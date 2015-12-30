@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Work flow &mdash; Phono3py v.0.9.14</title>
+    
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.3.4/cosmo/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.9.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.3.4/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="Phono3py v.0.9.14" href="index.html" />
+    <link rel="next" title="Installation" href="install.html" />
+    <link rel="prev" title="Welcome to phono3py" href="index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          Phono3py</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.9.14</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Work flow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#calculation-procedure">Calculation procedure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#convergence-check-in-calculation">Convergence check in calculation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="install.html#system-requirement">System requirement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#multithreading-support">Multithreading support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-procedure">Installation procedure</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#d"><code class="docutils literal"><span class="pre">-d</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#amplitude"><code class="docutils literal"><span class="pre">--amplitude</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#pa-primitive-axis"><code class="docutils literal"><span class="pre">--pa</span></code>, <code class="docutils literal"><span class="pre">--primitive_axis</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#fc2"><code class="docutils literal"><span class="pre">--fc2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#fc3"><code class="docutils literal"><span class="pre">--fc3</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#sym-fc2-sym-fc3r-tsym"><code class="docutils literal"><span class="pre">--sym_fc2</span></code>, <code class="docutils literal"><span class="pre">--sym_fc3r</span></code>, <code class="docutils literal"><span class="pre">--tsym</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#dim"><code class="docutils literal"><span class="pre">--dim</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#dim-fc2"><code class="docutils literal"><span class="pre">--dim_fc2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#mesh"><code class="docutils literal"><span class="pre">--mesh</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#br"><code class="docutils literal"><span class="pre">--br</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#sigma"><code class="docutils literal"><span class="pre">--sigma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#thm"><code class="docutils literal"><span class="pre">--thm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#tmax-tmin-tstep-ts"><code class="docutils literal"><span class="pre">--tmax</span></code>, <code class="docutils literal"><span class="pre">--tmin</span></code>, <code class="docutils literal"><span class="pre">--tstep</span></code>, <code class="docutils literal"><span class="pre">--ts</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#gp"><code class="docutils literal"><span class="pre">--gp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#ga"><code class="docutils literal"><span class="pre">--ga</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#wgp"><code class="docutils literal"><span class="pre">--wgp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#stp"><code class="docutils literal"><span class="pre">--stp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#nac"><code class="docutils literal"><span class="pre">--nac</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#q-direction"><code class="docutils literal"><span class="pre">--q_direction</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#isotope"><code class="docutils literal"><span class="pre">--isotope</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#mass-variances-or-mv"><code class="docutils literal"><span class="pre">--mass_variances</span></code> or <code class="docutils literal"><span class="pre">--mv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#boundary-mfp-bmfp"><code class="docutils literal"><span class="pre">--boundary_mfp</span></code>, <code class="docutils literal"><span class="pre">--bmfp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cf3"><code class="docutils literal"><span class="pre">--cf3</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cf2"><code class="docutils literal"><span class="pre">--cf2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cutoff-fc3-or-cutoff-fc3-distance"><code class="docutils literal"><span class="pre">--cutoff_fc3</span></code> or <code class="docutils literal"><span class="pre">--cutoff_fc3_distance</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cutoff-pair-or-cutoff-pair-distance"><code class="docutils literal"><span class="pre">--cutoff_pair</span></code> or <code class="docutils literal"><span class="pre">--cutoff_pair_distance</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#write-gamma"><code class="docutils literal"><span class="pre">--write_gamma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#read-gamma"><code class="docutils literal"><span class="pre">--read_gamma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#write-detailed-gamma"><code class="docutils literal"><span class="pre">--write_detailed_gamma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#ise"><code class="docutils literal"><span class="pre">--ise</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#lw"><code class="docutils literal"><span class="pre">--lw</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#jdos"><code class="docutils literal"><span class="pre">--jdos</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#num-freq-points-freq-pitch"><code class="docutils literal"><span class="pre">--num_freq_points</span></code>, <code class="docutils literal"><span class="pre">--freq_pitch</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#bi"><code class="docutils literal"><span class="pre">--bi</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#ave-pp"><code class="docutils literal"><span class="pre">--ave_pp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#const-ave-pp"><code class="docutils literal"><span class="pre">--const_ave_pp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#gruneisen"><code class="docutils literal"><span class="pre">--gruneisen</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#kaccum"><code class="docutils literal"><span class="pre">kaccum</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#gaccum"><code class="docutils literal"><span class="pre">gaccum</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="citation.html#citation-of-phono3py">Citation of phono3py</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#oct-10-2015-version-0-9-14">Oct-10-2015: version 0.9.14</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#sep-26-2015-version-0-9-13">Sep-26-2015: version 0.9.13</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#aug-12-2015-version-0-9-12">Aug-12-2015: version 0.9.12</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#jun-18-2015-version-0-9-10-1">Jun-18-2015: version 0.9.10.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#jun-17-2015-version-0-9-10">Jun-17-2015: version 0.9.10</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-9-7">Changes in version 0.9.7</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-9-6">Changes in version 0.9.6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-9-5">Changes in version 0.9.5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-9-4">Changes in version 0.9.4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-8-11">Changes in version 0.8.11</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-8-10">Changes in version 0.8.10</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-8-2">Changes in version 0.8.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-8-0">Changes in version 0.8.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-7-6">Changes in version 0.7.6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-7-2">Changes in version 0.7.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-7-1">Changes in version 0.7.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-6-0">Changes in version 0.6.0</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Work flow</a><ul>
+<li><a class="reference internal" href="#calculation-procedure">Calculation procedure</a></li>
+<li><a class="reference internal" href="#convergence-check-in-calculation">Convergence check in calculation</a><ul>
+<li><a class="reference internal" href="#brillouin-zone-summation">Brillouin zone summation</a></li>
+<li><a class="reference internal" href="#numerical-quality-of-force-constants">Numerical quality of force constants</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="index.html" title="Previous Chapter: Welcome to phono3py"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Welcome to ph...</span>
+    </a>
+  </li>
+  <li>
+    <a href="install.html" title="Next Chapter: Installation"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Installation &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <div class="section" id="work-flow">
+<span id="workflow"></span><h1>Work flow<a class="headerlink" href="#work-flow" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="calculation-procedure">
+<h2>Calculation procedure<a class="headerlink" href="#calculation-procedure" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p class="first">Create POSCARs with displacements</p>
+<p>This is the same way as usual phonopy:</p>
+<div class="highlight-python"><div class="highlight"><pre>% phono3py -d --dim=&quot;2 2 2&quot; -c POSCAR-unitcell
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> and <code class="docutils literal"><span class="pre">POSCAR-xxxxx</span></code> files are created.</p>
+<p>If you want to use larger supercell size for
+second-order force constants (fc2) calculation than that
+for third-order force constants (fc3) calculation:</p>
+<div class="highlight-python"><div class="highlight"><pre>% phono3py -d --dim_fc2=&quot;4 4 4&quot; --dim=&quot;2 2 2&quot; -c POSCAR-unitcell
+</pre></div>
+</div>
+<p>In this case, <code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> and <code class="docutils literal"><span class="pre">POSCAR_FC2-xxxxx</span></code> files are
+also created.</p>
+</li>
+<li><p class="first">Run VASP for supercell force calculations</p>
+<p>To calculate forces on atoms in supercells, <code class="docutils literal"><span class="pre">POSCAR-xxxxx</span></code> (and
+<code class="docutils literal"><span class="pre">POSCAR_FC2-xxxxx</span></code> if they exist) are used as VASP (or any force
+calculator) calculations.</p>
+<p>It is supposed that each force calculation is executed under the
+directory named <code class="docutils literal"><span class="pre">disp-xxxxx</span></code> (and <code class="docutils literal"><span class="pre">disp_fc2-xxxxx</span></code>), where
+<code class="docutils literal"><span class="pre">xxxxx</span></code> is sequential number.</p>
+</li>
+<li><p class="first">Collect <code class="docutils literal"><span class="pre">vasprun.xml</span></code>&#8216;s</p>
+<p>When VASP is used as the force calculator, force sets to calculate
+fc3 and fc2 are created as follows.</p>
+<div class="highlight-python"><div class="highlight"><pre>% phono3py --cf3 disp-{00001..00755}/vasprun.xml
+</pre></div>
+</div>
+<p>where 0755 is an example of the index of the last displacement
+supercell. To perform this collection, <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> created at
+step 1 is required. Then <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> is created.</p>
+<p>When you use larger supercell for fc2 calculation:</p>
+<div class="highlight-python"><div class="highlight"><pre>% phono3py --cf2 disp_fc2-{00001..00002}/vasprun.xml
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> is necessary in this case and <code class="docutils literal"><span class="pre">FORCES_FC2</span></code> is
+created.</p>
+</li>
+<li><p class="first">Create fc2.hdf and fc3.hdf</p>
+<div class="highlight-python"><div class="highlight"><pre>% phono3py --dim=&quot;2 2 2&quot; -c POSCAR-unitcell
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">fc2.hdf5</span></code> and <code class="docutils literal"><span class="pre">fc3.hdf5</span></code> are created from <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> and
+<code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code>. This step is not mandatory, but you can avoid
+calculating fc2 and fc3 at every run time.</p>
+<p>When you use larger supercell for fc2 calculation:</p>
+<div class="highlight-python"><div class="highlight"><pre>% phono3py --dim_fc2=&quot;4 4 4&quot; --dim=&quot;2 2 2&quot; -c POSCAR-unitcell
+</pre></div>
+</div>
+<p>Similarly <code class="docutils literal"><span class="pre">fc2.hdf5</span></code> and <code class="docutils literal"><span class="pre">fc3.hdf5</span></code> are created from <code class="docutils literal"><span class="pre">FORCES_FC3</span></code>,
+<code class="docutils literal"><span class="pre">FORCES_FC2</span></code>, <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code>, and <code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code>.</p>
+</li>
+<li><p class="first">Thermal conductivity calculation</p>
+<p>An example of thermal conductivity calculation is:</p>
+<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; -v --mesh=&quot;11 11 11&quot; \
+  -c POSCAR-unitcell --br --thm
+</pre></div>
+</div>
+<p>or with larger supercell for fc2:</p>
+<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim_fc2=&quot;4 4 4&quot; --dim=&quot;2 2 2&quot; -v --mesh=&quot;11 11 11&quot; \
+  -c POSCAR-unitcell --br --thm
+</pre></div>
+</div>
+<p>This calculation may take very long time. <code class="docutils literal"><span class="pre">--thm</span></code> invokes a
+tetrahedron method for Brillouin zone integration for phonon
+lifetime calculation. Instead, <code class="docutils literal"><span class="pre">--sigma</span></code> option can be used with
+the smearing widths.</p>
+<p>In this command, phonon lifetimes at many grid points are
+calculated in series. The phonon lifetime calculation at each grid
+point can be separately calculated since they
+are independent and no communication is necessary at the
+computation. The procedure is as follows:</p>
+<p>First run the same command with the addition option of <code class="docutils literal"><span class="pre">--wgp</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; -v --mesh=&quot;11 11 11&quot; \
+  -c POSCAR-unitcell --br --thm --wgp
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">ir_grid_points.yaml</span></code> is obtained. In this file, irreducible
+q-points are shown. Then distribute calculations of phonon
+lifetimes on grid points with <code class="docutils literal"><span class="pre">--write_gamma</span></code> option by:</p>
+<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; -v --mesh=&quot;11 11 11&quot; \
+  -c POSCAR-unitcell --br --thm --write_gamma --gp=&quot;[grid ponit(s)]&quot;
+</pre></div>
+</div>
+<p>After finishing all distributed calculations, run with
+<code class="docutils literal"><span class="pre">--read_gamma</span></code> option:</p>
+<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; -v --mesh=&quot;11 11 11&quot; \
+  -c POSCAR-unitcell --br --thm --read_gamma
+</pre></div>
+</div>
+<p>Once this calculation runs without problem, separately calculated
+hdf5 files on grid points are no more necessary and may be deleted.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="convergence-check-in-calculation">
+<h2>Convergence check in calculation<a class="headerlink" href="#convergence-check-in-calculation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="brillouin-zone-summation">
+<span id="brillouinzone-sum"></span><h3>Brillouin zone summation<a class="headerlink" href="#brillouin-zone-summation" title="Permalink to this headline">¶</a></h3>
+<p>Brillouin zone sums appear at different two points for phonon lifetime
+calculation. First it is used for the Fourier transform of force
+constans, and then to obtain imaginary part of phonon-self-energy.  In
+the numerical calculation, uniform sampling meshes are employed for
+these summations. To obtain more accurate result, it is always better
+to use denser meshes. But the denser mesh requires more
+computationally demanding.</p>
+<p>The second Brillouin zone sum contains delta functions. In phono3py
+calculation, a linear tetrahedron method (<code class="docutils literal"><span class="pre">--thm</span></code>) and a smearing
+method (<code class="docutils literal"><span class="pre">--sigma</span></code>) can be used for this Brillouin zone
+integration. Smearing parameter is used to approximate delta
+functions. Small <code class="docutils literal"><span class="pre">sigma</span></code> value is better to describe the detailed
+structure of three-phonon-space, but it requires a denser mesh to
+converge.</p>
+<p>To check the convergence with respect to the <code class="docutils literal"><span class="pre">sigma</span></code> value, multiple
+sigma values can be set. This can be computationally efficient, since
+it is avoided to re-calculate phonon-phonon interaction strength for
+different <code class="docutils literal"><span class="pre">sigma</span></code> values in this case.</p>
+<p>Convergence with respect to the sampling mesh and smearing parameter
+strongly depends on materials. A <img class="math" src="_images/math/8fbcadf6a8f153f126c0eb3a012c5a0284734009.png" alt="20\times 20\times 20"/> sampling
+mesh (or 8000 reducible sampling points) and 0.1 THz smearing value
+for reciprocal of the volume of an atom may be a good starting choice.</p>
+<p>The tetrahedron method requires no parameter such as the smearing
+width, therefore it is easier to use than the smearing method and
+recommended to use. A drawback of using the tetrahedron method is that
+it is slower and consumes more memory space.</p>
+</div>
+<div class="section" id="numerical-quality-of-force-constants">
+<h3>Numerical quality of force constants<a class="headerlink" href="#numerical-quality-of-force-constants" title="Permalink to this headline">¶</a></h3>
+<p>Third-order force constants are much weaker to numerical noise of a
+force calculator than second-order force constants. Therefore
+supercell force calculations have to be done by enough high numerical
+accuracy.</p>
+<p>The phono3py default displacement distance is 0.03
+<img class="math" src="_images/math/1589dee75c7ec545f11043c4ca3d2c52bdf5f683.png" alt="\text{\AA}"/>. In some cases, accurate result may not be obtained
+due to the numerical noise of the force calculator. Usually increasing
+the displacement distance by <code class="docutils literal"><span class="pre">--amplitude</span></code> option reduces
+the numerical noise, but increases error from higher order anharmonicity.</p>
+<p>It is not easy to check the numerical quality of force constants. It
+is suggested firstly to check deviation from the translational
+invariance condition by watching output where the output lines start
+with <code class="docutils literal"><span class="pre">max</span> <span class="pre">drift</span> <span class="pre">of</span> <span class="pre">...</span></code>. The drift value smaller than 1 may be
+acceptable but of course it is dependent on cases. The most practical
+way may be to compare thermal conductivities calculated with and
+without symmetrizing third-order force constants by <code class="docutils literal"><span class="pre">--sym_fc3r</span></code>,
+<code class="docutils literal"><span class="pre">--sym_fc2</span></code>, and <code class="docutils literal"><span class="pre">--tsym</span></code> options.</p>
+<p>Mode-Gruneisen-parameters calculated from third-order force constants
+look very sensitive to numerical noise near the Gamma point. Therefore
+symmetrization is recommended.</p>
+</div>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+<div id="sourcelink">
+  <a href="_sources/workflow.txt"
+     rel="nofollow">Source</a>
+</div>
+      
+    </p>
+    <p>
+        &copy; Copyright 2015, Atsushi Togo.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

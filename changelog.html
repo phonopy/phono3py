@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Change Log &mdash; Phono3py v.0.9.14</title>
+    
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.3.4/cosmo/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.9.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.3.4/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="Phono3py v.0.9.14" href="index.html" />
+    <link rel="prev" title="How to cite phono3py" href="citation.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          Phono3py</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.9.14</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Work flow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html#calculation-procedure">Calculation procedure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html#convergence-check-in-calculation">Convergence check in calculation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="install.html#system-requirement">System requirement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#multithreading-support">Multithreading support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-procedure">Installation procedure</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#d"><code class="docutils literal"><span class="pre">-d</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#amplitude"><code class="docutils literal"><span class="pre">--amplitude</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#pa-primitive-axis"><code class="docutils literal"><span class="pre">--pa</span></code>, <code class="docutils literal"><span class="pre">--primitive_axis</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#fc2"><code class="docutils literal"><span class="pre">--fc2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#fc3"><code class="docutils literal"><span class="pre">--fc3</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#sym-fc2-sym-fc3r-tsym"><code class="docutils literal"><span class="pre">--sym_fc2</span></code>, <code class="docutils literal"><span class="pre">--sym_fc3r</span></code>, <code class="docutils literal"><span class="pre">--tsym</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#dim"><code class="docutils literal"><span class="pre">--dim</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#dim-fc2"><code class="docutils literal"><span class="pre">--dim_fc2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#mesh"><code class="docutils literal"><span class="pre">--mesh</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#br"><code class="docutils literal"><span class="pre">--br</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#sigma"><code class="docutils literal"><span class="pre">--sigma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#thm"><code class="docutils literal"><span class="pre">--thm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#tmax-tmin-tstep-ts"><code class="docutils literal"><span class="pre">--tmax</span></code>, <code class="docutils literal"><span class="pre">--tmin</span></code>, <code class="docutils literal"><span class="pre">--tstep</span></code>, <code class="docutils literal"><span class="pre">--ts</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#gp"><code class="docutils literal"><span class="pre">--gp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#ga"><code class="docutils literal"><span class="pre">--ga</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#wgp"><code class="docutils literal"><span class="pre">--wgp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#stp"><code class="docutils literal"><span class="pre">--stp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#nac"><code class="docutils literal"><span class="pre">--nac</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#q-direction"><code class="docutils literal"><span class="pre">--q_direction</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#isotope"><code class="docutils literal"><span class="pre">--isotope</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#mass-variances-or-mv"><code class="docutils literal"><span class="pre">--mass_variances</span></code> or <code class="docutils literal"><span class="pre">--mv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#boundary-mfp-bmfp"><code class="docutils literal"><span class="pre">--boundary_mfp</span></code>, <code class="docutils literal"><span class="pre">--bmfp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cf3"><code class="docutils literal"><span class="pre">--cf3</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cf2"><code class="docutils literal"><span class="pre">--cf2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cutoff-fc3-or-cutoff-fc3-distance"><code class="docutils literal"><span class="pre">--cutoff_fc3</span></code> or <code class="docutils literal"><span class="pre">--cutoff_fc3_distance</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cutoff-pair-or-cutoff-pair-distance"><code class="docutils literal"><span class="pre">--cutoff_pair</span></code> or <code class="docutils literal"><span class="pre">--cutoff_pair_distance</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#write-gamma"><code class="docutils literal"><span class="pre">--write_gamma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#read-gamma"><code class="docutils literal"><span class="pre">--read_gamma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#write-detailed-gamma"><code class="docutils literal"><span class="pre">--write_detailed_gamma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#ise"><code class="docutils literal"><span class="pre">--ise</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#lw"><code class="docutils literal"><span class="pre">--lw</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#jdos"><code class="docutils literal"><span class="pre">--jdos</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#num-freq-points-freq-pitch"><code class="docutils literal"><span class="pre">--num_freq_points</span></code>, <code class="docutils literal"><span class="pre">--freq_pitch</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#bi"><code class="docutils literal"><span class="pre">--bi</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#ave-pp"><code class="docutils literal"><span class="pre">--ave_pp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#const-ave-pp"><code class="docutils literal"><span class="pre">--const_ave_pp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#gruneisen"><code class="docutils literal"><span class="pre">--gruneisen</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#kaccum"><code class="docutils literal"><span class="pre">kaccum</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#gaccum"><code class="docutils literal"><span class="pre">gaccum</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="citation.html#citation-of-phono3py">Citation of phono3py</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#oct-10-2015-version-0-9-14">Oct-10-2015: version 0.9.14</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sep-26-2015-version-0-9-13">Sep-26-2015: version 0.9.13</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aug-12-2015-version-0-9-12">Aug-12-2015: version 0.9.12</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#jun-18-2015-version-0-9-10-1">Jun-18-2015: version 0.9.10.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#jun-17-2015-version-0-9-10">Jun-17-2015: version 0.9.10</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changes-in-version-0-9-7">Changes in version 0.9.7</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changes-in-version-0-9-6">Changes in version 0.9.6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changes-in-version-0-9-5">Changes in version 0.9.5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changes-in-version-0-9-4">Changes in version 0.9.4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changes-in-version-0-8-11">Changes in version 0.8.11</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changes-in-version-0-8-10">Changes in version 0.8.10</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changes-in-version-0-8-2">Changes in version 0.8.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changes-in-version-0-8-0">Changes in version 0.8.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changes-in-version-0-7-6">Changes in version 0.7.6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changes-in-version-0-7-2">Changes in version 0.7.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changes-in-version-0-7-1">Changes in version 0.7.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#changes-in-version-0-6-0">Changes in version 0.6.0</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Change Log</a><ul>
+<li><a class="reference internal" href="#oct-10-2015-version-0-9-14">Oct-10-2015: version 0.9.14</a></li>
+<li><a class="reference internal" href="#sep-26-2015-version-0-9-13">Sep-26-2015: version 0.9.13</a></li>
+<li><a class="reference internal" href="#aug-12-2015-version-0-9-12">Aug-12-2015: version 0.9.12</a></li>
+<li><a class="reference internal" href="#jun-18-2015-version-0-9-10-1">Jun-18-2015: version 0.9.10.1</a></li>
+<li><a class="reference internal" href="#jun-17-2015-version-0-9-10">Jun-17-2015: version 0.9.10</a></li>
+<li><a class="reference internal" href="#changes-in-version-0-9-7">Changes in version 0.9.7</a></li>
+<li><a class="reference internal" href="#changes-in-version-0-9-6">Changes in version 0.9.6</a></li>
+<li><a class="reference internal" href="#changes-in-version-0-9-5">Changes in version 0.9.5</a></li>
+<li><a class="reference internal" href="#changes-in-version-0-9-4">Changes in version 0.9.4</a></li>
+<li><a class="reference internal" href="#changes-in-version-0-8-11">Changes in version 0.8.11</a></li>
+<li><a class="reference internal" href="#changes-in-version-0-8-10">Changes in version 0.8.10</a></li>
+<li><a class="reference internal" href="#changes-in-version-0-8-2">Changes in version 0.8.2</a></li>
+<li><a class="reference internal" href="#changes-in-version-0-8-0">Changes in version 0.8.0</a></li>
+<li><a class="reference internal" href="#changes-in-version-0-7-6">Changes in version 0.7.6</a></li>
+<li><a class="reference internal" href="#changes-in-version-0-7-2">Changes in version 0.7.2</a></li>
+<li><a class="reference internal" href="#changes-in-version-0-7-1">Changes in version 0.7.1</a></li>
+<li><a class="reference internal" href="#changes-in-version-0-6-0">Changes in version 0.6.0</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="citation.html" title="Previous Chapter: How to cite phono3py"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; How to cite p...</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <div class="section" id="change-log">
+<span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="oct-10-2015-version-0-9-14">
+<h2>Oct-10-2015: version 0.9.14<a class="headerlink" href="#oct-10-2015-version-0-9-14" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Computational performance tuning for phonon-phonon interaction
+strength calculation was made by Jonathan Skelton. Depending on
+systems, but 10-20% performance improvement may be possible.</li>
+<li><code class="docutils literal"><span class="pre">--stp</span></code> option is created to show numbers of q-point triplets to
+be calculated. See <a class="reference internal" href="command-options.html#command-options"><span>Command options</span></a>.</li>
+<li><code class="docutils literal"><span class="pre">--write_gamma</span></code> and <code class="docutils literal"><span class="pre">--read_gamma</span></code> support using with <code class="docutils literal"><span class="pre">--bi</span></code>
+option. Therefore a thermal conductivity calculation can be
+distributed over band index, too. This may be useful for the system
+whose unit cell is large.</li>
+</ul>
+</div>
+<div class="section" id="sep-26-2015-version-0-9-13">
+<h2>Sep-26-2015: version 0.9.13<a class="headerlink" href="#sep-26-2015-version-0-9-13" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Changed so that <code class="docutils literal"><span class="pre">--wgp</span></code> option writes <code class="docutils literal"><span class="pre">grid_address-mxxx.hdf5</span></code>
+instead of <code class="docutils literal"><span class="pre">grid_address-mxxx.dat</span></code>.</li>
+<li><code class="docutils literal"><span class="pre">--write_detailed_gamma</span></code> is implemented. See <a class="reference internal" href="command-options.html#command-options"><span>Command options</span></a>.</li>
+<li>When running without setting <code class="docutils literal"><span class="pre">--thm</span></code> and <code class="docutils literal"><span class="pre">--sigma</span></code> options,
+linear tetrahedron method corresponding to <code class="docutils literal"><span class="pre">--thm</span></code> is used as the
+default behavior.</li>
+<li><code class="docutils literal"><span class="pre">--ise</span></code> options is created.</li>
+</ul>
+</div>
+<div class="section" id="aug-12-2015-version-0-9-12">
+<h2>Aug-12-2015: version 0.9.12<a class="headerlink" href="#aug-12-2015-version-0-9-12" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Spglib update to version 1.8.2.1.</li>
+<li>Improve computational performance of <code class="docutils literal"><span class="pre">kaccum</span></code> and <code class="docutils literal"><span class="pre">gaccum</span></code>.</li>
+</ul>
+</div>
+<div class="section" id="jun-18-2015-version-0-9-10-1">
+<h2>Jun-18-2015: version 0.9.10.1<a class="headerlink" href="#jun-18-2015-version-0-9-10-1" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Bug fix of <code class="docutils literal"><span class="pre">gcaccum</span></code></li>
+</ul>
+</div>
+<div class="section" id="jun-17-2015-version-0-9-10">
+<h2>Jun-17-2015: version 0.9.10<a class="headerlink" href="#jun-17-2015-version-0-9-10" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Fix bug in <code class="docutils literal"><span class="pre">kaccum</span></code>. When using with <code class="docutils literal"><span class="pre">--pa</span></code> option, irreducible
+q-points were incorrectly indexed.</li>
+<li><code class="docutils literal"><span class="pre">gaccum</span></code> is implemented. <code class="docutils literal"><span class="pre">gaccum</span></code> is very similar to <code class="docutils literal"><span class="pre">kaccum</span></code>,
+but for <img class="math" src="_images/math/b23263d441abbb6f16226a98bbd61fd6452396d5.png" alt="\Gamma_\lambda(\omega_\lambda)"/>.</li>
+<li>spglib update.</li>
+</ul>
+</div>
+<div class="section" id="changes-in-version-0-9-7">
+<h2>Changes in version 0.9.7<a class="headerlink" href="#changes-in-version-0-9-7" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>The definition of MSPP is modified so as to be averaged ph-ph
+interaction defined as <img class="math" src="_images/math/645ecc9514b0f10389a05592cede1f2f11478b4b.png" alt="P_{\mathbf{q}j}"/> in the arXiv
+manuscript. The key in the kappa hdf5 file is changed from <code class="docutils literal"><span class="pre">mspp</span></code>
+to <code class="docutils literal"><span class="pre">ave_pp</span></code>. The physical unit of <img class="math" src="_images/math/645ecc9514b0f10389a05592cede1f2f11478b4b.png" alt="P_{\mathbf{q}j}"/> is set
+to <img class="math" src="_images/math/b1081ba55ca53aac658b057192e44ef64f27afa1.png" alt="\text{eV}^2"/>.</li>
+</ul>
+</div>
+<div class="section" id="changes-in-version-0-9-6">
+<h2>Changes in version 0.9.6<a class="headerlink" href="#changes-in-version-0-9-6" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Silicon example is put in <code class="docutils literal"><span class="pre">example-phono3py</span></code> directory.</li>
+<li>Accumulated lattice thermal conductivity is calculated by <code class="docutils literal"><span class="pre">kaccum</span></code>
+script.</li>
+<li>JDOS output format was changed.</li>
+</ul>
+</div>
+<div class="section" id="changes-in-version-0-9-5">
+<h2>Changes in version 0.9.5<a class="headerlink" href="#changes-in-version-0-9-5" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>In <code class="docutils literal"><span class="pre">kappa-xxx.hdf5</span></code> file, <code class="docutils literal"><span class="pre">heat_capacity</span></code> format was changed
+from <code class="docutils literal"><span class="pre">(irreducible</span> <span class="pre">q-point,</span> <span class="pre">temperature,</span> <span class="pre">phonon</span> <span class="pre">band)</span></code> to
+<code class="docutils literal"><span class="pre">(temperature,</span> <span class="pre">irreducible</span> <span class="pre">q-point,</span> <span class="pre">phonon</span> <span class="pre">band)</span></code>. For <code class="docutils literal"><span class="pre">gamma</span></code>,
+previous document was wrong in the array shape. It is
+<code class="docutils literal"><span class="pre">(temperature,</span> <span class="pre">irreducible</span> <span class="pre">q-point,</span> <span class="pre">phonon</span> <span class="pre">band)</span></code></li>
+</ul>
+</div>
+<div class="section" id="changes-in-version-0-9-4">
+<h2>Changes in version 0.9.4<a class="headerlink" href="#changes-in-version-0-9-4" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>The option of <code class="docutils literal"><span class="pre">--cutoff_mfp</span></code> is renamed to <code class="docutils literal"><span class="pre">--boundary_mfp</span></code> and
+now it&#8217;s on the document.</li>
+<li>Detailed contribution of <code class="docutils literal"><span class="pre">kappa</span></code> at each <strong>q</strong>-point and phonon
+mode is output to .hdf5 with the keyword <code class="docutils literal"><span class="pre">mode_kappa</span></code>.</li>
+</ul>
+</div>
+<div class="section" id="changes-in-version-0-8-11">
+<h2>Changes in version 0.8.11<a class="headerlink" href="#changes-in-version-0-8-11" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>A new option of <code class="docutils literal"><span class="pre">--cutoff_mfp</span></code> for including effective boundary
+mean free path.</li>
+<li>The option name <code class="docutils literal"><span class="pre">--cutfc3</span></code> is changed to <code class="docutils literal"><span class="pre">--cutoff_fc3</span></code>.</li>
+<li>The option name <code class="docutils literal"><span class="pre">--cutpair</span></code> is changed to <code class="docutils literal"><span class="pre">--cutoff_pair</span></code>.</li>
+<li>A new option <code class="docutils literal"><span class="pre">--ga</span></code> is created.</li>
+<li>Fix spectrum plot of joint dos and imaginary part of self energy</li>
+</ul>
+</div>
+<div class="section" id="changes-in-version-0-8-10">
+<h2>Changes in version 0.8.10<a class="headerlink" href="#changes-in-version-0-8-10" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Different supercell size of fc2 from fc3 can be specified using
+<code class="docutils literal"><span class="pre">--dim_fc2</span></code> option.</li>
+<li><code class="docutils literal"><span class="pre">--isotope</span></code> option is implemented. This is used instead of
+<code class="docutils literal"><span class="pre">--mass_variances</span></code> option without specifying the values. Mass
+variance parameters are read from database.</li>
+</ul>
+</div>
+<div class="section" id="changes-in-version-0-8-2">
+<h2>Changes in version 0.8.2<a class="headerlink" href="#changes-in-version-0-8-2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Phono3py python interface is rewritten and a lot of changes are
+introduced.</li>
+<li><code class="docutils literal"><span class="pre">FORCES_SECOND</span></code> and <code class="docutils literal"><span class="pre">FORCES_THIRD</span></code> are no more used. Instead just
+one file of <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> is used. Now <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> is generated
+by <code class="docutils literal"><span class="pre">--cf3</span></code> option and the backward compatibility is simple: <code class="docutils literal"><span class="pre">cat</span>
+<span class="pre">FORCES_SECOND</span> <span class="pre">FORCES_THIRD</span> <span class="pre">&gt;</span> <span class="pre">FORCES_FC3</span></code>.</li>
+<li><code class="docutils literal"><span class="pre">--multiple_sigmas</span></code> is removed. The same behavior is achieved by
+<code class="docutils literal"><span class="pre">--sigma</span></code>.</li>
+</ul>
+</div>
+<div class="section" id="changes-in-version-0-8-0">
+<h2>Changes in version 0.8.0<a class="headerlink" href="#changes-in-version-0-8-0" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">--q_direction</span></code> didn&#8217;t work. Fix it.</li>
+<li>Implementation of tetrahedron method whcih is activated by
+<code class="docutils literal"><span class="pre">--thm</span></code>.</li>
+<li>Grid addresses are written out by <code class="docutils literal"><span class="pre">--wgp</span></code> option.</li>
+</ul>
+</div>
+<div class="section" id="changes-in-version-0-7-6">
+<h2>Changes in version 0.7.6<a class="headerlink" href="#changes-in-version-0-7-6" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Cut-off distance for fc3 is implemented. This is activated by
+<code class="docutils literal"><span class="pre">--cutfc3</span></code> option. FC3 elements where any atomic pair has larger
+distance than cut-off distance are set zero.</li>
+<li><code class="docutils literal"><span class="pre">--cutpair</span></code> works only when creating displacements. The cut-off
+pair distance is written into <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> and FC3 is created
+from <code class="docutils literal"><span class="pre">FORCES_THIRD</span></code> with this information. Usually sets of pair
+displacements are more redundant than that needed for creating fc3
+if index permutation symmetry is considered. Therefore using index
+permutation symmetry, some elements of fc3 can be recovered even if
+some of supercell force calculations are missing. In paticular, all
+pair distances among triplet atoms are larger than cutoff pair
+distance, any fc3 elements are not recovered, i.e., the element will
+be zero.</li>
+</ul>
+</div>
+<div class="section" id="changes-in-version-0-7-2">
+<h2>Changes in version 0.7.2<a class="headerlink" href="#changes-in-version-0-7-2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Default displacement distance is changed to 0.03.</li>
+<li>Files names of displacement supercells now have 5 digits numbering,
+<code class="docutils literal"><span class="pre">POSCAR-xxxxx</span></code>.</li>
+<li>Cutoff distance between pair displacements is implemented. This is
+triggered by <code class="docutils literal"><span class="pre">--cutpair</span></code> option. This option works only for
+calculating atomic forces in supercells with configurations of pairs
+of displacements.</li>
+</ul>
+</div>
+<div class="section" id="changes-in-version-0-7-1">
+<h2>Changes in version 0.7.1<a class="headerlink" href="#changes-in-version-0-7-1" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>It is changed to sampling q-points in Brillouin zone. Previously
+q-points are sampled in reciprocal primitive lattice. Usually this
+change affects very little to the result.</li>
+<li>q-points of phonon triplets are more carefully sampled when a
+q-point is on Brillouin zone boundary. Usually this
+change affects very little to the result.</li>
+<li>Isotope effect to thermal conductivity is included.</li>
+</ul>
+</div>
+<div class="section" id="changes-in-version-0-6-0">
+<h2>Changes in version 0.6.0<a class="headerlink" href="#changes-in-version-0-6-0" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">disp.yaml</span></code> is renamed to <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code>. Old calculations with
+<code class="docutils literal"><span class="pre">disp.yaml</span></code> can be used without any problem just by changing the
+file name.</li>
+<li>Group velocity is calculated from analytical derivative of dynamical
+matrix.</li>
+<li>Group velocities at degenerate phonon modes are better handled.
+This improves the accuracy of group velocity and thus for thermal
+conductivity.</li>
+<li>Re-implementation of third-order force constants calculation from
+supercell forces, which makes the calculation much faster</li>
+<li>When any phonon of triplets can be on the Brillouin zone boundary, i.e.,
+when a mesh number is an even number, it is more carefully treated.</li>
+</ul>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+<div id="sourcelink">
+  <a href="_sources/changelog.txt"
+     rel="nofollow">Source</a>
+</div>
+      
+    </p>
+    <p>
+        &copy; Copyright 2015, Atsushi Togo.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

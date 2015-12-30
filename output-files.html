@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Output files &mdash; Phono3py v.0.9.14</title>
+    
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.3.4/cosmo/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.9.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.3.4/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="Phono3py v.0.9.14" href="index.html" />
+    <link rel="next" title="Command options" href="command-options.html" />
+    <link rel="prev" title="Installation" href="install.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          Phono3py</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.9.14</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Work flow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html#calculation-procedure">Calculation procedure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html#convergence-check-in-calculation">Convergence check in calculation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="install.html#system-requirement">System requirement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#multithreading-support">Multithreading support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-procedure">Installation procedure</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Output files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#d"><code class="docutils literal"><span class="pre">-d</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#amplitude"><code class="docutils literal"><span class="pre">--amplitude</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#pa-primitive-axis"><code class="docutils literal"><span class="pre">--pa</span></code>, <code class="docutils literal"><span class="pre">--primitive_axis</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#fc2"><code class="docutils literal"><span class="pre">--fc2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#fc3"><code class="docutils literal"><span class="pre">--fc3</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#sym-fc2-sym-fc3r-tsym"><code class="docutils literal"><span class="pre">--sym_fc2</span></code>, <code class="docutils literal"><span class="pre">--sym_fc3r</span></code>, <code class="docutils literal"><span class="pre">--tsym</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#dim"><code class="docutils literal"><span class="pre">--dim</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#dim-fc2"><code class="docutils literal"><span class="pre">--dim_fc2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#mesh"><code class="docutils literal"><span class="pre">--mesh</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#br"><code class="docutils literal"><span class="pre">--br</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#sigma"><code class="docutils literal"><span class="pre">--sigma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#thm"><code class="docutils literal"><span class="pre">--thm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#tmax-tmin-tstep-ts"><code class="docutils literal"><span class="pre">--tmax</span></code>, <code class="docutils literal"><span class="pre">--tmin</span></code>, <code class="docutils literal"><span class="pre">--tstep</span></code>, <code class="docutils literal"><span class="pre">--ts</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#gp"><code class="docutils literal"><span class="pre">--gp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#ga"><code class="docutils literal"><span class="pre">--ga</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#wgp"><code class="docutils literal"><span class="pre">--wgp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#stp"><code class="docutils literal"><span class="pre">--stp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#nac"><code class="docutils literal"><span class="pre">--nac</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#q-direction"><code class="docutils literal"><span class="pre">--q_direction</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#isotope"><code class="docutils literal"><span class="pre">--isotope</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#mass-variances-or-mv"><code class="docutils literal"><span class="pre">--mass_variances</span></code> or <code class="docutils literal"><span class="pre">--mv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#boundary-mfp-bmfp"><code class="docutils literal"><span class="pre">--boundary_mfp</span></code>, <code class="docutils literal"><span class="pre">--bmfp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cf3"><code class="docutils literal"><span class="pre">--cf3</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cf2"><code class="docutils literal"><span class="pre">--cf2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cutoff-fc3-or-cutoff-fc3-distance"><code class="docutils literal"><span class="pre">--cutoff_fc3</span></code> or <code class="docutils literal"><span class="pre">--cutoff_fc3_distance</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cutoff-pair-or-cutoff-pair-distance"><code class="docutils literal"><span class="pre">--cutoff_pair</span></code> or <code class="docutils literal"><span class="pre">--cutoff_pair_distance</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#write-gamma"><code class="docutils literal"><span class="pre">--write_gamma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#read-gamma"><code class="docutils literal"><span class="pre">--read_gamma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#write-detailed-gamma"><code class="docutils literal"><span class="pre">--write_detailed_gamma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#ise"><code class="docutils literal"><span class="pre">--ise</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#lw"><code class="docutils literal"><span class="pre">--lw</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#jdos"><code class="docutils literal"><span class="pre">--jdos</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#num-freq-points-freq-pitch"><code class="docutils literal"><span class="pre">--num_freq_points</span></code>, <code class="docutils literal"><span class="pre">--freq_pitch</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#bi"><code class="docutils literal"><span class="pre">--bi</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#ave-pp"><code class="docutils literal"><span class="pre">--ave_pp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#const-ave-pp"><code class="docutils literal"><span class="pre">--const_ave_pp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#gruneisen"><code class="docutils literal"><span class="pre">--gruneisen</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#kaccum"><code class="docutils literal"><span class="pre">kaccum</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#gaccum"><code class="docutils literal"><span class="pre">gaccum</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="citation.html#citation-of-phono3py">Citation of phono3py</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#oct-10-2015-version-0-9-14">Oct-10-2015: version 0.9.14</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#sep-26-2015-version-0-9-13">Sep-26-2015: version 0.9.13</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#aug-12-2015-version-0-9-12">Aug-12-2015: version 0.9.12</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#jun-18-2015-version-0-9-10-1">Jun-18-2015: version 0.9.10.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#jun-17-2015-version-0-9-10">Jun-17-2015: version 0.9.10</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-9-7">Changes in version 0.9.7</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-9-6">Changes in version 0.9.6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-9-5">Changes in version 0.9.5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-9-4">Changes in version 0.9.4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-8-11">Changes in version 0.8.11</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-8-10">Changes in version 0.8.10</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-8-2">Changes in version 0.8.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-8-0">Changes in version 0.8.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-7-6">Changes in version 0.7.6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-7-2">Changes in version 0.7.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-7-1">Changes in version 0.7.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-6-0">Changes in version 0.6.0</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Output files</a><ul>
+<li><a class="reference internal" href="#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a><ul>
+<li><a class="reference internal" href="#how-to-use-hdf5-python-library">How to use HDF5 python library</a></li>
+<li><a class="reference internal" href="#details-of-kappa-hdf5-file">Details of <code class="docutils literal"><span class="pre">kappa-*.hdf5</span></code> file</a><ul>
+<li><a class="reference internal" href="#frequency">frequency</a></li>
+<li><a class="reference internal" href="#gamma">gamma</a></li>
+<li><a class="reference internal" href="#gamma-isotope">gamma_isotope</a></li>
+<li><a class="reference internal" href="#group-velocity">group_velocity</a></li>
+<li><a class="reference internal" href="#heat-capacity">heat_capacity</a></li>
+<li><a class="reference internal" href="#kappa">kappa</a></li>
+<li><a class="reference internal" href="#mode-kappa">mode_kappa</a></li>
+<li><a class="reference internal" href="#q-point">q-point</a></li>
+<li><a class="reference internal" href="#temperature">temperature</a></li>
+<li><a class="reference internal" href="#weight">weight</a></li>
+<li><a class="reference internal" href="#ave-pp">ave_pp</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="install.html" title="Previous Chapter: Installation"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Installation</span>
+    </a>
+  </li>
+  <li>
+    <a href="command-options.html" title="Next Chapter: Command options"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Command options &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <div class="section" id="output-files">
+<span id="id1"></span><h1>Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="how-to-read-the-results-stored-in-hdf5-files">
+<h2>How to read the results stored in hdf5 files<a class="headerlink" href="#how-to-read-the-results-stored-in-hdf5-files" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="how-to-use-hdf5-python-library">
+<h3>How to use HDF5 python library<a class="headerlink" href="#how-to-use-hdf5-python-library" title="Permalink to this headline">¶</a></h3>
+<p>It is assumed that <code class="docutils literal"><span class="pre">python-h5py</span></code> is installed on the computer you
+interactively use. In the following, how to see the contents of
+<code class="docutils literal"><span class="pre">.hdf5</span></code> files in the interactive mode of Python. Usually for running
+interactive python, <code class="docutils literal"><span class="pre">ipython</span></code> is recommended to use but not the
+plain python. In the following example, an MgO result of thermal
+conductivity calculation is loaded and thermal conductivity tensor at
+300 K is watched.</p>
+<div class="highlight-python"><div class="highlight"><pre>In [1]: import h5py
+
+In [2]: f = h5py.File(&quot;kappa-m111111.hdf5&quot;)
+
+In [3]: f.keys()
+Out[3]:
+[u&#39;frequency&#39;,
+ u&#39;gamma&#39;,
+ u&#39;group_velocity&#39;,
+ u&#39;heat_capacity&#39;,
+ u&#39;kappa&#39;,
+ u&#39;mode_kappa&#39;,
+ u&#39;ave_pp&#39;,
+ u&#39;qpoint&#39;,
+ u&#39;temperature&#39;,
+ u&#39;weight&#39;]
+
+In [4]: f[&#39;kappa&#39;].shape
+Out[4]: (101, 6)
+
+In [5]: f[&#39;kappa&#39;][:]
+Out[5]:
+array([[  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,
+          0.00000000e+00,   0.00000000e+00,   0.00000000e+00],
+       [  5.86834069e+03,   5.86834069e+03,   5.86834069e+03,
+          1.20936823e-15,   0.00000000e+00,  -2.05720313e-15],
+       [  1.37552313e+03,   1.37552313e+03,   1.37552313e+03,
+          2.81132320e-16,   0.00000000e+00,  -5.00076366e-16],
+       ...,
+       [  6.56974871e+00,   6.56974871e+00,   6.56974871e+00,
+          1.76632276e-18,   0.00000000e+00,  -2.30450472e-18],
+       [  6.50316555e+00,   6.50316555e+00,   6.50316555e+00,
+          1.74843437e-18,   0.00000000e+00,  -2.28116103e-18],
+       [  6.43792061e+00,   6.43792061e+00,   6.43792061e+00,
+          1.73090513e-18,   0.00000000e+00,  -2.25828616e-18]])
+
+In [6]: f[&#39;temperature&#39;][:]
+Out[6]:
+array([    0.,    10.,    20.,    30.,    40.,    50.,    60.,    70.,
+          80.,    90.,   100.,   110.,   120.,   130.,   140.,   150.,
+         160.,   170.,   180.,   190.,   200.,   210.,   220.,   230.,
+         240.,   250.,   260.,   270.,   280.,   290.,   300.,   310.,
+         320.,   330.,   340.,   350.,   360.,   370.,   380.,   390.,
+         400.,   410.,   420.,   430.,   440.,   450.,   460.,   470.,
+         480.,   490.,   500.,   510.,   520.,   530.,   540.,   550.,
+         560.,   570.,   580.,   590.,   600.,   610.,   620.,   630.,
+         640.,   650.,   660.,   670.,   680.,   690.,   700.,   710.,
+         720.,   730.,   740.,   750.,   760.,   770.,   780.,   790.,
+         800.,   810.,   820.,   830.,   840.,   850.,   860.,   870.,
+         880.,   890.,   900.,   910.,   920.,   930.,   940.,   950.,
+         960.,   970.,   980.,   990.,  1000.])
+
+In [7]: f[&#39;kappa&#39;][30]
+Out[7]:
+array([  2.18146513e+01,   2.18146513e+01,   2.18146513e+01,
+         5.84389577e-18,   0.00000000e+00,  -7.63278476e-18])
+</pre></div>
+</div>
+</div>
+<div class="section" id="details-of-kappa-hdf5-file">
+<h3>Details of <code class="docutils literal"><span class="pre">kappa-*.hdf5</span></code> file<a class="headerlink" href="#details-of-kappa-hdf5-file" title="Permalink to this headline">¶</a></h3>
+<p>Files name, e.g. <code class="docutils literal"><span class="pre">kappa-m323220.hdf5</span></code>, is determined by some
+specific options. <code class="docutils literal"><span class="pre">mxxx</span></code>, show the numbers of sampling
+mesh. <code class="docutils literal"><span class="pre">sxxx</span></code> and <code class="docutils literal"><span class="pre">gxxx</span></code> appear optionally. <code class="docutils literal"><span class="pre">sxxx</span></code> gives the
+smearing width in the smearing method for Brillouin zone integration
+for phonon lifetime, and <code class="docutils literal"><span class="pre">gxxx</span></code> denotes the grid number. Using the
+command option of <code class="docutils literal"><span class="pre">-o</span></code>, the file name can be modified slightly. For
+example <code class="docutils literal"><span class="pre">-o</span> <span class="pre">nac</span></code> gives <code class="docutils literal"><span class="pre">kappa-m323220.nac.hdf5</span></code> to
+memorize the option <code class="docutils literal"><span class="pre">--nac</span></code> was used.</p>
+<p>Currently <code class="docutils literal"><span class="pre">kappa-*.hdf5</span></code> file (not for the specific grid points)
+contains the properties shown below.</p>
+<div class="section" id="frequency">
+<h4>frequency<a class="headerlink" href="#frequency" title="Permalink to this headline">¶</a></h4>
+<p>Phonon frequencies. The physical unit is THz (without <img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>)</p>
+<p>The array shape is (irreducible q-point, phonon band).</p>
+</div>
+<div class="section" id="gamma">
+<h4>gamma<a class="headerlink" href="#gamma" title="Permalink to this headline">¶</a></h4>
+<p>Imaginary part of self energy. The physical unit is THz
+(without <img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>).</p>
+<p>The array shape for all grid-points (irreducible q-points) is
+(temperature, irreducible q-point, phonon band).</p>
+<p>The array shape for a specific grid-point is
+(temperature, phonon band).</p>
+<p>This is read when <code class="docutils literal"><span class="pre">--read_gamma</span></code> option is specified.</p>
+</div>
+<div class="section" id="gamma-isotope">
+<h4>gamma_isotope<a class="headerlink" href="#gamma-isotope" title="Permalink to this headline">¶</a></h4>
+<p>Isotope scattering of <img class="math" src="_images/math/28244ea0c6294e2e5bc8ca744d9714824a9b4997.png" alt="1/2\tau^\mathrm{iso}_\lambda"/>.
+The physical unit is same as that of gamma.</p>
+<p>The array shape is same as that of frequency.</p>
+<p>This is NOT read even when <code class="docutils literal"><span class="pre">--read_gamma</span></code> option is specified.</p>
+</div>
+<div class="section" id="group-velocity">
+<h4>group_velocity<a class="headerlink" href="#group-velocity" title="Permalink to this headline">¶</a></h4>
+<p>Phonon group velocity, <img class="math" src="_images/math/74e0090a9685eb249708f67dfb1c8b5b31b889a2.png" alt="\nabla_\mathbf{q}\omega_\lambda"/>. The
+physical unit is <img class="math" src="_images/math/6c365dfcb34c1406c7cea803305860967a374293.png" alt="\text{THz}\cdot\text{\AA}"/> (without
+<img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>).</p>
+<p>The array shape is (irreducible q-point, phonon band, 3 = Cartesian coordinates).</p>
+</div>
+<div class="section" id="heat-capacity">
+<h4>heat_capacity<a class="headerlink" href="#heat-capacity" title="Permalink to this headline">¶</a></h4>
+<p>Mode-heat-capacity defined by</p>
+<div class="math">
+<p><img src="_images/math/227212f21a0160d69f4d772b607ddd9645184114.png" alt="C_\lambda = k_\mathrm{B}
+ \left(\frac{\hbar\omega_\lambda}{k_\mathrm{B} T} \right)^2
+ \frac{\exp(\hbar\omega_\lambda/k_\mathrm{B}
+ T)}{[\exp(\hbar\omega_\lambda/k_\mathrm{B} T)-1]^2}."/></p>
+</div><p>The physical unit is eV/K.</p>
+<p>The array shape is (temperature, irreducible q-point, phonon band).</p>
+</div>
+<div class="section" id="kappa">
+<h4>kappa<a class="headerlink" href="#kappa" title="Permalink to this headline">¶</a></h4>
+<p>Thermal conductivity tensor. The physical unit is W/m-K.</p>
+<p>The array shape is (temperature, 6 = (xx, yy, zz, yz, xz, xy)).</p>
+</div>
+<div class="section" id="mode-kappa">
+<h4>mode_kappa<a class="headerlink" href="#mode-kappa" title="Permalink to this headline">¶</a></h4>
+<p>Thermal conductivity tensor at k-star. The physical unit is
+W/m-K. Each tensor element is the sum of tensor elements on the
+members of the k-star, i.e., equivalent q-points by crystallographic
+point group and time reversal symmetry.</p>
+<p>The array shape is (temperature, irreducible q-point, phonon band, 6 =
+(xx, yy, zz, yz, xz, xy)).</p>
+</div>
+<div class="section" id="q-point">
+<h4>q-point<a class="headerlink" href="#q-point" title="Permalink to this headline">¶</a></h4>
+<p>Irreducible q-points in reduced coordinates.</p>
+<p>The array shape is (irreducible q-point, 3 = reduced
+coordinates in reciprocal space).</p>
+</div>
+<div class="section" id="temperature">
+<h4>temperature<a class="headerlink" href="#temperature" title="Permalink to this headline">¶</a></h4>
+<p>Temperatures where thermal conductivities are calculated. The physical
+unit is K.</p>
+</div>
+<div class="section" id="weight">
+<h4>weight<a class="headerlink" href="#weight" title="Permalink to this headline">¶</a></h4>
+<p>Weights corresponding to irreducible q-points. Sum of weights equals to
+the number of (coarse) mesh grid points.</p>
+</div>
+<div class="section" id="ave-pp">
+<h4>ave_pp<a class="headerlink" href="#ave-pp" title="Permalink to this headline">¶</a></h4>
+<p>Averaged phonon-phonon interaction in <img class="math" src="_images/math/b1081ba55ca53aac658b057192e44ef64f27afa1.png" alt="\text{eV}^2"/>,
+<img class="math" src="_images/math/645ecc9514b0f10389a05592cede1f2f11478b4b.png" alt="P_{\mathbf{q}j}"/>:</p>
+<div class="math">
+<p><img src="_images/math/7058b12b9d44c05403e8b9b3e4f2f953baa0b8cb.png" alt="P_{\mathbf{q}j} = \frac{1}{(3n_\mathrm{a})^2} \sum_{\lambda'\lambda''}
+|\Phi_{\lambda\lambda'\lambda''}|^2."/></p>
+</div></div>
+</div>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+<div id="sourcelink">
+  <a href="_sources/output-files.txt"
+     rel="nofollow">Source</a>
+</div>
+      
+    </p>
+    <p>
+        &copy; Copyright 2015, Atsushi Togo.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

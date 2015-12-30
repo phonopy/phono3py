@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>How to cite phono3py &mdash; Phono3py v.0.9.14</title>
+    
+    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.3.4/cosmo/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.9.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.3.4/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="Phono3py v.0.9.14" href="index.html" />
+    <link rel="next" title="Change Log" href="changelog.html" />
+    <link rel="prev" title="Auxiliary tools" href="auxiliary-tools.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          Phono3py</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.9.14</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Work flow</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html#calculation-procedure">Calculation procedure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html#convergence-check-in-calculation">Convergence check in calculation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="install.html#system-requirement">System requirement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#multithreading-support">Multithreading support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-procedure">Installation procedure</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#d"><code class="docutils literal"><span class="pre">-d</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#amplitude"><code class="docutils literal"><span class="pre">--amplitude</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#pa-primitive-axis"><code class="docutils literal"><span class="pre">--pa</span></code>, <code class="docutils literal"><span class="pre">--primitive_axis</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#fc2"><code class="docutils literal"><span class="pre">--fc2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#fc3"><code class="docutils literal"><span class="pre">--fc3</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#sym-fc2-sym-fc3r-tsym"><code class="docutils literal"><span class="pre">--sym_fc2</span></code>, <code class="docutils literal"><span class="pre">--sym_fc3r</span></code>, <code class="docutils literal"><span class="pre">--tsym</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#dim"><code class="docutils literal"><span class="pre">--dim</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#dim-fc2"><code class="docutils literal"><span class="pre">--dim_fc2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#mesh"><code class="docutils literal"><span class="pre">--mesh</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#br"><code class="docutils literal"><span class="pre">--br</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#sigma"><code class="docutils literal"><span class="pre">--sigma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#thm"><code class="docutils literal"><span class="pre">--thm</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#tmax-tmin-tstep-ts"><code class="docutils literal"><span class="pre">--tmax</span></code>, <code class="docutils literal"><span class="pre">--tmin</span></code>, <code class="docutils literal"><span class="pre">--tstep</span></code>, <code class="docutils literal"><span class="pre">--ts</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#gp"><code class="docutils literal"><span class="pre">--gp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#ga"><code class="docutils literal"><span class="pre">--ga</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#wgp"><code class="docutils literal"><span class="pre">--wgp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#stp"><code class="docutils literal"><span class="pre">--stp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#nac"><code class="docutils literal"><span class="pre">--nac</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#q-direction"><code class="docutils literal"><span class="pre">--q_direction</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#isotope"><code class="docutils literal"><span class="pre">--isotope</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#mass-variances-or-mv"><code class="docutils literal"><span class="pre">--mass_variances</span></code> or <code class="docutils literal"><span class="pre">--mv</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#boundary-mfp-bmfp"><code class="docutils literal"><span class="pre">--boundary_mfp</span></code>, <code class="docutils literal"><span class="pre">--bmfp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cf3"><code class="docutils literal"><span class="pre">--cf3</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cf2"><code class="docutils literal"><span class="pre">--cf2</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cutoff-fc3-or-cutoff-fc3-distance"><code class="docutils literal"><span class="pre">--cutoff_fc3</span></code> or <code class="docutils literal"><span class="pre">--cutoff_fc3_distance</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#cutoff-pair-or-cutoff-pair-distance"><code class="docutils literal"><span class="pre">--cutoff_pair</span></code> or <code class="docutils literal"><span class="pre">--cutoff_pair_distance</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#write-gamma"><code class="docutils literal"><span class="pre">--write_gamma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#read-gamma"><code class="docutils literal"><span class="pre">--read_gamma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#write-detailed-gamma"><code class="docutils literal"><span class="pre">--write_detailed_gamma</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#ise"><code class="docutils literal"><span class="pre">--ise</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#lw"><code class="docutils literal"><span class="pre">--lw</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#jdos"><code class="docutils literal"><span class="pre">--jdos</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#num-freq-points-freq-pitch"><code class="docutils literal"><span class="pre">--num_freq_points</span></code>, <code class="docutils literal"><span class="pre">--freq_pitch</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#bi"><code class="docutils literal"><span class="pre">--bi</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#ave-pp"><code class="docutils literal"><span class="pre">--ave_pp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#const-ave-pp"><code class="docutils literal"><span class="pre">--const_ave_pp</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#gruneisen"><code class="docutils literal"><span class="pre">--gruneisen</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#kaccum"><code class="docutils literal"><span class="pre">kaccum</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#gaccum"><code class="docutils literal"><span class="pre">gaccum</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">How to cite phono3py</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#citation-of-phono3py">Citation of phono3py</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#oct-10-2015-version-0-9-14">Oct-10-2015: version 0.9.14</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#sep-26-2015-version-0-9-13">Sep-26-2015: version 0.9.13</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#aug-12-2015-version-0-9-12">Aug-12-2015: version 0.9.12</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#jun-18-2015-version-0-9-10-1">Jun-18-2015: version 0.9.10.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#jun-17-2015-version-0-9-10">Jun-17-2015: version 0.9.10</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-9-7">Changes in version 0.9.7</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-9-6">Changes in version 0.9.6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-9-5">Changes in version 0.9.5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-9-4">Changes in version 0.9.4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-8-11">Changes in version 0.8.11</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-8-10">Changes in version 0.8.10</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-8-2">Changes in version 0.8.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-8-0">Changes in version 0.8.0</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-7-6">Changes in version 0.7.6</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-7-2">Changes in version 0.7.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-7-1">Changes in version 0.7.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#changes-in-version-0-6-0">Changes in version 0.6.0</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">How to cite phono3py</a><ul>
+<li><a class="reference internal" href="#citation-of-phono3py">Citation of phono3py</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="auxiliary-tools.html" title="Previous Chapter: Auxiliary tools"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Auxiliary tools</span>
+    </a>
+  </li>
+  <li>
+    <a href="changelog.html" title="Next Chapter: Change Log"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Change Log &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 content">
+      
+  <div class="section" id="how-to-cite-phono3py">
+<h1>How to cite phono3py<a class="headerlink" href="#how-to-cite-phono3py" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="citation-of-phono3py">
+<h2>Citation of phono3py<a class="headerlink" href="#citation-of-phono3py" title="Permalink to this headline">¶</a></h2>
+<p>If you have used phono3py, please cite the following article:</p>
+<ul class="simple">
+<li>&#8220;Distributions of phonon lifetimes in Brillouin zones&#8221;,
+Atsushi Togo, Laurent Chaput, and Isao Tanaka, Phys. Rev. B, <strong>91</strong>, 094306 (2015)</li>
+</ul>
+<div class="highlight-python"><div class="highlight"><pre>@article{phono3py,
+  title = {Distributions of phonon lifetimes in Brillouin zones},
+  author = {Togo, Atsushi and Chaput, Laurent and Tanaka, Isao},
+  journal = {Phys. Rev. B},
+  volume = {91},
+  issue = {9},
+  pages = {094306},
+  numpages = {31},
+  year = {2015},
+  month = {Mar},
+  publisher = {American Physical Society},
+  doi = {10.1103/PhysRevB.91.094306},
+}
+</pre></div>
+</div>
+</div>
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+<div id="sourcelink">
+  <a href="_sources/citation.txt"
+     rel="nofollow">Source</a>
+</div>
+      
+    </p>
+    <p>
+        &copy; Copyright 2015, Atsushi Togo.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
