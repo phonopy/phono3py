@@ -24,6 +24,7 @@ Documentation
    install
    output-files
    command-options
+   interfaces
    auxiliary-tools
    citation
    changelog

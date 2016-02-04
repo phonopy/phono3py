@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Work flow &mdash; Phono3py v.0.9.14</title>
+    <title>Work flow &mdash; Phono3py v.1.10.3</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.9.14',
+        VERSION:     '1.10.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.3.4/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Phono3py v.0.9.14" href="index.html" />
+    <link rel="top" title="Phono3py v.1.10.3" href="index.html" />
     <link rel="next" title="Installation" href="install.html" />
     <link rel="prev" title="Welcome to phono3py" href="index.html" />
 <meta charset='utf-8'>
@@ -50,7 +50,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.9.14</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.10.3</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -78,6 +78,9 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#intermediate-text-files">Intermediate text files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#hdf5-files">HDF5 files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#simple-text-file">Simple text file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="output-files.html#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a></li>
 </ul>
 </li>
@@ -119,6 +122,12 @@
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#ave-pp"><code class="docutils literal"><span class="pre">--ave_pp</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#const-ave-pp"><code class="docutils literal"><span class="pre">--const_ave_pp</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#gruneisen"><code class="docutils literal"><span class="pre">--gruneisen</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html#usage-of-vasp-interface">Usage of VASP interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html#usage-of-pwscf-interface">Usage of Pwscf interface</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
@@ -273,40 +282,40 @@ calculating fc2 and fc3 at every run time.</p>
 </li>
 <li><p class="first">Thermal conductivity calculation</p>
 <p>An example of thermal conductivity calculation is:</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; -v --mesh=&quot;11 11 11&quot; \
-  -c POSCAR-unitcell --br --thm
+<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; --mesh=&quot;11 11 11&quot; \
+  -c POSCAR-unitcell --br
 </pre></div>
 </div>
 <p>or with larger supercell for fc2:</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim_fc2=&quot;4 4 4&quot; --dim=&quot;2 2 2&quot; -v --mesh=&quot;11 11 11&quot; \
-  -c POSCAR-unitcell --br --thm
+<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim_fc2=&quot;4 4 4&quot; --dim=&quot;2 2 2&quot; --mesh=&quot;11 11 11&quot; \
+  -c POSCAR-unitcell --br
 </pre></div>
 </div>
 <p>This calculation may take very long time. <code class="docutils literal"><span class="pre">--thm</span></code> invokes a
 tetrahedron method for Brillouin zone integration for phonon
-lifetime calculation. Instead, <code class="docutils literal"><span class="pre">--sigma</span></code> option can be used with
-the smearing widths.</p>
+lifetime calculation, which is the default option. Instead,
+<code class="docutils literal"><span class="pre">--sigma</span></code> option can be used with the smearing widths.</p>
 <p>In this command, phonon lifetimes at many grid points are
 calculated in series. The phonon lifetime calculation at each grid
 point can be separately calculated since they
 are independent and no communication is necessary at the
 computation. The procedure is as follows:</p>
 <p>First run the same command with the addition option of <code class="docutils literal"><span class="pre">--wgp</span></code>:</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; -v --mesh=&quot;11 11 11&quot; \
-  -c POSCAR-unitcell --br --thm --wgp
+<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; --mesh=&quot;11 11 11&quot; \
+  -c POSCAR-unitcell --br --wgp
 </pre></div>
 </div>
 <p><code class="docutils literal"><span class="pre">ir_grid_points.yaml</span></code> is obtained. In this file, irreducible
 q-points are shown. Then distribute calculations of phonon
 lifetimes on grid points with <code class="docutils literal"><span class="pre">--write_gamma</span></code> option by:</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; -v --mesh=&quot;11 11 11&quot; \
-  -c POSCAR-unitcell --br --thm --write_gamma --gp=&quot;[grid ponit(s)]&quot;
+<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; --mesh=&quot;11 11 11&quot; \
+  -c POSCAR-unitcell --br --write_gamma --gp=&quot;[grid ponit(s)]&quot;
 </pre></div>
 </div>
 <p>After finishing all distributed calculations, run with
 <code class="docutils literal"><span class="pre">--read_gamma</span></code> option:</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; -v --mesh=&quot;11 11 11&quot; \
-  -c POSCAR-unitcell --br --thm --read_gamma
+<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; --mesh=&quot;11 11 11&quot; \
+  -c POSCAR-unitcell --br --read_gamma
 </pre></div>
 </div>
 <p>Once this calculation runs without problem, separately calculated
@@ -326,9 +335,9 @@ these summations. To obtain more accurate result, it is always better
 to use denser meshes. But the denser mesh requires more
 computationally demanding.</p>
 <p>The second Brillouin zone sum contains delta functions. In phono3py
-calculation, a linear tetrahedron method (<code class="docutils literal"><span class="pre">--thm</span></code>) and a smearing
-method (<code class="docutils literal"><span class="pre">--sigma</span></code>) can be used for this Brillouin zone
-integration. Smearing parameter is used to approximate delta
+calculation, a linear tetrahedron method (<code class="docutils literal"><span class="pre">--thm</span></code>, default option)
+and a smearing method (<code class="docutils literal"><span class="pre">--sigma</span></code>) can be used for this Brillouin
+zone integration. Smearing parameter is used to approximate delta
 functions. Small <code class="docutils literal"><span class="pre">sigma</span></code> value is better to describe the detailed
 structure of three-phonon-space, but it requires a denser mesh to
 converge.</p>
@@ -391,7 +400,7 @@ symmetrization is recommended.</p>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.3.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.4.<br/>
     </p>
   </div>
 </footer>

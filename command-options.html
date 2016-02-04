@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Command options &mdash; Phono3py v.0.9.14</title>
+    <title>Command options &mdash; Phono3py v.1.10.3</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.9.14',
+        VERSION:     '1.10.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,8 +28,8 @@
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.3.4/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Phono3py v.0.9.14" href="index.html" />
-    <link rel="next" title="Auxiliary tools" href="auxiliary-tools.html" />
+    <link rel="top" title="Phono3py v.1.10.3" href="index.html" />
+    <link rel="next" title="Interfaces to calculators" href="interfaces.html" />
     <link rel="prev" title="Output files" href="output-files.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
@@ -50,7 +50,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.9.14</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.10.3</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -78,6 +78,9 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#intermediate-text-files">Intermediate text files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#hdf5-files">HDF5 files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#simple-text-file">Simple text file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="output-files.html#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a></li>
 </ul>
 </li>
@@ -119,6 +122,12 @@
 <li class="toctree-l2"><a class="reference internal" href="#ave-pp"><code class="docutils literal"><span class="pre">--ave_pp</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#const-ave-pp"><code class="docutils literal"><span class="pre">--const_ave_pp</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#gruneisen"><code class="docutils literal"><span class="pre">--gruneisen</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html#usage-of-vasp-interface">Usage of VASP interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html#usage-of-pwscf-interface">Usage of Pwscf interface</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
@@ -216,7 +225,7 @@
     </a>
   </li>
   <li>
-    <a href="auxiliary-tools.html" title="Next Chapter: Auxiliary tools"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Auxiliary tools &raquo;</span>
+    <a href="interfaces.html" title="Next Chapter: Interfaces to calculators"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Interfaces to... &raquo;</span>
     </a>
   </li>
               
@@ -247,13 +256,16 @@
   <div class="section" id="command-options">
 <span id="id1"></span><h1>Command options<a class="headerlink" href="#command-options" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="d">
-<h2><code class="docutils literal"><span class="pre">-d</span></code><a class="headerlink" href="#d" title="Permalink to this headline">¶</a></h2>
+<span id="create-displacements-option"></span><h2><code class="docutils literal"><span class="pre">-d</span></code><a class="headerlink" href="#d" title="Permalink to this headline">¶</a></h2>
 <p>Supercell with displacements are created. Using with <code class="docutils literal"><span class="pre">--amplitude</span></code>
-option, atomic displacement distances are controlled.</p>
+option, atomic displacement distances are controlled. With this
+option, files for supercells with displacements and <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code>
+file are created.</p>
 </div>
 <div class="section" id="amplitude">
 <h2><code class="docutils literal"><span class="pre">--amplitude</span></code><a class="headerlink" href="#amplitude" title="Permalink to this headline">¶</a></h2>
-<p>Displacement distance. The default value is 0.03.</p>
+<p>Displacement distance. The default value depends on calculator. See
+<a class="reference internal" href="interfaces.html#default-displacement-distance-for-calculator"><span>Default displacement distance created</span></a>.</p>
 </div>
 <div class="section" id="pa-primitive-axis">
 <h2><code class="docutils literal"><span class="pre">--pa</span></code>, <code class="docutils literal"><span class="pre">--primitive_axis</span></code><a class="headerlink" href="#pa-primitive-axis" title="Permalink to this headline">¶</a></h2>
@@ -263,11 +275,11 @@ cell. See phonopy <code class="docutils literal"><span class="pre">PRIMITIVE_AXI
 </div>
 <div class="section" id="fc2">
 <h2><code class="docutils literal"><span class="pre">--fc2</span></code><a class="headerlink" href="#fc2" title="Permalink to this headline">¶</a></h2>
-<p>Read <code class="docutils literal"><span class="pre">fc2.hdf5</span></code>.</p>
+<p>Read 2nd order force constants from <code class="docutils literal"><span class="pre">fc2.hdf5</span></code>.</p>
 </div>
 <div class="section" id="fc3">
 <h2><code class="docutils literal"><span class="pre">--fc3</span></code><a class="headerlink" href="#fc3" title="Permalink to this headline">¶</a></h2>
-<p>Read <code class="docutils literal"><span class="pre">fc3.hdf5</span></code>.</p>
+<p>Read 3rd order force constants from <code class="docutils literal"><span class="pre">fc3.hdf5</span></code>.</p>
 </div>
 <div class="section" id="sym-fc2-sym-fc3r-tsym">
 <h2><code class="docutils literal"><span class="pre">--sym_fc2</span></code>, <code class="docutils literal"><span class="pre">--sym_fc3r</span></code>, <code class="docutils literal"><span class="pre">--tsym</span></code><a class="headerlink" href="#sym-fc2-sym-fc3r-tsym" title="Permalink to this headline">¶</a></h2>
@@ -285,7 +297,7 @@ files.</p>
 detail at <a class="reference external" href="http://phonopy.sourceforge.net/setting-tags.html#dim">http://phonopy.sourceforge.net/setting-tags.html#dim</a> .</p>
 </div>
 <div class="section" id="dim-fc2">
-<h2><code class="docutils literal"><span class="pre">--dim_fc2</span></code><a class="headerlink" href="#dim-fc2" title="Permalink to this headline">¶</a></h2>
+<span id="dim-fc2-option"></span><h2><code class="docutils literal"><span class="pre">--dim_fc2</span></code><a class="headerlink" href="#dim-fc2" title="Permalink to this headline">¶</a></h2>
 <p>Larger supercell size to calculate harmonic force constants can be
 used with these options. The larger supercell size is specified by
 <code class="docutils literal"><span class="pre">--dim_fc2</span></code>. When running with <code class="docutils literal"><span class="pre">--dim_fc2</span></code> option, a pair of
@@ -321,7 +333,9 @@ numerical values. This is used when we want to test several
 <div class="section" id="thm">
 <h2><code class="docutils literal"><span class="pre">--thm</span></code><a class="headerlink" href="#thm" title="Permalink to this headline">¶</a></h2>
 <p>Tetrahedron method is used for calculation of imaginary part of self
-energy.</p>
+energy. This is the default option. Therefore it is not necessary to
+specify this unless both results by tetrahedron method and
+smearing method in one time execution are expected.</p>
 </div>
 <div class="section" id="tmax-tmin-tstep-ts">
 <h2><code class="docutils literal"><span class="pre">--tmax</span></code>, <code class="docutils literal"><span class="pre">--tmin</span></code>, <code class="docutils literal"><span class="pre">--tstep</span></code>, <code class="docutils literal"><span class="pre">--ts</span></code><a class="headerlink" href="#tmax-tmin-tstep-ts" title="Permalink to this headline">¶</a></h2>
@@ -428,7 +442,7 @@ metre, is just used to avoid divergence of phonon lifetime and the
 contribution to the thermal conducitivity is considered negligible.</p>
 </div>
 <div class="section" id="cf3">
-<h2><code class="docutils literal"><span class="pre">--cf3</span></code><a class="headerlink" href="#cf3" title="Permalink to this headline">¶</a></h2>
+<span id="cf3-option"></span><h2><code class="docutils literal"><span class="pre">--cf3</span></code><a class="headerlink" href="#cf3" title="Permalink to this headline">¶</a></h2>
 <p>This is used to create <code class="docutils literal"><span class="pre">FORCES_FC3</span></code>. <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> has to be
 located at the current directory.</p>
 <div class="highlight-python"><div class="highlight"><pre>% phono3py --cf3 disp-{00001..00755}/vasprun.xml
@@ -436,7 +450,7 @@ located at the current directory.</p>
 </div>
 </div>
 <div class="section" id="cf2">
-<h2><code class="docutils literal"><span class="pre">--cf2</span></code><a class="headerlink" href="#cf2" title="Permalink to this headline">¶</a></h2>
+<span id="cf2-option"></span><h2><code class="docutils literal"><span class="pre">--cf2</span></code><a class="headerlink" href="#cf2" title="Permalink to this headline">¶</a></h2>
 <p>This is used to create <code class="docutils literal"><span class="pre">FORCES_FC2</span></code>. <code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> has to be
 located at the current directory. This is
 optional. <code class="docutils literal"><span class="pre">FORCES_FC2</span></code> is necessary to run with <code class="docutils literal"><span class="pre">--dim_fc2</span></code>.</p>
@@ -475,7 +489,7 @@ reduced number of <code class="docutils literal"><span class="pre">POSCAR-xxxxx<
 <p><code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> may be readable and helpful to understand this procedure.</p>
 </div>
 <div class="section" id="write-gamma">
-<h2><code class="docutils literal"><span class="pre">--write_gamma</span></code><a class="headerlink" href="#write-gamma" title="Permalink to this headline">¶</a></h2>
+<span id="write-gamma-option"></span><h2><code class="docutils literal"><span class="pre">--write_gamma</span></code><a class="headerlink" href="#write-gamma" title="Permalink to this headline">¶</a></h2>
 <p>Imaginary part of self energy at harmonic phonon frequency
 <img class="math" src="_images/math/b23263d441abbb6f16226a98bbd61fd6452396d5.png" alt="\Gamma_\lambda(\omega_\lambda)"/> (or twice of inverse phonon
 lifetime) is written into file in hdf5 format.  The result is written
@@ -495,7 +509,7 @@ found, it tries to read <code class="docutils literal"><span class="pre">kappa</
 <code class="docutils literal"><span class="pre">kappa-mxxx-dx-gx-bx(-sx).hdf5</span></code> files for band indices are searched.</p>
 </div>
 <div class="section" id="write-detailed-gamma">
-<h2><code class="docutils literal"><span class="pre">--write_detailed_gamma</span></code><a class="headerlink" href="#write-detailed-gamma" title="Permalink to this headline">¶</a></h2>
+<span id="write-detailed-gamma-option"></span><h2><code class="docutils literal"><span class="pre">--write_detailed_gamma</span></code><a class="headerlink" href="#write-detailed-gamma" title="Permalink to this headline">¶</a></h2>
 <p>Q-point triplet contributions to imaginary part of self energy are
 written into <code class="docutils literal"><span class="pre">gamma_detail-mxxx-gx-sx.hdf5</span></code> file. This option is
 only valid in calculation of imaginary part of self energy (<code class="docutils literal"><span class="pre">--ise</span></code>)
@@ -538,12 +552,12 @@ python script to obtain q-point triplets is shown below.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">h5py</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
-<span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s">&quot;gamma_detail-mxxx-gx-sx.hdf5&quot;</span><span class="p">)</span>
-<span class="n">g</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s">&quot;grid_address-mxxx.hdf5&quot;</span><span class="p">)</span>
-<span class="n">grid_address</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s">&#39;grid_address&#39;</span><span class="p">][:]</span>
-<span class="n">triplets</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s">&#39;triplet&#39;</span><span class="p">][:]</span>
-<span class="n">mesh</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s">&#39;mesh&#39;</span><span class="p">][:]</span>
-<span class="n">q</span> <span class="o">=</span> <span class="n">grid_address</span><span class="p">[</span><span class="n">triplets</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s">&#39;double&#39;</span><span class="p">)</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;gamma_detail-mxxx-gx-sx.hdf5&quot;</span><span class="p">)</span>
+<span class="n">g</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;grid_address-mxxx.hdf5&quot;</span><span class="p">)</span>
+<span class="n">grid_address</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;grid_address&#39;</span><span class="p">][:]</span>
+<span class="n">triplets</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="s1">&#39;triplet&#39;</span><span class="p">][:]</span>
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;mesh&#39;</span><span class="p">][:]</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">grid_address</span><span class="p">[</span><span class="n">triplets</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;double&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Imaginary part of self energy or linewidth/2 is recovered by the
@@ -551,39 +565,40 @@ following script:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">h5py</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
-<span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s">&quot;gamma_detail-mxxx-gx-sx.hdf5&quot;</span><span class="p">)</span>
-<span class="n">temp</span> <span class="o">=</span> <span class="mi">1</span> <span class="c"># index of temperature</span>
-<span class="n">gamma_detail</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s">&#39;gamma_detail&#39;</span><span class="p">][:]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">weight</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s">&#39;weight&#39;</span><span class="p">][:]</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;gamma_detail-mxxx-gx-sx.hdf5&quot;</span><span class="p">)</span>
+<span class="n">temp</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># index of temperature</span>
+<span class="n">gamma_detail</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;gamma_detail&#39;</span><span class="p">][:]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">weight</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;weight&#39;</span><span class="p">][:]</span>
 <span class="k">print</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gamma_detail</span><span class="p">[</span><span class="n">temp</span><span class="p">],</span> <span class="n">weight</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">gamma_detail</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="ise">
-<h2><code class="docutils literal"><span class="pre">--ise</span></code><a class="headerlink" href="#ise" title="Permalink to this headline">¶</a></h2>
+<span id="ise-option"></span><h2><code class="docutils literal"><span class="pre">--ise</span></code><a class="headerlink" href="#ise" title="Permalink to this headline">¶</a></h2>
 <p>Imaginary part of self energy <img class="math" src="_images/math/2f666581625ef5ad4acda33a7fb3df2a835dfc9f.png" alt="\Gamma_\lambda(\omega)"/> is
-calculated with respect to <img class="math" src="_images/math/c7415c6919c2eb17b1ea36f0243079b59825ee89.png" alt="\omega"/>. The output is written to <code class="docutils literal"><span class="pre">gammas-mxxxx-gx-sx-tx-bx.dat</span></code>.</p>
+calculated with respect to <img class="math" src="_images/math/c7415c6919c2eb17b1ea36f0243079b59825ee89.png" alt="\omega"/>. The output is written to
+<code class="docutils literal"><span class="pre">gammas-mxxxx-gx-sx-tx-bx.dat</span></code> in THz (without <img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>).</p>
 <div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2  2&quot; --mesh=&quot;16 16 16&quot; -c POSCAR-unitcell \
   --nac --q_direction=&quot;1 0 0&quot; --gp=0 --ise --bi=&quot;4 5, 6&quot;
 </pre></div>
 </div>
 </div>
 <div class="section" id="lw">
-<h2><code class="docutils literal"><span class="pre">--lw</span></code><a class="headerlink" href="#lw" title="Permalink to this headline">¶</a></h2>
+<span id="lw-option"></span><h2><code class="docutils literal"><span class="pre">--lw</span></code><a class="headerlink" href="#lw" title="Permalink to this headline">¶</a></h2>
 <p>Linewidth <img class="math" src="_images/math/c982f465afd7871837bb1192f5c85251543f3b99.png" alt="2\Gamma_\lambda(\omega_\lambda)"/> is calculated with
 respect to temperature. The output is written to
-<code class="docutils literal"><span class="pre">linewidth-mxxxx-gx-sx-bx.dat</span></code>.</p>
+<code class="docutils literal"><span class="pre">linewidth-mxxxx-gx-sx-bx.dat</span></code> in THz (without <img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>).</p>
 <div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2  2&quot; --mesh=&quot;16 16 16&quot; -c POSCAR-unitcell \
   --nac --q_direction=&quot;1 0 0&quot; --gp=0 --lw --bi=&quot;4 5, 6&quot;
 </pre></div>
 </div>
 </div>
 <div class="section" id="jdos">
-<h2><code class="docutils literal"><span class="pre">--jdos</span></code><a class="headerlink" href="#jdos" title="Permalink to this headline">¶</a></h2>
+<span id="jdos-option"></span><h2><code class="docutils literal"><span class="pre">--jdos</span></code><a class="headerlink" href="#jdos" title="Permalink to this headline">¶</a></h2>
 <p>Two classes of joint density of states (JDOS) are calculated. The
-result is written into <code class="docutils literal"><span class="pre">jdos-mxxxxxx-gx.dat</span></code>. The first column is
-the frequency, and the second and third columns are the values given
-as follows, respectively,</p>
+result is written into <code class="docutils literal"><span class="pre">jdos-mxxxxxx-gx.dat</span></code> in THz (without
+<img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>). The first column is the frequency, and the second and
+third columns are the values given as follows, respectively,</p>
 <div class="math">
 <p><img src="_images/math/ed084583af4860c914a649baebf8f52a5f551995.png" alt="&amp;D_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
 \sum_{\lambda_1,\lambda_2}
@@ -703,7 +718,7 @@ are not necessary to input.  The physical unit of the value is
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.3.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.4.<br/>
     </p>
   </div>
 </footer>

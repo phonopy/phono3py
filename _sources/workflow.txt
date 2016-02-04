@@ -74,18 +74,18 @@ Calculation procedure
 
    An example of thermal conductivity calculation is::
 
-      % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" \
-        -c POSCAR-unitcell --br --thm
+      % phono3py --fc3 --fc2 --dim="2 2 2" --mesh="11 11 11" \
+        -c POSCAR-unitcell --br
 
    or with larger supercell for fc2::
 
-      % phono3py --fc3 --fc2 --dim_fc2="4 4 4" --dim="2 2 2" -v --mesh="11 11 11" \
-        -c POSCAR-unitcell --br --thm
+      % phono3py --fc3 --fc2 --dim_fc2="4 4 4" --dim="2 2 2" --mesh="11 11 11" \
+        -c POSCAR-unitcell --br
 
    This calculation may take very long time. ``--thm`` invokes a
    tetrahedron method for Brillouin zone integration for phonon
-   lifetime calculation. Instead, ``--sigma`` option can be used with
-   the smearing widths.
+   lifetime calculation, which is the default option. Instead,
+   ``--sigma`` option can be used with the smearing widths.
 
    In this command, phonon lifetimes at many grid points are
    calculated in series. The phonon lifetime calculation at each grid
@@ -95,21 +95,21 @@ Calculation procedure
 
    First run the same command with the addition option of ``--wgp``::
 
-      % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" \
-        -c POSCAR-unitcell --br --thm --wgp
+      % phono3py --fc3 --fc2 --dim="2 2 2" --mesh="11 11 11" \
+        -c POSCAR-unitcell --br --wgp
 
    ``ir_grid_points.yaml`` is obtained. In this file, irreducible
    q-points are shown. Then distribute calculations of phonon
    lifetimes on grid points with ``--write_gamma`` option by::
 
-      % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" \
-        -c POSCAR-unitcell --br --thm --write_gamma --gp="[grid ponit(s)]"
+      % phono3py --fc3 --fc2 --dim="2 2 2" --mesh="11 11 11" \
+        -c POSCAR-unitcell --br --write_gamma --gp="[grid ponit(s)]"
 
    After finishing all distributed calculations, run with
    ``--read_gamma`` option::
 
-      % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" \
-        -c POSCAR-unitcell --br --thm --read_gamma
+      % phono3py --fc3 --fc2 --dim="2 2 2" --mesh="11 11 11" \
+        -c POSCAR-unitcell --br --read_gamma
 
    Once this calculation runs without problem, separately calculated
    hdf5 files on grid points are no more necessary and may be deleted.
@@ -132,9 +132,9 @@ to use denser meshes. But the denser mesh requires more
 computationally demanding.
 
 The second Brillouin zone sum contains delta functions. In phono3py
-calculation, a linear tetrahedron method (``--thm``) and a smearing
-method (``--sigma``) can be used for this Brillouin zone
-integration. Smearing parameter is used to approximate delta
+calculation, a linear tetrahedron method (``--thm``, default option)
+and a smearing method (``--sigma``) can be used for this Brillouin
+zone integration. Smearing parameter is used to approximate delta
 functions. Small ``sigma`` value is better to describe the detailed
 structure of three-phonon-space, but it requires a denser mesh to
 converge.
