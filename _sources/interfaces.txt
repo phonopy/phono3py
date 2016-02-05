@@ -54,7 +54,7 @@ Default displacement distances created by ``-d`` option without
 Usage of VASP interface
 -------------------------
 
-The VASP interface is the default one. Therefore how to use is written
+The VASP interface is the default one. Therefore how to use is found
 in :ref:`workflow`.
 
 Usage of Pwscf interface

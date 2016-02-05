@@ -271,7 +271,7 @@ file are created.</p>
 <h2><code class="docutils literal"><span class="pre">--pa</span></code>, <code class="docutils literal"><span class="pre">--primitive_axis</span></code><a class="headerlink" href="#pa-primitive-axis" title="Permalink to this headline">¶</a></h2>
 <p>Transformation matrix from a non-primitive cell to the primitive
 cell. See phonopy <code class="docutils literal"><span class="pre">PRIMITIVE_AXIS</span></code> tag (<code class="docutils literal"><span class="pre">--pa</span></code> option) at
-<a class="reference external" href="http://phonopy.sourceforge.net/setting-tags.html#primitive-axis">http://phonopy.sourceforge.net/setting-tags.html#primitive-axis</a></p>
+<a class="reference external" href="http://atztogo.github.io/phonopy/setting-tags.html#primitive-axis">http://atztogo.github.io/phonopy/setting-tags.html#primitive-axis</a></p>
 </div>
 <div class="section" id="fc2">
 <h2><code class="docutils literal"><span class="pre">--fc2</span></code><a class="headerlink" href="#fc2" title="Permalink to this headline">¶</a></h2>
@@ -294,7 +294,7 @@ files.</p>
 <div class="section" id="dim">
 <h2><code class="docutils literal"><span class="pre">--dim</span></code><a class="headerlink" href="#dim" title="Permalink to this headline">¶</a></h2>
 <p>Supercell size is specified. See the
-detail at <a class="reference external" href="http://phonopy.sourceforge.net/setting-tags.html#dim">http://phonopy.sourceforge.net/setting-tags.html#dim</a> .</p>
+detail at <a class="reference external" href="http://atztogo.github.io/phonopy/setting-tags.html#dim">http://atztogo.github.io/phonopy/setting-tags.html#dim</a> .</p>
 </div>
 <div class="section" id="dim-fc2">
 <span id="dim-fc2-option"></span><h2><code class="docutils literal"><span class="pre">--dim_fc2</span></code><a class="headerlink" href="#dim-fc2" title="Permalink to this headline">¶</a></h2>
@@ -342,7 +342,7 @@ smearing method in one time execution are expected.</p>
 <p>Temperatures at equal interval are specified by <code class="docutils literal"><span class="pre">--tmax</span></code>,
 <code class="docutils literal"><span class="pre">--tmin</span></code>, <code class="docutils literal"><span class="pre">--tstep</span></code>. See phonopy <code class="docutils literal"><span class="pre">TMAX</span></code>, <code class="docutils literal"><span class="pre">TMIN</span></code>, <code class="docutils literal"><span class="pre">TSTEP</span></code>
 tags (<code class="docutils literal"><span class="pre">--tmax</span></code>, <code class="docutils literal"><span class="pre">--tmin</span></code>, <code class="docutils literal"><span class="pre">--tstep</span></code> options) at
-<a class="reference external" href="http://phonopy.sourceforge.net/setting-tags.html#tprop-tmin-tmax-tstep">http://phonopy.sourceforge.net/setting-tags.html#tprop-tmin-tmax-tstep</a> .</p>
+<a class="reference external" href="http://atztogo.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep">http://atztogo.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep</a> .</p>
 <div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; -v --mesh=&quot;11 11 11&quot; \
   -c POSCAR-unitcell --br --tmin=100 --tmax=1000 --tstep=50
 </pre></div>
@@ -394,13 +394,15 @@ points are shown by using with <code class="docutils literal"><span class="pre">
 <div class="section" id="nac">
 <h2><code class="docutils literal"><span class="pre">--nac</span></code><a class="headerlink" href="#nac" title="Permalink to this headline">¶</a></h2>
 <p>Non-analytical term correction for harmonic phonons. Like as phonopy,
-<code class="docutils literal"><span class="pre">BORN</span></code> file has to be put on the same directory.</p>
+<code class="docutils literal"><span class="pre">BORN</span></code> file has to be put on the same directory. Always the default
+value of unit conversion factor is used even if it is written in the
+first line of <code class="docutils literal"><span class="pre">BORN</span></code> file.</p>
 </div>
 <div class="section" id="q-direction">
 <h2><code class="docutils literal"><span class="pre">--q_direction</span></code><a class="headerlink" href="#q-direction" title="Permalink to this headline">¶</a></h2>
 <p>This is used with <code class="docutils literal"><span class="pre">--nac</span></code> to specify the direction to polarize in
 reciprocal space. See the detail at
-<a class="reference external" href="http://phonopy.sourceforge.net/setting-tags.html#q-direction">http://phonopy.sourceforge.net/setting-tags.html#q-direction</a> .</p>
+<a class="reference external" href="http://atztogo.github.io/phonopy/setting-tags.html#q-direction">http://atztogo.github.io/phonopy/setting-tags.html#q-direction</a> .</p>
 </div>
 <div class="section" id="isotope">
 <h2><code class="docutils literal"><span class="pre">--isotope</span></code><a class="headerlink" href="#isotope" title="Permalink to this headline">¶</a></h2>

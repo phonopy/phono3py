@@ -235,14 +235,15 @@ ubuntu linux, these are installed using the package manager:</p>
   python-yaml python-h5py libgomp1 liblapacke-dev
 </pre></div>
 </div>
-<p>After the versions of Ubuntu-12.10, lapacke
+<p>In the versions of Ubuntu-12.10 or later, lapacke
 (<a class="reference external" href="http://www.netlib.org/lapack/lapacke.html">http://www.netlib.org/lapack/lapacke.html</a>) can be installed from the
-package manager (<code class="docutils literal"><span class="pre">liblapacke</span></code> and <code class="docutils literal"><span class="pre">liblapacke-dev</span></code>), but in older
-versions of ubuntu, or in other environments, you may have to compile
-lapacke by yourself. The compilation procedure is found at the lapacke
-web site. After creating the lapacke library, <code class="docutils literal"><span class="pre">liblapacke.a</span></code> (or the
-dynamic link library) <code class="docutils literal"><span class="pre">setup3.py</span></code> must be properly modified to link
-it. As an example, the procedure of compiling lapacke is shown below.</p>
+package manager (<code class="docutils literal"><span class="pre">liblapacke</span></code> and <code class="docutils literal"><span class="pre">liblapacke-dev</span></code>). But in the
+older versions of Ubuntu or in the other environments, e.g., Mac, you
+may have to compile lapacke by yourself. The compilation procedure is
+found at the lapacke web site. After creating the lapacke library,
+<code class="docutils literal"><span class="pre">liblapacke.a</span></code> (or the dynamic link library), <code class="docutils literal"><span class="pre">setup3.py</span></code> must be
+properly modified to link it. As an example, the procedure of
+compiling lapacke is shown below.</p>
 <div class="highlight-python"><div class="highlight"><pre>% tar xvfz lapack-3.5.0.tgz
 % cd lapack-3.5.0
 % cp make.inc.example make.inc
@@ -253,10 +254,11 @@ it. As an example, the procedure of compiling lapacke is shown below.</p>
 <div class="section" id="multithreading-support">
 <h2>Multithreading support<a class="headerlink" href="#multithreading-support" title="Permalink to this headline">¶</a></h2>
 <p>Phono3py supports OpenMP multithreading and most users will need it,
-otherwise the calculation may take long time. However, without special
-OpenMP environment variables (<code class="docutils literal"><span class="pre">-lgomp</span></code> and <code class="docutils literal"><span class="pre">-fopenmp</span></code> in
-<code class="docutils literal"><span class="pre">setup3.py</span></code>), phono3py will be compiled without the OpenMP
-multithreding support.</p>
+otherwise the calculation may take long time. The library options used
+for GCC, <code class="docutils literal"><span class="pre">-lgomp</span></code> and <code class="docutils literal"><span class="pre">-fopenmp</span></code>, are written in <code class="docutils literal"><span class="pre">setup3.py</span></code>,
+but for the other compilers, you may have to change them.  If you need
+to compile without the OpenMP support, you can remove these options in
+<code class="docutils literal"><span class="pre">setup3.py</span></code>.</p>
 </div>
 <div class="section" id="installation-procedure">
 <h2>Installation procedure<a class="headerlink" href="#installation-procedure" title="Permalink to this headline">¶</a></h2>
@@ -280,11 +282,11 @@ already a user of phonopy, the original phonopy version distributed at
 sourceforge.net will be removed from the list of the <code class="docutils literal"><span class="pre">PYTHONPATH</span></code>.
 The <code class="docutils literal"><span class="pre">PYTHONPATH</span></code> setting depends on shells that you use. For example
 in bash or zsh:</p>
-<div class="highlight-python"><div class="highlight"><pre>export PYTHONPATH=~/phonopy-0.9.9/lib/python
+<div class="highlight-python"><div class="highlight"><pre>export PYTHONPATH=~/phonopy-1.10.3/lib/python
 </pre></div>
 </div>
 <p>or:</p>
-<div class="highlight-python"><div class="highlight"><pre>export PYTHONPATH=$PYTHONPATH:~/phonopy-0.9.9/lib/python
+<div class="highlight-python"><div class="highlight"><pre>export PYTHONPATH=$PYTHONPATH:~/phonopy-1.10.3/lib/python
 </pre></div>
 </div>
 </div>

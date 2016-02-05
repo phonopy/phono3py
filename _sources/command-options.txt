@@ -24,7 +24,7 @@ Displacement distance. The default value depends on calculator. See
 
 Transformation matrix from a non-primitive cell to the primitive
 cell. See phonopy ``PRIMITIVE_AXIS`` tag (``--pa`` option) at
-http://phonopy.sourceforge.net/setting-tags.html#primitive-axis
+http://atztogo.github.io/phonopy/setting-tags.html#primitive-axis
 
 ``--fc2``
 ~~~~~~~~~
@@ -56,7 +56,7 @@ files.
 ~~~~~~~~~
 
 Supercell size is specified. See the
-detail at http://phonopy.sourceforge.net/setting-tags.html#dim .
+detail at http://atztogo.github.io/phonopy/setting-tags.html#dim .
 
 .. _dim_fc2_option:
 
@@ -124,7 +124,7 @@ smearing method in one time execution are expected.
 Temperatures at equal interval are specified by ``--tmax``,
 ``--tmin``, ``--tstep``. See phonopy ``TMAX``, ``TMIN``, ``TSTEP``
 tags (``--tmax``, ``--tmin``, ``--tstep`` options) at
-http://phonopy.sourceforge.net/setting-tags.html#tprop-tmin-tmax-tstep .
+http://atztogo.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep .
 
 ::
 
@@ -186,14 +186,16 @@ points are shown by using with ``--gp`` or ``--ga`` option.
 ~~~~~~~~~
 
 Non-analytical term correction for harmonic phonons. Like as phonopy,
-``BORN`` file has to be put on the same directory.
+``BORN`` file has to be put on the same directory. Always the default
+value of unit conversion factor is used even if it is written in the
+first line of ``BORN`` file.
 
 ``--q_direction``
 ~~~~~~~~~~~~~~~~~
 
 This is used with ``--nac`` to specify the direction to polarize in
 reciprocal space. See the detail at
-http://phonopy.sourceforge.net/setting-tags.html#q-direction .
+http://atztogo.github.io/phonopy/setting-tags.html#q-direction .
 
 ``--isotope``
 ~~~~~~~~~~~~~
