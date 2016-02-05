@@ -3,33 +3,38 @@
 Command options
 ===============
 
+.. _create_displacements_option:
+
 ``-d``
 ~~~~~~
 
 Supercell with displacements are created. Using with ``--amplitude``
-option, atomic displacement distances are controlled.
+option, atomic displacement distances are controlled. With this
+option, files for supercells with displacements and ``disp_fc3.yaml``
+file are created.
 
 ``--amplitude``
 ~~~~~~~~~~~~~~~
 
-Displacement distance. The default value is 0.03.
+Displacement distance. The default value depends on calculator. See
+:ref:`default_displacement_distance_for_calculator`.
 
 ``--pa``, ``--primitive_axis``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Transformation matrix from a non-primitive cell to the primitive
 cell. See phonopy ``PRIMITIVE_AXIS`` tag (``--pa`` option) at
-http://phonopy.sourceforge.net/setting-tags.html#primitive-axis
+http://atztogo.github.io/phonopy/setting-tags.html#primitive-axis
 
 ``--fc2``
 ~~~~~~~~~
 
-Read ``fc2.hdf5``.
+Read 2nd order force constants from ``fc2.hdf5``.
 
 ``--fc3``
 ~~~~~~~~~
 
-Read ``fc3.hdf5``.
+Read 3rd order force constants from ``fc3.hdf5``.
 
 ``--sym_fc2``, ``--sym_fc3r``, ``--tsym``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,7 +56,9 @@ files.
 ~~~~~~~~~
 
 Supercell size is specified. See the
-detail at http://phonopy.sourceforge.net/setting-tags.html#dim .
+detail at http://atztogo.github.io/phonopy/setting-tags.html#dim .
+
+.. _dim_fc2_option:
 
 ``--dim_fc2``
 ~~~~~~~~~~~~~
@@ -107,7 +114,9 @@ numerical values. This is used when we want to test several
 ~~~~~~~~~
 
 Tetrahedron method is used for calculation of imaginary part of self
-energy.
+energy. This is the default option. Therefore it is not necessary to
+specify this unless both results by tetrahedron method and
+smearing method in one time execution are expected.
 
 ``--tmax``, ``--tmin``, ``--tstep``, ``--ts``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -115,7 +124,7 @@ energy.
 Temperatures at equal interval are specified by ``--tmax``,
 ``--tmin``, ``--tstep``. See phonopy ``TMAX``, ``TMIN``, ``TSTEP``
 tags (``--tmax``, ``--tmin``, ``--tstep`` options) at
-http://phonopy.sourceforge.net/setting-tags.html#tprop-tmin-tmax-tstep .
+http://atztogo.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep .
 
 ::
 
@@ -177,14 +186,16 @@ points are shown by using with ``--gp`` or ``--ga`` option.
 ~~~~~~~~~
 
 Non-analytical term correction for harmonic phonons. Like as phonopy,
-``BORN`` file has to be put on the same directory.
+``BORN`` file has to be put on the same directory. Always the default
+value of unit conversion factor is used even if it is written in the
+first line of ``BORN`` file.
 
 ``--q_direction``
 ~~~~~~~~~~~~~~~~~
 
 This is used with ``--nac`` to specify the direction to polarize in
 reciprocal space. See the detail at
-http://phonopy.sourceforge.net/setting-tags.html#q-direction .
+http://atztogo.github.io/phonopy/setting-tags.html#q-direction .
 
 ``--isotope``
 ~~~~~~~~~~~~~
@@ -230,6 +241,8 @@ free path. The value is given in micrometre. The default value, 1
 metre, is just used to avoid divergence of phonon lifetime and the
 contribution to the thermal conducitivity is considered negligible.
 
+.. _cf3_option:
+
 ``--cf3``
 ~~~~~~~~~
 
@@ -239,6 +252,8 @@ located at the current directory.
 ::
 
    % phono3py --cf3 disp-{00001..00755}/vasprun.xml
+
+.. _cf2_option:
 
 ``--cf2``
 ~~~~~~~~~
@@ -288,6 +303,8 @@ After running VASP calculations,
 
 ``disp_fc3.yaml`` may be readable and helpful to understand this procedure.
 
+.. _write_gamma_option:
+
 ``--write_gamma``
 ~~~~~~~~~~~~~~~~~
 
@@ -309,6 +326,8 @@ found, it tries to read ``kappa`` file for each grid point,
 ``kappa-mxxx-dx-gx(-sx).hdf5``. Then, similarly,
 ``kappa-mxxx-dx-gx(-sx).hdf5`` not found,
 ``kappa-mxxx-dx-gx-bx(-sx).hdf5`` files for band indices are searched.
+
+.. _write_detailed_gamma_option:
 
 ``--write_detailed_gamma``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -368,35 +387,43 @@ following script::
    format. This file can be huge and usually it is not recommended to
    write it out.
 
+.. _ise_option:
+
 ``--ise``
 ~~~~~~~~~~
 Imaginary part of self energy :math:`\Gamma_\lambda(\omega)` is
-calculated with respect to :math:`\omega`. The output is written to ``gammas-mxxxx-gx-sx-tx-bx.dat``.
+calculated with respect to :math:`\omega`. The output is written to
+``gammas-mxxxx-gx-sx-tx-bx.dat`` in THz (without :math:`2\pi`).
 
 ::
 
    % phono3py --fc3 --fc2 --dim="2 2  2" --mesh="16 16 16" -c POSCAR-unitcell \
      --nac --q_direction="1 0 0" --gp=0 --ise --bi="4 5, 6"
 
+.. _lw_option:
+
 ``--lw``
 ~~~~~~~~
 
 Linewidth :math:`2\Gamma_\lambda(\omega_\lambda)` is calculated with
 respect to temperature. The output is written to
-``linewidth-mxxxx-gx-sx-bx.dat``.
+``linewidth-mxxxx-gx-sx-bx.dat`` in THz (without :math:`2\pi`).
 
 ::
 
    % phono3py --fc3 --fc2 --dim="2 2  2" --mesh="16 16 16" -c POSCAR-unitcell \
      --nac --q_direction="1 0 0" --gp=0 --lw --bi="4 5, 6"
 
+
+.. _jdos_option:
+
 ``--jdos``
 ~~~~~~~~~~
 
 Two classes of joint density of states (JDOS) are calculated. The
-result is written into ``jdos-mxxxxxx-gx.dat``. The first column is
-the frequency, and the second and third columns are the values given
-as follows, respectively,
+result is written into ``jdos-mxxxxxx-gx.dat`` in THz (without
+:math:`2\pi`). The first column is the frequency, and the second and
+third columns are the values given as follows, respectively,
 
 .. math::
    
