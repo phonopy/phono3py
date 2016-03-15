@@ -140,6 +140,7 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#mar-15-2016-version-1-10-5">Mar-15-2016: version 1.10.5</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#oct-10-2015-version-0-9-14">Oct-10-2015: version 0.9.14</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#sep-26-2015-version-0-9-13">Sep-26-2015: version 0.9.13</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#aug-12-2015-version-0-9-12">Aug-12-2015: version 0.9.12</a></li>
@@ -173,6 +174,7 @@
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Change Log</a><ul>
+<li><a class="reference internal" href="#mar-15-2016-version-1-10-5">Mar-15-2016: version 1.10.5</a></li>
 <li><a class="reference internal" href="#oct-10-2015-version-0-9-14">Oct-10-2015: version 0.9.14</a></li>
 <li><a class="reference internal" href="#sep-26-2015-version-0-9-13">Sep-26-2015: version 0.9.13</a></li>
 <li><a class="reference internal" href="#aug-12-2015-version-0-9-12">Aug-12-2015: version 0.9.12</a></li>
@@ -231,6 +233,21 @@
       
   <div class="section" id="change-log">
 <span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="mar-15-2016-version-1-10-5">
+<h2>Mar-15-2016: version 1.10.5<a class="headerlink" href="#mar-15-2016-version-1-10-5" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Numbering way of phono3py version was just changed (No big updates
+were made against previous version.) The number is given based on
+the phonopy version. For example, the harmonic part of
+phono3py-1.10.5 is based on the code close to phonopy-1.10.4.</li>
+<li>Python3 support</li>
+<li>For the RTA thermal conductivity calculation mode with using the
+linear tetrahedron method, only necessary part of phonon-phonon
+interaction strengh among phonons. This improves lifetime
+calculation performance, but as the drawback, averaged ph-ph
+interaction strength can not be given. See <a class="reference internal" href="command-options.html#full-pp-option"><span>&#8211;full_pp</span></a>.</li>
+</ul>
+</div>
 <div class="section" id="oct-10-2015-version-0-9-14">
 <h2>Oct-10-2015: version 0.9.14<a class="headerlink" href="#oct-10-2015-version-0-9-14" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
