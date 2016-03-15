@@ -16,6 +16,7 @@ Mar-15-2016: version 1.10.5
   interaction strengh among phonons. This improves lifetime
   calculation performance, but as the drawback, averaged ph-ph
   interaction strength can not be given. See :ref:`full_pp_option`.
+- Pwscf interface (:ref:`calculator_interfaces`)
 
 Oct-10-2015: version 0.9.14
 ------------------------------
