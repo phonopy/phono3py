@@ -3,6 +3,20 @@
 Change Log
 ==========
 
+Mar-15-2016: version 1.10.5
+------------------------------
+
+- Numbering way of phono3py version was just changed (No big updates
+  were made against previous version.) The number is given based on
+  the phonopy version. For example, the harmonic part of
+  phono3py-1.10.5 is based on the code close to phonopy-1.10.4.
+- Python3 support
+- For the RTA thermal conductivity calculation mode with using the
+  linear tetrahedron method, only necessary part of phonon-phonon
+  interaction strengh among phonons. This improves lifetime
+  calculation performance, but as the drawback, averaged ph-ph
+  interaction strength can not be given. See :ref:`full_pp_option`.
+
 Oct-10-2015: version 0.9.14
 ------------------------------
 

@@ -115,7 +115,6 @@ conductivity calculation is loaded and thermal conductivity tensor at
     u'heat_capacity',
     u'kappa',
     u'mode_kappa',
-    u'ave_pp',
     u'qpoint',
     u'temperature',
     u'weight']
@@ -281,3 +280,7 @@ Averaged phonon-phonon interaction in :math:`\text{eV}^2`,
 
    P_{\mathbf{q}j} = \frac{1}{(3n_\mathrm{a})^2} \sum_{\lambda'\lambda''}
    |\Phi_{\lambda\lambda'\lambda''}|^2.
+
+This is not going to be calculated in the RTA thermal coductivity
+calculation mode by default. To calculate this, ``--full_pp`` option
+has to be specified (see :ref:`full_pp_option`).

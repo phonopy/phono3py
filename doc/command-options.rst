@@ -308,19 +308,19 @@ After running VASP calculations,
 ``--write_gamma``
 ~~~~~~~~~~~~~~~~~
 
-Imaginary part of self energy at harmonic phonon frequency
-:math:`\Gamma_\lambda(\omega_\lambda)` (or twice of inverse phonon
-lifetime) is written into file in hdf5 format.  The result is written
-into ``kappa-mxxx-dx-gx.hdf5`` or ``kappa-mxxx-dx-gx-bx.hdf5`` with
+Imaginary parts of self energy at harmonic phonon frequencies
+:math:`\Gamma_\lambda(\omega_\lambda) = 1/2\tau_\lambda` are written
+into file in hdf5 format.  The result is written into
+``kappa-mxxx-dx-gx.hdf5`` or ``kappa-mxxx-dx-gx-bx.hdf5`` with
 ``--bi`` option. With ``--sigma`` option, ``-sx`` is inserted in front
 of ``.hdf5``.
 
 ``--read_gamma``
 ~~~~~~~~~~~~~~~~
 
-Imaginary part of self energy at harmonic phonon frequency
-:math:`\Gamma_\lambda(\omega_\lambda)` (or twice of inverse phonon lifetime)
-is read from ``kappa`` file in hdf5 format.  Initially the usual
+Imaginary parts of self energy at harmonic phonon frequencies
+:math:`\Gamma_\lambda(\omega_\lambda) = 1/2\tau_\lambda`
+are read from ``kappa`` file in hdf5 format.  Initially the usual
 result file of ``kappa-mxxx-dx(-sx).hdf5`` is searched. Unless it is
 found, it tries to read ``kappa`` file for each grid point,
 ``kappa-mxxx-dx-gx(-sx).hdf5``. Then, similarly,
@@ -473,8 +473,7 @@ JDOS, number of sampling frequency points is controlled by
 ``--bi``
 ~~~~~~~~
 
-Specify band indices. Imaginary part of self energy is calculated when
-``--lw`` is not specified. The output file name is like
+Specify band indices. The output file name will be, e.g.,
 ``gammas-mxxxxxx-gxx-bx.dat`` where ``bxbx...`` shows the band indices
 used to be averaged. The calculated values at indices separated by
 space are averaged, and those separated by comma are separately
@@ -485,6 +484,34 @@ calculated.
    % phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" \
      -c POSCAR-unitcell --nac --gp="34" --bi="4 5, 6"
 
+.. _full_pp_option:
+
+``--full_pp``
+~~~~~~~~~~~~~~
+
+After version 1.10.5, for RTA thermal conductivity calculation with
+using the linear tetrahedron method, only necessary part of
+phonon-phonon interaction strengh among phonons,
+:math:`\bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2`, is
+calculated due to delta functions in calculation of
+:math:`\Gamma_\lambda(\omega)`,
+
+.. math::
+
+   \Gamma_\lambda(\omega) = \frac{18\pi}{\hbar^2}
+    \sum_{\lambda' \lambda''}
+    \bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2 
+    \left\{(n_{\lambda'}+ n_{\lambda''}+1) 
+     \delta(\omega-\omega_{\lambda'}-\omega_{\lambda''}) \right.
+     + (n_{\lambda'}-n_{\lambda''})
+    \left[\delta(\omega+\omega_{\lambda'}-\omega_{\lambda''})
+   - \left. \delta(\omega-\omega_{\lambda'}+\omega_{\lambda''})
+   \right]\right\}.
+
+But specifying this option, full elements of phonon-phonon interaction
+strengh among phonons are calculated and averaged phonon-phonon
+interaction strength (:math:`P_{\mathbf{q}j}`) is also given.
+
 ``--ave_pp``
 ~~~~~~~~~~~~
 
@@ -492,11 +519,11 @@ Averaged phonon-phonon interaction strength (:math:`P_{\mathbf{q}j}`)
 is used to calculate imaginary part of self energy. This option works
 only when ``--read_gamma`` and ``--br`` options are activated where
 the averaged phonon-phonon interaction that is read from
-``kappa-mxxxxx.hdf5`` file is used. Therefore the averaged
-phonon-phonon interaction has to be stored before using this
-option. The calculation result **overwrites** ``kappa-mxxxxx.hdf5``
-file. Therefore to use this option together with ``-o`` option is
-strongly recommended.
+``kappa-mxxxxx.hdf5`` file is used if it exists in the file. Therefore the
+averaged phonon-phonon interaction has to be stored before using this
+option (see :ref:`full_pp_option`). The calculation result
+**overwrites** ``kappa-mxxxxx.hdf5`` file. Therefore to use this
+option together with ``-o`` option is strongly recommended.
 
 First, run full conductivity calculation,
 
