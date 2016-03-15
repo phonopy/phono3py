@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Command options &mdash; Phono3py v.1.10.3</title>
+    <title>Command options &mdash; Phono3py v.1.10.5</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.10.3',
+        VERSION:     '1.10.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.3.4/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Phono3py v.1.10.3" href="index.html" />
+    <link rel="top" title="Phono3py v.1.10.5" href="index.html" />
     <link rel="next" title="Interfaces to calculators" href="interfaces.html" />
     <link rel="prev" title="Output files" href="output-files.html" />
 <meta charset='utf-8'>
@@ -50,7 +50,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>1.10.3</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.10.5</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -119,6 +119,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#jdos"><code class="docutils literal"><span class="pre">--jdos</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#num-freq-points-freq-pitch"><code class="docutils literal"><span class="pre">--num_freq_points</span></code>, <code class="docutils literal"><span class="pre">--freq_pitch</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#bi"><code class="docutils literal"><span class="pre">--bi</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#full-pp"><code class="docutils literal"><span class="pre">--full_pp</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#ave-pp"><code class="docutils literal"><span class="pre">--ave_pp</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#const-ave-pp"><code class="docutils literal"><span class="pre">--const_ave_pp</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#gruneisen"><code class="docutils literal"><span class="pre">--gruneisen</span></code></a></li>
@@ -207,6 +208,7 @@
 <li><a class="reference internal" href="#jdos"><code class="docutils literal"><span class="pre">--jdos</span></code></a></li>
 <li><a class="reference internal" href="#num-freq-points-freq-pitch"><code class="docutils literal"><span class="pre">--num_freq_points</span></code>, <code class="docutils literal"><span class="pre">--freq_pitch</span></code></a></li>
 <li><a class="reference internal" href="#bi"><code class="docutils literal"><span class="pre">--bi</span></code></a></li>
+<li><a class="reference internal" href="#full-pp"><code class="docutils literal"><span class="pre">--full_pp</span></code></a></li>
 <li><a class="reference internal" href="#ave-pp"><code class="docutils literal"><span class="pre">--ave_pp</span></code></a></li>
 <li><a class="reference internal" href="#const-ave-pp"><code class="docutils literal"><span class="pre">--const_ave_pp</span></code></a></li>
 <li><a class="reference internal" href="#gruneisen"><code class="docutils literal"><span class="pre">--gruneisen</span></code></a></li>
@@ -492,18 +494,18 @@ reduced number of <code class="docutils literal"><span class="pre">POSCAR-xxxxx<
 </div>
 <div class="section" id="write-gamma">
 <span id="write-gamma-option"></span><h2><code class="docutils literal"><span class="pre">--write_gamma</span></code><a class="headerlink" href="#write-gamma" title="Permalink to this headline">¶</a></h2>
-<p>Imaginary part of self energy at harmonic phonon frequency
-<img class="math" src="_images/math/b23263d441abbb6f16226a98bbd61fd6452396d5.png" alt="\Gamma_\lambda(\omega_\lambda)"/> (or twice of inverse phonon
-lifetime) is written into file in hdf5 format.  The result is written
-into <code class="docutils literal"><span class="pre">kappa-mxxx-dx-gx.hdf5</span></code> or <code class="docutils literal"><span class="pre">kappa-mxxx-dx-gx-bx.hdf5</span></code> with
+<p>Imaginary parts of self energy at harmonic phonon frequencies
+<img class="math" src="_images/math/ec70451cff3f5a7990454829d6a3f3b72414e969.png" alt="\Gamma_\lambda(\omega_\lambda) = 1/2\tau_\lambda"/> are written
+into file in hdf5 format.  The result is written into
+<code class="docutils literal"><span class="pre">kappa-mxxx-dx-gx.hdf5</span></code> or <code class="docutils literal"><span class="pre">kappa-mxxx-dx-gx-bx.hdf5</span></code> with
 <code class="docutils literal"><span class="pre">--bi</span></code> option. With <code class="docutils literal"><span class="pre">--sigma</span></code> option, <code class="docutils literal"><span class="pre">-sx</span></code> is inserted in front
 of <code class="docutils literal"><span class="pre">.hdf5</span></code>.</p>
 </div>
 <div class="section" id="read-gamma">
 <h2><code class="docutils literal"><span class="pre">--read_gamma</span></code><a class="headerlink" href="#read-gamma" title="Permalink to this headline">¶</a></h2>
-<p>Imaginary part of self energy at harmonic phonon frequency
-<img class="math" src="_images/math/b23263d441abbb6f16226a98bbd61fd6452396d5.png" alt="\Gamma_\lambda(\omega_\lambda)"/> (or twice of inverse phonon lifetime)
-is read from <code class="docutils literal"><span class="pre">kappa</span></code> file in hdf5 format.  Initially the usual
+<p>Imaginary parts of self energy at harmonic phonon frequencies
+<img class="math" src="_images/math/ec70451cff3f5a7990454829d6a3f3b72414e969.png" alt="\Gamma_\lambda(\omega_\lambda) = 1/2\tau_\lambda"/>
+are read from <code class="docutils literal"><span class="pre">kappa</span></code> file in hdf5 format.  Initially the usual
 result file of <code class="docutils literal"><span class="pre">kappa-mxxx-dx(-sx).hdf5</span></code> is searched. Unless it is
 found, it tries to read <code class="docutils literal"><span class="pre">kappa</span></code> file for each grid point,
 <code class="docutils literal"><span class="pre">kappa-mxxx-dx-gx(-sx).hdf5</span></code>. Then, similarly,
@@ -641,8 +643,7 @@ JDOS, number of sampling frequency points is controlled by
 </div>
 <div class="section" id="bi">
 <h2><code class="docutils literal"><span class="pre">--bi</span></code><a class="headerlink" href="#bi" title="Permalink to this headline">¶</a></h2>
-<p>Specify band indices. Imaginary part of self energy is calculated when
-<code class="docutils literal"><span class="pre">--lw</span></code> is not specified. The output file name is like
+<p>Specify band indices. The output file name will be, e.g.,
 <code class="docutils literal"><span class="pre">gammas-mxxxxxx-gxx-bx.dat</span></code> where <code class="docutils literal"><span class="pre">bxbx...</span></code> shows the band indices
 used to be averaged. The calculated values at indices separated by
 space are averaged, and those separated by comma are separately
@@ -652,17 +653,39 @@ calculated.</p>
 </pre></div>
 </div>
 </div>
+<div class="section" id="full-pp">
+<span id="full-pp-option"></span><h2><code class="docutils literal"><span class="pre">--full_pp</span></code><a class="headerlink" href="#full-pp" title="Permalink to this headline">¶</a></h2>
+<p>After version 1.10.5, for RTA thermal conductivity calculation with
+using the linear tetrahedron method, only necessary part of
+phonon-phonon interaction strengh among phonons,
+<img class="math" src="_images/math/defd5206e15655ccdb878d60d72bdb8d70e5b37e.png" alt="\bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2"/>, is
+calculated due to delta functions in calculation of
+<img class="math" src="_images/math/2f666581625ef5ad4acda33a7fb3df2a835dfc9f.png" alt="\Gamma_\lambda(\omega)"/>,</p>
+<div class="math">
+<p><img src="_images/math/30142db4eb701c342683994b494b27b7075806e7.png" alt="\Gamma_\lambda(\omega) = \frac{18\pi}{\hbar^2}
+ \sum_{\lambda' \lambda''}
+ \bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2
+ \left\{(n_{\lambda'}+ n_{\lambda''}+1)
+  \delta(\omega-\omega_{\lambda'}-\omega_{\lambda''}) \right.
+  + (n_{\lambda'}-n_{\lambda''})
+ \left[\delta(\omega+\omega_{\lambda'}-\omega_{\lambda''})
+- \left. \delta(\omega-\omega_{\lambda'}+\omega_{\lambda''})
+\right]\right\}."/></p>
+</div><p>But specifying this option, full elements of phonon-phonon interaction
+strengh among phonons are calculated and averaged phonon-phonon
+interaction strength (<img class="math" src="_images/math/645ecc9514b0f10389a05592cede1f2f11478b4b.png" alt="P_{\mathbf{q}j}"/>) is also given.</p>
+</div>
 <div class="section" id="ave-pp">
 <h2><code class="docutils literal"><span class="pre">--ave_pp</span></code><a class="headerlink" href="#ave-pp" title="Permalink to this headline">¶</a></h2>
 <p>Averaged phonon-phonon interaction strength (<img class="math" src="_images/math/645ecc9514b0f10389a05592cede1f2f11478b4b.png" alt="P_{\mathbf{q}j}"/>)
 is used to calculate imaginary part of self energy. This option works
 only when <code class="docutils literal"><span class="pre">--read_gamma</span></code> and <code class="docutils literal"><span class="pre">--br</span></code> options are activated where
 the averaged phonon-phonon interaction that is read from
-<code class="docutils literal"><span class="pre">kappa-mxxxxx.hdf5</span></code> file is used. Therefore the averaged
-phonon-phonon interaction has to be stored before using this
-option. The calculation result <strong>overwrites</strong> <code class="docutils literal"><span class="pre">kappa-mxxxxx.hdf5</span></code>
-file. Therefore to use this option together with <code class="docutils literal"><span class="pre">-o</span></code> option is
-strongly recommended.</p>
+<code class="docutils literal"><span class="pre">kappa-mxxxxx.hdf5</span></code> file is used if it exists in the file. Therefore the
+averaged phonon-phonon interaction has to be stored before using this
+option (see <a class="reference internal" href="#full-pp-option"><span>&#8211;full_pp</span></a>). The calculation result
+<strong>overwrites</strong> <code class="docutils literal"><span class="pre">kappa-mxxxxx.hdf5</span></code> file. Therefore to use this
+option together with <code class="docutils literal"><span class="pre">-o</span></code> option is strongly recommended.</p>
 <p>First, run full conductivity calculation,</p>
 <div class="highlight-python"><div class="highlight"><pre>% phono3py --dim=&quot;3 3 2&quot; -v --mesh=&quot;32 32 20&quot; -c POSCAR-unitcell --br
 </pre></div>
@@ -720,7 +743,7 @@ are not necessary to input.  The physical unit of the value is
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.4.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.<br/>
     </p>
   </div>
 </footer>
