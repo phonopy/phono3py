@@ -8,7 +8,8 @@ Apr-16-2016: version 1.10.7
 
 - API example is prepared and it is found in ``Si`` example. No
   doucment yet.
-- Minor bug fixes.
+- Si pwscf example was placed in ``example-phono3py`` directory.
+- User interface bug fix.
 
 Mar-15-2016: version 1.10.5
 ------------------------------
