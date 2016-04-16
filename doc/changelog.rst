@@ -3,6 +3,13 @@
 Change Log
 ==========
 
+Apr-16-2016: version 1.10.7
+------------------------------
+
+- API example is prepared and it is found in ``Si`` example. No
+  doucment yet.
+- Minor bug fixes.
+
 Mar-15-2016: version 1.10.5
 ------------------------------
 
