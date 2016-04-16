@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Command options &mdash; Phono3py v.1.10.5</title>
+    <title>Command options &mdash; Phono3py v.1.10.7</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.10.5',
+        VERSION:     '1.10.7',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.3.4/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Phono3py v.1.10.5" href="index.html" />
+    <link rel="top" title="Phono3py v.1.10.7" href="index.html" />
     <link rel="next" title="Interfaces to calculators" href="interfaces.html" />
     <link rel="prev" title="Output files" href="output-files.html" />
 <meta charset='utf-8'>
@@ -50,7 +50,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>1.10.5</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.10.7</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -84,7 +84,7 @@
 <li class="toctree-l2"><a class="reference internal" href="output-files.html#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Command options</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Command options</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#d"><code class="docutils literal"><span class="pre">-d</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#amplitude"><code class="docutils literal"><span class="pre">--amplitude</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#pa-primitive-axis"><code class="docutils literal"><span class="pre">--pa</span></code>, <code class="docutils literal"><span class="pre">--primitive_axis</span></code></a></li>
@@ -141,6 +141,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#mar-15-2016-version-1-10-5">Mar-15-2016: version 1.10.5</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#oct-10-2015-version-0-9-14">Oct-10-2015: version 0.9.14</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#sep-26-2015-version-0-9-13">Sep-26-2015: version 0.9.13</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#aug-12-2015-version-0-9-12">Aug-12-2015: version 0.9.12</a></li>
@@ -267,7 +268,7 @@ file are created.</p>
 <div class="section" id="amplitude">
 <h2><code class="docutils literal"><span class="pre">--amplitude</span></code><a class="headerlink" href="#amplitude" title="Permalink to this headline">¶</a></h2>
 <p>Displacement distance. The default value depends on calculator. See
-<a class="reference internal" href="interfaces.html#default-displacement-distance-for-calculator"><span>Default displacement distance created</span></a>.</p>
+<a class="reference internal" href="interfaces.html#default-displacement-distance-for-calculator"><span class="std std-ref">Default displacement distance created</span></a>.</p>
 </div>
 <div class="section" id="pa-primitive-axis">
 <h2><code class="docutils literal"><span class="pre">--pa</span></code>, <code class="docutils literal"><span class="pre">--primitive_axis</span></code><a class="headerlink" href="#pa-primitive-axis" title="Permalink to this headline">¶</a></h2>
@@ -327,7 +328,7 @@ written into <code class="docutils literal"><span class="pre">kappa-mxxx.hdf5</s
 <h2><code class="docutils literal"><span class="pre">--sigma</span></code><a class="headerlink" href="#sigma" title="Permalink to this headline">¶</a></h2>
 <p><img class="math" src="_images/math/2298cf1485084afe72757a9c8483af49a138d81f.png" alt="\sigma"/> value of Gaussian function for smearing when
 calculating imaginary part of self energy. See the detail at
-<a class="reference internal" href="workflow.html#brillouinzone-sum"><span>Brillouin zone summation</span></a>.</p>
+<a class="reference internal" href="workflow.html#brillouinzone-sum"><span class="std std-ref">Brillouin zone summation</span></a>.</p>
 <p>Multiple <img class="math" src="_images/math/2298cf1485084afe72757a9c8483af49a138d81f.png" alt="\sigma"/> values are also specified by space separated
 numerical values. This is used when we want to test several
 <img class="math" src="_images/math/2298cf1485084afe72757a9c8483af49a138d81f.png" alt="\sigma"/> values simultaneously.</p>
@@ -345,13 +346,13 @@ smearing method in one time execution are expected.</p>
 <code class="docutils literal"><span class="pre">--tmin</span></code>, <code class="docutils literal"><span class="pre">--tstep</span></code>. See phonopy <code class="docutils literal"><span class="pre">TMAX</span></code>, <code class="docutils literal"><span class="pre">TMIN</span></code>, <code class="docutils literal"><span class="pre">TSTEP</span></code>
 tags (<code class="docutils literal"><span class="pre">--tmax</span></code>, <code class="docutils literal"><span class="pre">--tmin</span></code>, <code class="docutils literal"><span class="pre">--tstep</span></code> options) at
 <a class="reference external" href="http://atztogo.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep">http://atztogo.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep</a> .</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; -v --mesh=&quot;11 11 11&quot; \
-  -c POSCAR-unitcell --br --tmin=100 --tmax=1000 --tstep=50
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">v</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
+  <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">tmin</span><span class="o">=</span><span class="mi">100</span> <span class="o">--</span><span class="n">tmax</span><span class="o">=</span><span class="mi">1000</span> <span class="o">--</span><span class="n">tstep</span><span class="o">=</span><span class="mi">50</span>
 </pre></div>
 </div>
 <p>Specific temperatures are given by <code class="docutils literal"><span class="pre">--ts</span></code>.</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; -v --mesh=&quot;11 11 11&quot; \
-  -c POSCAR-unitcell --br --ts=&quot;200 300 400&quot;
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">v</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
+  <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="s2">&quot;200 300 400&quot;</span>
 </pre></div>
 </div>
 </div>
@@ -412,7 +413,7 @@ reciprocal space. See the detail at
 read from database of the natural abundance data for elements, which
 refers Laeter <em>et al.</em>, Pure Appl. Chem., <strong>75</strong>, 683
 (2003)</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --dim=&quot;3 3 2&quot; -v --mesh=&quot;32 32 20&quot; -c POSCAR-unitcell --br --isotope
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;3 3 2&quot;</span> <span class="o">-</span><span class="n">v</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;32 32 20&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">isotope</span>
 </pre></div>
 </div>
 </div>
@@ -424,12 +425,12 @@ mass variance parameters. For example of GaN, this may be set like
 correspond to the number of atoms in the primitive cell.</p>
 <p>Isotope effect to thermal conductivity may be checked first running
 without isotope calculation:</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --dim=&quot;3 3 2&quot; -v --mesh=&quot;32 32 20&quot; -c POSCAR-unitcell --br
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;3 3 2&quot;</span> <span class="o">-</span><span class="n">v</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;32 32 20&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span>
 </pre></div>
 </div>
 <p>Then running with isotope calculation:</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --dim=&quot;3 3 2&quot; -v --mesh=&quot;32 32 20&quot; -c POSCAR-unitcell --br \
-  --read_gamma --mv=&quot;1.97e-4 1.97e-4 0 0&quot;
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;3 3 2&quot;</span> <span class="o">-</span><span class="n">v</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;32 32 20&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> \
+  <span class="o">--</span><span class="n">read_gamma</span> <span class="o">--</span><span class="n">mv</span><span class="o">=</span><span class="s2">&quot;1.97e-4 1.97e-4 0 0&quot;</span>
 </pre></div>
 </div>
 <p>In the result hdf5 file, currently isotope scattering strength is not
@@ -449,7 +450,7 @@ contribution to the thermal conducitivity is considered negligible.</p>
 <span id="cf3-option"></span><h2><code class="docutils literal"><span class="pre">--cf3</span></code><a class="headerlink" href="#cf3" title="Permalink to this headline">¶</a></h2>
 <p>This is used to create <code class="docutils literal"><span class="pre">FORCES_FC3</span></code>. <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> has to be
 located at the current directory.</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --cf3 disp-{00001..00755}/vasprun.xml
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="p">{</span><span class="mf">00001.</span><span class="o">.</span><span class="mi">00755</span><span class="p">}</span><span class="o">/</span><span class="n">vasprun</span><span class="o">.</span><span class="n">xml</span>
 </pre></div>
 </div>
 </div>
@@ -458,7 +459,7 @@ located at the current directory.</p>
 <p>This is used to create <code class="docutils literal"><span class="pre">FORCES_FC2</span></code>. <code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> has to be
 located at the current directory. This is
 optional. <code class="docutils literal"><span class="pre">FORCES_FC2</span></code> is necessary to run with <code class="docutils literal"><span class="pre">--dim_fc2</span></code>.</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --cf2 disp_fc2-{00001..00002}/vasprun.xml
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf2</span> <span class="n">disp_fc2</span><span class="o">-</span><span class="p">{</span><span class="mf">00001.</span><span class="o">.</span><span class="mi">00002</span><span class="p">}</span><span class="o">/</span><span class="n">vasprun</span><span class="o">.</span><span class="n">xml</span>
 </pre></div>
 </div>
 </div>
@@ -483,11 +484,11 @@ indices are missing, which are not necessary to be put for creating
 <code class="docutils literal"><span class="pre">FORCES_THIRD</span></code>. Only <code class="docutils literal"><span class="pre">vasprun.xml</span></code>&#8216;s calculated for these
 reduced number of <code class="docutils literal"><span class="pre">POSCAR-xxxxx</span></code> have to be given at <code class="docutils literal"><span class="pre">phono3py</span> <span class="pre">--cf3</span>
 <span class="pre">...</span></code>.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">phono3py</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">cutpair</span><span class="o">=</span><span class="mi">4</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">cutpair</span><span class="o">=</span><span class="mi">4</span>
 </pre></div>
 </div>
 <p>After running VASP calculations,</p>
-<div class="highlight-python"><div class="highlight"><pre>phono3py --cf3 all_calculated_vasprun_xmls
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">all_calculated_vasprun_xmls</span>
 </pre></div>
 </div>
 <p><code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> may be readable and helpful to understand this procedure.</p>
@@ -553,8 +554,8 @@ detailed information.</p>
 grid addresses and sampling mesh numbers given in
 <code class="docutils literal"><span class="pre">grid_address-mxxx.hdf5</span></code> that is obtained by <code class="docutils literal"><span class="pre">--wgp</span></code> option. A
 python script to obtain q-point triplets is shown below.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">h5py</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;gamma_detail-mxxx-gx-sx.hdf5&quot;</span><span class="p">)</span>
 <span class="n">g</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;grid_address-mxxx.hdf5&quot;</span><span class="p">)</span>
@@ -566,14 +567,14 @@ python script to obtain q-point triplets is shown below.</p>
 </div>
 <p>Imaginary part of self energy or linewidth/2 is recovered by the
 following script:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">h5py</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;gamma_detail-mxxx-gx-sx.hdf5&quot;</span><span class="p">)</span>
 <span class="n">temp</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># index of temperature</span>
 <span class="n">gamma_detail</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;gamma_detail&#39;</span><span class="p">][:]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">weight</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;weight&#39;</span><span class="p">][:]</span>
-<span class="k">print</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gamma_detail</span><span class="p">[</span><span class="n">temp</span><span class="p">],</span> <span class="n">weight</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">gamma_detail</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+<span class="nb">print</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gamma_detail</span><span class="p">[</span><span class="n">temp</span><span class="p">],</span> <span class="n">weight</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">gamma_detail</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -582,8 +583,8 @@ following script:</p>
 <p>Imaginary part of self energy <img class="math" src="_images/math/2f666581625ef5ad4acda33a7fb3df2a835dfc9f.png" alt="\Gamma_\lambda(\omega)"/> is
 calculated with respect to <img class="math" src="_images/math/c7415c6919c2eb17b1ea36f0243079b59825ee89.png" alt="\omega"/>. The output is written to
 <code class="docutils literal"><span class="pre">gammas-mxxxx-gx-sx-tx-bx.dat</span></code> in THz (without <img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>).</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2  2&quot; --mesh=&quot;16 16 16&quot; -c POSCAR-unitcell \
-  --nac --q_direction=&quot;1 0 0&quot; --gp=0 --ise --bi=&quot;4 5, 6&quot;
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2  2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> \
+  <span class="o">--</span><span class="n">nac</span> <span class="o">--</span><span class="n">q_direction</span><span class="o">=</span><span class="s2">&quot;1 0 0&quot;</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="mi">0</span> <span class="o">--</span><span class="n">ise</span> <span class="o">--</span><span class="n">bi</span><span class="o">=</span><span class="s2">&quot;4 5, 6&quot;</span>
 </pre></div>
 </div>
 </div>
@@ -592,8 +593,8 @@ calculated with respect to <img class="math" src="_images/math/c7415c6919c2eb17b
 <p>Linewidth <img class="math" src="_images/math/c982f465afd7871837bb1192f5c85251543f3b99.png" alt="2\Gamma_\lambda(\omega_\lambda)"/> is calculated with
 respect to temperature. The output is written to
 <code class="docutils literal"><span class="pre">linewidth-mxxxx-gx-sx-bx.dat</span></code> in THz (without <img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>).</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2  2&quot; --mesh=&quot;16 16 16&quot; -c POSCAR-unitcell \
-  --nac --q_direction=&quot;1 0 0&quot; --gp=0 --lw --bi=&quot;4 5, 6&quot;
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2  2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> \
+  <span class="o">--</span><span class="n">nac</span> <span class="o">--</span><span class="n">q_direction</span><span class="o">=</span><span class="s2">&quot;1 0 0&quot;</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="mi">0</span> <span class="o">--</span><span class="n">lw</span> <span class="o">--</span><span class="n">bi</span><span class="o">=</span><span class="s2">&quot;4 5, 6&quot;</span>
 </pre></div>
 </div>
 </div>
@@ -604,15 +605,15 @@ result is written into <code class="docutils literal"><span class="pre">jdos-mxx
 <img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>). The first column is the frequency, and the second and
 third columns are the values given as follows, respectively,</p>
 <div class="math">
-<p><img src="_images/math/ed084583af4860c914a649baebf8f52a5f551995.png" alt="&amp;D_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
+<p><img src="_images/math/a0adde52e69e4cef60e24709788fb2682afe3931.png" alt="&amp;D_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
 \sum_{\lambda_1,\lambda_2}
 \left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2}) +
 \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2}) \right], \\
 &amp;D_2^{(2)}(\mathbf{q}, \omega) = \frac{1}{N}
 \sum_{\lambda_1,\lambda_2}\delta(\omega-\omega_{\lambda_1}
 -\omega_{\lambda_2})."/></p>
-</div><div class="highlight-python"><div class="highlight"><pre>% phono3py --fc2 --dim=&quot;2 2 2&quot; -c POSCAR-unitcell --mesh=&quot;16 16 16&quot; \
-  --nac --jdos --ga=&quot;0 0 0  8 8 8&quot;
+</div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span> \
+  <span class="o">--</span><span class="n">nac</span> <span class="o">--</span><span class="n">jdos</span> <span class="o">--</span><span class="n">ga</span><span class="o">=</span><span class="s2">&quot;0 0 0  8 8 8&quot;</span>
 </pre></div>
 </div>
 <p>When temperatures are specified, two classes of weighted JDOS are
@@ -621,7 +622,7 @@ where <code class="docutils literal"><span class="pre">txxx</span></code> shows 
 frequency, and the second and third columns are the values given as
 follows, respectively,</p>
 <div class="math">
-<p><img src="_images/math/415490c6d2e4a48fa625936bec31f43d0ea712c4.png" alt="&amp;N_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
+<p><img src="_images/math/00a206dddd52803135b093e106547f93dcc0200c.png" alt="&amp;N_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
 \sum_{\lambda'\lambda''} \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'')
 (n_{\lambda'} - n_{\lambda''}) [ \delta( \omega + \omega_{\lambda'} -
 \omega_{\lambda''}) - \delta( \omega - \omega_{\lambda'} +
@@ -630,8 +631,8 @@ follows, respectively,</p>
 \sum_{\lambda'\lambda''} \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'')
 (n_{\lambda'}+ n_{\lambda''}+1) \delta( \omega - \omega_{\lambda'} -
 \omega_{\lambda''})."/></p>
-</div><div class="highlight-python"><div class="highlight"><pre>% phono3py --fc2 --dim=&quot;2 2 2&quot; -c POSCAR-unitcell --mesh=&quot;16 16 16&quot; \
-  --nac --jdos --ga=&quot;0 0 0  8 8 8&quot; --ts=300
+</div><div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span> \
+  <span class="o">--</span><span class="n">nac</span> <span class="o">--</span><span class="n">jdos</span> <span class="o">--</span><span class="n">ga</span><span class="o">=</span><span class="s2">&quot;0 0 0  8 8 8&quot;</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="mi">300</span>
 </pre></div>
 </div>
 </div>
@@ -648,8 +649,8 @@ JDOS, number of sampling frequency points is controlled by
 used to be averaged. The calculated values at indices separated by
 space are averaged, and those separated by comma are separately
 calculated.</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; --mesh=&quot;16 16 16&quot; \
-  -c POSCAR-unitcell --nac --gp=&quot;34&quot; --bi=&quot;4 5, 6&quot;
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span> \
+  <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">nac</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="s2">&quot;34&quot;</span> <span class="o">--</span><span class="n">bi</span><span class="o">=</span><span class="s2">&quot;4 5, 6&quot;</span>
 </pre></div>
 </div>
 </div>
@@ -662,7 +663,7 @@ phonon-phonon interaction strengh among phonons,
 calculated due to delta functions in calculation of
 <img class="math" src="_images/math/2f666581625ef5ad4acda33a7fb3df2a835dfc9f.png" alt="\Gamma_\lambda(\omega)"/>,</p>
 <div class="math">
-<p><img src="_images/math/30142db4eb701c342683994b494b27b7075806e7.png" alt="\Gamma_\lambda(\omega) = \frac{18\pi}{\hbar^2}
+<p><img src="_images/math/68535d5a10b1dbdf8f0408268ae61da832b34ea7.png" alt="\Gamma_\lambda(\omega) = \frac{18\pi}{\hbar^2}
  \sum_{\lambda' \lambda''}
  \bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2
  \left\{(n_{\lambda'}+ n_{\lambda''}+1)
@@ -683,16 +684,16 @@ only when <code class="docutils literal"><span class="pre">--read_gamma</span></
 the averaged phonon-phonon interaction that is read from
 <code class="docutils literal"><span class="pre">kappa-mxxxxx.hdf5</span></code> file is used if it exists in the file. Therefore the
 averaged phonon-phonon interaction has to be stored before using this
-option (see <a class="reference internal" href="#full-pp-option"><span>&#8211;full_pp</span></a>). The calculation result
+option (see <a class="reference internal" href="#full-pp-option"><span class="std std-ref">&#8211;full_pp</span></a>). The calculation result
 <strong>overwrites</strong> <code class="docutils literal"><span class="pre">kappa-mxxxxx.hdf5</span></code> file. Therefore to use this
 option together with <code class="docutils literal"><span class="pre">-o</span></code> option is strongly recommended.</p>
 <p>First, run full conductivity calculation,</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --dim=&quot;3 3 2&quot; -v --mesh=&quot;32 32 20&quot; -c POSCAR-unitcell --br
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;3 3 2&quot;</span> <span class="o">-</span><span class="n">v</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;32 32 20&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span>
 </pre></div>
 </div>
 <p>Then</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --dim=&quot;3 3 2&quot; -v --mesh=&quot;32 32 20&quot; -c POSCAR-unitcell --br \
-  --read_gamma --ave_pp -o ave_pp
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;3 3 2&quot;</span> <span class="o">-</span><span class="n">v</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;32 32 20&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> \
+  <span class="o">--</span><span class="n">read_gamma</span> <span class="o">--</span><span class="n">ave_pp</span> <span class="o">-</span><span class="n">o</span> <span class="n">ave_pp</span>
 </pre></div>
 </div>
 </div>
@@ -702,8 +703,8 @@ option together with <code class="docutils literal"><span class="pre">-o</span><
 replaced by this constant value. Therefore third-order force constants
 are not necessary to input.  The physical unit of the value is
 <img class="math" src="_images/math/b1081ba55ca53aac658b057192e44ef64f27afa1.png" alt="\text{eV}^2"/>.</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --dim=&quot;3 3 2&quot; -v --mesh=&quot;32 32 20&quot; -c POSCAR-unitcell --br \
-  --const_ave_pp=1e-10
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;3 3 2&quot;</span> <span class="o">-</span><span class="n">v</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;32 32 20&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> \
+  <span class="o">--</span><span class="n">const_ave_pp</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">10</span>
 </pre></div>
 </div>
 </div>
@@ -711,13 +712,13 @@ are not necessary to input.  The physical unit of the value is
 <h2><code class="docutils literal"><span class="pre">--gruneisen</span></code><a class="headerlink" href="#gruneisen" title="Permalink to this headline">¶</a></h2>
 <p>Mode-Gruneisen-parameters are calculated from fc3.</p>
 <p>Mesh sampling mode:</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; -v --mesh=&quot;16 16 16&quot;
-  -c POSCAR-unitcell --nac --gruneisen
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">v</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span>
+  <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">nac</span> <span class="o">--</span><span class="n">gruneisen</span>
 </pre></div>
 </div>
 <p>Band path mode:</p>
-<div class="highlight-python"><div class="highlight"><pre>% phono3py --fc3 --fc2 --dim=&quot;2 2 2&quot; -v \
-  -c POSCAR-unitcell --nac --gruneisen --band=&quot;0 0 0  0 0 1/2&quot;
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">v</span> \
+  <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">nac</span> <span class="o">--</span><span class="n">gruneisen</span> <span class="o">--</span><span class="n">band</span><span class="o">=</span><span class="s2">&quot;0 0 0  0 0 1/2&quot;</span>
 </pre></div>
 </div>
 </div>
@@ -743,7 +744,7 @@ are not necessary to input.  The physical unit of the value is
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.5.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.<br/>
     </p>
   </div>
 </footer>

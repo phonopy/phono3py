@@ -20,15 +20,16 @@ ubuntu linux, these are installed using the package manager::
    % sudo apt-get install python-dev python-numpy python-matplotlib \
      python-yaml python-h5py libgomp1 liblapacke-dev
 
-In the versions of Ubuntu-12.10 or later, lapacke
+In the versions of Ubuntu-12.10 or later, LAPACKE
 (http://www.netlib.org/lapack/lapacke.html) can be installed from the
-package manager (``liblapacke`` and ``liblapacke-dev``). But in the
-older versions of Ubuntu or in the other environments, e.g., Mac, you
-may have to compile lapacke by yourself. The compilation procedure is
-found at the lapacke web site. After creating the lapacke library,
+package manager (``liblapacke`` and ``liblapacke-dev``). In the recent
+MacPorts, the ``lapack`` package may contains LAPACKE. But in the
+older versions of Ubuntu or in the other environments, you
+may have to compile LAPACKE by yourself. The compilation procedure is
+found at the LAPACKE web site. After creating the LAPACKE library,
 ``liblapacke.a`` (or the dynamic link library), ``setup3.py`` must be
 properly modified to link it. As an example, the procedure of
-compiling lapacke is shown below.
+compiling LAPACKE is shown below.
 
 ::
 
@@ -36,6 +37,9 @@ compiling lapacke is shown below.
    % cd lapack-3.5.0
    % cp make.inc.example make.inc
    % make lapackelib
+
+BLAS, LAPACK, and LAPACKE, these all may have to be compiled
+with -fPIC option to use it with python.
 
 Multithreading support
 ------------------------
