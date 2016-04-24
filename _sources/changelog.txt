@@ -3,6 +3,11 @@
 Change Log
 ==========
 
+Apr-24-2016: version 1.10.9
+------------------------------
+
+- Failure of writing ``kappa-mxxx-gx.hdf5`` was fixed.
+
 Apr-16-2016: version 1.10.7
 ------------------------------
 
