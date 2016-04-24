@@ -284,3 +284,22 @@ Averaged phonon-phonon interaction in :math:`\text{eV}^2`,
 This is not going to be calculated in the RTA thermal coductivity
 calculation mode by default. To calculate this, ``--full_pp`` option
 has to be specified (see :ref:`full_pp_option`).
+
+kappa_unit_conversion
+~~~~~~~~~~~~~~~~~~~~~~
+
+This is used to convert the physical unit of lattice thermal
+conductivity made of ``heat_capacity``, ``group_velocity``, and
+``gamma``, to W/m-K. In the single mode relaxation time (SMRT) method,
+a mode contribution to the lattice thermal conductivity is given by
+
+.. math::
+
+   \kappa_\lambda = \frac{1}{NV_0} C_\lambda \mathbf{v}_\lambda \otimes
+   \mathbf{v}_\lambda \tau_\lambda^{\mathrm{SMRT}}.
+
+For example of some single mode, :math:`\kappa_{\lambda,{xx}}` is calculated by::
+
+   kappa_unit_conversion / weight.sum() * heat_capacity[30, 2, 0] * group_velocity[2, 0, 0] ** 2 / (2 * gamma[30, 2, 0])
+
+where :math:`1/V_0` is included in ``kappa_unit_conversion``.
