@@ -18,9 +18,9 @@ calculated.
    % kaccum --mesh="11 11 11" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" \
      POSCAR-unitcell kappa-m111111.hdf5 |tee kaccum.dat
 
-``--mesh`` option is mandatory and ``--pa`` option is optional. The
-first and second arguments are the unit cell and ``kappa-***.hdf5`` files,
-respectively. 
+``--mesh`` option is mandatory before version 1.10.11 and ``--pa``
+option is optional. The first and second arguments are the unit cell
+and ``kappa-***.hdf5`` files, respectively.
 
 The format of the output is as follows: The first column gives
 frequency, and the second to seventh columns give the accumulated

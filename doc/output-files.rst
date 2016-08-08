@@ -3,9 +3,13 @@
 Output files
 ============
 
+.. contents::
+   :depth: 3
+   :local:
+
 The calculation results are written into files. Mostly the data are
-stored in HDF5 format. In the following sections, how to read the data
-from HDF5 files is shown.
+stored in HDF5 format, therefore how to read the data
+from HDF5 files is also shown.
 
 Intermediate text files
 ------------------------
@@ -112,8 +116,11 @@ conductivity calculation is loaded and thermal conductivity tensor at
    [u'frequency',
     u'gamma',
     u'group_velocity',
+    u'gv_by_gv',
     u'heat_capacity',
     u'kappa',
+    u'kappa_unit_conversion',
+    u'mesh',
     u'mode_kappa',
     u'qpoint',
     u'temperature',
@@ -177,17 +184,27 @@ memorize the option ``--nac`` was used.
 Currently ``kappa-*.hdf5`` file (not for the specific grid points)
 contains the properties shown below.
 
+mesh
+~~~~
+
+(Versions 1.10.11 or later)
+
+The numbers of mesh points for reciprocal space sampling along
+reciprocal axes, :math:`a^*, b^*, c^*` 
+
 frequency
 ~~~~~~~~~
 
-Phonon frequencies. The physical unit is THz (without :math:`2\pi`)
+Phonon frequencies. The physical unit is THz, where THz
+is in the ordinal frequency not the angular frequency.
 
 The array shape is (irreducible q-point, phonon band).
 
 gamma
 ~~~~~
-Imaginary part of self energy. The physical unit is THz
-(without :math:`2\pi`).
+
+Imaginary part of self energy. The physical unit is THz, where THz
+is in the ordinal frequency not the angular frequency.
 
 The array shape for all grid-points (irreducible q-points) is
 (temperature, irreducible q-point, phonon band).
@@ -211,8 +228,8 @@ group_velocity
 ~~~~~~~~~~~~~~
 
 Phonon group velocity, :math:`\nabla_\mathbf{q}\omega_\lambda`. The
-physical unit is :math:`\text{THz}\cdot\text{\AA}` (without
-:math:`2\pi`).
+physical unit is :math:`\text{THz}\cdot\text{\AA}`, where THz
+is in the ordinal frequency not the angular frequency.
 
 The array shape is (irreducible q-point, phonon band, 3 = Cartesian coordinates).
 
@@ -232,6 +249,8 @@ The physical unit is eV/K.
 
 The array shape is (temperature, irreducible q-point, phonon band).
 
+.. _output_kappa:
+
 kappa
 ~~~~~
 
@@ -239,16 +258,46 @@ Thermal conductivity tensor. The physical unit is W/m-K.
 
 The array shape is (temperature, 6 = (xx, yy, zz, yz, xz, xy)).
 
-mode_kappa
+.. _output_mode_kappa:
+
+mode-kappa
 ~~~~~~~~~~
 
-Thermal conductivity tensor at k-star. The physical unit is
-W/m-K. Each tensor element is the sum of tensor elements on the
-members of the k-star, i.e., equivalent q-points by crystallographic
-point group and time reversal symmetry.
+Thermal conductivity tensors at k-stars (:math:`{}^*\mathbf{k}`):
+
+.. math::
+
+   \sum_{\mathbf{q} \in {}^*\mathbf{k}} \kappa_{\mathbf{q}j}.
+
+The sum of this over :math:`{}^*\mathbf{k}` corresponding to
+irreducible q-points gives :math:`\kappa` (:ref:`output_kappa`).
+
+The physical unit is W/m-K. Each tensor element is the sum of tensor
+elements on the members of :math:`{}^*\mathbf{k}`, i.e., symmetrically
+equivalent q-points by crystallographic point group and time reversal
+symmetry.
 
 The array shape is (temperature, irreducible q-point, phonon band, 6 =
 (xx, yy, zz, yz, xz, xy)).
+
+gv_by_gv
+~~~~~~~~~
+
+Outer products of group velocities for k-stars
+(:math:`{}^*\mathbf{k}`) for each irreducible q-point and phonon band
+(:math:`j`):
+
+.. math::
+
+   \sum_{\mathbf{q} \in {}^*\mathbf{k}} \mathbf{v}_{\mathbf{q}j} \otimes
+   \mathbf{v}_{\mathbf{q}j}.
+
+The physical unit is
+:math:`\text{THz}^2\cdot\text{\AA}^2`, where THz is in the
+ordinal frequency not the angular frequency.
+
+The array shape is (irreducible q-point, phonon band, 6 = (xx, yy, zz,
+yz, xz, xy)).
 
 q-point
 ~~~~~~~
@@ -300,6 +349,14 @@ a mode contribution to the lattice thermal conductivity is given by
 
 For example of some single mode, :math:`\kappa_{\lambda,{xx}}` is calculated by::
 
-   kappa_unit_conversion / weight.sum() * heat_capacity[30, 2, 0] * group_velocity[2, 0, 0] ** 2 / (2 * gamma[30, 2, 0])
+   kappa_unit_conversion / weight.sum() * heat_capacity[30, 2, 0] *
+   group_velocity[2, 0, 0] ** 2 / (2 * gamma[30, 2, 0])
 
 where :math:`1/V_0` is included in ``kappa_unit_conversion``.
+Similary mode-kappa (defined at :ref:`output_mode_kappa`) is
+calculated by::
+
+   kappa_unit_conversion / weight.sum() * heat_capacity[30, 2, 0] *
+   gv_by_gv[2, 0] / (2 * gamma[30, 2, 0])
+
+
