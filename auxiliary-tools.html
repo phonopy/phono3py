@@ -5,17 +5,17 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Auxiliary tools &mdash; Phono3py v.1.10.9</title>
+    <title>Auxiliary tools &mdash; Phono3py v.1.10.11</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootswatch-3.3.4/cosmo/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.3.6/cosmo/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.10.9',
+        VERSION:     '1.10.11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -26,9 +26,9 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.3.4/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="Phono3py v.1.10.9" href="index.html" />
+    <link rel="top" title="Phono3py v.1.10.11" href="index.html" />
     <link rel="next" title="How to cite phono3py" href="citation.html" />
     <link rel="prev" title="Interfaces to calculators" href="interfaces.html" />
 <meta charset='utf-8'>
@@ -50,7 +50,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>1.10.9</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.10.11</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -235,9 +235,9 @@ calculated.</p>
   <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="n">kappa</span><span class="o">-</span><span class="n">m111111</span><span class="o">.</span><span class="n">hdf5</span> <span class="o">|</span><span class="n">tee</span> <span class="n">kaccum</span><span class="o">.</span><span class="n">dat</span>
 </pre></div>
 </div>
-<p><code class="docutils literal"><span class="pre">--mesh</span></code> option is mandatory and <code class="docutils literal"><span class="pre">--pa</span></code> option is optional. The
-first and second arguments are the unit cell and <code class="docutils literal"><span class="pre">kappa-***.hdf5</span></code> files,
-respectively.</p>
+<p><code class="docutils literal"><span class="pre">--mesh</span></code> option is mandatory before version 1.10.11 and <code class="docutils literal"><span class="pre">--pa</span></code>
+option is optional. The first and second arguments are the unit cell
+and <code class="docutils literal"><span class="pre">kappa-***.hdf5</span></code> files, respectively.</p>
 <p>The format of the output is as follows: The first column gives
 frequency, and the second to seventh columns give the accumulated</p>
 <p>lattice thermal conductivity of 6 elements, xx, yy, zz, yz, xz,
@@ -281,7 +281,7 @@ the number of grid points.</p>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.5.<br/>
     </p>
   </div>
 </footer>
