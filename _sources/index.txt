@@ -2,11 +2,13 @@
 Welcome to phono3py
 =======================================================
 
-This software calculates phonon-phonon interaction related properties:
+This software calculates phonon-phonon interaction and related
+properties using the supercell approach. For example, the following
+physical properties are obtained:
 
 - Lattice thermal conductivity
 - Phonon lifetime/linewidth
-- Imaginary part of self energy at the lowest order
+- Imaginary part of self energy
 - Joint density of states (JDOS) and weighted-JDOS
 
 The theoretical background is summarized in the paper found at
@@ -16,6 +18,10 @@ http://arxiv.org/abs/1501.00691 .
 Examples are found in ``example-phono3py`` directory. Phono3py API
 example ``Si.py`` is found in ``example-phono3py/Si`` directory, but
 the API document has not yet written.
+
+:ref:`Interfaces to calculators <calculator_interfaces>` for VASP and
+pwscf are built-in.
+
 
 Documentation
 =============

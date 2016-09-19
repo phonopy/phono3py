@@ -1,3 +1,5 @@
+.. _calculator_interfaces:
+
 Interfaces to calculators
 ==========================
 
@@ -5,8 +7,6 @@ Currently the built-in interfaces for VASP and Pwscf are
 prepared. VASP is the default interface and no special option is
 necessary to invoke it, but for the other interfaces, each special
 option has to be specified, e.g. ``--pwscf``.
-
-.. _calculator_interfaces:
 
 Calculator specific behaviors
 ------------------------------
@@ -59,6 +59,13 @@ in :ref:`workflow`.
 
 Usage of Pwscf interface
 -------------------------
+
+Quantum espresso package itself has a set of the force constants
+calculation environment based on DFPT. But the document here explains how
+to calculate phonon-phonon interaction and related properties using
+phono3py, i.e., using the finite displacement and supercell approach.
+
+An example for pwscf is found in the ``example-phono3py/Si-pwscf`` directory.
 
 To invoke the Pwscf interface, ``--pwscf`` option has to be always
 specified::
