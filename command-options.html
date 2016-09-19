@@ -29,8 +29,8 @@
     <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="Phono3py v.1.11.1" href="index.html" />
-    <link rel="next" title="Interfaces to calculators" href="interfaces.html" />
-    <link rel="prev" title="Output files" href="output-files.html" />
+    <link rel="next" title="Output files" href="output-files.html" />
+    <link rel="prev" title="Pwscf &amp; phono3py calculation" href="pwscf.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -66,22 +66,24 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="workflow.html">Work flow</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="workflow.html#calculation-procedure">Calculation procedure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="workflow.html#convergence-check-in-calculation">Convergence check in calculation</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="install.html#system-requirement">System requirement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#multithreading-support">Multithreading support</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-procedure">Installation procedure</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#intermediate-text-files">Intermediate text files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#hdf5-files">HDF5 files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#simple-text-file">Simple text file</a></li>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vasp.html#workflow">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pwscf.html#workflow">Workflow</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Command options</a><ul>
@@ -91,10 +93,15 @@
 <li class="toctree-l2"><a class="reference internal" href="#physical-properties">Physical properties</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="interfaces.html#usage-of-vasp-interface">Usage of VASP interface</a></li>
-<li class="toctree-l2"><a class="reference internal" href="interfaces.html#usage-of-pwscf-interface">Usage of Pwscf interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#intermediate-text-files">Intermediate text files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#hdf5-files">HDF5 files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#simple-text-file">Simple text file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tips.html#convergence-check-in-calculation">Convergence check in calculation</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
@@ -204,11 +211,11 @@
               
                 
   <li>
-    <a href="output-files.html" title="Previous Chapter: Output files"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Output files</span>
+    <a href="pwscf.html" title="Previous Chapter: Pwscf & phono3py calculation"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Pwscf & phono...</span>
     </a>
   </li>
   <li>
-    <a href="interfaces.html" title="Next Chapter: Interfaces to calculators"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Interfaces to... &raquo;</span>
+    <a href="output-files.html" title="Next Chapter: Output files"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Output files &raquo;</span>
     </a>
   </li>
               
@@ -325,8 +332,14 @@ interfaces) and <code class="docutils literal"><span class="pre">disp_fc2.yaml</
 calculate 2nd order force constants for the larger supercell size and
 these force calculations have to be done in addition to the usual
 force calculations for 3rd order force constants.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">dim_fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
+</pre></div>
+</div>
 <p>After the force calculations, <code class="docutils literal"><span class="pre">--cf2</span></code> option is used to create
 <code class="docutils literal"><span class="pre">FORCES_FC2</span></code>.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">--</span><span class="n">cf2</span> <span class="n">disp</span><span class="o">-</span><span class="p">{</span><span class="mi">001</span><span class="p">,</span><span class="mi">002</span><span class="p">}</span><span class="o">/</span><span class="n">vasprun</span><span class="o">.</span><span class="n">xml</span>
+</pre></div>
+</div>
 <p>To calculate 2nd order force constants for the larger supercell size,
 <code class="docutils literal"><span class="pre">FORCES_FC2</span></code> and <code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> are necessary. Whenever running
 phono3py for the larger 2nd order force constants, <code class="docutils literal"><span class="pre">--dim_fc2</span></code>
@@ -334,6 +347,9 @@ option has to be specified. <code class="docutils literal"><span class="pre">fc2
 running phono3py contains the 2nd order force constants with
 larger supercell size. The filename is the same as that created in the
 usual phono3py run without <code class="docutils literal"><span class="pre">--dim_fc2</span></code> option.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">dim_fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">...</span> <span class="p">(</span><span class="n">many</span> <span class="n">options</span><span class="p">)</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="pa-primitive-axis-transformation-matrix-to-primitive-cell">
 <h3><a class="toc-backref" href="#id7"><code class="docutils literal"><span class="pre">--pa</span></code>, <code class="docutils literal"><span class="pre">--primitive_axis</span></code>: Transformation matrix to primitive cell</a><a class="headerlink" href="#pa-primitive-axis-transformation-matrix-to-primitive-cell" title="Permalink to this headline">¶</a></h3>
@@ -468,7 +484,7 @@ smearing method in one time execution are expected.</p>
 <h3><a class="toc-backref" href="#id23"><code class="docutils literal"><span class="pre">--sigma</span></code>: Smearing method</a><a class="headerlink" href="#sigma-smearing-method" title="Permalink to this headline">¶</a></h3>
 <p><img class="math" src="_images/math/2298cf1485084afe72757a9c8483af49a138d81f.png" alt="\sigma"/> value of Gaussian function for smearing when
 calculating imaginary part of self energy. See the detail at
-<a class="reference internal" href="workflow.html#brillouinzone-sum"><span class="std std-ref">Brillouin zone summation</span></a>.</p>
+<a class="reference internal" href="tips.html#brillouinzone-sum"><span class="std std-ref">Brillouin zone summation</span></a>.</p>
 <p>Multiple <img class="math" src="_images/math/2298cf1485084afe72757a9c8483af49a138d81f.png" alt="\sigma"/> values are also specified by space separated
 numerical values. This is used when we want to test several
 <img class="math" src="_images/math/2298cf1485084afe72757a9c8483af49a138d81f.png" alt="\sigma"/> values simultaneously.</p>

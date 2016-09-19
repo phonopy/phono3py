@@ -29,11 +29,13 @@ Documentation
 .. toctree::
    :maxdepth: 1
       
-   workflow
    install
-   output-files
-   command-options
    interfaces
+   vasp
+   pwscf
+   command-options
+   output-files
+   tips
    auxiliary-tools
    citation
    changelog

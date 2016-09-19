@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Work flow &mdash; Phono3py v.1.11.1</title>
+    <title>Tips &mdash; Phono3py v.1.11.1</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -29,8 +29,6 @@
     <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="Phono3py v.1.11.1" href="index.html" />
-    <link rel="next" title="Installation" href="install.html" />
-    <link rel="prev" title="Welcome to phono3py" href="index.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -65,23 +63,25 @@
      href="index.html">Site <b class="caret"></b></a>
   <ul class="dropdown-menu globaltoc"
       role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Work flow</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#calculation-procedure">Calculation procedure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#convergence-check-in-calculation">Convergence check in calculation</a></li>
-</ul>
-</li>
+      aria-labelledby="dLabelGlobalToc"><ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="install.html#system-requirement">System requirement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#multithreading-support">Multithreading support</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-procedure">Installation procedure</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#intermediate-text-files">Intermediate text files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#hdf5-files">HDF5 files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#simple-text-file">Simple text file</a></li>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phonopy calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pwscf.html">Pwscf &amp; phonopy calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vasp.html">VASP &amp; phonopy calculation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vasp.html#workflow">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pwscf.html">Pwscf &amp; phonopy calculation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pwscf.html#workflow">Workflow</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options</a><ul>
@@ -91,10 +91,11 @@
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#physical-properties">Physical properties</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="interfaces.html#usage-of-vasp-interface">Usage of VASP interface</a></li>
-<li class="toctree-l2"><a class="reference internal" href="interfaces.html#usage-of-pwscf-interface">Usage of Pwscf interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#intermediate-text-files">Intermediate text files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#hdf5-files">HDF5 files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#simple-text-file">Simple text file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
@@ -142,8 +143,7 @@
   <ul class="dropdown-menu localtoc"
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">Work flow</a><ul>
-<li><a class="reference internal" href="#calculation-procedure">Calculation procedure</a></li>
+<li><a class="reference internal" href="#">Tips</a><ul>
 <li><a class="reference internal" href="#convergence-check-in-calculation">Convergence check in calculation</a><ul>
 <li><a class="reference internal" href="#brillouin-zone-summation">Brillouin zone summation</a></li>
 <li><a class="reference internal" href="#numerical-quality-of-force-constants">Numerical quality of force constants</a></li>
@@ -159,14 +159,6 @@
             
               
                 
-  <li>
-    <a href="index.html" title="Previous Chapter: Welcome to phono3py"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Welcome to ph...</span>
-    </a>
-  </li>
-  <li>
-    <a href="install.html" title="Next Chapter: Installation"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Installation &raquo;</span>
-    </a>
-  </li>
               
             
             
@@ -192,107 +184,8 @@
   <div class="row">
     <div class="col-md-12 content">
       
-  <div class="section" id="work-flow">
-<span id="workflow"></span><h1>Work flow<a class="headerlink" href="#work-flow" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="calculation-procedure">
-<h2>Calculation procedure<a class="headerlink" href="#calculation-procedure" title="Permalink to this headline">¶</a></h2>
-<ol class="arabic">
-<li><p class="first">Create POSCARs with displacements</p>
-<p>This is the same way as usual phonopy:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
-</pre></div>
-</div>
-<p><code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> and <code class="docutils literal"><span class="pre">POSCAR-xxxxx</span></code> files are created.</p>
-<p>If you want to use larger supercell size for
-second-order force constants (fc2) calculation than that
-for third-order force constants (fc3) calculation:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim_fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
-</pre></div>
-</div>
-<p>In this case, <code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> and <code class="docutils literal"><span class="pre">POSCAR_FC2-xxxxx</span></code> files are
-also created.</p>
-</li>
-<li><p class="first">Run VASP for supercell force calculations</p>
-<p>To calculate forces on atoms in supercells, <code class="docutils literal"><span class="pre">POSCAR-xxxxx</span></code> (and
-<code class="docutils literal"><span class="pre">POSCAR_FC2-xxxxx</span></code> if they exist) are used as VASP (or any force
-calculator) calculations.</p>
-<p>It is supposed that each force calculation is executed under the
-directory named <code class="docutils literal"><span class="pre">disp-xxxxx</span></code> (and <code class="docutils literal"><span class="pre">disp_fc2-xxxxx</span></code>), where
-<code class="docutils literal"><span class="pre">xxxxx</span></code> is sequential number.</p>
-</li>
-<li><p class="first">Collect <code class="docutils literal"><span class="pre">vasprun.xml</span></code>&#8216;s</p>
-<p>When VASP is used as the force calculator, force sets to calculate
-fc3 and fc2 are created as follows.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="p">{</span><span class="mf">00001.</span><span class="o">.</span><span class="mi">00755</span><span class="p">}</span><span class="o">/</span><span class="n">vasprun</span><span class="o">.</span><span class="n">xml</span>
-</pre></div>
-</div>
-<p>where 0755 is an example of the index of the last displacement
-supercell. To perform this collection, <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> created at
-step 1 is required. Then <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> is created.</p>
-<p>When you use larger supercell for fc2 calculation:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf2</span> <span class="n">disp_fc2</span><span class="o">-</span><span class="p">{</span><span class="mf">00001.</span><span class="o">.</span><span class="mi">00002</span><span class="p">}</span><span class="o">/</span><span class="n">vasprun</span><span class="o">.</span><span class="n">xml</span>
-</pre></div>
-</div>
-<p><code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> is necessary in this case and <code class="docutils literal"><span class="pre">FORCES_FC2</span></code> is
-created.</p>
-</li>
-<li><p class="first">Create fc2.hdf and fc3.hdf</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
-</pre></div>
-</div>
-<p><code class="docutils literal"><span class="pre">fc2.hdf5</span></code> and <code class="docutils literal"><span class="pre">fc3.hdf5</span></code> are created from <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> and
-<code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code>. This step is not mandatory, but you can avoid
-calculating fc2 and fc3 at every run time.</p>
-<p>When you use larger supercell for fc2 calculation:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim_fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
-</pre></div>
-</div>
-<p>Similarly <code class="docutils literal"><span class="pre">fc2.hdf5</span></code> and <code class="docutils literal"><span class="pre">fc3.hdf5</span></code> are created from <code class="docutils literal"><span class="pre">FORCES_FC3</span></code>,
-<code class="docutils literal"><span class="pre">FORCES_FC2</span></code>, <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code>, and <code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code>.</p>
-</li>
-<li><p class="first">Thermal conductivity calculation</p>
-<p>An example of thermal conductivity calculation is:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
-  <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span>
-</pre></div>
-</div>
-<p>or with larger supercell for fc2:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim_fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
-  <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span>
-</pre></div>
-</div>
-<p>This calculation may take very long time. <code class="docutils literal"><span class="pre">--thm</span></code> invokes a
-tetrahedron method for Brillouin zone integration for phonon
-lifetime calculation, which is the default option. Instead,
-<code class="docutils literal"><span class="pre">--sigma</span></code> option can be used with the smearing widths.</p>
-<p>In this command, phonon lifetimes at many grid points are
-calculated in series. The phonon lifetime calculation at each grid
-point can be separately calculated since they
-are independent and no communication is necessary at the
-computation. The procedure is as follows:</p>
-<p>First run the same command with the addition option of <code class="docutils literal"><span class="pre">--wgp</span></code>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
-  <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">wgp</span>
-</pre></div>
-</div>
-<p><code class="docutils literal"><span class="pre">ir_grid_points.yaml</span></code> is obtained. In this file, irreducible
-q-points are shown. Then distribute calculations of phonon
-lifetimes on grid points with <code class="docutils literal"><span class="pre">--write_gamma</span></code> option by:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
-  <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">write_gamma</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="s2">&quot;[grid ponit(s)]&quot;</span>
-</pre></div>
-</div>
-<p>After finishing all distributed calculations, run with
-<code class="docutils literal"><span class="pre">--read_gamma</span></code> option:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
-  <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">read_gamma</span>
-</pre></div>
-</div>
-<p>Once this calculation runs without problem, separately calculated
-hdf5 files on grid points are no more necessary and may be deleted.</p>
-</li>
-</ol>
-</div>
+  <div class="section" id="tips">
+<span id="id1"></span><h1>Tips<a class="headerlink" href="#tips" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="convergence-check-in-calculation">
 <h2>Convergence check in calculation<a class="headerlink" href="#convergence-check-in-calculation" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="brillouin-zone-summation">

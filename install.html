@@ -29,8 +29,8 @@
     <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="Phono3py v.1.11.1" href="index.html" />
-    <link rel="next" title="Output files" href="output-files.html" />
-    <link rel="prev" title="Work flow" href="workflow.html" />
+    <link rel="next" title="Interfaces to calculators" href="interfaces.html" />
+    <link rel="prev" title="Welcome to phono3py" href="index.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -66,22 +66,24 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="workflow.html">Work flow</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="workflow.html#calculation-procedure">Calculation procedure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="workflow.html#convergence-check-in-calculation">Convergence check in calculation</a></li>
-</ul>
-</li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#system-requirement">System requirement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#multithreading-support">Multithreading support</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installation-procedure">Installation procedure</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#intermediate-text-files">Intermediate text files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#hdf5-files">HDF5 files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#simple-text-file">Simple text file</a></li>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vasp.html#workflow">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pwscf.html#workflow">Workflow</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options</a><ul>
@@ -91,10 +93,15 @@
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#physical-properties">Physical properties</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="interfaces.html#usage-of-vasp-interface">Usage of VASP interface</a></li>
-<li class="toctree-l2"><a class="reference internal" href="interfaces.html#usage-of-pwscf-interface">Usage of Pwscf interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#intermediate-text-files">Intermediate text files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#hdf5-files">HDF5 files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#simple-text-file">Simple text file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tips.html#convergence-check-in-calculation">Convergence check in calculation</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
@@ -157,11 +164,11 @@
               
                 
   <li>
-    <a href="workflow.html" title="Previous Chapter: Work flow"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Work flow</span>
+    <a href="index.html" title="Previous Chapter: Welcome to phono3py"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Welcome to ph...</span>
     </a>
   </li>
   <li>
-    <a href="output-files.html" title="Next Chapter: Output files"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Output files &raquo;</span>
+    <a href="interfaces.html" title="Next Chapter: Interfaces to calculators"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Interfaces to... &raquo;</span>
     </a>
   </li>
               
@@ -244,24 +251,35 @@ distributed at sourceforge.net.</p>
 <p>In the directory, open <code class="docutils literal"><span class="pre">setup3.py</span></code> and set the location of
 lapacke. If you installed lapacke from the package manager, you can
 remove the line related to lapacke. If you compiled it by yourself,
-set the location of it. Then run <code class="docutils literal"><span class="pre">setup3.py</span></code> (for anharmonic
-phonopy):</p>
+set the location of it. Before running <code class="docutils literal"><span class="pre">setup3.py</span></code>, if you install
+phonopy (not phono3py), you need to uninstall phonopy since
+<code class="docutils literal"><span class="pre">setup3.py</span></code> installs phonopy, too. Then</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">python</span> <span class="n">setup3</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span>
+</pre></div>
+</div>
+<p>Or you can install phono3py on the current directory by</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">python</span> <span class="n">setup3</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">home</span><span class="o">=.</span>
 </pre></div>
 </div>
 <p>In this way to setup, <code class="docutils literal"><span class="pre">PYTHONPATH</span></code> has to be set so that python can
 find harmonic and anharmonic phonopy libraries. If you have been
-already a user of phonopy, the original phonopy version distributed at
-sourceforge.net will be removed from the list of the <code class="docutils literal"><span class="pre">PYTHONPATH</span></code>.
-The <code class="docutils literal"><span class="pre">PYTHONPATH</span></code> setting depends on shells that you use. For example
-in bash or zsh:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">PYTHONPATH</span><span class="o">=~/</span><span class="n">phonopy</span><span class="o">-</span><span class="mf">1.10</span><span class="o">.</span><span class="mi">3</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python</span>
+already a user of phonopy, <code class="docutils literal"><span class="pre">PYTHONPATH</span></code> for the original phonopy
+version has to be removed. The <code class="docutils literal"><span class="pre">PYTHONPATH</span></code> setting depends on
+shells that you use. For example in bash or zsh:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">PYTHONPATH</span><span class="o">=~/</span><span class="n">phonopy</span><span class="o">-</span><span class="mf">1.11</span><span class="o">.</span><span class="mi">1</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python</span>
 </pre></div>
 </div>
 <p>or:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>export PYTHONPATH=$PYTHONPATH:~/phonopy-1.10.3/lib/python
+<div class="highlight-default"><div class="highlight"><pre><span></span>export PYTHONPATH=$PYTHONPATH:~/phonopy-1.11.1/lib/python
 </pre></div>
 </div>
+<p>Phono3py command is installed under <code class="docutils literal"><span class="pre">bin</span></code> directory. The location of
+<code class="docutils literal"><span class="pre">bin</span></code> directory is depending on <code class="docutils literal"><span class="pre">--user</span></code> or <code class="docutils literal"><span class="pre">--home</span></code> scheme when
+running <code class="docutils literal"><span class="pre">setup3.py</span></code>. In the former case, it depends on your
+operation system, e.g., <code class="docutils literal"><span class="pre">~/.local/bin</span></code> for Ubuntu linux and
+<code class="docutils literal"><span class="pre">~/Library/Python/2.7</span></code> for Mac (&amp; python2.7). In the latter case,
+<code class="docutils literal"><span class="pre">bin</span></code> directory is found on the current directory if it was
+<code class="docutils literal"><span class="pre">--home=.</span></code>.</p>
 </div>
 </div>
 

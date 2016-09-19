@@ -29,7 +29,7 @@
     <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="Phono3py v.1.11.1" href="#" />
-    <link rel="next" title="Work flow" href="workflow.html" />
+    <link rel="next" title="Installation" href="install.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -65,22 +65,24 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
-<li class="toctree-l1"><a class="reference internal" href="workflow.html">Work flow</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="workflow.html#calculation-procedure">Calculation procedure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="workflow.html#convergence-check-in-calculation">Convergence check in calculation</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="install.html#system-requirement">System requirement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#multithreading-support">Multithreading support</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-procedure">Installation procedure</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#intermediate-text-files">Intermediate text files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#hdf5-files">HDF5 files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#simple-text-file">Simple text file</a></li>
-<li class="toctree-l2"><a class="reference internal" href="output-files.html#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vasp.html#workflow">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pwscf.html#workflow">Workflow</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options</a><ul>
@@ -90,10 +92,15 @@
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#physical-properties">Physical properties</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="interfaces.html#usage-of-vasp-interface">Usage of VASP interface</a></li>
-<li class="toctree-l2"><a class="reference internal" href="interfaces.html#usage-of-pwscf-interface">Usage of Pwscf interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#intermediate-text-files">Intermediate text files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#hdf5-files">HDF5 files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#simple-text-file">Simple text file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output-files.html#how-to-read-the-results-stored-in-hdf5-files">How to read the results stored in hdf5 files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tips.html#convergence-check-in-calculation">Convergence check in calculation</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
@@ -157,7 +164,7 @@
               
                 
   <li>
-    <a href="workflow.html" title="Next Chapter: Work flow"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Work flow &raquo;</span>
+    <a href="install.html" title="Next Chapter: Installation"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Installation &raquo;</span>
     </a>
   </li>
               
@@ -208,11 +215,13 @@ pwscf are built-in.</p>
 <h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="workflow.html">Work flow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a></li>
-<li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>

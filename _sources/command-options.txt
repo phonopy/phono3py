@@ -51,8 +51,16 @@ calculate 2nd order force constants for the larger supercell size and
 these force calculations have to be done in addition to the usual
 force calculations for 3rd order force constants. 
 
+::
+
+   phono3py -d --dim="2 2 2" --dim_fc2="4 4 4" -c POSCAR-unitcell
+
 After the force calculations, ``--cf2`` option is used to create
 ``FORCES_FC2``.
+
+::
+
+   phono3py --cf2 disp-{001,002}/vasprun.xml
 
 To calculate 2nd order force constants for the larger supercell size,
 ``FORCES_FC2`` and ``disp_fc2.yaml`` are necessary. Whenever running
@@ -61,6 +69,10 @@ option has to be specified. ``fc2.hdf5`` created as a result of
 running phono3py contains the 2nd order force constants with
 larger supercell size. The filename is the same as that created in the
 usual phono3py run without ``--dim_fc2`` option.
+
+::
+
+   phono3py --dim="2 2 2" --dim_fc2="4 4 4" -c POSCAR-unitcell ... (many options)
 
 ``--pa``, ``--primitive_axis``: Transformation matrix to primitive cell
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

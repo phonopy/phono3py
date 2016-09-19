@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Interfaces to calculators &mdash; Phono3py v.1.11.1</title>
+    <title>Pwscf &amp; phono3py calculation &mdash; Phono3py v.1.11.1</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -29,8 +29,9 @@
     <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="Phono3py v.1.11.1" href="index.html" />
-    <link rel="next" title="VASP &amp; phono3py calculation" href="vasp.html" />
-    <link rel="prev" title="Installation" href="install.html" />
+    <link rel="up" title="Interfaces to calculators" href="interfaces.html" />
+    <link rel="next" title="Tips" href="tips.html" />
+    <link rel="prev" title="VASP &amp; phono3py calculation" href="vasp.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -72,18 +73,18 @@
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-procedure">Installation procedure</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Interfaces to calculators</a><ul>
+<li class="toctree-l1 current"><a class="reference internal" href="interfaces.html">Interfaces to calculators</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#calculator-specific-behaviors">Calculator specific behaviors</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Pwscf &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="vasp.html#workflow">Workflow</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="pwscf.html#workflow">Workflow</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Pwscf &amp; phono3py calculation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#workflow">Workflow</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a><ul>
@@ -149,13 +150,8 @@
   <ul class="dropdown-menu localtoc"
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">Interfaces to calculators</a><ul>
-<li><a class="reference internal" href="#calculator-specific-behaviors">Calculator specific behaviors</a><ul>
-<li><a class="reference internal" href="#physical-unit">Physical unit</a></li>
-<li><a class="reference internal" href="#default-unit-cell-file-name">Default unit cell file name</a></li>
-<li><a class="reference internal" href="#default-displacement-distance-created">Default displacement distance created</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#">Pwscf &amp; phono3py calculation</a><ul>
+<li><a class="reference internal" href="#workflow">Workflow</a></li>
 </ul>
 </li>
 </ul>
@@ -167,11 +163,11 @@
               
                 
   <li>
-    <a href="install.html" title="Previous Chapter: Installation"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Installation</span>
+    <a href="vasp.html" title="Previous Chapter: VASP & phono3py calculation"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; VASP & phono3...</span>
     </a>
   </li>
   <li>
-    <a href="vasp.html" title="Next Chapter: VASP & phono3py calculation"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">VASP & phono3... &raquo;</span>
+    <a href="tips.html" title="Next Chapter: Tips"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Tips &raquo;</span>
     </a>
   </li>
               
@@ -199,51 +195,71 @@
   <div class="row">
     <div class="col-md-12 content">
       
-  <div class="section" id="interfaces-to-calculators">
-<span id="calculator-interfaces"></span><h1>Interfaces to calculators<a class="headerlink" href="#interfaces-to-calculators" title="Permalink to this headline">¶</a></h1>
-<p>Currently the built-in interfaces for VASP and Pwscf are
-prepared. VASP is the default interface and no special option is
-necessary to invoke it, but for the other interfaces, each special
-option has to be specified, e.g. <code class="docutils literal"><span class="pre">--pwscf</span></code>.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a></li>
-</ul>
-</div>
-<div class="section" id="calculator-specific-behaviors">
-<h2>Calculator specific behaviors<a class="headerlink" href="#calculator-specific-behaviors" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="physical-unit">
-<h3>Physical unit<a class="headerlink" href="#physical-unit" title="Permalink to this headline">¶</a></h3>
-<p>The interfaces for VASP and Pwscf are built in to the phono3py command.</p>
-<p>For each calculator, each physical unit system is used. The physical
-unit systems used for the calculators are summarized below.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>        <span class="o">|</span> <span class="n">unit</span><span class="o">-</span><span class="n">cell</span>  <span class="n">FORCES_FC3</span>   <span class="n">disp_fc3</span><span class="o">.</span><span class="n">yaml</span>
-<span class="o">-----------------------------------------------</span>
-<span class="n">VASP</span>    <span class="o">|</span> <span class="n">Angstrom</span>   <span class="n">eV</span><span class="o">/</span><span class="n">Angstrom</span>  <span class="n">Angstrom</span>
-<span class="n">Pwscf</span>   <span class="o">|</span> <span class="n">au</span> <span class="p">(</span><span class="n">bohr</span><span class="p">)</span>  <span class="n">Ry</span><span class="o">/</span><span class="n">au</span>        <span class="n">au</span>
+  <div class="section" id="pwscf-phono3py-calculation">
+<span id="pwscf-interface"></span><h1>Pwscf &amp; phono3py calculation<a class="headerlink" href="#pwscf-phono3py-calculation" title="Permalink to this headline">¶</a></h1>
+<p>Quantum espresso package itself has a set of the force constants
+calculation environment based on DFPT. But the document here explains how
+to calculate phonon-phonon interaction and related properties using
+phono3py, i.e., using the finite displacement and supercell approach.</p>
+<p>An example for pwscf is found in the <code class="docutils literal"><span class="pre">example-phono3py/Si-pwscf</span></code> directory.</p>
+<p>To invoke the Pwscf interface, <code class="docutils literal"><span class="pre">--pwscf</span></code> option has to be always
+specified:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">arguments</span><span class="p">]</span>
 </pre></div>
 </div>
-<p><code class="docutils literal"><span class="pre">FORCES_FC2</span></code> and <code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> have the same physical units as
-<code class="docutils literal"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code>, respectively.</p>
-</div>
-<div class="section" id="default-unit-cell-file-name">
-<span id="default-unit-cell-file-name-for-calculator"></span><h3>Default unit cell file name<a class="headerlink" href="#default-unit-cell-file-name" title="Permalink to this headline">¶</a></h3>
-<p>Default unit cell file names are also changed according to the calculators:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">VASP</span>    <span class="o">|</span> <span class="n">POSCAR</span>
-<span class="n">Pwscf</span>   <span class="o">|</span> <span class="n">unitcell</span><span class="o">.</span><span class="ow">in</span>
+<p>When the file name of the unit cell is different from the default one
+(see <a class="reference internal" href="interfaces.html#default-unit-cell-file-name-for-calculator"><span class="std std-ref">Default unit cell file name</span></a>), <code class="docutils literal"><span class="pre">-c</span></code> option
+is used to specify the file name. Pwscf unit cell file parser used in
+phono3py is the same as that in phonopy. It can read
+only limited number of keywords that are shown in the phonopy web site
+(<a class="reference external" href="http://atztogo.github.io/phonopy/pwscf.html#pwscf-interface">http://atztogo.github.io/phonopy/pwscf.html#pwscf-interface</a>).</p>
+<div class="section" id="workflow">
+<span id="pwscf-workflow"></span><h2>Workflow<a class="headerlink" href="#workflow" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic">
+<li><p class="first">Create supercells with displacements</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">Si</span><span class="o">.</span><span class="ow">in</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="default-displacement-distance-created">
-<span id="default-displacement-distance-for-calculator"></span><h3>Default displacement distance created<a class="headerlink" href="#default-displacement-distance-created" title="Permalink to this headline">¶</a></h3>
-<p>Default displacement distances created by <code class="docutils literal"><span class="pre">-d</span></code> option without
-<code class="docutils literal"><span class="pre">--amplitude</span></code> option are respectively as follows:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">VASP</span>    <span class="o">|</span> <span class="mf">0.03</span> <span class="n">Angstrom</span>
-<span class="n">Pwscf</span>   <span class="o">|</span> <span class="mf">0.06</span> <span class="n">au</span> <span class="p">(</span><span class="n">bohr</span><span class="p">)</span>
+<p>In this example, probably 111 different supercells with
+displacements are created. Supercell files (<code class="docutils literal"><span class="pre">supercell-xxx.in</span></code>)
+are created but they contain only the crystal
+structures. Calculation setting has to be added before running the
+calculation.</p>
+</li>
+<li><p class="first">Run Pwscf for supercell force calculations</p>
+<p>Let&#8217;s assume that the calculations have been made in <code class="docutils literal"><span class="pre">disp-xxx</span></code>
+directories with the file names of <code class="docutils literal"><span class="pre">Si-supercell.in</span></code>. Then after
+finishing those calculations, <code class="docutils literal"><span class="pre">Si-supercell.out</span></code> may be created
+in each directory.</p>
+</li>
+<li><p class="first">Collect forces</p>
+<p><code class="docutils literal"><span class="pre">FORCES_FC3</span></code> is obtained with <code class="docutils literal"><span class="pre">--cf3</span></code> options collecting the
+forces on atoms in Pwscf calculation results:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="mi">00001</span><span class="o">/</span><span class="n">Si</span><span class="o">-</span><span class="n">supercell</span><span class="o">.</span><span class="n">out</span> <span class="n">disp</span><span class="o">-</span><span class="mi">00002</span><span class="o">/</span><span class="n">Si</span><span class="o">-</span><span class="n">supercell</span><span class="o">.</span><span class="n">out</span> <span class="o">...</span>
 </pre></div>
 </div>
+<p>or in recent bash or zsh:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="p">{</span><span class="mf">00001.</span><span class="o">.</span><span class="mi">00111</span><span class="p">}</span><span class="o">/</span><span class="n">Si</span><span class="o">-</span><span class="n">supercell</span><span class="o">.</span><span class="n">out</span>
+</pre></div>
 </div>
+<p><code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> is used to create <code class="docutils literal"><span class="pre">FORCES_FC3</span></code>, therefore it
+must exist in current directory.</p>
+</li>
+</ol>
+<ol class="arabic" start="4">
+<li><p class="first">Calculate 3rd and 2nd order force constants</p>
+<p><code class="docutils literal"><span class="pre">fc3.hdf5</span></code> and <code class="docutils literal"><span class="pre">fc2.hdf5</span></code> files are created by:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">Si</span><span class="o">.</span><span class="ow">in</span> <span class="o">--</span><span class="n">sym_fc3r</span> <span class="o">--</span><span class="n">sym_fc2</span> <span class="o">--</span><span class="n">tsym</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Calculate lattice thermal conductivity, e.g., by:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">Si</span><span class="o">.</span><span class="ow">in</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> \
+   <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">br</span>
+</pre></div>
+</div>
+</li>
+</ol>
 </div>
 </div>
 
@@ -260,7 +276,7 @@ unit systems used for the calculators are summarized below.</p>
         <br/>
         
 <div id="sourcelink">
-  <a href="_sources/interfaces.txt"
+  <a href="_sources/pwscf.txt"
      rel="nofollow">Source</a>
 </div>
       

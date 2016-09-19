@@ -64,22 +64,36 @@ distributed at sourceforge.net.
 In the directory, open ``setup3.py`` and set the location of
 lapacke. If you installed lapacke from the package manager, you can
 remove the line related to lapacke. If you compiled it by yourself,
-set the location of it. Then run ``setup3.py`` (for anharmonic
-phonopy)::
+set the location of it. Before running ``setup3.py``, if you install
+phonopy (not phono3py), you need to uninstall phonopy since
+``setup3.py`` installs phonopy, too. Then
+
+::
+
+   % python setup3.py install --user
+
+Or you can install phono3py on the current directory by
+
+::
 
    % python setup3.py install --home=.
 
 In this way to setup, ``PYTHONPATH`` has to be set so that python can
 find harmonic and anharmonic phonopy libraries. If you have been
-already a user of phonopy, the original phonopy version distributed at
-sourceforge.net will be removed from the list of the ``PYTHONPATH``.
-The ``PYTHONPATH`` setting depends on shells that you use. For example
-in bash or zsh::
+already a user of phonopy, ``PYTHONPATH`` for the original phonopy
+version has to be removed. The ``PYTHONPATH`` setting depends on
+shells that you use. For example in bash or zsh::
 
-   export PYTHONPATH=~/phonopy-1.10.3/lib/python
+   export PYTHONPATH=~/phonopy-1.11.1/lib/python
 
 or::
 
-   export PYTHONPATH=$PYTHONPATH:~/phonopy-1.10.3/lib/python
+   export PYTHONPATH=$PYTHONPATH:~/phonopy-1.11.1/lib/python
 
-
+Phono3py command is installed under ``bin`` directory. The location of
+``bin`` directory is depending on ``--user`` or ``--home`` scheme when
+running ``setup3.py``. In the former case, it depends on your
+operation system, e.g., ``~/.local/bin`` for Ubuntu linux and
+``~/Library/Python/2.7`` for Mac (& python2.7). In the latter case,
+``bin`` directory is found on the current directory if it was
+``--home=.``.
