@@ -12,7 +12,7 @@ addons:
     packages:
     # - libopenblas-dev
     - liblapack-dev
-    - liblapacke-dev
+    # - liblapacke-dev
     - libhdf5-serial-dev
 
 before_install:
