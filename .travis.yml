@@ -10,7 +10,7 @@ cache: apt
 addons:
   apt:
     sources:
-    - trusty
+    - r-packages-trusty
     packages:
     # - libopenblas-dev
     - liblapack-dev
