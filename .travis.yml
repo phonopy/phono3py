@@ -10,8 +10,9 @@ cache: apt
 addons:
   apt:
     packages:
-    - libopenblas-dev
+    # - libopenblas-dev
     - liblapack-dev
+    - liblapacke-dev
     - libhdf5-serial-dev
     # - libhdf5-7
     # - libhdf5-dev
@@ -27,7 +28,7 @@ install:
     - pwd
     - git clone https://github.com/atztogo/phonopy.git
     - cd phonopy
-    - git checkout phono3py
+    # - git checkout phono3py
     - ./get_nanoversion.sh
     - cat __nanoversion__.txt
     - mv MANIFEST-phono3py.in MANIFEST.in
