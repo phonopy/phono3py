@@ -1,0 +1,83 @@
+language: python
+sudo: false
+dist: trusty
+
+python:
+    - '2.7'
+    # - '3.5'
+
+cache: apt
+addons:
+  apt:
+    packages:
+    - libopenblas-dev
+    - liblapack-dev
+    - libhdf5-serial-dev
+    # - libhdf5-7
+    # - libhdf5-dev
+
+before_install:
+    - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - export PATH="$HOME/miniconda/bin:$PATH"
+    - conda update --yes conda
+
+install:
+    - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy anaconda-client anaconda-build
+    - pwd
+    - git clone https://github.com/atztogo/phonopy.git
+    - cd phonopy
+    - git checkout phono3py
+    - ./get_nanoversion.sh
+    - cat __nanoversion__.txt
+    - mv MANIFEST-phono3py.in MANIFEST.in
+    - cp ../README.md .
+    - python setup3.py install
+
+# script: "( cd test/phonopy ; for d in * ; do ( cd $d ; for f in test_*.py ; do python $f ; done  ) ; done; cd ../.. )"
+
+deploy:
+    # testing pypi
+    - provider: pypi
+      server: https://testpypi.python.org/pypi
+      skip_cleanup: true
+      distributions: sdist
+      user: atztogo
+      password:
+        secure: "HPl1UC0wAHbWZ/6tNntwN/8lc0Bz+uwxEHuuyijU8hHGHsx2iFtLzXQ4XHUFGAYhU3yhHQ13SEkRbX+RLz6iaUY9Kou3XFFZCxWtSQx3jU9kgsxeIx4ZeuthR9gdrpbdbanBKj4S5kC61Fn4pd6ti2aPTm6j9pXQYHcwC+8K9iehmnIZsyYx5rkB/10PPuT7kGHRknreZmI3MEWP4fVFmHweqF+XTVE+Tyi1/rMjLLstGa5zU8B4CztphCVL2MzrlwrsFxUGaIIv6+dM0eR8AH5XAxrn/Xw975KmceDhxmZRqKd56f3KKpndq7PogLv3n+HKX9ru8Oq98AftJwJNvq7UE3w8GJYpa4Gh1wW9+MVsk+n3gjjulAWanCbgiSYLcDyAK86YrJS4ICvR9dLUrZtzH2LPijlWqcNJojY89W7d5pd0ZJ1Lz7uqYVkgy8ZDSsMCdHewdEimGXuweEU13h05FdMSL0Jmb/FCjBIPqivsOfGVJk0oLwPGaW28YCpm2Z5Ujmkxfu7+3d7pumXI5A6u47XZ1o0k4SMsHzhcLkqHWAXuassaqzB1Y7UmBQhOckF/UYHmw7l+GFRmj2YFfEdnQxz6BmpvrG2sTWyPso+zuBr/LEytRsmqMpQj2T2Kdsr3CxBz2kTCuCI9jeRyRswYPTj+Y/TpmDzzeDafohA="
+      on:
+        repo: atztogo/phono3py
+        branch: rc
+        tags: false
+        # python: 2.7
+
+    # # testing anaconda
+    # - provider: script
+    #   skip_cleanup: true
+    #   script: conda/anaconda_deploy.sh rc $ANACONDA_TOKEN $TRAVIS_BRANCH
+    #   on:
+    #     repo: atztogo/phono3py
+    #     branch: rc
+    #     tags: false
+    #     # python: 2.7
+
+    # production pypi
+    - provider: pypi
+      skip_cleanup: true
+      distributions: sdist
+      user: atztogo
+      password:
+        secure: "escKuUAL8TebIWvfIOnODdGGNiIR080GGY8ZGpD53DFoHm2vbhVW0kKKnAvhSy9HuLm+7UQWIRm+jGqntuJN5htg+q4Vk+IE3BVgDPu2JSF8KBd8Fc2buUF7sDEhURA6enEQT7hrJtL6V1mxrGqRlryVWKRlGbRzIBpYtB/s8fXP2zbHJvDgbIpY2L9ASNlUaTSBQtH7cjddTB756CqApOBpDdB+nb9bN94RkhVO8vRFWyxCHhN4GhEClLESkZoF+DcXWa9/Ov5uAdfLecQtYB8MECNsrUoEBCo0hU+WvuOWOf+IUhEuTjUYpMCcPsZ4LAO9A4HGVFiG+PhEhfikayavqbmW+UW/ib9qOwdIDoa9/7yf5foNvulXFMiAf3s2z8Cxi4Rk6RY/5uPQGGUZbr4DXZl9FH6cF+B5jkbfNyRkM/gx86E+XyFGiNaddV3tgljpSe0DmlsoW/J6c+idm2T/E3VJzgX+gs/LFK8gyANdnqx2slU8sFSbEZpmqzh/mkwD9sDr2cHqmVT5pVbwc44z0GLYHl8yhFAd1FtQpHXgjEqDqauOkvRwOPuiqMIa4EqcNsiyk0oxI89MplbV3V7O/7NI7JK5FQMOUlqOC8hH1/Oi7x9mD3l6iVdofeF86sTIJJoFmLuKEyuxeKDIAVwx4p//H6lMFqnTzAUPkhg="
+      on:
+        branch: master
+        tags: false
+        # python: 2.7  
+
+    # # production anaconda
+    # - provider: script
+    #   skip_cleanup: true
+    #   script: conda/anaconda_deploy.sh main $ANACONDA_TOKEN $TRAVIS_BRANCH
+    #   on:
+    #     branch: master
+    #     tags: false
+    #     # python: 2.7
