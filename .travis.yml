@@ -1,5 +1,5 @@
 language: python
-sudo: true
+sudo: required
 dist: trusty
 
 python:
@@ -9,8 +9,6 @@ python:
 cache: apt
 addons:
   apt:
-    sources:
-    - fpcomplete-trusty
     packages:
     # - libopenblas-dev
     - liblapack-dev
