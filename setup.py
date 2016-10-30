@@ -144,6 +144,7 @@ if __name__ == '__main__':
     # To deploy to pypi by travis-CI
     if os.path.isfile("__nanoversion__.txt"):
         with open('__nanoversion__.txt') as nv:
+            nanoversion = 0
             try :
                 for line in nv:
                     nanoversion = int(line.strip())
