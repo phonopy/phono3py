@@ -4,7 +4,7 @@ git describe --tags --dirty | sed -e 's/-\(.*\)-g.*/+\1/' -e 's/^[vr]//g' > __co
 
 ./get_nanoversion.sh
 
-$PYTHON setup3.py install
+$PYTHON setup.py install
 
 # Add more build steps here, if they are necessary.
 

@@ -30,6 +30,7 @@ requirements:
     - matplotlib
     - pyyaml
     - h5py
+    - phonopy
 
   run:
     - python
@@ -37,6 +38,7 @@ requirements:
     - matplotlib
     - pyyaml
     - h5py
+    - phonopy
 
 test:
   # Python imports
@@ -61,7 +63,7 @@ test:
 about:
   home: https://atztogo.github.io/phono3py/
   license: BSD
-  summary: 'Phonon calculation with finite displacements method.'
+  summary: 'A simulation package of phonon-phonon interaction related properties'
 
 # See
 # http://docs.continuum.io/conda/build.html for
