@@ -30,7 +30,7 @@ requirements:
     - matplotlib
     - pyyaml
     - h5py
-    - phonopy
+    # - phonopy (no way was found to set channel atztogo)
 
   run:
     - python
@@ -38,12 +38,12 @@ requirements:
     - matplotlib
     - pyyaml
     - h5py
-    - phonopy
+    # - phonopy (no way was found to set channel atztogo)
 
 test:
   # Python imports
   imports:
-    - phono3py
+    - anharmonic
 
 #  commands:
 #    # You can put test commands to be run here.  Use this to test that the
