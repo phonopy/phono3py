@@ -30,7 +30,7 @@ requirements:
     - matplotlib
     - pyyaml
     - h5py
-    # - phonopy (no way was found to set channel atztogo)
+    - phonopy
 
   run:
     - python
@@ -38,7 +38,7 @@ requirements:
     - matplotlib
     - pyyaml
     - h5py
-    # - phonopy (no way was found to set channel atztogo)
+    - phonopy
 
 test:
   # Python imports
