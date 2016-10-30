@@ -21,7 +21,8 @@ before_install:
     - conda update --yes conda
 
 install:
-    - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy h5py pyyaml matplotlib anaconda-client anaconda-build
+    # - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy h5py pyyaml matplotlib anaconda-client anaconda-build
+    - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy h5py pyyaml matplotlib
     - pwd
     - ./get_nanoversion.sh
     - cat __nanoversion__.txt
@@ -44,15 +45,15 @@ deploy:
         tags: false
         # python: 2.7
 
-    # # testing anaconda
-    # - provider: script
-    #   skip_cleanup: true
-    #   script: conda/anaconda_deploy.sh rc $ANACONDA_TOKEN $TRAVIS_BRANCH
-    #   on:
-    #     repo: atztogo/phono3py
-    #     branch: rc
-    #     tags: false
-    #     # python: 2.7
+    # testing anaconda
+    - provider: script
+      skip_cleanup: true
+      script: conda/anaconda_deploy.sh rc $ANACONDA_TOKEN $TRAVIS_BRANCH
+      on:
+        repo: atztogo/phono3py
+        branch: rc
+        tags: false
+        # python: 2.7
 
     # production pypi
     - provider: pypi
@@ -66,12 +67,12 @@ deploy:
         tags: false
         # python: 2.7  
 
-    # # production anaconda
-    # - provider: script
-    #   skip_cleanup: true
-    #   script: conda/anaconda_deploy.sh main $ANACONDA_TOKEN $TRAVIS_BRANCH
-    #   on:
-    #     repo: atztogo/phono3py
-    #     branch: master
-    #     tags: false
-    #     # python: 2.7
+    # production anaconda
+    - provider: script
+      skip_cleanup: true
+      script: conda/anaconda_deploy.sh main $ANACONDA_TOKEN $TRAVIS_BRANCH
+      on:
+        repo: atztogo/phono3py
+        branch: master
+        tags: false
+        # python: 2.7
