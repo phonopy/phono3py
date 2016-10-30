@@ -1,40 +1,33 @@
 language: python
-sudo: false
+sudo: required
 dist: trusty
 
 python:
     - '2.7'
-    # - '3.5'
+    - '3.5'
 
 cache: apt
 addons:
   apt:
     packages:
-    - libopenblas-dev
     - liblapack-dev
+    - liblapacke-dev
     - libhdf5-serial-dev
-    # - libhdf5-7
-    # - libhdf5-dev
 
 before_install:
-    - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+    - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH="$HOME/miniconda/bin:$PATH"
     - conda update --yes conda
 
 install:
-    - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy anaconda-client anaconda-build
+    - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy h5py pyyaml matplotlib anaconda-client anaconda-build
     - pwd
-    - git clone https://github.com/atztogo/phonopy.git
-    - cd phonopy
-    - git checkout phono3py
     - ./get_nanoversion.sh
     - cat __nanoversion__.txt
-    - mv MANIFEST-phono3py.in MANIFEST.in
-    - cp ../README.md .
-    - python setup3.py install
+    - python setup.py install
 
-# script: "( cd test/phonopy ; for d in * ; do ( cd $d ; for f in test_*.py ; do python $f ; done  ) ; done; cd ../.. )"
+script: "( cd test/anharmonic ; for d in * ; do ( cd $d ; for f in test_*.py ; do python $f ; done  ) ; done; cd ../.. )"
 
 deploy:
     # testing pypi
@@ -44,22 +37,22 @@ deploy:
       distributions: sdist
       user: atztogo
       password:
-        secure: "HPl1UC0wAHbWZ/6tNntwN/8lc0Bz+uwxEHuuyijU8hHGHsx2iFtLzXQ4XHUFGAYhU3yhHQ13SEkRbX+RLz6iaUY9Kou3XFFZCxWtSQx3jU9kgsxeIx4ZeuthR9gdrpbdbanBKj4S5kC61Fn4pd6ti2aPTm6j9pXQYHcwC+8K9iehmnIZsyYx5rkB/10PPuT7kGHRknreZmI3MEWP4fVFmHweqF+XTVE+Tyi1/rMjLLstGa5zU8B4CztphCVL2MzrlwrsFxUGaIIv6+dM0eR8AH5XAxrn/Xw975KmceDhxmZRqKd56f3KKpndq7PogLv3n+HKX9ru8Oq98AftJwJNvq7UE3w8GJYpa4Gh1wW9+MVsk+n3gjjulAWanCbgiSYLcDyAK86YrJS4ICvR9dLUrZtzH2LPijlWqcNJojY89W7d5pd0ZJ1Lz7uqYVkgy8ZDSsMCdHewdEimGXuweEU13h05FdMSL0Jmb/FCjBIPqivsOfGVJk0oLwPGaW28YCpm2Z5Ujmkxfu7+3d7pumXI5A6u47XZ1o0k4SMsHzhcLkqHWAXuassaqzB1Y7UmBQhOckF/UYHmw7l+GFRmj2YFfEdnQxz6BmpvrG2sTWyPso+zuBr/LEytRsmqMpQj2T2Kdsr3CxBz2kTCuCI9jeRyRswYPTj+Y/TpmDzzeDafohA="
+        secure: "NiGCFUvUZALME/raOyq5AspTc0sCBA+G7frAIAWLsNOk7JL25UIu/T4ufWHEpvssvXZ/zntEVKEnQo8kQYQfsfDtLccdVFKJ6jzKtqbL4s2+m8d61b+Ezu9mK1XM/ImiIkvhCD+j8jtzUbN24/qYhGgR8YeXxwfCJWU7SKNueTiyBT+xOoO4gswoRpA4Ztutzows0rKX1K/MBaKF9RGotIHCIay4ryWJUg9KWcp2rKGJeDiuTK81kSyZA1MV3x05PgnPH+gxTy8XbBP0Bk71FZUpkpQ7+UsmsUSLB9dlSgkhziYuDHb4Y48YO2XqHU7bi+pElUs660eez8m8IC5dUhjY3RPDQOSb3gpc1N56/RqfMugUyelEqfXaSCPBrXfhsvutwibA4ITNh4f86jylWFUQukHiK95NCVrvMDkNcFyNZVNHsWUIBWfCXPu4fmykOb4PR1eC1kZsuo0h3VTSzMn7vtFXbedt3VtaZMNEdbBMgKxoPwcE2DPBzZDZdSbVA8QuvmbwjGpxHNISssNzLhCVWbXSbjo2BntHzMIodz36rKQwqHqw58yUBNRZKLT1/0D2qGSSWQ/r4W6w2y7XoJXyJOIGRaAzTEWmGMZ7OHO1XON9cT8zOmikC9XhmC34mhzRrKmPx/5VMyzvM05wkCpNynx0SZc6w9wmIxhFl3Q="
       on:
         repo: atztogo/phono3py
         branch: rc
         tags: false
         # python: 2.7
 
-    # # testing anaconda
-    # - provider: script
-    #   skip_cleanup: true
-    #   script: conda/anaconda_deploy.sh rc $ANACONDA_TOKEN $TRAVIS_BRANCH
-    #   on:
-    #     repo: atztogo/phono3py
-    #     branch: rc
-    #     tags: false
-    #     # python: 2.7
+    # testing anaconda
+    - provider: script
+      skip_cleanup: true
+      script: conda/anaconda_deploy.sh rc $ANACONDA_TOKEN $TRAVIS_BRANCH
+      on:
+        repo: atztogo/phono3py
+        branch: rc
+        tags: false
+        # python: 2.7
 
     # production pypi
     - provider: pypi
@@ -67,17 +60,18 @@ deploy:
       distributions: sdist
       user: atztogo
       password:
-        secure: "escKuUAL8TebIWvfIOnODdGGNiIR080GGY8ZGpD53DFoHm2vbhVW0kKKnAvhSy9HuLm+7UQWIRm+jGqntuJN5htg+q4Vk+IE3BVgDPu2JSF8KBd8Fc2buUF7sDEhURA6enEQT7hrJtL6V1mxrGqRlryVWKRlGbRzIBpYtB/s8fXP2zbHJvDgbIpY2L9ASNlUaTSBQtH7cjddTB756CqApOBpDdB+nb9bN94RkhVO8vRFWyxCHhN4GhEClLESkZoF+DcXWa9/Ov5uAdfLecQtYB8MECNsrUoEBCo0hU+WvuOWOf+IUhEuTjUYpMCcPsZ4LAO9A4HGVFiG+PhEhfikayavqbmW+UW/ib9qOwdIDoa9/7yf5foNvulXFMiAf3s2z8Cxi4Rk6RY/5uPQGGUZbr4DXZl9FH6cF+B5jkbfNyRkM/gx86E+XyFGiNaddV3tgljpSe0DmlsoW/J6c+idm2T/E3VJzgX+gs/LFK8gyANdnqx2slU8sFSbEZpmqzh/mkwD9sDr2cHqmVT5pVbwc44z0GLYHl8yhFAd1FtQpHXgjEqDqauOkvRwOPuiqMIa4EqcNsiyk0oxI89MplbV3V7O/7NI7JK5FQMOUlqOC8hH1/Oi7x9mD3l6iVdofeF86sTIJJoFmLuKEyuxeKDIAVwx4p//H6lMFqnTzAUPkhg="
+        secure: "lqT3bcoiVePhx642M/dZBsnd8WUsYush58IGB2EiCu60FOhwfFJtSNEoJoKicGy54QiQ/Ho6xTcshf398CFSE2cVfW+YrTUtUaObOzFNLbmbvy5tnuvDgK/56T5jTCAVQaD68qDNR0O5qlnw/Xe8ZKoKTpoFwfnIv3brpokUFyMFcECuCtv2sNrVSF3d89S7jd9ahpjkvu0udA4jXKdwLMbjOmrpK7v7jkCtNXdJFLzprB4Y8tNX08TMovWzmrHk8YOx6v2YgNxW4/bqJbe+oGofpj9RcXfYdiXY797nz7D9b7BcRi1NMWoiMqOzpnlPEccQqhqOOxddkajiXHCyJPYJ9zWj3xuC2D50KdtGb5tm+qDI3EqzIiQv0akXE3nvMPinOQkjlUN/1/HmS5s99YMSg9GvmL4bPnu3phBjoND23IMPED4rra9IToeozPHaQGRoBvLNGAl28aAzuIP0JHmHQ26BNmOvOa+CQs1SbMytv570FMi6pN/vMgaMT71uXJWsIDb9aDG6V1snsTLIbwM/TYTLFM+2OGBN86nlmWQs0V46K2kPHcUbEv8GD148j1DTS4H0wDmc8pJSHqeSI2h35pbVbZJa6bk68V3Bhre/xo+zjxwJIkOATELbQCeFXIA059+hF+tsoQ0Jnd6RrbzP3tISdVThs3u7oSoddIE="
       on:
         branch: master
         tags: false
         # python: 2.7  
 
-    # # production anaconda
-    # - provider: script
-    #   skip_cleanup: true
-    #   script: conda/anaconda_deploy.sh main $ANACONDA_TOKEN $TRAVIS_BRANCH
-    #   on:
-    #     branch: master
-    #     tags: false
-    #     # python: 2.7
+    # production anaconda
+    - provider: script
+      skip_cleanup: true
+      script: conda/anaconda_deploy.sh main $ANACONDA_TOKEN $TRAVIS_BRANCH
+      on:
+        repo: atztogo/phono3py
+        branch: master
+        tags: false
+        # python: 2.7
