@@ -8,8 +8,8 @@ from phonopy.harmonic.force_constants import (similarity_transformation,
                                               get_positions_sent_by_rot_inv,
                                               set_translational_invariance)
 from phonopy.harmonic.dynamical_matrix import get_equivalent_smallest_vectors
-from anharmonic.phonon3.displacement_fc3 import (get_reduced_site_symmetry,
-                                                 get_bond_symmetry)
+from phono3py.phonon3.displacement_fc3 import (get_reduced_site_symmetry,
+                                               get_bond_symmetry)
 
 def get_fc3(supercell,
             disp_dataset,
@@ -148,7 +148,7 @@ def distribute_fc3(fc3_least_atoms,
                 sys.stdout.flush()
 
             try:
-                import anharmonic._phono3py as phono3c
+                import phono3py._phono3py as phono3c
                 phono3c.distribute_fc3(fc3,
                                        fc3_least_atoms,
                                        i,
@@ -168,7 +168,7 @@ def distribute_fc3(fc3_least_atoms,
 
 def set_permutation_symmetry_fc3(fc3):
     try:
-        import anharmonic._phono3py as phono3c
+        import phono3py._phono3py as phono3c
         phono3c.permutation_symmetry_fc3(fc3)
     except ImportError:
         num_atom = fc3.shape[0]

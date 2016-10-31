@@ -5,14 +5,14 @@ from phonopy.interface.vasp import read_vasp
 from phonopy.file_IO import parse_BORN
 from phonopy.units import Bohr, Hartree
 from phonopy.harmonic.force_constants import show_drift_force_constants
-from anharmonic.phonon3.fc3 import show_drift_fc3
-from anharmonic.phonon3 import Phono3py
-from anharmonic.file_IO import (parse_disp_fc3_yaml,
-                                parse_disp_fc2_yaml,
-                                parse_FORCES_FC2,
-                                parse_FORCES_FC3,
-                                read_fc3_from_hdf5,
-                                read_fc2_from_hdf5)
+from phono3py.phonon3.fc3 import show_drift_fc3
+from phono3py.phonon3 import Phono3py
+from phono3py.file_IO import (parse_disp_fc3_yaml,
+                              parse_disp_fc2_yaml,
+                              parse_FORCES_FC2,
+                              parse_FORCES_FC3,
+                              read_fc3_from_hdf5,
+                              read_fc2_from_hdf5)
 
 cell = read_vasp("POSCAR-unitcell")
 mesh = [11, 11, 11]

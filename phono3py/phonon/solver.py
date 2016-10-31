@@ -7,7 +7,7 @@ def get_phonons_at_qpoints(frequencies,
                            frequency_factor_to_THz,
                            nac_q_direction=None,
                            lapack_zheev_uplo='L'):
-    import anharmonic._lapackepy as lapackepy
+    import phono3py._lapackepy as lapackepy
 
     (svecs,
      multiplicity,
@@ -45,7 +45,7 @@ def set_phonon_c(dm,
                  frequency_factor_to_THz,
                  nac_q_direction,
                  lapack_zheev_uplo):
-    import anharmonic._lapackepy as lapackepy
+    import phono3py._lapackepy as lapackepy
 
     (svecs,
      multiplicity,

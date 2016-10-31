@@ -2,14 +2,14 @@ import sys
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.units import THz, Angstrom
-from anharmonic.phonon3.conductivity import Conductivity
-from anharmonic.phonon3.collision_matrix import CollisionMatrix
-from anharmonic.phonon3.triplets import (get_grid_points_by_rotations,
-                                         get_BZ_grid_points_by_rotations)
-from anharmonic.file_IO import (write_kappa_to_hdf5,
-                                write_collision_to_hdf5,
-                                read_collision_from_hdf5,
-                                write_collision_eigenvalues_to_hdf5)
+from phono3py.phonon3.conductivity import Conductivity
+from phono3py.phonon3.collision_matrix import CollisionMatrix
+from phono3py.phonon3.triplets import (get_grid_points_by_rotations,
+                                       get_BZ_grid_points_by_rotations)
+from phono3py.file_IO import (write_kappa_to_hdf5,
+                              write_collision_to_hdf5,
+                              read_collision_from_hdf5,
+                              write_collision_eigenvalues_to_hdf5)
 from phonopy.units import THzToEv, Kb
 
 def get_thermal_conductivity_LBTE(
@@ -614,7 +614,7 @@ class Conductivity_LBTE(Conductivity):
         return weights
 
     def _symmetrize_collision_matrix(self):
-        import anharmonic._phono3py as phono3c
+        import phono3py._phono3py as phono3c
         phono3c.symmetrize_collision_matrix(self._collision_matrix)
 
         # Average matrix elements belonging to degenerate bands
@@ -646,7 +646,7 @@ class Conductivity_LBTE(Conductivity):
                     col_mat[:, :, :, :, :, i, j, :] = sum_col
         
     def _symmetrize_reducible_collision_matrix(self):
-        import anharmonic._phono3py as phono3c
+        import phono3py._phono3py as phono3c
         phono3c.symmetrize_collision_matrix(self._collision_matrix)
         
         # Average matrix elements belonging to degenerate bands
@@ -722,12 +722,12 @@ class Conductivity_LBTE(Conductivity):
             v[:] = e * v
             v[:] = np.dot(v, v.T) # inv_col
         elif method == 1:
-            import anharmonic._phono3py as phono3c
+            import phono3py._phono3py as phono3c
             w = np.zeros(num_ir_grid_points * num_band * 3, dtype='double')
             phono3c.inverse_collision_matrix(
                 self._collision_matrix, w, i_sigma, i_temp, self._pinv_cutoff)
         elif method == 2:
-            import anharmonic._phono3py as phono3c
+            import phono3py._phono3py as phono3c
             w = np.zeros(num_ir_grid_points * num_band * 3, dtype='double')
             phono3c.inverse_collision_matrix_libflame(
                 self._collision_matrix, w, i_sigma, i_temp, self._pinv_cutoff)

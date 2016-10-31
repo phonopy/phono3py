@@ -8,23 +8,23 @@ from phonopy.harmonic.force_constants import (get_fc2, set_permutation_symmetry,
 from phonopy.harmonic.displacement import get_least_displacements
 from phonopy.harmonic.displacement import direction_to_displacement as \
      direction_to_displacement_fc2
-from anharmonic.phonon3.imag_self_energy import (get_imag_self_energy,
-                                                 write_imag_self_energy,
-                                                 get_linewidth,
-                                                 write_linewidth)
-from anharmonic.phonon3.frequency_shift import get_frequency_shift
-from anharmonic.phonon3.interaction import Interaction
-from anharmonic.phonon3.conductivity_RTA import get_thermal_conductivity_RTA
-from anharmonic.phonon3.conductivity_LBTE import get_thermal_conductivity_LBTE
-from anharmonic.phonon3.joint_dos import JointDos
-from anharmonic.phonon3.displacement_fc3 import (get_third_order_displacements,
-                                                 direction_to_displacement)
-from anharmonic.file_IO import write_joint_dos, write_phonon_to_hdf5
-from anharmonic.other.isotope import Isotope
-from anharmonic.phonon3.fc3 import (get_fc3,
-                                    set_permutation_symmetry_fc3,
-                                    set_translational_invariance_fc3,
-                                    cutoff_fc3_by_zero)
+from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
+                                               write_imag_self_energy,
+                                               get_linewidth,
+                                               write_linewidth)
+from phono3py.phonon3.frequency_shift import get_frequency_shift
+from phono3py.phonon3.interaction import Interaction
+from phono3py.phonon3.conductivity_RTA import get_thermal_conductivity_RTA
+from phono3py.phonon3.conductivity_LBTE import get_thermal_conductivity_LBTE
+from phono3py.phonon3.joint_dos import JointDos
+from phono3py.phonon3.displacement_fc3 import (get_third_order_displacements,
+                                               direction_to_displacement)
+from phono3py.file_IO import write_joint_dos, write_phonon_to_hdf5
+from phono3py.other.isotope import Isotope
+from phono3py.phonon3.fc3 import (get_fc3,
+                                  set_permutation_symmetry_fc3,
+                                  set_translational_invariance_fc3,
+                                  cutoff_fc3_by_zero)
 
 class Phono3py(object):
     def __init__(self,

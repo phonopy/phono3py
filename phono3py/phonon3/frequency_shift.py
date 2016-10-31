@@ -1,8 +1,8 @@
 import numpy as np
 from phonopy.units import THzToEv, Kb, VaspToTHz, Hbar, EV, Angstrom, THz, AMU
 from phonopy.phonon.degeneracy import degenerate_sets
-from anharmonic.phonon3.triplets import occupation
-from anharmonic.file_IO import write_frequency_shift
+from phono3py.phonon3.triplets import occupation
+from phono3py.file_IO import write_frequency_shift
 
 def get_frequency_shift(interaction,
                         grid_points,
@@ -149,7 +149,7 @@ class FrequencyShift(object):
             self._run_py_with_band_indices()
     
     def _run_c_with_band_indices(self):
-        import anharmonic._phono3py as phono3c
+        import phono3py._phono3py as phono3c
         phono3c.frequency_shift_at_bands(self._frequency_shifts,
                                          self._pp_strength,
                                          self._triplets_at_q,

@@ -1,11 +1,11 @@
 import numpy as np
 from phonopy.units import VaspToTHz, Hbar, EV, Angstrom, THz, AMU
 from phonopy.phonon.degeneracy import degenerate_sets
-from anharmonic.phonon3.triplets import (get_triplets_integration_weights,
-                                         gaussian, occupation)
-from anharmonic.file_IO import (write_gamma_detail_to_hdf5,
-                                write_linewidth_at_grid_point,
-                                write_imag_self_energy_at_grid_point)
+from phono3py.phonon3.triplets import (get_triplets_integration_weights,
+                                       gaussian, occupation)
+from phono3py.file_IO import (write_gamma_detail_to_hdf5,
+                              write_linewidth_at_grid_point,
+                              write_imag_self_energy_at_grid_point)
 
 def get_imag_self_energy(interaction,
                          grid_points,
@@ -494,7 +494,7 @@ class ImagSelfEnergy(object):
                 self._run_py_with_frequency_points()
 
     def _run_c_with_band_indices(self):
-        import anharmonic._phono3py as phono3c
+        import phono3py._phono3py as phono3c
         phono3c.imag_self_energy_at_bands(self._imag_self_energy,
                                           self._pp_strength,
                                           self._triplets_at_q,
@@ -507,7 +507,7 @@ class ImagSelfEnergy(object):
                                           self._cutoff_frequency)
 
     def _run_c_with_band_indices_with_g(self):
-        import anharmonic._phono3py as phono3c
+        import phono3py._phono3py as phono3c
 
         if self._g_zero is None:
             _g_zero = np.zeros(self._pp_strength.shape,
@@ -527,7 +527,7 @@ class ImagSelfEnergy(object):
                                         self._cutoff_frequency)
 
     def _run_c_detailed_with_band_indices_with_g(self):
-        import anharmonic._phono3py as phono3c
+        import phono3py._phono3py as phono3c
         phono3c.detailed_imag_self_energy_with_g(
             self._detailed_imag_self_energy,
             self._pp_strength,
@@ -539,7 +539,7 @@ class ImagSelfEnergy(object):
             self._cutoff_frequency)
 
     def _run_c_with_frequency_points(self):
-        import anharmonic._phono3py as phono3c
+        import phono3py._phono3py as phono3c
         ise_at_f = np.zeros(self._imag_self_energy.shape[1], dtype='double')
         for i, fpoint in enumerate(self._frequency_points):
             phono3c.imag_self_energy(ise_at_f,
@@ -555,7 +555,7 @@ class ImagSelfEnergy(object):
             self._imag_self_energy[i] = ise_at_f
 
     def _run_c_with_frequency_points_with_g(self):
-        import anharmonic._phono3py as phono3c
+        import phono3py._phono3py as phono3c
         num_band0 = self._pp_strength.shape[1]
         g_shape = list(self._g.shape)
         g_shape[2] = num_band0
@@ -579,7 +579,7 @@ class ImagSelfEnergy(object):
             self._imag_self_energy[i] = ise_at_f
 
     def _run_c_detailed_with_frequency_points_with_g(self):
-        import anharmonic._phono3py as phono3c
+        import phono3py._phono3py as phono3c
         g = np.zeros((2,) + self._pp_strength.shape, dtype='double')
         detailed_ise_at_f = np.zeros(self._detailed_imag_self_energy.shape[1:5],
                                      dtype='double')

@@ -26,7 +26,7 @@ install:
     - cat __nanoversion__.txt
     - python setup.py install
 
-script: "( cd test/anharmonic ; for d in * ; do ( cd $d ; for f in test_*.py ; do python $f ; done  ) ; done; cd ../.. )"
+script: "( cd test/phono3py ; for d in * ; do ( cd $d ; for f in test_*.py ; do python $f ; done  ) ; done; cd ../.. )"
 
 deploy:
     # testing pypi

@@ -38,25 +38,25 @@ import sys
 import numpy as np
 from phonopy.interface.vasp import read_vasp
 from phonopy.file_IO import parse_BORN, write_FORCE_SETS, parse_FORCE_SETS
-from anharmonic.file_IO import read_phonon_from_hdf5
+from phono3py.file_IO import read_phonon_from_hdf5
 from phonopy.units import VaspToTHz, PwscfToTHz, Bohr, Rydberg, Hartree
 from phonopy.version import __version__
 from phonopy.interface import read_crystal_structure
-from anharmonic.file_IO import (parse_disp_fc2_yaml, parse_disp_fc3_yaml,
-                                parse_FORCES_FC2, parse_FORCES_FC3,
-                                write_FORCES_FC2, write_FORCES_FC3)
-from anharmonic.cui.settings import Phono3pyConfParser
-from anharmonic.phonon3 import (Phono3py, Phono3pyJointDos, Phono3pyIsotope)
-from anharmonic.phonon3.gruneisen import get_gruneisen_parameters
-from anharmonic.cui.phono3py_argparse import get_parser
-from anharmonic.cui.show_log import (print_phono3py, print_version, print_end,
-                                     print_error, print_error_message,
-                                     show_phono3py_settings,
-                                     show_phono3py_cells, file_exists)
-from anharmonic.cui.triplets_info import write_grid_points, show_num_triplets
-from anharmonic.cui.translate_settings import get_phono3py_configurations
-from anharmonic.cui.create_supercells import create_phono3py_supercells
-from anharmonic.cui.create_force_constants import create_phono3py_force_constants
+from phono3py.file_IO import (parse_disp_fc2_yaml, parse_disp_fc3_yaml,
+                              parse_FORCES_FC2, parse_FORCES_FC3,
+                              write_FORCES_FC2, write_FORCES_FC3)
+from phono3py.cui.settings import Phono3pyConfParser
+from phono3py.phonon3 import (Phono3py, Phono3pyJointDos, Phono3pyIsotope)
+from phono3py.phonon3.gruneisen import get_gruneisen_parameters
+from phono3py.cui.phono3py_argparse import get_parser
+from phono3py.cui.show_log import (print_phono3py, print_version, print_end,
+                                   print_error, print_error_message,
+                                   show_phono3py_settings,
+                                   show_phono3py_cells, file_exists)
+from phono3py.cui.triplets_info import write_grid_points, show_num_triplets
+from phono3py.cui.translate_settings import get_phono3py_configurations
+from phono3py.cui.create_supercells import create_phono3py_supercells
+from phono3py.cui.create_force_constants import create_phono3py_force_constants
 
 phono3py_version = __version__
 
