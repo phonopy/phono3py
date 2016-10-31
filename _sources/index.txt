@@ -15,10 +15,6 @@ The theoretical background is summarized in the paper found at
 http://dx.doi.org/10.1103/PhysRevB.91.094306 or the draft in arxiv at
 http://arxiv.org/abs/1501.00691 .
 
-Examples are found in ``example-phono3py`` directory. Phono3py API
-example ``Si.py`` is found in ``example-phono3py/Si`` directory, but
-the API document has not yet written.
-
 :ref:`Interfaces to calculators <calculator_interfaces>` for VASP and
 pwscf are built-in.
 
@@ -30,6 +26,7 @@ Documentation
    :maxdepth: 1
       
    install
+   examples
    interfaces
    vasp
    pwscf
