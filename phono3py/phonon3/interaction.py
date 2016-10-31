@@ -2,12 +2,12 @@ import numpy as np
 from phonopy.harmonic.dynamical_matrix import (get_smallest_vectors,
                                                get_dynamical_matrix)
 from phonopy.units import VaspToTHz, Hbar, EV, Angstrom, THz, AMU, PlanckConstant
-from anharmonic.phonon.solver import set_phonon_c, set_phonon_py
-from anharmonic.phonon3.real_to_reciprocal import RealToReciprocal
-from anharmonic.phonon3.reciprocal_to_normal import ReciprocalToNormal
-from anharmonic.phonon3.triplets import (get_triplets_at_q,
-                                         get_nosym_triplets_at_q,
-                                         get_bz_grid_address)
+from phono3py.phonon.solver import set_phonon_c, set_phonon_py
+from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
+from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
+from phono3py.phonon3.triplets import (get_triplets_at_q,
+                                       get_nosym_triplets_at_q,
+                                       get_bz_grid_address)
 
 class Interaction(object):
     def __init__(self,
@@ -240,7 +240,7 @@ class Interaction(object):
         return np.dot(w, v_sum) / num_band ** 2
             
     def _run_c(self, g_zero=None):
-        import anharmonic._phono3py as phono3c
+        import phono3py._phono3py as phono3c
         
         num_band = self._primitive.get_number_of_atoms() * 3
         svecs, multiplicity = get_smallest_vectors(self._supercell,

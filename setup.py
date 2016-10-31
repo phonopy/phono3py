@@ -100,18 +100,18 @@ if platform.system() == 'Darwin':
 
 extra_link_args += extra_link_args_lapacke
 extension_phono3py = Extension(
-    'anharmonic._phono3py',
+    'phono3py._phono3py',
     include_dirs=include_dirs,
     extra_compile_args=extra_compile_args,
     extra_link_args=extra_link_args,
     define_macros=define_macros,
     sources=sources)
 
-packages_phono3py = ['anharmonic',
-                     'anharmonic.cui',
-                     'anharmonic.other',
-                     'anharmonic.phonon',
-                     'anharmonic.phonon3']
+packages_phono3py = ['phono3py',
+                     'phono3py.cui',
+                     'phono3py.other',
+                     'phono3py.phonon',
+                     'phono3py.phonon3']
 scripts_phono3py = ['scripts/phono3py',
                     'scripts/kaccum',
                     'scripts/gaccum']
@@ -127,7 +127,7 @@ sources_lapackepy = ['c/_lapackepy.c',
                      'c/harmonic/phonoc_utils.c',
                      'c/harmonic/lapack_wrapper.c']
 extension_lapackepy = Extension(
-    'anharmonic._lapackepy',
+    'phono3py._lapackepy',
     extra_compile_args=extra_compile_args,
     extra_link_args=extra_link_args,
     include_dirs=include_dirs,
@@ -135,7 +135,7 @@ extension_lapackepy = Extension(
 
 if __name__ == '__main__':
     version_nums = [None, None, None]
-    with open("anharmonic/version.py") as w:
+    with open("phono3py/version.py") as w:
         for line in w:
             if "__version__" in line:
                 for i, num in enumerate(line.split()[2].strip('\"').split('.')):

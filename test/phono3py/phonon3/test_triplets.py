@@ -2,8 +2,8 @@ import unittest
 import numpy as np
 
 from phonopy.interface.phonopy_yaml import get_unitcell_from_phonopy_yaml
-from anharmonic.phonon3.triplets import (get_grid_point_from_address,
-                                         get_grid_point_from_address_py)
+from phono3py.phonon3.triplets import (get_grid_point_from_address,
+                                       get_grid_point_from_address_py)
 
 class TestTriplets(unittest.TestCase):
 

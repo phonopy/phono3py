@@ -2,13 +2,13 @@ import sys
 import numpy as np
 from phonopy.structure.symmetry import Symmetry
 from phonopy.units import VaspToTHz
-from anharmonic.phonon3.triplets import (get_triplets_at_q,
-                                         get_nosym_triplets_at_q,
-                                         get_tetrahedra_vertices,
-                                         get_triplets_integration_weights,
-                                         occupation)
-from anharmonic.phonon3.interaction import set_phonon_c
-from anharmonic.phonon3.imag_self_energy import get_frequency_points
+from phono3py.phonon3.triplets import (get_triplets_at_q,
+                                       get_nosym_triplets_at_q,
+                                       get_tetrahedra_vertices,
+                                       get_triplets_integration_weights,
+                                       occupation)
+from phono3py.phonon3.interaction import set_phonon_c
+from phono3py.phonon3.imag_self_energy import get_frequency_points
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
@@ -74,7 +74,7 @@ class JointDos(object):
 
     def run(self):
         try:
-            import anharmonic._phono3py as phono3c
+            import phono3py._phono3py as phono3c
             self._run_c()
         except ImportError:
             print("Joint density of states in python is not implemented.")

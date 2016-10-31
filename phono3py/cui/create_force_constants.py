@@ -34,17 +34,17 @@
 
 import sys
 from phonopy.harmonic.force_constants import show_drift_force_constants
-from anharmonic.phonon3.fc3 import show_drift_fc3
-from anharmonic.file_IO import (parse_disp_fc3_yaml,
-                                parse_disp_fc2_yaml,
-                                parse_FORCES_FC2,
-                                parse_FORCES_FC3,
-                                read_fc3_from_hdf5,
-                                read_fc2_from_hdf5,
-                                write_fc3_to_hdf5,
-                                write_fc2_to_hdf5)
-from anharmonic.cui.show_log import (show_phono3py_force_constants_settings,
-                                     print_error, file_exists)
+from phono3py.phonon3.fc3 import show_drift_fc3
+from phono3py.file_IO import (parse_disp_fc3_yaml,
+                              parse_disp_fc2_yaml,
+                              parse_FORCES_FC2,
+                              parse_FORCES_FC3,
+                              read_fc3_from_hdf5,
+                              read_fc2_from_hdf5,
+                              write_fc3_to_hdf5,
+                              write_fc2_to_hdf5)
+from phono3py.cui.show_log import (show_phono3py_force_constants_settings,
+                                   print_error, file_exists)
 
 def create_phono3py_force_constants(phono3py,
                                     phonon_supercell_matrix,

@@ -33,8 +33,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
-from anharmonic.phonon3 import Phono3py
-from anharmonic.file_IO import write_disp_fc3_yaml, write_disp_fc2_yaml
+from phono3py.phonon3 import Phono3py
+from phono3py.file_IO import write_disp_fc3_yaml, write_disp_fc2_yaml
 
 def create_phono3py_supercells(unitcell,
                                supercell_matrix,

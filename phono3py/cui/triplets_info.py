@@ -34,10 +34,10 @@
 
 import sys
 import numpy as np
-from anharmonic.file_IO import (write_ir_grid_points,
-                                write_grid_address_to_hdf5)
-from anharmonic.phonon3.triplets import (get_coarse_ir_grid_points,
-                                         get_number_of_triplets)
+from phono3py.file_IO import (write_ir_grid_points,
+                              write_grid_address_to_hdf5)
+from phono3py.phonon3.triplets import (get_coarse_ir_grid_points,
+                                       get_number_of_triplets)
 
 def write_grid_points(primitive,
                       mesh,
