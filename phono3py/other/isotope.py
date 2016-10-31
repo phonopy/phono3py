@@ -38,8 +38,8 @@ from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
 from phonopy.units import VaspToTHz
 from phonopy.structure.atoms import isotope_data
-from anharmonic.phonon.solver import set_phonon_c, set_phonon_py
-from anharmonic.phonon3.triplets import get_bz_grid_address, gaussian
+from phono3py.phonon.solver import set_phonon_c, set_phonon_py
+from phono3py.phonon3.triplets import get_bz_grid_address, gaussian
 
 def get_mass_variances(primitive):
     symbols = primitive.get_chemical_symbols()
@@ -164,7 +164,7 @@ class Isotope(object):
 
     def _run_c(self):
         self._set_phonon_c(self._grid_points)
-        import anharmonic._phono3py as phono3c
+        import phono3py._phono3py as phono3c
         gamma = np.zeros(len(self._band_indices), dtype='double')
         if self._sigma is None:
             self._set_integration_weights()
@@ -202,7 +202,7 @@ class Isotope(object):
         self._set_integration_weights_c(thm)
 
     def _set_integration_weights_c(self, thm):
-        import anharmonic._phono3py as phono3c
+        import phono3py._phono3py as phono3c
         unique_vertices = thm.get_unique_tetrahedra_vertices()
         neighboring_grid_points = np.zeros(
             len(unique_vertices) * len(self._grid_points), dtype='intc')

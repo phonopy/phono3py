@@ -3,7 +3,8 @@
 import numpy as np
 from phonopy.phonon.tetrahedron_mesh import TetrahedronMesh
 from phonopy.harmonic.force_constants import similarity_transformation
-from anharmonic.phonon3.triplets import get_ir_grid_points, get_grid_points_by_rotations
+from phono3py.phonon3.triplets import (get_ir_grid_points,
+                                       get_grid_points_by_rotations)
 
 epsilon = 1.0e-8
 

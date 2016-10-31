@@ -2,7 +2,7 @@ import sys
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, DynamicalMatrixNAC, get_smallest_vectors
 from phonopy.structure.cells import get_supercell
-from anharmonic.file_IO import write_fc3_dat, write_fc2_dat
+from phono3py.file_IO import write_fc3_dat, write_fc2_dat
 from phonopy.units import VaspToTHz
 from phonopy.structure.grid_points import get_qpoints
 

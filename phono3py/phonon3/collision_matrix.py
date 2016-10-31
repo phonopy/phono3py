@@ -2,8 +2,8 @@ import sys
 import numpy as np
 from phonopy.units import THzToEv, Kb
 from phonopy.harmonic.force_constants import similarity_transformation
-from anharmonic.phonon3.imag_self_energy import ImagSelfEnergy
-from anharmonic.phonon3.triplets import get_triplets_third_q_list
+from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
+from phono3py.phonon3.triplets import get_triplets_third_q_list
 
 class CollisionMatrix(ImagSelfEnergy):
     """
@@ -123,7 +123,7 @@ class CollisionMatrix(ImagSelfEnergy):
                     self._run_py_collision_matrix()
 
     def _run_c_collision_matrix(self):
-        import anharmonic._phono3py as phono3c
+        import phono3py._phono3py as phono3c
         phono3c.collision_matrix(self._collision_matrix,
                                  self._pp_strength,
                                  self._frequencies,
@@ -139,7 +139,7 @@ class CollisionMatrix(ImagSelfEnergy):
                                  self._cutoff_frequency)
 
     def _run_c_reducible_collision_matrix(self):
-        import anharmonic._phono3py as phono3c
+        import phono3py._phono3py as phono3c
         phono3c.reducible_collision_matrix(self._collision_matrix,
                                            self._pp_strength,
                                            self._frequencies,

@@ -306,7 +306,7 @@ def get_triplets_integration_weights(interaction,
 
     if sigma:
         if lang == 'C':
-            import anharmonic._phono3py as phono3c
+            import phono3py._phono3py as phono3c
             phono3c.triplets_integration_weights_with_sigma(
                 g,
                 frequency_points,
@@ -364,7 +364,7 @@ def _get_triplets_reciprocal_mesh_at_q(fixed_grid_number,
                                        mesh,
                                        rotations,
                                        is_time_reversal=True):
-    import anharmonic._phono3py as phono3c
+    import phono3py._phono3py as phono3c
 
     map_triplets = np.zeros(np.prod(mesh), dtype='intc')
     map_q = np.zeros(np.prod(mesh), dtype='intc')
@@ -388,7 +388,7 @@ def _get_BZ_triplets_at_q(grid_point,
                           mesh):
     """grid_address is overwritten."""
 
-    import anharmonic._phono3py as phono3c
+    import phono3py._phono3py as phono3c
 
     weights = np.zeros_like(map_triplets)
     for g in map_triplets:
@@ -409,7 +409,7 @@ def _set_triplets_integration_weights_c(g,
                                         interaction,
                                         frequency_points,
                                         neighboring_phonons=True):
-    import anharmonic._phono3py as phono3c
+    import phono3py._phono3py as phono3c
 
     reciprocal_lattice = np.linalg.inv(interaction.get_primitive().get_cell())
     mesh = interaction.get_mesh_numbers()

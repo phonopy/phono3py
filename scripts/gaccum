@@ -5,7 +5,7 @@ import numpy as np
 from phonopy.cui.settings import fracval
 from phonopy.phonon.tetrahedron_mesh import TetrahedronMesh
 from phonopy.phonon.dos import NormalDistribution
-from anharmonic.phonon3.triplets import get_ir_grid_points
+from phono3py.phonon3.triplets import get_ir_grid_points
 
 epsilon = 1.0e-8
 
