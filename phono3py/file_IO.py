@@ -651,7 +651,8 @@ def write_kappa_to_hdf5(temperature,
                                   band_indices=band_indices,
                                   sigma=sigma,
                                   filename=filename)
-    with h5py.File("kappa" + suffix + ".hdf5", 'w') as w:
+    full_filename = "kappa" + suffix + ".hdf5" 
+    with h5py.File(full_filename, 'w') as w:
         w.create_dataset('temperature', data=temperature)
         w.create_dataset('mesh', data=mesh)
         if frequency is not None:
@@ -703,6 +704,8 @@ def write_kappa_to_hdf5(temperature,
                     text += "\n"
             text += "\"%s\"" % ("kappa" + suffix + ".hdf5")
             print(text)
+
+        return full_filename
 
 def write_collision_eigenvalues_to_hdf5(temperatures,
                                         mesh,
