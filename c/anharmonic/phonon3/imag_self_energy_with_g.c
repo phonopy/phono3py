@@ -418,11 +418,18 @@ static void sum_imag_self_energy_along_triplets
 {
   int i, j;
 
+/* #pragma omp parallel for private(j) */
   for (i = 0; i < num_band0; i++) {
     imag_self_energy[i] = 0;
+  }
+
+  for (i = 0; i < num_band0; i++) {
     for (j = 0; j < num_triplets; j++) {
       imag_self_energy[i] += ise[j * num_band0 + i] * weights[j];
     }
+  }
+
+  for (i = 0; i < num_band0; i++) {
     imag_self_energy[i] *= unit_conversion_factor;
   }
 }
