@@ -330,28 +330,40 @@ collect_detailed_imag_self_energy(double *imag_self_energy,
 				  const char *g_zero,
 				  const double unit_conversion_factor)
 {
-  int i, j, adrs;
+  int ij, i, j;
 
-  for (i = 0; i < num_band; i++) {
-    if (n1[i] < 0) {
-      for (j = 0; j < num_band; j++) {
-	imag_self_energy[i * num_band + j] = 0;
-      }
-      continue;
-    }
-
-    for (j = 0; j < num_band; j++) {
-      adrs = i * num_band + j;
-      if (n2[j] < 0) {
-	imag_self_energy[adrs] = 0;
-	continue;
-      }
-
-      imag_self_energy[adrs] =
-	((n1[i] + n2[j] + 1) * g1[adrs] + (n1[i] - n2[j]) * g2_3[adrs]) *
-	fc3_normal_squared[adrs] * unit_conversion_factor;
-    }
+  for (ij = 0; ij < num_band * num_band; ij++) {
+    imag_self_energy[ij] = 0;
+    if (g_zero[ij]) {continue;}
+    i = ij / num_band;
+    j = ij % num_band;
+    if (n1[i] < 0 || n2[j] < 0) {continue;}
+    imag_self_energy[ij] = (((n1[i] + n2[j] + 1) * g1[ij] +
+			     (n1[i] - n2[j]) * g2_3[ij]) *
+			    fc3_normal_squared[ij] * unit_conversion_factor);
   }
+
+
+  /* for (i = 0; i < num_band; i++) { */
+  /*   if (n1[i] < 0) { */
+  /*     for (j = 0; j < num_band; j++) { */
+  /* 	imag_self_energy[i * num_band + j] = 0; */
+  /*     } */
+  /*     continue; */
+  /*   } */
+
+  /*   for (j = 0; j < num_band; j++) { */
+  /*     adrs = i * num_band + j; */
+  /*     if (n2[j] < 0) { */
+  /* 	imag_self_energy[adrs] = 0; */
+  /* 	continue; */
+  /*     } */
+
+  /*     imag_self_energy[adrs] = */
+  /* 	((n1[i] + n2[j] + 1) * g1[adrs] + (n1[i] - n2[j]) * g2_3[adrs]) * */
+  /* 	fc3_normal_squared[adrs] * unit_conversion_factor; */
+  /*   } */
+  /* } */
 }
 
 static void
