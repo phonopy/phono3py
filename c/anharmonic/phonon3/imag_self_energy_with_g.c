@@ -417,20 +417,16 @@ static void sum_imag_self_energy_along_triplets
  const double unit_conversion_factor)
 {
   int i, j;
-
-/* #pragma omp parallel for private(j) */
-  for (i = 0; i < num_band0; i++) {
-    imag_self_energy[i] = 0;
-  }
+  double sum_g;
 
   for (i = 0; i < num_band0; i++) {
+    sum_g = 0;
+    /* OpenMP wasn't good in performance with the test of Macbook pro 2 cores. */
+/* #pragma omp parallel for reduction(+:sum_g) */
     for (j = 0; j < num_triplets; j++) {
-      imag_self_energy[i] += ise[j * num_band0 + i] * weights[j];
+      sum_g += ise[j * num_band0 + i] * weights[j];
     }
-  }
-
-  for (i = 0; i < num_band0; i++) {
-    imag_self_energy[i] *= unit_conversion_factor;
+    imag_self_energy[i] = sum_g * unit_conversion_factor;
   }
 }
 
