@@ -53,6 +53,7 @@ void get_detailed_imag_self_energy_at_bands_with_g
  const double *frequencies,
  const int *triplets,
  const double *g,
+ const char *g_zero,
  const double temperature,
  const double unit_conversion_factor,
  const double cutoff_frequency);

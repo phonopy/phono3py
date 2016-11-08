@@ -468,15 +468,25 @@ class ImagSelfEnergy(object):
     def _run_with_band_indices(self):
         if self._g is not None:
             if self._lang == 'C':
-                self._run_c_with_band_indices_with_g()
                 if self._with_detail:
+                    # (num_triplets, num_band0, num_band, num_band)
                     self._run_c_detailed_with_band_indices_with_g()
+                    self._imag_self_energy[:] = np.dot(
+                        self._weights_at_q,
+                        self._detailed_imag_self_energy.sum(axis=2).sum(axis=2))
+                else:
+                    # (num_band0,)
+                    self._run_c_with_band_indices_with_g()
             else:
+                print("Running into _run_py_with_band_indices_with_g()")
+                print("This routine is super slow and only for the test.")
                 self._run_py_with_band_indices_with_g()
         else:
             if self._lang == 'C':
                 self._run_c_with_band_indices()
             else:
+                print("Running into _run_py_with_band_indices")
+                print("This routine is super slow and only for the test.")
                 self._run_py_with_band_indices()
 
     def _run_with_frequency_points(self):
@@ -528,6 +538,13 @@ class ImagSelfEnergy(object):
 
     def _run_c_detailed_with_band_indices_with_g(self):
         import phono3py._phono3py as phono3c
+
+        if self._g_zero is None:
+            _g_zero = np.zeros(self._pp_strength.shape,
+                               dtype='byte', order='C')
+        else:
+            _g_zero = self._g_zero
+
         phono3c.detailed_imag_self_energy_with_g(
             self._detailed_imag_self_energy,
             self._pp_strength,
@@ -535,6 +552,7 @@ class ImagSelfEnergy(object):
             self._frequencies,
             self._temperature,
             self._g,
+            _g_zero,
             self._unit_conversion,
             self._cutoff_frequency)
 

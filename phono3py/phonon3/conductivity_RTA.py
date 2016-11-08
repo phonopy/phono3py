@@ -69,12 +69,12 @@ def get_thermal_conductivity_RTA(
                          i,
                          filename=output_filename,
                          verbose=log_level)
-        if write_gamma_detail:
-            _write_gamma_detail(br,
-                                interaction,
-                                i,
-                                filename=output_filename,
-                                verbose=log_level)
+        # if write_gamma_detail:
+        #     _write_gamma_detail(br,
+        #                         interaction,
+        #                         i,
+        #                         filename=output_filename,
+        #                         verbose=log_level)
         if log_level > 1 and read_gamma is False:
             _write_triplets(interaction)
 
