@@ -577,20 +577,21 @@ class Conductivity_RTA(Conductivity):
                     self._averaged_pp_interaction[i] = (
                         self._pp.get_averaged_interaction())
 
-            gamma_detail = []
+            # Number of triplets depends on q-point.
+            # So this is allocated each time.
+            if self._is_gamma_detail:
+                num_temp = len(self._temperatures)
+                self._gamma_detail_at_q = np.zeros(
+                    ((num_temp,) + self._pp.get_interaction_strength().shape),
+                    dtype='double', order='C')
+
             for k, t in enumerate(self._temperatures):
                 self._collision.set_temperature(t)
                 self._collision.run()
                 self._gamma[j, k, i] = self._collision.get_imag_self_energy()
                 if self._is_gamma_detail:
-                    gamma_detail.append(np.transpose(
-                        self._collision.get_detailed_imag_self_energy(),
-                        axes=(1, 2, 3, 0)))
-
-            if self._is_gamma_detail:
-                self._gamma_detail_at_q = np.array(gamma_detail,
-                                                   dtype='double', order='C')
-                
+                    self._gamma_detail_at_q[k] = (
+                        self._collision.get_detailed_imag_self_energy())
 
     def _get_gv_by_gv(self, i):
         rotation_map = get_grid_points_by_rotations(

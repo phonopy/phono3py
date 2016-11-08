@@ -60,7 +60,8 @@ static double sum_imag_self_energy_at_band_0K(const int num_band,
 					      const double *g,
 					      const char *g_zero);
 static void
-detailed_imag_self_energy_at_bands(double *imag_self_energy,
+detailed_imag_self_energy_at_bands(double *detailed_imag_self_energy,
+				   double *imag_self_energy,
 				   const Darray *fc3_normal_squared,
 				   const double *frequencies,
 				   const int *triplets,
@@ -69,7 +70,7 @@ detailed_imag_self_energy_at_bands(double *imag_self_energy,
 				   const double temperature,
 				   const double unit_conversion_factor,
 				   const double cutoff_frequency);
-static void
+static double
 collect_detailed_imag_self_energy(double *imag_self_energy,
 				  const int num_band,
 				  const double *fc3_normal_squared,
@@ -79,7 +80,7 @@ collect_detailed_imag_self_energy(double *imag_self_energy,
 				  const double *g2_3,
 				  const char *g_zero,
 				  const double unit_conversion_factor);
-static void
+static double
 collect_detailed_imag_self_energy_0K(double *imag_self_energy,
 				     const int num_band,
 				     const double *fc3_normal_squared,
@@ -88,6 +89,13 @@ collect_detailed_imag_self_energy_0K(double *imag_self_energy,
 				     const double *g,
 				     const char *g_zero,
 				     const double unit_conversion_factor);
+static void sum_imag_self_energy_along_triplets
+(double *imag_self_energy,
+ const double *ise,
+ const int *weights,
+ const int num_band0,
+ const int num_triplets,
+ const double unit_conversion_factor);
 static void set_tmp_values(double *n1,
 			   double *n2,
 			   const int i,
@@ -113,8 +121,8 @@ void get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
 
   num_triplets = fc3_normal_squared->dims[0];
   num_band0 = fc3_normal_squared->dims[1];
-
   ise = (double*)malloc(sizeof(double) * num_triplets * num_band0);
+
   imag_self_energy_at_bands(ise,
 			    fc3_normal_squared,
 			    frequencies,
@@ -124,28 +132,39 @@ void get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
 			    temperature,
 			    cutoff_frequency);
   
-  for (i = 0; i < num_band0; i++) {
-    imag_self_energy[i] = 0;
-    for (j = 0; j < num_triplets; j++) {
-      imag_self_energy[i] += ise[j * num_band0 + i] * weights[j];
-    }
-    imag_self_energy[i] *= unit_conversion_factor;
-  }
+  sum_imag_self_energy_along_triplets(imag_self_energy,
+				      ise,
+				      weights,
+				      num_band0,
+				      num_triplets,
+				      unit_conversion_factor);
+
   free(ise);
 }
 
 void get_detailed_imag_self_energy_at_bands_with_g
-(double *imag_self_energy,
+(double *detailed_imag_self_energy,
+ double *imag_self_energy,
  const Darray *fc3_normal_squared,
  const double *frequencies,
  const int *triplets,
+ const int *weights,
  const double *g,
  const char *g_zero,
  const double temperature,
  const double unit_conversion_factor,
  const double cutoff_frequency)
 {
-  detailed_imag_self_energy_at_bands(imag_self_energy,
+  double *ise;
+  int num_triplets;
+  int num_band0;
+
+  num_triplets = fc3_normal_squared->dims[0];
+  num_band0 = fc3_normal_squared->dims[1];
+  ise = (double*)malloc(sizeof(double) * num_triplets * num_band0);
+
+  detailed_imag_self_energy_at_bands(detailed_imag_self_energy,
+				     ise,
 				     fc3_normal_squared,
 				     frequencies,
 				     triplets,
@@ -154,6 +173,15 @@ void get_detailed_imag_self_energy_at_bands_with_g
 				     temperature,
 				     unit_conversion_factor,
 				     cutoff_frequency);
+
+  sum_imag_self_energy_along_triplets(imag_self_energy,
+				      ise,
+				      weights,
+				      num_band0,
+				      num_triplets,
+				      1);
+
+  free(ise);
 }
 
 static void imag_self_energy_at_bands(double *imag_self_energy,
@@ -259,7 +287,8 @@ static double sum_imag_self_energy_at_band_0K(const int num_band,
 }
 
 static void
-detailed_imag_self_energy_at_bands(double *imag_self_energy,
+detailed_imag_self_energy_at_bands(double *detailed_imag_self_energy,
+				   double *imag_self_energy,
 				   const Darray *fc3_normal_squared,
 				   const double *frequencies,
 				   const int *triplets,
@@ -292,8 +321,9 @@ detailed_imag_self_energy_at_bands(double *imag_self_energy,
     for (j = 0; j < num_band0; j++) {
       adrs_shift = i * num_band0 * num_band * num_band + j * num_band * num_band;
       if (temperature > 0) {
-	collect_detailed_imag_self_energy
-	  (imag_self_energy + adrs_shift,
+	imag_self_energy[i * num_band0 + j] =
+	  collect_detailed_imag_self_energy
+	  (detailed_imag_self_energy + adrs_shift,
 	   num_band,
 	   fc3_normal_squared->data + adrs_shift,
 	   n1,
@@ -303,8 +333,9 @@ detailed_imag_self_energy_at_bands(double *imag_self_energy,
 	   g_zero + adrs_shift,
 	   unit_conversion_factor);
       } else {
-	collect_detailed_imag_self_energy_0K
-	  (imag_self_energy + adrs_shift,
+	imag_self_energy[i * num_band0 + j] =
+	  collect_detailed_imag_self_energy_0K
+	  (detailed_imag_self_energy + adrs_shift,
 	   num_band,
 	   fc3_normal_squared->data + adrs_shift,
 	   n1,
@@ -319,7 +350,7 @@ detailed_imag_self_energy_at_bands(double *imag_self_energy,
   }
 }
 
-static void
+static double
 collect_detailed_imag_self_energy(double *imag_self_energy,
 				  const int num_band,
 				  const double *fc3_normal_squared,
@@ -331,7 +362,9 @@ collect_detailed_imag_self_energy(double *imag_self_energy,
 				  const double unit_conversion_factor)
 {
   int ij, i, j;
+  double sum_g;
 
+  sum_g = 0;
   for (ij = 0; ij < num_band * num_band; ij++) {
     imag_self_energy[ij] = 0;
     if (g_zero[ij]) {continue;}
@@ -341,32 +374,13 @@ collect_detailed_imag_self_energy(double *imag_self_energy,
     imag_self_energy[ij] = (((n1[i] + n2[j] + 1) * g1[ij] +
 			     (n1[i] - n2[j]) * g2_3[ij]) *
 			    fc3_normal_squared[ij] * unit_conversion_factor);
+    sum_g += imag_self_energy[ij];
   }
 
-
-  /* for (i = 0; i < num_band; i++) { */
-  /*   if (n1[i] < 0) { */
-  /*     for (j = 0; j < num_band; j++) { */
-  /* 	imag_self_energy[i * num_band + j] = 0; */
-  /*     } */
-  /*     continue; */
-  /*   } */
-
-  /*   for (j = 0; j < num_band; j++) { */
-  /*     adrs = i * num_band + j; */
-  /*     if (n2[j] < 0) { */
-  /* 	imag_self_energy[adrs] = 0; */
-  /* 	continue; */
-  /*     } */
-
-  /*     imag_self_energy[adrs] = */
-  /* 	((n1[i] + n2[j] + 1) * g1[adrs] + (n1[i] - n2[j]) * g2_3[adrs]) * */
-  /* 	fc3_normal_squared[adrs] * unit_conversion_factor; */
-  /*   } */
-  /* } */
+  return sum_g;
 }
 
-static void
+static double
 collect_detailed_imag_self_energy_0K(double *imag_self_energy,
 				     const int num_band,
 				     const double *fc3_normal_squared,
@@ -376,26 +390,40 @@ collect_detailed_imag_self_energy_0K(double *imag_self_energy,
 				     const char *g_zero,
 				     const double unit_conversion_factor)
 {
-  int i, j, adrs;
+  int ij, i, j;
+  double sum_g;
 
-  for (i = 0; i < num_band; i++) {
-    if (n1[i] < 0) {
-      for (j = 0; j < num_band; j++) {
-	imag_self_energy[i * num_band + j] = 0;
-      }
-      continue;
+  sum_g = 0;
+  for (ij = 0; ij < num_band * num_band; ij++) {
+    imag_self_energy[ij] = 0;
+    if (g_zero[ij]) {continue;}
+    i = ij / num_band;
+    j = ij % num_band;
+    if (n1[i] < 0 || n2[j] < 0) {continue;}
+    imag_self_energy[ij] = (g1[ij] * fc3_normal_squared[ij] *
+			    unit_conversion_factor);
+    sum_g += imag_self_energy[ij];
+  }
+
+  return sum_g;
+}
+
+static void sum_imag_self_energy_along_triplets
+(double *imag_self_energy,
+ const double *ise,
+ const int *weights,
+ const int num_band0,
+ const int num_triplets,
+ const double unit_conversion_factor)
+{
+  int i, j;
+
+  for (i = 0; i < num_band0; i++) {
+    imag_self_energy[i] = 0;
+    for (j = 0; j < num_triplets; j++) {
+      imag_self_energy[i] += ise[j * num_band0 + i] * weights[j];
     }
-
-    for (j = 0; j < num_band; j++) {
-      adrs = i * num_band + j;
-      if (n2[j] < 0) {
-	imag_self_energy[adrs] = 0;
-	continue;
-      }
-
-      imag_self_energy[adrs] =
-	g1[adrs] * fc3_normal_squared[adrs] * unit_conversion_factor;
-    }
+    imag_self_energy[i] *= unit_conversion_factor;
   }
 }
 

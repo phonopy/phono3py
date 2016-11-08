@@ -471,9 +471,9 @@ class ImagSelfEnergy(object):
                 if self._with_detail:
                     # (num_triplets, num_band0, num_band, num_band)
                     self._run_c_detailed_with_band_indices_with_g()
-                    self._imag_self_energy[:] = np.dot(
-                        self._weights_at_q,
-                        self._detailed_imag_self_energy.sum(axis=2).sum(axis=2))
+                    # self._imag_self_energy[:] = np.dot(
+                    #     self._weights_at_q,
+                    #     self._detailed_imag_self_energy.sum(axis=2).sum(axis=2))
                 else:
                     # (num_band0,)
                     self._run_c_with_band_indices_with_g()
@@ -547,8 +547,10 @@ class ImagSelfEnergy(object):
 
         phono3c.detailed_imag_self_energy_with_g(
             self._detailed_imag_self_energy,
+            self._imag_self_energy,
             self._pp_strength,
             self._triplets_at_q,
+            self._weights_at_q,
             self._frequencies,
             self._temperature,
             self._g,

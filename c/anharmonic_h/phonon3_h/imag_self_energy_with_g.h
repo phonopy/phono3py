@@ -48,10 +48,12 @@ void get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
 					  const double unit_conversion_factor,
 					  const double cutoff_frequency);
 void get_detailed_imag_self_energy_at_bands_with_g
-(double *imag_self_energy,
+(double *detailed_imag_self_energy,
+ double *imag_self_energy,
  const Darray *fc3_normal_squared,
  const double *frequencies,
  const int *triplets,
+ const int *weights,
  const double *g,
  const char *g_zero,
  const double temperature,
