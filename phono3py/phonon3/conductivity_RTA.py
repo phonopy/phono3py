@@ -29,6 +29,7 @@ def get_thermal_conductivity_RTA(
         write_gamma=False,
         read_gamma=False,
         write_kappa=False,
+        is_N_U=False,
         write_gamma_detail=False,
         input_filename=None,
         output_filename=None,
@@ -54,7 +55,7 @@ def get_thermal_conductivity_RTA(
         gv_delta_q=gv_delta_q,
         run_with_g=run_with_g,
         is_full_pp=is_full_pp,
-        is_gamma_detail=write_gamma_detail,
+        is_gamma_detail=(write_gamma_detail or is_N_U),
         log_level=log_level)
 
     if read_gamma:
@@ -69,12 +70,12 @@ def get_thermal_conductivity_RTA(
                          i,
                          filename=output_filename,
                          verbose=log_level)
-        # if write_gamma_detail:
-        #     _write_gamma_detail(br,
-        #                         interaction,
-        #                         i,
-        #                         filename=output_filename,
-        #                         verbose=log_level)
+        if write_gamma_detail:
+            _write_gamma_detail(br,
+                                interaction,
+                                i,
+                                filename=output_filename,
+                                verbose=log_level)
         if log_level > 1 and read_gamma is False:
             _write_triplets(interaction)
 
