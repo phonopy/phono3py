@@ -27,6 +27,7 @@ class Phono3pySettings(Settings):
         self._is_kappa_star = True
         self._is_lbte = False
         self._is_linewidth = False
+        self._is_N_U = False
         self._is_reducible_collision_matrix = False
         self._is_symmetrize_fc2 = False
         self._is_symmetrize_fc3_q = False
@@ -178,6 +179,12 @@ class Phono3pySettings(Settings):
 
     def get_is_linewidth(self):
         return self._is_linewidth
+
+    def set_is_N_U(self, is_N_U):
+        self._is_N_U = is_N_U
+
+    def get_is_N_U(self):
+        return self._is_N_U
 
     def set_is_reducible_collision_matrix(self, is_reducible_collision_matrix):
         self._is_reducible_collision_matrix = is_reducible_collision_matrix
@@ -423,6 +430,10 @@ class Phono3pyConfParser(ConfParser):
                 if self._options.is_linewidth:
                     self._confs['linewidth'] = '.true.'
 
+            if opt.dest == 'is_N_U':
+                if self._options.is_N_U:
+                    self._confs['N_U'] = '.true.'
+
             if opt.dest == 'is_reducible_collision_matrix':
                 if self._options.is_reducible_collision_matrix:
                     self._confs['reducible_collision_matrix'] = '.true.'
@@ -624,6 +635,10 @@ class Phono3pyConfParser(ConfParser):
             if conf_key == 'linewidth':
                 if confs['linewidth'] == '.true.':
                     self.set_parameter('is_linewidth', True)
+
+            if conf_key == 'N_U':
+                if confs['N_U'] == '.true.':
+                    self.set_parameter('is_N_U', True)
 
             if conf_key == 'reducible_collision_matrix':
                 if confs['reducible_collision_matrix'] == '.true.':
@@ -836,6 +851,10 @@ class Phono3pyConfParser(ConfParser):
         # Calculate linewidths
         if 'is_linewidth' in params:
             self._settings.set_is_linewidth(params['is_linewidth'])
+
+        # Calculate Normal and Umklapp processes
+        if 'is_N_U' in params:
+            self._settings.set_is_N_U(params['is_N_U'])
 
         # Solve reducible collision matrix but not reduced matrix
         if 'is_reducible_collision_matrix' in params:

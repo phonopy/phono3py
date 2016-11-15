@@ -67,17 +67,18 @@ def get_parser():
                         ion_clamped=False,
                         is_bterta=False,
                         is_decay_channel=False,
-                        is_nodiag=False,
                         is_displacement=False,
-                        is_nomeshsym=False,
+                        is_frequency_shift=False,
+                        is_full_pp=False,
                         is_gruneisen=False,
                         is_isotope=False,
                         is_joint_dos=False,
                         is_linewidth=False,
                         is_lbte=False,
-                        is_frequency_shift=False,
-                        is_full_pp=False,
                         is_nac=False,
+                        is_nodiag=False,
+                        is_nomeshsym=False,
+                        is_N_U=False,
                         is_plusminus_displacements=False,
                         is_reducible_collision_matrix=False,
                         is_translational_symmetry=False,
@@ -290,6 +291,9 @@ def get_parser():
     parser.add_option(
         "--nomeshsym", dest="is_nomeshsym", action="store_true",
         help="No symmetrization of triplets is made.")
+    parser.add_option(
+        "--nu", dest="is_N_U", action="store_true",
+        help="Split Gamma into Normal and Umklapp processes")
     parser.add_option(
         "--num_freq_points", dest="num_frequency_points", type="int",
         help="Number of sampling points for spectrum")
