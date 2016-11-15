@@ -631,6 +631,8 @@ def write_kappa_to_hdf5(temperature,
                         mode_kappa=None,
                         gamma=None,
                         gamma_isotope=None,
+                        gamma_N=None,
+                        gamma_U=None,
                         averaged_pp_interaction=None,
                         qpoint=None,
                         weight=None,
@@ -671,6 +673,10 @@ def write_kappa_to_hdf5(temperature,
             w.create_dataset('gamma', data=gamma)
         if gamma_isotope is not None:
             w.create_dataset('gamma_isotope', data=gamma_isotope)
+        if gamma_N is not None:
+            w.create_dataset('gamma_N', data=gamma_N)
+        if gamma_U is not None:
+            w.create_dataset('gamma_U', data=gamma_U)
         if averaged_pp_interaction is not None:
             w.create_dataset('ave_pp', data=averaged_pp_interaction)
         if qpoint is not None:

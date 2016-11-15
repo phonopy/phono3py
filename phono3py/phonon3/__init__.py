@@ -457,6 +457,7 @@ class Phono3py(object):
             pinv_cutoff=1.0e-8, # for pseudo-inversion of collision matrix
             write_gamma=False,
             read_gamma=False,
+            is_N_U=False,
             write_kappa=False,
             write_gamma_detail=False,
             write_collision=False,
@@ -507,6 +508,7 @@ class Phono3py(object):
                 is_full_pp=is_full_pp,
                 write_gamma=write_gamma,
                 read_gamma=read_gamma,
+                is_N_U=is_N_U,
                 write_kappa=write_kappa,
                 write_gamma_detail=write_gamma_detail,
                 input_filename=input_filename,

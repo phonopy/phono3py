@@ -120,6 +120,7 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
     gamma_isotope = br.get_gamma_isotope()
     sigmas = br.get_sigmas()
     volume = interaction.get_primitive().get_volume()
+    gamma_N, gamma_U = br.get_gamma_N_U()
 
     gp = grid_points[i]
     if _all_bands_exist(interaction):
@@ -133,6 +134,15 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
                 gamma_isotope_at_sigma = gamma_isotope[j, i]
             else:
                 gamma_isotope_at_sigma = None
+            if gamma_N is None:
+                gamma_N_at_sigma = None
+            else:
+                gamma_N_at_sigma = gamma_N[j, :, i]
+            if gamma_U is None:
+                gamma_U_at_sigma = None
+            else:
+                gamma_U_at_sigma = gamma_U[j, :, i]
+
             write_kappa_to_hdf5(temperatures,
                                 mesh,
                                 frequency=frequencies,
@@ -141,6 +151,8 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
                                 heat_capacity=mode_heat_capacities[:, i],
                                 gamma=gamma[j, :, i],
                                 gamma_isotope=gamma_isotope_at_sigma,
+                                gamma_N=gamma_N_at_sigma,
+                                gamma_U=gamma_U_at_sigma,
                                 averaged_pp_interaction=ave_pp_i,
                                 mesh_divisors=mesh_divisors,
                                 grid_point=gp,
@@ -160,23 +172,33 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
                     gamma_isotope_at_sigma = gamma_isotope[j, i, k]
                 else:
                     gamma_isotope_at_sigma = None
-                    write_kappa_to_hdf5(
-                        temperatures,
-                        mesh,
-                        frequency=frequencies,
-                        group_velocity=group_velocities[i, k],
-                        gv_by_gv=gv_by_gv[i, k],
-                        heat_capacity=mode_heat_capacities[:, i, k],
-                        gamma=gamma[j, :, i, k],
-                        gamma_isotope=gamma_isotope_at_sigma,
-                        averaged_pp_interaction=ave_pp_ik,
-                        mesh_divisors=mesh_divisors,
-                        grid_point=gp,
-                        band_index=bi,
-                        sigma=sigma,
-                        kappa_unit_conversion=unit_to_WmK / volume,
-                        filename=filename,
-                        verbose=verbose)
+                if gamma_N is None:
+                    gamma_N_at_sigma = None
+                else:
+                    gamma_N_at_sigma = gamma_N[j, :, i, k]
+                if gamma_U is None:
+                    gamma_U_at_sigma = None
+                else:
+                    gamma_U_at_sigma = gamma_U[j, :, i, k]
+                write_kappa_to_hdf5(
+                    temperatures,
+                    mesh,
+                    frequency=frequencies,
+                    group_velocity=group_velocities[i, k],
+                    gv_by_gv=gv_by_gv[i, k],
+                    heat_capacity=mode_heat_capacities[:, i, k],
+                    gamma=gamma[j, :, i, k],
+                    gamma_isotope=gamma_isotope_at_sigma,
+                    gamma_N=gamma_N_at_sigma,
+                    gamma_U=gamma_U_at_sigma,
+                    averaged_pp_interaction=ave_pp_ik,
+                    mesh_divisors=mesh_divisors,
+                    grid_point=gp,
+                    band_index=bi,
+                    sigma=sigma,
+                    kappa_unit_conversion=unit_to_WmK / volume,
+                    filename=filename,
+                    verbose=verbose)
 
 def _all_bands_exist(interaction):
     band_indices = interaction.get_band_indices()
@@ -203,6 +225,7 @@ def _write_kappa(br, interaction, filename=None, log_level=0):
     sigmas = br.get_sigmas()
     gamma = br.get_gamma()
     gamma_isotope = br.get_gamma_isotope()
+    gamma_N, gamma_U = br.get_gamma_N_U()
     mesh = br.get_mesh_numbers()
     mesh_divisors = br.get_mesh_divisors()
     frequencies = br.get_frequencies()
@@ -225,6 +248,14 @@ def _write_kappa(br, interaction, filename=None, log_level=0):
             gamma_isotope_at_sigma = gamma_isotope[i]
         else:
             gamma_isotope_at_sigma = None
+        if gamma_N is None:
+            gamma_N_at_sigma = None
+        else:
+            gamma_N_at_sigma = gamma_N[i]
+        if gamma_U is None:
+            gamma_U_at_sigma = None
+        else:
+            gamma_U_at_sigma = gamma_U[i]
         if log_level:
             text = "----------- Thermal conductivity (W/m-k) "
             if sigma:
@@ -256,6 +287,8 @@ def _write_kappa(br, interaction, filename=None, log_level=0):
                             mode_kappa=mode_kappa[i],
                             gamma=gamma[i],
                             gamma_isotope=gamma_isotope_at_sigma,
+                            gamma_N=gamma_N_at_sigma,
+                            gamma_U=gamma_U_at_sigma,
                             averaged_pp_interaction=ave_pp,
                             qpoint=qpoints,
                             weight=weights,
@@ -395,6 +428,8 @@ class Conductivity_RTA(Conductivity):
         self._gv_sum2 = None
         self._gamma = None
         self._gamma_iso = None
+        self._gamma_N = None
+        self._gamma_U = None
         self._gamma_detail_at_q = None
         self._gamma_unit_conversion = gamma_unit_conversion
         self._use_ave_pp = use_ave_pp
@@ -476,6 +511,9 @@ class Conductivity_RTA(Conductivity):
     def get_gv_by_gv(self):
         return self._gv_sum2
 
+    def get_gamma_N_U(self):
+        return (self._gamma_N, self._gamma_U)
+
     def get_gamma_detail_at_q(self):
         return self._gamma_detail_at_q
 
@@ -539,6 +577,9 @@ class Conductivity_RTA(Conductivity):
                                     num_temp,
                                     num_grid_points,
                                     num_band0), dtype='double')
+            if self._is_gamma_detail:
+                self._gamma_N = np.zeros_like(self._gamma)
+                self._gamma_U = np.zeros_like(self._gamma)
         self._gv = np.zeros((num_grid_points, num_band0, 3), dtype='double')
         self._gv_sum2 = np.zeros((num_grid_points, num_band0, 6), dtype='double')
         self._cv = np.zeros(
@@ -591,6 +632,9 @@ class Conductivity_RTA(Conductivity):
                 self._collision.run()
                 self._gamma[j, k, i] = self._collision.get_imag_self_energy()
                 if self._is_gamma_detail:
+                    g_N, g_U = self._collision.get_imag_self_energy_N_and_U()
+                    self._gamma_N[j, k, i] = g_N
+                    self._gamma_U[j, k, i] = g_U
                     self._gamma_detail_at_q[k] = (
                         self._collision.get_detailed_imag_self_energy())
 
