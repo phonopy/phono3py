@@ -631,6 +631,8 @@ def write_kappa_to_hdf5(temperature,
                         mode_kappa=None,
                         gamma=None,
                         gamma_isotope=None,
+                        gamma_N=None,
+                        gamma_U=None,
                         averaged_pp_interaction=None,
                         qpoint=None,
                         weight=None,
@@ -651,7 +653,8 @@ def write_kappa_to_hdf5(temperature,
                                   band_indices=band_indices,
                                   sigma=sigma,
                                   filename=filename)
-    with h5py.File("kappa" + suffix + ".hdf5", 'w') as w:
+    full_filename = "kappa" + suffix + ".hdf5" 
+    with h5py.File(full_filename, 'w') as w:
         w.create_dataset('temperature', data=temperature)
         w.create_dataset('mesh', data=mesh)
         if frequency is not None:
@@ -670,6 +673,10 @@ def write_kappa_to_hdf5(temperature,
             w.create_dataset('gamma', data=gamma)
         if gamma_isotope is not None:
             w.create_dataset('gamma_isotope', data=gamma_isotope)
+        if gamma_N is not None:
+            w.create_dataset('gamma_N', data=gamma_N)
+        if gamma_U is not None:
+            w.create_dataset('gamma_U', data=gamma_U)
         if averaged_pp_interaction is not None:
             w.create_dataset('ave_pp', data=averaged_pp_interaction)
         if qpoint is not None:
@@ -703,6 +710,8 @@ def write_kappa_to_hdf5(temperature,
                     text += "\n"
             text += "\"%s\"" % ("kappa" + suffix + ".hdf5")
             print(text)
+
+        return full_filename
 
 def write_collision_eigenvalues_to_hdf5(temperatures,
                                         mesh,
