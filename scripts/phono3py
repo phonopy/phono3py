@@ -238,13 +238,8 @@ elif settings.get_is_lbte():
     run_mode = "conductivity-LBTE"
 elif settings.get_create_displacements():
     run_mode = "displacements"
-else:
-    if log_level > 0:
-        print("Nothing has been done.")
-        print_end()
-    sys.exit(0)
 
-if log_level:
+if log_level and run_mode is not None:
     print("Run mode: %s" % run_mode)
 
 ##########################
@@ -657,6 +652,7 @@ elif run_mode == "conductivity-RTA" or run_mode == "conductivity-LBTE":
         write_gamma=settings.get_write_gamma(),
         read_gamma=settings.get_read_gamma(),
         write_kappa=True,
+        is_N_U=settings.get_is_N_U(),
         write_gamma_detail=settings.get_write_gamma_detail(),
         write_collision=settings.get_write_collision(),
         read_collision=settings.get_read_collision(),

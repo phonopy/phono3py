@@ -115,7 +115,7 @@ def get_imag_self_energy(interaction,
                 num_band = frequencies.shape[1]
                 detailed_gamma = np.zeros(
                     (len(temperatures), len(frequency_points_at_sigma),
-                     num_band0, num_band, num_band, len(weights)),
+                     len(weights), num_band0, num_band, num_band),
                     dtype='double')
 
             for k, freq_point in enumerate(frequency_points_at_sigma):
@@ -129,9 +129,8 @@ def get_imag_self_energy(interaction,
                     ise.run()
                     gamma[l, k] = ise.get_imag_self_energy()[0]
                     if write_detail:
-                        detailed_gamma[l, k] = np.transpose(
-                            ise.get_detailed_imag_self_energy()[0],
-                            axes=(1, 2, 3, 0))
+                        detailed_gamma[l, k] = (
+                            ise.get_detailed_imag_self_energy()[0])
 
             gamma_sigmas.append(gamma)
 
@@ -220,8 +219,9 @@ def get_linewidth(interaction,
                 num_band0 = len(interaction.get_band_indices())
                 num_band = frequencies.shape[1]
                 num_temp = len(temperatures)
+                num_triplets = len(weights)
                 detailed_gamma = np.zeros(
-                    (num_temp, num_band0, num_band, num_band, len(weights)),
+                    (num_temp, num_triplets, num_band0, num_band, num_band),
                     dtype='double')
 
             for k, t in enumerate(temperatures):
@@ -229,9 +229,7 @@ def get_linewidth(interaction,
                 ise.run()
                 gamma[i, j, k] = ise.get_imag_self_energy()
                 if write_detail:
-                    detailed_gamma[k] = np.transpose(
-                        ise.get_detailed_imag_self_energy(),
-                        axes=(1, 2, 3, 0))
+                    detailed_gamma[k] = ise.get_detailed_imag_self_energy()
 
             if write_detail:
                 filename = write_gamma_detail_to_hdf5(
@@ -358,6 +356,8 @@ class ImagSelfEnergy(object):
             if self._with_detail:
                 self._detailed_imag_self_energy = np.zeros_like(
                     self._pp_strength)
+                self._ise_N = np.zeros_like(self._imag_self_energy)
+                self._ise_U = np.zeros_like(self._imag_self_energy)
             self._run_with_band_indices()
         else:
             self._imag_self_energy = np.zeros(
@@ -366,6 +366,8 @@ class ImagSelfEnergy(object):
                 self._detailed_imag_self_energy = np.zeros(
                     (len(self._frequency_points),) + self._pp_strength.shape,
                     dtype='double')
+                self._ise_N = np.zeros_like(self._imag_self_energy)
+                self._ise_U = np.zeros_like(self._imag_self_energy)
             self._run_with_frequency_points()
 
     def run_interaction(self, is_full_pp=True):
@@ -393,27 +395,11 @@ class ImagSelfEnergy(object):
             self._g[scattering_event_class - 1] = 0
 
     def get_imag_self_energy(self):
-        if self._cutoff_frequency is None:
-            return self._imag_self_energy
+        return self._get_imag_self_energy(self._imag_self_energy)
 
-        # Averaging imag-self-energies by degenerate bands
-        imag_se = np.zeros_like(self._imag_self_energy)
-        freqs = self._frequencies[self._grid_point]
-        deg_sets = degenerate_sets(freqs)
-        for dset in deg_sets:
-            bi_set = []
-            for i, bi in enumerate(self._band_indices):
-                if bi in dset:
-                    bi_set.append(i)
-            for i in bi_set:
-                if self._frequency_points is None:
-                    imag_se[i] = (self._imag_self_energy[bi_set].sum() /
-                                  len(bi_set))
-                else:
-                    imag_se[:, i] = (
-                        self._imag_self_energy[:, bi_set].sum(axis=1) /
-                        len(bi_set))
-        return imag_se
+    def get_imag_self_energy_N_and_U(self):
+        return (self._get_imag_self_energy(self._ise_N),
+                self._get_imag_self_energy(self._ise_U))
 
     def get_detailed_imag_self_energy(self):
         return self._detailed_imag_self_energy
@@ -468,29 +454,43 @@ class ImagSelfEnergy(object):
     def _run_with_band_indices(self):
         if self._g is not None:
             if self._lang == 'C':
-                self._run_c_with_band_indices_with_g()
                 if self._with_detail:
+                    # self._detailed_imag_self_energy.shape = 
+                    #    (num_triplets, num_band0, num_band, num_band)
+                    # self._imag_self_energy is also set.
                     self._run_c_detailed_with_band_indices_with_g()
+                else:
+                    # self._imag_self_energy.shape = (num_band0,)
+                    self._run_c_with_band_indices_with_g()
             else:
+                print("Running into _run_py_with_band_indices_with_g()")
+                print("This routine is super slow and only for the test.")
                 self._run_py_with_band_indices_with_g()
         else:
             if self._lang == 'C':
                 self._run_c_with_band_indices()
             else:
+                print("Running into _run_py_with_band_indices")
+                print("This routine is super slow and only for the test.")
                 self._run_py_with_band_indices()
 
     def _run_with_frequency_points(self):
         if self._g is not None:
             if self._lang == 'C':
-                self._run_c_with_frequency_points_with_g()
                 if self._with_detail:
                     self._run_c_detailed_with_frequency_points_with_g()
+                else:
+                    self._run_c_with_frequency_points_with_g()
             else:
+                print("Running into _run_py_with_frequency_points_with_g()")
+                print("This routine is super slow and only for the test.")
                 self._run_py_with_frequency_points_with_g()
         else:
             if self._lang == 'C':
                 self._run_c_with_frequency_points()
             else:
+                print("Running into _run_py_with_frequency_points()")
+                print("This routine is super slow and only for the test.")
                 self._run_py_with_frequency_points()
 
     def _run_c_with_band_indices(self):
@@ -528,15 +528,29 @@ class ImagSelfEnergy(object):
 
     def _run_c_detailed_with_band_indices_with_g(self):
         import phono3py._phono3py as phono3c
+
+        if self._g_zero is None:
+            _g_zero = np.zeros(self._pp_strength.shape,
+                               dtype='byte', order='C')
+        else:
+            _g_zero = self._g_zero
+
         phono3c.detailed_imag_self_energy_with_g(
             self._detailed_imag_self_energy,
+            self._ise_N, # Normal
+            self._ise_U, # Umklapp
             self._pp_strength,
             self._triplets_at_q,
+            self._weights_at_q,
+            self._pp.get_grid_address(),
             self._frequencies,
             self._temperature,
             self._g,
+            _g_zero,
             self._unit_conversion,
             self._cutoff_frequency)
+
+        self._imag_self_energy = self._ise_N + self._ise_U
 
     def _run_c_with_frequency_points(self):
         import phono3py._phono3py as phono3c
@@ -580,22 +594,37 @@ class ImagSelfEnergy(object):
 
     def _run_c_detailed_with_frequency_points_with_g(self):
         import phono3py._phono3py as phono3c
+        num_band0 = self._pp_strength.shape[1]
+        g_shape = list(self._g.shape)
+        g_shape[2] = num_band0
         g = np.zeros((2,) + self._pp_strength.shape, dtype='double')
         detailed_ise_at_f = np.zeros(self._detailed_imag_self_energy.shape[1:5],
                                      dtype='double')
+        ise_at_f_N = np.zeros(num_band0, dtype='double')
+        ise_at_f_U = np.zeros(num_band0, dtype='double')
+        _g_zero = np.zeros(g_shape, dtype='byte', order='C')
 
         for i in range(len(self._frequency_points)):
             for j in range(g.shape[2]):
                 g[:, :, j, :, :] = self._g[:, :, i, :, :]
-            phono3c.detailed_imag_self_energy_with_g(detailed_ise_at_f,
-                                                     self._pp_strength,
-                                                     self._triplets_at_q,
-                                                     self._frequencies,
-                                                     self._temperature,
-                                                     g,
-                                                     self._unit_conversion,
-                                                     self._cutoff_frequency)
+                phono3c.detailed_imag_self_energy_with_g(
+                    detailed_ise_at_f,
+                    ise_at_f_N,
+                    ise_at_f_U,
+                    self._pp_strength,
+                    self._triplets_at_q,
+                    self._weights_at_q,
+                    self._pp.get_grid_address(),
+                    self._frequencies,
+                    self._temperature,
+                    g,
+                    _g_zero,
+                    self._unit_conversion,
+                    self._cutoff_frequency)
             self._detailed_imag_self_energy[i] = detailed_ise_at_f
+            self._imag_self_energy[i] = ise_at_f_N + ise_at_f_U
+            self._ise_N[i] = ise_at_f_N
+            self._ise_U[i] = ise_at_f_U
 
     def _run_py_with_band_indices(self):
         for i, (triplet, w, interaction) in enumerate(
@@ -755,3 +784,27 @@ class ImagSelfEnergy(object):
                     self._imag_self_energy[:, l] += g1 * interaction[l, j, k] * w
 
         self._imag_self_energy *= self._unit_conversion
+
+    def _get_imag_self_energy(self, imag_self_energy):
+        if self._cutoff_frequency is None:
+            return imag_self_energy
+
+        # Averaging imag-self-energies by degenerate bands
+        imag_se = np.zeros_like(imag_self_energy)
+        freqs = self._frequencies[self._grid_point]
+        deg_sets = degenerate_sets(freqs)
+        for dset in deg_sets:
+            bi_set = []
+            for i, bi in enumerate(self._band_indices):
+                if bi in dset:
+                    bi_set.append(i)
+            for i in bi_set:
+                if self._frequency_points is None:
+                    imag_se[i] = (imag_self_energy[bi_set].sum() /
+                                  len(bi_set))
+                else:
+                    imag_se[:, i] = (
+                        imag_self_energy[:, bi_set].sum(axis=1) /
+                        len(bi_set))
+        return imag_se
+
