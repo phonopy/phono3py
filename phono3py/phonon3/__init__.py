@@ -236,7 +236,8 @@ class Phono3py(object):
                     is_translational_symmetry=False,
                     is_permutation_symmetry=False,
                     is_permutation_symmetry_fc2=False,
-                    translational_symmetry_type=None):
+                    translational_symmetry_type=None,
+                    use_alm=False):
         if displacement_dataset is None:
             disp_dataset = self._displacement_dataset
         else:
