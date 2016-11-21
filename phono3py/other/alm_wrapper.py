@@ -63,8 +63,6 @@ def get_fc3(supercell,
         fc3_alm = alm.get_fc(2)
         map_p2s = alm.get_atom_mapping_by_pure_translations()
 
-    print(fc2_alm[1].shape, fc3_alm[1].shape)
-
     print("---------------------------------"
           " ALM end "
           "---------------------------------")
@@ -93,8 +91,6 @@ def _expand_fc2(fc2_alm, supercell, pure_trans, rotations, symprec=1e-5):
     fc2 = np.zeros((natom, natom, 3, 3), dtype='double', order='C')
     (fc_values, elem_indices) = fc2_alm
     first_atoms = np.unique(elem_indices[:, 0] // 3)
-    print("first atoms")
-    print(first_atoms)
 
     for (fc, indices) in zip(fc_values, elem_indices):
         v1 = indices[0] // 3
@@ -119,8 +115,6 @@ def _expand_fc3(fc3_alm, supercell, pure_trans, rotations, symprec=1e-5):
     fc3 = np.zeros((natom, natom, natom, 3, 3, 3), dtype='double', order='C')
     (fc_values, elem_indices) = fc3_alm
     first_atoms = np.unique(elem_indices[:, 0] // 3)
-    print("first atoms")
-    print(first_atoms)
 
     for (fc, indices) in zip(fc_values, elem_indices):
         v1 = indices[0] // 3
@@ -132,6 +126,7 @@ def _expand_fc3(fc3_alm, supercell, pure_trans, rotations, symprec=1e-5):
         if v2 == v3 and c2 == c3:
             fc3[v1, v2, v3, c1, c2, c3] = fc
         else:
+            fc3[v1, v2, v3, c1, c2, c3] = fc
             fc3[v1, v3, v2, c1, c3, c2] = fc
 
     lattice = np.array(supercell.get_cell().T, dtype='double', order='C')
