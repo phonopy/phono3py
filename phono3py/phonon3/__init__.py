@@ -243,45 +243,23 @@ class Phono3py(object):
         else:
             disp_dataset = displacement_dataset
 
-        for forces, disp1 in zip(forces_fc3, disp_dataset['first_atoms']):
-            disp1['forces'] = forces
-        fc2 = get_fc2(self._supercell, self._symmetry, disp_dataset)
-        if is_permutation_symmetry_fc2:
-            set_permutation_symmetry(fc2)
-
-        if is_translational_symmetry:
-            tsym_type = 1
+        if use_alm:
+            from phono3py.other.alm_wrapper  import get_fc3 as get_fc3_alm
+            fc2, fc3 = get_fc3_alm(self._supercell,
+                                   forces_fc3,
+                                   disp_dataset,
+                                   self._symmetry)
         else:
-            tsym_type = 0
-        if translational_symmetry_type:
-            tsym_type = translational_symmetry_type
-        if tsym_type:
-            set_translational_invariance(
-                fc2,
-                translational_symmetry_type=tsym_type)
+            fc2, fc3 = self._get_fc3(forces_fc3,
+                                     disp_dataset,
+                                     cutoff_distance,
+                                     is_translational_symmetry,
+                                     is_permutation_symmetry,
+                                     is_permutation_symmetry_fc2,
+                                     translational_symmetry_type)
 
-        count = len(disp_dataset['first_atoms'])
-        for disp1 in disp_dataset['first_atoms']:
-            for disp2 in disp1['second_atoms']:
-                disp2['delta_forces'] = forces_fc3[count] - disp1['forces']
-                count += 1
-        self._fc3 = get_fc3(
-            self._supercell,
-            disp_dataset,
-            fc2,
-            self._symmetry,
-            translational_symmetry_type=tsym_type,
-            is_permutation_symmetry=is_permutation_symmetry,
-            verbose=self._log_level)
-
-        # Set fc3 elements zero beyond cutoff_distance
-        if cutoff_distance:
-            if self._log_level:
-                print("Cutting-off fc3 by zero (cut-off distance: %f)" %
-                      cutoff_distance)
-            self.cutoff_fc3_by_zero(cutoff_distance)
-
-        # Set fc2
+        # Set fc2 and fc3
+        self._fc3 = fc3
         if self._fc2 is None:
             self._fc2 = fc2
 
@@ -687,6 +665,55 @@ class Phono3py(object):
             [p2p_map[x] for x in
              self._phonon_primitive.get_supercell_to_primitive_map()]]
         self._phonon_supercell.set_masses(s_masses)
+
+    def _get_fc3(self,
+                 forces_fc3,
+                 disp_dataset,
+                 cutoff_distance,
+                 is_translational_symmetry,
+                 is_permutation_symmetry,
+                 is_permutation_symmetry_fc2,
+                 translational_symmetry_type):
+        for forces, disp1 in zip(forces_fc3, disp_dataset['first_atoms']):
+            disp1['forces'] = forces
+        fc2 = get_fc2(self._supercell, self._symmetry, disp_dataset)
+        if is_permutation_symmetry_fc2:
+            set_permutation_symmetry(fc2)
+
+        if is_translational_symmetry:
+            tsym_type = 1
+        else:
+            tsym_type = 0
+        if translational_symmetry_type:
+            tsym_type = translational_symmetry_type
+        if tsym_type:
+            set_translational_invariance(
+                fc2,
+                translational_symmetry_type=tsym_type)
+
+        count = len(disp_dataset['first_atoms'])
+        for disp1 in disp_dataset['first_atoms']:
+            for disp2 in disp1['second_atoms']:
+                disp2['delta_forces'] = forces_fc3[count] - disp1['forces']
+                count += 1
+        fc3 = get_fc3(
+            self._supercell,
+            disp_dataset,
+            fc2,
+            self._symmetry,
+            translational_symmetry_type=tsym_type,
+            is_permutation_symmetry=is_permutation_symmetry,
+            verbose=self._log_level)
+
+        # Set fc3 elements zero beyond cutoff_distance
+        if cutoff_distance:
+            if self._log_level:
+                print("Cutting-off fc3 by zero (cut-off distance: %f)" %
+                      cutoff_distance)
+            self.cutoff_fc3_by_zero(cutoff_distance)
+
+        return fc2, fc3
+
 
 class Phono3pyIsotope(object):
     def __init__(self,

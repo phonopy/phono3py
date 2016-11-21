@@ -110,6 +110,7 @@ def create_phono3py_force_constants(phono3py,
                                         settings.get_cutoff_fc3_distance(),
                                         input_filename,
                                         output_filename,
+                                        settings.get_use_alm(),
                                         log_level):
                     print("fc3 was not created properly.")
                     if log_level:
@@ -186,6 +187,7 @@ def _create_phono3py_fc3(phono3py,
                          cutoff_distance,
                          input_filename,
                          output_filename,
+                         use_alm,
                          log_level):
     if input_filename is None:
         filename = 'disp_fc3.yaml'
@@ -219,7 +221,8 @@ def _create_phono3py_fc3(phono3py,
         cutoff_distance=cutoff_distance,
         translational_symmetry_type=tsym_type,
         is_permutation_symmetry=symmetrize_fc3_r,
-        is_permutation_symmetry_fc2=symmetrize_fc2)
+        is_permutation_symmetry_fc2=symmetrize_fc2,
+        use_alm=use_alm)
     if output_filename is None:
         filename = 'fc3.hdf5'
     else:
