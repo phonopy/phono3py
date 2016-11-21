@@ -36,6 +36,39 @@ import numpy as np
 from phono3py.phonon3.fc3 import distribute_fc3
 from phonopy.harmonic.force_constants import distribute_force_constants
 
+def get_fc2(supercell,
+            forces_fc2,
+            disp_dataset,
+            symmetry):
+    natom = supercell.get_number_of_atoms()
+    force = np.array(forces_fc2, dtype='double', order='C')
+    disp = np.zeros_like(force)
+    lattice = supercell.get_cell()
+    positions = supercell.get_scaled_positions()
+    numbers = supercell.get_atomic_numbers()
+    _set_disp_fc2(disp, disp_dataset)
+    pure_trans = _collect_pure_translations(symmetry)
+    rotations = np.array([np.eye(3, dtype='intc')] * len(pure_trans),
+                         dtype='intc', order='C')
+
+    print("------------------------------"
+          " ALM FC2 start "
+          "------------------------------")
+
+    from alm import ALM
+    with ALM(lattice, positions, numbers, 1) as alm:
+        alm.set_displacement_and_force(disp, force)
+        alm.run_fitting()
+        fc2_alm = alm.get_fc(1)
+
+    print("-------------------------------"
+          " ALM FC2 end "
+          "-------------------------------")
+
+    fc2 = _expand_fc2(fc2_alm, supercell, pure_trans, rotations)
+
+    return fc2
+
 def get_fc3(supercell,
             forces_fc3,
             disp_dataset,
@@ -46,14 +79,14 @@ def get_fc3(supercell,
     lattice = supercell.get_cell()
     positions = supercell.get_scaled_positions()
     numbers = supercell.get_atomic_numbers()
-    _set_disp(disp, disp_dataset)
+    _set_disp_fc3(disp, disp_dataset)
     pure_trans = _collect_pure_translations(symmetry)
     rotations = np.array([np.eye(3, dtype='intc')] * len(pure_trans),
                          dtype='intc', order='C')
 
-    print("--------------------------------"
-          " ALM start "
-          "--------------------------------")
+    print("------------------------------"
+          " ALM FC3 start "
+          "------------------------------")
 
     from alm import ALM
     with ALM(lattice, positions, numbers, 2) as alm:
@@ -61,18 +94,23 @@ def get_fc3(supercell,
         alm.run_fitting()
         fc2_alm = alm.get_fc(1)
         fc3_alm = alm.get_fc(2)
-        map_p2s = alm.get_atom_mapping_by_pure_translations()
 
-    print("---------------------------------"
-          " ALM end "
-          "---------------------------------")
+    print("-------------------------------"
+          " ALM FC3 end "
+          "-------------------------------")
 
     fc2 = _expand_fc2(fc2_alm, supercell, pure_trans, rotations)
     fc3 = _expand_fc3(fc3_alm, supercell, pure_trans, rotations)
 
     return fc2, fc3
 
-def _set_disp(disp, disp_dataset):
+def _set_disp_fc2(disp, disp_dataset):
+    count = 0
+    for disp1 in disp_dataset['first_atoms']:
+        disp[count, disp1['number']] = disp1['displacement']
+        count += 1
+
+def _set_disp_fc3(disp, disp_dataset):
     count = 0
     for disp1 in disp_dataset['first_atoms']:
         disp[count, disp1['number']] = disp1['displacement']
@@ -101,14 +139,15 @@ def _expand_fc2(fc2_alm, supercell, pure_trans, rotations, symprec=1e-5):
 
     lattice = np.array(supercell.get_cell().T, dtype='double', order='C')
     positions = supercell.get_scaled_positions()
-    return distribute_force_constants(fc2,
-                                      range(natom),
-                                      first_atoms,
-                                      lattice,
-                                      positions,
-                                      rotations,
-                                      pure_trans,
-                                      symprec)
+    distribute_force_constants(fc2,
+                               range(natom),
+                               first_atoms,
+                               lattice,
+                               positions,
+                               rotations,
+                               pure_trans,
+                               symprec)
+    return fc2
 
 def _expand_fc3(fc3_alm, supercell, pure_trans, rotations, symprec=1e-5):
     natom = supercell.get_number_of_atoms()
@@ -131,15 +170,16 @@ def _expand_fc3(fc3_alm, supercell, pure_trans, rotations, symprec=1e-5):
 
     lattice = np.array(supercell.get_cell().T, dtype='double', order='C')
     positions = supercell.get_scaled_positions()
-    return distribute_fc3(fc3,
-                          first_atoms,
-                          lattice,
-                          positions,
-                          rotations,
-                          pure_trans,
-                          symprec,
-                          overwrite=False,
-                          verbose=True)
+    distribute_fc3(fc3,
+                   first_atoms,
+                   lattice,
+                   positions,
+                   rotations,
+                   pure_trans,
+                   symprec,
+                   overwrite=True,
+                   verbose=True)
+    return fc3
 
 def _collect_pure_translations(symmetry):
     pure_trans = []

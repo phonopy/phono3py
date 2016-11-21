@@ -205,29 +205,37 @@ class Phono3py(object):
                     displacement_dataset=None,
                     is_translational_symmetry=False,
                     is_permutation_symmetry=False,
-                    translational_symmetry_type=None):
+                    translational_symmetry_type=None,
+                    use_alm=False):
         if displacement_dataset is None:
             disp_dataset = self._displacement_dataset
         else:
             disp_dataset = displacement_dataset
 
-        for forces, disp1 in zip(forces_fc2, disp_dataset['first_atoms']):
-            disp1['forces'] = forces
-        self._fc2 = get_fc2(self._phonon_supercell,
-                            self._phonon_supercell_symmetry,
-                            disp_dataset)
-        if is_permutation_symmetry:
-            set_permutation_symmetry(self._fc2)
-        if is_translational_symmetry:
-            tsym_type = 1
+        if use_alm:
+            from phono3py.other.alm_wrapper  import get_fc2 as get_fc2_alm
+            self._fc2 = get_fc2_alm(self._phonon_supercell,
+                                    forces_fc2,
+                                    disp_dataset,
+                                    self._phonon_supercell_symmetry)
         else:
-            tsym_type = 0
-        if translational_symmetry_type:
-            tsym_type = translational_symmetry_type
-        if tsym_type:
-            set_translational_invariance(
-                self._fc2,
-                translational_symmetry_type=tsym_type)
+            for forces, disp1 in zip(forces_fc2, disp_dataset['first_atoms']):
+                disp1['forces'] = forces
+            self._fc2 = get_fc2(self._phonon_supercell,
+                                self._phonon_supercell_symmetry,
+                                disp_dataset)
+            if is_permutation_symmetry:
+                set_permutation_symmetry(self._fc2)
+            if is_translational_symmetry:
+                tsym_type = 1
+            else:
+                tsym_type = 0
+            if translational_symmetry_type:
+                tsym_type = translational_symmetry_type
+            if tsym_type:
+                set_translational_invariance(
+                    self._fc2,
+                    translational_symmetry_type=tsym_type)
 
     def produce_fc3(self,
                     forces_fc3,
