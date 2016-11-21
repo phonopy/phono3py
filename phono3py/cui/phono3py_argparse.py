@@ -118,6 +118,7 @@ def get_parser():
                         tstep=None,
                         tsym_type=None,
                         uplo='L',
+                        use_alm=False,
                         use_ave_pp=False,
                         verbose=False,
                         write_amplitude=False,
@@ -126,6 +127,9 @@ def get_parser():
                         write_gamma=False,
                         write_phonon=False,
                         write_grid_points=False)
+    parser.add_option(
+        "--alm", dest="use_alm",
+        action="store_true", help="Use ALM for creating force constants")
     parser.add_option(
         "--amplitude", dest="displacement_distance", type="float",
         help="Distance of displacements")

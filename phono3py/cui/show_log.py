@@ -119,16 +119,20 @@ def show_phono3py_force_constants_settings(read_fc3,
               (tsym_type > 0))
         print("Imposing symmetry of index exchange to fc2: %s" %
               is_symmetrize_fc2)
-        
+
     if not (read_fc3 or
             settings.get_is_isotope() or
             settings.get_is_joint_dos()):
-        print("Imposing translational symmetry to fc3: %s" %
-              (tsym_type > 0))
-        print("Imposing symmetry of index exchange to fc3 in real space: %s" %
-              is_symmetrize_fc3_r)
-        print(("Imposing symmetry of index exchange to fc3 in reciprocal space: "
-              "%s") % is_symmetrize_fc3_q)
+
+        if settings.get_use_alm():
+            print("Use ALM for getting fc3")
+        else:            
+            print("Imposing translational symmetry to fc3: %s" %
+                  (tsym_type > 0))
+            print("Imposing symmetry of index exchange to fc3 in real space: %s"
+                  % is_symmetrize_fc3_r)
+            print(("Imposing symmetry of index exchange to fc3 in reciprocal "
+                   "space: %s") % is_symmetrize_fc3_q)
         
     if settings.get_cutoff_fc3_distance() is not None:
         print("FC3 cutoff distance: %s" % settings.get_cutoff_fc3_distance())
