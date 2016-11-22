@@ -20,7 +20,7 @@ before_install:
     - conda update --yes conda
 
 install:
-    - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy h5py pyyaml matplotlib lapack
+    - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy h5py pyyaml matplotlib
     - conda config --add channels conda-forge
     - conda install --yes python=$TRAVIS_PYTHON_VERSION lapack
     - pwd
