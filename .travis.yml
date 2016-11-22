@@ -1,5 +1,5 @@
 language: python
-sudo: false
+sudo: required
 dist: trusty
 
 python:
@@ -21,8 +21,6 @@ before_install:
 
 install:
     - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy h5py pyyaml matplotlib
-    - conda config --add channels conda-forge
-    - conda install --yes python=$TRAVIS_PYTHON_VERSION lapack
     - pwd
     - ./get_nanoversion.sh
     - cat __nanoversion__.txt
