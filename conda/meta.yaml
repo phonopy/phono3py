@@ -31,6 +31,7 @@ requirements:
     - pyyaml
     - h5py
     - phonopy
+    - lapack
 
   run:
     - python
@@ -39,6 +40,7 @@ requirements:
     - pyyaml
     - h5py
     - phonopy
+    - lapack
 
 test:
   # Python imports
