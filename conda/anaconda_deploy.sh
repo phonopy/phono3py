@@ -6,7 +6,6 @@ export GIT_BRANCH=$3
 
 conda install conda-build anaconda-client --yes
 conda config --add channels atztogo
-conda config --add channels conda-forge
 conda build conda --no-anaconda-upload
 TRG=`conda build conda --output |sed -e 's/--/-*-/'`
 echo "Uploading: $TRG"

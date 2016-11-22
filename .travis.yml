@@ -21,6 +21,8 @@ before_install:
 
 install:
     - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy h5py pyyaml matplotlib lapack
+    - conda config --add channels conda-forge
+    - conda install --yes python=$TRAVIS_PYTHON_VERSION lapack
     - pwd
     - ./get_nanoversion.sh
     - cat __nanoversion__.txt
