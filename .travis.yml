@@ -20,7 +20,7 @@ before_install:
     - conda update --yes conda
 
 install:
-    - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy h5py pyyaml matplotlib
+    - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy h5py pyyaml matplotlib lapack
     - pwd
     - ./get_nanoversion.sh
     - cat __nanoversion__.txt
