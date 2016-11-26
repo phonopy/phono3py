@@ -309,11 +309,8 @@ if __name__ == '__main__':
     """Incremental kappa with respect to frequency and the derivative"""
 
     import h5py
-    import sys
-    from phonopy.interface.vasp import read_vasp
     from phonopy.structure.cells import get_primitive
     from phonopy.structure.symmetry import Symmetry
-    from phonopy.structure.grid_points import GridPoints
     import argparse
 
     parser = argparse.ArgumentParser(description="Show unit cell volume")
@@ -340,9 +337,9 @@ if __name__ == '__main__':
     parser.add_argument('--temperature', type=float, dest='temperature',
                         help='Temperature to output data at')
     parser.add_argument('--nsp', '--num_sampling_points', type=int,
-                        dest='num_sampling_points',
-                        default=100,
-                        help='Number of sampling points in MFP axis')
+                        dest='num_sampling_points', default=100,
+                        help=("Number of sampling points in frequency or "
+                              "MFP axis"))
     parser.add_argument('--average', action='store_true',
                         help=("Output the traces of the tensors divided by 3 "
                               "rather than the unique elements"))
