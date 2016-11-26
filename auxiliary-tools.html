@@ -110,7 +110,6 @@
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Auxiliary tools</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#kaccum"><code class="docutils literal"><span class="pre">kaccum</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#gaccum"><code class="docutils literal"><span class="pre">gaccum</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a><ul>
@@ -154,8 +153,32 @@
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Auxiliary tools</a><ul>
-<li><a class="reference internal" href="#kaccum"><code class="docutils literal"><span class="pre">kaccum</span></code></a></li>
-<li><a class="reference internal" href="#gaccum"><code class="docutils literal"><span class="pre">gaccum</span></code></a></li>
+<li><a class="reference internal" href="#kaccum"><code class="docutils literal"><span class="pre">kaccum</span></code></a><ul>
+<li><a class="reference internal" href="#how-to-use-kaccum">How to use <code class="docutils literal"><span class="pre">kaccum</span></code></a></li>
+<li><a class="reference internal" href="#general-option">General option</a><ul>
+<li><a class="reference internal" href="#pa"><code class="docutils literal"><span class="pre">--pa</span></code></a></li>
+<li><a class="reference internal" href="#c"><code class="docutils literal"><span class="pre">-c</span></code></a></li>
+<li><a class="reference internal" href="#temperature"><code class="docutils literal"><span class="pre">--temperature</span></code></a></li>
+<li><a class="reference internal" href="#nsp"><code class="docutils literal"><span class="pre">--nsp</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#kaccum-for-tensor-properties"><code class="docutils literal"><span class="pre">kaccum</span></code> for tensor properties</a><ul>
+<li><a class="reference internal" href="#mfp"><code class="docutils literal"><span class="pre">--mfp</span></code></a></li>
+<li><a class="reference internal" href="#gv"><code class="docutils literal"><span class="pre">--gv</span></code></a></li>
+<li><a class="reference internal" href="#average"><code class="docutils literal"><span class="pre">--average</span></code></a></li>
+<li><a class="reference internal" href="#trace"><code class="docutils literal"><span class="pre">--trace</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#kaccum-for-scalar-properties"><code class="docutils literal"><span class="pre">kaccum</span></code> for scalar properties</a><ul>
+<li><a class="reference internal" href="#gamma"><code class="docutils literal"><span class="pre">--gamma</span></code></a></li>
+<li><a class="reference internal" href="#tau"><code class="docutils literal"><span class="pre">--tau</span></code></a></li>
+<li><a class="reference internal" href="#cv"><code class="docutils literal"><span class="pre">--cv</span></code></a></li>
+<li><a class="reference internal" href="#gv-norm"><code class="docutils literal"><span class="pre">--gv_norm</span></code></a></li>
+<li><a class="reference internal" href="#pqj"><code class="docutils literal"><span class="pre">--pqj</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -203,38 +226,135 @@
 <span id="id1"></span><h1>Auxiliary tools<a class="headerlink" href="#auxiliary-tools" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="kaccum">
 <h2><code class="docutils literal"><span class="pre">kaccum</span></code><a class="headerlink" href="#kaccum" title="Permalink to this headline">¶</a></h2>
-<p><strong>This command is under the development. The usage and file format of
-the output may change in the future.</strong></p>
-<p>Accumulated lattice thermal conductivity with respect to frequency is
-calculated. The frequency derivative like density of states is also
-calculated.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">kaccum</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> \
-  <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="n">kappa</span><span class="o">-</span><span class="n">m111111</span><span class="o">.</span><span class="n">hdf5</span> <span class="o">|</span><span class="n">tee</span> <span class="n">kaccum</span><span class="o">.</span><span class="n">dat</span>
+<p>Cumulative physical properties with respect to frequency or mean free
+path are calculated using this command.</p>
+<p>For example, cumulative thermal conductivity is defined by</p>
+<div class="math">
+<p><img src="_images/math/8c99c8a94ac3df30e2e2d9234c3954180bec5314.png" alt="\kappa^\text{c}(\omega) =
+ \int^\omega_0 \sum_\lambda
+\kappa_\lambda \delta(\omega_\lambda - \omega) d\omega"/></p>
+</div><p>where <img class="math" src="_images/math/8f20200aa4a655d80029df9547705d21640fe4e3.png" alt="\kappa_\lambda"/> of phono3py for single-mode RTA is given as</p>
+<div class="math">
+<p><img src="_images/math/5471f43f65a4cc1d451a5f22d213930a64e88243.png" alt="\kappa_\lambda =
+C_\lambda \mathbf{v}_\lambda \otimes \mathbf{v}_\lambda
+\tau_\lambda."/></p>
+</div><p>(The notations are found in <a class="reference external" href="http://arxiv.org/abs/1501.00691">http://arxiv.org/abs/1501.00691</a>.)</p>
+<div class="section" id="how-to-use-kaccum">
+<h3>How to use <code class="docutils literal"><span class="pre">kaccum</span></code><a class="headerlink" href="#how-to-use-kaccum" title="Permalink to this headline">¶</a></h3>
+<p>Let&#8217;s computer lattice thermal conductivity of Si using an example
+found in the example directory.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">sym_fc3r</span> <span class="o">--</span><span class="n">sym_fc2</span> <span class="o">--</span><span class="n">tsym</span> <span class="o">--</span><span class="n">br</span>
 </pre></div>
 </div>
-<p><code class="docutils literal"><span class="pre">--mesh</span></code> option is mandatory before version 1.10.11 and <code class="docutils literal"><span class="pre">--pa</span></code>
-option is optional. The first and second arguments are the unit cell
-and <code class="docutils literal"><span class="pre">kappa-***.hdf5</span></code> files, respectively.</p>
+<p>Then using the output file, <code class="docutils literal"><span class="pre">kappa-m191919.hdf5</span></code>, run <code class="docutils literal"><span class="pre">kaccum</span></code> as follows:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">kaccum</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="n">kappa</span><span class="o">-</span><span class="n">m191919</span><span class="o">.</span><span class="n">hdf5</span> <span class="o">|</span><span class="n">tee</span> <span class="n">kaccum</span><span class="o">.</span><span class="n">dat</span>
+</pre></div>
+</div>
+<p>Here <code class="docutils literal"><span class="pre">--pa</span></code> is optional. The definition of <code class="docutils literal"><span class="pre">--pa</span></code> option is same as
+<a class="reference internal" href="command-options.html#pa-option"><span class="std std-ref">&#8211;pa, &#8211;primitive_axis: Transformation matrix to primitive cell</span></a>. <code class="docutils literal"><span class="pre">POSCAR-unitcell</span></code> is the unit cell filename that
+is specified with <code class="docutils literal"><span class="pre">-c</span></code> option.
+<code class="docutils literal"><span class="pre">kappa-m191919.hdf5</span></code> is the output file of thermal conductivity
+calculation, which is passed to <code class="docutils literal"><span class="pre">kaccum</span></code> as the first argument.</p>
 <p>The format of the output is as follows: The first column gives
-frequency, and the second to seventh columns give the accumulated</p>
-<p>lattice thermal conductivity of 6 elements, xx, yy, zz, yz, xz,
-xy. The eighth to 13th columns give the derivatives. There are sets of
-frequencies, which are separated by blank lines. Each set is for a
-temperature. There are the groups corresponding to the number of
+frequency in THz, and the second to seventh columns give the
+cumulative lattice thermal conductivity of 6 elements, xx, yy, zz, yz,
+xz, xy. The eighth to 13th columns give the derivatives. There are
+sets of frequencies, which are separated by blank lines. Each set is
+for a temperature. There are the groups corresponding to the number of
 temperatures calculated.</p>
 <p>To plot the output by gnuplot at temperature index 30 that may
 correspond to 300 K,</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">echo</span> <span class="s1">&#39;p &quot;kaccum.dat&quot; i 30 u 1:2 w l, &quot;kaccum.dat&quot; i 30 u 1:8 w l&#39;</span><span class="o">|</span><span class="n">gnuplot</span> <span class="o">-</span><span class="n">persist</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">gnuplot</span>
+<span class="o">...</span>
+<span class="n">gnuplot</span><span class="o">&gt;</span> <span class="n">p</span> <span class="s2">&quot;kaccum.dat&quot;</span> <span class="n">i</span> <span class="mi">30</span> <span class="n">u</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span> <span class="n">w</span> <span class="n">l</span><span class="p">,</span> <span class="s2">&quot;kaccum.dat&quot;</span> <span class="n">i</span> <span class="mi">30</span> <span class="n">u</span> <span class="mi">1</span><span class="p">:</span><span class="mi">8</span> <span class="n">w</span> <span class="n">l</span>
 </pre></div>
 </div>
-<p>This is the result of silicon.</p>
+<p>The plot like below is displayed.</p>
 <p><a class="reference internal" href="_images/Si-kaccum.png"><img alt="i0" src="_images/Si-kaccum.png" style="width: 50%;" /></a></p>
 </div>
-<div class="section" id="gaccum">
-<h2><code class="docutils literal"><span class="pre">gaccum</span></code><a class="headerlink" href="#gaccum" title="Permalink to this headline">¶</a></h2>
-<p><code class="docutils literal"><span class="pre">gaccum</span></code> is very similar to <code class="docutils literal"><span class="pre">kaccum</span></code>, but for
-<img class="math" src="_images/math/b23263d441abbb6f16226a98bbd61fd6452396d5.png" alt="\Gamma_\lambda(\omega_\lambda)"/>. The intensity is normalized by
-the number of grid points.</p>
+<div class="section" id="general-option">
+<h3>General option<a class="headerlink" href="#general-option" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="pa">
+<h4><code class="docutils literal"><span class="pre">--pa</span></code><a class="headerlink" href="#pa" title="Permalink to this headline">¶</a></h4>
+<p>See <a class="reference internal" href="command-options.html#pa-option"><span class="std std-ref">&#8211;pa, &#8211;primitive_axis: Transformation matrix to primitive cell</span></a>.</p>
+</div>
+<div class="section" id="c">
+<h4><code class="docutils literal"><span class="pre">-c</span></code><a class="headerlink" href="#c" title="Permalink to this headline">¶</a></h4>
+<p>Unit cell filename is specified with this option, e.g., <code class="docutils literal"><span class="pre">-c</span> <span class="pre">POSCAR-unitcell</span></code>.</p>
+</div>
+<div class="section" id="temperature">
+<h4><code class="docutils literal"><span class="pre">--temperature</span></code><a class="headerlink" href="#temperature" title="Permalink to this headline">¶</a></h4>
+<p>Pick up one temperature point. For example, <code class="docutils literal"><span class="pre">--temperature=300</span></code> for
+300 K, which works only if thermal conductivity is calculated at
+temperatures including 300 K.</p>
+</div>
+<div class="section" id="nsp">
+<h4><code class="docutils literal"><span class="pre">--nsp</span></code><a class="headerlink" href="#nsp" title="Permalink to this headline">¶</a></h4>
+<p>Number of points to be sampled in the x-axis.</p>
+</div>
+</div>
+<div class="section" id="kaccum-for-tensor-properties">
+<h3><code class="docutils literal"><span class="pre">kaccum</span></code> for tensor properties<a class="headerlink" href="#kaccum-for-tensor-properties" title="Permalink to this headline">¶</a></h3>
+<p>Number of columns of output data is 13 as explained above. With
+<code class="docutils literal"><span class="pre">--average</span></code> and <code class="docutils literal"><span class="pre">--trace</span></code> options, number of columns of output
+data becomes 3.</p>
+<div class="section" id="mfp">
+<h4><code class="docutils literal"><span class="pre">--mfp</span></code><a class="headerlink" href="#mfp" title="Permalink to this headline">¶</a></h4>
+<p>Mean free path is used instead of frequency for the x-axis. The unit
+of MFP is Angstrom.</p>
+<p>The figure below shows the results of Si example with the
+<img class="math" src="_images/math/db31f68df9d4755f7535a4280c7f2d468a2114a6.png" alt="19\times 19\times 19"/> and <img class="math" src="_images/math/ca8881a6636159ecf7e5fb81baa133639f2b78f9.png" alt="11\times 11\times 11"/> sampling
+meshes used for the lattice thermal conductivity calculation. They look
+differently. Especially for the result of the <img class="math" src="_images/math/31378805d1c43e3b8b2c7975e32660666f2c5c6e.png" alt="11\times 11\times
+11"/> sampling mesh, the MFP seems converging but we can see it&#8217;s not
+true to look at that of the <img class="math" src="_images/math/db31f68df9d4755f7535a4280c7f2d468a2114a6.png" alt="19\times 19\times 19"/> sampling
+mesh. To show this type of plot, be careful about the sampling mesh
+convergence.</p>
+<p><a class="reference internal" href="_images/Si-kaccum-MFP.png"><img alt="i1" src="_images/Si-kaccum-MFP.png" style="width: 50%;" /></a></p>
+</div>
+<div class="section" id="gv">
+<h4><code class="docutils literal"><span class="pre">--gv</span></code><a class="headerlink" href="#gv" title="Permalink to this headline">¶</a></h4>
+<p>Outer product of group velocities <img class="math" src="_images/math/335ed2ec71beef618cb066c5dc6671f3d4ab513c.png" alt="\mathbf{v}_\lambda \otimes
+\mathbf{v}_\lambda"/> (in THz^2 x Angstrom^2)</p>
+</div>
+<div class="section" id="average">
+<h4><code class="docutils literal"><span class="pre">--average</span></code><a class="headerlink" href="#average" title="Permalink to this headline">¶</a></h4>
+<p>Output the traces of the tensors divided by 3 rather than the unique
+elements.</p>
+</div>
+<div class="section" id="trace">
+<h4><code class="docutils literal"><span class="pre">--trace</span></code><a class="headerlink" href="#trace" title="Permalink to this headline">¶</a></h4>
+<p>Output the traces of the tensors rather than the unique elements.</p>
+</div>
+</div>
+<div class="section" id="kaccum-for-scalar-properties">
+<h3><code class="docutils literal"><span class="pre">kaccum</span></code> for scalar properties<a class="headerlink" href="#kaccum-for-scalar-properties" title="Permalink to this headline">¶</a></h3>
+<p>For the following properties, those intensities are normalized by
+the number of grid points. Number of columns of output data is three,
+frequency, cumulative property, and derivative of cumulative property
+such like DOS.</p>
+<div class="section" id="gamma">
+<h4><code class="docutils literal"><span class="pre">--gamma</span></code><a class="headerlink" href="#gamma" title="Permalink to this headline">¶</a></h4>
+<p><img class="math" src="_images/math/b23263d441abbb6f16226a98bbd61fd6452396d5.png" alt="\Gamma_\lambda(\omega_\lambda)"/> (in THz)</p>
+</div>
+<div class="section" id="tau">
+<h4><code class="docutils literal"><span class="pre">--tau</span></code><a class="headerlink" href="#tau" title="Permalink to this headline">¶</a></h4>
+<p>Lifetime <img class="math" src="_images/math/6810f518fdbe3110359d8d83c4d7e15441f8b1d1.png" alt="\tau_\lambda = \frac{1}{2\Gamma_\lambda(\omega_\lambda)}"/> (in ps)</p>
+</div>
+<div class="section" id="cv">
+<h4><code class="docutils literal"><span class="pre">--cv</span></code><a class="headerlink" href="#cv" title="Permalink to this headline">¶</a></h4>
+<p>Modal heat capacity <img class="math" src="_images/math/ff6c91552f8444d0e9dbc95892268c34c81ac6fa.png" alt="C_\lambda"/> (in eV/K)</p>
+</div>
+<div class="section" id="gv-norm">
+<h4><code class="docutils literal"><span class="pre">--gv_norm</span></code><a class="headerlink" href="#gv-norm" title="Permalink to this headline">¶</a></h4>
+<p>Absolute value of group velocity <img class="math" src="_images/math/26a0f452d4ff6bb91517f741b380b03c9c8a6af2.png" alt="|\mathbf{v}_\lambda|"/> (in
+THz x Angstrom)</p>
+</div>
+<div class="section" id="pqj">
+<h4><code class="docutils literal"><span class="pre">--pqj</span></code><a class="headerlink" href="#pqj" title="Permalink to this headline">¶</a></h4>
+<p>Averaged phonon-phonon interaction <img class="math" src="_images/math/645ecc9514b0f10389a05592cede1f2f11478b4b.png" alt="P_{\mathbf{q}j}"/> (in eV^2)</p>
+</div>
+</div>
 </div>
 </div>
 
