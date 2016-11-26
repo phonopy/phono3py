@@ -74,6 +74,8 @@ usual phono3py run without ``--dim_fc2`` option.
 
    phono3py --dim="2 2 2" --dim_fc2="4 4 4" -c POSCAR-unitcell ... (many options)
 
+.. _pa_option:
+
 ``--pa``, ``--primitive_axis``: Transformation matrix to primitive cell
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
