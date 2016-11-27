@@ -113,7 +113,8 @@ packages_phono3py = ['phono3py',
                      'phono3py.phonon',
                      'phono3py.phonon3']
 scripts_phono3py = ['scripts/phono3py',
-                    'scripts/kaccum']
+                    'scripts/kaccum',
+                    'scripts/kdeplot']
 
 ########################
 # _lapackepy extension #
