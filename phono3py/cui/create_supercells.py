@@ -128,3 +128,5 @@ def create_phono3py_supercells(unitcell,
 
         if log_level:
             print("Number of displacements for special fc2: %d" % num_disps)
+
+    return phono3py
