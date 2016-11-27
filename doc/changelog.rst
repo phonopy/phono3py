@@ -3,6 +3,13 @@
 Change Log
 ==========
 
+Nov-27-2016: version 1.11.5
+------------------------------
+
+- ``gaccum`` is merged to ``kaccum``. ``gaccum`` is removed. See
+  :ref:`auxiliary_tools_kaccum`.
+- ``kdeplot`` is added. See :ref:`auxiliary_tools_kdeplot`.
+
 Apr-24-2016: version 1.10.9
 ------------------------------
 

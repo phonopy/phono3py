@@ -47,6 +47,7 @@ class Phono3pySettings(Settings):
         self._pp_conversion_factor = None
         self._scattering_event_class = None # scattering event class 1 or 2
         self._temperatures = None
+        self._use_alm = False
         self._use_ave_pp = False
         self._write_amplitude = False
         self._write_collision = False
@@ -300,6 +301,12 @@ class Phono3pySettings(Settings):
     def get_temperatures(self):
         return self._temperatures
 
+    def set_use_alm(self, use_alm):
+        self._use_alm = use_alm
+
+    def get_use_alm(self):
+        return self._use_alm
+
     def set_use_ave_pp(self, use_ave_pp):
         self._use_ave_pp = use_ave_pp
 
@@ -505,6 +512,10 @@ class Phono3pyConfParser(ConfParser):
             if opt.dest == 'temperatures':
                 if self._options.temperatures is not None:
                     self._confs['temperatures'] = self._options.temperatures
+
+            if opt.dest == 'use_alm':
+                if self._options.use_alm:
+                    self._confs['use_alm'] = '.true.'
 
             if opt.dest == 'use_ave_pp':
                 if self._options.use_ave_pp:
@@ -736,6 +747,10 @@ class Phono3pyConfParser(ConfParser):
                 else:
                     self.set_parameter('temperatures', vals)
 
+            if conf_key == 'use_alm':
+                if confs['use_alm'] == '.true.':
+                    self.set_parameter('use_alm', True)
+
             if conf_key == 'use_ave_pp':
                 if confs['use_ave_pp'] == '.true.':
                     self.set_parameter('use_ave_pp', True)
@@ -937,6 +952,10 @@ class Phono3pyConfParser(ConfParser):
         # Temperatures
         if 'temperatures' in params:
             self._settings.set_temperatures(params['temperatures'])
+
+        # Use ALM for creating force constants
+        if 'use_alm' in params:
+            self._settings.set_use_alm(params['use_alm'])
 
         # Use averaged ph-ph interaction
         if 'use_ave_pp' in params:
