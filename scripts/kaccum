@@ -348,14 +348,21 @@ if __name__ == '__main__':
                               "rather than the unique elements"))
     parser.add_argument('--smearing', action='store_true',
                         help='Use smearing method (only for scalar density)')
+    parser.add_argument('--pwscf', dest="pwscf_mode",
+                        action="store_true", help="Invoke Pwscf mode")
     parser.add_argument('filenames', nargs='*')
     args = parser.parse_args()
 
+    interface_mode = None
+    if args.pwscf_mode:
+        interface_mode = 'pwscf'
     if len(args.filenames) > 1:
-        cell, _ = read_crystal_structure(args.filenames[0])
+        cell, _ = read_crystal_structure(args.filenames[0],
+                                         interface_mode=interface_mode)
         f = h5py.File(args.filenames[1])
     else:        
-        cell, _ = read_crystal_structure(args.cell_filename)
+        cell, _ = read_crystal_structure(args.cell_filename,
+                                         interface_mode=interface_mode)
         f = h5py.File(args.filenames[0])
 
     primitive_matrix = np.reshape(

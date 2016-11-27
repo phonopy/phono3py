@@ -3,6 +3,12 @@
 Auxiliary tools
 ===============
 
+.. contents::
+   :depth: 2
+   :local:
+
+.. _auxiliary_tools_kaccum:
+
 ``kaccum``
 -----------
 
@@ -82,7 +88,21 @@ See :ref:`pa_option`.
 ``-c``
 ^^^^^^^
 
-Unit cell filename is specified with this option, e.g., ``-c POSCAR-unitcell``.
+Unit cell filename is specified with this option, e.g., ``-c
+POSCAR-unitcell``.
+
+``--pwscf``
+^^^^^^^^^^^^
+
+Let ``kaccum`` read a Pwscf unit cell file with ``-c`` option, for example::
+
+   kaccum --pwscf --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c Si.in  kappa-m191919.hdf5 --temperature=300
+
+.. |ipwscf| image:: Si-kaccum-pwscf.png
+		    :width: 25%
+
+|ipwscf|
+
 
 ``--temperature``
 ^^^^^^^^^^^^^^^^^^
@@ -118,10 +138,10 @@ true to look at that of the :math:`19\times 19\times 19` sampling
 mesh. To show this type of plot, be careful about the sampling mesh
 convergence.
 
-.. |i1| image:: Si-kaccum-MFP.png
-        :width: 50%
+.. |iMFP| image:: Si-kaccum-MFP.png
+		  :width: 50%
 
-|i1|
+|iMFP|
 
 
 ``--gv``
@@ -174,3 +194,35 @@ THz x Angstrom)
 ^^^^^^^^^^^^^^
 
 Averaged phonon-phonon interaction :math:`P_{\mathbf{q}j}` (in eV^2) 
+
+.. _auxiliary_tools_kdeplot:
+
+``kdeplot``
+------------
+
+**This script is under the development and may contain bugs.** But a
+feature is briefly introduced below since it may be useful. Scipy is
+needed to use this script.
+
+This script plots distribution of phonon modes in the
+frequency-lifetime plane. Its density is estimated using Gaussian-KDE
+using `scipy
+<https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html>`_.
+
+``kdeplot`` reads a result of the thermal conductivity calculation as
+the first argument::
+
+   % kdeplot kappa-m191919.hdf5
+
+After finishing calculation, the plot is saved in
+``lifetime.png``. The black dots show the phonon modes. The density is
+estimated from these dots.
+
+
+.. |ikde| image:: Si-kdeplot.png
+        :width: 50%
+
+|ikde|
+
+
+
