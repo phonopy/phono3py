@@ -105,7 +105,9 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Tips</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#convergence-check-in-calculation">Convergence check in calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#brillouin-zone-summation">Brillouin zone summation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#numerical-quality-of-force-constants">Numerical quality of force constants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#to-reduce-computational-demands">To reduce computational demands</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
@@ -118,6 +120,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#nov-27-2016-version-1-11-5">Nov-27-2016: version 1.11.5</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#apr-24-2016-version-1-10-9">Apr-24-2016: version 1.10.9</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#apr-16-2016-version-1-10-7">Apr-16-2016: version 1.10.7</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#mar-15-2016-version-1-10-5">Mar-15-2016: version 1.10.5</a></li>
@@ -154,11 +157,9 @@
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Tips</a><ul>
-<li><a class="reference internal" href="#convergence-check-in-calculation">Convergence check in calculation</a><ul>
 <li><a class="reference internal" href="#brillouin-zone-summation">Brillouin zone summation</a></li>
 <li><a class="reference internal" href="#numerical-quality-of-force-constants">Numerical quality of force constants</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#to-reduce-computational-demands">To reduce computational demands</a></li>
 </ul>
 </li>
 </ul>
@@ -204,21 +205,37 @@
       
   <div class="section" id="tips">
 <span id="id1"></span><h1>Tips<a class="headerlink" href="#tips" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="convergence-check-in-calculation">
-<h2>Convergence check in calculation<a class="headerlink" href="#convergence-check-in-calculation" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="brillouin-zone-summation">
-<span id="brillouinzone-sum"></span><h3>Brillouin zone summation<a class="headerlink" href="#brillouin-zone-summation" title="Permalink to this headline">¶</a></h3>
+<span id="brillouinzone-sum"></span><h2>Brillouin zone summation<a class="headerlink" href="#brillouin-zone-summation" title="Permalink to this headline">¶</a></h2>
 <p>Brillouin zone sums appear at different two points for phonon lifetime
 calculation. First it is used for the Fourier transform of force
 constans, and then to obtain imaginary part of phonon-self-energy.  In
 the numerical calculation, uniform sampling meshes are employed for
 these summations. To obtain more accurate result, it is always better
-to use denser meshes. But the denser mesh requires more
+to use denser meshes. But the denser mesh is more
 computationally demanding.</p>
 <p>The second Brillouin zone sum contains delta functions. In phono3py
 calculation, a linear tetrahedron method (<code class="docutils literal"><span class="pre">--thm</span></code>, default option)
 and a smearing method (<code class="docutils literal"><span class="pre">--sigma</span></code>) can be used for this Brillouin
-zone integration. Smearing parameter is used to approximate delta
+zone integration. In most cases, the tetrahedron method is better,
+therefore it is the default choice in phono3py. Especially in high
+thermal conductivity materials, the smearing method results in
+underestimation of thermal conductivity.</p>
+<p>The figure below shows Si thermal conductivity convergence with
+respect to number of mesh points along an axis from n=19 to 65. This
+is calculated with RTA and the linear tetrahedron method. Within the
+methods and phono3py implementation, it is converging at around n=55,
+however this computational demanding is not trivial. Extrapolation to
+<img class="math" src="_images/math/d2ec46511be73d05d687d562f81c398947114643.png" alt="1/n \rightarrow 0"/> seems not a good idea, since it is
+converging. This plot shows that we have to decide how much value is
+acceptable as thermal conductivity value. What is important is that
+the obtained value has to be shown accompanied with the information of
+the computational settings. The BZ integration method and sampling
+mesh are definitely those of them.</p>
+<p><a class="reference internal" href="_images/Si-convergence.png"><img alt="isiconv" src="_images/Si-convergence.png" style="width: 25%;" /></a></p>
+<p>In case the smearing method is necessary to use, the convergence of
+q-point mesh together with smearing width has to be checked
+carefully. Smearing parameter is used to approximate delta
 functions. Small <code class="docutils literal"><span class="pre">sigma</span></code> value is better to describe the detailed
 structure of three-phonon-space, but it requires a denser mesh to
 converge.</p>
@@ -236,7 +253,7 @@ recommended to use. A drawback of using the tetrahedron method is that
 it is slower and consumes more memory space.</p>
 </div>
 <div class="section" id="numerical-quality-of-force-constants">
-<h3>Numerical quality of force constants<a class="headerlink" href="#numerical-quality-of-force-constants" title="Permalink to this headline">¶</a></h3>
+<h2>Numerical quality of force constants<a class="headerlink" href="#numerical-quality-of-force-constants" title="Permalink to this headline">¶</a></h2>
 <p>Third-order force constants are much weaker to numerical noise of a
 force calculator than second-order force constants. Therefore
 supercell force calculations have to be done by enough high numerical
@@ -257,7 +274,30 @@ without symmetrizing third-order force constants by <code class="docutils litera
 <p>Mode-Gruneisen-parameters calculated from third-order force constants
 look very sensitive to numerical noise near the Gamma point. Therefore
 symmetrization is recommended.</p>
+<p>Overall, numerical quality of forces given by force calculators is
+the most important factor for the numerical quality of the thermal
+conductivity. We may be able to apply symmetry constraints to the
+force constants during the calculation e.g. using statistical
+approach, but the quality of force constants will be bad if that of
+forces are bad. Just they suffice the symmetry and the intensity is
+not reliable. Therefore what we can do best is to use the best
+calculator as the first priority. If we use ab-initio code, the
+knowledge about the ab-initio calculation from practical points like
+usage to method and theory is mandatory for the good thermal
+conductivity calculation.</p>
 </div>
+<div class="section" id="to-reduce-computational-demands">
+<h2>To reduce computational demands<a class="headerlink" href="#to-reduce-computational-demands" title="Permalink to this headline">¶</a></h2>
+<p>Here it is assumed ab-initio code is used as the force
+calculator. Then the most heavy part of thermal conductivity
+calculation is a set of many supercell force calculations by ab-initio code.</p>
+<p>The number of force calculation is reduced by employing crystal
+symmetry. This is only valid if the crystal we focus on has high
+symmetry. Therefore we need another strategy. Introducing cutoff
+distance to consider interaction among atoms is an idea. For this
+phono3py has a marginal option but it is not very recommended to use
+since there is a better code to do this task, which is the <a class="reference external" href="http://alamode.readthedocs.io/en/latest/input/inputalm.html">ALM code</a> in
+alamode package. The ALM interface for phono3py is now preparing.</p>
 </div>
 </div>
 
