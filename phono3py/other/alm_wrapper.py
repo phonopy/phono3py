@@ -79,7 +79,7 @@ def get_fc3(supercell,
     lattice = supercell.get_cell()
     positions = supercell.get_scaled_positions()
     numbers = supercell.get_atomic_numbers()
-    _set_disp_fc3(disp, disp_dataset)
+    indices = _set_disp_fc3(disp, disp_dataset)
     pure_trans = _collect_pure_translations(symmetry)
     rotations = np.array([np.eye(3, dtype='intc')] * len(pure_trans),
                          dtype='intc', order='C')
@@ -90,7 +90,12 @@ def get_fc3(supercell,
 
     from alm import ALM
     with ALM(lattice, positions, numbers, 2) as alm:
-        alm.set_displacement_and_force(disp, force)
+        alm.set_displacement_and_force(disp[indices], force[indices])
+        if 'cutoff_distance' in disp_dataset:
+            cut_d = disp_dataset['cutoff_distance']
+            nkd = len(np.unique(numbers))
+            rcs = np.ones((2, nkd, nkd), dtype='double') * cut_d
+            alm.set_cutoff_radii(rcs)
         alm.run_fitting()
         fc2_alm = alm.get_fc(1)
         fc3_alm = alm.get_fc(2)
@@ -111,18 +116,27 @@ def _set_disp_fc2(disp, disp_dataset):
         count += 1
 
 def _set_disp_fc3(disp, disp_dataset):
+    indices = []
     count = 0
     for disp1 in disp_dataset['first_atoms']:
+        indices.append(count)
         disp[count, disp1['number']] = disp1['displacement']
         count += 1
 
     for disp1 in disp_dataset['first_atoms']:
         for disp2 in disp1['second_atoms']:
+            if 'included' in disp2:
+                if disp2['included']:
+                    indices.append(count)
+            else:
+                indices.append(count)
             disp[count, disp1['number']] = disp1['displacement']
             disp[count, disp2['number']] = disp2['displacement']
             count += 1
 
     assert count == len(disp)
+
+    return indices
                                        
 def _expand_fc2(fc2_alm, supercell, pure_trans, rotations, symprec=1e-5):
     natom = supercell.get_number_of_atoms()
