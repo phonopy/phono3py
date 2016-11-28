@@ -8,6 +8,7 @@ from phonopy.harmonic.force_constants import (get_fc2, set_permutation_symmetry,
 from phonopy.harmonic.displacement import get_least_displacements
 from phonopy.harmonic.displacement import direction_to_displacement as \
      direction_to_displacement_fc2
+from phono3py.version import __version__
 from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
                                                write_imag_self_energy,
                                                get_linewidth,
@@ -105,6 +106,7 @@ class Phono3py(object):
         # Other variables
         self._fc2 = None
         self._fc3 = None
+        self._nac_params = None
 
         # Setup interaction
         self._interaction = None
@@ -129,6 +131,7 @@ class Phono3py(object):
                              constant_averaged_interaction=None,
                              frequency_scale_factor=None,
                              unit_conversion=None):
+        self._nac_params = nac_params
         self._interaction = Interaction(
             self._supercell,
             self._primitive,
@@ -147,7 +150,7 @@ class Phono3py(object):
             self._fc2,
             self._phonon_supercell,
             self._phonon_primitive,
-            nac_params=nac_params,
+            nac_params=self._nac_params,
             frequency_scale_factor=frequency_scale_factor)
         self._interaction.set_nac_q_direction(nac_q_direction=nac_q_direction)
 
@@ -294,6 +297,9 @@ class Phono3py(object):
                 self._fc3,
                 translational_symmetry_type=translational_symmetry_type)
 
+    def get_version(self):
+        return __version__
+
     def get_interaction_strength(self):
         return self._interaction
 
@@ -308,6 +314,9 @@ class Phono3py(object):
 
     def set_fc3(self, fc3):
         self._fc3 = fc3
+
+    def get_nac_params(self):
+        return self._nac_params
 
     def get_primitive(self):
         return self._primitive
@@ -333,6 +342,12 @@ class Phono3py(object):
 
     def get_phonon_supercell_symmetry(self):
         return self._phonon_supercell_symmetry
+
+    def get_supercell_matrix(self):
+        return self._supercell_matrix
+
+    def get_primitive_matrix(self):
+        return self._primitive_matrix
 
     def set_displacement_dataset(self, dataset):
         self._displacement_dataset = dataset

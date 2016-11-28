@@ -216,13 +216,45 @@ the first argument::
 
 After finishing calculation, the plot is saved in
 ``lifetime.png``. The black dots show the phonon modes. The density is
-estimated from these dots.
-
+estimated from these dots. The drawing area is automatically set to
+make look good, e.g, higher lifetime side is not drawn if the density
+is negligible.
 
 .. |ikde| image:: Si-kdeplot.png
         :width: 50%
 
 |ikde|
+
+Option
+~~~~~~~
+
+``--temperature``
+^^^^^^^^^^^^^^^^^^
+
+Pick up one temperature point. For example, ``--temperature=300`` for
+300 K, which works only if thermal conductivity is calculated at
+temperatures including 300 K.
+
+Without specifying this option, the 31st temperature index is
+chosen. This often corresponds to 300 K if phono3py ran without
+setting temperature range and step.
+
+``--nbins``
+^^^^^^^^^^^^
+
+This option controls the resolution of the density plot. The default
+value is 100.
+
+``--cutoff``, ``--fmax``
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The option ``--cutoff`` (``--fmax``) sets the maximum value of
+lifetime (frequency) to be included as data points. Normally increasing
+this value from the chosen value without specifying this option
+does nothing since automatic control of drawing area cut high lifetime
+(frequency) side if the density is low.
+
+
 
 
 
