@@ -17,7 +17,7 @@ def collect_data(gamma, weights, frequencies, t_index, cutoff, max_freq):
         tau = 1.0 / np.where(g > 0, g, -1) / (2 * 2 * np.pi)
         tau = np.where(tau > 0, tau, 0)
         if cutoff:
-            tau = np.where(tau < args.cutoff, tau, 0)
+            tau = np.where(tau < cutoff, tau, 0)
     
         if max_freq is None:
             freqs += list(freq)
@@ -95,14 +95,12 @@ parser = argparse.ArgumentParser(
 parser.add_argument("--fmax", help="Max frequency to plot",
                     type=float, default=None)
 parser.add_argument("--cutoff",
-                    help=("Property below this value is included in data "
-                          "before running Gaussian-KDE"),
+                    help=("Property (y-axis) below this value is included in "
+                          "data before running Gaussian-KDE"),
                     type=float, default=None)
 parser.add_argument('--nbins', type=int, default=100,
                     help=("Number of bins in which data are assigned, "
                           "i.e., determining resolution of plot")),
-parser.add_argument('--nu', action='store_true',
-                    help='Also plot N and U if they are available')
 parser.add_argument('--temperature', type=float, default=300.0,
                     dest='temperature',
                     help='Temperature to output data at')
@@ -131,11 +129,6 @@ if os.path.isfile(args.filenames[0]):
 else:
     print("File %s doens't exist." % args.filenames[0])
     sys.exit(1)
-
-if args.fmax:
-    max_freq = args.fmax
-else:
-    max_freq = None
 
 if args.title:
     title = args.title
@@ -174,7 +167,7 @@ if 'gamma_U' in f:
 #
 for gamma, s in zip(gammas, symbols):
     x, y, z = collect_data(gamma, weights, frequencies,
-                           t_index, args.cutoff, max_freq)
+                           t_index, args.cutoff, args.fmax)
     xi, yi, zi, indices = run_KDE(x, y, z, args.nbins)
     xmax = np.max(x)
     ymax = np.max(y)
