@@ -315,7 +315,7 @@ correspond to 300 K,</p>
 <div class="section" id="pwscf">
 <h4><code class="docutils literal"><span class="pre">--pwscf</span></code><a class="headerlink" href="#pwscf" title="Permalink to this headline">¶</a></h4>
 <p>Let <code class="docutils literal"><span class="pre">kaccum</span></code> read a Pwscf unit cell file with <code class="docutils literal"><span class="pre">-c</span></code> option, for example:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">kaccum</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">Si</span><span class="o">.</span><span class="ow">in</span>  <span class="n">kappa</span><span class="o">-</span><span class="n">m191919</span><span class="o">.</span><span class="n">hdf5</span> <span class="o">--</span><span class="n">temperature</span><span class="o">=</span><span class="mi">300</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">kaccum</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">Si</span><span class="o">.</span><span class="ow">in</span> <span class="o">--</span><span class="n">temperature</span><span class="o">=</span><span class="mi">300</span> <span class="n">kappa</span><span class="o">-</span><span class="n">m191919</span><span class="o">.</span><span class="n">hdf5</span>
 </pre></div>
 </div>
 <p><a class="reference internal" href="_images/Si-kaccum-pwscf.png"><img alt="ipwscf" src="_images/Si-kaccum-pwscf.png" style="width: 25%;" /></a></p>
@@ -404,7 +404,7 @@ frequency-lifetime plane. Its density is estimated using Gaussian-KDE
 using <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html">scipy</a>.</p>
 <p><code class="docutils literal"><span class="pre">kdeplot</span></code> reads a result of the thermal conductivity calculation as
 the first argument:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">kdeplot</span> <span class="n">kappa</span><span class="o">-</span><span class="n">m191919</span><span class="o">.</span><span class="n">hdf5</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">kdeplot</span> <span class="o">--</span><span class="n">nbins</span><span class="o">=</span><span class="mi">200</span> <span class="n">kappa</span><span class="o">-</span><span class="n">m191919</span><span class="o">.</span><span class="n">hdf5</span>
 </pre></div>
 </div>
 <p>After finishing calculation, the plot is saved in
