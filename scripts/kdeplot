@@ -4,7 +4,7 @@ import numpy as np
 import h5py
 import sys
 import os
-from scipy.stats import kde
+from scipy import stats
 import argparse
 
 epsilon = 1.0e-8
@@ -14,74 +14,90 @@ def collect_data(gamma, weights, frequencies, t_index, cutoff, max_freq):
     mode_prop = []
     mode_weights = []
     for w, freq, g in zip(weights, frequencies, gamma):
+
         tau = 1.0 / np.where(g > 0, g, -1) / (2 * 2 * np.pi)
-        tau = np.where(tau > 0, tau, 0)
         if cutoff:
-            tau = np.where(tau < cutoff, tau, 0)
+            tau = np.where(tau < cutoff, tau, -1)
     
+        condition = tau > 0
+        _tau = np.extract(condition, tau)
+        _freq = np.extract(condition, freq)
+
         if max_freq is None:
-            freqs += list(freq)
-            mode_prop += list(tau)
-            mode_weights += [w] * len(freq)
+            freqs += list(_freq) * w
+            mode_prop += list(_tau) * w 
         else:
             freqs += list(np.extract(freq < max_freq, freq))
             mode_prop += list(np.extract(freq < max_freq, tau))
-            mode_weights += [w] * np.sum(freq < max_freq)
     
     x = np.array(freqs)
     y = np.array(mode_prop)
-    z = np.array(mode_weights)
 
-    return x, y, z
+    return x, y
 
-def run_KDE(x, y, z, nbins):
-    """Running Gaussian-KDE
-
-    http://stackoverflow.com/questions/19390320/scatterplot-contours-in-matplotlib
+def run_KDE(x, y, nbins, y_max=None):
+    """Running Gaussian-KDE by scipy
     """
 
-    kernel = kde.gaussian_kde([x, y])
-    xi, yi = np.mgrid[x.min():x.max():nbins*1j, y.min():y.max():nbins*1j]
-    zi = kernel(np.vstack([xi.flatten(), yi.flatten()])).reshape(xi.shape)
-    
-    zi_max = np.max(zi)
-    indices = []
-    for i, r_zi in enumerate((zi.T)[::-1]):
-        if indices:
-            indices.append(nbins - i - 1)
-        elif np.max(r_zi) > zi_max / 10:
-            indices = [nbins - i - 1]
-    
-    ynbins = nbins ** 2 // len(indices)
-    xi, yi = np.mgrid[x.min():x.max():nbins*1j, y.min():y.max():ynbins*1j]
-    zi = kernel(np.vstack([xi.flatten(), yi.flatten()])).reshape(xi.shape)
+    x_min = 0
+    x_max = np.rint(x.max() * 1.1)
+    y_min = 0
+    if y_max is None:
+        _y_max = np.rint(y.max())
+    else:
+        _y_max = y_max
+    values = np.vstack([x.ravel(), y.ravel()])
+    kernel = stats.gaussian_kde(values)
 
-    return xi, yi, zi, indices
+    xi, yi = np.mgrid[x_min:x_max:nbins*1j, y_min:_y_max:nbins*1j]
+    positions = np.vstack([xi.ravel(), yi.ravel()])
+    zi = np.reshape(kernel(positions).T, xi.shape)
 
-def plot(plt, xi, yi, zi, indices, nbins, xmax, ymax):    
+    if y_max is None:
+        zi_max = np.max(zi)
+        indices = []
+        for i, r_zi in enumerate((zi.T)[::-1]):
+            if indices:
+                indices.append(nbins - i - 1)
+            elif np.max(r_zi) > zi_max / 10:
+                indices = [nbins - i - 1]
+        short_nbinds = len(indices)
+        
+        ynbins = nbins ** 2 // short_nbinds
+        xi, yi = np.mgrid[x_min:x_max:nbins*1j, y_min:_y_max:ynbins*1j]
+        positions = np.vstack([xi.ravel(), yi.ravel()])
+        zi = np.reshape(kernel(positions).T, xi.shape)
+    else:
+        short_nbinds = nbins
+
+    return xi, yi, zi, short_nbinds
+
+def plot(plt, xi, yi, zi, x, y, short_nbinds, nbins, y_max=None):    
     #
     # Plotting
     #
+    xmax = np.max(x)
+    ymax = np.max(y)
     x_cut = []
     y_cut = []
-    z_cut = []
-    threshold = ymax / nbins * len(indices)
-    threshold = threshold / nbins * (nbins - 1)
-    for xv, yv, zv in zip(x, y, z):
-        if (epsilon < yv and yv < threshold and
-            epsilon < xv and xv < xmax - epsilon):
-            x_cut.append(xv)
-            y_cut.append(yv)
-            z_cut.append(zv)
+    threshold = ymax / nbins * short_nbinds / nbins * (nbins - 1)
+    for _x, _y in zip(x, y):
+        if (epsilon < _y and _y < threshold and
+            epsilon < _x and _x < xmax - epsilon):
+            x_cut.append(_x)
+            y_cut.append(_y)
     
     fig = plt.figure()
     plt.pcolormesh(xi[:,:nbins], yi[:,:nbins], zi[:,:nbins])
     plt.colorbar()
     
-    plt.scatter(x_cut, y_cut, c=z_cut, s=0.1)
+    plt.scatter(x_cut, y_cut, s=0.01, marker='o')
     
-    plt.xlim(xmin=0, xmax=xmax)
-    plt.ylim(ymin=0, ymax=(np.max(y_cut) + epsilon))
+    plt.xlim(xmin=0, xmax=xi.max())
+    if y_max is None:
+        plt.ylim(ymin=0, ymax=(np.max(y_cut) + epsilon))
+    else:
+        plt.ylim(ymin=0, ymax=(y_max + epsilon))
     if title:
         plt.title(title, fontsize=20)
     plt.xlabel('Phonon frequency (THz)', fontsize=18)
@@ -98,9 +114,13 @@ parser.add_argument("--cutoff",
                     help=("Property (y-axis) below this value is included in "
                           "data before running Gaussian-KDE"),
                     type=float, default=None)
+parser.add_argument("--ymax",
+                    help="Set maximum y of draw area",
+                    type=float, default=None)
 parser.add_argument('--nbins', type=int, default=100,
                     help=("Number of bins in which data are assigned, "
                           "i.e., determining resolution of plot")),
+parser.add_argument('--nu', action='store_true', help='Plot N and U.')
 parser.add_argument('--temperature', type=float, default=300.0,
                     dest='temperature',
                     help='Temperature to output data at')
@@ -155,23 +175,22 @@ weights = f['weight'][:]
 frequencies = f['frequency'][:]
 gammas = [f['gamma'][t_index],]
 symbols = ['',]
-if 'gamma_N' in f:
-    gammas.append(f['gamma_N'][t_index])
-    symbols.append('N')
-if 'gamma_U' in f:
-    gammas.append(f['gamma_U'][t_index])
-    symbols.append('U')
+if args.nu:
+    if 'gamma_N' in f:
+        gammas.append(f['gamma_N'][t_index])
+        symbols.append('N')
+    if 'gamma_U' in f:
+        gammas.append(f['gamma_U'][t_index])
+        symbols.append('U')
 
 #
 # Run
 #
 for gamma, s in zip(gammas, symbols):
-    x, y, z = collect_data(gamma, weights, frequencies,
-                           t_index, args.cutoff, args.fmax)
-    xi, yi, zi, indices = run_KDE(x, y, z, args.nbins)
-    xmax = np.max(x)
-    ymax = np.max(y)
-    fig = plot(plt, xi, yi, zi, indices, args.nbins, xmax, ymax)
+    x, y = collect_data(gamma, weights, frequencies,
+                        t_index, args.cutoff, args.fmax)
+    xi, yi, zi, short_nbinds = run_KDE(x, y, args.nbins, y_max=args.ymax)
+    fig = plot(plt, xi, yi, zi, x, y, short_nbinds, args.nbins, y_max=args.ymax)
     if s:
         fig.savefig("lifetime-%s.png" % s)
     else:
