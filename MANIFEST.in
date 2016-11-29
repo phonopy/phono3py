@@ -4,3 +4,5 @@ graft c/spglib_h
 graft c/kspclib_h
 graft example
 include setup.py
+include __nanoversion__.txt
+include LICENSE
