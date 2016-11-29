@@ -94,7 +94,9 @@ def get_fc3(supercell,
         if 'cutoff_distance' in disp_dataset:
             cut_d = disp_dataset['cutoff_distance']
             nkd = len(np.unique(numbers))
-            rcs = np.ones((2, nkd, nkd), dtype='double') * cut_d
+            rcs = np.ones((2, nkd, nkd), dtype='double')
+            rcs[0] *= -1
+            rcs[1] *= cut_d
             alm.set_cutoff_radii(rcs)
         alm.run_fitting()
         fc2_alm = alm.get_fc(1)
