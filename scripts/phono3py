@@ -40,8 +40,8 @@ from phonopy.interface.vasp import read_vasp
 from phonopy.file_IO import parse_BORN, write_FORCE_SETS, parse_FORCE_SETS
 from phono3py.file_IO import read_phonon_from_hdf5
 from phonopy.units import VaspToTHz, PwscfToTHz, Bohr, Rydberg, Hartree
-from phonopy.version import __version__
 from phonopy.interface import read_crystal_structure
+from phono3py.version import __version__
 from phono3py.file_IO import (parse_disp_fc2_yaml, parse_disp_fc3_yaml,
                               parse_FORCES_FC2, parse_FORCES_FC3,
                               write_FORCES_FC2, write_FORCES_FC3)
