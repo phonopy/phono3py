@@ -91,7 +91,7 @@ def plot(plt, xi, yi, zi, x, y, short_nbinds, nbins, y_max=None):
     plt.pcolormesh(xi[:,:nbins], yi[:,:nbins], zi[:,:nbins])
     plt.colorbar()
     
-    plt.scatter(x_cut, y_cut, s=0.01, marker='o')
+    plt.scatter(x_cut, y_cut, s=5, c='k', marker='.', linewidth=0)
     
     plt.xlim(xmin=0, xmax=xi.max())
     if y_max is None:

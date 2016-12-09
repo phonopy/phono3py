@@ -96,7 +96,7 @@ POSCAR-unitcell``.
 
 Let ``kaccum`` read a Pwscf unit cell file with ``-c`` option, for example::
 
-   kaccum --pwscf --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c Si.in  kappa-m191919.hdf5 --temperature=300
+   kaccum --pwscf --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c Si.in --temperature=300 kappa-m191919.hdf5
 
 .. |ipwscf| image:: Si-kaccum-pwscf.png
 		    :width: 25%
@@ -212,9 +212,10 @@ using `scipy
 ``kdeplot`` reads a result of the thermal conductivity calculation as
 the first argument::
 
-   % kdeplot kappa-m191919.hdf5
+   % kdeplot --nbins=200 kappa-m191919.hdf5
 
-After finishing calculation, the plot is saved in
+(This may take long time. On a relatively fast machine, it took 20 mins.)
+After finishing the calculation, the plot is saved in
 ``lifetime.png``. The black dots show the phonon modes. The density is
 estimated from these dots. The drawing area is automatically set to
 make look good, e.g, higher lifetime side is not drawn if the density
