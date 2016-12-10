@@ -55,10 +55,13 @@ sources = ['c/_phono3py.c',
            'c/spglib/kpoint.c',
            'c/kspclib/kgrid.c',
            'c/kspclib/tetrahedron_method.c']
-# this is when lapacke is installed on system
-extra_link_args_lapacke = ['-llapacke',
-                            '-llapack',
-                            '-lblas']
+
+if os.path.isfile("travis_libs.py"):
+    # This is for travis-CI.
+    from travis_libs import extra_link_args_lapacke
+else:
+    # This is when lapacke is installed on system
+    extra_link_args_lapacke = ['-llapacke', '-llapack', '-lblas']
 
 extra_compile_args = ['-fopenmp',]
 include_dirs = (['c/harmonic_h',
