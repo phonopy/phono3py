@@ -2,11 +2,6 @@ import numpy
 import platform
 import os
 
-# For making source distribution package:
-# 1. cp MANIFEST-phono3py.in MANIFEST.in
-# 2. python setup3.py sdist
-# 3. git checkout -- MANIFEST.in
-
 try:
     from setuptools import setup, Extension
     use_setuptools = True
@@ -55,10 +50,6 @@ sources = ['c/_phono3py.c',
            'c/spglib/kpoint.c',
            'c/kspclib/kgrid.c',
            'c/kspclib/tetrahedron_method.c']
-# this is when lapacke is installed on system
-extra_link_args_lapacke = ['-llapacke',
-                            '-llapack',
-                            '-lblas']
 
 extra_compile_args = ['-fopenmp',]
 include_dirs = (['c/harmonic_h',
@@ -68,35 +59,24 @@ include_dirs = (['c/harmonic_h',
                 include_dirs_numpy)
 define_macros = []
 
-##
-## Modify include_dirs and extra_link_args if lapacke is prepared in a special
-## location
-#
+## Modify extra_link_args_lapacke depending on systems
+if os.path.isfile("libopenblas.py"):
+    # This is for travis-CI.
+    from libopenblas import extra_link_args_lapacke
+else:
+    # This is when lapacke is installed on system
+    extra_link_args_lapacke = ['-llapacke', '-llapack', '-lblas']
+
+# For MacPort
+# % sudo port install gcc6
+# % sudo port select --set gcc mp-gcc
+# % sudo port install OpenBLAS +gcc6
 if platform.system() == 'Darwin':
-    # phono3py is compiled with gcc5 from MacPorts. (export CC=gcc)
-    #   port install gcc5
-    #   port select --set gcc mp-gcc5
-    # With OpenBLAS in MacPorts 
-    #   port install OpenBLAS +gcc5
-    #   port install py27-numpy +gcc5 +openblas
     include_dirs += ['/opt/local/include']
     extra_link_args_lapacke = ['/opt/local/lib/libopenblas.a']
-#     # With lapack compiled manually
-#     include_dirs += ['../lapack-3.5.0/lapacke/include']
-#     extra_link_args_lapacke = ['../lapack-3.5.0/liblapacke.a']
 
 ## Uncomment below to measure reciprocal_to_normal_squared_openmp performance
 # define_macros = [('MEASURE_R2N', None)]
-
-##
-## This is for the test of libflame
-##
-# use_libflame = False
-# if use_libflame:
-#     sources.append('c/anharmonic/flame_wrapper.c')
-#     extra_link_args.append('../libflame-bin/lib/libflame.a')
-#     include_dirs_libflame = ['../libflame-bin/include']
-#     include_dirs += include_dirs_libflame
 
 extra_link_args += extra_link_args_lapacke
 extension_phono3py = Extension(
