@@ -131,7 +131,6 @@ class CollisionMatrix(ImagSelfEnergy):
                                  self._triplets_at_q,
                                  self._triplets_map_at_q,
                                  self._ir_map_at_q,
-                                 self._ir_grid_points,
                                  self._rot_grid_points,
                                  self._rotations_cartesian,
                                  self._temperature,

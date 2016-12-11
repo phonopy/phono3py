@@ -116,10 +116,11 @@ PyInit__lapackepy(void)
 #else
   PyObject *module = Py_InitModule("_lapackepy", _lapackepy_methods);
 #endif
+  struct module_state *st;
 
   if (module == NULL)
     INITERROR;
-  struct module_state *st = GETSTATE(module);
+  st = GETSTATE(module);
 
   st->error = PyErr_NewException("_lapackepy.Error", NULL, NULL);
   if (st->error == NULL) {
@@ -153,6 +154,23 @@ static PyObject * py_set_phonons_at_gridpoints(PyObject *self, PyObject *args)
   double nac_factor, unit_conversion_factor;
   char* uplo;
 
+  double* born;
+  double* dielectric;
+  double *q_dir;
+  Darray* freqs;
+  Carray* eigvecs;
+  char* phonon_done;
+  Iarray* grid_points;
+  int* grid_address;
+  int* mesh;
+  Darray* fc2;
+  Darray* svecs_fc2;
+  Iarray* multi_fc2;
+  double* masses_fc2;
+  int* p2s_fc2;
+  int* s2p_fc2;
+  double* rec_lat;
+
   if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOdOOOOds",
 			&frequencies,
 			&eigenvectors,
@@ -176,24 +194,21 @@ static PyObject * py_set_phonons_at_gridpoints(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  double* born;
-  double* dielectric;
-  double *q_dir;
-  Darray* freqs = convert_to_darray(frequencies);
+  freqs = convert_to_darray(frequencies);
   /* npy_cdouble and lapack_complex_double may not be compatible. */
   /* So eigenvectors should not be used in Python side */
-  Carray* eigvecs = convert_to_carray(eigenvectors);
-  char* phonon_done = (char*)PyArray_DATA(phonon_done_py);
-  Iarray* grid_points = convert_to_iarray(grid_points_py);
-  const int* grid_address = (int*)PyArray_DATA(grid_address_py);
-  const int* mesh = (int*)PyArray_DATA(mesh_py);
-  Darray* fc2 = convert_to_darray(fc2_py);
-  Darray* svecs_fc2 = convert_to_darray(shortest_vectors_fc2);
-  Iarray* multi_fc2 = convert_to_iarray(multiplicity_fc2);
-  const double* masses_fc2 = (double*)PyArray_DATA(atomic_masses_fc2);
-  const int* p2s_fc2 = (int*)PyArray_DATA(p2s_map_fc2);
-  const int* s2p_fc2 = (int*)PyArray_DATA(s2p_map_fc2);
-  const double* rec_lat = (double*)PyArray_DATA(reciprocal_lattice);
+  eigvecs = convert_to_carray(eigenvectors);
+  phonon_done = (char*)PyArray_DATA(phonon_done_py);
+  grid_points = convert_to_iarray(grid_points_py);
+  grid_address = (int*)PyArray_DATA(grid_address_py);
+  mesh = (int*)PyArray_DATA(mesh_py);
+  fc2 = convert_to_darray(fc2_py);
+  svecs_fc2 = convert_to_darray(shortest_vectors_fc2);
+  multi_fc2 = convert_to_iarray(multiplicity_fc2);
+  masses_fc2 = (double*)PyArray_DATA(atomic_masses_fc2);
+  p2s_fc2 = (int*)PyArray_DATA(p2s_map_fc2);
+  s2p_fc2 = (int*)PyArray_DATA(s2p_map_fc2);
+  rec_lat = (double*)PyArray_DATA(reciprocal_lattice);
   if ((PyObject*)born_effective_charge == Py_None) {
     born = NULL;
   } else {
@@ -259,6 +274,23 @@ static PyObject * py_get_phonons_at_qpoints(PyObject *self, PyObject *args)
   double nac_factor, unit_conversion_factor;
   char* uplo;
 
+  int i;
+  double* born;
+  double* dielectric;
+  double *q_dir;
+  double* freqs;
+  int num_band;
+  lapack_complex_double* eigvecs;
+  double (*qpoints)[3];
+  int num_q;
+  Darray* fc2;
+  Darray* svecs;
+  Iarray* multi;
+  double* masses;
+  int* p2s;
+  int* s2p;
+  double* rec_lat;
+
   if (sizeof(lapack_complex_double) != sizeof(npy_complex128)) {
     printf("***********************************************************\n");
     printf("* sizeof(lapack_complex_double) != sizeof(npy_complex128) *\n");
@@ -287,23 +319,18 @@ static PyObject * py_get_phonons_at_qpoints(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  int i;
-  double* born;
-  double* dielectric;
-  double *q_dir;
-  double* freqs = (double*)PyArray_DATA(frequencies_py);
-  const int num_band = PyArray_DIMS(frequencies_py)[1];
-  lapack_complex_double* eigvecs =
-    (lapack_complex_double*)PyArray_DATA(eigenvectors_py);
-  double (*qpoints)[3] = (double(*)[3])PyArray_DATA(qpoints_py);
-  const int num_q = PyArray_DIMS(qpoints_py)[0];
-  Darray* fc2 = convert_to_darray(fc2_py);
-  Darray* svecs = convert_to_darray(shortest_vectors_py);
-  Iarray* multi = convert_to_iarray(multiplicity_py);
-  const double* masses = (double*)PyArray_DATA(atomic_masses_py);
-  const int* p2s = (int*)PyArray_DATA(p2s_map_py);
-  const int* s2p = (int*)PyArray_DATA(s2p_map_py);
-  const double* rec_lat = (double*)PyArray_DATA(reciprocal_lattice_py);
+  freqs = (double*)PyArray_DATA(frequencies_py);
+  num_band = PyArray_DIMS(frequencies_py)[1];
+  eigvecs = (lapack_complex_double*)PyArray_DATA(eigenvectors_py);
+  qpoints = (double(*)[3])PyArray_DATA(qpoints_py);
+  num_q = PyArray_DIMS(qpoints_py)[0];
+  fc2 = convert_to_darray(fc2_py);
+  svecs = convert_to_darray(shortest_vectors_py);
+  multi = convert_to_iarray(multiplicity_py);
+  masses = (double*)PyArray_DATA(atomic_masses_py);
+  p2s = (int*)PyArray_DATA(p2s_map_py);
+  s2p = (int*)PyArray_DATA(s2p_map_py);
+  rec_lat = (double*)PyArray_DATA(reciprocal_lattice_py);
 
   if ((PyObject*)born_effective_charge_py == Py_None) {
     born = NULL;
@@ -353,18 +380,21 @@ static PyObject * py_phonopy_zheev(PyObject *self, PyObject *args)
   PyArrayObject* dynamical_matrix;
   PyArrayObject* eigenvalues;
 
+  int dimension;
+  npy_cdouble *dynmat;
+  double *eigvals;
+  lapack_complex_double *a;
+  int i, info;
+
   if (!PyArg_ParseTuple(args, "OO",
 			&dynamical_matrix,
 			&eigenvalues)) {
     return NULL;
   }
 
-  const int dimension = (int)PyArray_DIMS(dynamical_matrix)[0];
-  npy_cdouble *dynmat = (npy_cdouble*)PyArray_DATA(dynamical_matrix);
-  double *eigvals = (double*)PyArray_DATA(eigenvalues);
-
-  lapack_complex_double *a;
-  int i, info;
+  dimension = (int)PyArray_DIMS(dynamical_matrix)[0];
+  dynmat = (npy_cdouble*)PyArray_DATA(dynamical_matrix);
+  eigvals = (double*)PyArray_DATA(eigenvalues);
 
   a = (lapack_complex_double*) malloc(sizeof(lapack_complex_double) *
 				      dimension * dimension);
@@ -390,6 +420,12 @@ static PyObject * py_phonopy_pinv(PyObject *self, PyObject *args)
   PyArrayObject* data_out_py;
   double cutoff;
 
+  int m;
+  int n;
+  double *data_in;
+  double *data_out;
+  int info;
+
   if (!PyArg_ParseTuple(args, "OOd",
 			&data_out_py,
 			&data_in_py,
@@ -397,11 +433,10 @@ static PyObject * py_phonopy_pinv(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  const int m = (int)PyArray_DIMS(data_in_py)[0];
-  const int n = (int)PyArray_DIMS(data_in_py)[1];
-  const double *data_in = (double*)PyArray_DATA(data_in_py);
-  double *data_out = (double*)PyArray_DATA(data_out_py);
-  int info;
+  m = (int)PyArray_DIMS(data_in_py)[0];
+  n = (int)PyArray_DIMS(data_in_py)[1];
+  data_in = (double*)PyArray_DATA(data_in_py);
+  data_out = (double*)PyArray_DATA(data_out_py);
   
   info = phonopy_pinv(data_out, data_in, m, n, cutoff);
 

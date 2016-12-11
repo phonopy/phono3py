@@ -125,7 +125,7 @@ void get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
 					  const double unit_conversion_factor,
 					  const double cutoff_frequency)
 {
-  int i, j, num_triplets, num_band0;
+  int num_triplets, num_band0;
   double *ise;
 
   num_triplets = fc3_normal_squared->dims[0];
