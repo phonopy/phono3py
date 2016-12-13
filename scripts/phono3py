@@ -133,16 +133,30 @@ if options.forces_fc3_mode or options.forces_fc3_file_mode:
     if log_level:
         print("Displacement dataset is read from %s." % filename)
     disp_dataset = parse_disp_fc3_yaml()
-
+    num_disps = (len(disp_dataset['first_atoms'])
+                 + np.sum([len(d['second_atoms'])
+                           for d in disp_dataset['first_atoms']]))
     if options.forces_fc3_file_mode:
         file_exists(args[0], log_level)
         filenames = [x.strip() for x in open(args[0])]
     else:
         filenames = args
-    if interface_mode == 'pwscf':
-        force_sets = parse_set_of_forces(disp_dataset['natom'], filenames)
-    else:
-        force_sets = parse_set_of_forces(disp_dataset['natom'], filenames)
+    if log_level > 0:
+        print("Number of displacements: %d" % num_disps)
+        print("Number of supercell files: %d" % len(filenames))
+    if len(filenames) != num_disps:
+        print_error_message("These numbers are inconsistent."
+                            "Stop making FORCES_FC3.")
+        if log_level > 0:
+            print("List of supercell file names:")
+            for fname in filenames:
+                print(fname)
+            print_error()
+        sys.exit(1)
+
+    force_sets = parse_set_of_forces(disp_dataset['natom'],
+                                     filenames,
+                                     verbose=(log_level > 0))
     write_FORCES_FC3(disp_dataset, force_sets, filename="FORCES_FC3")
     
     if log_level:
