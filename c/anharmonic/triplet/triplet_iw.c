@@ -32,37 +32,37 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
+#include <triplet_h/triplet.h>
 #include <triplet_h/triplet_iw.h>
-#include <phonoc_const.h>
 #include <tetrahedron_method.h>
 
 static void set_freq_vertices(double freq_vertices[3][24][4],
 			      const double frequencies[],
-			      PHPYCONST int vertices[2][24][4],
+			      TPLCONST int vertices[2][24][4],
 			      const int num_band,
 			      const int b1,
 			      const int b2);
 static int set_g(double g[3],
 		 const double f0,
-		 PHPYCONST double freq_vertices[3][24][4]);
-static int in_tetrahedra(const double f0, PHPYCONST double freq_vertices[24][4]);
+		 TPLCONST double freq_vertices[3][24][4]);
+static int in_tetrahedra(const double f0, TPLCONST double freq_vertices[24][4]);
 static void get_triplet_tetrahedra_vertices
 (int vertices[2][24][4],
- PHPYCONST int relative_grid_address[2][24][4][3],
+ TPLCONST int relative_grid_address[2][24][4][3],
  const int mesh[3],
  const int triplet[3],
- PHPYCONST int bz_grid_address[][3],
+ TPLCONST int bz_grid_address[][3],
  const int bz_map[]);
 
 int tpi_get_integration_weight(double *iw,
 			       char *iw_zero,
 			       const double frequency_points[],
 			       const int num_band0,
-			       PHPYCONST int relative_grid_address[24][4][3],
+			       TPLCONST int relative_grid_address[24][4][3],
 			       const int mesh[3],
-			       PHPYCONST int triplets[][3],
+			       TPLCONST int triplets[][3],
 			       const int num_triplets,
-			       PHPYCONST int bz_grid_address[][3],
+			       TPLCONST int bz_grid_address[][3],
 			       const int bz_map[],
 			       const double frequencies[],
 			       const int num_band,
@@ -120,7 +120,7 @@ int tpi_get_integration_weight(double *iw,
 
 static void set_freq_vertices(double freq_vertices[3][24][4],
 			      const double frequencies[],
-			      PHPYCONST int vertices[2][24][4],
+			      TPLCONST int vertices[2][24][4],
 			      const int num_band,
 			      const int b1,
 			      const int b2)
@@ -141,7 +141,7 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
 
 static int set_g(double g[3],
 		 const double f0,
-		 PHPYCONST double freq_vertices[3][24][4])
+		 TPLCONST double freq_vertices[3][24][4])
 {
   int iw_zero;
 
@@ -169,7 +169,7 @@ static int set_g(double g[3],
   return iw_zero;
 }
 
-static int in_tetrahedra(const double f0, PHPYCONST double freq_vertices[24][4])
+static int in_tetrahedra(const double f0, TPLCONST double freq_vertices[24][4])
 {
   int i, j;
   double fmin, fmax;
@@ -197,10 +197,10 @@ static int in_tetrahedra(const double f0, PHPYCONST double freq_vertices[24][4])
 
 static void get_triplet_tetrahedra_vertices
 (int vertices[2][24][4],
- PHPYCONST int relative_grid_address[2][24][4][3],
+ TPLCONST int relative_grid_address[2][24][4][3],
  const int mesh[3],
  const int triplet[3],
- PHPYCONST int bz_grid_address[][3],
+ TPLCONST int bz_grid_address[][3],
  const int bz_map[])
 {
   int i, j;

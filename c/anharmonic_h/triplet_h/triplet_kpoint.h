@@ -37,8 +37,8 @@
 #ifndef __triplet_kpoint_H__
 #define __triplet_kpoint_H__
 
-#include <phonoc_const.h>
 #include <mathfunc.h>
+#include <triplet_h/triplet.h>
 
 int tpk_get_ir_triplets_at_q(int map_triplets[],
 			     int map_q[],
@@ -49,7 +49,7 @@ int tpk_get_ir_triplets_at_q(int map_triplets[],
 			     const MatINT * rotations);
 int tpk_get_BZ_triplets_at_q(int triplets[][3],
 			     const int grid_point,
-			     PHPYCONST int bz_grid_address[][3],
+			     TPLCONST int bz_grid_address[][3],
 			     const int bz_map[],
 			     const int map_triplets[],
 			     const int num_map_triplets,
