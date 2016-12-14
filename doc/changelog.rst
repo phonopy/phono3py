@@ -3,6 +3,12 @@
 Change Log
 ==========
 
+Dec-14-2016: version 1.11.7
+------------------------------
+
+- This is a maintenance release. This version must be used with
+  phonopy-1.11.6 or later.
+
 Nov-27-2016: version 1.11.5
 ------------------------------
 
