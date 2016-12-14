@@ -129,7 +129,7 @@ if options.forces_fc3_mode or options.forces_fc3_file_mode:
     file_exists(disp_filename, log_level)
     if log_level:
         print("Displacement dataset is read from %s." % disp_filename)
-    disp_dataset = parse_disp_fc3_yaml()
+    disp_dataset = parse_disp_fc3_yaml(filename=disp_filename)
     num_atoms = disp_dataset['natom']
     num_disps = (len(disp_dataset['first_atoms'])
                  + np.sum([len(d['second_atoms'])
@@ -168,25 +168,40 @@ if options.forces_fc3_mode or options.forces_fc3_file_mode:
 #####################
 if options.forces_fc2_mode:
     if input_filename is None:
-        filename = 'disp_fc2.yaml'
+        disp_filename = 'disp_fc2.yaml'
     else:
-        filename = 'disp_fc2.' + input_filename + '.yaml'
-    file_exists(filename, log_level)
+        disp_filename = 'disp_fc2.' + input_filename + '.yaml'
+    file_exists(disp_filename, log_level)
     if log_level:
-        print("Displacement dataset is read from %s." % filename)
-    disp_dataset = parse_disp_fc2_yaml()
-
-    filenames = args
-    if interface_mode == 'pwscf':
-        force_sets = parse_set_of_forces(disp_dataset['natom'], filenames)
+        print("Displacement dataset is read from %s." % disp_filename)
+    disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
+    num_atoms = disp_dataset['natom']
+    num_disps = len(disp_dataset['first_atoms'])
+    force_filenames = args
+    if log_level > 0:
+        print("Number of displacements: %d" % num_disps)
+        print("Number of supercell files: %d" % len(force_filenames))
+    force_sets = get_force_sets(interface_mode,
+                                num_atoms,
+                                num_disps,
+                                force_filenames,
+                                disp_filename,
+                                verbose=(log_level > 0))
+    if force_sets:
+        write_FORCES_FC2(disp_dataset,
+                         forces_fc2=force_sets,
+                         filename="FORCES_FC2")
+        if log_level:
+            print("")
+            print("%s has been created." % "FORCES_FC2")
+            print_end()
+        sys.exit(0)
     else:
-        force_sets = parse_set_of_forces(disp_dataset['natom'], filenames)
-    write_FORCES_FC2(disp_dataset, forces_fc2=force_sets, filename="FORCES_FC2")
-
-    if log_level:
-        print("FORCES_FC2 has been created.")
-        print_end()
-    sys.exit(0)
+        if log_level:
+            print("")
+            print("%s could not be created." % "FORCES_FC2")
+            print_error()
+        sys.exit(1)
 
 if options.force_sets_to_forces_fc2_mode:
     filename = 'FORCE_SETS'
@@ -205,23 +220,25 @@ if options.force_sets_to_forces_fc2_mode:
 if options.force_sets_mode:
     if options.phonon_supercell_dimension is not None:
         if input_filename is None:
-            filename = 'disp_fc2.yaml'
+            disp_filename = 'disp_fc2.yaml'
         else:
-            filename = 'disp_fc2.' + input_filename + '.yaml'
-        file_exists(filename, log_level)
-        disp_dataset = parse_disp_fc2_yaml()
+            disp_filename = 'disp_fc2.' + input_filename + '.yaml'
+        file_exists(disp_filename, log_level)
+        disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
+        file_exists("FORCES_FC2", log_level)
         forces = parse_FORCES_FC2(disp_dataset)
     else:
         if input_filename is None:
-            filename = 'disp_fc3.yaml'
+            disp_filename = 'disp_fc3.yaml'
         else:
-            filename = 'disp_fc3.' + input_filename + '.yaml'
-        file_exists(filename, log_level)
-        disp_dataset = parse_disp_fc3_yaml()
+            disp_filename = 'disp_fc3.' + input_filename + '.yaml'
+        file_exists(disp_filename, log_level)
+        disp_dataset = parse_disp_fc3_yaml(filename=disp_filename)
+        file_exists("FORCES_FC3", log_level)
         forces = parse_FORCES_FC3(disp_dataset)
         
     if log_level:
-        print("Displacement dataset is read from %s." % filename)
+        print("Displacement dataset is read from %s." % disp_filename)
         
     for force_set, disp1 in zip(forces, disp_dataset['first_atoms']):
         disp1['forces'] = force_set
