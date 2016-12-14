@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Installation &#8212; Phono3py v.1.11.5</title>
+    <title>Installation &#8212; Phono3py v.1.11.7</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.11.5',
+        VERSION:     '1.11.7',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -30,7 +30,7 @@
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="top" title="Phono3py v.1.11.5" href="index.html" />
+    <link rel="top" title="Phono3py v.1.11.7" href="index.html" />
     <link rel="next" title="Examples" href="examples.html" />
     <link rel="prev" title="Welcome to phono3py" href="index.html" />
 <meta charset='utf-8'>
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>1.11.5</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.11.7</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -120,6 +120,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#dec-14-2016-version-1-11-7">Dec-14-2016: version 1.11.7</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#nov-27-2016-version-1-11-5">Nov-27-2016: version 1.11.5</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#apr-24-2016-version-1-10-9">Apr-24-2016: version 1.10.9</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#apr-16-2016-version-1-10-7">Apr-16-2016: version 1.10.7</a></li>
@@ -206,9 +207,17 @@
       
   <div class="section" id="installation">
 <span id="install"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><a class="reference internal" href="#system-requirement" id="id1">System requirement</a></li>
+<li><a class="reference internal" href="#multithreading-support" id="id2">Multithreading support</a></li>
+<li><a class="reference internal" href="#install-using-pip-conda" id="id3">Install using pip/conda</a></li>
+<li><a class="reference internal" href="#building-using-setup-py" id="id4">Building using setup.py</a></li>
+</ul>
+</div>
 <div class="section" id="system-requirement">
-<h2>System requirement<a class="headerlink" href="#system-requirement" title="Permalink to this headline">¶</a></h2>
-<p><strong>From version 1.11.3, phono3py depends on phonopy (&gt;1.11.2).</strong> So the
+<h2><a class="toc-backref" href="#id1">System requirement</a><a class="headerlink" href="#system-requirement" title="Permalink to this headline">¶</a></h2>
+<p><strong>Phono3py-1.11.7 depends on phonopy-1.11.6 or later.</strong> So the
 installation of phonopy before the installation of phono3py is
 required. See how to install phonopy at
 <a class="reference external" href="https://atztogo.github.io/phonopy/install.html">https://atztogo.github.io/phonopy/install.html</a> .</p>
@@ -223,15 +232,15 @@ OS. In the case of ubuntu linux, it would be like:</p>
 <p>In the versions of Ubuntu-12.10 or later, LAPACKE
 (<a class="reference external" href="http://www.netlib.org/lapack/lapacke.html">http://www.netlib.org/lapack/lapacke.html</a>) can be installed from the
 package manager (<code class="docutils literal"><span class="pre">liblapacke</span></code> and <code class="docutils literal"><span class="pre">liblapacke-dev</span></code>). In the recent
-MacPorts, the <code class="docutils literal"><span class="pre">lapack</span></code> or <code class="docutils literal"><span class="pre">OpenBLAS</span></code> package probably contains
-LAPACKE. But in the older versions of Ubuntu or in the other
-environments, you may have to compile LAPACKE by yourself. The
-compilation procedure is found at the LAPACKE web site. After creating
-the LAPACKE library, <code class="docutils literal"><span class="pre">liblapacke.a</span></code> (or the dynamic link library),
-<code class="docutils literal"><span class="pre">setup3.py</span></code> must be properly modified to link it. As an example, the
-procedure of compiling LAPACKE is shown below.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">tar</span> <span class="n">xvfz</span> <span class="n">lapack</span><span class="o">-</span><span class="mf">3.5</span><span class="o">.</span><span class="mf">0.</span><span class="n">tgz</span>
-<span class="o">%</span> <span class="n">cd</span> <span class="n">lapack</span><span class="o">-</span><span class="mf">3.5</span><span class="o">.</span><span class="mi">0</span>
+MacPorts, the <code class="docutils literal"><span class="pre">OpenBLAS</span></code> package contains not only BLAS but also
+LAPACK and LAPACKE in <code class="docutils literal"><span class="pre">libopenblas</span></code>. But in the older versions of
+Ubuntu or in the other environments, you may have to compile LAPACKE
+by yourself. The compilation procedure is found at the LAPACKE web
+site. After creating the LAPACKE library, <code class="docutils literal"><span class="pre">liblapacke.a</span></code> (or the
+dynamic link library), <code class="docutils literal"><span class="pre">setup.py</span></code> must be properly modified to link
+it. As an example, the procedure of compiling LAPACKE is shown below.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">tar</span> <span class="n">xvfz</span> <span class="n">lapack</span><span class="o">-</span><span class="mf">3.6</span><span class="o">.</span><span class="mf">0.</span><span class="n">tgz</span>
+<span class="o">%</span> <span class="n">cd</span> <span class="n">lapack</span><span class="o">-</span><span class="mf">3.6</span><span class="o">.</span><span class="mi">0</span>
 <span class="o">%</span> <span class="n">cp</span> <span class="n">make</span><span class="o">.</span><span class="n">inc</span><span class="o">.</span><span class="n">example</span> <span class="n">make</span><span class="o">.</span><span class="n">inc</span>
 <span class="o">%</span> <span class="n">make</span> <span class="n">lapackelib</span>
 </pre></div>
@@ -240,44 +249,36 @@ procedure of compiling LAPACKE is shown below.</p>
 with -fPIC option to use it with python.</p>
 </div>
 <div class="section" id="multithreading-support">
-<h2>Multithreading support<a class="headerlink" href="#multithreading-support" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id2">Multithreading support</a><a class="headerlink" href="#multithreading-support" title="Permalink to this headline">¶</a></h2>
 <p>Phono3py supports OpenMP multithreading and most users will need it,
 otherwise the calculation may take long time. The library options used
-for GCC, <code class="docutils literal"><span class="pre">-lgomp</span></code> and <code class="docutils literal"><span class="pre">-fopenmp</span></code>, are written in <code class="docutils literal"><span class="pre">setup3.py</span></code>,
+for GCC, <code class="docutils literal"><span class="pre">-lgomp</span></code> and <code class="docutils literal"><span class="pre">-fopenmp</span></code>, are written in <code class="docutils literal"><span class="pre">setup.py</span></code>,
 but for the other compilers, you may have to change them.  If you need
 to compile without the OpenMP support, you can remove these options in
-<code class="docutils literal"><span class="pre">setup3.py</span></code>.</p>
+<code class="docutils literal"><span class="pre">setup.py</span></code>.</p>
 </div>
 <div class="section" id="install-using-pip-conda">
-<h2>Install using pip/conda<a class="headerlink" href="#install-using-pip-conda" title="Permalink to this headline">¶</a></h2>
-<p>Occasionally PyPI and conda packages are prepared at phonopy and
-phono3py releases. Using these packages, the phonopy and phono3py
-installations are expected to be easily done. For more detail, see
+<h2><a class="toc-backref" href="#id3">Install using pip/conda</a><a class="headerlink" href="#install-using-pip-conda" title="Permalink to this headline">¶</a></h2>
+<p>PyPI and conda packages are prepared at phonopy and phono3py
+releases. Using these packages, the phonopy and phono3py installations
+are expected to be easily done. For more detail, see
 <a class="reference external" href="https://atztogo.github.io/phonopy/install.html">https://atztogo.github.io/phonopy/install.html</a> .</p>
 </div>
 <div class="section" id="building-using-setup-py">
-<h2>Building using setup.py<a class="headerlink" href="#building-using-setup-py" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id4">Building using setup.py</a><a class="headerlink" href="#building-using-setup-py" title="Permalink to this headline">¶</a></h2>
 <p>If package installation is not possible or you want to compile with
 special compiler or special options, phono3py is built using
 setup.py. In this case, manual modification of <code class="docutils literal"><span class="pre">setup.py</span></code> may be
 needed.</p>
-<p>Download the latest source packages at</p>
-<p><a class="reference external" href="https://pypi.python.org/pypi/phono3py">https://pypi.python.org/pypi/phono3py</a></p>
-<p>and extract it somewhere. The version number here is not related to
-the version number of harmonic (usual) phonopy. The harmonic phonopy
-included in this package is a development version and can be different
-from that distributed at sourceforge.net.</p>
-<p>In the directory, open <code class="docutils literal"><span class="pre">setup3.py</span></code> and set the location of
-lapacke. If you installed lapacke from the package manager, you can
-remove the line related to lapacke. If you compiled it by yourself,
-set the location of it. Before running <code class="docutils literal"><span class="pre">setup3.py</span></code>, if you install
-phonopy (not phono3py), you need to uninstall phonopy since
-<code class="docutils literal"><span class="pre">setup3.py</span></code> installs phonopy, too. Then</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">python</span> <span class="n">setup3</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span>
+<p>Download the latest source packages at
+<a class="reference external" href="https://pypi.python.org/pypi/phono3py">https://pypi.python.org/pypi/phono3py</a> and extract it somewhere. In the
+directory, open <code class="docutils literal"><span class="pre">setup.py</span></code> and specify the library and its path of a
+lapacke library. Then</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span>
 </pre></div>
 </div>
 <p>Or you can install phono3py on the current directory by</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">python</span> <span class="n">setup3</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">home</span><span class="o">=.</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">home</span><span class="o">=.</span>
 </pre></div>
 </div>
 <p>In this way to setup, <code class="docutils literal"><span class="pre">PYTHONPATH</span></code> has to be set so that python can
@@ -285,16 +286,16 @@ find harmonic and anharmonic phonopy libraries. If you have been
 already a user of phonopy, <code class="docutils literal"><span class="pre">PYTHONPATH</span></code> for the original phonopy
 version has to be removed. The <code class="docutils literal"><span class="pre">PYTHONPATH</span></code> setting depends on
 shells that you use. For example in bash or zsh:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">PYTHONPATH</span><span class="o">=~/</span><span class="n">phonopy</span><span class="o">-</span><span class="mf">1.11</span><span class="o">.</span><span class="mi">3</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">PYTHONPATH</span><span class="o">=~/</span><span class="n">phono3py</span><span class="o">-</span><span class="mf">1.11</span><span class="o">.</span><span class="mi">3</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python</span>
 </pre></div>
 </div>
 <p>or:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>export PYTHONPATH=$PYTHONPATH:~/phonopy-1.11.3/lib/python
+<div class="highlight-default"><div class="highlight"><pre><span></span>export PYTHONPATH=$PYTHONPATH:~/phono3py-1.11.3/lib/python
 </pre></div>
 </div>
 <p>Phono3py command is installed under <code class="docutils literal"><span class="pre">bin</span></code> directory. The location of
 <code class="docutils literal"><span class="pre">bin</span></code> directory is depending on <code class="docutils literal"><span class="pre">--user</span></code> or <code class="docutils literal"><span class="pre">--home</span></code> scheme when
-running <code class="docutils literal"><span class="pre">setup3.py</span></code>. In the former case, it depends on your
+running <code class="docutils literal"><span class="pre">setup.py</span></code>. In the former case, it depends on your
 operation system, e.g., <code class="docutils literal"><span class="pre">~/.local/bin</span></code> for Ubuntu linux and
 <code class="docutils literal"><span class="pre">~/Library/Python/2.7</span></code> for Mac (&amp; python2.7). In the latter case,
 <code class="docutils literal"><span class="pre">bin</span></code> directory is found on the current directory if it was
