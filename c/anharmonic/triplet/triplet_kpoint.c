@@ -38,8 +38,137 @@
 #include <mathfunc.h>
 #include <kpoint.h>
 #include <kgrid.h>
-#include <phonoc_const.h>
+#include <triplet_h/triplet.h>
 #include <triplet_h/triplet_kpoint.h>
+
+#define KPT_NUM_BZ_SEARCH_SPACE 125
+static int bz_search_space[KPT_NUM_BZ_SEARCH_SPACE][3] = {
+  { 0,  0,  0},
+  { 0,  0,  1},
+  { 0,  0,  2},
+  { 0,  0, -2},
+  { 0,  0, -1},
+  { 0,  1,  0},
+  { 0,  1,  1},
+  { 0,  1,  2},
+  { 0,  1, -2},
+  { 0,  1, -1},
+  { 0,  2,  0},
+  { 0,  2,  1},
+  { 0,  2,  2},
+  { 0,  2, -2},
+  { 0,  2, -1},
+  { 0, -2,  0},
+  { 0, -2,  1},
+  { 0, -2,  2},
+  { 0, -2, -2},
+  { 0, -2, -1},
+  { 0, -1,  0},
+  { 0, -1,  1},
+  { 0, -1,  2},
+  { 0, -1, -2},
+  { 0, -1, -1},
+  { 1,  0,  0},
+  { 1,  0,  1},
+  { 1,  0,  2},
+  { 1,  0, -2},
+  { 1,  0, -1},
+  { 1,  1,  0},
+  { 1,  1,  1},
+  { 1,  1,  2},
+  { 1,  1, -2},
+  { 1,  1, -1},
+  { 1,  2,  0},
+  { 1,  2,  1},
+  { 1,  2,  2},
+  { 1,  2, -2},
+  { 1,  2, -1},
+  { 1, -2,  0},
+  { 1, -2,  1},
+  { 1, -2,  2},
+  { 1, -2, -2},
+  { 1, -2, -1},
+  { 1, -1,  0},
+  { 1, -1,  1},
+  { 1, -1,  2},
+  { 1, -1, -2},
+  { 1, -1, -1},
+  { 2,  0,  0},
+  { 2,  0,  1},
+  { 2,  0,  2},
+  { 2,  0, -2},
+  { 2,  0, -1},
+  { 2,  1,  0},
+  { 2,  1,  1},
+  { 2,  1,  2},
+  { 2,  1, -2},
+  { 2,  1, -1},
+  { 2,  2,  0},
+  { 2,  2,  1},
+  { 2,  2,  2},
+  { 2,  2, -2},
+  { 2,  2, -1},
+  { 2, -2,  0},
+  { 2, -2,  1},
+  { 2, -2,  2},
+  { 2, -2, -2},
+  { 2, -2, -1},
+  { 2, -1,  0},
+  { 2, -1,  1},
+  { 2, -1,  2},
+  { 2, -1, -2},
+  { 2, -1, -1},
+  {-2,  0,  0},
+  {-2,  0,  1},
+  {-2,  0,  2},
+  {-2,  0, -2},
+  {-2,  0, -1},
+  {-2,  1,  0},
+  {-2,  1,  1},
+  {-2,  1,  2},
+  {-2,  1, -2},
+  {-2,  1, -1},
+  {-2,  2,  0},
+  {-2,  2,  1},
+  {-2,  2,  2},
+  {-2,  2, -2},
+  {-2,  2, -1},
+  {-2, -2,  0},
+  {-2, -2,  1},
+  {-2, -2,  2},
+  {-2, -2, -2},
+  {-2, -2, -1},
+  {-2, -1,  0},
+  {-2, -1,  1},
+  {-2, -1,  2},
+  {-2, -1, -2},
+  {-2, -1, -1},
+  {-1,  0,  0},
+  {-1,  0,  1},
+  {-1,  0,  2},
+  {-1,  0, -2},
+  {-1,  0, -1},
+  {-1,  1,  0},
+  {-1,  1,  1},
+  {-1,  1,  2},
+  {-1,  1, -2},
+  {-1,  1, -1},
+  {-1,  2,  0},
+  {-1,  2,  1},
+  {-1,  2,  2},
+  {-1,  2, -2},
+  {-1,  2, -1},
+  {-1, -2,  0},
+  {-1, -2,  1},
+  {-1, -2,  2},
+  {-1, -2, -2},
+  {-1, -2, -1},
+  {-1, -1,  0},
+  {-1, -1,  1},
+  {-1, -1,  2},
+  {-1, -1, -2},
+  {-1, -1, -1}
+};
 
 static void grid_point_to_address_double(int address_double[3],
 					 const int grid_point,
@@ -53,7 +182,7 @@ static int get_ir_triplets_at_q(int map_triplets[],
 				const MatINT * rot_reciprocal);
 static int get_BZ_triplets_at_q(int triplets[][3],
 				const int grid_point,
-				PHPYCONST int bz_grid_address[][3],
+				TPLCONST int bz_grid_address[][3],
 				const int bz_map[],
 				const int map_triplets[],
 				const int num_map_triplets,
@@ -89,7 +218,7 @@ int tpk_get_ir_triplets_at_q(int map_triplets[],
 
 int tpk_get_BZ_triplets_at_q(int triplets[][3],
 			     const int grid_point,
-			     PHPYCONST int bz_grid_address[][3],
+			     TPLCONST int bz_grid_address[][3],
 			     const int bz_map[],
 			     const int map_triplets[],
 			     const int num_map_triplets,
@@ -197,7 +326,7 @@ static int get_ir_triplets_at_q(int map_triplets[],
 
 static int get_BZ_triplets_at_q(int triplets[][3],
 				const int grid_point,
-				PHPYCONST int bz_grid_address[][3],
+				TPLCONST int bz_grid_address[][3],
 				const int bz_map[],
 				const int map_triplets[],
 				const int num_map_triplets,
@@ -271,7 +400,7 @@ static int get_third_q_of_triplets_at_q(int bz_address[3][3],
   for (i = 0; i < KPT_NUM_BZ_SEARCH_SPACE; i++) {
     for (j = 0; j < 3; j++) {
       bz_address_double[j] = (bz_address[q_index][j] +
-			      kpt_bz_search_space[i][j] * mesh[j]) * 2;
+			      bz_search_space[i][j] * mesh[j]) * 2;
     }
     bzgp[i] = bz_map[kgd_get_grid_point_double_mesh(bz_address_double, bzmesh)];
   }
@@ -289,9 +418,9 @@ static int get_third_q_of_triplets_at_q(int bz_address[3][3],
 
   for (i = 0; i < KPT_NUM_BZ_SEARCH_SPACE; i++) {
     if (bzgp[i] > -1) { /* q'' is in BZ */
-      sum_g = (abs(delta_g[0] + kpt_bz_search_space[i][0]) +
-	       abs(delta_g[1] + kpt_bz_search_space[i][1]) +
-	       abs(delta_g[2] + kpt_bz_search_space[i][2]));
+      sum_g = (abs(delta_g[0] + bz_search_space[i][0]) +
+	       abs(delta_g[1] + bz_search_space[i][1]) +
+	       abs(delta_g[2] + bz_search_space[i][2]));
       if (sum_g < smallest_g) {
 	smallest_index = i;
 	smallest_g = sum_g;
@@ -300,7 +429,7 @@ static int get_third_q_of_triplets_at_q(int bz_address[3][3],
   }
 
   for (i = 0; i < 3; i++) {
-    bz_address[q_index][i] += kpt_bz_search_space[smallest_index][i] * mesh[i];
+    bz_address[q_index][i] += bz_search_space[smallest_index][i] * mesh[i];
   }
 
   return smallest_g;

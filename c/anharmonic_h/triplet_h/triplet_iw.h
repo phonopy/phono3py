@@ -35,17 +35,17 @@
 #ifndef __triplet_iw_H__
 #define __triplet_iw_H__
 
-#include <phonoc_const.h>
+#include <triplet_h/triplet.h>
 
 int tpi_get_integration_weight(double *iw,
 			       char *iw_zero,
 			       const double frequency_points[],
 			       const int num_band0,
-			       PHPYCONST int relative_grid_address[24][4][3],
+			       TPLCONST int relative_grid_address[24][4][3],
 			       const int mesh[3],
-			       PHPYCONST int triplets[][3],
+			       TPLCONST int triplets[][3],
 			       const int num_triplets,
-			       PHPYCONST int bz_grid_address[][3],
+			       TPLCONST int bz_grid_address[][3],
 			       const int bz_map[],
 			       const double frequencies[],
 			       const int num_band,

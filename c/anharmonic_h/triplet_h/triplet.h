@@ -37,7 +37,9 @@
 #ifndef __triplet_H__
 #define __triplet_H__
 
-#include <phonoc_const.h>
+#ifndef TPLCONST
+#define TPLCONST
+#endif
 
 /* Irreducible triplets of k-points are searched under conservation of */
 /* :math:``\mathbf{k}_1 + \mathbf{k}_2 + \mathbf{k}_3 = \mathbf{G}``. */
@@ -52,7 +54,7 @@ int tpl_get_triplets_reciprocal_mesh_at_q(int map_triplets[],
 					  const int mesh[3],
 					  const int is_time_reversal,
 					  const int num_rot,
-					  PHPYCONST int rotations[][3][3]);
+					  TPLCONST int rotations[][3][3]);
 
 /* Irreducible grid-point-triplets in BZ are stored. */
 /* triplets are recovered from grid_point and triplet_weights. */
@@ -62,7 +64,7 @@ int tpl_get_triplets_reciprocal_mesh_at_q(int map_triplets[],
 /* Number of ir-triplets is returned. */
 int tpl_get_BZ_triplets_at_q(int triplets[][3],
 			     const int grid_point,
-			     PHPYCONST int bz_grid_address[][3],
+			     TPLCONST int bz_grid_address[][3],
 			     const int bz_map[],
 			     const int map_triplets[],
 			     const int num_map_triplets,
@@ -73,11 +75,11 @@ int tpl_get_integration_weight(double *iw,
 			       char *iw_zero,
 			       const double frequency_points[],
 			       const int num_band0,
-			       PHPYCONST int relative_grid_address[24][4][3],
+			       TPLCONST int relative_grid_address[24][4][3],
 			       const int mesh[3],
-			       PHPYCONST int triplets[][3],
+			       TPLCONST int triplets[][3],
 			       const int num_triplets,
-			       PHPYCONST int bz_grid_address[][3],
+			       TPLCONST int bz_grid_address[][3],
 			       const int bz_map[],
 			       const double frequencies[],
 			       const int num_band,
