@@ -1,35 +1,33 @@
 .. _command_options:
 
-Command options (setting tags)
-===============================
+List of command options (setting tags)
+=======================================
 
 Command-user-interface of phono3py is operated with a variety of
-command options. Here those command options are explained. Together
-with the command options, a setting file can be used as the first
-argument of the phono3py command, where setting tags that correspond
-one-by-one to the command options are shown in this section. The
-setting tag names are case insensitive. A trick to find the setting
-tag names is to watch ``phono3py.yaml`` or ``phono3py_disp.yaml``
-files that are created after running phono3py.
+command options. Here those command options are explained.
 
-Phono3py can run without any configuration file, but if you want to
-run phono3py by a configuration file, for example, it is like::
+Using the latest phono3py and phonopy, a configuration file with
+setting tags can be used instead of and together with the command
+options. The setting tags are mostly equivalent to the most command
+options, but when both are set simultaneously, the command options are
+preferred. An example of configuration (e.g., saved in a file
+``setting.conf``) is as follow::
 
    DIM = 2 2 2
    DIM_FC2 = 4 4 4
    PRIMITIVE_AXIS = 0 1/2 1/2 1/2 0 1/2 1/2 1/2 0
-   MESH_NUMBERS = 11 11 11
+   MESH = 11 11 11
    BTERTA = .TRUE.
    NAC = .TRUE.
    READ_FC2 = .TRUE.
    READ_FC3 = .TRUE.
    CELL_FILENAME = POSCAR-unitcell
 
-and it is run by
+where the setting tag names are case insensitive. This is run by
 
 ::
 
-   % phono3py setting.conf (command options can be mixed.)
+   % phono3py [comannd options] setting.conf
 
 .. contents::
    :depth: 2
@@ -252,7 +250,7 @@ Reciprocal space sampling mesh and grid points
 ``--mesh``: Sampling mesh
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-(Setting tag: ``MESH_NUMBERS``)
+(Setting tag: ``MESH`` or ``MESH_NUMBERS``)
 
 Phonon triples are chosen on the grid points on the sampling mesh
 specified by this option. This mesh is made along reciprocal
