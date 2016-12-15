@@ -95,7 +95,7 @@ def get_parser():
                         no_kappa_stars=False,
                         output_filename=None,
                         phonon_supercell_dimension=None,
-                        pinv_cutoff=1.0e-8,
+                        pinv_cutoff=None,
                         pp_unit_conversion=None,
                         primitive_axis=None,
                         qpoints=None,
