@@ -220,29 +220,96 @@ reduce the supercell size and the second choice is using
 
 This option is only used together with ``-d`` option. Using this
 option, number of supercells with displacements is reduced and a
-special ``disp_fc3.yaml`` is created.
+special ``disp_fc3.yaml`` is created. This special ``disp_fc3.yaml``
+contains the information of the distance and which configurations of
+pair-displacements are included or not included.
 
-Cut-off pair distance is used to cut-off configurations of pairs of
-displacements. ``POSCAR-xxxxx`` are not created if distance between a
-pair of atoms to be displaced is larger than the specified cut-off
-pair distance. The indexing of ``POSCAR-xxxxx`` files is same as the
-usual case, i.e., without this option. But using this option, a lot of
-indices are missing, which are not necessary to be put for creating
-``FORCES_THIRD``. Only ``vasprun.xml``'s calculated for these reduced
-number of ``POSCAR-xxxxx`` have to be given at ``phono3py --cf3 ...``.
+Cut-off pair distance is used to cut-off the number of configurations
+of pair-displacements. ``POSCAR-xxxxx`` (in the other calculator
+interface, the prefix of the filename is different) are not generated
+if distance between a pair of atoms to be displaced is larger than the
+specified cut-off pair distance. The indexing number (``xxxxx``)
+corresponds to that of the case without setting this option, i.e., the
+same ``POSCAR-xxxxx`` files are created for the same configurations of
+pairs of displacements but ``POSCAR-xxxxx`` files not being included
+are not generated. The reason of this indexing is that it can be
+useful when changing the cutoff-pair-distance.
+
+To create ``FORCES_FC3``, only the respective output files containing
+forces are necessary to be given to ``phono3py`` command as the
+arguments.
+
+An example is shown below using the Si example.
 
 ::
 
-   phono3py -d --cutpair=4
+   % phono3py --cutoff_pair=5 -d --dim="2 2 2" -c POSCAR-unitcell
+           _                      _____
+     _ __ | |__   ___  _ __   ___|___ / _ __  _   _
+    | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
+    | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
+    | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
+    |_|                                |_|    |___/
+                                             1.11.7
+   
+   Run mode: displacements
+   
+   Displacement distance: 0.03
+   Number of displacements: 111
+   Cutoff distance for displacements: 5.0
+   Number of displacement supercell files created: 51
+                    _
+      ___ _ __   __| |
+     / _ \ '_ \ / _` |
+    |  __/ | | | (_| |
+     \___|_| |_|\__,_|
 
-After running VASP calculations,
+   % ls POSCAR-0*
+   POSCAR-00001  POSCAR-00032  POSCAR-00043  POSCAR-00080  POSCAR-00097
+   POSCAR-00002  POSCAR-00033  POSCAR-00070  POSCAR-00081  POSCAR-00098
+   POSCAR-00003  POSCAR-00034  POSCAR-00071  POSCAR-00082  POSCAR-00099
+   POSCAR-00016  POSCAR-00035  POSCAR-00072  POSCAR-00083  POSCAR-00100
+   POSCAR-00017  POSCAR-00036  POSCAR-00073  POSCAR-00084  POSCAR-00101
+   POSCAR-00018  POSCAR-00037  POSCAR-00074  POSCAR-00085  POSCAR-00102
+   POSCAR-00019  POSCAR-00038  POSCAR-00075  POSCAR-00086  POSCAR-00103
+   POSCAR-00024  POSCAR-00039  POSCAR-00076  POSCAR-00087
+   POSCAR-00025  POSCAR-00040  POSCAR-00077  POSCAR-00088
+   POSCAR-00026  POSCAR-00041  POSCAR-00078  POSCAR-00089
+   POSCAR-00027  POSCAR-00042  POSCAR-00079  POSCAR-00096
 
 ::
 
-   phono3py --cf3 all_calculated_vasprun_xmls
+For example, supporse forces are calculated using VASP in
+``disp-xxxxx`` directories, after running force calculations,
+``FORCES_FC3`` is created as follows::
 
-``disp_fc3.yaml`` may be readable and helpful to understand this
-procedure.
+   % phono3py --cf3 disp-{00001,00002,00003,00016,00017,00018,00019,00024,00025,00026,00027,00032,00033,00034,00035,00036,00037,00038,00039,00040,00041,00042,00043,00070,00071,00072,00073,00074,00075,00076,00077,00078,00079,00080,00081,00082,00083,00084,00085,00086,00087,00088,00089,00096,00097,00098,00099,00100,00101,00102,00103}/vasprun.xml
+           _                      _____
+     _ __ | |__   ___  _ __   ___|___ / _ __  _   _
+    | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
+    | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
+    | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
+    |_|                                |_|    |___/
+                                             1.11.7
+   
+   Displacement dataset is read from disp_fc3.yaml.
+   counter (file index): 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51
+   FORCES_FC3 has been created.
+                    _
+      ___ _ __   __| |
+     / _ \ '_ \ / _` |
+    |  __/ | | | (_| |
+     \___|_| |_|\__,_|
+
+Here one must mind that since the special ``disp_fc3.yaml`` is read in
+creating ``FORCES_FC3``, it has to be located on the current directory.
+
+Although it depends on computer systems, to obtain the list of file
+indices, a small shell one-liner may be used::
+
+   % for i in `ls POSCAR-0*|sed s/POSCAR-//`;do echo -n $i,;done
+   00001,00002,00003,00016,00017,00018,00019,00024,00025,00026,00027,00032,00033,00034,00035,00036,00037,00038,00039,00040,00041,00042,00043,00070,00071,00072,00073,00074,00075,00076,00077,00078,00079,00080,00081,00082,00083,00084,00085,00086,00087,00088,00089,00096,00097,00098,00099,00100,00101,00102,00103,
+
 
 Reciprocal space sampling mesh and grid points
 -----------------------------------------------
@@ -365,10 +432,11 @@ points are written into ``kappa-mxxx-gx(-sx).hdf5``.
 
 (Setting tag: ``ISOTOPE``, ``.TRUE.`` or ``.FALSE.``)
 
-Phonon-isotope scattering is calculated.. Mass variance parameters are
-read from database of the natural abundance data for elements, which
-refers Laeter *et al.*, Pure Appl. Chem., **75**, 683
-(2003)
+Phonon-isotope scattering is calculated based on the formula by
+Shin-ichiro Tamura, Phys. Rev. B, **27**, 858 (1983). Mass variance
+parameters are read from database of the natural abundance data for
+elements, which refers Laeter *et al.*, Pure Appl. Chem., **75**, 683
+(2003).
 
 ::
 
