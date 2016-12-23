@@ -39,12 +39,18 @@
 #include <phonoc_array.h>
 
 void real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
-			const double q[9],
-			const Darray *fc3,
-			const Darray *shortest_vectors,
-			const Iarray *multiplicity,
-			const int *p2s_map,
-			const int *s2p_map,
-			const int openmp_at_bands);
+                        const double q[9],
+                        const Darray *fc3,
+                        const Darray *shortest_vectors,
+                        const Iarray *multiplicity,
+                        const int *p2s_map,
+                        const int *s2p_map);
+void real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
+                               const double q[9],
+                               const Darray *fc3,
+                               const Darray *shortest_vectors,
+                               const Iarray *multiplicity,
+                               const int *p2s_map,
+                               const int *s2p_map);
 
 #endif
