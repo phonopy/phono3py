@@ -131,7 +131,7 @@ void get_interaction(Darray *fc3_normal_squared,
   num_band = frequencies->dims[1];
 
   if (triplets->dims[0] > num_band * num_band) {
-#pragma omp parallel for
+#pragma omp parallel for schedule(guided)
     for (i = 0; i < triplets->dims[0]; i++) {
       get_interaction_at_triplet(fc3_normal_squared,
                                  i,
