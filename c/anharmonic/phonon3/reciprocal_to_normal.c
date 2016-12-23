@@ -93,24 +93,24 @@ void reciprocal_to_normal_squared
     bi = band_indices[i];
     if (freqs0[bi] > cutoff_frequency) {
       for (j = 0; j < num_band; j++) {
-	for (k = 0; k < num_band; k++) {
-	  if (g_zero[i * num_band * num_band + j * num_band + k]) {
-	    fc3_normal_squared[i * num_band * num_band + j * num_band + k] = 0;
-	    continue;
-	  }
-	  fc3_normal_squared[i * num_band * num_band + j * num_band + k] =
-	    get_fc3_sum(j, k, bi,
-			freqs0, freqs1, freqs2,
-			eigvecs0, eigvecs1, eigvecs2,
-			fc3_reciprocal,
-			masses,
-			num_atom,
-			cutoff_frequency);
-	}
+        for (k = 0; k < num_band; k++) {
+          if (g_zero[i * num_band * num_band + j * num_band + k]) {
+            fc3_normal_squared[i * num_band * num_band + j * num_band + k] = 0;
+            continue;
+          }
+          fc3_normal_squared[i * num_band * num_band + j * num_band + k] =
+            get_fc3_sum(j, k, bi,
+                        freqs0, freqs1, freqs2,
+                        eigvecs0, eigvecs1, eigvecs2,
+                        fc3_reciprocal,
+                        masses,
+                        num_atom,
+                        cutoff_frequency);
+        }
       }
     } else {
       for (j = 0; j < num_band * num_band; j++) {
-	fc3_normal_squared[i * num_band * num_band + j] = 0;
+        fc3_normal_squared[i * num_band * num_band + j] = 0;
       }
     }
   }
@@ -170,14 +170,14 @@ void reciprocal_to_normal_squared_openmp
     bi = band_indices[i];
     if (freqs0[bi] > cutoff_frequency) {
       fc3_normal_squared[n[l]] = get_fc3_sum(j, k, bi,
-					     freqs0, freqs1, freqs2,
-					     eigvecs0, eigvecs1, eigvecs2,
-					     fc3_reciprocal,
-					     masses,
-					     num_atom,
-					     cutoff_frequency);
+                                             freqs0, freqs1, freqs2,
+                                             eigvecs0, eigvecs1, eigvecs2,
+                                             fc3_reciprocal,
+                                             masses,
+                                             num_atom,
+                                             cutoff_frequency);
     } else {
-      fc3_normal_squared[n[l]] = 0;      
+      fc3_normal_squared[n[l]] = 0;
     }
   }
 
@@ -251,25 +251,25 @@ static lapack_complex_double fc3_sum_in_reciprocal_to_normal
       index_lm = index_l + m * num_atom * 27;
 
       for (i = 0; i < 3; i++) {
-	for (j = 0; j < 3; j++) {
-	  eig_prod1 = phonoc_complex_prod
-	    (eigvecs0[(l * 3 + i) * num_atom * 3 + bi0],
-	     eigvecs1[(m * 3 + j) * num_atom * 3 + bi1]);
+        for (j = 0; j < 3; j++) {
+          eig_prod1 = phonoc_complex_prod
+            (eigvecs0[(l * 3 + i) * num_atom * 3 + bi0],
+             eigvecs1[(m * 3 + j) * num_atom * 3 + bi1]);
 
-	  for (n = 0; n < num_atom; n++) {
-	    mmm = 1.0 / sqrt(mass_lm * masses[n]);
-	    baseIndex = index_lm + n * 27 + i * 9 + j * 3;
+          for (n = 0; n < num_atom; n++) {
+            mmm = 1.0 / sqrt(mass_lm * masses[n]);
+            baseIndex = index_lm + n * 27 + i * 9 + j * 3;
 
-	    for (k = 0; k < 3; k++) {
-	      eig_prod = phonoc_complex_prod
-		(eig_prod1, eigvecs2[(n * 3 + k) * num_atom * 3 + bi2]);
-	      eig_prod = phonoc_complex_prod
-		(eig_prod, fc3_reciprocal[baseIndex + k]);
-	      sum_real += lapack_complex_double_real(eig_prod) * mmm;
-	      sum_imag += lapack_complex_double_imag(eig_prod) * mmm;
-	    }
-	  }
-	}
+            for (k = 0; k < 3; k++) {
+              eig_prod = phonoc_complex_prod
+                (eig_prod1, eigvecs2[(n * 3 + k) * num_atom * 3 + bi2]);
+              eig_prod = phonoc_complex_prod
+                (eig_prod, fc3_reciprocal[baseIndex + k]);
+              sum_real += lapack_complex_double_real(eig_prod) * mmm;
+              sum_imag += lapack_complex_double_imag(eig_prod) * mmm;
+            }
+          }
+        }
       }
     }
   }
