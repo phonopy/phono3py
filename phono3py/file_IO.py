@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import h5py
-from phonopy.interface.vasp import get_forces_from_vasprun_xmls
 
 def write_cell_yaml(w, supercell):
     w.write("lattice:\n")
@@ -153,33 +152,6 @@ def write_disp_fc2_yaml(dataset, supercell, filename='disp_fc2.yaml'):
     w.close()
 
     return num_first
-
-def write_FORCES_FC4_vasp(vaspruns,
-                          disp_dataset,
-                          filename='FORCES_FC4'):
-    natom = disp_dataset['natom']
-    forces = get_forces_from_vasprun_xmls(vaspruns, natom)
-    w = open(filename, 'w')
-    write_FORCES_FC4(disp_dataset, forces, fp=w)
-    w.close()
-
-def write_FORCES_FC3_vasp(vaspruns,
-                          disp_dataset,
-                          filename='FORCES_FC3'):
-    natom = disp_dataset['natom']
-    forces = get_forces_from_vasprun_xmls(vaspruns, natom)
-    w = open(filename, 'w')
-    write_FORCES_FC3(disp_dataset, forces, fp=w)
-    w.close()
-
-def write_FORCES_FC2_vasp(vaspruns,
-                          disp_dataset,
-                          filename='FORCES_FC2'):
-    natom = disp_dataset['natom']
-    forces_fc2 = get_forces_from_vasprun_xmls(vaspruns, natom)
-    w = open(filename, 'w')
-    write_FORCES_FC2(disp_dataset, forces_fc2=forces_fc2, fp=w)
-    w.close()
 
 def write_FORCES_FC2(disp_dataset,
                      forces_fc2=None,
