@@ -599,18 +599,18 @@ class Conductivity_RTA(Conductivity):
 
     def _set_gamma_at_sigmas(self, i):
         for j, sigma in enumerate(self._sigmas):
-            if self._log_level:
-                text = "Calculating Gamma of ph-ph with "
-                if sigma is None:
-                    text += "tetrahedron method"
-                else:
-                    text += "sigma=%s" % sigma
-                print(text)
-
             self._collision.set_sigma(sigma)
+            if sigma is None or self._run_with_g:
+                self._collision.set_integration_weights()
+
             if not self._use_ave_pp:
-                if sigma is None or self._run_with_g:
-                    self._collision.set_integration_weights()
+                if self._log_level:
+                    text = "Calculating Gamma of ph-ph with "
+                    if sigma is None:
+                        text += "tetrahedron method"
+                    else:
+                        text += "sigma=%s" % sigma
+                    print(text)
                 if self._is_full_pp and j != 0:
                     pass
                 else:
