@@ -94,12 +94,18 @@ if options.log_level is not None:
 # Physical units: energy,  distance,  atomic mass, force
 # vasp          : eV,      Angstrom,  AMU,         eV/Angstrom
 # pwscf         : Ry,      au,        AMU,         Ry/au
+# CRYSTAL       : eV,      Angstrom,  AMU,         eV/Angstrom
 #
 if options.pwscf_mode:
     interface_mode = 'pwscf'
     from phonopy.interface.pwscf import write_supercells_with_displacements
     energy_to_eV = Rydberg
     distance_to_A = Bohr
+if options.crystal_mode:
+    interface_mode = 'crystal'
+    from phonopy.interface.crystal import write_supercells_with_displacements
+    energy_to_eV = None
+    distance_to_A = None
 else:
     interface_mode = 'vasp'
     from phonopy.interface.vasp import write_supercells_with_displacements

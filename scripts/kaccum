@@ -350,12 +350,16 @@ if __name__ == '__main__':
                         help='Use smearing method (only for scalar density)')
     parser.add_argument('--pwscf', dest="pwscf_mode",
                         action="store_true", help="Invoke Pwscf mode")
+    parser.add_argument('--crystal', dest="crystal_mode",
+                        action="store_true", help="Invoke CRYSTAL mode")
     parser.add_argument('filenames', nargs='*')
     args = parser.parse_args()
 
     interface_mode = None
     if args.pwscf_mode:
         interface_mode = 'pwscf'
+    elif args.crystal_mode:
+        interface_mode = 'crystal'
     if len(args.filenames) > 1:
         cell, _ = read_crystal_structure(args.filenames[0],
                                          interface_mode=interface_mode)

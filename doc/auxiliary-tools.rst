@@ -103,6 +103,10 @@ Let ``kaccum`` read a Pwscf unit cell file with ``-c`` option, for example::
 
 |ipwscf|
 
+``--crystal``
+^^^^^^^^^^^^^
+
+Analogous to ``--pwscf``, but to be used with the CRYSTAL interface.
 
 ``--temperature``
 ^^^^^^^^^^^^^^^^^^
