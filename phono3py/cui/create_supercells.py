@@ -52,6 +52,8 @@ def create_phono3py_supercells(unitcell,
     if displacement_distance is None:
         if interface_mode == 'pwscf':
             distance = 0.06
+        elif interface_mode == 'crystal':
+            distance = 0.03
         else:
             distance = 0.03
     else:
@@ -88,6 +90,14 @@ def create_phono3py_supercells(unitcell,
                                             cells_with_disps,
                                             pp_filenames,
                                             width=5)
+    elif interface_mode == 'crystal':
+        conv_numbers = optional_structure_file_information[1]
+        write_supercells_with_displacements(supercell,
+                                            cells_with_disps,
+                                            conv_numbers,
+                                            supercell_matrix,
+                                            width=5,
+                                            template_file="TEMPLATE3")
     else:
         write_supercells_with_displacements(supercell,
                                             cells_with_disps,
@@ -120,6 +130,15 @@ def create_phono3py_supercells(unitcell,
                                                 pp_filenames,
                                                 pre_filename="supercell_fc2",
                                                 width=5)
+        elif interface_mode == 'crystal':
+            conv_numbers = optional_structure_file_information[1]
+            write_supercells_with_displacements(phonon_supercell,
+                                                cells_with_disps,
+                                                conv_numbers,
+                                                phonon_supercell_matrix,
+                                                pre_filename="supercell_fc2",
+                                                width=5,
+                                                template_file="TEMPLATE")
         else:
             write_supercells_with_displacements(phonon_supercell,
                                                 cells_with_disps,

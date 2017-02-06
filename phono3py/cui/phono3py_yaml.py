@@ -265,11 +265,12 @@ class Phono3pyYaml(object):
         # Abinit  | au (bohr)  AMU           eV/Angstrom   eV/Angstrom.au
         # Siesta  | au (bohr)  AMU           eV/Angstrom   eV/Angstrom.au
         # elk     | au (bohr)  AMU           hartree/au    hartree/au^2
+        # CRYSTAL | Angstrom   AMU           eV/Angstrom   eV/Angstrom^2
 
         lines = []
         if self._calculator in ['wien2k', 'abinit', 'elk', 'pwscf', 'siesta']:
             lines.append("  length: au")
-        elif self._calculator == 'vasp':
+        elif self._calculator in ['vasp', 'crystal']:
             lines.append("  length: Angstrom")
 
         if len(lines) > 0:

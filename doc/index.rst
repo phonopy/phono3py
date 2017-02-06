@@ -15,8 +15,8 @@ The theoretical background is summarized in the paper found at
 http://dx.doi.org/10.1103/PhysRevB.91.094306 or the draft in arxiv at
 http://arxiv.org/abs/1501.00691 .
 
-:ref:`Interfaces to calculators <calculator_interfaces>` for VASP and
-pwscf are built-in.
+:ref:`Interfaces to calculators <calculator_interfaces>` for VASP,
+pwscf, and CRYSTAL are built-in.
 
 
 Documentation
@@ -30,6 +30,7 @@ Documentation
    interfaces
    vasp
    pwscf
+   crystal
    command-options
    output-files
    tips
