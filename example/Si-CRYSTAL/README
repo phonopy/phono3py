@@ -1,0 +1,29 @@
+Si lattice thermal conductivity
+
+CRYSTAL output file is crystal.o. This is the default file name
+for the CRYSTAL interface, so the -c crystal.o parameter is not needed
+
+1) Create displaced supercells:
+   (4x4x4 for 2nd order FC, 2x2x2 for 3rd order FC)
+   phono3py --crystal --dim="2 2 2" --dim_fc2="4 4 4" -d
+   Complete CRYSTAL inputs can be prepared manually
+   or with the help of a template
+   (TEMPLATE for FC2-supercells, TEMPLATE3 for FC3-supercells)
+
+2) Run the supercell input with CRYSTAL
+   Here the supercells have been pre-calculated (outputs.tar.gz).
+
+3) Collect forces:
+   phono3py --crystal --cf3 supercell-*o
+   phono3py --crystal --cf2 supercell_fc2-*o
+   (Here the pre-calculated forces are available as FORCES_FC2 and FORCES_FC3)
+
+4) Create force constant files fc2.hdf5 and fc3.hdf5:
+   phono3py --crystal --dim="2 2 2" --dim_fc2="4 4 4" --sym_fc3r --sym_fc2 --tsym
+
+5) Thermal conductivity calculation:
+   phono3py --crystal --fc3 --fc2 --dim="2 2 2" --dim_fc2="4 4 4" --mesh="20 20 20" --br
+   --br ->  Relaxation time approximation
+   Add --isotope for isotope scattering
+   Check the effect of --nac for polar systems
+

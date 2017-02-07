@@ -545,7 +545,7 @@ class Conductivity_RTA(Conductivity):
             if self._log_level:
                 print("Number of triplets: %d" %
                       len(self._pp.get_triplets_at_q()[0]))
-                print("Calculating interaction...")
+                print("Calculating ph-ph interaction...")
 
             self._set_gamma_at_sigmas(i)
 
