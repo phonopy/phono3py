@@ -185,14 +185,19 @@ def get_linewidth(interaction,
         (len(grid_points), len(sigmas), len(temperatures), len(band_indices)),
         dtype='double')
 
+    print("--------------------------------"
+          " Linewidth "
+          "---------------------------------")
     for i, gp in enumerate(grid_points):
         ise.set_grid_point(gp)
         if log_level:
+            print("======================= Grid point %d (%d/%d) "
+                  "=======================" %
+                  (gp, i + 1, len(grid_points)))
             weights = interaction.get_triplets_at_q()[1]
-            print("------ Linewidth ------")
-            print("Grid point: %d" % gp)
             print("Number of ir-triplets: "
                   "%d / %d" % (len(weights), weights.sum()))
+            print("Calculating ph-ph interaction...")
         ise.run_interaction()
         frequencies = interaction.get_phonons()[0]
         if log_level:
@@ -207,10 +212,12 @@ def get_linewidth(interaction,
 
         for j, sigma in enumerate(sigmas):
             if log_level:
-                if sigma:
-                    print("Sigma: %s" % sigma)
+                text = "Calculating linewidths with "
+                if sigma is None:
+                    text += "tetrahedron method"
                 else:
-                    print("Tetrahedron method")
+                    text += "sigma=%s" % sigma
+                print(text)
             ise.set_sigma(sigma)
             if sigma is None or run_with_g:
                 ise.set_integration_weights()

@@ -41,6 +41,7 @@ def get_parser():
                         band_points=None,
                         cell_filename=None,
                         constant_averaged_pp_interaction=None,
+                        crystal_mode=False,
                         cutoff_fc3_distance=None,
                         cutoff_frequency=None,
                         boundary_mfp=None,
@@ -173,6 +174,11 @@ def get_parser():
         dest="constant_averaged_pp_interaction",
         type="float",
         help="Set constant averaged ph-ph interaction (Pqj)")
+    parser.add_option(
+        "--crystal", 
+        dest="crystal_mode",
+        action="store_true", 
+        help="Invoke CRYSTAL mode")
     parser.add_option(
         "--cutoff_fc3", "--cutoff_fc3_distance",
         dest="cutoff_fc3_distance", type="float",

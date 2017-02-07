@@ -120,13 +120,6 @@ class Interaction(object):
     def get_band_indices(self):
         return self._band_indices
 
-    def set_band_indices(self, band_indices):
-        num_band = self._primitive.get_number_of_atoms() * 3
-        if band_indices is None:
-            self._band_indices = np.arange(num_band, dtype='intc')
-        else:
-            self._band_indices = np.array(band_indices, dtype='intc')
-
     def get_frequency_factor_to_THz(self):
         return self._frequency_factor_to_THz
 
@@ -136,6 +129,23 @@ class Interaction(object):
     def get_cutoff_frequency(self):
         return self._cutoff_frequency
         
+    def get_averaged_interaction(self):
+        v = self._interaction_strength
+        w = self._weights_at_q
+        v_sum = v.sum(axis=2).sum(axis=2)
+        num_band = self._primitive.get_number_of_atoms() * 3
+        return np.dot(w, v_sum) / num_band ** 2
+
+    def get_nac_q_direction(self):
+        return self._nac_q_direction
+
+    def set_band_indices(self, band_indices):
+        num_band = self._primitive.get_number_of_atoms() * 3
+        if band_indices is None:
+            self._band_indices = np.arange(num_band, dtype='intc')
+        else:
+            self._band_indices = np.array(band_indices, dtype='intc')
+
     def set_grid_point(self, grid_point, stores_triplets_map=False):
         reciprocal_lattice = np.linalg.inv(self._primitive.get_cell())
         if not self._is_mesh_symmetry:
@@ -161,6 +171,20 @@ class Interaction(object):
                  self._symmetry.get_pointgroup_operations(),
                  reciprocal_lattice,
                  stores_triplets_map=stores_triplets_map)
+
+        # Disable use of symmetry for mesh sampling
+        if self._nac_q_direction is not None:
+            if (grid_address[grid_point] == 0).all():
+                (triplets_at_q,
+                 weights_at_q,
+                 grid_address,
+                 bz_map,
+                 triplets_map_at_q,
+                 ir_map_at_q) = get_nosym_triplets_at_q(
+                     grid_point,
+                     self._mesh,
+                     reciprocal_lattice,
+                     stores_triplets_map=stores_triplets_map)
 
         for triplet in triplets_at_q:
             sum_q = (grid_address[triplet]).sum(axis=0)
@@ -232,13 +256,6 @@ class Interaction(object):
         #         self._set_phonon_py(gp)
         self._set_phonon_c(grid_points)
 
-    def get_averaged_interaction(self):
-        v = self._interaction_strength
-        w = self._weights_at_q
-        v_sum = v.sum(axis=2).sum(axis=2)
-        num_band = self._primitive.get_number_of_atoms() * 3
-        return np.dot(w, v_sum) / num_band ** 2
-            
     def _run_c(self, g_zero=None):
         import phono3py._phono3py as phono3c
         

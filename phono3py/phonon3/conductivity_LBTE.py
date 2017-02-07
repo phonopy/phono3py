@@ -360,9 +360,9 @@ class Conductivity_LBTE(Conductivity):
             self._collision.set_grid_point(grid_point)
             
             if self._log_level:
-                print("Number of triplets: %s" %
+                print("Number of triplets: %d" %
                       len(self._pp.get_triplets_at_q()[0]))
-                print("Calculating interaction...")
+                print("Calculating ph-ph interaction...")
                 
             self._set_collision_matrix_at_sigmas(i)
             
