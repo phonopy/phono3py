@@ -1,7 +1,7 @@
 .. _crystal_interface:
 
 CRYSTAL & phono3py calculation
-=============================
+==============================
 
 CRYSTAL program package has a robust built-in phonon calculation 
 workflow for harmonic phonon properties. However, combining CRYSTAL
