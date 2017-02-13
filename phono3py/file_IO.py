@@ -147,7 +147,8 @@ def write_disp_fc2_yaml(dataset, supercell, filename='disp_fc2.yaml'):
         w.write("    [%20.16f,%20.16f,%20.16f ] # %05d\n" %
                 (disp_cart1[0], disp_cart1[1], disp_cart1[2], i + 1))
 
-    write_cell_yaml(w, supercell)
+    if supercell is not None:
+        write_cell_yaml(w, supercell)
 
     w.close()
 
