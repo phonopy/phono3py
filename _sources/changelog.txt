@@ -3,6 +3,12 @@
 Change Log
 ==========
 
+Feb-9-2017: version 1.11.9
+---------------------------
+
+- This version works coupled with phonopy-1.11.8 or later.
+- CRYSTAL code interface is implemented by Antti J. Karttunen.
+
 Dec-14-2016: version 1.11.7
 ------------------------------
 
