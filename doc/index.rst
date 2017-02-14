@@ -15,10 +15,6 @@ The theoretical background is summarized in the paper found at
 http://dx.doi.org/10.1103/PhysRevB.91.094306 or the draft in arxiv at
 http://arxiv.org/abs/1501.00691 .
 
-:ref:`Interfaces to calculators <calculator_interfaces>` for VASP,
-pwscf, and CRYSTAL are built-in.
-
-
 Documentation
 =============
 
@@ -27,12 +23,10 @@ Documentation
       
    install
    examples
-   interfaces
-   vasp
-   pwscf
-   crystal
+   Interfaces to calculators (VASP, pwscf, CRYSTAL) <interfaces>
    command-options
    output-files
+   hdf5_howto
    tips
    auxiliary-tools
    citation

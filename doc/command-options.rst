@@ -1,7 +1,7 @@
 .. _command_options:
 
-List of command options (setting tags)
-=======================================
+Command options and setting tags
+=================================
 
 Command-user-interface of phono3py is operated with a variety of
 command options. Here those command options are explained.
@@ -48,12 +48,14 @@ Calculator interface
 ``--pwscf``: PWSCF (Quantum espresso) interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The default calculator interface is VASP code like input files. But as
-an option, PWSCF interface is used with this option.
+Using this option, PWSCF interface is invoked.
+See the detail at :ref:`pwscf_interface`.
 
-::
+``--crystal``: CRYSTAL interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-   % phono3py --pwscf -c Si.in ...
+Using this option, CRYSTAL interface is invoked.
+See the detail at :ref:`crystal_interface`.
 
 Force constants
 ----------------
@@ -531,7 +533,7 @@ http://atztogo.github.io/phonopy/setting-tags.html#q-direction .
 (Setting tag: ``WRITE_GAMMA``, ``.TRUE.`` or ``.FALSE.``)
 
 Imaginary parts of self energy at harmonic phonon frequencies
-:math:`\Gamma_\lambda(\omega_\lambda) = 1/2\tau_\lambda` are written
+:math:`\Gamma_\lambda(\omega_\lambda)` are written
 into file in hdf5 format.  The result is written into
 ``kappa-mxxx-dx-gx(-sx).hdf5`` or ``kappa-mxxx-dx-gx-bx(-sx).hdf5`` with
 ``--bi`` option. With ``--sigma`` option, ``-sx`` is inserted in front
@@ -543,7 +545,7 @@ of ``.hdf5``.
 (Setting tag: ``READ_GAMMA``, ``.TRUE.`` or ``.FALSE.``)
 
 Imaginary parts of self energy at harmonic phonon frequencies
-:math:`\Gamma_\lambda(\omega_\lambda) = 1/2\tau_\lambda`
+:math:`\Gamma_\lambda(\omega_\lambda)`
 are read from ``kappa`` file in hdf5 format.  Initially the usual
 result file of ``kappa-mxxx-dx(-sx).hdf5`` is searched. Unless it is
 found, it tries to read ``kappa`` file for each grid point,
@@ -565,15 +567,15 @@ this is large data.
 In the output file in hdf5, following keys are used to extract the
 detailed information.
 
-====================================== =====================================================================================================================
-gamma_detail for ``--ise``             (temperature, sampling frequency point, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz
-gamma_detail for ``--lw`` and ``--br`` (temperature, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz
+====================================== =============================================================================================================================================
+gamma_detail for ``--ise``             (temperature, sampling frequency point, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz (without :math:`2\pi`)
+gamma_detail for ``--lw`` and ``--br`` (temperature, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz (without :math:`2\pi`)
 mesh                                   Numbers of sampling mesh along reciprocal axes.
-frequency_point for ``--ise``          Sampling frequency points in THz, i.e., :math:`\omega` in :math:`\Gamma_\lambda(\omega)`
+frequency_point for ``--ise``          Sampling frequency points in THz (without :math:`2\pi`), i.e., :math:`\omega` in :math:`\Gamma_\lambda(\omega)`
 temperature                            (temperature,), Temperatures in K
 triplet                                (symmetry reduced set of triplets at a grid point, 3), Triplets are given by the grid point indices (see below).
 weight                                 (symmetry reduced set of triplets at a grid point,), Weight of each triplet to imaginary part of self energy
-====================================== =====================================================================================================================
+====================================== =============================================================================================================================================
 
 Q-points corresponding to grid point indices are calculated from
 grid addresses and sampling mesh numbers given in
@@ -629,7 +631,8 @@ symmetrization, the values must be equivalent between them.
 
 Imaginary part of self energy :math:`\Gamma_\lambda(\omega)` is
 calculated with respect to :math:`\omega`. The output is written to
-``gammas-mxxxx-gx(-sx)-tx-bx.dat`` in THz (without :math:`2\pi`).
+``gammas-mxxxx-gx(-sx)-tx-bx.dat`` in THz (without :math:`2\pi`) with
+respect to frequency in THz (without :math:`2\pi`).
 
 ::
 
@@ -661,9 +664,11 @@ respect to temperature. The output is written to
 (Setting tag: ``JOINT_DOS``, ``.TRUE.`` or ``.FALSE.``)
 
 Two classes of joint density of states (JDOS) are calculated. The
-result is written into ``jdos-mxxxxxx-gx(-sx).dat`` in THz (without
-:math:`2\pi`). The first column is the frequency, and the second and
-third columns are the values given as follows, respectively,
+result is written into ``jdos-mxxxxxx-gx(-sx).dat`` in
+:math:`\text{THz}^{-1}` (without :math:`(2\pi)^{-1}`) with
+respect to frequency in THz (without :math:`2\pi`). The first
+column is the frequency, and the second and third columns are the
+values given as follows, respectively,
 
 .. math::
    
@@ -681,10 +686,12 @@ third columns are the values given as follows, respectively,
      --nac --jdos --ga="0 0 0  8 8 8"
 
 When temperatures are specified, two classes of weighted JDOS are
-calculated. The result is written into ``jdos-mxxxxxx-gx(-sx)-txxx.dat``,
-where ``txxx`` shows the temperature. The first column is the
-frequency, and the second and third columns are the values given as
-follows, respectively,
+calculated. The result is written into
+``jdos-mxxxxxx-gx(-sx)-txxx.dat`` in :math:`\text{THz}^{-1}` (without
+:math:`(2\pi)^{-1}`) with respect to frequency in THz
+(without :math:`2\pi`). In the file name, ``txxx`` shows the
+temperature. The first column is the frequency, and the second and
+third columns are the values given as follows, respectively,
 
 .. math::
 
