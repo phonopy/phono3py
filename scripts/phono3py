@@ -218,7 +218,7 @@ if options.force_sets_to_forces_fc2_mode:
     write_disp_fc2_yaml(disp_dataset, None)
 
     if log_level:
-        print("FORCES_FC2 has been created from FORCE_SETS.")
+        print("FORCES_FC2 and disp_fc2.yaml have been created from FORCE_SETS.")
         print_end()
     sys.exit(0)
     
