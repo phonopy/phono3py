@@ -23,7 +23,7 @@ Documentation
       
    install
    examples
-   Interfaces to calculators (VASP, pwscf, CRYSTAL) <interfaces>
+   Interfaces to calculators (VASP, pwscf, CRYSTAL, Abinit) <interfaces>
    command-options
    output-files
    hdf5_howto
