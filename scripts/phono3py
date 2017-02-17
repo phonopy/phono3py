@@ -101,23 +101,23 @@ if options.log_level is not None:
 if options.pwscf_mode:
     interface_mode = 'pwscf'
     from phonopy.interface.pwscf import write_supercells_with_displacements
-    energy_to_eV = Rydberg
     distance_to_A = Bohr
+    force_to_eVperA = Rydberg / Bohr
 elif options.crystal_mode:
     interface_mode = 'crystal'
     from phonopy.interface.crystal import write_supercells_with_displacements
-    energy_to_eV = None
     distance_to_A = None
+    force_to_eVperA = None
 elif options.abinit_mode:
     interface_mode = 'abinit'
     from phonopy.interface.abinit import write_supercells_with_displacements
-    energy_to_eV = None
     distance_to_A = Bohr
+    force_to_eVperA = None
 else:
     interface_mode = 'vasp'
     from phonopy.interface.vasp import write_supercells_with_displacements
-    energy_to_eV = None
     distance_to_A = None
+    force_to_eVperA = None
 
 # Input and output filename extension
 input_filename = options.input_filename
@@ -459,7 +459,7 @@ if options.show_num_triplets:
 create_phono3py_force_constants(phono3py,
                                 phonon_supercell_matrix,
                                 settings,
-                                energy_to_eV=energy_to_eV,
+                                force_to_eVperA=force_to_eVperA,
                                 distance_to_A=distance_to_A,
                                 input_filename=input_filename,
                                 output_filename=output_filename,

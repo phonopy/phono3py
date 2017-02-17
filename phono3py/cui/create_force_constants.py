@@ -49,7 +49,7 @@ from phono3py.cui.show_log import (show_phono3py_force_constants_settings,
 def create_phono3py_force_constants(phono3py,
                                     phonon_supercell_matrix,
                                     settings,
-                                    energy_to_eV=None,
+                                    force_to_eVperA=None,
                                     distance_to_A=None,
                                     input_filename=None,
                                     output_filename=None,
@@ -102,7 +102,7 @@ def create_phono3py_force_constants(phono3py,
             phono3py.set_fc3(fc3)
         else: # fc3 from FORCES_FC3
             if not _create_phono3py_fc3(phono3py,
-                                        energy_to_eV,
+                                        force_to_eVperA,
                                         distance_to_A,
                                         tsym_type,
                                         symmetrize_fc3_r,
@@ -144,7 +144,7 @@ def create_phono3py_force_constants(phono3py,
         if phonon_supercell_matrix is None:
             if phono3py.get_fc2() is None:
                 if not _create_phono3py_fc2(phono3py,
-                                            energy_to_eV,
+                                            force_to_eVperA,
                                             distance_to_A,
                                             tsym_type,
                                             symmetrize_fc2,
@@ -158,7 +158,7 @@ def create_phono3py_force_constants(phono3py,
 
         else:
             if not _create_phono3py_phonon_fc2(phono3py,
-                                               energy_to_eV,
+                                               force_to_eVperA,
                                                distance_to_A,
                                                tsym_type,
                                                symmetrize_fc2,
@@ -181,7 +181,7 @@ def create_phono3py_force_constants(phono3py,
         show_drift_force_constants(phono3py.get_fc2(), name='fc2')
 
 def _create_phono3py_fc3(phono3py,
-                         energy_to_eV,
+                         force_to_eVperA,
                          distance_to_A,
                          tsym_type,
                          symmetrize_fc3_r,
@@ -215,7 +215,7 @@ def _create_phono3py_fc3(phono3py,
     if not forces_fc3:
         return False
 
-    _convert_force_unit(forces_fc3, energy_to_eV, distance_to_A)
+    _convert_force_unit(forces_fc3, force_to_eVperA)
 
     phono3py.produce_fc3(
         forces_fc3,
@@ -236,7 +236,7 @@ def _create_phono3py_fc3(phono3py,
     return True
 
 def _create_phono3py_fc2(phono3py,
-                         energy_to_eV,
+                         force_to_eVperA,
                          distance_to_A,
                          tsym_type,
                          symmetrize_fc2,
@@ -267,7 +267,7 @@ def _create_phono3py_fc2(phono3py,
     if not forces_fc2:
         return False
 
-    _convert_force_unit(forces_fc2, energy_to_eV, distance_to_A)
+    _convert_force_unit(forces_fc2, force_to_eVperA)
 
     phono3py.produce_fc2(
         forces_fc2,
@@ -279,7 +279,7 @@ def _create_phono3py_fc2(phono3py,
     return True
 
 def _create_phono3py_phonon_fc2(phono3py,
-                                energy_to_eV,
+                                force_to_eVperA,
                                 distance_to_A,
                                 tsym_type,
                                 symmetrize_fc2,
@@ -311,7 +311,7 @@ def _create_phono3py_phonon_fc2(phono3py,
     if not forces_fc2:
         return False
 
-    _convert_force_unit(forces_fc2, energy_to_eV, distance_to_A)
+    _convert_force_unit(forces_fc2, force_to_eVperA)
 
     phono3py.produce_fc2(
         forces_fc2,
@@ -322,17 +322,11 @@ def _create_phono3py_phonon_fc2(phono3py,
 
     return True
 
-def _convert_force_unit(force_sets, energy_to_eV, distance_to_A):
-    if energy_to_eV is not None and distance_to_A is not None:
-        if energy_to_eV is None:
-            unit_conversion_factor = 1.0 / distance_to_A
-        elif distance_to_A is None:
-            unit_conversion_factor = energy_to_eV
-        else:
-            unit_conversion_factor = energy_to_eV / distance_to_A
+def _convert_force_unit(force_sets, force_to_eVperA):
+    if force_to_eVperA is not None:
         for forces in force_sets:
             if forces is not None:
-                forces *= unit_conversion_factor
+                forces *= force_to_eVperA
 
 def _convert_displacement_unit(disp_dataset, distance_to_A, is_fc2=False):
     if distance_to_A is not None:
