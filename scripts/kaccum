@@ -427,7 +427,7 @@ if __name__ == '__main__':
             mode_prop = f['gamma'][:]
         else:
             raise
-        if args.temperature is not None:
+        if args.temperature is not None and not args.gv_norm and not args.pqj:
             temperatures, mode_prop = set_T_target(temperatures,
                                                    mode_prop,
                                                    args.temperature)
@@ -476,7 +476,7 @@ if __name__ == '__main__':
             show_tensor(kdos, temperatures, sampling_points, args)
         else:
             frequencies = f['frequency'][:]
-            if args.temperature is not None:
+            if args.temperature is not None and not args.gv:
                 temperatures, mode_prop = set_T_target(temperatures,
                                                        mode_prop,
                                                        args.temperature)
