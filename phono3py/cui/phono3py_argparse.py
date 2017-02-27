@@ -36,7 +36,8 @@ from optparse import OptionParser
 
 def get_parser():
     parser = OptionParser()
-    parser.set_defaults(band_indices=None,
+    parser.set_defaults(abinit_mode=False,
+                        band_indices=None,
                         band_paths=None,
                         band_points=None,
                         cell_filename=None,
@@ -128,6 +129,9 @@ def get_parser():
                         write_gamma=False,
                         write_phonon=False,
                         write_grid_points=False)
+    parser.add_option(
+        "--abinit", dest="abinit_mode",
+        action="store_true", help="Invoke Abinit mode")
     parser.add_option(
         "--alm", dest="use_alm",
         action="store_true", help="Use ALM for creating force constants")

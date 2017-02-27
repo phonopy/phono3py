@@ -48,6 +48,7 @@ except ImportError:
     from yaml import Loader, Dumper
 
 from phonopy.structure.atoms import PhonopyAtoms as Atoms
+from phonopy.interface.phonopy_yaml import get_physical_unit_yaml_lines
 
 def get_unitcell_from_phono3py_yaml(filename):
     ph3_yaml = Phono3pyYaml()
@@ -126,7 +127,7 @@ class Phono3pyYaml(object):
                 lines.append("    %s: \"%s\"" % (key, self._configuration[key]))
             lines.append("")
 
-        lines += self._get_physical_unit_yaml_lines()
+        lines += get_physical_unit_yaml_lines(self._calculator)
 
         if self._supercell_matrix is not None:
             lines.append("supercell_matrix:")
@@ -257,28 +258,4 @@ class Phono3pyYaml(object):
                          scaled_positions=_points)
         else:
             return None
-
-    def _get_physical_unit_yaml_lines(self):
-        # VASP    | Angstrom   AMU           eV/Angstrom   eV/Angstrom^2
-        # Wien2k  | au (bohr)  AMU           mRy/au        mRy/au^2
-        # Pwscf   | au (bohr)  AMU           Ry/au         Ry/au^2
-        # Abinit  | au (bohr)  AMU           eV/Angstrom   eV/Angstrom.au
-        # Siesta  | au (bohr)  AMU           eV/Angstrom   eV/Angstrom.au
-        # elk     | au (bohr)  AMU           hartree/au    hartree/au^2
-        # CRYSTAL | Angstrom   AMU           eV/Angstrom   eV/Angstrom^2
-
-        lines = []
-        if self._calculator in ['wien2k', 'abinit', 'elk', 'pwscf', 'siesta']:
-            lines.append("  length: au")
-        elif self._calculator in ['vasp', 'crystal']:
-            lines.append("  length: Angstrom")
-
-        if len(lines) > 0:
-            lines.insert(0, "physical_unit:")
-            lines.append("  atomic_mass: AMU")
-            lines.append("")
-
-        return lines
-
-            
         
