@@ -172,18 +172,27 @@ class Interaction(object):
                  reciprocal_lattice,
                  stores_triplets_map=stores_triplets_map)
 
-        # Disable use of symmetry for mesh sampling
+        # Special treatment of symmetry is applied when q_direction is used.
         if self._nac_q_direction is not None:
             if (grid_address[grid_point] == 0).all():
+                rotations = []
+                for r in self._symmetry.get_pointgroup_operations():
+                    dq = self._nac_q_direction
+                    dq /= np.linalg.norm(dq)
+                    diff = np.dot(dq, r) - dq
+                    if (abs(diff) < 1e-5).all():
+                        rotations.append(r)
                 (triplets_at_q,
                  weights_at_q,
                  grid_address,
                  bz_map,
                  triplets_map_at_q,
-                 ir_map_at_q) = get_nosym_triplets_at_q(
+                 ir_map_at_q)= get_triplets_at_q(
                      grid_point,
                      self._mesh,
+                     np.array(rotations, dtype='intc', order='C'),
                      reciprocal_lattice,
+                     is_time_reversal=False,
                      stores_triplets_map=stores_triplets_map)
 
         for triplet in triplets_at_q:
