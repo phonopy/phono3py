@@ -18,7 +18,8 @@
         VERSION:     '1.11.9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
@@ -30,7 +31,6 @@
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="top" title="Phono3py v.1.11.9" href="index.html" />
     <link rel="next" title="How to read the results stored in hdf5 files" href="hdf5_howto.html" />
     <link rel="prev" title="Command options and setting tags" href="command-options.html" />
 <meta charset='utf-8'>
@@ -76,7 +76,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, pwscf, CRYSTAL)</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, pwscf, CRYSTAL, Abinit)</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
@@ -279,13 +279,62 @@ from HDF5 files is also shown.</p>
 <p>See the detail at <a class="reference internal" href="hdf5_howto.html#kappa-hdf5-file"><span class="std std-ref">Details of kappa-*.hdf5 file</span></a>.</p>
 </div>
 <div class="section" id="fc3-hdf5">
-<h3><a class="toc-backref" href="#id9"><code class="docutils literal"><span class="pre">fc3.hdf5</span></code></a><a class="headerlink" href="#fc3-hdf5" title="Permalink to this headline">¶</a></h3>
-<p>Third order force constants are stored in <img class="math" src="_images/math/54b276cf2f788492d60ddf926ceff1f501afce83.png" alt="\mathrm{eV}/\mathrm{\AA}^3"/>.</p>
+<span id="fc3-hdf5-file"></span><h3><a class="toc-backref" href="#id9"><code class="docutils literal"><span class="pre">fc3.hdf5</span></code></a><a class="headerlink" href="#fc3-hdf5" title="Permalink to this headline">¶</a></h3>
+<p>Third order force constants (in real space) are stored in
+<img class="math" src="_images/math/54b276cf2f788492d60ddf926ceff1f501afce83.png" alt="\mathrm{eV}/\mathrm{\AA}^3"/>.</p>
+<p>In phono3py, this is stored in the numpy array <code class="docutils literal"><span class="pre">dtype='double'</span></code> and
+<code class="docutils literal"><span class="pre">order='C'</span></code> in the shape of:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">num_atom</span><span class="p">,</span> <span class="n">num_atom</span><span class="p">,</span> <span class="n">num_atom</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>against <img class="math" src="_images/math/1a965748bc8f3e40c6ad3551b7ddf1b5d281ec1b.png" alt="\Phi_{\alpha\beta\gamma}(l\kappa, l'\kappa',
+l''\kappa'')"/>. The first three <code class="docutils literal"><span class="pre">num_atom</span></code> are the atom indices in supercell
+corresponding to <img class="math" src="_images/math/b36b7ecdf96e113cd15448199d3320c773fc7099.png" alt="l\kappa"/>, <img class="math" src="_images/math/fd6755757b4035cc0bc1360cbfd0086b3e465520.png" alt="l'\kappa'"/>,
+<img class="math" src="_images/math/b3d32fb59a58a30d4ff969f681af1aa99ac99eb5.png" alt="l''\kappa''"/>, respectively. The last three elements are the Cartesian
+coordinates corresponding to <img class="math" src="_images/math/ad59b6e24a4a00ac621801f8d7513d68be654ab5.png" alt="\alpha"/>, <img class="math" src="_images/math/8ce03f78ed945f2ef3dac87c8799b55b393527e7.png" alt="\beta"/>,
+<img class="math" src="_images/math/0ebb67342b546ca42a1c634b1ef03c893c4cdedb.png" alt="\gamma"/>, respectively.</p>
+<p>If you want to import a supercell structure and its fc3, you may
+suffer from matching its atom index between the supercell and an
+expected unit cell. This may be easily dealt with by letting phono3py
+see your supercell as the unit cell (e.g., <code class="docutils literal"><span class="pre">POSCAR</span></code>,
+<code class="docutils literal"><span class="pre">unitcell.in</span></code>, etc) and find the unit (primitive) cell using
+<a class="reference internal" href="command-options.html#pa-option"><span class="std std-ref">&#8211;pa option</span></a>. For example, let us assume your
+supercell is the 2x2x2 multiples of your unit cell that has no
+centring, then your <code class="docutils literal"><span class="pre">--pa</span></code> setting will be <code class="docutils literal"><span class="pre">1/2</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">1/2</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">1/2</span>
+<span class="pre">0</span></code>. If your unit cell is a conventional unit cell and has a centring,
+e.g., the face centring,</p>
+<div class="math">
+<p><img src="_images/math/d27bfe97844bd1d3fe0408f33f35b4657ed0bea6.png" alt="(\mathbf{a}_\text{p}, \mathbf{b}_\text{p}, \mathbf{c}_\text{p}) =
+(\mathbf{a}_\text{s}, \mathbf{b}_\text{s}, \mathbf{c}_\text{s})
+\begin{pmatrix}
+\frac{{1}}{2} &amp; 0 &amp; 0 \\
+0 &amp; \frac{{1}}{2} &amp; 0 \\
+0 &amp; 0 &amp; \frac{{1}}{2}
+\end{pmatrix}
+\begin{pmatrix}
+0 &amp; \frac{{1}}{2} &amp; \frac{{1}}{2} \\
+\frac{{1}}{2} &amp; 0 &amp; \frac{{1}}{2} \\
+\frac{{1}}{2} &amp; \frac{{1}}{2} &amp; 0
+\end{pmatrix} =
+(\mathbf{a}_\text{s}, \mathbf{b}_\text{s}, \mathbf{c}_\text{s})
+\begin{pmatrix}
+0 &amp; \frac{{1}}{4} &amp; \frac{{1}}{4} \\
+\frac{{1}}{4} &amp; 0 &amp; \frac{{1}}{4} \\
+\frac{{1}}{4} &amp; \frac{{1}}{4} &amp; 0
+\end{pmatrix}."/></p>
+</div><p>So what you have to set is <code class="docutils literal"><span class="pre">--pa=&quot;0</span> <span class="pre">1/4</span> <span class="pre">1/4</span>&#160; <span class="pre">1/4</span> <span class="pre">0</span> <span class="pre">1/4</span>&#160; <span class="pre">1/4</span> <span class="pre">1/4</span> <span class="pre">0&quot;</span></code>.</p>
 </div>
 <div class="section" id="fc2-hdf5">
-<h3><a class="toc-backref" href="#id10"><code class="docutils literal"><span class="pre">fc2.hdf5</span></code></a><a class="headerlink" href="#fc2-hdf5" title="Permalink to this headline">¶</a></h3>
+<span id="fc2-hdf5-file"></span><h3><a class="toc-backref" href="#id10"><code class="docutils literal"><span class="pre">fc2.hdf5</span></code></a><a class="headerlink" href="#fc2-hdf5" title="Permalink to this headline">¶</a></h3>
 <p>Second order force constants are stored in
 <img class="math" src="_images/math/54b276cf2f788492d60ddf926ceff1f501afce83.png" alt="\mathrm{eV}/\mathrm{\AA}^3"/>.</p>
+<p>In phono3py, this is stored in the numpy array <code class="docutils literal"><span class="pre">dtype='double'</span></code> and
+<code class="docutils literal"><span class="pre">order='C'</span></code> in the shape of:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">num_atom</span><span class="p">,</span> <span class="n">num_atom</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>against <img class="math" src="_images/math/a1b22cd55c0aa8ba8af5695321a64344dd5c4553.png" alt="\Phi_{\alpha\beta}(l\kappa, l'\kappa')"/>. More detail is
+similar to the case for <a class="reference internal" href="#fc3-hdf5-file"><span class="std std-ref">fc3.hdf5</span></a>.</p>
 </div>
 <div class="section" id="gamma-hdf5">
 <h3><a class="toc-backref" href="#id11"><code class="docutils literal"><span class="pre">gamma-*.hdf5</span></code></a><a class="headerlink" href="#gamma-hdf5" title="Permalink to this headline">¶</a></h3>
@@ -313,7 +362,6 @@ phonon frequencies (half linewidths) are stored in THz.  See
 </div>
 <div class="section" id="linewidth-dat">
 <h3><a class="toc-backref" href="#id16"><code class="docutils literal"><span class="pre">linewidth-*.dat</span></code></a><a class="headerlink" href="#linewidth-dat" title="Permalink to this headline">¶</a></h3>
-<p>Linewidths (FWHM) at temperatures are stored in THz. See <a class="reference internal" href="command-options.html#lw-option"><span class="std std-ref">&#8211;lw: Line width</span></a>.</p>
 </div>
 </div>
 </div>
@@ -331,14 +379,14 @@ phonon frequencies (half linewidths) are stored in THz.  See
         <br/>
         
 <div id="sourcelink">
-  <a href="_sources/output-files.txt"
+  <a href="_sources/output-files.rst.txt"
      rel="nofollow">Source</a>
 </div>
       
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.8.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.<br/>
     </p>
   </div>
 </footer>
