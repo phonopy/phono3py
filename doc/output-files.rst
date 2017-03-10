@@ -46,16 +46,75 @@ HDF5 files
 
 See the detail at :ref:`kappa_hdf5_file`.
 
+.. _fc3_hdf5_file:
+
 ``fc3.hdf5``
 ^^^^^^^^^^^^^
 
-Third order force constants are stored in :math:`\mathrm{eV}/\mathrm{\AA}^3`.
+Third order force constants (in real space) are stored in
+:math:`\mathrm{eV}/\mathrm{\AA}^3`. 
 
+In phono3py, this is stored in the numpy array ``dtype='double'`` and
+``order='C'`` in the shape of::
+
+   (num_atom, num_atom, num_atom, 3, 3, 3)
+
+against :math:`\Phi_{\alpha\beta\gamma}(l\kappa, l'\kappa',
+l''\kappa'')`. The first three ``num_atom`` are the atom indices in supercell
+corresponding to :math:`l\kappa`, :math:`l'\kappa'`,
+:math:`l''\kappa''`, respectively. The last three elements are the Cartesian
+coordinates corresponding to :math:`\alpha`, :math:`\beta`,
+:math:`\gamma`, respectively.
+
+If you want to import a supercell structure and its fc3, you may
+suffer from matching its atom index between the supercell and an
+expected unit cell. This may be easily dealt with by letting phono3py
+see your supercell as the unit cell (e.g., ``POSCAR``,
+``unitcell.in``, etc) and find the unit (primitive) cell using
+:ref:`--pa option <pa_option>`. For example, let us assume your
+supercell is the 2x2x2 multiples of your unit cell that has no
+centring, then your ``--pa`` setting will be ``1/2 0 0 0 1/2 0 0 1/2
+0``. If your unit cell is a conventional unit cell and has a centring,
+e.g., the face centring,
+
+.. math::
+
+   (\mathbf{a}_\text{p}, \mathbf{b}_\text{p}, \mathbf{c}_\text{p}) =
+   (\mathbf{a}_\text{s}, \mathbf{b}_\text{s}, \mathbf{c}_\text{s})
+   \begin{pmatrix}
+   \frac{{1}}{2} & 0 & 0 \\
+   0 & \frac{{1}}{2} & 0 \\
+   0 & 0 & \frac{{1}}{2}
+   \end{pmatrix}
+   \begin{pmatrix}
+   0 & \frac{{1}}{2} & \frac{{1}}{2} \\
+   \frac{{1}}{2} & 0 & \frac{{1}}{2} \\
+   \frac{{1}}{2} & \frac{{1}}{2} & 0
+   \end{pmatrix} = 
+   (\mathbf{a}_\text{s}, \mathbf{b}_\text{s}, \mathbf{c}_\text{s})
+   \begin{pmatrix}
+   0 & \frac{{1}}{4} & \frac{{1}}{4} \\
+   \frac{{1}}{4} & 0 & \frac{{1}}{4} \\
+   \frac{{1}}{4} & \frac{{1}}{4} & 0
+   \end{pmatrix}.
+
+So what you have to set is ``--pa="0 1/4 1/4  1/4 0 1/4  1/4 1/4 0"``.
+
+.. _fc2_hdf5_file:
+      
 ``fc2.hdf5``
 ^^^^^^^^^^^^^
 
 Second order force constants are stored in
 :math:`\mathrm{eV}/\mathrm{\AA}^3`.
+
+In phono3py, this is stored in the numpy array ``dtype='double'`` and
+``order='C'`` in the shape of::
+
+   (num_atom, num_atom, 3, 3)
+
+against :math:`\Phi_{\alpha\beta}(l\kappa, l'\kappa')`. More detail is
+similar to the case for :ref:`fc3_hdf5_file`.
 
 ``gamma-*.hdf5``
 ^^^^^^^^^^^^^^^^^
@@ -88,5 +147,4 @@ Joint densities of states are stored in Thz. See :ref:`jdos_option`.
 ``linewidth-*.dat``
 ^^^^^^^^^^^^^^^^^^^^
 
-Linewidths (FWHM) at temperatures are stored in THz. See :ref:`lw_option`.
 
