@@ -27,6 +27,10 @@ script:
     - cd test/phono3py
     - python -m unittest discover -b
     - cd ../..
+    - cd example/Si-pwscf
+    - tar xvf supercell_out.tar.lzma --lzma
+    - phono3py --pwscf --cf3 supercell_out/disp-{00001..00111}/Si.out
+    - cd ../..
 
 deploy:
     # testing pypi
