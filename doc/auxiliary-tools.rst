@@ -36,21 +36,21 @@ where :math:`\kappa_\lambda` of phono3py for single-mode RTA is given as
 How to use ``kaccum``
 ~~~~~~~~~~~~~~~~~~~~~
 
-Let's computer lattice thermal conductivity of Si using an example
-found in the example directory.
+Let's computer lattice thermal conductivity of Si using the ``Si-PBEsol``
+example found in the example directory.
 
 ::
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --sym_fc3r --sym_fc2 --tsym --br
+   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="11 11 11" --sym_fc3r --sym_fc2 --tsym --br
 
-Then using the output file, ``kappa-m191919.hdf5``, run ``kaccum`` as follows::
+Then using the output file, ``kappa-m111111.hdf5``, run ``kaccum`` as follows::
 
-   % kaccum --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell kappa-m191919.hdf5 |tee kaccum.dat
+   % kaccum --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell kappa-m111111.hdf5 |tee kaccum.dat
 
 Here ``--pa`` is optional. The definition of ``--pa`` option is same as
 :ref:`pa_option`. ``POSCAR-unitcell`` is the unit cell filename that
 is specified with ``-c`` option.
-``kappa-m191919.hdf5`` is the output file of thermal conductivity
+``kappa-m111111.hdf5`` is the output file of thermal conductivity
 calculation, which is passed to ``kaccum`` as the first argument.
 
 The format of the output is as follows: The first column gives
@@ -147,6 +147,8 @@ convergence.
 
 |iMFP|
 
+(This plot is based on the ``Si-PBEsol`` example.)
+
 
 ``--gv``
 ^^^^^^^^^
@@ -229,6 +231,8 @@ is negligible.
         :width: 50%
 
 |ikde|
+
+(This plot is based on the ``Si-PBEsol`` example.)
 
 Option
 ~~~~~~~
