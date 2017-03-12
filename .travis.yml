@@ -29,7 +29,7 @@ script:
     - python -m unittest discover -b
     - cd ../..
     - cd example/Si-PBE
-    - tar xf  --lzma
+    - tar xf vasprun_xmls.tar.lzma --lzma
     - phono3py --cf3 vasprun_xmls/disp-{00001..00111}/vasprun.xml
     - cd ../..
     - cd example/Si-pwscf
