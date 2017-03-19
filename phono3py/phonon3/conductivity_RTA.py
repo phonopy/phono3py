@@ -1,7 +1,4 @@
 import numpy as np
-from phonopy.phonon.group_velocity import get_group_velocity
-from phonopy.units import THzToEv, THz, Angstrom
-from phonopy.phonon.thermal_properties import mode_cv as get_mode_cv
 from phono3py.file_IO import (write_kappa_to_hdf5, write_triplets,
                               read_gamma_from_hdf5, write_grid_address,
                               write_gamma_detail_to_hdf5)
@@ -83,7 +80,7 @@ def get_thermal_conductivity_RTA(
         if (grid_points is None and _all_bands_exist(interaction)):
             br.set_kappa_at_sigmas()
             _write_kappa(br,
-                         interaction,
+                         interaction.get_primitive().get_volume(),
                          filename=output_filename,
                          log_level=log_level)
 
@@ -220,7 +217,7 @@ def _write_triplets(interaction, filename=None):
                    filename=filename)
     write_grid_address(grid_address, mesh, filename=filename)
 
-def _write_kappa(br, interaction, filename=None, log_level=0):
+def _write_kappa(br, volume, filename=None, log_level=0):
     temperatures = br.get_temperatures()
     sigmas = br.get_sigmas()
     gamma = br.get_gamma()
@@ -240,7 +237,6 @@ def _write_kappa(br, interaction, filename=None, log_level=0):
     num_ignored_phonon_modes = br.get_number_of_ignored_phonon_modes()
     num_band = br.get_frequencies().shape[1]
     num_phonon_modes = br.get_number_of_sampling_grid_points() * num_band
-    volume = interaction.get_primitive().get_volume()
 
     for i, sigma in enumerate(sigmas):
         kappa_at_sigma = kappa[i]
@@ -424,6 +420,7 @@ class Conductivity_RTA(Conductivity):
         self._read_gamma_iso = False
 
         self._frequencies = None
+        self._cv = None
         self._gv = None
         self._gv_sum2 = None
         self._gamma = None
@@ -463,29 +460,15 @@ class Conductivity_RTA(Conductivity):
                               gv_delta_q=gv_delta_q,
                               log_level=log_level)
 
-        self._cv = None
-
         if self._temperatures is not None:
             self._allocate_values()
 
     def set_kappa_at_sigmas(self):
         num_band = self._primitive.get_number_of_atoms() * 3
-        self._num_sampling_grid_points = 0
-
         for i, grid_point in enumerate(self._grid_points):
             cv = self._cv[:, i, :]
             gp = self._grid_points[i]
             frequencies = self._frequencies[gp]
-
-            # Outer product of group velocities (v x v) [num_k*, num_freqs, 3, 3]
-            gv_by_gv_tensor, order_kstar = self._get_gv_by_gv(i)
-            self._num_sampling_grid_points += order_kstar
-
-            # Sum all vxv at k*
-            gv_sum2 = np.zeros((6, num_band), dtype='double')
-            for j, vxv in enumerate(
-                ([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])):
-                gv_sum2[j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
 
             # Kappa
             for j in range(len(self._sigmas)):
@@ -497,19 +480,11 @@ class Conductivity_RTA(Conductivity):
                             continue
 
                         self._mode_kappa[j, k, i, l] = (
-                            gv_sum2[:, l] * cv[k, l] / (g_sum[l] * 2) *
+                            self._gv_sum2[i, l] * cv[k, l] / (g_sum[l] * 2) *
                             self._conversion_factor)
-
-            self._gv_sum2[i] = gv_sum2.T
 
         self._mode_kappa /= self._num_sampling_grid_points
         self._kappa = self._mode_kappa.sum(axis=2).sum(axis=2)
-
-    def get_mode_heat_capacities(self):
-        return self._cv
-
-    def get_gv_by_gv(self):
-        return self._gv_sum2
 
     def get_gamma_N_U(self):
         return (self._gamma_N, self._gamma_U)
@@ -552,9 +527,7 @@ class Conductivity_RTA(Conductivity):
         if self._isotope is not None and not self._read_gamma_iso:
             self._set_gamma_isotope_at_sigmas(i)
 
-        freqs = self._frequencies[grid_point][self._pp.get_band_indices()]
-        self._cv[:, i, :] = self._get_cv(freqs)
-        self._set_gv(i)
+        self._set_harmonic_properties(i)
 
         if self._log_level:
             self._show_log(self._qpoints[i], i)
@@ -581,7 +554,8 @@ class Conductivity_RTA(Conductivity):
                 self._gamma_N = np.zeros_like(self._gamma)
                 self._gamma_U = np.zeros_like(self._gamma)
         self._gv = np.zeros((num_grid_points, num_band0, 3), dtype='double')
-        self._gv_sum2 = np.zeros((num_grid_points, num_band0, 6), dtype='double')
+        self._gv_sum2 = np.zeros((num_grid_points, num_band0, 6),
+                                 dtype='double')
         self._cv = np.zeros(
             (num_temp, num_grid_points, num_band0), dtype='double')
         if self._isotope is not None:
@@ -637,41 +611,6 @@ class Conductivity_RTA(Conductivity):
                     self._gamma_U[j, k, i] = g_U
                     self._gamma_detail_at_q[k] = (
                         self._collision.get_detailed_imag_self_energy())
-
-    def _get_gv_by_gv(self, i):
-        rotation_map = get_grid_points_by_rotations(
-            self._grid_address[self._grid_points[i]],
-            self._point_operations,
-            self._mesh)
-        gv_by_gv = np.zeros((len(self._gv[i]), 3, 3), dtype='double')
-
-        for r in self._rotations_cartesian:
-            gvs_rot = np.dot(self._gv[i], r.T)
-            gv_by_gv += [np.outer(r_gv, r_gv) for r_gv in gvs_rot]
-        gv_by_gv /= len(rotation_map) // len(np.unique(rotation_map))
-        order_kstar = len(np.unique(rotation_map))
-
-        if order_kstar != self._grid_weights[i]:
-            if self._log_level:
-                print("*" * 33  + "Warning" + "*" * 33)
-                print(" Number of elements in k* is unequal "
-                      "to number of equivalent grid-points.")
-                print("*" * 73)
-
-        return gv_by_gv, order_kstar
-
-    def _get_cv(self, freqs):
-        cv = np.zeros((len(self._temperatures), len(freqs)), dtype='double')
-        # T/freq has to be large enough to avoid divergence.
-        # Otherwise just set 0.
-        for i, f in enumerate(freqs):
-            finite_t = (self._temperatures > f / 100)
-            if f > self._cutoff_frequency:
-                cv[:, i] = np.where(
-                    finite_t, get_mode_cv(
-                        np.where(finite_t, self._temperatures, 10000),
-                        f * THzToEv), 0)
-        return cv
 
     def _show_log(self, q, i):
         gp = self._grid_points[i]
