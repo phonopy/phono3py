@@ -80,7 +80,7 @@ def get_thermal_conductivity_RTA(
         if (grid_points is None and _all_bands_exist(interaction)):
             br.set_kappa_at_sigmas()
             _write_kappa(br,
-                         interaction,
+                         interaction.get_primitive().get_volume(),
                          filename=output_filename,
                          log_level=log_level)
 
@@ -217,7 +217,7 @@ def _write_triplets(interaction, filename=None):
                    filename=filename)
     write_grid_address(grid_address, mesh, filename=filename)
 
-def _write_kappa(br, interaction, filename=None, log_level=0):
+def _write_kappa(br, volume, filename=None, log_level=0):
     temperatures = br.get_temperatures()
     sigmas = br.get_sigmas()
     gamma = br.get_gamma()
@@ -237,7 +237,6 @@ def _write_kappa(br, interaction, filename=None, log_level=0):
     num_ignored_phonon_modes = br.get_number_of_ignored_phonon_modes()
     num_band = br.get_frequencies().shape[1]
     num_phonon_modes = br.get_number_of_sampling_grid_points() * num_band
-    volume = interaction.get_primitive().get_volume()
 
     for i, sigma in enumerate(sigmas):
         kappa_at_sigma = kappa[i]

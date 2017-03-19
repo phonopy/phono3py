@@ -2,7 +2,7 @@ import sys
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.units import THz, Angstrom
-from phono3py.phonon3.conductivity import Conductivity
+from phono3py.phonon3.conductivity import Conductivity, unit_to_WmK
 from phono3py.phonon3.collision_matrix import CollisionMatrix
 from phono3py.phonon3.triplets import (get_grid_points_by_rotations,
                                        get_BZ_grid_points_by_rotations)
@@ -80,7 +80,10 @@ def get_thermal_conductivity_LBTE(
 
     if write_kappa and grid_points is None:
         lbte.set_kappa_at_sigmas()
-        _write_kappa(lbte, filename=output_filename, log_level=log_level)
+        _write_kappa(lbte,
+                     interaction.get_primitive().get_volume(),
+                     filename=output_filename,
+                     log_level=log_level)
     
     return lbte
 
@@ -121,31 +124,44 @@ def _write_collision(lbte, i=None, filename=None):
                                     sigma=sigma,
                                     filename=filename)
     
-def _write_kappa(lbte, filename=None, log_level=0):
+def _write_kappa(lbte, volume, filename=None, log_level=0):
     temperatures = lbte.get_temperatures()
     sigmas = lbte.get_sigmas()
     gamma = lbte.get_gamma()
+    gamma_isotope = lbte.get_gamma_isotope()
     mesh = lbte.get_mesh_numbers()
     frequencies = lbte.get_frequencies()
     gv = lbte.get_group_velocities()
+    gv_by_gv = lbte.get_gv_by_gv()
+    mode_cv = lbte.get_mode_heat_capacities()
     ave_pp = lbte.get_averaged_pp_interaction()
     qpoints = lbte.get_qpoints()
+    weights = lbte.get_grid_weights()
     kappa = lbte.get_kappa()
     mode_kappa = lbte.get_mode_kappa()
     
     coleigs = lbte.get_collision_eigenvalues()
 
     for i, sigma in enumerate(sigmas):
+        if gamma_isotope is not None:
+            gamma_isotope_at_sigma = gamma_isotope[i]
+        else:
+            gamma_isotope_at_sigma = None
         write_kappa_to_hdf5(temperatures,
                             mesh,
                             frequency=frequencies,
                             group_velocity=gv,
+                            gv_by_gv=gv_by_gv,
+                            heat_capacity=mode_cv,
                             kappa=kappa[i],
                             mode_kappa=mode_kappa[i],
                             gamma=gamma[i],
+                            gamma_isotope=gamma_isotope_at_sigma,
                             averaged_pp_interaction=ave_pp,
                             qpoint=qpoints,
+                            weight=weights,
                             sigma=sigma,
+                            kappa_unit_conversion=unit_to_WmK / volume,
                             filename=filename,
                             verbose=log_level)
         write_collision_eigenvalues_to_hdf5(temperatures,
