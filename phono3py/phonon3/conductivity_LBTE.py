@@ -369,53 +369,58 @@ class Conductivity_LBTE(Conductivity):
         if self._isotope is not None:
             self._set_gamma_isotope_at_sigmas(i)
 
-        self._set_gv(i)
+        self._set_harmonic_properties(i)
+
         if self._log_level:
             self._show_log(i)
 
     def _allocate_values(self):
+        num_band0 = len(self._pp.get_band_indices())
         num_band = self._primitive.get_number_of_atoms() * 3
         num_grid_points = len(self._grid_points)
         num_ir_grid_points = len(self._ir_grid_points)
+        num_temp = len(self._temperatures)
 
         self._kappa = np.zeros((len(self._sigmas),
-                                len(self._temperatures),
+                                num_temp,
                                 6), dtype='double')
-        self._gv = np.zeros((num_grid_points,
-                             num_band,
-                             3), dtype='double')
+        self._gv = np.zeros((num_grid_points, num_band0, 3), dtype='double')
+        self._gv_sum2 = np.zeros((num_grid_points, num_band0, 6),
+                                 dtype='double')
+        self._cv = np.zeros((num_temp, num_grid_points, num_band0),
+                            dtype='double')
         if self._is_full_pp:
             self._averaged_pp_interaction = np.zeros(
-                (num_grid_points, num_band), dtype='double')
+                (num_grid_points, num_band0), dtype='double')
         self._gamma = np.zeros((len(self._sigmas),
-                                len(self._temperatures),
+                                num_temp,
                                 num_grid_points,
-                                num_band), dtype='double')
+                                num_band0), dtype='double')
         if self._isotope is not None:
             self._gamma_iso = np.zeros((len(self._sigmas),
                                         num_grid_points,
-                                        num_band), dtype='double')
+                                        num_band0), dtype='double')
 
         if self._is_reducible_collision_matrix:
             num_mesh_points = np.prod(self._mesh)
             self._mode_kappa = np.zeros((len(self._sigmas),
-                                         len(self._temperatures),
+                                         num_temp,
                                          num_mesh_points,
-                                         num_band,
+                                         num_band0,
                                          6), dtype='double')
             self._collision = CollisionMatrix(
                 self._pp,
                 is_reducible_collision_matrix=True)
             self._collision_matrix = np.zeros(
                 (len(self._sigmas),
-                 len(self._temperatures),
+                 num_temp,
                  num_grid_points, num_band, num_mesh_points, num_band),
                 dtype='double')
         else:
             self._mode_kappa = np.zeros((len(self._sigmas),
-                                         len(self._temperatures),
+                                         num_temp,
                                          num_grid_points,
-                                         num_band,
+                                         num_band0,
                                          6), dtype='double')
             self._rot_grid_points = np.zeros(
                 (len(self._ir_grid_points), len(self._point_operations)),
@@ -440,14 +445,14 @@ class Conductivity_LBTE(Conductivity):
                 rotated_grid_points=self._rot_BZ_grid_points)
             self._collision_matrix = np.zeros(
                 (len(self._sigmas),
-                 len(self._temperatures),
+                 num_temp,
                  num_grid_points, num_band, 3,
                  num_ir_grid_points, num_band, 3),
                 dtype='double')
 
             self._collision_eigenvalues = np.zeros(
                 (len(self._sigmas),
-                 len(self._temperatures),
+                 num_temp,
                  num_ir_grid_points * num_band * 3),
                 dtype='double')
 
