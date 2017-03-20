@@ -310,8 +310,7 @@ class Conductivity(object):
             lapack_zheev_uplo=self._pp.get_lapack_zheev_uplo())
         self._mass_variances = self._isotope.get_mass_variances()
 
-    def _set_harmonic_properties(self, i):
-        grid_point = self._grid_points[i]
+    def _set_harmonic_properties(self, i, grid_point):
         freqs = self._frequencies[grid_point][self._pp.get_band_indices()]
         self._cv[:, i, :] = self._get_cv(freqs)
         self._set_gv(i)

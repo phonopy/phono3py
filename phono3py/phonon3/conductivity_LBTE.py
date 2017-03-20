@@ -165,12 +165,14 @@ def _write_kappa(lbte, volume, filename=None, log_level=0):
                             kappa_unit_conversion=unit_to_WmK / volume,
                             filename=filename,
                             verbose=log_level)
-        write_collision_eigenvalues_to_hdf5(temperatures,
-                                            mesh,
-                                            coleigs[i],
-                                            sigma=sigma,
-                                            filename=filename,
-                                            verbose=log_level)
+        
+        if coleigs is not None:
+            write_collision_eigenvalues_to_hdf5(temperatures,
+                                                mesh,
+                                                coleigs[i],
+                                                sigma=sigma,
+                                                filename=filename,
+                                                verbose=log_level)
 
 
 def _set_collision_from_file(lbte,
@@ -386,7 +388,10 @@ class Conductivity_LBTE(Conductivity):
         if self._isotope is not None:
             self._set_gamma_isotope_at_sigmas(i)
 
-        self._set_harmonic_properties(i)
+        if self._is_reducible_collision_matrix:
+            self._set_harmonic_properties(i, i)
+        else:
+            self._set_harmonic_properties(i, self._grid_points[i])
 
         if self._log_level:
             self._show_log(i)
