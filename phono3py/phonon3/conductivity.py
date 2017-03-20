@@ -173,6 +173,9 @@ class Conductivity(object):
     def get_grid_point_count(self):
         return self._grid_point_count
 
+    def get_averaged_pp_interaction(self):
+        return self._averaged_pp_interaction
+
     def _run_at_grid_point(self):
         """This has to be implementated in the derived class"""
         pass
@@ -218,7 +221,8 @@ class Conductivity(object):
         self._pp.set_phonons(self._grid_points)
         self._frequencies = self._pp.get_phonons()[0]
 
-    def _set_gamma_isotope_at_sigmas(self, i):
+    def _get_gamma_isotope_at_sigmas(self, i):
+        gamma_iso = []
         for j, sigma in enumerate(self._sigmas):
             if self._log_level:
                 text = "Calculating Gamma of ph-isotope with "
@@ -236,7 +240,9 @@ class Conductivity(object):
             gp = self._grid_points[i]
             self._isotope.set_grid_point(gp)
             self._isotope.run()
-            self._gamma_iso[j, i] = self._isotope.get_gamma()
+            gamma_iso.append(self._isotope.get_gamma())
+
+        return gamma_iso
 
     def _set_mesh_numbers(self, mesh_divisors=None, coarse_mesh_shifts=None):
         self._mesh = self._pp.get_mesh_numbers()
@@ -310,25 +316,21 @@ class Conductivity(object):
             lapack_zheev_uplo=self._pp.get_lapack_zheev_uplo())
         self._mass_variances = self._isotope.get_mass_variances()
 
-    def _set_harmonic_properties(self, i):
-        grid_point = self._grid_points[i]
+    def _set_harmonic_properties(self, i_irgp, i_data):
+        grid_point = self._grid_points[i_irgp]
         freqs = self._frequencies[grid_point][self._pp.get_band_indices()]
-        self._cv[:, i, :] = self._get_cv(freqs)
-        self._set_gv(i)
+        self._cv[:, i_data, :] = self._get_cv(freqs)
+        gv = self._get_gv(self._qpoints[i_irgp])
+        self._gv[i_data] = gv[self._pp.get_band_indices(), :]
 
         # Outer product of group velocities (v x v) [num_k*, num_freqs, 3, 3]
-        gv_by_gv_tensor, order_kstar = self._get_gv_by_gv(i)
+        gv_by_gv_tensor, order_kstar = self._get_gv_by_gv(i_irgp, i_data)
         self._num_sampling_grid_points += order_kstar
 
         # Sum all vxv at k*
         for j, vxv in enumerate(
             ([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])):
-            self._gv_sum2[i, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
-
-    def _set_gv(self, i):
-        # Group velocity [num_freqs, 3]
-        gv = self._get_gv(self._qpoints[i])
-        self._gv[i] = gv[self._pp.get_band_indices(), :]
+            self._gv_sum2[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
 
     def _get_gv(self, q):
         return get_group_velocity(
@@ -338,20 +340,21 @@ class Conductivity(object):
             symmetry=self._symmetry,
             frequency_factor_to_THz=self._frequency_factor_to_THz)
 
-    def _get_gv_by_gv(self, i):
+    def _get_gv_by_gv(self, i_irgp, i_data):
         rotation_map = get_grid_points_by_rotations(
-            self._grid_address[self._grid_points[i]],
+            self._grid_address[self._grid_points[i_irgp]],
             self._point_operations,
             self._mesh)
-        gv_by_gv = np.zeros((len(self._gv[i]), 3, 3), dtype='double')
+        gv = self._gv[i_data]
+        gv_by_gv = np.zeros((len(gv), 3, 3), dtype='double')
 
         for r in self._rotations_cartesian:
-            gvs_rot = np.dot(self._gv[i], r.T)
+            gvs_rot = np.dot(gv, r.T)
             gv_by_gv += [np.outer(r_gv, r_gv) for r_gv in gvs_rot]
         gv_by_gv /= len(rotation_map) // len(np.unique(rotation_map))
         order_kstar = len(np.unique(rotation_map))
 
-        if order_kstar != self._grid_weights[i]:
+        if order_kstar != self._grid_weights[i_irgp]:
             if self._log_level:
                 print("*" * 33  + "Warning" + "*" * 33)
                 print(" Number of elements in k* is unequal "
