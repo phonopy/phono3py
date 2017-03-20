@@ -385,13 +385,15 @@ class Conductivity_LBTE(Conductivity):
 
             self._set_collision_matrix_at_sigmas(i)
 
-        if self._isotope is not None:
-            self._set_gamma_isotope_at_sigmas(i)
-
         if self._is_reducible_collision_matrix:
-            self._set_harmonic_properties(i, i)
+            gp = self._ir_grid_points[i]
+            self._set_harmonic_properties(i, gp)
+            if self._isotope is not None:
+                self._gamma_iso[:, gp, :] = self._get_gamma_isotope_at_sigmas(i)
         else:
-            self._set_harmonic_properties(i, self._grid_points[i])
+            self._set_harmonic_properties(i, i)
+            if self._isotope is not None:
+                self._gamma_iso[:, i, :] = self._get_gamma_isotope_at_sigmas(i)
 
         if self._log_level:
             self._show_log(i)
@@ -399,9 +401,14 @@ class Conductivity_LBTE(Conductivity):
     def _allocate_values(self):
         num_band0 = len(self._pp.get_band_indices())
         num_band = self._primitive.get_number_of_atoms() * 3
-        num_grid_points = len(self._grid_points)
         num_ir_grid_points = len(self._ir_grid_points)
         num_temp = len(self._temperatures)
+        num_mesh_points = np.prod(self._mesh)
+
+        if self._is_reducible_collision_matrix:
+            num_grid_points = num_mesh_points
+        else:
+            num_grid_points = len(self._grid_points)
 
         self._kappa = np.zeros((len(self._sigmas),
                                 num_temp,
@@ -424,7 +431,6 @@ class Conductivity_LBTE(Conductivity):
                                         num_band0), dtype='double')
 
         if self._is_reducible_collision_matrix:
-            num_mesh_points = np.prod(self._mesh)
             self._mode_kappa = np.zeros((len(self._sigmas),
                                          num_temp,
                                          num_mesh_points,
@@ -436,7 +442,7 @@ class Conductivity_LBTE(Conductivity):
             self._collision_matrix = np.zeros(
                 (len(self._sigmas),
                  num_temp,
-                 num_grid_points, num_band, num_mesh_points, num_band),
+                 num_mesh_points, num_band, num_mesh_points, num_band),
                 dtype='double')
         else:
             self._mode_kappa = np.zeros((len(self._sigmas),
@@ -471,7 +477,6 @@ class Conductivity_LBTE(Conductivity):
                  num_grid_points, num_band, 3,
                  num_ir_grid_points, num_band, 3),
                 dtype='double')
-
             self._collision_eigenvalues = np.zeros(
                 (len(self._sigmas),
                  num_temp,
@@ -501,8 +506,13 @@ class Conductivity_LBTE(Conductivity):
             for k, t in enumerate(self._temperatures):
                 self._collision.set_temperature(t)
                 self._collision.run()
-                self._gamma[j, k, i] = self._collision.get_imag_self_energy()
-                self._collision_matrix[j, k, i] = (
+                if self._is_reducible_collision_matrix:
+                    i_data = self._ir_grid_points[i]
+                else:
+                    i_data = i
+                self._gamma[j, k, i_data] = (
+                    self._collision.get_imag_self_energy())
+                self._collision_matrix[j, k, i_data] = (
                     self._collision.get_collision_matrix())
 
     def _set_kappa_at_sigmas(self):
@@ -585,23 +595,6 @@ class Conductivity_LBTE(Conductivity):
         num_band = self._primitive.get_number_of_atoms() * 3
         rot_grid_points = np.zeros(
             (num_rot, num_mesh_points), dtype='intc')
-        collision_matrix = np.zeros(
-            (len(self._sigmas),
-             len(self._temperatures),
-             num_mesh_points, num_band, num_mesh_points, num_band),
-            dtype='double')
-        gamma = np.zeros((len(self._sigmas),
-                          len(self._temperatures),
-                          num_mesh_points,
-                          num_band), dtype='double')
-        gv = np.zeros((num_mesh_points,
-                       num_band,
-                       3), dtype='double')
-
-        if self._gamma_iso is not None:
-            gamma_iso = np.zeros((len(self._sigmas),
-                                  num_mesh_points,
-                                  num_band), dtype='double')
 
         for i in range(num_mesh_points):
             rot_grid_points[:, i] = get_grid_points_by_rotations(
@@ -610,28 +603,28 @@ class Conductivity_LBTE(Conductivity):
                 self._mesh)
 
         for i, ir_gp in enumerate(self._ir_grid_points):
+            colmat_irgp = self._collision_matrix[:, :, ir_gp, :, :, :].copy()
+            self._collision_matrix[:, :, ir_gp, :, :, :] = 0
+            gv_irgp = self._gv[ir_gp].copy()
+            self._gv[ir_gp] = 0
+            gamma_irgp = self._gamma[:, :, ir_gp, :].copy()
+            self._gamma[:, :, ir_gp, :] = 0
             multi = (rot_grid_points[:, ir_gp] == ir_gp).sum()
-            g_elem = self._gamma[:, :, i, :] / multi
+            g_elem = gamma_irgp / multi
             if self._gamma_iso is not None:
-                giso_elem = self._gamma_iso[:, i, :] / multi
+                gamma_iso_irgp = self._gamma_iso[:, ir_gp, :].copy()
+                self._gamma_iso[:, ir_gp, :] = 0
+                giso_elem = gamma_iso_irgp / multi
             for j, r in enumerate(self._rotations_cartesian):
                 gp_r = rot_grid_points[j, ir_gp]
-                gamma[:, :, gp_r, :] += g_elem
+                self._gamma[:, :, gp_r, :] += g_elem
                 if self._gamma_iso is not None:
-                    gamma_iso[:, gp_r, :] += giso_elem
+                    self._gamma_iso[:, gp_r, :] += giso_elem
                 for k in range(num_mesh_points):
-                    colmat_elem = self._collision_matrix[:, :, i, :, k, :]
-                    colmat_elem = colmat_elem.copy() / multi
+                    colmat_elem = colmat_irgp[:, :, :, k, :] / multi
                     gp_c = rot_grid_points[j, k]
-                    collision_matrix[:, :, gp_r, :, gp_c, :] += colmat_elem
-
-                gv[gp_r] += np.dot(self._gv[i], r.T) / multi
-
-        self._gamma = gamma
-        self._collision_matrix = collision_matrix
-        if self._gamma_iso is not None:
-            self._gamma_iso = gamma_iso
-        self._gv = gv
+                    self._collision_matrix[:, :, gp_r, :, gp_c, :] += colmat_elem
+                self._gv[gp_r] += np.dot(gv_irgp, r.T) / multi
 
     def _get_weights(self):
         """Weights used for collision matrix and |X> and |f>

@@ -525,9 +525,9 @@ class Conductivity_RTA(Conductivity):
             self._set_gamma_at_sigmas(i)
 
         if self._isotope is not None and not self._read_gamma_iso:
-            self._set_gamma_isotope_at_sigmas(i)
+            self._gamma_iso[:, i, :] = self._get_gamma_isotope_at_sigmas(i)
 
-        self._set_harmonic_properties(i, self._grid_points[i])
+        self._set_harmonic_properties(i, i)
 
         if self._log_level:
             self._show_log(self._qpoints[i], i)
