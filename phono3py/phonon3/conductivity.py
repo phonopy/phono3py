@@ -173,6 +173,9 @@ class Conductivity(object):
     def get_grid_point_count(self):
         return self._grid_point_count
 
+    def get_averaged_pp_interaction(self):
+        return self._averaged_pp_interaction
+
     def _run_at_grid_point(self):
         """This has to be implementated in the derived class"""
         pass

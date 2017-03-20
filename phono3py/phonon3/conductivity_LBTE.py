@@ -140,6 +140,7 @@ def _write_kappa(lbte, volume, filename=None, log_level=0):
     weights = lbte.get_grid_weights()
     kappa = lbte.get_kappa()
     mode_kappa = lbte.get_mode_kappa()
+    mfp = lbte.get_mean_free_path()
 
     coleigs = lbte.get_collision_eigenvalues()
 
@@ -153,6 +154,7 @@ def _write_kappa(lbte, volume, filename=None, log_level=0):
                             frequency=frequencies,
                             group_velocity=gv,
                             gv_by_gv=gv_by_gv,
+                            mean_free_path=mfp,
                             heat_capacity=mode_cv,
                             kappa=kappa[i],
                             mode_kappa=mode_kappa[i],
@@ -283,8 +285,6 @@ class Conductivity_LBTE(Conductivity):
                  is_full_pp=False,
                  pinv_cutoff=1.0e-8,
                  log_level=0):
-        if sigmas is None:
-            sigmas = []
         self._pp = None
         self._temperatures = None
         self._sigmas = None
@@ -308,17 +308,19 @@ class Conductivity_LBTE(Conductivity):
         self._ir_grid_points = None
         self._ir_grid_weights = None
 
-        self._gamma = None
         self._read_gamma = False
         self._read_gamma_iso = False
+
         self._frequencies = None
+        self._cv = None
         self._gv = None
+        self._gv_sum2 = None
+        self._mfp = None
+        self._gamma = None
         self._gamma_iso = None
         self._averaged_pp_interaction = None
 
         self._mesh = None
-        self._coarse_mesh = None
-        self._coarse_mesh_shifts = None
         self._conversion_factor = None
 
         self._is_isotope = None
@@ -367,8 +369,8 @@ class Conductivity_LBTE(Conductivity):
     def get_collision_eigenvalues(self):
         return self._collision_eigenvalues
 
-    def get_averaged_pp_interaction(self):
-        return self._averaged_pp_interaction
+    def get_mean_free_path(self):
+        return self._mfp
 
     def _run_at_grid_point(self):
         i = self._grid_point_count
@@ -416,6 +418,11 @@ class Conductivity_LBTE(Conductivity):
         self._gv = np.zeros((num_grid_points, num_band0, 3), dtype='double')
         self._gv_sum2 = np.zeros((num_grid_points, num_band0, 6),
                                  dtype='double')
+        self._mfp = np.zeros((len(self._sigmas),
+                              num_temp,
+                              num_grid_points,
+                              num_band0,
+                              3), dtype='double')
         self._cv = np.zeros((num_temp, num_grid_points, num_band0),
                             dtype='double')
         if self._is_full_pp:
@@ -783,35 +790,45 @@ class Conductivity_LBTE(Conductivity):
 
         if self._is_reducible_collision_matrix:
             num_mesh_points = np.prod(self._mesh)
-            point_operations = self._symmetry.get_reciprocal_operations()
-            rec_lat = np.linalg.inv(self._primitive.get_cell())
-            rotations_cartesian = np.array(
-                [similarity_transformation(rec_lat, r)
-                 for r in point_operations], dtype='double')
+            # point_operations = self._symmetry.get_reciprocal_operations()
+            # rec_lat = np.linalg.inv(self._primitive.get_cell())
+            # rotations_cartesian = np.array(
+            #     [similarity_transformation(rec_lat, r)
+            #      for r in point_operations], dtype='double')
             inv_col_mat = np.kron(
                 self._collision_matrix[i_sigma, i_temp].reshape(
                     num_mesh_points * num_band,
                     num_mesh_points * num_band), np.eye(3))
             Y = np.dot(inv_col_mat, X.ravel()).reshape(-1, 3)
+            self._set_mean_free_path(i_sigma, i_temp, weights, Y)
             self._set_mode_kappa(X,
                                  Y,
                                  num_mesh_points,
-                                 rotations_cartesian,
+                                 self._rotations_cartesian,
                                  i_sigma,
                                  i_temp)
-            self._mode_kappa /= len(point_operations)
+            # self._mode_kappa /= len(point_operations)
+            self._mode_kappa /= len(self._rotations_cartesian)
         else:
             num_ir_grid_points = len(self._ir_grid_points)
             inv_col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
                 num_ir_grid_points * num_band * 3,
                 num_ir_grid_points * num_band * 3)
             Y = np.dot(inv_col_mat, X.ravel()).reshape(-1, 3)
+            self._set_mean_free_path(i_sigma, i_temp, weights, Y)
             self._set_mode_kappa(X,
                                  Y,
                                  num_ir_grid_points,
                                  self._rotations_cartesian,
                                  i_sigma,
                                  i_temp)
+            # self._set_mode_kappa_from_mfp(X,
+            #                               Y,
+            #                               weights,
+            #                               num_ir_grid_points,
+            #                               self._rotations_cartesian,
+            #                               i_sigma,
+            #                               i_temp)
 
         self._kappa[i_sigma, i_temp] = (
             self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
@@ -838,15 +855,49 @@ class Conductivity_LBTE(Conductivity):
                     self._mode_kappa[i_sigma, i_temp, i, j, k] = sum_k[vxf]
 
         t = self._temperatures[i_temp]
+        # Collision matrix is half of that defined in Chaput's paper.
+        # Therefore here 2 is not necessary multiplied.
         self._mode_kappa *= (self._conversion_factor * Kb * t ** 2
                              / np.prod(self._mesh))
 
-    def _get_mean_free_path(self, i_sigma, i_temp, weights, Y):
-        # self._cv = np.zeros((num_temp, num_grid_points, num_band0),
-        #                     dtype='double')
-        for i, f_gp in enumerate(Y.reshape(num_grid_points, num_band, 3)):
-            pass
-            
+    def _set_mode_kappa_from_mfp(self,
+                                 X,
+                                 Y,
+                                 weights,
+                                 num_grid_points,
+                                 rotations_cartesian,
+                                 i_sigma,
+                                 i_temp):
+        for i, (v_gp, mfp_gp, cv_gp) in enumerate(
+                zip(self._gv, self._mfp[i_sigma, i_temp], self._cv[i_temp])):
+            for j, (v, mfp, cv) in enumerate(zip(v_gp, mfp_gp, cv_gp)):
+                sum_k = np.zeros((3, 3), dtype='double')
+                for r in rotations_cartesian:
+                    sum_k += np.outer(np.dot(r, v), np.dot(r, mfp))
+                sum_k = (sum_k + sum_k.T) / 2 * cv * weights[i] ** 2 * 2 * np.pi
+                for k, vxf in enumerate(
+                        ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))):
+                    self._mode_kappa[i_sigma, i_temp, i, j, k] = sum_k[vxf]
+        # Collision matrix is half of that defined in Chaput's paper.
+        # Therefore here it is divided by 2.
+        self._mode_kappa *= - self._conversion_factor / np.prod(self._mesh) / 2
+
+    def _set_mean_free_path(self, i_sigma, i_temp, weights, Y):
+        if self._is_reducible_collision_matrix:
+            num_mesh_points = np.prod(self._mesh)
+            freqs = self._frequencies[:num_mesh_points]
+        else:
+            freqs = self._frequencies[self._ir_grid_points]
+        t = self._temperatures[i_temp]
+        num_band = self._primitive.get_number_of_atoms() * 3
+        for i, f_gp in enumerate(Y.reshape(len(freqs), num_band, 3)):
+            for j, f in enumerate(f_gp):
+                cv = self._cv[i_temp, i, j]
+                if cv < 1e-10:
+                    continue
+                self._mfp[i_sigma, i_temp, i, j] = (
+                    - 2 * t * np.sqrt(Kb / cv) / weights[i] * f / (2 * np.pi))
+
     def _show_log(self, i):
         q = self._qpoints[i]
         gp = self._grid_points[i]

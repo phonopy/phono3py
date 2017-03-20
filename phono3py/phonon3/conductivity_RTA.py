@@ -435,9 +435,6 @@ class Conductivity_RTA(Conductivity):
         self._num_sampling_grid_points = None
 
         self._mesh = None
-        self._mesh_divisors = None
-        self._coarse_mesh = None
-        self._coarse_mesh_shifts = None
         self._conversion_factor = None
 
         self._is_isotope = None
@@ -497,9 +494,6 @@ class Conductivity_RTA(Conductivity):
 
     def get_number_of_sampling_grid_points(self):
         return self._num_sampling_grid_points
-
-    def get_averaged_pp_interaction(self):
-        return self._averaged_pp_interaction
 
     def set_averaged_pp_interaction(self, ave_pp):
         self._averaged_pp_interaction = ave_pp
