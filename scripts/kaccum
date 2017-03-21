@@ -392,8 +392,8 @@ if __name__ == '__main__':
 
     if args.no_kappa_stars:
         grid_address = get_grid_address(mesh)
-        ir_grid_points = np.arange(np.prod(mesh))
-        grid_mapping_table = np.arange(np.prod(mesh))
+        ir_grid_points = np.arange(np.prod(mesh), dtype='intc')
+        grid_mapping_table = np.arange(np.prod(mesh), dtype='intc')
     else:
         (ir_grid_points,
          grid_address,
