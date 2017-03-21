@@ -5,7 +5,9 @@ from phonopy.phonon.tetrahedron_mesh import TetrahedronMesh
 from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.interface import read_crystal_structure
 from phono3py.phonon3.triplets import (get_ir_grid_points,
-                                       get_grid_points_by_rotations)
+                                       get_grid_points_by_rotations,
+                                       get_grid_address,
+                                       from_coarse_to_dense_grid_points)
 from phonopy.phonon.dos import NormalDistribution
 
 epsilon = 1.0e-8
@@ -354,6 +356,9 @@ if __name__ == '__main__':
                         action="store_true", help="Invoke CRYSTAL mode")
     parser.add_argument('--abinit', dest="abinit_mode",
                         action="store_true", help="Invoke Abinit mode")
+    parser.add_argument("--noks", "--no_kappa_stars",
+                        dest="no_kappa_stars", action="store_true",
+                        help="Deactivate summation of partial kappa at q-stars")
     parser.add_argument('filenames', nargs='*')
     args = parser.parse_args()
 
@@ -385,12 +390,17 @@ if __name__ == '__main__':
     temperatures = f['temperature'][:]
     weights = f['weight'][:]
 
-    (ir_grid_points,
-     grid_address,
-     grid_mapping_table) = get_grid_symmetry(primitive,
-                                             mesh,
-                                             weights,
-                                             f['qpoint'][:])
+    if args.no_kappa_stars:
+        grid_address = get_grid_address(mesh)
+        ir_grid_points = np.arange(np.prod(mesh))
+        grid_mapping_table = np.arange(np.prod(mesh))
+    else:
+        (ir_grid_points,
+         grid_address,
+         grid_mapping_table) = get_grid_symmetry(primitive,
+                                                 mesh,
+                                                 weights,
+                                                 f['qpoint'][:])
 
     ################
     # Set property #
@@ -461,7 +471,11 @@ if __name__ == '__main__':
         show_scalar(gdos, temperatures, sampling_points, args)        
     else:
         if args.mfp:
-            mean_freepath = get_mfp(f['gamma'][:], f['group_velocity'][:])
+            if 'mean_free_path' in f:
+                mfp = f['mean_free_path'][:]
+                mean_freepath = np.sqrt((mfp ** 2).sum(axis=3))
+            else:
+                mean_freepath = get_mfp(f['gamma'][:], f['group_velocity'][:])
             if args.temperature is not None:
                 (temperatures,
                  mode_prop,
@@ -469,6 +483,7 @@ if __name__ == '__main__':
                                                mode_prop,
                                                args.temperature,                
                                                mean_freepath=mean_freepath)
+
             kdos, sampling_points = run_mfp_dos(mean_freepath,
                                                 mode_prop,
                                                 primitive,

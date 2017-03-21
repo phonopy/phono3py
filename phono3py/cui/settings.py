@@ -425,7 +425,7 @@ class Phono3pyConfParser(ConfParser):
                 if self._options.is_joint_dos:
                     self._confs['joint_dos'] = '.true.'
 
-            if opt.dest == 'is_kappa_star':
+            if opt.dest == 'no_kappa_stars':
                 if self._options.no_kappa_stars:
                     self._confs['kappa_star'] = '.false.'
 
