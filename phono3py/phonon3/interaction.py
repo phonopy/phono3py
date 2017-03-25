@@ -76,19 +76,19 @@ class Interaction(object):
         num_band = self._primitive.get_number_of_atoms() * 3
         num_triplets = len(self._triplets_at_q)
 
+        self._interaction_strength = np.empty(
+            (num_triplets, len(self._band_indices), num_band, num_band),
+            dtype='double')
         if self._constant_averaged_interaction is None:
-            self._interaction_strength = np.zeros(
-                (num_triplets, len(self._band_indices), num_band, num_band),
-                dtype='double')
+            self._interaction_strength[:] = 0
             if lang == 'C':
                 self._run_c(g_zero=g_zero)
             else:
                 self._run_py()
         else:
             num_grid = np.prod(self._mesh)
-            self._interaction_strength = np.ones(
-                (num_triplets, len(self._band_indices), num_band, num_band),
-                dtype='double') * self._constant_averaged_interaction / num_grid
+            self._interaction_strength[:] = (
+                self._constant_averaged_interaction / num_grid)
 
     def get_interaction_strength(self):
         return self._interaction_strength
