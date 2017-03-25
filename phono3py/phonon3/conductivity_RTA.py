@@ -514,7 +514,6 @@ class Conductivity_RTA(Conductivity):
             if self._log_level:
                 print("Number of triplets: %d" %
                       len(self._pp.get_triplets_at_q()[0]))
-                print("Calculating ph-ph interaction...")
 
             self._set_gamma_at_sigmas(i)
 
@@ -573,15 +572,16 @@ class Conductivity_RTA(Conductivity):
 
             if not self._use_ave_pp:
                 if self._log_level:
-                    text = "Calculating Gamma of ph-ph with "
+                    text = "Collisions will be calculated with "
                     if sigma is None:
-                        text += "tetrahedron method"
+                        text += "tetrahedron method."
                     else:
-                        text += "sigma=%s" % sigma
+                        text += "sigma=%s." % sigma
                     print(text)
                 if self._is_full_pp and j != 0:
                     pass
                 else:
+                    print("Calculating ph-ph interaction...")
                     self._collision.run_interaction(is_full_pp=self._is_full_pp)
                 if self._is_full_pp and j == 0:
                     self._averaged_pp_interaction[i] = (
@@ -595,6 +595,7 @@ class Conductivity_RTA(Conductivity):
                     ((num_temp,) + self._pp.get_interaction_strength().shape),
                     dtype='double', order='C')
 
+            print("Calculating collisions at temperatures")
             for k, t in enumerate(self._temperatures):
                 self._collision.set_temperature(t)
                 self._collision.run()

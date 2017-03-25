@@ -136,10 +136,15 @@ def _write_kappa(lbte,
     sigmas = lbte.get_sigmas()
     mesh = lbte.get_mesh_numbers()
     weights = lbte.get_grid_weights()
+    frequencies = lbte.get_frequencies()
+    ave_pp = lbte.get_averaged_pp_interaction()
+    qpoints = lbte.get_qpoints()
+    kappa = lbte.get_kappa()
+    coleigs = lbte.get_collision_eigenvalues()
+
     if is_reducible_collision_matrix:
         ir_gp = lbte.get_grid_points()
         # frequencies = lbte.get_frequencies_all()
-        frequencies = lbte.get_frequencies()
         gamma = lbte.get_gamma()[:, :, ir_gp, :]
         gamma_isotope = lbte.get_gamma_isotope()
         if gamma_isotope is not None:
@@ -160,11 +165,6 @@ def _write_kappa(lbte,
         mode_cv = lbte.get_mode_heat_capacities()
         mode_kappa = lbte.get_mode_kappa()
         mfp = lbte.get_mean_free_path()
-    ave_pp = lbte.get_averaged_pp_interaction()
-    qpoints = lbte.get_qpoints()
-    kappa = lbte.get_kappa()
-
-    coleigs = lbte.get_collision_eigenvalues()
 
     for i, sigma in enumerate(sigmas):
         if gamma_isotope is not None:

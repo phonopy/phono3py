@@ -38,6 +38,7 @@
 #include <phonoc_utils.h>
 #include <phonoc_array.h>
 #include <phonon3_h/reciprocal_to_normal.h>
+#include <unistd.h>
 
 #ifdef MEASURE_R2N
 #include <time.h>
@@ -188,6 +189,7 @@ void reciprocal_to_normal_squared_openmp
 #endif
 
   free(n);
+  n = NULL;
 }
 
 static double get_fc3_sum

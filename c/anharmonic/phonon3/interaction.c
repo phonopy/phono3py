@@ -349,6 +349,7 @@ static void real_to_normal(double *fc3_normal_squared,
   }
 
   free(fc3_reciprocal);
+  fc3_reciprocal = NULL;
 }
 
 static void real_to_normal_sym_q(double *fc3_normal_squared,

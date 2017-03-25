@@ -480,6 +480,7 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
 				       cutoff_frequency);
 
   free(fc3_normal_squared);
+  fc3_normal_squared = NULL;
   
   Py_RETURN_NONE;
 }

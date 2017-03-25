@@ -149,6 +149,7 @@ void get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
 				      unit_conversion_factor);
 
   free(ise);
+  ise = NULL;
 }
 
 void get_detailed_imag_self_energy_at_bands_with_g
@@ -196,6 +197,7 @@ void get_detailed_imag_self_energy_at_bands_with_g
      num_triplets);
 
   free(ise);
+  ise = NULL;
 }
 
 static void imag_self_energy_at_bands(double *imag_self_energy,
@@ -210,6 +212,8 @@ static void imag_self_energy_at_bands(double *imag_self_energy,
   int i, j, num_triplets, num_band0, num_band, adrs_shift;
   double *n1, *n2;
 
+  n1 = NULL;
+  n2 = NULL;
   num_triplets = fc3_normal_squared->dims[0];
   num_band0 = fc3_normal_squared->dims[1];
   num_band = fc3_normal_squared->dims[2];
@@ -252,7 +256,9 @@ static void imag_self_energy_at_bands(double *imag_self_energy,
       }
     }
     free(n1);
+    n1 = NULL;
     free(n2);
+    n2 = NULL;
   }
 }
 
@@ -315,6 +321,8 @@ detailed_imag_self_energy_at_bands(double *detailed_imag_self_energy,
   int i, j, num_triplets, num_band0, num_band, adrs_shift;
   double *n1, *n2;
 
+  n1 = NULL;
+  n2 = NULL;
   num_triplets = fc3_normal_squared->dims[0];
   num_band0 = fc3_normal_squared->dims[1];
   num_band = fc3_normal_squared->dims[2];
@@ -360,7 +368,9 @@ detailed_imag_self_energy_at_bands(double *detailed_imag_self_energy,
       }
     }
     free(n1);
+    n1 = NULL;
     free(n2);
+    n2 = NULL;
   }
 }
 
@@ -490,6 +500,7 @@ static void sum_imag_self_energy_N_and_U_along_triplets
   }
 
   free(is_N);
+  is_N = NULL;
 }
 
 static void set_tmp_values(double *n1,

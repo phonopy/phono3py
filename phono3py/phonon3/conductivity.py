@@ -354,12 +354,13 @@ class Conductivity(object):
         gv_by_gv /= len(rotation_map) // len(np.unique(rotation_map))
         order_kstar = len(np.unique(rotation_map))
 
-        if order_kstar != self._grid_weights[i_irgp]:
-            if self._log_level:
-                print("*" * 33  + "Warning" + "*" * 33)
-                print(" Number of elements in k* is unequal "
-                      "to number of equivalent grid-points.")
-                print("*" * 73)
+        if self._grid_weights is not None:
+            if order_kstar != self._grid_weights[i_irgp]:
+                if self._log_level:
+                    print("*" * 33  + "Warning" + "*" * 33)
+                    print(" Number of elements in k* is unequal "
+                          "to number of equivalent grid-points.")
+                    print("*" * 73)
 
         return gv_by_gv, order_kstar
 
