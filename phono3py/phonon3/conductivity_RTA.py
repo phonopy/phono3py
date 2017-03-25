@@ -399,7 +399,7 @@ class Conductivity_RTA(Conductivity):
         self._is_kappa_star = None
         self._gv_delta_q = None
         self._run_with_g = run_with_g
-        self._is_full_pp = is_full_pp
+        self._is_full_pp = None
         self._is_gamma_detail = is_gamma_detail
         self._log_level = None
         self._primitive = None
@@ -455,6 +455,7 @@ class Conductivity_RTA(Conductivity):
                               boundary_mfp=boundary_mfp,
                               is_kappa_star=is_kappa_star,
                               gv_delta_q=gv_delta_q,
+                              is_full_pp=is_full_pp,
                               log_level=log_level)
 
         if self._temperatures is not None:
@@ -578,22 +579,21 @@ class Conductivity_RTA(Conductivity):
                     else:
                         text += "sigma=%s." % sigma
                     print(text)
-                if self._is_full_pp and j != 0:
-                    pass
-                else:
+                if not self._is_full_pp or j == 0:
                     print("Calculating ph-ph interaction...")
                     self._collision.run_interaction(is_full_pp=self._is_full_pp)
-                if self._is_full_pp and j == 0:
-                    self._averaged_pp_interaction[i] = (
-                        self._pp.get_averaged_interaction())
+                    if self._is_full_pp:
+                        self._averaged_pp_interaction[i] = (
+                            self._pp.get_averaged_interaction())
 
             # Number of triplets depends on q-point.
             # So this is allocated each time.
             if self._is_gamma_detail:
                 num_temp = len(self._temperatures)
-                self._gamma_detail_at_q = np.zeros(
+                self._gamma_detail_at_q = np.empty(
                     ((num_temp,) + self._pp.get_interaction_strength().shape),
                     dtype='double', order='C')
+                self._gamma_detail_at_q[:] = 0
 
             print("Calculating collisions at temperatures")
             for k, t in enumerate(self._temperatures):

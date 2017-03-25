@@ -361,8 +361,9 @@ class ImagSelfEnergy(object):
         if self._frequency_points is None:
             self._imag_self_energy = np.zeros(num_band0, dtype='double')
             if self._with_detail:
-                self._detailed_imag_self_energy = np.zeros_like(
+                self._detailed_imag_self_energy = np.empty_like(
                     self._pp_strength)
+                self._detailed_imag_self_energy[:] = 0
                 self._ise_N = np.zeros_like(self._imag_self_energy)
                 self._ise_U = np.zeros_like(self._imag_self_energy)
             self._run_with_band_indices()
@@ -381,7 +382,8 @@ class ImagSelfEnergy(object):
         if is_full_pp or self._frequency_points is not None:
             self._pp.run(lang=self._lang)
         else:
-            self._pp.run(g_zero=self._g_zero, lang=self._lang)
+            self._pp.set_g_zero(self._g_zero)
+            self._pp.run(lang=self._lang)
         self._pp_strength = self._pp.get_interaction_strength()
 
     def set_integration_weights(self, scattering_event_class=None):

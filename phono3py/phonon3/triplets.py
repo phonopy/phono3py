@@ -329,8 +329,10 @@ def get_triplets_integration_weights(interaction,
                         g[2, i, :, j, k] = g0 + g1 + g2
     else:
         if lang == 'C':
-            g_zero = _set_triplets_integration_weights_c(
+            g_zero = np.zeros(g.shape[1:], dtype='byte', order='C')
+            _set_triplets_integration_weights_c(
                 g,
+                g_zero,
                 interaction,
                 frequency_points,
                 neighboring_phonons=neighboring_phonons)
@@ -406,6 +408,7 @@ def _get_BZ_triplets_at_q(grid_point,
 
 
 def _set_triplets_integration_weights_c(g,
+                                        g_zero,
                                         interaction,
                                         frequency_points,
                                         neighboring_phonons=True):
@@ -432,8 +435,6 @@ def _set_triplets_integration_weights_c(g,
                 bz_map)
             interaction.set_phonons(np.unique(neighboring_grid_points))
 
-    g_zero = np.zeros(g.shape[1:], dtype='byte', order='C')
-
     phono3c.triplets_integration_weights(
         g,
         g_zero,
@@ -444,8 +445,6 @@ def _set_triplets_integration_weights_c(g,
         interaction.get_phonons()[0],
         grid_address,
         bz_map)
-
-    return g_zero
 
 def _set_triplets_integration_weights_py(g, interaction, frequency_points):
     reciprocal_lattice = np.linalg.inv(interaction.get_primitive().get_cell())

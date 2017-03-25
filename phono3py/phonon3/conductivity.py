@@ -26,12 +26,14 @@ class Conductivity(object):
                  boundary_mfp=None, # in micrometre
                  is_kappa_star=True,
                  gv_delta_q=None, # finite difference for group veolocity
+                 is_full_pp=False,
                  log_level=0):
         if sigmas is None:
             self._sigmas = []
         else:
             self._sigmas = sigmas
         self._pp = interaction
+        self._is_full_pp = is_full_pp
         self._collision = None # has to be set derived class
 
         self._temperatures = temperatures

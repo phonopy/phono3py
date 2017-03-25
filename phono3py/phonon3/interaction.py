@@ -31,7 +31,8 @@ class Interaction(object):
         self._symmetry = symmetry
 
         self._band_indices = None
-        self.set_band_indices(band_indices)
+        self._band_indices_to_run = None
+        self._set_band_indices(band_indices)
         self._constant_averaged_interaction = constant_averaged_interaction
         self._frequency_factor_to_THz = frequency_factor_to_THz
 
@@ -63,26 +64,46 @@ class Interaction(object):
         self._grid_address = None
         self._bz_map = None
         self._interaction_strength = None
+        self._g_zero = None
 
         self._phonon_done = None
         self._frequencies = None
         self._eigenvectors = None
         self._dm = None
         self._nac_q_direction = None
+
+        self._band_index_count = 0
         
         self._allocate_phonon()
         
-    def run(self, g_zero=None, lang='C'):
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._band_index_count == len(self._band_indices):
+            self._interaction_strength = None
+            raise StopIteration
+        else:
+            self._band_indices_to_run = [
+                self._band_indices[self._band_index_count]]
+            self._run_at_band()
+            self._band_index_count += 1
+            return self._band_index_count - 1
+
+    def next(self):
+        return self.__next__()
+
+    def run(self, lang='C'):
         num_band = self._primitive.get_number_of_atoms() * 3
         num_triplets = len(self._triplets_at_q)
 
         self._interaction_strength = np.empty(
-            (num_triplets, len(self._band_indices), num_band, num_band),
+            (num_triplets, len(self._band_indices_to_run), num_band, num_band),
             dtype='double')
         if self._constant_averaged_interaction is None:
             self._interaction_strength[:] = 0
             if lang == 'C':
-                self._run_c(g_zero=g_zero)
+                self._run_c()
             else:
                 self._run_py()
         else:
@@ -138,13 +159,6 @@ class Interaction(object):
 
     def get_nac_q_direction(self):
         return self._nac_q_direction
-
-    def set_band_indices(self, band_indices):
-        num_band = self._primitive.get_number_of_atoms() * 3
-        if band_indices is None:
-            self._band_indices = np.arange(num_band, dtype='intc')
-        else:
-            self._band_indices = np.array(band_indices, dtype='intc')
 
     def set_grid_point(self, grid_point, stores_triplets_map=False):
         reciprocal_lattice = np.linalg.inv(self._primitive.get_cell())
@@ -265,7 +279,27 @@ class Interaction(object):
         #         self._set_phonon_py(gp)
         self._set_phonon_c(grid_points)
 
-    def _run_c(self, g_zero=None):
+    def set_g_zero(self, g_zero):
+        self._g_zero = g_zero
+
+    def _run_at_band(self, g_zero=None):
+        num_band = self._primitive.get_number_of_atoms() * 3
+        num_triplets = len(self._triplets_at_q)
+
+        self._interaction_strength = np.empty(
+            (num_triplets, 1, num_band, num_band), dtype='double')
+        self._interaction_strength[:] = 0
+        self._run_c()
+
+    def _set_band_indices(self, band_indices):
+        num_band = self._primitive.get_number_of_atoms() * 3
+        if band_indices is None:
+            self._band_indices = np.arange(num_band, dtype='intc')
+        else:
+            self._band_indices = np.array(band_indices, dtype='intc')
+        self._band_indices_to_run = self._band_indices.copy()
+
+    def _run_c(self):
         import phono3py._phono3py as phono3c
         
         num_band = self._primitive.get_number_of_atoms() * 3
@@ -276,11 +310,11 @@ class Interaction(object):
         p2s = self._primitive.get_primitive_to_supercell_map()
         s2p = self._primitive.get_supercell_to_primitive_map()
 
-        if g_zero is None:
+        if self._g_zero is None:
             _g_zero = np.zeros(self._interaction_strength.shape,
                                dtype='byte', order='C')
         else:
-            _g_zero = g_zero
+            _g_zero = self._g_zero
 
         phono3c.interaction(self._interaction_strength,
                             _g_zero,
@@ -295,7 +329,7 @@ class Interaction(object):
                             masses,
                             p2s,
                             s2p,
-                            self._band_indices,
+                            self._band_indices_to_run,
                             self._symmetrize_fc3_q,
                             self._cutoff_frequency)
         self._interaction_strength *= self._unit_conversion
