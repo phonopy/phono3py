@@ -342,7 +342,6 @@ class ImagSelfEnergy(object):
         self._g = None # integration weights
         self._g_zero = None
         self._mesh = self._pp.get_mesh_numbers()
-        self._band_indices = self._pp.get_band_indices()
         self._is_collision_matrix = False
 
         # Unit to THz of Gamma
@@ -380,6 +379,7 @@ class ImagSelfEnergy(object):
 
     def run_interaction(self, is_full_pp=True):
         if is_full_pp or self._frequency_points is not None:
+            self._pp.set_g_zero(None)
             self._pp.run(lang=self._lang)
         else:
             self._pp.set_g_zero(self._g_zero)
@@ -388,7 +388,8 @@ class ImagSelfEnergy(object):
 
     def set_integration_weights(self, scattering_event_class=None):
         if self._frequency_points is None:
-            f_points = self._frequencies[self._grid_point][self._band_indices]
+            bi = self._pp.get_band_indices_to_run()
+            f_points = self._frequencies[self._grid_point][bi]
         else:
             f_points = self._frequency_points
 
@@ -453,9 +454,9 @@ class ImagSelfEnergy(object):
         num_triplets = len(self._triplets_at_q)
         num_band = self._pp.get_primitive().get_number_of_atoms() * 3
         num_grid = np.prod(self._mesh)
+        bi = self._pp.get_band_indices()
         self._pp_strength = np.zeros(
-            (num_triplets, len(self._band_indices), num_band, num_band),
-            dtype='double')
+            (num_triplets, len(bi), num_band, num_band), dtype='double')
 
         for i, v_ave in enumerate(ave_pp):
             self._pp_strength[:, i, :, :] = v_ave / num_grid
@@ -504,12 +505,13 @@ class ImagSelfEnergy(object):
 
     def _run_c_with_band_indices(self):
         import phono3py._phono3py as phono3c
+        bi = self._pp.get_band_indices_to_run()
         phono3c.imag_self_energy_at_bands(self._imag_self_energy,
                                           self._pp_strength,
                                           self._triplets_at_q,
                                           self._weights_at_q,
                                           self._frequencies,
-                                          self._band_indices,
+                                          bi,
                                           self._temperature,
                                           self._sigma,
                                           self._unit_conversion,
@@ -643,7 +645,7 @@ class ImagSelfEnergy(object):
             print("%d / %d" % (i + 1, len(self._triplets_at_q)))
 
             freqs = self._frequencies[triplet]
-            for j, bi in enumerate(self._band_indices):
+            for j, bi in enumerate(self._pp.get_band_indices()):
                 if self._temperature > 0:
                     self._imag_self_energy[j] += (
                         self._ise_at_bands(j, bi, freqs, interaction, w))
@@ -804,7 +806,7 @@ class ImagSelfEnergy(object):
         deg_sets = degenerate_sets(freqs)
         for dset in deg_sets:
             bi_set = []
-            for i, bi in enumerate(self._band_indices):
+            for i, bi in enumerate(self._pp.get_band_indices_to_run()):
                 if bi in dset:
                     bi_set.append(i)
             for i in bi_set:
@@ -816,4 +818,3 @@ class ImagSelfEnergy(object):
                         imag_self_energy[:, bi_set].sum(axis=1) /
                         len(bi_set))
         return imag_se
-

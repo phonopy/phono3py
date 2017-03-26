@@ -503,6 +503,7 @@ class Conductivity_RTA(Conductivity):
         i = self._grid_point_count
         self._show_log_header(i)
         grid_point = self._grid_points[i]
+        self._set_harmonic_properties(i, i)
 
         if self._read_gamma:
             if self._use_ave_pp:
@@ -517,11 +518,10 @@ class Conductivity_RTA(Conductivity):
                       len(self._pp.get_triplets_at_q()[0]))
 
             self._set_gamma_at_sigmas(i)
+            # self._set_gamma_at_sigmas_band_by_band(i)
 
         if self._isotope is not None and not self._read_gamma_iso:
             self._gamma_iso[:, i, :] = self._get_gamma_isotope_at_sigmas(i)
-
-        self._set_harmonic_properties(i, i)
 
         if self._log_level:
             self._show_log(self._qpoints[i], i)
@@ -607,14 +607,69 @@ class Conductivity_RTA(Conductivity):
                     self._gamma_detail_at_q[k] = (
                         self._collision.get_detailed_imag_self_energy())
 
+    def _set_gamma_at_sigmas_band_by_band(self, i):
+        for j, sigma in enumerate(self._sigmas):
+            self._collision.set_sigma(sigma)
+            for k, bi in enumerate(self._pp):
+                if sigma is None or self._run_with_g:
+                    self._collision.set_integration_weights()
+                self._collision.run_interaction(is_full_pp=self._is_full_pp)
+                for l, t in enumerate(self._temperatures):
+                    self._collision.set_temperature(t)
+                    self._collision.run()
+                    self._gamma[j, l, i, k] = self._collision.get_imag_self_energy()
+
     def _show_log(self, q, i):
         gp = self._grid_points[i]
         frequencies = self._frequencies[gp][self._pp.get_band_indices()]
         gv = self._gv[i]
-
         if self._is_full_pp or self._use_ave_pp:
             ave_pp = self._averaged_pp_interaction[i]
+        else:
+            ave_pp = None
+        self._show_log_value_names()
 
+        if self._log_level > 1:
+            self._show_log_values_on_kstar(frequencies, gv, ave_pp)
+        else:
+            self._show_log_values(frequencies, gv, ave_pp)
+
+    def _show_log_values(self, frequencies, gv, ave_pp):
+        if self._is_full_pp or self._use_ave_pp:
+            for f, v, pp in zip(frequencies, gv, ave_pp):
+                print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e" %
+                      (f, v[0], v[1], v[2], np.linalg.norm(v), pp))
+        else:
+            for f, v in zip(frequencies, gv):
+                print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f" %
+                      (f, v[0], v[1], v[2], np.linalg.norm(v)))
+
+    def _show_log_values_on_kstar(self, frequencies, gv, ave_pp):
+        rotation_map = get_grid_points_by_rotations(
+            self._grid_address[gp],
+            self._point_operations,
+            self._mesh)
+        for i, j in enumerate(np.unique(rotation_map)):
+            for k, (rot, rot_c) in enumerate(zip(
+                    self._point_operations, self._rotations_cartesian)):
+                if rotation_map[k] != j:
+                    continue
+
+                print(" k*%-2d (%5.2f %5.2f %5.2f)" %
+                      ((i + 1,) + tuple(np.dot(rot, q))))
+                if self._is_full_pp or self._use_ave_pp:
+                    for f, v, pp in zip(frequencies,
+                                        np.dot(rot_c, gv.T).T,
+                                        ave_pp):
+                        print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e" %
+                              (f, v[0], v[1], v[2], np.linalg.norm(v), pp))
+                else:
+                    for f, v in zip(frequencies, np.dot(rot_c, gv.T).T):
+                        print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f" %
+                              (f, v[0], v[1], v[2], np.linalg.norm(v)))
+        print('')
+
+    def _show_log_value_names(self):
         if self._is_full_pp or self._use_ave_pp:
             text = "Frequency     group velocity (x, y, z)     |gv|       Pqj"
         else:
@@ -625,36 +680,3 @@ class Conductivity_RTA(Conductivity):
             text += "  (dq=%3.1e)" % self._gv_delta_q
         print(text)
 
-        if self._log_level > 1:
-            rotation_map = get_grid_points_by_rotations(
-                self._grid_address[gp],
-                self._point_operations,
-                self._mesh)
-            for i, j in enumerate(np.unique(rotation_map)):
-                for k, (rot, rot_c) in enumerate(zip(
-                        self._point_operations, self._rotations_cartesian)):
-                    if rotation_map[k] != j:
-                        continue
-
-                    print(" k*%-2d (%5.2f %5.2f %5.2f)" %
-                          ((i + 1,) + tuple(np.dot(rot, q))))
-                    if self._is_full_pp or self._use_ave_pp:
-                        for f, v, pp in zip(frequencies,
-                                            np.dot(rot_c, gv.T).T,
-                                            ave_pp):
-                            print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e" %
-                                  (f, v[0], v[1], v[2], np.linalg.norm(v), pp))
-                    else:
-                        for f, v in zip(frequencies, np.dot(rot_c, gv.T).T):
-                            print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f" %
-                                  (f, v[0], v[1], v[2], np.linalg.norm(v)))
-            print('')
-        else:
-            if self._is_full_pp or self._use_ave_pp:
-                for f, v, pp in zip(frequencies, gv, ave_pp):
-                    print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e" %
-                          (f, v[0], v[1], v[2], np.linalg.norm(v), pp))
-            else:
-                for f, v in zip(frequencies, gv):
-                    print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f" %
-                          (f, v[0], v[1], v[2], np.linalg.norm(v)))

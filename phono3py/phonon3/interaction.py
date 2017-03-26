@@ -82,11 +82,16 @@ class Interaction(object):
     def __next__(self):
         if self._band_index_count == len(self._band_indices):
             self._interaction_strength = None
+            self._band_index_count = 0
             raise StopIteration
         else:
-            self._band_indices_to_run = [
-                self._band_indices[self._band_index_count]]
-            self._run_at_band()
+            self._band_indices_to_run = np.array([
+                self._band_indices[self._band_index_count]], dtype='intc')
+            num_band = self._primitive.get_number_of_atoms() * 3
+            num_triplets = len(self._triplets_at_q)
+            self._interaction_strength = np.empty(
+                (num_triplets, 1, num_band, num_band), dtype='double')
+            self._interaction_strength[:] = 0
             self._band_index_count += 1
             return self._band_index_count - 1
 
@@ -140,6 +145,9 @@ class Interaction(object):
     
     def get_band_indices(self):
         return self._band_indices
+
+    def get_band_indices_to_run(self):
+        return self._band_indices_to_run
 
     def get_frequency_factor_to_THz(self):
         return self._frequency_factor_to_THz
@@ -281,15 +289,6 @@ class Interaction(object):
 
     def set_g_zero(self, g_zero):
         self._g_zero = g_zero
-
-    def _run_at_band(self, g_zero=None):
-        num_band = self._primitive.get_number_of_atoms() * 3
-        num_triplets = len(self._triplets_at_q)
-
-        self._interaction_strength = np.empty(
-            (num_triplets, 1, num_band, num_band), dtype='double')
-        self._interaction_strength[:] = 0
-        self._run_c()
 
     def _set_band_indices(self, band_indices):
         num_band = self._primitive.get_number_of_atoms() * 3
