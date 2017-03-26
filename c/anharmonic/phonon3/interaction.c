@@ -48,12 +48,12 @@ static const int index_exchange[6][3] = {{0, 1, 2},
                                          {2, 1, 0},
                                          {0, 2, 1},
                                          {1, 0, 2}};
-static void get_interaction_at_triplet(Darray *fc3_normal_squared,
-                                       const int i,
+static void get_interaction_at_triplet(double *fc3_normal_squared,
+                                       const int num_band0,
                                        const char *g_zero,
                                        const Darray *frequencies,
                                        const Carray *eigenvectors,
-                                       const Iarray *triplets,
+                                       const int *triplets,
                                        const int *grid_address,
                                        const int *mesh,
                                        const Darray *fc3,
@@ -65,6 +65,7 @@ static void get_interaction_at_triplet(Darray *fc3_normal_squared,
                                        const int *band_indices,
                                        const int symmetrize_fc3_q,
                                        const double cutoff_frequency,
+                                       const int triplet_index,
                                        const int num_triplets,
                                        const int openmp_at_bands);
 static void real_to_normal(double *fc3_normal_squared,
@@ -126,64 +127,70 @@ void get_interaction(Darray *fc3_normal_squared,
                      const int symmetrize_fc3_q,
                      const double cutoff_frequency)
 {
-  int i, num_band;
+  int i, num_band, num_band0, num_band_prod;
 
+  num_band0 = fc3_normal_squared->dims[1];
   num_band = frequencies->dims[1];
+  num_band_prod = num_band0 * num_band * num_band;
 
   if (triplets->dims[0] > num_band * num_band) {
 #pragma omp parallel for schedule(guided)
     for (i = 0; i < triplets->dims[0]; i++) {
-      get_interaction_at_triplet(fc3_normal_squared,
-                                 i,
-                                 g_zero,
-                                 frequencies,
-                                 eigenvectors,
-                                 triplets,
-                                 grid_address,
-                                 mesh,
-                                 fc3,
-                                 shortest_vectors,
-                                 multiplicity,
-                                 masses,
-                                 p2s_map,
-                                 s2p_map,
-                                 band_indices,
-                                 symmetrize_fc3_q,
-                                 cutoff_frequency,
-                                 triplets->dims[0],
-                                 0);
+      get_interaction_at_triplet(
+        fc3_normal_squared->data + i * num_band_prod,
+        num_band0,
+        g_zero + i * num_band_prod,
+        frequencies,
+        eigenvectors,
+        triplets->data + i * 3,
+        grid_address,
+        mesh,
+        fc3,
+        shortest_vectors,
+        multiplicity,
+        masses,
+        p2s_map,
+        s2p_map,
+        band_indices,
+        symmetrize_fc3_q,
+        cutoff_frequency,
+        i,
+        triplets->dims[0],
+        0);
     }
   } else {
     for (i = 0; i < triplets->dims[0]; i++) {
-      get_interaction_at_triplet(fc3_normal_squared,
-                                 i,
-                                 g_zero,
-                                 frequencies,
-                                 eigenvectors,
-                                 triplets,
-                                 grid_address,
-                                 mesh,
-                                 fc3,
-                                 shortest_vectors,
-                                 multiplicity,
-                                 masses,
-                                 p2s_map,
-                                 s2p_map,
-                                 band_indices,
-                                 symmetrize_fc3_q,
-                                 cutoff_frequency,
-                                 triplets->dims[0],
-                                 1);
+      get_interaction_at_triplet(
+        fc3_normal_squared->data + i * num_band_prod,
+        num_band0,
+        g_zero + i * num_band_prod,
+        frequencies,
+        eigenvectors,
+        triplets->data + i * 3,
+        grid_address,
+        mesh,
+        fc3,
+        shortest_vectors,
+        multiplicity,
+        masses,
+        p2s_map,
+        s2p_map,
+        band_indices,
+        symmetrize_fc3_q,
+        cutoff_frequency,
+        i,
+        triplets->dims[0],
+        1);
     }
   }
 }
 
-static void get_interaction_at_triplet(Darray *fc3_normal_squared,
-                                       const int i,
+static void get_interaction_at_triplet(double *fc3_normal_squared,
+                                       const int num_band0,
                                        const char *g_zero,
                                        const Darray *frequencies,
                                        const Carray *eigenvectors,
-                                       const Iarray *triplets,
+                                       const int *triplets,
                                        const int *grid_address,
                                        const int *mesh,
                                        const Darray *fc3,
@@ -195,19 +202,19 @@ static void get_interaction_at_triplet(Darray *fc3_normal_squared,
                                        const int *band_indices,
                                        const int symmetrize_fc3_q,
                                        const double cutoff_frequency,
+                                       const int triplet_index,
                                        const int num_triplets,
                                        const int openmp_at_bands)
 {
-  int j, k, gp, num_band, num_band0;
+  int j, k, gp, num_band;
   double *freqs[3];
   lapack_complex_double *eigvecs[3];
   double q[9];
 
   num_band = frequencies->dims[1];
-  num_band0 = fc3_normal_squared->dims[1];
 
   for (j = 0; j < 3; j++) {
-    gp = triplets->data[i * 3 + j];
+    gp = triplets[j];
     for (k = 0; k < 3; k++) {
       q[j * 3 + k] = ((double)grid_address[gp * 3 + k]) / mesh[k];
     }
@@ -216,9 +223,8 @@ static void get_interaction_at_triplet(Darray *fc3_normal_squared,
   }
 
   if (symmetrize_fc3_q) {
-    real_to_normal_sym_q((fc3_normal_squared->data +
-                          i * num_band0 * num_band * num_band),
-                         g_zero + i * num_band0 * num_band * num_band,
+    real_to_normal_sym_q(fc3_normal_squared,
+                         g_zero,
                          freqs,
                          eigvecs,
                          fc3,
@@ -232,13 +238,12 @@ static void get_interaction_at_triplet(Darray *fc3_normal_squared,
                          num_band0,
                          num_band,
                          cutoff_frequency,
-                         i,
+                         triplet_index,
                          num_triplets,
                          openmp_at_bands);
   } else {
-    real_to_normal((fc3_normal_squared->data +
-                    i * num_band0 * num_band * num_band),
-                   g_zero + i * num_band0 * num_band * num_band,
+    real_to_normal(fc3_normal_squared,
+                   g_zero,
                    freqs[0],
                    freqs[1],
                    freqs[2],
@@ -256,7 +261,7 @@ static void get_interaction_at_triplet(Darray *fc3_normal_squared,
                    num_band0,
                    num_band,
                    cutoff_frequency,
-                   i,
+                   triplet_index,
                    num_triplets,
                    openmp_at_bands);
   }

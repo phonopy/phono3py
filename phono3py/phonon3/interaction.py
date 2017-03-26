@@ -309,7 +309,7 @@ class Interaction(object):
         p2s = self._primitive.get_primitive_to_supercell_map()
         s2p = self._primitive.get_supercell_to_primitive_map()
 
-        if self._g_zero is None:
+        if self._g_zero is None or self._symmetrize_fc3_q:
             _g_zero = np.zeros(self._interaction_strength.shape,
                                dtype='byte', order='C')
         else:
