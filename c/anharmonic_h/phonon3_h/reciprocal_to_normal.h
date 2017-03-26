@@ -52,22 +52,7 @@ void reciprocal_to_normal_squared
  const int *band_indices,
  const int num_band0,
  const int num_band,
- const double cutoff_frequency);
-
-void reciprocal_to_normal_squared_openmp
-(double *fc3_normal_squared,
- const char *g_zero,
- const lapack_complex_double *fc3_reciprocal,
- const double *freqs0,
- const double *freqs1,
- const double *freqs2,
- const lapack_complex_double *eigvecs0,
- const lapack_complex_double *eigvecs1,
- const lapack_complex_double *eigvecs2,
- const double *masses,
- const int *band_indices,
- const int num_band0,
- const int num_band,
- const double cutoff_frequency);
+ const double cutoff_frequency,
+ const int openmp_at_bands);
 
 #endif
