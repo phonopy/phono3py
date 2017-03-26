@@ -293,60 +293,36 @@ static void real_to_normal(double *fc3_normal_squared,
   fc3_reciprocal =
     (lapack_complex_double*)malloc(sizeof(lapack_complex_double) *
                                    num_patom * num_patom * num_patom * 27);
-
-  if (openmp_at_bands) {
-    real_to_reciprocal_openmp(fc3_reciprocal,
-                              q,
-                              fc3,
-                              shortest_vectors,
-                              multiplicity,
-                              p2s_map,
-                              s2p_map);
-  } else {
-    real_to_reciprocal(fc3_reciprocal,
-                       q,
-                       fc3,
-                       shortest_vectors,
-                       multiplicity,
-                       p2s_map,
-                       s2p_map);
-  }
+  real_to_reciprocal(fc3_reciprocal,
+                     q,
+                     fc3,
+                     shortest_vectors,
+                     multiplicity,
+                     p2s_map,
+                     s2p_map,
+                     openmp_at_bands);
 
   if (openmp_at_bands) {
 #ifdef MEASURE_R2N
     printf("At triplet %d/%d (# of bands=%d):\n",
            triplet_index, num_triplets, num_band0);
 #endif
-    reciprocal_to_normal_squared_openmp(fc3_normal_squared,
-                                        g_zero,
-                                        fc3_reciprocal,
-                                        freqs0,
-                                        freqs1,
-                                        freqs2,
-                                        eigvecs0,
-                                        eigvecs1,
-                                        eigvecs2,
-                                        masses,
-                                        band_indices,
-                                        num_band0,
-                                        num_band,
-                                        cutoff_frequency);
-  } else {
-    reciprocal_to_normal_squared(fc3_normal_squared,
-                                 g_zero,
-                                 fc3_reciprocal,
-                                 freqs0,
-                                 freqs1,
-                                 freqs2,
-                                 eigvecs0,
-                                 eigvecs1,
-                                 eigvecs2,
-                                 masses,
-                                 band_indices,
-                                 num_band0,
-                                 num_band,
-                                 cutoff_frequency);
   }
+  reciprocal_to_normal_squared(fc3_normal_squared,
+                               g_zero,
+                               fc3_reciprocal,
+                               freqs0,
+                               freqs1,
+                               freqs2,
+                               eigvecs0,
+                               eigvecs1,
+                               eigvecs2,
+                               masses,
+                               band_indices,
+                               num_band0,
+                               num_band,
+                               cutoff_frequency,
+                               openmp_at_bands);
 
   free(fc3_reciprocal);
   fc3_reciprocal = NULL;

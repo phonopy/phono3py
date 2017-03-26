@@ -41,6 +41,22 @@
 #include <phonoc_utils.h>
 #include <phonon3_h/real_to_reciprocal.h>
 
+static void
+real_to_reciprocal_single_thread(lapack_complex_double *fc3_reciprocal,
+                                 const double q[9],
+                                 const Darray *fc3,
+                                 const Darray *shortest_vectors,
+                                 const Iarray *multiplicity,
+                                 const int *p2s_map,
+                                 const int *s2p_map);
+static void
+real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
+                          const double q[9],
+                          const Darray *fc3,
+                          const Darray *shortest_vectors,
+                          const Iarray *multiplicity,
+                          const int *p2s_map,
+                          const int *s2p_map);
 static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
                                         const double q[9],
                                         const Darray *fc3,
@@ -64,7 +80,37 @@ void real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
                         const Darray *shortest_vectors,
                         const Iarray *multiplicity,
                         const int *p2s_map,
-                        const int *s2p_map)
+                        const int *s2p_map,
+                        const int openmp_at_bands)
+{
+  if (openmp_at_bands) {
+    real_to_reciprocal_openmp(fc3_reciprocal,
+                              q,
+                              fc3,
+                              shortest_vectors,
+                              multiplicity,
+                              p2s_map,
+                              s2p_map);
+  } else {
+    real_to_reciprocal_single_thread(fc3_reciprocal,
+                                     q,
+                                     fc3,
+                                     shortest_vectors,
+                                     multiplicity,
+                                     p2s_map,
+                                     s2p_map);
+  }
+}
+
+
+static void
+real_to_reciprocal_single_thread(lapack_complex_double *fc3_reciprocal,
+                                 const double q[9],
+                                 const Darray *fc3,
+                                 const Darray *shortest_vectors,
+                                 const Iarray *multiplicity,
+                                 const int *p2s_map,
+                                 const int *s2p_map)
 {
   int i, j, k, num_patom, adrs_shift;
   lapack_complex_double pre_phase_factor;
@@ -97,13 +143,14 @@ void real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
   }
 }
 
-void real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
-                               const double q[9],
-                               const Darray *fc3,
-                               const Darray *shortest_vectors,
-                               const Iarray *multiplicity,
-                               const int *p2s_map,
-                               const int *s2p_map)
+static void
+real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
+                          const double q[9],
+                          const Darray *fc3,
+                          const Darray *shortest_vectors,
+                          const Iarray *multiplicity,
+                          const int *p2s_map,
+                          const int *s2p_map)
 {
   int i, j, k, jk, num_patom, adrs_shift;
   lapack_complex_double pre_phase_factor;

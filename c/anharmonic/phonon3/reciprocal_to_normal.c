@@ -44,6 +44,38 @@
 #include <time.h>
 #endif
 
+static void reciprocal_to_normal_squared_single_thread
+(double *fc3_normal_squared,
+ const char *g_zero,
+ const lapack_complex_double *fc3_reciprocal,
+ const double *freqs0,
+ const double *freqs1,
+ const double *freqs2,
+ const lapack_complex_double *eigvecs0,
+ const lapack_complex_double *eigvecs1,
+ const lapack_complex_double *eigvecs2,
+ const double *masses,
+ const int *band_indices,
+ const int num_band0,
+ const int num_band,
+ const double cutoff_frequency);
+
+static void reciprocal_to_normal_squared_openmp
+(double *fc3_normal_squared,
+ const char *g_zero,
+ const lapack_complex_double *fc3_reciprocal,
+ const double *freqs0,
+ const double *freqs1,
+ const double *freqs2,
+ const lapack_complex_double *eigvecs0,
+ const lapack_complex_double *eigvecs1,
+ const lapack_complex_double *eigvecs2,
+ const double *masses,
+ const int *band_indices,
+ const int num_band0,
+ const int num_band,
+ const double cutoff_frequency);
+
 static lapack_complex_double fc3_sum_in_reciprocal_to_normal
 (const int bi0,
  const int bi1,
@@ -70,7 +102,56 @@ static double get_fc3_sum
  const int num_atom,
  const double cutoff_frequency);
 
-void reciprocal_to_normal_squared
+void reciprocal_to_normal_squared(double *fc3_normal_squared,
+                                  const char *g_zero,
+                                  const lapack_complex_double *fc3_reciprocal,
+                                  const double *freqs0,
+                                  const double *freqs1,
+                                  const double *freqs2,
+                                  const lapack_complex_double *eigvecs0,
+                                  const lapack_complex_double *eigvecs1,
+                                  const lapack_complex_double *eigvecs2,
+                                  const double *masses,
+                                  const int *band_indices,
+                                  const int num_band0,
+                                  const int num_band,
+                                  const double cutoff_frequency,
+                                  const int openmp_at_bands)
+{
+  if (openmp_at_bands) {
+    reciprocal_to_normal_squared_openmp(fc3_normal_squared,
+                                        g_zero,
+                                        fc3_reciprocal,
+                                        freqs0,
+                                        freqs1,
+                                        freqs2,
+                                        eigvecs0,
+                                        eigvecs1,
+                                        eigvecs2,
+                                        masses,
+                                        band_indices,
+                                        num_band0,
+                                        num_band,
+                                        cutoff_frequency);
+  } else {
+    reciprocal_to_normal_squared_single_thread(fc3_normal_squared,
+                                               g_zero,
+                                               fc3_reciprocal,
+                                               freqs0,
+                                               freqs1,
+                                               freqs2,
+                                               eigvecs0,
+                                               eigvecs1,
+                                               eigvecs2,
+                                               masses,
+                                               band_indices,
+                                               num_band0,
+                                               num_band,
+                                               cutoff_frequency);
+  }
+}
+
+static void reciprocal_to_normal_squared_single_thread
 (double *fc3_normal_squared,
  const char *g_zero,
  const lapack_complex_double *fc3_reciprocal,
@@ -117,7 +198,7 @@ void reciprocal_to_normal_squared
   }
 }
 
-void reciprocal_to_normal_squared_openmp
+static void reciprocal_to_normal_squared_openmp
 (double *fc3_normal_squared,
  const char *g_zero,
  const lapack_complex_double *fc3_reciprocal,
