@@ -31,7 +31,6 @@ class Interaction(object):
         self._symmetry = symmetry
 
         self._band_indices = None
-        self._band_indices_to_run = None
         self._set_band_indices(band_indices)
         self._constant_averaged_interaction = constant_averaged_interaction
         self._frequency_factor_to_THz = frequency_factor_to_THz
@@ -76,34 +75,12 @@ class Interaction(object):
         
         self._allocate_phonon()
         
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self._band_index_count == len(self._band_indices):
-            self._interaction_strength = None
-            self._band_index_count = 0
-            raise StopIteration
-        else:
-            self._band_indices_to_run = np.array([
-                self._band_indices[self._band_index_count]], dtype='intc')
-            num_band = self._primitive.get_number_of_atoms() * 3
-            num_triplets = len(self._triplets_at_q)
-            self._interaction_strength = np.empty(
-                (num_triplets, 1, num_band, num_band), dtype='double')
-            self._interaction_strength[:] = 0
-            self._band_index_count += 1
-            return self._band_index_count - 1
-
-    def next(self):
-        return self.__next__()
-
     def run(self, lang='C'):
         num_band = self._primitive.get_number_of_atoms() * 3
         num_triplets = len(self._triplets_at_q)
 
         self._interaction_strength = np.empty(
-            (num_triplets, len(self._band_indices_to_run), num_band, num_band),
+            (num_triplets, len(self._band_indices), num_band, num_band),
             dtype='double')
         if self._constant_averaged_interaction is None:
             self._interaction_strength[:] = 0
@@ -145,9 +122,6 @@ class Interaction(object):
     
     def get_band_indices(self):
         return self._band_indices
-
-    def get_band_indices_to_run(self):
-        return self._band_indices_to_run
 
     def get_frequency_factor_to_THz(self):
         return self._frequency_factor_to_THz
@@ -296,7 +270,6 @@ class Interaction(object):
             self._band_indices = np.arange(num_band, dtype='intc')
         else:
             self._band_indices = np.array(band_indices, dtype='intc')
-        self._band_indices_to_run = self._band_indices.copy()
 
     def _run_c(self):
         import phono3py._phono3py as phono3c
@@ -328,7 +301,7 @@ class Interaction(object):
                             masses,
                             p2s,
                             s2p,
-                            self._band_indices_to_run,
+                            self._band_indices,
                             self._symmetrize_fc3_q,
                             self._cutoff_frequency)
         self._interaction_strength *= self._unit_conversion

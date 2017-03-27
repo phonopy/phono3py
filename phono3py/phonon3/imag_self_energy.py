@@ -388,7 +388,7 @@ class ImagSelfEnergy(object):
 
     def set_integration_weights(self, scattering_event_class=None):
         if self._frequency_points is None:
-            bi = self._pp.get_band_indices_to_run()
+            bi = self._pp.get_band_indices()
             f_points = self._frequencies[self._grid_point][bi]
         else:
             f_points = self._frequency_points
@@ -505,7 +505,7 @@ class ImagSelfEnergy(object):
 
     def _run_c_with_band_indices(self):
         import phono3py._phono3py as phono3c
-        bi = self._pp.get_band_indices_to_run()
+        bi = self._pp.get_band_indices()
         phono3c.imag_self_energy_at_bands(self._imag_self_energy,
                                           self._pp_strength,
                                           self._triplets_at_q,
@@ -806,7 +806,7 @@ class ImagSelfEnergy(object):
         deg_sets = degenerate_sets(freqs)
         for dset in deg_sets:
             bi_set = []
-            for i, bi in enumerate(self._pp.get_band_indices_to_run()):
+            for i, bi in enumerate(self._pp.get_band_indices()):
                 if bi in dset:
                     bi_set.append(i)
             for i in bi_set:
