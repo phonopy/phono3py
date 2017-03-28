@@ -478,6 +478,7 @@ class ImagSelfEnergy(object):
                 self._run_py_with_band_indices_with_g()
         else:
             if self._lang == 'C':
+                # This function is obsolete.
                 self._run_c_with_band_indices()
             else:
                 print("Running into _run_py_with_band_indices")
@@ -497,12 +498,14 @@ class ImagSelfEnergy(object):
                 self._run_py_with_frequency_points_with_g()
         else:
             if self._lang == 'C':
+                # This function is obsolete.
                 self._run_c_with_frequency_points()
             else:
                 print("Running into _run_py_with_frequency_points()")
                 print("This routine is super slow and only for the test.")
                 self._run_py_with_frequency_points()
 
+    # This function is obsolete.
     def _run_c_with_band_indices(self):
         import phono3py._phono3py as phono3c
         bi = self._pp.get_band_indices()
@@ -563,6 +566,7 @@ class ImagSelfEnergy(object):
 
         self._imag_self_energy = self._ise_N + self._ise_U
 
+    # This function is obsolete.
     def _run_c_with_frequency_points(self):
         import phono3py._phono3py as phono3c
         ise_at_f = np.zeros(self._imag_self_energy.shape[1], dtype='double')
@@ -600,7 +604,8 @@ class ImagSelfEnergy(object):
                                             g,
                                             _g_zero, # don't use g_zero
                                             self._cutoff_frequency)
-            self._imag_self_energy[i] = ise_at_f * self._unit_conversion
+            self._imag_self_energy[i] = ise_at_f
+        self._imag_self_energy *= self._unit_conversion
 
     def _run_c_detailed_with_frequency_points_with_g(self):
         import phono3py._phono3py as phono3c

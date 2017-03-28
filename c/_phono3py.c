@@ -47,6 +47,7 @@
 #include <phonon3_h/interaction.h>
 #include <phonon3_h/imag_self_energy.h>
 #include <phonon3_h/imag_self_energy_with_g.h>
+#include <phonon3_h/pp_collision.h>
 #include <phonon3_h/collision_matrix.h>
 #include <other_h/isotope.h>
 #include <triplet_h/triplet.h>
@@ -418,6 +419,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
                           p2s,
                           s2p,
                           band_indices,
+                          temperature,
                           symmetrize_fc3_q,
                           cutoff_frequency);
 

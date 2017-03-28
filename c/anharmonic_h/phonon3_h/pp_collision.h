@@ -35,6 +35,7 @@
 #ifndef __pp_collision_H__
 #define __pp_collision_H__
 
+#include <lapacke.h>
 #include <phonoc_array.h>
 
 void get_pp_collision_with_g(double *imag_self_energy,
@@ -54,6 +55,7 @@ void get_pp_collision_with_g(double *imag_self_energy,
                              const int *s2p_map,
                              const Iarray *band_indices,
                              const double temperature,
+                             const int symmetrize_fc3_q,
                              const double cutoff_frequency);
 
 #endif

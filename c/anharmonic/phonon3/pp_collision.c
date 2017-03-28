@@ -38,9 +38,8 @@
 #include <phonoc_array.h>
 #include <phonoc_const.h>
 #include <phonoc_utils.h>
+#include <phonon3_h/pp_collision.h>
 #include <phonon3_h/interaction.h>
-#include <phonon3_h/real_to_reciprocal.h>
-#include <phonon3_h/reciprocal_to_normal.h>
 
 void get_pp_collision_with_g(double *imag_self_energy,
                              const double *g,
@@ -59,19 +58,22 @@ void get_pp_collision_with_g(double *imag_self_energy,
                              const int *s2p_map,
                              const Iarray *band_indices,
                              const double temperature,
+                             const int symmetrize_fc3_q,
                              const double cutoff_frequency)
 {
   int i, num_band, num_band0, num_band_prod;
+  double *fc3_normal_squared;
 
   num_band0 = band_indices->dims[0];
   num_band = shortest_vectors->dims[1] * 3;
   num_band_prod = num_band0 * num_band * num_band;
+  fc3_normal_squared = (double*)malloc(sizeof(double) * num_band_prod);
 
   if (triplets->dims[0] > num_band * num_band) {
 #pragma omp parallel for schedule(guided)
     for (i = 0; i < triplets->dims[0]; i++) {
       get_interaction_at_triplet(
-        fc3_normal_squared->data + i * num_band_prod,
+        fc3_normal_squared,
         num_band0,
         num_band,
         g_zero + i * num_band_prod,
@@ -94,4 +96,6 @@ void get_pp_collision_with_g(double *imag_self_energy,
         0);
     }
   }
+
+  free(fc3_normal_squared);
 }
