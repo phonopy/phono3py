@@ -32,33 +32,28 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef __imag_self_energy_with_g_H__
-#define __imag_self_energy_with_g_H__
+#ifndef __pp_collision_H__
+#define __pp_collision_H__
 
 #include <phonoc_array.h>
 
-void get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
-					  const Darray *fc3_normal_squared,
-					  const double *frequencies,
-					  const int *triplets,
-					  const int *weights,
-					  const double *g,
-					  const char *g_zero,
-					  const double temperature,
-					  const double cutoff_frequency);
-void get_detailed_imag_self_energy_at_bands_with_g
-(double *detailed_imag_self_energy,
- double *imag_self_energy_N,
- double *imag_self_energy_U,
- const Darray *fc3_normal_squared,
- const double *frequencies,
- const int *triplets,
- const int *weights,
- const int *grid_address,
- const double *g,
- const char *g_zero,
- const double temperature,
- const double unit_conversion_factor,
- const double cutoff_frequency);
+void get_pp_collision_with_g(double *imag_self_energy,
+                             const double *g,
+                             const char *g_zero,
+                             const double *frequencies,
+                             const lapack_complex_double *eigenvectors,
+                             const Iarray *triplets,
+                             const int *weights,
+                             const int *grid_address,
+                             const int *mesh,
+                             const double *fc3,
+                             const Darray *shortest_vectors,
+                             const int *multiplicity,
+                             const double *masses,
+                             const int *p2s_map,
+                             const int *s2p_map,
+                             const Iarray *band_indices,
+                             const double temperature,
+                             const double cutoff_frequency);
 
 #endif

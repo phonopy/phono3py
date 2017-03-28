@@ -534,8 +534,8 @@ class ImagSelfEnergy(object):
                                         self._temperature,
                                         self._g,
                                         _g_zero,
-                                        self._unit_conversion,
                                         self._cutoff_frequency)
+        self._imag_self_energy *= self._unit_conversion
 
     def _run_c_detailed_with_band_indices_with_g(self):
         import phono3py._phono3py as phono3c
@@ -599,9 +599,8 @@ class ImagSelfEnergy(object):
                                             self._temperature,
                                             g,
                                             _g_zero, # don't use g_zero
-                                            self._unit_conversion,
                                             self._cutoff_frequency)
-            self._imag_self_energy[i] = ise_at_f
+            self._imag_self_energy[i] = ise_at_f * self._unit_conversion
 
     def _run_c_detailed_with_frequency_points_with_g(self):
         import phono3py._phono3py as phono3c

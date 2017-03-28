@@ -37,7 +37,6 @@
 #include <lapacke.h>
 #include <phonoc_array.h>
 #include <phonoc_const.h>
-#include <phonoc_utils.h>
 #include <phonon3_h/interaction.h>
 #include <phonon3_h/real_to_reciprocal.h>
 #include <phonon3_h/reciprocal_to_normal.h>
@@ -48,26 +47,28 @@ static const int index_exchange[6][3] = {{0, 1, 2},
                                          {2, 1, 0},
                                          {0, 2, 1},
                                          {1, 0, 2}};
-static void get_interaction_at_triplet(double *fc3_normal_squared,
-                                       const int num_band0,
-                                       const char *g_zero,
-                                       const Darray *frequencies,
-                                       const Carray *eigenvectors,
-                                       const int *triplets,
-                                       const int *grid_address,
-                                       const int *mesh,
-                                       const Darray *fc3,
-                                       const Darray *shortest_vectors,
-                                       const Iarray *multiplicity,
-                                       const double *masses,
-                                       const int *p2s_map,
-                                       const int *s2p_map,
-                                       const int *band_indices,
-                                       const int symmetrize_fc3_q,
-                                       const double cutoff_frequency,
-                                       const int triplet_index,
-                                       const int num_triplets,
-                                       const int openmp_at_bands);
+static void
+get_interaction_at_triplet(double *fc3_normal_squared,
+                           const int num_band0,
+                           const int num_band,
+                           const char *g_zero,
+                           const double *frequencies,
+                           const lapack_complex_double *eigenvectors,
+                           const int *triplets,
+                           const int *grid_address,
+                           const int *mesh,
+                           const double *fc3,
+                           const Darray *shortest_vectors,
+                           const int *multiplicity,
+                           const double *masses,
+                           const int *p2s_map,
+                           const int *s2p_map,
+                           const int *band_indices,
+                           const int symmetrize_fc3_q,
+                           const double cutoff_frequency,
+                           const int triplet_index,
+                           const int num_triplets,
+                           const int openmp_at_bands);
 static void real_to_normal(double *fc3_normal_squared,
                            const char *g_zero,
                            const double *freqs0,
@@ -76,10 +77,10 @@ static void real_to_normal(double *fc3_normal_squared,
                            const lapack_complex_double *eigvecs0,
                            const lapack_complex_double *eigvecs1,
                            const lapack_complex_double *eigvecs2,
-                           const Darray *fc3,
+                           const double *fc3,
                            const double q[9], /* q0, q1, q2 */
                            const Darray *shortest_vectors,
-                           const Iarray *multiplicity,
+                           const int *multiplicity,
                            const double *masses,
                            const int *p2s_map,
                            const int *s2p_map,
@@ -94,10 +95,10 @@ static void real_to_normal_sym_q(double *fc3_normal_squared,
                                  const char *g_zero,
                                  PHPYCONST double *freqs[3],
                                  PHPYCONST lapack_complex_double *eigvecs[3],
-                                 const Darray *fc3,
+                                 const double *fc3,
                                  const double q[9], /* q0, q1, q2 */
                                  const Darray *shortest_vectors,
-                                 const Iarray *multiplicity,
+                                 const int *multiplicity,
                                  const double *masses,
                                  const int *p2s_map,
                                  const int *s2p_map,
@@ -139,15 +140,16 @@ void get_interaction(Darray *fc3_normal_squared,
       get_interaction_at_triplet(
         fc3_normal_squared->data + i * num_band_prod,
         num_band0,
+        num_band,
         g_zero + i * num_band_prod,
-        frequencies,
-        eigenvectors,
+        frequencies->data,
+        eigenvectors->data,
         triplets->data + i * 3,
         grid_address,
         mesh,
-        fc3,
+        fc3->data,
         shortest_vectors,
-        multiplicity,
+        multiplicity->data,
         masses,
         p2s_map,
         s2p_map,
@@ -163,15 +165,16 @@ void get_interaction(Darray *fc3_normal_squared,
       get_interaction_at_triplet(
         fc3_normal_squared->data + i * num_band_prod,
         num_band0,
+        num_band,
         g_zero + i * num_band_prod,
-        frequencies,
-        eigenvectors,
+        frequencies->data,
+        eigenvectors->data,
         triplets->data + i * 3,
         grid_address,
         mesh,
-        fc3,
+        fc3->data,
         shortest_vectors,
-        multiplicity,
+        multiplicity->data,
         masses,
         p2s_map,
         s2p_map,
@@ -185,41 +188,41 @@ void get_interaction(Darray *fc3_normal_squared,
   }
 }
 
-static void get_interaction_at_triplet(double *fc3_normal_squared,
-                                       const int num_band0,
-                                       const char *g_zero,
-                                       const Darray *frequencies,
-                                       const Carray *eigenvectors,
-                                       const int *triplets,
-                                       const int *grid_address,
-                                       const int *mesh,
-                                       const Darray *fc3,
-                                       const Darray *shortest_vectors,
-                                       const Iarray *multiplicity,
-                                       const double *masses,
-                                       const int *p2s_map,
-                                       const int *s2p_map,
-                                       const int *band_indices,
-                                       const int symmetrize_fc3_q,
-                                       const double cutoff_frequency,
-                                       const int triplet_index,
-                                       const int num_triplets,
-                                       const int openmp_at_bands)
+static void
+get_interaction_at_triplet(double *fc3_normal_squared,
+                           const int num_band0,
+                           const int num_band,
+                           const char *g_zero,
+                           const double *frequencies,
+                           const lapack_complex_double *eigenvectors,
+                           const int *triplets,
+                           const int *grid_address,
+                           const int *mesh,
+                           const double *fc3,
+                           const Darray *shortest_vectors,
+                           const int *multiplicity,
+                           const double *masses,
+                           const int *p2s_map,
+                           const int *s2p_map,
+                           const int *band_indices,
+                           const int symmetrize_fc3_q,
+                           const double cutoff_frequency,
+                           const int triplet_index,
+                           const int num_triplets,
+                           const int openmp_at_bands)
 {
-  int j, k, gp, num_band;
+  int j, k, gp;
   double *freqs[3];
   lapack_complex_double *eigvecs[3];
   double q[9];
-
-  num_band = frequencies->dims[1];
 
   for (j = 0; j < 3; j++) {
     gp = triplets[j];
     for (k = 0; k < 3; k++) {
       q[j * 3 + k] = ((double)grid_address[gp * 3 + k]) / mesh[k];
     }
-    freqs[j] = frequencies->data + gp * num_band;
-    eigvecs[j] = eigenvectors->data + gp * num_band * num_band;
+    freqs[j] = frequencies + gp * num_band;
+    eigvecs[j] = eigenvectors + gp * num_band * num_band;
   }
 
   if (symmetrize_fc3_q) {
@@ -275,10 +278,10 @@ static void real_to_normal(double *fc3_normal_squared,
                            const lapack_complex_double *eigvecs0,
                            const lapack_complex_double *eigvecs1,
                            const lapack_complex_double *eigvecs2,
-                           const Darray *fc3,
+                           const double *fc3,
                            const double q[9], /* q0, q1, q2 */
                            const Darray *shortest_vectors,
-                           const Iarray *multiplicity,
+                           const int *multiplicity,
                            const double *masses,
                            const int *p2s_map,
                            const int *s2p_map,
@@ -337,10 +340,10 @@ static void real_to_normal_sym_q(double *fc3_normal_squared,
                                  const char *g_zero,
                                  double *freqs[3],
                                  lapack_complex_double *eigvecs[3],
-                                 const Darray *fc3,
+                                 const double *fc3,
                                  const double q[9], /* q0, q1, q2 */
                                  const Darray *shortest_vectors,
-                                 const Iarray *multiplicity,
+                                 const int *multiplicity,
                                  const double *masses,
                                  const int *p2s_map,
                                  const int *s2p_map,

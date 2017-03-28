@@ -121,7 +121,6 @@ void get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
 					  const double *g,
 					  const char *g_zero,
 					  const double temperature,
-					  const double unit_conversion_factor,
 					  const double cutoff_frequency)
 {
   int i, j, num_triplets, num_band0, num_band, num_band_prod;
@@ -157,10 +156,6 @@ void get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
     for (j = 0; j < num_band0; j++) {
       imag_self_energy[j] += ise[i * num_band0 + j];
     }
-  }
-
-  for (i = 0; i < num_band0; i++) {
-    imag_self_energy[i] *= unit_conversion_factor;
   }
 
   free(ise);
