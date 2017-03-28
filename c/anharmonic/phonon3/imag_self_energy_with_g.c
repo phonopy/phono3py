@@ -38,18 +38,6 @@
 #include <phonoc_utils.h>
 #include <phonon3_h/imag_self_energy_with_g.h>
 
-static void imag_self_energy_at_triplet(double *imag_self_energy,
-                                        const int num_band0,
-                                        const int num_band,
-                                        const double *fc3_normal_squared,
-                                        const double *frequencies,
-                                        const int *triplets,
-                                        const int triplet_weight,
-                                        const double *g1,
-                                        const double *g2_3,
-                                        const char *g_zero,
-                                        const double temperature,
-                                        const double cutoff_frequency);
 static double sum_imag_self_energy_at_band(const int num_band,
 					   const double *fc3_normal_squared,
 					   const double *n1,
@@ -220,18 +208,18 @@ void get_detailed_imag_self_energy_at_bands_with_g
   ise = NULL;
 }
 
-static void imag_self_energy_at_triplet(double *imag_self_energy,
-                                        const int num_band0,
-                                        const int num_band,
-                                        const double *fc3_normal_squared,
-                                        const double *frequencies,
-                                        const int *triplets,
-                                        const int triplet_weight,
-                                        const double *g1,
-                                        const double *g2_3,
-                                        const char *g_zero,
-                                        const double temperature,
-                                        const double cutoff_frequency)
+void imag_self_energy_at_triplet(double *imag_self_energy,
+                                 const int num_band0,
+                                 const int num_band,
+                                 const double *fc3_normal_squared,
+                                 const double *frequencies,
+                                 const int *triplets,
+                                 const int triplet_weight,
+                                 const double *g1,
+                                 const double *g2_3,
+                                 const char *g_zero,
+                                 const double temperature,
+                                 const double cutoff_frequency)
 {
   int j;
   double *n1, *n2;

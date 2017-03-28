@@ -606,6 +606,33 @@ class Conductivity_RTA(Conductivity):
                     self._gamma_detail_at_q[k] = (
                         self._collision.get_detailed_imag_self_energy())
 
+    def _set_gamma_at_sigmas_lowmem(self, i):
+        for j, sigma in enumerate(self._sigmas):
+            self._collision.set_sigma(sigma)
+            if sigma is None or self._run_with_g:
+                self._collision.set_integration_weights()
+
+            import phono3py._phono3py as phono3c
+            phono3c.imag_self_energy_with_g(self._imag_self_energy,
+                                            self._g,
+                                            self._g_zero,
+                                            self._frequencies,
+                                            self._eigenvectors,
+                                            self._triplets_at_q,
+                                            self._weights_at_q,
+                                            self._grid_address,
+                                            self._mesh,
+                                            self._fc3,
+                                            self._shortest_vectors,
+                                            self._multiplicity,
+                                            self._masses,
+                                            self._p2s_map,
+                                            self._s2p_map,
+                                            self._band_indices,
+                                            self._temperatures,
+                                            self._symmetrize_fc3_q,
+                                            self._cutoff_frequency)
+
     def _show_log(self, q, i):
         gp = self._grid_points[i]
         frequencies = self._frequencies[gp][self._pp.get_band_indices()]

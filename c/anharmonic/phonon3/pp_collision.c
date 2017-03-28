@@ -57,21 +57,24 @@ void get_pp_collision_with_g(double *imag_self_energy,
                              const int *p2s_map,
                              const int *s2p_map,
                              const Iarray *band_indices,
-                             const double temperature,
+                             const Darray *temperatures,
                              const int symmetrize_fc3_q,
                              const double cutoff_frequency)
 {
-  int i, num_band, num_band0, num_band_prod;
-  double *fc3_normal_squared;
+  int i, j, k, num_band, num_band0, num_band_prod, num_triplets, num_temps;
+  double *fc3_normal_squared, *ise;
 
   num_band0 = band_indices->dims[0];
   num_band = shortest_vectors->dims[1] * 3;
   num_band_prod = num_band0 * num_band * num_band;
+  num_triplets = triplets->dims[0];
+  num_temps = temperatures->dims[0];
   fc3_normal_squared = (double*)malloc(sizeof(double) * num_band_prod);
+  ise = (double*)malloc(sizeof(double) * num_triplets * num_temps * num_band0);
 
   if (triplets->dims[0] > num_band * num_band) {
-#pragma omp parallel for schedule(guided)
-    for (i = 0; i < triplets->dims[0]; i++) {
+#pragma omp parallel for schedule(guided) private(j)
+    for (i = 0; i < num_triplets; i++) {
       get_interaction_at_triplet(
         fc3_normal_squared,
         num_band0,
@@ -94,8 +97,40 @@ void get_pp_collision_with_g(double *imag_self_energy,
         i,
         triplets->dims[0],
         0);
+
+      for (j = 0; j < num_temps; j++) {
+        imag_self_energy_at_triplet(
+          ise + i * num_temps * num_band0 + j * num_band0,
+          num_band0,
+          num_band,
+          fc3_normal_squared,
+          frequencies,
+          triplets + i * 3,
+          weights[i],
+          g + i * num_band_prod,
+          g + (i + num_triplets) * num_band_prod,
+          g_zero + i * num_band_prod,
+          temperatures->data[j],
+          cutoff_frequency);
+      }
+    }
+  }
+
+  for (i = 0; i < num_temps * num_band0; i++) {
+    imag_self_energy[i] = 0;
+  }
+
+  for (i = 0; i < num_triplets; i++) {
+    for (j = 0; j < num_temps; j++) {
+      for (k = 0; k < num_band0; k++) {
+        imag_self_energy[j * num_band0 + k] +=
+          ise[i * num_temps * num_band0 + j * num_band0 + k];
+      }
     }
   }
 
   free(fc3_normal_squared);
+  fc3_normal_squared = NULL;
+  free(ise);
+  ise = NULL;
 }

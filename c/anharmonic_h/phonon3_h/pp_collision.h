@@ -54,7 +54,7 @@ void get_pp_collision_with_g(double *imag_self_energy,
                              const int *p2s_map,
                              const int *s2p_map,
                              const Iarray *band_indices,
-                             const double temperature,
+                             const Darray *temperatures,
                              const int symmetrize_fc3_q,
                              const double cutoff_frequency);
 

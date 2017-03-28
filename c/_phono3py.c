@@ -332,7 +332,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   PyArrayObject *p2s_map_py;
   PyArrayObject *s2p_map_py;
   PyArrayObject *band_indices_py;
-  double temperature;
+  PyArrayObject *temperatures_py;
   double cutoff_frequency;
   int symmetrize_fc3_q;
 
@@ -352,8 +352,9 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   int *p2s;
   int *s2p;
   Iarray *band_indices;
+  Darray *temperatures;
 
-  if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOOOdid",
+  if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOOOOid",
 			&gamma_py,
                         &g_py,
 			&g_zero_py,
@@ -370,7 +371,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
 			&p2s_map_py,
 			&s2p_map_py,
 			&band_indices_py,
-                        &temperature,
+                        &temperatures_py,
 			&symmetrize_fc3_q,
 			&cutoff_frequency)) {
     return NULL;
@@ -394,6 +395,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   p2s = (int*)PyArray_DATA(p2s_map_py);
   s2p = (int*)PyArray_DATA(s2p_map_py);
   band_indices = convert_to_iarray(band_indices_py);
+  temperatures = convert_to_darray(temperatures_py);
 
   get_pp_collision_with_g(gamma,
                           g,
@@ -411,7 +413,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
                           p2s,
                           s2p,
                           band_indices,
-                          temperature,
+                          temperatures,
                           symmetrize_fc3_q,
                           cutoff_frequency);
 
