@@ -288,7 +288,7 @@ def get_triplets_integration_weights(interaction,
                                      frequency_points,
                                      sigma,
                                      is_collision_matrix=False,
-                                     neighboring_phonons=True,
+                                     neighboring_phonons=False,
                                      lang='C'):
     triplets = interaction.get_triplets_at_q()[0]
     frequencies = interaction.get_phonons()[0]
@@ -411,7 +411,7 @@ def _set_triplets_integration_weights_c(g,
                                         g_zero,
                                         interaction,
                                         frequency_points,
-                                        neighboring_phonons=True):
+                                        neighboring_phonons=False):
     import phono3py._phono3py as phono3c
 
     reciprocal_lattice = np.linalg.inv(interaction.get_primitive().get_cell())
