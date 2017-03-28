@@ -183,7 +183,7 @@ class Interaction(object):
                  grid_address,
                  bz_map,
                  triplets_map_at_q,
-                 ir_map_at_q)= get_triplets_at_q(
+                 ir_map_at_q) = get_triplets_at_q(
                      grid_point,
                      self._mesh,
                      np.array(rotations, dtype='intc', order='C'),
@@ -210,8 +210,8 @@ class Interaction(object):
         self._triplets_at_q = triplets_at_q
         self._weights_at_q = weights_at_q
         self._triplets_map_at_q = triplets_map_at_q
-        self._grid_address = grid_address
-        self._bz_map = bz_map
+        # self._grid_address = grid_address
+        # self._bz_map = bz_map
         self._ir_map_at_q = ir_map_at_q
         self.set_phonons(self._triplets_at_q.ravel())
 
@@ -230,6 +230,7 @@ class Interaction(object):
             frequency_scale_factor=frequency_scale_factor,
             decimals=decimals,
             symprec=self._symprec)
+        self.set_phonons(np.arange(len(self._grid_address), dtype='intc'))
 
     def set_nac_q_direction(self, nac_q_direction=None):
         if nac_q_direction is not None:
