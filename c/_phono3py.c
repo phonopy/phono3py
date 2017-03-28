@@ -45,7 +45,6 @@
 #include <phonon3_h/fc3.h>
 #include <phonon3_h/frequency_shift.h>
 #include <phonon3_h/interaction.h>
-#include <phonon3_h/imag_self_energy.h>
 #include <phonon3_h/imag_self_energy_with_g.h>
 #include <phonon3_h/pp_collision.h>
 #include <phonon3_h/collision_matrix.h>
@@ -60,9 +59,6 @@
 
 static PyObject * py_get_interaction(PyObject *self, PyObject *args);
 static PyObject * py_get_pp_collision(PyObject *self, PyObject *args);
-static PyObject * py_get_imag_self_energy(PyObject *self, PyObject *args);
-static PyObject * py_get_imag_self_energy_at_bands(PyObject *self,
-						   PyObject *args);
 static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args);
 static PyObject *
 py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args);
@@ -116,10 +112,6 @@ static PyMethodDef _phono3py_methods[] = {
   {"interaction", py_get_interaction, METH_VARARGS, "Interaction of triplets"},
   {"pp_collision", py_get_pp_collision, METH_VARARGS,
    "Collision and ph-ph calculation"},
-  {"imag_self_energy", py_get_imag_self_energy, METH_VARARGS,
-   "Imaginary part of self energy at arbitrary frequency points"},
-  {"imag_self_energy_at_bands", py_get_imag_self_energy_at_bands, METH_VARARGS,
-   "Imaginary part of self energy at bands"},
   {"imag_self_energy_with_g", py_get_imag_self_energy_with_g, METH_VARARGS,
    "Imaginary part of self energy at frequency points with g"},
   {"detailed_imag_self_energy_with_g",
@@ -426,114 +418,6 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   free(triplets);
   free(svecs);
   free(band_indices);
-
-  Py_RETURN_NONE;
-}
-
-static PyObject * py_get_imag_self_energy(PyObject *self, PyObject *args)
-{
-  PyArrayObject *gamma_py;
-  PyArrayObject *fc3_normal_squared_py;
-  PyArrayObject *frequencies_py;
-  PyArrayObject *grid_point_triplets_py;
-  PyArrayObject *triplet_weights_py;
-  double sigma, unit_conversion_factor, cutoff_frequency, temperature, fpoint;
-
-  Darray *fc3_normal_squared;
-  double *gamma;
-  double *frequencies;
-  int *grid_point_triplets;
-  int *triplet_weights;
-
-  if (!PyArg_ParseTuple(args, "OOOOOddddd",
-			&gamma_py,
-			&fc3_normal_squared_py,
-			&grid_point_triplets_py,
-			&triplet_weights_py,
-			&frequencies_py,
-			&fpoint,
-			&temperature,
-			&sigma,
-			&unit_conversion_factor,
-			&cutoff_frequency)) {
-    return NULL;
-  }
-
-
-  fc3_normal_squared = convert_to_darray(fc3_normal_squared_py);
-  gamma = (double*)PyArray_DATA(gamma_py);
-  frequencies = (double*)PyArray_DATA(frequencies_py);
-  grid_point_triplets = (int*)PyArray_DATA(grid_point_triplets_py);
-  triplet_weights = (int*)PyArray_DATA(triplet_weights_py);
-
-  get_imag_self_energy(gamma,
-		       fc3_normal_squared,
-		       fpoint,
-		       frequencies,
-		       grid_point_triplets,
-		       triplet_weights,
-		       sigma,
-		       temperature,
-		       unit_conversion_factor,
-		       cutoff_frequency);
-
-  free(fc3_normal_squared);
-
-  Py_RETURN_NONE;
-}
-
-static PyObject * py_get_imag_self_energy_at_bands(PyObject *self,
-						   PyObject *args)
-{
-  PyArrayObject *gamma_py;
-  PyArrayObject *fc3_normal_squared_py;
-  PyArrayObject *frequencies_py;
-  PyArrayObject *grid_point_triplets_py;
-  PyArrayObject *triplet_weights_py;
-  PyArrayObject *band_indices_py;
-  double sigma, unit_conversion_factor, cutoff_frequency, temperature;
-
-  Darray *fc3_normal_squared;
-  double *gamma;
-  double *frequencies;
-  int *band_indices;
-  int *grid_point_triplets;
-  int *triplet_weights;
-
-  if (!PyArg_ParseTuple(args, "OOOOOOdddd",
-			&gamma_py,
-			&fc3_normal_squared_py,
-			&grid_point_triplets_py,
-			&triplet_weights_py,
-			&frequencies_py,
-			&band_indices_py,
-			&temperature,
-			&sigma,
-			&unit_conversion_factor,
-			&cutoff_frequency)) {
-    return NULL;
-  }
-
-
-  fc3_normal_squared = convert_to_darray(fc3_normal_squared_py);
-  gamma = (double*)PyArray_DATA(gamma_py);
-  frequencies = (double*)PyArray_DATA(frequencies_py);
-  band_indices = (int*)PyArray_DATA(band_indices_py);
-  grid_point_triplets = (int*)PyArray_DATA(grid_point_triplets_py);
-  triplet_weights = (int*)PyArray_DATA(triplet_weights_py);
-
-  get_imag_self_energy_at_bands(gamma,
-				fc3_normal_squared,
-				band_indices,
-				frequencies,
-				grid_point_triplets,
-				triplet_weights,
-				sigma,
-				temperature,
-				unit_conversion_factor,
-				cutoff_frequency);
-
-  free(fc3_normal_squared);
 
   Py_RETURN_NONE;
 }

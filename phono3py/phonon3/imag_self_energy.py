@@ -477,13 +477,10 @@ class ImagSelfEnergy(object):
                 print("This routine is super slow and only for the test.")
                 self._run_py_with_band_indices_with_g()
         else:
-            if self._lang == 'C':
-                # This function is obsolete.
-                self._run_c_with_band_indices()
-            else:
-                print("Running into _run_py_with_band_indices")
-                print("This routine is super slow and only for the test.")
-                self._run_py_with_band_indices()
+            print("get_triplets_integration_weights must be executed "
+                  "before calling this method.")
+            import sys
+            sys.exit(1)
 
     def _run_with_frequency_points(self):
         if self._g is not None:
@@ -497,28 +494,11 @@ class ImagSelfEnergy(object):
                 print("This routine is super slow and only for the test.")
                 self._run_py_with_frequency_points_with_g()
         else:
-            if self._lang == 'C':
-                # This function is obsolete.
-                self._run_c_with_frequency_points()
-            else:
-                print("Running into _run_py_with_frequency_points()")
-                print("This routine is super slow and only for the test.")
-                self._run_py_with_frequency_points()
+            print("get_triplets_integration_weights must be executed "
+                  "before calling this method.")
+            import sys
+            sys.exit(1)
 
-    # This function is obsolete.
-    def _run_c_with_band_indices(self):
-        import phono3py._phono3py as phono3c
-        bi = self._pp.get_band_indices()
-        phono3c.imag_self_energy_at_bands(self._imag_self_energy,
-                                          self._pp_strength,
-                                          self._triplets_at_q,
-                                          self._weights_at_q,
-                                          self._frequencies,
-                                          bi,
-                                          self._temperature,
-                                          self._sigma,
-                                          self._unit_conversion,
-                                          self._cutoff_frequency)
 
     def _run_c_with_band_indices_with_g(self):
         import phono3py._phono3py as phono3c
@@ -565,23 +545,6 @@ class ImagSelfEnergy(object):
             self._cutoff_frequency)
 
         self._imag_self_energy = self._ise_N + self._ise_U
-
-    # This function is obsolete.
-    def _run_c_with_frequency_points(self):
-        import phono3py._phono3py as phono3c
-        ise_at_f = np.zeros(self._imag_self_energy.shape[1], dtype='double')
-        for i, fpoint in enumerate(self._frequency_points):
-            phono3c.imag_self_energy(ise_at_f,
-                                     self._pp_strength,
-                                     self._triplets_at_q,
-                                     self._weights_at_q,
-                                     self._frequencies,
-                                     fpoint,
-                                     self._temperature,
-                                     self._sigma,
-                                     self._unit_conversion,
-                                     self._cutoff_frequency)
-            self._imag_self_energy[i] = ise_at_f
 
     def _run_c_with_frequency_points_with_g(self):
         import phono3py._phono3py as phono3c
@@ -641,50 +604,6 @@ class ImagSelfEnergy(object):
             self._ise_N[i] = ise_at_f_N
             self._ise_U[i] = ise_at_f_U
 
-    def _run_py_with_band_indices(self):
-        for i, (triplet, w, interaction) in enumerate(
-            zip(self._triplets_at_q,
-                self._weights_at_q,
-                self._pp_strength)):
-            print("%d / %d" % (i + 1, len(self._triplets_at_q)))
-
-            freqs = self._frequencies[triplet]
-            for j, bi in enumerate(self._pp.get_band_indices()):
-                if self._temperature > 0:
-                    self._imag_self_energy[j] += (
-                        self._ise_at_bands(j, bi, freqs, interaction, w))
-                else:
-                    self._imag_self_energy[j] += (
-                        self._ise_at_bands_0K(j, bi, freqs, interaction, w))
-
-        self._imag_self_energy *= self._unit_conversion
-
-    def _ise_at_bands(self, i, bi, freqs, interaction, weight):
-        sum_g = 0
-        for (j, k) in list(np.ndindex(interaction.shape[1:])):
-            if (freqs[1][j] > self._cutoff_frequency and
-                freqs[2][k] > self._cutoff_frequency):
-                n2 = occupation(freqs[1][j], self._temperature)
-                n3 = occupation(freqs[2][k], self._temperature)
-                g1 = gaussian(freqs[0, bi] - freqs[1, j] - freqs[2, k],
-                              self._sigma)
-                g2 = gaussian(freqs[0, bi] + freqs[1, j] - freqs[2, k],
-                              self._sigma)
-                g3 = gaussian(freqs[0, bi] - freqs[1, j] + freqs[2, k],
-                              self._sigma)
-                sum_g += ((n2 + n3 + 1) * g1 +
-                          (n2 - n3) * (g2 - g3)) * interaction[i, j, k] * weight
-        return sum_g
-
-    def _ise_at_bands_0K(self, i, bi, freqs, interaction, weight):
-        sum_g = 0
-        for (j, k) in list(np.ndindex(interaction.shape[1:])):
-            g1 = gaussian(freqs[0, bi] - freqs[1, j] - freqs[2, k],
-                          self._sigma)
-            sum_g += g1 * interaction[i, j, k] * weight
-
-        return sum_g
-
     def _run_py_with_band_indices_with_g(self):
         if self._temperature > 0:
             self._ise_thm_with_band_indices()
@@ -721,48 +640,6 @@ class ImagSelfEnergy(object):
                 self._imag_self_energy[:] += g1 * interaction[:, j, k] * w
 
         self._imag_self_energy *= self._unit_conversion
-
-    def _run_py_with_frequency_points(self):
-        for i, (triplet, w, interaction) in enumerate(
-            zip(self._triplets_at_q,
-                self._weights_at_q,
-                self._pp_strength)):
-            print("%d / %d" % (i + 1, len(self._triplets_at_q)))
-
-            # freqs[2, num_band]
-            freqs = self._frequencies[triplet[1:]]
-            if self._temperature > 0:
-                self._ise_with_frequency_points(freqs, interaction, w)
-            else:
-                self._ise_with_frequency_points_0K(freqs, interaction, w)
-
-        self._imag_self_energy *= self._unit_conversion
-
-    def _ise_with_frequency_points(self, freqs, interaction, weight):
-        for j, k in list(np.ndindex(interaction.shape[1:])):
-            if (freqs[0][j] > self._cutoff_frequency and
-                freqs[1][k] > self._cutoff_frequency):
-                n2 = occupation(freqs[0][j], self._temperature)
-                n3 = occupation(freqs[1][k], self._temperature)
-                g1 = gaussian(self._frequency_points
-                              - freqs[0][j] - freqs[1][k], self._sigma)
-                g2 = gaussian(self._frequency_points
-                              + freqs[0][j] - freqs[1][k], self._sigma)
-                g3 = gaussian(self._frequency_points
-                              - freqs[0][j] + freqs[1][k], self._sigma)
-            else:
-                continue
-
-            for i in range(len(interaction)):
-                self._imag_self_energy[:, i] += (
-                    (n2 + n3 + 1) * g1 +
-                    (n2 - n3) * (g2 - g3)) * interaction[i, j, k] * weight
-
-    def _ise_with_frequency_points_0K(self, freqs, interaction, weight):
-        for (i, j, k) in list(np.ndindex(interaction.shape)):
-            g1 = gaussian(self._frequency_points - freqs[0][j] - freqs[1][k],
-                          self._sigma)
-            self._imag_self_energy[:, i] += g1 * interaction[i, j, k] * weight
 
     def _run_py_with_frequency_points_with_g(self):
         if self._temperature > 0:
