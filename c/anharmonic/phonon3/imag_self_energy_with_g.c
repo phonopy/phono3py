@@ -242,7 +242,8 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
     adrs_shift = j * num_band * num_band;
     sum_g = 0;
     if (temperature > 0) {
-#pragma omp parallel for reduction(+:sum_g) if (openmp_at_bands)
+/* #pragma omp parallel for reduction(+:sum_g) if (openmp_at_bands) */
+/* Significant performance down using openmp */
       for (ij = 0; ij < num_band * num_band; ij++) {
         if (g_zero[ij + adrs_shift]) {continue;}
         sum_g += sum_imag_self_energy_at_band(
@@ -256,7 +257,7 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
       }
       imag_self_energy[j] = sum_g;
     } else {
-#pragma omp parallel for reduction(+:sum_g) if (openmp_at_bands)
+/* #pragma omp parallel for reduction(+:sum_g) if (openmp_at_bands) */
       for (ij = 0; ij < num_band * num_band; ij++) {
           if (g_zero[ij + adrs_shift]) {continue;}
           sum_g += sum_imag_self_energy_at_band_0K(
