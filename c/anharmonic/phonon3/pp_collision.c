@@ -38,6 +38,7 @@
 #include <phonoc_array.h>
 #include <phonoc_const.h>
 #include <phonoc_utils.h>
+#include <phonon3_h/imag_self_energy_with_g.h>
 #include <phonon3_h/pp_collision.h>
 #include <phonon3_h/interaction.h>
 #include <triplet_h/triplet.h>
@@ -89,9 +90,9 @@ void get_pp_collision_with_g(double *imag_self_energy,
                                  num_band0,
                                  relative_grid_address,
                                  mesh,
-                                 triplets->data + i * 3,
+                                 (int(*)[3])(triplets->data + i * 3),
                                  1,
-                                 grid_address,
+                                 (int(*)[3])grid_address,
                                  bz_map,
                                  frequencies,
                                  num_band,
@@ -133,7 +134,8 @@ void get_pp_collision_with_g(double *imag_self_energy,
           iw + num_band_prod,
           iw_zero,
           temperatures->data[j],
-          cutoff_frequency);
+          cutoff_frequency,
+          0);
       }
       free(fc3_normal_squared);
       fc3_normal_squared = NULL;
@@ -152,9 +154,9 @@ void get_pp_collision_with_g(double *imag_self_energy,
                                  num_band0,
                                  relative_grid_address,
                                  mesh,
-                                 triplets->data + i * 3,
+                                 (int(*)[3])(triplets->data + i * 3),
                                  1,
-                                 grid_address,
+                                 (int(*)[3])grid_address,
                                  bz_map,
                                  frequencies,
                                  num_band,
@@ -196,7 +198,8 @@ void get_pp_collision_with_g(double *imag_self_energy,
           iw + num_band_prod,
           iw_zero,
           temperatures->data[j],
-          cutoff_frequency);
+          cutoff_frequency,
+          1);
       }
       free(fc3_normal_squared);
       fc3_normal_squared = NULL;

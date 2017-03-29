@@ -70,7 +70,6 @@ int tpl_get_BZ_triplets_at_q(int triplets[][3],
 			     const int num_map_triplets,
 			     const int mesh[3]);
 
-
 int tpl_get_integration_weight(double *iw,
 			       char *iw_zero,
 			       const double frequency_points[],

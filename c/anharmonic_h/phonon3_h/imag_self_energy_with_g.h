@@ -71,6 +71,7 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
                                  const double *g2_3,
                                  const char *g_zero,
                                  const double temperature,
-                                 const double cutoff_frequency);
+                                 const double cutoff_frequency,
+                                 const int openmp_at_bands);
 
 #endif

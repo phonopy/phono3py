@@ -38,19 +38,19 @@
 #include <phonoc_utils.h>
 #include <phonon3_h/imag_self_energy_with_g.h>
 
-static double sum_imag_self_energy_at_band(const int num_band,
+static double sum_imag_self_energy_at_band(const int ij,
+                                           const int num_band,
 					   const double *fc3_normal_squared,
 					   const double *n1,
 					   const double *n2,
 					   const double *g1,
-					   const double *g2_3,
-					   const char *g_zero);
-static double sum_imag_self_energy_at_band_0K(const int num_band,
+					   const double *g2_3);
+static double sum_imag_self_energy_at_band_0K(const int ij,
+                                              const int num_band,
 					      const double *fc3_normal_squared,
 					      const double *n1,
 					      const double *n2,
-					      const double *g,
-					      const char *g_zero);
+					      const double *g);
 static void
 detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
 				     double *imag_self_energy,
@@ -133,7 +133,8 @@ void get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
                                 g + (i + num_triplets) * num_band_prod,
                                 g_zero + i * num_band_prod,
                                 temperature,
-                                cutoff_frequency);
+                                cutoff_frequency,
+                                0);
   }
 
   for (i = 0; i < num_band0; i++) {
@@ -219,11 +220,13 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
                                  const double *g2_3,
                                  const char *g_zero,
                                  const double temperature,
-                                 const double cutoff_frequency)
+                                 const double cutoff_frequency,
+                                 const int openmp_at_bands)
 {
-  int j;
+  int ij, j;
   double *n1, *n2;
   int adrs_shift;
+  double sum_g;
 
   n1 = (double*)malloc(sizeof(double) * num_band);
   n2 = (double*)malloc(sizeof(double) * num_band);
@@ -237,25 +240,61 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
 
   for (j = 0; j < num_band0; j++) {
     adrs_shift = j * num_band * num_band;
+    sum_g = 0;
     if (temperature > 0) {
-      imag_self_energy[j] =
-        sum_imag_self_energy_at_band
-        (num_band,
-         fc3_normal_squared + adrs_shift,
-         n1,
-         n2,
-         g1 + adrs_shift,
-         g2_3 + adrs_shift,
-         g_zero + adrs_shift) * triplet_weight;
+      if (openmp_at_bands) {
+#pragma omp parallel for reduction(+:sum_g)
+        for (ij = 0; ij < num_band * num_band; ij++) {
+          if (g_zero[ij + adrs_shift]) {continue;}
+          sum_g += sum_imag_self_energy_at_band(
+            ij,
+            num_band,
+            fc3_normal_squared + adrs_shift,
+            n1,
+            n2,
+            g1 + adrs_shift,
+            g2_3 + adrs_shift) * triplet_weight;
+        }
+      } else {
+        for (ij = 0; ij < num_band * num_band; ij++) {
+          if (g_zero[ij + adrs_shift]) {continue;}
+          sum_g += sum_imag_self_energy_at_band(
+            ij,
+            num_band,
+            fc3_normal_squared + adrs_shift,
+            n1,
+            n2,
+            g1 + adrs_shift,
+            g2_3 + adrs_shift) * triplet_weight;
+        }
+      }
+      imag_self_energy[j] = sum_g;
     } else {
-      imag_self_energy[j] =
-        sum_imag_self_energy_at_band_0K
-        (num_band,
-         fc3_normal_squared + adrs_shift,
-         n1,
-         n2,
-         g1 + adrs_shift,
-         g_zero + adrs_shift) * triplet_weight;
+      if (openmp_at_bands) {
+#pragma omp parallel for reduction(+:sum_g)
+        for (ij = 0; ij < num_band * num_band; ij++) {
+          if (g_zero[ij + adrs_shift]) {continue;}
+          sum_g += sum_imag_self_energy_at_band_0K(
+            ij,
+            num_band,
+            fc3_normal_squared + adrs_shift,
+            n1,
+            n2,
+            g1 + adrs_shift) * triplet_weight;
+        }
+      } else {
+        for (ij = 0; ij < num_band * num_band; ij++) {
+          if (g_zero[ij + adrs_shift]) {continue;}
+          sum_g += sum_imag_self_energy_at_band_0K(
+            ij,
+            num_band,
+            fc3_normal_squared + adrs_shift,
+            n1,
+            n2,
+            g1 + adrs_shift) * triplet_weight;
+        }
+      }
+      imag_self_energy[j] = sum_g;
     }
   }
 
@@ -265,48 +304,36 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
   n2 = NULL;
 }
 
-static double sum_imag_self_energy_at_band(const int num_band,
+static double sum_imag_self_energy_at_band(const int ij,
+                                           const int num_band,
 					   const double *fc3_normal_squared,
 					   const double *n1,
 					   const double *n2,
 					   const double *g1,
-					   const double *g2_3,
-					   const char *g_zero)
+					   const double *g2_3)
 {
-  int ij, i, j;
-  double sum_g;
+  int i, j;
 
-  sum_g = 0;
-  for (ij = 0; ij < num_band * num_band; ij++) {
-    if (g_zero[ij]) {continue;}
-    i = ij / num_band;
-    j = ij % num_band;
-    if (n1[i] < 0 || n2[j] < 0) {continue;}
-    sum_g += ((n1[i] + n2[j] + 1) * g1[ij] +
-	      (n1[i] - n2[j]) * g2_3[ij]) * fc3_normal_squared[ij];
-  }
-  return sum_g;
+  i = ij / num_band;
+  j = ij % num_band;
+  if (n1[i] < 0 || n2[j] < 0) {return 0;}
+  return ((n1[i] + n2[j] + 1) * g1[ij] +
+          (n1[i] - n2[j]) * g2_3[ij]) * fc3_normal_squared[ij];
 }
 
-static double sum_imag_self_energy_at_band_0K(const int num_band,
+static double sum_imag_self_energy_at_band_0K(const int ij,
+                                              const int num_band,
 					      const double *fc3_normal_squared,
 					      const double *n1,
 					      const double *n2,
-					      const double *g1,
-					      const char *g_zero)
+					      const double *g1)
 {
-  int ij, i, j;
-  double sum_g;
+  int i, j;
 
-  sum_g = 0;
-  for (ij = 0; ij < num_band * num_band; ij++) {
-    if (g_zero[ij]) {continue;}
-    i = ij / num_band;
-    j = ij % num_band;
-    if (n1[i] < 0 || n2[j] < 0) {continue;}
-    sum_g += g1[ij] * fc3_normal_squared[ij];
-  }
-  return sum_g;
+  i = ij / num_band;
+  j = ij % num_band;
+  if (n1[i] < 0 || n2[j] < 0) {return 0;}
+  return g1[ij] * fc3_normal_squared[ij];
 }
 
 static void
