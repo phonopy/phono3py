@@ -1300,7 +1300,9 @@ py_set_triplets_integration_weights(PyObject *self, PyObject *args)
 			     bz_map,
 			     frequencies,
 			     num_band,
-			     num_iw);
+			     num_iw,
+                             1,
+                             0);
 
   Py_RETURN_NONE;
 }

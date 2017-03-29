@@ -102,7 +102,9 @@ void get_pp_collision_with_g(double *imag_self_energy,
                                bz_map,
                                frequencies,
                                num_band,
-                               2);
+                               2,
+                               0,
+                               1 - openmp_per_triplets);
     fc3_normal_squared = (double*)malloc(sizeof(double) * num_band_prod);
     get_interaction_at_triplet(
       fc3_normal_squared,

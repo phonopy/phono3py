@@ -82,6 +82,8 @@ int tpl_get_integration_weight(double *iw,
 			       const int bz_map[],
 			       const double frequencies[],
 			       const int num_band,
-			       const int num_iw);
+			       const int num_iw,
+                               const int openmp_per_triplets,
+                               const int openmp_per_bands);
 
 #endif
