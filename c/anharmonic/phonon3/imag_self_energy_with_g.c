@@ -242,37 +242,22 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
     adrs_shift = j * num_band * num_band;
     sum_g = 0;
     if (temperature > 0) {
-      if (openmp_at_bands) {
-#pragma omp parallel for reduction(+:sum_g)
-        for (ij = 0; ij < num_band * num_band; ij++) {
-          if (g_zero[ij + adrs_shift]) {continue;}
-          sum_g += sum_imag_self_energy_at_band(
-            ij,
-            num_band,
-            fc3_normal_squared + adrs_shift,
-            n1,
-            n2,
-            g1 + adrs_shift,
-            g2_3 + adrs_shift) * triplet_weight;
-        }
-      } else {
-        for (ij = 0; ij < num_band * num_band; ij++) {
-          if (g_zero[ij + adrs_shift]) {continue;}
-          sum_g += sum_imag_self_energy_at_band(
-            ij,
-            num_band,
-            fc3_normal_squared + adrs_shift,
-            n1,
-            n2,
-            g1 + adrs_shift,
-            g2_3 + adrs_shift) * triplet_weight;
-        }
+#pragma omp parallel for reduction(+:sum_g) if (openmp_at_bands)
+      for (ij = 0; ij < num_band * num_band; ij++) {
+        if (g_zero[ij + adrs_shift]) {continue;}
+        sum_g += sum_imag_self_energy_at_band(
+          ij,
+          num_band,
+          fc3_normal_squared + adrs_shift,
+          n1,
+          n2,
+          g1 + adrs_shift,
+          g2_3 + adrs_shift) * triplet_weight;
       }
       imag_self_energy[j] = sum_g;
     } else {
-      if (openmp_at_bands) {
-#pragma omp parallel for reduction(+:sum_g)
-        for (ij = 0; ij < num_band * num_band; ij++) {
+#pragma omp parallel for reduction(+:sum_g) if (openmp_at_bands)
+      for (ij = 0; ij < num_band * num_band; ij++) {
           if (g_zero[ij + adrs_shift]) {continue;}
           sum_g += sum_imag_self_energy_at_band_0K(
             ij,
@@ -281,18 +266,6 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
             n1,
             n2,
             g1 + adrs_shift) * triplet_weight;
-        }
-      } else {
-        for (ij = 0; ij < num_band * num_band; ij++) {
-          if (g_zero[ij + adrs_shift]) {continue;}
-          sum_g += sum_imag_self_energy_at_band_0K(
-            ij,
-            num_band,
-            fc3_normal_squared + adrs_shift,
-            n1,
-            n2,
-            g1 + adrs_shift) * triplet_weight;
-        }
       }
       imag_self_energy[j] = sum_g;
     }

@@ -64,6 +64,7 @@ void get_pp_collision_with_g(double *imag_self_energy,
                              const double cutoff_frequency)
 {
   int i, j, k, num_band, num_band0, num_band_prod, num_triplets, num_temps;
+  int openmp_per_triplets;
   double *fc3_normal_squared, *ise, *freqs_at_gp, *iw;
   char *iw_zero;
 
@@ -80,134 +81,74 @@ void get_pp_collision_with_g(double *imag_self_energy,
   }
 
   if (num_triplets > num_band * num_band) {
-#pragma omp parallel for schedule(guided) private(j, fc3_normal_squared, iw, iw_zero)
-    for (i = 0; i < num_triplets; i++) {
-      iw = (double*)malloc(sizeof(double) * 2 * num_band_prod);
-      iw_zero = (char*)malloc(sizeof(char) * num_band_prod);
-      tpl_get_integration_weight(iw,
-                                 iw_zero,
-                                 freqs_at_gp,
-                                 num_band0,
-                                 relative_grid_address,
-                                 mesh,
-                                 (int(*)[3])(triplets->data + i * 3),
-                                 1,
-                                 (int(*)[3])grid_address,
-                                 bz_map,
-                                 frequencies,
-                                 num_band,
-                                 2);
-      fc3_normal_squared = (double*)malloc(sizeof(double) * num_band_prod);
-      get_interaction_at_triplet(
-        fc3_normal_squared,
-        num_band0,
-        num_band,
-        iw_zero,
-        frequencies,
-        eigenvectors,
-        triplets->data + i * 3,
-        grid_address,
-        mesh,
-        fc3,
-        shortest_vectors,
-        multiplicity,
-        masses,
-        p2s_map,
-        s2p_map,
-        band_indices->data,
-        symmetrize_fc3_q,
-        cutoff_frequency,
-        i,
-        num_triplets,
-        0);
-
-      for (j = 0; j < num_temps; j++) {
-        imag_self_energy_at_triplet(
-          ise + i * num_temps * num_band0 + j * num_band0,
-          num_band0,
-          num_band,
-          fc3_normal_squared,
-          frequencies,
-          triplets->data + i * 3,
-          weights[i],
-          iw,
-          iw + num_band_prod,
-          iw_zero,
-          temperatures->data[j],
-          cutoff_frequency,
-          0);
-      }
-      free(fc3_normal_squared);
-      fc3_normal_squared = NULL;
-      free(iw);
-      iw = NULL;
-      free(iw_zero);
-      iw_zero = NULL;
-    }
+    openmp_per_triplets = 1;
   } else {
-    for (i = 0; i < num_triplets; i++) {
-      iw = (double*)malloc(sizeof(double) * 2 * num_band_prod);
-      iw_zero = (char*)malloc(sizeof(char) * num_band_prod);
-      tpl_get_integration_weight(iw,
-                                 iw_zero,
-                                 freqs_at_gp,
-                                 num_band0,
-                                 relative_grid_address,
-                                 mesh,
-                                 (int(*)[3])(triplets->data + i * 3),
-                                 1,
-                                 (int(*)[3])grid_address,
-                                 bz_map,
-                                 frequencies,
-                                 num_band,
-                                 2);
-      fc3_normal_squared = (double*)malloc(sizeof(double) * num_band_prod);
-      get_interaction_at_triplet(
-        fc3_normal_squared,
+    openmp_per_triplets = 0;
+  }
+
+#pragma omp parallel for schedule(guided) private(j, fc3_normal_squared, iw, iw_zero) if (openmp_per_triplets)
+  for (i = 0; i < num_triplets; i++) {
+    iw = (double*)malloc(sizeof(double) * 2 * num_band_prod);
+    iw_zero = (char*)malloc(sizeof(char) * num_band_prod);
+    tpl_get_integration_weight(iw,
+                               iw_zero,
+                               freqs_at_gp,
+                               num_band0,
+                               relative_grid_address,
+                               mesh,
+                               (int(*)[3])(triplets->data + i * 3),
+                               1,
+                               (int(*)[3])grid_address,
+                               bz_map,
+                               frequencies,
+                               num_band,
+                               2);
+    fc3_normal_squared = (double*)malloc(sizeof(double) * num_band_prod);
+    get_interaction_at_triplet(
+      fc3_normal_squared,
+      num_band0,
+      num_band,
+      iw_zero,
+      frequencies,
+      eigenvectors,
+      triplets->data + i * 3,
+      grid_address,
+      mesh,
+      fc3,
+      shortest_vectors,
+      multiplicity,
+      masses,
+      p2s_map,
+      s2p_map,
+      band_indices->data,
+      symmetrize_fc3_q,
+      cutoff_frequency,
+      i,
+      num_triplets,
+      1 - openmp_per_triplets);
+
+    for (j = 0; j < num_temps; j++) {
+      imag_self_energy_at_triplet(
+        ise + i * num_temps * num_band0 + j * num_band0,
         num_band0,
         num_band,
-        iw_zero,
+        fc3_normal_squared,
         frequencies,
-        eigenvectors,
         triplets->data + i * 3,
-        grid_address,
-        mesh,
-        fc3,
-        shortest_vectors,
-        multiplicity,
-        masses,
-        p2s_map,
-        s2p_map,
-        band_indices->data,
-        symmetrize_fc3_q,
+        weights[i],
+        iw,
+        iw + num_band_prod,
+        iw_zero,
+        temperatures->data[j],
         cutoff_frequency,
-        i,
-        num_triplets,
-        1);
-
-      for (j = 0; j < num_temps; j++) {
-        imag_self_energy_at_triplet(
-          ise + i * num_temps * num_band0 + j * num_band0,
-          num_band0,
-          num_band,
-          fc3_normal_squared,
-          frequencies,
-          triplets->data + i * 3,
-          weights[i],
-          iw,
-          iw + num_band_prod,
-          iw_zero,
-          temperatures->data[j],
-          cutoff_frequency,
-          1);
-      }
-      free(fc3_normal_squared);
-      fc3_normal_squared = NULL;
-      free(iw);
-      iw = NULL;
-      free(iw_zero);
-      iw_zero = NULL;
+        1 - openmp_per_triplets);
     }
+    free(fc3_normal_squared);
+    fc3_normal_squared = NULL;
+    free(iw);
+    iw = NULL;
+    free(iw_zero);
+    iw_zero = NULL;
   }
 
   for (i = 0; i < num_temps * num_band0; i++) {

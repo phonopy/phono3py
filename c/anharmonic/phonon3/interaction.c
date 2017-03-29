@@ -106,63 +106,42 @@ void get_interaction(Darray *fc3_normal_squared,
                      const int symmetrize_fc3_q,
                      const double cutoff_frequency)
 {
-  int i, num_band, num_band0, num_band_prod;
+  int i, num_band, num_band0, num_band_prod, openmp_per_triplets;
 
   num_band0 = fc3_normal_squared->dims[1];
   num_band = frequencies->dims[1];
   num_band_prod = num_band0 * num_band * num_band;
 
   if (triplets->dims[0] > num_band * num_band) {
-#pragma omp parallel for schedule(guided)
-    for (i = 0; i < triplets->dims[0]; i++) {
-      get_interaction_at_triplet(
-        fc3_normal_squared->data + i * num_band_prod,
-        num_band0,
-        num_band,
-        g_zero + i * num_band_prod,
-        frequencies->data,
-        eigenvectors->data,
-        triplets->data + i * 3,
-        grid_address,
-        mesh,
-        fc3->data,
-        shortest_vectors,
-        multiplicity->data,
-        masses,
-        p2s_map,
-        s2p_map,
-        band_indices,
-        symmetrize_fc3_q,
-        cutoff_frequency,
-        i,
-        triplets->dims[0],
-        0);
-    }
+    openmp_per_triplets = 1;
   } else {
-    for (i = 0; i < triplets->dims[0]; i++) {
-      get_interaction_at_triplet(
-        fc3_normal_squared->data + i * num_band_prod,
-        num_band0,
-        num_band,
-        g_zero + i * num_band_prod,
-        frequencies->data,
-        eigenvectors->data,
-        triplets->data + i * 3,
-        grid_address,
-        mesh,
-        fc3->data,
-        shortest_vectors,
-        multiplicity->data,
-        masses,
-        p2s_map,
-        s2p_map,
-        band_indices,
-        symmetrize_fc3_q,
-        cutoff_frequency,
-        i,
-        triplets->dims[0],
-        1);
-    }
+    openmp_per_triplets = 0;
+  }
+
+#pragma omp parallel for schedule(guided) if (openmp_per_triplets)
+  for (i = 0; i < triplets->dims[0]; i++) {
+    get_interaction_at_triplet(
+      fc3_normal_squared->data + i * num_band_prod,
+      num_band0,
+      num_band,
+      g_zero + i * num_band_prod,
+      frequencies->data,
+      eigenvectors->data,
+      triplets->data + i * 3,
+      grid_address,
+      mesh,
+      fc3->data,
+      shortest_vectors,
+      multiplicity->data,
+      masses,
+      p2s_map,
+      s2p_map,
+      band_indices,
+      symmetrize_fc3_q,
+      cutoff_frequency,
+      i,
+      triplets->dims[0],
+      1 - openmp_per_triplets);
   }
 }
 
