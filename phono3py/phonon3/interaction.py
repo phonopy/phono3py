@@ -63,7 +63,6 @@ class Interaction(object):
         self._grid_address = None
         self._bz_map = None
         self._interaction_strength = None
-        self._g_zero = None
 
         self._phonon_done = None
         self._frequencies = None
@@ -72,10 +71,19 @@ class Interaction(object):
         self._nac_q_direction = None
 
         self._band_index_count = 0
+
+        svecs, multiplicity = get_smallest_vectors(self._supercell,
+                                                   self._primitive,
+                                                   self._symprec)
+        self._smallest_vectors = svecs
+        self._multiplicity = multiplicity
+        self._masses = np.array(self._primitive.get_masses(), dtype='double')
+        self._p2s = self._primitive.get_primitive_to_supercell_map()
+        self._s2p = self._primitive.get_supercell_to_primitive_map()
         
         self._allocate_phonon()
         
-    def run(self, lang='C'):
+    def run(self, lang='C', g_zero=None):
         num_band = self._primitive.get_number_of_atoms() * 3
         num_triplets = len(self._triplets_at_q)
 
@@ -85,7 +93,7 @@ class Interaction(object):
         if self._constant_averaged_interaction is None:
             self._interaction_strength[:] = 0
             if lang == 'C':
-                self._run_c()
+                self._run_c(g_zero)
             else:
                 self._run_py()
         else:
@@ -102,11 +110,17 @@ class Interaction(object):
     def get_phonons(self):
         return self._frequencies, self._eigenvectors, self._phonon_done
 
+    def get_fc3(self):
+        return self._fc3
+
     def get_dynamical_matrix(self):
         return self._dm
 
     def get_primitive(self):
         return self._primitive
+
+    def get_supercell(self):
+        return self._supercell
 
     def get_triplets_at_q(self):
         return (self._triplets_at_q,
@@ -139,8 +153,18 @@ class Interaction(object):
         num_band = self._primitive.get_number_of_atoms() * 3
         return np.dot(w, v_sum) / num_band ** 2
 
+    def get_primitive_and_supercell_correspondence(self):
+        return (self._smallest_vectors,
+                self._multiplicity,
+                self._p2s,
+                self._s2p,
+                self._masses)
+
     def get_nac_q_direction(self):
         return self._nac_q_direction
+
+    def get_unit_conversion_factor(self):
+        return self._unit_conversion
 
     def set_grid_point(self, grid_point, stores_triplets_map=False):
         reciprocal_lattice = np.linalg.inv(self._primitive.get_cell())
@@ -262,9 +286,6 @@ class Interaction(object):
         #         self._set_phonon_py(gp)
         self._set_phonon_c(grid_points)
 
-    def set_g_zero(self, g_zero):
-        self._g_zero = g_zero
-
     def _set_band_indices(self, band_indices):
         num_band = self._primitive.get_number_of_atoms() * 3
         if band_indices is None:
@@ -272,22 +293,16 @@ class Interaction(object):
         else:
             self._band_indices = np.array(band_indices, dtype='intc')
 
-    def _run_c(self):
+    def _run_c(self, g_zero):
         import phono3py._phono3py as phono3c
         
         num_band = self._primitive.get_number_of_atoms() * 3
-        svecs, multiplicity = get_smallest_vectors(self._supercell,
-                                                   self._primitive,
-                                                   self._symprec)
-        masses = np.array(self._primitive.get_masses(), dtype='double')
-        p2s = self._primitive.get_primitive_to_supercell_map()
-        s2p = self._primitive.get_supercell_to_primitive_map()
 
-        if self._g_zero is None or self._symmetrize_fc3_q:
+        if g_zero is None or self._symmetrize_fc3_q:
             _g_zero = np.zeros(self._interaction_strength.shape,
                                dtype='byte', order='C')
         else:
-            _g_zero = self._g_zero
+            _g_zero = g_zero
 
         phono3c.interaction(self._interaction_strength,
                             _g_zero,
@@ -297,11 +312,11 @@ class Interaction(object):
                             self._grid_address,
                             self._mesh,
                             self._fc3,
-                            svecs,
-                            multiplicity,
-                            masses,
-                            p2s,
-                            s2p,
+                            self._smallest_vectors,
+                            self._multiplicity,
+                            self._masses,
+                            self._p2s,
+                            self._s2p,
                             self._band_indices,
                             self._symmetrize_fc3_q,
                             self._cutoff_frequency)

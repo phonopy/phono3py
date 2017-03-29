@@ -1,9 +1,11 @@
 import numpy as np
+from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phono3py.file_IO import (write_kappa_to_hdf5, write_triplets,
                               read_gamma_from_hdf5, write_grid_address,
                               write_gamma_detail_to_hdf5)
 from phono3py.phonon3.conductivity import Conductivity, unit_to_WmK
-from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
+from phono3py.phonon3.imag_self_energy import (ImagSelfEnergy,
+                                               average_by_degeneracy)
 from phono3py.phonon3.triplets import get_grid_points_by_rotations
 
 def get_thermal_conductivity_RTA(
@@ -21,7 +23,6 @@ def get_thermal_conductivity_RTA(
         coarse_mesh_shifts=None,
         is_kappa_star=True,
         gv_delta_q=1e-4,
-        run_with_g=True, # integration weights from gaussian smearing function
         is_full_pp=False,
         write_gamma=False,
         read_gamma=False,
@@ -50,7 +51,6 @@ def get_thermal_conductivity_RTA(
         coarse_mesh_shifts=coarse_mesh_shifts,
         is_kappa_star=is_kappa_star,
         gv_delta_q=gv_delta_q,
-        run_with_g=run_with_g,
         is_full_pp=is_full_pp,
         is_gamma_detail=(write_gamma_detail or is_N_U),
         log_level=log_level)
@@ -378,7 +378,7 @@ class Conductivity_RTA(Conductivity):
                  interaction,
                  symmetry,
                  grid_points=None,
-                 temperatures=np.arange(0, 1001, 10, dtype='double'),
+                 temperatures=None,
                  sigmas=None,
                  is_isotope=False,
                  mass_variances=None,
@@ -389,7 +389,6 @@ class Conductivity_RTA(Conductivity):
                  coarse_mesh_shifts=None,
                  is_kappa_star=True,
                  gv_delta_q=None,
-                 run_with_g=True,
                  is_full_pp=False,
                  is_gamma_detail=False,
                  log_level=0):
@@ -398,7 +397,6 @@ class Conductivity_RTA(Conductivity):
         self._sigmas = None
         self._is_kappa_star = None
         self._gv_delta_q = None
-        self._run_with_g = run_with_g
         self._is_full_pp = None
         self._is_gamma_detail = is_gamma_detail
         self._log_level = None
@@ -517,7 +515,14 @@ class Conductivity_RTA(Conductivity):
                 print("Number of triplets: %d" %
                       len(self._pp.get_triplets_at_q()[0]))
 
-            self._set_gamma_at_sigmas(i)
+            if (self._is_full_pp or
+                len(self._sigmas) > 1 or
+                self._sigmas[0] is not None or
+                self._use_ave_pp or
+                self._is_gamma_detail):
+                self._set_gamma_at_sigmas(i)
+            else: # can save memory space
+                self._set_gamma_at_sigmas_lowmem(i)
 
         if self._isotope is not None and not self._read_gamma_iso:
             self._gamma_iso[:, i, :] = self._get_gamma_isotope_at_sigmas(i)
@@ -567,8 +572,7 @@ class Conductivity_RTA(Conductivity):
     def _set_gamma_at_sigmas(self, i):
         for j, sigma in enumerate(self._sigmas):
             self._collision.set_sigma(sigma)
-            if sigma is None or self._run_with_g:
-                self._collision.set_integration_weights()
+            self._collision.set_integration_weights()
 
             if not self._use_ave_pp:
                 if self._log_level:
@@ -607,31 +611,51 @@ class Conductivity_RTA(Conductivity):
                         self._collision.get_detailed_imag_self_energy())
 
     def _set_gamma_at_sigmas_lowmem(self, i):
+        band_indices = self._pp.get_band_indices()
+        (svecs,
+         multiplicity,
+         p2s,
+         s2p,
+         masses) = self._pp.get_primitive_and_supercell_correspondence()
+        fc3 = self._pp.get_fc3()
+        triplets_at_q, weights_at_q, _, _ = self._pp.get_triplets_at_q()
+        bz_map = self._pp.get_bz_map()
+        symmetrize_fc3_q = 0
+        reciprocal_lattice = np.linalg.inv(self._pp.get_primitive().get_cell())
+        thm = TetrahedronMethod(reciprocal_lattice, mesh=self._mesh)
+
+        # It is assumed that self._sigmas = [None].
         for j, sigma in enumerate(self._sigmas):
             self._collision.set_sigma(sigma)
-            if sigma is None or self._run_with_g:
-                self._collision.set_integration_weights()
-
+            collisions = np.zeros((len(self._temperatures), len(band_indices)),
+                                  dtype='double')
             import phono3py._phono3py as phono3c
-            phono3c.imag_self_energy_with_g(self._imag_self_energy,
-                                            self._g,
-                                            self._g_zero,
-                                            self._frequencies,
-                                            self._eigenvectors,
-                                            self._triplets_at_q,
-                                            self._weights_at_q,
-                                            self._grid_address,
-                                            self._mesh,
-                                            self._fc3,
-                                            self._shortest_vectors,
-                                            self._multiplicity,
-                                            self._masses,
-                                            self._p2s_map,
-                                            self._s2p_map,
-                                            self._band_indices,
-                                            self._temperatures,
-                                            self._symmetrize_fc3_q,
-                                            self._cutoff_frequency)
+            phono3c.pp_collision(collisions,
+                                 thm.get_tetrahedra(),
+                                 self._frequencies,
+                                 self._eigenvectors,
+                                 triplets_at_q,
+                                 weights_at_q,
+                                 self._grid_address,
+                                 bz_map,
+                                 self._mesh,
+                                 fc3,
+                                 svecs,
+                                 multiplicity,
+                                 masses,
+                                 p2s,
+                                 s2p,
+                                 band_indices,
+                                 self._temperatures,
+                                 symmetrize_fc3_q,
+                                 self._cutoff_frequency)
+            col_unit_conv = self._collision.get_unit_conversion_factor()
+            pp_unit_conv = self._pp.get_unit_conversion_factor()
+            for k in range(len(self._temperatures)):
+                self._gamma[j, k, i, :] = average_by_degeneracy(
+                    collisions[k] * col_unit_conv * pp_unit_conv,
+                    band_indices,
+                    self._frequencies[self._grid_points[i]])
 
     def _show_log(self, q, i):
         gp = self._grid_points[i]

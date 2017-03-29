@@ -317,13 +317,13 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
 static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
 {
   PyArrayObject *gamma_py;
-  PyArrayObject *g_py;
-  PyArrayObject *g_zero_py;
+  PyArrayObject *relative_grid_address_py;
   PyArrayObject *frequencies_py;
   PyArrayObject *eigenvectors_py;
   PyArrayObject *triplets_py;
   PyArrayObject *triplet_weights_py;
   PyArrayObject *grid_address_py;
+  PyArrayObject *bz_map_py;
   PyArrayObject *mesh_py;
   PyArrayObject *fc3_py;
   PyArrayObject *shortest_vectors_py;
@@ -337,13 +337,13 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   int symmetrize_fc3_q;
 
   double *gamma;
-  double *g;
-  char *g_zero;
+  int (*relative_grid_address)[4][3];
   double *frequencies;
   lapack_complex_double *eigenvectors;
   Iarray *triplets;
   int *triplet_weights;
   int *grid_address;
+  int *bz_map;
   int *mesh;
   double *fc3;
   Darray *svecs;
@@ -356,13 +356,13 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOOOOid",
 			&gamma_py,
-                        &g_py,
-			&g_zero_py,
+                        &relative_grid_address_py,
 			&frequencies_py,
 			&eigenvectors_py,
 			&triplets_py,
                         &triplet_weights_py,
 			&grid_address_py,
+                        &bz_map_py,
 			&mesh_py,
 			&fc3_py,
 			&shortest_vectors_py,
@@ -379,14 +379,13 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
 
 
   gamma = (double*)PyArray_DATA(gamma_py);
-  g = (double*)PyArray_DATA(g_py);
-  g_zero = (char*)PyArray_DATA(g_zero_py);
+  relative_grid_address = (int(*)[4][3])PyArray_DATA(relative_grid_address_py);
   frequencies = (double*)PyArray_DATA(frequencies_py);
   eigenvectors = (lapack_complex_double*)PyArray_DATA(eigenvectors_py);
   triplets = convert_to_iarray(triplets_py);
   triplet_weights = (int*)PyArray_DATA(triplet_weights_py);
-  g_zero = (char*)PyArray_DATA(g_zero_py);
   grid_address = (int*)PyArray_DATA(grid_address_py);
+  bz_map = (int*)PyArray_DATA(bz_map_py);
   mesh = (int*)PyArray_DATA(mesh_py);
   fc3 = (double*)PyArray_DATA(fc3_py);
   svecs = convert_to_darray(shortest_vectors_py);
@@ -398,13 +397,13 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   temperatures = convert_to_darray(temperatures_py);
 
   get_pp_collision_with_g(gamma,
-                          g,
-                          g_zero,
+                          relative_grid_address,
                           frequencies,
                           eigenvectors,
                           triplets,
                           triplet_weights,
                           grid_address,
+                          bz_map,
                           mesh,
                           fc3,
                           svecs,
@@ -420,6 +419,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   free(triplets);
   free(svecs);
   free(band_indices);
+  free(temperatures);
 
   Py_RETURN_NONE;
 }

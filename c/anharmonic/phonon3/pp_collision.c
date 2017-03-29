@@ -40,15 +40,16 @@
 #include <phonoc_utils.h>
 #include <phonon3_h/pp_collision.h>
 #include <phonon3_h/interaction.h>
+#include <triplet_h/triplet.h>
 
 void get_pp_collision_with_g(double *imag_self_energy,
-                             const double *g,
-                             const char *g_zero,
+                             PHPYCONST int relative_grid_address[24][4][3],
                              const double *frequencies,
                              const lapack_complex_double *eigenvectors,
                              const Iarray *triplets,
                              const int *weights,
                              const int *grid_address,
+                             const int *bz_map,
                              const int *mesh,
                              const double *fc3,
                              const Darray *shortest_vectors,
@@ -62,24 +63,45 @@ void get_pp_collision_with_g(double *imag_self_energy,
                              const double cutoff_frequency)
 {
   int i, j, k, num_band, num_band0, num_band_prod, num_triplets, num_temps;
-  double *fc3_normal_squared, *ise;
+  double *fc3_normal_squared, *ise, *freqs_at_gp, *iw;
+  char *iw_zero;
 
   num_band0 = band_indices->dims[0];
   num_band = shortest_vectors->dims[1] * 3;
   num_band_prod = num_band0 * num_band * num_band;
   num_triplets = triplets->dims[0];
   num_temps = temperatures->dims[0];
-  fc3_normal_squared = (double*)malloc(sizeof(double) * num_band_prod);
   ise = (double*)malloc(sizeof(double) * num_triplets * num_temps * num_band0);
+  freqs_at_gp = (double*)malloc(sizeof(double) * num_band0);
+  for (i = 0; i < num_band0; i++) {
+    freqs_at_gp[i] = frequencies[triplets->data[0] * num_band +
+                                 band_indices->data[i]];
+  }
 
-  if (triplets->dims[0] > num_band * num_band) {
-#pragma omp parallel for schedule(guided) private(j)
+  /* if (num_triplets > num_band * num_band) { */
+#pragma omp parallel for schedule(guided) private(j, fc3_normal_squared, iw, iw_zero)
     for (i = 0; i < num_triplets; i++) {
+      iw = (double*)malloc(sizeof(double) * 2 * num_band_prod);
+      iw_zero = (char*)malloc(sizeof(char) * num_band_prod);
+      tpl_get_integration_weight(iw,
+                                 iw_zero,
+                                 freqs_at_gp,
+                                 num_band0,
+                                 relative_grid_address,
+                                 mesh,
+                                 triplets->data + i * 3,
+                                 1,
+                                 grid_address,
+                                 bz_map,
+                                 frequencies,
+                                 num_band,
+                                 2);
+      fc3_normal_squared = (double*)malloc(sizeof(double) * num_band_prod);
       get_interaction_at_triplet(
         fc3_normal_squared,
         num_band0,
         num_band,
-        g_zero + i * num_band_prod,
+        iw_zero,
         frequencies,
         eigenvectors,
         triplets->data + i * 3,
@@ -95,7 +117,7 @@ void get_pp_collision_with_g(double *imag_self_energy,
         symmetrize_fc3_q,
         cutoff_frequency,
         i,
-        triplets->dims[0],
+        num_triplets,
         0);
 
       for (j = 0; j < num_temps; j++) {
@@ -105,16 +127,22 @@ void get_pp_collision_with_g(double *imag_self_energy,
           num_band,
           fc3_normal_squared,
           frequencies,
-          triplets + i * 3,
+          triplets->data + i * 3,
           weights[i],
-          g + i * num_band_prod,
-          g + (i + num_triplets) * num_band_prod,
-          g_zero + i * num_band_prod,
+          iw,
+          iw + num_band_prod,
+          iw_zero,
           temperatures->data[j],
           cutoff_frequency);
       }
+      free(fc3_normal_squared);
+      fc3_normal_squared = NULL;
+      free(iw);
+      iw = NULL;
+      free(iw_zero);
+      iw_zero = NULL;
     }
-  }
+  /* } */
 
   for (i = 0; i < num_temps * num_band0; i++) {
     imag_self_energy[i] = 0;
@@ -129,8 +157,8 @@ void get_pp_collision_with_g(double *imag_self_energy,
     }
   }
 
-  free(fc3_normal_squared);
-  fc3_normal_squared = NULL;
+  free(freqs_at_gp);
+  freqs_at_gp = NULL;
   free(ise);
   ise = NULL;
 }

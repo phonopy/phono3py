@@ -14,7 +14,6 @@ def get_imag_self_energy(interaction,
                          num_frequency_points=None,
                          temperatures=None,
                          scattering_event_class=None, # class 1 or 2
-                         run_with_g=True,
                          write_detail=False,
                          log_level=0):
     """Imaginary part of self energy at frequency points
@@ -32,12 +31,7 @@ def get_imag_self_energy(interaction,
             instead of frequency_step.
         temperatures: Temperatures to be calculated at.
         scattering_event_class:
-            Extract scattering event class 1 or 2. This can be enabled only when
-            run_with_g is True.
-        run_with_g:
-            Integration weigths are calculated from gaussian smearing function.
-            More memory space is required, but a consistent routine can be used
-            both in tetrahedron method and smearing method.
+            Extract scattering event class 1 or 2.
         log_level: Log level. 0 or non 0 in this method.
 
     Returns:
@@ -120,9 +114,8 @@ def get_imag_self_energy(interaction,
 
             for k, freq_point in enumerate(frequency_points_at_sigma):
                 ise.set_frequency_points([freq_point])
-                if sigma is None or run_with_g:
-                    ise.set_integration_weights(
-                        scattering_event_class=scattering_event_class)
+                ise.set_integration_weights(
+                    scattering_event_class=scattering_event_class)
 
                 for l, t in enumerate(temperatures):
                     ise.set_temperature(t)
@@ -175,7 +168,6 @@ def get_linewidth(interaction,
                   grid_points,
                   sigmas,
                   temperatures=np.arange(0, 1001, 10, dtype='double'),
-                  run_with_g=True,
                   write_detail=False,
                   log_level=0):
     ise = ImagSelfEnergy(interaction, with_detail=write_detail)
@@ -219,8 +211,7 @@ def get_linewidth(interaction,
                     text += "sigma=%s" % sigma
                 print(text)
             ise.set_sigma(sigma)
-            if sigma is None or run_with_g:
-                ise.set_integration_weights()
+            ise.set_integration_weights()
 
             if write_detail:
                 num_band0 = len(interaction.get_band_indices())
@@ -310,6 +301,24 @@ def write_imag_self_energy(imag_self_energy,
                          filename=filename,
                          is_mesh_symmetry=is_mesh_symmetry)
 
+def average_by_degeneracy(imag_self_energy, band_indices, freqs_at_gp):
+    deg_sets = degenerate_sets(freqs_at_gp)
+    imag_se = np.zeros_like(imag_self_energy)
+    for dset in deg_sets:
+        bi_set = []
+        for i, bi in enumerate(band_indices):
+            if bi in dset:
+                bi_set.append(i)
+        for i in bi_set:
+            if imag_self_energy.ndim == 1:
+                imag_se[i] = (imag_self_energy[bi_set].sum() /
+                              len(bi_set))
+            else:
+                imag_se[:, i] = (
+                    imag_self_energy[:, bi_set].sum(axis=1) /
+                    len(bi_set))
+    return imag_se
+
 class ImagSelfEnergy(object):
     def __init__(self,
                  interaction,
@@ -379,11 +388,9 @@ class ImagSelfEnergy(object):
 
     def run_interaction(self, is_full_pp=True):
         if is_full_pp or self._frequency_points is not None:
-            self._pp.set_g_zero(None)
             self._pp.run(lang=self._lang)
         else:
-            self._pp.set_g_zero(self._g_zero)
-            self._pp.run(lang=self._lang)
+            self._pp.run(lang=self._lang, g_zero=self._g_zero)
         self._pp_strength = self._pp.get_interaction_strength()
 
     def set_integration_weights(self, scattering_event_class=None):
@@ -405,14 +412,26 @@ class ImagSelfEnergy(object):
             self._g[scattering_event_class - 1] = 0
 
     def get_imag_self_energy(self):
-        return self._get_imag_self_energy(self._imag_self_energy)
+        if self._cutoff_frequency is None:
+            return self._imag_self_energy
+        else:
+            return self._average_by_degeneracy(self._imag_self_energy)
 
     def get_imag_self_energy_N_and_U(self):
-        return (self._get_imag_self_energy(self._ise_N),
-                self._get_imag_self_energy(self._ise_U))
+        if self._cutoff_frequency is None:
+            return self._ise_N, self._ise_U
+        else:
+            return (self._average_by_degeneracy(self._ise_N),
+                    self._average_by_degeneracy(self._ise_U))
 
     def get_detailed_imag_self_energy(self):
         return self._detailed_imag_self_energy
+
+    def get_integration_weights(self):
+        return self._g, self._g_zero
+
+    def get_unit_conversion_factor(self):
+        return self._unit_conversion
 
     def set_grid_point(self, grid_point=None):
         if grid_point is None:
@@ -677,25 +696,7 @@ class ImagSelfEnergy(object):
 
         self._imag_self_energy *= self._unit_conversion
 
-    def _get_imag_self_energy(self, imag_self_energy):
-        if self._cutoff_frequency is None:
-            return imag_self_energy
-
-        # Averaging imag-self-energies by degenerate bands
-        imag_se = np.zeros_like(imag_self_energy)
-        freqs = self._frequencies[self._grid_point]
-        deg_sets = degenerate_sets(freqs)
-        for dset in deg_sets:
-            bi_set = []
-            for i, bi in enumerate(self._pp.get_band_indices()):
-                if bi in dset:
-                    bi_set.append(i)
-            for i in bi_set:
-                if self._frequency_points is None:
-                    imag_se[i] = (imag_self_energy[bi_set].sum() /
-                                  len(bi_set))
-                else:
-                    imag_se[:, i] = (
-                        imag_self_energy[:, bi_set].sum(axis=1) /
-                        len(bi_set))
-        return imag_se
+    def _average_by_degeneracy(self, imag_self_energy):
+        return average_by_degeneracy(imag_self_energy,
+                                     self._pp.get_band_indices(),
+                                     self._frequencies[self._grid_point])

@@ -37,15 +37,16 @@
 
 #include <lapacke.h>
 #include <phonoc_array.h>
+#include <phonoc_const.h>
 
 void get_pp_collision_with_g(double *imag_self_energy,
-                             const double *g,
-                             const char *g_zero,
+                             PHPYCONST int relative_grid_address[24][4][3],
                              const double *frequencies,
                              const lapack_complex_double *eigenvectors,
                              const Iarray *triplets,
                              const int *weights,
                              const int *grid_address,
+                             const int *bz_map,
                              const int *mesh,
                              const double *fc3,
                              const Darray *shortest_vectors,

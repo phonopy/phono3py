@@ -36,7 +36,10 @@ class Conductivity(object):
         self._is_full_pp = is_full_pp
         self._collision = None # has to be set derived class
 
-        self._temperatures = temperatures
+        if temperatures is None:
+            self._temperatures = np.arange(0, 1001, 10, dtype='double')
+        else:
+            self._temperatures = np.array(temperatures, dtype='double')
         self._is_kappa_star = is_kappa_star
         self._gv_delta_q = gv_delta_q
         self._log_level = log_level
@@ -221,7 +224,7 @@ class Conductivity(object):
 
         self._grid_point_count = 0
         self._pp.set_phonons(self._grid_points)
-        self._frequencies = self._pp.get_phonons()[0]
+        self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
 
     def _get_gamma_isotope_at_sigmas(self, i):
         gamma_iso = []
