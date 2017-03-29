@@ -502,6 +502,7 @@ class Conductivity_RTA(Conductivity):
         self._show_log_header(i)
         grid_point = self._grid_points[i]
         self._set_harmonic_properties(i, i)
+        num_band = self._primitive.get_number_of_atoms() * 3
 
         if self._read_gamma:
             if self._use_ave_pp:
@@ -511,9 +512,9 @@ class Conductivity_RTA(Conductivity):
                 self._set_gamma_at_sigmas(i)
         else:
             self._collision.set_grid_point(grid_point)
+            num_triplets = len(self._pp.get_triplets_at_q()[0])
             if self._log_level:
-                print("Number of triplets: %d" %
-                      len(self._pp.get_triplets_at_q()[0]))
+                print("Number of triplets: %d" % num_triplets)
 
             if (self._is_full_pp or
                 len(self._sigmas) > 1 or
