@@ -38,19 +38,6 @@
 #include <phonoc_utils.h>
 #include <phonon3_h/imag_self_energy_with_g.h>
 
-static double sum_imag_self_energy_at_band(const int i,
-                                           const int j,
-					   const double fc3_normal_squared,
-					   const double *n1,
-					   const double *n2,
-					   const double g1,
-					   const double g2_3);
-static double sum_imag_self_energy_at_band_0K(const int i,
-                                              const int j,
-					      const double fc3_normal_squared,
-					      const double *n1,
-					      const double *n2,
-					      const double g);
 static void
 detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
 				     double *imag_self_energy,
@@ -223,7 +210,7 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
                                  const double cutoff_frequency,
                                  const int openmp_at_bands)
 {
-  int i, ijk, j, k, l, num_g_pos, count;
+  int i, ijk, j, k, num_g_pos;
   double *n1, *n2, *ise;
   int (*g_pos)[4];
 
@@ -238,22 +225,18 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
                  cutoff_frequency);
 
   num_g_pos = 0;
-  for (i = 0; i < num_band0 * num_band * num_band; i ++) {
-    if (!g_zero[i]) {num_g_pos++;}
-  }
-
-  count = 0;
   ijk = 0;
-  g_pos = (int(*)[4])malloc(sizeof(int[4]) * num_g_pos);
+  g_pos = (int(*)[4])malloc(sizeof(int[4]) * num_band0 * num_band * num_band);
   for (i = 0; i < num_band0; i++) {
     for (j = 0; j < num_band; j++) {
       for (k = 0; k < num_band; k++) {
+        if (n1[j] < 0 || n2[k] < 0) {ijk++; continue;}
         if (!g_zero[ijk]) {
-          g_pos[count][0] = i;
-          g_pos[count][1] = j;
-          g_pos[count][2] = k;
-          g_pos[count][3] = ijk;
-          count++;
+          g_pos[num_g_pos][0] = i;
+          g_pos[num_g_pos][1] = j;
+          g_pos[num_g_pos][2] = k;
+          g_pos[num_g_pos][3] = ijk;
+          num_g_pos++;
         }
         ijk++;
       }
@@ -261,25 +244,17 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
   }
 
   ise = (double*)malloc(sizeof(double) * num_g_pos);
+  if (temperature > 0) {
 #pragma omp parallel for if (openmp_at_bands)
-  for (i = 0; i < num_g_pos; i++) {
-    if (temperature > 0) {
-      ise[i] = sum_imag_self_energy_at_band(
-        g_pos[i][1],
-        g_pos[i][2],
-        fc3_normal_squared[g_pos[i][3]],
-        n1,
-        n2,
-        g1[g_pos[i][3]],
-        g2_3[g_pos[i][3]]) * triplet_weight;
-    } else {
-      ise[i] = sum_imag_self_energy_at_band_0K(
-        g_pos[i][1],
-        g_pos[i][2],
-        fc3_normal_squared[g_pos[i][3]],
-        n1,
-        n2,
-        g1[g_pos[i][3]]) * triplet_weight;
+    for (i = 0; i < num_g_pos; i++) {
+      ise[i] = ((n1[g_pos[i][1]] + n2[g_pos[i][2]] + 1) * g1[g_pos[i][3]] +
+                (n1[g_pos[i][1]] - n2[g_pos[i][2]]) * g2_3[g_pos[i][3]]) *
+        fc3_normal_squared[g_pos[i][3]] * triplet_weight;
+    }
+  } else {
+#pragma omp parallel for if (openmp_at_bands)
+    for (i = 0; i < num_g_pos; i++) {
+      ise[i] = g1[g_pos[i][3]] * fc3_normal_squared[g_pos[i][3]] * triplet_weight;
     }
   }
 
@@ -300,30 +275,6 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
   n1 = NULL;
   free(n2);
   n2 = NULL;
-}
-
-static double sum_imag_self_energy_at_band(const int i,
-                                           const int j,
-					   const double fc3_normal_squared,
-					   const double *n1,
-					   const double *n2,
-					   const double g1,
-					   const double g2_3)
-{
-  if (n1[i] < 0 || n2[j] < 0) {return 0;}
-  return ((n1[i] + n2[j] + 1) * g1 +
-          (n1[i] - n2[j]) * g2_3) * fc3_normal_squared;
-}
-
-static double sum_imag_self_energy_at_band_0K(const int i,
-                                              const int j,
-					      const double fc3_normal_squared,
-					      const double *n1,
-					      const double *n2,
-					      const double g1)
-{
-  if (n1[i] < 0 || n2[j] < 0) {return 0;}
-  return g1 * fc3_normal_squared;
 }
 
 static void

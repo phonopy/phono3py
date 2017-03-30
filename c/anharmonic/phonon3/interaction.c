@@ -151,7 +151,7 @@ void get_interaction_at_triplet(double *fc3_normal_squared,
                                 const char *g_zero,
                                 const double *frequencies,
                                 const lapack_complex_double *eigenvectors,
-                                const int *triplets,
+                                const int *triplet,
                                 const int *grid_address,
                                 const int *mesh,
                                 const double *fc3,
@@ -163,25 +163,33 @@ void get_interaction_at_triplet(double *fc3_normal_squared,
                                 const int *band_indices,
                                 const int symmetrize_fc3_q,
                                 const double cutoff_frequency,
-                                const int triplet_index,
-                                const int num_triplets,
+                                const int triplet_index, /* only for print */
+                                const int num_triplets, /* only for print */
                                 const int openmp_at_bands)
 {
-  int j, k, gp;
+  int j, k;
   double *freqs[3];
   lapack_complex_double *eigvecs[3];
   double q[9];
 
   for (j = 0; j < 3; j++) {
-    gp = triplets[j];
     for (k = 0; k < 3; k++) {
-      q[j * 3 + k] = ((double)grid_address[gp * 3 + k]) / mesh[k];
+      q[j * 3 + k] = ((double)grid_address[triplet[j] * 3 + k]) / mesh[k];
     }
-    freqs[j] = frequencies + gp * num_band;
-    eigvecs[j] = eigenvectors + gp * num_band * num_band;
   }
 
   if (symmetrize_fc3_q) {
+    for (j = 0; j < 3; j++) {
+      freqs[j] = (double*)malloc(sizeof(double) * num_band);
+      eigvecs[j] = (lapack_complex_double*)
+        malloc(sizeof(lapack_complex_double) * num_band * num_band);
+      for (k = 0; k < num_band; k++) {
+        freqs[j][k] = frequencies[triplet[j] * num_band + k];
+      }
+      for (k = 0; k < num_band * num_band; k++) {
+        eigvecs[j][k] = eigenvectors[triplet[j] * num_band * num_band + k];
+      }
+    }
     real_to_normal_sym_q(fc3_normal_squared,
                          g_zero,
                          freqs,
@@ -200,15 +208,21 @@ void get_interaction_at_triplet(double *fc3_normal_squared,
                          triplet_index,
                          num_triplets,
                          openmp_at_bands);
+    for (j = 0; j < 3; j++) {
+      free(freqs[j]);
+      freqs[j] = NULL;
+      free(eigvecs[j]);
+      eigvecs[j] = NULL;
+    }
   } else {
     real_to_normal(fc3_normal_squared,
                    g_zero,
-                   freqs[0],
-                   freqs[1],
-                   freqs[2],
-                   eigvecs[0],
-                   eigvecs[1],
-                   eigvecs[2],
+                   frequencies + triplet[0] * num_band,
+                   frequencies + triplet[1] * num_band,
+                   frequencies + triplet[2] * num_band,
+                   eigenvectors + triplet[0] * num_band * num_band,
+                   eigenvectors + triplet[1] * num_band * num_band,
+                   eigenvectors + triplet[2] * num_band * num_band,
                    fc3,
                    q, /* q0, q1, q2 */
                    shortest_vectors,
@@ -294,8 +308,8 @@ static void real_to_normal(double *fc3_normal_squared,
 
 static void real_to_normal_sym_q(double *fc3_normal_squared,
                                  const char *g_zero,
-                                 double *freqs[3],
-                                 lapack_complex_double *eigvecs[3],
+                                 PHPYCONST double *freqs[3],
+                                 PHPYCONST lapack_complex_double *eigvecs[3],
                                  const double *fc3,
                                  const double q[9], /* q0, q1, q2 */
                                  const Darray *shortest_vectors,

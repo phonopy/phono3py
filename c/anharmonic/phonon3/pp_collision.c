@@ -80,7 +80,7 @@ void get_pp_collision_with_g(double *imag_self_energy,
                                  band_indices->data[i]];
   }
 
-  if (num_triplets > num_band * num_band) {
+  if (num_triplets * num_triplets > num_band * num_band * num_band) {
     openmp_per_triplets = 1;
   } else {
     openmp_per_triplets = 0;
