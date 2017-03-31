@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Command options and setting tags &#8212; Phono3py v.1.11.9</title>
+    <title>Command options and setting tags &#8212; Phono3py v.1.11.11</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.11.9',
+        VERSION:     '1.11.11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -30,7 +30,7 @@
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="top" title="Phono3py v.1.11.9" href="index.html" />
+    <link rel="top" title="Phono3py v.1.11.11" href="index.html" />
     <link rel="next" title="Output files" href="output-files.html" />
     <link rel="prev" title="CRYSTAL &amp; phono3py calculation" href="crystal.html" />
 <meta charset='utf-8'>
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>1.11.9</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.11.11</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -118,6 +118,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#mar-31-2017-version-1-11-11">Mar-31-2017: version 1.11.11</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#feb-9-2017-version-1-11-9">Feb-9-2017: version 1.11.9</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#dec-14-2016-version-1-11-7">Dec-14-2016: version 1.11.7</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#nov-27-2016-version-1-11-5">Nov-27-2016: version 1.11.5</a></li>
@@ -964,7 +965,7 @@ calculation. This option works only when <code class="docutils literal"><span cl
 activated. Therefore third-order force constants are not necessary to
 input. The physical unit of the value is <img class="math" src="_images/math/b1081ba55ca53aac658b057192e44ef64f27afa1.png" alt="\text{eV}^2"/>.</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;3 3 2&quot;</span> <span class="o">-</span><span class="n">v</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;32 32 20&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> \
-  <span class="o">--</span><span class="n">const_ave_pp</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">10</span>
+  <span class="o">--</span><span class="n">const_ave_pp</span><span class="o">=</span><span class="mf">1e-10</span>
 </pre></div>
 </div>
 </div>

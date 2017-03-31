@@ -3,6 +3,17 @@
 Change Log
 ==========
 
+Mar-31-2017: version 1.11.11
+----------------------------
+
+- Abinit code interface is implemented and now under the testing.
+- Reduction of memory usage in RTA thermal conductivity
+  calculation. This is especially effective for larger unit cell
+  case. Currently combinations with --full_pp, --write_gamma_detail,
+  and --simga(smearing method) are not supported for this. Performance
+  tuning is under going. In some case, computation can be slower than
+  the previous versions.
+
 Feb-9-2017: version 1.11.9
 ---------------------------
 
