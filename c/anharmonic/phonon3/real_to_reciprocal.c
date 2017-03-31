@@ -41,11 +41,27 @@
 #include <phonoc_utils.h>
 #include <phonon3_h/real_to_reciprocal.h>
 
+static void
+real_to_reciprocal_single_thread(lapack_complex_double *fc3_reciprocal,
+                                 const double q[9],
+                                 const double *fc3,
+                                 const Darray *shortest_vectors,
+                                 const int *multiplicity,
+                                 const int *p2s_map,
+                                 const int *s2p_map);
+static void
+real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
+                          const double q[9],
+                          const double *fc3,
+                          const Darray *shortest_vectors,
+                          const int *multiplicity,
+                          const int *p2s_map,
+                          const int *s2p_map);
 static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
                                         const double q[9],
-                                        const Darray *fc3,
+                                        const double *fc3,
                                         const Darray *shortest_vectors,
-                                        const Iarray *multiplicity,
+                                        const int *multiplicity,
                                         const int *p2s,
                                         const int *s2p,
                                         const int pi0,
@@ -60,16 +76,46 @@ get_pre_phase_factor(const int i,
 /* fc3_reciprocal[num_patom, num_patom, num_patom, 3, 3, 3] */
 void real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
                         const double q[9],
-                        const Darray *fc3,
+                        const double *fc3,
                         const Darray *shortest_vectors,
-                        const Iarray *multiplicity,
+                        const int *multiplicity,
                         const int *p2s_map,
-                        const int *s2p_map)
+                        const int *s2p_map,
+                        const int openmp_at_bands)
+{
+  if (openmp_at_bands) {
+    real_to_reciprocal_openmp(fc3_reciprocal,
+                              q,
+                              fc3,
+                              shortest_vectors,
+                              multiplicity,
+                              p2s_map,
+                              s2p_map);
+  } else {
+    real_to_reciprocal_single_thread(fc3_reciprocal,
+                                     q,
+                                     fc3,
+                                     shortest_vectors,
+                                     multiplicity,
+                                     p2s_map,
+                                     s2p_map);
+  }
+}
+
+
+static void
+real_to_reciprocal_single_thread(lapack_complex_double *fc3_reciprocal,
+                                 const double q[9],
+                                 const double *fc3,
+                                 const Darray *shortest_vectors,
+                                 const int *multiplicity,
+                                 const int *p2s_map,
+                                 const int *s2p_map)
 {
   int i, j, k, num_patom, adrs_shift;
   lapack_complex_double pre_phase_factor;
 
-  num_patom = multiplicity->dims[1];
+  num_patom = shortest_vectors->dims[1];
 
   for (i = 0; i < num_patom; i++) {
     for (j = 0; j < num_patom; j++) {
@@ -97,18 +143,19 @@ void real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
   }
 }
 
-void real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
-                               const double q[9],
-                               const Darray *fc3,
-                               const Darray *shortest_vectors,
-                               const Iarray *multiplicity,
-                               const int *p2s_map,
-                               const int *s2p_map)
+static void
+real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
+                          const double q[9],
+                          const double *fc3,
+                          const Darray *shortest_vectors,
+                          const int *multiplicity,
+                          const int *p2s_map,
+                          const int *s2p_map)
 {
   int i, j, k, jk, num_patom, adrs_shift;
   lapack_complex_double pre_phase_factor;
 
-  num_patom = multiplicity->dims[1];
+  num_patom = shortest_vectors->dims[1];
 
   for (i = 0; i < num_patom; i++) {
 #pragma omp parallel for private(j, k)
@@ -162,26 +209,25 @@ get_pre_phase_factor(const int i,
 
 static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
                                         const double q[9],
-                                        const Darray *fc3,
+                                        const double *fc3,
                                         const Darray *shortest_vectors,
-                                        const Iarray *multiplicity,
+                                        const int *multiplicity,
                                         const int *p2s,
                                         const int *s2p,
                                         const int pi0,
                                         const int pi1,
                                         const int pi2)
 {
-  int i, j, k, l, num_satom;
+  int i, j, k, l, num_satom, adrs_shift;
   lapack_complex_double phase_factor, phase_factor1, phase_factor2;
   double fc3_rec_real[27], fc3_rec_imag[27];
-  double *fc3_elem;
 
   for (i = 0; i < 27; i++) {
     fc3_rec_real[i] = 0;
     fc3_rec_imag[i] = 0;
   }
 
-  num_satom = multiplicity->dims[0];
+  num_satom = shortest_vectors->dims[0];
 
   i = p2s[pi0];
 
@@ -197,16 +243,13 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
       }
       phase_factor2 =
         get_phase_factor(q, shortest_vectors, multiplicity, pi0, k, 2);
-      fc3_elem = fc3->data + (i * 27 * num_satom * num_satom +
-                              j * 27 * num_satom +
-                              k * 27);
-
+      adrs_shift = i * 27 * num_satom * num_satom + j * 27 * num_satom + k * 27;
       phase_factor = phonoc_complex_prod(phase_factor1, phase_factor2);
       for (l = 0; l < 27; l++) {
         fc3_rec_real[l] +=
-          lapack_complex_double_real(phase_factor) * fc3_elem[l];
+          lapack_complex_double_real(phase_factor) * fc3[adrs_shift + l];
         fc3_rec_imag[l] +=
-          lapack_complex_double_imag(phase_factor) * fc3_elem[l];
+          lapack_complex_double_imag(phase_factor) * fc3[adrs_shift + l];
       }
     }
   }

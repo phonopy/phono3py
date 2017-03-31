@@ -97,7 +97,9 @@ int tpl_get_integration_weight(double *iw,
 			       const int bz_map[],
 			       const double frequencies[],
 			       const int num_band,
-			       const int num_iw)
+			       const int num_iw,
+                               const int openmp_per_triplets,
+                               const int openmp_per_bands)
 {
   return tpi_get_integration_weight(iw,
 				    iw_zero,
@@ -111,7 +113,9 @@ int tpl_get_integration_weight(double *iw,
 				    bz_map,
 				    frequencies,
 				    num_band,
-				    num_iw);
+				    num_iw,
+                                    openmp_per_triplets,
+                                    openmp_per_bands);
 }
 
 static int get_triplets_reciprocal_mesh_at_q(int map_triplets[],

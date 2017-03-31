@@ -599,6 +599,7 @@ def write_kappa_to_hdf5(temperature,
                         frequency=None,
                         group_velocity=None,
                         gv_by_gv=None,
+                        mean_free_path=None,
                         heat_capacity=None,
                         kappa=None,
                         mode_kappa=None,
@@ -636,6 +637,8 @@ def write_kappa_to_hdf5(temperature,
             w.create_dataset('group_velocity', data=group_velocity)
         if gv_by_gv is not None:
             w.create_dataset('gv_by_gv', data=gv_by_gv)
+        if mean_free_path is not None:
+            w.create_dataset('mean_free_path', data=mean_free_path)
         if heat_capacity is not None:
             w.create_dataset('heat_capacity', data=heat_capacity)
         if kappa is not None:

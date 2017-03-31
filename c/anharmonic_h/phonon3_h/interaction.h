@@ -35,6 +35,7 @@
 #ifndef __interaction_H__
 #define __interaction_H__
 
+#include <lapacke.h>
 #include <phonoc_array.h>
 
 void get_interaction(Darray *fc3_normal_squared,
@@ -53,4 +54,25 @@ void get_interaction(Darray *fc3_normal_squared,
 		     const int *band_indices,
 		     const int is_sym_q,
 		     const double cutoff_frequency);
+void get_interaction_at_triplet(double *fc3_normal_squared,
+                                const int num_band0,
+                                const int num_band,
+                                const char *g_zero,
+                                const double *frequencies,
+                                const lapack_complex_double *eigenvectors,
+                                const int *triplet,
+                                const int *grid_address,
+                                const int *mesh,
+                                const double *fc3,
+                                const Darray *shortest_vectors,
+                                const int *multiplicity,
+                                const double *masses,
+                                const int *p2s_map,
+                                const int *s2p_map,
+                                const int *band_indices,
+                                const int symmetrize_fc3_q,
+                                const double cutoff_frequency,
+                                const int triplet_index,
+                                const int num_triplets,
+                                const int openmp_at_bands);
 #endif

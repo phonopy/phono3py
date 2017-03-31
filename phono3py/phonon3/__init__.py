@@ -378,7 +378,6 @@ class Phono3py(object):
                              num_frequency_points=None,
                              temperatures=None,
                              scattering_event_class=None,
-                             run_with_g=True,
                              write_gamma_detail=False):
         if self._interaction is None:
             self.set_phph_interaction()
@@ -395,7 +394,6 @@ class Phono3py(object):
             num_frequency_points=num_frequency_points,
             temperatures=temperatures,
             scattering_event_class=scattering_event_class,
-            run_with_g=run_with_g,
             write_detail=write_gamma_detail,
             log_level=self._log_level)
 
@@ -415,7 +413,6 @@ class Phono3py(object):
     def run_linewidth(self,
                       grid_points,
                       temperatures=np.arange(0, 1001, 10, dtype='double'),
-                      run_with_g=True,
                       write_gamma_detail=False):
         if self._interaction is None:
             self.set_phph_interaction()
@@ -425,7 +422,6 @@ class Phono3py(object):
                                         grid_points,
                                         self._sigmas,
                                         temperatures=temperatures,
-                                        run_with_g=run_with_g,
                                         write_detail=write_gamma_detail,
                                         log_level=self._log_level)
 
@@ -454,7 +450,6 @@ class Phono3py(object):
             is_reducible_collision_matrix=False,
             is_kappa_star=True,
             gv_delta_q=None, # for group velocity
-            run_with_g=True, # integration weights for smearing method, too
             is_full_pp=False,
             pinv_cutoff=1.0e-8, # for pseudo-inversion of collision matrix
             write_gamma=False,
@@ -506,7 +501,6 @@ class Phono3py(object):
                 coarse_mesh_shifts=coarse_mesh_shifts,
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
-                run_with_g=run_with_g,
                 is_full_pp=is_full_pp,
                 write_gamma=write_gamma,
                 read_gamma=read_gamma,
