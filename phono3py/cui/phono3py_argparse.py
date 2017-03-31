@@ -108,7 +108,6 @@ def get_parser():
                         read_fc2=False,
                         read_fc3=False,
                         read_gamma=False,
-                        run_with_g=True,
                         scattering_event_class=None,
                         show_num_triplets=False,
                         sigma=None,
@@ -356,10 +355,6 @@ def get_parser():
     parser.add_option(
         "--reducible_colmat", dest="is_reducible_collision_matrix",
         action="store_true", help="Solve reducible collision matrix")
-    parser.add_option(
-        "--run_without_g", dest="run_with_g", action="store_false",
-        help=("Calculate imag-part self energy without using "
-              "integration weights from gaussian smearing function"))
     parser.add_option(
         "--scattering_event_class", dest="scattering_event_class", type="int",
         help=("Scattering event class 1 or 2 to draw imaginary part of self "

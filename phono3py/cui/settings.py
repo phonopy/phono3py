@@ -41,7 +41,6 @@ class Phono3pySettings(Settings):
         self._read_fc3 = False
         self._read_gamma = False
         self._read_phonon = False
-        self._run_with_g = True
         self._phonon_supercell_matrix = None
         self._pinv_cutoff = 1.0e-8
         self._pp_conversion_factor = None
@@ -283,12 +282,6 @@ class Phono3pySettings(Settings):
     def get_read_phonon(self):
         return self._read_phonon
 
-    def set_run_with_g(self, run_with_g):
-        self._run_with_g = run_with_g
-
-    def get_run_with_g(self):
-        return self._run_with_g
-
     def set_scattering_event_class(self, scattering_event_class):
         self._scattering_event_class = scattering_event_class
 
@@ -496,10 +489,6 @@ class Phono3pyConfParser(ConfParser):
             if opt.dest == 'read_phonon':
                 if self._options.read_phonon:
                     self._confs['read_phonon'] = '.true.'
-
-            if opt.dest == 'run_with_g':
-                if not self._options.run_with_g:
-                    self._confs['run_with_g'] = '.false.'
 
             if opt.dest == 'read_collision':
                 if self._options.read_collision is not None:
@@ -732,10 +721,6 @@ class Phono3pyConfParser(ConfParser):
                 if confs['read_phonon'].lower() == '.true.':
                     self.set_parameter('read_phonon', True)
 
-            if conf_key == 'run_with_g':
-                if confs['run_with_g'].lower() == '.false.':
-                    self.set_parameter('run_with_g', False)
-
             if conf_key == 'scattering_event_class':
                 self.set_parameter('scattering_event_class',
                                    confs['scattering_event_class'])
@@ -935,11 +920,6 @@ class Phono3pyConfParser(ConfParser):
         if 'read_phonon' in params:
             self._settings.set_read_phonon(params['read_phonon'])
 
-        # Calculate imag-part self energy with integration weights from gaussian
-        # smearing function
-        if 'run_with_g' in params:
-            self._settings.set_run_with_g(params['run_with_g'])
-            
         # Sum partial kappa at q-stars
         if 'is_kappa_star' in params:
             self._settings.set_is_kappa_star(params['is_kappa_star'])

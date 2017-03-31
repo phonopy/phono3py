@@ -312,7 +312,7 @@ class Conductivity_LBTE(Conductivity):
         self._sigmas = None
         self._is_kappa_star = None
         self._gv_delta_q = None
-        self._is_full_pp = is_full_pp
+        self._is_full_pp = None
         self._log_level = None
         self._primitive = None
         self._dm = None
@@ -363,6 +363,7 @@ class Conductivity_LBTE(Conductivity):
                               boundary_mfp=boundary_mfp,
                               is_kappa_star=is_kappa_star,
                               gv_delta_q=gv_delta_q,
+                              is_full_pp=is_full_pp,
                               log_level=log_level)
 
         self._is_reducible_collision_matrix = is_reducible_collision_matrix

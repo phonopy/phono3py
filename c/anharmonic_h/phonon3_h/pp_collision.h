@@ -32,38 +32,31 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef __imag_self_energy_H__
-#define __imag_self_energy_H__
+#ifndef __pp_collision_H__
+#define __pp_collision_H__
 
+#include <lapacke.h>
 #include <phonoc_array.h>
+#include <phonoc_const.h>
 
-void get_imag_self_energy(double *gamma,
-			  const Darray *fc3_normal_squared,
-			  const double fpoint,
-			  const double *frequencies,
-			  const int *grid_point_triplets,
-			  const int *triplet_weights,
-			  const double sigma,
-			  const double temperature,
-			  const double unit_conversion_factor,
-			  const double cutoff_frequency);
-void get_imag_self_energy_at_bands(double *imag_self_energy,
-				   const Darray *fc3_normal_squared,
-				   const int *band_indices,
-				   const double *frequencies,
-				   const int *grid_point_triplets,
-				   const int *triplet_weights,
-				   const double sigma,
-				   const double temperature,
-				   const double unit_conversion_factor,
-				   const double cutoff_frequency);
-int get_jointDOS(double *jdos,
-		 const int num_fpoints,
-		 const int num_triplet,
-		 const int num_band,
-		 const double *frequency_points,
-		 const double *frequencies,
-		 const int *triplets,
-		 const int *weights,
-		 const double sigma);
+void get_pp_collision_with_g(double *imag_self_energy,
+                             PHPYCONST int relative_grid_address[24][4][3],
+                             const double *frequencies,
+                             const lapack_complex_double *eigenvectors,
+                             const Iarray *triplets,
+                             const int *weights,
+                             const int *grid_address,
+                             const int *bz_map,
+                             const int *mesh,
+                             const double *fc3,
+                             const Darray *shortest_vectors,
+                             const int *multiplicity,
+                             const double *masses,
+                             const int *p2s_map,
+                             const int *s2p_map,
+                             const Iarray *band_indices,
+                             const Darray *temperatures,
+                             const int symmetrize_fc3_q,
+                             const double cutoff_frequency);
+
 #endif

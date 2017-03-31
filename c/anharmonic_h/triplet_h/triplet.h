@@ -70,7 +70,6 @@ int tpl_get_BZ_triplets_at_q(int triplets[][3],
 			     const int num_map_triplets,
 			     const int mesh[3]);
 
-
 int tpl_get_integration_weight(double *iw,
 			       char *iw_zero,
 			       const double frequency_points[],
@@ -83,6 +82,8 @@ int tpl_get_integration_weight(double *iw,
 			       const int bz_map[],
 			       const double frequencies[],
 			       const int num_band,
-			       const int num_iw);
+			       const int num_iw,
+                               const int openmp_per_triplets,
+                               const int openmp_per_bands);
 
 #endif

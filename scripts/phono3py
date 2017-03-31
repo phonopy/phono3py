@@ -667,16 +667,9 @@ if run_mode == "linewidth":
     phono3py.run_linewidth(
         grid_points,
         temperatures=temperatures,
-        run_with_g=settings.get_run_with_g(),
         write_gamma_detail=settings.get_write_gamma_detail())
     phono3py.write_linewidth(filename=output_filename)
 elif run_mode == "imag_self_energy":
-    if not settings.get_run_with_g() and settings.get_scattering_event_class():
-        print("--run_without_g and --scattering_event_class can not used "
-              "together.")
-        if log_level:
-            print_error()
-        sys.exit(1)
     if grid_points is None:
         print("Grid point(s) has to be specified with --gp or --ga option.")
         if log_level:
@@ -688,7 +681,6 @@ elif run_mode == "imag_self_energy":
         num_frequency_points=num_frequency_points,
         temperatures=temperature_points,
         scattering_event_class=settings.get_scattering_event_class(),
-        run_with_g=settings.get_run_with_g(),
         write_gamma_detail=settings.get_write_gamma_detail())
     phono3py.write_imag_self_energy(filename=output_filename)
 elif run_mode == "frequency_shift":
@@ -711,7 +703,6 @@ elif run_mode == "conductivity-RTA" or run_mode == "conductivity-LBTE":
         is_reducible_collision_matrix=settings.get_is_reducible_collision_matrix(),
         is_kappa_star=settings.get_is_kappa_star(),
         gv_delta_q=settings.get_group_velocity_delta_q(),
-        run_with_g=settings.get_run_with_g(),
         is_full_pp=settings.get_is_full_pp(),
         pinv_cutoff=settings.get_pinv_cutoff(),
         write_gamma=settings.get_write_gamma(),
