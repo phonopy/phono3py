@@ -40,7 +40,7 @@
 
 lapack_complex_double get_phase_factor(const double q[],
 				       const Darray *shortest_vectors,
-				       const Iarray *multiplicity,
+				       const int *multiplicity,
 				       const int pi0,
 				       const int si,
 				       const int qi);

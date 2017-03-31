@@ -45,7 +45,7 @@
 
 lapack_complex_double get_phase_factor(const double q[],
 				       const Darray *shortest_vectors,
-				       const Iarray *multiplicity,
+				       const int *multiplicity,
 				       const int pi0,
 				       const int si,
 				       const int qi)
@@ -57,7 +57,7 @@ lapack_complex_double get_phase_factor(const double q[],
   svecs = shortest_vectors->data + (si * shortest_vectors->dims[1] *
 				    shortest_vectors->dims[2] * 3 +
 				    pi0 * shortest_vectors->dims[2] * 3);
-  multi = multiplicity->data[si * multiplicity->dims[1] + pi0];
+  multi = multiplicity[si * shortest_vectors->dims[1] + pi0];
 
   sum_real = 0;
   sum_imag = 0;

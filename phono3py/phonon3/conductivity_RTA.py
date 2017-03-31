@@ -1,12 +1,11 @@
 import numpy as np
-from phonopy.phonon.group_velocity import get_group_velocity
-from phonopy.units import THzToEv, THz, Angstrom
-from phonopy.phonon.thermal_properties import mode_cv as get_mode_cv
+from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phono3py.file_IO import (write_kappa_to_hdf5, write_triplets,
                               read_gamma_from_hdf5, write_grid_address,
                               write_gamma_detail_to_hdf5)
 from phono3py.phonon3.conductivity import Conductivity, unit_to_WmK
-from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
+from phono3py.phonon3.imag_self_energy import (ImagSelfEnergy,
+                                               average_by_degeneracy)
 from phono3py.phonon3.triplets import get_grid_points_by_rotations
 
 def get_thermal_conductivity_RTA(
@@ -24,7 +23,6 @@ def get_thermal_conductivity_RTA(
         coarse_mesh_shifts=None,
         is_kappa_star=True,
         gv_delta_q=1e-4,
-        run_with_g=True, # integration weights from gaussian smearing function
         is_full_pp=False,
         write_gamma=False,
         read_gamma=False,
@@ -53,7 +51,6 @@ def get_thermal_conductivity_RTA(
         coarse_mesh_shifts=coarse_mesh_shifts,
         is_kappa_star=is_kappa_star,
         gv_delta_q=gv_delta_q,
-        run_with_g=run_with_g,
         is_full_pp=is_full_pp,
         is_gamma_detail=(write_gamma_detail or is_N_U),
         log_level=log_level)
@@ -83,7 +80,7 @@ def get_thermal_conductivity_RTA(
         if (grid_points is None and _all_bands_exist(interaction)):
             br.set_kappa_at_sigmas()
             _write_kappa(br,
-                         interaction,
+                         interaction.get_primitive().get_volume(),
                          filename=output_filename,
                          log_level=log_level)
 
@@ -220,7 +217,7 @@ def _write_triplets(interaction, filename=None):
                    filename=filename)
     write_grid_address(grid_address, mesh, filename=filename)
 
-def _write_kappa(br, interaction, filename=None, log_level=0):
+def _write_kappa(br, volume, filename=None, log_level=0):
     temperatures = br.get_temperatures()
     sigmas = br.get_sigmas()
     gamma = br.get_gamma()
@@ -240,7 +237,6 @@ def _write_kappa(br, interaction, filename=None, log_level=0):
     num_ignored_phonon_modes = br.get_number_of_ignored_phonon_modes()
     num_band = br.get_frequencies().shape[1]
     num_phonon_modes = br.get_number_of_sampling_grid_points() * num_band
-    volume = interaction.get_primitive().get_volume()
 
     for i, sigma in enumerate(sigmas):
         kappa_at_sigma = kappa[i]
@@ -382,7 +378,7 @@ class Conductivity_RTA(Conductivity):
                  interaction,
                  symmetry,
                  grid_points=None,
-                 temperatures=np.arange(0, 1001, 10, dtype='double'),
+                 temperatures=None,
                  sigmas=None,
                  is_isotope=False,
                  mass_variances=None,
@@ -393,7 +389,6 @@ class Conductivity_RTA(Conductivity):
                  coarse_mesh_shifts=None,
                  is_kappa_star=True,
                  gv_delta_q=None,
-                 run_with_g=True,
                  is_full_pp=False,
                  is_gamma_detail=False,
                  log_level=0):
@@ -402,8 +397,7 @@ class Conductivity_RTA(Conductivity):
         self._sigmas = None
         self._is_kappa_star = None
         self._gv_delta_q = None
-        self._run_with_g = run_with_g
-        self._is_full_pp = is_full_pp
+        self._is_full_pp = None
         self._is_gamma_detail = is_gamma_detail
         self._log_level = None
         self._primitive = None
@@ -424,6 +418,7 @@ class Conductivity_RTA(Conductivity):
         self._read_gamma_iso = False
 
         self._frequencies = None
+        self._cv = None
         self._gv = None
         self._gv_sum2 = None
         self._gamma = None
@@ -438,9 +433,6 @@ class Conductivity_RTA(Conductivity):
         self._num_sampling_grid_points = None
 
         self._mesh = None
-        self._mesh_divisors = None
-        self._coarse_mesh = None
-        self._coarse_mesh_shifts = None
         self._conversion_factor = None
 
         self._is_isotope = None
@@ -461,31 +453,18 @@ class Conductivity_RTA(Conductivity):
                               boundary_mfp=boundary_mfp,
                               is_kappa_star=is_kappa_star,
                               gv_delta_q=gv_delta_q,
+                              is_full_pp=is_full_pp,
                               log_level=log_level)
-
-        self._cv = None
 
         if self._temperatures is not None:
             self._allocate_values()
 
     def set_kappa_at_sigmas(self):
         num_band = self._primitive.get_number_of_atoms() * 3
-        self._num_sampling_grid_points = 0
-
         for i, grid_point in enumerate(self._grid_points):
             cv = self._cv[:, i, :]
             gp = self._grid_points[i]
             frequencies = self._frequencies[gp]
-
-            # Outer product of group velocities (v x v) [num_k*, num_freqs, 3, 3]
-            gv_by_gv_tensor, order_kstar = self._get_gv_by_gv(i)
-            self._num_sampling_grid_points += order_kstar
-
-            # Sum all vxv at k*
-            gv_sum2 = np.zeros((6, num_band), dtype='double')
-            for j, vxv in enumerate(
-                ([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])):
-                gv_sum2[j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
 
             # Kappa
             for j in range(len(self._sigmas)):
@@ -497,19 +476,11 @@ class Conductivity_RTA(Conductivity):
                             continue
 
                         self._mode_kappa[j, k, i, l] = (
-                            gv_sum2[:, l] * cv[k, l] / (g_sum[l] * 2) *
+                            self._gv_sum2[i, l] * cv[k, l] / (g_sum[l] * 2) *
                             self._conversion_factor)
-
-            self._gv_sum2[i] = gv_sum2.T
 
         self._mode_kappa /= self._num_sampling_grid_points
         self._kappa = self._mode_kappa.sum(axis=2).sum(axis=2)
-
-    def get_mode_heat_capacities(self):
-        return self._cv
-
-    def get_gv_by_gv(self):
-        return self._gv_sum2
 
     def get_gamma_N_U(self):
         return (self._gamma_N, self._gamma_U)
@@ -523,9 +494,6 @@ class Conductivity_RTA(Conductivity):
     def get_number_of_sampling_grid_points(self):
         return self._num_sampling_grid_points
 
-    def get_averaged_pp_interaction(self):
-        return self._averaged_pp_interaction
-
     def set_averaged_pp_interaction(self, ave_pp):
         self._averaged_pp_interaction = ave_pp
 
@@ -533,6 +501,8 @@ class Conductivity_RTA(Conductivity):
         i = self._grid_point_count
         self._show_log_header(i)
         grid_point = self._grid_points[i]
+        self._set_harmonic_properties(i, i)
+        num_band = self._primitive.get_number_of_atoms() * 3
 
         if self._read_gamma:
             if self._use_ave_pp:
@@ -542,19 +512,21 @@ class Conductivity_RTA(Conductivity):
                 self._set_gamma_at_sigmas(i)
         else:
             self._collision.set_grid_point(grid_point)
+            num_triplets = len(self._pp.get_triplets_at_q()[0])
             if self._log_level:
-                print("Number of triplets: %d" %
-                      len(self._pp.get_triplets_at_q()[0]))
-                print("Calculating ph-ph interaction...")
+                print("Number of triplets: %d" % num_triplets)
 
-            self._set_gamma_at_sigmas(i)
+            if (self._is_full_pp or
+                len(self._sigmas) > 1 or
+                self._sigmas[0] is not None or
+                self._use_ave_pp or
+                self._is_gamma_detail):
+                self._set_gamma_at_sigmas(i)
+            else: # can save memory space
+                self._set_gamma_at_sigmas_lowmem(i)
 
         if self._isotope is not None and not self._read_gamma_iso:
-            self._set_gamma_isotope_at_sigmas(i)
-
-        freqs = self._frequencies[grid_point][self._pp.get_band_indices()]
-        self._cv[:, i, :] = self._get_cv(freqs)
-        self._set_gv(i)
+            self._gamma_iso[:, i, :] = self._get_gamma_isotope_at_sigmas(i)
 
         if self._log_level:
             self._show_log(self._qpoints[i], i)
@@ -581,7 +553,8 @@ class Conductivity_RTA(Conductivity):
                 self._gamma_N = np.zeros_like(self._gamma)
                 self._gamma_U = np.zeros_like(self._gamma)
         self._gv = np.zeros((num_grid_points, num_band0, 3), dtype='double')
-        self._gv_sum2 = np.zeros((num_grid_points, num_band0, 6), dtype='double')
+        self._gv_sum2 = np.zeros((num_grid_points, num_band0, 6),
+                                 dtype='double')
         self._cv = np.zeros(
             (num_temp, num_grid_points, num_band0), dtype='double')
         if self._isotope is not None:
@@ -600,33 +573,33 @@ class Conductivity_RTA(Conductivity):
     def _set_gamma_at_sigmas(self, i):
         for j, sigma in enumerate(self._sigmas):
             self._collision.set_sigma(sigma)
-            if sigma is None or self._run_with_g:
-                self._collision.set_integration_weights()
+            self._collision.set_integration_weights()
 
             if not self._use_ave_pp:
                 if self._log_level:
-                    text = "Calculating Gamma of ph-ph with "
+                    text = "Collisions will be calculated with "
                     if sigma is None:
-                        text += "tetrahedron method"
+                        text += "tetrahedron method."
                     else:
-                        text += "sigma=%s" % sigma
+                        text += "sigma=%s." % sigma
                     print(text)
-                if self._is_full_pp and j != 0:
-                    pass
-                else:
+                if not self._is_full_pp or j == 0:
+                    print("Calculating ph-ph interaction...")
                     self._collision.run_interaction(is_full_pp=self._is_full_pp)
-                if self._is_full_pp and j == 0:
-                    self._averaged_pp_interaction[i] = (
-                        self._pp.get_averaged_interaction())
+                    if self._is_full_pp:
+                        self._averaged_pp_interaction[i] = (
+                            self._pp.get_averaged_interaction())
 
             # Number of triplets depends on q-point.
             # So this is allocated each time.
             if self._is_gamma_detail:
                 num_temp = len(self._temperatures)
-                self._gamma_detail_at_q = np.zeros(
+                self._gamma_detail_at_q = np.empty(
                     ((num_temp,) + self._pp.get_interaction_strength().shape),
                     dtype='double', order='C')
+                self._gamma_detail_at_q[:] = 0
 
+            print("Calculating collisions at temperatures")
             for k, t in enumerate(self._temperatures):
                 self._collision.set_temperature(t)
                 self._collision.run()
@@ -638,49 +611,104 @@ class Conductivity_RTA(Conductivity):
                     self._gamma_detail_at_q[k] = (
                         self._collision.get_detailed_imag_self_energy())
 
-    def _get_gv_by_gv(self, i):
-        rotation_map = get_grid_points_by_rotations(
-            self._grid_address[self._grid_points[i]],
-            self._point_operations,
-            self._mesh)
-        gv_by_gv = np.zeros((len(self._gv[i]), 3, 3), dtype='double')
+    def _set_gamma_at_sigmas_lowmem(self, i):
+        band_indices = self._pp.get_band_indices()
+        (svecs,
+         multiplicity,
+         p2s,
+         s2p,
+         masses) = self._pp.get_primitive_and_supercell_correspondence()
+        fc3 = self._pp.get_fc3()
+        triplets_at_q, weights_at_q, _, _ = self._pp.get_triplets_at_q()
+        bz_map = self._pp.get_bz_map()
+        symmetrize_fc3_q = 0
+        reciprocal_lattice = np.linalg.inv(self._pp.get_primitive().get_cell())
+        thm = TetrahedronMethod(reciprocal_lattice, mesh=self._mesh)
 
-        for r in self._rotations_cartesian:
-            gvs_rot = np.dot(self._gv[i], r.T)
-            gv_by_gv += [np.outer(r_gv, r_gv) for r_gv in gvs_rot]
-        gv_by_gv /= len(rotation_map) // len(np.unique(rotation_map))
-        order_kstar = len(np.unique(rotation_map))
-
-        if order_kstar != self._grid_weights[i]:
-            if self._log_level:
-                print("*" * 33  + "Warning" + "*" * 33)
-                print(" Number of elements in k* is unequal "
-                      "to number of equivalent grid-points.")
-                print("*" * 73)
-
-        return gv_by_gv, order_kstar
-
-    def _get_cv(self, freqs):
-        cv = np.zeros((len(self._temperatures), len(freqs)), dtype='double')
-        # T/freq has to be large enough to avoid divergence.
-        # Otherwise just set 0.
-        for i, f in enumerate(freqs):
-            finite_t = (self._temperatures > f / 100)
-            if f > self._cutoff_frequency:
-                cv[:, i] = np.where(
-                    finite_t, get_mode_cv(
-                        np.where(finite_t, self._temperatures, 10000),
-                        f * THzToEv), 0)
-        return cv
+        # It is assumed that self._sigmas = [None].
+        for j, sigma in enumerate(self._sigmas):
+            self._collision.set_sigma(sigma)
+            collisions = np.zeros((len(self._temperatures), len(band_indices)),
+                                  dtype='double')
+            import phono3py._phono3py as phono3c
+            phono3c.pp_collision(collisions,
+                                 thm.get_tetrahedra(),
+                                 self._frequencies,
+                                 self._eigenvectors,
+                                 triplets_at_q,
+                                 weights_at_q,
+                                 self._grid_address,
+                                 bz_map,
+                                 self._mesh,
+                                 fc3,
+                                 svecs,
+                                 multiplicity,
+                                 masses,
+                                 p2s,
+                                 s2p,
+                                 band_indices,
+                                 self._temperatures,
+                                 symmetrize_fc3_q,
+                                 self._cutoff_frequency)
+            col_unit_conv = self._collision.get_unit_conversion_factor()
+            pp_unit_conv = self._pp.get_unit_conversion_factor()
+            for k in range(len(self._temperatures)):
+                self._gamma[j, k, i, :] = average_by_degeneracy(
+                    collisions[k] * col_unit_conv * pp_unit_conv,
+                    band_indices,
+                    self._frequencies[self._grid_points[i]])
 
     def _show_log(self, q, i):
         gp = self._grid_points[i]
         frequencies = self._frequencies[gp][self._pp.get_band_indices()]
         gv = self._gv[i]
-
         if self._is_full_pp or self._use_ave_pp:
             ave_pp = self._averaged_pp_interaction[i]
+        else:
+            ave_pp = None
+        self._show_log_value_names()
 
+        if self._log_level > 1:
+            self._show_log_values_on_kstar(frequencies, gv, ave_pp)
+        else:
+            self._show_log_values(frequencies, gv, ave_pp)
+
+    def _show_log_values(self, frequencies, gv, ave_pp):
+        if self._is_full_pp or self._use_ave_pp:
+            for f, v, pp in zip(frequencies, gv, ave_pp):
+                print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e" %
+                      (f, v[0], v[1], v[2], np.linalg.norm(v), pp))
+        else:
+            for f, v in zip(frequencies, gv):
+                print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f" %
+                      (f, v[0], v[1], v[2], np.linalg.norm(v)))
+
+    def _show_log_values_on_kstar(self, frequencies, gv, ave_pp):
+        rotation_map = get_grid_points_by_rotations(
+            self._grid_address[gp],
+            self._point_operations,
+            self._mesh)
+        for i, j in enumerate(np.unique(rotation_map)):
+            for k, (rot, rot_c) in enumerate(zip(
+                    self._point_operations, self._rotations_cartesian)):
+                if rotation_map[k] != j:
+                    continue
+
+                print(" k*%-2d (%5.2f %5.2f %5.2f)" %
+                      ((i + 1,) + tuple(np.dot(rot, q))))
+                if self._is_full_pp or self._use_ave_pp:
+                    for f, v, pp in zip(frequencies,
+                                        np.dot(rot_c, gv.T).T,
+                                        ave_pp):
+                        print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e" %
+                              (f, v[0], v[1], v[2], np.linalg.norm(v), pp))
+                else:
+                    for f, v in zip(frequencies, np.dot(rot_c, gv.T).T):
+                        print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f" %
+                              (f, v[0], v[1], v[2], np.linalg.norm(v)))
+        print('')
+
+    def _show_log_value_names(self):
         if self._is_full_pp or self._use_ave_pp:
             text = "Frequency     group velocity (x, y, z)     |gv|       Pqj"
         else:
@@ -691,36 +719,3 @@ class Conductivity_RTA(Conductivity):
             text += "  (dq=%3.1e)" % self._gv_delta_q
         print(text)
 
-        if self._log_level > 1:
-            rotation_map = get_grid_points_by_rotations(
-                self._grid_address[gp],
-                self._point_operations,
-                self._mesh)
-            for i, j in enumerate(np.unique(rotation_map)):
-                for k, (rot, rot_c) in enumerate(zip(
-                        self._point_operations, self._rotations_cartesian)):
-                    if rotation_map[k] != j:
-                        continue
-
-                    print(" k*%-2d (%5.2f %5.2f %5.2f)" %
-                          ((i + 1,) + tuple(np.dot(rot, q))))
-                    if self._is_full_pp or self._use_ave_pp:
-                        for f, v, pp in zip(frequencies,
-                                            np.dot(rot_c, gv.T).T,
-                                            ave_pp):
-                            print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e" %
-                                  (f, v[0], v[1], v[2], np.linalg.norm(v), pp))
-                    else:
-                        for f, v in zip(frequencies, np.dot(rot_c, gv.T).T):
-                            print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f" %
-                                  (f, v[0], v[1], v[2], np.linalg.norm(v)))
-            print('')
-        else:
-            if self._is_full_pp or self._use_ave_pp:
-                for f, v, pp in zip(frequencies, gv, ave_pp):
-                    print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e" %
-                          (f, v[0], v[1], v[2], np.linalg.norm(v), pp))
-            else:
-                for f, v in zip(frequencies, gv):
-                    print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f" %
-                          (f, v[0], v[1], v[2], np.linalg.norm(v)))
