@@ -7,7 +7,7 @@ def direction_to_displacement(dataset,
                               distance,
                               supercell,
                               cutoff_distance=None):
-    lattice = supercell.get_cell()
+    lattice = supercell.get_cell().T
     new_dataset = {}
     new_dataset['natom'] = supercell.get_number_of_atoms()
     if cutoff_distance is not None:
@@ -16,7 +16,7 @@ def direction_to_displacement(dataset,
     for first_atoms in dataset:
         atom1 = first_atoms['number']
         direction1 = first_atoms['direction']
-        disp_cart1 = np.dot(direction1, lattice)
+        disp_cart1 = np.dot(direction1, lattice.T)
         disp_cart1 *= distance / np.linalg.norm(disp_cart1)
         new_second_atoms = []
         for second_atom in first_atoms['second_atoms']:
@@ -25,7 +25,7 @@ def direction_to_displacement(dataset,
             included = (pair_distance < cutoff_distance or
                         cutoff_distance is None)
             for direction2 in second_atom['directions']:
-                disp_cart2 = np.dot(direction2, lattice)
+                disp_cart2 = np.dot(direction2, lattice.T)
                 disp_cart2 *= distance / np.linalg.norm(disp_cart2)
                 if cutoff_distance is None:
                     new_second_atoms.append({'number': atom2,
@@ -59,7 +59,7 @@ def get_third_order_displacements(cell,
     # Atom 3: Force is mesuared on this atom.
 
     positions = cell.get_scaled_positions()
-    lattice = cell.get_cell()
+    lattice = cell.get_cell().T
 
     # Least displacements for third order force constants in yaml file
     #
@@ -105,16 +105,17 @@ def get_third_order_displacements(cell,
             dds_atom2 = get_next_displacements(atom1,
                                                atom2,
                                                reduced_site_sym,
+                                               lattice,
                                                positions,
                                                symprec,
                                                is_diagonal)
             min_distance = np.linalg.norm(
-                np.dot(get_equivalent_smallest_vectors(
-                        atom1,
-                        atom2,
-                        cell,
-                        lattice,
-                        symprec)[0], lattice))
+                np.dot(lattice, get_equivalent_smallest_vectors(
+                    atom1,
+                    atom2,
+                    cell,
+                    lattice.T,
+                    symprec)[0]))
             dds_atom2['distance'] = min_distance
             dds_atom1['second_atoms'].append(dds_atom2)
         dds.append(dds_atom1)
@@ -124,12 +125,14 @@ def get_third_order_displacements(cell,
 def get_next_displacements(atom1,
                            atom2,
                            reduced_site_sym,
+                           lattice,
                            positions,
                            symprec,
                            is_diagonal):
     # Bond symmetry between first and second atoms.
     reduced_bond_sym = get_bond_symmetry(
         reduced_site_sym,
+        lattice,
         positions, 
         atom1,
         atom2,
@@ -162,6 +165,7 @@ def get_reduced_site_symmetry(site_sym, direction, symprec=1e-5):
     return np.array(reduced_site_sym, dtype='intc')
 
 def get_bond_symmetry(site_symmetry,
+                      lattice,
                       positions,
                       atom_center,
                       atom_disp,
@@ -176,7 +180,9 @@ def get_bond_symmetry(site_symmetry,
         rot_pos = (np.dot(pos[atom_disp] - pos[atom_center], rot.T) +
                    pos[atom_center])
         diff = pos[atom_disp] - rot_pos
-        if (abs(diff - diff.round()) < symprec).all():
+        diff -= np.rint(diff)
+        dist = np.linalg.norm(np.dot(lattice, diff))
+        if dist < symprec:
             bond_sym.append(rot)
 
     return np.array(bond_sym)
@@ -194,6 +200,7 @@ def get_least_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
     return np.unique(mapping)
 
 def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
+    lattice = cell.get_cell().T
     positions = cell.get_scaled_positions()
     center = positions[atom_index]
 
@@ -207,8 +214,9 @@ def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
 
             for i, pos in enumerate(positions):
                 diff = pos - rot_pos
-                diff -= diff.round()
-                if (abs(diff) < symprec).all():
+                diff -= np.rint(diff)
+                dist = np.linalg.norm(np.dot(lattice, diff))
+                if dist < symprec:
                     mapping.append(i)
                     break
 
