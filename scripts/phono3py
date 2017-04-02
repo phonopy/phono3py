@@ -144,9 +144,11 @@ if options.forces_fc3_mode or options.forces_fc3_file_mode:
         print("Displacement dataset is read from %s." % disp_filename)
     disp_dataset = parse_disp_fc3_yaml(filename=disp_filename)
     num_atoms = disp_dataset['natom']
-    num_disps = (len(disp_dataset['first_atoms'])
-                 + np.sum([len(d['second_atoms'])
-                           for d in disp_dataset['first_atoms']]))
+    num_disps = len(disp_dataset['first_atoms'])
+    for d1 in disp_dataset['first_atoms']:
+        for d2 in d1['second_atoms']:
+            if d2['included']:
+                num_disps += 1
     if options.forces_fc3_file_mode:
         file_exists(args[0], log_level)
         force_filenames = [x.strip() for x in open(args[0])]
