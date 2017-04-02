@@ -187,14 +187,36 @@ located at the current directory.
 
    % phono3py --cf3 disp-{00001..00755}/vasprun.xml
 
+``--cf3_file``: Create ``FORCES_FC3`` from file name list
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is used to create ``FORCES_FC3`` from a file name
+list. ``disp_fc3.yaml`` has to be located at the current directory.
+
+::
+
+   % phono3py --cf3 phono3py --cf3_file file_list.dat
+
+where ``file_list.dat`` contains file names that can be recognized
+from the current directory and is expected to be like::
+
+  disp-00001/vasprun.xml
+  disp-00002/vasprun.xml
+  disp-00003/vasprun.xml
+  disp-00004/vasprun.xml
+  ...
+
+The order of the file names is important. This option may be useful
+to be used together with ``--cutoff_pair`` option.
+
 .. _cf2_option:
 
 ``--cf2``: Create ``FORCES_FC2``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is used to create ``FORCES_FC2``. ``disp_fc2.yaml`` has to be
-located at the current directory. This is
-optional. ``FORCES_FC2`` is necessary to run with ``--dim_fc2``. 
+located at the current directory. This is optional. ``FORCES_FC2`` is
+necessary to run with ``--dim_fc2`` option.
 
 ::
 
@@ -312,6 +334,32 @@ indices, a small shell one-liner may be used::
    % for i in `ls POSCAR-0*|sed s/POSCAR-//`;do echo -n $i,;done
    00001,00002,00003,00016,00017,00018,00019,00024,00025,00026,00027,00032,00033,00034,00035,00036,00037,00038,00039,00040,00041,00042,00043,00070,00071,00072,00073,00074,00075,00076,00077,00078,00079,00080,00081,00082,00083,00084,00085,00086,00087,00088,00089,00096,00097,00098,00099,00100,00101,00102,00103,
 
+When the number of force files is large, using ``--cf3_file`` option
+may be better::
+
+   % for i in `ls POSCAR-0*|sed s/POSCAR-//`;do echo disp-$i/vasprun.xml;done > file_list.dat
+   % phono3py --cf3_file file_list.dat
+
+Using a python script, ``disp_fc3.yaml`` is easily parsed. So it is also
+easy to create the file list by a python script such as
+
+::
+
+   #!/usr/bin/env python
+   import yaml
+
+   file_name_tmpl = "disp-%05d/vasprun.xml"
+   dds = yaml.load(open("disp_fc3.yaml"))
+   count = 1
+   for d1 in dds['first_atoms']:
+       print(file_name_tmpl % count)
+       count += 1
+   for d1 in dds['first_atoms']:
+       for d2 in d1['second_atoms']:
+           for d in d2['displacements']:
+               if d2['included']:
+                   print(file_name_tmpl % count)
+               count += 1
 
 Reciprocal space sampling mesh and grid points
 -----------------------------------------------
