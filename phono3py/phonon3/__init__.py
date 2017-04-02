@@ -274,8 +274,12 @@ class Phono3py(object):
         if self._fc2 is None:
             self._fc2 = fc2
 
-    def cutoff_fc3_by_zero(self, cutoff_distance):
-        cutoff_fc3_by_zero(self._fc3,
+    def cutoff_fc3_by_zero(self, cutoff_distance, fc3=None):
+        if fc3 is None:
+            _fc3 = self._fc3
+        else:
+            _fc3 = fc3
+        cutoff_fc3_by_zero(_fc3, # overwritten
                            self._supercell,
                            cutoff_distance,
                            self._symprec)
@@ -727,7 +731,7 @@ class Phono3py(object):
             if self._log_level:
                 print("Cutting-off fc3 by zero (cut-off distance: %f)" %
                       cutoff_distance)
-            self.cutoff_fc3_by_zero(cutoff_distance)
+            self.cutoff_fc3_by_zero(cutoff_distance, fc3=fc3)
 
         return fc2, fc3
 
