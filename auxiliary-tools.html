@@ -18,7 +18,8 @@
         VERSION:     '1.11.11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
@@ -30,7 +31,6 @@
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="top" title="Phono3py v.1.11.11" href="index.html" />
     <link rel="next" title="How to cite phono3py" href="citation.html" />
     <link rel="prev" title="Tips" href="tips.html" />
 <meta charset='utf-8'>
@@ -261,12 +261,12 @@
 path are calculated using this command.</p>
 <p>For example, cumulative thermal conductivity is defined by</p>
 <div class="math">
-<p><img src="_images/math/8c99c8a94ac3df30e2e2d9234c3954180bec5314.png" alt="\kappa^\text{c}(\omega) =
+<p><img src="_images/math/78174642317d5a6f506b8370599e9323b0187a1c.png" alt="\kappa^\text{c}(\omega) =
  \int^\omega_0 \sum_\lambda
 \kappa_\lambda \delta(\omega_\lambda - \omega) d\omega"/></p>
-</div><p>where <img class="math" src="_images/math/8f20200aa4a655d80029df9547705d21640fe4e3.png" alt="\kappa_\lambda"/> of phono3py for single-mode RTA is given as</p>
+</div><p>where <img class="math" src="_images/math/0be801c2e2457efda8802ba72913b513a8dfde42.png" alt="\kappa_\lambda"/> of phono3py for single-mode RTA is given as</p>
 <div class="math">
-<p><img src="_images/math/5471f43f65a4cc1d451a5f22d213930a64e88243.png" alt="\kappa_\lambda =
+<p><img src="_images/math/43fe10433ed2da4f438f29e1e2e69ef542053c18.png" alt="\kappa_\lambda =
 C_\lambda \mathbf{v}_\lambda \otimes \mathbf{v}_\lambda
 \tau_\lambda."/></p>
 </div><p>(The notations are found in <a class="reference external" href="http://arxiv.org/abs/1501.00691">http://arxiv.org/abs/1501.00691</a>.)</p>
@@ -347,11 +347,11 @@ data becomes 3.</p>
 <p>Mean free path is used instead of frequency for the x-axis. The unit
 of MFP is Angstrom.</p>
 <p>The figure below shows the results of Si example with the
-<img class="math" src="_images/math/db31f68df9d4755f7535a4280c7f2d468a2114a6.png" alt="19\times 19\times 19"/> and <img class="math" src="_images/math/ca8881a6636159ecf7e5fb81baa133639f2b78f9.png" alt="11\times 11\times 11"/> sampling
+<img class="math" src="_images/math/b5c72848cf3d020d1b16e90cbee13bd89d380c03.png" alt="19\times 19\times 19"/> and <img class="math" src="_images/math/18e04e5fddb80c3fc65c247206bcb73124793c4d.png" alt="11\times 11\times 11"/> sampling
 meshes used for the lattice thermal conductivity calculation. They look
-differently. Especially for the result of the <img class="math" src="_images/math/31378805d1c43e3b8b2c7975e32660666f2c5c6e.png" alt="11\times 11\times
+differently. Especially for the result of the <img class="math" src="_images/math/952dd8ebb0d39f1f4fab2a1b9066c46e0edf76c9.png" alt="11\times 11\times
 11"/> sampling mesh, the MFP seems converging but we can see it&#8217;s not
-true to look at that of the <img class="math" src="_images/math/db31f68df9d4755f7535a4280c7f2d468a2114a6.png" alt="19\times 19\times 19"/> sampling
+true to look at that of the <img class="math" src="_images/math/b5c72848cf3d020d1b16e90cbee13bd89d380c03.png" alt="19\times 19\times 19"/> sampling
 mesh. To show this type of plot, be careful about the sampling mesh
 convergence.</p>
 <p><a class="reference internal" href="_images/Si-kaccum-MFP.png"><img alt="iMFP" src="_images/Si-kaccum-MFP.png" style="width: 50%;" /></a></p>
@@ -359,7 +359,7 @@ convergence.</p>
 </div>
 <div class="section" id="gv">
 <h4><code class="docutils literal"><span class="pre">--gv</span></code><a class="headerlink" href="#gv" title="Permalink to this headline">¶</a></h4>
-<p>Outer product of group velocities <img class="math" src="_images/math/335ed2ec71beef618cb066c5dc6671f3d4ab513c.png" alt="\mathbf{v}_\lambda \otimes
+<p>Outer product of group velocities <img class="math" src="_images/math/c6c1ba531df59e04f0943a34006ed2abb340d2cf.png" alt="\mathbf{v}_\lambda \otimes
 \mathbf{v}_\lambda"/> (in THz^2 x Angstrom^2)</p>
 </div>
 <div class="section" id="average">
@@ -380,24 +380,24 @@ frequency, cumulative property, and derivative of cumulative property
 such like DOS.</p>
 <div class="section" id="gamma">
 <h4><code class="docutils literal"><span class="pre">--gamma</span></code><a class="headerlink" href="#gamma" title="Permalink to this headline">¶</a></h4>
-<p><img class="math" src="_images/math/b23263d441abbb6f16226a98bbd61fd6452396d5.png" alt="\Gamma_\lambda(\omega_\lambda)"/> (in THz)</p>
+<p><img class="math" src="_images/math/d9ec9488bdf3c60f32c84b18c0a7b988ed1a1de8.png" alt="\Gamma_\lambda(\omega_\lambda)"/> (in THz)</p>
 </div>
 <div class="section" id="tau">
 <h4><code class="docutils literal"><span class="pre">--tau</span></code><a class="headerlink" href="#tau" title="Permalink to this headline">¶</a></h4>
-<p>Lifetime <img class="math" src="_images/math/6810f518fdbe3110359d8d83c4d7e15441f8b1d1.png" alt="\tau_\lambda = \frac{1}{2\Gamma_\lambda(\omega_\lambda)}"/> (in ps)</p>
+<p>Lifetime <img class="math" src="_images/math/de30f6199e123594b62fc135fe5090b3583dc4e5.png" alt="\tau_\lambda = \frac{1}{2\Gamma_\lambda(\omega_\lambda)}"/> (in ps)</p>
 </div>
 <div class="section" id="cv">
 <h4><code class="docutils literal"><span class="pre">--cv</span></code><a class="headerlink" href="#cv" title="Permalink to this headline">¶</a></h4>
-<p>Modal heat capacity <img class="math" src="_images/math/ff6c91552f8444d0e9dbc95892268c34c81ac6fa.png" alt="C_\lambda"/> (in eV/K)</p>
+<p>Modal heat capacity <img class="math" src="_images/math/01a917c69235798a7673ef6843616c6c21b9fc94.png" alt="C_\lambda"/> (in eV/K)</p>
 </div>
 <div class="section" id="gv-norm">
 <h4><code class="docutils literal"><span class="pre">--gv_norm</span></code><a class="headerlink" href="#gv-norm" title="Permalink to this headline">¶</a></h4>
-<p>Absolute value of group velocity <img class="math" src="_images/math/26a0f452d4ff6bb91517f741b380b03c9c8a6af2.png" alt="|\mathbf{v}_\lambda|"/> (in
+<p>Absolute value of group velocity <img class="math" src="_images/math/7c4dd3d097d33250b84ce0d410dce04a2467a629.png" alt="|\mathbf{v}_\lambda|"/> (in
 THz x Angstrom)</p>
 </div>
 <div class="section" id="pqj">
 <h4><code class="docutils literal"><span class="pre">--pqj</span></code><a class="headerlink" href="#pqj" title="Permalink to this headline">¶</a></h4>
-<p>Averaged phonon-phonon interaction <img class="math" src="_images/math/645ecc9514b0f10389a05592cede1f2f11478b4b.png" alt="P_{\mathbf{q}j}"/> (in eV^2)</p>
+<p>Averaged phonon-phonon interaction <img class="math" src="_images/math/02108fb0196bec37d8f582e21bf5db60149a19d3.png" alt="P_{\mathbf{q}j}"/> (in eV^2)</p>
 </div>
 </div>
 </div>
@@ -463,14 +463,14 @@ does nothing since automatic control of drawing area cut high lifetime
         <br/>
         
 <div id="sourcelink">
-  <a href="_sources/auxiliary-tools.txt"
+  <a href="_sources/auxiliary-tools.rst.txt"
      rel="nofollow">Source</a>
 </div>
       
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.9.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.<br/>
     </p>
   </div>
 </footer>

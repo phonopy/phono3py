@@ -18,7 +18,8 @@
         VERSION:     '1.11.11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
@@ -30,7 +31,6 @@
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="top" title="Phono3py v.1.11.11" href="index.html" />
     <link rel="next" title="Auxiliary tools" href="auxiliary-tools.html" />
     <link rel="prev" title="How to read the results stored in hdf5 files" href="hdf5_howto.html" />
 <meta charset='utf-8'>
@@ -227,7 +227,7 @@ respect to number of mesh points along an axis from n=19 to 65. This
 is calculated with RTA and the linear tetrahedron method. Within the
 methods and phono3py implementation, it is converging at around n=55,
 however this computational demanding is not trivial. Extrapolation to
-<img class="math" src="_images/math/d2ec46511be73d05d687d562f81c398947114643.png" alt="1/n \rightarrow 0"/> seems not a good idea, since it is
+<img class="math" src="_images/math/1863b87a2715256aa7a9608436faa0d76e38941f.png" alt="1/n \rightarrow 0"/> seems not a good idea, since it is
 converging. This plot shows that we have to decide how much value is
 acceptable as thermal conductivity value. What is important is that
 the obtained value has to be shown accompanied with the information of
@@ -245,7 +245,7 @@ sigma values can be set. This can be computationally efficient, since
 it is avoided to re-calculate phonon-phonon interaction strength for
 different <code class="docutils literal"><span class="pre">sigma</span></code> values in this case.</p>
 <p>Convergence with respect to the sampling mesh and smearing parameter
-strongly depends on materials. A <img class="math" src="_images/math/8fbcadf6a8f153f126c0eb3a012c5a0284734009.png" alt="20\times 20\times 20"/> sampling
+strongly depends on materials. A <img class="math" src="_images/math/977682a1e1cdaad31811430231c166aff2a38935.png" alt="20\times 20\times 20"/> sampling
 mesh (or 8000 reducible sampling points) and 0.1 THz smearing value
 for reciprocal of the volume of an atom may be a good starting choice.</p>
 <p>The tetrahedron method requires no parameter such as the smearing
@@ -260,7 +260,7 @@ force calculator than second-order force constants. Therefore
 supercell force calculations have to be done by enough high numerical
 accuracy.</p>
 <p>The phono3py default displacement distance is 0.03
-<img class="math" src="_images/math/1589dee75c7ec545f11043c4ca3d2c52bdf5f683.png" alt="\text{\AA}"/>. In some cases, accurate result may not be obtained
+<img class="math" src="_images/math/04434c28148d7cc7b890adfcbcba587062175696.png" alt="\text{\AA}"/>. In some cases, accurate result may not be obtained
 due to the numerical noise of the force calculator. Usually increasing
 the displacement distance by <code class="docutils literal"><span class="pre">--amplitude</span></code> option reduces
 the numerical noise, but increases error from higher order anharmonicity.</p>
@@ -315,14 +315,14 @@ alamode package. The ALM interface for phono3py is now preparing.</p>
         <br/>
         
 <div id="sourcelink">
-  <a href="_sources/tips.txt"
+  <a href="_sources/tips.rst.txt"
      rel="nofollow">Source</a>
 </div>
       
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.9.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.<br/>
     </p>
   </div>
 </footer>

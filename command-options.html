@@ -18,7 +18,8 @@
         VERSION:     '1.11.11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
@@ -30,8 +31,7 @@
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="top" title="Phono3py v.1.11.11" href="index.html" />
-    <link rel="next" title="Output files" href="output-files.html" />
+    <link rel="next" title="Reducing number of force calculations by cutoff pair-distance" href="cutoff-pair.html" />
     <link rel="prev" title="CRYSTAL &amp; phono3py calculation" href="crystal.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
@@ -200,7 +200,7 @@
 <li><a class="reference internal" href="#boundary-mfp-bmfp-very-simple-phonon-boundary-scattering-model"><code class="docutils literal"><span class="pre">--boundary_mfp</span></code>, <code class="docutils literal"><span class="pre">--bmfp</span></code>: Very simple phonon-boundary scattering model</a></li>
 <li><a class="reference internal" href="#tmax-tmin-tstep-ts-temperatures"><code class="docutils literal"><span class="pre">--tmax</span></code>, <code class="docutils literal"><span class="pre">--tmin</span></code>, <code class="docutils literal"><span class="pre">--tstep</span></code>, <code class="docutils literal"><span class="pre">--ts</span></code>: Temperatures</a></li>
 <li><a class="reference internal" href="#nac-non-analytical-term-correction"><code class="docutils literal"><span class="pre">--nac</span></code>: Non-analytical term correction</a></li>
-<li><a class="reference internal" href="#q-direction-direction-for-non-analytical-term-correction-at"><code class="docutils literal"><span class="pre">--q_direction</span></code>: Direction for non-analytical term correction at <img class="math" src="_images/math/bb40fb8b11b460413f57c8dff936dbf6a9530198.png" alt="\mathbf{q}\rightarrow \mathbf{0}"/></a></li>
+<li><a class="reference internal" href="#q-direction-direction-for-non-analytical-term-correction-at"><code class="docutils literal"><span class="pre">--q_direction</span></code>: Direction for non-analytical term correction at <img class="math" src="_images/math/0ed4151b10cc423d0736b6fab656451ba1e2fa78.png" alt="\mathbf{q}\rightarrow \mathbf{0}"/></a></li>
 <li><a class="reference internal" href="#write-gamma"><code class="docutils literal"><span class="pre">--write_gamma</span></code></a></li>
 <li><a class="reference internal" href="#read-gamma"><code class="docutils literal"><span class="pre">--read_gamma</span></code></a></li>
 <li><a class="reference internal" href="#write-gamma-detail"><code class="docutils literal"><span class="pre">--write_gamma_detail</span></code></a></li>
@@ -230,7 +230,7 @@
     </a>
   </li>
   <li>
-    <a href="output-files.html" title="Next Chapter: Output files"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Output files &raquo;</span>
+    <a href="cutoff-pair.html" title="Next Chapter: Reducing number of force calculations by cutoff pair-distance"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Reducing numb... &raquo;</span>
     </a>
   </li>
               
@@ -327,7 +327,7 @@ preferred. An example of configuration (e.g., saved in a file
 <li><a class="reference internal" href="#boundary-mfp-bmfp-very-simple-phonon-boundary-scattering-model" id="id32"><code class="docutils literal"><span class="pre">--boundary_mfp</span></code>, <code class="docutils literal"><span class="pre">--bmfp</span></code>: Very simple phonon-boundary scattering model</a></li>
 <li><a class="reference internal" href="#tmax-tmin-tstep-ts-temperatures" id="id33"><code class="docutils literal"><span class="pre">--tmax</span></code>, <code class="docutils literal"><span class="pre">--tmin</span></code>, <code class="docutils literal"><span class="pre">--tstep</span></code>, <code class="docutils literal"><span class="pre">--ts</span></code>: Temperatures</a></li>
 <li><a class="reference internal" href="#nac-non-analytical-term-correction" id="id34"><code class="docutils literal"><span class="pre">--nac</span></code>: Non-analytical term correction</a></li>
-<li><a class="reference internal" href="#q-direction-direction-for-non-analytical-term-correction-at" id="id35"><code class="docutils literal"><span class="pre">--q_direction</span></code>: Direction for non-analytical term correction at <img class="math" src="_images/math/bb40fb8b11b460413f57c8dff936dbf6a9530198.png" alt="\mathbf{q}\rightarrow \mathbf{0}"/></a></li>
+<li><a class="reference internal" href="#q-direction-direction-for-non-analytical-term-correction-at" id="id35"><code class="docutils literal"><span class="pre">--q_direction</span></code>: Direction for non-analytical term correction at <img class="math" src="_images/math/0ed4151b10cc423d0736b6fab656451ba1e2fa78.png" alt="\mathbf{q}\rightarrow \mathbf{0}"/></a></li>
 <li><a class="reference internal" href="#write-gamma" id="id36"><code class="docutils literal"><span class="pre">--write_gamma</span></code></a></li>
 <li><a class="reference internal" href="#read-gamma" id="id37"><code class="docutils literal"><span class="pre">--read_gamma</span></code></a></li>
 <li><a class="reference internal" href="#write-gamma-detail" id="id38"><code class="docutils literal"><span class="pre">--write_gamma_detail</span></code></a></li>
@@ -459,7 +459,7 @@ located at the current directory.</p>
 </div>
 </div>
 <div class="section" id="cf3-file-create-forces-fc3-from-file-name-list">
-<h3><a class="toc-backref" href="#id15"><code class="docutils literal"><span class="pre">--cf3_file</span></code>: Create <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> from file name list</a><a class="headerlink" href="#cf3-file-create-forces-fc3-from-file-name-list" title="Permalink to this headline">¶</a></h3>
+<span id="cf3-file-option"></span><h3><a class="toc-backref" href="#id15"><code class="docutils literal"><span class="pre">--cf3_file</span></code>: Create <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> from file name list</a><a class="headerlink" href="#cf3-file-create-forces-fc3-from-file-name-list" title="Permalink to this headline">¶</a></h3>
 <p>This is used to create <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> from a file name
 list. <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> has to be located at the current directory.</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf3_file</span> <span class="n">file_list</span><span class="o">.</span><span class="n">dat</span>
@@ -499,116 +499,18 @@ reduce the supercell size and the second choice is using
 <code class="docutils literal"><span class="pre">--cutoff_pair</span></code> option.</p>
 </div>
 <div class="section" id="cutoff-pair-or-cutoff-pair-distance">
-<h3><a class="toc-backref" href="#id18"><code class="docutils literal"><span class="pre">--cutoff_pair</span></code> or <code class="docutils literal"><span class="pre">--cutoff_pair_distance</span></code></a><a class="headerlink" href="#cutoff-pair-or-cutoff-pair-distance" title="Permalink to this headline">¶</a></h3>
+<span id="cutoff-pair-option"></span><h3><a class="toc-backref" href="#id18"><code class="docutils literal"><span class="pre">--cutoff_pair</span></code> or <code class="docutils literal"><span class="pre">--cutoff_pair_distance</span></code></a><a class="headerlink" href="#cutoff-pair-or-cutoff-pair-distance" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal"><span class="pre">CUTOFF_PAIR_DISTANCE</span></code>)</p>
-<p>This option is only used together with <code class="docutils literal"><span class="pre">-d</span></code> option. Using this
-option, number of supercells with displacements is reduced and a
-special <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> is created. This special <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code>
-contains the information of the distance and which configurations of
-pair-displacements are included or not included.</p>
-<p>Cut-off pair distance is used to cut-off the number of configurations
-of pair-displacements. <code class="docutils literal"><span class="pre">POSCAR-xxxxx</span></code> (in the other calculator
-interface, the prefix of the filename is different) are not generated
-if distance between a pair of atoms to be displaced is larger than the
-specified cut-off pair distance. The indexing number (<code class="docutils literal"><span class="pre">xxxxx</span></code>)
-corresponds to that of the case without setting this option, i.e., the
-same <code class="docutils literal"><span class="pre">POSCAR-xxxxx</span></code> files are created for the same configurations of
-pairs of displacements but <code class="docutils literal"><span class="pre">POSCAR-xxxxx</span></code> files not being included
-are not generated. The reason of this indexing is that it can be
-useful when changing the cutoff-pair-distance.</p>
-<p>To create <code class="docutils literal"><span class="pre">FORCES_FC3</span></code>, only the respective output files containing
-forces are necessary to be given to <code class="docutils literal"><span class="pre">phono3py</span></code> command as the
-arguments.</p>
-<p>An example is shown below using the Si example.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cutoff_pair</span><span class="o">=</span><span class="mi">5</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
-        <span class="n">_</span>                      <span class="n">_____</span>
-  <span class="n">_</span> <span class="n">__</span> <span class="o">|</span> <span class="o">|</span><span class="n">__</span>   <span class="n">___</span>  <span class="n">_</span> <span class="n">__</span>   <span class="n">___</span><span class="o">|</span><span class="n">___</span> <span class="o">/</span> <span class="n">_</span> <span class="n">__</span>  <span class="n">_</span>   <span class="n">_</span>
- <span class="o">|</span> <span class="s1">&#39;_ \| &#39;</span><span class="n">_</span> \ <span class="o">/</span> <span class="n">_</span> \<span class="o">|</span> <span class="s1">&#39;_ \ / _ \ |_ \| &#39;</span><span class="n">_</span> \<span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span>
- <span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span><span class="n">__</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span>
- <span class="o">|</span> <span class="o">.</span><span class="n">__</span><span class="o">/|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>\<span class="n">___</span><span class="o">/|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>\<span class="n">___</span><span class="o">/</span><span class="n">____</span><span class="o">/|</span> <span class="o">.</span><span class="n">__</span><span class="o">/</span> \<span class="n">__</span><span class="p">,</span> <span class="o">|</span>
- <span class="o">|</span><span class="n">_</span><span class="o">|</span>                                <span class="o">|</span><span class="n">_</span><span class="o">|</span>    <span class="o">|</span><span class="n">___</span><span class="o">/</span>
-                                          <span class="mf">1.11</span><span class="o">.</span><span class="mi">7</span>
-
-<span class="n">Run</span> <span class="n">mode</span><span class="p">:</span> <span class="n">displacements</span>
-
-<span class="n">Displacement</span> <span class="n">distance</span><span class="p">:</span> <span class="mf">0.03</span>
-<span class="n">Number</span> <span class="n">of</span> <span class="n">displacements</span><span class="p">:</span> <span class="mi">111</span>
-<span class="n">Cutoff</span> <span class="n">distance</span> <span class="k">for</span> <span class="n">displacements</span><span class="p">:</span> <span class="mf">5.0</span>
-<span class="n">Number</span> <span class="n">of</span> <span class="n">displacement</span> <span class="n">supercell</span> <span class="n">files</span> <span class="n">created</span><span class="p">:</span> <span class="mi">51</span>
-                 <span class="n">_</span>
-   <span class="n">___</span> <span class="n">_</span> <span class="n">__</span>   <span class="n">__</span><span class="o">|</span> <span class="o">|</span>
-  <span class="o">/</span> <span class="n">_</span> \ <span class="s1">&#39;_ \ / _` |</span>
- <span class="o">|</span>  <span class="n">__</span><span class="o">/</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="p">(</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span>
-  \<span class="n">___</span><span class="o">|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>\<span class="n">__</span><span class="p">,</span><span class="n">_</span><span class="o">|</span>
-
-<span class="o">%</span> <span class="n">ls</span> <span class="n">POSCAR</span><span class="o">-</span><span class="mi">0</span><span class="o">*</span>
-<span class="n">POSCAR</span><span class="o">-</span><span class="mi">00001</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00032</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00043</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00080</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00097</span>
-<span class="n">POSCAR</span><span class="o">-</span><span class="mi">00002</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00033</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00070</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00081</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00098</span>
-<span class="n">POSCAR</span><span class="o">-</span><span class="mi">00003</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00034</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00071</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00082</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00099</span>
-<span class="n">POSCAR</span><span class="o">-</span><span class="mi">00016</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00035</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00072</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00083</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00100</span>
-<span class="n">POSCAR</span><span class="o">-</span><span class="mi">00017</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00036</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00073</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00084</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00101</span>
-<span class="n">POSCAR</span><span class="o">-</span><span class="mi">00018</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00037</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00074</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00085</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00102</span>
-<span class="n">POSCAR</span><span class="o">-</span><span class="mi">00019</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00038</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00075</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00086</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00103</span>
-<span class="n">POSCAR</span><span class="o">-</span><span class="mi">00024</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00039</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00076</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00087</span>
-<span class="n">POSCAR</span><span class="o">-</span><span class="mi">00025</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00040</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00077</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00088</span>
-<span class="n">POSCAR</span><span class="o">-</span><span class="mi">00026</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00041</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00078</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00089</span>
-<span class="n">POSCAR</span><span class="o">-</span><span class="mi">00027</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00042</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00079</span>  <span class="n">POSCAR</span><span class="o">-</span><span class="mi">00096</span>
-</pre></div>
-</div>
-<p>For example, supporse forces are calculated using VASP in
-<code class="docutils literal"><span class="pre">disp-xxxxx</span></code> directories, after running force calculations,
-<code class="docutils literal"><span class="pre">FORCES_FC3</span></code> is created as follows:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="p">{</span><span class="mi">00001</span><span class="p">,</span><span class="mi">00002</span><span class="p">,</span><span class="mi">00003</span><span class="p">,</span><span class="mi">00016</span><span class="p">,</span><span class="mi">00017</span><span class="p">,</span><span class="mi">00018</span><span class="p">,</span><span class="mi">00019</span><span class="p">,</span><span class="mi">00024</span><span class="p">,</span><span class="mi">00025</span><span class="p">,</span><span class="mi">00026</span><span class="p">,</span><span class="mi">00027</span><span class="p">,</span><span class="mi">00032</span><span class="p">,</span><span class="mi">00033</span><span class="p">,</span><span class="mi">00034</span><span class="p">,</span><span class="mi">00035</span><span class="p">,</span><span class="mi">00036</span><span class="p">,</span><span class="mi">00037</span><span class="p">,</span><span class="mi">00038</span><span class="p">,</span><span class="mi">00039</span><span class="p">,</span><span class="mi">00040</span><span class="p">,</span><span class="mi">00041</span><span class="p">,</span><span class="mi">00042</span><span class="p">,</span><span class="mi">00043</span><span class="p">,</span><span class="mi">00070</span><span class="p">,</span><span class="mi">00071</span><span class="p">,</span><span class="mi">00072</span><span class="p">,</span><span class="mi">00073</span><span class="p">,</span><span class="mi">00074</span><span class="p">,</span><span class="mi">00075</span><span class="p">,</span><span class="mi">00076</span><span class="p">,</span><span class="mi">00077</span><span class="p">,</span><span class="mi">00078</span><span class="p">,</span><span class="mi">00079</span><span class="p">,</span><span class="mi">00080</span><span class="p">,</span><span class="mi">00081</span><span class="p">,</span><span class="mi">00082</span><span class="p">,</span><span class="mi">00083</span><span class="p">,</span><span class="mi">00084</span><span class="p">,</span><span class="mi">00085</span><span class="p">,</span><span class="mi">00086</span><span class="p">,</span><span class="mi">00087</span><span class="p">,</span><span class="mi">00088</span><span class="p">,</span><span class="mi">00089</span><span class="p">,</span><span class="mi">00096</span><span class="p">,</span><span class="mi">00097</span><span class="p">,</span><span class="mi">00098</span><span class="p">,</span><span class="mi">00099</span><span class="p">,</span><span class="mi">00100</span><span class="p">,</span><span class="mi">00101</span><span class="p">,</span><span class="mi">00102</span><span class="p">,</span><span class="mi">00103</span><span class="p">}</span><span class="o">/</span><span class="n">vasprun</span><span class="o">.</span><span class="n">xml</span>
-        <span class="n">_</span>                      <span class="n">_____</span>
-  <span class="n">_</span> <span class="n">__</span> <span class="o">|</span> <span class="o">|</span><span class="n">__</span>   <span class="n">___</span>  <span class="n">_</span> <span class="n">__</span>   <span class="n">___</span><span class="o">|</span><span class="n">___</span> <span class="o">/</span> <span class="n">_</span> <span class="n">__</span>  <span class="n">_</span>   <span class="n">_</span>
- <span class="o">|</span> <span class="s1">&#39;_ \| &#39;</span><span class="n">_</span> \ <span class="o">/</span> <span class="n">_</span> \<span class="o">|</span> <span class="s1">&#39;_ \ / _ \ |_ \| &#39;</span><span class="n">_</span> \<span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span>
- <span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="p">(</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span><span class="n">__</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="p">)</span> <span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span>
- <span class="o">|</span> <span class="o">.</span><span class="n">__</span><span class="o">/|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>\<span class="n">___</span><span class="o">/|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>\<span class="n">___</span><span class="o">/</span><span class="n">____</span><span class="o">/|</span> <span class="o">.</span><span class="n">__</span><span class="o">/</span> \<span class="n">__</span><span class="p">,</span> <span class="o">|</span>
- <span class="o">|</span><span class="n">_</span><span class="o">|</span>                                <span class="o">|</span><span class="n">_</span><span class="o">|</span>    <span class="o">|</span><span class="n">___</span><span class="o">/</span>
-                                          <span class="mf">1.11</span><span class="o">.</span><span class="mi">7</span>
-
-<span class="n">Displacement</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="n">read</span> <span class="kn">from</span> <span class="nn">disp_fc3.yaml.</span>
-<span class="n">counter</span> <span class="p">(</span><span class="n">file</span> <span class="n">index</span><span class="p">):</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span> <span class="mi">8</span> <span class="mi">9</span> <span class="mi">10</span> <span class="mi">11</span> <span class="mi">12</span> <span class="mi">13</span> <span class="mi">14</span> <span class="mi">15</span> <span class="mi">16</span> <span class="mi">17</span> <span class="mi">18</span> <span class="mi">19</span> <span class="mi">20</span> <span class="mi">21</span> <span class="mi">22</span> <span class="mi">23</span> <span class="mi">24</span> <span class="mi">25</span> <span class="mi">26</span> <span class="mi">27</span> <span class="mi">28</span> <span class="mi">29</span> <span class="mi">30</span> <span class="mi">31</span> <span class="mi">32</span> <span class="mi">33</span> <span class="mi">34</span> <span class="mi">35</span> <span class="mi">36</span> <span class="mi">37</span> <span class="mi">38</span> <span class="mi">39</span> <span class="mi">40</span> <span class="mi">41</span> <span class="mi">42</span> <span class="mi">43</span> <span class="mi">44</span> <span class="mi">45</span> <span class="mi">46</span> <span class="mi">47</span> <span class="mi">48</span> <span class="mi">49</span> <span class="mi">50</span> <span class="mi">51</span>
-<span class="n">FORCES_FC3</span> <span class="n">has</span> <span class="n">been</span> <span class="n">created</span><span class="o">.</span>
-                 <span class="n">_</span>
-   <span class="n">___</span> <span class="n">_</span> <span class="n">__</span>   <span class="n">__</span><span class="o">|</span> <span class="o">|</span>
-  <span class="o">/</span> <span class="n">_</span> \ <span class="s1">&#39;_ \ / _` |</span>
- <span class="o">|</span>  <span class="n">__</span><span class="o">/</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="p">(</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span>
-  \<span class="n">___</span><span class="o">|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>\<span class="n">__</span><span class="p">,</span><span class="n">_</span><span class="o">|</span>
-</pre></div>
-</div>
-<p>Here one must mind that since the special <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> is read in
-creating <code class="docutils literal"><span class="pre">FORCES_FC3</span></code>, it has to be located on the current directory.</p>
-<p>Although it depends on computer systems, to obtain the list of file
-indices, a small shell one-liner may be used:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>% for i in `ls POSCAR-0*|sed s/POSCAR-//`;do echo -n $i,;done
-00001,00002,00003,00016,00017,00018,00019,00024,00025,00026,00027,00032,00033,00034,00035,00036,00037,00038,00039,00040,00041,00042,00043,00070,00071,00072,00073,00074,00075,00076,00077,00078,00079,00080,00081,00082,00083,00084,00085,00086,00087,00088,00089,00096,00097,00098,00099,00100,00101,00102,00103,
-</pre></div>
-</div>
-<p>When the number of force files is large, using <code class="docutils literal"><span class="pre">--cf3_file</span></code> option
-may be better:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>% for i in `ls POSCAR-0*|sed s/POSCAR-//`;do echo disp-$i/vasprun.xml;done &gt; file_list.dat
-% phono3py --cf3_file file_list.dat
-</pre></div>
-</div>
-<p>Using a python script, <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> is easily parsed. So it is also
-easy to create the file list by a python script such as</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
-<span class="kn">import</span> <span class="nn">yaml</span>
-
-<span class="n">file_name_tmpl</span> <span class="o">=</span> <span class="s2">&quot;disp-</span><span class="si">%05d</span><span class="s2">/vasprun.xml&quot;</span>
-<span class="n">dds</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;disp_fc3.yaml&quot;</span><span class="p">))</span>
-<span class="n">count</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="k">for</span> <span class="n">d1</span> <span class="ow">in</span> <span class="n">dds</span><span class="p">[</span><span class="s1">&#39;first_atoms&#39;</span><span class="p">]:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">file_name_tmpl</span> <span class="o">%</span> <span class="n">count</span><span class="p">)</span>
-    <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
-<span class="k">for</span> <span class="n">d1</span> <span class="ow">in</span> <span class="n">dds</span><span class="p">[</span><span class="s1">&#39;first_atoms&#39;</span><span class="p">]:</span>
-    <span class="k">for</span> <span class="n">d2</span> <span class="ow">in</span> <span class="n">d1</span><span class="p">[</span><span class="s1">&#39;second_atoms&#39;</span><span class="p">]:</span>
-        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;displacements&#39;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;included&#39;</span><span class="p">]:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">file_name_tmpl</span> <span class="o">%</span> <span class="n">count</span><span class="p">)</span>
-            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
-</pre></div>
+<p>This option is only used together with <code class="docutils literal"><span class="pre">-d</span></code> option.</p>
+<p>A cutoff pair-distance in a supercell is used to reduce the number of
+necessary supercells with displacements to obtain third order force
+constants. As the drawback, a certain number of
+third-order-force-constants elements are abandoned or computed with
+less numerical accuracy. More details are found in the following link:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Reducing number of force calculations by cutoff pair-distance</a></li>
+</ul>
 </div>
 </div>
 </div>
@@ -675,12 +577,12 @@ smearing method in one time execution are expected.</p>
 <div class="section" id="sigma-smearing-method">
 <h3><a class="toc-backref" href="#id27"><code class="docutils literal"><span class="pre">--sigma</span></code>: Smearing method</a><a class="headerlink" href="#sigma-smearing-method" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal"><span class="pre">SIGMA</span></code>)</p>
-<p><img class="math" src="_images/math/2298cf1485084afe72757a9c8483af49a138d81f.png" alt="\sigma"/> value of Gaussian function for smearing when
+<p><img class="math" src="_images/math/011e5790a6c33043ceadca81d9657dde6c61d769.png" alt="\sigma"/> value of Gaussian function for smearing when
 calculating imaginary part of self energy. See the detail at
 <a class="reference internal" href="tips.html#brillouinzone-sum"><span class="std std-ref">Brillouin zone summation</span></a>.</p>
-<p>Multiple <img class="math" src="_images/math/2298cf1485084afe72757a9c8483af49a138d81f.png" alt="\sigma"/> values are also specified by space separated
+<p>Multiple <img class="math" src="_images/math/011e5790a6c33043ceadca81d9657dde6c61d769.png" alt="\sigma"/> values are also specified by space separated
 numerical values. This is used when we want to test several
-<img class="math" src="_images/math/2298cf1485084afe72757a9c8483af49a138d81f.png" alt="\sigma"/> values simultaneously.</p>
+<img class="math" src="_images/math/011e5790a6c33043ceadca81d9657dde6c61d769.png" alt="\sigma"/> values simultaneously.</p>
 </div>
 </div>
 <div class="section" id="physical-properties">
@@ -738,8 +640,8 @@ ph-ph scattering.</p>
 <h3><a class="toc-backref" href="#id32"><code class="docutils literal"><span class="pre">--boundary_mfp</span></code>, <code class="docutils literal"><span class="pre">--bmfp</span></code>: Very simple phonon-boundary scattering model</a><a class="headerlink" href="#boundary-mfp-bmfp-very-simple-phonon-boundary-scattering-model" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal"><span class="pre">BOUNDARY_MFP</span></code>)</p>
 <p>A most simple boundary scattering treatment is
-implemented. <img class="math" src="_images/math/084d982acb5e1f007c0cefd3294812e2dd5ccd1f.png" alt="v_g/L"/> is just used as the scattering rate, where
-<img class="math" src="_images/math/96e44b53e19ef76c71778b8a801bccf1cb0ee50a.png" alt="v_g"/> is the group velocity and <img class="math" src="_images/math/0a5711c7a37994043b2bc3bb374adca232491762.png" alt="L"/> is the boundary mean
+implemented. <img class="math" src="_images/math/1ac15a86ba225ce307d0d1a4bd1c6cac4ae3f9c7.png" alt="v_g/L"/> is just used as the scattering rate, where
+<img class="math" src="_images/math/76b5f7b2f5eec711b34a4615fc0c332e71928a27.png" alt="v_g"/> is the group velocity and <img class="math" src="_images/math/ae2b750f71e1fc0daaa3de9a85d42794d7cd1326.png" alt="L"/> is the boundary mean
 free path. The value is given in micrometre. The default value, 1
 metre, is just used to avoid divergence of phonon lifetime and the
 contribution to the thermal conducitivity is considered negligible.</p>
@@ -770,7 +672,7 @@ value of unit conversion factor is used even if it is written in the
 first line of <code class="docutils literal"><span class="pre">BORN</span></code> file.</p>
 </div>
 <div class="section" id="q-direction-direction-for-non-analytical-term-correction-at">
-<h3><a class="toc-backref" href="#id35"><code class="docutils literal"><span class="pre">--q_direction</span></code>: Direction for non-analytical term correction at <img class="math" src="_images/math/bb40fb8b11b460413f57c8dff936dbf6a9530198.png" alt="\mathbf{q}\rightarrow \mathbf{0}"/></a><a class="headerlink" href="#q-direction-direction-for-non-analytical-term-correction-at" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id35"><code class="docutils literal"><span class="pre">--q_direction</span></code>: Direction for non-analytical term correction at <img class="math" src="_images/math/0ed4151b10cc423d0736b6fab656451ba1e2fa78.png" alt="\mathbf{q}\rightarrow \mathbf{0}"/></a><a class="headerlink" href="#q-direction-direction-for-non-analytical-term-correction-at" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal"><span class="pre">Q_DIRECTION</span></code>)</p>
 <p>This is used with <code class="docutils literal"><span class="pre">--nac</span></code> to specify the direction to polarize in
 reciprocal space. See the detail at
@@ -780,7 +682,7 @@ reciprocal space. See the detail at
 <span id="write-gamma-option"></span><h3><a class="toc-backref" href="#id36"><code class="docutils literal"><span class="pre">--write_gamma</span></code></a><a class="headerlink" href="#write-gamma" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal"><span class="pre">WRITE_GAMMA</span></code>, <code class="docutils literal"><span class="pre">.TRUE.</span></code> or <code class="docutils literal"><span class="pre">.FALSE.</span></code>)</p>
 <p>Imaginary parts of self energy at harmonic phonon frequencies
-<img class="math" src="_images/math/b23263d441abbb6f16226a98bbd61fd6452396d5.png" alt="\Gamma_\lambda(\omega_\lambda)"/> are written
+<img class="math" src="_images/math/d9ec9488bdf3c60f32c84b18c0a7b988ed1a1de8.png" alt="\Gamma_\lambda(\omega_\lambda)"/> are written
 into file in hdf5 format.  The result is written into
 <code class="docutils literal"><span class="pre">kappa-mxxx-dx-gx(-sx).hdf5</span></code> or <code class="docutils literal"><span class="pre">kappa-mxxx-dx-gx-bx(-sx).hdf5</span></code> with
 <code class="docutils literal"><span class="pre">--bi</span></code> option. With <code class="docutils literal"><span class="pre">--sigma</span></code> option, <code class="docutils literal"><span class="pre">-sx</span></code> is inserted in front
@@ -790,7 +692,7 @@ of <code class="docutils literal"><span class="pre">.hdf5</span></code>.</p>
 <h3><a class="toc-backref" href="#id37"><code class="docutils literal"><span class="pre">--read_gamma</span></code></a><a class="headerlink" href="#read-gamma" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal"><span class="pre">READ_GAMMA</span></code>, <code class="docutils literal"><span class="pre">.TRUE.</span></code> or <code class="docutils literal"><span class="pre">.FALSE.</span></code>)</p>
 <p>Imaginary parts of self energy at harmonic phonon frequencies
-<img class="math" src="_images/math/b23263d441abbb6f16226a98bbd61fd6452396d5.png" alt="\Gamma_\lambda(\omega_\lambda)"/>
+<img class="math" src="_images/math/d9ec9488bdf3c60f32c84b18c0a7b988ed1a1de8.png" alt="\Gamma_\lambda(\omega_\lambda)"/>
 are read from <code class="docutils literal"><span class="pre">kappa</span></code> file in hdf5 format.  Initially the usual
 result file of <code class="docutils literal"><span class="pre">kappa-mxxx-dx(-sx).hdf5</span></code> is searched. Unless it is
 found, it tries to read <code class="docutils literal"><span class="pre">kappa</span></code> file for each grid point,
@@ -813,16 +715,16 @@ detailed information.</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td>gamma_detail for <code class="docutils literal"><span class="pre">--ise</span></code></td>
-<td>(temperature, sampling frequency point, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz (without <img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>)</td>
+<td>(temperature, sampling frequency point, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz (without <img class="math" src="_images/math/6f064faadf14a1d739a4ca4e1ea4aeeb3a342dfe.png" alt="2\pi"/>)</td>
 </tr>
 <tr class="row-even"><td>gamma_detail for <code class="docutils literal"><span class="pre">--lw</span></code> and <code class="docutils literal"><span class="pre">--br</span></code></td>
-<td>(temperature, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz (without <img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>)</td>
+<td>(temperature, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz (without <img class="math" src="_images/math/6f064faadf14a1d739a4ca4e1ea4aeeb3a342dfe.png" alt="2\pi"/>)</td>
 </tr>
 <tr class="row-odd"><td>mesh</td>
 <td>Numbers of sampling mesh along reciprocal axes.</td>
 </tr>
 <tr class="row-even"><td>frequency_point for <code class="docutils literal"><span class="pre">--ise</span></code></td>
-<td>Sampling frequency points in THz (without <img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>), i.e., <img class="math" src="_images/math/c7415c6919c2eb17b1ea36f0243079b59825ee89.png" alt="\omega"/> in <img class="math" src="_images/math/2f666581625ef5ad4acda33a7fb3df2a835dfc9f.png" alt="\Gamma_\lambda(\omega)"/></td>
+<td>Sampling frequency points in THz (without <img class="math" src="_images/math/6f064faadf14a1d739a4ca4e1ea4aeeb3a342dfe.png" alt="2\pi"/>), i.e., <img class="math" src="_images/math/b51aa99e0bc8cc8c3d17c0b9cf822db73e13293e.png" alt="\omega"/> in <img class="math" src="_images/math/23cb377bb3afa36030325353599e85671e90c197.png" alt="\Gamma_\lambda(\omega)"/></td>
 </tr>
 <tr class="row-odd"><td>temperature</td>
 <td>(temperature,), Temperatures in K</td>
@@ -863,8 +765,8 @@ following script:</p>
 </pre></div>
 </div>
 <p>For example, for <code class="docutils literal"><span class="pre">--lw</span></code> or <code class="docutils literal"><span class="pre">--br</span></code>, this <code class="docutils literal"><span class="pre">gamma</span></code> gives
-<img class="math" src="_images/math/b23263d441abbb6f16226a98bbd61fd6452396d5.png" alt="\Gamma_\lambda(\omega_\lambda)"/> of the band indices at the grid
-point indicated by <img class="math" src="_images/math/1ab0134b6e0837594649c75a2ed83cfd85a2d03d.png" alt="\lambda"/> at the temperature of index 30. If
+<img class="math" src="_images/math/d9ec9488bdf3c60f32c84b18c0a7b988ed1a1de8.png" alt="\Gamma_\lambda(\omega_\lambda)"/> of the band indices at the grid
+point indicated by <img class="math" src="_images/math/76f1d8ace30435987c01a00ca53a71cba1f40e6c.png" alt="\lambda"/> at the temperature of index 30. If
 any bands are degenerated, those <code class="docutils literal"><span class="pre">gamma</span></code> in <code class="docutils literal"><span class="pre">kappa--mxxx-gx(-sx).hdf5</span></code>
 or <code class="docutils literal"><span class="pre">gamma--mxxx-gx(-sx).hdf5</span></code> type file are averaged, but the <code class="docutils literal"><span class="pre">gamma</span></code>
 obtained here in this way are not symmetrized. Apart from this
@@ -873,10 +775,10 @@ symmetrization, the values must be equivalent between them.</p>
 <div class="section" id="ise-imaginary-part-of-self-energy">
 <span id="ise-option"></span><h3><a class="toc-backref" href="#id39"><code class="docutils literal"><span class="pre">--ise</span></code>: Imaginary part of self energy</a><a class="headerlink" href="#ise-imaginary-part-of-self-energy" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal"><span class="pre">IMAG_SELF_ENERGY</span></code>, <code class="docutils literal"><span class="pre">.TRUE.</span></code> or <code class="docutils literal"><span class="pre">.FALSE.</span></code>)</p>
-<p>Imaginary part of self energy <img class="math" src="_images/math/2f666581625ef5ad4acda33a7fb3df2a835dfc9f.png" alt="\Gamma_\lambda(\omega)"/> is
-calculated with respect to <img class="math" src="_images/math/c7415c6919c2eb17b1ea36f0243079b59825ee89.png" alt="\omega"/>. The output is written to
-<code class="docutils literal"><span class="pre">gammas-mxxxx-gx(-sx)-tx-bx.dat</span></code> in THz (without <img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>) with
-respect to frequency in THz (without <img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>).</p>
+<p>Imaginary part of self energy <img class="math" src="_images/math/23cb377bb3afa36030325353599e85671e90c197.png" alt="\Gamma_\lambda(\omega)"/> is
+calculated with respect to <img class="math" src="_images/math/b51aa99e0bc8cc8c3d17c0b9cf822db73e13293e.png" alt="\omega"/>. The output is written to
+<code class="docutils literal"><span class="pre">gammas-mxxxx-gx(-sx)-tx-bx.dat</span></code> in THz (without <img class="math" src="_images/math/6f064faadf14a1d739a4ca4e1ea4aeeb3a342dfe.png" alt="2\pi"/>) with
+respect to frequency in THz (without <img class="math" src="_images/math/6f064faadf14a1d739a4ca4e1ea4aeeb3a342dfe.png" alt="2\pi"/>).</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2  2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> \
   <span class="o">--</span><span class="n">nac</span> <span class="o">--</span><span class="n">q_direction</span><span class="o">=</span><span class="s2">&quot;1 0 0&quot;</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="mi">0</span> <span class="o">--</span><span class="n">ise</span> <span class="o">--</span><span class="n">bi</span><span class="o">=</span><span class="s2">&quot;4 5, 6&quot;</span>
 </pre></div>
@@ -885,9 +787,9 @@ respect to frequency in THz (without <img class="math" src="_images/math/9871bd6
 <div class="section" id="lw-line-width">
 <span id="lw-option"></span><h3><a class="toc-backref" href="#id40"><code class="docutils literal"><span class="pre">--lw</span></code>: Line width</a><a class="headerlink" href="#lw-line-width" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal"><span class="pre">LINEWIDTH</span></code>, <code class="docutils literal"><span class="pre">.TRUE.</span></code> or <code class="docutils literal"><span class="pre">.FALSE.</span></code>)</p>
-<p>Linewidth <img class="math" src="_images/math/c982f465afd7871837bb1192f5c85251543f3b99.png" alt="2\Gamma_\lambda(\omega_\lambda)"/> is calculated with
+<p>Linewidth <img class="math" src="_images/math/4aee867014e71bcbd5bf53201d0134373a84b96a.png" alt="2\Gamma_\lambda(\omega_\lambda)"/> is calculated with
 respect to temperature. The output is written to
-<code class="docutils literal"><span class="pre">linewidth-mxxxx-gx(-sx)-bx.dat</span></code> in THz (without <img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>).</p>
+<code class="docutils literal"><span class="pre">linewidth-mxxxx-gx(-sx)-bx.dat</span></code> in THz (without <img class="math" src="_images/math/6f064faadf14a1d739a4ca4e1ea4aeeb3a342dfe.png" alt="2\pi"/>).</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2  2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> \
   <span class="o">--</span><span class="n">nac</span> <span class="o">--</span><span class="n">q_direction</span><span class="o">=</span><span class="s2">&quot;1 0 0&quot;</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="mi">0</span> <span class="o">--</span><span class="n">lw</span> <span class="o">--</span><span class="n">bi</span><span class="o">=</span><span class="s2">&quot;4 5, 6&quot;</span>
 </pre></div>
@@ -898,12 +800,12 @@ respect to temperature. The output is written to
 <p>(Setting tag: <code class="docutils literal"><span class="pre">JOINT_DOS</span></code>, <code class="docutils literal"><span class="pre">.TRUE.</span></code> or <code class="docutils literal"><span class="pre">.FALSE.</span></code>)</p>
 <p>Two classes of joint density of states (JDOS) are calculated. The
 result is written into <code class="docutils literal"><span class="pre">jdos-mxxxxxx-gx(-sx).dat</span></code> in
-<img class="math" src="_images/math/0c882144f3685899475f00611f43d7e4ab04af71.png" alt="\text{THz}^{-1}"/> (without <img class="math" src="_images/math/b8e6870fcd63e825d3c6edb3b0e8e88b21068897.png" alt="(2\pi)^{-1}"/>) with
-respect to frequency in THz (without <img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>). The first
+<img class="math" src="_images/math/9b36d7fac6defaab9ae8e804341aec7879ce299d.png" alt="\text{THz}^{-1}"/> (without <img class="math" src="_images/math/6ac47f484c2c47e4bffcaf8cf8fb3e515a131130.png" alt="(2\pi)^{-1}"/>) with
+respect to frequency in THz (without <img class="math" src="_images/math/6f064faadf14a1d739a4ca4e1ea4aeeb3a342dfe.png" alt="2\pi"/>). The first
 column is the frequency, and the second and third columns are the
 values given as follows, respectively,</p>
 <div class="math">
-<p><img src="_images/math/b5351bf39d3f2131a6ed77573410ca44f3574588.png" alt="&amp;D_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
+<p><img src="_images/math/37634ed05b769d63e161dc69904455e05feb8a88.png" alt="&amp;D_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
 \sum_{\lambda_1,\lambda_2}
 \left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2}) +
 \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2}) \right], \\
@@ -916,13 +818,13 @@ values given as follows, respectively,</p>
 </div>
 <p>When temperatures are specified, two classes of weighted JDOS are
 calculated. The result is written into
-<code class="docutils literal"><span class="pre">jdos-mxxxxxx-gx(-sx)-txxx.dat</span></code> in <img class="math" src="_images/math/0c882144f3685899475f00611f43d7e4ab04af71.png" alt="\text{THz}^{-1}"/> (without
-<img class="math" src="_images/math/b8e6870fcd63e825d3c6edb3b0e8e88b21068897.png" alt="(2\pi)^{-1}"/>) with respect to frequency in THz
-(without <img class="math" src="_images/math/9871bd64995368def3d10c85692a233e4cb5e3f9.png" alt="2\pi"/>). In the file name, <code class="docutils literal"><span class="pre">txxx</span></code> shows the
+<code class="docutils literal"><span class="pre">jdos-mxxxxxx-gx(-sx)-txxx.dat</span></code> in <img class="math" src="_images/math/9b36d7fac6defaab9ae8e804341aec7879ce299d.png" alt="\text{THz}^{-1}"/> (without
+<img class="math" src="_images/math/6ac47f484c2c47e4bffcaf8cf8fb3e515a131130.png" alt="(2\pi)^{-1}"/>) with respect to frequency in THz
+(without <img class="math" src="_images/math/6f064faadf14a1d739a4ca4e1ea4aeeb3a342dfe.png" alt="2\pi"/>). In the file name, <code class="docutils literal"><span class="pre">txxx</span></code> shows the
 temperature. The first column is the frequency, and the second and
 third columns are the values given as follows, respectively,</p>
 <div class="math">
-<p><img src="_images/math/bea7dc5938d3ac2b3a7e2d2ff83626c1112f11ad.png" alt="&amp;N_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
+<p><img src="_images/math/7ad7467a48c3e11ccfdb6aec6dd744cbe1cddda3.png" alt="&amp;N_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
 \sum_{\lambda'\lambda''} \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'')
 (n_{\lambda'} - n_{\lambda''}) [ \delta( \omega + \omega_{\lambda'} -
 \omega_{\lambda''}) - \delta( \omega - \omega_{\lambda'} +
@@ -962,11 +864,11 @@ calculated.</p>
 <p>After version 1.10.5, for RTA thermal conductivity calculation with
 using the linear tetrahedron method, only necessary part of
 phonon-phonon interaction strengh among phonons,
-<img class="math" src="_images/math/defd5206e15655ccdb878d60d72bdb8d70e5b37e.png" alt="\bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2"/>, is
+<img class="math" src="_images/math/303c08c57df05be6a8597ad5bcd6ea2121095326.png" alt="\bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2"/>, is
 calculated due to delta functions in calculation of
-<img class="math" src="_images/math/2f666581625ef5ad4acda33a7fb3df2a835dfc9f.png" alt="\Gamma_\lambda(\omega)"/>,</p>
+<img class="math" src="_images/math/23cb377bb3afa36030325353599e85671e90c197.png" alt="\Gamma_\lambda(\omega)"/>,</p>
 <div class="math">
-<p><img src="_images/math/e8b1dab6bd7705f5675ecaee7ae7bb518a3a3e46.png" alt="\Gamma_\lambda(\omega) = \frac{18\pi}{\hbar^2}
+<p><img src="_images/math/a4bedb1a349c19405467485852cb51af0229b9c0.png" alt="\Gamma_\lambda(\omega) = \frac{18\pi}{\hbar^2}
  \sum_{\lambda' \lambda''}
  \bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2
  \left\{(n_{\lambda'}+ n_{\lambda''}+1)
@@ -977,12 +879,12 @@ calculated due to delta functions in calculation of
 \right]\right\}."/></p>
 </div><p>But specifying this option, full elements of phonon-phonon interaction
 strengh among phonons are calculated and averaged phonon-phonon
-interaction strength (<img class="math" src="_images/math/645ecc9514b0f10389a05592cede1f2f11478b4b.png" alt="P_{\mathbf{q}j}"/>) is also given.</p>
+interaction strength (<img class="math" src="_images/math/02108fb0196bec37d8f582e21bf5db60149a19d3.png" alt="P_{\mathbf{q}j}"/>) is also given.</p>
 </div>
 <div class="section" id="ave-pp-use-averaged-phonon-phonon-interaction-strength">
 <h3><a class="toc-backref" href="#id45"><code class="docutils literal"><span class="pre">--ave_pp</span></code>: Use averaged phonon-phonon interaction strength</a><a class="headerlink" href="#ave-pp-use-averaged-phonon-phonon-interaction-strength" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal"><span class="pre">USE_AVE_PP</span></code>, <code class="docutils literal"><span class="pre">.TRUE.</span></code> or <code class="docutils literal"><span class="pre">.FALSE.</span></code>)</p>
-<p>Averaged phonon-phonon interaction strength (<img class="math" src="_images/math/645ecc9514b0f10389a05592cede1f2f11478b4b.png" alt="P_{\mathbf{q}j}"/>)
+<p>Averaged phonon-phonon interaction strength (<img class="math" src="_images/math/02108fb0196bec37d8f582e21bf5db60149a19d3.png" alt="P_{\mathbf{q}j}"/>)
 is used to calculate imaginary part of self energy in thermal
 conductivity calculation. This option works
 only when <code class="docutils literal"><span class="pre">--read_gamma</span></code> and <code class="docutils literal"><span class="pre">--br</span></code> options are activated where
@@ -1005,11 +907,11 @@ option together with <code class="docutils literal"><span class="pre">-o</span><
 <div class="section" id="const-ave-pp-use-constant-phonon-phonon-interaction-strength">
 <h3><a class="toc-backref" href="#id46"><code class="docutils literal"><span class="pre">--const_ave_pp</span></code>: Use constant phonon-phonon interaction strength</a><a class="headerlink" href="#const-ave-pp-use-constant-phonon-phonon-interaction-strength" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal"><span class="pre">CONSTANT_AVERAGED_PP_INTERACTION</span></code>, <code class="docutils literal"><span class="pre">.TRUE.</span></code> or <code class="docutils literal"><span class="pre">.FALSE.</span></code>)</p>
-<p>Averaged phonon-phonon interaction (<img class="math" src="_images/math/645ecc9514b0f10389a05592cede1f2f11478b4b.png" alt="P_{\mathbf{q}j}"/>) is
+<p>Averaged phonon-phonon interaction (<img class="math" src="_images/math/02108fb0196bec37d8f582e21bf5db60149a19d3.png" alt="P_{\mathbf{q}j}"/>) is
 replaced by this constant value in thermal conductivity
 calculation. This option works only when <code class="docutils literal"><span class="pre">--br</span></code> options are
 activated. Therefore third-order force constants are not necessary to
-input. The physical unit of the value is <img class="math" src="_images/math/b1081ba55ca53aac658b057192e44ef64f27afa1.png" alt="\text{eV}^2"/>.</p>
+input. The physical unit of the value is <img class="math" src="_images/math/786103382befe75b189f6ee6fb66af3a3ff43155.png" alt="\text{eV}^2"/>.</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;3 3 2&quot;</span> <span class="o">-</span><span class="n">v</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;32 32 20&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> \
   <span class="o">--</span><span class="n">const_ave_pp</span><span class="o">=</span><span class="mf">1e-10</span>
 </pre></div>
@@ -1046,14 +948,14 @@ input. The physical unit of the value is <img class="math" src="_images/math/b10
         <br/>
         
 <div id="sourcelink">
-  <a href="_sources/command-options.txt"
+  <a href="_sources/command-options.rst.txt"
      rel="nofollow">Source</a>
 </div>
       
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.9.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.<br/>
     </p>
   </div>
 </footer>
