@@ -461,6 +461,16 @@ generating contracted fc3 for each special <code class="docutils literal"><span 
 disp_fc3.10.yaml  disp_fc3.4.yaml  disp_fc3.7.yaml
 disp_fc3.2.yaml   disp_fc3.5.yaml  disp_fc3.8.yaml
 disp_fc3.3.yaml   disp_fc3.6.yaml  disp_fc3.9.yaml
+% for i in {2..10};do grep num_displacements_created disp_fc3.$i.yaml;done
+num_displacements_created: 11
+num_displacements_created: 31
+num_displacements_created: 51
+num_displacements_created: 56
+num_displacements_created: 76
+num_displacements_created: 96
+num_displacements_created: 104
+num_displacements_created: 109
+num_displacements_created: 111
 % for i in {2..10};do phono3py --dim=&quot;2 2 2&quot; --pa=&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot; -c POSCAR-unitcell --mesh=&quot;11 11 11&quot; --br --io=$i|tee std.$i.out;done
 % for i in {2..10};do egrep &#39;^\s+300&#39; std.$i.out;done
   300.0     123.559    123.559    123.559     -0.000     -0.000      0.000
@@ -512,6 +522,28 @@ disp_fc3.3.yaml   disp_fc3.6.yaml  disp_fc3.9.yaml
 6.469591
 7.335901
 % for i in {2..22};do d=`egrep &#39;^\s+distance&#39; disp_fc3.yaml|awk &#39;{print $2}&#39;|sort|uniq|sed &quot;${i}q;d&quot;`; d=$((d+0.0001)); phono3py --cutoff_pair=$d -o $i -d --dim=&quot;3 3 2&quot; -c POSCAR-unitcell ;done
+% for i in {2..22};do grep num_displacements_created disp_fc3.$i.yaml;done
+num_displacements_created: 78
+num_displacements_created: 98
+num_displacements_created: 202
+num_displacements_created: 222
+num_displacements_created: 318
+num_displacements_created: 370
+num_displacements_created: 466
+num_displacements_created: 570
+num_displacements_created: 666
+num_displacements_created: 718
+num_displacements_created: 718
+num_displacements_created: 770
+num_displacements_created: 790
+num_displacements_created: 894
+num_displacements_created: 934
+num_displacements_created: 986
+num_displacements_created: 1026
+num_displacements_created: 1122
+num_displacements_created: 1162
+num_displacements_created: 1214
+num_displacements_created: 1254
 % for i in {2..22};do phono3py --dim=&quot;3 3 2&quot; -c POSCAR-unitcell --mesh=&quot;13 13 9&quot; --br --nac --io $i|tee std.$i.out; done
 % for i in {2..22};do egrep &#39;^\s+300\.0&#39; std.$i.out;done
   300.0     201.530    201.530    192.685     -0.000     -0.000     -0.000
@@ -535,6 +567,7 @@ disp_fc3.3.yaml   disp_fc3.6.yaml  disp_fc3.9.yaml
   300.0     224.645    224.645    215.260     -0.000     -0.000     -0.000
   300.0     224.769    224.769    215.220     -0.000     -0.000     -0.000
   300.0     224.650    224.650    215.090     -0.000     -0.000     -0.000
+% for i in {2..22};do phono3py --dim=&quot;3 3 2&quot; -c POSCAR-unitcell --mesh=&quot;13 13 9&quot; --sym_fc3r --sym_fc2 --tsym --br --nac -i $i -o sym-$i|tee std.sym-$i.out; done
 % for i in {2..22};do egrep &#39;^\s+300\.0&#39; std.sym-$i.out;done
   300.0     224.122    224.122    213.086      0.000     -0.000      0.000
   300.0     225.394    225.394    215.683      0.000     -0.000      0.000
