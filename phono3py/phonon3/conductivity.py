@@ -191,6 +191,7 @@ class Conductivity(object):
 
     def _set_grid_properties(self, grid_points):
         self._grid_address = self._pp.get_grid_address()
+        self._pp.set_nac_q_direction(nac_q_direction=None)
 
         if grid_points is not None: # Specify grid points
             self._grid_points = reduce_grid_points(
@@ -223,7 +224,10 @@ class Conductivity(object):
                                  dtype='double', order='C')
 
         self._grid_point_count = 0
-        self._pp.set_phonons(self._grid_points)
+        # set_phonons is unnecessary now because all phonons are calculated in
+        # self._pp.set_dynamical_matrix, though Gamma-point is an exception,
+        # which is treatd at self._pp.set_grid_point.
+        # self._pp.set_phonons(self._grid_points)
         self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
 
     def _get_gamma_isotope_at_sigmas(self, i):
