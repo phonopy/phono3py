@@ -146,13 +146,13 @@ class Phono3py(object):
             is_mesh_symmetry=self._is_mesh_symmetry,
             symmetrize_fc3_q=self._symmetrize_fc3_q,
             lapack_zheev_uplo=self._lapack_zheev_uplo)
+        self._interaction.set_nac_q_direction(nac_q_direction=nac_q_direction)
         self._interaction.set_dynamical_matrix(
             self._fc2,
             self._phonon_supercell,
             self._phonon_primitive,
             nac_params=self._nac_params,
             frequency_scale_factor=frequency_scale_factor)
-        self._interaction.set_nac_q_direction(nac_q_direction=nac_q_direction)
 
     def set_phonon_data(self, frequencies, eigenvectors, grid_address):
         if self._interaction is not None:

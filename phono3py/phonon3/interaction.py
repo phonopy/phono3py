@@ -193,8 +193,10 @@ class Interaction(object):
                  stores_triplets_map=stores_triplets_map)
 
         # Special treatment of symmetry is applied when q_direction is used.
-        if self._nac_q_direction is not None:
-            if (grid_address[grid_point] == 0).all():
+        if (grid_address[grid_point] == 0).all():
+            self._phonon_done[grid_point] = 0
+            self.set_phonons(np.array([0], dtype='intc'))
+            if self._nac_q_direction is not None:
                 rotations = []
                 for r in self._symmetry.get_pointgroup_operations():
                     dq = self._nac_q_direction
@@ -237,7 +239,10 @@ class Interaction(object):
         # self._grid_address = grid_address
         # self._bz_map = bz_map
         self._ir_map_at_q = ir_map_at_q
-        self.set_phonons(self._triplets_at_q.ravel())
+
+        # set_phonons is unnecessary now because all phonons are calculated in
+        # set_dynamical_matrix, though Gamma-point is an exception.
+        # self.set_phonons(self._triplets_at_q.ravel())
 
     def set_dynamical_matrix(self,
                              fc2,
