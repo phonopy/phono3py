@@ -80,13 +80,13 @@ static void sum_imag_self_energy_N_and_U_along_triplets
  const int *grid_address,
  const int num_band0,
  const int num_triplets);
-static void set_tmp_values(double *n1,
-			   double *n2,
-			   const int num_band,
-			   const double temperature,
-			   const int *triplets,
-			   const double *frequencies,
-			   const double cutoff_frequency);
+static void set_occupations(double *n1,
+                            double *n2,
+                            const int num_band,
+                            const double temperature,
+                            const int *triplets,
+                            const double *frequencies,
+                            const double cutoff_frequency);
 
 void get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
 					  const Darray *fc3_normal_squared,
@@ -205,7 +205,8 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
                                  const int triplet_weight,
                                  const double *g1,
                                  const double *g2_3,
-                                 const char *g_zero,
+                                 PHPYCONST int (*g_pos)[4],
+                                 const int num_g_pos,
                                  const double temperature,
                                  const double cutoff_frequency,
                                  const int openmp_at_bands)
@@ -216,7 +217,7 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
 
   n1 = (double*)malloc(sizeof(double) * num_band);
   n2 = (double*)malloc(sizeof(double) * num_band);
-  set_tmp_values(n1,
+  set_occupations(n1,
                  n2,
                  num_band,
                  temperature,
@@ -300,7 +301,7 @@ detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
 
   n1 = (double*)malloc(sizeof(double) * num_band);
   n2 = (double*)malloc(sizeof(double) * num_band);
-  set_tmp_values(n1,
+  set_occupations(n1,
 		 n2,
 		 num_band,
 		 temperature,
@@ -448,13 +449,13 @@ static void sum_imag_self_energy_N_and_U_along_triplets
   is_N = NULL;
 }
 
-static void set_tmp_values(double *n1,
-			   double *n2,
-			   const int num_band,
-			   const double temperature,
-			   const int *triplets,
-			   const double *frequencies,
-			   const double cutoff_frequency)
+static void set_occupations(double *n1,
+                            double *n2,
+                            const int num_band,
+                            const double temperature,
+                            const int *triplets,
+                            const double *frequencies,
+                            const double cutoff_frequency)
 {
   int j;
   double f1, f2;
