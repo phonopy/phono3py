@@ -48,7 +48,8 @@ static const int index_exchange[6][3] = {{0, 1, 2},
                                          {0, 2, 1},
                                          {1, 0, 2}};
 static void real_to_normal(double *fc3_normal_squared,
-                           const char *g_zero,
+                           PHPYCONST int (*g_pos)[4],
+                           const int num_g_pos,
                            const double *freqs0,
                            const double *freqs1,
                            const double *freqs2,
@@ -70,7 +71,8 @@ static void real_to_normal(double *fc3_normal_squared,
                            const int num_triplets,
                            const int openmp_at_bands);
 static void real_to_normal_sym_q(double *fc3_normal_squared,
-                                 const char *g_zero,
+                                 PHPYCONST int (*g_pos)[4],
+                                 const int num_g_pos,
                                  PHPYCONST double *freqs[3],
                                  PHPYCONST lapack_complex_double *eigvecs[3],
                                  const double *fc3,
@@ -107,24 +109,49 @@ void get_interaction(Darray *fc3_normal_squared,
                      const double cutoff_frequency)
 {
   int i, num_band, num_band0, num_band_prod, openmp_per_triplets;
+  int j, k, l, jkl, num_g_pos;
+  int (*g_pos)[4];
+
+  g_pos = NULL;
 
   num_band0 = fc3_normal_squared->dims[1];
   num_band = frequencies->dims[1];
   num_band_prod = num_band0 * num_band * num_band;
 
-  if (triplets->dims[0] > num_band * num_band) {
+  if (triplets->dims[0] > num_band) {
     openmp_per_triplets = 1;
   } else {
     openmp_per_triplets = 0;
   }
 
-#pragma omp parallel for schedule(guided) if (openmp_per_triplets)
+#pragma omp parallel for schedule(guided) private(j, k, l, jkl, num_g_pos, g_pos) if (openmp_per_triplets)
   for (i = 0; i < triplets->dims[0]; i++) {
+    num_g_pos = 0;
+    jkl = 0;
+    g_pos = (int(*)[4])malloc(sizeof(int[4]) * num_band_prod);
+    for (j = 0; j < num_band0; j++) {
+      for (k = 0; k < num_band; k++) {
+        for (l = 0; l < num_band; l++) {
+          if (!g_zero[jkl + i * num_band_prod]) {
+            g_pos[num_g_pos][0] = j;
+            g_pos[num_g_pos][1] = k;
+            g_pos[num_g_pos][2] = l;
+            g_pos[num_g_pos][3] = jkl;
+            num_g_pos++;
+          } else {
+            fc3_normal_squared->data[jkl + i * num_band_prod] = 0;
+          }
+          jkl++;
+        }
+      }
+    }
+
     get_interaction_at_triplet(
       fc3_normal_squared->data + i * num_band_prod,
       num_band0,
       num_band,
-      g_zero + i * num_band_prod,
+      g_pos,
+      num_g_pos,
       frequencies->data,
       eigenvectors->data,
       triplets->data + i * 3,
@@ -142,13 +169,17 @@ void get_interaction(Darray *fc3_normal_squared,
       i,
       triplets->dims[0],
       1 - openmp_per_triplets);
+
+    free(g_pos);
+    g_pos = NULL;
   }
 }
 
 void get_interaction_at_triplet(double *fc3_normal_squared,
                                 const int num_band0,
                                 const int num_band,
-                                const char *g_zero,
+                                PHPYCONST int (*g_pos)[4],
+                                const int num_g_pos,
                                 const double *frequencies,
                                 const lapack_complex_double *eigenvectors,
                                 const int *triplet,
@@ -191,7 +222,8 @@ void get_interaction_at_triplet(double *fc3_normal_squared,
       }
     }
     real_to_normal_sym_q(fc3_normal_squared,
-                         g_zero,
+                         g_pos,
+                         num_g_pos,
                          freqs,
                          eigvecs,
                          fc3,
@@ -216,7 +248,8 @@ void get_interaction_at_triplet(double *fc3_normal_squared,
     }
   } else {
     real_to_normal(fc3_normal_squared,
-                   g_zero,
+                   g_pos,
+                   num_g_pos,
                    frequencies + triplet[0] * num_band,
                    frequencies + triplet[1] * num_band,
                    frequencies + triplet[2] * num_band,
@@ -241,7 +274,8 @@ void get_interaction_at_triplet(double *fc3_normal_squared,
 }
 
 static void real_to_normal(double *fc3_normal_squared,
-                           const char* g_zero,
+                           PHPYCONST int (*g_pos)[4],
+                           const int num_g_pos,
                            const double *freqs0,
                            const double *freqs1,
                            const double *freqs2,
@@ -287,7 +321,8 @@ static void real_to_normal(double *fc3_normal_squared,
 #endif
   }
   reciprocal_to_normal_squared(fc3_normal_squared,
-                               g_zero,
+                               g_pos,
+                               num_g_pos,
                                fc3_reciprocal,
                                freqs0,
                                freqs1,
@@ -307,7 +342,8 @@ static void real_to_normal(double *fc3_normal_squared,
 }
 
 static void real_to_normal_sym_q(double *fc3_normal_squared,
-                                 const char *g_zero,
+                                 PHPYCONST int (*g_pos)[4],
+                                 const int num_g_pos,
                                  PHPYCONST double *freqs[3],
                                  PHPYCONST lapack_complex_double *eigvecs[3],
                                  const double *fc3,
@@ -344,7 +380,8 @@ static void real_to_normal_sym_q(double *fc3_normal_squared,
       }
     }
     real_to_normal(fc3_normal_squared_ex,
-                   g_zero,
+                   g_pos,
+                   num_g_pos,
                    freqs[index_exchange[i][0]],
                    freqs[index_exchange[i][1]],
                    freqs[index_exchange[i][2]],
