@@ -118,7 +118,7 @@ void get_interaction(Darray *fc3_normal_squared,
   num_band = frequencies->dims[1];
   num_band_prod = num_band0 * num_band * num_band;
 
-  if (triplets->dims[0] > num_band * num_band) {
+  if (triplets->dims[0] > num_band) {
     openmp_per_triplets = 1;
   } else {
     openmp_per_triplets = 0;
