@@ -44,38 +44,6 @@
 #include <time.h>
 #endif
 
-static void reciprocal_to_normal_squared_single_thread
-(double *fc3_normal_squared,
- const char *g_zero,
- const lapack_complex_double *fc3_reciprocal,
- const double *freqs0,
- const double *freqs1,
- const double *freqs2,
- const lapack_complex_double *eigvecs0,
- const lapack_complex_double *eigvecs1,
- const lapack_complex_double *eigvecs2,
- const double *masses,
- const int *band_indices,
- const int num_band0,
- const int num_band,
- const double cutoff_frequency);
-
-static void reciprocal_to_normal_squared_openmp
-(double *fc3_normal_squared,
- const char *g_zero,
- const lapack_complex_double *fc3_reciprocal,
- const double *freqs0,
- const double *freqs1,
- const double *freqs2,
- const lapack_complex_double *eigvecs0,
- const lapack_complex_double *eigvecs1,
- const lapack_complex_double *eigvecs2,
- const double *masses,
- const int *band_indices,
- const int num_band0,
- const int num_band,
- const double cutoff_frequency);
-
 static lapack_complex_double fc3_sum_in_reciprocal_to_normal
 (const int bi0,
  const int bi1,
@@ -102,58 +70,10 @@ static double get_fc3_sum
  const int num_atom,
  const double cutoff_frequency);
 
-void reciprocal_to_normal_squared(double *fc3_normal_squared,
-                                  const char *g_zero,
-                                  const lapack_complex_double *fc3_reciprocal,
-                                  const double *freqs0,
-                                  const double *freqs1,
-                                  const double *freqs2,
-                                  const lapack_complex_double *eigvecs0,
-                                  const lapack_complex_double *eigvecs1,
-                                  const lapack_complex_double *eigvecs2,
-                                  const double *masses,
-                                  const int *band_indices,
-                                  const int num_band0,
-                                  const int num_band,
-                                  const double cutoff_frequency,
-                                  const int openmp_at_bands)
-{
-  if (openmp_at_bands) {
-    reciprocal_to_normal_squared_openmp(fc3_normal_squared,
-                                        g_zero,
-                                        fc3_reciprocal,
-                                        freqs0,
-                                        freqs1,
-                                        freqs2,
-                                        eigvecs0,
-                                        eigvecs1,
-                                        eigvecs2,
-                                        masses,
-                                        band_indices,
-                                        num_band0,
-                                        num_band,
-                                        cutoff_frequency);
-  } else {
-    reciprocal_to_normal_squared_single_thread(fc3_normal_squared,
-                                               g_zero,
-                                               fc3_reciprocal,
-                                               freqs0,
-                                               freqs1,
-                                               freqs2,
-                                               eigvecs0,
-                                               eigvecs1,
-                                               eigvecs2,
-                                               masses,
-                                               band_indices,
-                                               num_band0,
-                                               num_band,
-                                               cutoff_frequency);
-  }
-}
-
-static void reciprocal_to_normal_squared_single_thread
+void reciprocal_to_normal_squared
 (double *fc3_normal_squared,
- const char *g_zero,
+ const int (*g_pos)[4],
+ const int num_g_pos,
  const lapack_complex_double *fc3_reciprocal,
  const double *freqs0,
  const double *freqs1,
@@ -165,57 +85,10 @@ static void reciprocal_to_normal_squared_single_thread
  const int *band_indices,
  const int num_band0,
  const int num_band,
- const double cutoff_frequency)
+ const double cutoff_frequency,
+ const int openmp_at_bands)
 {
-  int i, j, k, bi, num_atom;
-
-  num_atom = num_band / 3;
-
-  for (i = 0; i < num_band0; i++) {
-    bi = band_indices[i];
-    if (freqs0[bi] > cutoff_frequency) {
-      for (j = 0; j < num_band; j++) {
-        for (k = 0; k < num_band; k++) {
-          if (g_zero[i * num_band * num_band + j * num_band + k]) {
-            fc3_normal_squared[i * num_band * num_band + j * num_band + k] = 0;
-            continue;
-          }
-          fc3_normal_squared[i * num_band * num_band + j * num_band + k] =
-            get_fc3_sum(j, k, bi,
-                        freqs0, freqs1, freqs2,
-                        eigvecs0, eigvecs1, eigvecs2,
-                        fc3_reciprocal,
-                        masses,
-                        num_atom,
-                        cutoff_frequency);
-        }
-      }
-    } else {
-      for (j = 0; j < num_band * num_band; j++) {
-        fc3_normal_squared[i * num_band * num_band + j] = 0;
-      }
-    }
-  }
-}
-
-static void reciprocal_to_normal_squared_openmp
-(double *fc3_normal_squared,
- const char *g_zero,
- const lapack_complex_double *fc3_reciprocal,
- const double *freqs0,
- const double *freqs1,
- const double *freqs2,
- const lapack_complex_double *eigvecs0,
- const lapack_complex_double *eigvecs1,
- const lapack_complex_double *eigvecs2,
- const double *masses,
- const int *band_indices,
- const int num_band0,
- const int num_band,
- const double cutoff_frequency)
-{
-  int i, j, k, ijk, num_atom, num_g_pos;
-  int (*g_pos)[4];
+  int i, num_atom;
 
 #ifdef MEASURE_R2N
   double loopTotalCPUTime, loopTotalWallTime;
@@ -224,46 +97,29 @@ static void reciprocal_to_normal_squared_openmp
 #endif
 
   num_atom = num_band / 3;
-  num_g_pos = 0;
-  ijk = 0;
-  g_pos = (int(*)[4])malloc(sizeof(int[4]) * num_band0 * num_band * num_band);
-  for (i = 0; i < num_band0; i++) {
-    for (j = 0; j < num_band; j++) {
-      for (k = 0; k < num_band; k++) {
-        if (freqs0[band_indices[i]] > cutoff_frequency && !g_zero[ijk]) {
-          g_pos[num_g_pos][0] = i;
-          g_pos[num_g_pos][1] = j;
-          g_pos[num_g_pos][2] = k;
-          g_pos[num_g_pos][3] = ijk;
-          num_g_pos++;
-        } else {
-          fc3_normal_squared[ijk] = 0;
-        }
-        ijk++;
-      }
-    }
-  }
 
 #ifdef MEASURE_R2N
   loopStartWallTime = time(NULL);
   loopStartCPUTime = clock();
 #endif
 
-#pragma omp parallel for
+#pragma omp parallel for if (openmp_at_bands)
   for (i = 0; i < num_g_pos; i++) {
-    fc3_normal_squared[g_pos[i][3]] = get_fc3_sum(g_pos[i][1],
-                                                  g_pos[i][2],
-                                                  band_indices[g_pos[i][0]],
-                                                  freqs0,
-                                                  freqs1,
-                                                  freqs2,
-                                                  eigvecs0,
-                                                  eigvecs1,
-                                                  eigvecs2,
-                                                  fc3_reciprocal,
-                                                  masses,
-                                                  num_atom,
-                                                  cutoff_frequency);
+    if (freqs0[band_indices[g_pos[i][0]]] > cutoff_frequency) {
+      fc3_normal_squared[g_pos[i][3]] = get_fc3_sum(g_pos[i][1],
+                                                    g_pos[i][2],
+                                                    band_indices[g_pos[i][0]],
+                                                    freqs0,
+                                                    freqs1,
+                                                    freqs2,
+                                                    eigvecs0,
+                                                    eigvecs1,
+                                                    eigvecs2,
+                                                    fc3_reciprocal,
+                                                    masses,
+                                                    num_atom,
+                                                    cutoff_frequency);
+    }
   }
 
 #ifdef MEASURE_R2N
@@ -272,8 +128,6 @@ static void reciprocal_to_normal_squared_openmp
       printf("  %1.3fs (%1.3fs CPU)\n", loopTotalWallTime, loopTotalCPUTime);
 #endif
 
-  free(g_pos);
-  g_pos = NULL;
 }
 
 static double get_fc3_sum

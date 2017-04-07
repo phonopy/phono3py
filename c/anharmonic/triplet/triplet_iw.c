@@ -121,6 +121,7 @@ int tpi_get_integration_weight(double *iw,
   return 0;
 }
 
+
 static void set_freq_vertices(double freq_vertices[3][24][4],
 			      const double frequencies[],
 			      TPLCONST int vertices[2][24][4],

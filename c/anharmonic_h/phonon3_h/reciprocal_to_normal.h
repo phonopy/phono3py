@@ -40,7 +40,8 @@
 
 void reciprocal_to_normal_squared
 (double *fc3_normal_squared,
- const char *g_zero,
+ const int (*g_pos)[4],
+ const int num_g_pos,
  const lapack_complex_double *fc3_reciprocal,
  const double *freqs0,
  const double *freqs1,
