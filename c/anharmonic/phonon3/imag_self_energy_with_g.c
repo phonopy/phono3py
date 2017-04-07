@@ -143,7 +143,8 @@ void get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
                                 g + (i + num_triplets) * num_band_prod,
                                 g_pos,
                                 num_g_pos,
-                                temperature,
+                                &temperature,
+                                1,
                                 cutoff_frequency,
                                 0);
 
@@ -234,57 +235,52 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
                                  const double *g2_3,
                                  PHPYCONST int (*g_pos)[4],
                                  const int num_g_pos,
-                                 const double temperature,
+                                 const double *temperatures,
+                                 const int num_temps,
                                  const double cutoff_frequency,
                                  const int openmp_at_bands)
 {
-  int i;
-  double *n1, *n2, *ise;
+  int i, j;
+  double *n1, *n2;
 
-  n1 = (double*)malloc(sizeof(double) * num_band);
-  n2 = (double*)malloc(sizeof(double) * num_band);
-  set_occupations(n1,
-                  n2,
-                  num_band,
-                  temperature,
-                  triplets,
-                  frequencies,
-                  cutoff_frequency);
-
-  ise = (double*)malloc(sizeof(double) * num_g_pos);
-  if (temperature > 0) {
-#pragma omp parallel for if (openmp_at_bands)
-    for (i = 0; i < num_g_pos; i++) {
-      if (n1[g_pos[i][1]] < 0 || n2[g_pos[i][2]] < 0) {
-        ise[i] = 0;
-      } else {
-        ise[i] = ((n1[g_pos[i][1]] + n2[g_pos[i][2]] + 1) * g1[g_pos[i][3]] +
-                  (n1[g_pos[i][1]] - n2[g_pos[i][2]]) * g2_3[g_pos[i][3]]) *
-          fc3_normal_squared[g_pos[i][3]] * triplet_weight;
-      }
-    }
-  } else {
-#pragma omp parallel for if (openmp_at_bands)
-    for (i = 0; i < num_g_pos; i++) {
-      if (n1[g_pos[i][1]] < 0 || n2[g_pos[i][2]] < 0) {
-        ise[i] = 0;
-      } else {
-        ise[i] = g1[g_pos[i][3]] * fc3_normal_squared[g_pos[i][3]] * triplet_weight;
-      }
-    }
+  n1 = (double*)malloc(sizeof(double) * num_temps * num_band);
+  n2 = (double*)malloc(sizeof(double) * num_temps * num_band);
+  for (i = 0; i < num_temps; i++) {
+    set_occupations(n1 + i * num_band,
+                    n2 + i * num_band,
+                    num_band,
+                    temperatures[i],
+                    triplets,
+                    frequencies,
+                    cutoff_frequency);
   }
 
-  for (i = 0; i < num_band0; i++) {
+  for (i = 0; i < num_band0 * num_temps; i++) {
     imag_self_energy[i] = 0;
   }
 
+#pragma omp parallel for private(j) if (openmp_at_bands)
   for (i = 0; i < num_g_pos; i++) {
-    imag_self_energy[g_pos[i][0]] += ise[i];
+    for (j = 0; j < num_temps; j++) {
+      if (n1[j * num_band + g_pos[i][1]] < 0 ||
+          n2[j * num_band + g_pos[i][2]] < 0) {
+        ;
+      } else {
+        if (temperatures[j] > 0) {
+          imag_self_energy[j * num_band0 + g_pos[i][0]] +=
+            ((n1[j * num_band + g_pos[i][1]] +
+              n2[j * num_band + g_pos[i][2]] + 1) * g1[g_pos[i][3]] +
+             (n1[j * num_band + g_pos[i][1]] -
+              n2[j * num_band + g_pos[i][2]]) * g2_3[g_pos[i][3]]) *
+            fc3_normal_squared[g_pos[i][3]] * triplet_weight;
+        } else {
+          imag_self_energy[j * num_band0 + g_pos[i][0]] +=
+            g1[g_pos[i][3]] * fc3_normal_squared[g_pos[i][3]] * triplet_weight;
+        }
+      }
+    }
   }
 
-
-  free(ise);
-  ise = NULL;
   free(n1);
   n1 = NULL;
   free(n2);

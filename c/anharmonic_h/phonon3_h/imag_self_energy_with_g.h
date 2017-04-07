@@ -71,7 +71,8 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
                                  const double *g2_3,
                                  PHPYCONST int (*g_pos)[4],
                                  const int num_g_pos,
-                                 const double temperature,
+                                 const double *temperatures,
+                                 const int num_temps,
                                  const double cutoff_frequency,
                                  const int openmp_at_bands);
 

@@ -160,23 +160,23 @@ void get_pp_collision_with_g(double *imag_self_energy,
       num_triplets,
       1 - openmp_per_triplets);
 
-    for (j = 0; j < num_temps; j++) {
-      imag_self_energy_at_triplet(
-        ise + i * num_temps * num_band0 + j * num_band0,
-        num_band0,
-        num_band,
-        fc3_normal_squared,
-        frequencies,
-        triplets->data + i * 3,
-        weights[i],
-        iw,
-        iw + num_band_prod,
-        iw_pos,
-        num_iw_pos,
-        temperatures->data[j],
-        cutoff_frequency,
-        1 - openmp_per_triplets);
-    }
+    imag_self_energy_at_triplet(
+      ise + i * num_temps * num_band0,
+      num_band0,
+      num_band,
+      fc3_normal_squared,
+      frequencies,
+      triplets->data + i * 3,
+      weights[i],
+      iw,
+      iw + num_band_prod,
+      iw_pos,
+      num_iw_pos,
+      temperatures->data,
+      num_temps,
+      cutoff_frequency,
+      1 - openmp_per_triplets);
+
     free(fc3_normal_squared);
     fc3_normal_squared = NULL;
     free(iw_pos);
