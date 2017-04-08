@@ -56,6 +56,7 @@ void phonopy_pinv_mt(double *data_out,
 int phonopy_pinv_dsyev(double *data,
 		       double *eigvals,
 		       const int size,
-		       const double cutoff);
+		       const double cutoff,
+                       const int algorithm);
 
 #endif

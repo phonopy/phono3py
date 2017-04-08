@@ -772,11 +772,11 @@ class Conductivity_LBTE(Conductivity):
     def _set_inv_collision_matrix(self,
                                   i_sigma,
                                   i_temp,
-                                  method=0):
+                                  method=2):
         num_ir_grid_points = len(self._ir_grid_points)
         num_band = self._primitive.get_number_of_atoms() * 3
 
-        if method == 0:
+        if method == 0: # This needs more memory space. Numpy uses dsyevd.
             col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
                 num_ir_grid_points * num_band * 3,
                 num_ir_grid_points * num_band * 3)
@@ -788,16 +788,29 @@ class Conductivity_LBTE(Conductivity):
                     e[l] = 1 / np.sqrt(val)
             v[:] = e * v
             v[:] = np.dot(v, v.T) # inv_col
-        elif method == 1:
+        elif method == 1: # dsyev
             import phono3py._phono3py as phono3c
             w = np.zeros(num_ir_grid_points * num_band * 3, dtype='double')
-            phono3c.inverse_collision_matrix(
-                self._collision_matrix, w, i_sigma, i_temp, self._pinv_cutoff)
-        elif method == 2:
+            phono3c.inverse_collision_matrix(self._collision_matrix,
+                                             w,
+                                             i_sigma,
+                                             i_temp,
+                                             self._pinv_cutoff,
+                                             0)
+        elif method == 2: # dsyevd
             import phono3py._phono3py as phono3c
             w = np.zeros(num_ir_grid_points * num_band * 3, dtype='double')
-            phono3c.inverse_collision_matrix_libflame(
-                self._collision_matrix, w, i_sigma, i_temp, self._pinv_cutoff)
+            phono3c.inverse_collision_matrix(self._collision_matrix,
+                                             w,
+                                             i_sigma,
+                                             i_temp,
+                                             self._pinv_cutoff,
+                                             1)
+        # elif method == 3:
+        #     import phono3py._phono3py as phono3c
+        #     w = np.zeros(num_ir_grid_points * num_band * 3, dtype='double')
+        #     phono3c.inverse_collision_matrix_libflame(
+        #         self._collision_matrix, w, i_sigma, i_temp, self._pinv_cutoff)
 
         self._collision_eigenvalues[i_sigma, i_temp] = w
 
