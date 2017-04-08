@@ -227,21 +227,19 @@ def _set_collision_from_file(lbte,
                 if collision_gp is False:
                     print("Gamma at grid point %d doesn't exist." % gp)
                     return False
+
+                (collision_matrix_at_gp,
+                 gamma_at_gp,
+                 temperatures_at_gp) = collision_gp
+                if indices == 'all':
+                    gamma_of_gps.append(gamma_at_gp)
+                    collision_matrix_of_gps.append(collision_matrix_at_gp)
+                    temperatures = temperatures_at_gp
                 else:
-                    (collision_matrix_at_gp,
-                     gamma_at_gp,
-                     temperatures_at_gp) = collision_gp
-                    gamma_at_t = []
-                    collision_matrix_at_t = []
-                    if indices == 'all':
-                        gamma_of_gps.append(gamma_at_gp)
-                        collision_matrix_of_gps.append(collision_matrix_at_gp)
-                        temperatures = temperatures_at_gp
-                    else:
-                        gamma_of_gps.append(gamma_at_gp[indices])
-                        collision_matrix_of_gps.append(
-                            collision_matrix_at_gp[indices])
-                        temperatures = temperatures_at_gp[indices]
+                    gamma_of_gps.append(gamma_at_gp[indices])
+                    collision_matrix_of_gps.append(
+                        collision_matrix_at_gp[indices])
+                    temperatures = temperatures_at_gp[indices]
 
             gamma_at_sigma = np.zeros((len(temperatures),
                                        len(grid_points),
@@ -255,11 +253,11 @@ def _set_collision_from_file(lbte,
                                                   len(gamma_of_gps[0][0]),
                                                   3),
                                                   dtype='double')
-            for i in range(len(temperatures)):
-                for j in range(len(grid_points)):
-                    gamma_at_sigma[i, j] = gamma_of_gps[j][i]
+            for k in range(len(temperatures)):
+                for l in range(len(grid_points)):
+                    gamma_at_sigma[k, l] = gamma_of_gps[l][k]
                     collision_matrix_at_sigma[
-                        i, j] = collision_matrix_of_gps[j][i]
+                        k, l] = collision_matrix_of_gps[l][k]
 
             gamma.append(gamma_at_sigma)
             collision_matrix.append(collision_matrix_at_sigma)

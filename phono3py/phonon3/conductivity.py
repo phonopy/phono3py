@@ -35,9 +35,8 @@ class Conductivity(object):
         self._pp = interaction
         self._is_full_pp = is_full_pp
         self._collision = None # has to be set derived class
-
         if temperatures is None:
-            self._temperatures = np.arange(0, 1001, 10, dtype='double')
+            self._temperatures = None
         else:
             self._temperatures = np.array(temperatures, dtype='double')
         self._is_kappa_star = is_kappa_star
