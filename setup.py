@@ -96,6 +96,15 @@ scripts_phono3py = ['scripts/phono3py',
                     'scripts/kaccum',
                     'scripts/kdeplot']
 
+## This is for the test of libflame
+##
+# use_libflame = False
+# if use_libflame:
+#     sources.append('c/anharmonic/flame_wrapper.c')
+#     extra_link_args.append('../libflame-bin/lib/libflame.a')
+#     include_dirs_libflame = ['../libflame-bin/include']
+#     include_dirs += include_dirs_libflame
+
 ########################
 # _lapackepy extension #
 ########################
