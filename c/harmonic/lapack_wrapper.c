@@ -155,13 +155,13 @@ int phonopy_pinv_dsyev(double *data,
                          eigvals);
     break;
   case 1: /* dsyevd */
-    info = LAPACKE_dsyev(LAPACK_ROW_MAJOR,
-                         'V',
-                         'U',
-                         (lapack_int)size,
-                         tmp_data,
-                         (lapack_int)size,
-                         eigvals);
+    info = LAPACKE_dsyevd(LAPACK_ROW_MAJOR,
+                          'V',
+                          'U',
+                          (lapack_int)size,
+                          tmp_data,
+                          (lapack_int)size,
+                          eigvals);
     break;
   }
 

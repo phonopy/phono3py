@@ -772,11 +772,11 @@ class Conductivity_LBTE(Conductivity):
     def _set_inv_collision_matrix(self,
                                   i_sigma,
                                   i_temp,
-                                  method=2):
+                                  method=1):
         num_ir_grid_points = len(self._ir_grid_points)
         num_band = self._primitive.get_number_of_atoms() * 3
 
-        if method == 0: # This needs more memory space. Numpy uses dsyevd.
+        if method == 0: # np.eigh depends on dsyevd
             col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
                 num_ir_grid_points * num_band * 3,
                 num_ir_grid_points * num_band * 3)
@@ -788,7 +788,8 @@ class Conductivity_LBTE(Conductivity):
                     e[l] = 1 / np.sqrt(val)
             v[:] = e * v
             v[:] = np.dot(v, v.T) # inv_col
-        elif method == 1: # dsyev
+        elif method == 1: # dsyev: safer and slower than dsyevd and
+                          #        smallest memory usage
             import phono3py._phono3py as phono3c
             w = np.zeros(num_ir_grid_points * num_band * 3, dtype='double')
             phono3c.inverse_collision_matrix(self._collision_matrix,
@@ -797,7 +798,7 @@ class Conductivity_LBTE(Conductivity):
                                              i_temp,
                                              self._pinv_cutoff,
                                              0)
-        elif method == 2: # dsyevd
+        elif method == 2: # dsyevd: faster than dsyev and lagest memory usage
             import phono3py._phono3py as phono3c
             w = np.zeros(num_ir_grid_points * num_band * 3, dtype='double')
             phono3c.inverse_collision_matrix(self._collision_matrix,
