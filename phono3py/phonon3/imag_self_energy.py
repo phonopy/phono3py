@@ -485,6 +485,7 @@ class ImagSelfEnergy(object):
     def delete_integration_weights(self):
         self._g = None
         self._g_zero = None
+        self._pp_strength = None
 
     def _run_with_band_indices(self):
         if self._g is not None:
