@@ -472,11 +472,12 @@ class Conductivity_LBTE(Conductivity):
             self._collision = CollisionMatrix(
                 self._pp,
                 is_reducible_collision_matrix=True)
-            self._collision_matrix = np.zeros(
+            self._collision_matrix = np.empty(
                 (len(self._sigmas),
                  num_temp,
                  num_mesh_points, num_band, num_mesh_points, num_band),
                 dtype='double')
+            self._collision_matrix[:] = 0
         else:
             self._mode_kappa = np.zeros((len(self._sigmas),
                                          num_temp,
@@ -504,12 +505,13 @@ class Conductivity_LBTE(Conductivity):
                 point_operations=self._point_operations,
                 ir_grid_points=self._ir_grid_points,
                 rotated_grid_points=self._rot_BZ_grid_points)
-            self._collision_matrix = np.zeros(
+            self._collision_matrix = np.empty(
                 (len(self._sigmas),
                  num_temp,
                  num_grid_points, num_band, 3,
                  num_ir_grid_points, num_band, 3),
                 dtype='double')
+            self._collision_matrix[:] = 0
             self._collision_eigenvalues = np.zeros(
                 (len(self._sigmas),
                  num_temp,
@@ -547,6 +549,9 @@ class Conductivity_LBTE(Conductivity):
                     self._collision.get_imag_self_energy())
                 self._collision_matrix[j, k, i_data] = (
                     self._collision.get_collision_matrix())
+
+        self._collision.delete_integration_weights()
+        self._pp.delete_interaction_strength()
 
     def _set_kappa_at_sigmas(self):
         if self._log_level:

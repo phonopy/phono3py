@@ -49,7 +49,6 @@ void get_collision_matrix(double *collision_matrix,
 			  const double temperature,
 			  const double unit_conversion_factor,
 			  const double cutoff_frequency);
-
 void get_reducible_collision_matrix(double *collision_matrix,
 				    const Darray *fc3_normal_squared,
 				    const double *frequencies,
@@ -60,4 +59,5 @@ void get_reducible_collision_matrix(double *collision_matrix,
 				    const double temperature,
 				    const double unit_conversion_factor,
 				    const double cutoff_frequency);
+
 #endif
