@@ -76,8 +76,9 @@ def get_thermal_conductivity_LBTE(
         if write_collision:
             _write_collision(lbte, i=i, filename=output_filename)
 
-    if not read_collision or read_from == "grid_points":
-        _write_collision(lbte, filename=output_filename)
+    if (not read_collision) or (read_collision and read_from == "grid_points"):
+        if grid_points is None:
+            _write_collision(lbte, filename=output_filename)
 
     if write_kappa and grid_points is None:
         lbte.set_kappa_at_sigmas()
