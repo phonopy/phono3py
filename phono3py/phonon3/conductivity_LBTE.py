@@ -67,10 +67,19 @@ def get_thermal_conductivity_LBTE(
         read_from = _set_collision_from_file(
             lbte,
             indices=read_collision,
-            filename=input_filename)
+            filename=input_filename,
+            log_level=log_level)
         if not read_from:
             print("Reading collisions failed.")
             return False
+        if log_level:
+            temperatures = lbte.get_temperatures()
+            if len(temperatures) > 5:
+                text = (" %.1f " * 5 + "...") % tuple(temperatures[:5])
+                text += " %.1f" % temperatures[-1]
+            else:
+                text = (" %.1f " * len(temperatures)) % tuple(temperatures)
+            print("Temperature: " + text)
 
     for i in lbte:
         if write_collision:
@@ -202,7 +211,8 @@ def _write_kappa(lbte,
 
 def _set_collision_from_file(lbte,
                              indices='all',
-                             filename=None):
+                             filename=None,
+                             log_level=0):
     sigmas = lbte.get_sigmas()
     mesh = lbte.get_mesh_numbers()
     grid_points = lbte.get_grid_points()
@@ -212,10 +222,18 @@ def _set_collision_from_file(lbte,
 
     read_from = None
 
+    if log_level:
+        print("---------------------- Reading collision data from file "
+              "----------------------")
+        sys.stdout.flush()
+
     for j, sigma in enumerate(sigmas):
         collisions = read_collision_from_hdf5(mesh,
                                               sigma=sigma,
-                                              filename=filename)
+                                              filename=filename,
+                                              verbose=(log_level > 0))
+        if log_level:
+            sys.stdout.flush()
         if collisions is False:
             gamma_of_gps = []
             collision_matrix_of_gps = []
@@ -224,7 +242,11 @@ def _set_collision_from_file(lbte,
                     mesh,
                     grid_point=gp,
                     sigma=sigma,
-                    filename=filename)
+                    filename=filename,
+                    verbose=(log_level > 0))
+                if log_level:
+                    sys.stdout.flush()
+
                 if collision_gp is False:
                     print("Gamma at grid point %d doesn't exist." % gp)
                     return False
@@ -581,6 +603,7 @@ class Conductivity_LBTE(Conductivity):
                 print(text)
                 print(("#%6s       " + " %-10s" * 6) %
                       ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy"))
+                sys.stdout.flush()
             for k, t in enumerate(self._temperatures):
                 if t > 0:
                     if self._is_reducible_collision_matrix:
@@ -592,6 +615,7 @@ class Conductivity_LBTE(Conductivity):
                 if self._log_level:
                     print(("%7.1f " + " %10.3f" * 6) %
                           ((t,) + tuple(self._kappa[j, k])))
+                    sys.stdout.flush()
 
         if self._log_level:
             print('')
