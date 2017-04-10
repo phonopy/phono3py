@@ -132,7 +132,7 @@ int phonopy_pinv_dsyev(double *data,
 		       const double cutoff,
                        const int algorithm)
 {
-  int i, j, k, max_l;
+  int i, j, k, max_l, i_s, j_s;
   lapack_int info;
   double *tmp_data;
   double sum;
@@ -177,14 +177,16 @@ int phonopy_pinv_dsyev(double *data,
   }
 
 
-#pragma omp parallel for private(j, k, sum)
+#pragma omp parallel for private(j, k, i_s, j_s, sum)
   for (i = 0; i < size; i++) {
+    i_s = i * size;
     for (j = i; j < size; j++) {
+      j_s = j * size;
       sum = 0;
       for (k = 0; k < max_l; k++) {
-        sum += tmp_data[i * size + l[k]] * tmp_data[j * size + l[k]] / eigvals[l[k]];
+        sum += tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
       }
-      data[i * size + j] = sum;
+      data[i_s + j] = sum;
     }
   }
 
