@@ -132,16 +132,18 @@ int phonopy_pinv_dsyev(double *data,
 		       const double cutoff,
                        const int algorithm)
 {
-  int i, j, k;
+  int i, j, k, max_l;
   lapack_int info;
   double *tmp_data;
+  double sum;
+  int *l;
 
   tmp_data = (double*)malloc(sizeof(double) * size * size);
 
 #pragma omp parallel for
   for (i = 0; i < size * size; i++) {
     tmp_data[i] = data[i];
-    data[i] = 0;
+    /* data[i] = 0; */
   }
 
   switch (algorithm) {
@@ -165,15 +167,31 @@ int phonopy_pinv_dsyev(double *data,
     break;
   }
 
-#pragma omp parallel for private(j, k)
+  l = (int*)malloc(sizeof(int)*size);
+  max_l = 0;
   for (i = 0; i < size; i++) {
-    for (j = 0; j < size; j++) {
-      for (k = 0; k < size; k++) {
-  	if (eigvals[k] > cutoff) {
-  	  data[i * size + j] +=
-  	    tmp_data[i * size + k] / eigvals[k] * tmp_data[j * size + k];
-  	}
+    if (eigvals[i] > cutoff) {
+      l[max_l] = i;
+      max_l++;
+    }
+  }
+
+
+#pragma omp parallel for private(j, k, sum)
+  for (i = 0; i < size; i++) {
+    for (j = i; j < size; j++) {
+      sum = 0;
+      for (k = 0; k < max_l; k++) {
+        sum += tmp_data[i * size + l[k]] * tmp_data[j * size + l[k]] / eigvals[l[k]];
       }
+      data[i * size + j] = sum;
+    }
+  }
+
+#pragma omp parallel for private(i)
+  for (j = 0; j < size - 1; j++) {
+    for (i = j + 1; i < size; i++) {
+      data[i * size + j] = data[j * size + i];
     }
   }
 
