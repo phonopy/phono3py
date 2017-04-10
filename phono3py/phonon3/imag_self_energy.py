@@ -450,8 +450,7 @@ class ImagSelfEnergy(object):
         else:
             self._sigma = float(sigma)
 
-        self._g = None
-        self._g_zero = None
+        self.delete_integration_weights()
 
     def set_frequency_points(self, frequency_points):
         if frequency_points is None:
@@ -482,6 +481,11 @@ class ImagSelfEnergy(object):
 
         for i, v_ave in enumerate(ave_pp):
             self._pp_strength[:, i, :, :] = v_ave / num_grid
+
+    def delete_integration_weights(self):
+        self._g = None
+        self._g_zero = None
+        self._pp_strength = None
 
     def _run_with_band_indices(self):
         if self._g is not None:

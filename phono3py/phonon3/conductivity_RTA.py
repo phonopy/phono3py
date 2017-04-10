@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phono3py.file_IO import (write_kappa_to_hdf5, write_triplets,
@@ -672,6 +673,8 @@ class Conductivity_RTA(Conductivity):
             self._show_log_values_on_kstar(frequencies, gv, ave_pp)
         else:
             self._show_log_values(frequencies, gv, ave_pp)
+
+        sys.stdout.flush()
 
     def _show_log_values(self, frequencies, gv, ave_pp):
         if self._is_full_pp or self._use_ave_pp:

@@ -37,10 +37,12 @@
 
 #include <lapacke.h>
 #include <phonoc_array.h>
+#include <phonoc_const.h>
 
 void reciprocal_to_normal_squared
 (double *fc3_normal_squared,
- const char *g_zero,
+ PHPYCONST int (*g_pos)[4],
+ const int num_g_pos,
  const lapack_complex_double *fc3_reciprocal,
  const double *freqs0,
  const double *freqs1,

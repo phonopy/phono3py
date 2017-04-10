@@ -781,7 +781,6 @@ def read_collision_from_hdf5(mesh,
         gamma = f['gamma'][:]
         collision_matrix = f['collision_matrix'][:]
         temperatures = f['temperature'][:]
-        f.close()
 
         if verbose:
             text = "Collisions "
@@ -796,7 +795,7 @@ def read_collision_from_hdf5(mesh,
             text += "were read from "
             if grid_point is not None:
                 text += "\n"
-            text += "%s" % ("collision" + suffix + ".hdf5")
+            text += "%s." % ("collision" + suffix + ".hdf5")
             print(text)
 
         return collision_matrix, gamma, temperatures
