@@ -138,6 +138,7 @@ int phonopy_pinv_dsyev(double *data,
   double sum;
   int *l;
 
+  l = NULL;
   tmp_data = (double*)malloc(sizeof(double) * size * size);
 
 #pragma omp parallel for
@@ -167,7 +168,7 @@ int phonopy_pinv_dsyev(double *data,
     break;
   }
 
-  l = (int*)malloc(sizeof(int)*size);
+  l = (int*)malloc(sizeof(int) * size);
   max_l = 0;
   for (i = 0; i < size; i++) {
     if (eigvals[i] > cutoff) {
@@ -221,6 +222,7 @@ int phonopy_pinv_dsyev(double *data,
 /*   } */
   
   free(tmp_data);
+  tmp_data = NULL;
 
   return (int)info;
 }
