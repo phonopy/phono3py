@@ -379,20 +379,20 @@ when the number of force files is large.</p>
 <p>Using a python script, <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> is easily parsed. So
 it is also easy to create the file list by a python
 script:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
 <span class="kn">import</span> <span class="nn">yaml</span>
 
 <span class="n">file_name_tmpl</span> <span class="o">=</span> <span class="s2">&quot;disp-</span><span class="si">%05d</span><span class="s2">/vasprun.xml&quot;</span>
 <span class="n">dds</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;disp_fc3.yaml&quot;</span><span class="p">))</span>
 <span class="n">count</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="k">for</span> <span class="n">d1</span> <span class="ow">in</span> <span class="n">dds</span><span class="p">[</span><span class="s1">&#39;first_atoms&#39;</span><span class="p">]:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">file_name_tmpl</span> <span class="o">%</span> <span class="n">count</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">file_name_tmpl</span> <span class="o">%</span> <span class="n">count</span><span class="p">)</span>
     <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
 <span class="k">for</span> <span class="n">d1</span> <span class="ow">in</span> <span class="n">dds</span><span class="p">[</span><span class="s1">&#39;first_atoms&#39;</span><span class="p">]:</span>
     <span class="k">for</span> <span class="n">d2</span> <span class="ow">in</span> <span class="n">d1</span><span class="p">[</span><span class="s1">&#39;second_atoms&#39;</span><span class="p">]:</span>
         <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;displacements&#39;</span><span class="p">]:</span>
             <span class="k">if</span> <span class="n">d2</span><span class="p">[</span><span class="s1">&#39;included&#39;</span><span class="p">]:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">file_name_tmpl</span> <span class="o">%</span> <span class="n">count</span><span class="p">)</span>
+                <span class="k">print</span><span class="p">(</span><span class="n">file_name_tmpl</span> <span class="o">%</span> <span class="n">count</span><span class="p">)</span>
             <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
 </pre></div>
 </div>
@@ -616,7 +616,7 @@ num_displacements_created: 1254
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.4.<br/>
     </p>
   </div>
 </footer>
