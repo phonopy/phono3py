@@ -696,7 +696,7 @@ reciprocal space. See the detail at
 <p>Imaginary parts of self energy at harmonic phonon frequencies
 <img class="math" src="_images/math/d9ec9488bdf3c60f32c84b18c0a7b988ed1a1de8.png" alt="\Gamma_\lambda(\omega_\lambda)"/> are written
 into file in hdf5 format.  The result is written into
-<code class="docutils literal"><span class="pre">kappa-mxxx-dx-gx(-sx).hdf5</span></code> or <code class="docutils literal"><span class="pre">kappa-mxxx-dx-gx-bx(-sx).hdf5</span></code> with
+<code class="docutils literal"><span class="pre">kappa-mxxx-gx(-sx).hdf5</span></code> or <code class="docutils literal"><span class="pre">kappa-mxxx-gx-bx(-sx).hdf5</span></code> with
 <code class="docutils literal"><span class="pre">--bi</span></code> option. With <code class="docutils literal"><span class="pre">--sigma</span></code> option, <code class="docutils literal"><span class="pre">-sx</span></code> is inserted in front
 of <code class="docutils literal"><span class="pre">.hdf5</span></code>.</p>
 </div>
@@ -706,11 +706,11 @@ of <code class="docutils literal"><span class="pre">.hdf5</span></code>.</p>
 <p>Imaginary parts of self energy at harmonic phonon frequencies
 <img class="math" src="_images/math/d9ec9488bdf3c60f32c84b18c0a7b988ed1a1de8.png" alt="\Gamma_\lambda(\omega_\lambda)"/>
 are read from <code class="docutils literal"><span class="pre">kappa</span></code> file in hdf5 format.  Initially the usual
-result file of <code class="docutils literal"><span class="pre">kappa-mxxx-dx(-sx).hdf5</span></code> is searched. Unless it is
+result file of <code class="docutils literal"><span class="pre">kappa-mxxx(-sx).hdf5</span></code> is searched. Unless it is
 found, it tries to read <code class="docutils literal"><span class="pre">kappa</span></code> file for each grid point,
-<code class="docutils literal"><span class="pre">kappa-mxxx-dx-gx(-sx).hdf5</span></code>. Then, similarly,
-<code class="docutils literal"><span class="pre">kappa-mxxx-dx-gx(-sx).hdf5</span></code> not found,
-<code class="docutils literal"><span class="pre">kappa-mxxx-dx-gx-bx(-sx).hdf5</span></code> files for band indices are searched.</p>
+<code class="docutils literal"><span class="pre">kappa-mxxx-gx(-sx).hdf5</span></code>. Then, similarly,
+<code class="docutils literal"><span class="pre">kappa-mxxx-gx(-sx).hdf5</span></code> not found,
+<code class="docutils literal"><span class="pre">kappa-mxxx-gx-bx(-sx).hdf5</span></code> files for band indices are searched.</p>
 </div>
 <div class="section" id="write-gamma-detail">
 <span id="write-detailed-gamma-option"></span><h3><a class="toc-backref" href="#id38"><code class="docutils literal"><span class="pre">--write_gamma_detail</span></code></a><a class="headerlink" href="#write-gamma-detail" title="Permalink to this headline">¶</a></h3>
