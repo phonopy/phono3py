@@ -502,7 +502,7 @@ http://atztogo.github.io/phonopy/setting-tags.html#q-direction .
 Imaginary parts of self energy at harmonic phonon frequencies
 :math:`\Gamma_\lambda(\omega_\lambda)` are written
 into file in hdf5 format.  The result is written into
-``kappa-mxxx-dx-gx(-sx).hdf5`` or ``kappa-mxxx-dx-gx-bx(-sx).hdf5`` with
+``kappa-mxxx-gx(-sx).hdf5`` or ``kappa-mxxx-gx-bx(-sx).hdf5`` with
 ``--bi`` option. With ``--sigma`` option, ``-sx`` is inserted in front
 of ``.hdf5``.
 
@@ -516,11 +516,11 @@ of ``.hdf5``.
 Imaginary parts of self energy at harmonic phonon frequencies
 :math:`\Gamma_\lambda(\omega_\lambda)`
 are read from ``kappa`` file in hdf5 format.  Initially the usual
-result file of ``kappa-mxxx-dx(-sx).hdf5`` is searched. Unless it is
+result file of ``kappa-mxxx(-sx).hdf5`` is searched. Unless it is
 found, it tries to read ``kappa`` file for each grid point,
-``kappa-mxxx-dx-gx(-sx).hdf5``. Then, similarly,
-``kappa-mxxx-dx-gx(-sx).hdf5`` not found,
-``kappa-mxxx-dx-gx-bx(-sx).hdf5`` files for band indices are searched.
+``kappa-mxxx-gx(-sx).hdf5``. Then, similarly,
+``kappa-mxxx-gx(-sx).hdf5`` not found,
+``kappa-mxxx-gx-bx(-sx).hdf5`` files for band indices are searched.
 
 .. _write_detailed_gamma_option:
 
