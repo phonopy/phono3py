@@ -10,7 +10,7 @@ are supported. Distribution over bands has some overhead in
 calculation of Fourier transformation of force constants. Below
 distribution over only grid points is explained. For each computer
 node, selected irreducible grid points needed for completing thermal
-conductivity are calculated. Te resulting data for each grid point are
+conductivity are calculated. The resulting data for each grid point are
 stored in its ``kappa-mxxx-gx.hdf5`` file on each node by setting
 :ref:`--write_gamma option <write_gamma_option>`. Once all data are
 obtained, those data are collected by :ref:`--read_gamma option

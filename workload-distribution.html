@@ -102,6 +102,11 @@
 <li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#details-of-kappa-hdf5-file">Details of <code class="docutils literal"><span class="pre">kappa-*.hdf5</span></code> file</a></li>
 </ul>
 </li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Workload distribution</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-do-it">How to do it</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#a-convenient-script">A convenient script</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tips.html#brillouin-zone-summation">Brillouin zone summation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tips.html#numerical-quality-of-force-constants">Numerical quality of force constants</a></li>
@@ -212,7 +217,7 @@ are supported. Distribution over bands has some overhead in
 calculation of Fourier transformation of force constants. Below
 distribution over only grid points is explained. For each computer
 node, selected irreducible grid points needed for completing thermal
-conductivity are calculated. Te resulting data for each grid point are
+conductivity are calculated. The resulting data for each grid point are
 stored in its <code class="docutils literal"><span class="pre">kappa-mxxx-gx.hdf5</span></code> file on each node by setting
 <a class="reference internal" href="command-options.html#write-gamma-option"><span class="std std-ref">&#8211;write_gamma option</span></a>. Once all data are
 obtained, those data are collected by <a class="reference internal" href="command-options.html#read-gamma-option"><span class="std std-ref">&#8211;read_gamma option</span></a>.</p>
