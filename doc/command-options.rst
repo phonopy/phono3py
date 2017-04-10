@@ -280,18 +280,37 @@ axes and is always Gamma-centered.
    calculation of phonon lifetimes when it is specified, e.g.,
    ``--mesh="11 11 11" --md="2 2 2"``.
 
+.. _gp_option:
+
 ``--gp``: Grid points by their ID
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``GRID_POINTS``)
 
-Grid points where imaginary part of self energy is calculated. Indices
-of grid points are specified by space separated numbers. The mapping
-table between grid points to its indices is obtained by running with
-``--loglevel=2`` option.
+Grid points where imaginary part of self energy is calculated are
+specified. Indices of grid points are specified by space or comma
+(``,``) separated numbers. The mapping table between grid points to its
+indices is obtained by running with ``--loglevel=2`` option.
 
-``--ga`` option can be used instead of ``--gp`` option. See ``--gp``
-section.
+::
+
+   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --write_gamma --gp="0 1 2 3 4 5"
+
+where ``--gp="0 1 2 3 4 5"`` can be also written
+``--gp="0,1,2,3,4,5"``. There is a similar option as this option,
+:ref:`--ga option <ga_option>`.
+
+``--ga`` option may be also useful when a workload of thermal
+conductivity calculation is expected to be distributed into different
+computer nodes.
+
+.. toctree::
+   :maxdepth: 1
+
+   workload-distribution
+
+
+.. _ga_option:
 
 ``--ga``: Grid points by address with three integer values
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -307,17 +326,19 @@ grid point. The grid points given by ``--ga`` option are translated to
 grid point indices as given by ``--gp`` option, and the values given
 by ``--ga`` option will not be shown in log files.
 
+.. _wgp_option:
+
 ``--wgp``: Write grid point information
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Irreducible grid point indices are written into
 ``ir_grid_points.yaml``. This information may be used when we want to
 calculate imaginary part of self energy at each grid point in
-conjunction with ``--gp`` option. ``grid_address-mxxx.hdf5`` is also
-written. This file contains all the grid points and their grid
-addresses in integers. Q-points corresponding to grid points are
-calculated divided these integers by sampling mesh numbers for
-respective reciprocal axes.
+conjunction with :ref:`--gp option <gp_option>`.
+``grid_address-mxxx.hdf5`` is also written. This file contains all the
+grid points and their grid addresses in integers. Q-points
+corresponding to grid points are calculated divided these integers by
+sampling mesh numbers for respective reciprocal axes.
 
 ``--stp``: Show number of triplets to be calculated for each grid point
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -485,6 +506,8 @@ into file in hdf5 format.  The result is written into
 ``--bi`` option. With ``--sigma`` option, ``-sx`` is inserted in front
 of ``.hdf5``.
 
+.. _read_gamma_option:
+
 ``--read_gamma``
 ~~~~~~~~~~~~~~~~
 
@@ -528,7 +551,7 @@ grid addresses and sampling mesh numbers given in
 ``grid_address-mxxx.hdf5`` that is obtained by ``--wgp`` option. A
 python script to obtain q-point triplets is shown below.
 
-:: 
+.. code-block:: python
 
     import h5py
     import numpy as np
@@ -541,7 +564,9 @@ python script to obtain q-point triplets is shown below.
     q = grid_address[triplets] / np.array(mesh, dtype='double')
 
 Imaginary part of self energy or linewidth/2 is recovered by the
-following script::
+following script:
+
+.. code-block:: python
 
     import h5py
     import numpy as np
@@ -664,6 +689,8 @@ third columns are the values given as follows, respectively,
 For spectrum like calculations of imaginary part of self energy and
 JDOS, number of sampling frequency points is controlled by
 ``--num_freq_points`` or ``--freq_pitch``.
+
+.. _bi_option:
 
 ``--bi``: Specific band index
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
