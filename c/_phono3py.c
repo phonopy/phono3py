@@ -1421,7 +1421,7 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
   PyArrayObject *collision_matrix_py;
   PyArrayObject *eigenvalues_py;
   double cutoff;
-  int i_sigma, i_temp;
+  int i_sigma, i_temp, algorithm;
 
   double *collision_matrix;
   double *eigvals;
@@ -1430,12 +1430,13 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
   int num_band;
   int num_column, adrs_shift, info;
 
-  if (!PyArg_ParseTuple(args, "OOiid",
+  if (!PyArg_ParseTuple(args, "OOiidi",
 			&collision_matrix_py,
 			&eigenvalues_py,
 			&i_sigma,
 			&i_temp,
-			&cutoff)) {
+			&cutoff,
+                        &algorithm)) {
     return NULL;
   }
 
@@ -1450,7 +1451,7 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
 		i_temp * num_column * num_column);
 
   info = phonopy_pinv_dsyev(collision_matrix + adrs_shift,
-			    eigvals, num_column, cutoff);
+			    eigvals, num_column, cutoff, algorithm);
 
   return PyLong_FromLong((long) info);
 }

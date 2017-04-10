@@ -296,13 +296,14 @@ def get_triplets_integration_weights(interaction,
     g_zero = None
 
     if is_collision_matrix:
-        g = np.zeros(
+        g = np.empty(
             (3, len(triplets), len(frequency_points), num_band, num_band),
             dtype='double', order='C')
     else:
-        g = np.zeros(
+        g = np.empty(
             (2, len(triplets), len(frequency_points), num_band, num_band),
             dtype='double', order='C')
+    g[:] = 0
 
     if sigma:
         if lang == 'C':

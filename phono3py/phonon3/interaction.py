@@ -291,6 +291,9 @@ class Interaction(object):
         #         self._set_phonon_py(gp)
         self._set_phonon_c(grid_points)
 
+    def delete_interaction_strength(self):
+        self._interaction_strength = None
+
     def _set_band_indices(self, band_indices):
         num_band = self._primitive.get_number_of_atoms() * 3
         if band_indices is None:

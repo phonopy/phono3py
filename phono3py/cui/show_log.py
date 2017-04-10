@@ -171,10 +171,11 @@ def show_phono3py_settings(settings,
                 text += ", "
         print(text)
         
-    if (settings.get_is_linewidth() or
+    if settings.get_is_lbte() and settings.get_read_collision() is not None:
+        pass
+    elif (settings.get_is_linewidth() or
         settings.get_is_frequency_shift() or
-        settings.get_is_bterta() or
-        settings.get_is_lbte()):
+        settings.get_is_bterta()):
         if len(temperatures) > 5:
             text = (" %.1f " * 5 + "...") % tuple(temperatures[:5])
             text += " %.1f" % temperatures[-1]

@@ -67,17 +67,27 @@ def get_thermal_conductivity_LBTE(
         read_from = _set_collision_from_file(
             lbte,
             indices=read_collision,
-            filename=input_filename)
+            filename=input_filename,
+            log_level=log_level)
         if not read_from:
             print("Reading collisions failed.")
             return False
+        if log_level:
+            temperatures = lbte.get_temperatures()
+            if len(temperatures) > 5:
+                text = (" %.1f " * 5 + "...") % tuple(temperatures[:5])
+                text += " %.1f" % temperatures[-1]
+            else:
+                text = (" %.1f " * len(temperatures)) % tuple(temperatures)
+            print("Temperature: " + text)
 
     for i in lbte:
         if write_collision:
             _write_collision(lbte, i=i, filename=output_filename)
 
-    if not read_collision or read_from == "grid_points":
-        _write_collision(lbte, filename=output_filename)
+    if (not read_collision) or (read_collision and read_from == "grid_points"):
+        if grid_points is None:
+            _write_collision(lbte, filename=output_filename)
 
     if write_kappa and grid_points is None:
         lbte.set_kappa_at_sigmas()
@@ -201,7 +211,8 @@ def _write_kappa(lbte,
 
 def _set_collision_from_file(lbte,
                              indices='all',
-                             filename=None):
+                             filename=None,
+                             log_level=0):
     sigmas = lbte.get_sigmas()
     mesh = lbte.get_mesh_numbers()
     grid_points = lbte.get_grid_points()
@@ -211,10 +222,18 @@ def _set_collision_from_file(lbte,
 
     read_from = None
 
+    if log_level:
+        print("---------------------- Reading collision data from file "
+              "----------------------")
+        sys.stdout.flush()
+
     for j, sigma in enumerate(sigmas):
         collisions = read_collision_from_hdf5(mesh,
                                               sigma=sigma,
-                                              filename=filename)
+                                              filename=filename,
+                                              verbose=(log_level > 0))
+        if log_level:
+            sys.stdout.flush()
         if collisions is False:
             gamma_of_gps = []
             collision_matrix_of_gps = []
@@ -223,25 +242,27 @@ def _set_collision_from_file(lbte,
                     mesh,
                     grid_point=gp,
                     sigma=sigma,
-                    filename=filename)
+                    filename=filename,
+                    verbose=(log_level > 0))
+                if log_level:
+                    sys.stdout.flush()
+
                 if collision_gp is False:
                     print("Gamma at grid point %d doesn't exist." % gp)
                     return False
+
+                (collision_matrix_at_gp,
+                 gamma_at_gp,
+                 temperatures_at_gp) = collision_gp
+                if indices == 'all':
+                    gamma_of_gps.append(gamma_at_gp)
+                    collision_matrix_of_gps.append(collision_matrix_at_gp)
+                    temperatures = temperatures_at_gp
                 else:
-                    (collision_matrix_at_gp,
-                     gamma_at_gp,
-                     temperatures_at_gp) = collision_gp
-                    gamma_at_t = []
-                    collision_matrix_at_t = []
-                    if indices == 'all':
-                        gamma_of_gps.append(gamma_at_gp)
-                        collision_matrix_of_gps.append(collision_matrix_at_gp)
-                        temperatures = temperatures_at_gp
-                    else:
-                        gamma_of_gps.append(gamma_at_gp[indices])
-                        collision_matrix_of_gps.append(
-                            collision_matrix_at_gp[indices])
-                        temperatures = temperatures_at_gp[indices]
+                    gamma_of_gps.append(gamma_at_gp[indices])
+                    collision_matrix_of_gps.append(
+                        collision_matrix_at_gp[indices])
+                    temperatures = temperatures_at_gp[indices]
 
             gamma_at_sigma = np.zeros((len(temperatures),
                                        len(grid_points),
@@ -255,11 +276,11 @@ def _set_collision_from_file(lbte,
                                                   len(gamma_of_gps[0][0]),
                                                   3),
                                                   dtype='double')
-            for i in range(len(temperatures)):
-                for j in range(len(grid_points)):
-                    gamma_at_sigma[i, j] = gamma_of_gps[j][i]
+            for k in range(len(temperatures)):
+                for l in range(len(grid_points)):
+                    gamma_at_sigma[k, l] = gamma_of_gps[l][k]
                     collision_matrix_at_sigma[
-                        i, j] = collision_matrix_of_gps[j][i]
+                        k, l] = collision_matrix_of_gps[l][k]
 
             gamma.append(gamma_at_sigma)
             collision_matrix.append(collision_matrix_at_sigma)
@@ -472,11 +493,12 @@ class Conductivity_LBTE(Conductivity):
             self._collision = CollisionMatrix(
                 self._pp,
                 is_reducible_collision_matrix=True)
-            self._collision_matrix = np.zeros(
+            self._collision_matrix = np.empty(
                 (len(self._sigmas),
                  num_temp,
                  num_mesh_points, num_band, num_mesh_points, num_band),
                 dtype='double')
+            self._collision_matrix[:] = 0
         else:
             self._mode_kappa = np.zeros((len(self._sigmas),
                                          num_temp,
@@ -504,12 +526,13 @@ class Conductivity_LBTE(Conductivity):
                 point_operations=self._point_operations,
                 ir_grid_points=self._ir_grid_points,
                 rotated_grid_points=self._rot_BZ_grid_points)
-            self._collision_matrix = np.zeros(
+            self._collision_matrix = np.empty(
                 (len(self._sigmas),
                  num_temp,
                  num_grid_points, num_band, 3,
                  num_ir_grid_points, num_band, 3),
                 dtype='double')
+            self._collision_matrix[:] = 0
             self._collision_eigenvalues = np.zeros(
                 (len(self._sigmas),
                  num_temp,
@@ -548,6 +571,9 @@ class Conductivity_LBTE(Conductivity):
                 self._collision_matrix[j, k, i_data] = (
                     self._collision.get_collision_matrix())
 
+        self._collision.delete_integration_weights()
+        self._pp.delete_interaction_strength()
+
     def _set_kappa_at_sigmas(self):
         if self._log_level:
             print("Symmetrizing collision matrix...")
@@ -577,6 +603,7 @@ class Conductivity_LBTE(Conductivity):
                 print(text)
                 print(("#%6s       " + " %-10s" * 6) %
                       ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy"))
+                sys.stdout.flush()
             for k, t in enumerate(self._temperatures):
                 if t > 0:
                     if self._is_reducible_collision_matrix:
@@ -588,6 +615,7 @@ class Conductivity_LBTE(Conductivity):
                 if self._log_level:
                     print(("%7.1f " + " %10.3f" * 6) %
                           ((t,) + tuple(self._kappa[j, k])))
+                    sys.stdout.flush()
 
         if self._log_level:
             print('')
@@ -767,11 +795,11 @@ class Conductivity_LBTE(Conductivity):
     def _set_inv_collision_matrix(self,
                                   i_sigma,
                                   i_temp,
-                                  method=0):
+                                  method=1):
         num_ir_grid_points = len(self._ir_grid_points)
         num_band = self._primitive.get_number_of_atoms() * 3
 
-        if method == 0:
+        if method == 0: # np.eigh depends on dsyevd
             col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
                 num_ir_grid_points * num_band * 3,
                 num_ir_grid_points * num_band * 3)
@@ -783,16 +811,30 @@ class Conductivity_LBTE(Conductivity):
                     e[l] = 1 / np.sqrt(val)
             v[:] = e * v
             v[:] = np.dot(v, v.T) # inv_col
-        elif method == 1:
+        elif method == 1: # dsyev: safer and slower than dsyevd and
+                          #        smallest memory usage
             import phono3py._phono3py as phono3c
             w = np.zeros(num_ir_grid_points * num_band * 3, dtype='double')
-            phono3c.inverse_collision_matrix(
-                self._collision_matrix, w, i_sigma, i_temp, self._pinv_cutoff)
-        elif method == 2:
+            phono3c.inverse_collision_matrix(self._collision_matrix,
+                                             w,
+                                             i_sigma,
+                                             i_temp,
+                                             self._pinv_cutoff,
+                                             0)
+        elif method == 2: # dsyevd: faster than dsyev and lagest memory usage
             import phono3py._phono3py as phono3c
             w = np.zeros(num_ir_grid_points * num_band * 3, dtype='double')
-            phono3c.inverse_collision_matrix_libflame(
-                self._collision_matrix, w, i_sigma, i_temp, self._pinv_cutoff)
+            phono3c.inverse_collision_matrix(self._collision_matrix,
+                                             w,
+                                             i_sigma,
+                                             i_temp,
+                                             self._pinv_cutoff,
+                                             1)
+        # elif method == 3:
+        #     import phono3py._phono3py as phono3c
+        #     w = np.zeros(num_ir_grid_points * num_band * 3, dtype='double')
+        #     phono3c.inverse_collision_matrix_libflame(
+        #         self._collision_matrix, w, i_sigma, i_temp, self._pinv_cutoff)
 
         self._collision_eigenvalues[i_sigma, i_temp] = w
 

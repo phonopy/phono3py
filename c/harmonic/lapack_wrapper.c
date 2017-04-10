@@ -129,7 +129,8 @@ void phonopy_pinv_mt(double *data_out,
 int phonopy_pinv_dsyev(double *data,
 		       double *eigvals,
 		       const int size,
-		       const double cutoff)
+		       const double cutoff,
+                       const int algorithm)
 {
   int i, j, k;
   lapack_int info;
@@ -143,13 +144,26 @@ int phonopy_pinv_dsyev(double *data,
     data[i] = 0;
   }
 
-  info = LAPACKE_dsyev(LAPACK_ROW_MAJOR,
-  		       'V',
-  		       'U',
-  		       (lapack_int)size,
-  		       tmp_data,
-  		       (lapack_int)size,
-  		       eigvals);
+  switch (algorithm) {
+  case 0: /* dsyev */
+    info = LAPACKE_dsyev(LAPACK_ROW_MAJOR,
+                         'V',
+                         'U',
+                         (lapack_int)size,
+                         tmp_data,
+                         (lapack_int)size,
+                         eigvals);
+    break;
+  case 1: /* dsyevd */
+    info = LAPACKE_dsyevd(LAPACK_ROW_MAJOR,
+                          'V',
+                          'U',
+                          (lapack_int)size,
+                          tmp_data,
+                          (lapack_int)size,
+                          eigvals);
+    break;
+  }
 
 #pragma omp parallel for private(j, k)
   for (i = 0; i < size; i++) {
