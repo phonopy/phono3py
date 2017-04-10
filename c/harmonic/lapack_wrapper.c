@@ -188,6 +188,9 @@ int phonopy_pinv_dsyev(double *data,
     }
   }
 
+  free(l);
+  l = NULL;
+
 #pragma omp parallel for private(i)
   for (j = 0; j < size - 1; j++) {
     for (i = j + 1; i < size; i++) {
