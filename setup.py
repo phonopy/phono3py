@@ -76,6 +76,8 @@ if os.path.isfile("mkl.py"):
 elif os.path.isfile("libopenblas.py"):
     # This is for travis-CI.
     from libopenblas import extra_link_args_lapacke
+    include_dirs_lapacke = []
+    library_dirs_lapacke = []
     if use_setuptools:
         extra_compile_args += ['-DMULTITHREADED_BLAS']
     else:
