@@ -121,7 +121,8 @@ void get_undone_phonons(Darray *frequencies,
 
   num_band = frequencies->dims[1];
 
-#pragma omp parallel for private(j, q, gp)
+/* Comment out to avoid multithreaded BLAS in OpenMP loop */
+/* #pragma omp parallel for private(j, q, gp) */
   for (i = 0; i < num_undone_grid_points; i++) {
     gp = undone_grid_points[i];
     for (j = 0; j < 3; j++) {

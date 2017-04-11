@@ -141,12 +141,14 @@ int phonopy_pinv_dsyev(double *data,
   l = NULL;
   tmp_data = (double*)malloc(sizeof(double) * size * size);
 
+  printf("copying data...\n");
 #pragma omp parallel for
   for (i = 0; i < size * size; i++) {
     tmp_data[i] = data[i];
     /* data[i] = 0; */
   }
 
+  printf("start dsyev...\n");
   switch (algorithm) {
   case 0: /* dsyev */
     info = LAPACKE_dsyev(LAPACK_ROW_MAJOR,
@@ -168,6 +170,7 @@ int phonopy_pinv_dsyev(double *data,
     break;
   }
 
+  printf("checking eigvals > cutoff...\n");
   l = (int*)malloc(sizeof(int) * size);
   max_l = 0;
   for (i = 0; i < size; i++) {
@@ -178,6 +181,7 @@ int phonopy_pinv_dsyev(double *data,
   }
 
 
+  printf("pinv...\n");
 #pragma omp parallel for private(j, k, i_s, j_s, sum)
   for (i = 0; i < size; i++) {
     i_s = i * size;
@@ -190,6 +194,7 @@ int phonopy_pinv_dsyev(double *data,
       data[i_s + j] = sum;
     }
   }
+  printf("done...\n");
 
   free(l);
   l = NULL;

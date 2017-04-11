@@ -63,6 +63,7 @@ define_macros = []
 if os.path.isfile("libopenblas.py"):
     # This is for travis-CI.
     from libopenblas import extra_link_args_lapacke
+    define_macros += [('MULTITHREADED_BLAS', None)]
 else:
     # This is when lapacke is installed on system
     extra_link_args_lapacke = ['-llapacke', '-llapack', '-lblas']
@@ -76,7 +77,7 @@ if platform.system() == 'Darwin':
     extra_link_args_lapacke = ['/opt/local/lib/libopenblas.a']
 
 ## Uncomment below to measure reciprocal_to_normal_squared_openmp performance
-# define_macros = [('MEASURE_R2N', None)]
+# define_macros += [('MEASURE_R2N', None)]
 
 extra_link_args += extra_link_args_lapacke
 extension_phono3py = Extension(
