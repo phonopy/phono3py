@@ -32,12 +32,17 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#include <lapacke.h>
 #include <math.h>
 #include <dynmat.h>
 #include <phonoc_array.h>
 #include <phonon.h>
 #include <lapack_wrapper.h>
+
+#ifdef MKL_KAPACKE
+#include <mkl.h>
+#else
+#include <lapacke.h>
+#endif
 
 static int collect_undone_grid_points(int *undone,
 				      char *phonon_done,
@@ -121,7 +126,10 @@ void get_undone_phonons(Darray *frequencies,
 
   num_band = frequencies->dims[1];
 
+/* To avoid multithreaded BLAS in OpenMP loop */
+#ifndef MULTITHREADED_BLAS
 #pragma omp parallel for private(j, q, gp)
+#endif
   for (i = 0; i < num_undone_grid_points; i++) {
     gp = undone_grid_points[i];
     for (j = 0; j < 3; j++) {

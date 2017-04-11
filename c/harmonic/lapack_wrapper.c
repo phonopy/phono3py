@@ -33,7 +33,12 @@
 /* POSSIBILITY OF SUCH DAMAGE. */
 
 #include <lapack_wrapper.h>
+
+#ifdef MKL_KAPACKE
+#include <mkl.h>
+#else
 #include <lapacke.h>
+#endif
 
 #define min(a,b) ((a)>(b)?(b):(a))
 
@@ -132,16 +137,18 @@ int phonopy_pinv_dsyev(double *data,
 		       const double cutoff,
                        const int algorithm)
 {
-  int i, j, k;
+  int i, ib, j, k, max_l, i_s, j_s;
   lapack_int info;
   double *tmp_data;
+  double sum;
+  int *l;
 
+  l = NULL;
   tmp_data = (double*)malloc(sizeof(double) * size * size);
 
 #pragma omp parallel for
   for (i = 0; i < size * size; i++) {
     tmp_data[i] = data[i];
-    data[i] = 0;
   }
 
   switch (algorithm) {
@@ -165,17 +172,60 @@ int phonopy_pinv_dsyev(double *data,
     break;
   }
 
-#pragma omp parallel for private(j, k)
+  l = (int*)malloc(sizeof(int) * size);
+  max_l = 0;
   for (i = 0; i < size; i++) {
-    for (j = 0; j < size; j++) {
-      for (k = 0; k < size; k++) {
-  	if (eigvals[k] > cutoff) {
-  	  data[i * size + j] +=
-  	    tmp_data[i * size + k] / eigvals[k] * tmp_data[j * size + k];
-  	}
-      }
+    if (eigvals[i] > cutoff) {
+      l[max_l] = i;
+      max_l++;
     }
   }
+
+
+#pragma omp parallel for private(ib, j, k, i_s, j_s, sum)
+  for (i = 0; i < size / 2; i++) {
+    /* from front */
+    i_s = i * size;
+    for (j = i; j < size; j++) {
+      j_s = j * size;
+      sum = 0;
+      for (k = 0; k < max_l; k++) {
+        sum += tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
+      }
+      data[i_s + j] = sum;
+      data[j_s + i] = sum;
+    }
+    /* from back */
+    ib = size - i - 1;
+    i_s = ib * size;
+    for (j = ib; j < size; j++) {
+      j_s = j * size;
+      sum = 0;
+      for (k = 0; k < max_l; k++) {
+        sum += tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
+      }
+      data[i_s + j] = sum;
+      data[j_s + ib] = sum;
+    }
+  }
+
+  /* when size is odd */
+  if ((size % 2) == 1) {
+    i = (size - 1) / 2;
+    i_s = i * size;
+    for (j = i; j < size; j++) {
+      j_s = j * size;
+      sum = 0;
+      for (k = 0; k < max_l; k++) {
+        sum += tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
+      }
+      data[i_s + j] = sum;
+      data[j_s + i] = sum;
+    }
+  }
+
+  free(l);
+  l = NULL;
 
 /*   info = LAPACKE_dsyev(LAPACK_COL_MAJOR, */
 /*   		       'V', */
@@ -198,6 +248,7 @@ int phonopy_pinv_dsyev(double *data,
 /*   } */
   
   free(tmp_data);
+  tmp_data = NULL;
 
   return (int)info;
 }

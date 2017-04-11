@@ -33,13 +33,18 @@
 /* POSSIBILITY OF SUCH DAMAGE. */
 
 #include <stdlib.h>
-#include <lapacke.h>
 #include <math.h>
 #include <phonoc_utils.h>
 #include <phonoc_const.h>
 #include <phonoc_array.h>
 #include <phonon3_h/reciprocal_to_normal.h>
 #include <unistd.h>
+
+#ifdef MKL_KAPACKE
+#include <mkl.h>
+#else
+#include <lapacke.h>
+#endif
 
 #ifdef MEASURE_R2N
 #include <time.h>
