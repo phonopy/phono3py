@@ -43,6 +43,7 @@ class Phono3pySettings(Settings):
         self._read_phonon = False
         self._phonon_supercell_matrix = None
         self._pinv_cutoff = 1.0e-8
+        self._pinv_solver = 1
         self._pp_conversion_factor = None
         self._scattering_event_class = None # scattering event class 1 or 2
         self._temperatures = None
@@ -239,6 +240,12 @@ class Phono3pySettings(Settings):
 
     def get_pinv_cutoff(self):
         return self._pinv_cutoff
+
+    def set_pinv_solver(self, pinv_solver):
+        self._pinv_solver = pinv_solver
+
+    def get_pinv_solver(self):
+        return self._pinv_solver
 
     def set_pp_conversion_factor(self, pp_conversion_factor):
         self._pp_conversion_factor = pp_conversion_factor
@@ -466,6 +473,10 @@ class Phono3pyConfParser(ConfParser):
                 if self._options.pinv_cutoff is not None:
                     self._confs['pinv_cutoff'] = self._options.pinv_cutoff
 
+            if opt.dest == 'pinv_solver':
+                if self._options.pinv_solver is not None:
+                    self._confs['pinv_solver'] = self._options.pinv_solver
+
             if opt.dest == 'pp_conversion_factor':
                 if self._options.pp_conversion_factor is not None:
                     self._confs['pp_conversion_factor'] = self._options.pp_conversion_factor
@@ -690,6 +701,9 @@ class Phono3pyConfParser(ConfParser):
             if conf_key == 'pinv_cutoff':
                 self.set_parameter('pinv_cutoff', float(confs['pinv_cutoff']))
 
+            if conf_key == 'pinv_solver':
+                self.set_parameter('pinv_solver', float(confs['pinv_solver']))
+
             if conf_key == 'pp_conversion_factor':
                 self.set_parameter('pp_conversion_factor',
                                    float(confs['pp_conversion_factor']))
@@ -891,6 +905,10 @@ class Phono3pyConfParser(ConfParser):
         # Cutoff frequency for pseudo inversion of collision matrix
         if 'pinv_cutoff' in params:
             self._settings.set_pinv_cutoff(params['pinv_cutoff'])
+
+        # Switch for pseudo-inverse solver
+        if 'pinv_solver' in params:
+            self._settings.set_pinv_solver(params['pinv_solver'])
 
         # Ph-ph interaction unit conversion factor
         if 'pp_conversion_factor' in params:
