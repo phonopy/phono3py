@@ -27,6 +27,7 @@ def get_thermal_conductivity_LBTE(
         gv_delta_q=1e-4, # for group velocity
         is_full_pp=False,
         pinv_cutoff=1.0e-8,
+        pinv_solver=1, # default: dsyev in lapacke
         write_collision=False,
         read_collision=False,
         write_kappa=False,
@@ -41,6 +42,8 @@ def get_thermal_conductivity_LBTE(
               "--------------------")
         print("Cutoff frequency of pseudo inversion of collision matrix: %s" %
               pinv_cutoff)
+        print("Solver of pseudo inversion of collision matrix: %d" %
+              pinv_solver)
 
     if read_collision:
         temps = None
@@ -61,6 +64,7 @@ def get_thermal_conductivity_LBTE(
         gv_delta_q=gv_delta_q,
         is_full_pp=is_full_pp,
         pinv_cutoff=pinv_cutoff,
+        pinv_solver=pinv_solver,
         log_level=log_level)
 
     if read_collision:
@@ -327,6 +331,7 @@ class Conductivity_LBTE(Conductivity):
                  gv_delta_q=None, # finite difference for group veolocity
                  is_full_pp=False,
                  pinv_cutoff=1.0e-8,
+                 pinv_solver=1,
                  log_level=0):
         self._pp = None
         self._temperatures = None
@@ -392,6 +397,7 @@ class Conductivity_LBTE(Conductivity):
             self._is_reducible_collision_matrix = True
         self._collision_matrix = None
         self._pinv_cutoff = pinv_cutoff
+        self._pinv_solver = pinv_solver
 
         if self._temperatures is not None:
             self._allocate_values()
@@ -792,14 +798,11 @@ class Conductivity_LBTE(Conductivity):
         else:
             return np.zeros_like(X.reshape(-1, 3))
 
-    def _set_inv_collision_matrix(self,
-                                  i_sigma,
-                                  i_temp,
-                                  method=1):
+    def _set_inv_collision_matrix(self, i_sigma, i_temp):
         num_ir_grid_points = len(self._ir_grid_points)
         num_band = self._primitive.get_number_of_atoms() * 3
 
-        if method == 0: # np.eigh depends on dsyevd
+        if self._pinv_solver == 0: # np.linalg.eigh depends on dsyevd
             col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
                 num_ir_grid_points * num_band * 3,
                 num_ir_grid_points * num_band * 3)
@@ -811,8 +814,8 @@ class Conductivity_LBTE(Conductivity):
                     e[l] = 1 / np.sqrt(val)
             v[:] = e * v
             v[:] = np.dot(v, v.T) # inv_col
-        elif method == 1: # dsyev: safer and slower than dsyevd and
-                          #        smallest memory usage
+        elif self._pinv_solver == 1: # dsyev: safer and slower than dsyevd and
+                                     #        smallest memory usage
             import phono3py._phono3py as phono3c
             w = np.zeros(num_ir_grid_points * num_band * 3, dtype='double')
             phono3c.inverse_collision_matrix(self._collision_matrix,
@@ -821,7 +824,8 @@ class Conductivity_LBTE(Conductivity):
                                              i_temp,
                                              self._pinv_cutoff,
                                              0)
-        elif method == 2: # dsyevd: faster than dsyev and lagest memory usage
+        elif self._pinv_solver == 2: # dsyevd: faster than dsyev and
+                                     #         lagest memory usage
             import phono3py._phono3py as phono3c
             w = np.zeros(num_ir_grid_points * num_band * 3, dtype='double')
             phono3c.inverse_collision_matrix(self._collision_matrix,
@@ -830,7 +834,21 @@ class Conductivity_LBTE(Conductivity):
                                              i_temp,
                                              self._pinv_cutoff,
                                              1)
-        # elif method == 3:
+        if self._pinv_solver == 3: # scipy.linalg.lapack.dsyev
+            import scipy.linalg
+            col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
+                num_ir_grid_points * num_band * 3,
+                num_ir_grid_points * num_band * 3)
+            w, col_mat[:], info = scipy.linalg.lapack.dsyev(col_mat)
+            e = np.zeros_like(w)
+            v = col_mat
+            for l, val in enumerate(w):
+                if val > self._pinv_cutoff:
+                    e[l] = 1 / np.sqrt(val)
+            v[:] = e * v
+            v[:] = np.dot(v, v.T) # inv_col
+
+        # elif self._pinv_solver == 4:
         #     import phono3py._phono3py as phono3c
         #     w = np.zeros(num_ir_grid_points * num_band * 3, dtype='double')
         #     phono3c.inverse_collision_matrix_libflame(
