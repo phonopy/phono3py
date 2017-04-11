@@ -33,10 +33,15 @@
 /* POSSIBILITY OF SUCH DAMAGE. */
 
 #include <stdlib.h>
-#include <lapacke.h>
 #include <phonoc_const.h>
 #include <phonoc_utils.h>
 #include <other_h/isotope.h>
+
+#ifdef MKL_KAPACKE
+#include <mkl.h>
+#else
+#include <lapacke.h>
+#endif
 
 void get_isotope_scattering_strength(double *gamma,
 				     const int grid_point,

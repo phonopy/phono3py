@@ -33,7 +33,12 @@
 /* POSSIBILITY OF SUCH DAMAGE. */
 
 #include <lapack_wrapper.h>
+
+#ifdef MKL_KAPACKE
+#include <mkl.h>
+#else
 #include <lapacke.h>
+#endif
 
 #define min(a,b) ((a)>(b)?(b):(a))
 

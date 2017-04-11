@@ -37,7 +37,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <numpy/arrayobject.h>
-#include <lapacke.h>
 #include <lapack_wrapper.h>
 #include <phonoc_array.h>
 #include <phonoc_const.h>
@@ -51,6 +50,12 @@
 #include <other_h/isotope.h>
 #include <triplet_h/triplet.h>
 #include <tetrahedron_method.h>
+
+#ifdef MKL_KAPACKE
+#include <mkl.h>
+#else
+#include <lapacke.h>
+#endif
 
 /* #define LIBFLAME */
 #ifdef LIBFLAME

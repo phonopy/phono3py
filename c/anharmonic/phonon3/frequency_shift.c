@@ -32,13 +32,18 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#include <lapacke.h>
 #include <stdlib.h>
 #include <math.h>
 #include <phonoc_array.h>
 #include <phonoc_utils.h>
 #include <phonon3_h/frequency_shift.h>
 #include <phonon3_h/real_to_reciprocal.h>
+
+#ifdef MKL_KAPACKE
+#include <mkl.h>
+#else
+#include <lapacke.h>
+#endif
 
 static double get_frequency_shift_at_band(const int band_index,
 					  const Darray *fc3_normal_squared,

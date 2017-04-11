@@ -35,8 +35,13 @@
 #ifndef __interaction_H__
 #define __interaction_H__
 
-#include <lapacke.h>
 #include <phonoc_array.h>
+
+#ifdef MKL_KAPACKE
+#include <mkl.h>
+#else
+#include <lapacke.h>
+#endif
 
 void get_interaction(Darray *fc3_normal_squared,
 		     const char *g_zero,
