@@ -132,7 +132,7 @@ int phonopy_pinv_dsyev(double *data,
 		       const double cutoff,
                        const int algorithm)
 {
-  int i, j, k, max_l, i_s, j_s;
+  int i, ib, j, k, max_l, i_s, j_s;
   lapack_int info;
   double *tmp_data;
   double sum;
@@ -177,8 +177,9 @@ int phonopy_pinv_dsyev(double *data,
   }
 
 
-#pragma omp parallel for private(j, k, i_s, j_s, sum)
-  for (i = 0; i < size; i++) {
+#pragma omp parallel for private(ib, j, k, i_s, j_s, sum)
+  for (i = 0; i < size / 2; i++) {
+    /* from front */
     i_s = i * size;
     for (j = i; j < size; j++) {
       j_s = j * size;
@@ -187,18 +188,39 @@ int phonopy_pinv_dsyev(double *data,
         sum += tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
       }
       data[i_s + j] = sum;
+      data[j_s + i] = sum;
+    }
+    /* from back */
+    ib = size - i - 1;
+    i_s = ib * size;
+    for (j = ib; j < size; j++) {
+      j_s = j * size;
+      sum = 0;
+      for (k = 0; k < max_l; k++) {
+        sum += tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
+      }
+      data[i_s + j] = sum;
+      data[j_s + ib] = sum;
+    }
+  }
+
+  /* when size is odd */
+  if ((size % 2) == 1) {
+    i = (size - 1) / 2;
+    i_s = i * size;
+    for (j = i; j < size; j++) {
+      j_s = j * size;
+      sum = 0;
+      for (k = 0; k < max_l; k++) {
+        sum += tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
+      }
+      data[i_s + j] = sum;
+      data[j_s + i] = sum;
     }
   }
 
   free(l);
   l = NULL;
-
-#pragma omp parallel for private(i)
-  for (j = 0; j < size - 1; j++) {
-    for (i = j + 1; i < size; i++) {
-      data[i * size + j] = data[j * size + i];
-    }
-  }
 
 /*   info = LAPACKE_dsyev(LAPACK_COL_MAJOR, */
 /*   		       'V', */

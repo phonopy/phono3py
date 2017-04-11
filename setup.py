@@ -63,7 +63,10 @@ define_macros = []
 if os.path.isfile("libopenblas.py"):
     # This is for travis-CI.
     from libopenblas import extra_link_args_lapacke
-    define_macros += [('MULTITHREADED_BLAS', None)]
+    if use_setuptools:
+        extra_compile_args += ['-DMULTITHREADED_BLAS']
+    else:
+        define_macros += [('MULTITHREADED_BLAS', None)]
 else:
     # This is when lapacke is installed on system
     extra_link_args_lapacke = ['-llapacke', '-llapack', '-lblas']
