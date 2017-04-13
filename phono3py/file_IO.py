@@ -761,6 +761,7 @@ def read_gamma_from_hdf5(mesh,
     return None
 
 def read_collision_from_hdf5(mesh,
+                             indices=None,
                              grid_point=None,
                              sigma=None,
                              filename=None,
@@ -778,9 +779,18 @@ def read_collision_from_hdf5(mesh,
         return False
 
     with h5py.File("collision" + suffix + ".hdf5", 'r') as f:
-        gamma = f['gamma'][:]
-        collision_matrix = f['collision_matrix'][:]
-        temperatures = f['temperature'][:]
+        if indices == 'all':
+            colmat_shape = (1,) + f['collision_matrix'].shape
+            collision_matrix = np.zeros(colmat_shape, dtype='double', order='C')
+            gamma = np.array(f['gamma'][:], dtype='double', order='C')
+            collision_matrix[0] = f['collision_matrix'][:]
+            temperatures = np.array(f['temperature'][:], dtype='double')
+        else:
+            colmat_shape = (1, len(indices)) + f['collision_matrix'].shape[1:]
+            collision_matrix = np.zeros(colmat_shape, dtype='double')
+            gamma = np.array(f['gamma'][indices], dtype='double', order='C')
+            collision_matrix[0] = f['collision_matrix'][indices]
+            temperatures = np.array(f['temperature'][indices], dtype='double')
 
         if verbose:
             text = "Collisions "
