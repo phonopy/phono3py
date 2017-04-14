@@ -585,10 +585,11 @@ def write_collision_to_hdf5(temperature,
             else:
                 text += "at "
             text += "sigma %s " % sigma_str
-        text += "were written into \n"
-        text += "\"%s\"" % ("collision" + suffix + ".hdf5")
+        text += "were written into "
+        if sigma is not None:
+            text += "\n"
+        text += "\"%s\"." % ("collision" + suffix + ".hdf5")
         print(text)
-        print('')
 
 def write_full_collision_matrix(collision_matrix, filename='fcm.hdf5'):
     with h5py.File(filename, 'w') as w:
