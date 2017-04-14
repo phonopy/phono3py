@@ -867,24 +867,16 @@ class Conductivity_LBTE(Conductivity):
         num_ir_grid_points = len(self._ir_grid_points)
         num_band = self._primitive.get_number_of_atoms() * 3
 
-        if self._pinv_solver == 0: # np.linalg.eigh depends on dsyevd
-            if self._log_level:
-                print("Pseudo-inv (cutoff=%-.1e) by np.linalg.eigh..." %
-                      self._pinv_cutoff)
-                sys.stdout.flush()
-            col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
-                num_ir_grid_points * num_band * 3,
-                num_ir_grid_points * num_band * 3)
-            w, col_mat[:] = np.linalg.eigh(col_mat)
-            e = np.zeros_like(w)
-            v = col_mat
-            for l, val in enumerate(w):
-                if val > self._pinv_cutoff:
-                    e[l] = 1 / np.sqrt(val)
-            v[:] = e * v
-            v[:] = np.dot(v, v.T) # inv_col
-        elif self._pinv_solver == 1: # dsyev: safer and slower than dsyevd and
-                                     #        smallest memory usage
+        solver = self._pinv_solver % 10
+        pinv_method = self._pinv_solver // 10
+        # Safest choice
+        if not solver in [1, 2, 3, 4]:
+            solver = 1
+        if not pinv_method in [0, 1]:
+            pinv_method = 0
+
+        if solver == 1: # dsyev: safer and slower than dsyevd and smallest
+                        #        memory usage
             if self._log_level:
                 print("Pseudo-inv (cutoff=%-.1e) by lapacke dsyev..." %
                       self._pinv_cutoff)
@@ -896,9 +888,9 @@ class Conductivity_LBTE(Conductivity):
                                              i_sigma,
                                              i_temp,
                                              self._pinv_cutoff,
-                                             0)
-        elif self._pinv_solver == 2: # dsyevd: faster than dsyev and
-                                     #         lagest memory usage
+                                             solver - 1,
+                                             pinv_method)
+        elif solver == 2: # dsyevd: faster than dsyev and lagest memory usage
             if self._log_level:
                 print("Pseudo-inv (cutoff=%-.1e) by lapacke dsyevd..." %
                       self._pinv_cutoff)
@@ -910,10 +902,29 @@ class Conductivity_LBTE(Conductivity):
                                              i_sigma,
                                              i_temp,
                                              self._pinv_cutoff,
-                                             1)
-        elif self._pinv_solver == 3: # scipy.linalg.lapack.dsyev
+                                             solver - 1,
+                                             pinv_method) # 1 or 11
+        elif solver == 3: # np.linalg.eigh depends on dsyevd
+                        # Sometimes unstable.
             if self._log_level:
-                print("Pseudo-inv (cutoff=%-.1e) by scipy.linalg.lapack.dsyev..." %
+                print("Pseudo-inv (cutoff=%-.1e) by np.linalg.eigh..." %
+                      self._pinv_cutoff)
+                sys.stdout.flush()
+            col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
+                num_ir_grid_points * num_band * 3,
+                num_ir_grid_points * num_band * 3)
+            w, col_mat[:] = np.linalg.eigh(col_mat)
+            import phono3py._phono3py as phono3c
+            phono3c.pinv_from_eigensolution(self._collision_matrix,
+                                            np.array(w, dtype='double'),
+                                            i_sigma,
+                                            i_temp,
+                                            self._pinv_cutoff,
+                                            pinv_method)
+        elif solver == 4: # scipy.linalg.lapack.dsyev
+            if self._log_level:
+                print("Pseudo-inv (cutoff=%-.1e) by "
+                      "scipy.linalg.lapack.dsyev..." %
                       self._pinv_cutoff)
                 sys.stdout.flush()
             import scipy.linalg
@@ -921,16 +932,24 @@ class Conductivity_LBTE(Conductivity):
                 num_ir_grid_points * num_band * 3,
                 num_ir_grid_points * num_band * 3)
             w, col_mat[:], info = scipy.linalg.lapack.dsyev(col_mat)
-            e = np.zeros_like(w)
-            v = col_mat
-            for l, val in enumerate(w):
-                if abs(val) > self._pinv_cutoff:
-                # if val > self._pinv_cutoff:
-                    # e[l] = 1 / np.sqrt(abs(val))
-                    e[l] = 1 / abs(val)
-            # v[:] = e * v
-            # v[:] = np.dot(v, v.T) # inv_col
-            v[:] = np.dot(v, np.dot(np.diag(e), v.T))
+
+            import phono3py._phono3py as phono3c
+            phono3c.pinv_from_eigensolution(self._collision_matrix,
+                                            np.array(w, dtype='double'),
+                                            i_sigma,
+                                            i_temp,
+                                            self._pinv_cutoff,
+                                            pinv_method)
+            # e = np.zeros_like(w)
+            # v = col_mat
+            # for l, val in enumerate(w):
+            #     if abs(val) > self._pinv_cutoff:
+            #     # if val > self._pinv_cutoff:
+            #         # e[l] = 1 / np.sqrt(abs(val))
+            #         e[l] = 1 / val
+            # # v[:] = e * v
+            # # v[:] = np.dot(v, v.T) # inv_col
+            # v[:] = np.dot(v, np.dot(np.diag(e), v.T))
 
         # elif self._pinv_solver == 4:
         #     import phono3py._phono3py as phono3c
