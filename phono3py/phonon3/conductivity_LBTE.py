@@ -519,6 +519,9 @@ class Conductivity_LBTE(Conductivity):
                  num_mesh_points, num_band, num_mesh_points, num_band),
                 dtype='double', order='C')
             self._collision_matrix[:] = 0
+            self._collision_eigenvalues = np.zeros(
+                (len(self._sigmas), num_temp, num_mesh_points * num_band),
+                dtype='double', order='C')
         else:
             self._mode_kappa = np.zeros((len(self._sigmas),
                                          num_temp,
@@ -631,6 +634,8 @@ class Conductivity_LBTE(Conductivity):
                     else:
                         self._set_inv_collision_matrix(j, k)
                     self._set_kappa(j, k, weights)
+                    # print("spectra")
+                    # print(self._get_spectra(j, k, weights))
 
                 if self._log_level:
                     print(("#%6s       " + " %-10s" * 6) %
@@ -870,9 +875,10 @@ class Conductivity_LBTE(Conductivity):
                                              i_temp,
                                              self._pinv_cutoff,
                                              1)
-        if self._pinv_solver == 3: # scipy.linalg.lapack.dsyev
+        elif self._pinv_solver == 3: # scipy.linalg.lapack.dsyev
             if self._log_level:
                 print("Pseudo inversion by scipy.linalg.lapack.dsyev...")
+                print("pinv cutoff: %e" % self._pinv_cutoff)
                 sys.stdout.flush()
             import scipy.linalg
             col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
@@ -882,10 +888,13 @@ class Conductivity_LBTE(Conductivity):
             e = np.zeros_like(w)
             v = col_mat
             for l, val in enumerate(w):
-                if val > self._pinv_cutoff:
-                    e[l] = 1 / np.sqrt(val)
-            v[:] = e * v
-            v[:] = np.dot(v, v.T) # inv_col
+                if abs(val) > self._pinv_cutoff:
+                # if val > self._pinv_cutoff:
+                    # e[l] = 1 / np.sqrt(abs(val))
+                    e[l] = 1 / abs(val)
+            # v[:] = e * v
+            # v[:] = np.dot(v, v.T) # inv_col
+            v[:] = np.dot(v, np.dot(np.diag(e), v.T))
 
         # elif self._pinv_solver == 4:
         #     import phono3py._phono3py as phono3c
@@ -894,6 +903,18 @@ class Conductivity_LBTE(Conductivity):
         #         self._collision_matrix, w, i_sigma, i_temp, self._pinv_cutoff)
 
         self._collision_eigenvalues[i_sigma, i_temp] = w
+
+    def _get_I(self, a, b, size):
+        r_sum = np.zeros((3, 3), dtype='double')
+        for r in self._rotations_cartesian:
+            for i in range(3):
+                for j in range(3):
+                    r_sum[i, j] += r[a, i] * r[b, j]
+        I = np.zeros((size * 3, size * 3), dtype='double')
+        for i in range(size):
+            I[(i * 3):((i + 1) * 3), (i * 3):((i + 1) * 3)] = r_sum
+
+        return I
 
     def _set_inv_reducible_collision_matrix(self, i_sigma, i_temp):
         t = self._temperatures[i_temp]
@@ -909,6 +930,8 @@ class Conductivity_LBTE(Conductivity):
                 e[l] = 1 / np.sqrt(val)
         v[:] = e * v
         v[:] = np.dot(v, v.T) # inv_col
+
+        self._collision_eigenvalues[i_sigma, i_temp] = w
 
     def _set_kappa(self, i_sigma, i_temp, weights):
         X = self._get_X(i_temp, weights, self._gv)
@@ -955,6 +978,23 @@ class Conductivity_LBTE(Conductivity):
             self._kappa[i_sigma, i_temp] = (
                 self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
 
+    def _get_spectra(self, i_sigma, i_temp, weights):
+        import scipy.linalg
+        num_band = self._primitive.get_number_of_atoms() * 3
+        num_ir_grid_points = len(self._ir_grid_points)
+        inv_col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
+            num_ir_grid_points * num_band * 3,
+            num_ir_grid_points * num_band * 3)
+        X = self._get_X(i_temp, weights, self._gv)
+        num_band = self._primitive.get_number_of_atoms() * 3
+        I = self._get_I(2, 2, num_ir_grid_points * num_band)
+        inv_col_mat[:] = np.dot(inv_col_mat, I.T)
+        w, inv_col_mat[:], info = scipy.linalg.lapack.dsyev(inv_col_mat)
+        for i, x in enumerate(w):
+            if i % 8 == 0:
+                print("")
+            sys.stdout.write("%f " % x)
+
     def _set_mode_kappa(self,
                         X,
                         Y,
@@ -968,7 +1008,7 @@ class Conductivity_LBTE(Conductivity):
                                              Y.reshape(num_grid_points,
                                                        num_band, 3))):
             for j, (v, f) in enumerate(zip(v_gp, f_gp)):
-                if rotations_cartesian is None:
+                if rotations_cartesian is None or self._pinv_solver == 4:
                     sum_k = np.outer(v, f)
                 else:
                     sum_k = np.zeros((3, 3), dtype='double')
