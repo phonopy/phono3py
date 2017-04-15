@@ -753,6 +753,7 @@ class Conductivity_LBTE(Conductivity):
     def _symmetrize_collision_matrix(self):
         if self._log_level:
             print("- Making collision matrix symmetric...")
+            sys.stdout.flush()
         import phono3py._phono3py as phono3c
         phono3c.symmetrize_collision_matrix(self._collision_matrix)
 
@@ -768,6 +769,7 @@ class Conductivity_LBTE(Conductivity):
         if self._log_level:
             print("- Averaging collision matrix elements "
                   "by phonon degeneracy ...")
+            sys.stdout.flush()
 
         col_mat = self._collision_matrix
         for i, gp in enumerate(self._ir_grid_points):
@@ -780,13 +782,14 @@ class Conductivity_LBTE(Conductivity):
                         bi_set.append(j)
 
                 if self._is_reducible_collision_matrix:
-                    sum_col = (col_mat[:, :, i, bi_set, :, :].sum(axis=2) /
+                    sum_col = (col_mat[:, :, gp, bi_set, :, :].sum(axis=2) /
                                len(bi_set))
                     for j in bi_set:
-                        col_mat[:, :, i, j, :, :] = sum_col
+                        col_mat[:, :, gp, j, :, :] = sum_col
                 else:
-                    sum_col = (col_mat[:, :, i, bi_set, :, :, :, :].sum(axis=2) /
-                               len(bi_set))
+                    sum_col = (
+                        col_mat[:, :, i, bi_set, :, :, :, :].sum(axis=2) /
+                        len(bi_set))
                     for j in bi_set:
                         col_mat[:, :, i, j, :, :, :, :] = sum_col
 
@@ -799,48 +802,16 @@ class Conductivity_LBTE(Conductivity):
                     if j in dset:
                         bi_set.append(j)
                 if self._is_reducible_collision_matrix:
-                    sum_col = (col_mat[:, :, :, :, i, bi_set].sum(axis=4) /
+                    sum_col = (col_mat[:, :, :, :, gp, bi_set].sum(axis=4) /
                                len(bi_set))
                     for j in bi_set:
-                        col_mat[:, :, :, :, i, j] = sum_col
+                        col_mat[:, :, :, :, gp, j] = sum_col
                 else:
-                    sum_col = (col_mat[:, :, :, :, :, i, bi_set, :].sum(axis=5) /
-                               len(bi_set))
+                    sum_col = (
+                        col_mat[:, :, :, :, :, i, bi_set, :].sum(axis=5) /
+                        len(bi_set))
                     for j in bi_set:
                         col_mat[:, :, :, :, :, i, j, :] = sum_col
-
-    def _average_reducible_collision_matrix_by_degeneracy(self):
-        if self._log_level:
-            print("- Averaging collision matrix elements "
-                  "by phonon degeneracy ...")
-
-        # Average matrix elements belonging to degenerate bands
-        col_mat = self._collision_matrix
-        for i, gp in enumerate(self._ir_grid_points):
-            freqs = self._frequencies[gp]
-            deg_sets = degenerate_sets(freqs)
-            for dset in deg_sets:
-                bi_set = []
-                for j in range(len(freqs)):
-                    if j in dset:
-                        bi_set.append(j)
-                sum_col = (col_mat[:, :, i, bi_set, :, :].sum(axis=2) /
-                           len(bi_set))
-                for j in bi_set:
-                    col_mat[:, :, i, j, :, :] = sum_col
-
-        for i, gp in enumerate(self._ir_grid_points):
-            freqs = self._frequencies[gp]
-            deg_sets = degenerate_sets(freqs)
-            for dset in deg_sets:
-                bi_set = []
-                for j in range(len(freqs)):
-                    if j in dset:
-                        bi_set.append(j)
-                sum_col = (col_mat[:, :, :, :, i, bi_set].sum(axis=4) /
-                           len(bi_set))
-                for j in bi_set:
-                    col_mat[:, :, :, :, i, j] = sum_col
 
     def _get_X(self, i_temp, weights, gv):
         num_band = self._primitive.get_number_of_atoms() * 3
