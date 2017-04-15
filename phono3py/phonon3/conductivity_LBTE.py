@@ -627,11 +627,7 @@ class Conductivity_LBTE(Conductivity):
                 self._expand_collisions()
             self._combine_reducible_collisions()
             weights = np.ones(np.prod(self._mesh), dtype='intc')
-            if self._log_level:
-                print("- Making collision matrix symmetric...")
-                sys.stdout.flush()
-            import phono3py._phono3py as phono3c
-            phono3c.symmetrize_collision_matrix(self._collision_matrix)
+            self._symmetrize_reducible_collision_matrix()
             size = np.prod(self._mesh) * num_band
         else:
             self._combine_collisions()
@@ -756,15 +752,35 @@ class Conductivity_LBTE(Conductivity):
         if self._log_level:
             print("- Making collision matrix symmetric...")
             sys.stdout.flush()
-        import phono3py._phono3py as phono3c
-        phono3c.symmetrize_collision_matrix(self._collision_matrix)
 
-        # size = np.prod(self._collision_matrix.shape[2:5])
-        # for i in range(self._collision_matrix.shape[0]):
-        #     for j in range(self._collision_matrix.shape[1]):
-        #         col_mat = self._collision_matrix[i, j].reshape(size, size)
-        #         col_mat += col_mat.T
-        #         col_mat /= 2
+        # C-API implementation causes segmentation fault in specific cases.
+        # The reason is not clear, but when using memory largely.
+        # import phono3py._phono3py as phono3c
+        # phono3c.symmetrize_collision_matrix(self._collision_matrix)
+
+        size = np.prod(self._collision_matrix.shape[2:5])
+        for i in range(self._collision_matrix.shape[0]):
+            for j in range(self._collision_matrix.shape[1]):
+                col_mat = self._collision_matrix[i, j].reshape(size, size)
+                col_mat += col_mat.T
+                col_mat /= 2
+
+    def _symmetrize_reducible_collision_matrix(self):
+        if self._log_level:
+            print("- Making reducibe collision matrix symmetric...")
+            sys.stdout.flush()
+
+        # C-API implementation causes segmentation fault in specific cases.
+        # The reason is not clear, but when using memory largely.
+        # import phono3py._phono3py as phono3c
+        # phono3c.symmetrize_collision_matrix(self._collision_matrix)
+
+        size = np.prod(self._collision_matrix.shape[2:4])
+        for i in range(self._collision_matrix.shape[0]):
+            for j in range(self._collision_matrix.shape[1]):
+                col_mat = self._collision_matrix[i, j].reshape(size, size)
+                col_mat += col_mat.T
+                col_mat /= 2
 
     def _average_collision_matrix_by_degeneracy(self):
         # Average matrix elements belonging to degenerate bands
@@ -1102,7 +1118,10 @@ class Conductivity_LBTE(Conductivity):
         q = self._qpoints[i]
         gp = self._grid_points[i]
         frequencies = self._frequencies[gp]
-        gv = self._gv[i]
+        if self._is_reducible_collision_matrix:
+            gv = self._gv[gp]
+        else:
+            gv = self._gv[i]
         if self._is_full_pp:
             ave_pp = self._averaged_pp_interaction[i]
             text = "Frequency     group velocity (x, y, z)     |gv|       Pqj"
