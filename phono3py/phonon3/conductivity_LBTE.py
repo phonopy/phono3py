@@ -627,7 +627,9 @@ class Conductivity_LBTE(Conductivity):
                 self._expand_collisions()
             self._combine_reducible_collisions()
             weights = np.ones(np.prod(self._mesh), dtype='intc')
-            print("- Making collision matrix symmetric...")
+            if self._log_level:
+                print("- Making collision matrix symmetric...")
+                sys.stdout.flush()
             import phono3py._phono3py as phono3c
             phono3c.symmetrize_collision_matrix(self._collision_matrix)
             size = np.prod(self._mesh) * num_band
@@ -964,29 +966,12 @@ class Conductivity_LBTE(Conductivity):
         self._collision_eigenvalues[i_sigma, i_temp] = w
 
     def _set_kappa(self, i_sigma, i_temp, weights):
-        X = self._get_X(i_temp, weights, self._gv)
-        num_band = self._primitive.get_number_of_atoms() * 3
-
         if self._is_reducible_collision_matrix:
-            num_mesh_points = np.prod(self._mesh)
-            inv_col_mat = np.kron(
-                self._collision_matrix[i_sigma, i_temp].reshape(
-                    num_mesh_points * num_band,
-                    num_mesh_points * num_band), np.eye(3))
-            Y = np.dot(inv_col_mat, X.ravel()).reshape(-1, 3)
-            self._set_mean_free_path(i_sigma, i_temp, weights, Y)
-            # Putting self._rotations_cartesian is to symmetrize kappa.
-            # None can be put instead for watching pure information.
-            self._set_mode_kappa(X,
-                                 Y,
-                                 num_mesh_points,
-                                 self._rotations_cartesian,
-                                 i_sigma,
-                                 i_temp)
-            self._mode_kappa[i_sigma, i_temp] /= len(self._rotations_cartesian)
-            self._kappa[i_sigma, i_temp] = (
-                self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
+            self._set_kappa_of_reducible_collision_matrix(
+                i_sigma, i_temp, weights)
         else:
+            X = self._get_X(i_temp, weights, self._gv)
+            num_band = self._primitive.get_number_of_atoms() * 3
             num_ir_grid_points = len(self._ir_grid_points)
             inv_col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
                 num_ir_grid_points * num_band * 3,
@@ -1007,6 +992,29 @@ class Conductivity_LBTE(Conductivity):
 
             self._kappa[i_sigma, i_temp] = (
                 self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
+
+    def _set_kappa_of_reducible_collision_matrix(self,
+                                                 i_sigma,
+                                                 i_temp,
+                                                 weights):
+        X = self._get_X(i_temp, weights, self._gv)
+        num_band = self._primitive.get_number_of_atoms() * 3
+        num_mesh_points = np.prod(self._mesh)
+        inv_col_mat =  self._collision_matrix[i_sigma, i_temp].reshape(
+            num_mesh_points * num_band, num_mesh_points * num_band)
+        Y = np.dot(inv_col_mat, X)
+        self._set_mean_free_path(i_sigma, i_temp, weights, Y)
+        # Putting self._rotations_cartesian is to symmetrize kappa.
+        # None can be put instead for watching pure information.
+        self._set_mode_kappa(X,
+                             Y,
+                             num_mesh_points,
+                             self._rotations_cartesian,
+                             i_sigma,
+                             i_temp)
+        self._mode_kappa[i_sigma, i_temp] /= len(self._rotations_cartesian)
+        self._kappa[i_sigma, i_temp] = (
+            self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
 
     def _get_spectra(self, i_sigma, i_temp, weights):
         import scipy.linalg
