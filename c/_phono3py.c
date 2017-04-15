@@ -1440,7 +1440,7 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
   double *collision_matrix;
   double *eigvals;
   int num_temp;
-  int num_ir_grid_points;
+  int num_grid_point;
   int num_band;
   int num_column, adrs_shift, info;
 
@@ -1458,10 +1458,14 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
   collision_matrix = (double*)PyArray_DATA(collision_matrix_py);
   eigvals = (double*)PyArray_DATA(eigenvalues_py);
   num_temp = PyArray_DIMS(collision_matrix_py)[1];
-  num_ir_grid_points = PyArray_DIMS(collision_matrix_py)[2];
+  num_grid_point = PyArray_DIMS(collision_matrix_py)[2];
   num_band = PyArray_DIMS(collision_matrix_py)[3];
 
-  num_column = num_ir_grid_points * num_band * 3;
+  if (PyArray_NDIM(collision_matrix_py) == 8) {
+    num_column = num_grid_point * num_band * 3;
+  } else {
+    num_column = num_grid_point * num_band;
+  }
   adrs_shift = (i_sigma * num_column * num_column * num_temp +
 		i_temp * num_column * num_column);
 
@@ -1483,9 +1487,9 @@ static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args)
   double *collision_matrix;
   double *eigvals;
   int num_temp;
-  int num_ir_grid_points;
+  int num_grid_point;
   int num_band;
-  int num_column, adrs_shift, info;
+  int num_column, adrs_shift;
 
   if (!PyArg_ParseTuple(args, "OOiidi",
 			&collision_matrix_py,
@@ -1500,10 +1504,14 @@ static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args)
   collision_matrix = (double*)PyArray_DATA(collision_matrix_py);
   eigvals = (double*)PyArray_DATA(eigenvalues_py);
   num_temp = PyArray_DIMS(collision_matrix_py)[1];
-  num_ir_grid_points = PyArray_DIMS(collision_matrix_py)[2];
+  num_grid_point = PyArray_DIMS(collision_matrix_py)[2];
   num_band = PyArray_DIMS(collision_matrix_py)[3];
 
-  num_column = num_ir_grid_points * num_band * 3;
+  if (PyArray_NDIM(collision_matrix_py) == 8) {
+    num_column = num_grid_point * num_band * 3;
+  } else {
+    num_column = num_grid_point * num_band;
+  }
   adrs_shift = (i_sigma * num_column * num_column * num_temp +
 		i_temp * num_column * num_column);
   pinv_from_eigensolution(collision_matrix + adrs_shift,
