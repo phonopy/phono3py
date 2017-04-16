@@ -702,7 +702,7 @@ class Phono3pyConfParser(ConfParser):
                 self.set_parameter('pinv_cutoff', float(confs['pinv_cutoff']))
 
             if conf_key == 'pinv_solver':
-                self.set_parameter('pinv_solver', float(confs['pinv_solver']))
+                self.set_parameter('pinv_solver', int(confs['pinv_solver']))
 
             if conf_key == 'pp_conversion_factor':
                 self.set_parameter('pp_conversion_factor',
