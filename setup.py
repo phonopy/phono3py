@@ -52,20 +52,41 @@ sources = ['c/_phono3py.c',
            'c/kspclib/tetrahedron_method.c']
 
 extra_compile_args = ['-fopenmp',]
-include_dirs = (['c/harmonic_h',
-                 'c/anharmonic_h',
-                 'c/spglib_h',
-                 'c/kspclib_h'] +
-                include_dirs_numpy)
+include_dirs = ['c/harmonic_h',
+                'c/anharmonic_h',
+                'c/spglib_h',
+                'c/kspclib_h'] + include_dirs_numpy
+library_dirs = []
 define_macros = []
 
+#### mkl.py ####
+# Many problems to be fixed exist using MKL. Not yet ready!
+# extra_link_args_lapacke = ['-lmkl_intel_ilp64', '-lmkl_gnu_thread', '-lmkl_core']
+# library_dirs_lapacke = ['/opt/intel/parallel_studio_xe_2016/mkl/lib/intel64']
+# include_dirs_lapacke = ['/opt/intel/parallel_studio_xe_2016/mkl/include']
+if os.path.isfile("mkl.py"):
+    from mkl import (extra_link_args_lapacke, include_dirs_lapacke,
+                     library_dirs_lapacke)
+    if use_setuptools:
+        extra_compile_args += ['-DMKL_LAPACKE']
+    else:
+        define_macros += [('MKL_LAPACKE', None)]
 ## Modify extra_link_args_lapacke depending on systems
-if os.path.isfile("libopenblas.py"):
+# echo "extra_link_args_lapacke = ['-lopenblas']"
+elif os.path.isfile("libopenblas.py"):
     # This is for travis-CI.
     from libopenblas import extra_link_args_lapacke
+    include_dirs_lapacke = []
+    library_dirs_lapacke = []
+    if use_setuptools:
+        extra_compile_args += ['-DMULTITHREADED_BLAS']
+    else:
+        define_macros += [('MULTITHREADED_BLAS', None)]
 else:
     # This is when lapacke is installed on system
     extra_link_args_lapacke = ['-llapacke', '-llapack', '-lblas']
+    include_dirs_lapacke = []
+    library_dirs_lapacke = []
 
 # For MacPort
 # % sudo port install gcc6
@@ -76,14 +97,17 @@ if platform.system() == 'Darwin':
     extra_link_args_lapacke = ['/opt/local/lib/libopenblas.a']
 
 ## Uncomment below to measure reciprocal_to_normal_squared_openmp performance
-# define_macros = [('MEASURE_R2N', None)]
+# define_macros += [('MEASURE_R2N', None)]
 
 extra_link_args += extra_link_args_lapacke
+include_dirs += include_dirs_lapacke
+library_dirs += library_dirs_lapacke
 extension_phono3py = Extension(
     'phono3py._phono3py',
     include_dirs=include_dirs,
     extra_compile_args=extra_compile_args,
     extra_link_args=extra_link_args,
+    library_dirs=library_dirs,
     define_macros=define_macros,
     sources=sources)
 

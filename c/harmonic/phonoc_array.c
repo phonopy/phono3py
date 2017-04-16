@@ -34,8 +34,13 @@
 
 #include <Python.h>
 #include <numpy/arrayobject.h>
-#include <lapacke.h>
 #include <phonoc_array.h>
+
+#ifdef MKL_KAPACKE
+#include <mkl.h>
+#else
+#include <lapacke.h>
+#endif
 
 Iarray* convert_to_iarray(const PyArrayObject* npyary)
 {

@@ -35,7 +35,12 @@
 #ifndef __lapack_wrapper_H__
 #define __lapack_wrapper_H__
 
+#ifdef MKL_KAPACKE
+#include <mkl.h>
+#else
 #include <lapacke.h>
+#endif
+
 int phonopy_zheev(double *w,
 		  lapack_complex_double *a,
 		  const int n,
@@ -56,7 +61,6 @@ void phonopy_pinv_mt(double *data_out,
 int phonopy_pinv_dsyev(double *data,
 		       double *eigvals,
 		       const int size,
-		       const double cutoff,
                        const int algorithm);
 
 #endif

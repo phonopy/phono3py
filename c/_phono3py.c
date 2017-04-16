@@ -37,7 +37,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <numpy/arrayobject.h>
-#include <lapacke.h>
 #include <lapack_wrapper.h>
 #include <phonoc_array.h>
 #include <phonoc_const.h>
@@ -51,6 +50,12 @@
 #include <other_h/isotope.h>
 #include <triplet_h/triplet.h>
 #include <tetrahedron_method.h>
+
+#ifdef MKL_KAPACKE
+#include <mkl.h>
+#else
+#include <lapacke.h>
+#endif
 
 /* #define LIBFLAME */
 #ifdef LIBFLAME
@@ -84,10 +89,17 @@ py_set_triplets_integration_weights(PyObject *self, PyObject *args);
 static PyObject *
 py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args);
 static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args);
+static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args);
 
 #ifdef LIBFLAME
 static PyObject * py_inverse_collision_matrix_libflame(PyObject *self, PyObject *args);
 #endif
+
+static void pinv_from_eigensolution(double *data,
+                                    double *eigvals,
+                                    const int size,
+                                    const double cutoff,
+                                    const int pinv_method);
 
 struct module_state {
   PyObject *error;
@@ -147,7 +159,9 @@ static PyMethodDef _phono3py_methods[] = {
    py_set_triplets_integration_weights_with_sigma, METH_VARARGS,
    "Integration weights of smearing method for triplets"},
   {"inverse_collision_matrix", py_inverse_collision_matrix, METH_VARARGS,
-   "Pseudo-inverse using Lapack dsyev"},
+   "Pseudo-inverse using Lapack dsyev(d)"},
+  {"pinv_from_eigensolution", py_pinv_from_eigensolution, METH_VARARGS,
+   "Pseudo-inverse from eigensolution"},
 #ifdef LIBFLAME
   {"inverse_collision_matrix_libflame",
    py_inverse_collision_matrix_libflame, METH_VARARGS,
@@ -1421,14 +1435,61 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
   PyArrayObject *collision_matrix_py;
   PyArrayObject *eigenvalues_py;
   double cutoff;
-  int i_sigma, i_temp, algorithm;
+  int i_sigma, i_temp, pinv_method, solver;
 
   double *collision_matrix;
   double *eigvals;
   int num_temp;
-  int num_ir_grid_points;
+  int num_grid_point;
   int num_band;
   int num_column, adrs_shift, info;
+
+  if (!PyArg_ParseTuple(args, "OOiidii",
+			&collision_matrix_py,
+			&eigenvalues_py,
+			&i_sigma,
+			&i_temp,
+			&cutoff,
+                        &solver,
+                        &pinv_method)) {
+    return NULL;
+  }
+
+  collision_matrix = (double*)PyArray_DATA(collision_matrix_py);
+  eigvals = (double*)PyArray_DATA(eigenvalues_py);
+  num_temp = PyArray_DIMS(collision_matrix_py)[1];
+  num_grid_point = PyArray_DIMS(collision_matrix_py)[2];
+  num_band = PyArray_DIMS(collision_matrix_py)[3];
+
+  if (PyArray_NDIM(collision_matrix_py) == 8) {
+    num_column = num_grid_point * num_band * 3;
+  } else {
+    num_column = num_grid_point * num_band;
+  }
+  adrs_shift = (i_sigma * num_column * num_column * num_temp +
+		i_temp * num_column * num_column);
+
+  info = phonopy_pinv_dsyev(collision_matrix + adrs_shift,
+			    eigvals, num_column, solver);
+  pinv_from_eigensolution(collision_matrix + adrs_shift,
+                          eigvals, num_column, cutoff, pinv_method);
+
+  return PyLong_FromLong((long) info);
+}
+
+static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args)
+{
+  PyArrayObject *collision_matrix_py;
+  PyArrayObject *eigenvalues_py;
+  double cutoff;
+  int i_sigma, i_temp, pinv_method;
+
+  double *collision_matrix;
+  double *eigvals;
+  int num_temp;
+  int num_grid_point;
+  int num_band;
+  int num_column, adrs_shift;
 
   if (!PyArg_ParseTuple(args, "OOiidi",
 			&collision_matrix_py,
@@ -1436,22 +1497,107 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
 			&i_sigma,
 			&i_temp,
 			&cutoff,
-                        &algorithm)) {
+                        &pinv_method)) {
     return NULL;
   }
 
   collision_matrix = (double*)PyArray_DATA(collision_matrix_py);
   eigvals = (double*)PyArray_DATA(eigenvalues_py);
   num_temp = PyArray_DIMS(collision_matrix_py)[1];
-  num_ir_grid_points = PyArray_DIMS(collision_matrix_py)[2];
+  num_grid_point = PyArray_DIMS(collision_matrix_py)[2];
   num_band = PyArray_DIMS(collision_matrix_py)[3];
 
-  num_column = num_ir_grid_points * num_band * 3;
+  if (PyArray_NDIM(collision_matrix_py) == 8) {
+    num_column = num_grid_point * num_band * 3;
+  } else {
+    num_column = num_grid_point * num_band;
+  }
   adrs_shift = (i_sigma * num_column * num_column * num_temp +
 		i_temp * num_column * num_column);
+  pinv_from_eigensolution(collision_matrix + adrs_shift,
+                          eigvals, num_column, cutoff, pinv_method);
 
-  info = phonopy_pinv_dsyev(collision_matrix + adrs_shift,
-			    eigvals, num_column, cutoff, algorithm);
+  Py_RETURN_NONE;
+}
 
-  return PyLong_FromLong((long) info);
+static void pinv_from_eigensolution(double *data,
+                                    double *eigvals,
+                                    const int size,
+                                    const double cutoff,
+                                    const int pinv_method)
+{
+  int i, ib, j, k, max_l, i_s, j_s;
+  double *tmp_data;
+  double e, sum;
+  int *l;
+
+  l = NULL;
+  tmp_data = (double*)malloc(sizeof(double) * size * size);
+
+#pragma omp parallel for
+  for (i = 0; i < size * size; i++) {
+    tmp_data[i] = data[i];
+  }
+
+  l = (int*)malloc(sizeof(int) * size);
+  max_l = 0;
+  for (i = 0; i < size; i++) {
+    if (pinv_method == 0) {
+      e = fabs(eigvals[i]);
+    } else {
+      e = eigvals[i];
+    }
+    if (e > cutoff) {
+      l[max_l] = i;
+      max_l++;
+    }
+  }
+
+#pragma omp parallel for private(ib, j, k, i_s, j_s, sum)
+  for (i = 0; i < size / 2; i++) {
+    /* from front */
+    i_s = i * size;
+    for (j = i; j < size; j++) {
+      j_s = j * size;
+      sum = 0;
+      for (k = 0; k < max_l; k++) {
+        sum += tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
+      }
+      data[i_s + j] = sum;
+      data[j_s + i] = sum;
+    }
+    /* from back */
+    ib = size - i - 1;
+    i_s = ib * size;
+    for (j = ib; j < size; j++) {
+      j_s = j * size;
+      sum = 0;
+      for (k = 0; k < max_l; k++) {
+        sum += tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
+      }
+      data[i_s + j] = sum;
+      data[j_s + ib] = sum;
+    }
+  }
+
+  /* when size is odd */
+  if ((size % 2) == 1) {
+    i = (size - 1) / 2;
+    i_s = i * size;
+    for (j = i; j < size; j++) {
+      j_s = j * size;
+      sum = 0;
+      for (k = 0; k < max_l; k++) {
+        sum += tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
+      }
+      data[i_s + j] = sum;
+      data[j_s + i] = sum;
+    }
+  }
+
+  free(l);
+  l = NULL;
+
+  free(tmp_data);
+  tmp_data = NULL;
 }
