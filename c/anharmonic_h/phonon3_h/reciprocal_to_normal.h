@@ -35,9 +35,14 @@
 #ifndef __reciprocal_to_normal_H__
 #define __reciprocal_to_normal_H__
 
-#include <lapacke.h>
 #include <phonoc_array.h>
 #include <phonoc_const.h>
+
+#ifdef MKL_KAPACKE
+#include <mkl.h>
+#else
+#include <lapacke.h>
+#endif
 
 void reciprocal_to_normal_squared
 (double *fc3_normal_squared,

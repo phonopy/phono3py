@@ -37,7 +37,13 @@
 
 #include <Python.h>
 #include <numpy/arrayobject.h>
+
+#ifdef MKL_KAPACKE
+#include <mkl.h>
+#else
 #include <lapacke.h>
+#endif
+
 #define MAX_NUM_DIM 20
 
 /* It is assumed that number of dimensions is known for each array. */

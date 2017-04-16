@@ -707,6 +707,7 @@ elif run_mode == "conductivity-RTA" or run_mode == "conductivity-LBTE":
         gv_delta_q=settings.get_group_velocity_delta_q(),
         is_full_pp=settings.get_is_full_pp(),
         pinv_cutoff=settings.get_pinv_cutoff(),
+        pinv_solver=settings.get_pinv_solver(),
         write_gamma=settings.get_write_gamma(),
         read_gamma=settings.get_read_gamma(),
         write_kappa=True,

@@ -163,7 +163,9 @@ when the number of force files is large. ::
 
 Using a python script, ``disp_fc3.yaml`` is easily parsed. So
 it is also easy to create the file list by a python
-script::
+script:
+
+.. code-block:: python
 
    #!/usr/bin/env python
    import yaml

@@ -32,13 +32,18 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#include <lapacke.h>
 #include <math.h>
 #include <dynmat.h>
 #include <phonoc_array.h>
 #include <phonoc_const.h>
 #include <phonoc_utils.h>
 #include <lapack_wrapper.h>
+
+#ifdef MKL_KAPACKE
+#include <mkl.h>
+#else
+#include <lapacke.h>
+#endif
 
 #define THZTOEVPARKB 47.992398658977166
 #define INVSQRT2PI 0.3989422804014327

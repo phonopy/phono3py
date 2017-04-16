@@ -33,7 +33,12 @@
 /* POSSIBILITY OF SUCH DAMAGE. */
 
 #include <lapack_wrapper.h>
+
+#ifdef MKL_KAPACKE
+#include <mkl.h>
+#else
 #include <lapacke.h>
+#endif
 
 #define min(a,b) ((a)>(b)?(b):(a))
 
@@ -129,20 +134,9 @@ void phonopy_pinv_mt(double *data_out,
 int phonopy_pinv_dsyev(double *data,
 		       double *eigvals,
 		       const int size,
-		       const double cutoff,
                        const int algorithm)
 {
-  int i, j, k;
   lapack_int info;
-  double *tmp_data;
-
-  tmp_data = (double*)malloc(sizeof(double) * size * size);
-
-#pragma omp parallel for
-  for (i = 0; i < size * size; i++) {
-    tmp_data[i] = data[i];
-    data[i] = 0;
-  }
 
   switch (algorithm) {
   case 0: /* dsyev */
@@ -150,7 +144,7 @@ int phonopy_pinv_dsyev(double *data,
                          'V',
                          'U',
                          (lapack_int)size,
-                         tmp_data,
+                         data,
                          (lapack_int)size,
                          eigvals);
     break;
@@ -159,23 +153,12 @@ int phonopy_pinv_dsyev(double *data,
                           'V',
                           'U',
                           (lapack_int)size,
-                          tmp_data,
+                          data,
                           (lapack_int)size,
                           eigvals);
     break;
   }
 
-#pragma omp parallel for private(j, k)
-  for (i = 0; i < size; i++) {
-    for (j = 0; j < size; j++) {
-      for (k = 0; k < size; k++) {
-  	if (eigvals[k] > cutoff) {
-  	  data[i * size + j] +=
-  	    tmp_data[i * size + k] / eigvals[k] * tmp_data[j * size + k];
-  	}
-      }
-    }
-  }
 
 /*   info = LAPACKE_dsyev(LAPACK_COL_MAJOR, */
 /*   		       'V', */
@@ -197,7 +180,5 @@ int phonopy_pinv_dsyev(double *data,
 /*     } */
 /*   } */
   
-  free(tmp_data);
-
   return (int)info;
 }

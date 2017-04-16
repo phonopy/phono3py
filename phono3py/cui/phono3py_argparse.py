@@ -98,6 +98,7 @@ def get_parser():
                         output_filename=None,
                         phonon_supercell_dimension=None,
                         pinv_cutoff=None,
+                        pinv_solver=None,
                         pp_unit_conversion=None,
                         primitive_axis=None,
                         qpoints=None,
@@ -319,6 +320,9 @@ def get_parser():
     parser.add_option(
         "--pinv_cutoff", dest="pinv_cutoff", type="float",
         help="Cutoff frequency (THz) for pseudo inversion of collision matrix")
+    parser.add_option(
+        "--pinv_solver", dest="pinv_solver", type="int",
+        help="Switch of LBTE pinv solver")
     parser.add_option(
         "--pm", dest="is_plusminus_displacements", action="store_true",
         help="Set plus minus displacements")
