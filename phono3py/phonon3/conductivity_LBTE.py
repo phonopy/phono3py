@@ -95,6 +95,10 @@ def get_thermal_conductivity_LBTE(
                 filename=output_filename)
             print("write_collision %d" % i)
 
+    if (not read_collision) or (read_collision and read_from == "grid_points"):
+        if grid_points is None:
+            _write_collision(lbte, filename=output_filename)
+
     if write_kappa and grid_points is None:
         lbte.set_kappa_at_sigmas()
         _write_kappa(
@@ -103,10 +107,6 @@ def get_thermal_conductivity_LBTE(
             is_reducible_collision_matrix=is_reducible_collision_matrix,
             filename=output_filename,
             log_level=log_level)
-
-    if (not read_collision) or (read_collision and read_from == "grid_points"):
-        if grid_points is None:
-            _write_collision(lbte, filename=output_filename)
 
     return lbte
 
