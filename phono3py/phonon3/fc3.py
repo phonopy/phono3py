@@ -354,11 +354,21 @@ def solve_fc3(fc3,
               displacements_first,
               delta_fc2s,
               symprec,
-              pinv="numpy",
+              pinv_solver="numpy",
               verbose=False):
 
+    if pinv_solver == "numpy":
+        solver = "numpy.linalg.pinv"
+    else:
+        try:
+            import phono3py._lapackepy as lapackepy
+            solver = "lapacke-dgesvd"
+        except ImportError:
+            solver = "numpy"
+
     if verbose:
-        text = "Solving fc3[ %d, x, x ] with " % (first_atom_num + 1)
+        text = ("Computing fc3[ %d, x, x ] using %s with " %
+                (first_atom_num + 1, solver))
         if len(displacements_first) > 1:
             text += "displacements:"
         else:
@@ -389,16 +399,12 @@ def solve_fc3(fc3,
 
     rot_disps = get_rotated_displacement(displacements_first, site_sym_cart)
 
-    if pinv == "numpy":
+    if "numpy" in solver:
         inv_U = np.linalg.pinv(rot_disps)
     else:
-        try:
-            import phonopy._lapackepy as lapackepy
-            inv_U = np.zeros((rot_disps.shape[1], rot_disps.shape[0]),
-                             dtype='double')
-            lapackepy.pinv(inv_U, rot_disps, 1e-13)
-        except ImportError:
-            inv_U = np.linalg.pinv(rot_disps)
+        inv_U = np.zeros((rot_disps.shape[1], rot_disps.shape[0]),
+                         dtype='double')
+        lapackepy.pinv(inv_U, rot_disps, 1e-13)
 
     for (i, j) in list(np.ndindex(num_atom, num_atom)):
         fc3[first_atom_num, i, j] = np.dot(inv_U, _get_rotated_fc2s(
