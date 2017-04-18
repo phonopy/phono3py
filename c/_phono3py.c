@@ -100,6 +100,10 @@ static void pinv_from_eigensolution(double *data,
                                     const int size,
                                     const double cutoff,
                                     const int pinv_method);
+static void show_colmat_info(const PyArrayObject *collision_matrix_py,
+                             const int i_sigma,
+                             const int i_temp,
+                             const int adrs_shift);
 
 struct module_state {
   PyObject *error;
@@ -121,50 +125,90 @@ error_out(PyObject *m) {
 
 static PyMethodDef _phono3py_methods[] = {
   {"error_out", (PyCFunction)error_out, METH_NOARGS, NULL},
-  {"interaction", py_get_interaction, METH_VARARGS, "Interaction of triplets"},
-  {"pp_collision", py_get_pp_collision, METH_VARARGS,
+  {"interaction",
+   (PyCFunction)py_get_interaction,
+   METH_VARARGS,
+   "Interaction of triplets"},
+  {"pp_collision",
+   (PyCFunction)py_get_pp_collision,
+   METH_VARARGS,
    "Collision and ph-ph calculation"},
-  {"imag_self_energy_with_g", py_get_imag_self_energy_with_g, METH_VARARGS,
+  {"imag_self_energy_with_g",
+   (PyCFunction)py_get_imag_self_energy_with_g,
+   METH_VARARGS,
    "Imaginary part of self energy at frequency points with g"},
   {"detailed_imag_self_energy_with_g",
-   py_get_detailed_imag_self_energy_with_g, METH_VARARGS,
+   (PyCFunction)py_get_detailed_imag_self_energy_with_g,
+   METH_VARARGS,
    "Detailed contribution to imaginary part of self energy at frequency points with g"},
-  {"frequency_shift_at_bands", py_get_frequency_shift_at_bands, METH_VARARGS,
+  {"frequency_shift_at_bands",
+   (PyCFunction)py_get_frequency_shift_at_bands,
+   METH_VARARGS,
    "Phonon frequency shift from third order force constants"},
-  {"collision_matrix", py_get_collision_matrix, METH_VARARGS,
+  {"collision_matrix",
+   (PyCFunction)py_get_collision_matrix,
+   METH_VARARGS,
    "Collision matrix with g"},
-  {"reducible_collision_matrix", py_get_reducible_collision_matrix, METH_VARARGS,
+  {"reducible_collision_matrix",
+   (PyCFunction)py_get_reducible_collision_matrix,
+   METH_VARARGS,
    "Collision matrix with g for reducible grid points"},
-  {"symmetrize_collision_matrix", py_symmetrize_collision_matrix, METH_VARARGS,
+  {"symmetrize_collision_matrix",
+   (PyCFunction)py_symmetrize_collision_matrix,
+   METH_VARARGS,
    "Symmetrize collision matrix"},
-  {"distribute_fc3", py_distribute_fc3, METH_VARARGS,
+  {"distribute_fc3",
+   (PyCFunction)py_distribute_fc3,
+   METH_VARARGS,
    "Distribute least fc3 to full fc3"},
-  {"isotope_strength", py_get_isotope_strength, METH_VARARGS,
+  {"isotope_strength",
+   (PyCFunction)py_get_isotope_strength,
+   METH_VARARGS,
    "Isotope scattering strength"},
-  {"thm_isotope_strength", py_get_thm_isotope_strength, METH_VARARGS,
+  {"thm_isotope_strength",
+   (PyCFunction)py_get_thm_isotope_strength,
+   METH_VARARGS,
    "Isotope scattering strength for tetrahedron_method"},
-  {"permutation_symmetry_fc3", py_set_permutation_symmetry_fc3, METH_VARARGS,
+  {"permutation_symmetry_fc3",
+   (PyCFunction)py_set_permutation_symmetry_fc3,
+   METH_VARARGS,
    "Set permutation symmetry for fc3"},
-  {"neighboring_grid_points", py_get_neighboring_gird_points, METH_VARARGS,
+  {"neighboring_grid_points",
+   (PyCFunction)py_get_neighboring_gird_points,
+   METH_VARARGS,
    "Neighboring grid points by relative grid addresses"},
-  {"integration_weights", py_set_integration_weights, METH_VARARGS,
+  {"integration_weights",
+   (PyCFunction)py_set_integration_weights,
+   METH_VARARGS,
    "Integration weights of tetrahedron method"},
-  {"triplets_reciprocal_mesh_at_q", py_tpl_get_triplets_reciprocal_mesh_at_q,
-   METH_VARARGS, "Triplets on reciprocal mesh points at a specific q-point"},
-  {"BZ_triplets_at_q", py_tpl_get_BZ_triplets_at_q, METH_VARARGS,
+  {"triplets_reciprocal_mesh_at_q",
+   (PyCFunction)py_tpl_get_triplets_reciprocal_mesh_at_q,
+   METH_VARARGS,
+   "Triplets on reciprocal mesh points at a specific q-point"},
+  {"BZ_triplets_at_q",
+   (PyCFunction)py_tpl_get_BZ_triplets_at_q,
+   METH_VARARGS,
    "Triplets in reciprocal primitive lattice are transformed to those in BZ."},
-  {"triplets_integration_weights", py_set_triplets_integration_weights, METH_VARARGS,
+  {"triplets_integration_weights",
+   (PyCFunction)py_set_triplets_integration_weights,
+   METH_VARARGS,
    "Integration weights of tetrahedron method for triplets"},
   {"triplets_integration_weights_with_sigma",
-   py_set_triplets_integration_weights_with_sigma, METH_VARARGS,
+   (PyCFunction)py_set_triplets_integration_weights_with_sigma,
+   METH_VARARGS,
    "Integration weights of smearing method for triplets"},
-  {"inverse_collision_matrix", py_inverse_collision_matrix, METH_VARARGS,
+  {"inverse_collision_matrix",
+   (PyCFunction)py_inverse_collision_matrix,
+   METH_VARARGS,
    "Pseudo-inverse using Lapack dsyev(d)"},
-  {"pinv_from_eigensolution", py_pinv_from_eigensolution, METH_VARARGS,
+  {"pinv_from_eigensolution",
+   (PyCFunction)py_pinv_from_eigensolution,
+   METH_VARARGS,
    "Pseudo-inverse from eigensolution"},
 #ifdef LIBFLAME
   {"inverse_collision_matrix_libflame",
-   py_inverse_collision_matrix_libflame, METH_VARARGS,
+   (PyCFunction)py_inverse_collision_matrix_libflame,
+   METH_VARARGS,
    "Pseudo-inverse using libflame hevd"},
 #endif
   {NULL, NULL, 0, NULL}
@@ -773,7 +817,7 @@ static PyObject * py_symmetrize_collision_matrix(PyObject *self, PyObject *args)
   num_grid_points = PyArray_DIMS(collision_matrix_py)[2];
   num_band = PyArray_DIMS(collision_matrix_py)[3];
 
-  if (collision_matrix_py->nd == 8) {
+  if (PyArray_NDIM(collision_matrix_py) == 8) {
     num_column = num_grid_points * num_band * 3;
   } else {
     num_column = num_grid_points * num_band;
@@ -783,6 +827,7 @@ static PyObject * py_symmetrize_collision_matrix(PyObject *self, PyObject *args)
     for (j = 0; j < num_temp; j++) {
       adrs_shift = (i * num_column * num_column * num_temp +
 		    j * num_column * num_column);
+      show_colmat_info(collision_matrix_py, i, j, adrs_shift);
 #pragma omp parallel for private(l, val)
       for (k = 0; k < num_column; k++) {
 	for (l = k + 1; l < num_column; l++) {
@@ -1435,7 +1480,7 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
   PyArrayObject *collision_matrix_py;
   PyArrayObject *eigenvalues_py;
   double cutoff;
-  int i_sigma, i_temp, pinv_method, solver;
+  int i, i_sigma, i_temp, pinv_method, solver;
 
   double *collision_matrix;
   double *eigvals;
@@ -1443,6 +1488,8 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
   int num_grid_point;
   int num_band;
   int num_column, adrs_shift, info;
+
+  npy_intp size;
 
   if (!PyArg_ParseTuple(args, "OOiidii",
 			&collision_matrix_py,
@@ -1457,9 +1504,9 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
 
   collision_matrix = (double*)PyArray_DATA(collision_matrix_py);
   eigvals = (double*)PyArray_DATA(eigenvalues_py);
-  num_temp = PyArray_DIMS(collision_matrix_py)[1];
-  num_grid_point = PyArray_DIMS(collision_matrix_py)[2];
-  num_band = PyArray_DIMS(collision_matrix_py)[3];
+  num_temp = PyArray_DIM(collision_matrix_py, 1);
+  num_grid_point = PyArray_DIM(collision_matrix_py, 2);
+  num_band = PyArray_DIM(collision_matrix_py, 3);
 
   if (PyArray_NDIM(collision_matrix_py) == 8) {
     num_column = num_grid_point * num_band * 3;
@@ -1469,6 +1516,7 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
   adrs_shift = (i_sigma * num_column * num_column * num_temp +
 		i_temp * num_column * num_column);
 
+  show_colmat_info(collision_matrix_py, i_sigma, i_temp, adrs_shift);
   info = phonopy_pinv_dsyev(collision_matrix + adrs_shift,
 			    eigvals, num_column, solver);
   pinv_from_eigensolution(collision_matrix + adrs_shift,
@@ -1514,6 +1562,9 @@ static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args)
   }
   adrs_shift = (i_sigma * num_column * num_column * num_temp +
 		i_temp * num_column * num_column);
+
+  show_colmat_info(collision_matrix_py, i_sigma, i_temp, adrs_shift);
+
   pinv_from_eigensolution(collision_matrix + adrs_shift,
                           eigvals, num_column, cutoff, pinv_method);
 
@@ -1600,4 +1651,23 @@ static void pinv_from_eigensolution(double *data,
 
   free(tmp_data);
   tmp_data = NULL;
+}
+
+static void show_colmat_info(const PyArrayObject *collision_matrix_py,
+                             const int i_sigma,
+                             const int i_temp,
+                             const int adrs_shift)
+{
+  int i;
+
+  printf(" [Array_shape:(");
+  for (i = 0; i < PyArray_NDIM(collision_matrix_py); i++) {
+    printf("%d", PyArray_DIM(collision_matrix_py, i));
+    if (i < PyArray_NDIM(collision_matrix_py) - 1) {
+      printf(",");
+    } else {
+      printf("), ");
+    }
+  }
+  printf("Data shift:%d]\n", i_sigma, i_temp, adrs_shift);
 }
