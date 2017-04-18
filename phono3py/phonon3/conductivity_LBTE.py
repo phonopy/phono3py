@@ -977,18 +977,8 @@ class Conductivity_LBTE(Conductivity):
                 size, size)
             w, col_mat[:], info = scipy.linalg.lapack.dsyev(col_mat)
 
-            if self._log_level:
-                print("Calculating pseudo-inv of collision matrix by np.dot "
-                      "(cutoff=%-.1e)" % self._pinv_cutoff)
-                sys.stdout.flush()
-
-            e = np.zeros_like(w)
-            v = col_mat
-            for l, val in enumerate(w):
-                if (val > self._pinv_cutoff and pinv_method == 1 or
-                    abs(val) > self._pinv_cutoff and pinv_method == 0):
-                    e[l] = 1 / val
-            v[:] = np.dot(v, np.dot(np.diag(e), v.T))
+            # Pseudo inversion is done together with with multiplying
+            # X in _set_kappa to save memory space.
 
         elif solver == 9: # Test
             w = np.ones(size, dtype='double')
@@ -1006,18 +996,68 @@ class Conductivity_LBTE(Conductivity):
 
         self._collision_eigenvalues[i_sigma, i_temp] = w
 
+    def _get_Y(self, i_sigma, i_temp, X):
+        num_band = self._primitive.get_number_of_atoms() * 3
+
+        if self._is_reducible_collision_matrix:
+            num_mesh_points = np.prod(self._mesh)
+            size = num_mesh_points * num_band
+        else:
+            num_ir_grid_points = len(self._ir_grid_points)
+            size = num_ir_grid_points * num_band * 3
+        v = self._collision_matrix[i_sigma, i_temp].reshape(size, size)
+
+        if self._pinv_solver % 10 == 6:
+            if self._log_level:
+                print("Calculating pseudo-inv of collision matrix by np.dot "
+                      "(cutoff=%-.1e)" % self._pinv_cutoff)
+                sys.stdout.flush()
+
+            w = self._collision_eigenvalues[i_sigma, i_temp]
+            e = np.zeros_like(w)
+            pinv_method = self._pinv_solver // 10
+            if pinv_method not in [0, 1]:
+                pinv_method = 0
+            for l, val in enumerate(w):
+                if (val > self._pinv_cutoff and pinv_method == 1 or
+                    abs(val) > self._pinv_cutoff and pinv_method == 0):
+                    e[l] = 1 / val
+            if self._is_reducible_collision_matrix:
+                X1 = np.dot(v.T, X)
+                for i in range(3):
+                    X1[:, i] *= e
+                Y = np.dot(v, X1)
+            else:
+                Y = np.dot(v, e * np.dot(v.T, X.ravel())).reshape(-1, 3)
+        else:
+            if self._is_reducible_collision_matrix:
+                Y = np.dot(v, X)
+            else:
+                Y = np.dot(v, X.ravel()).reshape(-1, 3)
+
+        return Y
+
     def _set_kappa(self, i_sigma, i_temp, weights):
         if self._is_reducible_collision_matrix:
-            self._set_kappa_of_reducible_collision_matrix(
-                i_sigma, i_temp, weights)
+            X = self._get_X(i_temp, weights, self._gv)
+            num_mesh_points = np.prod(self._mesh)
+            Y = self._get_Y(i_sigma, i_temp, X)
+            self._set_mean_free_path(i_sigma, i_temp, weights, Y)
+            # Putting self._rotations_cartesian is to symmetrize kappa.
+            # None can be put instead for watching pure information.
+            self._set_mode_kappa(X,
+                                 Y,
+                                 num_mesh_points,
+                                 self._rotations_cartesian,
+                                 i_sigma,
+                                 i_temp)
+            self._mode_kappa[i_sigma, i_temp] /= len(self._rotations_cartesian)
+            self._kappa[i_sigma, i_temp] = (
+                self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
         else:
             X = self._get_X(i_temp, weights, self._gv)
-            num_band = self._primitive.get_number_of_atoms() * 3
             num_ir_grid_points = len(self._ir_grid_points)
-            inv_col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
-                num_ir_grid_points * num_band * 3,
-                num_ir_grid_points * num_band * 3)
-            Y = np.dot(inv_col_mat, X.ravel()).reshape(-1, 3)
+            Y = self._get_Y(i_sigma, i_temp, X)
             self._set_mean_free_path(i_sigma, i_temp, weights, Y)
             self._set_mode_kappa(X,
                                  Y,
@@ -1033,29 +1073,6 @@ class Conductivity_LBTE(Conductivity):
 
             self._kappa[i_sigma, i_temp] = (
                 self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
-
-    def _set_kappa_of_reducible_collision_matrix(self,
-                                                 i_sigma,
-                                                 i_temp,
-                                                 weights):
-        X = self._get_X(i_temp, weights, self._gv)
-        num_band = self._primitive.get_number_of_atoms() * 3
-        num_mesh_points = np.prod(self._mesh)
-        inv_col_mat =  self._collision_matrix[i_sigma, i_temp].reshape(
-            num_mesh_points * num_band, num_mesh_points * num_band)
-        Y = np.dot(inv_col_mat, X)
-        self._set_mean_free_path(i_sigma, i_temp, weights, Y)
-        # Putting self._rotations_cartesian is to symmetrize kappa.
-        # None can be put instead for watching pure information.
-        self._set_mode_kappa(X,
-                             Y,
-                             num_mesh_points,
-                             self._rotations_cartesian,
-                             i_sigma,
-                             i_temp)
-        self._mode_kappa[i_sigma, i_temp] /= len(self._rotations_cartesian)
-        self._kappa[i_sigma, i_temp] = (
-            self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
 
     def _get_spectra(self, i_sigma, i_temp, weights):
         import scipy.linalg
