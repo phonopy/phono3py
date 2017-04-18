@@ -93,6 +93,7 @@ def get_thermal_conductivity_LBTE(
                 i=i,
                 is_reducible_collision_matrix=is_reducible_collision_matrix,
                 filename=output_filename)
+            print("write_collision %d" % i)
 
     if (not read_collision) or (read_collision and read_from == "grid_points"):
         if grid_points is None:
@@ -627,7 +628,7 @@ class Conductivity_LBTE(Conductivity):
                 self._expand_collisions()
             self._combine_reducible_collisions()
             weights = np.ones(np.prod(self._mesh), dtype='intc')
-            self._symmetrize_reducible_collision_matrix()
+            self._symmetrize_collision_matrix()
             size = np.prod(self._mesh) * num_band
         else:
             self._combine_collisions()
@@ -753,29 +754,20 @@ class Conductivity_LBTE(Conductivity):
             print("- Making collision matrix symmetric...")
             sys.stdout.flush()
 
-        # C-API implementation causes segmentation fault in specific cases.
-        # The reason is not clear, but when using memory largely.
+        # C-API implementation causes segmentation fault in specific
+        # cases. The reason is not clear, but it seems to happen when
+        # using large memory space. Passing data to C-API is doubted.
+        # 
         # import phono3py._phono3py as phono3c
+        # print(self._collision_matrix.flags)
+        # print(self._collision_matrix.shape)
+        # sys.stdout.flush()
         # phono3c.symmetrize_collision_matrix(self._collision_matrix)
 
-        size = np.prod(self._collision_matrix.shape[2:5])
-        for i in range(self._collision_matrix.shape[0]):
-            for j in range(self._collision_matrix.shape[1]):
-                col_mat = self._collision_matrix[i, j].reshape(size, size)
-                col_mat += col_mat.T
-                col_mat /= 2
-
-    def _symmetrize_reducible_collision_matrix(self):
-        if self._log_level:
-            print("- Making reducibe collision matrix symmetric...")
-            sys.stdout.flush()
-
-        # C-API implementation causes segmentation fault in specific cases.
-        # The reason is not clear, but when using memory largely.
-        # import phono3py._phono3py as phono3c
-        # phono3c.symmetrize_collision_matrix(self._collision_matrix)
-
-        size = np.prod(self._collision_matrix.shape[2:4])
+        if self._is_reducible_collision_matrix:
+            size = np.prod(self._collision_matrix.shape[2:4])
+        else:
+            size = np.prod(self._collision_matrix.shape[2:5])
         for i in range(self._collision_matrix.shape[0]):
             for j in range(self._collision_matrix.shape[1]):
                 col_mat = self._collision_matrix[i, j].reshape(size, size)
@@ -879,15 +871,17 @@ class Conductivity_LBTE(Conductivity):
         solver = self._pinv_solver % 10
         pinv_method = self._pinv_solver // 10
         # Safest choice
-        if not solver in range(1, 6):
+        if solver == 9:
+            print("*** Attention: This isn't the calculation, but the test. ***")
+        elif solver not in range(1, 7):
             solver = 1
-        if not pinv_method in [0, 1]:
+        if pinv_method not in [0, 1]:
             pinv_method = 0
 
         if solver == 1: # dsyev: safer and slower than dsyevd and smallest
                         #        memory usage
             if self._log_level:
-                print("Pseudo-inv (cutoff=%-.1e) by lapacke dsyev..." %
+                print("Pseudo-inversion (cutoff=%-.1e) by lapacke dsyev..." %
                       self._pinv_cutoff)
                 sys.stdout.flush()
             import phono3py._phono3py as phono3c
@@ -901,7 +895,7 @@ class Conductivity_LBTE(Conductivity):
                                              pinv_method)
         elif solver == 2: # dsyevd: faster than dsyev and lagest memory usage
             if self._log_level:
-                print("Pseudo-inv (cutoff=%-.1e) by lapacke dsyevd..." %
+                print("Pseudo-inversion (cutoff=%-.1e) by lapacke dsyevd..." %
                       self._pinv_cutoff)
                 sys.stdout.flush()
             import phono3py._phono3py as phono3c
@@ -917,12 +911,16 @@ class Conductivity_LBTE(Conductivity):
                           # Dangeraous to use this because
                           # the result becomes different.
             if self._log_level:
-                print("Pseudo-inv (cutoff=%-.1e) by np.linalg.eigh..." %
-                      self._pinv_cutoff)
+                print("Diagonalizing by np.linalg.eigh...")
                 sys.stdout.flush()
             col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
                 size, size)
             w, col_mat[:] = np.linalg.eigh(col_mat)
+
+            if self._log_level:
+                print("Calculating pseudo-inv of collision matrix "
+                      "(cutoff=%-.1e)" % self._pinv_cutoff)
+                sys.stdout.flush()
             import phono3py._phono3py as phono3c
             phono3c.pinv_from_eigensolution(self._collision_matrix,
                                             np.array(w, dtype='double'),
@@ -932,14 +930,17 @@ class Conductivity_LBTE(Conductivity):
                                             pinv_method)
         elif solver == 4: # scipy.linalg.lapack.dsyev
             if self._log_level:
-                print("Pseudo-inv (cutoff=%-.1e) by "
-                      "scipy.linalg.lapack.dsyev..." %
-                      self._pinv_cutoff)
+                print("Diagonalizing by scipy.linalg.lapack.dsyev...")
                 sys.stdout.flush()
             import scipy.linalg
             col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
                 size, size)
             w, col_mat[:], info = scipy.linalg.lapack.dsyev(col_mat)
+
+            if self._log_level:
+                print("Calculating pseudo-inv of collision matrix "
+                      "(cutoff=%-.1e)" % self._pinv_cutoff)
+                sys.stdout.flush()
             import phono3py._phono3py as phono3c
             phono3c.pinv_from_eigensolution(self._collision_matrix,
                                             np.array(w, dtype='double'),
@@ -947,30 +948,44 @@ class Conductivity_LBTE(Conductivity):
                                             i_temp,
                                             self._pinv_cutoff,
                                             pinv_method)
-
-            # np.dot below can be better in performance but
-            # to be sure consuming less memory space,
-            # the phono3c.pinv_from_eigensolution is used.
-            #
-            # e = np.zeros_like(w)
-            # v = col_mat
-            # for l, val in enumerate(w):
-            #     if (val > self._pinv_cutoff and pinv_method == 1 or
-            #         abs(val) > self._pinv_cutoff and pinv_method == 0):
-            #         e[l] = 1 / val
-            # v[:] = np.dot(v, np.dot(np.diag(e), v.T))
-
         elif solver == 5: # scipy.linalg.lapack.dsyevd
                           # This is more stable than numpy.linalg.eigh.
             if self._log_level:
-                print("Pseudo-inv (cutoff=%-.1e) by "
-                      "scipy.linalg.lapack.dsyevd..." %
-                      self._pinv_cutoff)
+                print("Diagonalizing by scipy.linalg.lapack.dsyevd...")
                 sys.stdout.flush()
             import scipy.linalg
             col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
                 size, size)
             w, col_mat[:], info = scipy.linalg.lapack.dsyevd(col_mat)
+            if self._log_level:
+                print("Calculating pseudo-inv of collision matrix "
+                      "(cutoff=%-.1e)" % self._pinv_cutoff)
+                sys.stdout.flush()
+            import phono3py._phono3py as phono3c
+            phono3c.pinv_from_eigensolution(self._collision_matrix,
+                                            np.array(w, dtype='double'),
+                                            i_sigma,
+                                            i_temp,
+                                            self._pinv_cutoff,
+                                            pinv_method)
+        elif solver == 6: # fully scipy & numpy
+            if self._log_level:
+                print("Diagonalizing by scipy.linalg.lapack.dsyev...")
+                sys.stdout.flush()
+            import scipy.linalg
+            col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
+                size, size)
+            w, col_mat[:], info = scipy.linalg.lapack.dsyev(col_mat)
+
+            # Pseudo inversion is done together with with multiplying
+            # X in _set_kappa to save memory space.
+
+        elif solver == 9: # Test
+            w = np.ones(size, dtype='double')
+            if self._log_level:
+                print("Calculating pseudo-inv of collision matrix "
+                      "(cutoff=%-.1e)" % self._pinv_cutoff)
+                sys.stdout.flush()
             import phono3py._phono3py as phono3c
             phono3c.pinv_from_eigensolution(self._collision_matrix,
                                             np.array(w, dtype='double'),
@@ -981,18 +996,68 @@ class Conductivity_LBTE(Conductivity):
 
         self._collision_eigenvalues[i_sigma, i_temp] = w
 
+    def _get_Y(self, i_sigma, i_temp, X):
+        num_band = self._primitive.get_number_of_atoms() * 3
+
+        if self._is_reducible_collision_matrix:
+            num_mesh_points = np.prod(self._mesh)
+            size = num_mesh_points * num_band
+        else:
+            num_ir_grid_points = len(self._ir_grid_points)
+            size = num_ir_grid_points * num_band * 3
+        v = self._collision_matrix[i_sigma, i_temp].reshape(size, size)
+
+        if self._pinv_solver % 10 == 6:
+            if self._log_level:
+                print("Calculating pseudo-inv of collision matrix by np.dot "
+                      "(cutoff=%-.1e)" % self._pinv_cutoff)
+                sys.stdout.flush()
+
+            w = self._collision_eigenvalues[i_sigma, i_temp]
+            e = np.zeros_like(w)
+            pinv_method = self._pinv_solver // 10
+            if pinv_method not in [0, 1]:
+                pinv_method = 0
+            for l, val in enumerate(w):
+                if (val > self._pinv_cutoff and pinv_method == 1 or
+                    abs(val) > self._pinv_cutoff and pinv_method == 0):
+                    e[l] = 1 / val
+            if self._is_reducible_collision_matrix:
+                X1 = np.dot(v.T, X)
+                for i in range(3):
+                    X1[:, i] *= e
+                Y = np.dot(v, X1)
+            else:
+                Y = np.dot(v, e * np.dot(v.T, X.ravel())).reshape(-1, 3)
+        else:
+            if self._is_reducible_collision_matrix:
+                Y = np.dot(v, X)
+            else:
+                Y = np.dot(v, X.ravel()).reshape(-1, 3)
+
+        return Y
+
     def _set_kappa(self, i_sigma, i_temp, weights):
         if self._is_reducible_collision_matrix:
-            self._set_kappa_of_reducible_collision_matrix(
-                i_sigma, i_temp, weights)
+            X = self._get_X(i_temp, weights, self._gv)
+            num_mesh_points = np.prod(self._mesh)
+            Y = self._get_Y(i_sigma, i_temp, X)
+            self._set_mean_free_path(i_sigma, i_temp, weights, Y)
+            # Putting self._rotations_cartesian is to symmetrize kappa.
+            # None can be put instead for watching pure information.
+            self._set_mode_kappa(X,
+                                 Y,
+                                 num_mesh_points,
+                                 self._rotations_cartesian,
+                                 i_sigma,
+                                 i_temp)
+            self._mode_kappa[i_sigma, i_temp] /= len(self._rotations_cartesian)
+            self._kappa[i_sigma, i_temp] = (
+                self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
         else:
             X = self._get_X(i_temp, weights, self._gv)
-            num_band = self._primitive.get_number_of_atoms() * 3
             num_ir_grid_points = len(self._ir_grid_points)
-            inv_col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
-                num_ir_grid_points * num_band * 3,
-                num_ir_grid_points * num_band * 3)
-            Y = np.dot(inv_col_mat, X.ravel()).reshape(-1, 3)
+            Y = self._get_Y(i_sigma, i_temp, X)
             self._set_mean_free_path(i_sigma, i_temp, weights, Y)
             self._set_mode_kappa(X,
                                  Y,
@@ -1008,29 +1073,6 @@ class Conductivity_LBTE(Conductivity):
 
             self._kappa[i_sigma, i_temp] = (
                 self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
-
-    def _set_kappa_of_reducible_collision_matrix(self,
-                                                 i_sigma,
-                                                 i_temp,
-                                                 weights):
-        X = self._get_X(i_temp, weights, self._gv)
-        num_band = self._primitive.get_number_of_atoms() * 3
-        num_mesh_points = np.prod(self._mesh)
-        inv_col_mat =  self._collision_matrix[i_sigma, i_temp].reshape(
-            num_mesh_points * num_band, num_mesh_points * num_band)
-        Y = np.dot(inv_col_mat, X)
-        self._set_mean_free_path(i_sigma, i_temp, weights, Y)
-        # Putting self._rotations_cartesian is to symmetrize kappa.
-        # None can be put instead for watching pure information.
-        self._set_mode_kappa(X,
-                             Y,
-                             num_mesh_points,
-                             self._rotations_cartesian,
-                             i_sigma,
-                             i_temp)
-        self._mode_kappa[i_sigma, i_temp] /= len(self._rotations_cartesian)
-        self._kappa[i_sigma, i_temp] = (
-            self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
 
     def _get_spectra(self, i_sigma, i_temp, weights):
         import scipy.linalg
