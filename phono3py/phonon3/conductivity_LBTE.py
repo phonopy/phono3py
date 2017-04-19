@@ -664,17 +664,23 @@ class Conductivity_LBTE(Conductivity):
                     sys.stdout.flush()
 
                 if t > 0:
+                    self._set_kappa_RTA(j, k, weights)
+
                     self._set_inv_collision_matrix(j, k, size)
                     self._set_kappa(j, k, weights)
                     # print("spectra")
                     # print(self._get_spectra(j, k, weights))
 
-                if self._log_level:
-                    print(("#%6s       " + " %-10s" * 6) %
-                          ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy"))
-                    print(("%7.1f " + " %10.3f" * 6) %
-                          ((t,) + tuple(self._kappa[j, k])))
-                    sys.stdout.flush()
+                    if self._log_level:
+                        print(("#%6s       " + " %-10s" * 6) %
+                              ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy"))
+                        print(("%7.1f " + " %10.3f" * 6) %
+                              ((t,) + tuple(self._kappa[j, k])))
+                        print((" %6s " + " %10.3f" * 6) %
+                              (("(RTA)",) + tuple(self._kappa_RTA[j, k])))
+                        sys.stdout.flush()
+
+                        sys.stdout.flush()
 
         if self._log_level:
             print('')
@@ -1049,46 +1055,6 @@ class Conductivity_LBTE(Conductivity):
 
         self._collision_eigenvalues[i_sigma, i_temp] = w
 
-    def _set_kappa_RTA(self, i_sigma, i_temp, weights):
-
-
-        if self._is_reducible_collision_matrix:
-            num_mesh_points = np.prod(self._mesh)
-            size = num_mesh_points * num_band
-            X = self._get_X(i_temp, weights, self._gv)
-            v = self._collision_matrix[i_sigma, i_temp].reshape(size, size)
-            Y = np.zeros_like(X)
-            for i in range(3):
-                Y[:, i] = X[:, i] / v.diagonal()
-            # Putting self._rotations_cartesian is to symmetrize kappa.
-            # None can be put instead for watching pure information.
-            self._set_mode_kappa(self._mode_kappa_RTA,
-                                 X,
-                                 Y,
-                                 num_mesh_points,
-                                 self._rotations_cartesian,
-                                 i_sigma,
-                                 i_temp)
-            self._mode_kappa[i_sigma, i_temp] /= len(self._rotations_cartesian)
-            self._kappa[i_sigma, i_temp] = (
-                self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
-        else:
-            num_ir_grid_points = len(self._ir_grid_points)
-            size = num_ir_grid_points * num_band * 3
-            X = self._get_X(i_temp, weights, self._gv)
-            v = self._collision_matrix[i_sigma, i_temp].reshape(size, size)
-            Y = np.zeros_like(X)
-            Y = (X.ravel() / v.diagonal()).reshape(Y.shape)
-            self._set_mode_kappa(self._mode_kappa_RTA,
-                                 X,
-                                 Y,
-                                 num_ir_grid_points,
-                                 self._rotations_cartesian,
-                                 i_sigma,
-                                 i_temp)
-            self._kappa[i_sigma, i_temp] = (
-                self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
-
     def _set_kappa(self, i_sigma, i_temp, weights):
         if self._is_reducible_collision_matrix:
             X = self._get_X(i_temp, weights, self._gv)
@@ -1128,6 +1094,60 @@ class Conductivity_LBTE(Conductivity):
             self._kappa[i_sigma, i_temp] = (
                 self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
 
+    def _set_kappa_RTA(self, i_sigma, i_temp, weights):
+        num_band = self._primitive.get_number_of_atoms() * 3
+        X = self._get_X(i_temp, weights, self._gv)
+        Y = np.zeros_like(X)
+
+        if self._is_reducible_collision_matrix:
+            # This RTA is not equivalent to conductivity_RTA.
+            # The lifetime is defined from the diagonal part of
+            # collision matrix.
+            num_mesh_points = np.prod(self._mesh)
+            size = num_mesh_points * num_band
+            v_diag = np.diagonal(
+                self._collision_matrix[i_sigma, i_temp].reshape(size, size))
+                     
+            for gp in range(num_mesh_points):
+                frequencies = self._frequencies[gp]
+                for j, f in enumerate(frequencies):
+                    if f > self._cutoff_frequency:
+                        i_mode = gp * num_band + j
+                        Y[i_mode, :] = X[i_mode, :] / v_diag[i_mode]
+            # Putting self._rotations_cartesian is to symmetrize kappa.
+            # None can be put instead for watching pure information.
+            self._set_mode_kappa(self._mode_kappa_RTA,
+                                 X,
+                                 Y,
+                                 num_mesh_points,
+                                 self._rotations_cartesian,
+                                 i_sigma,
+                                 i_temp)
+            g = len(self._rotations_cartesian)
+            self._mode_kappa_RTA[i_sigma, i_temp] /= g
+            self._kappa_RTA[i_sigma, i_temp] = (
+                self._mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0))
+        else:
+            # This RTA is supposed to be the same as conductivity_RTA.
+            num_ir_grid_points = len(self._ir_grid_points)
+            size = num_ir_grid_points * num_band * 3
+            for i, gp in enumerate(self._ir_grid_points):
+                g = self._get_main_diagonal(i, i_sigma, i_temp)
+                frequencies = self._frequencies[gp]
+                for j, f in enumerate(frequencies):
+                    if f > self._cutoff_frequency:
+                        i_mode = i * num_band + j
+                        Y[i_mode, :] = X[i_mode, :] / g[j]
+            self._set_mode_kappa(self._mode_kappa_RTA,
+                                 X,
+                                 Y,
+                                 num_ir_grid_points,
+                                 self._rotations_cartesian,
+                                 i_sigma,
+                                 i_temp)
+            self._kappa_RTA[i_sigma, i_temp] = (
+                self._mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0))
+
     def _set_mode_kappa(self,
                         mode_kappa,
                         X,
@@ -1156,6 +1176,7 @@ class Conductivity_LBTE(Conductivity):
         t = self._temperatures[i_temp]
         # Collision matrix is half of that defined in Chaput's paper.
         # Therefore here 2 is not necessary multiplied.
+        # sum_k = sum_k + sum_k.T is equivalent to I(a,b) + I(b,a).
         mode_kappa[i_sigma, i_temp] *= (
             self._conversion_factor * Kb * t ** 2 / np.prod(self._mesh))
 
