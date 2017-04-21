@@ -27,7 +27,7 @@ def get_thermal_conductivity_LBTE(
         gv_delta_q=1e-4, # for group velocity
         is_full_pp=False,
         pinv_cutoff=1.0e-8,
-        pinv_solver=1, # default: dsyev in lapacke
+        pinv_solver=0, # default: dsyev in lapacke
         write_collision=False,
         read_collision=False,
         write_kappa=False,
@@ -42,8 +42,6 @@ def get_thermal_conductivity_LBTE(
               "--------------------")
         print("Cutoff frequency of pseudo inversion of collision matrix: %s" %
               pinv_cutoff)
-        print("Solver of pseudo inversion of collision matrix: %d" %
-              pinv_solver)
 
     if read_collision:
         temps = None
@@ -168,6 +166,7 @@ def _write_kappa(lbte,
     ave_pp = lbte.get_averaged_pp_interaction()
     qpoints = lbte.get_qpoints()
     kappa = lbte.get_kappa()
+    kappa_RTA = lbte.get_kappa_RTA()
     coleigs = lbte.get_collision_eigenvalues()
 
     if is_reducible_collision_matrix:
@@ -181,6 +180,7 @@ def _write_kappa(lbte,
         gv_by_gv = lbte.get_gv_by_gv()[ir_gp]
         mode_cv = lbte.get_mode_heat_capacities()[:, ir_gp, :]
         mode_kappa = lbte.get_mode_kappa()[:, :, ir_gp, :, :]
+        mode_kappa_RTA = lbte.get_mode_kappa_RTA()[:, :, ir_gp, :, :]
         for i, w in enumerate(weights):
             mode_kappa[:, :, i, :, :] *= w
         mfp = lbte.get_mean_free_path()[:, :, ir_gp, :, :]
@@ -192,6 +192,7 @@ def _write_kappa(lbte,
         gv_by_gv = lbte.get_gv_by_gv()
         mode_cv = lbte.get_mode_heat_capacities()
         mode_kappa = lbte.get_mode_kappa()
+        mode_kappa_RTA = lbte.get_mode_kappa_RTA()
         mfp = lbte.get_mean_free_path()
 
     for i, sigma in enumerate(sigmas):
@@ -208,6 +209,8 @@ def _write_kappa(lbte,
                             heat_capacity=mode_cv,
                             kappa=kappa[i],
                             mode_kappa=mode_kappa[i],
+                            kappa_RTA=kappa_RTA[i],
+                            mode_kappa_RTA=mode_kappa_RTA[i],
                             gamma=gamma[i],
                             gamma_isotope=gamma_isotope_at_sigma,
                             averaged_pp_interaction=ave_pp,
@@ -366,7 +369,7 @@ class Conductivity_LBTE(Conductivity):
                  gv_delta_q=None, # finite difference for group veolocity
                  is_full_pp=False,
                  pinv_cutoff=1.0e-8,
-                 pinv_solver=1,
+                 pinv_solver=0,
                  log_level=0):
         self._pp = None
         self._temperatures = None
@@ -459,6 +462,12 @@ class Conductivity_LBTE(Conductivity):
 
     def get_frequencies_all(self):
         return self._frequencies[:np.prod(self._mesh)]
+
+    def get_kappa_RTA(self):
+        return self._kappa_RTA
+
+    def get_mode_kappa_RTA(self):
+        return self._mode_kappa_RTA
 
     def _run_at_grid_point(self):
         i = self._grid_point_count
@@ -878,7 +887,7 @@ class Conductivity_LBTE(Conductivity):
             size = num_ir_grid_points * num_band * 3
         v = self._collision_matrix[i_sigma, i_temp].reshape(size, size)
 
-        if self._pinv_solver % 10 == 6:
+        if self._pinv_solver % 10 in [0, 6]:
             if self._log_level:
                 print("Calculating pseudo-inv of collision matrix by np.dot "
                       "(cutoff=%-.1e)" % self._pinv_cutoff)
@@ -932,6 +941,13 @@ class Conductivity_LBTE(Conductivity):
         # Safest choice
         if solver == 9:
             print("*** Attention: This isn't the calculation, but the test. ***")
+        elif solver == 0: # default solver
+            try:
+                import scipy.linalg
+            except ImportError:
+                solver = 1
+            else:
+                solver = 6
         elif solver not in range(1, 7):
             solver = 1
         if pinv_method not in [0, 1]:

@@ -43,7 +43,7 @@ class Phono3pySettings(Settings):
         self._read_phonon = False
         self._phonon_supercell_matrix = None
         self._pinv_cutoff = 1.0e-8
-        self._pinv_solver = 1
+        self._pinv_solver = 0
         self._pp_conversion_factor = None
         self._scattering_event_class = None # scattering event class 1 or 2
         self._temperatures = None
