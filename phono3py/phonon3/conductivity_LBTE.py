@@ -73,7 +73,7 @@ def get_thermal_conductivity_LBTE(
             filename=input_filename,
             log_level=log_level)
         if not read_from:
-            print("Reading collisions failed.")
+            print("Reading gamma failed.")
             return False
         if log_level:
             temperatures = lbte.get_temperatures()
@@ -91,7 +91,6 @@ def get_thermal_conductivity_LBTE(
                 i=i,
                 is_reducible_collision_matrix=is_reducible_collision_matrix,
                 filename=output_filename)
-            print("write_collision %d" % i)
 
     if (not read_collision) or (read_collision and read_from == "grid_points"):
         if grid_points is None:
@@ -259,7 +258,7 @@ def _set_collision_from_file(lbte,
                                               verbose=(log_level > 0))
         if log_level:
             sys.stdout.flush()
-        if collisions is False:
+        if collisions is None:
             gamma_of_gps = []
             collision_matrix_of_gps = []
             collision_gp = read_collision_from_hdf5(
@@ -269,6 +268,12 @@ def _set_collision_from_file(lbte,
                 sigma=sigma,
                 filename=filename,
                 verbose=(log_level > 0))
+            if collision_gp is None:
+                if log_level:
+                    print("Collision at grid point %d doesn't exist." %
+                          grid_points[0])
+                return False
+
             num_band = collision_gp[0].shape[2]
             num_temp = len(collision_gp[2])
             if is_reducible_collision_matrix:
@@ -298,11 +303,13 @@ def _set_collision_from_file(lbte,
                     sigma=sigma,
                     filename=filename,
                     verbose=(log_level > 0))
+
                 if log_level:
                     sys.stdout.flush()
 
                 if collision_gp is False:
-                    print("Gamma at grid point %d doesn't exist." % gp)
+                    if log_level:
+                        print("Gamma at grid point %d doesn't exist." % gp)
                     return False
 
                 (collision_matrix_at_gp,

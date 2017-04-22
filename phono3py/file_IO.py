@@ -738,7 +738,7 @@ def read_gamma_from_hdf5(mesh,
     if not os.path.exists("kappa" + suffix + ".hdf5"):
         if verbose:
             print("%s not found." % ("kappa" + suffix + ".hdf5"))
-            return False
+        return None
 
     with h5py.File("kappa" + suffix + ".hdf5", 'r') as f:
         if len(f['gamma'].shape) > 0:
@@ -783,7 +783,9 @@ def read_collision_from_hdf5(mesh,
         suffix += "." + filename
 
     if not os.path.exists("collision" + suffix + ".hdf5"):
-        return False
+        if verbose:
+            print("%s not found." % ("collision" + suffix + ".hdf5"))
+        return None
 
     with h5py.File("collision" + suffix + ".hdf5", 'r') as f:
         if indices == 'all':
