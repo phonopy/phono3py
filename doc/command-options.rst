@@ -800,3 +800,39 @@ Band path mode::
    % phono3py --fc3 --fc2 --dim="2 2 2" -v \
      -c POSCAR-unitcell --nac --gruneisen --band="0 0 0  0 0 1/2"
 
+Input and output file names
+----------------------------
+
+.. _output_filename_option:
+
+``-o``: Arranging output file names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using this option, output file names are slightly modified. For example,
+specifying ``-o iso``, a file name ``kappa-m191919.hdf5`` is changed
+to ``kappa-m191919.iso.hdf5``.
+
+This rule is applied to
+
+- ``fc3.hdf5``
+- ``fc2.hdf5``
+- ``kappa-xxx.hdf5``
+- ``disp_fc3.yaml``
+- ``disp_fc2.yaml``
+
+.. _input_filename_option:
+
+``-i``: Arranging input file names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using this option, input file names are slightly modified. For example,
+specifying ``-i iso --fc3``, a file name ``fc3.iso.hdf5`` is read
+instead of ``fc3.hdf5``.
+
+This rule is applied to
+
+- ``fc3.hdf5``
+- ``fc2.hdf5``
+- ``kappa-xxx.hdf5``
+- ``disp_fc3.yaml``
+- ``disp_fc2.yaml``
