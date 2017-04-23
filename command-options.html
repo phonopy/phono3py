@@ -18,8 +18,7 @@
         VERSION:     '1.11.11',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
+        HAS_SOURCE:  true
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
@@ -31,6 +30,7 @@
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="Phono3py v.1.11.11" href="index.html" />
     <link rel="next" title="Reducing number of force calculations by cutoff pair-distance" href="cutoff-pair.html" />
     <link rel="prev" title="CRYSTAL &amp; phono3py calculation" href="crystal.html" />
 <meta charset='utf-8'>
@@ -89,6 +89,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#reciprocal-space-sampling-mesh-and-grid-points">Reciprocal space sampling mesh and grid points</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#brillouin-zone-integration">Brillouin zone integration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#physical-properties">Physical properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#input-and-output-file-names">Input and output file names</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="output-files.html">Output files</a><ul>
@@ -220,6 +221,11 @@
 <li><a class="reference internal" href="#gruneisen-mode-gruneisen-parameter-from-3rd-order-force-constants"><code class="docutils literal"><span class="pre">--gruneisen</span></code>: Mode-Gruneisen parameter from 3rd order force constants</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#input-and-output-file-names">Input and output file names</a><ul>
+<li><a class="reference internal" href="#o-arranging-output-file-names"><code class="docutils literal"><span class="pre">-o</span></code>: Arranging output file names</a></li>
+<li><a class="reference internal" href="#i-arranging-input-file-names"><code class="docutils literal"><span class="pre">-i</span></code>: Arranging input file names</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -345,6 +351,11 @@ preferred. An example of configuration (e.g., saved in a file
 <li><a class="reference internal" href="#ave-pp-use-averaged-phonon-phonon-interaction-strength" id="id45"><code class="docutils literal"><span class="pre">--ave_pp</span></code>: Use averaged phonon-phonon interaction strength</a></li>
 <li><a class="reference internal" href="#const-ave-pp-use-constant-phonon-phonon-interaction-strength" id="id46"><code class="docutils literal"><span class="pre">--const_ave_pp</span></code>: Use constant phonon-phonon interaction strength</a></li>
 <li><a class="reference internal" href="#gruneisen-mode-gruneisen-parameter-from-3rd-order-force-constants" id="id47"><code class="docutils literal"><span class="pre">--gruneisen</span></code>: Mode-Gruneisen parameter from 3rd order force constants</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#input-and-output-file-names" id="id48">Input and output file names</a><ul>
+<li><a class="reference internal" href="#o-arranging-output-file-names" id="id49"><code class="docutils literal"><span class="pre">-o</span></code>: Arranging output file names</a></li>
+<li><a class="reference internal" href="#i-arranging-input-file-names" id="id50"><code class="docutils literal"><span class="pre">-i</span></code>: Arranging input file names</a></li>
 </ul>
 </li>
 </ul>
@@ -950,6 +961,37 @@ input. The physical unit of the value is <img class="math" src="_images/math/786
 </div>
 </div>
 </div>
+<div class="section" id="input-and-output-file-names">
+<h2><a class="toc-backref" href="#id48">Input and output file names</a><a class="headerlink" href="#input-and-output-file-names" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="o-arranging-output-file-names">
+<span id="output-filename-option"></span><h3><a class="toc-backref" href="#id49"><code class="docutils literal"><span class="pre">-o</span></code>: Arranging output file names</a><a class="headerlink" href="#o-arranging-output-file-names" title="Permalink to this headline">¶</a></h3>
+<p>Using this option, output file names are slightly modified. For example,
+specifying <code class="docutils literal"><span class="pre">-o</span> <span class="pre">iso</span></code>, a file name <code class="docutils literal"><span class="pre">kappa-m191919.hdf5</span></code> is changed
+to <code class="docutils literal"><span class="pre">kappa-m191919.iso.hdf5</span></code>.</p>
+<p>This rule is applied to</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">fc3.hdf5</span></code></li>
+<li><code class="docutils literal"><span class="pre">fc2.hdf5</span></code></li>
+<li><code class="docutils literal"><span class="pre">kappa-xxx.hdf5</span></code></li>
+<li><code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code></li>
+<li><code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code></li>
+</ul>
+</div>
+<div class="section" id="i-arranging-input-file-names">
+<span id="input-filename-option"></span><h3><a class="toc-backref" href="#id50"><code class="docutils literal"><span class="pre">-i</span></code>: Arranging input file names</a><a class="headerlink" href="#i-arranging-input-file-names" title="Permalink to this headline">¶</a></h3>
+<p>Using this option, input file names are slightly modified. For example,
+specifying <code class="docutils literal"><span class="pre">-i</span> <span class="pre">iso</span> <span class="pre">--fc3</span></code>, a file name <code class="docutils literal"><span class="pre">fc3.iso.hdf5</span></code> is read
+instead of <code class="docutils literal"><span class="pre">fc3.hdf5</span></code>.</p>
+<p>This rule is applied to</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">fc3.hdf5</span></code></li>
+<li><code class="docutils literal"><span class="pre">fc2.hdf5</span></code></li>
+<li><code class="docutils literal"><span class="pre">kappa-xxx.hdf5</span></code></li>
+<li><code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code></li>
+<li><code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code></li>
+</ul>
+</div>
+</div>
 </div>
 
 
@@ -965,14 +1007,14 @@ input. The physical unit of the value is <img class="math" src="_images/math/786
         <br/>
         
 <div id="sourcelink">
-  <a href="_sources/command-options.rst.txt"
+  <a href="_sources/command-options.txt"
      rel="nofollow">Source</a>
 </div>
       
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.4.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.9.<br/>
     </p>
   </div>
 </footer>
