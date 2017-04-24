@@ -83,18 +83,19 @@ elif os.path.isfile("libopenblas.py"):
     else:
         define_macros += [('MULTITHREADED_BLAS', None)]
 else:
-    # This is when lapacke is installed on system
-    extra_link_args_lapacke = ['-llapacke', '-llapack', '-lblas']
-    include_dirs_lapacke = []
-    library_dirs_lapacke = []
+    # For MacPort
+    # % sudo port install gcc6
+    # % sudo port select --set gcc mp-gcc
+    # % sudo port install OpenBLAS +gcc6
+    if platform.system() == 'Darwin':
+        include_dirs_lapacke += ['/opt/local/include']
+        extra_link_args_lapacke = ['/opt/local/lib/libopenblas.a']
+    else:
+        # This is when lapacke is installed on system
+        extra_link_args_lapacke = ['-llapacke', '-llapack', '-lblas']
+        include_dirs_lapacke = []
+        library_dirs_lapacke = []
 
-# For MacPort
-# % sudo port install gcc6
-# % sudo port select --set gcc mp-gcc
-# % sudo port install OpenBLAS +gcc6
-if platform.system() == 'Darwin':
-    include_dirs += ['/opt/local/include']
-    extra_link_args_lapacke = ['/opt/local/lib/libopenblas.a']
 
 ## Uncomment below to measure reciprocal_to_normal_squared_openmp performance
 # define_macros += [('MEASURE_R2N', None)]

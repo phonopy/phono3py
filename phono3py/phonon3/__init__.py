@@ -456,7 +456,7 @@ class Phono3py(object):
             gv_delta_q=None, # for group velocity
             is_full_pp=False,
             pinv_cutoff=1.0e-8, # for pseudo-inversion of collision matrix
-            pinv_solver=1, # solver of pseudo-inversion of collision matrix
+            pinv_solver=0, # solver of pseudo-inversion of collision matrix
             write_gamma=False,
             read_gamma=False,
             is_N_U=False,

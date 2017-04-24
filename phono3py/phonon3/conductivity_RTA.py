@@ -322,7 +322,7 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
             sigma=sigma,
             filename=filename,
             verbose=verbose)
-        if collisions:
+        if collisions is not None:
             gamma_at_sigma, gamma_iso_at_sigma, ave_pp = collisions
             gamma[j] = gamma_at_sigma
             if gamma_iso_at_sigma is not None:
@@ -337,7 +337,7 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
                     sigma=sigma,
                     filename=filename,
                     verbose=verbose)
-                if collisions_gp:
+                if collisions_gp is not None:
                     gamma_gp, gamma_iso_gp, ave_pp_gp = collisions_gp
                     gamma[j, :, i] = gamma_gp
                     if gamma_iso_gp is not None:
@@ -355,7 +355,7 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
                             sigma=sigma,
                             filename=filename,
                             verbose=verbose)
-                        if collisions_band:
+                        if collisions_band is not None:
                             gamma_bi, gamma_iso_bi, ave_pp_bi = collisions_band
                             gamma[j, :, i, bi] = gamma_bi
                             if gamma_iso_bi is not None:
