@@ -604,6 +604,8 @@ def write_kappa_to_hdf5(temperature,
                         heat_capacity=None,
                         kappa=None,
                         mode_kappa=None,
+                        kappa_RTA=None, # RTA calculated in LBTE
+                        mode_kappa_RTA=None, # RTA calculated in LBTE
                         gamma=None,
                         gamma_isotope=None,
                         gamma_N=None,
@@ -646,6 +648,10 @@ def write_kappa_to_hdf5(temperature,
             w.create_dataset('kappa', data=kappa)
         if mode_kappa is not None:
             w.create_dataset('mode_kappa', data=mode_kappa)
+        if kappa_RTA is not None:
+            w.create_dataset('kappa_RTA', data=kappa_RTA)
+        if mode_kappa_RTA is not None:
+            w.create_dataset('mode_kappa_RTA', data=mode_kappa_RTA)
         if gamma is not None:
             w.create_dataset('gamma', data=gamma)
         if gamma_isotope is not None:
@@ -732,7 +738,7 @@ def read_gamma_from_hdf5(mesh,
     if not os.path.exists("kappa" + suffix + ".hdf5"):
         if verbose:
             print("%s not found." % ("kappa" + suffix + ".hdf5"))
-            return False
+        return None
 
     with h5py.File("kappa" + suffix + ".hdf5", 'r') as f:
         if len(f['gamma'].shape) > 0:
@@ -777,7 +783,9 @@ def read_collision_from_hdf5(mesh,
         suffix += "." + filename
 
     if not os.path.exists("collision" + suffix + ".hdf5"):
-        return False
+        if verbose:
+            print("%s not found." % ("collision" + suffix + ".hdf5"))
+        return None
 
     with h5py.File("collision" + suffix + ".hdf5", 'r') as f:
         if indices == 'all':
