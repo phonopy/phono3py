@@ -59,21 +59,21 @@ include_dirs = ['c/harmonic_h',
 library_dirs = []
 define_macros = []
 
-#### mkl.py ####
-# Many problems to be fixed exist using MKL. Not yet ready!
-# extra_link_args_lapacke = ['-lmkl_intel_ilp64', '-lmkl_gnu_thread', '-lmkl_core']
-# library_dirs_lapacke = ['/opt/intel/parallel_studio_xe_2016/mkl/lib/intel64']
-# include_dirs_lapacke = ['/opt/intel/parallel_studio_xe_2016/mkl/include']
 if os.path.isfile("mkl.py"):
+    #### mkl.py ####
+    # Many problems to be fixed exist using MKL. Not yet ready!
+    # extra_link_args_lapacke = ['-lmkl_intel_ilp64', '-lmkl_gnu_thread', '-lmkl_core']
+    # library_dirs_lapacke = ['/opt/intel/parallel_studio_xe_2016/mkl/lib/intel64']
+    # include_dirs_lapacke = ['/opt/intel/parallel_studio_xe_2016/mkl/include']
     from mkl import (extra_link_args_lapacke, include_dirs_lapacke,
                      library_dirs_lapacke)
     if use_setuptools:
         extra_compile_args += ['-DMKL_LAPACKE']
     else:
         define_macros += [('MKL_LAPACKE', None)]
-## Modify extra_link_args_lapacke depending on systems
-# echo "extra_link_args_lapacke = ['-lopenblas']"
 elif os.path.isfile("libopenblas.py"):
+    ## Modify extra_link_args_lapacke depending on systems
+    # echo "extra_link_args_lapacke = ['-lopenblas']"
     # This is for travis-CI.
     from libopenblas import extra_link_args_lapacke
     include_dirs_lapacke = []
@@ -82,19 +82,19 @@ elif os.path.isfile("libopenblas.py"):
         extra_compile_args += ['-DMULTITHREADED_BLAS']
     else:
         define_macros += [('MULTITHREADED_BLAS', None)]
-else:
+elif platform.system() == 'Darwin':
     # For MacPort
     # % sudo port install gcc6
     # % sudo port select --set gcc mp-gcc
     # % sudo port install OpenBLAS +gcc6
-    if platform.system() == 'Darwin':
-        include_dirs_lapacke += ['/opt/local/include']
-        extra_link_args_lapacke = ['/opt/local/lib/libopenblas.a']
-    else:
-        # This is when lapacke is installed on system
-        extra_link_args_lapacke = ['-llapacke', '-llapack', '-lblas']
-        include_dirs_lapacke = []
-        library_dirs_lapacke = []
+    extra_link_args_lapacke = ['/opt/local/lib/libopenblas.a']
+    include_dirs_lapacke = ['/opt/local/include']
+    library_dirs_lapacke = []
+else:
+    # This is when lapacke is installed on system
+    extra_link_args_lapacke = ['-llapacke', '-llapack', '-lblas']
+    include_dirs_lapacke = []
+    library_dirs_lapacke = []
 
 
 ## Uncomment below to measure reciprocal_to_normal_squared_openmp performance
