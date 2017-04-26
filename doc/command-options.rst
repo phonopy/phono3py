@@ -492,6 +492,20 @@ This is used with ``--nac`` to specify the direction to polarize in
 reciprocal space. See the detail at
 http://atztogo.github.io/phonopy/setting-tags.html#q-direction .
 
+
+.. _normal_umklapp_option:
+
+``--nu``: Normal and Umklapp processes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(Setting tag: ``N_U``, ``.TRUE.`` or ``.FALSE.``)
+
+Integration over q-point triplets for the calculation of
+:math:`\Gamma_\lambda(\omega_\lambda)` is made separately for normal
+and Umklapp processes, therefore the sum of them is usual
+:math:`\Gamma_\lambda(\omega_\lambda)`. The separation, i.e., the
+choice of G-vector, is made based on the first Brillouin zone.
+
 .. _write_gamma_option:
 
 ``--write_gamma``
