@@ -25,7 +25,7 @@ conductivity calculation is loaded and thermal conductivity tensor at
    
    In [2]: f = h5py.File("kappa-m111111.hdf5")
    
-   In [3]: f.keys()
+   In [3]: list(f)
    Out[3]:
    [u'frequency',
     u'gamma',
