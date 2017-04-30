@@ -476,9 +476,21 @@ class Conductivity_RTA(Conductivity):
                             self._num_ignored_phonon_modes[j, k] += 1
                             continue
 
-                        self._mode_kappa[j, k, i, l] = (
-                            self._gv_sum2[i, l] * cv[k, l] / (g_sum[l] * 2) *
-                            self._conversion_factor)
+                        old_settings = np.seterr(all='raise')
+                        try:
+                            self._mode_kappa[j, k, i, l] = (
+                                self._gv_sum2[i, l] * cv[k, l] /
+                                (g_sum[l] * 2) * self._conversion_factor)
+                        except:
+                            print("**************************** Phono3py wa"
+                                  "rning *****************************")
+                            print(" Unexpected physical condition of ph-ph "
+                                  "interaction calculation was found.")
+                            print(" g[j]=%f at gp=%d, band=%d, freq=%f" %
+                                  (g_sum[l], gp, l + 1, frequencies[l]))
+                            print("*******************************************"
+                                  "********************************")
+                        np.seterr(**old_settings) 
 
         self._mode_kappa /= self._num_sampling_grid_points
         self._kappa = self._mode_kappa.sum(axis=2).sum(axis=2)
