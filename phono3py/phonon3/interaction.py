@@ -260,6 +260,16 @@ class Interaction(object):
             decimals=decimals,
             symprec=self._symprec)
         self.set_phonons(np.arange(len(self._grid_address), dtype='intc'))
+        if (self._grid_address[0] == 0).all():
+            if np.sum(self._frequencies[0] < self._cutoff_frequency) < 3:
+                for i, f in enumerate(self._frequencies[0, :3]):
+                    if not (f < self._cutoff_frequency):
+                        self._frequencies[0, i] = 0
+                        print("=" * 26 + " Warning " + "=" * 26)
+                        print(" Phonon frequency of band index %d at Gamma "
+                              "is calculated to be %f." % (i + 1, f))
+                        print(" But this frequency is forced to be zero.")
+                        print("=" * 61)
 
     def set_nac_q_direction(self, nac_q_direction=None):
         if nac_q_direction is not None:

@@ -1164,14 +1164,12 @@ class Conductivity_LBTE(Conductivity):
                         try:
                             Y[i_mode, :] = X[i_mode, :] / g[j]
                         except:
-                            print("**************************** Phono3py wa"
-                                  "rning *****************************")
+                            print("=" * 26 + " Warning " + "=" * 26)
                             print(" Unexpected physical condition of ph-ph "
                                   "interaction calculation was found.")
                             print(" g[j]=%f at gp=%d, band=%d, freq=%f" %
                                   (g[j], gp, j + 1, f))
-                            print("*******************************************"
-                                  "********************************")
+                            print("=" * 61)
                         np.seterr(**old_settings) 
 
             self._set_mode_kappa(self._mode_kappa_RTA,
