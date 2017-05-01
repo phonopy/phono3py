@@ -1,7 +1,7 @@
 import numpy as np
-from phonopy.harmonic.dynamical_matrix import (get_smallest_vectors,
-                                               get_dynamical_matrix)
-from phonopy.units import VaspToTHz, Hbar, EV, Angstrom, THz, AMU, PlanckConstant
+from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
+from phonopy.units import (VaspToTHz, Hbar, EV, Angstrom, THz, AMU,
+                           PlanckConstant)
 from phono3py.phonon.solver import set_phonon_c, set_phonon_py
 from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
 from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
@@ -72,9 +72,13 @@ class Interaction(object):
 
         self._band_index_count = 0
 
-        svecs, multiplicity = get_smallest_vectors(self._supercell,
-                                                   self._primitive,
-                                                   self._symprec)
+        try:
+            svecs, multiplicity = self._pcell.get_smallest_vectors()
+        except AttributeError:
+            from phonopy.harmonic.dynamical_matrix import get_smallest_vectors
+            svecs, multiplicity = get_smallest_vectors(self._supercell,
+                                                       self._primitive,
+                                                       self._symprec)
         self._smallest_vectors = svecs
         self._multiplicity = multiplicity
         self._masses = np.array(self._primitive.get_masses(), dtype='double')
