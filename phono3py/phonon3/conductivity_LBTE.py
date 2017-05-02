@@ -669,16 +669,16 @@ class Conductivity_LBTE(Conductivity):
             size = len(self._ir_grid_points) * num_band * 3
 
         for j, sigma in enumerate(self._sigmas):
-            for k, t in enumerate(self._temperatures):
-                if self._log_level:
-                    text = "----------- Thermal conductivity (W/m-k) "
-                    if sigma:
-                        text += "for sigma=%s -----------" % sigma
-                    else:
-                        text += "with tetrahedron method -----------"
-                    print(text)
-                    sys.stdout.flush()
+            if self._log_level:
+                text = "----------- Thermal conductivity (W/m-k) "
+                if sigma:
+                    text += "for sigma=%s -----------" % sigma
+                else:
+                    text += "with tetrahedron method -----------"
+                print(text)
+                sys.stdout.flush()
 
+            for k, t in enumerate(self._temperatures):
                 if t > 0:
                     self._set_kappa_RTA(j, k, weights)
 
@@ -694,6 +694,7 @@ class Conductivity_LBTE(Conductivity):
                               ((t,) + tuple(self._kappa[j, k])))
                         print((" %6s " + " %10.3f" * 6) %
                               (("(RTA)",) + tuple(self._kappa_RTA[j, k])))
+                        print("-" * 76)
                         sys.stdout.flush()
 
                         sys.stdout.flush()
