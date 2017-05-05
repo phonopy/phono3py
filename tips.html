@@ -31,8 +31,8 @@
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Auxiliary tools" href="auxiliary-tools.html" />
-    <link rel="prev" title="How to read the results stored in hdf5 files" href="hdf5_howto.html" />
+    <link rel="next" title="How to cite phono3py" href="citation.html" />
+    <link rel="prev" title="Auxiliary tools" href="auxiliary-tools.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -108,15 +108,14 @@
 <li class="toctree-l2"><a class="reference internal" href="workload-distribution.html#a-convenient-script">A convenient script</a></li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Tips</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#brillouin-zone-summation">Brillouin zone summation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#numerical-quality-of-force-constants">Numerical quality of force constants</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#to-reduce-computational-demands">To reduce computational demands</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#kaccum"><code class="docutils literal"><span class="pre">kaccum</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#kdeplot"><code class="docutils literal"><span class="pre">kdeplot</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tips</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#brillouin-zone-summation">Brillouin zone summation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#importance-of-numerical-quality-of-force-constants">Importance of numerical quality of force constants</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a><ul>
@@ -165,8 +164,11 @@
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Tips</a><ul>
 <li><a class="reference internal" href="#brillouin-zone-summation">Brillouin zone summation</a></li>
-<li><a class="reference internal" href="#numerical-quality-of-force-constants">Numerical quality of force constants</a></li>
-<li><a class="reference internal" href="#to-reduce-computational-demands">To reduce computational demands</a></li>
+<li><a class="reference internal" href="#importance-of-numerical-quality-of-force-constants">Importance of numerical quality of force constants</a><ul>
+<li><a class="reference internal" href="#a-practical-way-to-check-lattice-thermal-conductivity-result">A practical way to check lattice thermal conductivity result</a></li>
+<li><a class="reference internal" href="#displacement-distance-of-atoms">Displacement distance of atoms</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -178,11 +180,11 @@
               
                 
   <li>
-    <a href="hdf5_howto.html" title="Previous Chapter: How to read the results stored in hdf5 files"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; How to read t...</span>
+    <a href="auxiliary-tools.html" title="Previous Chapter: Auxiliary tools"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Auxiliary tools</span>
     </a>
   </li>
   <li>
-    <a href="auxiliary-tools.html" title="Next Chapter: Auxiliary tools"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Auxiliary tools &raquo;</span>
+    <a href="citation.html" title="Next Chapter: How to cite phono3py"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">How to cite phono3py &raquo;</span>
     </a>
   </li>
               
@@ -214,97 +216,84 @@
 <span id="id1"></span><h1>Tips<a class="headerlink" href="#tips" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="brillouin-zone-summation">
 <span id="brillouinzone-sum"></span><h2>Brillouin zone summation<a class="headerlink" href="#brillouin-zone-summation" title="Permalink to this headline">¶</a></h2>
-<p>Brillouin zone sums appear at different two points for phonon lifetime
-calculation. First it is used for the Fourier transform of force
-constans, and then to obtain imaginary part of phonon-self-energy.  In
-the numerical calculation, uniform sampling meshes are employed for
-these summations. To obtain more accurate result, it is always better
-to use denser meshes. But the denser mesh is more
-computationally demanding.</p>
-<p>The second Brillouin zone sum contains delta functions. In phono3py
-calculation, a linear tetrahedron method (<code class="docutils literal"><span class="pre">--thm</span></code>, default option)
-and a smearing method (<code class="docutils literal"><span class="pre">--sigma</span></code>) can be used for this Brillouin
-zone integration. In most cases, the tetrahedron method is better,
-therefore it is the default choice in phono3py. Especially in high
+<p>Brillouin zone (BZ) summations appear at different two points in
+phonon lifetime calculation. First it is used for the Fourier
+transform of force constants, and second to obtain imaginary part of
+phonon-self-energy. For the summation, usually uniform sampling meshes
+are employed. To obtain more accurate result, it is always better to
+use denser meshes. But the denser mesh requires more computational
+demand.</p>
+<p>The second BZ summation contains delta functions. In
+phono3py calculation, a linear tetrahedron method (<a class="reference internal" href="command-options.html#thm-option"><span class="std std-ref">thm option</span></a>, default option) and a smearing method (<a class="reference internal" href="command-options.html#sigma-option"><span class="std std-ref">sigma
+option</span></a>) can be used for this BZ
+integration. In most cases, the tetrahedron method is better. Especially in high
 thermal conductivity materials, the smearing method results in
-underestimation of thermal conductivity.</p>
+underestimation of lattice thermal conductivity.</p>
 <p>The figure below shows Si thermal conductivity convergence with
 respect to number of mesh points along an axis from n=19 to 65. This
 is calculated with RTA and the linear tetrahedron method. Within the
 methods and phono3py implementation, it is converging at around n=55,
-however this computational demanding is not trivial. Extrapolation to
-<img class="math" src="_images/math/1863b87a2715256aa7a9608436faa0d76e38941f.png" alt="1/n \rightarrow 0"/> seems not a good idea, since it is
-converging. This plot shows that we have to decide how much value is
-acceptable as thermal conductivity value. What is important is that
-the obtained value has to be shown accompanied with the information of
-the computational settings. The BZ integration method and sampling
-mesh are definitely those of them.</p>
+however this computational demand is not trivial. As far as observing
+this result, an extrapolation to <img class="math" src="_images/math/1863b87a2715256aa7a9608436faa0d76e38941f.png" alt="1/n \rightarrow 0"/> seems not a
+good idea, since it gives overestimation in the case of this Si
+example. This plot tells that we have to decide how much value is
+acceptable as lattice thermal conductivity value. Therefore it
+important to describe the number of sampling mesh and method of BZ
+integration to let other people reproduce the computational results.</p>
 <p><a class="reference internal" href="_images/Si-convergence.png"><img alt="isiconv" src="_images/Si-convergence.png" style="width: 25%;" /></a></p>
 <p>In case the smearing method is necessary to use, the convergence of
 q-point mesh together with smearing width has to be checked
-carefully. Smearing parameter is used to approximate delta
-functions. Small <code class="docutils literal"><span class="pre">sigma</span></code> value is better to describe the detailed
-structure of three-phonon-space, but it requires a denser mesh to
-converge.</p>
-<p>To check the convergence with respect to the <code class="docutils literal"><span class="pre">sigma</span></code> value, multiple
-sigma values can be set. This can be computationally efficient, since
-it is avoided to re-calculate phonon-phonon interaction strength for
-different <code class="docutils literal"><span class="pre">sigma</span></code> values in this case.</p>
-<p>Convergence with respect to the sampling mesh and smearing parameter
-strongly depends on materials. A <img class="math" src="_images/math/977682a1e1cdaad31811430231c166aff2a38935.png" alt="20\times 20\times 20"/> sampling
-mesh (or 8000 reducible sampling points) and 0.1 THz smearing value
-for reciprocal of the volume of an atom may be a good starting choice.</p>
-<p>The tetrahedron method requires no parameter such as the smearing
-width, therefore it is easier to use than the smearing method and
-recommended to use. A drawback of using the tetrahedron method is that
-it is slower and consumes more memory space.</p>
+carefully. Since smearing parameter is used to approximate delta
+functions, small <code class="docutils literal"><span class="pre">sigma</span></code> value is better to describe the detailed
+structure of three-phonon-space, however it requires a denser sampling
+mesh to converge the result. To check the convergence with respect to
+the <code class="docutils literal"><span class="pre">sigma</span></code> value, multiple sigma values can be set. This can be
+computationally efficient, since it is avoided to re-calculate
+phonon-phonon interaction strength for different <code class="docutils literal"><span class="pre">sigma</span></code> values in
+this case. Convergence with respect to the sampling mesh and smearing
+parameter strongly depends on materials. For Si example, a
+<img class="math" src="_images/math/977682a1e1cdaad31811430231c166aff2a38935.png" alt="20\times 20\times 20"/> sampling mesh (or 8000 reducible sampling
+points) and 0.1 THz smearing value for reciprocal of the volume of an
+atom may be a good starting choice. The tetrahedron method requires no
+such parameter as the smearing width.</p>
 </div>
-<div class="section" id="numerical-quality-of-force-constants">
-<h2>Numerical quality of force constants<a class="headerlink" href="#numerical-quality-of-force-constants" title="Permalink to this headline">¶</a></h2>
-<p>Third-order force constants are much weaker to numerical noise of a
-force calculator than second-order force constants. Therefore
-supercell force calculations have to be done by enough high numerical
-accuracy.</p>
+<div class="section" id="importance-of-numerical-quality-of-force-constants">
+<h2>Importance of numerical quality of force constants<a class="headerlink" href="#importance-of-numerical-quality-of-force-constants" title="Permalink to this headline">¶</a></h2>
+<p>Third-order force constants (fc3) are much weaker to numerical noise
+of a force calculator than second-order force constants
+(fc2). Therefore supercell force calculations have to be done very
+carefully.</p>
+<p>Numerical quality of forces given by force calculators is the most
+important factor for the numerical quality of lattice thermal
+conductivity calculation. We may be able to apply symmetry constraints
+to force constants, however even if force constants fulfill those
+symmetries, the numerical quality of force constants is not guaranteed
+since elements of force constants just suffice the symmetries but most
+of those intensities are not constrained.</p>
+<p>It is important to use the best possible force calculator in the
+possibly best way. The knowledge of the force calculator from the
+theory and method to the practical usage is required to obtain
+good results of lattice thermal conductivity calculation.</p>
+<p>In the following, a few things that may be good to know are
+presented.</p>
+<div class="section" id="a-practical-way-to-check-lattice-thermal-conductivity-result">
+<h3>A practical way to check lattice thermal conductivity result<a class="headerlink" href="#a-practical-way-to-check-lattice-thermal-conductivity-result" title="Permalink to this headline">¶</a></h3>
+<p>Some feeling whether our calculation result is OK or not may be
+obtained by comparing lattice thermal conductivities calculated with
+and without <a class="reference internal" href="command-options.html#symmetrization-option"><span class="std std-ref">symmetrizations of force constants</span></a>. If they are enough different, e.g., more
+than twice different, it is better to re-consider about the force
+calculation. In the case of DFT calculations, the choice of input
+settings such as k-point sampling mesh, plane-wave energy cutoff, and
+exchange-correlational potential, etc, should be reconsidered.</p>
+</div>
+<div class="section" id="displacement-distance-of-atoms">
+<h3>Displacement distance of atoms<a class="headerlink" href="#displacement-distance-of-atoms" title="Permalink to this headline">¶</a></h3>
 <p>The phono3py default displacement distance is 0.03
 <img class="math" src="_images/math/04434c28148d7cc7b890adfcbcba587062175696.png" alt="\text{\AA}"/>. In some cases, accurate result may not be obtained
 due to the numerical noise of the force calculator. Usually increasing
-the displacement distance by <code class="docutils literal"><span class="pre">--amplitude</span></code> option reduces
-the numerical noise, but increases error from higher order anharmonicity.</p>
-<p>It is not easy to check the numerical quality of force constants. It
-is suggested firstly to check deviation from the translational
-invariance condition by watching output where the output lines start
-with <code class="docutils literal"><span class="pre">max</span> <span class="pre">drift</span> <span class="pre">of</span> <span class="pre">...</span></code>. The drift value smaller than 1 may be
-acceptable but of course it is dependent on cases. The most practical
-way may be to compare thermal conductivities calculated with and
-without symmetrizing third-order force constants by <code class="docutils literal"><span class="pre">--sym_fc3r</span></code>,
-<code class="docutils literal"><span class="pre">--sym_fc2</span></code>, and <code class="docutils literal"><span class="pre">--tsym</span></code> options.</p>
-<p>Mode-Gruneisen-parameters calculated from third-order force constants
-look very sensitive to numerical noise near the Gamma point. Therefore
-symmetrization is recommended.</p>
-<p>Overall, numerical quality of forces given by force calculators is
-the most important factor for the numerical quality of the thermal
-conductivity. We may be able to apply symmetry constraints to the
-force constants during the calculation e.g. using statistical
-approach, but the quality of force constants will be bad if that of
-forces are bad. Just they suffice the symmetry and the intensity is
-not reliable. Therefore what we can do best is to use the best
-calculator as the first priority. If we use ab-initio code, the
-knowledge about the ab-initio calculation from practical points like
-usage to method and theory is mandatory for the good thermal
-conductivity calculation.</p>
+the displacement distance by the <a class="reference internal" href="command-options.html#amplitude-option"><span class="std std-ref">amplitude option</span></a> reduces the numerical noise, but as its drawback
+higher order anharmonicity is involved (renormalized) into fc3 and fc2.</p>
 </div>
-<div class="section" id="to-reduce-computational-demands">
-<h2>To reduce computational demands<a class="headerlink" href="#to-reduce-computational-demands" title="Permalink to this headline">¶</a></h2>
-<p>Here it is assumed ab-initio code is used as the force
-calculator. Then the most heavy part of thermal conductivity
-calculation is a set of many supercell force calculations by ab-initio code.</p>
-<p>The number of force calculation is reduced by employing crystal
-symmetry. This is only valid if the crystal we focus on has high
-symmetry. Therefore we need another strategy. Introducing cutoff
-distance to consider interaction among atoms is an idea. For this
-phono3py has a marginal option but it is not very recommended to use
-since there is a better code to do this task, which is the <a class="reference external" href="http://alamode.readthedocs.io/en/latest/input/inputalm.html">ALM code</a> in
-alamode package. The ALM interface for phono3py is now preparing.</p>
 </div>
 </div>
 

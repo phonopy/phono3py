@@ -72,12 +72,18 @@ option, atomic displacement distances are controlled. With this
 option, files for supercells with displacements and ``disp_fc3.yaml``
 file are created.
 
+.. _amplitude_option:
+
 ``--amplitude``: Amplitude of displacements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``DISPLACEMENT_DISTANCE``)
 
-Displacement distance. The default value depends on calculator. See
+Atomic displacement distance is specified using this option.  This
+value may be increased for the weak interaction systems and descreased
+when the force calculator is numerically very accurate.
+
+The default value depends on calculator. See
 :ref:`default_displacement_distance_for_calculator`.
 
 ``--dim``: Supercell dimension
@@ -156,6 +162,8 @@ Read 2nd order force constants from ``fc2.hdf5``.
 (Setting tag: ``READ_FC3``, ``.TRUE.`` or ``.FALSE.``)
 
 Read 3rd order force constants from ``fc3.hdf5``.
+
+.. _symmetrization_option:
 
 ``--sym_fc2``, ``--sym_fc3r``, ``--tsym``: Symmetries force constants
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -351,6 +359,8 @@ points are shown by using with ``--gp`` or ``--ga`` option.
 Brillouin zone integration
 ---------------------------
 
+.. _thm_option:
+
 ``--thm``: Tetrahedron method (default choice)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -360,6 +370,8 @@ Tetrahedron method is used for calculation of imaginary part of self
 energy. This is the default option. Therefore it is not necessary to
 specify this unless both results by tetrahedron method and
 smearing method in one time execution are expected.
+
+.. _sigma_option:
 
 ``--sigma``: Smearing method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
