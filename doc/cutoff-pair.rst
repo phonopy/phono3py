@@ -3,8 +3,8 @@
 Reducing number of force calculations by cutoff pair-distance
 =============================================================
 
-The detail of the command option :ref:`cutoff_pair_option` is
-described.
+Here the detail of the command option :ref:`cutoff_pair_option` is
+explained.
 
 .. contents::
    :depth: 2
