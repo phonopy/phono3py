@@ -7,9 +7,12 @@ from phonopy.harmonic.force_constants import (similarity_transformation,
                                               get_rotated_displacement,
                                               get_positions_sent_by_rot_inv,
                                               set_translational_invariance)
-from phonopy.harmonic.dynamical_matrix import get_equivalent_smallest_vectors
 from phono3py.phonon3.displacement_fc3 import (get_reduced_site_symmetry,
                                                get_bond_symmetry)
+try:
+    from phonopy.structure.cells import get_equivalent_smallest_vectors
+except ImportError:
+    from phonopy.harmonic.dynamical_matrix import get_equivalent_smallest_vectors
 
 def get_fc3(supercell,
             disp_dataset,
