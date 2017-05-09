@@ -307,47 +307,58 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
                       len(temperatures),
                       len(grid_points),
                       num_band), dtype='double')
+    gamma_N = np.zeros_like(gamma)
+    gamma_U = np.zeros_like(gamma)
     gamma_iso = np.zeros((len(sigmas),
                           len(grid_points),
                           num_band), dtype='double')
     ave_pp = np.zeros((len(grid_points), num_band), dtype='double')
 
-    is_isotope = False
+    is_gamma_N_U_in = False
+    is_ave_pp_in = False
     read_succeeded = True
 
     for j, sigma in enumerate(sigmas):
-        collisions = read_gamma_from_hdf5(
+        data = read_gamma_from_hdf5(
             mesh,
             mesh_divisors=mesh_divisors,
             sigma=sigma,
             filename=filename,
             verbose=verbose)
-        if collisions is not None:
-            gamma_at_sigma, gamma_iso_at_sigma, ave_pp = collisions
-            gamma[j] = gamma_at_sigma
-            if gamma_iso_at_sigma is not None:
-                is_isotope = True
-                gamma_iso[j] = gamma_iso_at_sigma
+        if data:
+            gamma[j] = data['gamma']
+            if 'gamma_isotope' in data:
+                gamma_iso[j] = data['gamma_isotope']
+            if 'gamma_N' in data:
+                is_gamma_N_U_in = True
+                gamma_N[j] = data['gamma_N']
+                gamma_U[j] = data['gamma_U']
+            if 'ave_pp' in data:
+                is_ave_pp_in = True
+                ave_pp[:] = data['ave_pp']
         else:
             for i, gp in enumerate(grid_points):
-                collisions_gp = read_gamma_from_hdf5(
+                data_gp = read_gamma_from_hdf5(
                     mesh,
                     mesh_divisors=mesh_divisors,
                     grid_point=gp,
                     sigma=sigma,
                     filename=filename,
                     verbose=verbose)
-                if collisions_gp is not None:
-                    gamma_gp, gamma_iso_gp, ave_pp_gp = collisions_gp
-                    gamma[j, :, i] = gamma_gp
-                    if gamma_iso_gp is not None:
-                        is_isotope = True
-                        gamma_iso[j, i] = gamma_iso_gp
-                    if ave_pp_gp is not None:
-                        ave_pp[i] = ave_pp_gp
+                if data_gp:
+                    gamma[j, :, i] = data_gp['gamma']
+                    if 'gamma_iso' in data_gp:
+                        gamma_iso[j, i] = data_gp['gamma_iso']
+                    if 'gamma_N' in data_gp:
+                        is_gamma_N_U_in = True
+                        gamma_N[j, :, i] = data_gp['gamma_N']
+                        gamma_U[j, :, i] = data_gp['gamma_U']
+                    if 'ave_pp' in data_gp:
+                        is_ave_pp_in = True
+                        ave_pp[i] = data_gp['ave_pp']
                 else:
                     for bi in range(num_band):
-                        collisions_band = read_gamma_from_hdf5(
+                        data_band = read_gamma_from_hdf5(
                             mesh,
                             mesh_divisors=mesh_divisors,
                             grid_point=gp,
@@ -355,21 +366,26 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
                             sigma=sigma,
                             filename=filename,
                             verbose=verbose)
-                        if collisions_band is not None:
-                            gamma_bi, gamma_iso_bi, ave_pp_bi = collisions_band
-                            gamma[j, :, i, bi] = gamma_bi
-                            if gamma_iso_bi is not None:
-                                is_isotope = True
-                                gamma_iso[j, i, bi] = gamma_iso_bi
-                            if ave_pp_bi is not None:
-                                ave_pp[i, bi] = ave_pp_bi
+                        if data_band:
+                            gamma[j, :, i, bi] = data_band['gamma']
+                            if 'gamma_iso' in data_band:
+                                gamma_iso[j, i, bi] = data_band['gamma_iso']
+                            if 'gamma_N' in data_band:
+                                is_gamma_N_U_in = True
+                                gamma_N[j, :, i, bi] = data_band['gamma_N']
+                                gamma_U[j, :, i, bi] = data_band['gamma_U']
+                            if 'ave_pp' in data_band:
+                                is_ave_pp_in = True
+                                ave_pp[i, bi] = data_band['ave_pp']
                         else:
                             read_succeeded = False
 
     if read_succeeded:
         br.set_gamma(gamma)
-        if ave_pp is not None:
+        if is_ave_pp_in:
             br.set_averaged_pp_interaction(ave_pp)
+        if is_gamma_N_U_in:
+            br.set_gamma_N_U(gamma_N, gamma_U)
         return True
     else:
         return False
@@ -495,6 +511,10 @@ class Conductivity_RTA(Conductivity):
 
     def get_gamma_N_U(self):
         return (self._gamma_N, self._gamma_U)
+
+    def set_gamma_N_U(self, gamma_N, gamma_U):
+        self._gamma_N = gamma_N
+        self._gamma_U = gamma_U
 
     def get_gamma_detail_at_q(self):
         return self._gamma_detail_at_q

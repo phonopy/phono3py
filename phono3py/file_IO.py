@@ -740,32 +740,27 @@ def read_gamma_from_hdf5(mesh,
             print("%s not found." % ("kappa" + suffix + ".hdf5"))
         return None
 
+    read_data = {}
+
     with h5py.File("kappa" + suffix + ".hdf5", 'r') as f:
         if len(f['gamma'].shape) > 0:
-            gamma = f['gamma'][:]
+            read_data['gamma'] = f['gamma'][:]
         else:
-            gamma = f['gamma'][()]
-        if 'gamma_isotope' in f.keys():
-            if len(f['gamma_isotope'].shape) > 0:
-                gamma_isotope = f['gamma_isotope'][:]
-            else:
-                gamma_isotope = f['gamma_isotope'][()]
-        else:
-            gamma_isotope = None
-        if 'ave_pp' in f.keys():
-            if len(f['ave_pp'].shape) > 0:
-                averaged_pp_interaction = f['ave_pp'][:]
-            else:
-                averaged_pp_interaction = f['ave_pp'][()]
-        else:
-            averaged_pp_interaction = None
+            read_data['gamma'] = f['gamma'][()]
 
+        for key in ('gamma_isotope',
+                    'ave_pp',
+                    'gamma_N',
+                    'gamma_U'):
+            if key in f.keys():
+                if len(f[key].shape) > 0:
+                    read_data[key] = f[key][:]
+                else:
+                    read_data[key] = f[key][()]
         if verbose:
             print("Read data from %s." % ("kappa" + suffix + ".hdf5"))
 
-        return gamma, gamma_isotope, averaged_pp_interaction
-
-    return None
+    return read_data
 
 def read_collision_from_hdf5(mesh,
                              indices=None,
