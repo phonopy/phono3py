@@ -392,6 +392,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   PyArrayObject *band_indices_py;
   PyArrayObject *temperatures_py;
   double cutoff_frequency;
+  int is_NU;
   int symmetrize_fc3_q;
 
   double *gamma;
@@ -412,7 +413,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   Iarray *band_indices;
   Darray *temperatures;
 
-  if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOOOOid",
+  if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOOOOiid",
 			&gamma_py,
                         &relative_grid_address_py,
 			&frequencies_py,
@@ -430,11 +431,11 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
 			&s2p_map_py,
 			&band_indices_py,
                         &temperatures_py,
+                        &is_NU,
 			&symmetrize_fc3_q,
 			&cutoff_frequency)) {
     return NULL;
   }
-
 
   gamma = (double*)PyArray_DATA(gamma_py);
   relative_grid_address = (int(*)[4][3])PyArray_DATA(relative_grid_address_py);
@@ -471,6 +472,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
                           s2p,
                           band_indices,
                           temperatures,
+                          is_NU,
                           symmetrize_fc3_q,
                           cutoff_frequency);
 
@@ -551,7 +553,7 @@ py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args)
   PyArrayObject *grid_address_py;
   PyArrayObject *g_py;
   PyArrayObject *g_zero_py;
-  double unit_conversion_factor, cutoff_frequency, temperature;
+  double cutoff_frequency, temperature;
 
   Darray *fc3_normal_squared;
   double *gamma_detail;
@@ -564,7 +566,7 @@ py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args)
   int *triplet_weights;
   int *grid_address;
 
-  if (!PyArg_ParseTuple(args, "OOOOOOOOdOOdd",
+  if (!PyArg_ParseTuple(args, "OOOOOOOOdOOd",
 			&gamma_detail_py,
 			&gamma_N_py,
 			&gamma_U_py,
@@ -576,7 +578,6 @@ py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args)
 			&temperature,
 			&g_py,
 			&g_zero_py,
-			&unit_conversion_factor,
 			&cutoff_frequency)) {
     return NULL;
   }
@@ -603,7 +604,6 @@ py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args)
 						g,
 						g_zero,
 						temperature,
-						unit_conversion_factor,
 						cutoff_frequency);
 
   free(fc3_normal_squared);
@@ -1480,7 +1480,7 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
   PyArrayObject *collision_matrix_py;
   PyArrayObject *eigenvalues_py;
   double cutoff;
-  int i, i_sigma, i_temp, pinv_method, solver;
+  int i_sigma, i_temp, pinv_method, solver;
 
   double *collision_matrix;
   double *eigvals;
@@ -1488,8 +1488,6 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
   int num_grid_point;
   int num_band;
   int num_column, adrs_shift, info;
-
-  npy_intp size;
 
   if (!PyArg_ParseTuple(args, "OOiidii",
 			&collision_matrix_py,
@@ -1662,12 +1660,12 @@ static void show_colmat_info(const PyArrayObject *collision_matrix_py,
 
   printf(" [Array_shape:(");
   for (i = 0; i < PyArray_NDIM(collision_matrix_py); i++) {
-    printf("%d", PyArray_DIM(collision_matrix_py, i));
+    printf("%d", (int)PyArray_DIM(collision_matrix_py, i));
     if (i < PyArray_NDIM(collision_matrix_py) - 1) {
       printf(",");
     } else {
       printf("), ");
     }
   }
-  printf("Data shift:%d]\n", i_sigma, i_temp, adrs_shift);
+  printf("Data shift:%d [%d, %d]\n", adrs_shift, i_sigma, i_temp);
 }

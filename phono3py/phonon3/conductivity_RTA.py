@@ -53,7 +53,8 @@ def get_thermal_conductivity_RTA(
         is_kappa_star=is_kappa_star,
         gv_delta_q=gv_delta_q,
         is_full_pp=is_full_pp,
-        is_gamma_detail=(write_gamma_detail or is_N_U),
+        is_N_U=is_N_U,
+        is_gamma_detail=write_gamma_detail,
         log_level=log_level)
 
     if read_gamma:
@@ -407,6 +408,7 @@ class Conductivity_RTA(Conductivity):
                  is_kappa_star=True,
                  gv_delta_q=None,
                  is_full_pp=False,
+                 is_N_U=False,
                  is_gamma_detail=False,
                  log_level=0):
         self._pp = None
@@ -415,6 +417,7 @@ class Conductivity_RTA(Conductivity):
         self._is_kappa_star = None
         self._gv_delta_q = None
         self._is_full_pp = None
+        self._is_N_U = is_N_U
         self._is_gamma_detail = is_gamma_detail
         self._log_level = None
         self._primitive = None
@@ -580,7 +583,7 @@ class Conductivity_RTA(Conductivity):
                                     num_temp,
                                     num_grid_points,
                                     num_band0), dtype='double')
-            if self._is_gamma_detail:
+            if self._is_gamma_detail or self._is_N_U:
                 self._gamma_N = np.zeros_like(self._gamma)
                 self._gamma_U = np.zeros_like(self._gamma)
         self._gv = np.zeros((num_grid_points, num_band0, 3), dtype='double')
@@ -659,8 +662,14 @@ class Conductivity_RTA(Conductivity):
         # It is assumed that self._sigmas = [None].
         for j, sigma in enumerate(self._sigmas):
             self._collision.set_sigma(sigma)
-            collisions = np.zeros((len(self._temperatures), len(band_indices)),
-                                  dtype='double')
+            if self._is_N_U:
+                collisions = np.zeros((2, len(self._temperatures),
+                                       len(band_indices)),
+                                      dtype='double', order='C')
+            else:
+                collisions = np.zeros((len(self._temperatures),
+                                       len(band_indices)),
+                                      dtype='double', order='C')
             import phono3py._phono3py as phono3c
             phono3c.pp_collision(collisions,
                                  thm.get_tetrahedra(),
@@ -679,15 +688,31 @@ class Conductivity_RTA(Conductivity):
                                  s2p,
                                  band_indices,
                                  self._temperatures,
+                                 self._is_N_U * 1,
                                  symmetrize_fc3_q,
                                  self._cutoff_frequency)
             col_unit_conv = self._collision.get_unit_conversion_factor()
             pp_unit_conv = self._pp.get_unit_conversion_factor()
+            if self._is_N_U:
+                col = collisions.sum(axis=0)
+                col_N = collisions[0]
+                col_U = collisions[1]
+            else:
+                col = collisions
             for k in range(len(self._temperatures)):
                 self._gamma[j, k, i, :] = average_by_degeneracy(
-                    collisions[k] * col_unit_conv * pp_unit_conv,
+                    col[k] * col_unit_conv * pp_unit_conv,
                     band_indices,
                     self._frequencies[self._grid_points[i]])
+                if self._is_N_U:
+                    self._gamma_N[j, k, i, :] = average_by_degeneracy(
+                        col_N[k] * col_unit_conv * pp_unit_conv,
+                        band_indices,
+                        self._frequencies[self._grid_points[i]])
+                    self._gamma_U[j, k, i, :] = average_by_degeneracy(
+                        col_U[k] * col_unit_conv * pp_unit_conv,
+                        band_indices,
+                        self._frequencies[self._grid_points[i]])
 
     def _show_log(self, q, i):
         gp = self._grid_points[i]

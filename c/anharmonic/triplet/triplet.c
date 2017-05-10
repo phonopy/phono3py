@@ -118,6 +118,24 @@ int tpl_get_integration_weight(double *iw,
                                     openmp_per_bands);
 }
 
+int tpl_is_N(const int *triplets, const int *grid_address)
+{
+  int i, j, sum_q, is_N;
+
+  is_N = 1;
+  for (i = 0; i < 3; i++) {
+    sum_q = 0;
+    for (j = 0; j < 3; j++) { /* 1st, 2nd, 3rd triplet */
+      sum_q += grid_address[triplets[j] * 3 + i];
+    }
+    if (sum_q) {
+      is_N = 0;
+      break;
+    }
+  }
+  return is_N;
+}
+
 static int get_triplets_reciprocal_mesh_at_q(int map_triplets[],
 					     int map_q[],
 					     int grid_address[][3],

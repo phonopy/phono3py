@@ -138,6 +138,8 @@ int phonopy_pinv_dsyev(double *data,
 {
   lapack_int info;
 
+  info = 0;
+
   switch (algorithm) {
   case 0: /* dsyev */
     info = LAPACKE_dsyev(LAPACK_ROW_MAJOR,
