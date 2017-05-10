@@ -143,9 +143,8 @@ void get_interaction(Darray *fc3_normal_squared,
             g_pos[num_g_pos][2] = l;
             g_pos[num_g_pos][3] = jkl;
             num_g_pos++;
-          } else {
-            fc3_normal_squared->data[jkl + i * num_band_prod] = 0;
           }
+          fc3_normal_squared->data[jkl + i * num_band_prod] = 0;
           jkl++;
         }
       }
