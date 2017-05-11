@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from phonopy.units import VaspToTHz, Hbar, EV, Angstrom, THz, AMU
 from phonopy.phonon.degeneracy import degenerate_sets
@@ -74,6 +75,7 @@ def get_imag_self_energy(interaction,
                 text += "%8.4f " % freq
             text += "]"
             print(text)
+            sys.stdout.flush()
 
         gamma_sigmas = []
         fp_sigmas = []
@@ -198,6 +200,7 @@ def get_linewidth(interaction,
             print("q-point: %s" % q)
             print("Phonon frequency:")
             print("%s" % frequencies[gp])
+            sys.stdout.flush()
 
         if write_detail:
             triplets, weights, _, _ = interaction.get_triplets_at_q()
@@ -242,8 +245,6 @@ def get_linewidth(interaction,
                 if log_level:
                     print("Contribution of each triplet to imaginary part of "
                           "self energy is written in\n\"%s\"." % filename)
-
-
     return gamma
 
 def write_linewidth(linewidth,
