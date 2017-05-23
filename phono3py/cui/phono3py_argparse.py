@@ -80,6 +80,7 @@ def get_parser():
                         is_nac=False,
                         is_nodiag=False,
                         is_nomeshsym=False,
+                        is_nosym=False,
                         is_N_U=False,
                         is_plusminus_displacements=False,
                         is_reducible_collision_matrix=False,
@@ -305,6 +306,9 @@ def get_parser():
     parser.add_option(
         "--nomeshsym", dest="is_nomeshsym", action="store_true",
         help="No symmetrization of triplets is made.")
+    parser.add_option(
+        "--nosym", dest="is_nosym", action="store_true",
+        help="Symmetry is not imposed.")
     parser.add_option(
         "--nu", dest="is_N_U", action="store_true",
         help="Split Gamma into Normal and Umklapp processes")

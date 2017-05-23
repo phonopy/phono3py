@@ -368,6 +368,7 @@ if settings.get_create_displacements():
         settings.get_cutoff_pair_distance(),
         write_supercells_with_displacements,
         optional_structure_file_information,
+        settings.get_is_symmetry(),
         symprec,
         output_filename=output_filename,
         interface_mode=interface_mode,
