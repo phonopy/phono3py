@@ -475,14 +475,13 @@ if settings.get_is_nac():
     file_exists('BORN', log_level)
     nac_params = parse_BORN(phonon_primitive)
     nac_factor = Hartree * Bohr
-    if nac_params['factor'] is None:
-        pass
-    elif abs(nac_params['factor'] - nac_factor) > 1e-4:
+    if nac_params['factor'] is not None:
         print("-" * 22 + " Non-analytical term correction " + "-" * 22)
-        print("NAC unit conversion factor in BORN file %f was ignored." %
+        print("Default NAC unit conversion factor is %6.4f." % nac_factor)
+        print("But instead the value in BORN file %f is used." %
               nac_params['factor'])
-        print("Instead, the default value %6.4f is used." % nac_factor)
-    nac_params['factor'] = nac_factor
+    else:
+        nac_params['factor'] = nac_factor
     nac_q_direction = settings.get_nac_q_direction()
 else:
     nac_params = None
