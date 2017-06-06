@@ -232,6 +232,38 @@ necessary to run with ``--dim_fc2`` option.
 
    % phono3py --cf2 disp_fc2-{00001..00002}/vasprun.xml
 
+.. _fs2f2_option:
+
+``--fs2f2`` or ``--force_sets_to_forces_fc2``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using this option, ``FORCES_FC2`` and ``disp_fc2.yaml`` are created
+from phonopy ``FORCE_SETS`` file.
+
+::
+
+   % phono3py --fs2f2
+
+.. _cfs_option:
+
+``--cfs`` or ``--create_force_sets``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using this option, phonopy's ``FORCE_SETS`` is created from
+``FORCES_FC3`` and ``disp_fc3.yaml``.
+
+::
+
+   % phono3py --cfs
+
+In conjunction with :ref:`--dim_fc2 <dim_fc2_option>`, phonopy's
+``FORCE_SETS`` is created from ``FORCES_FC2`` and ``disp_fc2.yaml``
+instead of ``FORCES_FC3`` and ``disp_fc3.yaml``.
+
+::
+
+   % phono3py --cfs --dim_fc2="x x x"
+
 ``--cutoff_fc3`` or ``--cutoff_fc3_distance``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
