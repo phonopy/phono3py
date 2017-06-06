@@ -116,6 +116,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Tips</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#brillouin-zone-summation">Brillouin zone summation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#importance-of-numerical-quality-of-force-constants">Importance of numerical quality of force constants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#file-format-compatibility-with-phonopy">File format compatibility with phonopy</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a><ul>
@@ -169,6 +170,7 @@
 <li><a class="reference internal" href="#displacement-distance-of-atoms">Displacement distance of atoms</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#file-format-compatibility-with-phonopy">File format compatibility with phonopy</a></li>
 </ul>
 </li>
 </ul>
@@ -214,8 +216,19 @@
       
   <div class="section" id="tips">
 <span id="id1"></span><h1>Tips<a class="headerlink" href="#tips" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><a class="reference internal" href="#brillouin-zone-summation" id="id2">Brillouin zone summation</a></li>
+<li><a class="reference internal" href="#importance-of-numerical-quality-of-force-constants" id="id3">Importance of numerical quality of force constants</a><ul>
+<li><a class="reference internal" href="#a-practical-way-to-check-lattice-thermal-conductivity-result" id="id4">A practical way to check lattice thermal conductivity result</a></li>
+<li><a class="reference internal" href="#displacement-distance-of-atoms" id="id5">Displacement distance of atoms</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#file-format-compatibility-with-phonopy" id="id6">File format compatibility with phonopy</a></li>
+</ul>
+</div>
 <div class="section" id="brillouin-zone-summation">
-<span id="brillouinzone-sum"></span><h2>Brillouin zone summation<a class="headerlink" href="#brillouin-zone-summation" title="Permalink to this headline">¶</a></h2>
+<span id="brillouinzone-sum"></span><h2><a class="toc-backref" href="#id2">Brillouin zone summation</a><a class="headerlink" href="#brillouin-zone-summation" title="Permalink to this headline">¶</a></h2>
 <p>Brillouin zone (BZ) summations appear at different two points in
 phonon lifetime calculation. First it is used for the Fourier
 transform of force constants, and second to obtain imaginary part of
@@ -258,7 +271,7 @@ atom may be a good starting choice. The tetrahedron method requires no
 such parameter as the smearing width.</p>
 </div>
 <div class="section" id="importance-of-numerical-quality-of-force-constants">
-<h2>Importance of numerical quality of force constants<a class="headerlink" href="#importance-of-numerical-quality-of-force-constants" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id3">Importance of numerical quality of force constants</a><a class="headerlink" href="#importance-of-numerical-quality-of-force-constants" title="Permalink to this headline">¶</a></h2>
 <p>Third-order force constants (fc3) are much weaker to numerical noise
 of a force calculator than second-order force constants
 (fc2). Therefore supercell force calculations have to be done very
@@ -277,7 +290,7 @@ good results of lattice thermal conductivity calculation.</p>
 <p>In the following, a few things that may be good to know are
 presented.</p>
 <div class="section" id="a-practical-way-to-check-lattice-thermal-conductivity-result">
-<h3>A practical way to check lattice thermal conductivity result<a class="headerlink" href="#a-practical-way-to-check-lattice-thermal-conductivity-result" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id4">A practical way to check lattice thermal conductivity result</a><a class="headerlink" href="#a-practical-way-to-check-lattice-thermal-conductivity-result" title="Permalink to this headline">¶</a></h3>
 <p>Some feeling whether our calculation result is OK or not may be
 obtained by comparing lattice thermal conductivities calculated with
 and without <a class="reference internal" href="command-options.html#symmetrization-option"><span class="std std-ref">symmetrizations of force constants</span></a>. If they are enough different, e.g., more
@@ -287,13 +300,23 @@ settings such as k-point sampling mesh, plane-wave energy cutoff, and
 exchange-correlational potential, etc, should be reconsidered.</p>
 </div>
 <div class="section" id="displacement-distance-of-atoms">
-<h3>Displacement distance of atoms<a class="headerlink" href="#displacement-distance-of-atoms" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id5">Displacement distance of atoms</a><a class="headerlink" href="#displacement-distance-of-atoms" title="Permalink to this headline">¶</a></h3>
 <p>The phono3py default displacement distance is 0.03
 <img class="math" src="_images/math/04434c28148d7cc7b890adfcbcba587062175696.png" alt="\text{\AA}"/>. In some cases, accurate result may not be obtained
 due to the numerical noise of the force calculator. Usually increasing
 the displacement distance by the <a class="reference internal" href="command-options.html#amplitude-option"><span class="std std-ref">amplitude option</span></a> reduces the numerical noise, but as its drawback
 higher order anharmonicity is involved (renormalized) into fc3 and fc2.</p>
 </div>
+</div>
+<div class="section" id="file-format-compatibility-with-phonopy">
+<span id="file-format-compatibility"></span><h2><a class="toc-backref" href="#id6">File format compatibility with phonopy</a><a class="headerlink" href="#file-format-compatibility-with-phonopy" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> and <code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> are not compatible with
+phonopy&#8217;s <code class="docutils literal"><span class="pre">disp.yaml</span></code>. <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal"><span class="pre">FORCES_FC2</span></code> are not
+compatible with phonopy&#8217;s <code class="docutils literal"><span class="pre">FORCE_SETS</span></code>. But <code class="docutils literal"><span class="pre">FORCE_SETS</span></code> can be
+created using <a class="reference internal" href="command-options.html#cfs-option"><span class="std std-ref">&#8211;cfs</span></a>, and <code class="docutils literal"><span class="pre">FORCES_FC2</span></code> and
+<code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> can be created using <a class="reference internal" href="command-options.html#fs2f2-option"><span class="std std-ref">&#8211;fs2f2</span></a>. In addition, if <code class="docutils literal"><span class="pre">fc2.hdf5</span></code> is renamed to
+<code class="docutils literal"><span class="pre">force_constants.hdf5</span></code>, it is used in phonopy with <code class="docutils literal"><span class="pre">--hdf5</span></code> and
+<code class="docutils literal"><span class="pre">--readfc</span></code> option.</p>
 </div>
 </div>
 

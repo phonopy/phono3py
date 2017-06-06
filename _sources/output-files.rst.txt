@@ -14,6 +14,10 @@ from HDF5 files is also shown.
 Intermediate text files
 ------------------------
 
+The following files are not compatible with phonopy. But phonopy's
+``FORCE_SETS`` file can be created using phono3py command options from
+the following files. See the detail at :ref:`file_format_compatibility`.
+
 ``disp_fc3.yaml``
 ^^^^^^^^^^^^^^^^^^
 
@@ -24,7 +28,6 @@ This is created with ``-d`` option. See :ref:`create_displacements_option`.
 
 This is created with ``-d`` option with ``--dim_fc2`` option. See
 :ref:`dim_fc2_option`.
-
 
 ``FORCES_FC3``
 ^^^^^^^^^^^^^^^

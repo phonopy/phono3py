@@ -3,6 +3,10 @@
 Tips
 =====
 
+.. contents::
+   :depth: 2
+   :local:
+
 .. _brillouinzone_sum:
 
 Brillouin zone summation
@@ -102,3 +106,17 @@ due to the numerical noise of the force calculator. Usually increasing
 the displacement distance by the :ref:`amplitude option
 <amplitude_option>` reduces the numerical noise, but as its drawback
 higher order anharmonicity is involved (renormalized) into fc3 and fc2.
+
+.. _file_format_compatibility:
+
+File format compatibility with phonopy
+---------------------------------------
+
+``disp_fc3.yaml`` and ``disp_fc2.yaml`` are not compatible with
+phonopy's ``disp.yaml``. ``FORCES_FC3`` and ``FORCES_FC2`` are not
+compatible with phonopy's ``FORCE_SETS``. But ``FORCE_SETS`` can be
+created using :ref:`--cfs <cfs_option>`, and ``FORCES_FC2`` and
+``disp_fc2.yaml`` can be created using :ref:`--fs2f2
+<fs2f2_option>`. In addition, if ``fc2.hdf5`` is renamed to
+``force_constants.hdf5``, it is used in phonopy with ``--hdf5`` and
+``--readfc`` option.

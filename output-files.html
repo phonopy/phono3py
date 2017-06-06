@@ -108,15 +108,15 @@
 <li class="toctree-l2"><a class="reference internal" href="workload-distribution.html#a-convenient-script">A convenient script</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="tips.html#brillouin-zone-summation">Brillouin zone summation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tips.html#numerical-quality-of-force-constants">Numerical quality of force constants</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tips.html#to-reduce-computational-demands">To reduce computational demands</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#kaccum"><code class="docutils literal"><span class="pre">kaccum</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#kdeplot"><code class="docutils literal"><span class="pre">kdeplot</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tips.html#brillouin-zone-summation">Brillouin zone summation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tips.html#importance-of-numerical-quality-of-force-constants">Importance of numerical quality of force constants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tips.html#file-format-compatibility-with-phonopy">File format compatibility with phonopy</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a><ul>
@@ -260,6 +260,9 @@ stored in HDF5 format, therefore how to read the data
 from HDF5 files is also shown.</p>
 <div class="section" id="intermediate-text-files">
 <h2><a class="toc-backref" href="#id2">Intermediate text files</a><a class="headerlink" href="#intermediate-text-files" title="Permalink to this headline">¶</a></h2>
+<p>The following files are not compatible with phonopy. But phonopy&#8217;s
+<code class="docutils literal"><span class="pre">FORCE_SETS</span></code> file can be created using phono3py command options from
+the following files. See the detail at <a class="reference internal" href="tips.html#file-format-compatibility"><span class="std std-ref">File format compatibility with phonopy</span></a>.</p>
 <div class="section" id="disp-fc3-yaml">
 <h3><a class="toc-backref" href="#id3"><code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code></a><a class="headerlink" href="#disp-fc3-yaml" title="Permalink to this headline">¶</a></h3>
 <p>This is created with <code class="docutils literal"><span class="pre">-d</span></code> option. See <a class="reference internal" href="command-options.html#create-displacements-option"><span class="std std-ref">-d: Create displacements</span></a>.</p>
