@@ -82,20 +82,30 @@ elif os.path.isfile("libopenblas.py"):
         extra_compile_args += ['-DMULTITHREADED_BLAS']
     else:
         define_macros += [('MULTITHREADED_BLAS', None)]
-elif platform.system() == 'Darwin':
-    # For MacPort
+elif (platform.system() == 'Darwin' and
+      os.path.isfile('/opt/local/lib/libopenblas.a')):
+    # For MacPort:
     # % sudo port install gcc6
     # % sudo port select --set gcc mp-gcc
     # % sudo port install OpenBLAS +gcc6
     extra_link_args_lapacke = ['/opt/local/lib/libopenblas.a']
     include_dirs_lapacke = ['/opt/local/include']
     library_dirs_lapacke = []
-else:
+elif os.path.isfile('/usr/lib/liblapacke.so'):
     # This is when lapacke is installed on system
     extra_link_args_lapacke = ['-llapacke', '-llapack', '-lblas']
     include_dirs_lapacke = []
     library_dirs_lapacke = []
-
+else:
+    # For conda: Try dynamic link library of openblas
+    # % conda install numpy scipy h5py pyyaml matplotlib openblas
+    extra_link_args_lapacke = ['-lopenblas']
+    include_dirs_lapacke = []
+    library_dirs_lapacke = []
+    if use_setuptools:
+        extra_compile_args += ['-DMULTITHREADED_BLAS']
+    else:
+        define_macros += [('MULTITHREADED_BLAS', None)]
 
 ## Uncomment below to measure reciprocal_to_normal_squared_openmp performance
 # define_macros += [('MEASURE_R2N', None)]

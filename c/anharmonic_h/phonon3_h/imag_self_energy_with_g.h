@@ -58,7 +58,6 @@ void get_detailed_imag_self_energy_at_bands_with_g
  const double *g,
  const char *g_zero,
  const double temperature,
- const double unit_conversion_factor,
  const double cutoff_frequency);
 void imag_self_energy_at_triplet(double *imag_self_energy,
                                  const int num_band0,
@@ -75,5 +74,19 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
                                  const int num_temps,
                                  const double cutoff_frequency,
                                  const int openmp_at_bands);
+void
+detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
+				     double *imag_self_energy,
+				     const int num_band0,
+				     const int num_band,
+				     const double *fc3_normal_squared,
+				     const double *frequencies,
+				     const int *triplets,
+				     const double *g1,
+				     const double *g2_3,
+				     const char *g_zero,
+				     const double *temperatures,
+                                     const int num_temps,
+				     const double cutoff_frequency);
 
 #endif

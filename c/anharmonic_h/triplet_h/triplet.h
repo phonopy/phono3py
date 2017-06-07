@@ -86,4 +86,6 @@ int tpl_get_integration_weight(double *iw,
                                const int openmp_per_triplets,
                                const int openmp_per_bands);
 
+int tpl_is_N(const int *triplets, const int *grid_address);
+
 #endif

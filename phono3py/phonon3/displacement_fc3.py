@@ -1,7 +1,11 @@
 import numpy as np
-from phonopy.harmonic.displacement import get_least_displacements, \
-    directions_axis, get_displacement, is_minus_displacement
-from phonopy.harmonic.dynamical_matrix import get_equivalent_smallest_vectors
+from phonopy.harmonic.displacement import (get_least_displacements,
+                                           directions_axis, get_displacement,
+                                           is_minus_displacement)
+try:
+    from phonopy.structure.cells import get_equivalent_smallest_vectors
+except ImportError:
+    from phonopy.harmonic.dynamical_matrix import get_equivalent_smallest_vectors
 
 def direction_to_displacement(dataset,
                               distance,
@@ -109,6 +113,7 @@ def get_third_order_displacements(cell,
                                                positions,
                                                symprec,
                                                is_diagonal)
+
             min_distance = np.linalg.norm(
                 np.dot(lattice, get_equivalent_smallest_vectors(
                     atom1,

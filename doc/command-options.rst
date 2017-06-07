@@ -72,12 +72,18 @@ option, atomic displacement distances are controlled. With this
 option, files for supercells with displacements and ``disp_fc3.yaml``
 file are created.
 
+.. _amplitude_option:
+
 ``--amplitude``: Amplitude of displacements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``DISPLACEMENT_DISTANCE``)
 
-Displacement distance. The default value depends on calculator. See
+Atomic displacement distance is specified using this option.  This
+value may be increased for the weak interaction systems and descreased
+when the force calculator is numerically very accurate.
+
+The default value depends on calculator. See
 :ref:`default_displacement_distance_for_calculator`.
 
 ``--dim``: Supercell dimension
@@ -157,6 +163,8 @@ Read 2nd order force constants from ``fc2.hdf5``.
 
 Read 3rd order force constants from ``fc3.hdf5``.
 
+.. _symmetrization_option:
+
 ``--sym_fc2``, ``--sym_fc3r``, ``--tsym``: Symmetries force constants
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -223,6 +231,38 @@ necessary to run with ``--dim_fc2`` option.
 ::
 
    % phono3py --cf2 disp_fc2-{00001..00002}/vasprun.xml
+
+.. _fs2f2_option:
+
+``--fs2f2`` or ``--force_sets_to_forces_fc2``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using this option, ``FORCES_FC2`` and ``disp_fc2.yaml`` are created
+from phonopy ``FORCE_SETS`` file.
+
+::
+
+   % phono3py --fs2f2
+
+.. _cfs_option:
+
+``--cfs`` or ``--create_force_sets``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using this option, phonopy's ``FORCE_SETS`` is created from
+``FORCES_FC3`` and ``disp_fc3.yaml``.
+
+::
+
+   % phono3py --cfs
+
+In conjunction with :ref:`--dim_fc2 <dim_fc2_option>`, phonopy's
+``FORCE_SETS`` is created from ``FORCES_FC2`` and ``disp_fc2.yaml``
+instead of ``FORCES_FC3`` and ``disp_fc3.yaml``.
+
+::
+
+   % phono3py --cfs --dim_fc2="x x x"
 
 ``--cutoff_fc3`` or ``--cutoff_fc3_distance``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -351,6 +391,8 @@ points are shown by using with ``--gp`` or ``--ga`` option.
 Brillouin zone integration
 ---------------------------
 
+.. _thm_option:
+
 ``--thm``: Tetrahedron method (default choice)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -360,6 +402,8 @@ Tetrahedron method is used for calculation of imaginary part of self
 energy. This is the default option. Therefore it is not necessary to
 specify this unless both results by tetrahedron method and
 smearing method in one time execution are expected.
+
+.. _sigma_option:
 
 ``--sigma``: Smearing method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -491,6 +535,20 @@ first line of ``BORN`` file.
 This is used with ``--nac`` to specify the direction to polarize in
 reciprocal space. See the detail at
 http://atztogo.github.io/phonopy/setting-tags.html#q-direction .
+
+
+.. _normal_umklapp_option:
+
+``--nu``: Normal and Umklapp processes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(Setting tag: ``N_U``, ``.TRUE.`` or ``.FALSE.``)
+
+Integration over q-point triplets for the calculation of
+:math:`\Gamma_\lambda(\omega_\lambda)` is made separately for normal
+and Umklapp processes, therefore the sum of them is usual
+:math:`\Gamma_\lambda(\omega_\lambda)`. The separation, i.e., the
+choice of G-vector, is made based on the first Brillouin zone.
 
 .. _write_gamma_option:
 

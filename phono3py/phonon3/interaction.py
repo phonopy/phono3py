@@ -1,7 +1,7 @@
 import numpy as np
-from phonopy.harmonic.dynamical_matrix import (get_smallest_vectors,
-                                               get_dynamical_matrix)
-from phonopy.units import VaspToTHz, Hbar, EV, Angstrom, THz, AMU, PlanckConstant
+from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
+from phonopy.units import (VaspToTHz, Hbar, EV, Angstrom, THz, AMU,
+                           PlanckConstant)
 from phono3py.phonon.solver import set_phonon_c, set_phonon_py
 from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
 from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
@@ -72,9 +72,13 @@ class Interaction(object):
 
         self._band_index_count = 0
 
-        svecs, multiplicity = get_smallest_vectors(self._supercell,
-                                                   self._primitive,
-                                                   self._symprec)
+        try:
+            svecs, multiplicity = self._primitive.get_smallest_vectors()
+        except AttributeError:
+            from phonopy.harmonic.dynamical_matrix import get_smallest_vectors
+            svecs, multiplicity = get_smallest_vectors(self._supercell,
+                                                       self._primitive,
+                                                       self._symprec)
         self._smallest_vectors = svecs
         self._multiplicity = multiplicity
         self._masses = np.array(self._primitive.get_masses(), dtype='double')
@@ -260,6 +264,16 @@ class Interaction(object):
             decimals=decimals,
             symprec=self._symprec)
         self.set_phonons(np.arange(len(self._grid_address), dtype='intc'))
+        if (self._grid_address[0] == 0).all():
+            if np.sum(self._frequencies[0] < self._cutoff_frequency) < 3:
+                for i, f in enumerate(self._frequencies[0, :3]):
+                    if not (f < self._cutoff_frequency):
+                        self._frequencies[0, i] = 0
+                        print("=" * 26 + " Warning " + "=" * 26)
+                        print(" Phonon frequency of band index %d at Gamma "
+                              "is calculated to be %f." % (i + 1, f))
+                        print(" But this frequency is forced to be zero.")
+                        print("=" * 61)
 
     def set_nac_q_direction(self, nac_q_direction=None):
         if nac_q_direction is not None:

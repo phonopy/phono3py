@@ -28,8 +28,8 @@ Documentation
    output-files
    hdf5_howto
    workload-distribution
-   tips
    auxiliary-tools
+   tips
    citation
    changelog
 

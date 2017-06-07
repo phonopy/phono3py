@@ -45,6 +45,7 @@ def create_phono3py_supercells(unitcell,
                                cutoff_pair_distance,
                                write_supercells_with_displacements,
                                optional_structure_file_information,
+                               is_symmetry,
                                symprec,
                                interface_mode='vasp',
                                output_filename=None,
@@ -62,6 +63,7 @@ def create_phono3py_supercells(unitcell,
         unitcell,
         supercell_matrix,
         phonon_supercell_matrix=phonon_supercell_matrix,
+        is_symmetry=is_symmetry,
         symprec=symprec)
     supercell = phono3py.get_supercell()
     phono3py.generate_displacements(
