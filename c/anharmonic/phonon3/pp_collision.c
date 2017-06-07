@@ -65,21 +65,23 @@ void get_pp_collision_with_g(double *imag_self_energy,
                              const int *s2p_map,
                              const Iarray *band_indices,
                              const Darray *temperatures,
+                             const int is_NU,
                              const int symmetrize_fc3_q,
                              const double cutoff_frequency)
 {
-  int i, j, k, l, jkl, num_band, num_band0, num_band_prod, num_triplets, num_temps, num_iw_pos;
+  int i, j, k, l, jkl, num_band, num_band0, num_band_prod, num_triplets;
+  int num_temps, num_g_pos, is_N;
   int openmp_per_triplets;
-  double *fc3_normal_squared, *ise, *freqs_at_gp, *iw;
-  char *iw_zero;
-  int (*iw_pos)[4];
+  double *fc3_normal_squared, *ise, *freqs_at_gp, *g;
+  char *g_zero;
+  int (*g_pos)[4];
 
   fc3_normal_squared = NULL;
   ise = NULL;
   freqs_at_gp = NULL;
-  iw = NULL;
-  iw_zero = NULL;
-  iw_pos = NULL;
+  g = NULL;
+  g_zero = NULL;
+  g_pos = NULL;
 
   num_band0 = band_indices->dims[0];
   num_band = shortest_vectors->dims[1] * 3;
@@ -99,12 +101,12 @@ void get_pp_collision_with_g(double *imag_self_energy,
     openmp_per_triplets = 0;
   }
 
-#pragma omp parallel for schedule(guided) private(j, k, l, jkl, fc3_normal_squared, iw, iw_zero, iw_pos, num_iw_pos) if (openmp_per_triplets)
+#pragma omp parallel for schedule(guided) private(j, k, l, jkl, fc3_normal_squared, g, g_zero, g_pos, num_g_pos) if (openmp_per_triplets)
   for (i = 0; i < num_triplets; i++) {
-    iw = (double*)malloc(sizeof(double) * 2 * num_band_prod);
-    iw_zero = (char*)malloc(sizeof(char) * num_band_prod);
-    tpl_get_integration_weight(iw,
-                               iw_zero,
+    g = (double*)malloc(sizeof(double) * 2 * num_band_prod);
+    g_zero = (char*)malloc(sizeof(char) * num_band_prod);
+    tpl_get_integration_weight(g,
+                               g_zero,
                                freqs_at_gp,
                                num_band0,
                                relative_grid_address,
@@ -120,22 +122,20 @@ void get_pp_collision_with_g(double *imag_self_energy,
                                1 - openmp_per_triplets);
 
     fc3_normal_squared = (double*)malloc(sizeof(double) * num_band_prod);
-
-    num_iw_pos = 0;
+    num_g_pos = 0;
     jkl = 0;
-    iw_pos = (int(*)[4])malloc(sizeof(int[4]) * num_band_prod);
+    g_pos = (int(*)[4])malloc(sizeof(int[4]) * num_band_prod);
     for (j = 0; j < num_band0; j++) {
       for (k = 0; k < num_band; k++) {
         for (l = 0; l < num_band; l++) {
-          if (!iw_zero[jkl]) {
-            iw_pos[num_iw_pos][0] = j;
-            iw_pos[num_iw_pos][1] = k;
-            iw_pos[num_iw_pos][2] = l;
-            iw_pos[num_iw_pos][3] = jkl;
-            num_iw_pos++;
-          } else {
-            fc3_normal_squared[jkl] = 0;
+          if (!g_zero[jkl]) {
+            g_pos[num_g_pos][0] = j;
+            g_pos[num_g_pos][1] = k;
+            g_pos[num_g_pos][2] = l;
+            g_pos[num_g_pos][3] = jkl;
+            num_g_pos++;
           }
+          fc3_normal_squared[jkl] = 0;
           jkl++;
         }
       }
@@ -145,8 +145,8 @@ void get_pp_collision_with_g(double *imag_self_energy,
       fc3_normal_squared,
       num_band0,
       num_band,
-      iw_pos,
-      num_iw_pos,
+      g_pos,
+      num_g_pos,
       frequencies,
       eigenvectors,
       triplets->data + i * 3,
@@ -173,10 +173,10 @@ void get_pp_collision_with_g(double *imag_self_energy,
       frequencies,
       triplets->data + i * 3,
       weights[i],
-      iw,
-      iw + num_band_prod,
-      iw_pos,
-      num_iw_pos,
+      g,
+      g + num_band_prod,
+      g_pos,
+      num_g_pos,
       temperatures->data,
       num_temps,
       cutoff_frequency,
@@ -184,23 +184,42 @@ void get_pp_collision_with_g(double *imag_self_energy,
 
     free(fc3_normal_squared);
     fc3_normal_squared = NULL;
-    free(iw_pos);
-    iw_pos = NULL;
-    free(iw_zero);
-    iw_zero = NULL;
-    free(iw);
-    iw = NULL;
+    free(g_pos);
+    g_pos = NULL;
+    free(g_zero);
+    g_zero = NULL;
+    free(g);
+    g = NULL;
   }
 
-  for (i = 0; i < num_temps * num_band0; i++) {
-    imag_self_energy[i] = 0;
-  }
-
-  for (i = 0; i < num_triplets; i++) {
-    for (j = 0; j < num_temps; j++) {
-      for (k = 0; k < num_band0; k++) {
-        imag_self_energy[j * num_band0 + k] +=
-          ise[i * num_temps * num_band0 + j * num_band0 + k];
+  if (is_NU) {
+    for (i = 0; i < 2 * num_temps * num_band0; i++) {
+      imag_self_energy[i] = 0;
+    }
+    for (i = 0; i < num_triplets; i++) {
+      is_N = tpl_is_N(triplets->data + i * 3, grid_address);
+      for (j = 0; j < num_temps; j++) {
+        for (k = 0; k < num_band0; k++) {
+          if (is_N) {
+            imag_self_energy[j * num_band0 + k] +=
+              ise[i * num_temps * num_band0 + j * num_band0 + k];
+          } else {
+            imag_self_energy[num_temps * num_band0 + j * num_band0 + k] +=
+              ise[i * num_temps * num_band0 + j * num_band0 + k];
+          }
+        }
+      }
+    }
+  } else {
+    for (i = 0; i < num_temps * num_band0; i++) {
+      imag_self_energy[i] = 0;
+    }
+    for (i = 0; i < num_triplets; i++) {
+      for (j = 0; j < num_temps; j++) {
+        for (k = 0; k < num_band0; k++) {
+          imag_self_energy[j * num_band0 + k] +=
+            ise[i * num_temps * num_band0 + j * num_band0 + k];
+        }
       }
     }
   }

@@ -1,6 +1,7 @@
 import sys
 import numpy as np
-from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, DynamicalMatrixNAC, get_smallest_vectors
+from phonopy.harmonic.dynamical_matrix import (DynamicalMatrix,
+                                               DynamicalMatrixNAC)
 from phonopy.structure.cells import get_supercell
 from phono3py.file_IO import write_fc3_dat, write_fc2_dat
 from phonopy.units import VaspToTHz
@@ -88,8 +89,14 @@ class Gruneisen(object):
                                           symprec=self._symprec)
             self._dm.set_nac_params(nac_params)
         self._nac_q_direction = nac_q_direction
-        self._shortest_vectors, self._multiplicity = get_smallest_vectors(
-            self._scell, self._pcell, self._symprec)
+
+        try:
+            (self._shortest_vectors,
+             self._multiplicity) = self._pcell.get_smallest_vectors()
+        except AttributeError:
+            from phonopy.harmonic.dynamical_matrix import get_smallest_vectors
+            self._shortest_vectors, self._multiplicity = get_smallest_vectors(
+                self._scell, self._pcell, self._symprec)
 
         if self._ion_clamped:
             num_atom_prim = self._pcell.get_number_of_atoms()

@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from phonopy.units import VaspToTHz, Hbar, EV, Angstrom, THz, AMU
 from phonopy.phonon.degeneracy import degenerate_sets
@@ -74,6 +75,7 @@ def get_imag_self_energy(interaction,
                 text += "%8.4f " % freq
             text += "]"
             print(text)
+            sys.stdout.flush()
 
         gamma_sigmas = []
         fp_sigmas = []
@@ -198,6 +200,7 @@ def get_linewidth(interaction,
             print("q-point: %s" % q)
             print("Phonon frequency:")
             print("%s" % frequencies[gp])
+            sys.stdout.flush()
 
         if write_detail:
             triplets, weights, _, _ = interaction.get_triplets_at_q()
@@ -242,8 +245,6 @@ def get_linewidth(interaction,
                 if log_level:
                     print("Contribution of each triplet to imaginary part of "
                           "self energy is written in\n\"%s\"." % filename)
-
-
     return gamma
 
 def write_linewidth(linewidth,
@@ -567,9 +568,10 @@ class ImagSelfEnergy(object):
             self._temperature,
             self._g,
             _g_zero,
-            self._unit_conversion,
             self._cutoff_frequency)
 
+        self._ise_N *= self._unit_conversion
+        self._ise_U *= self._unit_conversion
         self._imag_self_energy = self._ise_N + self._ise_U
 
     def _run_c_with_frequency_points_with_g(self):
@@ -623,12 +625,12 @@ class ImagSelfEnergy(object):
                     self._temperature,
                     g,
                     _g_zero,
-                    self._unit_conversion,
                     self._cutoff_frequency)
-            self._detailed_imag_self_energy[i] = detailed_ise_at_f
-            self._imag_self_energy[i] = ise_at_f_N + ise_at_f_U
-            self._ise_N[i] = ise_at_f_N
-            self._ise_U[i] = ise_at_f_U
+            self._detailed_imag_self_energy[i] = (detailed_ise_at_f *
+                                                  self._unit_conversion)
+            self._ise_N[i] = ise_at_f_N * self._unit_conversion
+            self._ise_U[i] = ise_at_f_U * self._unit_conversion
+            self._imag_self_energy[i] = self._ise_N[i] + self._ise_U[i]
 
     def _run_py_with_band_indices_with_g(self):
         if self._temperature > 0:

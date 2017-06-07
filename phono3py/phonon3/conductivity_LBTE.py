@@ -669,16 +669,16 @@ class Conductivity_LBTE(Conductivity):
             size = len(self._ir_grid_points) * num_band * 3
 
         for j, sigma in enumerate(self._sigmas):
-            for k, t in enumerate(self._temperatures):
-                if self._log_level:
-                    text = "----------- Thermal conductivity (W/m-k) "
-                    if sigma:
-                        text += "for sigma=%s -----------" % sigma
-                    else:
-                        text += "with tetrahedron method -----------"
-                    print(text)
-                    sys.stdout.flush()
+            if self._log_level:
+                text = "----------- Thermal conductivity (W/m-k) "
+                if sigma:
+                    text += "for sigma=%s -----------" % sigma
+                else:
+                    text += "with tetrahedron method -----------"
+                print(text)
+                sys.stdout.flush()
 
+            for k, t in enumerate(self._temperatures):
                 if t > 0:
                     self._set_kappa_RTA(j, k, weights)
 
@@ -694,6 +694,7 @@ class Conductivity_LBTE(Conductivity):
                               ((t,) + tuple(self._kappa[j, k])))
                         print((" %6s " + " %10.3f" * 6) %
                               (("(RTA)",) + tuple(self._kappa_RTA[j, k])))
+                        print("-" * 76)
                         sys.stdout.flush()
 
                         sys.stdout.flush()
@@ -1160,7 +1161,18 @@ class Conductivity_LBTE(Conductivity):
                 for j, f in enumerate(frequencies):
                     if f > self._cutoff_frequency:
                         i_mode = i * num_band + j
-                        Y[i_mode, :] = X[i_mode, :] / g[j]
+                        old_settings = np.seterr(all='raise')
+                        try:
+                            Y[i_mode, :] = X[i_mode, :] / g[j]
+                        except:
+                            print("=" * 26 + " Warning " + "=" * 26)
+                            print(" Unexpected physical condition of ph-ph "
+                                  "interaction calculation was found.")
+                            print(" g[j]=%f at gp=%d, band=%d, freq=%f" %
+                                  (g[j], gp, j + 1, f))
+                            print("=" * 61)
+                        np.seterr(**old_settings) 
+
             self._set_mode_kappa(self._mode_kappa_RTA,
                                  X,
                                  Y,
@@ -1185,6 +1197,11 @@ class Conductivity_LBTE(Conductivity):
                                              Y.reshape(num_grid_points,
                                                        num_band, 3))):
             for j, (v, f) in enumerate(zip(v_gp, f_gp)):
+                # Do not consider three lowest modes at Gamma-point
+                # It is assumed that there are no imaginary modes.
+                if (self._grid_address[i] == 0).all() and j < 3:
+                    continue
+
                 if rotations_cartesian is None:
                     sum_k = np.outer(v, f)
                 else:

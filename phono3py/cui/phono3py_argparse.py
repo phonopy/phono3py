@@ -80,6 +80,7 @@ def get_parser():
                         is_nac=False,
                         is_nodiag=False,
                         is_nomeshsym=False,
+                        is_nosym=False,
                         is_N_U=False,
                         is_plusminus_displacements=False,
                         is_reducible_collision_matrix=False,
@@ -218,16 +219,19 @@ def get_parser():
         "--fc3", dest="read_fc3", action="store_true",
         help="Read third order force constants")
     parser.add_option(
-        "--fs2f2", "--force_sets_to_forces_fc2",
-        dest="force_sets_to_forces_fc2_mode",
-        action="store_true", help="Create FORCES_FC2 from FORCE_SETS")
-    parser.add_option(
         "--freq_scale", dest="frequency_scale_factor", type="float",
         help=("Squared scale factor multiplied with fc2. Therefore frequency "
               "is changed but the contribution from NAC is not changed."))
     parser.add_option(
         "--freq_pitch", dest="fpitch", type="float",
         help="Pitch in frequency for spectrum")
+    parser.add_option(
+        "--fs2f2", "--force_sets_to_forces_fc2",
+        dest="force_sets_to_forces_fc2_mode",
+        action="store_true", help="Create FORCES_FC2 from FORCE_SETS")
+    parser.add_option(
+        "--fst", "--frequency_shift", dest="is_frequency_shift",
+        action="store_true", help="Calculate frequency shifts")
     parser.add_option(
         "--full_pp", dest="is_full_pp",
         action="store_true",
@@ -236,14 +240,14 @@ def get_parser():
               "strength are needed, i.e., to calculate average ph-ph "
               "interaction strength."))
     parser.add_option(
+        "--ga", "--grid_addresses", dest="grid_addresses", type="string",
+        help="Fixed grid addresses where anharmonic properties are calculated")
+    parser.add_option(
         "--gamma_unit_conversion", dest="gamma_unit_conversion", type="float",
         help="Conversion factor for gamma")
     parser.add_option(
         "--gp", "--grid_points", dest="grid_points", type="string",
         help="Fixed grid points where anharmonic properties are calculated")
-    parser.add_option(
-        "--ga", "--grid_addresses", dest="grid_addresses", type="string",
-        help="Fixed grid addresses where anharmonic properties are calculated")
     parser.add_option(
         "--gruneisen", dest="is_gruneisen", action="store_true",
         help="Calculate phonon Gruneisen parameter")
@@ -278,9 +282,6 @@ def get_parser():
         "--lw", "--linewidth", dest="is_linewidth",
         action="store_true", help="Calculate linewidths")
     parser.add_option(
-        "--fst", "--frequency_shift", dest="is_frequency_shift",
-        action="store_true", help="Calculate frequency shifts")
-    parser.add_option(
         "--mass", dest="masses", action="store", type="string",
         help="Same as MASS tag")
     parser.add_option(
@@ -305,6 +306,9 @@ def get_parser():
     parser.add_option(
         "--nomeshsym", dest="is_nomeshsym", action="store_true",
         help="No symmetrization of triplets is made.")
+    parser.add_option(
+        "--nosym", dest="is_nosym", action="store_true",
+        help="Symmetry is not imposed.")
     parser.add_option(
         "--nu", dest="is_N_U", action="store_true",
         help="Split Gamma into Normal and Umklapp processes")
@@ -422,12 +426,12 @@ def get_parser():
         "--write_collision", dest="write_collision", action="store_true",
         help="Write collision matrix and Gammas to files")
     parser.add_option(
+        "--write_gamma", dest="write_gamma", action="store_true",
+        help="Write imag-part of self energy to files")
+    parser.add_option(
         "--write_gamma_detail", "--write_detailed_gamma",
         dest="write_gamma_detail",
         action="store_true", help="Write out detailed imag-part of self energy")
-    parser.add_option(
-        "--write_gamma", dest="write_gamma", action="store_true",
-        help="Write imag-part of self energy to files")
     parser.add_option(
         "--write_phonon", dest="write_phonon", action="store_true",
         help="Write all phonons on grid points to files")
