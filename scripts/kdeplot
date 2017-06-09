@@ -35,7 +35,7 @@ def collect_data(gamma, weights, frequencies, t_index, cutoff, max_freq):
 
     return x, y
 
-def run_KDE(x, y, nbins, y_max=None):
+def run_KDE(x, y, nbins, y_max=None, min_density=0.1):
     """Running Gaussian-KDE by scipy
     """
 
@@ -59,7 +59,7 @@ def run_KDE(x, y, nbins, y_max=None):
         for i, r_zi in enumerate((zi.T)[::-1]):
             if indices:
                 indices.append(nbins - i - 1)
-            elif np.max(r_zi) > zi_max / 10:
+            elif np.max(r_zi) > zi_max * min_density:
                 indices = [nbins - i - 1]
         short_nbinds = len(indices)
         
@@ -72,7 +72,8 @@ def run_KDE(x, y, nbins, y_max=None):
 
     return xi, yi, zi, short_nbinds
 
-def plot(plt, xi, yi, zi, x, y, short_nbinds, nbins, y_max=None):    
+def plot(plt, xi, yi, zi, x, y, short_nbinds, nbins,
+         y_max=None, cmap='viridis'):    
     #
     # Plotting
     #
@@ -88,7 +89,7 @@ def plot(plt, xi, yi, zi, x, y, short_nbinds, nbins, y_max=None):
             y_cut.append(_y)
     
     fig = plt.figure()
-    plt.pcolormesh(xi[:,:nbins], yi[:,:nbins], zi[:,:nbins])
+    plt.pcolormesh(xi[:,:nbins], yi[:,:nbins], zi[:,:nbins], cmap=cmap)
     plt.colorbar()
     
     plt.scatter(x_cut, y_cut, s=5, c='k', marker='.', linewidth=0)
@@ -108,15 +109,18 @@ def plot(plt, xi, yi, zi, x, y, short_nbinds, nbins, y_max=None):
 # Arg-parser
 parser = argparse.ArgumentParser(
     description="Plot property density with gaussian KDE")
-parser.add_argument("--fmax", help="Max frequency to plot",
-                    type=float, default=None)
+parser.add_argument("--cmap", dest="cmap", default="viridis",
+                    help="Matplotlib cmap")
 parser.add_argument("--cutoff",
                     help=("Property (y-axis) below this value is included in "
                           "data before running Gaussian-KDE"),
                     type=float, default=None)
-parser.add_argument("--ymax",
-                    help="Set maximum y of draw area",
+parser.add_argument("--fmax", help="Max frequency to plot",
                     type=float, default=None)
+parser.add_argument("--min_density",
+                    help=("Minimum density ratio with respect to maximum "
+                          "density used to determine drawing region"),
+                    type=float, default=0.1)
 parser.add_argument('--nbins', type=int, default=100,
                     help=("Number of bins in which data are assigned, "
                           "i.e., determining resolution of plot")),
@@ -125,6 +129,9 @@ parser.add_argument('--temperature', type=float, default=300.0,
                     dest='temperature',
                     help='Temperature to output data at')
 parser.add_argument("--title", dest="title", default=None, help="Plot title")
+parser.add_argument("--ymax",
+                    help="Set maximum y of draw area",
+                    type=float, default=None)
 parser.add_argument('filenames', nargs='*')
 args = parser.parse_args()
 
@@ -168,6 +175,9 @@ for i, t in enumerate(temperatures):
         t_index = i
         break
 
+print("Temperature at which lifetime density is drawn: %7.3f"
+      % temperatures[t_index])
+
 #
 # Set data
 #
@@ -189,8 +199,11 @@ if args.nu:
 for gamma, s in zip(gammas, symbols):
     x, y = collect_data(gamma, weights, frequencies,
                         t_index, args.cutoff, args.fmax)
-    xi, yi, zi, short_nbinds = run_KDE(x, y, args.nbins, y_max=args.ymax)
-    fig = plot(plt, xi, yi, zi, x, y, short_nbinds, args.nbins, y_max=args.ymax)
+    xi, yi, zi, short_nbinds = run_KDE(x, y, args.nbins,
+                                       y_max=args.ymax,
+                                       min_density=args.min_density)
+    fig = plot(plt, xi, yi, zi, x, y, short_nbinds, args.nbins,
+               y_max=args.ymax, cmap=args.cmap)
     if s:
         fig.savefig("lifetime-%s.png" % s)
     else:

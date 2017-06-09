@@ -210,31 +210,40 @@ Averaged phonon-phonon interaction :math:`P_{\mathbf{q}j}` (in eV^2)
 feature is briefly introduced below since it may be useful. Scipy is
 needed to use this script.
 
-This script plots distribution of phonon modes in the
-frequency-lifetime plane. Its density is estimated using Gaussian-KDE
-using `scipy
+This script draws density of phonon modes in the frequency-lifetime
+plane. Its density is estimated using Gaussian-KDE using `scipy
 <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html>`_.
+Then (frequency, lifetime)-data points are superimposed on the density
+plot.
 
 ``kdeplot`` reads a result of the thermal conductivity calculation as
 the first argument::
 
-   % kdeplot --nbins=200 kappa-m191919.hdf5
+   % kdeplot kappa-m111111.hdf5
 
-(This may take long time. On a relatively fast machine, it took 20 mins.)
+This calculation takes some time from minutes to hours depending on
+mesh numbers and nbins. Therefore it is recommended to start with
+smaller mesh and gradually to increase mesh numbers and nbins up to
+satisfaction.
+
 After finishing the calculation, the plot is saved in
-``lifetime.png``. The black dots show the phonon modes. The density is
-estimated from these dots. The drawing area is automatically set to
-make look good, e.g, higher lifetime side is not drawn if the density
-is negligible.
+``lifetime.png``. The black dots show original data points. The
+drawing area is automatically set to make the look good, where its
+higher lifetime side is not drawn if all density beyond a lifetime
+value is smaller than some percentage (default: 10%) of the maximum
+density.
+
+The following plot is drawn with a
+19x19x19 mesh and nbins=200 and the ``Si-PBEsol`` example is used to
+generate the data.
 
 .. |ikde| image:: Si-kdeplot.png
         :width: 50%
 
 |ikde|
 
-(This plot is based on the ``Si-PBEsol`` example.)
 
-Option
+Options
 ~~~~~~~
 
 ``--temperature``
@@ -252,18 +261,60 @@ setting temperature range and step.
 ^^^^^^^^^^^^
 
 This option controls the resolution of the density plot. The default
-value is 100.
+value is 100. With larger nbins, the resolution of the plot becomes
+better, but the computation will take more time.
+
+::
+
+   % kdeplot --nbins=200 kappa-m111111.hdf5
 
 ``--cutoff``, ``--fmax``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The option ``--cutoff`` (``--fmax``) sets the maximum value of
-lifetime (frequency) to be included as data points. Normally increasing
-this value from the chosen value without specifying this option
-does nothing since automatic control of drawing area cut high lifetime
-(frequency) side if the density is low.
+lifetime (frequency) to be included as data points **before**
+Gaussian-KDE. Normally increasing this value from the chosen value
+without specifying this option does nothing since automatic control of
+drawing area cuts high lifetime (frequency) side if the density is low.
+
+``--ymax``
+^^^^^^^^^^^
+
+Maximum value of drawing region of lifetime (y) axis. This switches
+off automatic determination of drawing area, therefore as a side
+effect, the computation will be roughly twice faster.
+
+::
+
+   % kdeplot --ymax=60 kappa-m111111.hdf5
+
+``--cmap``
+^^^^^^^^^^^
+
+**New** (``kdeplot`` is a stand-alone script. The latest version is
+download at
+https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot.)
 
 
+Color map to be used for the density plot. It's given by the name
+presented at the matplotlib documentation,
+https://matplotlib.org/users/colormaps.html.
 
+::
 
+   % kdeplot --cmap="OrRd" kappa-m111111.hdf5
 
+``--min_density``
+^^^^^^^^^^^^^^^^^^
+
+**New** (``kdeplot`` is a stand-alone script. The latest version is
+download at
+https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot.)
+
+The density threshold is specified by the ratio with respect to
+maximum density. The default value is 0.1. When ``--ymax`` is
+specified together, this option is ignored.
+
+::
+
+   % kdeplot --min_density=0.01 kappa-m111111.hdf5
