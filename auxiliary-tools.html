@@ -69,10 +69,8 @@
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="install.html#system-requirement">System requirement</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#multithreading-support">Multithreading support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#from-source-code">From source code</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#install-using-pip-conda">Install using pip/conda</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#building-using-setup-py">Building using setup.py</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -116,6 +114,7 @@
 <li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tips.html#brillouin-zone-summation">Brillouin zone summation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tips.html#importance-of-numerical-quality-of-force-constants">Importance of numerical quality of force constants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tips.html#file-format-compatibility-with-phonopy">File format compatibility with phonopy</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a><ul>
@@ -192,10 +191,13 @@
 </ul>
 </li>
 <li><a class="reference internal" href="#kdeplot"><code class="docutils literal"><span class="pre">kdeplot</span></code></a><ul>
-<li><a class="reference internal" href="#option">Option</a><ul>
+<li><a class="reference internal" href="#options">Options</a><ul>
 <li><a class="reference internal" href="#id2"><code class="docutils literal"><span class="pre">--temperature</span></code></a></li>
 <li><a class="reference internal" href="#nbins"><code class="docutils literal"><span class="pre">--nbins</span></code></a></li>
 <li><a class="reference internal" href="#cutoff-fmax"><code class="docutils literal"><span class="pre">--cutoff</span></code>, <code class="docutils literal"><span class="pre">--fmax</span></code></a></li>
+<li><a class="reference internal" href="#ymax"><code class="docutils literal"><span class="pre">--ymax</span></code></a></li>
+<li><a class="reference internal" href="#cmap"><code class="docutils literal"><span class="pre">--cmap</span></code></a></li>
+<li><a class="reference internal" href="#min-density"><code class="docutils literal"><span class="pre">--min_density</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -255,7 +257,7 @@
 </ul>
 </li>
 <li><a class="reference internal" href="#kdeplot" id="id8"><code class="docutils literal"><span class="pre">kdeplot</span></code></a><ul>
-<li><a class="reference internal" href="#option" id="id9">Option</a></li>
+<li><a class="reference internal" href="#options" id="id9">Options</a></li>
 </ul>
 </li>
 </ul>
@@ -411,24 +413,31 @@ THz x Angstrom)</p>
 <p><strong>This script is under the development and may contain bugs.</strong> But a
 feature is briefly introduced below since it may be useful. Scipy is
 needed to use this script.</p>
-<p>This script plots distribution of phonon modes in the
-frequency-lifetime plane. Its density is estimated using Gaussian-KDE
-using <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html">scipy</a>.</p>
+<p>This script draws density of phonon modes in the frequency-lifetime
+plane. Its density is estimated using Gaussian-KDE using <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html">scipy</a>.
+Then (frequency, lifetime)-data points are superimposed on the density
+plot.</p>
 <p><code class="docutils literal"><span class="pre">kdeplot</span></code> reads a result of the thermal conductivity calculation as
 the first argument:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">kdeplot</span> <span class="o">--</span><span class="n">nbins</span><span class="o">=</span><span class="mi">200</span> <span class="n">kappa</span><span class="o">-</span><span class="n">m191919</span><span class="o">.</span><span class="n">hdf5</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">kdeplot</span> <span class="n">kappa</span><span class="o">-</span><span class="n">m111111</span><span class="o">.</span><span class="n">hdf5</span>
 </pre></div>
 </div>
-<p>(This may take long time. On a relatively fast machine, it took 20 mins.)
-After finishing the calculation, the plot is saved in
-<code class="docutils literal"><span class="pre">lifetime.png</span></code>. The black dots show the phonon modes. The density is
-estimated from these dots. The drawing area is automatically set to
-make look good, e.g, higher lifetime side is not drawn if the density
-is negligible.</p>
+<p>This calculation takes some time from minutes to hours depending on
+mesh numbers and nbins. Therefore it is recommended to start with
+smaller mesh and gradually to increase mesh numbers and nbins up to
+satisfaction.</p>
+<p>After finishing the calculation, the plot is saved in
+<code class="docutils literal"><span class="pre">lifetime.png</span></code>. The black dots show original data points. The
+drawing area is automatically set to make the look good, where its
+higher lifetime side is not drawn if all density beyond a lifetime
+value is smaller than some percentage (default: 10%) of the maximum
+density.</p>
+<p>The following plot is drawn with a
+19x19x19 mesh and nbins=200 and the <code class="docutils literal"><span class="pre">Si-PBEsol</span></code> example is used to
+generate the data.</p>
 <p><a class="reference internal" href="_images/Si-kdeplot.png"><img alt="ikde" src="_images/Si-kdeplot.png" style="width: 50%;" /></a></p>
-<p>(This plot is based on the <code class="docutils literal"><span class="pre">Si-PBEsol</span></code> example.)</p>
-<div class="section" id="option">
-<h3><a class="toc-backref" href="#id9">Option</a><a class="headerlink" href="#option" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="options">
+<h3><a class="toc-backref" href="#id9">Options</a><a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="id2">
 <h4><code class="docutils literal"><span class="pre">--temperature</span></code><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
 <p>Pick up one temperature point. For example, <code class="docutils literal"><span class="pre">--temperature=300</span></code> for
@@ -441,15 +450,51 @@ setting temperature range and step.</p>
 <div class="section" id="nbins">
 <h4><code class="docutils literal"><span class="pre">--nbins</span></code><a class="headerlink" href="#nbins" title="Permalink to this headline">¶</a></h4>
 <p>This option controls the resolution of the density plot. The default
-value is 100.</p>
+value is 100. With larger nbins, the resolution of the plot becomes
+better, but the computation will take more time.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">kdeplot</span> <span class="o">--</span><span class="n">nbins</span><span class="o">=</span><span class="mi">200</span> <span class="n">kappa</span><span class="o">-</span><span class="n">m111111</span><span class="o">.</span><span class="n">hdf5</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="cutoff-fmax">
 <h4><code class="docutils literal"><span class="pre">--cutoff</span></code>, <code class="docutils literal"><span class="pre">--fmax</span></code><a class="headerlink" href="#cutoff-fmax" title="Permalink to this headline">¶</a></h4>
 <p>The option <code class="docutils literal"><span class="pre">--cutoff</span></code> (<code class="docutils literal"><span class="pre">--fmax</span></code>) sets the maximum value of
-lifetime (frequency) to be included as data points. Normally increasing
-this value from the chosen value without specifying this option
-does nothing since automatic control of drawing area cut high lifetime
-(frequency) side if the density is low.</p>
+lifetime (frequency) to be included as data points <strong>before</strong>
+Gaussian-KDE. Normally increasing this value from the chosen value
+without specifying this option does nothing since automatic control of
+drawing area cuts high lifetime (frequency) side if the density is low.</p>
+</div>
+<div class="section" id="ymax">
+<h4><code class="docutils literal"><span class="pre">--ymax</span></code><a class="headerlink" href="#ymax" title="Permalink to this headline">¶</a></h4>
+<p>Maximum value of drawing region of lifetime (y) axis. This switches
+off automatic determination of drawing area, therefore as a side
+effect, the computation will be roughly twice faster.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">kdeplot</span> <span class="o">--</span><span class="n">ymax</span><span class="o">=</span><span class="mi">60</span> <span class="n">kappa</span><span class="o">-</span><span class="n">m111111</span><span class="o">.</span><span class="n">hdf5</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="cmap">
+<h4><code class="docutils literal"><span class="pre">--cmap</span></code><a class="headerlink" href="#cmap" title="Permalink to this headline">¶</a></h4>
+<p><strong>New</strong> (<code class="docutils literal"><span class="pre">kdeplot</span></code> is a stand-alone script. The latest version is
+download at
+<a class="reference external" href="https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot">https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot</a>.)</p>
+<p>Color map to be used for the density plot. It&#8217;s given by the name
+presented at the matplotlib documentation,
+<a class="reference external" href="https://matplotlib.org/users/colormaps.html">https://matplotlib.org/users/colormaps.html</a>.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">kdeplot</span> <span class="o">--</span><span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;OrRd&quot;</span> <span class="n">kappa</span><span class="o">-</span><span class="n">m111111</span><span class="o">.</span><span class="n">hdf5</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="min-density">
+<h4><code class="docutils literal"><span class="pre">--min_density</span></code><a class="headerlink" href="#min-density" title="Permalink to this headline">¶</a></h4>
+<p><strong>New</strong> (<code class="docutils literal"><span class="pre">kdeplot</span></code> is a stand-alone script. The latest version is
+download at
+<a class="reference external" href="https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot">https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot</a>.)</p>
+<p>The density threshold is specified by the ratio with respect to
+maximum density. The default value is 0.1.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">kdeplot</span> <span class="o">--</span><span class="n">min_density</span><span class="o">=</span><span class="mf">0.01</span> <span class="n">kappa</span><span class="o">-</span><span class="n">m111111</span><span class="o">.</span><span class="n">hdf5</span>
+</pre></div>
+</div>
 </div>
 </div>
 </div>
