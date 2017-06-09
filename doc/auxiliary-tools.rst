@@ -230,8 +230,8 @@ After finishing the calculation, the plot is saved in
 ``lifetime.png``. The black dots show original data points. The
 drawing area is automatically set to make the look good, where its
 higher lifetime side is not drawn if all density beyond a lifetime
-value is smaller than some percentage (default: 10%) of the maximum
-density.
+value is smaller than some ratio (see
+:ref:`kdeplot_density_ratio`) of the maximum density.
 
 The following plot is drawn with a
 19x19x19 mesh and nbins=200 and the ``Si-PBEsol`` example is used to
@@ -304,17 +304,20 @@ https://matplotlib.org/users/colormaps.html.
 
    % kdeplot --cmap="OrRd" kappa-m111111.hdf5
 
-``--min_density``
-^^^^^^^^^^^^^^^^^^
+.. _kdeplot_density_ratio:
+
+``--dr``, ``--density_ratio``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **New** (``kdeplot`` is a stand-alone script. The latest version is
 download at
 https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot.)
 
 The density threshold is specified by the ratio with respect to
-maximum density. The default value is 0.1. When ``--ymax`` is
-specified together, this option is ignored.
+maximum density. Normally smaller value results in larger drawing
+region. The default value is 0.1. When ``--ymax`` is specified
+together, this option is ignored.
 
 ::
 
-   % kdeplot --min_density=0.01 kappa-m111111.hdf5
+   % kdeplot --dr=0.01 kappa-m111111.hdf5

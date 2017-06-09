@@ -35,7 +35,7 @@ def collect_data(gamma, weights, frequencies, t_index, cutoff, max_freq):
 
     return x, y
 
-def run_KDE(x, y, nbins, y_max=None, min_density=0.1):
+def run_KDE(x, y, nbins, y_max=None, density_ratio=0.1):
     """Running Gaussian-KDE by scipy
     """
 
@@ -59,7 +59,7 @@ def run_KDE(x, y, nbins, y_max=None, min_density=0.1):
         for i, r_zi in enumerate((zi.T)[::-1]):
             if indices:
                 indices.append(nbins - i - 1)
-            elif np.max(r_zi) > zi_max * min_density:
+            elif np.max(r_zi) > zi_max * density_ratio:
                 indices = [nbins - i - 1]
         short_nbinds = len(indices)
         
@@ -115,12 +115,12 @@ parser.add_argument("--cutoff",
                     help=("Property (y-axis) below this value is included in "
                           "data before running Gaussian-KDE"),
                     type=float, default=None)
-parser.add_argument("--fmax", help="Max frequency to plot",
-                    type=float, default=None)
-parser.add_argument("--min_density",
+parser.add_argument("--dr", "--density_ratio", dest="density_ratio",
                     help=("Minimum density ratio with respect to maximum "
                           "density used to determine drawing region"),
                     type=float, default=0.1)
+parser.add_argument("--fmax", help="Max frequency to plot",
+                    type=float, default=None)
 parser.add_argument('--nbins', type=int, default=100,
                     help=("Number of bins in which data are assigned, "
                           "i.e., determining resolution of plot")),
@@ -201,7 +201,7 @@ for gamma, s in zip(gammas, symbols):
                         t_index, args.cutoff, args.fmax)
     xi, yi, zi, short_nbinds = run_KDE(x, y, args.nbins,
                                        y_max=args.ymax,
-                                       min_density=args.min_density)
+                                       density_ratio=args.density_ratio)
     fig = plot(plt, xi, yi, zi, x, y, short_nbinds, args.nbins,
                y_max=args.ymax, cmap=args.cmap)
     if s:
