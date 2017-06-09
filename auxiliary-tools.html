@@ -197,7 +197,7 @@
 <li><a class="reference internal" href="#cutoff-fmax"><code class="docutils literal"><span class="pre">--cutoff</span></code>, <code class="docutils literal"><span class="pre">--fmax</span></code></a></li>
 <li><a class="reference internal" href="#ymax"><code class="docutils literal"><span class="pre">--ymax</span></code></a></li>
 <li><a class="reference internal" href="#cmap"><code class="docutils literal"><span class="pre">--cmap</span></code></a></li>
-<li><a class="reference internal" href="#min-density"><code class="docutils literal"><span class="pre">--min_density</span></code></a></li>
+<li><a class="reference internal" href="#dr-density-ratio"><code class="docutils literal"><span class="pre">--dr</span></code>, <code class="docutils literal"><span class="pre">--density_ratio</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -430,8 +430,8 @@ satisfaction.</p>
 <code class="docutils literal"><span class="pre">lifetime.png</span></code>. The black dots show original data points. The
 drawing area is automatically set to make the look good, where its
 higher lifetime side is not drawn if all density beyond a lifetime
-value is smaller than some percentage (default: 10%) of the maximum
-density.</p>
+value is smaller than some ratio (see
+<a class="reference internal" href="#kdeplot-density-ratio"><span class="std std-ref">&#8211;dr, &#8211;density_ratio</span></a>) of the maximum density.</p>
 <p>The following plot is drawn with a
 19x19x19 mesh and nbins=200 and the <code class="docutils literal"><span class="pre">Si-PBEsol</span></code> example is used to
 generate the data.</p>
@@ -485,14 +485,16 @@ presented at the matplotlib documentation,
 </pre></div>
 </div>
 </div>
-<div class="section" id="min-density">
-<h4><code class="docutils literal"><span class="pre">--min_density</span></code><a class="headerlink" href="#min-density" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="dr-density-ratio">
+<span id="kdeplot-density-ratio"></span><h4><code class="docutils literal"><span class="pre">--dr</span></code>, <code class="docutils literal"><span class="pre">--density_ratio</span></code><a class="headerlink" href="#dr-density-ratio" title="Permalink to this headline">¶</a></h4>
 <p><strong>New</strong> (<code class="docutils literal"><span class="pre">kdeplot</span></code> is a stand-alone script. The latest version is
 download at
 <a class="reference external" href="https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot">https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot</a>.)</p>
 <p>The density threshold is specified by the ratio with respect to
-maximum density. The default value is 0.1.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">kdeplot</span> <span class="o">--</span><span class="n">min_density</span><span class="o">=</span><span class="mf">0.01</span> <span class="n">kappa</span><span class="o">-</span><span class="n">m111111</span><span class="o">.</span><span class="n">hdf5</span>
+maximum density. Normally smaller value results in larger drawing
+region. The default value is 0.1. When <code class="docutils literal"><span class="pre">--ymax</span></code> is specified
+together, this option is ignored.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">kdeplot</span> <span class="o">--</span><span class="n">dr</span><span class="o">=</span><span class="mf">0.01</span> <span class="n">kappa</span><span class="o">-</span><span class="n">m111111</span><span class="o">.</span><span class="n">hdf5</span>
 </pre></div>
 </div>
 </div>
