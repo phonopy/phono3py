@@ -195,7 +195,7 @@
 <li><a class="reference internal" href="#id2"><code class="docutils literal"><span class="pre">--temperature</span></code></a></li>
 <li><a class="reference internal" href="#nbins"><code class="docutils literal"><span class="pre">--nbins</span></code></a></li>
 <li><a class="reference internal" href="#cutoff-fmax"><code class="docutils literal"><span class="pre">--cutoff</span></code>, <code class="docutils literal"><span class="pre">--fmax</span></code></a></li>
-<li><a class="reference internal" href="#ymax"><code class="docutils literal"><span class="pre">--ymax</span></code></a></li>
+<li><a class="reference internal" href="#xmax-and-ymax"><code class="docutils literal"><span class="pre">--xmax</span></code> and <code class="docutils literal"><span class="pre">--ymax</span></code></a></li>
 <li><a class="reference internal" href="#cmap"><code class="docutils literal"><span class="pre">--cmap</span></code></a></li>
 <li><a class="reference internal" href="#dr-density-ratio"><code class="docutils literal"><span class="pre">--dr</span></code>, <code class="docutils literal"><span class="pre">--density_ratio</span></code></a></li>
 </ul>
@@ -464,19 +464,23 @@ Gaussian-KDE. Normally increasing this value from the chosen value
 without specifying this option does nothing since automatic control of
 drawing area cuts high lifetime (frequency) side if the density is low.</p>
 </div>
-<div class="section" id="ymax">
-<h4><code class="docutils literal"><span class="pre">--ymax</span></code><a class="headerlink" href="#ymax" title="Permalink to this headline">¶</a></h4>
-<p>Maximum value of drawing region of lifetime (y) axis. This switches
-off automatic determination of drawing area, therefore as a side
-effect, the computation will be roughly twice faster.</p>
+<div class="section" id="xmax-and-ymax">
+<h4><code class="docutils literal"><span class="pre">--xmax</span></code> and <code class="docutils literal"><span class="pre">--ymax</span></code><a class="headerlink" href="#xmax-and-ymax" title="Permalink to this headline">¶</a></h4>
+<p><strong>New</strong>: The latest version of <code class="docutils literal"><span class="pre">kdeplot</span></code> is download at
+<a class="reference external" href="https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot">https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot</a>.)</p>
+<p>Maximum values of drawing region of phonon frequency (x-axis) and
+lifetime (y-axis) are specified by <code class="docutils literal"><span class="pre">--xmax</span></code> and <code class="docutils literal"><span class="pre">--ymax</span></code>,
+respectively.</p>
+<p><code class="docutils literal"><span class="pre">--ymax</span></code> switches off automatic determination of maximum value
+of drawing region along y-axis, therefore as a side effect, the
+computation will be roughly twice faster.</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">kdeplot</span> <span class="o">--</span><span class="n">ymax</span><span class="o">=</span><span class="mi">60</span> <span class="n">kappa</span><span class="o">-</span><span class="n">m111111</span><span class="o">.</span><span class="n">hdf5</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="cmap">
 <h4><code class="docutils literal"><span class="pre">--cmap</span></code><a class="headerlink" href="#cmap" title="Permalink to this headline">¶</a></h4>
-<p><strong>New</strong> (<code class="docutils literal"><span class="pre">kdeplot</span></code> is a stand-alone script. The latest version is
-download at
+<p><strong>New</strong>: The latest version of <code class="docutils literal"><span class="pre">kdeplot</span></code> is download at
 <a class="reference external" href="https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot">https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot</a>.)</p>
 <p>Color map to be used for the density plot. It&#8217;s given by the name
 presented at the matplotlib documentation,
@@ -487,8 +491,7 @@ presented at the matplotlib documentation,
 </div>
 <div class="section" id="dr-density-ratio">
 <span id="kdeplot-density-ratio"></span><h4><code class="docutils literal"><span class="pre">--dr</span></code>, <code class="docutils literal"><span class="pre">--density_ratio</span></code><a class="headerlink" href="#dr-density-ratio" title="Permalink to this headline">¶</a></h4>
-<p><strong>New</strong> (<code class="docutils literal"><span class="pre">kdeplot</span></code> is a stand-alone script. The latest version is
-download at
+<p><strong>New</strong>: The latest version of <code class="docutils literal"><span class="pre">kdeplot</span></code> is download at
 <a class="reference external" href="https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot">https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot</a>.)</p>
 <p>The density threshold is specified by the ratio with respect to
 maximum density. Normally smaller value results in larger drawing
@@ -522,7 +525,7 @@ together, this option is ignored.</p>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.4.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.<br/>
     </p>
   </div>
 </footer>
