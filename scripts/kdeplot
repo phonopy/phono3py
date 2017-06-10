@@ -35,12 +35,15 @@ def collect_data(gamma, weights, frequencies, t_index, cutoff, max_freq):
 
     return x, y
 
-def run_KDE(x, y, nbins, y_max=None, density_ratio=0.1):
+def run_KDE(x, y, nbins, x_max=None, y_max=None, density_ratio=0.1):
     """Running Gaussian-KDE by scipy
     """
 
     x_min = 0
-    x_max = np.rint(x.max() * 1.1)
+    if x_max is None:
+        _x_max = np.rint(x.max() * 1.1)
+    else:
+        _x_max = x_max
     y_min = 0
     if y_max is None:
         _y_max = np.rint(y.max())
@@ -49,7 +52,7 @@ def run_KDE(x, y, nbins, y_max=None, density_ratio=0.1):
     values = np.vstack([x.ravel(), y.ravel()])
     kernel = stats.gaussian_kde(values)
 
-    xi, yi = np.mgrid[x_min:x_max:nbins*1j, y_min:_y_max:nbins*1j]
+    xi, yi = np.mgrid[x_min:_x_max:nbins*1j, y_min:_y_max:nbins*1j]
     positions = np.vstack([xi.ravel(), yi.ravel()])
     zi = np.reshape(kernel(positions).T, xi.shape)
 
@@ -64,7 +67,7 @@ def run_KDE(x, y, nbins, y_max=None, density_ratio=0.1):
         short_nbinds = len(indices)
         
         ynbins = nbins ** 2 // short_nbinds
-        xi, yi = np.mgrid[x_min:x_max:nbins*1j, y_min:_y_max:ynbins*1j]
+        xi, yi = np.mgrid[x_min:_x_max:nbins*1j, y_min:_y_max:ynbins*1j]
         positions = np.vstack([xi.ravel(), yi.ravel()])
         zi = np.reshape(kernel(positions).T, xi.shape)
     else:
@@ -129,6 +132,9 @@ parser.add_argument('--temperature', type=float, default=300.0,
                     dest='temperature',
                     help='Temperature to output data at')
 parser.add_argument("--title", dest="title", default=None, help="Plot title")
+parser.add_argument("--xmax",
+                    help="Set maximum x of draw area",
+                    type=float, default=None)
 parser.add_argument("--ymax",
                     help="Set maximum y of draw area",
                     type=float, default=None)
@@ -200,6 +206,7 @@ for gamma, s in zip(gammas, symbols):
     x, y = collect_data(gamma, weights, frequencies,
                         t_index, args.cutoff, args.fmax)
     xi, yi, zi, short_nbinds = run_KDE(x, y, args.nbins,
+                                       x_max=args.xmax,
                                        y_max=args.ymax,
                                        density_ratio=args.density_ratio)
     fig = plot(plt, xi, yi, zi, x, y, short_nbinds, args.nbins,

@@ -277,12 +277,19 @@ Gaussian-KDE. Normally increasing this value from the chosen value
 without specifying this option does nothing since automatic control of
 drawing area cuts high lifetime (frequency) side if the density is low.
 
-``--ymax``
-^^^^^^^^^^^
+``--xmax`` and ``--ymax``
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Maximum value of drawing region of lifetime (y) axis. This switches
-off automatic determination of drawing area, therefore as a side
-effect, the computation will be roughly twice faster.
+**New**: The latest version of ``kdeplot`` is download at
+https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot.)
+
+Maximum values of drawing region of phonon frequency (x-axis) and
+lifetime (y-axis) are specified by ``--xmax`` and ``--ymax``,
+respectively.
+
+``--ymax`` switches off automatic determination of maximum value
+of drawing region along y-axis, therefore as a side effect, the
+computation will be roughly twice faster.
 
 ::
 
@@ -291,10 +298,8 @@ effect, the computation will be roughly twice faster.
 ``--cmap``
 ^^^^^^^^^^^
 
-**New** (``kdeplot`` is a stand-alone script. The latest version is
-download at
+**New**: The latest version of ``kdeplot`` is download at
 https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot.)
-
 
 Color map to be used for the density plot. It's given by the name
 presented at the matplotlib documentation,
@@ -309,8 +314,7 @@ https://matplotlib.org/users/colormaps.html.
 ``--dr``, ``--density_ratio``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**New** (``kdeplot`` is a stand-alone script. The latest version is
-download at
+**New**: The latest version of ``kdeplot`` is download at
 https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot.)
 
 The density threshold is specified by the ratio with respect to
