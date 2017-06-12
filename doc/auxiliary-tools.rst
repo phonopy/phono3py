@@ -233,9 +233,9 @@ higher lifetime side is not drawn if all density beyond a lifetime
 value is smaller than some ratio (see
 :ref:`kdeplot_density_ratio`) of the maximum density.
 
-The following plot is drawn with a
-19x19x19 mesh and nbins=200 and the ``Si-PBEsol`` example is used to
-generate the data.
+The following plot is drawn with a 19x19x19 mesh and nbins=200 and the
+``Si-PBEsol`` example is used to generate the data. The colormap of
+'jet' in matplotlib is used.
 
 .. |ikde| image:: Si-kdeplot.png
         :width: 50%
@@ -295,19 +295,15 @@ computation will be roughly twice faster.
 
    % kdeplot --ymax=60 kappa-m111111.hdf5
 
-``--cmap``
+``--zmax``
 ^^^^^^^^^^^
 
 **New**: The latest version of ``kdeplot`` is download at
 https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot.)
 
-Color map to be used for the density plot. It's given by the name
-presented at the matplotlib documentation,
-https://matplotlib.org/users/colormaps.html.
-
-::
-
-   % kdeplot --cmap="OrRd" kappa-m111111.hdf5
+Maximum value of the density is specified with this option. The color
+along colorbar saturates by choosing a smaller value than the maximum value
+of density in the data.
 
 .. _kdeplot_density_ratio:
 
@@ -325,3 +321,38 @@ together, this option is ignored.
 ::
 
    % kdeplot --dr=0.01 kappa-m111111.hdf5
+
+``--cmap``
+^^^^^^^^^^^
+
+**New**: The latest version of ``kdeplot`` is download at
+https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot.)
+
+Color map to be used for the density plot. It's given by the name
+presented at the matplotlib documentation,
+https://matplotlib.org/users/colormaps.html. The default colormap
+depends on your matplotlib environment.
+
+::
+
+   % kdeplot --cmap="OrRd" kappa-m111111.hdf5
+
+The following figures are those drawn with ``jet``, ``bwr``,
+``seismic``, ``gnuplot``, ``hsv``, and ``OrRd`` colormaps. 
+
+
+.. |ikde-jet| image:: Si-kdeplot-jet.png
+	      :width: 25%
+.. |ikde-bwr| image:: Si-kdeplot-bwr.png
+	      :width: 25%
+.. |ikde-seismic| image:: Si-kdeplot-seismic.png
+		  :width: 25%
+.. |ikde-gnuplot| image:: Si-kdeplot-gnuplot.png
+		  :width: 25%
+.. |ikde-hsv| image:: Si-kdeplot-hsv.png
+	       :width: 25%
+.. |ikde-OrRd| image:: Si-kdeplot-OrRd.png
+	       :width: 25%
+
+|ikde-jet| |ikde-bwr| |ikde-seismic| |ikde-gnuplot| |ikde-hsv| |ikde-OrRd|
+
