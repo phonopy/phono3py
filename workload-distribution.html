@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -39,7 +38,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 
   </head>
-  <body role="document">
+  <body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -69,10 +68,8 @@
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="install.html#system-requirement">System requirement</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#multithreading-support">Multithreading support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#from-source-code">From source code</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#install-using-pip-conda">Install using pip/conda</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#building-using-setup-py">Building using setup.py</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -116,6 +113,7 @@
 <li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tips.html#brillouin-zone-summation">Brillouin zone summation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tips.html#importance-of-numerical-quality-of-force-constants">Importance of numerical quality of force constants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tips.html#file-format-compatibility-with-phonopy">File format compatibility with phonopy</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a><ul>
@@ -211,8 +209,8 @@
   <div class="section" id="workload-distribution">
 <span id="id1"></span><h1>Workload distribution<a class="headerlink" href="#workload-distribution" title="Permalink to this headline">¶</a></h1>
 <p>Workload of thermal conductivity calculation can be distributed into
-computer nodes. The distribution over q-point grid points (<a class="reference internal" href="command-options.html#gp-option"><span class="std std-ref">&#8211;gp
-option</span></a>), over phonon bands (<a class="reference internal" href="command-options.html#bi-option"><span class="std std-ref">&#8211;bi option</span></a>), and over both of them are supported. Unless necessary,
+computer nodes. The distribution over q-point grid points (<a class="reference internal" href="command-options.html#gp-option"><span class="std std-ref">–gp
+option</span></a>), over phonon bands (<a class="reference internal" href="command-options.html#bi-option"><span class="std std-ref">–bi option</span></a>), and over both of them are supported. Unless necessary,
 the distribution over bands is not recommended since it has some
 amount of overhead in the part of Fourier transformation of force
 constants. Therefore the distribution over grid-points is explained
@@ -221,8 +219,8 @@ that over q-points, the usage can be easily guessed.</p>
 <p>On each computer node, pieces of lattice thermal conductivity
 calculation are executed. The resulting data for each grid point are
 stored in its <code class="docutils literal"><span class="pre">kappa-mxxx-gx.hdf5</span></code> file on each node by setting
-<a class="reference internal" href="command-options.html#write-gamma-option"><span class="std std-ref">&#8211;write_gamma option</span></a>. Once all data are
-obtained, those data are collected by <a class="reference internal" href="command-options.html#read-gamma-option"><span class="std std-ref">&#8211;read_gamma option</span></a> and the lattice thermal conductivity is obtained.</p>
+<a class="reference internal" href="command-options.html#write-gamma-option"><span class="std std-ref">–write_gamma option</span></a>. Once all data are
+obtained, those data are collected by <a class="reference internal" href="command-options.html#read-gamma-option"><span class="std std-ref">–read_gamma option</span></a> and the lattice thermal conductivity is obtained.</p>
 <div class="contents local topic" id="contents">
 <ul class="simple">
 <li><a class="reference internal" href="#how-to-do-it" id="id2">How to do it</a></li>
@@ -238,7 +236,7 @@ created on a single node:</p>
 </pre></div>
 </div>
 <p>The indices of the irreducible grid-points neccesarry to specify
-<code class="docutils literal"><span class="pre">--ga</span></code> option are found by <a class="reference internal" href="command-options.html#wgp-option"><span class="std std-ref">&#8211;wgp option</span></a></p>
+<code class="docutils literal"><span class="pre">--ga</span></code> option are found by <a class="reference internal" href="command-options.html#wgp-option"><span class="std std-ref">–wgp option</span></a></p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">wgp</span>
 </pre></div>
 </div>
@@ -355,7 +353,7 @@ phono3py --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> 
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.4.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.<br/>
     </p>
   </div>
 </footer>
