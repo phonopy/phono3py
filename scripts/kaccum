@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 import numpy as np
 from phonopy.phonon.tetrahedron_mesh import TetrahedronMesh
 from phonopy.harmonic.force_constants import similarity_transformation
@@ -422,6 +423,13 @@ if __name__ == '__main__':
     else:
         mode_prop = f['mode_kappa'][:]
 
+    frequencies = f['frequency'][:]
+    conditions = frequencies > 0
+    if not conditions.all():
+        sys.stderr.write("# Imaginary frequencies are found. "
+                         "They are set to be zero.\n")
+        frequencies = np.where(conditions, frequencies, 0)
+
     #######
     # Run #
     #######
@@ -445,7 +453,6 @@ if __name__ == '__main__':
             temperatures, mode_prop = set_T_target(temperatures,
                                                    mode_prop,
                                                    args.temperature)
-        frequencies = f['frequency'][:]
         if args.smearing:
             mode_prop_dos = GammaDOSsmearing(
                 mode_prop,
@@ -494,7 +501,6 @@ if __name__ == '__main__':
                                                 args.num_sampling_points)
             show_tensor(kdos, temperatures, sampling_points, args)
         else:
-            frequencies = f['frequency'][:]
             if args.temperature is not None and not args.gv:
                 temperatures, mode_prop = set_T_target(temperatures,
                                                        mode_prop,
