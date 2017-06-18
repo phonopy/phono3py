@@ -3,6 +3,13 @@
 Change Log
 ==========
 
+Jun-18-2017: version 1.11.13
+----------------------------
+
+- :ref:`normal_umklapp_option` option was made.
+- Many minor updates: fixing bugs, improving usabilities.
+- Improve of :ref:`auxiliary_tools_kaccum` and :ref:`auxiliary_tools_kdeplot`.
+
 Mar-31-2017: version 1.11.11
 ----------------------------
 
