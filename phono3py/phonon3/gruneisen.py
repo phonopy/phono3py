@@ -32,7 +32,7 @@ def get_gruneisen_parameters(fc2,
                       (tuple(path[0]) + tuple(path[-1])))
         if ion_clamped:
             print("To be calculated with ion clamped.")
-            
+
         sys.stdout.flush()
 
     gruneisen = Gruneisen(fc2,
@@ -54,10 +54,10 @@ def get_gruneisen_parameters(fc2,
     gruneisen.run()
 
     if output_filename is None:
-        filename = 'gruneisen3.yaml'
+        filename = 'gruneisen'
     else:
-        filename = 'gruneisen3.' + output_filename + '.yaml'
-    gruneisen.write_yaml(filename=filename)
+        filename = 'gruneisen.' + output_filename
+    gruneisen.write(filename=filename)
 
 class Gruneisen(object):
     def __init__(self,
@@ -156,69 +156,86 @@ class Gruneisen(object):
                                          distances_at_path[-1])
             self._band_distances.append(distances_at_path)
 
-    def write_yaml(self, filename="gruneisen3.yaml"):
+    def write(self, filename="gruneisen"):
         if self._gruneisen_parameters is not None:
-            f = open(filename, 'w')
             if self._run_mode == 'band':
-                self._write_band_yaml(f)
+                self._write_band_yaml(filename + ".yaml")
             elif self._run_mode == 'qpoints' or self._run_mode == 'mesh':
-                self._write_yaml(f)
-            f.close()
+                # self._write_mesh_yaml(filename + ".yaml")
+                self._write_mesh_hdf5(filename + ".hdf5")
 
-    def _write_yaml(self, f):
-        if self._run_mode == 'mesh':
-            f.write("mesh: [ %5d, %5d, %5d ]\n" % tuple(self._mesh))
-        f.write("nqpoint: %d\n" % len(self._qpoints))
-        f.write("phonon:\n")
-        for i, (q, g_at_q, freqs_at_q) in enumerate(
-            zip(self._qpoints,
-                self._gruneisen_parameters,
-                self._frequencies)):
-            f.write("- q-position: [ %10.7f, %10.7f, %10.7f ]\n" % tuple(q))
-            if self._weights is not None:
-                f.write("  multiplicity: %d\n" % self._weights[i])
-            f.write("  band:\n")
-            for j, (g, freq) in enumerate(zip(g_at_q, freqs_at_q)):
-                f.write("  - # %d\n" % (j + 1))
-                f.write("    frequency: %15.10f\n" % freq)
-                f.write("    gruneisen: %15.10f\n" % (g.trace() / 3))
-                f.write("    gruneisen_tensor:\n")
-                for g_xyz in g:
-                    f.write("    - [ %10.7f, %10.7f, %10.7f ]\n" %
-                            tuple(g_xyz))
-        
-    def _write_band_yaml(self, f):
-        f.write("path:\n\n")
-        for path, distances, gs, fs in zip(self._band_paths,
-                                           self._band_distances,
-                                           self._gruneisen_parameters,
-                                           self._frequencies):
-            f.write("- nqpoint: %d\n" % len(path))
-            f.write("  phonon:\n")
-            for i, (q, d, g_at_q, freqs_at_q) in enumerate(
-                zip(path, distances, gs, fs)):
-                f.write("  - q-position: [ %10.7f, %10.7f, %10.7f ]\n"
-                        % tuple(q))
-                f.write("    distance: %10.7f\n" % d)
-                f.write("    band:\n")
+    def _write_mesh_yaml(self, filename):
+        with open(filename, 'w') as f:
+            if self._run_mode == 'mesh':
+                f.write("mesh: [ %5d, %5d, %5d ]\n" % tuple(self._mesh))
+            f.write("nqpoint: %d\n" % len(self._qpoints))
+            f.write("phonon:\n")
+            for i, (q, g_at_q, freqs_at_q) in enumerate(
+                zip(self._qpoints,
+                    self._gruneisen_parameters,
+                    self._frequencies)):
+                f.write("- q-position: [ %10.7f, %10.7f, %10.7f ]\n" % tuple(q))
+                if self._weights is not None:
+                    f.write("  multiplicity: %d\n" % self._weights[i])
+                f.write("  band:\n")
                 for j, (g, freq) in enumerate(zip(g_at_q, freqs_at_q)):
-                    f.write("    - # %d\n" % (j + 1))
-                    f.write("      frequency: %15.10f\n" % freq)
-                    f.write("      gruneisen: %15.10f\n" % (g.trace() / 3))
-                    f.write("      gruneisen_tensor:\n")
+                    f.write("  - # %d\n" % (j + 1))
+                    f.write("    frequency: %15.10f\n" % freq)
+                    f.write("    gruneisen: %15.10f\n" % (g.trace() / 3))
+                    f.write("    gruneisen_tensor:\n")
                     for g_xyz in g:
-                        f.write("      - [ %10.7f, %10.7f, %10.7f ]\n" %
+                        f.write("    - [ %10.7f, %10.7f, %10.7f ]\n" %
                                 tuple(g_xyz))
-                f.write("\n")
-                        
-        
+
+    def _write_band_yaml(self, filename):
+        with open(filename, 'w') as f:
+            f.write("path:\n\n")
+            for path, distances, gs, fs in zip(self._band_paths,
+                                               self._band_distances,
+                                               self._gruneisen_parameters,
+                                               self._frequencies):
+                f.write("- nqpoint: %d\n" % len(path))
+                f.write("  phonon:\n")
+                for i, (q, d, g_at_q, freqs_at_q) in enumerate(
+                    zip(path, distances, gs, fs)):
+                    f.write("  - q-position: [ %10.7f, %10.7f, %10.7f ]\n"
+                            % tuple(q))
+                    f.write("    distance: %10.7f\n" % d)
+                    f.write("    band:\n")
+                    for j, (g, freq) in enumerate(zip(g_at_q, freqs_at_q)):
+                        f.write("    - # %d\n" % (j + 1))
+                        f.write("      frequency: %15.10f\n" % freq)
+                        f.write("      gruneisen: %15.10f\n" % (g.trace() / 3))
+                        f.write("      gruneisen_tensor:\n")
+                        for g_xyz in g:
+                            f.write("      - [ %10.7f, %10.7f, %10.7f ]\n" %
+                                    tuple(g_xyz))
+                    f.write("\n")
+
+    def _write_mesh_hdf5(self, filename="gruneisen.hdf5"):
+        import h5py
+
+        g = self._gruneisen_parameters
+        gruneisen = np.array(
+            (g[:, :, 0, 0] + g[:, :, 1, 1] + g[:, :, 2, 2]) / 3,
+            dtype='double', order='C')
+
+        with h5py.File(filename, 'w') as w:
+            w.create_dataset('mesh', data=self._mesh)
+            w.create_dataset('gruneisen', data=gruneisen)
+            w.create_dataset('gruneisen_tensor',
+                             data=self._gruneisen_parameters)
+            w.create_dataset('weight', data=self._weights)
+            w.create_dataset('frequency', data=self._frequencies)
+            w.create_dataset('qpoint', data=self._qpoints)
+
     def _calculate_at_qpoints(self, qpoints):
         gruneisen_parameters = []
         frequencies = []
         for i, q in enumerate(qpoints):
             if self._dm.is_nac():
                 if (np.abs(q) < 1e-5).all(): # If q is almost at Gamma
-                    if self._run_mode == 'band': 
+                    if self._run_mode == 'band':
                         # Direction estimated from neighboring point
                         if i > 0:
                             q_dir = qpoints[i] - qpoints[i - 1]
@@ -239,8 +256,9 @@ class Gruneisen(object):
             frequencies.append(
                 np.sqrt(abs(omega2)) * np.sign(omega2) * self._factor)
 
-        return gruneisen_parameters, frequencies
-            
+        return (np.array(gruneisen_parameters, dtype='double', order='C'),
+                np.array(frequencies, dtype='double', order='C'))
+
     def _calculate_band_paths(self):
         gruneisen_parameters = []
         frequencies = []
@@ -269,7 +287,7 @@ class Gruneisen(object):
                 for j in range(3):
                     for nu in range(num_atom_prim):
                         for pi in range(num_atom_prim):
-                            g[s] += (w[nu * 3 + i, s].conjugate() * 
+                            g[s] += (w[nu * 3 + i, s].conjugate() *
                                      dDdu[nu, pi, i, j] * w[pi * 3 + j, s]).real
 
             g[s] *= -1.0 / 2 / omega2[s]
@@ -286,7 +304,7 @@ class Gruneisen(object):
         m = self._pcell.get_masses()
         dPhidu = self._dPhidu
         dDdu = np.zeros((num_atom_prim, num_atom_prim, 3, 3, 3, 3), dtype=complex)
-        
+
         for nu in range(num_atom_prim):
             for pi, p in enumerate(p2s):
                 for Ppi, s in enumerate(s2p):
@@ -299,7 +317,7 @@ class Gruneisen(object):
                 dDdu[nu, pi] /= np.sqrt(m[nu] * m[pi])
 
         return dDdu
-                                    
+
     def _get_dPhidu(self):
         fc3 = self._fc3
         num_atom_prim = self._pcell.get_number_of_atoms()
@@ -344,7 +362,7 @@ class Gruneisen(object):
             for i in range(3):
                 Y[Mmu, i, i, :] = R[Mmu, :]
             Y[Mmu] += X[p2p[s2p[Mmu]]]
-            
+
         return Y
 
     def _get_X(self):
@@ -391,6 +409,3 @@ class Gruneisen(object):
                             (vecs[pi * 3 + k, 3:] * vecs[mu * 3 + i, 3:] /
                              vals[3:]).sum())
         return G
-
-            
-        
