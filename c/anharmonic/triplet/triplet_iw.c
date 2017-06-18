@@ -136,6 +136,8 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
     for (j = 0; j < 4; j++) {
       f1 = frequencies[vertices[0][i][j] * num_band + b1];
       f2 = frequencies[vertices[1][i][j] * num_band + b2];
+      if (f1 < 0) {f1 = 0;}
+      if (f2 < 0) {f2 = 0;}
       freq_vertices[0][i][j] = f1 + f2;
       freq_vertices[1][i][j] = -f1 + f2;
       freq_vertices[2][i][j] = f1 - f2;
