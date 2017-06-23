@@ -207,7 +207,6 @@ class KappaDOS(object):
                 # mode_kappa[temp, ir_gp, band, tensor_elem]
                 self._kdos[:, :, j] += np.transpose(
                     np.dot(iw, self._mode_kappa[:, i]), axes=(1, 0, 2))
-        self._kdos *= np.prod(mesh)
 
 class GammaDOS(object):
     def __init__(self,
@@ -418,7 +417,7 @@ if __name__ == '__main__':
                                    mesh,
                                    ir_grid_points,
                                    grid_address)
-        unit_conversion = primitive.get_volume() * np.prod(mesh)
+        unit_conversion = primitive.get_volume()
         mode_prop = gv_sum2.reshape((1,) + gv_sum2.shape) / unit_conversion
     else:
         mode_prop = f['mode_kappa'][:]
@@ -513,4 +512,9 @@ if __name__ == '__main__':
                                                  grid_mapping_table,
                                                  ir_grid_points,
                                                  args.num_sampling_points)
+            if not args.gv:
+                # Already mode_kappa is divided by num_mesh.
+                # But tetrahedron method divides it again. So it has to repair.
+                kdos *= np.prod(mesh)
+
             show_tensor(kdos, temperatures, sampling_points, args)
