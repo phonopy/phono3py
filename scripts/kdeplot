@@ -91,6 +91,10 @@ def plot(plt, xi, yi, zi, x, y, short_nbinds, nbins,
             y_cut.append(_y)
     
     fig, ax = plt.subplots()
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    ax.xaxis.set_tick_params(which='both', direction='out')
+    ax.yaxis.set_tick_params(which='both', direction='out')
 
     if flip:
         # Start Flip
@@ -263,6 +267,7 @@ for gamma, s in zip(gammas, symbols):
                aspect=args.aspect, flip=args.flip,
                no_points=args.no_points, show_colorbar=(not args.hide_colorbar),
                point_size=args.point_size)
+
     if args.output_filename:
         fig.savefig(args.output_filename)
     else:
