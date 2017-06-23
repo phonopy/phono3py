@@ -77,7 +77,8 @@ def run_KDE(x, y, nbins, x_max=None, y_max=None, density_ratio=0.1):
 
 def plot(plt, xi, yi, zi, x, y, short_nbinds, nbins,
          y_max=None, z_max=None, cmap=None, aspect=None,
-         flip=False, show_colorbar=True):
+         flip=False, no_points=False, show_colorbar=True,
+         point_size=5):
     xmax = np.max(x)
     ymax = np.max(y)
     x_cut = []
@@ -95,7 +96,9 @@ def plot(plt, xi, yi, zi, x, y, short_nbinds, nbins,
         # Start Flip
         plt.pcolormesh(yi[:,:nbins], xi[:,:nbins], zi[:,:nbins],
                        vmax=z_max, cmap=cmap)
-        plt.scatter(y_cut, x_cut, s=5, c='k', marker='.', linewidth=0)
+        if not no_points:
+            plt.scatter(y_cut, x_cut, s=point_size,
+                        c='k', marker='.', linewidth=0)
         plt.ylim(ymin=0, ymax=xi.max())
         if y_max is None:
             plt.xlim(xmin=0, xmax=(np.max(y_cut) + epsilon))
@@ -107,7 +110,9 @@ def plot(plt, xi, yi, zi, x, y, short_nbinds, nbins,
     else:
         plt.pcolormesh(xi[:,:nbins], yi[:,:nbins], zi[:,:nbins],
                        vmax=z_max, cmap=cmap)
-        plt.scatter(x_cut, y_cut, s=5, c='k', marker='.', linewidth=0)
+        if not no_points:
+            plt.scatter(x_cut, y_cut, s=point_size,
+                        c='k', marker='.', linewidth=0)
         plt.xlim(xmin=0, xmax=xi.max())
         if y_max is None:
             plt.ylim(ymin=0, ymax=(np.max(y_cut) + epsilon))
@@ -157,7 +162,13 @@ parser.add_argument('--gv_norm', action='store_true',
 parser.add_argument('--nbins', type=int, default=100,
                     help=("Number of bins in which data are assigned, "
                           "i.e., determining resolution of plot")),
-parser.add_argument('--nu', action='store_true', help='Plot N and U.')
+parser.add_argument("--no_points",
+                    action='store_true', help='Do not show points')
+parser.add_argument("--nu", action='store_true', help="Plot N and U.")
+parser.add_argument("-o", "--output", dest="output_filename", default=None,
+                    help="Output filename, e.g., to PDF")
+parser.add_argument('--point_size', type=float, default=5,
+                    help='Point size (default=5)')
 parser.add_argument('--temperature', type=float, default=300.0,
                     dest='temperature',
                     help='Temperature to output data at')
@@ -250,9 +261,13 @@ for gamma, s in zip(gammas, symbols):
     fig = plot(plt, xi, yi, zi, x, y, short_nbinds, args.nbins,
                y_max=args.ymax, z_max=args.zmax, cmap=args.cmap,
                aspect=args.aspect, flip=args.flip,
-               show_colorbar=(not args.hide_colorbar))
-    if s:
-        fig.savefig("lifetime-%s.png" % s)
+               no_points=args.no_points, show_colorbar=(not args.hide_colorbar),
+               point_size=args.point_size)
+    if args.output_filename:
+        fig.savefig(args.output_filename)
     else:
-        fig.savefig("lifetime.png")
+        if s:
+            fig.savefig("lifetime-%s.png" % s)
+        else:
+            fig.savefig("lifetime.png")
     plt.close(fig)
