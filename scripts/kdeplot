@@ -100,6 +100,8 @@ def plot(plt, xi, yi, zi, x, y, short_nbinds, nbins,
         # Start Flip
         plt.pcolormesh(yi[:,:nbins], xi[:,:nbins], zi[:,:nbins],
                        vmax=z_max, cmap=cmap)
+        if show_colorbar:
+            plt.colorbar()
         if not no_points:
             plt.scatter(y_cut, x_cut, s=point_size,
                         c='k', marker='.', linewidth=0)
@@ -114,6 +116,8 @@ def plot(plt, xi, yi, zi, x, y, short_nbinds, nbins,
     else:
         plt.pcolormesh(xi[:,:nbins], yi[:,:nbins], zi[:,:nbins],
                        vmax=z_max, cmap=cmap)
+        if show_colorbar:
+            plt.colorbar()
         if not no_points:
             plt.scatter(x_cut, y_cut, s=point_size,
                         c='k', marker='.', linewidth=0)
@@ -135,8 +139,6 @@ def plot(plt, xi, yi, zi, x, y, short_nbinds, nbins,
 
     if title:
         plt.title(title, fontsize=20)
-    if show_colorbar:
-        plt.colorbar()
 
     return fig
 
