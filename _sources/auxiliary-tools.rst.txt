@@ -123,6 +123,13 @@ Number of points to be sampled in the x-axis.
 ``kaccum`` for tensor properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+For cummulative thermal conductivity, the last value is given as the
+thermal conductivity in W/mK. For the other properties, the last value
+is effectively the sum of values on all mesh grids divided by number
+of mesh grids. This is understood as normalized for one primitive
+cell. Before version 1.11.13.1, the last value for gv_by_gv (--gv
+option) was further divided by the primitive cell volume.
+
 Number of columns of output data is 13 as explained above. With
 ``--average`` and ``--trace`` options, number of columns of output
 data becomes 3.
@@ -170,8 +177,11 @@ Output the traces of the tensors rather than the unique elements.
 ``kaccum`` for scalar properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For the following properties, those intensities are normalized by
-the number of grid points. Number of columns of output data is three,
+For the following properties, those values are normalized by the
+number of full grid points. This is understood as normalized for one
+primitive cell.
+
+Number of columns of output data is three,
 frequency, cumulative property, and derivative of cumulative property
 such like DOS.
 
