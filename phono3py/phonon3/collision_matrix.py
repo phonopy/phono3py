@@ -14,7 +14,7 @@ class CollisionMatrix(ImagSelfEnergy):
                  interaction,
                  point_operations=None,
                  ir_grid_points=None,
-                 rotated_grid_points=None,
+                 rot_grid_points=None,
                  temperature=None,
                  sigma=None,
                  is_reducible_collision_matrix=False,
@@ -39,7 +39,7 @@ class CollisionMatrix(ImagSelfEnergy):
         self._mesh = None
         self._is_collision_matrix = None
         self._unit_conversion = None
-        
+
         ImagSelfEnergy.__init__(self,
                                 interaction,
                                 temperature=temperature,
@@ -51,16 +51,16 @@ class CollisionMatrix(ImagSelfEnergy):
 
         if not self._is_reducible_collision_matrix:
             self._ir_grid_points = ir_grid_points
-            self._rot_grid_points = rotated_grid_points
+            self._rot_grid_points = rot_grid_points
             self._point_operations = point_operations
             self._primitive = self._pp.get_primitive()
             rec_lat = np.linalg.inv(self._primitive.get_cell())
             self._rotations_cartesian = np.array(
                 [similarity_transformation(rec_lat, r)
                  for r in self._point_operations], dtype='double', order='C')
-        
+
     def run(self):
-        if self._pp_strength is None:        
+        if self._pp_strength is None:
             self.run_interaction()
 
         # num_band0 is supposed to be equal to num_band.
@@ -70,7 +70,7 @@ class CollisionMatrix(ImagSelfEnergy):
         if num_band0 != num_band:
             print("--bi option is not allowed to use with collision matrix.")
             sys.exit(1)
-        
+
         num_triplets = len(self._triplets_at_q)
         self._imag_self_energy = np.zeros(num_band, dtype='double')
 
@@ -78,7 +78,7 @@ class CollisionMatrix(ImagSelfEnergy):
             num_mesh_points = np.prod(self._mesh)
             self._collision_matrix = np.zeros(
                 (num_band, num_mesh_points, num_band), dtype='double')
-        else:        
+        else:
             self._collision_matrix = np.zeros(
                 (num_band, 3, len(self._ir_grid_points), num_band, 3),
                 dtype='double')
@@ -107,7 +107,7 @@ class CollisionMatrix(ImagSelfEnergy):
                 self._mesh)
             self._bz_map = self._pp.get_bz_map()
             self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
-            
+
     def _run_collision_matrix(self):
         self._run_with_band_indices()
         if self._temperature > 0:
@@ -157,27 +157,22 @@ class CollisionMatrix(ImagSelfEnergy):
 
         for i, ir_gp in enumerate(self._ir_grid_points):
             r_gps = self._rot_grid_points[i]
-            multi = len(r_gps) // (r_gps < num_mesh_points).sum()
-            
             for r, r_gp in zip(self._rotations_cartesian, r_gps):
-                if r_gp > num_mesh_points - 1:
-                    continue
-                    
                 ti = gp2tp_map[self._triplets_map_at_q[r_gp]]
                 inv_sinh = self._get_inv_sinh(r_gp, gp2tp_map)
-                
+
                 for j, k in list(np.ndindex((num_band, num_band))):
                     collision = (self._pp_strength[ti, j, k]
                                  * inv_sinh
                                  * self._g[2, ti, j, k]).sum()
-                    collision *= self._unit_conversion * multi
+                    collision *= self._unit_conversion
                     self._collision_matrix[j, :, i, k, :] += collision * r
 
     def _run_py_reducible_collision_matrix(self):
         num_mesh_points = np.prod(self._mesh)
         num_band = self._pp_strength.shape[1]
         gp2tp_map = self._get_gp2tp_map()
-        
+
         for i in range(num_mesh_points):
             ti = gp2tp_map[self._triplets_map_at_q[i]]
             inv_sinh = self._get_inv_sinh(i, gp2tp_map)
@@ -197,7 +192,7 @@ class CollisionMatrix(ImagSelfEnergy):
                 count += 1
 
         return gp2tp_map
-                
+
     def _get_inv_sinh(self, gp, gp2tp_map):
         ti = gp2tp_map[self._triplets_map_at_q[gp]]
         tp = self._triplets_at_q[ti]
@@ -213,4 +208,3 @@ class CollisionMatrix(ImagSelfEnergy):
         inv_sinh = np.where(sinh > 0, 1.0 / sinh, 0)
 
         return inv_sinh
-        

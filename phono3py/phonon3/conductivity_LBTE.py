@@ -219,7 +219,7 @@ def _write_kappa(lbte,
                             kappa_unit_conversion=unit_to_WmK / volume,
                             filename=filename,
                             verbose=log_level)
-        
+
         if coleigs is not None:
             write_collision_eigenvalues_to_hdf5(temperatures,
                                                 mesh,
@@ -341,7 +341,7 @@ def _set_collision_from_file(lbte,
                 gamma = np.zeros((1,) + gamma_at_sigma.shape,
                                  dtype='double', order='C')
                 gamma[0] = gamma_at_sigma
-            else:                
+            else:
                 collision_matrix.append(collision_matrix_at_sigma)
                 gamma.append(gamma_at_sigma)
 
@@ -581,24 +581,16 @@ class Conductivity_LBTE(Conductivity):
             self._rot_grid_points = np.zeros(
                 (len(self._ir_grid_points), len(self._point_operations)),
                 dtype='intc')
-            self._rot_BZ_grid_points = np.zeros(
-                (len(self._ir_grid_points), len(self._point_operations)),
-                dtype='intc')
             for i, ir_gp in enumerate(self._ir_grid_points):
                 self._rot_grid_points[i] = get_grid_points_by_rotations(
                     self._grid_address[ir_gp],
                     self._point_operations,
                     self._mesh)
-                self._rot_BZ_grid_points[i] = get_BZ_grid_points_by_rotations(
-                    self._grid_address[ir_gp],
-                    self._point_operations,
-                    self._mesh,
-                    self._pp.get_bz_map())
             self._collision = CollisionMatrix(
                 self._pp,
                 point_operations=self._point_operations,
                 ir_grid_points=self._ir_grid_points,
-                rotated_grid_points=self._rot_BZ_grid_points)
+                rot_grid_points=self._rot_grid_points)
             if self._collision_matrix is None:
                 self._collision_matrix = np.empty(
                     (len(self._sigmas),
@@ -707,15 +699,12 @@ class Conductivity_LBTE(Conductivity):
         for j, k in list(np.ndindex((len(self._sigmas),
                                      len(self._temperatures)))):
             for i, ir_gp in enumerate(self._ir_grid_points):
-                multi = ((self._rot_grid_points == ir_gp).sum() //
-                         (self._rot_BZ_grid_points == ir_gp).sum())
-                for r, r_BZ_gp in zip(self._rotations_cartesian,
-                                      self._rot_BZ_grid_points[i]):
-                    if ir_gp != r_BZ_gp:
+                for r, r_gp in zip(self._rotations_cartesian,
+                                      self._rot_grid_points[i]):
+                    if ir_gp != r_gp:
                         continue
 
                     main_diagonal = self._get_main_diagonal(i, j, k)
-                    main_diagonal *= multi
                     for l in range(num_band):
                         self._collision_matrix[
                             j, k, i, l, :, i, l, :] += main_diagonal[l] * r
@@ -792,7 +781,7 @@ class Conductivity_LBTE(Conductivity):
         # C-API implementation causes segmentation fault in specific
         # cases. The reason is not clear, but it seems to happen when
         # using large memory space. Passing data to C-API is doubted.
-        # 
+        #
         # import phono3py._phono3py as phono3c
         # print(self._collision_matrix.flags)
         # print(self._collision_matrix.shape)
@@ -1131,7 +1120,7 @@ class Conductivity_LBTE(Conductivity):
             size = num_mesh_points * num_band
             v_diag = np.diagonal(
                 self._collision_matrix[i_sigma, i_temp].reshape(size, size))
-                     
+
             for gp in range(num_mesh_points):
                 frequencies = self._frequencies[gp]
                 for j, f in enumerate(frequencies):
@@ -1171,7 +1160,7 @@ class Conductivity_LBTE(Conductivity):
                             print(" g[j]=%f at gp=%d, band=%d, freq=%f" %
                                   (g[j], gp, j + 1, f))
                             print("=" * 61)
-                        np.seterr(**old_settings) 
+                        np.seterr(**old_settings)
 
             self._set_mode_kappa(self._mode_kappa_RTA,
                                  X,
