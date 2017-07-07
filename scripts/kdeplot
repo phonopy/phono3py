@@ -76,10 +76,9 @@ def run_KDE(x, y, nbins, x_max=None, y_max=None, density_ratio=0.1):
     return xi, yi, zi, short_nbinds
 
 def plot(plt, xi, yi, zi, x, y, short_nbinds, nbins,
-         y_max=None, z_max=None, cmap=None):    
-    #
-    # Plotting
-    #
+         y_max=None, z_max=None, cmap=None, aspect=None,
+         flip=False, no_points=False, show_colorbar=True,
+         point_size=5):
     xmax = np.max(x)
     ymax = np.max(y)
     x_cut = []
@@ -91,28 +90,63 @@ def plot(plt, xi, yi, zi, x, y, short_nbinds, nbins,
             x_cut.append(_x)
             y_cut.append(_y)
     
-    fig = plt.figure()
-    plt.pcolormesh(xi[:,:nbins], yi[:,:nbins], zi[:,:nbins],
-                   vmax=z_max, cmap=cmap)
-    plt.colorbar()
-    
-    plt.scatter(x_cut, y_cut, s=5, c='k', marker='.', linewidth=0)
-    
-    plt.xlim(xmin=0, xmax=xi.max())
-    if y_max is None:
-        plt.ylim(ymin=0, ymax=(np.max(y_cut) + epsilon))
+    fig, ax = plt.subplots()
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    ax.xaxis.set_tick_params(which='both', direction='out')
+    ax.yaxis.set_tick_params(which='both', direction='out')
+
+    if flip:
+        # Start Flip
+        plt.pcolormesh(yi[:,:nbins], xi[:,:nbins], zi[:,:nbins],
+                       vmax=z_max, cmap=cmap)
+        if show_colorbar:
+            plt.colorbar()
+        if not no_points:
+            plt.scatter(y_cut, x_cut, s=point_size,
+                        c='k', marker='.', linewidth=0)
+        plt.ylim(ymin=0, ymax=xi.max())
+        if y_max is None:
+            plt.xlim(xmin=0, xmax=(np.max(y_cut) + epsilon))
+        else:
+            plt.xlim(xmin=0, xmax=(y_max + epsilon))
+        plt.xlabel('Lifetime (ps)', fontsize=18)
+        plt.ylabel('Phonon frequency (THz)', fontsize=18)
+        # End Flip
     else:
-        plt.ylim(ymin=0, ymax=(y_max + epsilon))
+        plt.pcolormesh(xi[:,:nbins], yi[:,:nbins], zi[:,:nbins],
+                       vmax=z_max, cmap=cmap)
+        if show_colorbar:
+            plt.colorbar()
+        if not no_points:
+            plt.scatter(x_cut, y_cut, s=point_size,
+                        c='k', marker='.', linewidth=0)
+        plt.xlim(xmin=0, xmax=xi.max())
+        if y_max is None:
+            plt.ylim(ymin=0, ymax=(np.max(y_cut) + epsilon))
+        else:
+            plt.ylim(ymin=0, ymax=(y_max + epsilon))
+        if title:
+            plt.title(title, fontsize=20)
+        plt.xlabel('Phonon frequency (THz)', fontsize=18)
+        plt.ylabel('Lifetime (ps)', fontsize=18)
+
+    if aspect is not None:
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+        ax_aspect = (xlim[1] - xlim[0]) / (ylim[1] - ylim[0]) * aspect
+        ax.set_aspect(ax_aspect)
+
     if title:
         plt.title(title, fontsize=20)
-    plt.xlabel('Phonon frequency (THz)', fontsize=18)
-    plt.ylabel('Lifetime (ps)', fontsize=18)
 
     return fig
 
 # Arg-parser
 parser = argparse.ArgumentParser(
     description="Plot property density with gaussian KDE")
+parser.add_argument("--aspect", help="The ration, height/width of canvas",
+                    type=float, default=None)
 parser.add_argument("--cmap", dest="cmap", default=None,
                     help="Matplotlib cmap")
 parser.add_argument("--cutoff",
@@ -123,15 +157,24 @@ parser.add_argument("--dr", "--density_ratio", dest="density_ratio",
                     help=("Minimum density ratio with respect to maximum "
                           "density used to determine drawing region"),
                     type=float, default=0.1)
+parser.add_argument('--flip', action='store_true', help='Flip x and y.')
 parser.add_argument("--fmax", help="Max frequency to plot",
                     type=float, default=None)
+parser.add_argument("--hc", "--hide_colorbar", dest="hide_colorbar",
+                    action='store_true', help='Do not show colorbar')
 parser.add_argument('--gv_norm', action='store_true',
                     help=("|gv| is used for the density plot instead of "
                           "lifetime.")),
 parser.add_argument('--nbins', type=int, default=100,
                     help=("Number of bins in which data are assigned, "
                           "i.e., determining resolution of plot")),
-parser.add_argument('--nu', action='store_true', help='Plot N and U.')
+parser.add_argument("--no_points",
+                    action='store_true', help='Do not show points')
+parser.add_argument("--nu", action='store_true', help="Plot N and U.")
+parser.add_argument("-o", "--output", dest="output_filename", default=None,
+                    help="Output filename, e.g., to PDF")
+parser.add_argument('--point_size', type=float, default=5,
+                    help='Point size (default=5)')
 parser.add_argument('--temperature', type=float, default=300.0,
                     dest='temperature',
                     help='Temperature to output data at')
@@ -222,9 +265,16 @@ for gamma, s in zip(gammas, symbols):
                                        y_max=args.ymax,
                                        density_ratio=args.density_ratio)
     fig = plot(plt, xi, yi, zi, x, y, short_nbinds, args.nbins,
-               y_max=args.ymax, z_max=args.zmax, cmap=args.cmap)
-    if s:
-        fig.savefig("lifetime-%s.png" % s)
+               y_max=args.ymax, z_max=args.zmax, cmap=args.cmap,
+               aspect=args.aspect, flip=args.flip,
+               no_points=args.no_points, show_colorbar=(not args.hide_colorbar),
+               point_size=args.point_size)
+
+    if args.output_filename:
+        fig.savefig(args.output_filename)
     else:
-        fig.savefig("lifetime.png")
+        if s:
+            fig.savefig("lifetime-%s.png" % s)
+        else:
+            fig.savefig("lifetime.png")
     plt.close(fig)
