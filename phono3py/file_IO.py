@@ -595,6 +595,39 @@ def write_full_collision_matrix(collision_matrix, filename='fcm.hdf5'):
     with h5py.File(filename, 'w') as w:
         w.create_dataset('collision_matrix', data=collision_matrix)
 
+def write_unitary_matrix_to_hdf5(temperature,
+                                 mesh,
+                                 unitary_matrix=None,
+                                 sigma=None,
+                                 filename=None):
+    suffix = "-m%d%d%d" % tuple(mesh)
+    if sigma is not None:
+        sigma_str = ("%f" % sigma).rstrip('0').rstrip('\.')
+        suffix += "-s" + sigma_str
+    if filename is not None:
+        suffix += "." + filename
+
+    hdf5_filename = "unitary" + suffix + ".hdf5"
+    with h5py.File(hdf5_filename, 'w') as w:
+        w.create_dataset('temperature', data=temperature)
+        if unitary_matrix is not None:
+            w.create_dataset('unitary_matrix', data=unitary_matrix)
+
+        if len(temperature) > 1:
+            text = "Unitary matrices "
+        else:
+            text = "Unitary matrix "
+        if sigma is not None:
+            text += "at sigma %s " % sigma_str
+        if len(temperature) > 1:
+            text += "were written into "
+        else:
+            text += "was written into "
+        if sigma is not None:
+            text += "\n"
+        text += "\"%s\"." % hdf5_filename
+        print(text)
+
 def write_kappa_to_hdf5(temperature,
                         mesh,
                         frequency=None,
