@@ -10,7 +10,8 @@ from phono3py.phonon3.triplets import (get_grid_points_by_rotations,
 from phono3py.file_IO import (write_kappa_to_hdf5,
                               write_collision_to_hdf5,
                               read_collision_from_hdf5,
-                              write_collision_eigenvalues_to_hdf5)
+                              write_collision_eigenvalues_to_hdf5,
+                              write_unitary_matrix_to_hdf5)
 from phonopy.units import THzToEv, Kb
 
 def get_thermal_conductivity_LBTE(
@@ -102,6 +103,7 @@ def get_thermal_conductivity_LBTE(
             lbte,
             interaction.get_primitive().get_volume(),
             is_reducible_collision_matrix=is_reducible_collision_matrix,
+            pinv_solver=pinv_solver,
             filename=output_filename,
             log_level=log_level)
 
@@ -155,6 +157,7 @@ def _write_collision(lbte,
 def _write_kappa(lbte,
                  volume,
                  is_reducible_collision_matrix=False,
+                 pinv_solver=None,
                  filename=None,
                  log_level=0):
     temperatures = lbte.get_temperatures()
@@ -167,6 +170,8 @@ def _write_kappa(lbte,
     kappa = lbte.get_kappa()
     kappa_RTA = lbte.get_kappa_RTA()
     coleigs = lbte.get_collision_eigenvalues()
+    # After kappa calculation, the variable is overwritten by unitary matrix
+    unitary_matrix = lbte.get_collision_matrix()
 
     if is_reducible_collision_matrix:
         ir_gp = lbte.get_grid_points()
@@ -227,7 +232,21 @@ def _write_kappa(lbte,
                                                 sigma=sigma,
                                                 filename=filename,
                                                 verbose=log_level)
-
+            if pinv_solver is not None:
+                solver = pinv_solver
+                if pinv_solver == 0:
+                    try:
+                        import scipy.linalg
+                    except ImportError:
+                        solver = 0
+                    else:
+                        solver = 6
+                if solver % 10 == 6:
+                    write_unitary_matrix_to_hdf5(temperatures,
+                                                 mesh,
+                                                 unitary_matrix=unitary_matrix,
+                                                 sigma=sigma,
+                                                 filename=filename)
 
 def _set_collision_from_file(lbte,
                              indices='all',
