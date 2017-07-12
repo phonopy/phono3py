@@ -1,8 +1,7 @@
 #!/bin/bash
 
-export C_INCLUDE_PATH=${HOME}/miniconda/include:${C_INCLUDE_PATH}
-export LD_LIBRARY_PATH=${HOME}/miniconda/lib:${LD_LIBRARY_PATH}
-echo "extra_link_args_lapacke = ['-lopenblas']" |tee libopenblas.py
+export C_INCLUDE_PATH=${HOME}/.miniconda/include:${C_INCLUDE_PATH}
+export LD_LIBRARY_PATH=${HOME}/.miniconda/lib:${LD_LIBRARY_PATH}
 
 $PYTHON setup.py install
 
