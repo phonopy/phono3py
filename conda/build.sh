@@ -2,6 +2,8 @@
 
 git describe --tags --dirty | sed -e 's/-\(.*\)-g.*/+\1/' -e 's/^[vr]//g' > __conda_version__.txt
 
+cat __conda_version__.txt
+
 # echo "1.11.3" > __conda_version__.txt
 
 ./get_nanoversion.sh
