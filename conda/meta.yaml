@@ -1,6 +1,5 @@
 package:
   name: phono3py
-  # version: {{ GIT_DESCRIBE_TAG }}
   version: version_from_shell
 
 source:
@@ -8,7 +7,6 @@ source:
   git_branch: {{ environ.get('GIT_BRANCH','master') }}
 
 build:
-  # number: {{ GIT_DESCRIBE_NUMBER }}
   script_env:
     - GIT_BRANCH
 
@@ -53,7 +51,7 @@ test:
 #  commands:
 #    # You can put test commands to be run here.  Use this to test that the
 #    # entry points work.
-#    - cd example/MgO 
+#    - cd example/MgO
 #    - phonopy -f vasprun.xml-001 vasprun.xml-002
 #    - phonopy -p band.conf
 #    - phonopy -p --nac band.conf
