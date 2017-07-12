@@ -7,7 +7,6 @@ python:
     - '3.5'
 
 before_install:
-    - TRAVIS_PYTHON_VERSION=`python --version |& awk '{print $2}'|awk -F'.' '{print $1}'`
     - wget http://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION}-latest-Linux-x86_64.sh -O miniconda.sh
     - bash miniconda.sh -b -p ${HOME}/.miniconda
     - export PATH=${HOME}/.miniconda/bin:${PATH}
@@ -16,8 +15,8 @@ before_install:
     - conda update --yes conda
 
 install:
-    - conda install --yes pip numpy h5py pyyaml matplotlib openblas
-    - conda install -c atztogo --yes phonopy
+    - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy h5py pyyaml matplotlib openblas
+    - conda install -c atztogo --yes python=$TRAVIS_PYTHON_VERSION phonopy
     - pwd
     - ./get_nanoversion.sh
     - cat __nanoversion__.txt
