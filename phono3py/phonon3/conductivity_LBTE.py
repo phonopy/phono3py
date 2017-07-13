@@ -187,6 +187,7 @@ def _write_kappa(lbte,
         mode_kappa_RTA = lbte.get_mode_kappa_RTA()[:, :, ir_gp, :, :]
         for i, w in enumerate(weights):
             mode_kappa[:, :, i, :, :] *= w
+            mode_kappa_RTA[:, :, i, :, :] *= w
         mfp = lbte.get_mean_free_path()[:, :, ir_gp, :, :]
     else:
         frequencies = lbte.get_frequencies()
