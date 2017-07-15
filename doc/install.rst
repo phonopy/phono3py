@@ -13,8 +13,28 @@ https://atztogo.github.io/phonopy/install.html. Phono3py relies on
 phonopy, so please use the latest release of phonopy when installing
 phono3py.
 
-From source code
------------------
+Installation using conda
+-----------------------------
+
+Using conda is the easiest way for installation of phono3py if you are
+using usual 64 bit linux system. The conda packages for 64bit linux
+are also found at ``atztogo`` channel::
+
+   % conda install -c atztogo phono3py
+
+All dependent packages are installed simultaneously.
+
+Installation using pip
+---------------------------
+
+PyPI packages are prepared for phonopy and phono3py releases. When
+installing with PyPI, ``setup.py`` is executed locally to compile the
+part of the code written in C, so a few libraries such as
+lapacke must exist in the system. Those necessary libraries are
+explained in the next section.
+
+Installation from source code
+------------------------------
 
 When installing phono3py using ``setup.py`` from the source code, a
 few libraries are required before running ``setup.py`` script.
@@ -31,28 +51,31 @@ Ubuntu linux, it is installed by::
 
    % sudo apt-get install libgomp1
 
-Installation of necessary libraries
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Installation of LAPACKE
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here two ways to install necessary libraries are introduced.
+LAPACK library is used in a few parts of the code to diagonalize
+matrices. LAPACK*E* is the C-wrapper of LAPACK and LAPACK relies on
+BLAS. Both single-thread or multithread BLAS can be
+used in phono3py. In the following, multiple different ways of
+installation of LAPACKE are explained.
 
-By Ubuntu package manager
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In the case of ubuntu linux, it would be like::
-
-   % sudo apt-get install libgomp1 liblapack-dev liblapacke-dev
+Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In the versions of Ubuntu-12.10 or later, LAPACKE
 (http://www.netlib.org/lapack/lapacke.html) can be installed from the
-package manager (``liblapacke`` and ``liblapacke-dev``). In the recent
-MacPorts, the ``OpenBLAS`` package contains not only BLAS but also
-LAPACK and LAPACKE in ``libopenblas``. But in the older versions of
-Ubuntu or in the other environments, you may have to compile LAPACKE
-by yourself. The compilation procedure is found at the LAPACKE web
-site. After creating the LAPACKE library, ``liblapacke.a`` (or the
-dynamic link library), ``setup.py`` must be properly modified to link
-it. As an example, the procedure of compiling LAPACKE is shown below.
+package manager (``liblapacke`` and ``liblapacke-dev``)::
+
+   % sudo apt-get install liblapack-dev liblapacke-dev
+
+Compiling Netlib LAPACKE
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The compilation procedure is found at the LAPACKE web site. After
+creating the LAPACKE library, ``liblapacke.a`` (or the dynamic link
+library), ``setup.py`` must be properly modified to link it. As an
+example, the procedure of compiling LAPACKE is shown below.
 
 ::
 
@@ -64,8 +87,28 @@ it. As an example, the procedure of compiling LAPACKE is shown below.
 BLAS, LAPACK, and LAPACKE, these all may have to be compiled
 with -fPIC option to use it with python.
 
-By conda
-^^^^^^^^^
+OpenBLAS provided by MacPorts (with single-thread BLAS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+MacPorts, the ``OpenBLAS`` package contains not only BLAS but also
+LAPACK and LAPACKE in ``libopenblas``.
+
+MKL LAPACKE (with multithread BLAS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+MKL LAPACKE can be used. For this, ``mkl.py`` file has to be
+created. In this file, the locations of necessary MKL libraries are
+provided such as follows::
+
+   extra_link_args_lapacke += ['-L/opt/intel/mkl/lib/intel64',
+                               '-lmkl_intel_ilp64', '-lmkl_intel_thread',
+                               '-lmkl_core']
+   library_dirs_lapacke += []
+   include_dirs_lapacke += ['/opt/intel/mkl/include']
+
+
+OpenBLAS provided by conda (with multithread BLAS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The installtion of LAPACKE is easy by conda. It is::
 
@@ -130,12 +173,4 @@ operation system, e.g., ``~/.local/bin`` for Ubuntu linux and
 ``~/Library/Python/2.7`` for Mac (& python2.7). In the latter case,
 ``bin`` directory is found on the current directory if it was
 ``--home=.``.
-
-Install using pip/conda
-------------------------
-
-PyPI and conda packages are prepared at phonopy and phono3py
-releases. Using these packages, the phonopy and phono3py installations
-are expected to be easily done. For more detail, see
-https://atztogo.github.io/phonopy/install.html .
 

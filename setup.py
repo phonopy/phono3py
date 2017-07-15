@@ -59,6 +59,10 @@ include_dirs = ['c/harmonic_h',
 library_dirs = []
 define_macros = []
 
+extra_link_args_lapacke = []
+include_dirs_lapacke = []
+library_dirs_lapacke = []
+
 # C macro definitions:
 # - MULTITHREADED_BLAS
 #   This deactivates OpenMP multithread harmonic phonon calculation,
@@ -75,11 +79,11 @@ if os.path.isfile("mkl.py"):
     # This is invoked when mkl.py exists on the current directory.
 
     #### Example of mkl.py ####
-    # extra_link_args_lapacke = ['-L/opt/intel/mkl/lib/intel64',
+    # extra_link_args_lapacke += ['-L/opt/intel/mkl/lib/intel64',
     #                            '-lmkl_intel_ilp64', '-lmkl_intel_thread',
     #                            '-lmkl_core']
-    # library_dirs_lapacke = []
-    # include_dirs_lapacke = ['/opt/intel/mkl/include']
+    # library_dirs_lapacke += []
+    # include_dirs_lapacke += ['/opt/intel/mkl/include']
 
     print("MKL LAPACKE is to be used.")
     from mkl import (extra_link_args_lapacke, include_dirs_lapacke,
@@ -95,11 +99,11 @@ elif os.path.isfile("libopenblas.py"):
     # This is invoked when libopenblas.py exists on the current directory.
 
     #### Example of libopenblas.py ####
-    # extra_link_args_lapacke = ['-lopenblas']
+    # extra_link_args_lapacke += ['-lopenblas']
 
     from libopenblas import extra_link_args_lapacke
-    include_dirs_lapacke = []
-    library_dirs_lapacke = []
+    include_dirs_lapacke += []
+    library_dirs_lapacke += []
     if use_setuptools:
         extra_compile_args += ['-DMULTITHREADED_BLAS']
     else:
@@ -111,14 +115,14 @@ elif (platform.system() == 'Darwin' and
     # % sudo port install gcc6
     # % sudo port select --set gcc mp-gcc
     # % sudo port install OpenBLAS +gcc6
-    extra_link_args_lapacke = ['/opt/local/lib/libopenblas.a']
-    include_dirs_lapacke = ['/opt/local/include']
-    library_dirs_lapacke = []
+    extra_link_args_lapacke += ['/opt/local/lib/libopenblas.a']
+    include_dirs_lapacke += ['/opt/local/include']
+    library_dirs_lapacke += []
 elif os.path.isfile('/usr/lib/liblapacke.so'):
     # This supposes that lapacke with single-thread BLAS is installed on system.
-    extra_link_args_lapacke = ['-llapacke', '-llapack', '-lblas']
-    include_dirs_lapacke = []
-    library_dirs_lapacke = []
+    extra_link_args_lapacke += ['-llapacke', '-llapack', '-lblas']
+    include_dirs_lapacke += []
+    library_dirs_lapacke += []
 else:
     # Here is the default lapacke linkage setting.
     # Please modify according to your system environment.
@@ -134,9 +138,9 @@ else:
     # For conda: Try dynamic
     # link library of openblas % conda install numpy scipy h5py pyyaml
     # matplotlib openblas
-    extra_link_args_lapacke = ['-lopenblas']
-    include_dirs_lapacke = []
-    library_dirs_lapacke = []
+    extra_link_args_lapacke += ['-lopenblas']
+    include_dirs_lapacke += []
+    library_dirs_lapacke += []
     if use_setuptools:
         extra_compile_args += ['-DMULTITHREADED_BLAS']
     else:
