@@ -38,15 +38,10 @@
 #include <phonoc_const.h>
 #include <phonoc_array.h>
 #include <phonon3_h/reciprocal_to_normal.h>
-#include <unistd.h>
-
-#ifdef MKL_KAPACKE
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
+#include <lapack_wrapper.h>
 
 #ifdef MEASURE_R2N
+#include <unistd.h>
 #include <time.h>
 #endif
 

@@ -35,7 +35,7 @@
 #ifndef __lapack_wrapper_H__
 #define __lapack_wrapper_H__
 
-#ifdef MKL_KAPACKE
+#ifdef MKL_LAPACKE
 #include <mkl.h>
 #else
 #include <lapacke.h>
