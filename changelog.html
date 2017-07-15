@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 
+
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
     <title>Change Log &#8212; Phono3py v.1.11.13</title>
     
-    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootswatch-3.3.6/cosmo/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -37,7 +36,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 
   </head>
-  <body>
+  <body role="document">
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -230,7 +229,7 @@
 <div class="section" id="jun-18-2017-version-1-11-13">
 <h2>Jun-18-2017: version 1.11.13<a class="headerlink" href="#jun-18-2017-version-1-11-13" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><a class="reference internal" href="command-options.html#normal-umklapp-option"><span class="std std-ref">--nu: Normal and Umklapp processes</span></a> option was made.</li>
+<li><a class="reference internal" href="command-options.html#normal-umklapp-option"><span class="std std-ref">&#8211;nu: Normal and Umklapp processes</span></a> option was made.</li>
 <li>Many minor updates: fixing bugs, improving usabilities.</li>
 <li>Improve of <a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kaccum"><span class="std std-ref">kaccum</span></a> and <a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kdeplot"><span class="std std-ref">kdeplot</span></a>.</li>
 </ul>
@@ -241,8 +240,8 @@
 <li>Abinit code interface is implemented and now under the testing.</li>
 <li>Reduction of memory usage in RTA thermal conductivity
 calculation. This is especially effective for larger unit cell
-case. Currently combinations with –full_pp, –write_gamma_detail,
-and –simga(smearing method) are not supported for this. Performance
+case. Currently combinations with &#8211;full_pp, &#8211;write_gamma_detail,
+and &#8211;simga(smearing method) are not supported for this. Performance
 tuning is under going. In some case, computation can be slower than
 the previous versions.</li>
 </ul>
@@ -296,7 +295,7 @@ phono3py-1.10.5 is based on the code close to phonopy-1.10.4.</li>
 linear tetrahedron method, only necessary part of phonon-phonon
 interaction strengh among phonons. This improves lifetime
 calculation performance, but as the drawback, averaged ph-ph
-interaction strength can not be given. See <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full_pp: Calculate all elements of phonon-phonon interaction strength</span></a>.</li>
+interaction strength can not be given. See <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">&#8211;full_pp: Calculate all elements of phonon-phonon interaction strength</span></a>.</li>
 <li>Pwscf interface (<a class="reference internal" href="interfaces.html#calculator-interfaces"><span class="std std-ref">Interfaces to calculators</span></a>)</li>
 </ul>
 </div>
@@ -382,7 +381,7 @@ previous document was wrong in the array shape. It is
 <h2>Changes in version 0.9.4<a class="headerlink" href="#changes-in-version-0-9-4" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>The option of <code class="docutils literal"><span class="pre">--cutoff_mfp</span></code> is renamed to <code class="docutils literal"><span class="pre">--boundary_mfp</span></code> and
-now it’s on the document.</li>
+now it&#8217;s on the document.</li>
 <li>Detailed contribution of <code class="docutils literal"><span class="pre">kappa</span></code> at each <strong>q</strong>-point and phonon
 mode is output to .hdf5 with the keyword <code class="docutils literal"><span class="pre">mode_kappa</span></code>.</li>
 </ul>
@@ -424,7 +423,7 @@ by <code class="docutils literal"><span class="pre">--cf3</span></code> option a
 <div class="section" id="changes-in-version-0-8-0">
 <h2>Changes in version 0.8.0<a class="headerlink" href="#changes-in-version-0-8-0" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><code class="docutils literal"><span class="pre">--q_direction</span></code> didn’t work. Fix it.</li>
+<li><code class="docutils literal"><span class="pre">--q_direction</span></code> didn&#8217;t work. Fix it.</li>
 <li>Implementation of tetrahedron method whcih is activated by
 <code class="docutils literal"><span class="pre">--thm</span></code>.</li>
 <li>Grid addresses are written out by <code class="docutils literal"><span class="pre">--wgp</span></code> option.</li>
@@ -511,7 +510,7 @@ when a mesh number is an even number, it is more carefully treated.</li>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.4.<br/>
     </p>
   </div>
 </footer>

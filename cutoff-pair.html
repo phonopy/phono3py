@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 
+
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
     <title>Reducing number of force calculations by cutoff pair-distance &#8212; Phono3py v.1.11.13</title>
     
-    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootswatch-3.3.6/cosmo/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -38,7 +37,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 
   </head>
-  <body>
+  <body role="document">
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -223,7 +222,7 @@
       
   <div class="section" id="reducing-number-of-force-calculations-by-cutoff-pair-distance">
 <span id="command-cutoff-pair"></span><h1>Reducing number of force calculations by cutoff pair-distance<a class="headerlink" href="#reducing-number-of-force-calculations-by-cutoff-pair-distance" title="Permalink to this headline">¶</a></h1>
-<p>Here the detail of the command option <a class="reference internal" href="command-options.html#cutoff-pair-option"><span class="std std-ref">--cutoff_pair or --cutoff_pair_distance</span></a> is
+<p>Here the detail of the command option <a class="reference internal" href="command-options.html#cutoff-pair-option"><span class="std std-ref">&#8211;cutoff_pair or &#8211;cutoff_pair_distance</span></a> is
 explained.</p>
 <div class="contents local topic" id="contents">
 <ul class="simple">
@@ -374,7 +373,7 @@ output file containing forces in each directory (for VASP
   \<span class="n">___</span><span class="o">|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>\<span class="n">__</span><span class="p">,</span><span class="n">_</span><span class="o">|</span>
 </pre></div>
 </div>
-<p>Using <a class="reference internal" href="command-options.html#cf3-file-option"><span class="std std-ref">–cf3_file option</span></a> may be recommended
+<p>Using <a class="reference internal" href="command-options.html#cf3-file-option"><span class="std std-ref">&#8211;cf3_file option</span></a> may be recommended
 when the number of force files is large.</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>% for i in `ls POSCAR-0*|sed s/POSCAR-//`;do echo disp-$i/vasprun.xml;done &gt; file_list.dat
 % phono3py --cf3_file file_list.dat
@@ -620,7 +619,7 @@ num_displacements_created: 1254
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.4.<br/>
     </p>
   </div>
 </footer>

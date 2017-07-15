@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 
+
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
     <title>Auxiliary tools &#8212; Phono3py v.1.11.13</title>
     
-    <link rel="stylesheet" href="_static/basic.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/bootswatch-3.3.6/cosmo/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -38,7 +37,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 
   </head>
-  <body>
+  <body role="document">
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -280,7 +279,7 @@ C_\lambda \mathbf{v}_\lambda \otimes \mathbf{v}_\lambda
 </div><p>(The notations are found in <a class="reference external" href="http://arxiv.org/abs/1501.00691">http://arxiv.org/abs/1501.00691</a>.)</p>
 <div class="section" id="how-to-use-kaccum">
 <h3><a class="toc-backref" href="#id4">How to use <code class="docutils literal"><span class="pre">kaccum</span></code></a><a class="headerlink" href="#how-to-use-kaccum" title="Permalink to this headline">¶</a></h3>
-<p>Let’s computer lattice thermal conductivity of Si using the <code class="docutils literal"><span class="pre">Si-PBEsol</span></code>
+<p>Let&#8217;s computer lattice thermal conductivity of Si using the <code class="docutils literal"><span class="pre">Si-PBEsol</span></code>
 example found in the example directory.</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> <span class="o">--</span><span class="n">sym_fc3r</span> <span class="o">--</span><span class="n">sym_fc2</span> <span class="o">--</span><span class="n">tsym</span> <span class="o">--</span><span class="n">br</span>
 </pre></div>
@@ -290,7 +289,7 @@ example found in the example directory.</p>
 </pre></div>
 </div>
 <p>Here <code class="docutils literal"><span class="pre">--pa</span></code> is optional. The definition of <code class="docutils literal"><span class="pre">--pa</span></code> option is same as
-<a class="reference internal" href="command-options.html#pa-option"><span class="std std-ref">--pa, --primitive_axis: Transformation matrix to primitive cell</span></a>. <code class="docutils literal"><span class="pre">POSCAR-unitcell</span></code> is the unit cell filename that
+<a class="reference internal" href="command-options.html#pa-option"><span class="std std-ref">&#8211;pa, &#8211;primitive_axis: Transformation matrix to primitive cell</span></a>. <code class="docutils literal"><span class="pre">POSCAR-unitcell</span></code> is the unit cell filename that
 is specified with <code class="docutils literal"><span class="pre">-c</span></code> option.
 <code class="docutils literal"><span class="pre">kappa-m111111.hdf5</span></code> is the output file of thermal conductivity
 calculation, which is passed to <code class="docutils literal"><span class="pre">kaccum</span></code> as the first argument.</p>
@@ -315,7 +314,7 @@ correspond to 300 K,</p>
 <h3><a class="toc-backref" href="#id5">General option</a><a class="headerlink" href="#general-option" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="pa">
 <h4><code class="docutils literal"><span class="pre">--pa</span></code><a class="headerlink" href="#pa" title="Permalink to this headline">¶</a></h4>
-<p>See <a class="reference internal" href="command-options.html#pa-option"><span class="std std-ref">--pa, --primitive_axis: Transformation matrix to primitive cell</span></a>.</p>
+<p>See <a class="reference internal" href="command-options.html#pa-option"><span class="std std-ref">&#8211;pa, &#8211;primitive_axis: Transformation matrix to primitive cell</span></a>.</p>
 </div>
 <div class="section" id="c">
 <h4><code class="docutils literal"><span class="pre">-c</span></code><a class="headerlink" href="#c" title="Permalink to this headline">¶</a></h4>
@@ -351,7 +350,7 @@ temperatures including 300 K.</p>
 thermal conductivity in W/mK. For the other properties, the last value
 is effectively the sum of values on all mesh grids divided by number
 of mesh grids. This is understood as normalized for one primitive
-cell. Before version 1.11.13.1, the last value for gv_by_gv (–gv
+cell. Before version 1.11.13.1, the last value for gv_by_gv (&#8211;gv
 option) was further divided by the primitive cell volume.</p>
 <p>Number of columns of output data is 13 as explained above. With
 <code class="docutils literal"><span class="pre">--average</span></code> and <code class="docutils literal"><span class="pre">--trace</span></code> options, number of columns of output
@@ -364,7 +363,7 @@ of MFP is Angstrom.</p>
 <img class="math" src="_images/math/b5c72848cf3d020d1b16e90cbee13bd89d380c03.png" alt="19\times 19\times 19"/> and <img class="math" src="_images/math/18e04e5fddb80c3fc65c247206bcb73124793c4d.png" alt="11\times 11\times 11"/> sampling
 meshes used for the lattice thermal conductivity calculation. They look
 differently. Especially for the result of the <img class="math" src="_images/math/952dd8ebb0d39f1f4fab2a1b9066c46e0edf76c9.png" alt="11\times 11\times
-11"/> sampling mesh, the MFP seems converging but we can see it’s not
+11"/> sampling mesh, the MFP seems converging but we can see it&#8217;s not
 true to look at that of the <img class="math" src="_images/math/b5c72848cf3d020d1b16e90cbee13bd89d380c03.png" alt="19\times 19\times 19"/> sampling
 mesh. To show this type of plot, be careful about the sampling mesh
 convergence.</p>
@@ -440,10 +439,10 @@ satisfaction.</p>
 drawing area is automatically set to make the look good, where its
 higher lifetime side is not drawn if all density beyond a lifetime
 value is smaller than some ratio (see
-<a class="reference internal" href="#kdeplot-density-ratio"><span class="std std-ref">--dr, --density_ratio</span></a>) of the maximum density.</p>
+<a class="reference internal" href="#kdeplot-density-ratio"><span class="std std-ref">&#8211;dr, &#8211;density_ratio</span></a>) of the maximum density.</p>
 <p>The following plot is drawn with a 19x19x19 mesh and nbins=200 and the
 <code class="docutils literal"><span class="pre">Si-PBEsol</span></code> example is used to generate the data. The colormap of
-‘jet’ in matplotlib is used.</p>
+&#8216;jet&#8217; in matplotlib is used.</p>
 <p><a class="reference internal" href="_images/Si-kdeplot.png"><img alt="ikde" src="_images/Si-kdeplot.png" style="width: 50%;" /></a></p>
 <div class="section" id="options">
 <h3><a class="toc-backref" href="#id9">Options</a><a class="headerlink" href="#options" title="Permalink to this headline">¶</a></h3>
@@ -511,7 +510,7 @@ together, this option is ignored.</p>
 <h4><code class="docutils literal"><span class="pre">--cmap</span></code><a class="headerlink" href="#cmap" title="Permalink to this headline">¶</a></h4>
 <p><strong>New</strong>: The latest version of <code class="docutils literal"><span class="pre">kdeplot</span></code> is download at
 <a class="reference external" href="https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot">https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot</a>.)</p>
-<p>Color map to be used for the density plot. It’s given by the name
+<p>Color map to be used for the density plot. It&#8217;s given by the name
 presented at the matplotlib documentation,
 <a class="reference external" href="https://matplotlib.org/users/colormaps.html">https://matplotlib.org/users/colormaps.html</a>. The default colormap
 depends on your matplotlib environment.</p>
@@ -546,7 +545,7 @@ depends on your matplotlib environment.</p>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.4.<br/>
     </p>
   </div>
 </footer>
