@@ -37,12 +37,7 @@
 
 #include <Python.h>
 #include <numpy/arrayobject.h>
-
-#ifdef MKL_KAPACKE
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
+#include <lapack_wrapper.h>
 
 #define MAX_NUM_DIM 20
 

@@ -39,12 +39,6 @@
 #include <phonoc_utils.h>
 #include <lapack_wrapper.h>
 
-#ifdef MKL_KAPACKE
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
-
 #define THZTOEVPARKB 47.992398658977166
 #define INVSQRT2PI 0.3989422804014327
 

@@ -36,12 +36,7 @@
 #define __phonon_H__
 
 #include <phonoc_array.h>
-
-#ifdef MKL_KAPACKE
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
+#include <lapack_wrapper.h>
 
 void set_phonons_at_gridpoints(Darray *frequencies,
 			       Carray *eigenvectors,
