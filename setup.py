@@ -59,22 +59,44 @@ include_dirs = ['c/harmonic_h',
 library_dirs = []
 define_macros = []
 
+# C macro definitions:
+# - MULTITHREADED_BLAS
+#   This deactivates OpenMP multithread harmonic phonon calculation,
+#   since inside each phonon calculation, zheev is called.
+#   When using multithread BLAS, this macro has to be set and
+#   by this all phonons on q-points should be calculated in series.
+# - MKL_LAPACKE:
+#   This sets definitions and functions needed when using MKL lapacke.
+#   Phono3py complex values are handled based on those provided by Netlib
+#   lapacke. However MKL lapacke doesn't provide some macros and functions
+#   that provided Netlib. This macro defines those used in phono3py among them.
 if os.path.isfile("mkl.py"):
-    #### mkl.py ####
-    # Many problems to be fixed exist using MKL. Not yet ready!
-    # extra_link_args_lapacke = ['-lmkl_intel_ilp64', '-lmkl_gnu_thread', '-lmkl_core']
-    # library_dirs_lapacke = ['/opt/intel/parallel_studio_xe_2016/mkl/lib/intel64']
-    # include_dirs_lapacke = ['/opt/intel/parallel_studio_xe_2016/mkl/include']
+    # This supposes that MKL multithread BLAS is used.
+    # This is invoked when mkl.py exists on the current directory.
+
+    #### Example of mkl.py ####
+    # extra_link_args_lapacke = ['-L/opt/intel/mkl/lib/intel64',
+    #                            '-lmkl_intel_ilp64', '-lmkl_intel_thread',
+    #                            '-lmkl_core']
+    # library_dirs_lapacke = []
+    # include_dirs_lapacke = ['/opt/intel/mkl/include']
+
+    print("MKL LAPACKE is to be used.")
     from mkl import (extra_link_args_lapacke, include_dirs_lapacke,
                      library_dirs_lapacke)
     if use_setuptools:
-        extra_compile_args += ['-DMKL_LAPACKE']
+        extra_compile_args += ['-DMKL_LAPACKE',
+                               '-DMULTITHREADED_BLAS']
     else:
-        define_macros += [('MKL_LAPACKE', None)]
+        define_macros += [('MKL_LAPACKE', None),
+                          ('MULTITHREADED_BLAS', None)]
 elif os.path.isfile("libopenblas.py"):
-    ## Modify extra_link_args_lapacke depending on systems
-    # echo "extra_link_args_lapacke = ['-lopenblas']"
-    # This is for travis-CI.
+    # This supposes that multithread openBLAS is used.
+    # This is invoked when libopenblas.py exists on the current directory.
+
+    #### Example of libopenblas.py ####
+    # extra_link_args_lapacke = ['-lopenblas']
+
     from libopenblas import extra_link_args_lapacke
     include_dirs_lapacke = []
     library_dirs_lapacke = []
@@ -84,7 +106,8 @@ elif os.path.isfile("libopenblas.py"):
         define_macros += [('MULTITHREADED_BLAS', None)]
 elif (platform.system() == 'Darwin' and
       os.path.isfile('/opt/local/lib/libopenblas.a')):
-    # For MacPort:
+    # This supposes lapacke with single-thread openBLAS provided by MacPort is
+    # used.
     # % sudo port install gcc6
     # % sudo port select --set gcc mp-gcc
     # % sudo port install OpenBLAS +gcc6
@@ -92,13 +115,25 @@ elif (platform.system() == 'Darwin' and
     include_dirs_lapacke = ['/opt/local/include']
     library_dirs_lapacke = []
 elif os.path.isfile('/usr/lib/liblapacke.so'):
-    # This is when lapacke is installed on system
+    # This supposes that lapacke with single-thread BLAS is installed on system.
     extra_link_args_lapacke = ['-llapacke', '-llapack', '-lblas']
     include_dirs_lapacke = []
     library_dirs_lapacke = []
 else:
-    # For conda: Try dynamic link library of openblas
-    # % conda install numpy scipy h5py pyyaml matplotlib openblas
+    # Here is the default lapacke linkage setting.
+    # Please modify according to your system environment.
+    # Without using multithreaded BLAS, DMULTITHREADED_BLAS is better to be
+    # removed to activate OpenMP multithreading harmonic phonon calculation, but
+    # this is not mandatory.
+    #
+    # The below supposes that lapacke with multithread openblas is used.
+    # Even if using single-thread BLAS and deactivating OpenMP
+    # multithreading for harmonic phonon calculation, the total performance
+    # decrease is considered marginal.
+    #
+    # For conda: Try dynamic
+    # link library of openblas % conda install numpy scipy h5py pyyaml
+    # matplotlib openblas
     extra_link_args_lapacke = ['-lopenblas']
     include_dirs_lapacke = []
     library_dirs_lapacke = []

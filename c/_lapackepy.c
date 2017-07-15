@@ -40,12 +40,6 @@
 #include <phonon.h>
 #include <phonoc_array.h>
 
-#ifdef MKL_KAPACKE
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
-
 static PyObject * py_set_phonons_at_gridpoints(PyObject *self, PyObject *args);
 static PyObject * py_get_phonons_at_qpoints(PyObject *self, PyObject *args);
 static PyObject * py_phonopy_pinv(PyObject *self, PyObject *args);
