@@ -34,13 +34,16 @@
 
 #include <lapack_wrapper.h>
 
-#ifdef MKL_KAPACKE
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
-
 #define min(a,b) ((a)>(b)?(b):(a))
+
+#ifdef MKL_LAPACKE
+MKL_Complex16 lapack_make_complex_double( double re, double im ) {
+  MKL_Complex16 z;
+  z.real = re;
+  z.imag = im;
+  return z;
+}
+#endif
 
 int phonopy_zheev(double *w,
 		  lapack_complex_double *a,

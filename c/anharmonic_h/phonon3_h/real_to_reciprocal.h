@@ -36,12 +36,7 @@
 #define __real_to_reciprocal_H__
 
 #include <phonoc_array.h>
-
-#ifdef MKL_KAPACKE
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
+#include <lapack_wrapper.h>
 
 void real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
                         const double q[9],

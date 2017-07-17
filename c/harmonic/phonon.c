@@ -38,12 +38,6 @@
 #include <phonon.h>
 #include <lapack_wrapper.h>
 
-#ifdef MKL_KAPACKE
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
-
 static int collect_undone_grid_points(int *undone,
 				      char *phonon_done,
 				      const int num_grid_points,

@@ -37,12 +37,7 @@
 
 #include <phonoc_array.h>
 #include <phonoc_const.h>
-
-#ifdef MKL_KAPACKE
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
+#include <lapack_wrapper.h>
 
 void reciprocal_to_normal_squared
 (double *fc3_normal_squared,

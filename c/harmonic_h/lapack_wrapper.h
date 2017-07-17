@@ -35,8 +35,12 @@
 #ifndef __lapack_wrapper_H__
 #define __lapack_wrapper_H__
 
-#ifdef MKL_KAPACKE
+#ifdef MKL_LAPACKE
 #include <mkl.h>
+#define lapack_complex_double MKL_Complex16
+#define lapack_complex_double_real(z) ((z).real)
+#define lapack_complex_double_imag(z) ((z).imag)
+MKL_Complex16 lapack_make_complex_double(double re, double im);
 #else
 #include <lapacke.h>
 #endif

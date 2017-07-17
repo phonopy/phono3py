@@ -51,12 +51,6 @@
 #include <triplet_h/triplet.h>
 #include <tetrahedron_method.h>
 
-#ifdef MKL_KAPACKE
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
-
 /* #define LIBFLAME */
 #ifdef LIBFLAME
 #include <flame_wrapper.h>
@@ -1658,7 +1652,7 @@ static void show_colmat_info(const PyArrayObject *collision_matrix_py,
 {
   int i;
 
-  printf(" [Array_shape:(");
+  printf(" Array_shape:(");
   for (i = 0; i < PyArray_NDIM(collision_matrix_py); i++) {
     printf("%d", (int)PyArray_DIM(collision_matrix_py, i));
     if (i < PyArray_NDIM(collision_matrix_py) - 1) {
