@@ -39,12 +39,7 @@
 #include <phonoc_const.h>
 #include <phonoc_utils.h>
 #include <phonon3_h/real_to_reciprocal.h>
-
-#ifdef MKL_KAPACKE
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
+#include <lapack_wrapper.h>
 
 static void
 real_to_reciprocal_single_thread(lapack_complex_double *fc3_reciprocal,

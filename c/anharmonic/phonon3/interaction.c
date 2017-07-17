@@ -39,12 +39,7 @@
 #include <phonon3_h/interaction.h>
 #include <phonon3_h/real_to_reciprocal.h>
 #include <phonon3_h/reciprocal_to_normal.h>
-
-#ifdef MKL_KAPACKE
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
+#include <lapack_wrapper.h>
 
 static const int index_exchange[6][3] = {{0, 1, 2},
                                          {2, 0, 1},

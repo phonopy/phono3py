@@ -36,12 +36,7 @@
 #define __phonoc_utils_H__
 
 #include <phonoc_array.h>
-
-#ifdef MKL_KAPACKE
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
+#include <lapack_wrapper.h>
 
 lapack_complex_double get_phase_factor(const double q[],
 				       const Darray *shortest_vectors,

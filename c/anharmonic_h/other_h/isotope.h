@@ -35,6 +35,8 @@
 #ifndef __isotope_H__
 #define __isotope_H__
 
+#include <lapack_wrapper.h>
+
 void get_isotope_scattering_strength(double *gamma,
 				     const int grid_point,
 				     const double *mass_variances,

@@ -37,12 +37,7 @@
 
 #include <phonoc_array.h>
 #include <phonoc_const.h>
-
-#ifdef MKL_KAPACKE
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
+#include <lapack_wrapper.h>
 
 void get_pp_collision_with_g(double *imag_self_energy,
                              PHPYCONST int relative_grid_address[24][4][3],
