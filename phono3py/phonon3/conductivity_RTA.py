@@ -541,8 +541,6 @@ class Conductivity_RTA(Conductivity):
         if self._read_gamma:
             if self._use_ave_pp:
                 self._collision.set_grid_point(grid_point)
-                self._collision.set_averaged_pp_interaction(
-                    self._averaged_pp_interaction[i])
                 self._set_gamma_at_sigmas(i)
         else:
             self._collision.set_grid_point(grid_point)
@@ -550,10 +548,12 @@ class Conductivity_RTA(Conductivity):
             if self._log_level:
                 print("Number of triplets: %d" % num_triplets)
 
+            const_ave_pp = self._pp.get_constant_averaged_interaction()
             if (self._is_full_pp or
                 len(self._sigmas) > 1 or
                 self._sigmas[0] is not None or
                 self._use_ave_pp or
+                const_ave_pp is not None or
                 self._is_gamma_detail):
                 self._set_gamma_at_sigmas(i)
             else: # can save memory space
@@ -609,7 +609,10 @@ class Conductivity_RTA(Conductivity):
             self._collision.set_sigma(sigma)
             self._collision.set_integration_weights()
 
-            if not self._use_ave_pp:
+            if self._use_ave_pp:
+                self._collision.set_averaged_pp_interaction(
+                    self._averaged_pp_interaction[i])
+            else:
                 if self._log_level:
                     text = "Collisions will be calculated with "
                     if sigma is None:

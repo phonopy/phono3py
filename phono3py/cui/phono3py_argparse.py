@@ -349,7 +349,7 @@ def get_parser():
     #     "--read_amplitude", dest="read_amplitude", action="store_true",
     #     help="Read phonon-phonon interaction amplitudes")
     parser.add_option(
-        "--use_ave_pp", dest="use_ave_pp", action="store_true",
+        "--ave_pp", dest="use_ave_pp", action="store_true",
         help="Use averaged ph-ph interaction")
     parser.add_option(
         "--read_collision", dest="read_collision", type="string",

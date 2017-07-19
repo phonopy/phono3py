@@ -470,8 +470,8 @@ class ImagSelfEnergy(object):
         # self._pp.set_dynamical_matrix, though Gamma-point is an exception,
         # which is treatd at self._pp.set_grid_point.
         # self._pp.set_phonons(self._triplets_at_q.ravel())
-        (self._frequencies,
-         self._eigenvectors) = self._pp.get_phonons()[:2]
+        # (self._frequencies,
+        #  self._eigenvectors) = self._pp.get_phonons()[:2]
 
         num_triplets = len(self._triplets_at_q)
         num_band = self._pp.get_primitive().get_number_of_atoms() * 3
