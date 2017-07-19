@@ -149,7 +149,7 @@ class Interaction(object):
 
     def get_cutoff_frequency(self):
         return self._cutoff_frequency
-        
+
     def get_averaged_interaction(self):
         v = self._interaction_strength
         w = self._weights_at_q
@@ -169,6 +169,9 @@ class Interaction(object):
 
     def get_unit_conversion_factor(self):
         return self._unit_conversion
+
+    def get_constant_averaged_interaction(self):
+        return self._constant_averaged_interaction
 
     def set_grid_point(self, grid_point, stores_triplets_map=False):
         reciprocal_lattice = np.linalg.inv(self._primitive.get_cell())
