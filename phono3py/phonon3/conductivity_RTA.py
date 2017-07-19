@@ -728,7 +728,7 @@ class Conductivity_RTA(Conductivity):
         self._show_log_value_names()
 
         if self._log_level > 1:
-            self._show_log_values_on_kstar(frequencies, gv, ave_pp)
+            self._show_log_values_on_kstar(frequencies, gv, ave_pp, gp, q)
         else:
             self._show_log_values(frequencies, gv, ave_pp)
 
@@ -744,7 +744,7 @@ class Conductivity_RTA(Conductivity):
                 print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f" %
                       (f, v[0], v[1], v[2], np.linalg.norm(v)))
 
-    def _show_log_values_on_kstar(self, frequencies, gv, ave_pp):
+    def _show_log_values_on_kstar(self, frequencies, gv, ave_pp, gp, q):
         rotation_map = get_grid_points_by_rotations(
             self._grid_address[gp],
             self._point_operations,
