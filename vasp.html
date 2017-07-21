@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -23,6 +22,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
@@ -37,7 +37,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 
   </head>
-  <body role="document">
+  <body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -67,8 +67,9 @@
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="install.html#from-source-code">From source code</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#install-using-pip-conda">Install using pip/conda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-using-conda">Installation using conda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-using-pip">Installation using pip</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-from-source-code">Installation from source code</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -233,7 +234,7 @@ calculator) calculations.</p>
 directory named <code class="docutils literal"><span class="pre">disp-xxxxx</span></code> (and <code class="docutils literal"><span class="pre">disp_fc2-xxxxx</span></code>), where
 <code class="docutils literal"><span class="pre">xxxxx</span></code> is sequential number.</p>
 </li>
-<li><p class="first">Collect <code class="docutils literal"><span class="pre">vasprun.xml</span></code>&#8216;s</p>
+<li><p class="first">Collect <code class="docutils literal"><span class="pre">vasprun.xml</span></code>’s</p>
 <p>When VASP is used as the force calculator, force sets to calculate
 fc3 and fc2 are created as follows.</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="p">{</span><span class="mf">00001.</span><span class="o">.</span><span class="mi">00755</span><span class="p">}</span><span class="o">/</span><span class="n">vasprun</span><span class="o">.</span><span class="n">xml</span>
@@ -328,7 +329,7 @@ hdf5 files on grid points are no more necessary and may be deleted.</p>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.4.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.<br/>
     </p>
   </div>
 </footer>

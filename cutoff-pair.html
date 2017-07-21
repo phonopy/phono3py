@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -23,6 +22,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
@@ -37,7 +37,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 
   </head>
-  <body role="document">
+  <body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -67,8 +67,9 @@
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="install.html#from-source-code">From source code</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#install-using-pip-conda">Install using pip/conda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-using-conda">Installation using conda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-using-pip">Installation using pip</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-from-source-code">Installation from source code</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -222,7 +223,7 @@
       
   <div class="section" id="reducing-number-of-force-calculations-by-cutoff-pair-distance">
 <span id="command-cutoff-pair"></span><h1>Reducing number of force calculations by cutoff pair-distance<a class="headerlink" href="#reducing-number-of-force-calculations-by-cutoff-pair-distance" title="Permalink to this headline">¶</a></h1>
-<p>Here the detail of the command option <a class="reference internal" href="command-options.html#cutoff-pair-option"><span class="std std-ref">&#8211;cutoff_pair or &#8211;cutoff_pair_distance</span></a> is
+<p>Here the detail of the command option <a class="reference internal" href="command-options.html#cutoff-pair-option"><span class="std std-ref">--cutoff_pair or --cutoff_pair_distance</span></a> is
 explained.</p>
 <div class="contents local topic" id="contents">
 <ul class="simple">
@@ -256,16 +257,16 @@ computational resource.</p>
 enough. If it is the case, we may be allowed to omit computing some
 elements of fc3. This is what achieved by <code class="docutils literal"><span class="pre">--cutoff_pair</span></code> option.</p>
 <p>A fc3 element is made of three atoms in the supercell. Two of three
-are finitely displaced (<img class="math" src="_images/math/b5442303fd0da158cce2edc382c0bca0e90335b9.png" alt="\Delta\mathbf{r}_1"/> and
-<img class="math" src="_images/math/70c3baa7cbf84b574d2d743b8a213db164c78584.png" alt="\Delta\mathbf{r}_2"/>) but one of them is included in a force
+are finitely displaced (<span class="math">\(\Delta\mathbf{r}_1\)</span> and
+<span class="math">\(\Delta\mathbf{r}_2\)</span>) but one of them is included in a force
 given by the force calculator
-(<img class="math" src="_images/math/896516b992b8094d2309c3695aef2e38bb08ab04.png" alt="-\frac{\partial\Phi}{\partial\mathbf{r}_3}"/>). The cutoff
-distance <img class="math" src="_images/math/36d607323b734ecadc73885c0b08a2408559bb48.png" alt="d_\text{cut}"/> is defined as the upper bound of the
+(<span class="math">\(-\frac{\partial\Phi}{\partial\mathbf{r}_3}\)</span>). The cutoff
+distance <span class="math">\(d_\text{cut}\)</span> is defined as the upper bound of the
 distance between the former two atoms that are considered for the
 force calculations, i.e., the set of atomic pairs
-<img class="math" src="_images/math/1bb37c98623cd0461d16f76e2b56e0c9ee26d5a3.png" alt="\{(\mathbf{r}_1,\mathbf{r}_2)| |\mathbf{r}_1 - \mathbf{r}_2| &lt;
-d_\text{cut}\}"/> is selected. By this, when three distances among the
-three atoms of triplets are all larger than <img class="math" src="_images/math/36d607323b734ecadc73885c0b08a2408559bb48.png" alt="d_\text{cut}"/>,
+<span class="math">\(\{(\mathbf{r}_1,\mathbf{r}_2)| |\mathbf{r}_1 - \mathbf{r}_2| &lt;
+d_\text{cut}\}\)</span> is selected. By this, when three distances among the
+three atoms of triplets are all larger than <span class="math">\(d_\text{cut}\)</span>,
 those fc3 elements can not be obtained and so they are set to be zero.</p>
 </div>
 <div class="section" id="usage">
@@ -373,7 +374,7 @@ output file containing forces in each directory (for VASP
   \<span class="n">___</span><span class="o">|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>\<span class="n">__</span><span class="p">,</span><span class="n">_</span><span class="o">|</span>
 </pre></div>
 </div>
-<p>Using <a class="reference internal" href="command-options.html#cf3-file-option"><span class="std std-ref">&#8211;cf3_file option</span></a> may be recommended
+<p>Using <a class="reference internal" href="command-options.html#cf3-file-option"><span class="std std-ref">–cf3_file option</span></a> may be recommended
 when the number of force files is large.</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>% for i in `ls POSCAR-0*|sed s/POSCAR-//`;do echo disp-$i/vasprun.xml;done &gt; file_list.dat
 % phono3py --cf3_file file_list.dat
@@ -619,7 +620,7 @@ num_displacements_created: 1254
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.4.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.<br/>
     </p>
   </div>
 </footer>

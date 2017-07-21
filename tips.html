@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -23,6 +22,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
@@ -37,7 +37,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 
   </head>
-  <body role="document">
+  <body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -67,8 +67,9 @@
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="install.html#from-source-code">From source code</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#install-using-pip-conda">Install using pip/conda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-using-conda">Installation using conda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-using-pip">Installation using pip</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-from-source-code">Installation from source code</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
@@ -244,7 +245,7 @@ respect to number of mesh points along an axis from n=19 to 65. This
 is calculated with RTA and the linear tetrahedron method. Within the
 methods and phono3py implementation, it is converging at around n=55,
 however this computational demand is not trivial. As far as observing
-this result, an extrapolation to <img class="math" src="_images/math/1863b87a2715256aa7a9608436faa0d76e38941f.png" alt="1/n \rightarrow 0"/> seems not a
+this result, an extrapolation to <span class="math">\(1/n \rightarrow 0\)</span> seems not a
 good idea, since it gives overestimation in the case of this Si
 example. This plot tells that we have to decide how much value is
 acceptable as lattice thermal conductivity value. Therefore it
@@ -262,7 +263,7 @@ computationally efficient, since it is avoided to re-calculate
 phonon-phonon interaction strength for different <code class="docutils literal"><span class="pre">sigma</span></code> values in
 this case. Convergence with respect to the sampling mesh and smearing
 parameter strongly depends on materials. For Si example, a
-<img class="math" src="_images/math/977682a1e1cdaad31811430231c166aff2a38935.png" alt="20\times 20\times 20"/> sampling mesh (or 8000 reducible sampling
+<span class="math">\(20\times 20\times 20\)</span> sampling mesh (or 8000 reducible sampling
 points) and 0.1 THz smearing value for reciprocal of the volume of an
 atom may be a good starting choice. The tetrahedron method requires no
 such parameter as the smearing width.</p>
@@ -299,7 +300,7 @@ exchange-correlational potential, etc, should be reconsidered.</p>
 <div class="section" id="displacement-distance-of-atoms">
 <h3><a class="toc-backref" href="#id5">Displacement distance of atoms</a><a class="headerlink" href="#displacement-distance-of-atoms" title="Permalink to this headline">¶</a></h3>
 <p>The phono3py default displacement distance is 0.03
-<img class="math" src="_images/math/04434c28148d7cc7b890adfcbcba587062175696.png" alt="\text{\AA}"/>. In some cases, accurate result may not be obtained
+<span class="math">\(\text{\AA}\)</span>. In some cases, accurate result may not be obtained
 due to the numerical noise of the force calculator. Usually increasing
 the displacement distance by the <a class="reference internal" href="command-options.html#amplitude-option"><span class="std std-ref">amplitude option</span></a> reduces the numerical noise, but as its drawback
 higher order anharmonicity is involved (renormalized) into fc3 and fc2.</p>
@@ -308,10 +309,10 @@ higher order anharmonicity is involved (renormalized) into fc3 and fc2.</p>
 <div class="section" id="file-format-compatibility-with-phonopy">
 <span id="file-format-compatibility"></span><h2><a class="toc-backref" href="#id6">File format compatibility with phonopy</a><a class="headerlink" href="#file-format-compatibility-with-phonopy" title="Permalink to this headline">¶</a></h2>
 <p><code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> and <code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> are not compatible with
-phonopy&#8217;s <code class="docutils literal"><span class="pre">disp.yaml</span></code>. <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal"><span class="pre">FORCES_FC2</span></code> are not
-compatible with phonopy&#8217;s <code class="docutils literal"><span class="pre">FORCE_SETS</span></code>. But <code class="docutils literal"><span class="pre">FORCE_SETS</span></code> can be
-created using <a class="reference internal" href="command-options.html#cfs-option"><span class="std std-ref">&#8211;cfs</span></a>, and <code class="docutils literal"><span class="pre">FORCES_FC2</span></code> and
-<code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> can be created using <a class="reference internal" href="command-options.html#fs2f2-option"><span class="std std-ref">&#8211;fs2f2</span></a>. In addition, if <code class="docutils literal"><span class="pre">fc2.hdf5</span></code> is renamed to
+phonopy’s <code class="docutils literal"><span class="pre">disp.yaml</span></code>. <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal"><span class="pre">FORCES_FC2</span></code> are not
+compatible with phonopy’s <code class="docutils literal"><span class="pre">FORCE_SETS</span></code>. But <code class="docutils literal"><span class="pre">FORCE_SETS</span></code> can be
+created using <a class="reference internal" href="command-options.html#cfs-option"><span class="std std-ref">–cfs</span></a>, and <code class="docutils literal"><span class="pre">FORCES_FC2</span></code> and
+<code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> can be created using <a class="reference internal" href="command-options.html#fs2f2-option"><span class="std std-ref">–fs2f2</span></a>. In addition, if <code class="docutils literal"><span class="pre">fc2.hdf5</span></code> is renamed to
 <code class="docutils literal"><span class="pre">force_constants.hdf5</span></code>, it is used in phonopy with <code class="docutils literal"><span class="pre">--hdf5</span></code> and
 <code class="docutils literal"><span class="pre">--readfc</span></code> option.</p>
 </div>
@@ -337,7 +338,7 @@ created using <a class="reference internal" href="command-options.html#cfs-optio
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.4.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.<br/>
     </p>
   </div>
 </footer>
