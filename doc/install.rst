@@ -166,48 +166,60 @@ If you think you are familiar with MacOSX, unix system, and python,
 the recommended installation process is written at
 https://atztogo.github.io/phonopy/MacOSX.html, which is more-or-less
 the same as phonopy, but with openblas, too. An example of the
-procedure is summarized below.
+procedure is summarized in the next section.
 
-It is supposed to have the following environment variable::
+An example of installation process
+-----------------------------------
 
-   export PATH=~/.miniconda3/bin:$PATH
+1. Download miniconda package
 
-Here it is assumed that gcc compiler is installed on your system. The
-compiler such as default clang on MacOSX can't handle OpenMP, so it
-can't be used. The gcc compiler may be installed using MacPort, e.g.::
+   Miniconda is downloaded at https://conda.io/miniconda.html. 
 
-   % sudo port install gcc7 wget
+   For usual 64-bit Linux system::
 
-where wget is optional. Download miniconda at
-https://conda.io/miniconda.html. Using wget::
+     % wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 
-  % wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+   For MacOSX, it is assumed that gcc compiler is installed on your system. The
+   compiler such as default clang on MacOSX can't handle OpenMP, so it
+   can't be used. The gcc compiler may be installed using MacPort, e.g.::
 
-Then install and update conda::
+     % sudo port install gcc7 wget
 
-  % bash miniconda.sh -b -p $HOME/.miniconda3
-  % conda update conda
+   where wget is optional. Then download using wget::
 
-The necessary python libraries and openBLAS are installed by::
+     % wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
 
-  % conda install numpy scipy h5py pyyaml matplotlib openblas
+2. Install conda packages
 
-Install the latest phonopy and phono3py::
+   It is supposed to have the following environment variable::
 
-   % git clone https://github.com/atztogo/phonopy.git
-   % cd phonopy
-   % python setup.py install --user
-   % cd ..
-   % git clone https://github.com/atztogo/phono3py.git
-   % cd phono3py
-   % python setup.py install --user
-   % cd ..
+     export PATH=~/.miniconda3/bin:$PATH
 
-Environment variables ``PATH`` and ``PYTHONPATH`` must be set
-appropriately to use phono3py. See see
-https://atztogo.github.io/phonopy/install.html#building-using-setup-py
-and
-https://atztogo.github.io/phonopy/install.html#set-correct-environment-variables-path-and-pythonpath.
+   Then install and update conda::
+
+     % bash miniconda.sh -b -p $HOME/.miniconda3
+     % conda update conda
+
+   The necessary python libraries and openBLAS are installed by::
+
+     % conda install numpy scipy h5py pyyaml matplotlib openblas
+
+   Install the latest phonopy and phono3py::
+
+     % git clone https://github.com/atztogo/phonopy.git
+     % cd phonopy
+     % python setup.py install --user
+     % cd ..
+     % git clone https://github.com/atztogo/phono3py.git
+     % cd phono3py
+     % python setup.py install --user
+     % cd ..
+
+   Environment variables ``PATH`` and ``PYTHONPATH`` must be set
+   appropriately to use phono3py. See see
+   https://atztogo.github.io/phonopy/install.html#building-using-setup-py
+   and
+   https://atztogo.github.io/phonopy/install.html#set-correct-environment-variables-path-and-pythonpath.
 
 Trouble shooting
 -----------------
