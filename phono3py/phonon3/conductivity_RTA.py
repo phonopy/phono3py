@@ -601,7 +601,7 @@ class Conductivity_RTA(Conductivity):
             (len(self._sigmas), num_temp), dtype='intc')
         self._collision = ImagSelfEnergy(
             self._pp,
-            with_detail=self._is_gamma_detail,
+            with_detail=(self._is_gamma_detail or self._is_N_U),
             unit_conversion=self._gamma_unit_conversion)
 
     def _set_gamma_at_sigmas(self, i):
@@ -641,10 +641,11 @@ class Conductivity_RTA(Conductivity):
                 self._collision.set_temperature(t)
                 self._collision.run()
                 self._gamma[j, k, i] = self._collision.get_imag_self_energy()
-                if self._is_gamma_detail:
+                if self._is_N_U or self._is_gamma_detail:
                     g_N, g_U = self._collision.get_imag_self_energy_N_and_U()
                     self._gamma_N[j, k, i] = g_N
                     self._gamma_U[j, k, i] = g_U
+                if self._is_gamma_detail:
                     self._gamma_detail_at_q[k] = (
                         self._collision.get_detailed_imag_self_energy())
 
