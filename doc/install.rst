@@ -120,17 +120,6 @@ or if the python libraries are not yet installed::
 
 This openblas package contains BLAS, LAPACK, and LAPACKE.
 
-..
-   Multithreading support
-   ------------------------
-
-   Phono3py supports OpenMP multithreading and most users will need it,
-   otherwise the calculation may take long time. The library options used
-   for GCC, ``-lgomp`` and ``-fopenmp``, are written in ``setup.py``,
-   but for the other compilers, you may have to change them.  If you need
-   to compile without the OpenMP support, you can remove these options in
-   ``setup.py``.
-
 Building using setup.py
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -139,38 +128,102 @@ special compiler or special options, phono3py is built using
 setup.py. In this case, manual modification of ``setup.py`` may be
 needed.
 
-Download the latest source packages at
-https://pypi.python.org/pypi/phono3py and extract it somewhere. In the
-directory, open ``setup.py`` and specify the library and its path of a
-lapacke library. Then
+1. Download the latest source code at
 
-::
+   https://pypi.python.org/pypi/phono3py
 
-   % python setup.py install --user
+2. and extract it::
 
-Or you can install phono3py on the current directory by
+     % tar xvfz phono3py-1.11.13.39.tar.gz
+     % cd phono3py-1.11.13.39
 
-::
+   The other option is using git to clone the phonopy repository from github::
 
-   % python setup.py install --home=.
+     % git clone https://github.com/atztogo/phono3py.git
+     % cd phono3py
 
-In this way to setup, ``PYTHONPATH`` has to be set so that python can
-find harmonic and anharmonic phonopy libraries. If you have been
-already a user of phonopy, ``PYTHONPATH`` for the original phonopy
-version has to be removed. The ``PYTHONPATH`` setting depends on
-shells that you use. For example in bash or zsh::
+2. Set up C-libraries for python C-API and python codes. This can be
+   done as follows:
 
-   export PYTHONPATH=~/phono3py-1.11.11/lib/python
+   Run ``setup.py`` script::
 
-or::
+      % python setup.py install --user
 
-   export PYTHONPATH=$PYTHONPATH:~/phono3py-1.11.11/lib/python
+3. Set :envvar:`$PATH` and :envvar:`$PYTHONPATH`
 
-Phono3py command is installed under ``bin`` directory. The location of
-``bin`` directory is depending on ``--user`` or ``--home`` scheme when
-running ``setup.py``. In the former case, it depends on your
-operation system, e.g., ``~/.local/bin`` for Ubuntu linux and
-``~/Library/Python/2.7`` for Mac (& python2.7). In the latter case,
-``bin`` directory is found on the current directory if it was
-``--home=.``.
+   ``PATH`` and ``PYTHONPATH`` are set in the same way as phonopy, see
+   https://atztogo.github.io/phonopy/install.html#building-using-setup-py.
 
+Installation on MacOSX
+-----------------------
+
+MacOSX users may be able to install phonopy and phono3py on recent
+MacOSX. But it requires a basic knowledge on UNIX and python. So if
+you are afraid of that, please prepare a computer or a virtual machine
+with a normal linux OS such as Ubuntu-linux-64bit 14.04 or 16.04.
+
+If you think you are familiar with MacOSX, unix system, and python,
+the recommended installation process is written at
+https://atztogo.github.io/phonopy/MacOSX.html, which is more-or-less
+the same as phonopy, but with openblas, too. An example of the
+procedure is summarized in the next section.
+
+An example of installation process
+-----------------------------------
+
+1. Download miniconda package
+
+   Miniconda is downloaded at https://conda.io/miniconda.html. 
+
+   For usual 64-bit Linux system::
+
+     % wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+
+   For MacOSX, it is assumed that gcc compiler is installed on your system. The
+   compiler such as default clang on MacOSX can't handle OpenMP, so it
+   can't be used. The gcc compiler may be installed using MacPort, e.g.::
+
+     % sudo port install gcc7 wget
+
+   where wget is optional. Then download using wget::
+
+     % wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+
+2. Install conda packages
+
+   It is supposed to have the following environment variable::
+
+     export PATH=~/.miniconda3/bin:$PATH
+
+   Then install and update conda::
+
+     % bash miniconda.sh -b -p $HOME/.miniconda3
+     % conda update conda
+
+   The necessary python libraries and openBLAS are installed by::
+
+     % conda install numpy scipy h5py pyyaml matplotlib openblas
+
+   Install the latest phonopy and phono3py::
+
+     % git clone https://github.com/atztogo/phonopy.git
+     % cd phonopy
+     % python setup.py install --user
+     % cd ..
+     % git clone https://github.com/atztogo/phono3py.git
+     % cd phono3py
+     % python setup.py install --user
+     % cd ..
+
+   Environment variables ``PATH`` and ``PYTHONPATH`` must be set
+   appropriately to use phono3py. See see
+   https://atztogo.github.io/phonopy/install.html#building-using-setup-py
+   and
+   https://atztogo.github.io/phonopy/install.html#set-correct-environment-variables-path-and-pythonpath.
+
+Trouble shooting
+-----------------
+
+1. Phonopy version should be the latest to use the latest phono3py.
+2. There are other pitfalls, see
+   https://atztogo.github.io/phonopy/install.html#trouble-shooting.
