@@ -205,7 +205,7 @@ list. ``disp_fc3.yaml`` has to be located at the current directory.
 
 ::
 
-   % phono3py --cf3 phono3py --cf3_file file_list.dat
+   % phono3py --cf3_file file_list.dat
 
 where ``file_list.dat`` contains file names that can be recognized
 from the current directory and is expected to be like::

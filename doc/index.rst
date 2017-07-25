@@ -29,6 +29,7 @@ Documentation
    hdf5_howto
    workload-distribution
    auxiliary-tools
+   external-tools
    tips
    citation
    changelog
