@@ -231,6 +231,9 @@ class Conductivity(object):
 
     def _get_gamma_isotope_at_sigmas(self, i):
         gamma_iso = []
+        bz_map = self._pp.get_bz_map()
+        pp_freqs, pp_eigvecs, pp_phonon_done = self._pp.get_phonons()
+
         for j, sigma in enumerate(self._sigmas):
             if self._log_level:
                 text = "Calculating Gamma of ph-isotope with "
@@ -239,9 +242,11 @@ class Conductivity(object):
                 else:
                     text += "sigma=%s" % sigma
                 print(text)
-            pp_freqs, pp_eigvecs, pp_phonon_done = self._pp.get_phonons()
+
             self._isotope.set_sigma(sigma)
-            self._isotope.set_phonons(pp_freqs,
+            self._isotope.set_phonons(self._grid_address,
+                                      bz_map,
+                                      pp_freqs,
                                       pp_eigvecs,
                                       pp_phonon_done,
                                       dm=self._dm)
