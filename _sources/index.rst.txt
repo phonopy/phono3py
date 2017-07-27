@@ -28,6 +28,7 @@ Documentation
    output-files
    hdf5_howto
    workload-distribution
+   cutoff-pair
    auxiliary-tools
    external-tools
    tips
