@@ -69,7 +69,7 @@
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-using-conda">Installation using conda</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-using-pip">Installation using pip</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-from-source-code">Installation from source code</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#installation-on-macosx">Installation on MacOSX</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installation-on-macos">Installation on macOS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#an-example-of-installation-process">An example of installation process</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#trouble-shooting">Trouble shooting</a></li>
 </ul>
@@ -82,7 +82,7 @@
 <li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options and setting tags</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#calculator-interface">Calculator interface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#force-constants">Force constants</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#reciprocal-space-sampling-mesh-and-grid-points">Reciprocal space sampling mesh and grid points</a></li>
@@ -102,14 +102,20 @@
 <li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#details-of-kappa-hdf5-file">Details of <code class="docutils literal"><span class="pre">kappa-*.hdf5</span></code> file</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#kaccum"><code class="docutils literal"><span class="pre">kaccum</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#kdeplot"><code class="docutils literal"><span class="pre">kdeplot</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="workload-distribution.html#how-to-do-it">How to do it</a></li>
 <li class="toctree-l2"><a class="reference internal" href="workload-distribution.html#a-convenient-script">A convenient script</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#kaccum"><code class="docutils literal"><span class="pre">kaccum</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#kdeplot"><code class="docutils literal"><span class="pre">kdeplot</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Crude force constants calculation by cutoff pair-distance</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cutoff-pair.html#what-is-cutff-pair-distance-in-phono3py">What is cutff pair-distance in phono3py?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cutoff-pair.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cutoff-pair.html#the-test">The Test</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a><ul>
@@ -314,7 +320,7 @@ interaction strength can not be given. See <a class="reference internal" href="c
 strength calculation was made by Jonathan Skelton. Depending on
 systems, but 10-20% performance improvement may be possible.</li>
 <li><code class="docutils literal"><span class="pre">--stp</span></code> option is created to show numbers of q-point triplets to
-be calculated. See <a class="reference internal" href="command-options.html#command-options"><span class="std std-ref">Command options and setting tags</span></a>.</li>
+be calculated. See <a class="reference internal" href="command-options.html#command-options"><span class="std std-ref">Command options / Setting tags</span></a>.</li>
 <li><code class="docutils literal"><span class="pre">--write_gamma</span></code> and <code class="docutils literal"><span class="pre">--read_gamma</span></code> support using with <code class="docutils literal"><span class="pre">--bi</span></code>
 option. Therefore a thermal conductivity calculation can be
 distributed over band index, too. This may be useful for the system
@@ -326,7 +332,7 @@ whose unit cell is large.</li>
 <ul class="simple">
 <li>Changed so that <code class="docutils literal"><span class="pre">--wgp</span></code> option writes <code class="docutils literal"><span class="pre">grid_address-mxxx.hdf5</span></code>
 instead of <code class="docutils literal"><span class="pre">grid_address-mxxx.dat</span></code>.</li>
-<li><code class="docutils literal"><span class="pre">--write_detailed_gamma</span></code> is implemented. See <a class="reference internal" href="command-options.html#command-options"><span class="std std-ref">Command options and setting tags</span></a>.</li>
+<li><code class="docutils literal"><span class="pre">--write_detailed_gamma</span></code> is implemented. See <a class="reference internal" href="command-options.html#command-options"><span class="std std-ref">Command options / Setting tags</span></a>.</li>
 <li>When running without setting <code class="docutils literal"><span class="pre">--thm</span></code> and <code class="docutils literal"><span class="pre">--sigma</span></code> options,
 linear tetrahedron method corresponding to <code class="docutils literal"><span class="pre">--thm</span></code> is used as the
 default behavior.</li>
