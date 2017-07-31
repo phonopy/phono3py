@@ -23,7 +23,8 @@ For example, cumulative thermal conductivity is defined by
     \int^\omega_0 \sum_\lambda
    \kappa_\lambda \delta(\omega_\lambda - \omega') d\omega'
 
-where :math:`\kappa_\lambda` of phono3py for single-mode RTA is given as
+:math:`\kappa_\lambda` is the contribution to :math:`\kappa` from the
+phonon mode :math:`\lambda`, which is defined as
 
 .. math::
 
