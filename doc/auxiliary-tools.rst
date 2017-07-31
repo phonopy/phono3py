@@ -21,7 +21,7 @@ For example, cumulative thermal conductivity is defined by
 
    \kappa^\text{c}(\omega) = 
     \int^\omega_0 \sum_\lambda
-   \kappa_\lambda \delta(\omega_\lambda - \omega) d\omega
+   \kappa_\lambda \delta(\omega_\lambda - \omega') d\omega'
 
 where :math:`\kappa_\lambda` of phono3py for single-mode RTA is given as
 
@@ -137,21 +137,30 @@ data becomes 3.
 ``--mfp``
 ^^^^^^^^^^
 
-Mean free path (MFP) is used instead of frequency for the x-axis. The
-MFP cumulative :math:`\kappa(l)^\text{c}` is given by
+Mean free path (MFP) is used instead of frequency for the x-axis. MFP
+is defined in the single-mode RTA by a vector
+
+.. math::
+
+   \mathbf{l}_\lambda = \mathbf{v}_\lambda \tau_\lambda.
+
+The MFP cumulative :math:`\kappa^\text{c}(l)` is given by
 
 .. math::
 
    \kappa^\text{c}(l) = 
     \int^l_0 \sum_\lambda
-   \kappa_\lambda \delta(l_\lambda - l)
+   \kappa_\lambda \delta(l_\lambda - l') dl'
 
-where :math:`\kappa_\lambda` of phono3py for single-mode RTA is given as
+where :math:`l_\lambda = |\mathbf{l}_\lambda|` and
+:math:`\kappa_\lambda` is the contribution to :math:`\kappa` from the
+phonon mode :math:`\lambda` in the single-mode RTA, which is defined
+as
 
 .. math::
 
    \kappa_\lambda = C_\lambda \mathbf{v}_\lambda \otimes
-   \mathbf{v}_\lambda = C_\lambda \mathbf{v}_\lambda \otimes
+   \mathbf{v}_\lambda \tau_\lambda = C_\lambda \mathbf{v}_\lambda \otimes
    \mathbf{l}_\lambda.
 
 The unit of MFP is Angstrom. 
