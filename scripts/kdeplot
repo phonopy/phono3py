@@ -9,7 +9,7 @@ import argparse
 
 epsilon = 1.0e-8
 
-def collect_data(gamma, weights, frequencies, t_index, cutoff, max_freq):
+def collect_data(gamma, weights, frequencies, cutoff, max_freq):
     freqs = []
     mode_prop = []
     mode_weights = []
@@ -162,9 +162,6 @@ parser.add_argument("--fmax", help="Max frequency to plot",
                     type=float, default=None)
 parser.add_argument("--hc", "--hide_colorbar", dest="hide_colorbar",
                     action='store_true', help='Do not show colorbar')
-parser.add_argument('--gv_norm', action='store_true',
-                    help=("|gv| is used for the density plot instead of "
-                          "lifetime.")),
 parser.add_argument('--nbins', type=int, default=100,
                     help=("Number of bins in which data are assigned, "
                           "i.e., determining resolution of plot")),
@@ -241,25 +238,20 @@ weights = f['weight'][:]
 frequencies = f['frequency'][:]
 symbols = ['',]
 
-if args.gv_norm:
-    gv_norm = np.sqrt((f['group_velocity'][:, :, :] ** 2).sum(axis=2))
-    gammas = [gv_norm,]
-else:
-    gammas = [f['gamma'][t_index],]
-    if args.nu:
-        if 'gamma_N' in f:
-            gammas.append(f['gamma_N'][t_index])
-            symbols.append('N')
-        if 'gamma_U' in f:
-            gammas.append(f['gamma_U'][t_index])
-            symbols.append('U')
+gammas = [f['gamma'][t_index],]
+if args.nu:
+    if 'gamma_N' in f:
+        gammas.append(f['gamma_N'][t_index])
+        symbols.append('N')
+    if 'gamma_U' in f:
+        gammas.append(f['gamma_U'][t_index])
+        symbols.append('U')
 
 #
 # Run
 #
 for gamma, s in zip(gammas, symbols):
-    x, y = collect_data(gamma, weights, frequencies,
-                        t_index, args.cutoff, args.fmax)
+    x, y = collect_data(gamma, weights, frequencies, args.cutoff, args.fmax)
     xi, yi, zi, short_nbinds = run_KDE(x, y, args.nbins,
                                        x_max=args.xmax,
                                        y_max=args.ymax,
