@@ -19,7 +19,7 @@ before_install:
 
 install:
     - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy h5py pyyaml matplotlib openblas
-    - conda install -c atztogo --yes phonopy
+    - conda install --yes -c atztogo phonopy
     - pwd
     - ./get_nanoversion.sh
     - cat __nanoversion__.txt
