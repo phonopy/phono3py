@@ -72,13 +72,7 @@ class Interaction(object):
 
         self._band_index_count = 0
 
-        try:
-            svecs, multiplicity = self._primitive.get_smallest_vectors()
-        except AttributeError:
-            from phonopy.harmonic.dynamical_matrix import get_smallest_vectors
-            svecs, multiplicity = get_smallest_vectors(self._supercell,
-                                                       self._primitive,
-                                                       self._symprec)
+        svecs, multiplicity = self._primitive.get_smallest_vectors()
         self._smallest_vectors = svecs
         self._multiplicity = multiplicity
         self._masses = np.array(self._primitive.get_masses(), dtype='double')

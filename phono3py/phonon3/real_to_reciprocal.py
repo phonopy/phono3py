@@ -17,15 +17,8 @@ class RealToReciprocal(object):
         self._p2s_map = primitive.get_primitive_to_supercell_map()
         self._s2p_map = primitive.get_supercell_to_primitive_map()
         # Reduce supercell atom index to primitive index
-        try:
-            (self._smallest_vectors,
-             self._multiplicity) = primitive.get_smallest_vectors()
-        except AttributeError:
-            from phonopy.harmonic.dynamical_matrix import get_smallest_vectors
-            (self._smallest_vectors,
-             self._multiplicity) = get_smallest_vectors(supercell,
-                                                        primitive,
-                                                        symprec)
+        (self._smallest_vectors,
+         self._multiplicity) = primitive.get_smallest_vectors()
         self._fc3_reciprocal = None
 
     def run(self, triplet):
