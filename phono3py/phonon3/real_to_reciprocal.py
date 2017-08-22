@@ -24,8 +24,9 @@ class RealToReciprocal(object):
     def run(self, triplet):
         self._triplet = triplet
         num_patom = self._primitive.get_number_of_atoms()
+        dtype = "c%d" % (np.dtype('double').itemsize * 2)
         self._fc3_reciprocal = np.zeros(
-            (num_patom, num_patom, num_patom, 3, 3, 3), dtype='complex128')
+            (num_patom, num_patom, num_patom, 3, 3, 3), dtype=dtype)
         self._real_to_reciprocal()
 
     def get_fc3_reciprocal(self):
@@ -49,7 +50,8 @@ class RealToReciprocal(object):
         num_satom = self._supercell.get_number_of_atoms()
         pi = patom_indices
         i = self._p2s_map[pi[0]]
-        fc3_reciprocal = np.zeros((3, 3, 3), dtype='complex128')
+        dtype = "c%d" % (np.dtype('double').itemsize * 2)
+        fc3_reciprocal = np.zeros((3, 3, 3), dtype=dtype)
         for j in range(num_satom):
             if self._s2p_map[j] != self._p2s_map[pi[1]]:
                 continue
