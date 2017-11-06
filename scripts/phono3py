@@ -77,17 +77,16 @@ phono3py_version = __version__
 
 # Parse arguments
 parser = get_parser()
-(options, args) = parser.parse_args()
-option_list = parser.option_list
+args = parser.parse_args()
 
 # Log level
 log_level = 1
-if options.verbose:
+if args.verbose:
     log_level = 2
-if options.quiet:
+if args.quiet:
     log_level = 0
-if options.log_level is not None:
-    log_level=options.log_level
+if args.log_level is not None:
+    log_level = args.log_level
 
 #
 # Phono3py interface mode
@@ -98,17 +97,17 @@ if options.log_level is not None:
 # CRYSTAL       : eV,      Angstrom,  AMU,         eV/Angstrom
 # abinit        : hartree, au,        AMU,         eV/Angstrom
 #
-if options.pwscf_mode:
+if args.pwscf_mode:
     interface_mode = 'pwscf'
     from phonopy.interface.pwscf import write_supercells_with_displacements
     distance_to_A = Bohr
     force_to_eVperA = Rydberg / Bohr
-elif options.crystal_mode:
+elif args.crystal_mode:
     interface_mode = 'crystal'
     from phonopy.interface.crystal import write_supercells_with_displacements
     distance_to_A = None
     force_to_eVperA = None
-elif options.abinit_mode:
+elif args.abinit_mode:
     interface_mode = 'abinit'
     from phonopy.interface.abinit import write_supercells_with_displacements
     distance_to_A = Bohr
@@ -120,11 +119,11 @@ else:
     force_to_eVperA = None
 
 # Input and output filename extension
-input_filename = options.input_filename
-output_filename = options.output_filename
-if options.input_output_filename is not None:
-    input_filename = options.input_output_filename
-    output_filename = options.input_output_filename
+input_filename = args.input_filename
+output_filename = args.output_filename
+if args.input_output_filename is not None:
+    input_filename = args.input_output_filename
+    output_filename = args.input_output_filename
 
 # Title
 if log_level:
@@ -134,7 +133,7 @@ if log_level:
 #####################
 # Create FORCES_FC3 #
 #####################
-if options.forces_fc3_mode or options.forces_fc3_file_mode:
+if args.forces_fc3 or args.forces_fc3_file:
     if input_filename is None:
         disp_filename = 'disp_fc3.yaml'
     else:
@@ -149,11 +148,15 @@ if options.forces_fc3_mode or options.forces_fc3_file_mode:
         for d2 in d1['second_atoms']:
             if d2['included']:
                 num_disps += 1
-    if options.forces_fc3_file_mode:
-        file_exists(args[0], log_level)
-        force_filenames = [x.strip() for x in open(args[0])]
+    if args.forces_fc3_file:
+        file_exists(args.forces_fc3_file[0], log_level)
+        force_filenames = [x.strip() for x in open(args.forces_fc3_file[0])]
     else:
-        force_filenames = args
+        force_filenames = args.forces_fc3
+
+    for filename in force_filenames:
+        file_exists(filename, log_level)
+
     if log_level > 0:
         print("Number of displacements: %d" % num_disps)
         print("Number of supercell files: %d" % len(force_filenames))
@@ -181,7 +184,7 @@ if options.forces_fc3_mode or options.forces_fc3_file_mode:
 #####################
 # Create FORCES_FC2 #
 #####################
-if options.forces_fc2_mode:
+if args.forces_fc2:
     if input_filename is None:
         disp_filename = 'disp_fc2.yaml'
     else:
@@ -192,7 +195,10 @@ if options.forces_fc2_mode:
     disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
     num_atoms = disp_dataset['natom']
     num_disps = len(disp_dataset['first_atoms'])
-    force_filenames = args
+    force_filenames = args.forces_fc2
+    for filename in force_filenames:
+        file_exists(filename, log_level)
+
     if log_level > 0:
         print("Number of displacements: %d" % num_disps)
         print("Number of supercell files: %d" % len(force_filenames))
@@ -218,7 +224,7 @@ if options.forces_fc2_mode:
             print_error()
         sys.exit(1)
 
-if options.force_sets_to_forces_fc2_mode:
+if args.force_sets_to_forces_fc2_mode:
     filename = 'FORCE_SETS'
     file_exists(filename, log_level)
     disp_dataset = parse_FORCE_SETS(filename=filename)
@@ -229,12 +235,12 @@ if options.force_sets_to_forces_fc2_mode:
         print("FORCES_FC2 and disp_fc2.yaml have been created from FORCE_SETS.")
         print_end()
     sys.exit(0)
-    
+
 #####################################
 # Create FORCE_SETS from FORCES_FC* #
 #####################################
-if options.force_sets_mode:
-    if options.phonon_supercell_dimension is not None:
+if args.force_sets_mode:
+    if args.phonon_supercell_dimension is not None:
         if input_filename is None:
             disp_filename = 'disp_fc2.yaml'
         else:
@@ -252,32 +258,29 @@ if options.force_sets_mode:
         disp_dataset = parse_disp_fc3_yaml(filename=disp_filename)
         file_exists("FORCES_FC3", log_level)
         forces = parse_FORCES_FC3(disp_dataset)
-        
+
     if log_level:
         print("Displacement dataset is read from %s." % disp_filename)
-        
+
     for force_set, disp1 in zip(forces, disp_dataset['first_atoms']):
         disp1['forces'] = force_set
     write_FORCE_SETS(disp_dataset)
-    
+
     if log_level:
         print("FORCE_SETS has been created.")
         print_end()
     sys.exit(0)
-    
+
 ##################
 # Parse settings #
 ##################
-if len(args) > 0:
-    phono3py_conf = Phono3pyConfParser(filename=args[0],
-                                       options=options,
-                                       option_list=option_list)
+if len(args.conf_file) > 0:
+    phono3py_conf = Phono3pyConfParser(filename=args.conf_file[0], args=args)
     settings = phono3py_conf.get_settings()
 else:
-    phono3py_conf = Phono3pyConfParser(options=options,
-                                       option_list=option_list)
+    phono3py_conf = Phono3pyConfParser(args=args)
     settings = phono3py_conf.get_settings()
-    
+
 #############
 # Run modes #
 #############
@@ -352,7 +355,7 @@ frequency_step = conf['frequency_step']
 frequency_scale_factor = conf['frequency_scale_factor']
 cutoff_frequency = conf['cutoff_frequency']
 
-symprec = options.symprec
+symprec = args.symprec
 
 # Check supercell size
 if supercell_matrix is None:
@@ -380,7 +383,7 @@ if settings.get_create_displacements():
         output_filename=output_filename,
         interface_mode=interface_mode,
         log_level=log_level)
-    
+
     finalize_phono3py(log_level,
                       phono3py_conf,
                       phono3py,
@@ -414,7 +417,7 @@ phono3py = Phono3py(
     symmetrize_fc3_q=settings.get_is_symmetrize_fc3_q(),
     symprec=symprec,
     log_level=log_level,
-    lapack_zheev_uplo=options.uplo)
+    lapack_zheev_uplo=args.uplo)
 
 supercell = phono3py.get_supercell()
 primitive = phono3py.get_primitive()
@@ -430,15 +433,15 @@ if log_level:
                         phonon_supercell,
                         settings)
 
-#####################################################  
+#####################################################
 # Write ir-grid points and grid addresses, and exit #
 #####################################################
-if options.write_grid_points:
+if args.write_grid_points:
     write_grid_points(primitive,
                       mesh,
                       mesh_divs,
                       coarse_mesh_shifts,
-                      settings.get_is_kappa_star(),                  
+                      settings.get_is_kappa_star(),
                       symprec,
                       log_level)
 
@@ -449,15 +452,15 @@ if options.write_grid_points:
 ##################################################
 # Show reduced number of triplets at grid points #
 ##################################################
-if options.show_num_triplets:
+if args.show_num_triplets:
     show_num_triplets(primitive,
                       mesh,
                       mesh_divs,
                       grid_points,
                       coarse_mesh_shifts,
-                      settings.get_is_kappa_star(),                  
+                      settings.get_is_kappa_star(),
                       symprec,
-                      log_level)    
+                      log_level)
 
     if log_level:
         print_end()
@@ -548,7 +551,7 @@ if log_level and run_mode is not None:
                            frequency_step,
                            num_frequency_points,
                            log_level)
-    
+
 #############
 # Joint DOS #
 #############
@@ -575,7 +578,7 @@ if run_mode == "jdos":
     if log_level:
         print_end()
     sys.exit(0)
-    
+
 #############################
 # Phonon-isotope scattering #
 #############################
@@ -610,7 +613,7 @@ if run_mode == "isotope":
         frequency_factor_to_THz=frequency_factor_to_THz,
         symprec=symprec,
         cutoff_frequency=settings.get_cutoff_frequency(),
-        lapack_zheev_uplo=options.uplo)
+        lapack_zheev_uplo=args.uplo)
     iso.set_dynamical_matrix(phono3py.get_fc2(),
                              phonon_supercell,
                              phonon_primitive,
