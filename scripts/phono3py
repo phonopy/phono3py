@@ -37,12 +37,12 @@
 import sys
 import numpy as np
 from phonopy.file_IO import parse_BORN, write_FORCE_SETS, parse_FORCE_SETS
-from phono3py.file_IO import read_phonon_from_hdf5
 from phonopy.units import VaspToTHz, PwscfToTHz, Bohr, Rydberg, Hartree
 from phonopy.interface import read_crystal_structure, get_force_sets
+from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phono3py.version import __version__
 from phono3py.file_IO import (parse_disp_fc2_yaml, parse_disp_fc3_yaml,
-                              write_disp_fc2_yaml,
+                              write_disp_fc2_yaml, read_phonon_from_hdf5,
                               parse_FORCES_FC2, parse_FORCES_FC3,
                               write_FORCES_FC2, write_FORCES_FC3)
 from phono3py.cui.settings import Phono3pyConfParser
@@ -73,10 +73,8 @@ def finalize_phono3py(log_level,
         print_end()
     sys.exit(0)
 
-phono3py_version = __version__
-
 # Parse arguments
-parser = get_parser()
+parser, deprecated = get_parser()
 args = parser.parse_args()
 
 # Log level
@@ -87,6 +85,14 @@ if args.quiet:
     log_level = 0
 if args.log_level is not None:
     log_level = args.log_level
+
+# Title
+if log_level:
+    print_phono3py()
+    print_version(__version__)
+
+if deprecated:
+    show_deprecated_option_warnings(deprecated)
 
 #
 # Phono3py interface mode
@@ -124,11 +130,6 @@ output_filename = args.output_filename
 if args.input_output_filename is not None:
     input_filename = args.input_output_filename
     output_filename = args.input_output_filename
-
-# Title
-if log_level:
-    print_phono3py()
-    print_version(phono3py_version)
 
 #####################
 # Create FORCES_FC3 #

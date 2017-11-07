@@ -32,9 +32,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from optparse import OptionParser
+import sys
+from phonopy.cui.phonopy_argparse import fix_deprecated_option_names
 
 def get_parser():
+    deprecated = fix_deprecated_option_names(sys.argv)
+
     import argparse
     parser = argparse.ArgumentParser(
         description="Phono3py command-line-tool")
@@ -145,14 +148,14 @@ def get_parser():
         "--band", dest="band_paths",
         help="Band structure paths calculated for Gruneisen parameter")
     parser.add_argument(
-        "--band_points", dest="band_points", type=int,
+        "--band-points", dest="band_points", type=int,
         help=("Number of points calculated on a band segment in the band "
               "structure Gruneisen parameter calculation"))
     parser.add_argument(
-        "--bi", "--band_indices", dest="band_indices",
+        "--bi", "--band-indices", dest="band_indices",
         help="Band indices where life time is calculated")
     parser.add_argument(
-        "--boundary_mfp", "--bmfp", dest="boundary_mfp", type=float,
+        "--boundary-mfp", "--bmfp", dest="boundary_mfp", type=float,
         help=("Boundary mean free path in micrometre for thermal conductivity "
               "calculation"))
     parser.add_argument(
@@ -162,36 +165,36 @@ def get_parser():
         "-c", "--cell", dest="cell_filename", metavar="FILE",
         help="Read unit cell")
     parser.add_argument(
-        "--cf2", "--create_f2", dest="forces_fc2", nargs='+',
+        "--cf2", "--create-f2", dest="forces_fc2", nargs='+',
         help="Create FORCES_FC2")
     parser.add_argument(
-        "--cf3", "--create_f3", dest="forces_fc3", nargs='+',
+        "--cf3", "--create-f3", dest="forces_fc3", nargs='+',
         help="Create FORCES_FC3")
     parser.add_argument(
-        "--cf3_file", "--create_f3_from_file", dest="forces_fc3_file", nargs=1,
+        "--cf3-file", "--create-f3-from-file", dest="forces_fc3_file", nargs=1,
         help="Create FORCES_FC3 from file name list")
     parser.add_argument(
-        "--cfs", "--create_force_sets", dest="force_sets_mode",
+        "--cfs", "--create-force-sets", dest="force_sets_mode",
         action="store_true",
         help="Create phonopy FORCE_SETS from FORCES_FC2")
     parser.add_argument(
-        "--const_ave_pp", dest="constant_averaged_pp_interaction", type=float,
+        "--const-ave-pp", dest="constant_averaged_pp_interaction", type=float,
         help="Set constant averaged ph-ph interaction (Pqj)")
     parser.add_argument(
         "--crystal", dest="crystal_mode", action="store_true",
         help="Invoke CRYSTAL mode")
     parser.add_argument(
-        "--cutoff_fc3", "--cutoff_fc3_distance", dest="cutoff_fc3_distance",
+        "--cutoff-fc3", "--cutoff-fc3-distance", dest="cutoff_fc3_distance",
         type=float,
         help=("Cutoff distance of third-order force constants. Elements where "
               "any pair of atoms has larger distance than cut-off distance are "
               "set zero."))
     parser.add_argument(
-        "--cutoff_freq", "--cutoff_frequency", dest="cutoff_frequency",
+        "--cutoff-freq", "--cutoff-frequency", dest="cutoff_frequency",
         type=float,
         help="Phonon modes below this frequency are ignored.")
     parser.add_argument(
-        "--cutoff_pair", "--cutoff_pair_distance", dest="cutoff_pair_distance",
+        "--cutoff-pair", "--cutoff-pair-distance", dest="cutoff_pair_distance",
         type=float,
         help=("Cutoff distance between pairs of displaced atoms used for "
               "supercell creation with displacements and making third-order "
@@ -203,7 +206,7 @@ def get_parser():
         "--dim", dest="supercell_dimension",
         help="Supercell dimension")
     parser.add_argument(
-        "--dim_fc2", dest="phonon_supercell_dimension",
+        "--dim-fc2", dest="phonon_supercell_dimension",
         help="Supercell dimension for extra fc2")
     parser.add_argument(
         "--factor", dest="frequency_conversion_factor", type=float,
@@ -215,39 +218,39 @@ def get_parser():
         "--fc3", dest="read_fc3", action="store_true",
         help="Read third order force constants")
     parser.add_argument(
-        "--freq_scale", dest="frequency_scale_factor", type=float,
+        "--freq-scale", dest="frequency_scale_factor", type=float,
         help=("Squared scale factor multiplied with fc2. Therefore frequency "
               "is changed but the contribution from NAC is not changed."))
     parser.add_argument(
-        "--freq_pitch", dest="fpitch", type=float,
+        "--freq-pitch", dest="fpitch", type=float,
         help="Pitch in frequency for spectrum")
     parser.add_argument(
-        "--fs2f2", "--force_sets_to_forces_fc2",
+        "--fs2f2", "--force-sets-to-forces-fc2",
         dest="force_sets_to_forces_fc2_mode",
         action="store_true", help="Create FORCES_FC2 from FORCE_SETS")
     parser.add_argument(
-        "--fst", "--frequency_shift", dest="is_frequency_shift",
+        "--fst", "--frequency-shift", dest="is_frequency_shift",
         action="store_true", help="Calculate frequency shifts")
     parser.add_argument(
-        "--full_pp", dest="is_full_pp", action="store_true",
+        "--full-pp", dest="is_full_pp", action="store_true",
         help=("Calculate full ph-ph interaction for RTA conductivity."
               "This may be activated when full elements of ph-ph interaction "
               "strength are needed, i.e., to calculate average ph-ph "
               "interaction strength."))
     parser.add_argument(
-        "--ga", "--grid_addresses", dest="grid_addresses",
+        "--ga", "--grid-addresses", dest="grid_addresses",
         help="Fixed grid addresses where anharmonic properties are calculated")
     parser.add_argument(
-        "--gamma_unit_conversion", dest="gamma_unit_conversion", type=float,
+        "--gamma-unit-conversion", dest="gamma_unit_conversion", type=float,
         help="Conversion factor for gamma")
     parser.add_argument(
-        "--gp", "--grid_points", dest="grid_points",
+        "--gp", "--grid-points", dest="grid_points",
         help="Fixed grid points where anharmonic properties are calculated")
     parser.add_argument(
         "--gruneisen", dest="is_gruneisen", action="store_true",
         help="Calculate phonon Gruneisen parameter")
     parser.add_argument(
-        "--gv_delta_q", dest="gv_delta_q", type=float,
+        "--gv-delta-q", dest="gv_delta_q", type=float,
         help="Delta-q distance used for group velocity calculation")
     parser.add_argument(
         "-i", dest="input_filename",
@@ -256,7 +259,7 @@ def get_parser():
         "--io", dest="input_output_filename",
         help="Input and output filename extension")
     parser.add_argument(
-        "--ion_clamped", dest="ion_clamped", action="store_true",
+        "--ion-clamped", dest="ion_clamped", action="store_true",
         help=("Atoms are clamped under applied strain in Gruneisen parameter "
               "calculation"))
     parser.add_argument(
@@ -281,13 +284,13 @@ def get_parser():
         "--mass", dest="masses",
         help="Same as MASS tag")
     parser.add_argument(
-        "--md", "--mesh_divisors", dest="mesh_divisors",
+        "--md", "--mesh-divisors", dest="mesh_divisors",
         help="Divisors for mesh numbers")
     parser.add_argument(
         "--mesh", dest="mesh_numbers",
         help="Mesh numbers")
     parser.add_argument(
-        "--mv", "--mass_variances", dest="mass_variances",
+        "--mv", "--mass-variances", dest="mass_variances",
         help="Mass variance parameters for isotope scattering")
     parser.add_argument(
         "--nac", dest="is_nac", action="store_true",
@@ -296,7 +299,7 @@ def get_parser():
         "--nodiag", dest="is_nodiag", action="store_true",
         help="Set displacements parallel to axes")
     parser.add_argument(
-        "--noks", "--no_kappa_stars", dest="no_kappa_stars",
+        "--noks", "--no-kappa-stars", dest="no_kappa_stars",
         action="store_true",
         help="Deactivate summation of partial kappa at q-stars"),
     parser.add_argument(
@@ -309,25 +312,25 @@ def get_parser():
         "--nu", dest="is_N_U", action="store_true",
         help="Split Gamma into Normal and Umklapp processes")
     parser.add_argument(
-        "--num_freq_points", dest="num_frequency_points", type=int,
+        "--num-freq-points", dest="num_frequency_points", type=int,
         help="Number of sampling points for spectrum")
     parser.add_argument(
         "-o", dest="output_filename",
         help="Output filename extension")
     parser.add_argument(
-        "--pa", "--primitive_axis", dest="primitive_axis",
+        "--pa", "--primitive-axis", dest="primitive_axis",
         help="Same as PRIMITIVE_AXIS tags")
     parser.add_argument(
-        "--pinv_cutoff", dest="pinv_cutoff", type=float,
+        "--pinv-cutoff", dest="pinv_cutoff", type=float,
         help="Cutoff frequency (THz) for pseudo inversion of collision matrix")
     parser.add_argument(
-        "--pinv_solver", dest="pinv_solver", type=int,
+        "--pinv-solver", dest="pinv_solver", type=int,
         help="Switch of LBTE pinv solver")
     parser.add_argument(
         "--pm", dest="is_plusminus_displacements", action="store_true",
         help="Set plus minus displacements")
     parser.add_argument(
-        "--pp_unit_conversion", dest="pp_unit_conversion", type=float,
+        "--pp-unit-conversion", dest="pp_unit_conversion", type=float,
         help="Conversion factor for ph-ph interaction")
     parser.add_argument(
         "--pwscf", dest="pwscf_mode", action="store_true",
@@ -336,7 +339,7 @@ def get_parser():
         "--qpoints", dest="qpoints",
         help="Calculate at specified q-points")
     parser.add_argument(
-        "--q_direction", dest="q_direction",
+        "--q-direction", dest="q_direction",
         help="q-vector direction at q->0 for non-analytical term correction")
     parser.add_argument(
         "-q", "--quiet", dest="quiet", action="store_true",
@@ -345,27 +348,27 @@ def get_parser():
     #     "--read_amplitude", dest="read_amplitude", action="store_true",
     #     help="Read phonon-phonon interaction amplitudes")
     parser.add_argument(
-        "--ave_pp", dest="use_ave_pp", action="store_true",
+        "--ave-pp", dest="use_ave_pp", action="store_true",
         help="Use averaged ph-ph interaction")
     parser.add_argument(
-        "--read_collision", dest="read_collision",
+        "--read-collision", dest="read_collision",
         help="Read collision matrix and Gammas from files")
     parser.add_argument(
-        "--read_gamma", dest="read_gamma", action="store_true",
+        "--read-gamma", dest="read_gamma", action="store_true",
         help="Read Gammas from files")
     parser.add_argument(
-        "--read_phonon", dest="read_phonon", action="store_true",
+        "--read-phonon", dest="read_phonon", action="store_true",
         help="Read phonons from files")
     parser.add_argument(
-        "--reducible_colmat", dest="is_reducible_collision_matrix",
+        "--reducible-colmat", dest="is_reducible_collision_matrix",
         action="store_true",
         help="Solve reducible collision matrix")
     parser.add_argument(
-        "--scattering_event_class", dest="scattering_event_class", type=int,
+        "--scattering-event-class", dest="scattering_event_class", type=int,
         help=("Scattering event class 1 or 2 to draw imaginary part of self "
               "energy"))
     parser.add_argument(
-        "--stp", "--show_num_triplets", dest="show_num_triplets",
+        "--stp", "--show-num-triplets", dest="show_num_triplets",
         action="store_true",
         help=("Show reduced number of triplets to be calculated at "
               "specified grid points"))
@@ -374,16 +377,16 @@ def get_parser():
         help=("A sigma value or multiple sigma values (separated by space) for "
               "smearing width used for limited functions"))
     parser.add_argument(
-        "--sym_fc2", dest="is_symmetrize_fc2", action="store_true",
+        "--sym-fc2", dest="is_symmetrize_fc2", action="store_true",
         help="Symmetrize fc2 by index exchange")
     parser.add_argument(
-        "--sym_fc3r", dest="is_symmetrize_fc3_r", action="store_true",
+        "--sym-fc3r", dest="is_symmetrize_fc3_r", action="store_true",
         help="Symmetrize fc3 in real space by index exchange")
     parser.add_argument(
-        "--sym_fc3q", dest="is_symmetrize_fc3_q", action="store_true",
+        "--sym-fc3q", dest="is_symmetrize_fc3_q", action="store_true",
         help="Symmetrize fc3 in reciprocal space by index exchange")
     parser.add_argument(
-        "--thm", "--tetrahedron_method", dest="is_tetrahedron_method",
+        "--thm", "--tetrahedron-method", dest="is_tetrahedron_method",
         action="store_true",
         help="Use tetrahedron method")
     parser.add_argument(
@@ -402,7 +405,7 @@ def get_parser():
         "--tsym", dest="is_translational_symmetry", action="store_true",
         help="Impose translational invariance condition")
     parser.add_argument(
-        "--tsym_type", dest="tsym_type", type=int,
+        "--tsym-type", dest="tsym_type", type=int,
         help="Imposing type of translational invariance")
     parser.add_argument(
         "--tolerance", dest="symprec", type=float,
@@ -414,7 +417,7 @@ def get_parser():
         "-v", "--verbose", dest="verbose", action="store_true",
         help="Detailed run-time information is displayed")
     parser.add_argument(
-        "--wgp", "--write_grid_points", dest="write_grid_points",
+        "--wgp", "--write-grid-points", dest="write_grid_points",
         action="store_true",
         help=("Write grid address of irreducible grid points for specified "
               "mesh numbers to ir_grid_address.yaml"))
@@ -422,20 +425,20 @@ def get_parser():
     #                   action="store_true",
     #                   help="Write phonon-phonon interaction amplitudes")
     parser.add_argument(
-        "--write_collision", dest="write_collision", action="store_true",
+        "--write-collision", dest="write_collision", action="store_true",
         help="Write collision matrix and Gammas to files")
     parser.add_argument(
-        "--write_gamma", dest="write_gamma", action="store_true",
+        "--write-gamma", dest="write_gamma", action="store_true",
         help="Write imag-part of self energy to files")
     parser.add_argument(
-        "--write_gamma_detail", "--write_detailed_gamma",
+        "--write-gamma-detail", "--write_detailed_gamma",
         dest="write_gamma_detail", action="store_true",
         help="Write out detailed imag-part of self energy")
     parser.add_argument(
-        "--write_phonon", dest="write_phonon", action="store_true",
+        "--write-phonon", dest="write_phonon", action="store_true",
         help="Write all phonons on grid points to files")
     parser.add_argument(
         "conf_file", nargs='*',
         help="Phono3py configure file")
 
-    return parser
+    return parser, deprecated
