@@ -24,7 +24,7 @@ class Interaction(object):
                  symmetrize_fc3_q=False,
                  cutoff_frequency=None,
                  lapack_zheev_uplo='L'):
-        self._fc3 = fc3 
+        self._fc3 = fc3
         self._supercell = supercell
         self._primitive = primitive
         self._mesh = np.array(mesh, dtype='intc')
@@ -78,9 +78,9 @@ class Interaction(object):
         self._masses = np.array(self._primitive.get_masses(), dtype='double')
         self._p2s = self._primitive.get_primitive_to_supercell_map()
         self._s2p = self._primitive.get_supercell_to_primitive_map()
-        
+
         self._allocate_phonon()
-        
+
     def run(self, lang='C', g_zero=None):
         num_band = self._primitive.get_number_of_atoms() * 3
         num_triplets = len(self._triplets_at_q)
@@ -104,7 +104,7 @@ class Interaction(object):
 
     def get_mesh_numbers(self):
         return self._mesh
-    
+
     def get_phonons(self):
         return self._frequencies, self._eigenvectors, self._phonon_done
 
@@ -131,7 +131,7 @@ class Interaction(object):
 
     def get_bz_map(self):
         return self._bz_map
-    
+
     def get_band_indices(self):
         return self._band_indices
 
@@ -314,7 +314,7 @@ class Interaction(object):
 
     def _run_c(self, g_zero):
         import phono3py._phono3py as phono3c
-        
+
         num_band = self._primitive.get_number_of_atoms() * 3
 
         if g_zero is None or self._symmetrize_fc3_q:
@@ -352,7 +352,7 @@ class Interaction(object):
                      self._frequency_factor_to_THz,
                      self._nac_q_direction,
                      self._lapack_zheev_uplo)
-        
+
     def _run_py(self):
         r2r = RealToReciprocal(self._fc3,
                                self._supercell,
@@ -383,7 +383,7 @@ class Interaction(object):
                       self._grid_address,
                       self._mesh,
                       self._dm,
-                      self._frequency_factor_to_THz,                  
+                      self._frequency_factor_to_THz,
                       self._lapack_zheev_uplo)
 
     def _allocate_phonon(self):
