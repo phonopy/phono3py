@@ -48,13 +48,13 @@
 /* operations in real space for which duplicate operations are allowed */
 /* in the input. */
 int tpl_get_triplets_reciprocal_mesh_at_q(int map_triplets[],
-					  int map_q[],
-					  int grid_address[][3],
-					  const int grid_point,
-					  const int mesh[3],
-					  const int is_time_reversal,
-					  const int num_rot,
-					  TPLCONST int rotations[][3][3]);
+                                          int map_q[],
+                                          int grid_address[][3],
+                                          const int grid_point,
+                                          const int mesh[3],
+                                          const int is_time_reversal,
+                                          const int num_rot,
+                                          TPLCONST int rotations[][3][3]);
 
 /* Irreducible grid-point-triplets in BZ are stored. */
 /* triplets are recovered from grid_point and triplet_weights. */
@@ -63,26 +63,26 @@ int tpl_get_triplets_reciprocal_mesh_at_q(int map_triplets[],
 /* triplets[num_ir_triplets][3] = number of non-zero triplets weights*/
 /* Number of ir-triplets is returned. */
 int tpl_get_BZ_triplets_at_q(int triplets[][3],
-			     const int grid_point,
-			     TPLCONST int bz_grid_address[][3],
-			     const int bz_map[],
-			     const int map_triplets[],
-			     const int num_map_triplets,
-			     const int mesh[3]);
+                             const int grid_point,
+                             TPLCONST int bz_grid_address[][3],
+                             const int bz_map[],
+                             const int map_triplets[],
+                             const int num_map_triplets,
+                             const int mesh[3]);
 
 int tpl_get_integration_weight(double *iw,
-			       char *iw_zero,
-			       const double frequency_points[],
-			       const int num_band0,
-			       TPLCONST int relative_grid_address[24][4][3],
-			       const int mesh[3],
-			       TPLCONST int triplets[][3],
-			       const int num_triplets,
-			       TPLCONST int bz_grid_address[][3],
-			       const int bz_map[],
-			       const double frequencies[],
-			       const int num_band,
-			       const int num_iw,
+                               char *iw_zero,
+                               const double frequency_points[],
+                               const int num_band0,
+                               TPLCONST int relative_grid_address[24][4][3],
+                               const int mesh[3],
+                               TPLCONST int triplets[][3],
+                               const int num_triplets,
+                               TPLCONST int bz_grid_address[][3],
+                               const int bz_map[],
+                               const double frequencies[],
+                               const int num_band,
+                               const int num_iw,
                                const int openmp_per_triplets,
                                const int openmp_per_bands);
 

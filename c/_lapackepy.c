@@ -171,25 +171,25 @@ static PyObject * py_set_phonons_at_gridpoints(PyObject *self, PyObject *args)
   double* rec_lat;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOdOOOOds",
-			&frequencies,
-			&eigenvectors,
-			&phonon_done_py,
-			&grid_points_py,
-			&grid_address_py,
-			&mesh_py,
-			&fc2_py,
-			&shortest_vectors_fc2,
-			&multiplicity_fc2,
-			&atomic_masses_fc2,
-			&p2s_map_fc2,
-			&s2p_map_fc2,
-			&unit_conversion_factor,
-			&born_effective_charge,
-			&dielectric_constant,
-			&reciprocal_lattice,
-			&q_direction,
-			&nac_factor,
-			&uplo)) {
+                        &frequencies,
+                        &eigenvectors,
+                        &phonon_done_py,
+                        &grid_points_py,
+                        &grid_address_py,
+                        &mesh_py,
+                        &fc2_py,
+                        &shortest_vectors_fc2,
+                        &multiplicity_fc2,
+                        &atomic_masses_fc2,
+                        &p2s_map_fc2,
+                        &s2p_map_fc2,
+                        &unit_conversion_factor,
+                        &born_effective_charge,
+                        &dielectric_constant,
+                        &reciprocal_lattice,
+                        &q_direction,
+                        &nac_factor,
+                        &uplo)) {
     return NULL;
   }
 
@@ -225,24 +225,24 @@ static PyObject * py_set_phonons_at_gridpoints(PyObject *self, PyObject *args)
   }
 
   set_phonons_at_gridpoints(freqs,
-			    eigvecs,
-			    phonon_done,
-			    grid_points,
-			    grid_address,
-			    mesh,
-			    fc2,
-			    svecs_fc2,
-			    multi_fc2,
-			    masses_fc2,
-			    p2s_fc2,
-			    s2p_fc2,
-			    unit_conversion_factor,
-			    born,
-			    dielectric,
-			    rec_lat,
-			    q_dir,
-			    nac_factor,
-			    uplo[0]);
+                            eigvecs,
+                            phonon_done,
+                            grid_points,
+                            grid_address,
+                            mesh,
+                            fc2,
+                            svecs_fc2,
+                            multi_fc2,
+                            masses_fc2,
+                            p2s_fc2,
+                            s2p_fc2,
+                            unit_conversion_factor,
+                            born,
+                            dielectric,
+                            rec_lat,
+                            q_dir,
+                            nac_factor,
+                            uplo[0]);
 
   free(freqs);
   free(eigvecs);
@@ -250,7 +250,7 @@ static PyObject * py_set_phonons_at_gridpoints(PyObject *self, PyObject *args)
   free(fc2);
   free(svecs_fc2);
   free(multi_fc2);
-  
+
   Py_RETURN_NONE;
 }
 
@@ -299,22 +299,22 @@ static PyObject * py_get_phonons_at_qpoints(PyObject *self, PyObject *args)
   }
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOdOOOOds",
-			&frequencies_py,
-			&eigenvectors_py,
-			&qpoints_py,
-			&fc2_py,
-			&shortest_vectors_py,
-			&multiplicity_py,
-			&atomic_masses_py,
-			&p2s_map_py,
-			&s2p_map_py,
-			&unit_conversion_factor,
-			&born_effective_charge_py,
-			&dielectric_constant_py,
-			&reciprocal_lattice_py,
-			&q_direction_py,
-			&nac_factor,
-			&uplo)) {
+                        &frequencies_py,
+                        &eigenvectors_py,
+                        &qpoints_py,
+                        &fc2_py,
+                        &shortest_vectors_py,
+                        &multiplicity_py,
+                        &atomic_masses_py,
+                        &p2s_map_py,
+                        &s2p_map_py,
+                        &unit_conversion_factor,
+                        &born_effective_charge_py,
+                        &dielectric_constant_py,
+                        &reciprocal_lattice_py,
+                        &q_direction_py,
+                        &nac_factor,
+                        &uplo)) {
     return NULL;
   }
 
@@ -350,27 +350,27 @@ static PyObject * py_get_phonons_at_qpoints(PyObject *self, PyObject *args)
 #pragma omp parallel for
   for (i = 0; i < num_q; i++) {
     get_phonons(eigvecs + num_band * num_band * i,
-		freqs + num_band * i,
-		qpoints[i],
-		fc2,
-		masses,
-		p2s,
-		s2p,
-		multi,
-		svecs,
-		born,
-		dielectric,
-		rec_lat,
-		q_dir,
-		nac_factor,
-		unit_conversion_factor,
-		uplo[0]);
+                freqs + num_band * i,
+                qpoints[i],
+                fc2,
+                masses,
+                p2s,
+                s2p,
+                multi,
+                svecs,
+                born,
+                dielectric,
+                rec_lat,
+                q_dir,
+                nac_factor,
+                unit_conversion_factor,
+                uplo[0]);
   }
 
   free(fc2);
   free(svecs);
   free(multi);
-  
+
   Py_RETURN_NONE;
 }
 
@@ -386,8 +386,8 @@ static PyObject * py_phonopy_zheev(PyObject *self, PyObject *args)
   int i, info;
 
   if (!PyArg_ParseTuple(args, "OO",
-			&dynamical_matrix,
-			&eigenvalues)) {
+                        &dynamical_matrix,
+                        &eigenvalues)) {
     return NULL;
   }
 
@@ -396,7 +396,7 @@ static PyObject * py_phonopy_zheev(PyObject *self, PyObject *args)
   eigvals = (double*)PyArray_DATA(eigenvalues);
 
   a = (lapack_complex_double*) malloc(sizeof(lapack_complex_double) *
-				      dimension * dimension);
+                                      dimension * dimension);
   for (i = 0; i < dimension * dimension; i++) {
     a[i] = lapack_make_complex_double(dynmat[i].real, dynmat[i].imag);
   }
@@ -409,7 +409,7 @@ static PyObject * py_phonopy_zheev(PyObject *self, PyObject *args)
   }
 
   free(a);
-  
+
   return PyLong_FromLong((long) info);
 }
 
@@ -426,9 +426,9 @@ static PyObject * py_phonopy_pinv(PyObject *self, PyObject *args)
   int info;
 
   if (!PyArg_ParseTuple(args, "OOd",
-			&data_out_py,
-			&data_in_py,
-			&cutoff)) {
+                        &data_out_py,
+                        &data_in_py,
+                        &cutoff)) {
     return NULL;
   }
 
@@ -436,7 +436,7 @@ static PyObject * py_phonopy_pinv(PyObject *self, PyObject *args)
   n = (int)PyArray_DIMS(data_in_py)[1];
   data_in = (double*)PyArray_DATA(data_in_py);
   data_out = (double*)PyArray_DATA(data_out_py);
-  
+
   info = phonopy_pinv(data_out, data_in, m, n, cutoff);
 
   return PyLong_FromLong((long) info);

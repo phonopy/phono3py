@@ -224,7 +224,7 @@ def get_coarse_ir_grid_points(primitive,
         coarse_mesh = mesh // mesh_divs
         if coarse_mesh_shifts is None:
             coarse_mesh_shifts = [False, False, False]
-    
+
         if not is_kappa_star:
             coarse_grid_address = get_grid_address(coarse_mesh)
             coarse_grid_points = np.arange(np.prod(coarse_mesh), dtype='intc')

@@ -37,14 +37,14 @@
 #include <tetrahedron_method.h>
 
 static void set_freq_vertices(double freq_vertices[3][24][4],
-			      const double frequencies[],
-			      TPLCONST int vertices[2][24][4],
-			      const int num_band,
-			      const int b1,
-			      const int b2);
+                              const double frequencies[],
+                              TPLCONST int vertices[2][24][4],
+                              const int num_band,
+                              const int b1,
+                              const int b2);
 static int set_g(double g[3],
-		 const double f0,
-		 TPLCONST double freq_vertices[3][24][4]);
+                 const double f0,
+                 TPLCONST double freq_vertices[3][24][4]);
 static int in_tetrahedra(const double f0, TPLCONST double freq_vertices[24][4]);
 static void get_triplet_tetrahedra_vertices
 (int vertices[2][24][4],
@@ -55,18 +55,18 @@ static void get_triplet_tetrahedra_vertices
  const int bz_map[]);
 
 int tpi_get_integration_weight(double *iw,
-			       char *iw_zero,
-			       const double frequency_points[],
-			       const int num_band0,
-			       TPLCONST int relative_grid_address[24][4][3],
-			       const int mesh[3],
-			       TPLCONST int triplets[][3],
-			       const int num_triplets,
-			       TPLCONST int bz_grid_address[][3],
-			       const int bz_map[],
-			       const double frequencies[],
-			       const int num_band,
-			       const int num_iw,
+                               char *iw_zero,
+                               const double frequency_points[],
+                               const int num_band0,
+                               TPLCONST int relative_grid_address[24][4][3],
+                               const int mesh[3],
+                               TPLCONST int triplets[][3],
+                               const int num_triplets,
+                               TPLCONST int bz_grid_address[][3],
+                               const int bz_map[],
+                               const double frequencies[],
+                               const int num_band,
+                               const int num_iw,
                                const int openmp_per_triplets,
                                const int openmp_per_bands)
 {
@@ -76,15 +76,15 @@ int tpi_get_integration_weight(double *iw,
   int adrs_shift;
   double g[3];
   double freq_vertices[3][24][4];
-    
+
   for (i = 0; i < 2; i++) {
     sign = 1 - i * 2;
     for (j = 0; j < 24; j++) {
       for (k = 0; k < 4; k++) {
-	for (l = 0; l < 3; l++) {
-	  tp_relative_grid_address[i][j][k][l] = 
-	    relative_grid_address[j][k][l] * sign;
-	}
+        for (l = 0; l < 3; l++) {
+          tp_relative_grid_address[i][j][k][l] =
+            relative_grid_address[j][k][l] * sign;
+        }
       }
     }
   }
@@ -92,11 +92,11 @@ int tpi_get_integration_weight(double *iw,
 #pragma omp parallel for private(j, b1, b2, b12, vertices, adrs_shift, g, freq_vertices) if (openmp_per_triplets)
   for (i = 0; i < num_triplets; i++) {
     get_triplet_tetrahedra_vertices(vertices,
-				    tp_relative_grid_address,
-				    mesh,
-				    triplets[i],
-				    bz_grid_address,
-				    bz_map);
+                                    tp_relative_grid_address,
+                                    mesh,
+                                    triplets[i],
+                                    bz_grid_address,
+                                    bz_map);
 #pragma omp parallel for private(j, b1, b2, b12, adrs_shift, g, freq_vertices) if (openmp_per_bands)
     for (b12 = 0; b12 < num_band * num_band; b12++) {
       b1 = b12 / num_band;
@@ -123,15 +123,15 @@ int tpi_get_integration_weight(double *iw,
 
 
 static void set_freq_vertices(double freq_vertices[3][24][4],
-			      const double frequencies[],
-			      TPLCONST int vertices[2][24][4],
-			      const int num_band,
-			      const int b1,
-			      const int b2)
+                              const double frequencies[],
+                              TPLCONST int vertices[2][24][4],
+                              const int num_band,
+                              const int b1,
+                              const int b2)
 {
   int i, j;
   double f1, f2;
-  
+
   for (i = 0; i < 24; i++) {
     for (j = 0; j < 4; j++) {
       f1 = frequencies[vertices[0][i][j] * num_band + b1];
@@ -146,8 +146,8 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
 }
 
 static int set_g(double g[3],
-		 const double f0,
-		 TPLCONST double freq_vertices[3][24][4])
+                 const double f0,
+                 TPLCONST double freq_vertices[3][24][4])
 {
   int iw_zero;
 
@@ -186,10 +186,10 @@ static int in_tetrahedra(const double f0, TPLCONST double freq_vertices[24][4])
   for (i = 0; i < 24; i++) {
     for (j = 0; j < 4; j++) {
       if (fmin > freq_vertices[i][j]) {
-	fmin = freq_vertices[i][j];
+        fmin = freq_vertices[i][j];
       }
       if (fmax < freq_vertices[i][j]) {
-	fmax = freq_vertices[i][j];
+        fmax = freq_vertices[i][j];
       }
     }
   }
@@ -214,13 +214,12 @@ static void get_triplet_tetrahedra_vertices
   for (i = 0; i < 2; i++) {
     for (j = 0; j < 24; j++) {
       thm_get_neighboring_grid_points(vertices[i][j],
-				      triplet[i + 1],
-				      relative_grid_address[i][j],
-				      4,
-				      mesh,
-				      bz_grid_address,
-				      bz_map);
+                                      triplet[i + 1],
+                                      relative_grid_address[i][j],
+                                      4,
+                                      mesh,
+                                      bz_grid_address,
+                                      bz_map);
     }
   }
 }
-
