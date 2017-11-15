@@ -46,6 +46,7 @@ class Phono3pySettings(Settings):
         self._pinv_solver = 0
         self._pp_conversion_factor = None
         self._scattering_event_class = None # scattering event class 1 or 2
+        self._sigma_cutoff_width = None
         self._temperatures = None
         self._use_alm = False
         self._use_ave_pp = False
@@ -295,6 +296,12 @@ class Phono3pySettings(Settings):
     def get_scattering_event_class(self):
         return self._scattering_event_class
 
+    def set_sigma_cutoff_width(self, sigma_cutoff_width):
+        self._sigma_cutoff_width = sigma_cutoff_width
+
+    def get_sigma_cutoff_width(self):
+        return self._sigma_cutoff_width
+
     def set_temperatures(self, temperatures):
         self._temperatures = temperatures
 
@@ -515,6 +522,11 @@ class Phono3pyConfParser(ConfParser):
             scatt_class = self._args.scattering_event_class
             if scatt_class is not None:
                 self._confs['scattering_event_class'] = scatt_class
+
+        if 'sigma_cutoff_width' in self._args:
+            sigma_cutoff = self._args.sigma_cutoff_width
+            if sigma_cutoff is not None:
+                self._confs['sigma_cutoff_width'] = sigma_cutoff
 
         if 'temperatures' in self._args:
             if self._args.temperatures is not None:
@@ -746,6 +758,10 @@ class Phono3pyConfParser(ConfParser):
                 self.set_parameter('scattering_event_class',
                                    confs['scattering_event_class'])
 
+            if conf_key == 'sigma_cutoff_width':
+                self.set_parameter('sigma_cutoff_width',
+                                   float(confs['sigma_cutoff_width']))
+
             if conf_key == 'temperatures':
                 vals = [fracval(x) for x in confs['temperatures'].split()]
                 if len(vals) < 1:
@@ -953,6 +969,10 @@ class Phono3pyConfParser(ConfParser):
         if 'scattering_event_class' in params:
             self._settings.set_scattering_event_class(
                 params['scattering_event_class'])
+
+        # Cutoff width of smearing function (ratio to sigma value)
+        if 'sigma_cutoff_width' in params:
+            self._settings.set_sigma_cutoff_width(params['sigma_cutoff_width'])
 
         # Temperatures
         if 'temperatures' in params:

@@ -1364,12 +1364,14 @@ static PyObject *
 py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
 {
   PyArrayObject *iw_py;
+  PyArrayObject *iw_zero_py;
   PyArrayObject *frequency_points_py;
   PyArrayObject *triplets_py;
   PyArrayObject *frequencies_py;
-  double sigma;
+  double sigma, sigma_cutoff;
 
   double *iw;
+  char *iw_zero;
   double *frequency_points;
   int num_band0;
   int (*triplets)[3];
@@ -1379,18 +1381,21 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
   int num_iw;
 
   int i, j, k, l, adrs_shift;
-  double f0, f1, f2, g0, g1, g2;
+  double f0, f1, f2, g0, g1, g2, cutoff;
 
-  if (!PyArg_ParseTuple(args, "OOOOd",
+  if (!PyArg_ParseTuple(args, "OOOOOdd",
                         &iw_py,
+                        &iw_zero_py,
                         &frequency_points_py,
                         &triplets_py,
                         &frequencies_py,
-                        &sigma)) {
+                        &sigma,
+                        &sigma_cutoff)) {
     return NULL;
   }
 
   iw = (double*)PyArray_DATA(iw_py);
+  iw_zero = (char*)PyArray_DATA(iw_zero_py);
   frequency_points = (double*)PyArray_DATA(frequency_points_py);
   num_band0 = PyArray_DIMS(frequency_points_py)[0];
   triplets = (int(*)[3])PyArray_DATA(triplets_py);
@@ -1398,6 +1403,7 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
   frequencies = (double*)PyArray_DATA(frequencies_py);
   num_band = PyArray_DIMS(frequencies_py)[1];
   num_iw = PyArray_DIMS(iw_py)[0];
+  cutoff = sigma * sigma_cutoff;
 
 #pragma omp parallel for private(j, k, l, adrs_shift, f0, f1, f2, g0, g1, g2)
   for (i = 0; i < num_triplets; i++) {
@@ -1407,11 +1413,22 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
         f1 = frequencies[triplets[i][1] * num_band + k];
         for (l = 0; l < num_band; l++) {
           f2 = frequencies[triplets[i][2] * num_band + l];
-          g0 = gaussian(f0 - f1 - f2, sigma);
-          g1 = gaussian(f0 + f1 - f2, sigma);
-          g2 = gaussian(f0 - f1 + f2, sigma);
           adrs_shift = i * num_band0 * num_band * num_band +
             j * num_band * num_band + k * num_band + l;
+          if (sigma_cutoff > 0 &&
+              fabs(f0 - f1 - f2) > cutoff &&
+              fabs(f0 + f1 - f2) > cutoff &&
+              fabs(f0 - f1 + f2) > cutoff) {
+            iw_zero[adrs_shift] = 1;
+            g0 = 0;
+            g1 = 0;
+            g2 = 0;
+          } else {
+            iw_zero[adrs_shift] = 0;
+            g0 = gaussian(f0 - f1 - f2, sigma);
+            g1 = gaussian(f0 + f1 - f2, sigma);
+            g2 = gaussian(f0 - f1 + f2, sigma);
+          }
           iw[adrs_shift] = g0;
           adrs_shift += num_triplets * num_band0 * num_band * num_band;
           iw[adrs_shift] = g1 - g2;

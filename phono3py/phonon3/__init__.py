@@ -37,6 +37,7 @@ class Phono3py(object):
                  mesh=None,
                  band_indices=None,
                  sigmas=None,
+                 sigma_cutoff=None,
                  cutoff_frequency=1e-4,
                  frequency_factor_to_THz=VaspToTHz,
                  is_symmetry=True,
@@ -49,6 +50,7 @@ class Phono3py(object):
             self._sigmas = [None]
         else:
             self._sigmas = sigmas
+        self._sigma_cutoff = sigma_cutoff
         self._symprec = symprec
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._is_symmetry = is_symmetry
@@ -476,6 +478,7 @@ class Phono3py(object):
                 self._primitive_symmetry,
                 temperatures=temperatures,
                 sigmas=self._sigmas,
+                sigma_cutoff=self._sigma_cutoff,
                 is_isotope=is_isotope,
                 mass_variances=mass_variances,
                 grid_points=grid_points,
@@ -497,6 +500,7 @@ class Phono3py(object):
                 self._primitive_symmetry,
                 temperatures=temperatures,
                 sigmas=self._sigmas,
+                sigma_cutoff=self._sigma_cutoff,
                 is_isotope=is_isotope,
                 mass_variances=mass_variances,
                 grid_points=grid_points,

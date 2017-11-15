@@ -19,6 +19,7 @@ def get_thermal_conductivity_LBTE(
         symmetry,
         temperatures=np.arange(0, 1001, 10, dtype='double'),
         sigmas=None,
+        sigma_cutoff=None,
         is_isotope=False,
         mass_variances=None,
         grid_points=None,
@@ -55,6 +56,7 @@ def get_thermal_conductivity_LBTE(
         grid_points=grid_points,
         temperatures=temps,
         sigmas=sigmas,
+        sigma_cutoff=sigma_cutoff,
         is_isotope=is_isotope,
         mass_variances=mass_variances,
         boundary_mfp=boundary_mfp,
@@ -388,6 +390,7 @@ class Conductivity_LBTE(Conductivity):
                  grid_points=None,
                  temperatures=None,
                  sigmas=None,
+                 sigma_cutoff=None,
                  is_isotope=False,
                  mass_variances=None,
                  boundary_mfp=None, # in micrometre
@@ -401,6 +404,7 @@ class Conductivity_LBTE(Conductivity):
         self._pp = None
         self._temperatures = None
         self._sigmas = None
+        self._sigma_cutoff = None
         self._is_kappa_star = None
         self._gv_delta_q = None
         self._is_full_pp = None
@@ -449,6 +453,7 @@ class Conductivity_LBTE(Conductivity):
                               grid_points=grid_points,
                               temperatures=temperatures,
                               sigmas=sigmas,
+                              sigma_cutoff=sigma_cutoff,
                               is_isotope=is_isotope,
                               mass_variances=mass_variances,
                               boundary_mfp=boundary_mfp,
@@ -634,7 +639,7 @@ class Conductivity_LBTE(Conductivity):
                 else:
                     text += "sigma=%s" % sigma
                 print(text)
-            self._collision.set_sigma(sigma)
+            self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
             self._collision.set_integration_weights()
 
             if self._is_full_pp and j != 0:

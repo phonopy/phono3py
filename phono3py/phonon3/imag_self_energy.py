@@ -326,12 +326,13 @@ class ImagSelfEnergy(object):
                  frequency_points=None,
                  temperature=None,
                  sigma=None,
+                 sigma_cutoff=None,
                  with_detail=False,
                  unit_conversion=None,
                  lang='C'):
         self._pp = interaction
         self._sigma = None
-        self.set_sigma(sigma)
+        self.set_sigma(sigma, sigma_cutoff=sigma_cutoff)
         self._temperature = None
         self.set_temperature(temperature)
         self._frequency_points = None
@@ -405,6 +406,7 @@ class ImagSelfEnergy(object):
             self._pp,
             np.array(f_points, dtype='double'),
             self._sigma,
+            self._sigma_cutoff,
             is_collision_matrix=self._is_collision_matrix)
         if self._frequency_points is None:
             self._g_zero = _g_zero
@@ -445,11 +447,16 @@ class ImagSelfEnergy(object):
             self._grid_point = grid_point
             self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
 
-    def set_sigma(self, sigma):
+    def set_sigma(self, sigma, sigma_cutoff=None):
         if sigma is None:
             self._sigma = None
         else:
             self._sigma = float(sigma)
+
+        if sigma_cutoff is None:
+            self._sigma_cutoff = None
+        else:
+            self._sigma_cutoff = float(sigma_cutoff)
 
         self.delete_integration_weights()
 
@@ -492,7 +499,7 @@ class ImagSelfEnergy(object):
         if self._g is not None:
             if self._lang == 'C':
                 if self._with_detail:
-                    # self._detailed_imag_self_energy.shape = 
+                    # self._detailed_imag_self_energy.shape =
                     #    (num_triplets, num_band0, num_band, num_band)
                     # self._imag_self_energy is also set.
                     self._run_c_detailed_with_band_indices_with_g()
