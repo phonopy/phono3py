@@ -4,7 +4,7 @@ Auxiliary tools
 ===============
 
 .. contents::
-   :depth: 2
+   :depth: 3
    :local:
 
 .. _auxiliary_tools_kaccum:
@@ -21,9 +21,10 @@ For example, cumulative thermal conductivity is defined by
 
    \kappa^\text{c}(\omega) = 
     \int^\omega_0 \sum_\lambda
-   \kappa_\lambda \delta(\omega_\lambda - \omega) d\omega
+   \kappa_\lambda \delta(\omega_\lambda - \omega') d\omega'
 
-where :math:`\kappa_\lambda` of phono3py for single-mode RTA is given as
+:math:`\kappa_\lambda` is the contribution to :math:`\kappa` from the
+phonon mode :math:`\lambda`, which is defined as
 
 .. math::
 
@@ -77,8 +78,8 @@ The plot like below is displayed.
 
 |i0|
 
-General option
-~~~~~~~~~~~~~~~
+General options
+~~~~~~~~~~~~~~~~
 
 ``--pa``
 ^^^^^^^^^
@@ -120,8 +121,8 @@ temperatures including 300 K.
 
 Number of points to be sampled in the x-axis.
 
-``kaccum`` for tensor properties
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Options for tensor properties
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For cummulative thermal conductivity, the last value is given as the
 thermal conductivity in W/mK. For the other properties, the last value
@@ -137,8 +138,33 @@ data becomes 3.
 ``--mfp``
 ^^^^^^^^^^
 
-Mean free path is used instead of frequency for the x-axis. The unit
-of MFP is Angstrom.
+Mean free path (MFP) is used instead of frequency for the x-axis. MFP
+is defined in the single-mode RTA by a vector
+
+.. math::
+
+   \mathbf{l}_\lambda = \mathbf{v}_\lambda \tau_\lambda.
+
+The MFP cumulative :math:`\kappa^\text{c}(l)` is given by
+
+.. math::
+
+   \kappa^\text{c}(l) = 
+    \int^l_0 \sum_\lambda
+   \kappa_\lambda \delta(l_\lambda - l') dl'
+
+where :math:`l_\lambda = |\mathbf{l}_\lambda|` and
+:math:`\kappa_\lambda` is the contribution to :math:`\kappa` from the
+phonon mode :math:`\lambda` in the single-mode RTA, which is defined
+as
+
+.. math::
+
+   \kappa_\lambda = C_\lambda \mathbf{v}_\lambda \otimes
+   \mathbf{v}_\lambda \tau_\lambda = C_\lambda \mathbf{v}_\lambda \otimes
+   \mathbf{l}_\lambda.
+
+The unit of MFP is Angstrom. 
 
 The figure below shows the results of Si example with the
 :math:`19\times 19\times 19` and :math:`11\times 11\times 11` sampling
@@ -148,6 +174,7 @@ differently. Especially for the result of the :math:`11\times 11\times
 true to look at that of the :math:`19\times 19\times 19` sampling
 mesh. To show this type of plot, be careful about the sampling mesh
 convergence.
+
 
 .. |iMFP| image:: Si-kaccum-MFP.png
 		  :width: 50%
@@ -174,8 +201,8 @@ elements.
 
 Output the traces of the tensors rather than the unique elements.
 
-``kaccum`` for scalar properties
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Options for scalar properties
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For the following properties, those values are normalized by the
 number of full grid points. This is understood as normalized for one

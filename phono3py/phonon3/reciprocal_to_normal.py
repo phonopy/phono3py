@@ -21,8 +21,9 @@ class ReciprocalToNormal(object):
     def run(self, fc3_reciprocal, grid_triplet):
         num_band = self._primitive.get_number_of_atoms() * 3
         self._fc3_reciprocal = fc3_reciprocal
+        dtype = "c%d" % (np.dtype('double').itemsize * 2)
         self._fc3_normal = np.zeros(
-            (len(self._band_indices), num_band, num_band), dtype='complex128')
+            (len(self._band_indices), num_band, num_band), dtype=dtype)
         self._reciprocal_to_normal(grid_triplet)
 
     def get_reciprocal_to_normal(self):

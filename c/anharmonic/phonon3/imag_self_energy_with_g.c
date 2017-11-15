@@ -42,21 +42,21 @@
 
 static double
 collect_detailed_imag_self_energy(double *imag_self_energy,
-				  const int num_band,
-				  const double *fc3_normal_squared,
-				  const double *n1,
-				  const double *n2,
-				  const double *g1,
-				  const double *g2_3,
-				  const char *g_zero);
+                                  const int num_band,
+                                  const double *fc3_normal_squared,
+                                  const double *n1,
+                                  const double *n2,
+                                  const double *g1,
+                                  const double *g2_3,
+                                  const char *g_zero);
 static double
 collect_detailed_imag_self_energy_0K(double *imag_self_energy,
-				     const int num_band,
-				     const double *fc3_normal_squared,
-				     const double *n1,
-				     const double *n2,
-				     const double *g,
-				     const char *g_zero);
+                                     const int num_band,
+                                     const double *fc3_normal_squared,
+                                     const double *n1,
+                                     const double *n2,
+                                     const double *g,
+                                     const char *g_zero);
 static void set_occupations(double *n1,
                             double *n2,
                             const int num_band,
@@ -72,14 +72,14 @@ static int set_g_pos(int (*g_pos)[4],
                      const char *g_zero);
 
 void get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
-					  const Darray *fc3_normal_squared,
-					  const double *frequencies,
-					  const int *triplets,
-					  const int *weights,
-					  const double *g,
-					  const char *g_zero,
-					  const double temperature,
-					  const double cutoff_frequency)
+                                          const Darray *fc3_normal_squared,
+                                          const double *frequencies,
+                                          const int *triplets,
+                                          const int *weights,
+                                          const double *g,
+                                          const char *g_zero,
+                                          const double temperature,
+                                          const double cutoff_frequency)
 {
   int i, j, num_triplets, num_band0, num_band, num_band_prod, num_g_pos;
   int (*g_pos)[4];
@@ -278,18 +278,18 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
 
 void
 detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
-				     double *imag_self_energy,
-				     const int num_band0,
-				     const int num_band,
-				     const double *fc3_normal_squared,
-				     const double *frequencies,
-				     const int *triplets,
-				     const double *g1,
-				     const double *g2_3,
-				     const char *g_zero,
-				     const double *temperatures,
+                                     double *imag_self_energy,
+                                     const int num_band0,
+                                     const int num_band,
+                                     const double *fc3_normal_squared,
+                                     const double *frequencies,
+                                     const int *triplets,
+                                     const double *g1,
+                                     const double *g2_3,
+                                     const char *g_zero,
+                                     const double *temperatures,
                                      const int num_temps,
-				     const double cutoff_frequency)
+                                     const double cutoff_frequency)
 {
   int i, j, adrs_shift;
   double *n1, *n2;
@@ -308,7 +308,7 @@ detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
                     triplets,
                     frequencies,
                     cutoff_frequency);
-    
+
     for (j = 0; j < num_band0; j++) {
       adrs_shift = j * num_band * num_band;
       if (temperatures[i] > 0) {
@@ -344,13 +344,13 @@ detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
 
 static double
 collect_detailed_imag_self_energy(double *imag_self_energy,
-				  const int num_band,
-				  const double *fc3_normal_squared,
-				  const double *n1,
-				  const double *n2,
-				  const double *g1,
-				  const double *g2_3,
-				  const char *g_zero)
+                                  const int num_band,
+                                  const double *fc3_normal_squared,
+                                  const double *n1,
+                                  const double *n2,
+                                  const double *g1,
+                                  const double *g2_3,
+                                  const char *g_zero)
 {
   int ij, i, j;
   double sum_g;
@@ -363,8 +363,8 @@ collect_detailed_imag_self_energy(double *imag_self_energy,
     j = ij % num_band;
     if (n1[i] < 0 || n2[j] < 0) {continue;}
     imag_self_energy[ij] = (((n1[i] + n2[j] + 1) * g1[ij] +
-			     (n1[i] - n2[j]) * g2_3[ij]) *
-			    fc3_normal_squared[ij]);
+                             (n1[i] - n2[j]) * g2_3[ij]) *
+                            fc3_normal_squared[ij]);
     sum_g += imag_self_energy[ij];
   }
 
@@ -373,12 +373,12 @@ collect_detailed_imag_self_energy(double *imag_self_energy,
 
 static double
 collect_detailed_imag_self_energy_0K(double *imag_self_energy,
-				     const int num_band,
-				     const double *fc3_normal_squared,
-				     const double *n1,
-				     const double *n2,
-				     const double *g1,
-				     const char *g_zero)
+                                     const int num_band,
+                                     const double *fc3_normal_squared,
+                                     const double *n1,
+                                     const double *n2,
+                                     const double *g1,
+                                     const char *g_zero)
 {
   int ij, i, j;
   double sum_g;

@@ -135,9 +135,8 @@ else:
     # multithreading for harmonic phonon calculation, the total performance
     # decrease is considered marginal.
     #
-    # For conda: Try dynamic
-    # link library of openblas % conda install numpy scipy h5py pyyaml
-    # matplotlib openblas
+    # For conda: Try installing with dynamic link library of openblas by
+    # % conda install numpy scipy h5py pyyaml matplotlib openblas
     extra_link_args_lapacke += ['-lopenblas']
     include_dirs_lapacke += []
     library_dirs_lapacke += []

@@ -69,30 +69,30 @@ _get_reducible_collision_matrix(double *collision_matrix,
                                 const double unit_conversion_factor,
                                 const double cutoff_frequency);
 static int get_inv_sinh(double *inv_sinh,
-			const int gp,
-			const int temperature,
-			const double *frequencies,
-			const int *triplets,
-			const int *triplets_map,
-			const int *stabilized_gp_map,
-			const int *gp2tp_map,
-			const int num_band,
-			const double cutoff_frequency);
+                        const int gp,
+                        const int temperature,
+                        const double *frequencies,
+                        const int *triplets,
+                        const int *triplets_map,
+                        const int *stabilized_gp_map,
+                        const int *gp2tp_map,
+                        const int num_band,
+                        const double cutoff_frequency);
 static int *create_gp2tp_map(const int *triplets,
                              const int num_gp);
 
 void get_collision_matrix(double *collision_matrix,
-			  const Darray *fc3_normal_squared,
-			  const double *frequencies,
-			  const int *triplets,
-			  const Iarray *triplets_map,
-			  const int *stabilized_gp_map,
-			  const Iarray *rot_BZ_grid_points,
-			  const double *rotations_cartesian,
-			  const double *g,
-			  const double temperature,
-			  const double unit_conversion_factor,
-			  const double cutoff_frequency)
+                          const Darray *fc3_normal_squared,
+                          const double *frequencies,
+                          const int *triplets,
+                          const Iarray *triplets_map,
+                          const int *stabilized_gp_map,
+                          const Iarray *rot_BZ_grid_points,
+                          const double *rotations_cartesian,
+                          const double *g,
+                          const double temperature,
+                          const double unit_conversion_factor,
+                          const double cutoff_frequency)
 {
   int num_triplets, num_ir_gp, num_rot, num_gp, num_band;
 
@@ -183,38 +183,38 @@ static void _get_collision_matrix(double *collision_matrix,
     for (j = 0; j < num_rot; j++) {
       r_gp = rot_BZ_grid_points[i * num_rot + j];
       ti = get_inv_sinh(inv_sinh,
-      			r_gp,
-      			temperature,
-      			frequencies,
-      			triplets,
-      			triplets_map,
-      			stabilized_gp_map,
-      			gp2tp_map,
-      			num_band,
-      			cutoff_frequency);
+                        r_gp,
+                        temperature,
+                        frequencies,
+                        triplets,
+                        triplets_map,
+                        stabilized_gp_map,
+                        gp2tp_map,
+                        num_band,
+                        cutoff_frequency);
 
       for (k = 0; k < num_band; k++) {
-	for (l = 0; l < num_band; l++) {
-	  collision = 0;
-	  for (m = 0; m < num_band; m++) {
-	    collision +=
-	      fc3_normal_squared[ti * num_band * num_band * num_band +
+        for (l = 0; l < num_band; l++) {
+          collision = 0;
+          for (m = 0; m < num_band; m++) {
+            collision +=
+              fc3_normal_squared[ti * num_band * num_band * num_band +
                                  k * num_band * num_band +
                                  l * num_band + m] *
-	      g[ti * num_band * num_band * num_band +
-		k * num_band * num_band +
-		l * num_band + m] *
-	      inv_sinh[m] * unit_conversion_factor;
-	  }
-	  for (m = 0; m < 3; m++) {
-	    for (n = 0; n < 3; n++) {
-	      collision_matrix[k * 3 * num_ir_gp * num_band * 3 +
-			       m * num_ir_gp * num_band * 3 +
-			       i * num_band * 3 + l * 3 + n] +=
-		collision * rotations_cartesian[j * 9 + m * 3 + n];
-	    }
-	  }
-	}
+              g[ti * num_band * num_band * num_band +
+                k * num_band * num_band +
+                l * num_band + m] *
+              inv_sinh[m] * unit_conversion_factor;
+          }
+          for (m = 0; m < 3; m++) {
+            for (n = 0; n < 3; n++) {
+              collision_matrix[k * 3 * num_ir_gp * num_band * 3 +
+                               m * num_ir_gp * num_band * 3 +
+                               i * num_band * 3 + l * 3 + n] +=
+                collision * rotations_cartesian[j * 9 + m * 3 + n];
+            }
+          }
+        }
       }
     }
     free(inv_sinh);
@@ -250,30 +250,30 @@ _get_reducible_collision_matrix(double *collision_matrix,
   for (i = 0; i < num_gp; i++) {
     inv_sinh = (double*)malloc(sizeof(double) * num_band);
     ti = get_inv_sinh(inv_sinh,
-		      i,
-		      temperature,
-		      frequencies,
-		      triplets,
-		      triplets_map,
-		      stabilized_gp_map,
-		      gp2tp_map,
-		      num_band,
-		      cutoff_frequency);
+                      i,
+                      temperature,
+                      frequencies,
+                      triplets,
+                      triplets_map,
+                      stabilized_gp_map,
+                      gp2tp_map,
+                      num_band,
+                      cutoff_frequency);
 
     for (j = 0; j < num_band; j++) {
       for (k = 0; k < num_band; k++) {
-	collision = 0;
-	for (l = 0; l < num_band; l++) {
-	  collision +=
-	    fc3_normal_squared[ti * num_band * num_band * num_band +
+        collision = 0;
+        for (l = 0; l < num_band; l++) {
+          collision +=
+            fc3_normal_squared[ti * num_band * num_band * num_band +
                                j * num_band * num_band +
                                k * num_band + l] *
-	    g[ti * num_band * num_band * num_band +
-	      j * num_band * num_band +
-	      k * num_band + l] *
-	    inv_sinh[l] * unit_conversion_factor;
-	}
-	collision_matrix[j * num_gp * num_band + i * num_band + k] += collision;
+            g[ti * num_band * num_band * num_band +
+              j * num_band * num_band +
+              k * num_band + l] *
+            inv_sinh[l] * unit_conversion_factor;
+        }
+        collision_matrix[j * num_gp * num_band + i * num_band + k] += collision;
       }
     }
 
@@ -286,15 +286,15 @@ _get_reducible_collision_matrix(double *collision_matrix,
 }
 
 static int get_inv_sinh(double *inv_sinh,
-			const int gp,
-			const int temperature,
-			const double *frequencies,
-			const int *triplets,
-			const int *triplets_map,
-			const int *stabilized_gp_map,
-			const int *gp2tp_map,
-			const int num_band,
-			const double cutoff_frequency)
+                        const int gp,
+                        const int temperature,
+                        const double *frequencies,
+                        const int *triplets,
+                        const int *triplets_map,
+                        const int *stabilized_gp_map,
+                        const int *gp2tp_map,
+                        const int num_band,
+                        const double cutoff_frequency)
 {
   int i, ti, gp2;
   double f;

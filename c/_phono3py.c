@@ -62,17 +62,17 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
 static PyObject *
 py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args);
 static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
-						  PyObject *args);
+                                                  PyObject *args);
 static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args);
 static PyObject * py_get_reducible_collision_matrix(PyObject *self,
-						    PyObject *args);
+                                                    PyObject *args);
 static PyObject * py_symmetrize_collision_matrix(PyObject *self,
-						 PyObject *args);
+                                                 PyObject *args);
 static PyObject * py_distribute_fc3(PyObject *self, PyObject *args);
 static PyObject * py_get_isotope_strength(PyObject *self, PyObject *args);
 static PyObject * py_get_thm_isotope_strength(PyObject *self, PyObject *args);
 static PyObject * py_set_permutation_symmetry_fc3(PyObject *self,
-						  PyObject *args);
+                                                  PyObject *args);
 static PyObject * py_get_neighboring_gird_points(PyObject *self, PyObject *args);
 static PyObject * py_set_integration_weights(PyObject *self, PyObject *args);
 static PyObject *
@@ -301,22 +301,22 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   int *band_indices;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOid",
-			&fc3_normal_squared_py,
-			&g_zero_py,
-			&frequencies,
-			&eigenvectors,
-			&grid_point_triplets,
-			&grid_address_py,
-			&mesh_py,
-			&fc3_py,
-			&shortest_vectors,
-			&multiplicity,
-			&atomic_masses,
-			&p2s_map,
-			&s2p_map,
-			&band_indices_py,
-			&symmetrize_fc3_q,
-			&cutoff_frequency)) {
+                        &fc3_normal_squared_py,
+                        &g_zero_py,
+                        &frequencies,
+                        &eigenvectors,
+                        &grid_point_triplets,
+                        &grid_address_py,
+                        &mesh_py,
+                        &fc3_py,
+                        &shortest_vectors,
+                        &multiplicity,
+                        &atomic_masses,
+                        &p2s_map,
+                        &s2p_map,
+                        &band_indices_py,
+                        &symmetrize_fc3_q,
+                        &cutoff_frequency)) {
     return NULL;
   }
 
@@ -339,21 +339,21 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   band_indices = (int*)PyArray_DATA(band_indices_py);
 
   get_interaction(fc3_normal_squared,
-		  g_zero,
-		  freqs,
-		  eigvecs,
-		  triplets,
-		  grid_address,
-		  mesh,
-		  fc3,
-		  svecs,
-		  multi,
-		  masses,
-		  p2s,
-		  s2p,
-		  band_indices,
-		  symmetrize_fc3_q,
-		  cutoff_frequency);
+                  g_zero,
+                  freqs,
+                  eigvecs,
+                  triplets,
+                  grid_address,
+                  mesh,
+                  fc3,
+                  svecs,
+                  multi,
+                  masses,
+                  p2s,
+                  s2p,
+                  band_indices,
+                  symmetrize_fc3_q,
+                  cutoff_frequency);
 
   free(fc3_normal_squared);
   free(freqs);
@@ -408,26 +408,26 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   Darray *temperatures;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOOOOiid",
-			&gamma_py,
+                        &gamma_py,
                         &relative_grid_address_py,
-			&frequencies_py,
-			&eigenvectors_py,
-			&triplets_py,
+                        &frequencies_py,
+                        &eigenvectors_py,
+                        &triplets_py,
                         &triplet_weights_py,
-			&grid_address_py,
+                        &grid_address_py,
                         &bz_map_py,
-			&mesh_py,
-			&fc3_py,
-			&shortest_vectors_py,
-			&multiplicity_py,
-			&atomic_masses_py,
-			&p2s_map_py,
-			&s2p_map_py,
-			&band_indices_py,
+                        &mesh_py,
+                        &fc3_py,
+                        &shortest_vectors_py,
+                        &multiplicity_py,
+                        &atomic_masses_py,
+                        &p2s_map_py,
+                        &s2p_map_py,
+                        &band_indices_py,
                         &temperatures_py,
                         &is_NU,
-			&symmetrize_fc3_q,
-			&cutoff_frequency)) {
+                        &symmetrize_fc3_q,
+                        &cutoff_frequency)) {
     return NULL;
   }
 
@@ -498,15 +498,15 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
   int *triplet_weights;
 
   if (!PyArg_ParseTuple(args, "OOOOOdOOd",
-			&gamma_py,
-			&fc3_normal_squared_py,
-			&grid_point_triplets_py,
-			&triplet_weights_py,
-			&frequencies_py,
-			&temperature,
-			&g_py,
-			&g_zero_py,
-			&cutoff_frequency)) {
+                        &gamma_py,
+                        &fc3_normal_squared_py,
+                        &grid_point_triplets_py,
+                        &triplet_weights_py,
+                        &frequencies_py,
+                        &temperature,
+                        &g_py,
+                        &g_zero_py,
+                        &cutoff_frequency)) {
     return NULL;
   }
 
@@ -519,14 +519,14 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
   triplet_weights = (int*)PyArray_DATA(triplet_weights_py);
 
   get_imag_self_energy_at_bands_with_g(gamma,
-				       fc3_normal_squared,
-				       frequencies,
-				       grid_point_triplets,
-				       triplet_weights,
-				       g,
-				       g_zero,
-				       temperature,
-				       cutoff_frequency);
+                                       fc3_normal_squared,
+                                       frequencies,
+                                       grid_point_triplets,
+                                       triplet_weights,
+                                       g,
+                                       g_zero,
+                                       temperature,
+                                       cutoff_frequency);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;
@@ -561,18 +561,18 @@ py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args)
   int *grid_address;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOdOOd",
-			&gamma_detail_py,
-			&gamma_N_py,
-			&gamma_U_py,
-			&fc3_normal_squared_py,
-			&grid_point_triplets_py,
-			&triplet_weights_py,
-			&grid_address_py,
-			&frequencies_py,
-			&temperature,
-			&g_py,
-			&g_zero_py,
-			&cutoff_frequency)) {
+                        &gamma_detail_py,
+                        &gamma_N_py,
+                        &gamma_U_py,
+                        &fc3_normal_squared_py,
+                        &grid_point_triplets_py,
+                        &triplet_weights_py,
+                        &grid_address_py,
+                        &frequencies_py,
+                        &temperature,
+                        &g_py,
+                        &g_zero_py,
+                        &cutoff_frequency)) {
     return NULL;
   }
 
@@ -588,17 +588,17 @@ py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args)
   grid_address = (int*)PyArray_DATA(grid_address_py);
 
   get_detailed_imag_self_energy_at_bands_with_g(gamma_detail,
-						gamma_N,
-						gamma_U,
-						fc3_normal_squared,
-						frequencies,
-						grid_point_triplets,
-						triplet_weights,
-						grid_address,
-						g,
-						g_zero,
-						temperature,
-						cutoff_frequency);
+                                                gamma_N,
+                                                gamma_U,
+                                                fc3_normal_squared,
+                                                frequencies,
+                                                grid_point_triplets,
+                                                triplet_weights,
+                                                grid_address,
+                                                g,
+                                                g_zero,
+                                                temperature,
+                                                cutoff_frequency);
 
   free(fc3_normal_squared);
 
@@ -606,7 +606,7 @@ py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args)
 }
 
 static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
-						  PyObject *args)
+                                                  PyObject *args)
 {
   PyArrayObject *shift_py;
   PyArrayObject *fc3_normal_squared_py;
@@ -624,16 +624,16 @@ static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
   int *triplet_weights;
 
   if (!PyArg_ParseTuple(args, "OOOOOOdddd",
-			&shift_py,
-			&fc3_normal_squared_py,
-			&grid_point_triplets_py,
-			&triplet_weights_py,
-			&frequencies_py,
-			&band_indices_py,
-			&temperature,
-			&epsilon,
-			&unit_conversion_factor,
-			&cutoff_frequency)) {
+                        &shift_py,
+                        &fc3_normal_squared_py,
+                        &grid_point_triplets_py,
+                        &triplet_weights_py,
+                        &frequencies_py,
+                        &band_indices_py,
+                        &temperature,
+                        &epsilon,
+                        &unit_conversion_factor,
+                        &cutoff_frequency)) {
     return NULL;
   }
 
@@ -646,15 +646,15 @@ static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
   triplet_weights = (int*)PyArray_DATA(triplet_weights_py);
 
   get_frequency_shift_at_bands(shift,
-			       fc3_normal_squared,
-			       band_indices,
-			       frequencies,
-			       grid_point_triplets,
-			       triplet_weights,
-			       epsilon,
-			       temperature,
-			       unit_conversion_factor,
-			       cutoff_frequency);
+                               fc3_normal_squared,
+                               band_indices,
+                               frequencies,
+                               grid_point_triplets,
+                               triplet_weights,
+                               epsilon,
+                               temperature,
+                               unit_conversion_factor,
+                               cutoff_frequency);
 
   free(fc3_normal_squared);
 
@@ -685,18 +685,18 @@ static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args)
   double *rotations_cartesian;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOddd",
-			&collision_matrix_py,
-			&fc3_normal_squared_py,
-			&frequencies_py,
-			&g_py,
-			&triplets_py,
-			&triplets_map_py,
-			&stabilized_gp_map_py,
-			&rotated_grid_points_py,
-			&rotations_cartesian_py,
-			&temperature,
-			&unit_conversion_factor,
-			&cutoff_frequency)) {
+                        &collision_matrix_py,
+                        &fc3_normal_squared_py,
+                        &frequencies_py,
+                        &g_py,
+                        &triplets_py,
+                        &triplets_map_py,
+                        &stabilized_gp_map_py,
+                        &rotated_grid_points_py,
+                        &rotations_cartesian_py,
+                        &temperature,
+                        &unit_conversion_factor,
+                        &cutoff_frequency)) {
     return NULL;
   }
 
@@ -711,17 +711,17 @@ static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args)
   rotations_cartesian = (double*)PyArray_DATA(rotations_cartesian_py);
 
   get_collision_matrix(collision_matrix,
-  		       fc3_normal_squared,
-  		       frequencies,
-  		       triplets,
-  		       triplets_map,
-  		       stabilized_gp_map,
-  		       rotated_grid_points,
-  		       rotations_cartesian,
-  		       g,
-  		       temperature,
-  		       unit_conversion_factor,
-  		       cutoff_frequency);
+                       fc3_normal_squared,
+                       frequencies,
+                       triplets,
+                       triplets_map,
+                       stabilized_gp_map,
+                       rotated_grid_points,
+                       rotations_cartesian,
+                       g,
+                       temperature,
+                       unit_conversion_factor,
+                       cutoff_frequency);
 
   free(fc3_normal_squared);
   free(triplets_map);
@@ -750,16 +750,16 @@ static PyObject * py_get_reducible_collision_matrix(PyObject *self, PyObject *ar
   int *stabilized_gp_map;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOddd",
-			&collision_matrix_py,
-			&fc3_normal_squared_py,
-			&frequencies_py,
-			&g_py,
-			&triplets_py,
-			&triplets_map_py,
-			&stabilized_gp_map_py,
-			&temperature,
-			&unit_conversion_factor,
-			&cutoff_frequency)) {
+                        &collision_matrix_py,
+                        &fc3_normal_squared_py,
+                        &frequencies_py,
+                        &g_py,
+                        &triplets_py,
+                        &triplets_map_py,
+                        &stabilized_gp_map_py,
+                        &temperature,
+                        &unit_conversion_factor,
+                        &cutoff_frequency)) {
     return NULL;
   }
 
@@ -772,15 +772,15 @@ static PyObject * py_get_reducible_collision_matrix(PyObject *self, PyObject *ar
   stabilized_gp_map = (int*)PyArray_DATA(stabilized_gp_map_py);
 
   get_reducible_collision_matrix(collision_matrix,
-				 fc3_normal_squared,
-				 frequencies,
-				 triplets,
-				 triplets_map,
-				 stabilized_gp_map,
-				 g,
-				 temperature,
-				 unit_conversion_factor,
-				 cutoff_frequency);
+                                 fc3_normal_squared,
+                                 frequencies,
+                                 triplets,
+                                 triplets_map,
+                                 stabilized_gp_map,
+                                 g,
+                                 temperature,
+                                 unit_conversion_factor,
+                                 cutoff_frequency);
 
   free(fc3_normal_squared);
   free(triplets_map);
@@ -801,7 +801,7 @@ static PyObject * py_symmetrize_collision_matrix(PyObject *self, PyObject *args)
   double val;
 
   if (!PyArg_ParseTuple(args, "O",
-			&collision_matrix_py)) {
+                        &collision_matrix_py)) {
     return NULL;
   }
 
@@ -820,16 +820,16 @@ static PyObject * py_symmetrize_collision_matrix(PyObject *self, PyObject *args)
   for (i = 0; i < num_sigma; i++) {
     for (j = 0; j < num_temp; j++) {
       adrs_shift = (i * num_column * num_column * num_temp +
-		    j * num_column * num_column);
+                    j * num_column * num_column);
       show_colmat_info(collision_matrix_py, i, j, adrs_shift);
 #pragma omp parallel for private(l, val)
       for (k = 0; k < num_column; k++) {
-	for (l = k + 1; l < num_column; l++) {
-	  val = (collision_matrix[adrs_shift + k * num_column + l] +
-		 collision_matrix[adrs_shift + l * num_column + k]) / 2;
-	  collision_matrix[adrs_shift + k * num_column + l] = val;
-	  collision_matrix[adrs_shift + l * num_column + k] = val;
-	}
+        for (l = k + 1; l < num_column; l++) {
+          val = (collision_matrix[adrs_shift + k * num_column + l] +
+                 collision_matrix[adrs_shift + l * num_column + k]) / 2;
+          collision_matrix[adrs_shift + k * num_column + l] = val;
+          collision_matrix[adrs_shift + l * num_column + k] = val;
+        }
       }
     }
   }
@@ -858,15 +858,15 @@ static PyObject * py_get_isotope_strength(PyObject *self, PyObject *args)
   int num_band0;
 
   if (!PyArg_ParseTuple(args, "OiOOOOidd",
-			&gamma_py,
-			&grid_point,
-			&mass_variances_py,
-			&frequencies_py,
-			&eigenvectors_py,
-			&band_indices_py,
-			&num_grid_points,
-			&sigma,
-			&cutoff_frequency)) {
+                        &gamma_py,
+                        &grid_point,
+                        &mass_variances_py,
+                        &frequencies_py,
+                        &eigenvectors_py,
+                        &band_indices_py,
+                        &num_grid_points,
+                        &sigma,
+                        &cutoff_frequency)) {
     return NULL;
   }
 
@@ -887,7 +887,7 @@ static PyObject * py_get_isotope_strength(PyObject *self, PyObject *args)
   /* ir_grid_points = (int*)malloc(sizeof(int) * num_grid_points); */
   /* weights = (int*)malloc(sizeof(int) * num_grid_points); */
   /* integration_weights = (double*)malloc(sizeof(double) * */
-  /* 					num_grid_points * num_band0 * num_band); */
+  /*                                    num_grid_points * num_band0 * num_band); */
 
   /* for (i = 0; i < num_grid_points; i++) { */
   /*   ir_grid_points[i] = i; */
@@ -895,42 +895,42 @@ static PyObject * py_get_isotope_strength(PyObject *self, PyObject *args)
   /*   for (j = 0; j < num_band0; j++) { */
   /*     f0 = frequencies[grid_point * num_band + band_indices[j]]; */
   /*     for (k = 0; k < num_band; k++) { */
-  /* 	f = frequencies[i * num_band + k]; */
-  /* 	integration_weights[i * num_band0 * num_band + */
-  /* 			    j * num_band + k] = gaussian(f - f0, sigma); */
+  /*    f = frequencies[i * num_band + k]; */
+  /*    integration_weights[i * num_band0 * num_band + */
+  /*                        j * num_band + k] = gaussian(f - f0, sigma); */
   /*     } */
   /*   } */
   /* } */
 
   /* get_thm_isotope_scattering_strength(gamma, */
-  /* 				      grid_point, */
-  /* 				      ir_grid_points, */
-  /* 				      weights, */
-  /* 				      mass_variances, */
-  /* 				      frequencies, */
-  /* 				      eigenvectors, */
-  /* 				      num_grid_points, */
-  /* 				      band_indices, */
-  /* 				      num_band, */
-  /* 				      num_band0, */
-  /* 				      integration_weights, */
-  /* 				      cutoff_frequency); */
+  /*                                  grid_point, */
+  /*                                  ir_grid_points, */
+  /*                                  weights, */
+  /*                                  mass_variances, */
+  /*                                  frequencies, */
+  /*                                  eigenvectors, */
+  /*                                  num_grid_points, */
+  /*                                  band_indices, */
+  /*                                  num_band, */
+  /*                                  num_band0, */
+  /*                                  integration_weights, */
+  /*                                  cutoff_frequency); */
 
   /* free(ir_grid_points); */
   /* free(weights); */
   /* free(integration_weights); */
 
   get_isotope_scattering_strength(gamma,
-  				  grid_point,
-  				  mass_variances,
-  				  frequencies,
-  				  eigenvectors,
-  				  num_grid_points,
-  				  band_indices,
-  				  num_band,
-  				  num_band0,
-  				  sigma,
-  				  cutoff_frequency);
+                                  grid_point,
+                                  mass_variances,
+                                  frequencies,
+                                  eigenvectors,
+                                  num_grid_points,
+                                  band_indices,
+                                  num_band,
+                                  num_band0,
+                                  sigma,
+                                  cutoff_frequency);
 
   Py_RETURN_NONE;
 }
@@ -961,16 +961,16 @@ static PyObject * py_get_thm_isotope_strength(PyObject *self, PyObject *args)
   int num_ir_grid_points;
 
   if (!PyArg_ParseTuple(args, "OiOOOOOOOd",
-			&gamma_py,
-			&grid_point,
-			&ir_grid_points_py,
-			&weights_py,
-			&mass_variances_py,
-			&frequencies_py,
-			&eigenvectors_py,
-			&band_indices_py,
-			&integration_weights_py,
-			&cutoff_frequency)) {
+                        &gamma_py,
+                        &grid_point,
+                        &ir_grid_points_py,
+                        &weights_py,
+                        &mass_variances_py,
+                        &frequencies_py,
+                        &eigenvectors_py,
+                        &band_indices_py,
+                        &integration_weights_py,
+                        &cutoff_frequency)) {
     return NULL;
   }
 
@@ -988,18 +988,18 @@ static PyObject * py_get_thm_isotope_strength(PyObject *self, PyObject *args)
   num_ir_grid_points = PyArray_DIMS(ir_grid_points_py)[0];
 
   get_thm_isotope_scattering_strength(gamma,
-				      grid_point,
-				      ir_grid_points,
-				      weights,
-				      mass_variances,
-				      frequencies,
-				      eigenvectors,
-				      num_ir_grid_points,
-				      band_indices,
-				      num_band,
-				      num_band0,
-				      integration_weights,
-				      cutoff_frequency);
+                                      grid_point,
+                                      ir_grid_points,
+                                      weights,
+                                      mass_variances,
+                                      frequencies,
+                                      eigenvectors,
+                                      num_ir_grid_points,
+                                      band_indices,
+                                      num_band,
+                                      num_band0,
+                                      integration_weights,
+                                      cutoff_frequency);
 
   Py_RETURN_NONE;
 }
@@ -1019,11 +1019,11 @@ static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
   int num_atom;
 
   if (!PyArg_ParseTuple(args, "OOiOO",
-			&force_constants_third_copy,
-			&force_constants_third,
-			&third_atom,
-			&atom_mapping_py,
-			&rotation_cart_inv)) {
+                        &force_constants_third_copy,
+                        &force_constants_third,
+                        &third_atom,
+                        &atom_mapping_py,
+                        &rotation_cart_inv)) {
     return NULL;
   }
 
@@ -1034,11 +1034,11 @@ static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
   num_atom = PyArray_DIMS(atom_mapping_py)[0];
 
   distribute_fc3(fc3_copy,
-		 fc3,
-		 third_atom,
-		 atom_mapping,
-		 num_atom,
-		 rot_cart_inv);
+                 fc3,
+                 third_atom,
+                 atom_mapping,
+                 num_atom,
+                 rot_cart_inv);
 
   Py_RETURN_NONE;
 }
@@ -1051,7 +1051,7 @@ static PyObject * py_set_permutation_symmetry_fc3(PyObject *self, PyObject *args
   int num_atom;
 
   if (!PyArg_ParseTuple(args, "O",
-			&fc3_py)) {
+                        &fc3_py)) {
     return NULL;
   }
 
@@ -1083,12 +1083,12 @@ static PyObject * py_get_neighboring_gird_points(PyObject *self, PyObject *args)
   int i;
 
   if (!PyArg_ParseTuple(args, "OOOOOO",
-			&relative_grid_points_py,
-			&grid_points_py,
-			&relative_grid_address_py,
-			&mesh_py,
-			&bz_grid_address_py,
-			&bz_map_py)) {
+                        &relative_grid_points_py,
+                        &grid_points_py,
+                        &relative_grid_address_py,
+                        &mesh_py,
+                        &bz_grid_address_py,
+                        &bz_map_py)) {
     return NULL;
   }
 
@@ -1143,14 +1143,14 @@ static PyObject * py_set_integration_weights(PyObject *self, PyObject *args)
   double freq_vertices[24][4];
 
   if (!PyArg_ParseTuple(args, "OOOOOOOO",
-			&iw_py,
-			&frequency_points_py,
-			&relative_grid_address_py,
-			&mesh_py,
-			&grid_points_py,
-			&frequencies_py,
-			&bz_grid_address_py,
-			&bz_map_py)) {
+                        &iw_py,
+                        &frequency_points_py,
+                        &relative_grid_address_py,
+                        &mesh_py,
+                        &grid_points_py,
+                        &frequencies_py,
+                        &bz_grid_address_py,
+                        &bz_map_py)) {
     return NULL;
   }
 
@@ -1170,22 +1170,22 @@ static PyObject * py_set_integration_weights(PyObject *self, PyObject *args)
   for (i = 0; i < num_gp; i++) {
     for (j = 0; j < 24; j++) {
       thm_get_neighboring_grid_points(vertices[j],
-				      grid_points[i],
-				      relative_grid_address[j],
-				      4,
-				      mesh,
-				      bz_grid_address,
-				      bz_map);
+                                      grid_points[i],
+                                      relative_grid_address[j],
+                                      4,
+                                      mesh,
+                                      bz_grid_address,
+                                      bz_map);
     }
     for (bi = 0; bi < num_band; bi++) {
       for (j = 0; j < 24; j++) {
-	for (k = 0; k < 4; k++) {
-	  freq_vertices[j][k] = frequencies[vertices[j][k] * num_band + bi];
-	}
+        for (k = 0; k < 4; k++) {
+          freq_vertices[j][k] = frequencies[vertices[j][k] * num_band + bi];
+        }
       }
       for (j = 0; j < num_band0; j++) {
-	iw[i * num_band0 * num_band + j * num_band + bi] =
-	  thm_get_integration_weight(frequency_points[j], freq_vertices, 'I');
+        iw[i * num_band0 * num_band + j * num_band + bi] =
+          thm_get_integration_weight(frequency_points[j], freq_vertices, 'I');
       }
     }
   }
@@ -1213,13 +1213,13 @@ py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
   int num_ir;
 
   if (!PyArg_ParseTuple(args, "OOOiOiO",
-			&map_triplets,
-			&map_q,
-			&grid_address_py,
-			&fixed_grid_number,
-			&mesh,
-			&is_time_reversal,
-			&rotations)) {
+                        &map_triplets,
+                        &map_q,
+                        &grid_address_py,
+                        &fixed_grid_number,
+                        &mesh,
+                        &is_time_reversal,
+                        &rotations)) {
     return NULL;
   }
 
@@ -1230,13 +1230,13 @@ py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
   rot = (int(*)[3][3])PyArray_DATA(rotations);
   num_rot = PyArray_DIMS(rotations)[0];
   num_ir = tpl_get_triplets_reciprocal_mesh_at_q(map_triplets_int,
-						 map_q_int,
-						 grid_address,
-						 fixed_grid_number,
-						 mesh_int,
-						 is_time_reversal,
-						 num_rot,
-						 rot);
+                                                 map_q_int,
+                                                 grid_address,
+                                                 fixed_grid_number,
+                                                 mesh_int,
+                                                 is_time_reversal,
+                                                 num_rot,
+                                                 rot);
 
   return PyLong_FromLong((long) num_ir);
 }
@@ -1260,12 +1260,12 @@ static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args)
   int num_ir;
 
   if (!PyArg_ParseTuple(args, "OiOOOO",
-			&triplets_py,
-			&grid_point,
-			&bz_grid_address_py,
-			&bz_map_py,
-			&map_triplets_py,
-			&mesh_py)) {
+                        &triplets_py,
+                        &grid_point,
+                        &bz_grid_address_py,
+                        &bz_map_py,
+                        &map_triplets_py,
+                        &mesh_py)) {
     return NULL;
   }
 
@@ -1277,12 +1277,12 @@ static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args)
   mesh = (int*)PyArray_DATA(mesh_py);
 
   num_ir = tpl_get_BZ_triplets_at_q(triplets,
-				    grid_point,
-				    bz_grid_address,
-				    bz_map,
-				    map_triplets,
-				    num_map_triplets,
-				    mesh);
+                                    grid_point,
+                                    bz_grid_address,
+                                    bz_map,
+                                    map_triplets,
+                                    num_map_triplets,
+                                    mesh);
 
   return PyLong_FromLong((long) num_ir);
 }
@@ -1315,15 +1315,15 @@ py_set_triplets_integration_weights(PyObject *self, PyObject *args)
   int num_iw;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOO",
-			&iw_py,
-			&iw_zero_py,
-			&frequency_points_py,
-			&relative_grid_address_py,
-			&mesh_py,
-			&triplets_py,
-			&frequencies_py,
-			&bz_grid_address_py,
-			&bz_map_py)) {
+                        &iw_py,
+                        &iw_zero_py,
+                        &frequency_points_py,
+                        &relative_grid_address_py,
+                        &mesh_py,
+                        &triplets_py,
+                        &frequencies_py,
+                        &bz_grid_address_py,
+                        &bz_map_py)) {
     return NULL;
   }
 
@@ -1342,18 +1342,18 @@ py_set_triplets_integration_weights(PyObject *self, PyObject *args)
   num_iw = PyArray_DIMS(iw_py)[0];
 
   tpl_get_integration_weight(iw,
-			     iw_zero,
-			     frequency_points,
-			     num_band0,
-			     relative_grid_address,
-			     mesh,
-			     triplets,
-			     num_triplets,
-			     bz_grid_address,
-			     bz_map,
-			     frequencies,
-			     num_band,
-			     num_iw,
+                             iw_zero,
+                             frequency_points,
+                             num_band0,
+                             relative_grid_address,
+                             mesh,
+                             triplets,
+                             num_triplets,
+                             bz_grid_address,
+                             bz_map,
+                             frequencies,
+                             num_band,
+                             num_iw,
                              1,
                              0);
 
@@ -1364,12 +1364,14 @@ static PyObject *
 py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
 {
   PyArrayObject *iw_py;
+  PyArrayObject *iw_zero_py;
   PyArrayObject *frequency_points_py;
   PyArrayObject *triplets_py;
   PyArrayObject *frequencies_py;
-  double sigma;
+  double sigma, sigma_cutoff;
 
   double *iw;
+  char *iw_zero;
   double *frequency_points;
   int num_band0;
   int (*triplets)[3];
@@ -1379,18 +1381,21 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
   int num_iw;
 
   int i, j, k, l, adrs_shift;
-  double f0, f1, f2, g0, g1, g2;
+  double f0, f1, f2, g0, g1, g2, cutoff;
 
-  if (!PyArg_ParseTuple(args, "OOOOd",
-			&iw_py,
-			&frequency_points_py,
-			&triplets_py,
-			&frequencies_py,
-			&sigma)) {
+  if (!PyArg_ParseTuple(args, "OOOOOdd",
+                        &iw_py,
+                        &iw_zero_py,
+                        &frequency_points_py,
+                        &triplets_py,
+                        &frequencies_py,
+                        &sigma,
+                        &sigma_cutoff)) {
     return NULL;
   }
 
   iw = (double*)PyArray_DATA(iw_py);
+  iw_zero = (char*)PyArray_DATA(iw_zero_py);
   frequency_points = (double*)PyArray_DATA(frequency_points_py);
   num_band0 = PyArray_DIMS(frequency_points_py)[0];
   triplets = (int(*)[3])PyArray_DATA(triplets_py);
@@ -1398,28 +1403,40 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
   frequencies = (double*)PyArray_DATA(frequencies_py);
   num_band = PyArray_DIMS(frequencies_py)[1];
   num_iw = PyArray_DIMS(iw_py)[0];
+  cutoff = sigma * sigma_cutoff;
 
 #pragma omp parallel for private(j, k, l, adrs_shift, f0, f1, f2, g0, g1, g2)
   for (i = 0; i < num_triplets; i++) {
     for (j = 0; j < num_band0; j++) {
       f0 = frequency_points[j];
       for (k = 0; k < num_band; k++) {
-	f1 = frequencies[triplets[i][1] * num_band + k];
-	for (l = 0; l < num_band; l++) {
-	  f2 = frequencies[triplets[i][2] * num_band + l];
-	  g0 = gaussian(f0 - f1 - f2, sigma);
-	  g1 = gaussian(f0 + f1 - f2, sigma);
-	  g2 = gaussian(f0 - f1 + f2, sigma);
-	  adrs_shift = i * num_band0 * num_band * num_band +
-	    j * num_band * num_band + k * num_band + l;
-	  iw[adrs_shift] = g0;
-	  adrs_shift += num_triplets * num_band0 * num_band * num_band;
-	  iw[adrs_shift] = g1 - g2;
-	  if (num_iw == 3) {
-	    adrs_shift += num_triplets * num_band0 * num_band * num_band;
-	    iw[adrs_shift] = g0 + g1 + g2;
-	  }
-	}
+        f1 = frequencies[triplets[i][1] * num_band + k];
+        for (l = 0; l < num_band; l++) {
+          f2 = frequencies[triplets[i][2] * num_band + l];
+          adrs_shift = i * num_band0 * num_band * num_band +
+            j * num_band * num_band + k * num_band + l;
+          if (sigma_cutoff > 0 &&
+              fabs(f0 - f1 - f2) > cutoff &&
+              fabs(f0 + f1 - f2) > cutoff &&
+              fabs(f0 - f1 + f2) > cutoff) {
+            iw_zero[adrs_shift] = 1;
+            g0 = 0;
+            g1 = 0;
+            g2 = 0;
+          } else {
+            iw_zero[adrs_shift] = 0;
+            g0 = gaussian(f0 - f1 - f2, sigma);
+            g1 = gaussian(f0 + f1 - f2, sigma);
+            g2 = gaussian(f0 - f1 + f2, sigma);
+          }
+          iw[adrs_shift] = g0;
+          adrs_shift += num_triplets * num_band0 * num_band * num_band;
+          iw[adrs_shift] = g1 - g2;
+          if (num_iw == 3) {
+            adrs_shift += num_triplets * num_band0 * num_band * num_band;
+            iw[adrs_shift] = g0 + g1 + g2;
+          }
+        }
       }
     }
   }
@@ -1442,11 +1459,11 @@ static PyObject * py_inverse_collision_matrix_libflame(PyObject *self, PyObject 
   int num_column, adrs_shift;
 
   if (!PyArg_ParseTuple(args, "OOiid",
-			&collision_matrix_py,
-			&eigenvalues_py,
-			&i_sigma,
-			&i_temp,
-			&cutoff)) {
+                        &collision_matrix_py,
+                        &eigenvalues_py,
+                        &i_sigma,
+                        &i_temp,
+                        &cutoff)) {
     return NULL;
   }
 
@@ -1460,10 +1477,10 @@ static PyObject * py_inverse_collision_matrix_libflame(PyObject *self, PyObject 
   num_column = num_ir_grid_points * num_band * 3;
 
   adrs_shift = (i_sigma * num_column * num_column * num_temp +
-		i_temp * num_column * num_column);
+                i_temp * num_column * num_column);
 
   phonopy_pinv_libflame(collision_matrix + adrs_shift,
-			eigvals, num_column, cutoff);
+                        eigvals, num_column, cutoff);
 
   Py_RETURN_NONE;
 }
@@ -1484,11 +1501,11 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
   int num_column, adrs_shift, info;
 
   if (!PyArg_ParseTuple(args, "OOiidii",
-			&collision_matrix_py,
-			&eigenvalues_py,
-			&i_sigma,
-			&i_temp,
-			&cutoff,
+                        &collision_matrix_py,
+                        &eigenvalues_py,
+                        &i_sigma,
+                        &i_temp,
+                        &cutoff,
                         &solver,
                         &pinv_method)) {
     return NULL;
@@ -1506,11 +1523,11 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
     num_column = num_grid_point * num_band;
   }
   adrs_shift = (i_sigma * num_column * num_column * num_temp +
-		i_temp * num_column * num_column);
+                i_temp * num_column * num_column);
 
   show_colmat_info(collision_matrix_py, i_sigma, i_temp, adrs_shift);
   info = phonopy_pinv_dsyev(collision_matrix + adrs_shift,
-			    eigvals, num_column, solver);
+                            eigvals, num_column, solver);
   pinv_from_eigensolution(collision_matrix + adrs_shift,
                           eigvals, num_column, cutoff, pinv_method);
 
@@ -1532,11 +1549,11 @@ static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args)
   int num_column, adrs_shift;
 
   if (!PyArg_ParseTuple(args, "OOiidi",
-			&collision_matrix_py,
-			&eigenvalues_py,
-			&i_sigma,
-			&i_temp,
-			&cutoff,
+                        &collision_matrix_py,
+                        &eigenvalues_py,
+                        &i_sigma,
+                        &i_temp,
+                        &cutoff,
                         &pinv_method)) {
     return NULL;
   }
@@ -1553,7 +1570,7 @@ static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args)
     num_column = num_grid_point * num_band;
   }
   adrs_shift = (i_sigma * num_column * num_column * num_temp +
-		i_temp * num_column * num_column);
+                i_temp * num_column * num_column);
 
   show_colmat_info(collision_matrix_py, i_sigma, i_temp, adrs_shift);
 

@@ -154,15 +154,15 @@ needed.
    ``PATH`` and ``PYTHONPATH`` are set in the same way as phonopy, see
    https://atztogo.github.io/phonopy/install.html#building-using-setup-py.
 
-Installation on MacOSX
+Installation on macOS
 -----------------------
 
-MacOSX users may be able to install phonopy and phono3py on recent
-MacOSX. But it requires a basic knowledge on UNIX and python. So if
+macOS users may be able to install phonopy and phono3py on recent
+macOS. But it requires a basic knowledge on UNIX and python. So if
 you are afraid of that, please prepare a computer or a virtual machine
 with a normal linux OS such as Ubuntu-linux-64bit 14.04 or 16.04.
 
-If you think you are familiar with MacOSX, unix system, and python,
+If you think you are familiar with macOS, unix system, and python,
 the recommended installation process is written at
 https://atztogo.github.io/phonopy/MacOSX.html, which is more-or-less
 the same as phonopy, but with openblas, too. An example of the
@@ -179,8 +179,8 @@ An example of installation process
 
      % wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
 
-   For MacOSX, it is assumed that gcc compiler is installed on your system. The
-   compiler such as default clang on MacOSX can't handle OpenMP, so it
+   For macOS, it is assumed that gcc compiler is installed on your system. The
+   compiler such as default clang on macOS can't handle OpenMP, so it
    can't be used. The gcc compiler may be installed using MacPort, e.g.::
 
      % sudo port install gcc7 wget
@@ -206,6 +206,7 @@ An example of installation process
 
    Install the latest phonopy and phono3py::
 
+     % export CC=gcc # only for macOS
      % git clone https://github.com/atztogo/phonopy.git
      % cd phonopy
      % python setup.py install --user

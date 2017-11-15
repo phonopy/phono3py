@@ -49,8 +49,8 @@ def file_exists(filename, log_level):
 
 # AA is created at http://www.network-science.de/ascii/.
 def print_phono3py():
-    print("""        _                      _____             
-  _ __ | |__   ___  _ __   ___|___ / _ __  _   _ 
+    print("""        _                      _____
+  _ __ | |__   ___  _ __   ___|___ / _ __  _   _
  | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
  | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
  | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
@@ -61,7 +61,7 @@ def print_version(version):
     print('')
 
 def print_end():
-    print("""                 _ 
+    print("""                 _
    ___ _ __   __| |
   / _ \ '_ \ / _` |
  |  __/ | | | (_| |
@@ -69,9 +69,9 @@ def print_end():
 """)
 
 def print_error():
-    print("""  ___ _ __ _ __ ___  _ __ 
+    print("""  ___ _ __ _ __ ___  _ __
  / _ \ '__| '__/ _ \| '__|
-|  __/ |  | | | (_) | |   
+|  __/ |  | | | (_) | |
  \___|_|  |_|  \___/|_|
 """)
 
@@ -115,7 +115,7 @@ def show_phono3py_force_constants_settings(read_fc3,
                                            settings):
     print("-" * 29 + " Force constants " + "-" * 30)
     if not read_fc2:
-        print("Imposing translational symmetry to fc2: %s" % 
+        print("Imposing translational symmetry to fc2: %s" %
               (tsym_type > 0))
         print("Imposing symmetry of index exchange to fc2: %s" %
               is_symmetrize_fc2)
@@ -126,14 +126,14 @@ def show_phono3py_force_constants_settings(read_fc3,
 
         if settings.get_use_alm():
             print("Use ALM for getting fc3")
-        else:            
+        else:
             print("Imposing translational symmetry to fc3: %s" %
                   (tsym_type > 0))
             print("Imposing symmetry of index exchange to fc3 in real space: %s"
                   % is_symmetrize_fc3_r)
             print(("Imposing symmetry of index exchange to fc3 in reciprocal "
                    "space: %s") % is_symmetrize_fc3_q)
-        
+
     if settings.get_cutoff_fc3_distance() is not None:
         print("FC3 cutoff distance: %s" % settings.get_cutoff_fc3_distance())
 
@@ -142,6 +142,7 @@ def show_phono3py_settings(settings,
                            mesh_divs,
                            band_indices,
                            sigmas,
+                           sigma_cutoff,
                            temperatures,
                            temperature_points,
                            grid_points,
@@ -165,12 +166,14 @@ def show_phono3py_settings(settings,
         for i, sigma in enumerate(sigmas):
             if sigma:
                 text += "Smearing=%s" % sigma
+                if sigma_cutoff is not None:
+                    text += "(%4.2f SD)" % sigma_cutoff
             else:
                 text += "Tetrahedron-method"
             if i < len(sigmas) - 1:
                 text += ", "
         print(text)
-        
+
     if settings.get_is_lbte() and settings.get_read_collision() is not None:
         pass
     elif (settings.get_is_linewidth() or
@@ -188,7 +191,7 @@ def show_phono3py_settings(settings,
         if settings.get_scattering_event_class() is not None:
             print("Scattering event class: %s" %
                   settings.get_scattering_event_class())
-            
+
     if grid_points is not None:
         text = "Grid point to be calculated: "
         if len(grid_points) > 8:
@@ -201,7 +204,7 @@ def show_phono3py_settings(settings,
             for gp in grid_points:
                 text += "%d " % gp
         print(text)
-            
+
     if cutoff_frequency:
         print("Cutoff frequency: %s" % cutoff_frequency)
 

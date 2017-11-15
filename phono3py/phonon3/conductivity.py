@@ -19,6 +19,7 @@ class Conductivity(object):
                  grid_points=None,
                  temperatures=None,
                  sigmas=None,
+                 sigma_cutoff=None,
                  is_isotope=False,
                  mass_variances=None,
                  mesh_divisors=None,
@@ -32,6 +33,7 @@ class Conductivity(object):
             self._sigmas = []
         else:
             self._sigmas = sigmas
+        self._sigma_cutoff = sigma_cutoff
         self._pp = interaction
         self._is_full_pp = is_full_pp
         self._collision = None # has to be set derived class
@@ -231,6 +233,9 @@ class Conductivity(object):
 
     def _get_gamma_isotope_at_sigmas(self, i):
         gamma_iso = []
+        bz_map = self._pp.get_bz_map()
+        pp_freqs, pp_eigvecs, pp_phonon_done = self._pp.get_phonons()
+
         for j, sigma in enumerate(self._sigmas):
             if self._log_level:
                 text = "Calculating Gamma of ph-isotope with "
@@ -239,9 +244,11 @@ class Conductivity(object):
                 else:
                     text += "sigma=%s" % sigma
                 print(text)
-            pp_freqs, pp_eigvecs, pp_phonon_done = self._pp.get_phonons()
+
             self._isotope.set_sigma(sigma)
-            self._isotope.set_phonons(pp_freqs,
+            self._isotope.set_phonons(self._grid_address,
+                                      bz_map,
+                                      pp_freqs,
                                       pp_eigvecs,
                                       pp_phonon_done,
                                       dm=self._dm)

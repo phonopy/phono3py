@@ -1,46 +1,48 @@
 .. _command_cutoff_pair:
 
-Reducing number of force calculations by cutoff pair-distance
+Crude force constants calculation by cutoff pair-distance
 =============================================================
 
-Here the detail of the command option :ref:`cutoff_pair_option` is
-explained.
+Here the detail of the command option :ref:`--cutoff_pair
+<cutoff_pair_option>` is explained.
 
 .. contents::
    :depth: 2
    :local:
 
-Cutff pair-distance
---------------------
+What is cutff pair-distance in phono3py?
+----------------------------------------
 
 Using ``--cutoff_pair`` option, number of supercells with
 displacements to be calculated is reduced. But of course this
-sacrificed the accuracy of third-order force constants (fc3).
+sacrifices the accuracy of third-order force constants (fc3).
 
-In phono3py, to fill elements of fc3 of a supercell, forces in many
+In phono3py, to obtain supercell-fc3,
+:math:`\Phi_{\alpha\beta\gamma}(jl, j'l', j''l'')`, forces in many
 supercells having different pairs of displaced atoms are computed
 using some force-calculator such as ab-initio code. In the phono3py
-default behaviour, full elements of fc3 are computed. In this case,
-depending on the number of atoms in the supercell and the crystal
-symmetry, the configuration of atomic pairs can be huge and beyond our
-computational resource.
+default behaviour, full elements of supercell-fc3 are computed. In
+this case, though depending on the number of atoms in the supercell
+and the crystal symmetry, the number of atomic-pair configuration can
+be huge and beyond our computational resource.
 
-However fc3 interaction range among triplets of atoms may be short
-enough. If it is the case, we may be allowed to omit computing some
-elements of fc3. This is what achieved by ``--cutoff_pair`` option.
+Sometimes we may expect that interaction range of fc3 among triplets
+of atoms is shorter than chosen supercell size. If it is the case, we
+may be allowed to omit computing some elements of supercell-fc3. This
+is what achieved by ``--cutoff_pair`` option.
 
-A fc3 element is made of three atoms in the supercell. Two of three
-are finitely displaced (:math:`\Delta\mathbf{r}_1` and
-:math:`\Delta\mathbf{r}_2`) but one of them is included in a force
-given by the force calculator
-(:math:`-\frac{\partial\Phi}{\partial\mathbf{r}_3}`). The cutoff
-distance :math:`d_\text{cut}` is defined as the upper bound of the
-distance between the former two atoms that are considered for the
-force calculations, i.e., the set of atomic pairs
-:math:`\{(\mathbf{r}_1,\mathbf{r}_2)| |\mathbf{r}_1 - \mathbf{r}_2| <
-d_\text{cut}\}` is selected. By this, when three distances among the
-three atoms of triplets are all larger than :math:`d_\text{cut}`,
-those fc3 elements can not be obtained and so they are set to be zero.
+A supercell-fc3 element is specified by three atomic
+displacements. Two of three are finitely displaced
+(:math:`\Delta\mathbf{r}_1` and :math:`\Delta\mathbf{r}_2`) but one of
+them is included in a force given by the force calculator such as
+:math:`\mathbf{F}_3=-\frac{\partial V}{\partial\mathbf{r}_3}`. The
+cutoff distance :math:`d_\text{cut}` is defined as the upper bound of
+the distance between the atoms 1 and 2. By this, the set of atomic
+pairs :math:`\{(\mathbf{r}_1,\mathbf{r}_2)| |\mathbf{r}_1 -
+\mathbf{r}_2| < d_\text{cut}\}` is selected for the supercell-fc3
+calculation. By this, when three distances among the three atoms of
+triplets are all larger than :math:`d_\text{cut}`, those fc3 elements
+can not be obtained and so they are simply set zero.
 
 Usage
 ------

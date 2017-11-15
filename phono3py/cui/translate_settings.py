@@ -50,7 +50,7 @@ def get_phono3py_configurations(settings):
         grid_points = [get_grid_point_from_address(ga, mesh)
                        for ga in grid_addresses]
     band_indices = settings.get_band_indices()
-    
+
     # Brillouin zone integration: Tetrahedron (default) or smearing method
     sigma = settings.get_sigma()
     if sigma is None:
@@ -63,6 +63,8 @@ def get_phono3py_configurations(settings):
         sigmas = [None] + sigmas
     if len(sigmas) == 0:
         sigmas = [None]
+
+    sigma_cutoff = settings.get_sigma_cutoff_width()
 
     if settings.get_temperatures() is None:
         if settings.get_is_joint_dos():
@@ -115,6 +117,7 @@ def get_phono3py_configurations(settings):
     conf['grid_points'] = grid_points
     conf['band_indices'] = band_indices
     conf['sigmas'] = sigmas
+    conf['sigma_cutoff'] = sigma_cutoff
     conf['temperature_points'] = temperature_points
     conf['temperatures'] = temperatures
     conf['frequency_factor_to_THz'] = frequency_factor_to_THz

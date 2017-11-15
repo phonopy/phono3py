@@ -1,6 +1,6 @@
 .. _command_options:
 
-Command options and setting tags
+Command options / Setting tags
 =================================
 
 Command-user-interface of phono3py is operated with a variety of

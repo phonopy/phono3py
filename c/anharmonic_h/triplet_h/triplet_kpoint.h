@@ -41,18 +41,18 @@
 #include <triplet_h/triplet.h>
 
 int tpk_get_ir_triplets_at_q(int map_triplets[],
-			     int map_q[],
-			     int grid_address[][3],
-			     const int grid_point,
-			     const int mesh[3],
-			     const int is_time_reversal,
-			     const MatINT * rotations);
+                             int map_q[],
+                             int grid_address[][3],
+                             const int grid_point,
+                             const int mesh[3],
+                             const int is_time_reversal,
+                             const MatINT * rotations);
 int tpk_get_BZ_triplets_at_q(int triplets[][3],
-			     const int grid_point,
-			     TPLCONST int bz_grid_address[][3],
-			     const int bz_map[],
-			     const int map_triplets[],
-			     const int num_map_triplets,
-			     const int mesh[3]);
+                             const int grid_point,
+                             TPLCONST int bz_grid_address[][3],
+                             const int bz_map[],
+                             const int map_triplets[],
+                             const int num_map_triplets,
+                             const int mesh[3]);
 
 #endif
