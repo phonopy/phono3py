@@ -46,6 +46,7 @@ class Phono3pySettings(Settings):
         self._pinv_solver = 0
         self._pp_conversion_factor = None
         self._scattering_event_class = None # scattering event class 1 or 2
+        self._sigma_cutoff_width = None
         self._temperatures = None
         self._use_alm = False
         self._use_ave_pp = False
@@ -295,6 +296,12 @@ class Phono3pySettings(Settings):
     def get_scattering_event_class(self):
         return self._scattering_event_class
 
+    def set_sigma_cutoff_width(self, sigma_cutoff_width):
+        self._sigma_cutoff_width = sigma_cutoff_width
+
+    def get_sigma_cutoff_width(self):
+        return self._sigma_cutoff_width
+
     def set_temperatures(self, temperatures):
         self._temperatures = temperatures
 
@@ -344,202 +351,214 @@ class Phono3pySettings(Settings):
         return self._write_phonon
 
 class Phono3pyConfParser(ConfParser):
-    def __init__(self, filename=None, options=None, option_list=None):
-        ConfParser.__init__(self, filename, options, option_list)
+    def __init__(self, filename=None, args=None):
+        ConfParser.__init__(self, filename, args)
         self._read_options()
         self._parse_conf()
         self._settings = Phono3pySettings()
         self._set_settings()
 
     def _read_options(self):
-        for opt in self._option_list:
-            if opt.dest == 'phonon_supercell_dimension':
-                if self._options.phonon_supercell_dimension is not None:
-                    self._confs['dim_fc2'] = self._options.phonon_supercell_dimension
+        if 'phonon_supercell_dimension' in self._args:
+            dim_fc2 = self._args.phonon_supercell_dimension
+            if dim_fc2 is not None:
+                self._confs['dim_fc2'] = dim_fc2
 
-            if opt.dest == 'boundary_mfp':
-                if self._options.boundary_mfp is not None:
-                    self._confs['boundary_mfp'] = self._options.boundary_mfp
+        if 'boundary_mfp' in self._args:
+            if self._args.boundary_mfp is not None:
+                self._confs['boundary_mfp'] = self._args.boundary_mfp
 
-            if opt.dest == 'constant_averaged_pp_interaction':
-                if self._options.constant_averaged_pp_interaction is not None:
-                    self._confs['constant_averaged_pp_interaction'] = self._options.constant_averaged_pp_interaction
+        if 'constant_averaged_pp_interaction' in self._args:
+            const_ave_pp = self._args.constant_averaged_pp_interaction
+            if const_ave_pp is not None:
+                self._confs['constant_averaged_pp_interaction'] = const_ave_pp
 
-            if opt.dest == 'cutoff_fc3_distance':
-                if self._options.cutoff_fc3_distance is not None:
-                    self._confs['cutoff_fc3_distance'] = self._options.cutoff_fc3_distance
+        if 'cutoff_fc3_distance' in self._args:
+            cutoff_fc3 = self._args.cutoff_fc3_distance
+            if cutoff_fc3 is not None:
+                self._confs['cutoff_fc3_distance'] = cutoff_fc3
 
-            if opt.dest == 'cutoff_pair_distance':
-                if self._options.cutoff_pair_distance is not None:
-                    self._confs['cutoff_pair_distance'] = self._options.cutoff_pair_distance
+        if 'cutoff_pair_distance' in self._args:
+            cutoff_pair = self._args.cutoff_pair_distance
+            if cutoff_pair is not None:
+                self._confs['cutoff_pair_distance'] = cutoff_pair
 
-            if opt.dest == 'frequency_scale_factor':
-                if self._options.frequency_scale_factor is not None:
-                    self._confs['frequency_scale_factor'] = self._options.frequency_scale_factor
+        if 'frequency_scale_factor' in self._args:
+            freq_scale = self._args.frequency_scale_factor
+            if freq_scale is not None:
+                self._confs['frequency_scale_factor'] = freq_scale
 
-            if opt.dest == 'gamma_conversion_factor':
-                if self._options.gamma_conversion_factor is not None:
-                    self._confs['gamma_conversion_factor'] = self._options.gamma_conversion_factor
+        if 'gamma_conversion_factor' in self._args:
+            g_conv_factor = self._args.gamma_conversion_factor
+            if g_conv_factor is not None:
+                self._confs['gamma_conversion_factor'] = g_conv_factor
 
-            if opt.dest == 'grid_addresses':
-                if self._options.grid_addresses is not None:
-                    self._confs['grid_addresses'] = self._options.grid_addresses
+        if 'grid_addresses' in self._args:
+            if self._args.grid_addresses is not None:
+                self._confs['grid_addresses'] = self._args.grid_addresses
 
-            if opt.dest == 'grid_points':
-                if self._options.grid_points is not None:
-                    self._confs['grid_points'] = self._options.grid_points
+        if 'grid_points' in self._args:
+            if self._args.grid_points is not None:
+                self._confs['grid_points'] = self._args.grid_points
 
-            if opt.dest == 'ion_clamped':
-                if self._options.ion_clamped:
-                    self._confs['ion_clamped'] = '.true.'
+        if 'ion_clamped' in self._args:
+            if self._args.ion_clamped:
+                self._confs['ion_clamped'] = '.true.'
 
-            if opt.dest == 'is_bterta':
-                if self._options.is_bterta:
-                    self._confs['bterta'] = '.true.'
+        if 'is_bterta' in self._args:
+            if self._args.is_bterta:
+                self._confs['bterta'] = '.true.'
 
-            if opt.dest == 'is_gruneisen':
-                if self._options.is_gruneisen:
-                    self._confs['gruneisen'] = '.true.'
+        if 'is_gruneisen' in self._args:
+            if self._args.is_gruneisen:
+                self._confs['gruneisen'] = '.true.'
 
-            if opt.dest == 'is_displacement':
-                if self._options.is_displacement:
-                    self._confs['create_displacements'] = '.true.'
+        if 'is_displacement' in self._args:
+            if self._args.is_displacement:
+                self._confs['create_displacements'] = '.true.'
 
-            if opt.dest == 'is_frequency_shift':
-                if self._options.is_frequency_shift:
-                    self._confs['frequency_shift'] = '.true.'
+        if 'is_frequency_shift' in self._args:
+            if self._args.is_frequency_shift:
+                self._confs['frequency_shift'] = '.true.'
 
-            if opt.dest == 'is_full_pp':
-                if self._options.is_full_pp:
-                    self._confs['full_pp'] = '.true.'
+        if 'is_full_pp' in self._args:
+            if self._args.is_full_pp:
+                self._confs['full_pp'] = '.true.'
 
-            if opt.dest == 'is_imag_self_energy':
-                if self._options.is_imag_self_energy:
-                    self._confs['imag_self_energy'] = '.true.'
+        if 'is_imag_self_energy' in self._args:
+            if self._args.is_imag_self_energy:
+                self._confs['imag_self_energy'] = '.true.'
 
-            if opt.dest == 'is_isotope':
-                if self._options.is_isotope:
-                    self._confs['isotope'] = '.true.'
+        if 'is_isotope' in self._args:
+            if self._args.is_isotope:
+                self._confs['isotope'] = '.true.'
 
-            if opt.dest == 'is_joint_dos':
-                if self._options.is_joint_dos:
-                    self._confs['joint_dos'] = '.true.'
+        if 'is_joint_dos' in self._args:
+            if self._args.is_joint_dos:
+                self._confs['joint_dos'] = '.true.'
 
-            if opt.dest == 'no_kappa_stars':
-                if self._options.no_kappa_stars:
-                    self._confs['kappa_star'] = '.false.'
+        if 'no_kappa_stars' in self._args:
+            if self._args.no_kappa_stars:
+                self._confs['kappa_star'] = '.false.'
 
-            if opt.dest == 'is_lbte':
-                if self._options.is_lbte:
-                    self._confs['lbte'] = '.true.'
+        if 'is_lbte' in self._args:
+            if self._args.is_lbte:
+                self._confs['lbte'] = '.true.'
 
-            if opt.dest == 'is_linewidth':
-                if self._options.is_linewidth:
-                    self._confs['linewidth'] = '.true.'
+        if 'is_linewidth' in self._args:
+            if self._args.is_linewidth:
+                self._confs['linewidth'] = '.true.'
 
-            if opt.dest == 'is_N_U':
-                if self._options.is_N_U:
-                    self._confs['N_U'] = '.true.'
+        if 'is_N_U' in self._args:
+            if self._args.is_N_U:
+                self._confs['N_U'] = '.true.'
 
-            if opt.dest == 'is_reducible_collision_matrix':
-                if self._options.is_reducible_collision_matrix:
-                    self._confs['reducible_collision_matrix'] = '.true.'
+        if 'is_reducible_collision_matrix' in self._args:
+            if self._args.is_reducible_collision_matrix:
+                self._confs['reducible_collision_matrix'] = '.true.'
 
-            if opt.dest == 'is_symmetrize_fc2':
-                if self._options.is_symmetrize_fc2:
-                    self._confs['symmetrize_fc2'] = '.true.'
+        if 'is_symmetrize_fc2' in self._args:
+            if self._args.is_symmetrize_fc2:
+                self._confs['symmetrize_fc2'] = '.true.'
 
-            if opt.dest == 'is_symmetrize_fc3_q':
-                if self._options.is_symmetrize_fc3_q:
-                    self._confs['symmetrize_fc3_q'] = '.true.'
+        if 'is_symmetrize_fc3_q' in self._args:
+            if self._args.is_symmetrize_fc3_q:
+                self._confs['symmetrize_fc3_q'] = '.true.'
 
-            if opt.dest == 'is_symmetrize_fc3_r':
-                if self._options.is_symmetrize_fc3_r:
-                    self._confs['symmetrize_fc3_r'] = '.true.'
+        if 'is_symmetrize_fc3_r' in self._args:
+            if self._args.is_symmetrize_fc3_r:
+                self._confs['symmetrize_fc3_r'] = '.true.'
 
-            if opt.dest == 'mass_variances':
-                if self._options.mass_variances is not None:
-                    self._confs['mass_variances'] = self._options.mass_variances
+        if 'mass_variances' in self._args:
+            if self._args.mass_variances is not None:
+                self._confs['mass_variances'] = self._args.mass_variances
 
-            if opt.dest == 'max_freepath':
-                if self._options.max_freepath is not None:
-                    self._confs['max_freepath'] = self._options.max_freepath
+        if 'max_freepath' in self._args:
+            if self._args.max_freepath is not None:
+                self._confs['max_freepath'] = self._args.max_freepath
 
-            if opt.dest == 'mesh_divisors':
-                if self._options.mesh_divisors is not None:
-                    self._confs['mesh_divisors'] = self._options.mesh_divisors
+        if 'mesh_divisors' in self._args:
+            if self._args.mesh_divisors is not None:
+                self._confs['mesh_divisors'] = self._args.mesh_divisors
 
-            if opt.dest == 'pinv_cutoff':
-                if self._options.pinv_cutoff is not None:
-                    self._confs['pinv_cutoff'] = self._options.pinv_cutoff
+        if 'pinv_cutoff' in self._args:
+            if self._args.pinv_cutoff is not None:
+                self._confs['pinv_cutoff'] = self._args.pinv_cutoff
 
-            if opt.dest == 'pinv_solver':
-                if self._options.pinv_solver is not None:
-                    self._confs['pinv_solver'] = self._options.pinv_solver
+        if 'pinv_solver' in self._args:
+            if self._args.pinv_solver is not None:
+                self._confs['pinv_solver'] = self._args.pinv_solver
 
-            if opt.dest == 'pp_conversion_factor':
-                if self._options.pp_conversion_factor is not None:
-                    self._confs['pp_conversion_factor'] = self._options.pp_conversion_factor
+        if 'pp_conversion_factor' in self._args:
+            pp_conv_factor = self._args.pp_conversion_factor
+            if pp_conv_factor is not None:
+                self._confs['pp_conversion_factor'] = pp_conv_factor
 
-            if opt.dest == 'read_amplitude':
-                if self._options.read_amplitude:
-                    self._confs['read_amplitude'] = '.true.'
+        if 'read_amplitude' in self._args:
+            if self._args.read_amplitude:
+                self._confs['read_amplitude'] = '.true.'
 
-            if opt.dest == 'read_fc2':
-                if self._options.read_fc2:
-                    self._confs['read_fc2'] = '.true.'
+        if 'read_fc2' in self._args:
+            if self._args.read_fc2:
+                self._confs['read_fc2'] = '.true.'
 
-            if opt.dest == 'read_fc3':
-                if self._options.read_fc3:
-                    self._confs['read_fc3'] = '.true.'
+        if 'read_fc3' in self._args:
+            if self._args.read_fc3:
+                self._confs['read_fc3'] = '.true.'
 
-            if opt.dest == 'read_gamma':
-                if self._options.read_gamma:
-                    self._confs['read_gamma'] = '.true.'
+        if 'read_gamma' in self._args:
+            if self._args.read_gamma:
+                self._confs['read_gamma'] = '.true.'
 
-            if opt.dest == 'read_phonon':
-                if self._options.read_phonon:
-                    self._confs['read_phonon'] = '.true.'
+        if 'read_phonon' in self._args:
+            if self._args.read_phonon:
+                self._confs['read_phonon'] = '.true.'
 
-            if opt.dest == 'read_collision':
-                if self._options.read_collision is not None:
-                    self._confs['read_collision'] = self._options.read_collision
+        if 'read_collision' in self._args:
+            if self._args.read_collision is not None:
+                self._confs['read_collision'] = self._args.read_collision
 
-            if opt.dest == 'scattering_event_class':
-                if self._options.scattering_event_class is not None:
-                    self._confs['scattering_event_class'] = self._options.scattering_event_class
+        if 'scattering_event_class' in self._args:
+            scatt_class = self._args.scattering_event_class
+            if scatt_class is not None:
+                self._confs['scattering_event_class'] = scatt_class
 
-            if opt.dest == 'temperatures':
-                if self._options.temperatures is not None:
-                    self._confs['temperatures'] = self._options.temperatures
+        if 'sigma_cutoff_width' in self._args:
+            sigma_cutoff = self._args.sigma_cutoff_width
+            if sigma_cutoff is not None:
+                self._confs['sigma_cutoff_width'] = sigma_cutoff
 
-            if opt.dest == 'use_alm':
-                if self._options.use_alm:
-                    self._confs['use_alm'] = '.true.'
+        if 'temperatures' in self._args:
+            if self._args.temperatures is not None:
+                self._confs['temperatures'] = self._args.temperatures
 
-            if opt.dest == 'use_ave_pp':
-                if self._options.use_ave_pp:
-                    self._confs['use_ave_pp'] = '.true.'
+        if 'use_alm' in self._args:
+            if self._args.use_alm:
+                self._confs['use_alm'] = '.true.'
 
-            if opt.dest == 'write_amplitude':
-                if self._options.write_amplitude:
-                    self._confs['write_amplitude'] = '.true.'
+        if 'use_ave_pp' in self._args:
+            if self._args.use_ave_pp:
+                self._confs['use_ave_pp'] = '.true.'
 
-            if opt.dest == 'write_gamma_detail':
-                if self._options.write_gamma_detail:
-                    self._confs['write_gamma_detail'] = '.true.'
+        if 'write_amplitude' in self._args:
+            if self._args.write_amplitude:
+                self._confs['write_amplitude'] = '.true.'
 
-            if opt.dest == 'write_gamma':
-                if self._options.write_gamma:
-                    self._confs['write_gamma'] = '.true.'
+        if 'write_gamma_detail' in self._args:
+            if self._args.write_gamma_detail:
+                self._confs['write_gamma_detail'] = '.true.'
 
-            if opt.dest == 'write_collision':
-                if self._options.write_collision:
-                    self._confs['write_collision'] = '.true.'
+        if 'write_gamma' in self._args:
+            if self._args.write_gamma:
+                self._confs['write_gamma'] = '.true.'
 
-            if opt.dest == 'write_phonon':
-                if self._options.write_phonon:
-                    self._confs['write_phonon'] = '.true.'
+        if 'write_collision' in self._args:
+            if self._args.write_collision:
+                self._confs['write_collision'] = '.true.'
+
+        if 'write_phonon' in self._args:
+            if self._args.write_phonon:
+                self._confs['write_phonon'] = '.true.'
 
     def _parse_conf(self):
         confs = self._confs
@@ -630,11 +649,11 @@ class Phono3pyConfParser(ConfParser):
             if conf_key == 'imag_self_energy':
                 if confs['imag_self_energy'].lower() == '.true.':
                     self.set_parameter('is_imag_self_energy', True)
-                    
+
             if conf_key == 'isotope':
                 if confs['isotope'].lower() == '.true.':
                     self.set_parameter('is_isotope', True)
-                    
+
             if conf_key == 'joint_dos':
                 if confs['joint_dos'].lower() == '.true.':
                     self.set_parameter('is_joint_dos', True)
@@ -739,6 +758,10 @@ class Phono3pyConfParser(ConfParser):
                 self.set_parameter('scattering_event_class',
                                    confs['scattering_event_class'])
 
+            if conf_key == 'sigma_cutoff_width':
+                self.set_parameter('sigma_cutoff_width',
+                                   float(confs['sigma_cutoff_width']))
+
             if conf_key == 'temperatures':
                 vals = [fracval(x) for x in confs['temperatures'].split()]
                 if len(vals) < 1:
@@ -761,7 +784,7 @@ class Phono3pyConfParser(ConfParser):
             if conf_key == 'write_gamma_detail':
                 if confs['write_gamma_detail'].lower() == '.true.':
                     self.set_parameter('write_gamma_detail', True)
-                    
+
             if conf_key == 'write_gamma':
                 if confs['write_gamma'].lower() == '.true.':
                     self.set_parameter('write_gamma', True)
@@ -782,7 +805,7 @@ class Phono3pyConfParser(ConfParser):
         if 'create_displacements' in params:
             if params['create_displacements']:
                 self._settings.set_create_displacements('displacements')
-    
+
         # Supercell dimension for fc2
         if 'dim_fc2' in params:
             self._settings.set_phonon_supercell_matrix(params['dim_fc2'])
@@ -796,7 +819,7 @@ class Phono3pyConfParser(ConfParser):
             self._settings.set_constant_averaged_pp_interaction(
                 params['constant_averaged_pp_interaction'])
 
-        # Cutoff distance of third-order force constants. Elements where any 
+        # Cutoff distance of third-order force constants. Elements where any
         # pair of atoms has larger distance than cut-off distance are set zero.
         if 'cutoff_fc3_distance' in params:
             self._settings.set_cutoff_fc3_distance(params['cutoff_fc3_distance'])
@@ -807,7 +830,7 @@ class Phono3pyConfParser(ConfParser):
             self._settings.set_cutoff_pair_distance(
                 params['cutoff_pair_distance'])
 
-        # This scale factor is multiplied to frequencies only, i.e., changes 
+        # This scale factor is multiplied to frequencies only, i.e., changes
         # frequencies but assumed not to change the physical unit
         if 'frequency_scale_factor' in params:
             self._settings.set_frequency_scale_factor(
@@ -925,15 +948,15 @@ class Phono3pyConfParser(ConfParser):
         # Read fc2 from hdf5
         if 'read_fc2' in params:
             self._settings.set_read_fc2(params['read_fc2'])
-            
+
         # Read fc3 from hdf5
         if 'read_fc3' in params:
             self._settings.set_read_fc3(params['read_fc3'])
-            
+
         # Read gammas from hdf5
         if 'read_gamma' in params:
             self._settings.set_read_gamma(params['read_gamma'])
-            
+
         # Read phonons from hdf5
         if 'read_phonon' in params:
             self._settings.set_read_phonon(params['read_phonon'])
@@ -946,6 +969,10 @@ class Phono3pyConfParser(ConfParser):
         if 'scattering_event_class' in params:
             self._settings.set_scattering_event_class(
                 params['scattering_event_class'])
+
+        # Cutoff width of smearing function (ratio to sigma value)
+        if 'sigma_cutoff_width' in params:
+            self._settings.set_sigma_cutoff_width(params['sigma_cutoff_width'])
 
         # Temperatures
         if 'temperatures' in params:
@@ -975,11 +1002,7 @@ class Phono3pyConfParser(ConfParser):
         # Write collision matrix and gammas to hdf5
         if 'write_collision' in params:
             self._settings.set_write_collision(params['write_collision'])
-            
+
         # Write all phonons on grid points to hdf5
         if 'write_phonon' in params:
             self._settings.set_write_phonon(params['write_phonon'])
-
-
-        
-

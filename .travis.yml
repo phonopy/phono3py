@@ -8,17 +8,24 @@ python:
     - '3.6'
 
 before_install:
-    - TRAVIS_PYTHON_VERSION=`python --version |& awk '{print $2}'|awk -F'.' '{print $1"."$2}'`
-    - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+    # - TRAVIS_PYTHON_VERSION=`python --version |& awk '{print $2}'|awk -F'.' '{print $1"."$2}'`
+    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+        wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
+      else
+        wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+      fi    
+    - echo $TRAVIS_PYTHON_VERSION
+    # - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
     - bash miniconda.sh -b -p ${HOME}/.miniconda
     - export PATH=${HOME}/.miniconda/bin:${PATH}
     - export C_INCLUDE_PATH=${HOME}/.miniconda/include:${C_INCLUDE_PATH}
     - export LD_LIBRARY_PATH=${HOME}/.miniconda/lib:${LD_LIBRARY_PATH}
     - conda update --yes conda
+    - conda info -a
 
 install:
     - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy h5py pyyaml matplotlib openblas
-    - conda install -c atztogo --yes python=$TRAVIS_PYTHON_VERSION phonopy
+    - conda install --yes -c atztogo phonopy
     - pwd
     - ./get_nanoversion.sh
     - cat __nanoversion__.txt

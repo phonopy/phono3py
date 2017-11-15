@@ -14,6 +14,7 @@ def get_thermal_conductivity_RTA(
         symmetry,
         temperatures=np.arange(0, 1001, 10, dtype='double'),
         sigmas=None,
+        sigma_cutoff=None,
         mass_variances=None,
         grid_points=None,
         is_isotope=False,
@@ -43,6 +44,7 @@ def get_thermal_conductivity_RTA(
         grid_points=grid_points,
         temperatures=temperatures,
         sigmas=sigmas,
+        sigma_cutoff=sigma_cutoff,
         is_isotope=is_isotope,
         mass_variances=mass_variances,
         boundary_mfp=boundary_mfp,
@@ -398,6 +400,7 @@ class Conductivity_RTA(Conductivity):
                  grid_points=None,
                  temperatures=None,
                  sigmas=None,
+                 sigma_cutoff=None,
                  is_isotope=False,
                  mass_variances=None,
                  boundary_mfp=None, # in micrometre
@@ -414,6 +417,7 @@ class Conductivity_RTA(Conductivity):
         self._pp = None
         self._temperatures = None
         self._sigmas = None
+        self._sigma_cutoff = None
         self._is_kappa_star = None
         self._gv_delta_q = None
         self._is_full_pp = None
@@ -466,6 +470,7 @@ class Conductivity_RTA(Conductivity):
                               grid_points=grid_points,
                               temperatures=temperatures,
                               sigmas=sigmas,
+                              sigma_cutoff=sigma_cutoff,
                               is_isotope=is_isotope,
                               mass_variances=mass_variances,
                               mesh_divisors=mesh_divisors,
@@ -507,7 +512,7 @@ class Conductivity_RTA(Conductivity):
                             print(" g[j]=%f at gp=%d, band=%d, freq=%f" %
                                   (g_sum[l], gp, l + 1, frequencies[l]))
                             print("=" * 61)
-                        np.seterr(**old_settings) 
+                        np.seterr(**old_settings)
 
         self._mode_kappa /= self._num_sampling_grid_points
         self._kappa = self._mode_kappa.sum(axis=2).sum(axis=2)
@@ -606,7 +611,7 @@ class Conductivity_RTA(Conductivity):
 
     def _set_gamma_at_sigmas(self, i):
         for j, sigma in enumerate(self._sigmas):
-            self._collision.set_sigma(sigma)
+            self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
             self._collision.set_integration_weights()
 
             if self._use_ave_pp:
@@ -780,4 +785,3 @@ class Conductivity_RTA(Conductivity):
         else:
             text += "  (dq=%3.1e)" % self._gv_delta_q
         print(text)
-

@@ -40,80 +40,80 @@
 #include <triplet_h/triplet_kpoint.h>
 
 static int get_triplets_reciprocal_mesh_at_q(int map_triplets[],
-					     int map_q[],
-					     int grid_address[][3],
-					     const int grid_point,
-					     const int mesh[3],
-					     const int is_time_reversal,
-					     const int num_rot,
-					     TPLCONST int rotations[][3][3]);
+                                             int map_q[],
+                                             int grid_address[][3],
+                                             const int grid_point,
+                                             const int mesh[3],
+                                             const int is_time_reversal,
+                                             const int num_rot,
+                                             TPLCONST int rotations[][3][3]);
 
 
 int tpl_get_BZ_triplets_at_q(int triplets[][3],
-			     const int grid_point,
-			     TPLCONST int bz_grid_address[][3],
-			     const int bz_map[],
-			     const int map_triplets[],
-			     const int num_map_triplets,
-			     const int mesh[3])
+                             const int grid_point,
+                             TPLCONST int bz_grid_address[][3],
+                             const int bz_map[],
+                             const int map_triplets[],
+                             const int num_map_triplets,
+                             const int mesh[3])
 {
   return tpk_get_BZ_triplets_at_q(triplets,
-				  grid_point,
-				  bz_grid_address,
-				  bz_map,
-				  map_triplets,
-				  num_map_triplets,
-				  mesh);
+                                  grid_point,
+                                  bz_grid_address,
+                                  bz_map,
+                                  map_triplets,
+                                  num_map_triplets,
+                                  mesh);
 }
 
 int tpl_get_triplets_reciprocal_mesh_at_q(int map_triplets[],
-					  int map_q[],
-					  int grid_address[][3],
-					  const int grid_point,
-					  const int mesh[3],
-					  const int is_time_reversal,
-					  const int num_rot,
-					  TPLCONST int rotations[][3][3])
+                                          int map_q[],
+                                          int grid_address[][3],
+                                          const int grid_point,
+                                          const int mesh[3],
+                                          const int is_time_reversal,
+                                          const int num_rot,
+                                          TPLCONST int rotations[][3][3])
 {
   return get_triplets_reciprocal_mesh_at_q(map_triplets,
-					   map_q,
-					   grid_address,
-					   grid_point,
-					   mesh,
-					   is_time_reversal,
-					   num_rot,
-					   rotations);
+                                           map_q,
+                                           grid_address,
+                                           grid_point,
+                                           mesh,
+                                           is_time_reversal,
+                                           num_rot,
+                                           rotations);
 }
 
 int tpl_get_integration_weight(double *iw,
-			       char *iw_zero,
-			       const double frequency_points[],
-			       const int num_band0,
-			       TPLCONST int relative_grid_address[24][4][3],
-			       const int mesh[3],
-			       TPLCONST int triplets[][3],
-			       const int num_triplets,
-			       TPLCONST int bz_grid_address[][3],
-			       const int bz_map[],
-			       const double frequencies[],
-			       const int num_band,
-			       const int num_iw,
+                               char *iw_zero,
+                               const double frequency_points[],
+                               const int num_band0,
+                               TPLCONST int relative_grid_address[24][4][3],
+                               const int mesh[3],
+                               TPLCONST int triplets[][3],
+                               const int num_triplets,
+                               TPLCONST int bz_grid_address[][3],
+                               const int bz_map[],
+                               const double frequencies[],
+                               const int num_band,
+                               const int num_iw,
                                const int openmp_per_triplets,
                                const int openmp_per_bands)
 {
   return tpi_get_integration_weight(iw,
-				    iw_zero,
-				    frequency_points,
-				    num_band0,
-				    relative_grid_address,
-				    mesh,
-				    triplets,
-				    num_triplets,
-				    bz_grid_address,
-				    bz_map,
-				    frequencies,
-				    num_band,
-				    num_iw,
+                                    iw_zero,
+                                    frequency_points,
+                                    num_band0,
+                                    relative_grid_address,
+                                    mesh,
+                                    triplets,
+                                    num_triplets,
+                                    bz_grid_address,
+                                    bz_map,
+                                    frequencies,
+                                    num_band,
+                                    num_iw,
                                     openmp_per_triplets,
                                     openmp_per_bands);
 }
@@ -137,29 +137,29 @@ int tpl_is_N(const int *triplets, const int *grid_address)
 }
 
 static int get_triplets_reciprocal_mesh_at_q(int map_triplets[],
-					     int map_q[],
-					     int grid_address[][3],
-					     const int grid_point,
-					     const int mesh[3],
-					     const int is_time_reversal,
-					     const int num_rot,
-					     TPLCONST int rotations[][3][3])
+                                             int map_q[],
+                                             int grid_address[][3],
+                                             const int grid_point,
+                                             const int mesh[3],
+                                             const int is_time_reversal,
+                                             const int num_rot,
+                                             TPLCONST int rotations[][3][3])
 {
   MatINT *rot_real;
   int i, num_ir;
-  
+
   rot_real = mat_alloc_MatINT(num_rot);
   for (i = 0; i < num_rot; i++) {
     mat_copy_matrix_i3(rot_real->mat[i], rotations[i]);
   }
 
   num_ir = tpk_get_ir_triplets_at_q(map_triplets,
-				    map_q,
-				    grid_address,
-				    grid_point,
-				    mesh,
-				    is_time_reversal,
-				    rot_real);
+                                    map_q,
+                                    grid_address,
+                                    grid_point,
+                                    mesh,
+                                    is_time_reversal,
+                                    rot_real);
 
   mat_free_MatINT(rot_real);
 

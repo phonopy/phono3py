@@ -35,48 +35,48 @@
 #include <phonon3_h/fc3.h>
 
 static double tensor3_rotation_elem(const double *tensor,
-				    const double *r,
-				    const int pos);
+                                    const double *r,
+                                    const int pos);
 static void copy_permutation_symmetry_fc3_elem(double *fc3,
-					       const double fc3_elem[27],
-					       const int a,
-					       const int b,
-					       const int c,
-					       const int num_atom);
+                                               const double fc3_elem[27],
+                                               const int a,
+                                               const int b,
+                                               const int c,
+                                               const int num_atom);
 static void set_permutation_symmetry_fc3_elem(double *fc3_elem,
-					      const double *fc3,
-					      const int a,
-					      const int b,
-					      const int c,
-					      const int num_atom);
+                                              const double *fc3,
+                                              const int a,
+                                              const int b,
+                                              const int c,
+                                              const int num_atom);
 
 void distribute_fc3(double *fc3_copy,
-		    const double *fc3,
-		    const int third_atom,
-		    const int *atom_mapping,
-		    const int num_atom,
-		    const double *rot_cart)
+                    const double *fc3,
+                    const int third_atom,
+                    const int *atom_mapping,
+                    const int num_atom,
+                    const double *rot_cart)
 {
   int i, j;
 
   for (i = 0; i < num_atom; i++) {
     for (j = 0; j < num_atom; j++) {
       tensor3_rotation(fc3_copy +
-		       27 * num_atom * num_atom * third_atom +
-		       27 * num_atom * i +
-		       27 * j,
-		       fc3 +
-		       27 * num_atom * num_atom * atom_mapping[third_atom] +
-		       27 * num_atom * atom_mapping[i] +
-		       27 * atom_mapping[j],
-		       rot_cart);
+                       27 * num_atom * num_atom * third_atom +
+                       27 * num_atom * i +
+                       27 * j,
+                       fc3 +
+                       27 * num_atom * num_atom * atom_mapping[third_atom] +
+                       27 * num_atom * atom_mapping[i] +
+                       27 * atom_mapping[j],
+                       rot_cart);
     }
   }
 }
 
 void tensor3_rotation(double *rot_tensor,
-		      const double *tensor,
-		      const double *rot_cartesian)
+                      const double *tensor,
+                      const double *rot_cartesian)
 {
   int l;
 
@@ -94,17 +94,17 @@ void set_permutation_symmetry_fc3(double *fc3, const int num_atom)
   for (i = 0; i < num_atom; i++) {
     for (j = i; j < num_atom; j++) {
       for (k = j; k < num_atom; k++) {
-	set_permutation_symmetry_fc3_elem(fc3_elem, fc3, i, j, k, num_atom);
-	copy_permutation_symmetry_fc3_elem(fc3, fc3_elem,
-					   i, j, k, num_atom);
+        set_permutation_symmetry_fc3_elem(fc3_elem, fc3, i, j, k, num_atom);
+        copy_permutation_symmetry_fc3_elem(fc3, fc3_elem,
+                                           i, j, k, num_atom);
       }
     }
   }
 }
 
 static double tensor3_rotation_elem(const double *tensor,
-				    const double *r,
-				    const int pos)
+                                    const double *r,
+                                    const int pos)
 {
   int i, j, k, l, m, n;
   double sum;
@@ -117,8 +117,8 @@ static double tensor3_rotation_elem(const double *tensor,
   for (i = 0; i < 3; i++) {
     for (j = 0; j < 3; j++) {
       for (k = 0; k < 3; k++) {
-	sum += r[l * 3 + i] * r[m * 3 + j] * r[n * 3 + k] *
-	  tensor[i * 9 + j * 3 + k];
+        sum += r[l * 3 + i] * r[m * 3 + j] * r[n * 3 + k] *
+          tensor[i * 9 + j * 3 + k];
       }
     }
   }
@@ -127,77 +127,77 @@ static double tensor3_rotation_elem(const double *tensor,
 
 
 static void copy_permutation_symmetry_fc3_elem(double *fc3,
-					       const double fc3_elem[27],
-					       const int a,
-					       const int b,
-					       const int c,
-					       const int num_atom)
+                                               const double fc3_elem[27],
+                                               const int a,
+                                               const int b,
+                                               const int c,
+                                               const int num_atom)
 {
   int i, j, k;
 
   for (i = 0; i < 3; i++) {
     for (j = 0; j < 3; j++) {
       for (k = 0; k < 3; k++) {
-	fc3[a * num_atom * num_atom * 27 +
-	    b * num_atom * 27 +
-	    c * 27 + i * 9 + j * 3 + k] =
-	  fc3_elem[i * 9 + j * 3 + k];
-	fc3[a * num_atom * num_atom * 27 +
-	    c * num_atom * 27 +
-	    b * 27 + i * 9 + k * 3 + j] =
-	  fc3_elem[i * 9 + j * 3 + k];
-	fc3[b * num_atom * num_atom * 27 +
-	    a * num_atom * 27 +
-	    c * 27 + j * 9 + i * 3 + k] =
-	  fc3_elem[i * 9 + j * 3 + k];
-	fc3[b * num_atom * num_atom * 27 +
-	    c * num_atom * 27 +
-	    a * 27 + j * 9 + k * 3 + i] =
-	  fc3_elem[i * 9 + j * 3 + k];
-	fc3[c * num_atom * num_atom * 27 +
-	    a * num_atom * 27 +
-	    b * 27 + k * 9 + i * 3 + j] =
-	  fc3_elem[i * 9 + j * 3 + k];
-	fc3[c * num_atom * num_atom * 27 +
-	    b * num_atom * 27 +
-	    a * 27 + k * 9 + j * 3 + i] =
-	  fc3_elem[i * 9 + j * 3 + k];
+        fc3[a * num_atom * num_atom * 27 +
+            b * num_atom * 27 +
+            c * 27 + i * 9 + j * 3 + k] =
+          fc3_elem[i * 9 + j * 3 + k];
+        fc3[a * num_atom * num_atom * 27 +
+            c * num_atom * 27 +
+            b * 27 + i * 9 + k * 3 + j] =
+          fc3_elem[i * 9 + j * 3 + k];
+        fc3[b * num_atom * num_atom * 27 +
+            a * num_atom * 27 +
+            c * 27 + j * 9 + i * 3 + k] =
+          fc3_elem[i * 9 + j * 3 + k];
+        fc3[b * num_atom * num_atom * 27 +
+            c * num_atom * 27 +
+            a * 27 + j * 9 + k * 3 + i] =
+          fc3_elem[i * 9 + j * 3 + k];
+        fc3[c * num_atom * num_atom * 27 +
+            a * num_atom * 27 +
+            b * 27 + k * 9 + i * 3 + j] =
+          fc3_elem[i * 9 + j * 3 + k];
+        fc3[c * num_atom * num_atom * 27 +
+            b * num_atom * 27 +
+            a * 27 + k * 9 + j * 3 + i] =
+          fc3_elem[i * 9 + j * 3 + k];
       }
     }
   }
 }
 
 static void set_permutation_symmetry_fc3_elem(double *fc3_elem,
-					      const double *fc3,
-					      const int a,
-					      const int b,
-					      const int c,
-					      const int num_atom)
+                                              const double *fc3,
+                                              const int a,
+                                              const int b,
+                                              const int c,
+                                              const int num_atom)
 {
   int i, j, k;
 
   for (i = 0; i < 3; i++) {
     for (j = 0; j < 3; j++) {
       for (k = 0; k < 3; k++) {
-	fc3_elem[i * 9 + j * 3 + k] =
-	  (fc3[a * num_atom * num_atom * 27 +
-	       b * num_atom * 27 +
-	       c * 27 + i * 9 + j * 3 + k] +
-	   fc3[a * num_atom * num_atom * 27 +
-	       c * num_atom * 27 +
-	       b * 27 + i * 9 + k * 3 + j] +
-	   fc3[b * num_atom * num_atom * 27 +
-	       a * num_atom * 27 +
-	       c * 27 + j * 9 + i * 3 + k] +
-	   fc3[b * num_atom * num_atom * 27 +
-	       c * num_atom * 27 +
-	       a * 27 + j * 9 + k * 3 + i] +
-	   fc3[c * num_atom * num_atom * 27 +
-	       a * num_atom * 27 +
-	       b * 27 + k * 9 + i * 3 + j] +
-	   fc3[c * num_atom * num_atom * 27 +
-	       b * num_atom * 27 +
-	       a * 27 + k * 9 + j * 3 + i]) / 6;
+        fc3_elem[i * 9 + j * 3 + k] =
+          (fc3[a * num_atom * num_atom * 27 +
+               b * num_atom * 27 +
+               c * 27 + i * 9 + j * 3 + k] +
+           fc3[a * num_atom * num_atom * 27 +
+               c * num_atom * 27 +
+               b * 27 + i * 9 + k * 3 + j] +
+           fc3[b * num_atom * num_atom * 27 +
+               a * num_atom * 27 +
+               c * 27 + j * 9 + i * 3 + k] +
+           fc3[b * num_atom * num_atom * 27 +
+               c * num_atom * 27 +
+               a * 27 + j * 9 + k * 3 + i] +
+           fc3[c * num_atom * num_atom * 27 +
+               a * num_atom * 27 +
+               b * 27 + k * 9 + i * 3 + j] +
+           fc3[c * num_atom * num_atom * 27 +
+               b * num_atom * 27 +
+               a * 27 + k * 9 + j * 3 + i]) / 6;
       }
     }
   }

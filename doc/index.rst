@@ -27,8 +27,9 @@ Documentation
    command-options
    output-files
    hdf5_howto
-   workload-distribution
    auxiliary-tools
+   workload-distribution
+   cutoff-pair
    external-tools
    tips
    citation
