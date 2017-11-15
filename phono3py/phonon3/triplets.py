@@ -287,6 +287,7 @@ def get_grid_points_in_Brillouin_zone(primitive_vectors, # column vectors
 def get_triplets_integration_weights(interaction,
                                      frequency_points,
                                      sigma,
+                                     sigma_cutoff=None,
                                      is_collision_matrix=False,
                                      neighboring_phonons=False,
                                      lang='C'):
@@ -308,12 +309,21 @@ def get_triplets_integration_weights(interaction,
     if sigma:
         if lang == 'C':
             import phono3py._phono3py as phono3c
+            g_zero = np.zeros(g.shape[1:], dtype='byte', order='C')
+            if sigma_cutoff is None:
+                cutoff = -1
+            else:
+                cutoff = float(sigma_cutoff)
+            print("sigma cutoff %s" % cutoff)
+            # cutoff < 0 disables g_zero feature.
             phono3c.triplets_integration_weights_with_sigma(
                 g,
+                g_zero,
                 frequency_points,
                 triplets,
                 frequencies,
-                sigma)
+                sigma,
+                cutoff)
         else:
             for i, tp in enumerate(triplets):
                 f1s = frequencies[tp[1]]

@@ -348,6 +348,7 @@ coarse_mesh_shifts = conf['coarse_mesh_shifts']
 grid_points = conf['grid_points']
 band_indices = conf['band_indices']
 sigmas = conf['sigmas']
+sigma_cutoff = conf['sigma_cutoff']
 temperature_points = conf['temperature_points']
 temperatures = conf['temperatures']
 frequency_factor_to_THz = conf['frequency_factor_to_THz']
@@ -411,6 +412,7 @@ phono3py = Phono3py(
     mesh=mesh,
     band_indices=band_indices,
     sigmas=sigmas,
+    sigma_cutoff=sigma_cutoff,
     cutoff_frequency=cutoff_frequency,
     frequency_factor_to_THz=frequency_factor_to_THz,
     is_symmetry=settings.get_is_symmetry(),
@@ -544,6 +546,7 @@ if log_level and run_mode is not None:
                            mesh_divs,
                            band_indices,
                            sigmas,
+                           sigma_cutoff,
                            temperatures,
                            temperature_points,
                            grid_points,

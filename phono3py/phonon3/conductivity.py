@@ -19,6 +19,7 @@ class Conductivity(object):
                  grid_points=None,
                  temperatures=None,
                  sigmas=None,
+                 sigma_cutoff=None,
                  is_isotope=False,
                  mass_variances=None,
                  mesh_divisors=None,
@@ -32,6 +33,7 @@ class Conductivity(object):
             self._sigmas = []
         else:
             self._sigmas = sigmas
+        self._sigma_cutoff = sigma_cutoff
         self._pp = interaction
         self._is_full_pp = is_full_pp
         self._collision = None # has to be set derived class

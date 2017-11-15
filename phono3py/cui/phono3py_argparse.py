@@ -118,6 +118,7 @@ def get_parser():
                         scattering_event_class=None,
                         show_num_triplets=False,
                         sigma=None,
+                        sigma_cutoff=None,
                         supercell_dimension=None,
                         symprec=1e-5,
                         temperatures=None,
@@ -375,7 +376,10 @@ def get_parser():
     parser.add_argument(
         "--sigma", dest="sigma",
         help=("A sigma value or multiple sigma values (separated by space) for "
-              "smearing width used for limited functions"))
+              "smearing function"))
+    parser.add_argument(
+        "--sigma-cutoff", dest="sigma_cutoff_width", type=float,
+        help="Cutoff width of smearing function (ratio to sigma value)")
     parser.add_argument(
         "--sym-fc2", dest="is_symmetrize_fc2", action="store_true",
         help="Symmetrize fc2 by index exchange")
