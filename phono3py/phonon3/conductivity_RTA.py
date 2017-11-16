@@ -4,7 +4,8 @@ from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phono3py.file_IO import (write_kappa_to_hdf5, write_triplets,
                               read_gamma_from_hdf5, write_grid_address,
                               write_gamma_detail_to_hdf5)
-from phono3py.phonon3.conductivity import Conductivity, unit_to_WmK
+from phono3py.phonon3.conductivity import (Conductivity, all_bands_exist,
+                                           unit_to_WmK)
 from phono3py.phonon3.imag_self_energy import (ImagSelfEnergy,
                                                average_by_degeneracy)
 from phono3py.phonon3.triplets import get_grid_points_by_rotations
@@ -81,7 +82,7 @@ def get_thermal_conductivity_RTA(
             _write_triplets(interaction)
 
     if write_kappa:
-        if (grid_points is None and _all_bands_exist(interaction)):
+        if grid_points is None and all_bands_exist(interaction):
             br.set_kappa_at_sigmas()
             _write_kappa(br,
                          interaction.get_primitive().get_volume(),
@@ -125,7 +126,7 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
     gamma_N, gamma_U = br.get_gamma_N_U()
 
     gp = grid_points[i]
-    if _all_bands_exist(interaction):
+    if all_bands_exist(interaction):
         if ave_pp is None:
             ave_pp_i = None
         else:
@@ -203,14 +204,6 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
                     kappa_unit_conversion=unit_to_WmK / volume,
                     filename=filename,
                     verbose=verbose)
-
-def _all_bands_exist(interaction):
-    band_indices = interaction.get_band_indices()
-    num_band = interaction.get_primitive().get_number_of_atoms() * 3
-    if len(band_indices) == num_band:
-        if (band_indices - np.arange(num_band) == 0).all():
-            return True
-    return False
 
 def _write_triplets(interaction, filename=None):
     triplets, weights = interaction.get_triplets_at_q()[:2]

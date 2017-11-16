@@ -633,7 +633,7 @@ def write_unitary_matrix_to_hdf5(temperature,
         if sigma is not None:
             text += "at sigma %s" % _del_zeros(sigma)
             if sigma_cutoff is not None:
-                text += "(%4.2 SD)" % sigma_cutoff_str
+                text += "(%4.2f SD)" % sigma_cutoff
         if len(temperature) > 1:
             text += " were written into "
         else:
@@ -831,6 +831,7 @@ def read_gamma_from_hdf5(mesh,
 def read_collision_from_hdf5(mesh,
                              indices=None,
                              grid_point=None,
+                             band_index=None,
                              sigma=None,
                              sigma_cutoff=None,
                              filename=None,
@@ -876,7 +877,7 @@ def read_collision_from_hdf5(mesh,
                     text += "at "
                 text += "sigma %s" % _del_zeros(sigma)
                 if sigma_cutoff is not None:
-                    text += "(%4.2 SD)" % sigma_cutoff_str
+                    text += "(%4.2f SD)" % sigma_cutoff
             text += " were read from "
             if grid_point is not None:
                 text += "\n"
