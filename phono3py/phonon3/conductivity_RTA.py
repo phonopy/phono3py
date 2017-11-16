@@ -567,7 +567,8 @@ class Conductivity_RTA(Conductivity):
                 self._set_gamma_at_sigmas_lowmem(i)
 
         if self._isotope is not None and not self._read_gamma_iso:
-            self._gamma_iso[:, i, :] = self._get_gamma_isotope_at_sigmas(i)
+            gamma_iso = self._get_gamma_isotope_at_sigmas(i)
+            self._gamma_iso[:, i, :] = gamma_iso[:, self._pp.get_band_indices()]
 
         if self._log_level:
             self._show_log(self._qpoints[i], i)

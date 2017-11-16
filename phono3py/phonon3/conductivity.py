@@ -269,7 +269,7 @@ class Conductivity(object):
             self._isotope.run()
             gamma_iso.append(self._isotope.get_gamma())
 
-        return gamma_iso
+        return np.array(gamma_iso, dtype='double', order='C')
 
     def _set_mesh_numbers(self, mesh_divisors=None, coarse_mesh_shifts=None):
         self._mesh = self._pp.get_mesh_numbers()

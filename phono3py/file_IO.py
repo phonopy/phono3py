@@ -809,11 +809,7 @@ def read_gamma_from_hdf5(mesh,
     read_data = {}
 
     with h5py.File("kappa" + suffix + ".hdf5", 'r') as f:
-        if len(f['gamma'].shape) > 0:
-            read_data['gamma'] = f['gamma'][:]
-        else:
-            read_data['gamma'] = f['gamma'][()]
-
+        read_data['gamma'] = f['gamma'][:]
         for key in ('gamma_isotope',
                     'ave_pp',
                     'gamma_N',

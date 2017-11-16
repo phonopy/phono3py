@@ -77,7 +77,7 @@ def get_thermal_conductivity_LBTE(
             filename=input_filename,
             log_level=log_level)
         if not read_from:
-            print("Reading gamma failed.")
+            print("Reading collision failed.")
             return False
         if log_level:
             temperatures = lbte.get_temperatures()
@@ -162,7 +162,7 @@ def _write_collision(lbte,
                         mesh,
                         gamma=gamma[j, :, igp, k],
                         gamma_isotope=gamma_isotope_at_sigma,
-                        collision_matrix=collision_matrix[j, k, igp],
+                        collision_matrix=collision_matrix[j, :, igp, k],
                         grid_point=gp,
                         band_index=bi,
                         sigma=sigma,
@@ -323,16 +323,16 @@ def _set_collision_from_file(lbte,
                 sigma=sigma,
                 sigma_cutoff=sigma_cutoff,
                 filename=filename,
-                verbose=(log_level > 0))
+                verbose=False)
             if collision_gp is None:
                 if log_level:
                     print("Collision at grid point %d doesn't exist." %
                           grid_points[0])
                 return False
 
-            num_band = collision_gp[0].shape[2]
-            num_temp = len(collision_gp[2])
+            num_temp = len(collision_gp[2]) # This is to treat indices="all".
             if is_reducible_collision_matrix:
+                num_band = collision_gp[0].shape[4] # (s,T,b,irgp,b)
                 gamma_at_sigma = np.zeros(
                     (1, num_temp, num_mesh_points, num_band),
                     dtype='double', order='C')
@@ -342,6 +342,7 @@ def _set_collision_from_file(lbte,
                      num_mesh_points, num_band),
                     dtype='double', order='C')
             else:
+                num_band = collision_gp[0].shape[5] # (s,T,b0,3,irgp,b,3)
                 gamma_at_sigma = np.zeros(
                     (1, num_temp, len(grid_points), num_band),
                     dtype='double', order='C')
@@ -366,7 +367,7 @@ def _set_collision_from_file(lbte,
 
                 if collision_gp is False:
                     if log_level:
-                        print("Gamma at grid point %d doesn't exist." % gp)
+                        print("Collision at grid point %d doesn't exist." % gp)
                     return False
 
                 (collision_matrix_at_gp,
@@ -551,13 +552,14 @@ class Conductivity_LBTE(Conductivity):
             self._set_collision_matrix_at_sigmas(i)
 
         if self._is_reducible_collision_matrix:
-            self._set_harmonic_properties(i, gp)
-            if self._isotope is not None:
-                self._gamma_iso[:, gp, :] = self._get_gamma_isotope_at_sigmas(i)
+            igp = gp
         else:
-            self._set_harmonic_properties(i, i)
-            if self._isotope is not None:
-                self._gamma_iso[:, i, :] = self._get_gamma_isotope_at_sigmas(i)
+            igp = i
+        self._set_harmonic_properties(i, igp)
+        if self._isotope is not None:
+            gamma_iso = self._get_gamma_isotope_at_sigmas(i)
+            band_indices = self._pp.get_band_indices()
+            self._gamma_iso[:, igp, :] = gamma_iso[:, band_indices]
 
         if self._log_level:
             self._show_log(i)
