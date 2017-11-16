@@ -314,7 +314,6 @@ def get_triplets_integration_weights(interaction,
                 cutoff = -1
             else:
                 cutoff = float(sigma_cutoff)
-            print("sigma cutoff %s" % cutoff)
             # cutoff < 0 disables g_zero feature.
             phono3c.triplets_integration_weights_with_sigma(
                 g,
