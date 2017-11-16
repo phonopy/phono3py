@@ -623,10 +623,19 @@ class Conductivity_RTA(Conductivity):
                     if sigma is None:
                         text += "tetrahedron method."
                     else:
-                        text += "sigma=%s." % sigma
+                        text += "sigma=%s" % sigma
+                        if self._sigma_cutoff is None:
+                            text += "."
+                        else:
+                            text += "(%4.2f SD)." % self._sigma_cutoff
                     print(text)
-                if not self._is_full_pp or j == 0:
-                    print("Calculating ph-ph interaction...")
+
+                if j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
+                    if self._log_level:
+                        print("Existing ph-ph interaction is used.")
+                else:
+                    if self._log_level:
+                        print("Calculating ph-ph interaction...")
                     self._collision.run_interaction(is_full_pp=self._is_full_pp)
                     if self._is_full_pp:
                         self._averaged_pp_interaction[i] = (
@@ -641,7 +650,8 @@ class Conductivity_RTA(Conductivity):
                     dtype='double', order='C')
                 self._gamma_detail_at_q[:] = 0
 
-            print("Calculating collisions at temperatures")
+            if self._log_level:
+                print("Calculating collisions at temperatures")
             for k, t in enumerate(self._temperatures):
                 self._collision.set_temperature(t)
                 self._collision.run()
