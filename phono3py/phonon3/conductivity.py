@@ -176,6 +176,9 @@ class Conductivity(object):
     def get_sigmas(self):
         return self._sigmas
 
+    def get_sigma_cutoff_width(self):
+        return self._sigma_cutoff
+
     def get_grid_point_count(self):
         return self._grid_point_count
 

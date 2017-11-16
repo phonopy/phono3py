@@ -120,6 +120,7 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
     gamma = br.get_gamma()
     gamma_isotope = br.get_gamma_isotope()
     sigmas = br.get_sigmas()
+    sigma_cutoff = br.get_sigma_cutoff_width()
     volume = interaction.get_primitive().get_volume()
     gamma_N, gamma_U = br.get_gamma_N_U()
 
@@ -158,6 +159,7 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
                                 mesh_divisors=mesh_divisors,
                                 grid_point=gp,
                                 sigma=sigma,
+                                sigma_cutoff=sigma_cutoff,
                                 kappa_unit_conversion=unit_to_WmK / volume,
                                 filename=filename,
                                 verbose=verbose)
@@ -197,6 +199,7 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
                     grid_point=gp,
                     band_index=bi,
                     sigma=sigma,
+                    sigma_cutoff=sigma_cutoff,
                     kappa_unit_conversion=unit_to_WmK / volume,
                     filename=filename,
                     verbose=verbose)
@@ -224,6 +227,7 @@ def _write_triplets(interaction, filename=None):
 def _write_kappa(br, volume, filename=None, log_level=0):
     temperatures = br.get_temperatures()
     sigmas = br.get_sigmas()
+    sigma_cutoff = br.get_sigma_cutoff_width()
     gamma = br.get_gamma()
     gamma_isotope = br.get_gamma_isotope()
     gamma_N, gamma_U = br.get_gamma_N_U()
@@ -294,12 +298,14 @@ def _write_kappa(br, volume, filename=None, log_level=0):
                             weight=weights,
                             mesh_divisors=mesh_divisors,
                             sigma=sigma,
+                            sigma_cutoff=sigma_cutoff,
                             kappa_unit_conversion=unit_to_WmK / volume,
                             filename=filename,
                             verbose=log_level)
 
 def _set_gamma_from_file(br, filename=None, verbose=True):
     sigmas = br.get_sigmas()
+    sigma_cutoff = br.get_sigma_cutoff_width()
     mesh = br.get_mesh_numbers()
     mesh_divisors = br.get_mesh_divisors()
     grid_points = br.get_grid_points()
@@ -326,6 +332,7 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
             mesh,
             mesh_divisors=mesh_divisors,
             sigma=sigma,
+            sigma_cutoff=sigma_cutoff,
             filename=filename,
             verbose=verbose)
         if data:
@@ -346,6 +353,7 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
                     mesh_divisors=mesh_divisors,
                     grid_point=gp,
                     sigma=sigma,
+                    sigma_cutoff=sigma_cutoff,
                     filename=filename,
                     verbose=verbose)
                 if data_gp:
@@ -367,6 +375,7 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
                             grid_point=gp,
                             band_index=bi,
                             sigma=sigma,
+                            sigma_cutoff=sigma_cutoff,
                             filename=filename,
                             verbose=verbose)
                         if data_band:

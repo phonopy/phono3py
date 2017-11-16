@@ -557,17 +557,20 @@ def write_collision_to_hdf5(temperature,
                             gamma_isotope=None,
                             collision_matrix=None,
                             grid_point=None,
+                            band_index=None,
                             sigma=None,
                             filename=None):
-    suffix = "-m%d%d%d" % tuple(mesh)
-    if grid_point is not None:
-        suffix += ("-g%d" % grid_point)
-    if sigma is not None:
-        sigma_str = ("%f" % sigma).rstrip('0').rstrip('\.')
-        suffix += "-s" + sigma_str
-    if filename is not None:
-        suffix += "." + filename
-    with h5py.File("collision" + suffix + ".hdf5", 'w') as w:
+    if band_index is None:
+        band_indices = None
+    else:
+        band_indices = [band_index]
+    suffix = _get_filename_suffix(mesh,
+                                  grid_point=grid_point,
+                                  band_indices=band_indices,
+                                  sigma=sigma,
+                                  filename=filename)
+    full_filename = "collision" + suffix + ".hdf5"
+    with h5py.File(full_filename, 'w') as w:
         w.create_dataset('temperature', data=temperature)
         if gamma is not None:
             w.create_dataset('gamma', data=gamma)
@@ -650,6 +653,7 @@ def write_kappa_to_hdf5(temperature,
                         grid_point=None,
                         band_index=None,
                         sigma=None,
+                        sigma_cutoff=None,
                         kappa_unit_conversion=None,
                         filename=None,
                         verbose=True):
@@ -662,8 +666,9 @@ def write_kappa_to_hdf5(temperature,
                                   grid_point=grid_point,
                                   band_indices=band_indices,
                                   sigma=sigma,
+                                  sigma_cutoff=sigma_cutoff,
                                   filename=filename)
-    full_filename = "kappa" + suffix + ".hdf5" 
+    full_filename = "kappa" + suffix + ".hdf5"
     with h5py.File(full_filename, 'w') as w:
         w.create_dataset('temperature', data=temperature)
         w.create_dataset('mesh', data=mesh)
@@ -699,6 +704,8 @@ def write_kappa_to_hdf5(temperature,
             w.create_dataset('qpoint', data=qpoint)
         if weight is not None:
             w.create_dataset('weight', data=weight)
+        if sigma_cutoff is not None:
+            w.create_dataset('sigma_cutoff_width', data=sigma_cutoff)
         if kappa_unit_conversion is not None:
             w.create_dataset('kappa_unit_conversion',
                              data=kappa_unit_conversion)
@@ -718,7 +725,11 @@ def write_kappa_to_hdf5(temperature,
                     text += "and "
                 else:
                     text += "at "
-                text += "sigma %s\n" % sigma
+                text += "sigma %s" % sigma
+                if sigma_cutoff is None:
+                    text += "\n"
+                else:
+                    text += "(%4.2f SD)\n" % sigma_cutoff
                 text += "were written into "
             else:
                 text += "were written into "
@@ -756,6 +767,7 @@ def read_gamma_from_hdf5(mesh,
                          grid_point=None,
                          band_index=None,
                          sigma=None,
+                         sigma_cutoff=None,
                          filename=None,
                          verbose=True):
     if band_index is None:
@@ -767,6 +779,7 @@ def read_gamma_from_hdf5(mesh,
                                   grid_point=grid_point,
                                   band_indices=band_indices,
                                   sigma=sigma,
+                                  sigma_cutoff=sigma_cutoff,
                                   filename=filename)
     if not os.path.exists("kappa" + suffix + ".hdf5"):
         if verbose:
@@ -1178,6 +1191,7 @@ def _get_filename_suffix(mesh,
                          grid_point=None,
                          band_indices=None,
                          sigma=None,
+                         sigma_cutoff=None,
                          filename=None):
     suffix = "-m%d%d%d" % tuple(mesh)
     if mesh_divisors is not None:
@@ -1192,6 +1206,9 @@ def _get_filename_suffix(mesh,
     if sigma is not None:
         sigma_str = ("%f" % sigma).rstrip('0').rstrip('\.')
         suffix += "-s" + sigma_str
+        if sigma_cutoff is not None:
+            sigma_cutoff_str = ("%f" % sigma_cutoff).rstrip('0').rstrip('\.')
+            suffix += "-sd" + sigma_cutoff_str
     if filename is not None:
         suffix += "." + filename
 
