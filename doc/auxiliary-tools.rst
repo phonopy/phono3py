@@ -229,7 +229,7 @@ Lifetime :math:`\tau_\lambda = \frac{1}{2\Gamma_\lambda(\omega_\lambda)}` (in ps
 
 Modal heat capacity :math:`C_\lambda` (in eV/K)
 
-``--gv_norm``
+``--gv-norm``
 ^^^^^^^^^^^^^^
 
 Absolute value of group velocity :math:`|\mathbf{v}_\lambda|` (in
@@ -340,7 +340,7 @@ of density in the data.
 
 .. _kdeplot_density_ratio:
 
-``--dr``, ``--density_ratio``
+``--dr``, ``--density-ratio``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The density threshold is specified by the ratio with respect to
