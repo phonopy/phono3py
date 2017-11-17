@@ -166,8 +166,8 @@ packages_phono3py = ['phono3py',
                      'phono3py.phonon',
                      'phono3py.phonon3']
 scripts_phono3py = ['scripts/phono3py',
-                    'scripts/kaccum',
-                    'scripts/kdeplot']
+                    'scripts/phono3py-kaccum',
+                    'scripts/phono3py-kdeplot']
 
 ## This is for the test of libflame
 ##

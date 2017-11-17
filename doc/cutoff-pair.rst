@@ -13,7 +13,7 @@ Here the detail of the command option :ref:`--cutoff_pair
 What is cutff pair-distance in phono3py?
 ----------------------------------------
 
-Using ``--cutoff_pair`` option, number of supercells with
+Using ``--cutoff-pair`` option, number of supercells with
 displacements to be calculated is reduced. But of course this
 sacrifices the accuracy of third-order force constants (fc3).
 
@@ -29,7 +29,7 @@ be huge and beyond our computational resource.
 Sometimes we may expect that interaction range of fc3 among triplets
 of atoms is shorter than chosen supercell size. If it is the case, we
 may be allowed to omit computing some elements of supercell-fc3. This
-is what achieved by ``--cutoff_pair`` option.
+is what achieved by ``--cutoff-pair`` option.
 
 A supercell-fc3 element is specified by three atomic
 displacements. Two of three are finitely displaced
@@ -50,11 +50,11 @@ Usage
 Creating supercells with displacements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``-cutoff_pair`` option is employed when creating supercells with
+``--cutoff-pair`` option is employed when creating supercells with
 displacements, therefore this option must be used with ``-d`` option
 when running phono3py, for example for the Si example::
 
-   % phono3py --cutoff_pair=5 -d --dim="2 2 2" -c POSCAR-unitcell
+   % phono3py --cutoff-pair=5 -d --dim="2 2 2" -c POSCAR-unitcell
            _                      _____
      _ __ | |__   ___  _ __   ___|___ / _ __  _   _
     | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
@@ -62,9 +62,9 @@ when running phono3py, for example for the Si example::
     | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
     |_|                                |_|    |___/
                                              1.11.11
-   
+
    Run mode: displacements
-   
+
    Displacement distance: 0.03
    Number of displacements: 111
    Cutoff distance for displacements: 5.0
@@ -91,10 +91,10 @@ when running phono3py, for example for the Si example::
          51
 
 ``Number of displacements: 111`` shows the number of supercells with
-displacements when this is run without ``--cutoff_pair``
+displacements when this is run without ``--cutoff-pair``
 option. ``Number of displacement supercell files created: 51`` gives
 the contracted number of supercells with displacements by
-``--cutoff_pair`` option. There number of ``POSCAR-0xxxx`` files is found
+``--cutoff-pair`` option. There number of ``POSCAR-0xxxx`` files is found
 51. At this step, a special ``disp_fc3.yaml`` is created. This
 contains information on this contraction and used in the other
 calculation step, therefore this file must be kept carefully.
@@ -115,19 +115,19 @@ changing the cutoff-pair-distance.
 Special ``disp_fc3.yaml``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Using ``-cutoff_pair`` option together with ``-d`` option, a special
+Using ``--cutoff-pair`` option together with ``-d`` option, a special
 ``disp_fc3.yaml`` is created. This contains information on distances
 between displaced atomic-pairs and whether those pairs are to be
 computed or not. This special ``disp_fc3.yaml`` is necessary to create
 fc3, therefore be careful not to overwrite it by running the option
-``-d`` without ``-cutoff_pair`` or with different ``-cutoff_pair``
+``-d`` without ``--cutoff-pair`` or with different ``--cutoff-pair``
 with different value.
 
 Making ``FORCES_FC3``
 ~~~~~~~~~~~~~~~~~~~~~~
 
 To create ``FORCES_FC3``, only output files of the supercells created
-using ``--cutoff_pair`` option are passed to ``phono3py`` as the
+using ``--cutoff-pair`` option are passed to ``phono3py`` as the
 arguments. The special ``disp_fc3.yaml`` file is necessary to be
 located at current directory.
 
@@ -147,7 +147,7 @@ output file containing forces in each directory (for VASP
     | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
     |_|                                |_|    |___/
                                              1.11.7
-   
+
    Displacement dataset is read from disp_fc3.yaml.
    counter (file index): 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51
    FORCES_FC3 has been created.
@@ -188,14 +188,14 @@ script:
 Running phonon-phonon interaction calculation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To create fc3, ``--cutoff_pair`` option is not necessary but the
+To create fc3, ``--cutoff-pair`` option is not necessary but the
 special ``disp_fc3.yaml`` is required.
 
 ::
 
    % phono3py --dim="2 2 2" -c POSCAR-unitcell
    ...
-   
+
    Displacement dataset is read from disp_fc3.yaml.
    Sets of supercell forces are read from FORCES_FC3.
    Solving fc3[ 1, x, x ] with a displacement:
@@ -214,9 +214,9 @@ special ``disp_fc3.yaml`` is required.
       ___ _ __   __| |
      / _ \ '_ \ / _` |
     |  __/ | | | (_| |
-     \___|_| |_|\__,_|   
+     \___|_| |_|\__,_|
 
-Once ``fc3.hdf5`` and ``fc2.hdf5`` are created, ``--cutoff_pair``
+Once ``fc3.hdf5`` and ``fc2.hdf5`` are created, ``--cutoff-pair``
 option and the special ``disp_fc3.yaml`` are not needed anymore.
 
 ::
@@ -225,7 +225,7 @@ option and the special ``disp_fc3.yaml`` are not needed anymore.
    ...
 
      300.0     118.778    118.778    118.778     -0.000     -0.000      0.000
-   
+
    ...
 
 
@@ -235,7 +235,7 @@ The Test
 Si-PBE
 ~~~~~~
 
-For testing, thermal conductivities with respect to ``--cutoff_pair``
+For testing, thermal conductivities with respect to ``--cutoff-pair``
 values are calculated as follows. Note that if ``FORCES_FC3`` for full
 fc3 elements exists, the same ``FORCES_FC3`` file can be used for
 generating contracted fc3 for each special ``disp_fc3.yaml``.
@@ -253,7 +253,7 @@ generating contracted fc3 for each special ``disp_fc3.yaml``.
    7.100884
    7.730463
    9.467845
-   % for i in {2..10};do d=`grep distance disp_fc3.yaml|awk '{print $2}'|sort|uniq|sed "${i}q;d"`; d=$((d+0.1)); phono3py --cutoff_pair=$d -o $i -d --dim="2 2 2" -c POSCAR-unitcell ;done
+   % for i in {2..10};do d=`grep distance disp_fc3.yaml|awk '{print $2}'|sort|uniq|sed "${i}q;d"`; d=$((d+0.1)); phono3py --cutoff-pair=$d -o $i -d --dim="2 2 2" -c POSCAR-unitcell ;done
    % ls disp_fc3.*.yaml
    disp_fc3.10.yaml  disp_fc3.4.yaml  disp_fc3.7.yaml
    disp_fc3.2.yaml   disp_fc3.5.yaml  disp_fc3.8.yaml
@@ -279,7 +279,7 @@ generating contracted fc3 for each special ``disp_fc3.yaml``.
      300.0     119.466    119.466    119.466     -0.000     -0.000      0.000
      300.0     119.447    119.447    119.447     -0.000     -0.000      0.000
      300.0     119.445    119.445    119.445     -0.000     -0.000      0.000
-   % for i in {2..10};do phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="11 11 11" --sym_fc3r --sym_fc2 --tsym --br -i $i -o sym-$i|tee std.sym-$i.out;done
+   % for i in {2..10};do phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="11 11 11" --sym-fc3r --sym-fc2 --tsym --br -i $i -o sym-$i|tee std.sym-$i.out;done
    % for i in {2..10};do egrep '^\s+300' std.sym-$i.out;done
      300.0     124.626    124.626    124.626     -0.000      0.000      0.000
      300.0     119.721    119.721    119.721     -0.000      0.000      0.000
@@ -319,7 +319,7 @@ AlN-LDA
    6.205027
    6.469591
    7.335901
-   % for i in {2..22};do d=`egrep '^\s+distance' disp_fc3.yaml|awk '{print $2}'|sort|uniq|sed "${i}q;d"`; d=$((d+0.0001)); phono3py --cutoff_pair=$d -o $i -d --dim="3 3 2" -c POSCAR-unitcell ;done
+   % for i in {2..22};do d=`egrep '^\s+distance' disp_fc3.yaml|awk '{print $2}'|sort|uniq|sed "${i}q;d"`; d=$((d+0.0001)); phono3py --cutoff-pair=$d -o $i -d --dim="3 3 2" -c POSCAR-unitcell ;done
    % for i in {2..22};do grep num_displacements_created disp_fc3.$i.yaml;done
    num_displacements_created: 78
    num_displacements_created: 98
@@ -365,7 +365,7 @@ AlN-LDA
      300.0     224.645    224.645    215.260     -0.000     -0.000     -0.000
      300.0     224.769    224.769    215.220     -0.000     -0.000     -0.000
      300.0     224.650    224.650    215.090     -0.000     -0.000     -0.000
-   % for i in {2..22};do phono3py --dim="3 3 2" -c POSCAR-unitcell --mesh="13 13 9" --sym_fc3r --sym_fc2 --tsym --br --nac -i $i -o sym-$i|tee std.sym-$i.out; done
+   % for i in {2..22};do phono3py --dim="3 3 2" -c POSCAR-unitcell --mesh="13 13 9" --sym-fc3r --sym-fc2 --tsym --br --nac -i $i -o sym-$i|tee std.sym-$i.out; done
    % for i in {2..22};do egrep '^\s+300\.0' std.sym-$i.out;done
      300.0     224.122    224.122    213.086      0.000     -0.000      0.000
      300.0     225.394    225.394    215.683      0.000     -0.000      0.000

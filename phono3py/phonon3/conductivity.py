@@ -12,6 +12,15 @@ from phono3py.other.isotope import Isotope
 unit_to_WmK = ((THz * Angstrom) ** 2 / (Angstrom ** 3) * EV / THz /
                (2 * np.pi)) # 2pi comes from definition of lifetime.
 
+def all_bands_exist(interaction):
+    band_indices = interaction.get_band_indices()
+    num_band = interaction.get_primitive().get_number_of_atoms() * 3
+    if len(band_indices) == num_band:
+        if (band_indices - np.arange(num_band) == 0).all():
+            return True
+    return False
+
+
 class Conductivity(object):
     def __init__(self,
                  interaction,
@@ -176,6 +185,9 @@ class Conductivity(object):
     def get_sigmas(self):
         return self._sigmas
 
+    def get_sigma_cutoff_width(self):
+        return self._sigma_cutoff
+
     def get_grid_point_count(self):
         return self._grid_point_count
 
@@ -257,7 +269,7 @@ class Conductivity(object):
             self._isotope.run()
             gamma_iso.append(self._isotope.get_gamma())
 
-        return gamma_iso
+        return np.array(gamma_iso, dtype='double', order='C')
 
     def _set_mesh_numbers(self, mesh_divisors=None, coarse_mesh_shifts=None):
         self._mesh = self._pp.get_mesh_numbers()

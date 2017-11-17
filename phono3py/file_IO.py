@@ -557,17 +557,22 @@ def write_collision_to_hdf5(temperature,
                             gamma_isotope=None,
                             collision_matrix=None,
                             grid_point=None,
+                            band_index=None,
                             sigma=None,
+                            sigma_cutoff=None,
                             filename=None):
-    suffix = "-m%d%d%d" % tuple(mesh)
-    if grid_point is not None:
-        suffix += ("-g%d" % grid_point)
-    if sigma is not None:
-        sigma_str = ("%f" % sigma).rstrip('0').rstrip('\.')
-        suffix += "-s" + sigma_str
-    if filename is not None:
-        suffix += "." + filename
-    with h5py.File("collision" + suffix + ".hdf5", 'w') as w:
+    if band_index is None:
+        band_indices = None
+    else:
+        band_indices = [band_index]
+    suffix = _get_filename_suffix(mesh,
+                                  grid_point=grid_point,
+                                  band_indices=band_indices,
+                                  sigma=sigma,
+                                  sigma_cutoff=sigma_cutoff,
+                                  filename=filename)
+    full_filename = "collision" + suffix + ".hdf5"
+    with h5py.File(full_filename, 'w') as w:
         w.create_dataset('temperature', data=temperature)
         if gamma is not None:
             w.create_dataset('gamma', data=gamma)
@@ -575,6 +580,14 @@ def write_collision_to_hdf5(temperature,
             w.create_dataset('gamma_isotope', data=gamma_isotope)
         if collision_matrix is not None:
             w.create_dataset('collision_matrix', data=collision_matrix)
+        if grid_point is not None:
+            w.create_dataset('grid_point', data=grid_point)
+        if band_index is not None:
+            w.create_dataset('band_index', data=(band_index + 1))
+        if sigma is not None:
+            w.create_dataset('sigma', data=sigma)
+        if sigma_cutoff is not None:
+            w.create_dataset('sigma_cutoff_width', data=sigma_cutoff)
 
         text = "Collisions "
         if grid_point is not None:
@@ -584,12 +597,14 @@ def write_collision_to_hdf5(temperature,
                 text += "and "
             else:
                 text += "at "
-            text += "sigma %s " % sigma_str
+            text += "sigma %s " % _del_zeros(sigma)
         text += "were written into "
         if sigma is not None:
             text += "\n"
         text += "\"%s\"." % ("collision" + suffix + ".hdf5")
         print(text)
+
+    return full_filename
 
 def write_full_collision_matrix(collision_matrix, filename='fcm.hdf5'):
     with h5py.File(filename, 'w') as w:
@@ -599,14 +614,12 @@ def write_unitary_matrix_to_hdf5(temperature,
                                  mesh,
                                  unitary_matrix=None,
                                  sigma=None,
+                                 sigma_cutoff=None,
                                  filename=None):
-    suffix = "-m%d%d%d" % tuple(mesh)
-    if sigma is not None:
-        sigma_str = ("%f" % sigma).rstrip('0').rstrip('\.')
-        suffix += "-s" + sigma_str
-    if filename is not None:
-        suffix += "." + filename
-
+    suffix = _get_filename_suffix(mesh,
+                                  sigma=sigma,
+                                  sigma_cutoff=sigma_cutoff,
+                                  filename=filename)
     hdf5_filename = "unitary" + suffix + ".hdf5"
     with h5py.File(hdf5_filename, 'w') as w:
         w.create_dataset('temperature', data=temperature)
@@ -618,15 +631,41 @@ def write_unitary_matrix_to_hdf5(temperature,
         else:
             text = "Unitary matrix "
         if sigma is not None:
-            text += "at sigma %s " % sigma_str
+            text += "at sigma %s" % _del_zeros(sigma)
+            if sigma_cutoff is not None:
+                text += "(%4.2f SD)" % sigma_cutoff
         if len(temperature) > 1:
-            text += "were written into "
+            text += " were written into "
         else:
-            text += "was written into "
+            text += " was written into "
         if sigma is not None:
             text += "\n"
         text += "\"%s\"." % hdf5_filename
         print(text)
+
+def write_collision_eigenvalues_to_hdf5(temperatures,
+                                        mesh,
+                                        collision_eigenvalues,
+                                        sigma=None,
+                                        sigma_cutoff=None,
+                                        filename=None,
+                                        verbose=True):
+    suffix = _get_filename_suffix(mesh,
+                                  sigma=sigma,
+                                  sigma_cutoff=sigma_cutoff,
+                                  filename=filename)
+    with h5py.File("coleigs" + suffix + ".hdf5", 'w') as w:
+        w.create_dataset('temperature', data=temperatures)
+        w.create_dataset('collision_eigenvalues', data=collision_eigenvalues)
+        w.close()
+
+        if verbose:
+            text = "Eigenvalues of collision matrix "
+            if sigma is not None:
+                text += "with sigma %s\n" % sigma
+            text += "were written into "
+            text += "\"%s\"" % ("coleigs" + suffix + ".hdf5")
+            print(text)
 
 def write_kappa_to_hdf5(temperature,
                         mesh,
@@ -650,6 +689,7 @@ def write_kappa_to_hdf5(temperature,
                         grid_point=None,
                         band_index=None,
                         sigma=None,
+                        sigma_cutoff=None,
                         kappa_unit_conversion=None,
                         filename=None,
                         verbose=True):
@@ -662,8 +702,9 @@ def write_kappa_to_hdf5(temperature,
                                   grid_point=grid_point,
                                   band_indices=band_indices,
                                   sigma=sigma,
+                                  sigma_cutoff=sigma_cutoff,
                                   filename=filename)
-    full_filename = "kappa" + suffix + ".hdf5" 
+    full_filename = "kappa" + suffix + ".hdf5"
     with h5py.File(full_filename, 'w') as w:
         w.create_dataset('temperature', data=temperature)
         w.create_dataset('mesh', data=mesh)
@@ -699,6 +740,14 @@ def write_kappa_to_hdf5(temperature,
             w.create_dataset('qpoint', data=qpoint)
         if weight is not None:
             w.create_dataset('weight', data=weight)
+        if grid_point is not None:
+            w.create_dataset('grid_point', data=grid_point)
+        if band_index is not None:
+            w.create_dataset('band_index', data=(band_index + 1))
+        if sigma is not None:
+            w.create_dataset('sigma', data=sigma)
+        if sigma_cutoff is not None:
+            w.create_dataset('sigma_cutoff_width', data=sigma_cutoff)
         if kappa_unit_conversion is not None:
             w.create_dataset('kappa_unit_conversion',
                              data=kappa_unit_conversion)
@@ -718,7 +767,11 @@ def write_kappa_to_hdf5(temperature,
                     text += "and "
                 else:
                     text += "at "
-                text += "sigma %s\n" % sigma
+                text += "sigma %s" % sigma
+                if sigma_cutoff is None:
+                    text += "\n"
+                else:
+                    text += "(%4.2f SD)\n" % sigma_cutoff
                 text += "were written into "
             else:
                 text += "were written into "
@@ -729,33 +782,12 @@ def write_kappa_to_hdf5(temperature,
 
         return full_filename
 
-def write_collision_eigenvalues_to_hdf5(temperatures,
-                                        mesh,
-                                        collision_eigenvalues,
-                                        sigma=None,
-                                        filename=None,
-                                        verbose=True):
-    suffix = _get_filename_suffix(mesh,
-                                  sigma=sigma,
-                                  filename=filename)
-    with h5py.File("coleigs" + suffix + ".hdf5", 'w') as w:
-        w.create_dataset('temperature', data=temperatures)
-        w.create_dataset('collision_eigenvalues', data=collision_eigenvalues)
-        w.close()
-
-        if verbose:
-            text = "Eigenvalues of collision matrix "
-            if sigma is not None:
-                text += "with sigma %s\n" % sigma
-            text += "were written into "
-            text += "\"%s\"" % ("coleigs" + suffix + ".hdf5")
-            print(text)
-
 def read_gamma_from_hdf5(mesh,
                          mesh_divisors=None,
                          grid_point=None,
                          band_index=None,
                          sigma=None,
+                         sigma_cutoff=None,
                          filename=None,
                          verbose=True):
     if band_index is None:
@@ -767,6 +799,7 @@ def read_gamma_from_hdf5(mesh,
                                   grid_point=grid_point,
                                   band_indices=band_indices,
                                   sigma=sigma,
+                                  sigma_cutoff=sigma_cutoff,
                                   filename=filename)
     if not os.path.exists("kappa" + suffix + ".hdf5"):
         if verbose:
@@ -776,11 +809,7 @@ def read_gamma_from_hdf5(mesh,
     read_data = {}
 
     with h5py.File("kappa" + suffix + ".hdf5", 'r') as f:
-        if len(f['gamma'].shape) > 0:
-            read_data['gamma'] = f['gamma'][:]
-        else:
-            read_data['gamma'] = f['gamma'][()]
-
+        read_data['gamma'] = f['gamma'][:]
         for key in ('gamma_isotope',
                     'ave_pp',
                     'gamma_N',
@@ -798,24 +827,28 @@ def read_gamma_from_hdf5(mesh,
 def read_collision_from_hdf5(mesh,
                              indices=None,
                              grid_point=None,
+                             band_index=None,
                              sigma=None,
+                             sigma_cutoff=None,
                              filename=None,
                              verbose=True):
-    suffix = "-m%d%d%d" % tuple(mesh)
-    if grid_point is not None:
-        suffix += ("-g%d" % grid_point)
-    if sigma is not None:
-        sigma_str = ("%f" % sigma).rstrip('0').rstrip('\.')
-        suffix += "-s" + sigma_str
-    if filename is not None:
-        suffix += "." + filename
-
-    if not os.path.exists("collision" + suffix + ".hdf5"):
+    if band_index is None:
+        band_indices = None
+    else:
+        band_indices = [band_index]
+    suffix = _get_filename_suffix(mesh,
+                                  grid_point=grid_point,
+                                  band_indices=band_indices,
+                                  sigma=sigma,
+                                  sigma_cutoff=sigma_cutoff,
+                                  filename=filename)
+    full_filename = "collision" + suffix + ".hdf5"
+    if not os.path.exists(full_filename):
         if verbose:
-            print("%s not found." % ("collision" + suffix + ".hdf5"))
+            print("%s not found." % full_filename)
         return None
 
-    with h5py.File("collision" + suffix + ".hdf5", 'r') as f:
+    with h5py.File(full_filename, 'r') as f:
         if indices == 'all':
             colmat_shape = (1,) + f['collision_matrix'].shape
             collision_matrix = np.zeros(colmat_shape, dtype='double', order='C')
@@ -831,18 +864,28 @@ def read_collision_from_hdf5(mesh,
 
         if verbose:
             text = "Collisions "
-            if grid_point is not None:
-                text += "at grid adress %d " % grid_point
+            if band_index is None:
+                if grid_point is not None:
+                    text += "at grid point %d " % grid_point
+            else:
+                if grid_point is not None:
+                    text += ("at (grid point %d, band index %d) " %
+                             (grid_point, band_index))
             if sigma is not None:
                 if grid_point is not None:
                     text += "and "
                 else:
                     text += "at "
-                text += "sigma %s " % sigma_str
-            text += "were read from "
-            if grid_point is not None:
+                text += "sigma %s" % _del_zeros(sigma)
+                if sigma_cutoff is not None:
+                    text += "(%4.2f SD)" % sigma_cutoff
+            if band_index is None and grid_point is not None:
+                text += " were read from "
                 text += "\n"
-            text += "%s." % ("collision" + suffix + ".hdf5")
+            else:
+                text += "\n"
+                text += "were read from "
+            text += "%s." % full_filename
             print(text)
 
         return collision_matrix, gamma, temperatures
@@ -1178,6 +1221,7 @@ def _get_filename_suffix(mesh,
                          grid_point=None,
                          band_indices=None,
                          sigma=None,
+                         sigma_cutoff=None,
                          filename=None):
     suffix = "-m%d%d%d" % tuple(mesh)
     if mesh_divisors is not None:
@@ -1190,12 +1234,17 @@ def _get_filename_suffix(mesh,
         for bi in band_indices:
             suffix += "b%d" % (bi + 1)
     if sigma is not None:
-        sigma_str = ("%f" % sigma).rstrip('0').rstrip('\.')
-        suffix += "-s" + sigma_str
+        suffix += "-s" + _del_zeros(sigma)
+        if sigma_cutoff is not None:
+            sigma_cutoff_str = _del_zeros(sigma_cutoff)
+            suffix += "-sd" + sigma_cutoff_str
     if filename is not None:
         suffix += "." + filename
 
     return suffix
+
+def _del_zeros(val):
+    return ("%f" % val).rstrip('0').rstrip('\.')
 
 def _parse_yaml(file_yaml):
     import yaml

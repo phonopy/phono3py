@@ -18,6 +18,7 @@ class CollisionMatrix(ImagSelfEnergy):
                  temperature=None,
                  sigma=None,
                  is_reducible_collision_matrix=False,
+                 log_level=0,
                  lang='C'):
         self._pp = None
         self._sigma = None
@@ -39,6 +40,7 @@ class CollisionMatrix(ImagSelfEnergy):
         self._mesh = None
         self._is_collision_matrix = None
         self._unit_conversion = None
+        self._log_level = log_level
 
         ImagSelfEnergy.__init__(self,
                                 interaction,
@@ -68,11 +70,17 @@ class CollisionMatrix(ImagSelfEnergy):
         num_band = self._pp_strength.shape[2]
 
         if num_band0 != num_band:
-            print("--bi option is not allowed to use with collision matrix.")
-            sys.exit(1)
+            if self._is_reducible_collision_matrix:
+                print("--bi option can't be used for reducible collision "
+                      "matrix.")
+                raise ValueError()
+            else:
+                if self._log_level:
+                    print("Number of bands calculated is %d." % num_band0)
+                    print("--bi option is under testing.")
 
         num_triplets = len(self._triplets_at_q)
-        self._imag_self_energy = np.zeros(num_band, dtype='double')
+        self._imag_self_energy = np.zeros(num_band0, dtype='double')
 
         if self._is_reducible_collision_matrix:
             num_mesh_points = np.prod(self._mesh)
@@ -80,7 +88,7 @@ class CollisionMatrix(ImagSelfEnergy):
                 (num_band, num_mesh_points, num_band), dtype='double')
         else:
             self._collision_matrix = np.zeros(
-                (num_band, 3, len(self._ir_grid_points), num_band, 3),
+                (num_band0, 3, len(self._ir_grid_points), num_band, 3),
                 dtype='double')
         self._run_with_band_indices()
         self._run_collision_matrix()
@@ -152,7 +160,8 @@ class CollisionMatrix(ImagSelfEnergy):
 
     def _run_py_collision_matrix(self):
         num_mesh_points = np.prod(self._mesh)
-        num_band = self._pp_strength.shape[1]
+        num_band0 = self._pp_strength.shape[1]
+        num_band = self._pp_strength.shape[2]
         gp2tp_map = self._get_gp2tp_map()
 
         for i, ir_gp in enumerate(self._ir_grid_points):
@@ -161,12 +170,13 @@ class CollisionMatrix(ImagSelfEnergy):
                 ti = gp2tp_map[self._triplets_map_at_q[r_gp]]
                 inv_sinh = self._get_inv_sinh(r_gp, gp2tp_map)
 
-                for j, k in list(np.ndindex((num_band, num_band))):
-                    collision = (self._pp_strength[ti, j, k]
-                                 * inv_sinh
-                                 * self._g[2, ti, j, k]).sum()
-                    collision *= self._unit_conversion
-                    self._collision_matrix[j, :, i, k, :] += collision * r
+                for j in range(num_band0):
+                    for k in range(num_band):
+                        collision = (self._pp_strength[ti, j, k]
+                                     * inv_sinh
+                                     * self._g[2, ti, j, k]).sum()
+                        collision *= self._unit_conversion
+                        self._collision_matrix[j, :, i, k, :] += collision * r
 
     def _run_py_reducible_collision_matrix(self):
         num_mesh_points = np.prod(self._mesh)

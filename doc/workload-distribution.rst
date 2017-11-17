@@ -32,7 +32,7 @@ The following example is executed in the ``Si-PBE`` example.
 To avoid re-calculating fc3 and fc2, ``fc3.hdf5`` and ``fc2.hdf5`` are
 created on a single node::
 
-   % phono3py --dim="2 2 2" --sym_fc3r --sym_fc2 --tsym -c POSCAR-unitcell
+   % phono3py --dim="2 2 2" --sym-fc3r --sym-fc2 --tsym -c POSCAR-unitcell
 
 The indices of the irreducible grid-points neccesarry to specify
 ``--ga`` option are found by :ref:`--wgp option <wgp_option>`
@@ -53,7 +53,7 @@ necessary to obtain lattice thermal conductivity. To distribute
 computational demands into computer nodes, a set of the grid-point
 indices are chosen and executed as follows::
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --gp="0,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25" --write_gamma
+   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --gp="0,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25" --write-gamma
 
 Then many ``kappa-m191919-gx.hdf5`` files are generated. These file
 names should not be altered because in reading the data by phono3py,
@@ -66,7 +66,7 @@ short time from the stored data:
 
 ::
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --read_gamma
+   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --read-gamma
 
 A convenient script
 --------------------
@@ -78,15 +78,15 @@ indices for workload distribution.
 .. code-block:: python
 
    #!/usr/bin/env python
-   
+
    import sys
    import yaml
-   
+
    if len(sys.argv) > 1:
        num = int(sys.argv[1])
    else:
        num = 1
-   
+
    with open("ir_grid_points.yaml") as f:
        data = yaml.load(f)
        gps = [gp['grid_point'] for gp in data['ir_grid_points']]
@@ -141,6 +141,5 @@ with ``job.sh`` (here for grid-engine):
    #$ -pe mpi* 16
    #$ -e err-phono3py-num.log
    #$ -o std-phono3py-num.log
-   
-   phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --gp="gps" --write_gamma
 
+   phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --gp="gps" --write-gamma
