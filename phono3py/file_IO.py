@@ -864,8 +864,13 @@ def read_collision_from_hdf5(mesh,
 
         if verbose:
             text = "Collisions "
-            if grid_point is not None:
-                text += "at grid adress %d " % grid_point
+            if band_index is None:
+                if grid_point is not None:
+                    text += "at grid point %d " % grid_point
+            else:
+                if grid_point is not None:
+                    text += ("at (grid point %d, band index %d) " %
+                             (grid_point, band_index))
             if sigma is not None:
                 if grid_point is not None:
                     text += "and "
@@ -874,9 +879,12 @@ def read_collision_from_hdf5(mesh,
                 text += "sigma %s" % _del_zeros(sigma)
                 if sigma_cutoff is not None:
                     text += "(%4.2f SD)" % sigma_cutoff
-            text += " were read from "
-            if grid_point is not None:
+            if band_index is None and grid_point is not None:
+                text += " were read from "
                 text += "\n"
+            else:
+                text += "\n"
+                text += "were read from "
             text += "%s." % full_filename
             print(text)
 

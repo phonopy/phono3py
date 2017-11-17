@@ -118,7 +118,7 @@ void get_collision_matrix(double *collision_matrix,
     num_ir_gp,
     num_rot,
     rotations_cartesian,
-    g + 2 * num_triplets * num_band * num_band * num_band,
+    g + 2 * num_triplets * num_band0 * num_band * num_band,
     temperature,
     unit_conversion_factor,
     cutoff_frequency);

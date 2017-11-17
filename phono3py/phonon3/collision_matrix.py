@@ -76,6 +76,7 @@ class CollisionMatrix(ImagSelfEnergy):
                 raise ValueError()
             else:
                 if self._log_level:
+                    print("Number of bands calculated is %d." % num_band0)
                     print("--bi option is under testing.")
 
         num_triplets = len(self._triplets_at_q)
