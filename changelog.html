@@ -3,16 +3,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Change Log &#8212; Phono3py v.1.11.13</title>
-    
+    <title>Change Log &#8212; Phono3py v.1.12.3</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.11.13',
+        VERSION:     '1.12.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -22,10 +19,10 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -49,7 +46,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>1.11.13</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.12.3</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -85,7 +82,7 @@
 <li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#calculator-interface">Calculator interface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#force-constants">Force constants</a></li>
-<li class="toctree-l2"><a class="reference internal" href="command-options.html#reciprocal-space-sampling-mesh-and-grid-points">Reciprocal space sampling mesh and grid points</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#reciprocal-space-sampling-mesh-and-grid-points-and-band-indices">Reciprocal space sampling mesh and grid points, and band indices</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#brillouin-zone-integration">Brillouin zone integration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#physical-properties">Physical properties</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#input-and-output-file-names">Input and output file names</a></li>
@@ -133,6 +130,7 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#nov-17-2017-version-1-12-3">Nov-17-2017: version 1.12.3</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#jun-18-2017-version-1-11-13">Jun-18-2017: version 1.11.13</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#mar-31-2017-version-1-11-11">Mar-31-2017: version 1.11.11</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#feb-9-2017-version-1-11-9">Feb-9-2017: version 1.11.9</a></li>
@@ -174,6 +172,7 @@
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Change Log</a><ul>
+<li><a class="reference internal" href="#nov-17-2017-version-1-12-3">Nov-17-2017: version 1.12.3</a></li>
 <li><a class="reference internal" href="#jun-18-2017-version-1-11-13">Jun-18-2017: version 1.11.13</a></li>
 <li><a class="reference internal" href="#mar-31-2017-version-1-11-11">Mar-31-2017: version 1.11.11</a></li>
 <li><a class="reference internal" href="#feb-9-2017-version-1-11-9">Feb-9-2017: version 1.11.9</a></li>
@@ -240,6 +239,22 @@
       
   <div class="section" id="change-log">
 <span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="nov-17-2017-version-1-12-3">
+<h2>Nov-17-2017: version 1.12.3<a class="headerlink" href="#nov-17-2017-version-1-12-3" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Command option parser of the phonopy tools is replaced from
+<code class="docutils literal"><span class="pre">optparse</span></code> to <code class="docutils literal"><span class="pre">argparse</span></code>.</li>
+<li>The filenames used with these options were the positional arguments
+previously. Now they are the command-line arguments, i.e., filenames
+have to be put just after the option name like <code class="docutils literal"><span class="pre">-f</span> <span class="pre">vasprun.xml-001</span>
+<span class="pre">vasprun.xml-002</span> <span class="pre">...</span></code>.</li>
+<li>The names of auxiliary tools (<code class="docutils literal"><span class="pre">kdeplot</span></code> and <code class="docutils literal"><span class="pre">kaccum</span></code>) are
+changed, for which the prefix phono3py- is added to the old names to
+avoid accidental conflict with other script names already existing
+under bin directory.</li>
+<li><a class="reference internal" href="command-options.html#sigma-cutoff-option"><span class="std std-ref">--sigma-cutoff: Cutoff parameter for smearing method</span></a> option was created.</li>
+</ul>
+</div>
 <div class="section" id="jun-18-2017-version-1-11-13">
 <h2>Jun-18-2017: version 1.11.13<a class="headerlink" href="#jun-18-2017-version-1-11-13" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
@@ -309,7 +324,7 @@ phono3py-1.10.5 is based on the code close to phonopy-1.10.4.</li>
 linear tetrahedron method, only necessary part of phonon-phonon
 interaction strengh among phonons. This improves lifetime
 calculation performance, but as the drawback, averaged ph-ph
-interaction strength can not be given. See <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full_pp: Calculate all elements of phonon-phonon interaction strength</span></a>.</li>
+interaction strength can not be given. See <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full-pp: Calculate all elements of phonon-phonon interaction strength</span></a>.</li>
 <li>Pwscf interface (<a class="reference internal" href="interfaces.html#calculator-interfaces"><span class="std std-ref">Interfaces to calculators</span></a>)</li>
 </ul>
 </div>
@@ -524,7 +539,7 @@ when a mesh number is an even number, it is more carefully treated.</li>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.<br/>
     </p>
   </div>
 </footer>

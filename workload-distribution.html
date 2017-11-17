@@ -3,16 +3,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Workload distribution &#8212; Phono3py v.1.11.13</title>
-    
+    <title>Workload distribution &#8212; Phono3py v.1.12.3</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.11.13',
+        VERSION:     '1.12.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -22,10 +19,10 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -50,7 +47,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>1.11.13</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.12.3</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -86,7 +83,7 @@
 <li class="toctree-l1 current"><a class="reference internal" href="command-options.html">Command options / Setting tags</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#calculator-interface">Calculator interface</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#force-constants">Force constants</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="command-options.html#reciprocal-space-sampling-mesh-and-grid-points">Reciprocal space sampling mesh and grid points</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="command-options.html#reciprocal-space-sampling-mesh-and-grid-points-and-band-indices">Reciprocal space sampling mesh and grid points, and band indices</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#brillouin-zone-integration">Brillouin zone integration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#physical-properties">Physical properties</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#input-and-output-file-names">Input and output file names</a></li>
@@ -104,8 +101,8 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#kaccum"><code class="docutils literal"><span class="pre">kaccum</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#kdeplot"><code class="docutils literal"><span class="pre">kdeplot</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kaccum"><code class="docutils literal"><span class="pre">phono3py-kaccum</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kdeplot"><code class="docutils literal"><span class="pre">phono3py-kdeplot</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Workload distribution</a><ul>
@@ -134,6 +131,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#nov-17-2017-version-1-12-3">Nov-17-2017: version 1.12.3</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#jun-18-2017-version-1-11-13">Jun-18-2017: version 1.11.13</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#mar-31-2017-version-1-11-11">Mar-31-2017: version 1.11.11</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#feb-9-2017-version-1-11-9">Feb-9-2017: version 1.11.9</a></li>
@@ -246,7 +244,7 @@ obtained, those data are collected by <a class="reference internal" href="comman
 <p>The following example is executed in the <code class="docutils literal"><span class="pre">Si-PBE</span></code> example.</p>
 <p>To avoid re-calculating fc3 and fc2, <code class="docutils literal"><span class="pre">fc3.hdf5</span></code> and <code class="docutils literal"><span class="pre">fc2.hdf5</span></code> are
 created on a single node:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">sym_fc3r</span> <span class="o">--</span><span class="n">sym_fc2</span> <span class="o">--</span><span class="n">tsym</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">sym</span><span class="o">-</span><span class="n">fc3r</span> <span class="o">--</span><span class="n">sym</span><span class="o">-</span><span class="n">fc2</span> <span class="o">--</span><span class="n">tsym</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
 </pre></div>
 </div>
 <p>The indices of the irreducible grid-points neccesarry to specify
@@ -263,7 +261,7 @@ created on a single node:</p>
 necessary to obtain lattice thermal conductivity. To distribute
 computational demands into computer nodes, a set of the grid-point
 indices are chosen and executed as follows:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="s2">&quot;0,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25&quot;</span> <span class="o">--</span><span class="n">write_gamma</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="s2">&quot;0,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25&quot;</span> <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">gamma</span>
 </pre></div>
 </div>
 <p>Then many <code class="docutils literal"><span class="pre">kappa-m191919-gx.hdf5</span></code> files are generated. These file
@@ -273,7 +271,7 @@ freedom to arrange those file names, for which see <a class="reference internal"
 options. After completing calculations for all irreducible grid-point
 indices, the RTA thermal conductivity is computed by another run in a
 short time from the stored data:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">read_gamma</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">read</span><span class="o">-</span><span class="n">gamma</span>
 </pre></div>
 </div>
 </div>
@@ -341,7 +339,7 @@ system,</p>
 <span class="c1">#$ -e err-phono3py-num.log</span>
 <span class="c1">#$ -o std-phono3py-num.log</span>
 
-phono3py --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --pa<span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> -c POSCAR-unitcell --mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> --fc3 --fc2 --br --gp<span class="o">=</span><span class="s2">&quot;gps&quot;</span> --write_gamma
+phono3py --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --pa<span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> -c POSCAR-unitcell --mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> --fc3 --fc2 --br --gp<span class="o">=</span><span class="s2">&quot;gps&quot;</span> --write-gamma
 </pre></div>
 </div>
 </div>
@@ -367,7 +365,7 @@ phono3py --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> 
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.<br/>
     </p>
   </div>
 </footer>
