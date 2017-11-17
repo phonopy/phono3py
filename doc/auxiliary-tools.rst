@@ -9,8 +9,8 @@ Auxiliary tools
 
 .. _auxiliary_tools_kaccum:
 
-``kaccum``
------------
+``phono3py-kaccum``
+--------------------
 
 Cumulative physical properties with respect to frequency or mean free
 path are calculated using this command.
@@ -19,7 +19,7 @@ For example, cumulative thermal conductivity is defined by
 
 .. math::
 
-   \kappa^\text{c}(\omega) = 
+   \kappa^\text{c}(\omega) =
     \int^\omega_0 \sum_\lambda
    \kappa_\lambda \delta(\omega_\lambda - \omega') d\omega'
 
@@ -34,8 +34,8 @@ phonon mode :math:`\lambda`, which is defined as
 
 (The notations are found in http://arxiv.org/abs/1501.00691.)
 
-How to use ``kaccum``
-~~~~~~~~~~~~~~~~~~~~~
+How to use ``phono3py-kaccum``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Let's computer lattice thermal conductivity of Si using the ``Si-PBEsol``
 example found in the example directory.
@@ -44,15 +44,16 @@ example found in the example directory.
 
    % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="11 11 11" --sym_fc3r --sym_fc2 --tsym --br
 
-Then using the output file, ``kappa-m111111.hdf5``, run ``kaccum`` as follows::
+Then using the output file, ``kappa-m111111.hdf5``, run
+``phono3py-kaccum`` as follows::
 
-   % kaccum --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell kappa-m111111.hdf5 |tee kaccum.dat
+   % phono3py-kaccum --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell kappa-m111111.hdf5 |tee kaccum.dat
 
-Here ``--pa`` is optional. The definition of ``--pa`` option is same as
-:ref:`pa_option`. ``POSCAR-unitcell`` is the unit cell filename that
-is specified with ``-c`` option.
-``kappa-m111111.hdf5`` is the output file of thermal conductivity
-calculation, which is passed to ``kaccum`` as the first argument.
+Here ``--pa`` is optional. The definition of ``--pa`` option is same
+as :ref:`pa_option`. ``POSCAR-unitcell`` is the unit cell filename
+that is specified with ``-c`` option.  ``kappa-m111111.hdf5`` is the
+output file of thermal conductivity calculation, which is passed to
+``phono3py-kaccum`` as the first argument.
 
 The format of the output is as follows: The first column gives
 frequency in THz, and the second to seventh columns give the
@@ -95,12 +96,13 @@ POSCAR-unitcell``.
 ``--pwscf``
 ^^^^^^^^^^^^
 
-Let ``kaccum`` read a Pwscf unit cell file with ``-c`` option, for example::
+Let ``phono3py-kaccum`` read a Pwscf unit cell file with ``-c``
+option, for example::
 
-   kaccum --pwscf --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c Si.in --temperature=300 kappa-m191919.hdf5
+   phono3py-kaccum --pwscf --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c Si.in --temperature=300 kappa-m191919.hdf5
 
 .. |ipwscf| image:: Si-kaccum-pwscf.png
-		    :width: 25%
+                    :width: 25%
 
 |ipwscf|
 
@@ -149,7 +151,7 @@ The MFP cumulative :math:`\kappa^\text{c}(l)` is given by
 
 .. math::
 
-   \kappa^\text{c}(l) = 
+   \kappa^\text{c}(l) =
     \int^l_0 \sum_\lambda
    \kappa_\lambda \delta(l_\lambda - l') dl'
 
@@ -164,7 +166,7 @@ as
    \mathbf{v}_\lambda \tau_\lambda = C_\lambda \mathbf{v}_\lambda \otimes
    \mathbf{l}_\lambda.
 
-The unit of MFP is Angstrom. 
+The unit of MFP is Angstrom.
 
 The figure below shows the results of Si example with the
 :math:`19\times 19\times 19` and :math:`11\times 11\times 11` sampling
@@ -177,7 +179,7 @@ convergence.
 
 
 .. |iMFP| image:: Si-kaccum-MFP.png
-		  :width: 50%
+                  :width: 50%
 
 |iMFP|
 
@@ -215,33 +217,33 @@ such like DOS.
 ``--gamma``
 ^^^^^^^^^^^^
 
-:math:`\Gamma_\lambda(\omega_\lambda)` (in THz) 
+:math:`\Gamma_\lambda(\omega_\lambda)` (in THz)
 
 ``--tau``
 ^^^^^^^^^^^
 
-Lifetime :math:`\tau_\lambda = \frac{1}{2\Gamma_\lambda(\omega_\lambda)}` (in ps) 
+Lifetime :math:`\tau_\lambda = \frac{1}{2\Gamma_\lambda(\omega_\lambda)}` (in ps)
 
 ``--cv``
 ^^^^^^^^^
 
 Modal heat capacity :math:`C_\lambda` (in eV/K)
 
-``--gv_norm``
+``--gv-norm``
 ^^^^^^^^^^^^^^
 
 Absolute value of group velocity :math:`|\mathbf{v}_\lambda|` (in
-THz x Angstrom) 
+THz x Angstrom)
 
 ``--pqj``
 ^^^^^^^^^^^^^^
 
-Averaged phonon-phonon interaction :math:`P_{\mathbf{q}j}` (in eV^2) 
+Averaged phonon-phonon interaction :math:`P_{\mathbf{q}j}` (in eV^2)
 
 .. _auxiliary_tools_kdeplot:
 
-``kdeplot``
-------------
+``phono3py-kdeplot``
+---------------------
 
 **This script is under the development and may contain bugs.** But a
 feature is briefly introduced below since it may be useful. Scipy is
@@ -253,10 +255,10 @@ plane. Its density is estimated using Gaussian-KDE using `scipy
 Then (frequency, lifetime)-data points are superimposed on the density
 plot.
 
-``kdeplot`` reads a result of the thermal conductivity calculation as
-the first argument::
+``phono3py-kdeplot`` reads a result of the thermal conductivity
+calculation as the first argument::
 
-   % kdeplot kappa-m111111.hdf5
+   % phono3py-kdeplot kappa-m111111.hdf5
 
 This calculation takes some time from minutes to hours depending on
 mesh numbers and nbins. Therefore it is recommended to start with
@@ -303,7 +305,7 @@ better, but the computation will take more time.
 
 ::
 
-   % kdeplot --nbins=200 kappa-m111111.hdf5
+   % phono3py-kdeplot --nbins=200 kappa-m111111.hdf5
 
 ``--cutoff``, ``--fmax``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -317,9 +319,6 @@ drawing area cuts high lifetime (frequency) side if the density is low.
 ``--xmax`` and ``--ymax``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**New**: The latest version of ``kdeplot`` is download at
-https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot.)
-
 Maximum values of drawing region of phonon frequency (x-axis) and
 lifetime (y-axis) are specified by ``--xmax`` and ``--ymax``,
 respectively.
@@ -330,13 +329,10 @@ computation will be roughly twice faster.
 
 ::
 
-   % kdeplot --ymax=60 kappa-m111111.hdf5
+   % phono3py-kdeplot --ymax=60 kappa-m111111.hdf5
 
 ``--zmax``
 ^^^^^^^^^^^
-
-**New**: The latest version of ``kdeplot`` is download at
-https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot.)
 
 Maximum value of the density is specified with this option. The color
 along colorbar saturates by choosing a smaller value than the maximum value
@@ -344,11 +340,8 @@ of density in the data.
 
 .. _kdeplot_density_ratio:
 
-``--dr``, ``--density_ratio``
+``--dr``, ``--density-ratio``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-**New**: The latest version of ``kdeplot`` is download at
-https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot.)
 
 The density threshold is specified by the ratio with respect to
 maximum density. Normally smaller value results in larger drawing
@@ -357,13 +350,10 @@ together, this option is ignored.
 
 ::
 
-   % kdeplot --dr=0.01 kappa-m111111.hdf5
+   % phono3py-kdeplot --dr=0.01 kappa-m111111.hdf5
 
 ``--cmap``
 ^^^^^^^^^^^
-
-**New**: The latest version of ``kdeplot`` is download at
-https://github.com/atztogo/phono3py/blob/develop/scripts/kdeplot.)
 
 Color map to be used for the density plot. It's given by the name
 presented at the matplotlib documentation,
@@ -372,24 +362,23 @@ depends on your matplotlib environment.
 
 ::
 
-   % kdeplot --cmap="OrRd" kappa-m111111.hdf5
+   % phono3py-kdeplot --cmap="OrRd" kappa-m111111.hdf5
 
 The following figures are those drawn with ``jet``, ``bwr``,
-``seismic``, ``gnuplot``, ``hsv``, and ``OrRd`` colormaps. 
+``seismic``, ``gnuplot``, ``hsv``, and ``OrRd`` colormaps.
 
 
 .. |ikde-jet| image:: Si-kdeplot-jet.png
-	      :width: 25%
+              :width: 25%
 .. |ikde-bwr| image:: Si-kdeplot-bwr.png
-	      :width: 25%
+              :width: 25%
 .. |ikde-seismic| image:: Si-kdeplot-seismic.png
-		  :width: 25%
+                  :width: 25%
 .. |ikde-gnuplot| image:: Si-kdeplot-gnuplot.png
-		  :width: 25%
+                  :width: 25%
 .. |ikde-hsv| image:: Si-kdeplot-hsv.png
-	       :width: 25%
+               :width: 25%
 .. |ikde-OrRd| image:: Si-kdeplot-OrRd.png
-	       :width: 25%
+               :width: 25%
 
 |ikde-jet| |ikde-bwr| |ikde-seismic| |ikde-gnuplot| |ikde-hsv| |ikde-OrRd|
-

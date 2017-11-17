@@ -3,6 +3,9 @@
 Command options / Setting tags
 =================================
 
+From phonopy v1.12.3, the command option names with underscores ``_``
+are replaced by those with dashes ``-``. Those tag names are unchanged.
+
 Command-user-interface of phono3py is operated with a variety of
 command options. Here those command options are explained.
 
@@ -96,7 +99,7 @@ detail at http://atztogo.github.io/phonopy/setting-tags.html#dim .
 
 .. _dim_fc2_option:
 
-``--dim_fc2``: Supercell dimension for 2nd order force constants
+``--dim-fc2``: Supercell dimension for 2nd order force constants
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``DIM_FC2``)
@@ -113,11 +116,11 @@ Using this option with ``-d`` option, the structure files
 interfaces) and ``disp_fc2.yaml`` are created. These are used to
 calculate 2nd order force constants for the larger supercell size and
 these force calculations have to be done in addition to the usual
-force calculations for 3rd order force constants. 
+force calculations for 3rd order force constants.
 
 ::
 
-   phono3py -d --dim="2 2 2" --dim_fc2="4 4 4" -c POSCAR-unitcell
+   phono3py -d --dim="2 2 2" --dim-fc2="4 4 4" -c POSCAR-unitcell
 
 After the force calculations, ``--cf2`` option is used to create
 ``FORCES_FC2``.
@@ -128,11 +131,11 @@ After the force calculations, ``--cf2`` option is used to create
 
 To calculate 2nd order force constants for the larger supercell size,
 ``FORCES_FC2`` and ``disp_fc2.yaml`` are necessary. Whenever running
-phono3py for the larger 2nd order force constants, ``--dim_fc2``
+phono3py for the larger 2nd order force constants, ``--dim-fc2``
 option has to be specified. ``fc2.hdf5`` created as a result of
 running phono3py contains the 2nd order force constants with
 larger supercell size. The filename is the same as that created in the
-usual phono3py run without ``--dim_fc2`` option.
+usual phono3py run without ``--dim-fc2`` option.
 
 ::
 
@@ -140,7 +143,7 @@ usual phono3py run without ``--dim_fc2`` option.
 
 .. _pa_option:
 
-``--pa``, ``--primitive_axis``: Transformation matrix to primitive cell
+``--pa``, ``--primitive-axis``: Transformation matrix to primitive cell
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``PRIMITIVE_AXIS``)
@@ -165,7 +168,7 @@ Read 3rd order force constants from ``fc3.hdf5``.
 
 .. _symmetrization_option:
 
-``--sym_fc2``, ``--sym_fc3r``, ``--tsym``: Symmetries force constants
+``--sym-fc2``, ``--sym-fc3r``, ``--tsym``: Symmetries force constants
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tags: ``SYMMETRIZE_FC2``, ``.TRUE.`` or ``.FALSE.``)
@@ -173,12 +176,12 @@ Read 3rd order force constants from ``fc3.hdf5``.
 (Setting tags: ``TRANSLATION``, ``.TRUE.`` or ``.FALSE.``)
 
 These are used to symmetrize second- and third-order force
-constants. ``--sym_fc2`` and ``--sym_fc3r`` symmetrize those in real
+constants. ``--sym-fc2`` and ``--sym-fc3r`` symmetrize those in real
 space by the index exchange, respectively, and ``--tsym`` symmetrizes
 by the translational invariance, respectively.
 
 ..
-   ``--sym_fc3q`` symmetrizes third-order force constants in normal
+   ``--sym-fc3q`` symmetrizes third-order force constants in normal
    coordinates by the index exchange.
 
 When those force constants are not read from the hdf5 files,
@@ -197,7 +200,7 @@ located at the current directory.
 
 .. _cf3_file_option:
 
-``--cf3_file``: Create ``FORCES_FC3`` from file name list
+``--cf3-file``: Create ``FORCES_FC3`` from file name list
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is used to create ``FORCES_FC3`` from a file name
@@ -205,7 +208,7 @@ list. ``disp_fc3.yaml`` has to be located at the current directory.
 
 ::
 
-   % phono3py --cf3_file file_list.dat
+   % phono3py --cf3-file file_list.dat
 
 where ``file_list.dat`` contains file names that can be recognized
 from the current directory and is expected to be like::
@@ -217,7 +220,7 @@ from the current directory and is expected to be like::
   ...
 
 The order of the file names is important. This option may be useful
-to be used together with ``--cutoff_pair`` option.
+to be used together with ``--cutoff-pair`` option.
 
 .. _cf2_option:
 
@@ -234,7 +237,7 @@ necessary to run with ``--dim_fc2`` option.
 
 .. _fs2f2_option:
 
-``--fs2f2`` or ``--force_sets_to_forces_fc2``
+``--fs2f2`` or ``--force-sets-to-forces-fc2``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Using this option, ``FORCES_FC2`` and ``disp_fc2.yaml`` are created
@@ -246,7 +249,7 @@ from phonopy ``FORCE_SETS`` file.
 
 .. _cfs_option:
 
-``--cfs`` or ``--create_force_sets``
+``--cfs`` or ``--create-force-sets``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Using this option, phonopy's ``FORCE_SETS`` is created from
@@ -256,15 +259,15 @@ Using this option, phonopy's ``FORCE_SETS`` is created from
 
    % phono3py --cfs
 
-In conjunction with :ref:`--dim_fc2 <dim_fc2_option>`, phonopy's
+In conjunction with :ref:`--dim-fc2 <dim_fc2_option>`, phonopy's
 ``FORCE_SETS`` is created from ``FORCES_FC2`` and ``disp_fc2.yaml``
 instead of ``FORCES_FC3`` and ``disp_fc3.yaml``.
 
 ::
 
-   % phono3py --cfs --dim_fc2="x x x"
+   % phono3py --cfs --dim-fc2="x x x"
 
-``--cutoff_fc3`` or ``--cutoff_fc3_distance``
+``--cutoff-fc3`` or ``--cutoff-fc3-distance``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``CUTOFF_FC3_DISTANCE``)
@@ -277,11 +280,11 @@ larger than the specified cut-off distance.
 
 If one wants to reduce number of supercells, the first choice is to
 reduce the supercell size and the second choice is using
-``--cutoff_pair`` option.
+``--cutoff-pair`` option.
 
 .. _cutoff_pair_option:
 
-``--cutoff_pair`` or ``--cutoff_pair_distance``
+``--cutoff-pair`` or ``--cutoff-pair-distance``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``CUTOFF_PAIR_DISTANCE``)
@@ -299,8 +302,8 @@ less numerical accuracy. More details are found in the following link:
 
    cutoff-pair
 
-Reciprocal space sampling mesh and grid points
------------------------------------------------
+Reciprocal space sampling mesh and grid points, and band indices
+-----------------------------------------------------------------
 
 ``--mesh``: Sampling mesh
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -334,7 +337,7 @@ indices is obtained by running with ``--loglevel=2`` option.
 
 ::
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --write_gamma --gp="0 1 2 3 4 5"
+   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --write-gamma --gp="0 1 2 3 4 5"
 
 where ``--gp="0 1 2 3 4 5"`` can be also written
 ``--gp="0,1,2,3,4,5"``. There is a similar option as this option,
@@ -388,6 +391,24 @@ points for specified sampling mesh numbers are shown. This can be used
 to estimate how large a calculation is. Only those for specific grid
 points are shown by using with ``--gp`` or ``--ga`` option.
 
+.. _bi_option:
+
+``--bi``: Specific band index
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(Setting tag: ``BAND_INDICES``)
+
+Specify band indices. The output file name will be, e.g.,
+``gammas-mxxx-gxx(-sx)-bx.dat`` where ``bxbx...`` shows the band
+indices used to be averaged. The calculated values at indices
+separated by space are averaged, and those separated by comma are
+separately calculated.
+
+::
+
+   % phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" \
+     -c POSCAR-unitcell --nac --gp="34" --bi="4 5, 6"
+
 Brillouin zone integration
 ---------------------------
 
@@ -418,6 +439,53 @@ Multiple :math:`\sigma` values are also specified by space separated
 numerical values. This is used when we want to test several
 :math:`\sigma` values simultaneously.
 
+.. _sigma_cutoff_option:
+
+``--sigma-cutoff``: Cutoff parameter for smearing method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(Setting tag: ``SIGMA_CUTOFF_WIDTH``)
+
+The tails of the Guassian functions that are used to replace delta
+functions in the equation shown at :ref:`--full-pp <full_pp_option>`
+are cut with this option. The value is specified in number of standard
+deviation. ``--sigma-cutoff=5`` gives the Gaussian functions to be cut
+at :math:`5\sigma`. Using this option scarifies the numerical
+accuracy. So the number has to be carefully tested. But computation of
+phonon-phonon interaction strength becomes much faster in exchange for
+it.
+
+.. _full_pp_option:
+
+``--full-pp``: Calculate all elements of phonon-phonon interaction strength
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(Setting tag: ``FULL_PP``, ``.TRUE.`` or ``.FALSE.``)
+
+For thermal conductivity calculation using the linear tetrahedron
+method (from version 1.10.5) and smearing method with
+``--simga-cutoff`` (from version 1.12.3), only necessary elements
+(i.e., that have non-zero delta functions) of phonon-phonon interaction strength,
+:math:`\bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2`, is calculated
+due to delta functions in calculation of
+:math:`\Gamma_\lambda(\omega)`,
+
+.. math::
+
+   \Gamma_\lambda(\omega) = \frac{18\pi}{\hbar^2}
+    \sum_{\lambda' \lambda''}
+    \bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2
+    \left\{(n_{\lambda'}+ n_{\lambda''}+1)
+     \delta(\omega-\omega_{\lambda'}-\omega_{\lambda''}) \right.
+     + (n_{\lambda'}-n_{\lambda''})
+    \left[\delta(\omega+\omega_{\lambda'}-\omega_{\lambda''})
+   - \left. \delta(\omega-\omega_{\lambda'}+\omega_{\lambda''})
+   \right]\right\}.
+
+But using this option, full elements of phonon-phonon interaction
+strength are calculated and averaged phonon-phonon interaction
+strength (:math:`P_{\mathbf{q}j}`) is also given.
+
 Physical properties
 --------------------
 
@@ -432,11 +500,11 @@ Boltzmann equation. Without specifying ``--gp`` (or ``--ga``) option,
 all necessary phonon lifetime calculations for grid points are
 sequentially executed and then thermal conductivity is calculated
 under RTA. The thermal conductivity and many related properties are
-written into ``kappa-mxxx.hdf5``. 
+written into ``kappa-mxxx.hdf5``.
 
 With ``--gp`` (or ``--ga``) option,
 phonon lifetimes on the specified grid points are calculated. To save
-the results, ``--write_gamma`` option has to be specified and the
+the results, ``--write-gamma`` option has to be specified and the
 physical properties belonging to the grid
 points are written into ``kappa-mxxx-gx(-sx).hdf5``.
 
@@ -455,7 +523,7 @@ elements, which refers Laeter *et al.*, Pure Appl. Chem., **75**, 683
 
    % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --isotope
 
-``--mass_variances`` or ``--mv``: Parameter for phonon-isotope scattering
+``--mass-variances`` or ``--mv``: Parameter for phonon-isotope scattering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``MASS_VARIANCES``)
@@ -473,13 +541,13 @@ without isotope calculation::
 Then running with isotope calculation::
 
    % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br \
-     --read_gamma --mv="1.97e-4 1.97e-4 0 0"
+     --read-gamma --mv="1.97e-4 1.97e-4 0 0"
 
 In the result hdf5 file, currently isotope scattering strength is not
 written out, i.e., ``gamma`` is still imaginary part of self energy of
 ph-ph scattering.
 
-``--boundary_mfp``, ``--bmfp``: Very simple phonon-boundary scattering model
+``--boundary-mfp``, ``--bmfp``: Very simple phonon-boundary scattering model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``BOUNDARY_MFP``)
@@ -527,7 +595,7 @@ Non-analytical term correction for harmonic phonons. Like as phonopy,
 value of unit conversion factor is used even if it is written in the
 first line of ``BORN`` file.
 
-``--q_direction``: Direction for non-analytical term correction at :math:`\mathbf{q}\rightarrow \mathbf{0}`
+``--q-direction``: Direction for non-analytical term correction at :math:`\mathbf{q}\rightarrow \mathbf{0}`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``Q_DIRECTION``)
@@ -552,21 +620,21 @@ choice of G-vector, is made based on the first Brillouin zone.
 
 .. _write_gamma_option:
 
-``--write_gamma``
+``--write-gamma``
 ~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``WRITE_GAMMA``, ``.TRUE.`` or ``.FALSE.``)
 
 Imaginary parts of self energy at harmonic phonon frequencies
-:math:`\Gamma_\lambda(\omega_\lambda)` are written
-into file in hdf5 format.  The result is written into
-``kappa-mxxx-gx(-sx).hdf5`` or ``kappa-mxxx-gx-bx(-sx).hdf5`` with
-``--bi`` option. With ``--sigma`` option, ``-sx`` is inserted in front
-of ``.hdf5``.
+:math:`\Gamma_\lambda(\omega_\lambda)` are written into file in hdf5
+format.  The result is written into ``kappa-mxxx-gx(-sx-sdx).hdf5`` or
+``kappa-mxxx-gx-bx(-sx-sdx).hdf5`` with ``--bi`` option. With
+``--sigma`` and ``--sigma-cutoff`` options, ``-sx`` and ``--sdx`` are
+inserted, respectively, in front of ``.hdf5``.
 
 .. _read_gamma_option:
 
-``--read_gamma``
+``--read-gamma``
 ~~~~~~~~~~~~~~~~
 
 (Setting tag: ``READ_GAMMA``, ``.TRUE.`` or ``.FALSE.``)
@@ -574,22 +642,22 @@ of ``.hdf5``.
 Imaginary parts of self energy at harmonic phonon frequencies
 :math:`\Gamma_\lambda(\omega_\lambda)`
 are read from ``kappa`` file in hdf5 format.  Initially the usual
-result file of ``kappa-mxxx(-sx).hdf5`` is searched. Unless it is
+result file of ``kappa-mxxx(-sx-sdx).hdf5`` is searched. Unless it is
 found, it tries to read ``kappa`` file for each grid point,
-``kappa-mxxx-gx(-sx).hdf5``. Then, similarly,
-``kappa-mxxx-gx(-sx).hdf5`` not found,
-``kappa-mxxx-gx-bx(-sx).hdf5`` files for band indices are searched.
+``kappa-mxxx-gx(-sx-sdx).hdf5``. Then, similarly,
+``kappa-mxxx-gx(-sx-sdx).hdf5`` not found,
+``kappa-mxxx-gx-bx(-sx-sdx).hdf5`` files for band indices are searched.
 
 .. _write_detailed_gamma_option:
 
-``--write_gamma_detail``
+``--write-gamma-detail``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``WRITE_GAMMA_DETAIL``, ``.TRUE.`` or ``.FALSE.``)
 
 Each q-point triplet contribution to imaginary part of self energy is
-written into ``gamma_detail-mxxx-gx(-sx).hdf5`` file. Be careful that
-this is large data.
+written into ``gamma_detail-mxxx-gx(-sx-sdx).hdf5`` file. Be careful
+that this is large data.
 
 In the output file in hdf5, following keys are used to extract the
 detailed information.
@@ -613,7 +681,7 @@ python script to obtain q-point triplets is shown below.
 
     import h5py
     import numpy as np
-    
+
     f = h5py.File("gamma_detail-mxxx-gx.hdf5")
     g = h5py.File("grid_address-mxxx.hdf5")
     grid_address = f['grid_address'][:]
@@ -628,7 +696,7 @@ following script:
 
     import h5py
     import numpy as np
-    
+
     f = h5py.File("gamma_detail-mxxx-gx.hdf5")
     temp = 30 # index of temperature
     gamma_tp = f['gamma_detail'][:].sum(axis=-1).sum(axis=-1)
@@ -638,13 +706,14 @@ following script:
 For example, for ``--lw`` or ``--br``, this ``gamma`` gives
 :math:`\Gamma_\lambda(\omega_\lambda)` of the band indices at the grid
 point indicated by :math:`\lambda` at the temperature of index 30. If
-any bands are degenerated, those ``gamma`` in ``kappa--mxxx-gx(-sx).hdf5``
-or ``gamma--mxxx-gx(-sx).hdf5`` type file are averaged, but the ``gamma``
-obtained here in this way are not symmetrized. Apart from this
-symmetrization, the values must be equivalent between them.
+any bands are degenerated, those ``gamma`` in
+``kappa-mxxx-gx(-sx-sdx).hdf5`` or ``gamma-mxxx-gx(-sx-sdx).hdf5``
+type file are averaged, but the ``gamma`` obtained here in this way
+are not symmetrized. Apart from this symmetrization, the values must
+be equivalent between them.
 
 ..
-   ``--write_amplitude``
+   ``--write-amplitude``
    ~~~~~~~~~~~~~~~~~~~~~~
 
    Interaction strengths of triplets are written into file in hdf5
@@ -660,13 +729,13 @@ symmetrization, the values must be equivalent between them.
 
 Imaginary part of self energy :math:`\Gamma_\lambda(\omega)` is
 calculated with respect to :math:`\omega`. The output is written to
-``gammas-mxxxx-gx(-sx)-tx-bx.dat`` in THz (without :math:`2\pi`) with
-respect to frequency in THz (without :math:`2\pi`).
+``gammas-mxxx-gx(-sx)-tx-bx.dat`` in THz (without :math:`2\pi`)
+with respect to frequency in THz (without :math:`2\pi`).
 
 ::
 
    % phono3py --fc3 --fc2 --dim="2 2  2" --mesh="16 16 16" -c POSCAR-unitcell \
-     --nac --q_direction="1 0 0" --gp=0 --ise --bi="4 5, 6"
+     --nac --q-direction="1 0 0" --gp=0 --ise --bi="4 5, 6"
 
 .. _lw_option:
 
@@ -677,12 +746,12 @@ respect to frequency in THz (without :math:`2\pi`).
 
 Linewidth :math:`2\Gamma_\lambda(\omega_\lambda)` is calculated with
 respect to temperature. The output is written to
-``linewidth-mxxxx-gx(-sx)-bx.dat`` in THz (without :math:`2\pi`).
+``linewidth-mxxx-gx(-sx)-bx.dat`` in THz (without :math:`2\pi`).
 
 ::
 
    % phono3py --fc3 --fc2 --dim="2 2  2" --mesh="16 16 16" -c POSCAR-unitcell \
-     --nac --q_direction="1 0 0" --gp=0 --lw --bi="4 5, 6"
+     --nac --q-direction="1 0 0" --gp=0 --lw --bi="4 5, 6"
 
 
 .. _jdos_option:
@@ -693,14 +762,14 @@ respect to temperature. The output is written to
 (Setting tag: ``JOINT_DOS``, ``.TRUE.`` or ``.FALSE.``)
 
 Two classes of joint density of states (JDOS) are calculated. The
-result is written into ``jdos-mxxxxxx-gx(-sx).dat`` in
+result is written into ``jdos-mxxx-gx(-sx-sdx).dat`` in
 :math:`\text{THz}^{-1}` (without :math:`(2\pi)^{-1}`) with
 respect to frequency in THz (without :math:`2\pi`). The first
 column is the frequency, and the second and third columns are the
 values given as follows, respectively,
 
 .. math::
-   
+
    &D_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
    \sum_{\lambda_1,\lambda_2}
    \left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2}) +
@@ -716,11 +785,11 @@ values given as follows, respectively,
 
 When temperatures are specified, two classes of weighted JDOS are
 calculated. The result is written into
-``jdos-mxxxxxx-gx(-sx)-txxx.dat`` in :math:`\text{THz}^{-1}` (without
-:math:`(2\pi)^{-1}`) with respect to frequency in THz
-(without :math:`2\pi`). In the file name, ``txxx`` shows the
-temperature. The first column is the frequency, and the second and
-third columns are the values given as follows, respectively,
+``jdos-mxxx-gx(-sx)-txxx.dat`` in :math:`\text{THz}^{-1}` (without
+:math:`(2\pi)^{-1}`) with respect to frequency in THz (without
+:math:`2\pi`). In the file name, ``txxx`` shows the temperature. The
+first column is the frequency, and the second and third columns are
+the values given as follows, respectively,
 
 .. math::
 
@@ -739,78 +808,30 @@ third columns are the values given as follows, respectively,
    % phono3py --fc2 --dim="2 2 2" -c POSCAR-unitcell --mesh="16 16 16" \
      --nac --jdos --ga="0 0 0  8 8 8" --ts=300
 
-``--num_freq_points``, ``--freq_pitch``: Sampling frequency for distribution functions
+``--num-freq-points``, ``--freq-pitch``: Sampling frequency for distribution functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``NUM_FREQUENCY_POINTS``)
 
 For spectrum like calculations of imaginary part of self energy and
 JDOS, number of sampling frequency points is controlled by
-``--num_freq_points`` or ``--freq_pitch``.
+``--num-freq-points`` or ``--freq-pitch``.
 
-.. _bi_option:
-
-``--bi``: Specific band index
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``BAND_INDICES``)
-
-Specify band indices. The output file name will be, e.g.,
-``gammas-mxxxxxx-gxx(-sx)-bx.dat`` where ``bxbx...`` shows the band indices
-used to be averaged. The calculated values at indices separated by
-space are averaged, and those separated by comma are separately
-calculated.
-
-::
-
-   % phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" \
-     -c POSCAR-unitcell --nac --gp="34" --bi="4 5, 6"
-
-.. _full_pp_option:
-
-``--full_pp``: Calculate all elements of phonon-phonon interaction strength
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``FULL_PP``, ``.TRUE.`` or ``.FALSE.``)
-
-After version 1.10.5, for RTA thermal conductivity calculation with
-using the linear tetrahedron method, only necessary part of
-phonon-phonon interaction strengh among phonons,
-:math:`\bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2`, is
-calculated due to delta functions in calculation of
-:math:`\Gamma_\lambda(\omega)`,
-
-.. math::
-
-   \Gamma_\lambda(\omega) = \frac{18\pi}{\hbar^2}
-    \sum_{\lambda' \lambda''}
-    \bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2 
-    \left\{(n_{\lambda'}+ n_{\lambda''}+1) 
-     \delta(\omega-\omega_{\lambda'}-\omega_{\lambda''}) \right.
-     + (n_{\lambda'}-n_{\lambda''})
-    \left[\delta(\omega+\omega_{\lambda'}-\omega_{\lambda''})
-   - \left. \delta(\omega-\omega_{\lambda'}+\omega_{\lambda''})
-   \right]\right\}.
-
-But specifying this option, full elements of phonon-phonon interaction
-strengh among phonons are calculated and averaged phonon-phonon
-interaction strength (:math:`P_{\mathbf{q}j}`) is also given.
-
-``--ave_pp``: Use averaged phonon-phonon interaction strength
+``--ave-pp``: Use averaged phonon-phonon interaction strength
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``USE_AVE_PP``, ``.TRUE.`` or ``.FALSE.``)
 
 Averaged phonon-phonon interaction strength (:math:`P_{\mathbf{q}j}`)
 is used to calculate imaginary part of self energy in thermal
-conductivity calculation. This option works
-only when ``--read_gamma`` and ``--br`` options are activated where
-the averaged phonon-phonon interaction that is read from
-``kappa-mxxxxx.hdf5`` file is used if it exists in the file. Therefore the
-averaged phonon-phonon interaction has to be stored before using this
-option (see :ref:`full_pp_option`). The calculation result
-**overwrites** ``kappa-mxxxxx.hdf5`` file. Therefore to use this
-option together with ``-o`` option is strongly recommended.
+conductivity calculation. This option works only when ``--read-gamma``
+and ``--br`` options are activated where the averaged phonon-phonon
+interaction that is read from ``kappa-mxxx(-sx-sdx).hdf5`` file is
+used if it exists in the file. Therefore the averaged phonon-phonon
+interaction has to be stored before using this option (see
+:ref:`full_pp_option`). The calculation result **overwrites**
+``kappa-mxxx(-sx-sdx).hdf5`` file. Therefore to use this option
+together with ``-o`` option is strongly recommended.
 
 First, run full conductivity calculation,
 
@@ -823,9 +844,9 @@ Then
 ::
 
    % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br \
-     --read_gamma --ave_pp -o ave_pp
+     --read-gamma --ave-pp -o ave_pp
 
-``--const_ave_pp``: Use constant phonon-phonon interaction strength
+``--const-ave-pp``: Use constant phonon-phonon interaction strength
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``CONSTANT_AVERAGED_PP_INTERACTION``, ``.TRUE.`` or ``.FALSE.``)
@@ -837,9 +858,9 @@ activated. Therefore third-order force constants are not necessary to
 input. The physical unit of the value is :math:`\text{eV}^2`.
 
 ::
-   
+
    % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br \
-     --const_ave_pp=1e-10
+     --const-ave-pp=1e-10
 
 ``--gruneisen``: Mode-Gruneisen parameter from 3rd order force constants
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -850,7 +871,7 @@ Mode-Gruneisen-parameters are calculated from fc3.
 
 Mesh sampling mode::
 
-   % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="16 16 16" 
+   % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="16 16 16"
      -c POSCAR-unitcell --nac --gruneisen
 
 Band path mode::

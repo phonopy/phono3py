@@ -4,7 +4,8 @@ from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phono3py.file_IO import (write_kappa_to_hdf5, write_triplets,
                               read_gamma_from_hdf5, write_grid_address,
                               write_gamma_detail_to_hdf5)
-from phono3py.phonon3.conductivity import Conductivity, unit_to_WmK
+from phono3py.phonon3.conductivity import (Conductivity, all_bands_exist,
+                                           unit_to_WmK)
 from phono3py.phonon3.imag_self_energy import (ImagSelfEnergy,
                                                average_by_degeneracy)
 from phono3py.phonon3.triplets import get_grid_points_by_rotations
@@ -81,7 +82,7 @@ def get_thermal_conductivity_RTA(
             _write_triplets(interaction)
 
     if write_kappa:
-        if (grid_points is None and _all_bands_exist(interaction)):
+        if grid_points is None and all_bands_exist(interaction):
             br.set_kappa_at_sigmas()
             _write_kappa(br,
                          interaction.get_primitive().get_volume(),
@@ -120,11 +121,12 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
     gamma = br.get_gamma()
     gamma_isotope = br.get_gamma_isotope()
     sigmas = br.get_sigmas()
+    sigma_cutoff = br.get_sigma_cutoff_width()
     volume = interaction.get_primitive().get_volume()
     gamma_N, gamma_U = br.get_gamma_N_U()
 
     gp = grid_points[i]
-    if _all_bands_exist(interaction):
+    if all_bands_exist(interaction):
         if ave_pp is None:
             ave_pp_i = None
         else:
@@ -158,6 +160,7 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
                                 mesh_divisors=mesh_divisors,
                                 grid_point=gp,
                                 sigma=sigma,
+                                sigma_cutoff=sigma_cutoff,
                                 kappa_unit_conversion=unit_to_WmK / volume,
                                 filename=filename,
                                 verbose=verbose)
@@ -197,17 +200,10 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
                     grid_point=gp,
                     band_index=bi,
                     sigma=sigma,
+                    sigma_cutoff=sigma_cutoff,
                     kappa_unit_conversion=unit_to_WmK / volume,
                     filename=filename,
                     verbose=verbose)
-
-def _all_bands_exist(interaction):
-    band_indices = interaction.get_band_indices()
-    num_band = interaction.get_primitive().get_number_of_atoms() * 3
-    if len(band_indices) == num_band:
-        if (band_indices - np.arange(num_band) == 0).all():
-            return True
-    return False
 
 def _write_triplets(interaction, filename=None):
     triplets, weights = interaction.get_triplets_at_q()[:2]
@@ -224,6 +220,7 @@ def _write_triplets(interaction, filename=None):
 def _write_kappa(br, volume, filename=None, log_level=0):
     temperatures = br.get_temperatures()
     sigmas = br.get_sigmas()
+    sigma_cutoff = br.get_sigma_cutoff_width()
     gamma = br.get_gamma()
     gamma_isotope = br.get_gamma_isotope()
     gamma_N, gamma_U = br.get_gamma_N_U()
@@ -294,12 +291,14 @@ def _write_kappa(br, volume, filename=None, log_level=0):
                             weight=weights,
                             mesh_divisors=mesh_divisors,
                             sigma=sigma,
+                            sigma_cutoff=sigma_cutoff,
                             kappa_unit_conversion=unit_to_WmK / volume,
                             filename=filename,
                             verbose=log_level)
 
 def _set_gamma_from_file(br, filename=None, verbose=True):
     sigmas = br.get_sigmas()
+    sigma_cutoff = br.get_sigma_cutoff_width()
     mesh = br.get_mesh_numbers()
     mesh_divisors = br.get_mesh_divisors()
     grid_points = br.get_grid_points()
@@ -326,6 +325,7 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
             mesh,
             mesh_divisors=mesh_divisors,
             sigma=sigma,
+            sigma_cutoff=sigma_cutoff,
             filename=filename,
             verbose=verbose)
         if data:
@@ -346,6 +346,7 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
                     mesh_divisors=mesh_divisors,
                     grid_point=gp,
                     sigma=sigma,
+                    sigma_cutoff=sigma_cutoff,
                     filename=filename,
                     verbose=verbose)
                 if data_gp:
@@ -367,6 +368,7 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
                             grid_point=gp,
                             band_index=bi,
                             sigma=sigma,
+                            sigma_cutoff=sigma_cutoff,
                             filename=filename,
                             verbose=verbose)
                         if data_band:
@@ -565,7 +567,8 @@ class Conductivity_RTA(Conductivity):
                 self._set_gamma_at_sigmas_lowmem(i)
 
         if self._isotope is not None and not self._read_gamma_iso:
-            self._gamma_iso[:, i, :] = self._get_gamma_isotope_at_sigmas(i)
+            gamma_iso = self._get_gamma_isotope_at_sigmas(i)
+            self._gamma_iso[:, i, :] = gamma_iso[:, self._pp.get_band_indices()]
 
         if self._log_level:
             self._show_log(self._qpoints[i], i)

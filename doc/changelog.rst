@@ -3,6 +3,21 @@
 Change Log
 ==========
 
+Nov-17-2017: version 1.12.3
+----------------------------
+
+- Command option parser of the phonopy tools is replaced from
+  ``optparse`` to ``argparse``.
+- The filenames used with these options were the positional arguments
+  previously. Now they are the command-line arguments, i.e., filenames
+  have to be put just after the option name like ``-f vasprun.xml-001
+  vasprun.xml-002 ...``.
+- The names of auxiliary tools (``kdeplot`` and ``kaccum``) are
+  changed, for which the prefix phono3py- is added to the old names to
+  avoid accidental conflict with other script names already existing
+  under bin directory.
+- :ref:`sigma_cutoff_option` option was created.
+
 Jun-18-2017: version 1.11.13
 ----------------------------
 
@@ -151,8 +166,8 @@ Changes in version 0.8.11
 -------------------------
 
 - A new option of ``--cutoff_mfp`` for including effective boundary
-  mean free path. 
-- The option name ``--cutfc3`` is changed to ``--cutoff_fc3``. 
+  mean free path.
+- The option name ``--cutfc3`` is changed to ``--cutoff_fc3``.
 - The option name ``--cutpair`` is changed to ``--cutoff_pair``.
 - A new option ``--ga`` is created.
 - Fix spectrum plot of joint dos and imaginary part of self energy
@@ -240,5 +255,3 @@ Changes in version 0.6.0
   supercell forces, which makes the calculation much faster
 - When any phonon of triplets can be on the Brillouin zone boundary, i.e.,
   when a mesh number is an even number, it is more carefully treated.
-
-

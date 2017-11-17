@@ -195,7 +195,7 @@ class KappaDOS(object):
 
     def get_kdos(self):
         return self._frequency_points, self._kdos
-        
+
     def _run_tetrahedron_method(self):
         num_freqs = len(self._frequency_points)
         thm = self._tetrahedron_mesh
@@ -224,7 +224,7 @@ class GammaDOS(object):
 
     def get_gdos(self):
         return self._frequency_points, self._gdos
-    
+
     def _set_frequency_points(self):
         min_freq = np.min(self._frequencies)
         max_freq = np.max(self._frequencies) + epsilon
@@ -294,13 +294,13 @@ class GammaDOStetrahedron(GammaDOS):
             self._grid_address,
             self._grid_mapping_table,
             self._ir_grid_points)
-        
+
     def _run_tetrahedron_method(self):
         num_freqs = len(self._frequency_points)
         thm = self._tetrahedron_mesh
         for j, value in enumerate(('J', 'I')):
             thm.set(value=value, frequency_points=self._frequency_points)
-            for i, iw in enumerate(thm): 
+            for i, iw in enumerate(thm):
                 # gdos[temp, freq_points, IJ]
                 # iw[freq_points, band]
                 # gamma[temp, ir_gp, band]
@@ -316,49 +316,67 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description="Show unit cell volume")
-    parser.add_argument("--pa", dest="primitive_matrix",
-                        default="1 0 0 0 1 0 0 0 1", help="Primitive matrix")
-    parser.add_argument("--mesh", dest="mesh", default="1 1 1",
-                         help="Mesh numbers")
-    parser.add_argument("-c", "--cell", dest="cell_filename",
-                         help="Unit cell filename")
-    parser.add_argument('--gv', action='store_true',
-                        help='Calculate gv_x_gv (tensor)')
-    parser.add_argument('--pqj', action='store_true',
-                        help='Calculate Pqj (scalar)')
-    parser.add_argument('--cv', action='store_true',
-                        help='Calculate Cv (scalar)')
-    parser.add_argument('--tau', action='store_true',
-                        help='Calculate lifetimes (scalar)')
-    parser.add_argument('--gamma', action='store_true',
-                        help='Calculate Gamma (scalar)')
-    parser.add_argument('--gv_norm', action='store_true',
-                        help='Calculate |g_v| (scalar)')
-    parser.add_argument('--mfp', action='store_true',
-                        help='Mean free path is used instead of frequency')
-    parser.add_argument('--temperature', type=float, dest='temperature',
-                        help='Temperature to output data at')
-    parser.add_argument('--nsp', '--num_sampling_points', type=int,
-                        dest='num_sampling_points', default=100,
-                        help=("Number of sampling points in frequency or "
-                              "MFP axis"))
-    parser.add_argument('--average', action='store_true',
-                        help=("Output the traces of the tensors divided by 3 "
-                              "rather than the unique elements"))
-    parser.add_argument('--trace', action='store_true',
-                        help=("Output the traces of the tensors "
-                              "rather than the unique elements"))
-    parser.add_argument('--smearing', action='store_true',
-                        help='Use smearing method (only for scalar density)')
-    parser.add_argument('--pwscf', dest="pwscf_mode",
-                        action="store_true", help="Invoke Pwscf mode")
-    parser.add_argument('--crystal', dest="crystal_mode",
-                        action="store_true", help="Invoke CRYSTAL mode")
-    parser.add_argument('--abinit', dest="abinit_mode",
-                        action="store_true", help="Invoke Abinit mode")
-    parser.add_argument("--noks", "--no_kappa_stars",
-                        dest="no_kappa_stars", action="store_true",
-                        help="Deactivate summation of partial kappa at q-stars")
+    parser.add_argument(
+        "--pa", dest="primitive_matrix", default="1 0 0 0 1 0 0 0 1",
+        help="Primitive matrix")
+    parser.add_argument(
+        "--mesh", dest="mesh", default="1 1 1",
+        help="Mesh numbers")
+    parser.add_argument(
+        "-c", "--cell", dest="cell_filename",
+        help="Unit cell filename")
+    parser.add_argument(
+        '--gv', action='store_true',
+        help='Calculate gv_x_gv (tensor)')
+    parser.add_argument(
+        '--pqj', action='store_true',
+        help='Calculate Pqj (scalar)')
+    parser.add_argument(
+        '--cv', action='store_true',
+        help='Calculate Cv (scalar)')
+    parser.add_argument(
+        '--tau', action='store_true',
+        help='Calculate lifetimes (scalar)')
+    parser.add_argument(
+        '--gamma', action='store_true',
+        help='Calculate Gamma (scalar)')
+    parser.add_argument(
+        '--gv_norm', action='store_true',
+        help='Calculate |g_v| (scalar)')
+    parser.add_argument(
+        '--mfp', action='store_true',
+        help='Mean free path is used instead of frequency')
+    parser.add_argument(
+        '--temperature', type=float, dest='temperature',
+        help='Temperature to output data at')
+    parser.add_argument(
+        '--nsp', '--num-sampling-points', type=int, dest='num_sampling_points',
+        default=100,
+        help="Number of sampling points in frequency or MFP axis")
+    parser.add_argument(
+        '--average', action='store_true',
+        help=("Output the traces of the tensors divided by 3 "
+              "rather than the unique elements"))
+    parser.add_argument(
+        '--trace', action='store_true',
+        help=("Output the traces of the tensors "
+              "rather than the unique elements"))
+    parser.add_argument(
+        '--smearing', action='store_true',
+        help='Use smearing method (only for scalar density)')
+    parser.add_argument(
+        '--pwscf', dest="pwscf_mode",
+        action="store_true", help="Invoke Pwscf mode")
+    parser.add_argument(
+        '--crystal', dest="crystal_mode",
+        action="store_true", help="Invoke CRYSTAL mode")
+    parser.add_argument(
+        '--abinit', dest="abinit_mode",
+        action="store_true", help="Invoke Abinit mode")
+    parser.add_argument(
+        "--noks", "--no-kappa-stars",
+        dest="no_kappa_stars", action="store_true",
+        help="Deactivate summation of partial kappa at q-stars")
     parser.add_argument('filenames', nargs='*')
     args = parser.parse_args()
 
@@ -373,7 +391,7 @@ if __name__ == '__main__':
         cell, _ = read_crystal_structure(args.filenames[0],
                                          interface_mode=interface_mode)
         f = h5py.File(args.filenames[1])
-    else:        
+    else:
         cell, _ = read_crystal_structure(args.cell_filename,
                                          interface_mode=interface_mode)
         f = h5py.File(args.filenames[0])
@@ -474,7 +492,7 @@ if __name__ == '__main__':
             for i, gdos_t in enumerate(gdos):
                 total = np.dot(weights, mode_prop[i]).sum() / weights.sum()
                 assert np.isclose(gdos_t[-1][0], total)
-        show_scalar(gdos, temperatures, sampling_points, args)        
+        show_scalar(gdos, temperatures, sampling_points, args)
     else:
         if args.mfp:
             if 'mean_free_path' in f:
@@ -487,7 +505,7 @@ if __name__ == '__main__':
                  mode_prop,
                  mean_freepath) = set_T_target(temperatures,
                                                mode_prop,
-                                               args.temperature,                
+                                               args.temperature,
                                                mean_freepath=mean_freepath)
 
             kdos, sampling_points = run_mfp_dos(mean_freepath,
