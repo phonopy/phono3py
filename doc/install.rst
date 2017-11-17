@@ -173,7 +173,7 @@ An example of installation process
 
 1. Download miniconda package
 
-   Miniconda is downloaded at https://conda.io/miniconda.html. 
+   Miniconda is downloaded at https://conda.io/miniconda.html.
 
    For usual 64-bit Linux system::
 
@@ -181,7 +181,12 @@ An example of installation process
 
    For macOS, it is assumed that gcc compiler is installed on your system. The
    compiler such as default clang on macOS can't handle OpenMP, so it
-   can't be used. The gcc compiler may be installed using MacPort, e.g.::
+   can't be used. The gcc compiler may be installed using homebrew,
+   e.g.::
+
+     % brew install gcc
+
+   or using MacPort, e.g.::
 
      % sudo port install gcc7 wget
 
@@ -206,7 +211,7 @@ An example of installation process
 
    Install the latest phonopy and phono3py::
 
-     % export CC=gcc # only for macOS
+     % export CC=gcc # only for macOS (macport), CC=gcc-7 for homebrew
      % git clone https://github.com/atztogo/phonopy.git
      % cd phonopy
      % python setup.py install --user
