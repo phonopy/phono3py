@@ -40,7 +40,6 @@
 #include <lapack_wrapper.h>
 #include <phonoc_array.h>
 #include <phonoc_const.h>
-#include <phonoc_utils.h>
 #include <phonon3_h/fc3.h>
 #include <phonon3_h/frequency_shift.h>
 #include <phonon3_h/interaction.h>
@@ -1380,9 +1379,6 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
   int num_band;
   int num_iw;
 
-  int i, j, k, l, adrs_shift;
-  double f0, f1, f2, g0, g1, g2, cutoff;
-
   if (!PyArg_ParseTuple(args, "OOOOOdd",
                         &iw_py,
                         &iw_zero_py,
@@ -1403,43 +1399,18 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
   frequencies = (double*)PyArray_DATA(frequencies_py);
   num_band = PyArray_DIMS(frequencies_py)[1];
   num_iw = PyArray_DIMS(iw_py)[0];
-  cutoff = sigma * sigma_cutoff;
 
-#pragma omp parallel for private(j, k, l, adrs_shift, f0, f1, f2, g0, g1, g2)
-  for (i = 0; i < num_triplets; i++) {
-    for (j = 0; j < num_band0; j++) {
-      f0 = frequency_points[j];
-      for (k = 0; k < num_band; k++) {
-        f1 = frequencies[triplets[i][1] * num_band + k];
-        for (l = 0; l < num_band; l++) {
-          f2 = frequencies[triplets[i][2] * num_band + l];
-          adrs_shift = i * num_band0 * num_band * num_band +
-            j * num_band * num_band + k * num_band + l;
-          if (sigma_cutoff > 0 &&
-              fabs(f0 - f1 - f2) > cutoff &&
-              fabs(f0 + f1 - f2) > cutoff &&
-              fabs(f0 - f1 + f2) > cutoff) {
-            iw_zero[adrs_shift] = 1;
-            g0 = 0;
-            g1 = 0;
-            g2 = 0;
-          } else {
-            iw_zero[adrs_shift] = 0;
-            g0 = gaussian(f0 - f1 - f2, sigma);
-            g1 = gaussian(f0 + f1 - f2, sigma);
-            g2 = gaussian(f0 - f1 + f2, sigma);
-          }
-          iw[adrs_shift] = g0;
-          adrs_shift += num_triplets * num_band0 * num_band * num_band;
-          iw[adrs_shift] = g1 - g2;
-          if (num_iw == 3) {
-            adrs_shift += num_triplets * num_band0 * num_band * num_band;
-            iw[adrs_shift] = g0 + g1 + g2;
-          }
-        }
-      }
-    }
-  }
+  tpl_get_integration_weight_with_sigma(iw,
+                                        iw_zero,
+                                        sigma,
+                                        sigma_cutoff,
+                                        frequency_points,
+                                        num_band0,
+                                        triplets,
+                                        num_triplets,
+                                        frequencies,
+                                        num_band,
+                                        num_iw);
 
   Py_RETURN_NONE;
 }

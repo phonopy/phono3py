@@ -44,14 +44,14 @@
 #include <lapack_wrapper.h>
 
 void get_pp_collision_with_g(double *imag_self_energy,
-                             PHPYCONST int relative_grid_address[24][4][3],
+                             PHPYCONST int relative_grid_address[24][4][3], /* thm */
                              const double *frequencies,
                              const lapack_complex_double *eigenvectors,
                              const Iarray *triplets,
                              const int *weights,
-                             const int *grid_address,
-                             const int *bz_map,
-                             const int *mesh,
+                             const int *grid_address, /* thm */
+                             const int *bz_map, /* thm */
+                             const int *mesh, /* thm */
                              const double *fc3,
                              const Darray *shortest_vectors,
                              const int *multiplicity,
@@ -115,6 +115,18 @@ void get_pp_collision_with_g(double *imag_self_energy,
                                2,
                                0,
                                1 - openmp_per_triplets);
+
+    /* tpi_get_integration_weight_with_sigma(g, */
+    /*                                       g_zero, */
+    /*                                       sigma, */
+    /*                                       sigma_cutoff, */
+    /*                                       freqs_at_gp, */
+    /*                                       num_band0, */
+    /*                                       (int(*)[3])(triplets->data + i * 3), */
+    /*                                       1, */
+    /*                                       frequencies, */
+    /*                                       num_band, */
+    /*                                       2); */
 
     fc3_normal_squared = (double*)malloc(sizeof(double) * num_band_prod);
     num_g_pos = 0;
