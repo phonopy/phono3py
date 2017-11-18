@@ -101,21 +101,41 @@ void tpl_get_integration_weight(double *iw,
                                 const int openmp_per_triplets,
                                 const int openmp_per_bands)
 {
-  tpi_get_integration_weight(iw,
-                             iw_zero,
-                             frequency_points,
-                             num_band0,
-                             relative_grid_address,
-                             mesh,
-                             triplets,
-                             num_triplets,
-                             bz_grid_address,
-                             bz_map,
-                             frequencies,
-                             num_band,
-                             num_iw,
-                             openmp_per_triplets,
-                             openmp_per_bands);
+  int i, j, k, l, sign;
+  int tp_relative_grid_address[2][24][4][3];
+  int num_band_prod;
+
+  for (i = 0; i < 2; i++) {
+    sign = 1 - i * 2;
+    for (j = 0; j < 24; j++) {
+      for (k = 0; k < 4; k++) {
+        for (l = 0; l < 3; l++) {
+          tp_relative_grid_address[i][j][k][l] =
+            relative_grid_address[j][k][l] * sign;
+        }
+      }
+    }
+  }
+
+  num_band_prod = num_band0 * num_band * num_band;
+
+#pragma omp parallel for if (openmp_per_triplets)
+  for (i = 0; i < num_triplets; i++) {
+    tpi_get_integration_weight(iw + i * num_band_prod,
+                               iw_zero + i * num_band_prod,
+                               frequency_points,
+                               num_band0,
+                               tp_relative_grid_address,
+                               mesh,
+                               triplets[i],
+                               num_triplets,
+                               bz_grid_address,
+                               bz_map,
+                               frequencies,
+                               num_band,
+                               num_iw,
+                               openmp_per_bands);
+  }
 }
 
 
