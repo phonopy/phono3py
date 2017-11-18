@@ -37,20 +37,31 @@
 
 #include <triplet_h/triplet.h>
 
-int tpi_get_integration_weight(double *iw,
-                               char *iw_zero,
-                               const double frequency_points[],
-                               const int num_band0,
-                               TPLCONST int relative_grid_address[24][4][3],
-                               const int mesh[3],
-                               TPLCONST int triplets[][3],
-                               const int num_triplets,
-                               TPLCONST int bz_grid_address[][3],
-                               const int bz_map[],
-                               const double frequencies[],
-                               const int num_band,
-                               const int num_iw,
-                               const int openmp_per_triplets,
-                               const int openmp_per_bands);
+void tpi_get_integration_weight(double *iw,
+                                char *iw_zero,
+                                const double frequency_points[],
+                                const int num_band0,
+                                TPLCONST int relative_grid_address[24][4][3],
+                                const int mesh[3],
+                                TPLCONST int triplets[][3],
+                                const int num_triplets,
+                                TPLCONST int bz_grid_address[][3],
+                                const int bz_map[],
+                                const double frequencies[],
+                                const int num_band,
+                                const int num_iw,
+                                const int openmp_per_triplets,
+                                const int openmp_per_bands);
+void tpi_get_integration_weight_with_sigma(double *iw,
+                                           char *iw_zero,
+                                           const double sigma,
+                                           const double sigma_cutoff,
+                                           const double frequency_points[],
+                                           const int num_band0,
+                                           TPLCONST int triplets[][3],
+                                           const int num_triplets,
+                                           const double frequencies[],
+                                           const int num_band,
+                                           const int num_iw);
 
 #endif

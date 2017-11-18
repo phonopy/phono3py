@@ -85,38 +85,65 @@ int tpl_get_triplets_reciprocal_mesh_at_q(int map_triplets[],
                                            rotations);
 }
 
-int tpl_get_integration_weight(double *iw,
-                               char *iw_zero,
-                               const double frequency_points[],
-                               const int num_band0,
-                               TPLCONST int relative_grid_address[24][4][3],
-                               const int mesh[3],
-                               TPLCONST int triplets[][3],
-                               const int num_triplets,
-                               TPLCONST int bz_grid_address[][3],
-                               const int bz_map[],
-                               const double frequencies[],
-                               const int num_band,
-                               const int num_iw,
-                               const int openmp_per_triplets,
-                               const int openmp_per_bands)
+void tpl_get_integration_weight(double *iw,
+                                char *iw_zero,
+                                const double frequency_points[],
+                                const int num_band0,
+                                TPLCONST int relative_grid_address[24][4][3],
+                                const int mesh[3],
+                                TPLCONST int triplets[][3],
+                                const int num_triplets,
+                                TPLCONST int bz_grid_address[][3],
+                                const int bz_map[],
+                                const double frequencies[],
+                                const int num_band,
+                                const int num_iw,
+                                const int openmp_per_triplets,
+                                const int openmp_per_bands)
 {
-  return tpi_get_integration_weight(iw,
-                                    iw_zero,
-                                    frequency_points,
-                                    num_band0,
-                                    relative_grid_address,
-                                    mesh,
-                                    triplets,
-                                    num_triplets,
-                                    bz_grid_address,
-                                    bz_map,
-                                    frequencies,
-                                    num_band,
-                                    num_iw,
-                                    openmp_per_triplets,
-                                    openmp_per_bands);
+  tpi_get_integration_weight(iw,
+                             iw_zero,
+                             frequency_points,
+                             num_band0,
+                             relative_grid_address,
+                             mesh,
+                             triplets,
+                             num_triplets,
+                             bz_grid_address,
+                             bz_map,
+                             frequencies,
+                             num_band,
+                             num_iw,
+                             openmp_per_triplets,
+                             openmp_per_bands);
 }
+
+
+void tpl_get_integration_weight_with_sigma(double *iw,
+                                           char *iw_zero,
+                                           const double sigma,
+                                           const double sigma_cutoff,
+                                           const double frequency_points[],
+                                           const int num_band0,
+                                           TPLCONST int triplets[][3],
+                                           const int num_triplets,
+                                           const double frequencies[],
+                                           const int num_band,
+                                           const int num_iw)
+{
+  tpi_get_integration_weight_with_sigma(iw,
+                                        iw_zero,
+                                        sigma,
+                                        sigma_cutoff,
+                                        frequency_points,
+                                        num_band0,
+                                        triplets,
+                                        num_triplets,
+                                        frequencies,
+                                        num_band,
+                                        num_iw);
+}
+
 
 int tpl_is_N(const int *triplets, const int *grid_address)
 {
