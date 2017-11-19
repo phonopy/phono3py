@@ -41,6 +41,7 @@
 #include <phonon3_h/pp_collision.h>
 #include <phonon3_h/interaction.h>
 #include <triplet_h/triplet.h>
+#include <triplet_h/triplet_iw.h>
 #include <lapack_wrapper.h>
 
 void get_pp_collision_with_g(double *imag_self_energy,
@@ -70,6 +71,7 @@ void get_pp_collision_with_g(double *imag_self_energy,
   double *fc3_normal_squared, *ise, *freqs_at_gp, *g;
   char *g_zero;
   int (*g_pos)[4];
+  int tp_relative_grid_address[2][24][4][3];
 
   fc3_normal_squared = NULL;
   ise = NULL;
@@ -96,24 +98,26 @@ void get_pp_collision_with_g(double *imag_self_energy,
     openmp_per_triplets = 0;
   }
 
+  tpl_set_relative_grid_address(tp_relative_grid_address,
+                                relative_grid_address);
+
 #pragma omp parallel for schedule(guided) private(j, k, l, jkl, fc3_normal_squared, g, g_zero, g_pos, num_g_pos) if (openmp_per_triplets)
   for (i = 0; i < num_triplets; i++) {
     g = (double*)malloc(sizeof(double) * 2 * num_band_prod);
     g_zero = (char*)malloc(sizeof(char) * num_band_prod);
-    tpl_get_integration_weight(g,
+    tpi_get_integration_weight(g,
                                g_zero,
                                freqs_at_gp,
                                num_band0,
-                               relative_grid_address,
+                               tp_relative_grid_address,
                                mesh,
-                               (int(*)[3])(triplets->data + i * 3),
+                               triplets->data + i * 3,
                                1,
                                (int(*)[3])grid_address,
                                bz_map,
                                frequencies,
                                num_band,
                                2,
-                               0,
                                1 - openmp_per_triplets);
 
     /* tpi_get_integration_weight_with_sigma(g, */
