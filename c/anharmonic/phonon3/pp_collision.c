@@ -44,26 +44,26 @@
 #include <triplet_h/triplet_iw.h>
 #include <lapack_wrapper.h>
 
-void get_pp_collision_with_g(double *imag_self_energy,
-                             PHPYCONST int relative_grid_address[24][4][3], /* thm */
-                             const double *frequencies,
-                             const lapack_complex_double *eigenvectors,
-                             const Iarray *triplets,
-                             const int *weights,
-                             const int *grid_address, /* thm */
-                             const int *bz_map, /* thm */
-                             const int *mesh, /* thm */
-                             const double *fc3,
-                             const Darray *shortest_vectors,
-                             const int *multiplicity,
-                             const double *masses,
-                             const int *p2s_map,
-                             const int *s2p_map,
-                             const Iarray *band_indices,
-                             const Darray *temperatures,
-                             const int is_NU,
-                             const int symmetrize_fc3_q,
-                             const double cutoff_frequency)
+void ppc_get_pp_collision_with_g(double *imag_self_energy,
+                                 PHPYCONST int relative_grid_address[24][4][3], /* thm */
+                                 const double *frequencies,
+                                 const lapack_complex_double *eigenvectors,
+                                 const Iarray *triplets,
+                                 const int *weights,
+                                 const int *grid_address, /* thm */
+                                 const int *bz_map, /* thm */
+                                 const int *mesh, /* thm */
+                                 const double *fc3,
+                                 const Darray *shortest_vectors,
+                                 const int *multiplicity,
+                                 const double *masses,
+                                 const int *p2s_map,
+                                 const int *s2p_map,
+                                 const Iarray *band_indices,
+                                 const Darray *temperatures,
+                                 const int is_NU,
+                                 const int symmetrize_fc3_q,
+                                 const double cutoff_frequency)
 {
   int i, j, k, l, jkl, num_band, num_band0, num_band_prod, num_triplets;
   int num_temps, num_g_pos, is_N;

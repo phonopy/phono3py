@@ -448,26 +448,26 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   band_indices = convert_to_iarray(band_indices_py);
   temperatures = convert_to_darray(temperatures_py);
 
-  get_pp_collision_with_g(gamma,
-                          relative_grid_address,
-                          frequencies,
-                          eigenvectors,
-                          triplets,
-                          triplet_weights,
-                          grid_address,
-                          bz_map,
-                          mesh,
-                          fc3,
-                          svecs,
-                          multi,
-                          masses,
-                          p2s,
-                          s2p,
-                          band_indices,
-                          temperatures,
-                          is_NU,
-                          symmetrize_fc3_q,
-                          cutoff_frequency);
+  ppc_get_pp_collision_with_g(gamma,
+                              relative_grid_address,
+                              frequencies,
+                              eigenvectors,
+                              triplets,
+                              triplet_weights,
+                              grid_address,
+                              bz_map,
+                              mesh,
+                              fc3,
+                              svecs,
+                              multi,
+                              masses,
+                              p2s,
+                              s2p,
+                              band_indices,
+                              temperatures,
+                              is_NU,
+                              symmetrize_fc3_q,
+                              cutoff_frequency);
 
   free(triplets);
   free(svecs);
