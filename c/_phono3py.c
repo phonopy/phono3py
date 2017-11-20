@@ -448,26 +448,26 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   band_indices = convert_to_iarray(band_indices_py);
   temperatures = convert_to_darray(temperatures_py);
 
-  get_pp_collision_with_g(gamma,
-                          relative_grid_address,
-                          frequencies,
-                          eigenvectors,
-                          triplets,
-                          triplet_weights,
-                          grid_address,
-                          bz_map,
-                          mesh,
-                          fc3,
-                          svecs,
-                          multi,
-                          masses,
-                          p2s,
-                          s2p,
-                          band_indices,
-                          temperatures,
-                          is_NU,
-                          symmetrize_fc3_q,
-                          cutoff_frequency);
+  ppc_get_pp_collision_with_g(gamma,
+                              relative_grid_address,
+                              frequencies,
+                              eigenvectors,
+                              triplets,
+                              triplet_weights,
+                              grid_address,
+                              bz_map,
+                              mesh,
+                              fc3,
+                              svecs,
+                              multi,
+                              masses,
+                              p2s,
+                              s2p,
+                              band_indices,
+                              temperatures,
+                              is_NU,
+                              symmetrize_fc3_q,
+                              cutoff_frequency);
 
   free(triplets);
   free(svecs);
@@ -709,18 +709,18 @@ static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args)
   rotated_grid_points = convert_to_iarray(rotated_grid_points_py);
   rotations_cartesian = (double*)PyArray_DATA(rotations_cartesian_py);
 
-  get_collision_matrix(collision_matrix,
-                       fc3_normal_squared,
-                       frequencies,
-                       triplets,
-                       triplets_map,
-                       stabilized_gp_map,
-                       rotated_grid_points,
-                       rotations_cartesian,
-                       g,
-                       temperature,
-                       unit_conversion_factor,
-                       cutoff_frequency);
+  col_get_collision_matrix(collision_matrix,
+                           fc3_normal_squared,
+                           frequencies,
+                           triplets,
+                           triplets_map,
+                           stabilized_gp_map,
+                           rotated_grid_points,
+                           rotations_cartesian,
+                           g,
+                           temperature,
+                           unit_conversion_factor,
+                           cutoff_frequency);
 
   free(fc3_normal_squared);
   free(triplets_map);
@@ -770,16 +770,16 @@ static PyObject * py_get_reducible_collision_matrix(PyObject *self, PyObject *ar
   triplets_map = convert_to_iarray(triplets_map_py);
   stabilized_gp_map = (int*)PyArray_DATA(stabilized_gp_map_py);
 
-  get_reducible_collision_matrix(collision_matrix,
-                                 fc3_normal_squared,
-                                 frequencies,
-                                 triplets,
-                                 triplets_map,
-                                 stabilized_gp_map,
-                                 g,
-                                 temperature,
-                                 unit_conversion_factor,
-                                 cutoff_frequency);
+  col_get_reducible_collision_matrix(collision_matrix,
+                                     fc3_normal_squared,
+                                     frequencies,
+                                     triplets,
+                                     triplets_map,
+                                     stabilized_gp_map,
+                                     g,
+                                     temperature,
+                                     unit_conversion_factor,
+                                     cutoff_frequency);
 
   free(fc3_normal_squared);
   free(triplets_map);

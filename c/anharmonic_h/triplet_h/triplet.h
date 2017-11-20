@@ -98,5 +98,8 @@ void tpl_get_integration_weight_with_sigma(double *iw,
                                            const int num_iw);
 
 int tpl_is_N(const int *triplets, const int *grid_address);
+void tpl_set_relative_grid_address(
+  int tp_relative_grid_address[2][24][4][3],
+  TPLCONST int relative_grid_address[24][4][3]);
 
 #endif

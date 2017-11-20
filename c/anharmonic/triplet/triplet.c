@@ -101,22 +101,11 @@ void tpl_get_integration_weight(double *iw,
                                 const int openmp_per_triplets,
                                 const int openmp_per_bands)
 {
-  int i, j, k, l, sign;
+  int i, num_band_prod;
   int tp_relative_grid_address[2][24][4][3];
-  int num_band_prod;
 
-  for (i = 0; i < 2; i++) {
-    sign = 1 - i * 2;
-    for (j = 0; j < 24; j++) {
-      for (k = 0; k < 4; k++) {
-        for (l = 0; l < 3; l++) {
-          tp_relative_grid_address[i][j][k][l] =
-            relative_grid_address[j][k][l] * sign;
-        }
-      }
-    }
-  }
-
+  tpl_set_relative_grid_address(tp_relative_grid_address,
+                                relative_grid_address);
   num_band_prod = num_band0 * num_band * num_band;
 
 #pragma omp parallel for if (openmp_per_triplets)
@@ -181,6 +170,25 @@ int tpl_is_N(const int *triplets, const int *grid_address)
     }
   }
   return is_N;
+}
+
+void tpl_set_relative_grid_address(
+  int tp_relative_grid_address[2][24][4][3],
+  TPLCONST int relative_grid_address[24][4][3])
+{
+  int i, j, k, l, sign;
+
+  for (i = 0; i < 2; i++) {
+    sign = 1 - i * 2;
+    for (j = 0; j < 24; j++) {
+      for (k = 0; k < 4; k++) {
+        for (l = 0; l < 3; l++) {
+          tp_relative_grid_address[i][j][k][l] =
+            relative_grid_address[j][k][l] * sign;
+        }
+      }
+    }
+  }
 }
 
 static int get_triplets_reciprocal_mesh_at_q(int map_triplets[],
