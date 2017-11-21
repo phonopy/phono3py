@@ -558,6 +558,7 @@ class Conductivity_RTA(Conductivity):
             const_ave_pp = self._pp.get_constant_averaged_interaction()
             if (self._is_full_pp or
                 self._use_ave_pp or
+                # self._sigmas[0] is not None or
                 const_ave_pp is not None or
                 self._is_gamma_detail):
                 self._set_gamma_at_sigmas(i)
