@@ -55,13 +55,14 @@ tpi_get_integration_weight(double *iw,
 void tpi_get_integration_weight_with_sigma(double *iw,
                                            char *iw_zero,
                                            const double sigma,
-                                           const double sigma_cutoff,
+                                           const double cutoff,
                                            const double frequency_points[],
                                            const int num_band0,
-                                           TPLCONST int triplets[][3],
-                                           const int num_triplets,
+                                           const int triplet[3],
+                                           const int const_adrs_shift,
                                            const double frequencies[],
                                            const int num_band,
-                                           const int num_iw);
+                                           const int num_iw,
+                                           const int openmp_per_bands);
 
 #endif

@@ -223,7 +223,8 @@ void ppc_get_pp_collision_with_sigma(
   const double cutoff_frequency)
 {
   int i, num_band, num_band0, num_band_prod, num_triplets, num_temps;
-  int openmp_per_triplets;
+  int openmp_per_triplets, const_adrs_shift;
+  double cutoff;
   double *ise, *freqs_at_gp, *g;
   char *g_zero;
 
@@ -237,6 +238,8 @@ void ppc_get_pp_collision_with_sigma(
   num_band_prod = num_band0 * num_band * num_band;
   num_triplets = triplets->dims[0];
   num_temps = temperatures->dims[0];
+  const_adrs_shift = num_band_prod;
+
   ise = (double*)malloc(sizeof(double) * num_triplets * num_temps * num_band0);
   freqs_at_gp = (double*)malloc(sizeof(double) * num_band0);
   for (i = 0; i < num_band0; i++) {
@@ -250,6 +253,8 @@ void ppc_get_pp_collision_with_sigma(
     openmp_per_triplets = 0;
   }
 
+  cutoff = sigma * sigma_cutoff;
+
 #pragma omp parallel for schedule(guided) private(g, g_zero) if (openmp_per_triplets)
   for (i = 0; i < num_triplets; i++) {
     g = (double*)malloc(sizeof(double) * 2 * num_band_prod);
@@ -257,14 +262,15 @@ void ppc_get_pp_collision_with_sigma(
     tpi_get_integration_weight_with_sigma(g,
                                           g_zero,
                                           sigma,
-                                          sigma_cutoff,
+                                          cutoff,
                                           freqs_at_gp,
                                           num_band0,
-                                          (int(*)[3])(triplets->data + i * 3),
-                                          1,
+                                          triplets->data + i * 3,
+                                          const_adrs_shift,
                                           frequencies,
                                           num_band,
-                                          2);
+                                          2,
+                                          0);
 
     get_collision(ise + i * num_temps * num_band0,
                   i,

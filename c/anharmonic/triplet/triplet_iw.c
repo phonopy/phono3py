@@ -87,7 +87,7 @@ tpi_get_integration_weight(double *iw,
 
   num_band_prod = num_triplets * num_band0 * num_band * num_band;
 
-#pragma omp parallel for private(j, b1, b2, b12, adrs_shift, g, freq_vertices) if (openmp_per_bands)
+#pragma omp parallel for private(j, b1, b2, adrs_shift, g, freq_vertices) if (openmp_per_bands)
   for (b12 = 0; b12 < num_band * num_band; b12++) {
     b1 = b12 / num_band;
     b2 = b12 % num_band;
@@ -110,51 +110,49 @@ tpi_get_integration_weight(double *iw,
 void tpi_get_integration_weight_with_sigma(double *iw,
                                            char *iw_zero,
                                            const double sigma,
-                                           const double sigma_cutoff,
+                                           const double cutoff,
                                            const double frequency_points[],
                                            const int num_band0,
-                                           TPLCONST int triplets[][3],
-                                           const int num_triplets,
+                                           const int triplet[3],
+                                           const int const_adrs_shift,
                                            const double frequencies[],
                                            const int num_band,
-                                           const int num_iw)
+                                           const int num_iw,
+                                           const int openmp_per_bands)
 {
-  int i, j, k, l, adrs_shift;
-  double f0, f1, f2, g0, g1, g2, cutoff;
+  int j, b12, b1, b2, adrs_shift;
+  double f0, f1, f2, g0, g1, g2;
 
-  cutoff = sigma * sigma_cutoff;
-#pragma omp parallel for private(j, k, l, adrs_shift, f0, f1, f2, g0, g1, g2)
-  for (i = 0; i < num_triplets; i++) {
+#pragma omp parallel for private(j, b1, b2, f0, f1, f2, g0, g1, g2, adrs_shift) if (openmp_per_bands)
+  for (b12 = 0; b12 < num_band * num_band; b12++) {
+    b1 = b12 / num_band;
+    b2 = b12 % num_band;
+    f1 = frequencies[triplet[1] * num_band + b1];
+    f2 = frequencies[triplet[2] * num_band + b2];
     for (j = 0; j < num_band0; j++) {
       f0 = frequency_points[j];
-      for (k = 0; k < num_band; k++) {
-        f1 = frequencies[triplets[i][1] * num_band + k];
-        for (l = 0; l < num_band; l++) {
-          f2 = frequencies[triplets[i][2] * num_band + l];
-          adrs_shift = i * num_band0 * num_band * num_band +
-            j * num_band * num_band + k * num_band + l;
-          if (sigma_cutoff > 0 &&
-              fabs(f0 - f1 - f2) > cutoff &&
-              fabs(f0 + f1 - f2) > cutoff &&
-              fabs(f0 - f1 + f2) > cutoff) {
-            iw_zero[adrs_shift] = 1;
-            g0 = 0;
-            g1 = 0;
-            g2 = 0;
-          } else {
-            iw_zero[adrs_shift] = 0;
-            g0 = gaussian(f0 - f1 - f2, sigma);
-            g1 = gaussian(f0 + f1 - f2, sigma);
-            g2 = gaussian(f0 - f1 + f2, sigma);
-          }
-          iw[adrs_shift] = g0;
-          adrs_shift += num_triplets * num_band0 * num_band * num_band;
-          iw[adrs_shift] = g1 - g2;
-          if (num_iw == 3) {
-            adrs_shift += num_triplets * num_band0 * num_band * num_band;
-            iw[adrs_shift] = g0 + g1 + g2;
-          }
-        }
+      adrs_shift = j * num_band * num_band + b1 * num_band + b2;
+
+      if (cutoff > 0 &&
+          fabs(f0 - f1 - f2) > cutoff &&
+          fabs(f0 + f1 - f2) > cutoff &&
+          fabs(f0 - f1 + f2) > cutoff) {
+        iw_zero[adrs_shift] = 1;
+        g0 = 0;
+        g1 = 0;
+        g2 = 0;
+      } else {
+        iw_zero[adrs_shift] = 0;
+        g0 = gaussian(f0 - f1 - f2, sigma);
+        g1 = gaussian(f0 + f1 - f2, sigma);
+        g2 = gaussian(f0 - f1 + f2, sigma);
+      }
+      iw[adrs_shift] = g0;
+      adrs_shift += const_adrs_shift;
+      iw[adrs_shift] = g1 - g2;
+      if (num_iw == 3) {
+        adrs_shift += const_adrs_shift;
+        iw[adrs_shift] = g0 + g1 + g2;
       }
     }
   }
