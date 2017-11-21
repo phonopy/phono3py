@@ -57,7 +57,10 @@
 
 static PyObject * py_get_interaction(PyObject *self, PyObject *args);
 static PyObject * py_get_pp_collision(PyObject *self, PyObject *args);
-static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args);
+static PyObject *
+py_get_pp_collision_with_sigma(PyObject *self, PyObject *args);
+static PyObject *
+py_get_imag_self_energy_with_g(PyObject *self, PyObject *args);
 static PyObject *
 py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args);
 static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
@@ -126,6 +129,10 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_get_pp_collision,
    METH_VARARGS,
    "Collision and ph-ph calculation"},
+  {"pp_collision_with_sigma",
+   (PyCFunction)py_get_pp_collision_with_sigma,
+   METH_VARARGS,
+   "Collision and ph-ph calculation for smearing method"},
   {"imag_self_energy_with_g",
    (PyCFunction)py_get_imag_self_energy_with_g,
    METH_VARARGS,
@@ -448,31 +455,147 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   band_indices = convert_to_iarray(band_indices_py);
   temperatures = convert_to_darray(temperatures_py);
 
-  ppc_get_pp_collision_with_g(gamma,
-                              relative_grid_address,
-                              frequencies,
-                              eigenvectors,
-                              triplets,
-                              triplet_weights,
-                              grid_address,
-                              bz_map,
-                              mesh,
-                              fc3,
-                              svecs,
-                              multi,
-                              masses,
-                              p2s,
-                              s2p,
-                              band_indices,
-                              temperatures,
-                              is_NU,
-                              symmetrize_fc3_q,
-                              cutoff_frequency);
+  ppc_get_pp_collision(gamma,
+                       relative_grid_address,
+                       frequencies,
+                       eigenvectors,
+                       triplets,
+                       triplet_weights,
+                       grid_address,
+                       bz_map,
+                       mesh,
+                       fc3,
+                       svecs,
+                       multi,
+                       masses,
+                       p2s,
+                       s2p,
+                       band_indices,
+                       temperatures,
+                       is_NU,
+                       symmetrize_fc3_q,
+                       cutoff_frequency);
 
   free(triplets);
+  triplets = NULL;
   free(svecs);
+  svecs = NULL;
   free(band_indices);
+  band_indices = NULL;
   free(temperatures);
+  temperatures = NULL;
+
+  Py_RETURN_NONE;
+}
+
+static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
+{
+  PyArrayObject *gamma_py;
+  PyArrayObject *frequencies_py;
+  PyArrayObject *eigenvectors_py;
+  PyArrayObject *triplets_py;
+  PyArrayObject *triplet_weights_py;
+  PyArrayObject *grid_address_py;
+  PyArrayObject *mesh_py;
+  PyArrayObject *fc3_py;
+  PyArrayObject *shortest_vectors_py;
+  PyArrayObject *multiplicity_py;
+  PyArrayObject *atomic_masses_py;
+  PyArrayObject *p2s_map_py;
+  PyArrayObject *s2p_map_py;
+  PyArrayObject *band_indices_py;
+  PyArrayObject *temperatures_py;
+  int is_NU;
+  int symmetrize_fc3_q;
+  double sigma;
+  double sigma_cutoff;
+  double cutoff_frequency;
+
+  double *gamma;
+  double *frequencies;
+  lapack_complex_double *eigenvectors;
+  Iarray *triplets;
+  int *triplet_weights;
+  int *grid_address;
+  int *mesh;
+  double *fc3;
+  Darray *svecs;
+  int *multi;
+  double *masses;
+  int *p2s;
+  int *s2p;
+  Iarray *band_indices;
+  Darray *temperatures;
+
+  if (!PyArg_ParseTuple(args, "OddOOOOOOOOOOOOOOiid",
+                        &gamma_py,
+                        &sigma,
+                        &sigma_cutoff,
+                        &frequencies_py,
+                        &eigenvectors_py,
+                        &triplets_py,
+                        &triplet_weights_py,
+                        &grid_address_py,
+                        &mesh_py,
+                        &fc3_py,
+                        &shortest_vectors_py,
+                        &multiplicity_py,
+                        &atomic_masses_py,
+                        &p2s_map_py,
+                        &s2p_map_py,
+                        &band_indices_py,
+                        &temperatures_py,
+                        &is_NU,
+                        &symmetrize_fc3_q,
+                        &cutoff_frequency)) {
+    return NULL;
+  }
+
+  gamma = (double*)PyArray_DATA(gamma_py);
+  frequencies = (double*)PyArray_DATA(frequencies_py);
+  eigenvectors = (lapack_complex_double*)PyArray_DATA(eigenvectors_py);
+  triplets = convert_to_iarray(triplets_py);
+  triplet_weights = (int*)PyArray_DATA(triplet_weights_py);
+  grid_address = (int*)PyArray_DATA(grid_address_py);
+  mesh = (int*)PyArray_DATA(mesh_py);
+  fc3 = (double*)PyArray_DATA(fc3_py);
+  svecs = convert_to_darray(shortest_vectors_py);
+  multi = (int*)PyArray_DATA(multiplicity_py);
+  masses = (double*)PyArray_DATA(atomic_masses_py);
+  p2s = (int*)PyArray_DATA(p2s_map_py);
+  s2p = (int*)PyArray_DATA(s2p_map_py);
+  band_indices = convert_to_iarray(band_indices_py);
+  temperatures = convert_to_darray(temperatures_py);
+
+  ppc_get_pp_collision_with_sigma(gamma,
+                                  sigma,
+                                  sigma_cutoff,
+                                  frequencies,
+                                  eigenvectors,
+                                  triplets,
+                                  triplet_weights,
+                                  grid_address,
+                                  mesh,
+                                  fc3,
+                                  svecs,
+                                  multi,
+                                  masses,
+                                  p2s,
+                                  s2p,
+                                  band_indices,
+                                  temperatures,
+                                  is_NU,
+                                  symmetrize_fc3_q,
+                                  cutoff_frequency);
+
+  free(triplets);
+  triplets = NULL;
+  free(svecs);
+  svecs = NULL;
+  free(band_indices);
+  band_indices = NULL;
+  free(temperatures);
+  temperatures = NULL;
 
   Py_RETURN_NONE;
 }
