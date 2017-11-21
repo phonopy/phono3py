@@ -140,17 +140,29 @@ void tpl_get_integration_weight_with_sigma(double *iw,
                                            const int num_band,
                                            const int num_iw)
 {
-  tpi_get_integration_weight_with_sigma(iw,
-                                        iw_zero,
-                                        sigma,
-                                        sigma_cutoff,
-                                        frequency_points,
-                                        num_band0,
-                                        triplets,
-                                        num_triplets,
-                                        frequencies,
-                                        num_band,
-                                        num_iw);
+  int i, num_band_prod, const_adrs_shift;
+  double cutoff;
+
+  cutoff = sigma * sigma_cutoff;
+  num_band_prod = num_band0 * num_band * num_band;
+  const_adrs_shift = num_triplets * num_band0 * num_band * num_band;
+
+#pragma omp parallel for
+  for (i = 0; i < num_triplets; i++) {
+    tpi_get_integration_weight_with_sigma(
+      iw + i * num_band_prod,
+      iw_zero + i * num_band_prod,
+      sigma,
+      cutoff,
+      frequency_points,
+      num_band0,
+      triplets[i],
+      const_adrs_shift,
+      frequencies,
+      num_band,
+      num_iw,
+      0);
+  }
 }
 
 
