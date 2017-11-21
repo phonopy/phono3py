@@ -557,8 +557,6 @@ class Conductivity_RTA(Conductivity):
 
             const_ave_pp = self._pp.get_constant_averaged_interaction()
             if (self._is_full_pp or
-                len(self._sigmas) > 1 or
-                self._sigmas[0] is not None or
                 self._use_ave_pp or
                 const_ave_pp is not None or
                 self._is_gamma_detail):
@@ -678,8 +676,10 @@ class Conductivity_RTA(Conductivity):
         triplets_at_q, weights_at_q, _, _ = self._pp.get_triplets_at_q()
         bz_map = self._pp.get_bz_map()
         symmetrize_fc3_q = 0
-        reciprocal_lattice = np.linalg.inv(self._pp.get_primitive().get_cell())
-        thm = TetrahedronMethod(reciprocal_lattice, mesh=self._mesh)
+
+        if None in self._sigmas:
+            reclat = np.linalg.inv(self._pp.get_primitive().get_cell())
+            thm = TetrahedronMethod(reclat, mesh=self._mesh)
 
         # It is assumed that self._sigmas = [None].
         for j, sigma in enumerate(self._sigmas):
@@ -693,26 +693,52 @@ class Conductivity_RTA(Conductivity):
                                        len(band_indices)),
                                       dtype='double', order='C')
             import phono3py._phono3py as phono3c
-            phono3c.pp_collision(collisions,
-                                 thm.get_tetrahedra(),
-                                 self._frequencies,
-                                 self._eigenvectors,
-                                 triplets_at_q,
-                                 weights_at_q,
-                                 self._grid_address,
-                                 bz_map,
-                                 self._mesh,
-                                 fc3,
-                                 svecs,
-                                 multiplicity,
-                                 masses,
-                                 p2s,
-                                 s2p,
-                                 band_indices,
-                                 self._temperatures,
-                                 self._is_N_U * 1,
-                                 symmetrize_fc3_q,
-                                 self._cutoff_frequency)
+            if sigma is None:
+                phono3c.pp_collision(collisions,
+                                     thm.get_tetrahedra(),
+                                     self._frequencies,
+                                     self._eigenvectors,
+                                     triplets_at_q,
+                                     weights_at_q,
+                                     self._grid_address,
+                                     bz_map,
+                                     self._mesh,
+                                     fc3,
+                                     svecs,
+                                     multiplicity,
+                                     masses,
+                                     p2s,
+                                     s2p,
+                                     band_indices,
+                                     self._temperatures,
+                                     self._is_N_U * 1,
+                                     symmetrize_fc3_q,
+                                     self._cutoff_frequency)
+            else:
+                if self._sigma_cutoff is None:
+                    sigma_cutoff = -1
+                else:
+                    sigma_cutoff = float(self._sigma_cutoff)
+                phono3c.pp_collision_with_sigma(collisions,
+                                                sigma,
+                                                sigma_cutoff,
+                                                self._frequencies,
+                                                self._eigenvectors,
+                                                triplets_at_q,
+                                                weights_at_q,
+                                                self._grid_address,
+                                                self._mesh,
+                                                fc3,
+                                                svecs,
+                                                multiplicity,
+                                                masses,
+                                                p2s,
+                                                s2p,
+                                                band_indices,
+                                                self._temperatures,
+                                                self._is_N_U * 1,
+                                                symmetrize_fc3_q,
+                                                self._cutoff_frequency)
             col_unit_conv = self._collision.get_unit_conversion_factor()
             pp_unit_conv = self._pp.get_unit_conversion_factor()
             if self._is_N_U:

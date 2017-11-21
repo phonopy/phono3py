@@ -313,12 +313,12 @@ static void real_to_normal(double *fc3_normal_squared,
                      s2p_map,
                      openmp_at_bands);
 
-  if (openmp_at_bands) {
 #ifdef MEASURE_R2N
+  if (openmp_at_bands && num_triplets > 0) {
     printf("At triplet %d/%d (# of bands=%d):\n",
            triplet_index, num_triplets, num_band0);
-#endif
   }
+#endif
   reciprocal_to_normal_squared(fc3_normal_squared,
                                g_pos,
                                num_g_pos,
