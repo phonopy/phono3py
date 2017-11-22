@@ -40,6 +40,20 @@
 #include <phonon3_h/imag_self_energy_with_g.h>
 #include <triplet_h/triplet.h>
 
+static void
+detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
+                                     double *imag_self_energy,
+                                     const int num_band0,
+                                     const int num_band,
+                                     const double *fc3_normal_squared,
+                                     const double *frequencies,
+                                     const int *triplets,
+                                     const double *g1,
+                                     const double *g2_3,
+                                     const char *g_zero,
+                                     const double *temperatures,
+                                     const int num_temps,
+                                     const double cutoff_frequency);
 static double
 collect_detailed_imag_self_energy(double *imag_self_energy,
                                   const int num_band,
@@ -64,22 +78,16 @@ static void set_occupations(double *n1,
                             const int *triplets,
                             const double *frequencies,
                             const double cutoff_frequency);
-static int set_g_pos(int (*g_pos)[4],
-                     const int i_triplet,
-                     const int num_band0,
-                     const int num_band,
-                     const int num_band_prod,
-                     const char *g_zero);
 
-void get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
-                                          const Darray *fc3_normal_squared,
-                                          const double *frequencies,
-                                          const int *triplets,
-                                          const int *weights,
-                                          const double *g,
-                                          const char *g_zero,
-                                          const double temperature,
-                                          const double cutoff_frequency)
+void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
+                                              const Darray *fc3_normal_squared,
+                                              const double *frequencies,
+                                              const int *triplets,
+                                              const int *weights,
+                                              const double *g,
+                                              const char *g_zero,
+                                              const double temperature,
+                                              const double cutoff_frequency)
 {
   int i, j, num_triplets, num_band0, num_band, num_band_prod, num_g_pos;
   int (*g_pos)[4];
@@ -97,28 +105,27 @@ void get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
 #pragma omp parallel for private(num_g_pos, j, g_pos)
   for (i = 0; i < num_triplets; i++) {
     g_pos = (int(*)[4])malloc(sizeof(int[4]) * num_band_prod);
-    num_g_pos = set_g_pos(g_pos,
-                          i,
-                          num_band0,
-                          num_band,
-                          num_band_prod,
-                          g_zero);
+    num_g_pos = ise_set_g_pos(g_pos,
+                              num_band0,
+                              num_band,
+                              g_zero + i * num_band_prod);
 
-    imag_self_energy_at_triplet(ise + i * num_band0,
-                                num_band0,
-                                num_band,
-                                fc3_normal_squared->data + i * num_band_prod,
-                                frequencies,
-                                triplets + i * 3,
-                                weights[i],
-                                g + i * num_band_prod,
-                                g + (i + num_triplets) * num_band_prod,
-                                g_pos,
-                                num_g_pos,
-                                &temperature,
-                                1,
-                                cutoff_frequency,
-                                0);
+    ise_imag_self_energy_at_triplet(
+      ise + i * num_band0,
+      num_band0,
+      num_band,
+      fc3_normal_squared->data + i * num_band_prod,
+      frequencies,
+      triplets + i * 3,
+      weights[i],
+      g + i * num_band_prod,
+      g + (i + num_triplets) * num_band_prod,
+      g_pos,
+      num_g_pos,
+      &temperature,
+      1,
+      cutoff_frequency,
+      0);
 
     free(g_pos);
     g_pos = NULL;
@@ -138,7 +145,7 @@ void get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
   ise = NULL;
 }
 
-void get_detailed_imag_self_energy_at_bands_with_g
+void ise_get_detailed_imag_self_energy_at_bands_with_g
 (double *detailed_imag_self_energy,
  double *imag_self_energy_N,
  double *imag_self_energy_U,
@@ -213,21 +220,21 @@ void get_detailed_imag_self_energy_at_bands_with_g
   ise = NULL;
 }
 
-void imag_self_energy_at_triplet(double *imag_self_energy,
-                                 const int num_band0,
-                                 const int num_band,
-                                 const double *fc3_normal_squared,
-                                 const double *frequencies,
-                                 const int *triplets,
-                                 const int triplet_weight,
-                                 const double *g1,
-                                 const double *g2_3,
-                                 PHPYCONST int (*g_pos)[4],
-                                 const int num_g_pos,
-                                 const double *temperatures,
-                                 const int num_temps,
-                                 const double cutoff_frequency,
-                                 const int openmp_at_bands)
+void ise_imag_self_energy_at_triplet(double *imag_self_energy,
+                                     const int num_band0,
+                                     const int num_band,
+                                     const double *fc3_normal_squared,
+                                     const double *frequencies,
+                                     const int *triplets,
+                                     const int triplet_weight,
+                                     const double *g1,
+                                     const double *g2_3,
+                                     PHPYCONST int (*g_pos)[4],
+                                     const int num_g_pos,
+                                     const double *temperatures,
+                                     const int num_temps,
+                                     const double cutoff_frequency,
+                                     const int openmp_at_bands)
 {
   int i, j;
   double *n1, *n2;
@@ -278,7 +285,33 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
   n2 = NULL;
 }
 
-void
+int ise_set_g_pos(int (*g_pos)[4],
+                  const int num_band0,
+                  const int num_band,
+                  const char *g_zero)
+{
+  int num_g_pos, j, k, l, jkl;
+
+  num_g_pos = 0;
+  jkl = 0;
+  for (j = 0; j < num_band0; j++) {
+    for (k = 0; k < num_band; k++) {
+      for (l = 0; l < num_band; l++) {
+        if (!g_zero[jkl]) {
+          g_pos[num_g_pos][0] = j;
+          g_pos[num_g_pos][1] = k;
+          g_pos[num_g_pos][2] = l;
+          g_pos[num_g_pos][3] = jkl;
+          num_g_pos++;
+        }
+        jkl++;
+      }
+    }
+  }
+  return num_g_pos;
+}
+
+static void
 detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
                                      double *imag_self_energy,
                                      const int num_band0,
@@ -424,32 +457,4 @@ static void set_occupations(double *n1,
       n2[j] = -1;
     }
   }
-}
-
-static int set_g_pos(int (*g_pos)[4],
-                     const int i_triplet,
-                     const int num_band0,
-                     const int num_band,
-                     const int num_band_prod,
-                     const char *g_zero)
-{
-  int num_g_pos, j, k, l, jkl;
-
-  num_g_pos = 0;
-  jkl = 0;
-  for (j = 0; j < num_band0; j++) {
-    for (k = 0; k < num_band; k++) {
-      for (l = 0; l < num_band; l++) {
-        if (!g_zero[jkl + i_triplet * num_band_prod]) {
-          g_pos[num_g_pos][0] = j;
-          g_pos[num_g_pos][1] = k;
-          g_pos[num_g_pos][2] = l;
-          g_pos[num_g_pos][3] = jkl;
-          num_g_pos++;
-        }
-        jkl++;
-      }
-    }
-  }
-  return num_g_pos;
 }
