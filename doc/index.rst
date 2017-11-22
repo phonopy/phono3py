@@ -20,7 +20,7 @@ Documentation
 
 .. toctree::
    :maxdepth: 1
-      
+
    install
    examples
    Interfaces to calculators (VASP, pwscf, CRYSTAL, Abinit) <interfaces>
@@ -54,4 +54,3 @@ Contact
 =======
 
 * Author: `Atsushi Togo <http://atztogo.github.io/>`_
-
