@@ -249,8 +249,8 @@ void imag_self_energy_at_triplet(double *imag_self_energy,
   }
 
 /* Do not use OpenMP here!! */
-/* Activating this OpenMP gives wrong results. */
-/* #pragma omp parallel for private(j) if (openmp_at_bands) */
+/* g_pos[i][0] takes value 0 <= x < num_band0 only, */
+/* which causes race condition. */
   for (i = 0; i < num_g_pos; i++) {
     for (j = 0; j < num_temps; j++) {
       if (n1[j * num_band + g_pos[i][1]] < 0 ||
