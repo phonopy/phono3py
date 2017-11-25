@@ -59,6 +59,7 @@ static void _get_collision_matrix(double *collision_matrix,
 static void
 _get_reducible_collision_matrix(double *collision_matrix,
                                 const double *fc3_normal_squared,
+                                const int num_band0,
                                 const int num_band,
                                 const double *frequencies,
                                 const int *triplets,
@@ -135,22 +136,24 @@ void col_get_reducible_collision_matrix(double *collision_matrix,
                                         const double unit_conversion_factor,
                                         const double cutoff_frequency)
 {
-  int num_triplets, num_gp, num_band;
+  int num_triplets, num_gp, num_band, num_band0;
 
   num_triplets = fc3_normal_squared->dims[0];
+  num_band0 = fc3_normal_squared->dims[1];
   num_band = fc3_normal_squared->dims[2];
   num_gp = triplets_map->dims[0];
 
   _get_reducible_collision_matrix(
     collision_matrix,
     fc3_normal_squared->data,
+    num_band0,
     num_band,
     frequencies,
     triplets,
     triplets_map->data,
     num_gp,
     stabilized_gp_map,
-    g + 2 * num_triplets * num_band * num_band * num_band,
+    g + 2 * num_triplets * num_band0 * num_band * num_band,
     temperature,
     unit_conversion_factor,
     cutoff_frequency);
@@ -233,6 +236,7 @@ static void _get_collision_matrix(double *collision_matrix,
 static void
 _get_reducible_collision_matrix(double *collision_matrix,
                                 const double *fc3_normal_squared,
+                                const int num_band0,
                                 const int num_band,
                                 const double *frequencies,
                                 const int *triplets,
@@ -266,15 +270,15 @@ _get_reducible_collision_matrix(double *collision_matrix,
                  num_band,
                  cutoff_frequency);
 
-    for (j = 0; j < num_band; j++) {
+    for (j = 0; j < num_band0; j++) {
       for (k = 0; k < num_band; k++) {
         collision = 0;
         for (l = 0; l < num_band; l++) {
           collision +=
-            fc3_normal_squared[ti * num_band * num_band * num_band +
+            fc3_normal_squared[ti * num_band0 * num_band * num_band +
                                j * num_band * num_band +
                                k * num_band + l] *
-            g[ti * num_band * num_band * num_band +
+            g[ti * num_band0 * num_band * num_band +
               j * num_band * num_band +
               k * num_band + l] *
             inv_sinh[l] * unit_conversion_factor;
