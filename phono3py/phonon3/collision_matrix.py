@@ -65,27 +65,15 @@ class CollisionMatrix(ImagSelfEnergy):
         if self._pp_strength is None:
             self.run_interaction()
 
-        # num_band0 is supposed to be equal to num_band.
         num_band0 = self._pp_strength.shape[1]
         num_band = self._pp_strength.shape[2]
-
-        if num_band0 != num_band:
-            if self._is_reducible_collision_matrix:
-                print("--bi option can't be used for reducible collision "
-                      "matrix.")
-                raise ValueError()
-            else:
-                if self._log_level:
-                    print("Number of bands calculated is %d." % num_band0)
-                    print("--bi option is under testing.")
-
         num_triplets = len(self._triplets_at_q)
         self._imag_self_energy = np.zeros(num_band0, dtype='double')
 
         if self._is_reducible_collision_matrix:
             num_mesh_points = np.prod(self._mesh)
             self._collision_matrix = np.zeros(
-                (num_band, num_mesh_points, num_band), dtype='double')
+                (num_band0, num_mesh_points, num_band), dtype='double')
         else:
             self._collision_matrix = np.zeros(
                 (num_band0, 3, len(self._ir_grid_points), num_band, 3),
@@ -186,7 +174,7 @@ class CollisionMatrix(ImagSelfEnergy):
         for i in range(num_mesh_points):
             ti = gp2tp_map[self._triplets_map_at_q[i]]
             inv_sinh = self._get_inv_sinh(i, gp2tp_map)
-            for j, k in list(np.ndindex((num_band, num_band))):
+            for j, k in list(np.ndindex((num_band0, num_band))):
                 collision = (self._pp_strength[ti, j, k]
                              * inv_sinh
                              * self._g[2, ti, j, k]).sum()
