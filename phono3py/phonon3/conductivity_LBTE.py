@@ -813,7 +813,7 @@ class Conductivity_LBTE(Conductivity):
                 self._collision_matrix = np.empty(
                     (len(self._sigmas),
                      num_temp,
-                     num_stored_points, num_band0, 3,
+                     num_stored_grid_points, num_band0, 3,
                      num_ir_grid_points, num_band, 3),
                     dtype='double', order='C')
                 self._collision_matrix[:] = 0
