@@ -95,6 +95,7 @@ def get_thermal_conductivity_LBTE(
                 interaction,
                 i=i,
                 is_reducible_collision_matrix=is_reducible_collision_matrix,
+                is_one_gp_colmat=(grid_points is not None),
                 filename=output_filename)
 
     if (not read_collision and all_bands_exist(interaction)
@@ -119,6 +120,7 @@ def _write_collision(lbte,
                      interaction,
                      i=None,
                      is_reducible_collision_matrix=False,
+                     is_one_gp_colmat=False,
                      filename=None):
     grid_points = lbte.get_grid_points()
     temperatures = lbte.get_temperatures()
@@ -129,12 +131,17 @@ def _write_collision(lbte,
     collision_matrix = lbte.get_collision_matrix()
     mesh = lbte.get_mesh_numbers()
 
+    print(collision_matrix.shape)
+
     if i is not None:
         gp = grid_points[i]
-        if is_reducible_collision_matrix:
-            igp = gp
+        if is_one_gp_colmat:
+            igp = 0
         else:
-            igp = i
+            if is_reducible_collision_matrix:
+                igp = gp
+            else:
+                igp = i
         if all_bands_exist(interaction):
             for j, sigma in enumerate(sigmas):
                 if gamma_isotope is not None:
@@ -639,6 +646,11 @@ class Conductivity_LBTE(Conductivity):
         self._pinv_cutoff = pinv_cutoff
         self._pinv_solver = pinv_solver
 
+        if grid_points is None:
+            self._all_grid_points = True
+        else:
+            self._all_grid_points = False
+
         if self._temperatures is not None:
             self._allocate_values()
 
@@ -676,6 +688,9 @@ class Conductivity_LBTE(Conductivity):
         self._show_log_header(i)
         gp = self._grid_points[i]
 
+        if not self._all_grid_points:
+            self._collision_matrix[:] = 0
+
         if not self._read_gamma:
             self._collision.set_grid_point(gp)
 
@@ -709,6 +724,11 @@ class Conductivity_LBTE(Conductivity):
             num_grid_points = num_mesh_points
         else:
             num_grid_points = len(self._grid_points)
+
+        if self._all_grid_points:
+            num_stored_grid_points = num_grid_points
+        else:
+            num_stored_grid_points = 1
 
         self._kappa = np.zeros((len(self._sigmas), num_temp, 6),
                                dtype='double', order='C')
@@ -757,7 +777,8 @@ class Conductivity_LBTE(Conductivity):
             if self._collision_matrix is None:
                 self._collision_matrix = np.empty(
                     (len(self._sigmas), num_temp,
-                     num_mesh_points, num_band, num_mesh_points, num_band),
+                     num_stored_grid_points, num_band,
+                     num_mesh_points, num_band),
                     dtype='double', order='C')
                 self._collision_matrix[:] = 0
             self._collision_eigenvalues = np.zeros(
@@ -792,7 +813,7 @@ class Conductivity_LBTE(Conductivity):
                 self._collision_matrix = np.empty(
                     (len(self._sigmas),
                      num_temp,
-                     num_grid_points, num_band0, 3,
+                     num_stored_points, num_band0, 3,
                      num_ir_grid_points, num_band, 3),
                     dtype='double', order='C')
                 self._collision_matrix[:] = 0
@@ -833,10 +854,13 @@ class Conductivity_LBTE(Conductivity):
             for k, t in enumerate(self._temperatures):
                 self._collision.set_temperature(t)
                 self._collision.run()
-                if self._is_reducible_collision_matrix:
-                    i_data = self._grid_points[i]
+                if self._all_grid_points:
+                    if self._is_reducible_collision_matrix:
+                        i_data = self._grid_points[i]
+                    else:
+                        i_data = i
                 else:
-                    i_data = i
+                    i_data = 0
                 self._gamma[j, k, i_data] = (
                     self._collision.get_imag_self_energy())
                 self._collision_matrix[j, k, i_data] = (
