@@ -777,7 +777,7 @@ class Conductivity_LBTE(Conductivity):
             if self._collision_matrix is None:
                 self._collision_matrix = np.empty(
                     (len(self._sigmas), num_temp,
-                     num_stored_grid_points, num_band,
+                     num_stored_grid_points, num_band0,
                      num_mesh_points, num_band),
                     dtype='double', order='C')
                 self._collision_matrix[:] = 0
