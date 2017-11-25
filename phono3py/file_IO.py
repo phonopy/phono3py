@@ -892,57 +892,67 @@ def read_collision_from_hdf5(mesh,
 
     return None
 
-def write_amplitude_to_hdf5(amplitude,
-                            mesh,
-                            grid_point,
-                            triplet=None,
-                            weight=None,
-                            frequency=None,
-                            eigenvector=None):
-    suffix = "-m%d%d%d" % tuple(mesh)
-    suffix += ("-g%d" % grid_point)
-    with h5py.File("amplitude" + suffix + ".hdf5", 'w') as w:
-        w.create_dataset('amplitude', data=amplitude)
-        if triplet is not None:
-            w.create_dataset('triplet', data=triplet)
-        if weight is not None:
-            w.create_dataset('weight', data=weight)
-        if frequency is not None:
-            w.create_dataset('frequency', data=frequency)
-        if eigenvector is not None:
-            w.create_dataset('eigenvector', data=eigenvector)
-
-def read_amplitude_from_hdf5(amplitudes_at_q,
-                             mesh,
-                             grid_point):
-    suffix = "-m%d%d%d" % tuple(mesh)
-    suffix += ("-g%d" % grid_point)
-    with h5py.File("amplitude" + suffix + ".hdf5", 'r') as f:
-        amplitudes_at_q[:] = f['amplitudes'][:]
-        return amplitudes_at_q
-    return None
-
-def write_gamma_detail_to_hdf5(detailed_gamma,
-                               temperature,
-                               mesh,
-                               grid_point,
-                               sigma,
-                               triplets,
-                               weights,
-                               frequency_points=None,
-                               filename=None):
+def write_pp_to_hdf5(mesh,
+                     indices=None,
+                     grid_point=None,
+                     band_index=None,
+                     sigma=None,
+                     sigma_cutoff=None,
+                     filename=None,
+                     verbose=True):
     suffix = _get_filename_suffix(mesh,
                                   grid_point=grid_point,
                                   sigma=sigma,
+                                  sigma_cutoff=sigma_cutoff,
+                                  filename=filename)
+    full_filename = "pp" + suffix + ".hdf5"
+
+    with h5py.File(full_filename, 'w') as w:
+        w.create_dataset('pp', data=amplitude)
+        if triplet is not None:
+            w.create_dataset('pp', data=pp)
+        return full_filename
+
+def write_gamma_detail_to_hdf5(temperature,
+                               mesh,
+                               gamma_detail=None,
+                               grid_point=None,
+                               triplet=None,
+                               weight=None,
+                               frequency_points=None,
+                               band_index=None,
+                               sigma=None,
+                               sigma_cutoff=None,
+                               filename=None):
+    if band_index is None:
+        band_indices = None
+    else:
+        band_indices = [band_index]
+    suffix = _get_filename_suffix(mesh,
+                                  grid_point=grid_point,
+                                  band_indices=band_indices,
+                                  sigma=sigma,
+                                  sigma_cutoff=sigma_cutoff,
                                   filename=filename)
     full_filename = "gamma_detail" + suffix + ".hdf5"
 
     with h5py.File(full_filename, 'w') as w:
-        w.create_dataset('gamma_detail', data=detailed_gamma)
         w.create_dataset('temperature', data=temperature)
         w.create_dataset('mesh', data=mesh)
-        w.create_dataset('triplet', data=triplets)
-        w.create_dataset('weight', data=weights)
+        if gamma_detail is not None:
+            w.create_dataset('gamma_detail', data=gamma_detail)
+        if triplet is not None:
+            w.create_dataset('triplet', data=triplet)
+        if weight is not None:
+            w.create_dataset('weight', data=weight)
+        if grid_point is not None:
+            w.create_dataset('grid_point', data=grid_point)
+        if band_index is not None:
+            w.create_dataset('band_index', data=(band_index + 1))
+        if sigma is not None:
+            w.create_dataset('sigma', data=sigma)
+        if sigma_cutoff is not None:
+            w.create_dataset('sigma_cutoff_width', data=sigma_cutoff)
         if frequency_points is not None:
             w.create_dataset('frequency_point', data=frequency_points)
         return full_filename
@@ -951,7 +961,7 @@ def write_phonon_to_hdf5(frequency,
                          eigenvector,
                          grid_address,
                          mesh,
-                          filename=None):
+                         filename=None):
     suffix = _get_filename_suffix(mesh, filename=filename)
     full_filename = "phonon" + suffix + ".hdf5"
 

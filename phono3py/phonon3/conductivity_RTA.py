@@ -98,16 +98,18 @@ def _write_gamma_detail(br, interaction, i, filename=None, verbose=True):
     grid_points = br.get_grid_points()
     gp = grid_points[i]
     sigmas = br.get_sigmas()
+    sigma_cutoff = br.get_sigma_cutoff_width()
     triplets, weights, _, _ = interaction.get_triplets_at_q()
     for j, sigma in enumerate(sigmas):
         write_gamma_detail_to_hdf5(
-            gamma_detail,
             temperatures,
             mesh,
-            gp,
-            sigma,
-            triplets,
-            weights)
+            gamma_detail=gamma_detail,
+            grid_point=gp,
+            sigma=sigma,
+            sigma_cutoff=sigma_cutoff,
+            triplet=triplets,
+            weight=weights)
 
 def _write_gamma(br, interaction, i, filename=None, verbose=True):
     grid_points = br.get_grid_points()
