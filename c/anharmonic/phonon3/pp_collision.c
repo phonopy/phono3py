@@ -45,7 +45,6 @@
 #include <lapack_wrapper.h>
 
 static void get_collision(double *ise,
-                          const int i,
                           const int num_band0,
                           const int num_band,
                           const int num_temps,
@@ -68,11 +67,6 @@ static void get_collision(double *ise,
                           const int symmetrize_fc3_q,
                           const double cutoff_frequency,
                           const int openmp_per_triplets);
-static int set_g_pos(int (*g_pos)[4],
-                     double * fc3_normal_squared,
-                     const char *g_zero,
-                     const int num_band0,
-                     const int num_band);
 static void finalize_ise(double *imag_self_energy,
                          const double *ise,
                          const int *grid_address,
@@ -155,7 +149,6 @@ void ppc_get_pp_collision(double *imag_self_energy,
                                1 - openmp_per_triplets);
 
     get_collision(ise + i * num_temps * num_band0,
-                  i,
                   num_band0,
                   num_band,
                   num_temps,
@@ -273,7 +266,6 @@ void ppc_get_pp_collision_with_sigma(
                                           0);
 
     get_collision(ise + i * num_temps * num_band0,
-                  i,
                   num_band0,
                   num_band,
                   num_temps,
@@ -319,7 +311,6 @@ void ppc_get_pp_collision_with_sigma(
 }
 
 static void get_collision(double *ise,
-                          const int i,
                           const int num_band0,
                           const int num_band,
                           const int num_temps,
@@ -343,7 +334,7 @@ static void get_collision(double *ise,
                           const double cutoff_frequency,
                           const int openmp_per_triplets)
 {
-  int num_band_prod, num_g_pos;
+  int i, num_band_prod, num_g_pos;
   double *fc3_normal_squared;
   int (*g_pos)[4];
 
@@ -354,11 +345,14 @@ static void get_collision(double *ise,
   fc3_normal_squared = (double*)malloc(sizeof(double) * num_band_prod);
   g_pos = (int(*)[4])malloc(sizeof(int[4]) * num_band_prod);
 
-  num_g_pos = set_g_pos(g_pos,
-                        fc3_normal_squared,
-                        g_zero,
-                        num_band0,
-                        num_band);
+  for (i = 0; i < num_band_prod; i++) {
+    fc3_normal_squared[i] = 0;
+  }
+
+  num_g_pos = ise_set_g_pos(g_pos,
+                            num_band0,
+                            num_band,
+                            g_zero);
 
   get_interaction_at_triplet(
     fc3_normal_squared,
@@ -384,7 +378,7 @@ static void get_collision(double *ise,
     0,
     1 - openmp_per_triplets);
 
-  imag_self_energy_at_triplet(
+  ise_imag_self_energy_at_triplet(
     ise,
     num_band0,
     num_band,
@@ -405,34 +399,6 @@ static void get_collision(double *ise,
   fc3_normal_squared = NULL;
   free(g_pos);
   g_pos = NULL;
-}
-
-static int set_g_pos(int (*g_pos)[4],
-                     double * fc3_normal_squared,
-                     const char *g_zero,
-                     const int num_band0,
-                     const int num_band)
-{
-  int j, k, l, num_g_pos, jkl;
-
-  num_g_pos = 0;
-  jkl = 0;
-  for (j = 0; j < num_band0; j++) {
-    for (k = 0; k < num_band; k++) {
-      for (l = 0; l < num_band; l++) {
-        if (!g_zero[jkl]) {
-          g_pos[num_g_pos][0] = j;
-          g_pos[num_g_pos][1] = k;
-          g_pos[num_g_pos][2] = l;
-          g_pos[num_g_pos][3] = jkl;
-          num_g_pos++;
-        }
-        fc3_normal_squared[jkl] = 0;
-        jkl++;
-      }
-    }
-  }
-  return num_g_pos;
 }
 
 static void finalize_ise(double *imag_self_energy,

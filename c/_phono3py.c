@@ -640,15 +640,15 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
   grid_point_triplets = (int*)PyArray_DATA(grid_point_triplets_py);
   triplet_weights = (int*)PyArray_DATA(triplet_weights_py);
 
-  get_imag_self_energy_at_bands_with_g(gamma,
-                                       fc3_normal_squared,
-                                       frequencies,
-                                       grid_point_triplets,
-                                       triplet_weights,
-                                       g,
-                                       g_zero,
-                                       temperature,
-                                       cutoff_frequency);
+  ise_get_imag_self_energy_at_bands_with_g(gamma,
+                                           fc3_normal_squared,
+                                           frequencies,
+                                           grid_point_triplets,
+                                           triplet_weights,
+                                           g,
+                                           g_zero,
+                                           temperature,
+                                           cutoff_frequency);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;
@@ -709,18 +709,18 @@ py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args)
   triplet_weights = (int*)PyArray_DATA(triplet_weights_py);
   grid_address = (int*)PyArray_DATA(grid_address_py);
 
-  get_detailed_imag_self_energy_at_bands_with_g(gamma_detail,
-                                                gamma_N,
-                                                gamma_U,
-                                                fc3_normal_squared,
-                                                frequencies,
-                                                grid_point_triplets,
-                                                triplet_weights,
-                                                grid_address,
-                                                g,
-                                                g_zero,
-                                                temperature,
-                                                cutoff_frequency);
+  ise_get_detailed_imag_self_energy_at_bands_with_g(gamma_detail,
+                                                    gamma_N,
+                                                    gamma_U,
+                                                    fc3_normal_squared,
+                                                    frequencies,
+                                                    grid_point_triplets,
+                                                    triplet_weights,
+                                                    grid_address,
+                                                    g,
+                                                    g_zero,
+                                                    temperature,
+                                                    cutoff_frequency);
 
   free(fc3_normal_squared);
 
