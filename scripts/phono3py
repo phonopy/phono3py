@@ -442,11 +442,14 @@ if log_level:
 if args.write_grid_points:
     write_grid_points(primitive,
                       mesh,
-                      mesh_divs,
-                      coarse_mesh_shifts,
-                      settings.get_is_kappa_star(),
-                      symprec,
-                      log_level)
+                      mesh_divs=mesh_divs,
+                      band_indices=band_indices,
+                      sigmas=sigmas,
+                      temperatures=temperatures,
+                      coarse_mesh_shifts=coarse_mesh_shifts,
+                      is_kappa_star=settings.get_is_kappa_star(),
+                      write_collision=settings.get_write_collision(),
+                      symprec=symprec)
 
     if log_level:
         print_end()
@@ -462,8 +465,7 @@ if args.show_num_triplets:
                       grid_points,
                       coarse_mesh_shifts,
                       settings.get_is_kappa_star(),
-                      symprec,
-                      log_level)
+                      symprec)
 
     if log_level:
         print_end()
