@@ -461,11 +461,12 @@ if args.write_grid_points:
 if args.show_num_triplets:
     show_num_triplets(primitive,
                       mesh,
-                      mesh_divs,
-                      grid_points,
-                      coarse_mesh_shifts,
-                      settings.get_is_kappa_star(),
-                      symprec)
+                      mesh_divs=mesh_divs,
+                      band_indices=band_indices,
+                      grid_points=grid_points,
+                      coarse_mesh_shifts=coarse_mesh_shifts,
+                      is_kappa_star=settings.get_is_kappa_star(),
+                      symprec=symprec)
 
     if log_level:
         print_end()

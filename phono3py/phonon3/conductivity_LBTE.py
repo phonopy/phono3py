@@ -12,7 +12,8 @@ from phono3py.file_IO import (write_kappa_to_hdf5,
                               write_collision_to_hdf5,
                               read_collision_from_hdf5,
                               write_collision_eigenvalues_to_hdf5,
-                              write_unitary_matrix_to_hdf5)
+                              write_unitary_matrix_to_hdf5,
+                              write_pp_to_hdf5)
 from phonopy.units import THzToEv, Kb
 
 def get_thermal_conductivity_LBTE(
@@ -31,6 +32,7 @@ def get_thermal_conductivity_LBTE(
         is_full_pp=False,
         pinv_cutoff=1.0e-8,
         pinv_solver=0, # default: dsyev in lapacke
+        write_pp=False,
         write_collision=False,
         read_collision=False,
         write_kappa=False,
@@ -89,6 +91,12 @@ def get_thermal_conductivity_LBTE(
             print("Temperature: " + text)
 
     for i in lbte:
+        if write_pp:
+            _write_pp(lbte,
+                      interaction,
+                      i=i,
+                      filename=output_filename)
+
         if write_collision:
             _write_collision(
                 lbte,
@@ -116,6 +124,26 @@ def get_thermal_conductivity_LBTE(
 
     return lbte
 
+def _write_pp(lbte,
+              pp,
+              i=None,
+              filename=None):
+    grid_points = lbte.get_grid_points()
+    sigmas = lbte.get_sigmas()
+    sigma_cutoff = lbte.get_sigma_cutoff_width()
+    mesh = lbte.get_mesh_numbers()
+
+    write_pp_to_hdf5(mesh,
+                     pp=pp.get_interaction_strength(),
+                     grid_point=grid_points[i],
+                     sigma=sigmas[-1],
+                     sigma_cutoff=sigma_cutoff,
+                     filename=filename)
+
+    if len(sigmas) > 1:
+        print("Multiple smearing parameters were given. The last one in ")
+        print("ph-ph interaction calculations was written in the file.")
+
 def _write_collision(lbte,
                      interaction,
                      i=None,
@@ -130,8 +158,6 @@ def _write_collision(lbte,
     gamma_isotope = lbte.get_gamma_isotope()
     collision_matrix = lbte.get_collision_matrix()
     mesh = lbte.get_mesh_numbers()
-
-    print(collision_matrix.shape)
 
     if i is not None:
         gp = grid_points[i]
@@ -847,6 +873,7 @@ class Conductivity_LBTE(Conductivity):
                 if self._log_level:
                     print("Calculating ph-ph interaction...")
                 self._collision.run_interaction(is_full_pp=self._is_full_pp)
+
             if self._is_full_pp and j == 0:
                 self._averaged_pp_interaction[i] = (
                     self._pp.get_averaged_interaction())

@@ -777,7 +777,7 @@ def write_kappa_to_hdf5(temperature,
                 text += "were written into "
                 if band_index is None:
                     text += "\n"
-            text += "\"%s\"" % ("kappa" + suffix + ".hdf5")
+            text += "\"%s\"." % full_filename
             print(text)
 
         return full_filename
@@ -885,7 +885,7 @@ def read_collision_from_hdf5(mesh,
             else:
                 text += "\n"
                 text += "were read from "
-            text += "%s." % full_filename
+            text += "\"%s\"." % full_filename
             print(text)
 
         return collision_matrix, gamma, temperatures
@@ -893,9 +893,8 @@ def read_collision_from_hdf5(mesh,
     return None
 
 def write_pp_to_hdf5(mesh,
-                     indices=None,
+                     pp=None,
                      grid_point=None,
-                     band_index=None,
                      sigma=None,
                      sigma_cutoff=None,
                      filename=None,
@@ -908,9 +907,32 @@ def write_pp_to_hdf5(mesh,
     full_filename = "pp" + suffix + ".hdf5"
 
     with h5py.File(full_filename, 'w') as w:
-        w.create_dataset('pp', data=amplitude)
-        if triplet is not None:
+        if pp is not None:
             w.create_dataset('pp', data=pp)
+
+        if verbose:
+            text = ""
+            text += "Ph-ph interaction strength "
+            if grid_point is not None:
+                text += "at gp-%d " % grid_point
+            if sigma is not None:
+                if grid_point is not None:
+                    text += "and "
+                else:
+                    text += "at "
+                text += "sigma %s" % sigma
+                if sigma_cutoff is None:
+                    text += "\n"
+                else:
+                    text += "(%4.2f SD)\n" % sigma_cutoff
+                text += "were written into "
+            else:
+                text += "were written into "
+                text += "\n"
+            text += "\"%s\"." % full_filename
+            print(text)
+
+
         return full_filename
 
 def write_gamma_detail_to_hdf5(temperature,
