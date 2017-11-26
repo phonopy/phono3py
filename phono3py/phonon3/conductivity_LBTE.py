@@ -13,7 +13,7 @@ from phono3py.file_IO import (write_kappa_to_hdf5,
                               read_collision_from_hdf5,
                               write_collision_eigenvalues_to_hdf5,
                               write_unitary_matrix_to_hdf5,
-                              write_pp_to_hdf5)
+                              write_pp_to_hdf5, read_pp_from_hdf5)
 from phonopy.units import THzToEv, Kb
 
 def get_thermal_conductivity_LBTE(
@@ -32,10 +32,11 @@ def get_thermal_conductivity_LBTE(
         is_full_pp=False,
         pinv_cutoff=1.0e-8,
         pinv_solver=0, # default: dsyev in lapacke
-        write_pp=False,
         write_collision=False,
         read_collision=False,
         write_kappa=False,
+        write_pp=False,
+        read_pp=False,
         input_filename=None,
         output_filename=None,
         log_level=0):
@@ -67,6 +68,8 @@ def get_thermal_conductivity_LBTE(
         is_kappa_star=is_kappa_star,
         gv_delta_q=gv_delta_q,
         is_full_pp=is_full_pp,
+        read_pp=read_pp,
+        pp_filename=input_filename,
         pinv_cutoff=pinv_cutoff,
         pinv_solver=pinv_solver,
         log_level=log_level)
@@ -105,6 +108,8 @@ def get_thermal_conductivity_LBTE(
                 is_reducible_collision_matrix=is_reducible_collision_matrix,
                 is_one_gp_colmat=(grid_points is not None),
                 filename=output_filename)
+
+        lbte.delete_gp_collision_and_pp()
 
     if (not read_collision and all_bands_exist(interaction)
         or (read_collision and read_from == "grid_points")):
@@ -601,6 +606,8 @@ class Conductivity_LBTE(Conductivity):
                  is_kappa_star=True,
                  gv_delta_q=None, # finite difference for group veolocity
                  is_full_pp=False,
+                 read_pp=False,
+                 pp_filename=None,
                  pinv_cutoff=1.0e-8,
                  pinv_solver=0,
                  log_level=0):
@@ -669,6 +676,8 @@ class Conductivity_LBTE(Conductivity):
         if not self._is_kappa_star:
             self._is_reducible_collision_matrix = True
         self._collision_matrix = None
+        self._read_pp = read_pp
+        self._pp_filename = pp_filename
         self._pinv_cutoff = pinv_cutoff
         self._pinv_solver = pinv_solver
 
@@ -708,6 +717,10 @@ class Conductivity_LBTE(Conductivity):
 
     def get_mode_kappa_RTA(self):
         return self._mode_kappa_RTA
+
+    def delete_gp_collision_and_pp(self):
+        self._collision.delete_integration_weights()
+        self._pp.delete_interaction_strength()
 
     def _run_at_grid_point(self):
         i = self._grid_point_count
@@ -866,7 +879,15 @@ class Conductivity_LBTE(Conductivity):
             self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
             self._collision.set_integration_weights()
 
-            if j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
+            if self._read_pp:
+                pp = read_pp_from_hdf5(self._mesh,
+                                       grid_point=self._grid_points[i],
+                                       sigma=sigma,
+                                       sigma_cutoff=self._sigma_cutoff,
+                                       filename=self._pp_filename,
+                                       verbose=(self._log_level > 0))
+                self._pp.set_interaction_strength(pp)
+            elif j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
                 if self._log_level:
                     print("Existing ph-ph interaction is used.")
             else:
@@ -892,9 +913,6 @@ class Conductivity_LBTE(Conductivity):
                     self._collision.get_imag_self_energy())
                 self._collision_matrix[j, k, i_data] = (
                     self._collision.get_collision_matrix())
-
-        self._collision.delete_integration_weights()
-        self._pp.delete_interaction_strength()
 
     def _set_kappa_at_sigmas(self):
         num_band = self._primitive.get_number_of_atoms() * 3

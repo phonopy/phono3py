@@ -102,6 +102,9 @@ class Interaction(object):
     def get_interaction_strength(self):
         return self._interaction_strength
 
+    def set_interaction_strength(self, pp):
+        self._interaction_strength = pp
+
     def get_mesh_numbers(self):
         return self._mesh
 

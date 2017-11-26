@@ -115,6 +115,7 @@ def get_parser():
                         read_fc2=False,
                         read_fc3=False,
                         read_gamma=False,
+                        read_pp=False,
                         scattering_event_class=None,
                         show_num_triplets=False,
                         sigma=None,
@@ -130,11 +131,11 @@ def get_parser():
                         use_alm=False,
                         use_ave_pp=False,
                         verbose=False,
-                        write_amplitude=False,
                         write_collision=False,
                         write_gamma_detail=False,
                         write_gamma=False,
                         write_phonon=False,
+                        write_pp=False,
                         write_grid_points=False)
     parser.add_argument(
         "--abinit", dest="abinit_mode", action="store_true",
@@ -145,6 +146,9 @@ def get_parser():
     parser.add_argument(
         "--amplitude", dest="displacement_distance", type=float,
         help="Distance of displacements")
+    parser.add_argument(
+        "--ave-pp", dest="use_ave_pp", action="store_true",
+        help="Use averaged ph-ph interaction")
     parser.add_argument(
         "--band", dest="band_paths",
         help="Band structure paths calculated for Gruneisen parameter")
@@ -349,9 +353,6 @@ def get_parser():
     #     "--read_amplitude", dest="read_amplitude", action="store_true",
     #     help="Read phonon-phonon interaction amplitudes")
     parser.add_argument(
-        "--ave-pp", dest="use_ave_pp", action="store_true",
-        help="Use averaged ph-ph interaction")
-    parser.add_argument(
         "--read-collision", dest="read_collision",
         help="Read collision matrix and Gammas from files")
     parser.add_argument(
@@ -361,6 +362,9 @@ def get_parser():
         "--read-phonon", dest="read_phonon", action="store_true",
         help="Read phonons from files")
     parser.add_argument(
+        "--read-pp", dest="read_pp", action="store_true",
+        help="Read phonon-phonon interaction strength")
+    parser.add_argument(
         "--reducible-colmat", dest="is_reducible_collision_matrix",
         action="store_true",
         help="Solve reducible collision matrix")
@@ -369,17 +373,17 @@ def get_parser():
         help=("Scattering event class 1 or 2 to draw imaginary part of self "
               "energy"))
     parser.add_argument(
-        "--stp", "--show-num-triplets", dest="show_num_triplets",
-        action="store_true",
-        help=("Show reduced number of triplets to be calculated at "
-              "specified grid points"))
-    parser.add_argument(
         "--sigma", dest="sigma",
         help=("A sigma value or multiple sigma values (separated by space) for "
               "smearing function"))
     parser.add_argument(
         "--sigma-cutoff", dest="sigma_cutoff_width", type=float,
         help="Cutoff width of smearing function (ratio to sigma value)")
+    parser.add_argument(
+        "--stp", "--show-num-triplets", dest="show_num_triplets",
+        action="store_true",
+        help=("Show reduced number of triplets to be calculated at "
+              "specified grid points"))
     parser.add_argument(
         "--sym-fc2", dest="is_symmetrize_fc2", action="store_true",
         help="Symmetrize fc2 by index exchange")
@@ -425,9 +429,6 @@ def get_parser():
         action="store_true",
         help=("Write grid address of irreducible grid points for specified "
               "mesh numbers to ir_grid_address.yaml"))
-    # parser.add_argument("--write_amplitude", dest="write_amplitude",
-    #                   action="store_true",
-    #                   help="Write phonon-phonon interaction amplitudes")
     parser.add_argument(
         "--write-collision", dest="write_collision", action="store_true",
         help="Write collision matrix and Gammas to files")
@@ -441,6 +442,9 @@ def get_parser():
     parser.add_argument(
         "--write-phonon", dest="write_phonon", action="store_true",
         help="Write all phonons on grid points to files")
+    parser.add_argument(
+        "--write-pp", dest="write_pp", action="store_true",
+        help="Write phonon-phonon interaction strength")
     parser.add_argument(
         "conf_file", nargs='*',
         help="Phono3py configure file")
