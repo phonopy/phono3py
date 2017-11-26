@@ -801,14 +801,15 @@ def read_gamma_from_hdf5(mesh,
                                   sigma=sigma,
                                   sigma_cutoff=sigma_cutoff,
                                   filename=filename)
-    if not os.path.exists("kappa" + suffix + ".hdf5"):
+    full_filename = "kappa" + suffix + ".hdf5"
+    if not os.path.exists(full_filename):
         if verbose:
-            print("%s not found." % ("kappa" + suffix + ".hdf5"))
+            print("%s not found." % full_filename)
         return None
 
     read_data = {}
 
-    with h5py.File("kappa" + suffix + ".hdf5", 'r') as f:
+    with h5py.File(full_filename, 'r') as f:
         read_data['gamma'] = f['gamma'][:]
         for key in ('gamma_isotope',
                     'ave_pp',
@@ -820,7 +821,7 @@ def read_gamma_from_hdf5(mesh,
                 else:
                     read_data[key] = f[key][()]
         if verbose:
-            print("Read data from %s." % ("kappa" + suffix + ".hdf5"))
+            print("Read data from %s." % full_filename)
 
     return read_data
 
@@ -934,6 +935,33 @@ def write_pp_to_hdf5(mesh,
 
 
         return full_filename
+
+def read_pp_from_hdf5(mesh,
+                      grid_point=None,
+                      sigma=None,
+                      sigma_cutoff=None,
+                      filename=None,
+                      verbose=True):
+    suffix = _get_filename_suffix(mesh,
+                                  grid_point=grid_point,
+                                  sigma=sigma,
+                                  sigma_cutoff=sigma_cutoff,
+                                  filename=filename)
+    full_filename = "pp" + suffix + ".hdf5"
+    if not os.path.exists(full_filename):
+        if verbose:
+            print("%s not found." % full_filename)
+        return None
+
+    with h5py.File(full_filename) as f:
+        pp = np.array(f['pp'], dtype='double', order='C')
+        if verbose:
+            print("Ph-ph interaction strength was read from \"%s\"." %
+                  full_filename)
+        return pp
+
+    return None
+
 
 def write_gamma_detail_to_hdf5(temperature,
                                mesh,

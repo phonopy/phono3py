@@ -466,8 +466,8 @@ class Phono3py(object):
             write_gamma_detail=False,
             write_collision=False,
             read_collision=False,
-            write_amplitude=False,
-            read_amplitude=False,
+            write_pp=False,
+            read_pp=False,
             input_filename=None,
             output_filename=None):
         if self._interaction is None:
@@ -491,6 +491,8 @@ class Phono3py(object):
                 write_collision=write_collision,
                 read_collision=read_collision,
                 write_kappa=write_kappa,
+                write_pp=write_pp,
+                read_pp=read_pp,
                 input_filename=input_filename,
                 output_filename=output_filename,
                 log_level=self._log_level)

@@ -732,6 +732,8 @@ elif run_mode == "conductivity-RTA" or run_mode == "conductivity-LBTE":
         write_gamma_detail=settings.get_write_gamma_detail(),
         write_collision=settings.get_write_collision(),
         read_collision=settings.get_read_collision(),
+        write_pp=settings.get_write_pp(),
+        read_pp=settings.get_read_pp(),
         input_filename=input_filename,
         output_filename=output_filename)
 else:
