@@ -202,8 +202,8 @@ class Interaction(object):
                  stores_triplets_map=stores_triplets_map)
 
         # Special treatment of symmetry is applied when q_direction is used.
-        if (grid_address[grid_point] == 0).all():
-            if self._nac_q_direction is not None:
+        if self._nac_q_direction is not None:
+            if (grid_address[grid_point] == 0).all():
                 self._phonon_done[grid_point] = 0
                 self.set_phonons(np.array([0], dtype='intc'))
                 rotations = []
