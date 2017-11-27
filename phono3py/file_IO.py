@@ -910,7 +910,7 @@ def write_pp_to_hdf5(mesh,
     full_filename = "pp" + suffix + ".hdf5"
 
     x = g_zero.ravel()
-    nonzero_pp = np.array(pp.ravel()[x==1], dtype='double')
+    nonzero_pp = np.array(pp.ravel()[x==0], dtype='double')
     bytelen = len(x) // 8
     remlen = len(x) % 8
     y = x[:bytelen * 8].reshape(-1, 8)
@@ -976,7 +976,7 @@ def read_pp_from_hdf5(mesh,
 
     with h5py.File(full_filename) as f:
         nonzero_pp = f['nonzero_pp'][:]
-        g_zero_orig = f['g_zero'][:]
+        pp_shape = f['pp_shape'][:]
         z = f['g_zero_bits'][:]
         bytelen = np.prod(pp_shape) // 8
         remlen = 0
@@ -1001,15 +1001,19 @@ def read_pp_from_hdf5(mesh,
         count = 0
         pp_ravel = pp.ravel()
         for i, v in enumerate(g_zero.ravel()):
-            if v == 1:
+            if v == 0:
                 pp_ravel[i] = nonzero_pp[count]
                 count += 1
 
+        assert count == len(nonzero_pp)
+
         if check_consistency:
-            assert (g_zero == f['pp_shape'][:]).all()
+            if verbose:
+                print("Checking consistency of ph-ph interanction strength.")
+            assert (g_zero == f['g_zero'][:]).all()
             assert np.allclose(pp, f['pp'][:])
 
-        return pp
+        return pp, g_zero
 
     return None
 

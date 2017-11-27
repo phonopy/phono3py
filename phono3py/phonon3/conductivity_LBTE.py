@@ -868,7 +868,7 @@ class Conductivity_LBTE(Conductivity):
             if self._log_level:
                 text = "Calculating collision matrix with "
                 if sigma is None:
-                    text += "tetrahedron method"
+                    text += "tetrahedron method."
                 else:
                     text += "sigma=%s" % sigma
                     if self._sigma_cutoff is None:
@@ -881,13 +881,13 @@ class Conductivity_LBTE(Conductivity):
             self._collision.set_integration_weights()
 
             if self._read_pp:
-                pp = read_pp_from_hdf5(self._mesh,
-                                       grid_point=self._grid_points[i],
-                                       sigma=sigma,
-                                       sigma_cutoff=self._sigma_cutoff,
-                                       filename=self._pp_filename,
-                                       verbose=(self._log_level > 0))
-                self._pp.set_interaction_strength(pp)
+                pp, g_zero = read_pp_from_hdf5(self._mesh,
+                                               grid_point=self._grid_points[i],
+                                               sigma=sigma,
+                                               sigma_cutoff=self._sigma_cutoff,
+                                               filename=self._pp_filename,
+                                               verbose=(self._log_level > 0))
+                self._collision.set_interaction_strength(pp, g_zero=g_zero)
             elif j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
                 if self._log_level:
                     print("Existing ph-ph interaction is used.")

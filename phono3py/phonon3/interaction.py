@@ -103,8 +103,9 @@ class Interaction(object):
     def get_interaction_strength(self):
         return self._interaction_strength
 
-    def set_interaction_strength(self, pp):
-        self._interaction_strength = pp
+    def set_interaction_strength(self, pp_strength, g_zero=None):
+        self._interaction_strength = pp_strength
+        self._g_zero = g_zero
 
     def get_zero_value_positions(self):
         return self._g_zero
