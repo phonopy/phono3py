@@ -35,7 +35,6 @@ class Phono3pySettings(Settings):
         self._mass_variances = None
         self._max_freepath = None
         self._mesh_divisors = None
-        self._read_amplitude = False
         self._read_collision = None
         self._read_fc2 = False
         self._read_fc3 = False
@@ -255,12 +254,6 @@ class Phono3pySettings(Settings):
 
     def get_pp_conversion_factor(self):
         return self._pp_conversion_factor
-
-    def set_read_amplitude(self, read_amplitude):
-        self._read_amplitude = read_amplitude
-
-    def get_read_amplitude(self):
-        return self._read_amplitude
 
     def set_read_collision(self, read_collision):
         self._read_collision = read_collision
