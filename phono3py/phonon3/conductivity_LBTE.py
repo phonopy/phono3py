@@ -37,6 +37,7 @@ def get_thermal_conductivity_LBTE(
         write_kappa=False,
         write_pp=False,
         read_pp=False,
+        write_LBTE_solution=False,
         input_filename=None,
         output_filename=None,
         log_level=0):
@@ -111,10 +112,13 @@ def get_thermal_conductivity_LBTE(
 
         lbte.delete_gp_collision_and_pp()
 
-    if (not read_collision and all_bands_exist(interaction)
-        or read_collision and read_from == "grid_points"
-        or not read_pp):
-        if grid_points is None:
+    # Write full collision matrix
+    if write_LBTE_solution:
+        if ((read_collision and
+             all_bands_exist(interaction) and
+             read_from == "grid_points" and
+             grid_points is None) or
+            (not read_collision)):
             _write_collision(lbte, interaction, filename=output_filename)
 
     if write_kappa:
@@ -124,6 +128,7 @@ def get_thermal_conductivity_LBTE(
                 lbte,
                 interaction.get_primitive().get_volume(),
                 is_reducible_collision_matrix=is_reducible_collision_matrix,
+                write_LBTE_solution=write_LBTE_solution,
                 pinv_solver=pinv_solver,
                 filename=output_filename,
                 log_level=log_level)
@@ -227,6 +232,7 @@ def _write_collision(lbte,
 def _write_kappa(lbte,
                  volume,
                  is_reducible_collision_matrix=False,
+                 write_LBTE_solution=False,
                  pinv_solver=None,
                  filename=None,
                  log_level=0):
@@ -298,7 +304,7 @@ def _write_kappa(lbte,
                             filename=filename,
                             verbose=log_level)
 
-        if coleigs is not None:
+        if coleigs is not None and write_LBTE_solution:
             write_collision_eigenvalues_to_hdf5(temperatures,
                                                 mesh,
                                                 coleigs[i],
@@ -882,13 +888,20 @@ class Conductivity_LBTE(Conductivity):
             self._collision.set_integration_weights()
 
             if self._read_pp:
-                pp, g_zero = read_pp_from_hdf5(self._mesh,
-                                               grid_point=self._grid_points[i],
-                                               sigma=sigma,
-                                               sigma_cutoff=self._sigma_cutoff,
-                                               filename=self._pp_filename,
-                                               verbose=(self._log_level > 0))
-                self._collision.set_interaction_strength(pp, g_zero=g_zero)
+                pp, _g_zero = read_pp_from_hdf5(self._mesh,
+                                                grid_point=self._grid_points[i],
+                                                sigma=sigma,
+                                                sigma_cutoff=self._sigma_cutoff,
+                                                filename=self._pp_filename,
+                                                verbose=(self._log_level > 0))
+                _, g_zero = self._collision.get_integration_weights()
+                if self._log_level:
+                    if len(self._sigmas) > 1:
+                        print("Multiple sigmas or mixing smearing and "
+                              "tetrahedron method is not supported.")
+                if (_g_zero != g_zero).any():
+                    raise ValueError("Inconsistency found in g_zero.")
+                self._collision.set_interaction_strength(pp)
             elif j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
                 if self._log_level:
                     print("Existing ph-ph interaction is used.")

@@ -51,11 +51,12 @@ class Phono3pySettings(Settings):
         self._temperatures = None
         self._use_alm = False
         self._use_ave_pp = False
-        self._write_pp = False
         self._write_collision = False
         self._write_gamma_detail = False
         self._write_gamma = False
         self._write_phonon = False
+        self._write_pp = False
+        self._write_LBTE_solution = False
 
     def set_boundary_mfp(self, boundary_mfp):
         self._boundary_mfp = boundary_mfp
@@ -327,12 +328,6 @@ class Phono3pySettings(Settings):
     def get_use_ave_pp(self):
         return self._use_ave_pp
 
-    def set_write_pp(self, write_pp):
-        self._write_pp = write_pp
-
-    def get_write_pp(self):
-        return self._write_pp
-
     def set_write_collision(self, write_collision):
         self._write_collision = write_collision
 
@@ -356,6 +351,19 @@ class Phono3pySettings(Settings):
 
     def get_write_phonon(self):
         return self._write_phonon
+
+    def set_write_pp(self, write_pp):
+        self._write_pp = write_pp
+
+    def get_write_pp(self):
+        return self._write_pp
+
+    def set_write_LBTE_solution(self, write_LBTE_solution):
+        self._write_LBTE_solution = write_LBTE_solution
+
+    def get_write_LBTE_solution(self):
+        return self._write_LBTE_solution
+
 
 class Phono3pyConfParser(ConfParser):
     def __init__(self, filename=None, args=None):
@@ -551,10 +559,6 @@ class Phono3pyConfParser(ConfParser):
             if self._args.use_ave_pp:
                 self._confs['use_ave_pp'] = '.true.'
 
-        if 'write_pp' in self._args:
-            if self._args.write_pp:
-                self._confs['write_pp'] = '.true.'
-
         if 'write_gamma_detail' in self._args:
             if self._args.write_gamma_detail:
                 self._confs['write_gamma_detail'] = '.true.'
@@ -570,6 +574,14 @@ class Phono3pyConfParser(ConfParser):
         if 'write_phonon' in self._args:
             if self._args.write_phonon:
                 self._confs['write_phonon'] = '.true.'
+
+        if 'write_pp' in self._args:
+            if self._args.write_pp:
+                self._confs['write_pp'] = '.true.'
+
+        if 'write_LBTE_solution' in self._args:
+            if self._args.write_LBTE_solution:
+                self._confs['write_LBTE_solution'] = '.true.'
 
     def _parse_conf(self):
         confs = self._confs
@@ -792,10 +804,6 @@ class Phono3pyConfParser(ConfParser):
                 if confs['use_ave_pp'].lower() == '.true.':
                     self.set_parameter('use_ave_pp', True)
 
-            if conf_key == 'write_pp':
-                if confs['write_pp'].lower() == '.true.':
-                    self.set_parameter('write_pp', True)
-
             if conf_key == 'write_gamma_detail':
                 if confs['write_gamma_detail'].lower() == '.true.':
                     self.set_parameter('write_gamma_detail', True)
@@ -811,6 +819,14 @@ class Phono3pyConfParser(ConfParser):
             if conf_key == 'write_phonon':
                 if confs['write_phonon'].lower() == '.true.':
                     self.set_parameter('write_phonon', True)
+
+            if conf_key == 'write_pp':
+                if confs['write_pp'].lower() == '.true.':
+                    self.set_parameter('write_pp', True)
+
+            if conf_key == 'write_LBTE_solution':
+                if confs['write_LBTE_solution'].lower() == '.true.':
+                    self.set_parameter('write_LBTE_solution', True)
 
     def _set_settings(self):
         ConfParser.set_settings(self)
@@ -1005,10 +1021,6 @@ class Phono3pyConfParser(ConfParser):
         if 'use_ave_pp' in params:
             self._settings.set_use_ave_pp(params['use_ave_pp'])
 
-        # Write phonon-phonon interaction amplitudes to hdf5
-        if 'write_pp' in params:
-            self._settings.set_write_pp(params['write_pp'])
-
         # Write detailed imag-part of self energy to hdf5
         if 'write_gamma_detail' in params:
             self._settings.set_write_gamma_detail(
@@ -1025,3 +1037,12 @@ class Phono3pyConfParser(ConfParser):
         # Write all phonons on grid points to hdf5
         if 'write_phonon' in params:
             self._settings.set_write_phonon(params['write_phonon'])
+
+        # Write phonon-phonon interaction amplitudes to hdf5
+        if 'write_pp' in params:
+            self._settings.set_write_pp(params['write_pp'])
+
+        # Write direct solution of LBTE to hdf5 files
+        if 'write_LBTE_solution' in params:
+            self._settings.set_write_LBTE_solution(
+                params['write_LBTE_solution'])

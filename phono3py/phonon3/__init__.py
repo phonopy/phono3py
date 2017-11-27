@@ -468,6 +468,7 @@ class Phono3py(object):
             read_collision=False,
             write_pp=False,
             read_pp=False,
+            write_LBTE_solution=False,
             input_filename=None,
             output_filename=None):
         if self._interaction is None:
@@ -493,6 +494,7 @@ class Phono3py(object):
                 write_kappa=write_kappa,
                 write_pp=write_pp,
                 read_pp=read_pp,
+                write_LBTE_solution=write_LBTE_solution,
                 input_filename=input_filename,
                 output_filename=output_filename,
                 log_level=self._log_level)
@@ -668,7 +670,10 @@ class Phono3py(object):
 
         self._supercells_with_displacements = supercells
 
-    def _get_primitive_cell(self, supercell, supercell_matrix, primitive_matrix):
+    def _get_primitive_cell(self,
+                            supercell,
+                            supercell_matrix,
+                            primitive_matrix):
         inv_supercell_matrix = np.linalg.inv(supercell_matrix)
         if primitive_matrix is None:
             t_mat = inv_supercell_matrix

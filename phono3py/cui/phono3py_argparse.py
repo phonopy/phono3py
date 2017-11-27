@@ -134,9 +134,10 @@ def get_parser():
                         write_collision=False,
                         write_gamma_detail=False,
                         write_gamma=False,
+                        write_grid_points=False,
                         write_phonon=False,
                         write_pp=False,
-                        write_grid_points=False)
+                        write_LBTE_solution=False)
     parser.add_argument(
         "--abinit", dest="abinit_mode", action="store_true",
         help="Invoke Abinit mode")
@@ -445,6 +446,10 @@ def get_parser():
     parser.add_argument(
         "--write-pp", dest="write_pp", action="store_true",
         help="Write phonon-phonon interaction strength")
+    parser.add_argument(
+        "--write-lbte-solution", dest="write_LBTE_solution",
+        action="store_true",
+        help="Write direct solution of LBTE to hdf5 files")
     parser.add_argument(
         "conf_file", nargs='*',
         help="Phono3py configure file")
