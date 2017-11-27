@@ -777,7 +777,7 @@ def write_kappa_to_hdf5(temperature,
                 text += "were written into "
                 if band_index is None:
                     text += "\n"
-            text += "\"%s\"" % ("kappa" + suffix + ".hdf5")
+            text += "\"%s\"." % full_filename
             print(text)
 
         return full_filename
@@ -801,14 +801,15 @@ def read_gamma_from_hdf5(mesh,
                                   sigma=sigma,
                                   sigma_cutoff=sigma_cutoff,
                                   filename=filename)
-    if not os.path.exists("kappa" + suffix + ".hdf5"):
+    full_filename = "kappa" + suffix + ".hdf5"
+    if not os.path.exists(full_filename):
         if verbose:
-            print("%s not found." % ("kappa" + suffix + ".hdf5"))
+            print("%s not found." % full_filename)
         return None
 
     read_data = {}
 
-    with h5py.File("kappa" + suffix + ".hdf5", 'r') as f:
+    with h5py.File(full_filename, 'r') as f:
         read_data['gamma'] = f['gamma'][:]
         for key in ('gamma_isotope',
                     'ave_pp',
@@ -820,7 +821,7 @@ def read_gamma_from_hdf5(mesh,
                 else:
                     read_data[key] = f[key][()]
         if verbose:
-            print("Read data from %s." % ("kappa" + suffix + ".hdf5"))
+            print("Read data from %s." % full_filename)
 
     return read_data
 
@@ -885,64 +886,183 @@ def read_collision_from_hdf5(mesh,
             else:
                 text += "\n"
                 text += "were read from "
-            text += "%s." % full_filename
+            text += "\"%s\"." % full_filename
             print(text)
 
         return collision_matrix, gamma, temperatures
 
     return None
 
-def write_amplitude_to_hdf5(amplitude,
-                            mesh,
-                            grid_point,
-                            triplet=None,
-                            weight=None,
-                            frequency=None,
-                            eigenvector=None):
-    suffix = "-m%d%d%d" % tuple(mesh)
-    suffix += ("-g%d" % grid_point)
-    with h5py.File("amplitude" + suffix + ".hdf5", 'w') as w:
-        w.create_dataset('amplitude', data=amplitude)
-        if triplet is not None:
-            w.create_dataset('triplet', data=triplet)
-        if weight is not None:
-            w.create_dataset('weight', data=weight)
-        if frequency is not None:
-            w.create_dataset('frequency', data=frequency)
-        if eigenvector is not None:
-            w.create_dataset('eigenvector', data=eigenvector)
-
-def read_amplitude_from_hdf5(amplitudes_at_q,
-                             mesh,
-                             grid_point):
-    suffix = "-m%d%d%d" % tuple(mesh)
-    suffix += ("-g%d" % grid_point)
-    with h5py.File("amplitude" + suffix + ".hdf5", 'r') as f:
-        amplitudes_at_q[:] = f['amplitudes'][:]
-        return amplitudes_at_q
-    return None
-
-def write_gamma_detail_to_hdf5(detailed_gamma,
-                               temperature,
-                               mesh,
-                               grid_point,
-                               sigma,
-                               triplets,
-                               weights,
-                               frequency_points=None,
-                               filename=None):
+def write_pp_to_hdf5(mesh,
+                     pp=None,
+                     g_zero=None,
+                     grid_point=None,
+                     sigma=None,
+                     sigma_cutoff=None,
+                     filename=None,
+                     verbose=True,
+                     check_consistency=False):
     suffix = _get_filename_suffix(mesh,
                                   grid_point=grid_point,
                                   sigma=sigma,
+                                  sigma_cutoff=sigma_cutoff,
+                                  filename=filename)
+    full_filename = "pp" + suffix + ".hdf5"
+
+    with h5py.File(full_filename, 'w') as w:
+        if pp is not None:
+            if g_zero is None:
+                w.create_dataset('pp', data=pp)
+            else:
+                x = g_zero.ravel()
+                nonzero_pp = np.array(pp.ravel()[x==0], dtype='double')
+                bytelen = len(x) // 8
+                remlen = len(x) % 8
+                y = x[:bytelen * 8].reshape(-1, 8)
+                z = np.packbits(y)
+                if remlen != 0:
+                    z_rem = np.packbits(x[bytelen * 8:])
+
+                w.create_dataset('nonzero_pp', data=nonzero_pp)
+                w.create_dataset('pp_shape', data=pp.shape)
+                w.create_dataset('g_zero_bits', data=z)
+                if remlen != 0:
+                    w.create_dataset('g_zero_bits_reminder', data=z_rem)
+
+        if check_consistency and g_zero is not None:
+            w.create_dataset('pp', data=pp)
+            w.create_dataset('g_zero', data=g_zero)
+
+        if verbose:
+            text = ""
+            text += "Ph-ph interaction strength "
+            if grid_point is not None:
+                text += "at gp-%d " % grid_point
+            if sigma is not None:
+                if grid_point is not None:
+                    text += "and "
+                else:
+                    text += "at "
+                text += "sigma %s" % sigma
+                if sigma_cutoff is None:
+                    text += "\n"
+                else:
+                    text += "(%4.2f SD)\n" % sigma_cutoff
+                text += "were written into "
+            else:
+                text += "were written into "
+                text += "\n"
+            text += "\"%s\"." % full_filename
+            print(text)
+
+
+        return full_filename
+
+def read_pp_from_hdf5(mesh,
+                      grid_point=None,
+                      sigma=None,
+                      sigma_cutoff=None,
+                      filename=None,
+                      verbose=True,
+                      check_consistency=False):
+    suffix = _get_filename_suffix(mesh,
+                                  grid_point=grid_point,
+                                  sigma=sigma,
+                                  sigma_cutoff=sigma_cutoff,
+                                  filename=filename)
+    full_filename = "pp" + suffix + ".hdf5"
+    if not os.path.exists(full_filename):
+        if verbose:
+            print("%s not found." % full_filename)
+        return None
+
+    with h5py.File(full_filename, 'r') as f:
+        if 'nonzero_pp' in f:
+            nonzero_pp = f['nonzero_pp'][:]
+            pp_shape = f['pp_shape'][:]
+            z = f['g_zero_bits'][:]
+            bytelen = np.prod(pp_shape) // 8
+            remlen = 0
+            if 'g_zero_bits_reminder' in f:
+                z_rem = f['g_zero_bits_reminder'][:]
+                remlen = np.prod(pp_shape) - len(z)
+
+            bits = np.unpackbits(z)
+            if not bits.flags['C_CONTIGUOUS']:
+                bits = np.array(bits, dtype='uint8')
+
+            g_zero = np.zeros(pp_shape, dtype='byte', order='C')
+            b = g_zero.ravel()
+            b[:(bytelen * 8)] = bits
+            if remlen != 0:
+                b[-remlen:] = np.unpackbits(z_rem)[:remlen]
+
+            pp = np.zeros(pp_shape, dtype='double', order='C')
+            count = 0
+            pp_ravel = pp.ravel()
+            pp_ravel[g_zero.ravel()==0] = nonzero_pp
+
+            # check_consistency==True in write_pp_to_hdf5 required.
+            if check_consistency and g_zero is not None:
+                if verbose:
+                    print("Checking consistency of ph-ph interanction "
+                          "strength.")
+                assert (g_zero == f['g_zero'][:]).all()
+                assert np.allclose(pp, f['pp'][:])
+        else:
+            pp = f['pp'][:]
+            g_zero = None
+
+        if verbose:
+            print("Ph-ph interaction strength was read from \"%s\"." %
+                  full_filename)
+
+
+        return pp, g_zero
+
+    return None
+
+
+def write_gamma_detail_to_hdf5(temperature,
+                               mesh,
+                               gamma_detail=None,
+                               grid_point=None,
+                               triplet=None,
+                               weight=None,
+                               frequency_points=None,
+                               band_index=None,
+                               sigma=None,
+                               sigma_cutoff=None,
+                               filename=None):
+    if band_index is None:
+        band_indices = None
+    else:
+        band_indices = [band_index]
+    suffix = _get_filename_suffix(mesh,
+                                  grid_point=grid_point,
+                                  band_indices=band_indices,
+                                  sigma=sigma,
+                                  sigma_cutoff=sigma_cutoff,
                                   filename=filename)
     full_filename = "gamma_detail" + suffix + ".hdf5"
 
     with h5py.File(full_filename, 'w') as w:
-        w.create_dataset('gamma_detail', data=detailed_gamma)
         w.create_dataset('temperature', data=temperature)
         w.create_dataset('mesh', data=mesh)
-        w.create_dataset('triplet', data=triplets)
-        w.create_dataset('weight', data=weights)
+        if gamma_detail is not None:
+            w.create_dataset('gamma_detail', data=gamma_detail)
+        if triplet is not None:
+            w.create_dataset('triplet', data=triplet)
+        if weight is not None:
+            w.create_dataset('weight', data=weight)
+        if grid_point is not None:
+            w.create_dataset('grid_point', data=grid_point)
+        if band_index is not None:
+            w.create_dataset('band_index', data=(band_index + 1))
+        if sigma is not None:
+            w.create_dataset('sigma', data=sigma)
+        if sigma_cutoff is not None:
+            w.create_dataset('sigma_cutoff_width', data=sigma_cutoff)
         if frequency_points is not None:
             w.create_dataset('frequency_point', data=frequency_points)
         return full_filename
@@ -951,7 +1071,7 @@ def write_phonon_to_hdf5(frequency,
                          eigenvector,
                          grid_address,
                          mesh,
-                          filename=None):
+                         filename=None):
     suffix = _get_filename_suffix(mesh, filename=filename)
     full_filename = "phonon" + suffix + ".hdf5"
 

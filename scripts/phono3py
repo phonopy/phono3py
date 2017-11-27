@@ -442,11 +442,14 @@ if log_level:
 if args.write_grid_points:
     write_grid_points(primitive,
                       mesh,
-                      mesh_divs,
-                      coarse_mesh_shifts,
-                      settings.get_is_kappa_star(),
-                      symprec,
-                      log_level)
+                      mesh_divs=mesh_divs,
+                      band_indices=band_indices,
+                      sigmas=sigmas,
+                      temperatures=temperatures,
+                      coarse_mesh_shifts=coarse_mesh_shifts,
+                      is_kappa_star=settings.get_is_kappa_star(),
+                      write_collision=settings.get_write_collision(),
+                      symprec=symprec)
 
     if log_level:
         print_end()
@@ -458,12 +461,12 @@ if args.write_grid_points:
 if args.show_num_triplets:
     show_num_triplets(primitive,
                       mesh,
-                      mesh_divs,
-                      grid_points,
-                      coarse_mesh_shifts,
-                      settings.get_is_kappa_star(),
-                      symprec,
-                      log_level)
+                      mesh_divs=mesh_divs,
+                      band_indices=band_indices,
+                      grid_points=grid_points,
+                      coarse_mesh_shifts=coarse_mesh_shifts,
+                      is_kappa_star=settings.get_is_kappa_star(),
+                      symprec=symprec)
 
     if log_level:
         print_end()
@@ -729,6 +732,9 @@ elif run_mode == "conductivity-RTA" or run_mode == "conductivity-LBTE":
         write_gamma_detail=settings.get_write_gamma_detail(),
         write_collision=settings.get_write_collision(),
         read_collision=settings.get_read_collision(),
+        write_pp=settings.get_write_pp(),
+        read_pp=settings.get_read_pp(),
+        write_LBTE_solution=settings.get_write_LBTE_solution(),
         input_filename=input_filename,
         output_filename=output_filename)
 else:

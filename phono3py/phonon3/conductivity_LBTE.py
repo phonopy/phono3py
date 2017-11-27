@@ -12,7 +12,8 @@ from phono3py.file_IO import (write_kappa_to_hdf5,
                               write_collision_to_hdf5,
                               read_collision_from_hdf5,
                               write_collision_eigenvalues_to_hdf5,
-                              write_unitary_matrix_to_hdf5)
+                              write_unitary_matrix_to_hdf5,
+                              write_pp_to_hdf5, read_pp_from_hdf5)
 from phonopy.units import THzToEv, Kb
 
 def get_thermal_conductivity_LBTE(
@@ -34,6 +35,9 @@ def get_thermal_conductivity_LBTE(
         write_collision=False,
         read_collision=False,
         write_kappa=False,
+        write_pp=False,
+        read_pp=False,
+        write_LBTE_solution=False,
         input_filename=None,
         output_filename=None,
         log_level=0):
@@ -65,6 +69,8 @@ def get_thermal_conductivity_LBTE(
         is_kappa_star=is_kappa_star,
         gv_delta_q=gv_delta_q,
         is_full_pp=is_full_pp,
+        read_pp=read_pp,
+        pp_filename=input_filename,
         pinv_cutoff=pinv_cutoff,
         pinv_solver=pinv_solver,
         log_level=log_level)
@@ -89,6 +95,12 @@ def get_thermal_conductivity_LBTE(
             print("Temperature: " + text)
 
     for i in lbte:
+        if write_pp:
+            _write_pp(lbte,
+                      interaction,
+                      i=i,
+                      filename=output_filename)
+
         if write_collision:
             _write_collision(
                 lbte,
@@ -98,9 +110,15 @@ def get_thermal_conductivity_LBTE(
                 is_one_gp_colmat=(grid_points is not None),
                 filename=output_filename)
 
-    if (not read_collision and all_bands_exist(interaction)
-        or (read_collision and read_from == "grid_points")):
-        if grid_points is None:
+        lbte.delete_gp_collision_and_pp()
+
+    # Write full collision matrix
+    if write_LBTE_solution:
+        if ((read_collision and
+             all_bands_exist(interaction) and
+             read_from == "grid_points" and
+             grid_points is None) or
+            (not read_collision)):
             _write_collision(lbte, interaction, filename=output_filename)
 
     if write_kappa:
@@ -110,11 +128,33 @@ def get_thermal_conductivity_LBTE(
                 lbte,
                 interaction.get_primitive().get_volume(),
                 is_reducible_collision_matrix=is_reducible_collision_matrix,
+                write_LBTE_solution=write_LBTE_solution,
                 pinv_solver=pinv_solver,
                 filename=output_filename,
                 log_level=log_level)
 
     return lbte
+
+def _write_pp(lbte,
+              pp,
+              i=None,
+              filename=None):
+    grid_points = lbte.get_grid_points()
+    sigmas = lbte.get_sigmas()
+    sigma_cutoff = lbte.get_sigma_cutoff_width()
+    mesh = lbte.get_mesh_numbers()
+
+    write_pp_to_hdf5(mesh,
+                     pp=pp.get_interaction_strength(),
+                     g_zero=pp.get_zero_value_positions(),
+                     grid_point=grid_points[i],
+                     sigma=sigmas[-1],
+                     sigma_cutoff=sigma_cutoff,
+                     filename=filename)
+
+    if len(sigmas) > 1:
+        print("Multiple smearing parameters were given. The last one in ")
+        print("ph-ph interaction calculations was written in the file.")
 
 def _write_collision(lbte,
                      interaction,
@@ -130,8 +170,6 @@ def _write_collision(lbte,
     gamma_isotope = lbte.get_gamma_isotope()
     collision_matrix = lbte.get_collision_matrix()
     mesh = lbte.get_mesh_numbers()
-
-    print(collision_matrix.shape)
 
     if i is not None:
         gp = grid_points[i]
@@ -194,6 +232,7 @@ def _write_collision(lbte,
 def _write_kappa(lbte,
                  volume,
                  is_reducible_collision_matrix=False,
+                 write_LBTE_solution=False,
                  pinv_solver=None,
                  filename=None,
                  log_level=0):
@@ -265,7 +304,7 @@ def _write_kappa(lbte,
                             filename=filename,
                             verbose=log_level)
 
-        if coleigs is not None:
+        if coleigs is not None and write_LBTE_solution:
             write_collision_eigenvalues_to_hdf5(temperatures,
                                                 mesh,
                                                 coleigs[i],
@@ -575,6 +614,8 @@ class Conductivity_LBTE(Conductivity):
                  is_kappa_star=True,
                  gv_delta_q=None, # finite difference for group veolocity
                  is_full_pp=False,
+                 read_pp=False,
+                 pp_filename=None,
                  pinv_cutoff=1.0e-8,
                  pinv_solver=0,
                  log_level=0):
@@ -643,6 +684,8 @@ class Conductivity_LBTE(Conductivity):
         if not self._is_kappa_star:
             self._is_reducible_collision_matrix = True
         self._collision_matrix = None
+        self._read_pp = read_pp
+        self._pp_filename = pp_filename
         self._pinv_cutoff = pinv_cutoff
         self._pinv_solver = pinv_solver
 
@@ -682,6 +725,10 @@ class Conductivity_LBTE(Conductivity):
 
     def get_mode_kappa_RTA(self):
         return self._mode_kappa_RTA
+
+    def delete_gp_collision_and_pp(self):
+        self._collision.delete_integration_weights()
+        self._pp.delete_interaction_strength()
 
     def _run_at_grid_point(self):
         i = self._grid_point_count
@@ -828,7 +875,7 @@ class Conductivity_LBTE(Conductivity):
             if self._log_level:
                 text = "Calculating collision matrix with "
                 if sigma is None:
-                    text += "tetrahedron method"
+                    text += "tetrahedron method."
                 else:
                     text += "sigma=%s" % sigma
                     if self._sigma_cutoff is None:
@@ -840,13 +887,29 @@ class Conductivity_LBTE(Conductivity):
             self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
             self._collision.set_integration_weights()
 
-            if j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
+            if self._read_pp:
+                pp, _g_zero = read_pp_from_hdf5(self._mesh,
+                                                grid_point=self._grid_points[i],
+                                                sigma=sigma,
+                                                sigma_cutoff=self._sigma_cutoff,
+                                                filename=self._pp_filename,
+                                                verbose=(self._log_level > 0))
+                _, g_zero = self._collision.get_integration_weights()
+                if self._log_level:
+                    if len(self._sigmas) > 1:
+                        print("Multiple sigmas or mixing smearing and "
+                              "tetrahedron method is not supported.")
+                if (_g_zero != g_zero).any():
+                    raise ValueError("Inconsistency found in g_zero.")
+                self._collision.set_interaction_strength(pp)
+            elif j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
                 if self._log_level:
                     print("Existing ph-ph interaction is used.")
             else:
                 if self._log_level:
                     print("Calculating ph-ph interaction...")
                 self._collision.run_interaction(is_full_pp=self._is_full_pp)
+
             if self._is_full_pp and j == 0:
                 self._averaged_pp_interaction[i] = (
                     self._pp.get_averaged_interaction())
@@ -865,9 +928,6 @@ class Conductivity_LBTE(Conductivity):
                     self._collision.get_imag_self_energy())
                 self._collision_matrix[j, k, i_data] = (
                     self._collision.get_collision_matrix())
-
-        self._collision.delete_integration_weights()
-        self._pp.delete_interaction_strength()
 
     def _set_kappa_at_sigmas(self):
         num_band = self._primitive.get_number_of_atoms() * 3

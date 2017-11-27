@@ -63,6 +63,7 @@ class Interaction(object):
         self._grid_address = None
         self._bz_map = None
         self._interaction_strength = None
+        self._g_zero = None
 
         self._phonon_done = None
         self._frequencies = None
@@ -101,6 +102,13 @@ class Interaction(object):
 
     def get_interaction_strength(self):
         return self._interaction_strength
+
+    def set_interaction_strength(self, pp_strength, g_zero=None):
+        self._interaction_strength = pp_strength
+        self._g_zero = g_zero
+
+    def get_zero_value_positions(self):
+        return self._g_zero
 
     def get_mesh_numbers(self):
         return self._mesh
@@ -304,6 +312,7 @@ class Interaction(object):
 
     def delete_interaction_strength(self):
         self._interaction_strength = None
+        self._g_zero = None
 
     def _set_band_indices(self, band_indices):
         num_band = self._primitive.get_number_of_atoms() * 3
@@ -340,6 +349,7 @@ class Interaction(object):
                             self._symmetrize_fc3_q,
                             self._cutoff_frequency)
         self._interaction_strength *= self._unit_conversion
+        self._g_zero = g_zero
 
     def _set_phonon_c(self, grid_points):
         set_phonon_c(self._dm,

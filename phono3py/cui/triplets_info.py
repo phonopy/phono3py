@@ -41,11 +41,14 @@ from phono3py.phonon3.triplets import (get_coarse_ir_grid_points,
 
 def write_grid_points(primitive,
                       mesh,
-                      mesh_divs,
-                      coarse_mesh_shifts,
-                      is_kappa_star,
-                      symprec,
-                      log_level):
+                      mesh_divs=None,
+                      band_indices=None,
+                      sigmas=None,
+                      temperatures=None,
+                      coarse_mesh_shifts=None,
+                      is_kappa_star=True,
+                      write_collision=False,
+                      symprec=1e-5):
     print("-" * 76)
     if mesh is None:
         print("To write grid points, mesh numbers have to be specified.")
@@ -73,14 +76,32 @@ def write_grid_points(primitive,
         print("Ir-grid points are written into \"ir_grid_points.yaml\".")
         print("Grid addresses are written into \"%s\"." % gadrs_hdf5_fname)
 
+        if write_collision and temperatures is not None:
+            num_temp = len(temperatures)
+            num_sigma = len(sigmas)
+            num_ir_grid_points = len(ir_grid_points)
+            num_band = primitive.get_number_of_atoms() * 3
+            if band_indices is None:
+                num_band0 = num_band
+            else:
+                num_band0 = len(band_indices)
+            size = (num_sigma * num_temp *
+                    num_band0 * 3 * num_ir_grid_points * num_band * 3) * 8 / 1e9
+            print("Memory size needed for collision matrix at each grid point: "
+                  "%.2f Gb" % size)
+            size = (num_ir_grid_points * num_band * 3) ** 2 * 8 / 1e9
+            print("Memory size needed for one full collision matrix: %.2f Gb"
+                  % size)
+
+
 def show_num_triplets(primitive,
                       mesh,
-                      mesh_divs,
-                      grid_points,
-                      coarse_mesh_shifts,
-                      is_kappa_star,
-                      symprec,
-                      log_level):
+                      mesh_divs=None,
+                      band_indices=None,
+                      grid_points=None,
+                      coarse_mesh_shifts=None,
+                      is_kappa_star=True,
+                      symprec=1e-5):
     print("-" * 76)
 
     ir_grid_points, _, grid_address, _ = get_coarse_ir_grid_points(
@@ -96,12 +117,19 @@ def show_num_triplets(primitive,
     else:
         _grid_points = ir_grid_points
 
-    print("Grid point        q-point        No. of triplets")
+    num_band = primitive.get_number_of_atoms() * 3
+    if band_indices is None:
+        num_band0 = num_band
+    else:
+        num_band0 = len(band_indices)
+
+    print("Grid point        q-point        No. of triplets     Memory size")
     for gp in _grid_points:
         num_triplets = get_number_of_triplets(primitive,
                                               mesh,
                                               gp,
                                               symprec=symprec)
         q = grid_address[gp] / np.array(mesh, dtype='double')
-        print("  %5d     (%5.2f %5.2f %5.2f)  %8d" %
-              (gp, q[0], q[1], q[2], num_triplets))
+        size = num_triplets * num_band0 * num_band ** 2 * 8 / 1e6
+        print("  %5d     (%5.2f %5.2f %5.2f)  %8d              %d Mb" %
+              (gp, q[0], q[1], q[2], num_triplets, size))
