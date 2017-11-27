@@ -131,13 +131,13 @@ def get_imag_self_energy(interaction,
 
             if write_detail:
                 filename = write_gamma_detail_to_hdf5(
-                    detailed_gamma,
                     temperatures,
                     mesh,
-                    gp,
-                    sigma,
-                    triplets,
-                    weights,
+                    gamma_detail=detailed_gamma,
+                    grid_point=gp,
+                    triplet=triplets,
+                    weight=weights,
+                    sigma=sigma,
                     frequency_points=frequency_points_at_sigma)
 
                 if log_level:
@@ -234,13 +234,13 @@ def get_linewidth(interaction,
 
             if write_detail:
                 filename = write_gamma_detail_to_hdf5(
-                    detailed_gamma,
                     temperatures,
                     mesh,
-                    gp,
-                    sigma,
-                    triplets,
-                    weights)
+                    gamma_detail=detailed_gamma,
+                    grid_point=gp,
+                    triplet=triplets,
+                    weight=weights,
+                    sigma=sigma)
 
                 if log_level:
                     print("Contribution of each triplet to imaginary part of "
@@ -489,6 +489,10 @@ class ImagSelfEnergy(object):
 
         for i, v_ave in enumerate(ave_pp):
             self._pp_strength[:, i, :, :] = v_ave / num_grid
+
+    def set_interaction_strength(self, pp_strength):
+        self._pp_strength = pp_strength
+        self._pp.set_interaction_strength(pp_strength, g_zero=self._g_zero)
 
     def delete_integration_weights(self):
         self._g = None

@@ -41,6 +41,7 @@ class Phono3pySettings(Settings):
         self._read_fc3 = False
         self._read_gamma = False
         self._read_phonon = False
+        self._read_pp = False
         self._phonon_supercell_matrix = None
         self._pinv_cutoff = 1.0e-8
         self._pinv_solver = 0
@@ -50,11 +51,12 @@ class Phono3pySettings(Settings):
         self._temperatures = None
         self._use_alm = False
         self._use_ave_pp = False
-        self._write_amplitude = False
         self._write_collision = False
         self._write_gamma_detail = False
         self._write_gamma = False
         self._write_phonon = False
+        self._write_pp = False
+        self._write_LBTE_solution = False
 
     def set_boundary_mfp(self, boundary_mfp):
         self._boundary_mfp = boundary_mfp
@@ -290,6 +292,12 @@ class Phono3pySettings(Settings):
     def get_read_phonon(self):
         return self._read_phonon
 
+    def set_read_pp(self, read_pp):
+        self._read_pp = read_pp
+
+    def get_read_pp(self):
+        return self._read_pp
+
     def set_scattering_event_class(self, scattering_event_class):
         self._scattering_event_class = scattering_event_class
 
@@ -320,12 +328,6 @@ class Phono3pySettings(Settings):
     def get_use_ave_pp(self):
         return self._use_ave_pp
 
-    def set_write_amplitude(self, write_amplitude):
-        self._write_amplitude = write_amplitude
-
-    def get_write_amplitude(self):
-        return self._write_amplitude
-
     def set_write_collision(self, write_collision):
         self._write_collision = write_collision
 
@@ -349,6 +351,19 @@ class Phono3pySettings(Settings):
 
     def get_write_phonon(self):
         return self._write_phonon
+
+    def set_write_pp(self, write_pp):
+        self._write_pp = write_pp
+
+    def get_write_pp(self):
+        return self._write_pp
+
+    def set_write_LBTE_solution(self, write_LBTE_solution):
+        self._write_LBTE_solution = write_LBTE_solution
+
+    def get_write_LBTE_solution(self):
+        return self._write_LBTE_solution
+
 
 class Phono3pyConfParser(ConfParser):
     def __init__(self, filename=None, args=None):
@@ -514,6 +529,10 @@ class Phono3pyConfParser(ConfParser):
             if self._args.read_phonon:
                 self._confs['read_phonon'] = '.true.'
 
+        if 'read_pp' in self._args:
+            if self._args.read_pp:
+                self._confs['read_pp'] = '.true.'
+
         if 'read_collision' in self._args:
             if self._args.read_collision is not None:
                 self._confs['read_collision'] = self._args.read_collision
@@ -540,10 +559,6 @@ class Phono3pyConfParser(ConfParser):
             if self._args.use_ave_pp:
                 self._confs['use_ave_pp'] = '.true.'
 
-        if 'write_amplitude' in self._args:
-            if self._args.write_amplitude:
-                self._confs['write_amplitude'] = '.true.'
-
         if 'write_gamma_detail' in self._args:
             if self._args.write_gamma_detail:
                 self._confs['write_gamma_detail'] = '.true.'
@@ -559,6 +574,14 @@ class Phono3pyConfParser(ConfParser):
         if 'write_phonon' in self._args:
             if self._args.write_phonon:
                 self._confs['write_phonon'] = '.true.'
+
+        if 'write_pp' in self._args:
+            if self._args.write_pp:
+                self._confs['write_pp'] = '.true.'
+
+        if 'write_LBTE_solution' in self._args:
+            if self._args.write_LBTE_solution:
+                self._confs['write_LBTE_solution'] = '.true.'
 
     def _parse_conf(self):
         confs = self._confs
@@ -754,6 +777,10 @@ class Phono3pyConfParser(ConfParser):
                 if confs['read_phonon'].lower() == '.true.':
                     self.set_parameter('read_phonon', True)
 
+            if conf_key == 'read_pp':
+                if confs['read_pp'].lower() == '.true.':
+                    self.set_parameter('read_pp', True)
+
             if conf_key == 'scattering_event_class':
                 self.set_parameter('scattering_event_class',
                                    confs['scattering_event_class'])
@@ -777,10 +804,6 @@ class Phono3pyConfParser(ConfParser):
                 if confs['use_ave_pp'].lower() == '.true.':
                     self.set_parameter('use_ave_pp', True)
 
-            if conf_key == 'write_amplitude':
-                if confs['write_amplitude'].lower() == '.true.':
-                    self.set_parameter('write_amplitude', True)
-
             if conf_key == 'write_gamma_detail':
                 if confs['write_gamma_detail'].lower() == '.true.':
                     self.set_parameter('write_gamma_detail', True)
@@ -796,6 +819,14 @@ class Phono3pyConfParser(ConfParser):
             if conf_key == 'write_phonon':
                 if confs['write_phonon'].lower() == '.true.':
                     self.set_parameter('write_phonon', True)
+
+            if conf_key == 'write_pp':
+                if confs['write_pp'].lower() == '.true.':
+                    self.set_parameter('write_pp', True)
+
+            if conf_key == 'write_LBTE_solution':
+                if confs['write_LBTE_solution'].lower() == '.true.':
+                    self.set_parameter('write_LBTE_solution', True)
 
     def _set_settings(self):
         ConfParser.set_settings(self)
@@ -961,6 +992,10 @@ class Phono3pyConfParser(ConfParser):
         if 'read_phonon' in params:
             self._settings.set_read_phonon(params['read_phonon'])
 
+        # Read ph-ph interaction strength from hdf5
+        if 'read_pp' in params:
+            self._settings.set_read_pp(params['read_pp'])
+
         # Sum partial kappa at q-stars
         if 'is_kappa_star' in params:
             self._settings.set_is_kappa_star(params['is_kappa_star'])
@@ -986,10 +1021,6 @@ class Phono3pyConfParser(ConfParser):
         if 'use_ave_pp' in params:
             self._settings.set_use_ave_pp(params['use_ave_pp'])
 
-        # Write phonon-phonon interaction amplitudes to hdf5
-        if 'write_amplitude' in params:
-            self._settings.set_write_amplitude(params['write_amplitude'])
-
         # Write detailed imag-part of self energy to hdf5
         if 'write_gamma_detail' in params:
             self._settings.set_write_gamma_detail(
@@ -1006,3 +1037,12 @@ class Phono3pyConfParser(ConfParser):
         # Write all phonons on grid points to hdf5
         if 'write_phonon' in params:
             self._settings.set_write_phonon(params['write_phonon'])
+
+        # Write phonon-phonon interaction amplitudes to hdf5
+        if 'write_pp' in params:
+            self._settings.set_write_pp(params['write_pp'])
+
+        # Write direct solution of LBTE to hdf5 files
+        if 'write_LBTE_solution' in params:
+            self._settings.set_write_LBTE_solution(
+                params['write_LBTE_solution'])
