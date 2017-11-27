@@ -140,6 +140,7 @@ def _write_pp(lbte,
 
     write_pp_to_hdf5(mesh,
                      pp=pp.get_interaction_strength(),
+                     g_zero=pp.get_zero_value_positions(),
                      grid_point=grid_points[i],
                      sigma=sigmas[-1],
                      sigma_cutoff=sigma_cutoff,

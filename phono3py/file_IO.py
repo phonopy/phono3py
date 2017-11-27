@@ -895,11 +895,13 @@ def read_collision_from_hdf5(mesh,
 
 def write_pp_to_hdf5(mesh,
                      pp=None,
+                     g_zero=None,
                      grid_point=None,
                      sigma=None,
                      sigma_cutoff=None,
                      filename=None,
-                     verbose=True):
+                     verbose=True,
+                     check_consistency=False):
     suffix = _get_filename_suffix(mesh,
                                   grid_point=grid_point,
                                   sigma=sigma,
@@ -907,9 +909,27 @@ def write_pp_to_hdf5(mesh,
                                   filename=filename)
     full_filename = "pp" + suffix + ".hdf5"
 
+    x = g_zero.ravel()
+    nonzero_pp = np.array(pp.ravel()[x==1], dtype='double')
+    bytelen = len(x) // 8
+    remlen = len(x) % 8
+    y = x[:bytelen * 8].reshape(-1, 8)
+    z = np.packbits(y)
+    if remlen != 0:
+        z_rem = np.packbits(x[bytelen * 8:])
+
     with h5py.File(full_filename, 'w') as w:
         if pp is not None:
+            w.create_dataset('nonzero_pp', data=nonzero_pp)
+            w.create_dataset('pp_shape', data=pp.shape)
+        if g_zero is not None:
+            w.create_dataset('g_zero_bits', data=z)
+            if remlen != 0:
+                w.create_dataset('g_zero_bits_reminder', data=z_rem)
+
+        if check_consistency:
             w.create_dataset('pp', data=pp)
+            w.create_dataset('g_zero', data=g_zero)
 
         if verbose:
             text = ""
@@ -941,7 +961,8 @@ def read_pp_from_hdf5(mesh,
                       sigma=None,
                       sigma_cutoff=None,
                       filename=None,
-                      verbose=True):
+                      verbose=True,
+                      check_consistency=False):
     suffix = _get_filename_suffix(mesh,
                                   grid_point=grid_point,
                                   sigma=sigma,
@@ -954,10 +975,40 @@ def read_pp_from_hdf5(mesh,
         return None
 
     with h5py.File(full_filename) as f:
-        pp = np.array(f['pp'], dtype='double', order='C')
+        nonzero_pp = f['nonzero_pp'][:]
+        g_zero_orig = f['g_zero'][:]
+        z = f['g_zero_bits'][:]
+        bytelen = np.prod(pp_shape) // 8
+        remlen = 0
+        if 'g_zero_bits_reminder' in f:
+            z_rem = f['g_zero_bits_reminder'][:]
+            remlen = np.prod(pp_shape) - len(z)
+
         if verbose:
             print("Ph-ph interaction strength was read from \"%s\"." %
                   full_filename)
+
+        bits = np.unpackbits(z)
+        if not bits.flags['C_CONTIGUOUS']:
+            bits = np.array(bits, dtype='uint8')
+        g_zero = np.zeros(pp_shape, dtype='byte', order='C')
+        b = g_zero.ravel()
+        b[:(bytelen * 8)] = bits
+        if remlen != 0:
+            b[-remlen:] = np.unpackbits(z_rem)[:remlen]
+
+        pp = np.zeros(pp_shape, dtype='double', order='C')
+        count = 0
+        pp_ravel = pp.ravel()
+        for i, v in enumerate(g_zero.ravel()):
+            if v == 1:
+                pp_ravel[i] = nonzero_pp[count]
+                count += 1
+
+        if check_consistency:
+            assert (g_zero == f['pp_shape'][:]).all()
+            assert np.allclose(pp, f['pp'][:])
+
         return pp
 
     return None
