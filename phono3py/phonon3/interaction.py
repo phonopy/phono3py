@@ -203,9 +203,9 @@ class Interaction(object):
 
         # Special treatment of symmetry is applied when q_direction is used.
         if (grid_address[grid_point] == 0).all():
-            self._phonon_done[grid_point] = 0
-            self.set_phonons(np.array([0], dtype='intc'))
             if self._nac_q_direction is not None:
+                self._phonon_done[grid_point] = 0
+                self.set_phonons(np.array([0], dtype='intc'))
                 rotations = []
                 for r in self._symmetry.get_pointgroup_operations():
                     dq = self._nac_q_direction
