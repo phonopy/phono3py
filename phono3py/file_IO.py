@@ -909,25 +909,27 @@ def write_pp_to_hdf5(mesh,
                                   filename=filename)
     full_filename = "pp" + suffix + ".hdf5"
 
-    x = g_zero.ravel()
-    nonzero_pp = np.array(pp.ravel()[x==0], dtype='double')
-    bytelen = len(x) // 8
-    remlen = len(x) % 8
-    y = x[:bytelen * 8].reshape(-1, 8)
-    z = np.packbits(y)
-    if remlen != 0:
-        z_rem = np.packbits(x[bytelen * 8:])
-
     with h5py.File(full_filename, 'w') as w:
         if pp is not None:
-            w.create_dataset('nonzero_pp', data=nonzero_pp)
-            w.create_dataset('pp_shape', data=pp.shape)
-        if g_zero is not None:
-            w.create_dataset('g_zero_bits', data=z)
-            if remlen != 0:
-                w.create_dataset('g_zero_bits_reminder', data=z_rem)
+            if g_zero is None:
+                w.create_dataset('pp', data=pp)
+            else:
+                x = g_zero.ravel()
+                nonzero_pp = np.array(pp.ravel()[x==0], dtype='double')
+                bytelen = len(x) // 8
+                remlen = len(x) % 8
+                y = x[:bytelen * 8].reshape(-1, 8)
+                z = np.packbits(y)
+                if remlen != 0:
+                    z_rem = np.packbits(x[bytelen * 8:])
 
-        if check_consistency:
+                w.create_dataset('nonzero_pp', data=nonzero_pp)
+                w.create_dataset('pp_shape', data=pp.shape)
+                w.create_dataset('g_zero_bits', data=z)
+                if remlen != 0:
+                    w.create_dataset('g_zero_bits_reminder', data=z_rem)
+
+        if check_consistency and g_zero is not None:
             w.create_dataset('pp', data=pp)
             w.create_dataset('g_zero', data=g_zero)
 
@@ -974,44 +976,47 @@ def read_pp_from_hdf5(mesh,
             print("%s not found." % full_filename)
         return None
 
-    with h5py.File(full_filename) as f:
-        nonzero_pp = f['nonzero_pp'][:]
-        pp_shape = f['pp_shape'][:]
-        z = f['g_zero_bits'][:]
-        bytelen = np.prod(pp_shape) // 8
-        remlen = 0
-        if 'g_zero_bits_reminder' in f:
-            z_rem = f['g_zero_bits_reminder'][:]
-            remlen = np.prod(pp_shape) - len(z)
+    with h5py.File(full_filename, 'r') as f:
+        if 'nonzero_pp' in f:
+            nonzero_pp = f['nonzero_pp'][:]
+            pp_shape = f['pp_shape'][:]
+            z = f['g_zero_bits'][:]
+            bytelen = np.prod(pp_shape) // 8
+            remlen = 0
+            if 'g_zero_bits_reminder' in f:
+                z_rem = f['g_zero_bits_reminder'][:]
+                remlen = np.prod(pp_shape) - len(z)
+
+            bits = np.unpackbits(z)
+            if not bits.flags['C_CONTIGUOUS']:
+                bits = np.array(bits, dtype='uint8')
+
+            g_zero = np.zeros(pp_shape, dtype='byte', order='C')
+            b = g_zero.ravel()
+            b[:(bytelen * 8)] = bits
+            if remlen != 0:
+                b[-remlen:] = np.unpackbits(z_rem)[:remlen]
+
+            pp = np.zeros(pp_shape, dtype='double', order='C')
+            count = 0
+            pp_ravel = pp.ravel()
+            pp_ravel[g_zero.ravel()==0] = nonzero_pp
+
+            # check_consistency==True in write_pp_to_hdf5 required.
+            if check_consistency and g_zero is not None:
+                if verbose:
+                    print("Checking consistency of ph-ph interanction "
+                          "strength.")
+                assert (g_zero == f['g_zero'][:]).all()
+                assert np.allclose(pp, f['pp'][:])
+        else:
+            pp = f['pp'][:]
+            g_zero = None
 
         if verbose:
             print("Ph-ph interaction strength was read from \"%s\"." %
                   full_filename)
 
-        bits = np.unpackbits(z)
-        if not bits.flags['C_CONTIGUOUS']:
-            bits = np.array(bits, dtype='uint8')
-        g_zero = np.zeros(pp_shape, dtype='byte', order='C')
-        b = g_zero.ravel()
-        b[:(bytelen * 8)] = bits
-        if remlen != 0:
-            b[-remlen:] = np.unpackbits(z_rem)[:remlen]
-
-        pp = np.zeros(pp_shape, dtype='double', order='C')
-        count = 0
-        pp_ravel = pp.ravel()
-        for i, v in enumerate(g_zero.ravel()):
-            if v == 0:
-                pp_ravel[i] = nonzero_pp[count]
-                count += 1
-
-        assert count == len(nonzero_pp)
-
-        if check_consistency:
-            if verbose:
-                print("Checking consistency of ph-ph interanction strength.")
-            assert (g_zero == f['g_zero'][:]).all()
-            assert np.allclose(pp, f['pp'][:])
 
         return pp, g_zero
 

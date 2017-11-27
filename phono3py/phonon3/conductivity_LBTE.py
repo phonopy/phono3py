@@ -112,7 +112,8 @@ def get_thermal_conductivity_LBTE(
         lbte.delete_gp_collision_and_pp()
 
     if (not read_collision and all_bands_exist(interaction)
-        or (read_collision and read_from == "grid_points")):
+        or read_collision and read_from == "grid_points"
+        or not read_pp):
         if grid_points is None:
             _write_collision(lbte, interaction, filename=output_filename)
 
