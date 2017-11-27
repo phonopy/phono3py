@@ -390,11 +390,11 @@ if __name__ == '__main__':
     if len(args.filenames) > 1:
         cell, _ = read_crystal_structure(args.filenames[0],
                                          interface_mode=interface_mode)
-        f = h5py.File(args.filenames[1])
+        f = h5py.File(args.filenames[1], 'r')
     else:
         cell, _ = read_crystal_structure(args.cell_filename,
                                          interface_mode=interface_mode)
-        f = h5py.File(args.filenames[0])
+        f = h5py.File(args.filenames[0], 'r')
 
     primitive_matrix = np.reshape(
         [fracval(x) for x in args.primitive_matrix.split()], (3, 3))
