@@ -720,6 +720,36 @@ be equivalent between them.
    format. This file can be huge and usually it is not recommended to
    write it out.
 
+.. _write_phonon_option:
+
+``--write-phonon``
+~~~~~~~~~~~~~~~~~~~
+
+Phonon frequencies, eigenvectors, and grid point addresses are stored
+in ``phonon-mxxx.hdf5`` file. After writing phonons, phono3py stops
+without going to calculation.
+
+::
+
+   % phono3py --fc2 --dim="2 2  2" --mesh="16 16 16" -c POSCAR-unitcell \
+     --nac --write-phoonon
+
+.. _read_phonon_option:
+
+``--read-phonon``
+~~~~~~~~~~~~~~~~~~
+
+Phonon frequencies, eigenvectors, and grid point addresses are read
+from ``phonon-mxxx.hdf5`` file and the calculation is continued using
+these phonon values. This is useful when we want to use fixed phonon
+eigenvectors that can be different for degenerate bands when using
+different eigenvalue solvers or different CPU architectures.
+
+::
+
+   % phono3py --fc2 --fc3 --dim="2 2  2" --mesh="16 16 16" -c POSCAR-unitcell \
+     --nac --read-phoonon --br
+
 .. _ise_option:
 
 ``--ise``: Imaginary part of self energy

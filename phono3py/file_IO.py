@@ -1067,6 +1067,8 @@ def write_gamma_detail_to_hdf5(temperature,
             w.create_dataset('frequency_point', data=frequency_points)
         return full_filename
 
+    return None
+
 def write_phonon_to_hdf5(frequency,
                          eigenvector,
                          grid_address,
@@ -1082,30 +1084,34 @@ def write_phonon_to_hdf5(frequency,
         w.create_dataset('eigenvector', data=eigenvector)
         return full_filename
 
+    return None
+
 def read_phonon_from_hdf5(mesh,
                           filename=None,
                           verbose=True):
     suffix = _get_filename_suffix(mesh, filename=filename)
-    hdf5_filename = "phonon" + suffix + ".hdf5"
-    if not os.path.exists(hdf5_filename):
+    full_filename = "phonon" + suffix + ".hdf5"
+    if not os.path.exists(full_filename):
         if verbose:
-            print("%s not found." % hdf5_filename)
-        return (None, None, None, None, hdf5_filename)
+            print("%s not found." % full_filename)
+        return (None, None, None, None, full_filename)
 
-    with h5py.File(hdf5_filename, 'r') as f:
+    with h5py.File(full_filename, 'r') as f:
         frequencies = np.array(f['frequency'][:], dtype='double', order='C')
         itemsize = frequencies.itemsize
         eigenvectors = np.array(f['eigenvector'][:],
                                 dtype=("c%d" % (itemsize * 2)), order='C')
         mesh_in_file = np.array(f['mesh'][:], dtype='intc')
         grid_address = np.array(f['grid_address'][:], dtype='intc', order='C')
-        return (frequencies,
-                eigenvectors,
-                mesh_in_file,
-                grid_address,
-                hdf5_filename)
 
-    return (None, None, None, None, hdf5_filename)
+        assert (mesh_in_file == mesh).all(), "Mesh numbers are inconsistent."
+
+        if verbose:
+            print("Phonons are read from \"%s\"." % full_filename)
+
+        return frequencies, eigenvectors, grid_address
+
+    return None
 
 def write_ir_grid_points(mesh,
                          mesh_divs,
