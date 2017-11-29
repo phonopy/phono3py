@@ -3,6 +3,12 @@
 Change Log
 ==========
 
+Nov-29-2017
+-------------------
+
+- Documentation of ``--write-phonon`` and ``--read-phonon`` options is
+  written.
+
 Nov-22-2017: version 1.12.5
 -----------------------------
 

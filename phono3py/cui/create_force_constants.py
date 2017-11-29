@@ -80,7 +80,8 @@ def create_phono3py_force_constants(phono3py,
         (settings.get_is_isotope() and
          not (settings.get_is_bterta() or settings.get_is_lbte())) or
         settings.get_read_gamma() or
-        settings.get_read_amplitude() or
+        settings.get_read_pp() or
+        settings.get_write_phonon() or
         settings.get_constant_averaged_pp_interaction() is not None):
         pass
     else:
@@ -118,7 +119,7 @@ def create_phono3py_force_constants(phono3py,
                     sys.exit(1)
         if log_level:
             show_drift_fc3(phono3py.get_fc3())
-    
+
     # fc2
     if read_fc2:
         if input_filename is None:
@@ -135,12 +136,12 @@ def create_phono3py_force_constants(phono3py,
             if log_level:
                 print_error()
             sys.exit(1)
-        
+
         phono3py.set_fc2(phonon_fc2)
     else:
         if log_level:
             print("Solving fc2")
-            
+
         if phonon_supercell_matrix is None:
             if phono3py.get_fc2() is None:
                 if not _create_phono3py_fc2(phono3py,
@@ -176,8 +177,8 @@ def create_phono3py_force_constants(phono3py,
         if log_level:
             print("Writing fc2 to %s" % filename)
         write_fc2_to_hdf5(phono3py.get_fc2(), filename=filename)
-    
-    if log_level:    
+
+    if log_level:
         show_drift_force_constants(phono3py.get_fc2(), name='fc2')
 
 def _create_phono3py_fc3(phono3py,
