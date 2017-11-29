@@ -247,18 +247,21 @@
 <li><p class="first">Bug fix of RTA thermal conductivity. This bug exists from version
 1.10.11.18 (git e40cd059). This bug exhibits when all the following
 conditions are met:</p>
-<ul class="simple">
-<li>RTA thermal conductivity calculation</li>
-<li>Tetrahedron method for Brillouin zone integration</li>
-<li>Number of triplets is smaller than number of bands at each grid point</li>
-<li>Without using <code class="docutils literal"><span class="pre">--full-pp</span></code></li>
-</ul>
-<p>A race condition of OpenMP multithreading is the source of this
-bug. Therefore, the same calculation comes up with the different
-number in every run time, i.e., it behaves like randomly.</p>
+<ol class="arabic simple">
+<li>RTA thermal conductivity calculation.</li>
+<li>Tetrahedron method for Brillouin zone integration is used.</li>
+<li>Number of triplets is smaller than number of bands at each grid point.</li>
+<li>Without using <code class="docutils literal"><span class="pre">--full-pp</span></code>.</li>
+</ol>
+<p>(3) happens when the primitive cell is relatively large. Number of
+triplets can be shown using <code class="docutils literal"><span class="pre">--stp</span></code> option. A race condition of
+OpenMP multithreading is the source of the bug. Therefore, if it
+occurs, the same calculation comes up with the different thermal
+conductivity value in every run time, for whcih it behaves like
+randomly.</p>
 </li>
-<li><p class="first">RTA thermal conductivity with smearing method (<code class="docutils literal"><span class="pre">--sigma</span></code>)
-is made to run smaller memory consumption as similar as tetrahedron
+<li><p class="first">RTA thermal conductivity with smearing method (<code class="docutils literal"><span class="pre">--sigma</span></code>) is made
+to run with smaller memory consumption as similar as tetrahedron
 method (<code class="docutils literal"><span class="pre">--thm</span></code>).</p>
 </li>
 </ul>

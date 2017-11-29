@@ -10,17 +10,21 @@ Nov-22-2017: version 1.12.5
   1.10.11.18 (git e40cd059). This bug exhibits when all the following
   conditions are met:
 
-  - RTA thermal conductivity calculation
-  - Tetrahedron method for Brillouin zone integration
-  - Number of triplets is smaller than number of bands at each grid point
-  - Without using ``--full-pp``
+  1. RTA thermal conductivity calculation.
+  2. Tetrahedron method for Brillouin zone integration is used.
+  3. Number of triplets is smaller than number of bands at each grid point.
+  4. Without using ``--full-pp``.
 
-  A race condition of OpenMP multithreading is the source of this
-  bug. Therefore, the same calculation comes up with the different
-  number in every run time, i.e., it behaves like randomly.
 
-- RTA thermal conductivity with smearing method (``--sigma``)
-  is made to run smaller memory consumption as similar as tetrahedron
+  (3) happens when the primitive cell is relatively large. Number of
+  triplets can be shown using ``--stp`` option. A race condition of
+  OpenMP multithreading is the source of the bug. Therefore, if it
+  occurs, the same calculation comes up with the different thermal
+  conductivity value in every run time, for whcih it behaves like
+  randomly.
+
+- RTA thermal conductivity with smearing method (``--sigma``) is made
+  to run with smaller memory consumption as similar as tetrahedron
   method (``--thm``).
 
 Nov-17-2017: version 1.12.3
