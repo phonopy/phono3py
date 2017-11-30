@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import h5py
+import numpy as np
+import argparse
+
+epsilon = 1.0e-8
+
+def get_options():
+    # Arg-parser
+    parser = argparse.ArgumentParser(
+        description="Plot collision matrix eigenvalues")
+    parser.add_argument(
+        '--temperature', type=float, default=300.0, dest='temperature',
+        help='Temperature to output data at')
+    parser.add_argument('filenames', nargs='*')
+    args = parser.parse_args()
+    return args
+
+def main(args):
+    filename = args.filenames[0]
+    if os.path.isfile(filename):
+        with h5py.File(filename, 'r') as f:
+            coleigs = f['collision_eigenvalues'][:]
+            temperatures = f['temperature'][:]
+    else:
+        print("File %s doens't exist." % filename)
+        sys.exit(1)
+
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    ax.xaxis.set_ticks_position('bottom')
+    ax.yaxis.set_ticks_position('left')
+    ax.xaxis.set_tick_params(which='both', direction='in')
+    ax.yaxis.set_tick_params(which='both', direction='in')
+
+    if len(temperatures) > 29:
+        t_index = 30
+    else:
+        t_index = 0
+    for i, t in enumerate(temperatures):
+        if np.abs(t - args.temperature) < epsilon:
+            t_index = i
+            break
+
+    coleigs_p = coleigs[t_index].copy()
+    coleigs_n = coleigs[t_index].copy()
+    coleigs_p[coleigs_p < 0] = np.nan
+    coleigs_n[coleigs_n >= 0] = np.nan
+
+    plt.semilogy(coleigs_p, 'b.', markersize=1)
+    plt.semilogy(-coleigs_n, 'r.', markersize=1)
+    plt.xlim(xmin=0, xmax=len(coleigs_p))
+    plt.show()
+
+if __name__ == "__main__":
+    main(get_options())

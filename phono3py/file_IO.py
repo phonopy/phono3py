@@ -1094,7 +1094,7 @@ def read_phonon_from_hdf5(mesh,
     if not os.path.exists(full_filename):
         if verbose:
             print("%s not found." % full_filename)
-        return (None, None, None, None, full_filename)
+        return None
 
     with h5py.File(full_filename, 'r') as f:
         frequencies = np.array(f['frequency'][:], dtype='double', order='C')

@@ -134,10 +134,10 @@ void phonopy_pinv_mt(double *data_out,
   }
 }
 
-int phonopy_pinv_dsyev(double *data,
-                       double *eigvals,
-                       const int size,
-                       const int algorithm)
+int phonopy_dsyev(double *data,
+                  double *eigvals,
+                  const int size,
+                  const int algorithm)
 {
   lapack_int info;
 
@@ -163,27 +163,6 @@ int phonopy_pinv_dsyev(double *data,
                           eigvals);
     break;
   }
-
-
-/*   info = LAPACKE_dsyev(LAPACK_COL_MAJOR, */
-/*                     'V', */
-/*                     'U', */
-/*                     (lapack_int)size, */
-/*                     tmp_data, */
-/*                     (lapack_int)size, */
-/*                     w); */
-
-/* #pragma omp parallel for private(j, k) */
-/*   for (i = 0; i < size; i++) { */
-/*     for (j = 0; j < size; j++) { */
-/*       for (k = 0; k < size; k++) { */
-/*      if (w[k] > cutoff) { */
-/*        data[i * size + j] += */
-/*          tmp_data[k * size + i] / w[k] * tmp_data[k * size + j]; */
-/*      } */
-/*       } */
-/*     } */
-/*   } */
 
   return (int)info;
 }
