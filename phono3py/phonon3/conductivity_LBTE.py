@@ -1200,6 +1200,11 @@ class Conductivity_LBTE(Conductivity):
                 Y = np.dot(v, e * np.dot(v.T, X.ravel())).reshape(-1, 3)
         else: # This is slower as far as tested.
             import phono3py._phono3py as phono3c
+            if self._log_level:
+                print("Calculating pseudo-inv of collision matrix "
+                      "(cutoff=%-.1e)" % self._pinv_cutoff)
+                sys.stdout.flush()
+
             phono3c.pinv_from_eigensolution(self._collision_matrix,
                                             w,
                                             i_sigma,
@@ -1241,7 +1246,7 @@ class Conductivity_LBTE(Conductivity):
             except ImportError:
                 solver = 1
             else:
-                solver = 5
+                solver = 4
         elif solver not in range(1, 7):
             solver = 1
         if pinv_method not in [0, 1]:
@@ -1256,8 +1261,7 @@ class Conductivity_LBTE(Conductivity):
                     routine = 'dsyev'
                 else:
                     routine = 'dsyevd'
-                print("Pseudo-inversion (cutoff=%-.1e) by lapacke %s..." %
-                      (self._pinv_cutoff, routine))
+                print("Diagonalizing by lapacke %s..." % routine)
                 sys.stdout.flush()
             import phono3py._phono3py as phono3c
             w = np.zeros(size, dtype='double')
@@ -1276,10 +1280,6 @@ class Conductivity_LBTE(Conductivity):
                 size, size)
             w, col_mat[:] = np.linalg.eigh(col_mat)
 
-            if self._log_level:
-                print("Calculating pseudo-inv of collision matrix "
-                      "(cutoff=%-.1e)" % self._pinv_cutoff)
-                sys.stdout.flush()
         elif solver == 4: # fully scipy & numpy
             if self._log_level:
                 print("Diagonalizing by scipy.linalg.lapack.dsyev...")
@@ -1290,7 +1290,7 @@ class Conductivity_LBTE(Conductivity):
             w, col_mat[:], info = scipy.linalg.lapack.dsyev(col_mat)
         elif solver in [5, 6]: # fully scipy dsyev & numpy
             if self._log_level:
-                print("Diagonalizing by scipy.linalg.lapack.dsyev...")
+                print("Diagonalizing by scipy.linalg.lapack.dsyevd...")
                 sys.stdout.flush()
             import scipy.linalg
             col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
