@@ -84,7 +84,8 @@ static PyObject *
 py_set_triplets_integration_weights(PyObject *self, PyObject *args);
 static PyObject *
 py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args);
-static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args);
+static PyObject *
+py_diagonalize_collision_matrix(PyObject *self, PyObject *args);
 static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args);
 
 #ifdef LIBFLAME
@@ -92,7 +93,7 @@ static PyObject * py_inverse_collision_matrix_libflame(PyObject *self, PyObject 
 #endif
 
 static void pinv_from_eigensolution(double *data,
-                                    double *eigvals,
+                                    const double *eigvals,
                                     const int size,
                                     const double cutoff,
                                     const int pinv_method);
@@ -197,10 +198,10 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_set_triplets_integration_weights_with_sigma,
    METH_VARARGS,
    "Integration weights of smearing method for triplets"},
-  {"inverse_collision_matrix",
-   (PyCFunction)py_inverse_collision_matrix,
+  {"diagonalize_collision_matrix",
+   (PyCFunction)py_diagonalize_collision_matrix,
    METH_VARARGS,
-   "Pseudo-inverse using Lapack dsyev(d)"},
+   "Diagonalize and optionally pseudo-inverse using Lapack dsyev(d)"},
   {"pinv_from_eigensolution",
    (PyCFunction)py_pinv_from_eigensolution,
    METH_VARARGS,
@@ -1580,12 +1581,13 @@ static PyObject * py_inverse_collision_matrix_libflame(PyObject *self, PyObject 
 }
 #endif
 
-static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
+static PyObject *
+py_diagonalize_collision_matrix(PyObject *self, PyObject *args)
 {
   PyArrayObject *collision_matrix_py;
   PyArrayObject *eigenvalues_py;
   double cutoff;
-  int i_sigma, i_temp, pinv_method, solver;
+  int i_sigma, i_temp, is_pinv, solver;
 
   double *collision_matrix;
   double *eigvals;
@@ -1601,7 +1603,7 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
                         &i_temp,
                         &cutoff,
                         &solver,
-                        &pinv_method)) {
+                        &is_pinv)) {
     return NULL;
   }
 
@@ -1622,8 +1624,10 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
   show_colmat_info(collision_matrix_py, i_sigma, i_temp, adrs_shift);
   info = phonopy_dsyev(collision_matrix + adrs_shift,
                        eigvals, num_column, solver);
-  pinv_from_eigensolution(collision_matrix + adrs_shift,
-                          eigvals, num_column, cutoff, pinv_method);
+  if (is_pinv) {
+    pinv_from_eigensolution(collision_matrix + adrs_shift,
+                            eigvals, num_column, cutoff, 0);
+  }
 
   return PyLong_FromLong((long) info);
 }
@@ -1675,7 +1679,7 @@ static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args)
 }
 
 static void pinv_from_eigensolution(double *data,
-                                    double *eigvals,
+                                    const double *eigvals,
                                     const int size,
                                     const double cutoff,
                                     const int pinv_method)
