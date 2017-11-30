@@ -304,7 +304,7 @@ def _write_kappa(lbte,
                             filename=filename,
                             verbose=log_level)
 
-        if coleigs is not None and write_LBTE_solution:
+        if coleigs is not None:
             write_collision_eigenvalues_to_hdf5(temperatures,
                                                 mesh,
                                                 coleigs[i],
@@ -312,22 +312,25 @@ def _write_kappa(lbte,
                                                 sigma_cutoff=sigma_cutoff,
                                                 filename=filename,
                                                 verbose=log_level)
-            if pinv_solver is not None:
-                solver = pinv_solver
-                if pinv_solver == 0:
-                    try:
-                        import scipy.linalg
-                    except ImportError:
-                        solver = 0
-                    else:
-                        solver = 6
-                if solver % 10 == 6:
-                    write_unitary_matrix_to_hdf5(temperatures,
-                                                 mesh,
-                                                 unitary_matrix=unitary_matrix,
-                                                 sigma=sigma,
-                                                 sigma_cutoff=sigma_cutoff,
-                                                 filename=filename)
+
+            if write_LBTE_solution:
+                if pinv_solver is not None:
+                    solver = pinv_solver
+                    if pinv_solver == 0:
+                        try:
+                            import scipy.linalg
+                        except ImportError:
+                            solver = 0
+                        else:
+                            solver = 6
+                    if solver % 10 == 6:
+                        write_unitary_matrix_to_hdf5(
+                            temperatures,
+                            mesh,
+                            unitary_matrix=unitary_matrix,
+                            sigma=sigma,
+                            sigma_cutoff=sigma_cutoff,
+                            filename=filename)
 
 def _set_collision_from_file(lbte,
                              indices='all',
@@ -1224,10 +1227,8 @@ class Conductivity_LBTE(Conductivity):
         """
         solver = self._pinv_solver % 10
         pinv_method = self._pinv_solver // 10
-        # Safest choice
-        if solver == 9:
-            print("*** Attention: This isn't the calculation, but the test. ***")
-        elif solver == 0: # default solver
+
+        if solver == 0: # default solver
             try:
                 import scipy.linalg
             except ImportError:
@@ -1239,11 +1240,17 @@ class Conductivity_LBTE(Conductivity):
         if pinv_method not in [0, 1]:
             pinv_method = 0
 
-        if solver == 1: # dsyev: safer and slower than dsyevd and smallest
-                        #        memory usage
+        if solver in [1, 2]: # dsyev: safer and slower than dsyevd and smallest
+                             #        memory usage
+                             # dsyevd: faster than dsyev and largest memory
+                             #         usage
             if self._log_level:
-                print("Pseudo-inversion (cutoff=%-.1e) by lapacke dsyev..." %
-                      self._pinv_cutoff)
+                if solver == 1:
+                    routine = 'dsyev'
+                else:
+                    routine = 'dsyevd'
+                print("Pseudo-inversion (cutoff=%-.1e) by lapacke %s..." %
+                      (self._pinv_cutoff, routine))
                 sys.stdout.flush()
             import phono3py._phono3py as phono3c
             w = np.zeros(size, dtype='double')
@@ -1254,23 +1261,9 @@ class Conductivity_LBTE(Conductivity):
                                              self._pinv_cutoff,
                                              solver - 1,
                                              pinv_method)
-        elif solver == 2: # dsyevd: faster than dsyev and lagest memory usage
-            if self._log_level:
-                print("Pseudo-inversion (cutoff=%-.1e) by lapacke dsyevd..." %
-                      self._pinv_cutoff)
-                sys.stdout.flush()
-            import phono3py._phono3py as phono3c
-            w = np.zeros(size, dtype='double')
-            phono3c.inverse_collision_matrix(self._collision_matrix,
-                                             w,
-                                             i_sigma,
-                                             i_temp,
-                                             self._pinv_cutoff,
-                                             solver - 1,
-                                             pinv_method) # 1 or 11
         elif solver == 3: # np.linalg.eigh depends on dsyevd.
                           # Dangeraous to use this because
-                          # the result becomes different.
+                          # the result can become different.
             if self._log_level:
                 print("Diagonalizing by np.linalg.eigh...")
                 sys.stdout.flush()
@@ -1340,20 +1333,6 @@ class Conductivity_LBTE(Conductivity):
 
             # Pseudo inversion is done together with with multiplying
             # X in _set_kappa to save memory space.
-
-        elif solver == 9: # Test
-            w = np.ones(size, dtype='double')
-            if self._log_level:
-                print("Calculating pseudo-inv of collision matrix "
-                      "(cutoff=%-.1e)" % self._pinv_cutoff)
-                sys.stdout.flush()
-            import phono3py._phono3py as phono3c
-            phono3c.pinv_from_eigensolution(self._collision_matrix,
-                                            np.array(w, dtype='double'),
-                                            i_sigma,
-                                            i_temp,
-                                            self._pinv_cutoff,
-                                            pinv_method)
 
         self._collision_eigenvalues[i_sigma, i_temp] = w
 

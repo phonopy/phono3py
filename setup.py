@@ -27,7 +27,7 @@ import sysconfig
 config_var = sysconfig.get_config_var("CFLAGS")
 if config_var is not None and "-Werror=declaration-after-statement" in config_var:
     os.environ['CFLAGS'] = config_var.replace(
-        "-Werror=declaration-after-statement", "")    
+        "-Werror=declaration-after-statement", "")
 
 sources = ['c/_phono3py.c',
            'c/harmonic/dynmat.c',
@@ -167,7 +167,8 @@ packages_phono3py = ['phono3py',
                      'phono3py.phonon3']
 scripts_phono3py = ['scripts/phono3py',
                     'scripts/phono3py-kaccum',
-                    'scripts/phono3py-kdeplot']
+                    'scripts/phono3py-kdeplot',
+                    'scripts/phono3py-coleigplot']
 
 ## This is for the test of libflame
 ##

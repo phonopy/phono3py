@@ -1620,8 +1620,8 @@ static PyObject * py_inverse_collision_matrix(PyObject *self, PyObject *args)
                 i_temp * num_column * num_column);
 
   show_colmat_info(collision_matrix_py, i_sigma, i_temp, adrs_shift);
-  info = phonopy_pinv_dsyev(collision_matrix + adrs_shift,
-                            eigvals, num_column, solver);
+  info = phonopy_dsyev(collision_matrix + adrs_shift,
+                       eigvals, num_column, solver);
   pinv_from_eigensolution(collision_matrix + adrs_shift,
                           eigvals, num_column, cutoff, pinv_method);
 
@@ -1686,6 +1686,8 @@ static void pinv_from_eigensolution(double *data,
   int *l;
 
   l = NULL;
+  tmp_data = NULL;
+
   tmp_data = (double*)malloc(sizeof(double) * size * size);
 
 #pragma omp parallel for
