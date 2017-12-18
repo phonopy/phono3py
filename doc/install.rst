@@ -60,6 +60,49 @@ BLAS. Both single-thread or multithread BLAS can be
 used in phono3py. In the following, multiple different ways of
 installation of LAPACKE are explained.
 
+MKL LAPACKE (with multithread BLAS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+MKL LAPACKE can be used by creating ``mkl.py`` file with the following
+content that gives locations of the necessary MKL libraries, e.g.,::
+
+   extra_link_args_lapacke += ['-L/opt/intel/mkl/lib/intel64',
+                               '-lmkl_intel_ilp64', '-lmkl_intel_thread',
+                               '-lmkl_core']
+   library_dirs_lapacke += []
+   include_dirs_lapacke += ['/opt/intel/mkl/include']
+
+When ``setup.py`` finds the file named ``mkl.py``, this is
+included and the following C macros are activated::
+
+   if use_setuptools:
+       extra_compile_args += ['-DMKL_LAPACKE',
+                              '-DMULTITHREADED_BLAS']
+   else:
+       define_macros += [('MKL_LAPACKE', None),
+                         ('MULTITHREADED_BLAS', None)]
+
+OpenBLAS provided by conda (with multithread BLAS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The installtion of LAPACKE is easy by conda. It is::
+
+   % conda install openblas
+
+or if the python libraries are not yet installed::
+
+   % conda install openblas numpy scipy h5py pyyaml matplotlib
+
+This openblas package contains BLAS, LAPACK, and LAPACKE. When this
+``libopenblas`` is linked and the ``else`` statement of the C macro
+definition section in ``setup.py`` is executed, the following macro
+are activated::
+
+   if use_setuptools:
+       extra_compile_args += ['-DMULTITHREADED_BLAS']
+   else:
+       define_macros += [('MULTITHREADED_BLAS', None)]
+
 Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -85,40 +128,13 @@ example, the procedure of compiling LAPACKE is shown below.
    % make lapackelib
 
 BLAS, LAPACK, and LAPACKE, these all may have to be compiled
-with -fPIC option to use it with python.
+with ``-fPIC`` option to use it with python.
 
 OpenBLAS provided by MacPorts (with single-thread BLAS)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 MacPorts, the ``OpenBLAS`` package contains not only BLAS but also
 LAPACK and LAPACKE in ``libopenblas``.
-
-MKL LAPACKE (with multithread BLAS)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-MKL LAPACKE can be used. For this, ``mkl.py`` file has to be
-created. In this file, the locations of necessary MKL libraries are
-provided such as follows::
-
-   extra_link_args_lapacke += ['-L/opt/intel/mkl/lib/intel64',
-                               '-lmkl_intel_ilp64', '-lmkl_intel_thread',
-                               '-lmkl_core']
-   library_dirs_lapacke += []
-   include_dirs_lapacke += ['/opt/intel/mkl/include']
-
-
-OpenBLAS provided by conda (with multithread BLAS)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The installtion of LAPACKE is easy by conda. It is::
-
-   % conda install openblas
-
-or if the python libraries are not yet installed::
-
-   % conda install openblas numpy scipy h5py pyyaml matplotlib
-
-This openblas package contains BLAS, LAPACK, and LAPACKE.
 
 Building using setup.py
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -226,6 +242,28 @@ An example of installation process
    https://atztogo.github.io/phonopy/install.html#building-using-setup-py
    and
    https://atztogo.github.io/phonopy/install.html#set-correct-environment-variables-path-and-pythonpath.
+
+Multithreading and its controlling by C macro
+----------------------------------------------
+
+Phono3py uses multithreading concurrency in two ways. One is that
+written in the code with OpenMP ``parallel for``. The other is
+achieved by using multithreaded BLAS. The BLAS multithreading is
+depending on which BLAS library is chosen by users and the number of
+threads to be used may be controlled by the library's environment
+variables (e.g., ``OPENBLAS_NUM_THREADS`` or ``MKL_NUM_THREADS``). In
+the phono3py C code, these two are written in a nested way, but of
+course the nested use of multiple multithreadings has to be
+avoided. The outer loop of the nesting is done by the OpenMP
+``parallel for`` code. The inner loop calls LAPACKE functions and then
+the LAPACKE functions call the BLAS routines. If both of the inner and
+outer multithreadings can be activated, the inner multithreading must
+be deactivated at the compilation time. This is achieved by setting
+the C macro ``MULTITHREADED_BLAS``, which can be written in
+``setup.py``. Deactivating the multithreading of BLAS using the
+environment variables is not recommended because it is used in the
+non-nested parts of the code and these multithreadings are
+unnecessary to be deactivated.
 
 Trouble shooting
 -----------------
