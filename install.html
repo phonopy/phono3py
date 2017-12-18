@@ -69,6 +69,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#installation-from-source-code">Installation from source code</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#installation-on-macos">Installation on macOS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#an-example-of-installation-process">An example of installation process</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#multithreading-and-its-controlling-by-c-macro">Multithreading and its controlling by C macro</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#trouble-shooting">Trouble shooting</a></li>
 </ul>
 </li>
@@ -131,6 +132,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#nov-29-2017">Nov-29-2017</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#nov-22-2017-version-1-12-5">Nov-22-2017: version 1.12.5</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#nov-17-2017-version-1-12-3">Nov-17-2017: version 1.12.3</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#jun-18-2017-version-1-11-13">Jun-18-2017: version 1.11.13</a></li>
@@ -178,11 +180,11 @@
 <li><a class="reference internal" href="#installation-using-pip">Installation using pip</a></li>
 <li><a class="reference internal" href="#installation-from-source-code">Installation from source code</a><ul>
 <li><a class="reference internal" href="#installation-of-lapacke">Installation of LAPACKE</a><ul>
+<li><a class="reference internal" href="#mkl-lapacke-with-multithread-blas">MKL LAPACKE (with multithread BLAS)</a></li>
+<li><a class="reference internal" href="#openblas-provided-by-conda-with-multithread-blas">OpenBLAS provided by conda (with multithread BLAS)</a></li>
 <li><a class="reference internal" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a></li>
 <li><a class="reference internal" href="#compiling-netlib-lapacke">Compiling Netlib LAPACKE</a></li>
 <li><a class="reference internal" href="#openblas-provided-by-macports-with-single-thread-blas">OpenBLAS provided by MacPorts (with single-thread BLAS)</a></li>
-<li><a class="reference internal" href="#mkl-lapacke-with-multithread-blas">MKL LAPACKE (with multithread BLAS)</a></li>
-<li><a class="reference internal" href="#openblas-provided-by-conda-with-multithread-blas">OpenBLAS provided by conda (with multithread BLAS)</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#building-using-setup-py">Building using setup.py</a></li>
@@ -190,6 +192,7 @@
 </li>
 <li><a class="reference internal" href="#installation-on-macos">Installation on macOS</a></li>
 <li><a class="reference internal" href="#an-example-of-installation-process">An example of installation process</a></li>
+<li><a class="reference internal" href="#multithreading-and-its-controlling-by-c-macro">Multithreading and its controlling by C macro</a></li>
 <li><a class="reference internal" href="#trouble-shooting">Trouble shooting</a></li>
 </ul>
 </li>
@@ -242,11 +245,11 @@
 <li><a class="reference internal" href="#installation-using-pip" id="id2">Installation using pip</a></li>
 <li><a class="reference internal" href="#installation-from-source-code" id="id3">Installation from source code</a><ul>
 <li><a class="reference internal" href="#installation-of-lapacke" id="id4">Installation of LAPACKE</a><ul>
-<li><a class="reference internal" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas" id="id5">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a></li>
-<li><a class="reference internal" href="#compiling-netlib-lapacke" id="id6">Compiling Netlib LAPACKE</a></li>
-<li><a class="reference internal" href="#openblas-provided-by-macports-with-single-thread-blas" id="id7">OpenBLAS provided by MacPorts (with single-thread BLAS)</a></li>
-<li><a class="reference internal" href="#mkl-lapacke-with-multithread-blas" id="id8">MKL LAPACKE (with multithread BLAS)</a></li>
-<li><a class="reference internal" href="#openblas-provided-by-conda-with-multithread-blas" id="id9">OpenBLAS provided by conda (with multithread BLAS)</a></li>
+<li><a class="reference internal" href="#mkl-lapacke-with-multithread-blas" id="id5">MKL LAPACKE (with multithread BLAS)</a></li>
+<li><a class="reference internal" href="#openblas-provided-by-conda-with-multithread-blas" id="id6">OpenBLAS provided by conda (with multithread BLAS)</a></li>
+<li><a class="reference internal" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas" id="id7">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a></li>
+<li><a class="reference internal" href="#compiling-netlib-lapacke" id="id8">Compiling Netlib LAPACKE</a></li>
+<li><a class="reference internal" href="#openblas-provided-by-macports-with-single-thread-blas" id="id9">OpenBLAS provided by MacPorts (with single-thread BLAS)</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#building-using-setup-py" id="id10">Building using setup.py</a></li>
@@ -254,7 +257,8 @@
 </li>
 <li><a class="reference internal" href="#installation-on-macos" id="id11">Installation on macOS</a></li>
 <li><a class="reference internal" href="#an-example-of-installation-process" id="id12">An example of installation process</a></li>
-<li><a class="reference internal" href="#trouble-shooting" id="id13">Trouble shooting</a></li>
+<li><a class="reference internal" href="#multithreading-and-its-controlling-by-c-macro" id="id13">Multithreading and its controlling by C macro</a></li>
+<li><a class="reference internal" href="#trouble-shooting" id="id14">Trouble shooting</a></li>
 </ul>
 </div>
 <p>Installation of phonopy before the installation of phono3py is
@@ -302,8 +306,51 @@ matrices. LAPACK*E* is the C-wrapper of LAPACK and LAPACK relies on
 BLAS. Both single-thread or multithread BLAS can be
 used in phono3py. In the following, multiple different ways of
 installation of LAPACKE are explained.</p>
+<div class="section" id="mkl-lapacke-with-multithread-blas">
+<h4><a class="toc-backref" href="#id5">MKL LAPACKE (with multithread BLAS)</a><a class="headerlink" href="#mkl-lapacke-with-multithread-blas" title="Permalink to this headline">¶</a></h4>
+<p>MKL LAPACKE can be used by creating <code class="docutils literal"><span class="pre">mkl.py</span></code> file with the following
+content that gives locations of the necessary MKL libraries, e.g.,:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">extra_link_args_lapacke</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;-L/opt/intel/mkl/lib/intel64&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;-lmkl_intel_ilp64&#39;</span><span class="p">,</span> <span class="s1">&#39;-lmkl_intel_thread&#39;</span><span class="p">,</span>
+                            <span class="s1">&#39;-lmkl_core&#39;</span><span class="p">]</span>
+<span class="n">library_dirs_lapacke</span> <span class="o">+=</span> <span class="p">[]</span>
+<span class="n">include_dirs_lapacke</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;/opt/intel/mkl/include&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>When <code class="docutils literal"><span class="pre">setup.py</span></code> finds the file named <code class="docutils literal"><span class="pre">mkl.py</span></code>, this is
+included and the following C macros are activated:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">use_setuptools</span><span class="p">:</span>
+    <span class="n">extra_compile_args</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;-DMKL_LAPACKE&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;-DMULTITHREADED_BLAS&#39;</span><span class="p">]</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">define_macros</span> <span class="o">+=</span> <span class="p">[(</span><span class="s1">&#39;MKL_LAPACKE&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                      <span class="p">(</span><span class="s1">&#39;MULTITHREADED_BLAS&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="openblas-provided-by-conda-with-multithread-blas">
+<h4><a class="toc-backref" href="#id6">OpenBLAS provided by conda (with multithread BLAS)</a><a class="headerlink" href="#openblas-provided-by-conda-with-multithread-blas" title="Permalink to this headline">¶</a></h4>
+<p>The installtion of LAPACKE is easy by conda. It is:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">openblas</span>
+</pre></div>
+</div>
+<p>or if the python libraries are not yet installed:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">openblas</span> <span class="n">numpy</span> <span class="n">scipy</span> <span class="n">h5py</span> <span class="n">pyyaml</span> <span class="n">matplotlib</span>
+</pre></div>
+</div>
+<p>This openblas package contains BLAS, LAPACK, and LAPACKE. When this
+<code class="docutils literal"><span class="pre">libopenblas</span></code> is linked and the <code class="docutils literal"><span class="pre">else</span></code> statement of the C macro
+definition section in <code class="docutils literal"><span class="pre">setup.py</span></code> is executed, the following macro
+are activated:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">use_setuptools</span><span class="p">:</span>
+    <span class="n">extra_compile_args</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;-DMULTITHREADED_BLAS&#39;</span><span class="p">]</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">define_macros</span> <span class="o">+=</span> <span class="p">[(</span><span class="s1">&#39;MULTITHREADED_BLAS&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span>
+</pre></div>
+</div>
+</div>
 <div class="section" id="netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas">
-<h4><a class="toc-backref" href="#id5">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a><a class="headerlink" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id7">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a><a class="headerlink" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas" title="Permalink to this headline">¶</a></h4>
 <p>In the versions of Ubuntu-12.10 or later, LAPACKE
 (<a class="reference external" href="http://www.netlib.org/lapack/lapacke.html">http://www.netlib.org/lapack/lapacke.html</a>) can be installed from the
 package manager (<code class="docutils literal"><span class="pre">liblapacke</span></code> and <code class="docutils literal"><span class="pre">liblapacke-dev</span></code>):</p>
@@ -312,7 +359,7 @@ package manager (<code class="docutils literal"><span class="pre">liblapacke</sp
 </div>
 </div>
 <div class="section" id="compiling-netlib-lapacke">
-<h4><a class="toc-backref" href="#id6">Compiling Netlib LAPACKE</a><a class="headerlink" href="#compiling-netlib-lapacke" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id8">Compiling Netlib LAPACKE</a><a class="headerlink" href="#compiling-netlib-lapacke" title="Permalink to this headline">¶</a></h4>
 <p>The compilation procedure is found at the LAPACKE web site. After
 creating the LAPACKE library, <code class="docutils literal"><span class="pre">liblapacke.a</span></code> (or the dynamic link
 library), <code class="docutils literal"><span class="pre">setup.py</span></code> must be properly modified to link it. As an
@@ -324,37 +371,12 @@ example, the procedure of compiling LAPACKE is shown below.</p>
 </pre></div>
 </div>
 <p>BLAS, LAPACK, and LAPACKE, these all may have to be compiled
-with -fPIC option to use it with python.</p>
+with <code class="docutils literal"><span class="pre">-fPIC</span></code> option to use it with python.</p>
 </div>
 <div class="section" id="openblas-provided-by-macports-with-single-thread-blas">
-<h4><a class="toc-backref" href="#id7">OpenBLAS provided by MacPorts (with single-thread BLAS)</a><a class="headerlink" href="#openblas-provided-by-macports-with-single-thread-blas" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id9">OpenBLAS provided by MacPorts (with single-thread BLAS)</a><a class="headerlink" href="#openblas-provided-by-macports-with-single-thread-blas" title="Permalink to this headline">¶</a></h4>
 <p>MacPorts, the <code class="docutils literal"><span class="pre">OpenBLAS</span></code> package contains not only BLAS but also
 LAPACK and LAPACKE in <code class="docutils literal"><span class="pre">libopenblas</span></code>.</p>
-</div>
-<div class="section" id="mkl-lapacke-with-multithread-blas">
-<h4><a class="toc-backref" href="#id8">MKL LAPACKE (with multithread BLAS)</a><a class="headerlink" href="#mkl-lapacke-with-multithread-blas" title="Permalink to this headline">¶</a></h4>
-<p>MKL LAPACKE can be used. For this, <code class="docutils literal"><span class="pre">mkl.py</span></code> file has to be
-created. In this file, the locations of necessary MKL libraries are
-provided such as follows:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">extra_link_args_lapacke</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;-L/opt/intel/mkl/lib/intel64&#39;</span><span class="p">,</span>
-                            <span class="s1">&#39;-lmkl_intel_ilp64&#39;</span><span class="p">,</span> <span class="s1">&#39;-lmkl_intel_thread&#39;</span><span class="p">,</span>
-                            <span class="s1">&#39;-lmkl_core&#39;</span><span class="p">]</span>
-<span class="n">library_dirs_lapacke</span> <span class="o">+=</span> <span class="p">[]</span>
-<span class="n">include_dirs_lapacke</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;/opt/intel/mkl/include&#39;</span><span class="p">]</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="openblas-provided-by-conda-with-multithread-blas">
-<h4><a class="toc-backref" href="#id9">OpenBLAS provided by conda (with multithread BLAS)</a><a class="headerlink" href="#openblas-provided-by-conda-with-multithread-blas" title="Permalink to this headline">¶</a></h4>
-<p>The installtion of LAPACKE is easy by conda. It is:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">openblas</span>
-</pre></div>
-</div>
-<p>or if the python libraries are not yet installed:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">openblas</span> <span class="n">numpy</span> <span class="n">scipy</span> <span class="n">h5py</span> <span class="n">pyyaml</span> <span class="n">matplotlib</span>
-</pre></div>
-</div>
-<p>This openblas package contains BLAS, LAPACK, and LAPACKE.</p>
 </div>
 </div>
 <div class="section" id="building-using-setup-py">
@@ -465,8 +487,29 @@ and
 </li>
 </ol>
 </div>
+<div class="section" id="multithreading-and-its-controlling-by-c-macro">
+<h2><a class="toc-backref" href="#id13">Multithreading and its controlling by C macro</a><a class="headerlink" href="#multithreading-and-its-controlling-by-c-macro" title="Permalink to this headline">¶</a></h2>
+<p>Phono3py uses multithreading concurrency in two ways. One is that
+written in the code with OpenMP <code class="docutils literal"><span class="pre">parallel</span> <span class="pre">for</span></code>. The other is
+achieved by using multithreaded BLAS. The BLAS multithreading is
+depending on which BLAS library is chosen by users and the number of
+threads to be used may be controlled by the library’s environment
+variables (e.g., <code class="docutils literal"><span class="pre">OPENBLAS_NUM_THREADS</span></code> or <code class="docutils literal"><span class="pre">MKL_NUM_THREADS</span></code>). In
+the phono3py C code, these two are written in a nested way, but of
+course the nested use of multiple multithreadings has to be
+avoided. The outer loop of the nesting is done by the OpenMP
+<code class="docutils literal"><span class="pre">parallel</span> <span class="pre">for</span></code> code. The inner loop calls LAPACKE functions and then
+the LAPACKE functions call the BLAS routines. If both of the inner and
+outer multithreadings can be activated, the inner multithreading must
+be deactivated at the compilation time. This is achieved by setting
+the C macro <code class="docutils literal"><span class="pre">MULTITHREADED_BLAS</span></code>, which can be written in
+<code class="docutils literal"><span class="pre">setup.py</span></code>. Deactivating the multithreading of BLAS using the
+environment variables is not recommended because it is used in the
+non-nested parts of the code and these multithreadings are
+unnecessary to be deactivated.</p>
+</div>
 <div class="section" id="trouble-shooting">
-<h2><a class="toc-backref" href="#id13">Trouble shooting</a><a class="headerlink" href="#trouble-shooting" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id14">Trouble shooting</a><a class="headerlink" href="#trouble-shooting" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple">
 <li>Phonopy version should be the latest to use the latest phono3py.</li>
 <li>There are other pitfalls, see
