@@ -509,11 +509,14 @@ class Conductivity_RTA(Conductivity):
                             self._mode_kappa[j, k, i, l] = (
                                 self._gv_sum2[i, l] * cv[k, l] /
                                 (g_sum[l] * 2) * self._conversion_factor)
+                        except FloatingPointError:
+                            # supposed that g is almost 0 and |gv|=0
+                            pass
                         except:
                             print("=" * 26 + " Warning " + "=" * 26)
                             print(" Unexpected physical condition of ph-ph "
                                   "interaction calculation was found.")
-                            print(" g[j]=%f at gp=%d, band=%d, freq=%f" %
+                            print(" g=%f at gp=%d, band=%d, freq=%f" %
                                   (g_sum[l], gp, l + 1, frequencies[l]))
                             print("=" * 61)
                         np.seterr(**old_settings)
