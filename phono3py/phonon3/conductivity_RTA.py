@@ -510,6 +510,7 @@ class Conductivity_RTA(Conductivity):
                                 self._gv_sum2[i, l] * cv[k, l] /
                                 (g_sum[l] * 2) * self._conversion_factor)
                         except FloatingPointError:
+                            # supposed that g is almost 0 and |gv|=0
                             pass
                         except:
                             print("=" * 26 + " Warning " + "=" * 26)
