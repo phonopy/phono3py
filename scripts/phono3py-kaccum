@@ -516,6 +516,9 @@ if __name__ == '__main__':
                                                 grid_mapping_table,
                                                 ir_grid_points,
                                                 args.num_sampling_points)
+            # Already mode_kappa is divided by num_mesh.
+            # But tetrahedron method divides it again. So it has to repair.
+            kdos *= np.prod(mesh)
             show_tensor(kdos, temperatures, sampling_points, args)
         else:
             if args.temperature is not None and not args.gv:
