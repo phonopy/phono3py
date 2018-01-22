@@ -107,6 +107,7 @@ def get_parser():
                         pinv_solver=None,
                         pp_unit_conversion=None,
                         primitive_axis=None,
+                        qe_mode=False,
                         qpoints=None,
                         quiet=False,
                         q_direction=None,
@@ -339,8 +340,8 @@ def get_parser():
         "--pp-unit-conversion", dest="pp_unit_conversion", type=float,
         help="Conversion factor for ph-ph interaction")
     parser.add_argument(
-        "--pwscf", dest="pwscf_mode", action="store_true",
-        help="Invoke Pwscf mode")
+        "--qe", "--pwscf", dest="qe_mode",
+        action="store_true", help="Invoke Quantum espresso (QE) mode")
     parser.add_argument(
         "--qpoints", dest="qpoints",
         help="Calculate at specified q-points")

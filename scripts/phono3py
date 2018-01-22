@@ -37,7 +37,7 @@
 import sys
 import numpy as np
 from phonopy.file_IO import parse_BORN, write_FORCE_SETS, parse_FORCE_SETS
-from phonopy.units import VaspToTHz, PwscfToTHz, Bohr, Rydberg, Hartree
+from phonopy.units import VaspToTHz, Bohr, Rydberg, Hartree
 from phonopy.interface import read_crystal_structure, get_force_sets
 from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phono3py.version import __version__
@@ -103,9 +103,12 @@ if deprecated:
 # CRYSTAL       : eV,      Angstrom,  AMU,         eV/Angstrom
 # abinit        : hartree, au,        AMU,         eV/Angstrom
 #
-if args.pwscf_mode:
-    interface_mode = 'pwscf'
-    from phonopy.interface.pwscf import write_supercells_with_displacements
+if args.qe_mode:
+    interface_mode = 'qe'
+    try:
+        from phonopy.interface.qe import write_supercells_with_displacements
+    except ImportError: # to be compatible to older phonopy
+        from phonopy.interface.pwscf import write_supercells_with_displacements
     distance_to_A = Bohr
     force_to_eVperA = Rydberg / Bohr
 elif args.crystal_mode:

@@ -669,4 +669,3 @@ def _get_atom_mapping_by_symmetry(lattice,
             break
 
     return map_sym
-

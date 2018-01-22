@@ -51,7 +51,7 @@ def create_phono3py_supercells(unitcell,
                                output_filename=None,
                                log_level=1):
     if displacement_distance is None:
-        if interface_mode in ('pwscf', 'abinit'):
+        if interface_mode in ('qe', 'abinit'):
             distance = 0.06
         elif interface_mode == 'crystal':
             distance = 0.03
@@ -72,7 +72,7 @@ def create_phono3py_supercells(unitcell,
         is_plusminus=is_plusminus,
         is_diagonal=is_diagonal)
     dds = phono3py.get_displacement_dataset()
-    
+
     if log_level:
         print('')
         print("Displacement distance: %s" % distance)
@@ -81,12 +81,12 @@ def create_phono3py_supercells(unitcell,
         filename = 'disp_fc3.yaml'
     else:
         filename = 'disp_fc3.' + output_filename + '.yaml'
-        
+
     num_disps, num_disp_files = write_disp_fc3_yaml(dds,
                                                     supercell,
                                                     filename=filename)
     cells_with_disps = phono3py.get_supercells_with_displacements()
-    if interface_mode == 'pwscf':
+    if interface_mode == 'qe':
         pp_filenames = optional_structure_file_information[1]
         write_supercells_with_displacements(supercell,
                                             cells_with_disps,
@@ -116,7 +116,7 @@ def create_phono3py_supercells(unitcell,
                   cutoff_pair_distance)
             print("Number of displacement supercell files created: %d" %
                   num_disp_files)
-            
+
     if phonon_supercell_matrix is not None:
         phonon_dds = phono3py.get_phonon_displacement_dataset()
         phonon_supercell = phono3py.get_phonon_supercell()
@@ -124,12 +124,12 @@ def create_phono3py_supercells(unitcell,
             filename = 'disp_fc2.yaml'
         else:
             filename = 'disp_fc2.' + output_filename + '.yaml'
-            
+
         num_disps = write_disp_fc2_yaml(phonon_dds,
                                         phonon_supercell,
                                         filename=filename)
         cells_with_disps = phono3py.get_phonon_supercells_with_displacements()
-        if interface_mode == 'pwscf':
+        if interface_mode == 'qe':
             pp_filenames = optional_structure_file_information[1]
             write_supercells_with_displacements(phonon_supercell,
                                                 cells_with_disps,
