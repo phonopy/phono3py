@@ -32,7 +32,7 @@ The following example is executed in the ``Si-PBE`` example.
 To avoid re-calculating fc3 and fc2, ``fc3.hdf5`` and ``fc2.hdf5`` are
 created on a single node::
 
-   % phono3py --dim="2 2 2" --sym-fc3r --sym-fc2 --tsym -c POSCAR-unitcell
+   % phono3py --dim="2 2 2" --sym-fc -c POSCAR-unitcell
 
 The indices of the irreducible grid-points neccesarry to specify
 ``--ga`` option are found by :ref:`--wgp option <wgp_option>`
