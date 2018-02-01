@@ -14,5 +14,3 @@ https://pypi.python.org/pypi/phono3py .
 Examples of silicon with VASP and Pwscf as calculators are given in
 the ``example`` directory. An example using phono3py API is found in
 the ``example/Si-PBEsol/Si.py`` but the API document has not yet written.
-
-

@@ -13,7 +13,7 @@ before_install:
         wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
       else
         wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-      fi    
+      fi
     - echo $TRAVIS_PYTHON_VERSION
     # - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
     - bash miniconda.sh -b -p ${HOME}/.miniconda
@@ -47,7 +47,7 @@ script:
 deploy:
     # testing pypi
     - provider: pypi
-      server: https://testpypi.python.org/pypi
+      server: https://test.pypi.org/legacy/
       skip_cleanup: true
       distributions: sdist
       user: atztogo
@@ -57,7 +57,7 @@ deploy:
         repo: atztogo/phono3py
         branch: rc
         tags: false
-        # python: 2.7
+        python: 2.7
 
     # testing anaconda
     - provider: script
@@ -79,7 +79,7 @@ deploy:
       on:
         branch: master
         tags: false
-        # python: 2.7  
+        python: 2.7
 
     # production anaconda
     - provider: script

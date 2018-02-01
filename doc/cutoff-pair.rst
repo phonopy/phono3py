@@ -279,7 +279,7 @@ generating contracted fc3 for each special ``disp_fc3.yaml``.
      300.0     119.466    119.466    119.466     -0.000     -0.000      0.000
      300.0     119.447    119.447    119.447     -0.000     -0.000      0.000
      300.0     119.445    119.445    119.445     -0.000     -0.000      0.000
-   % for i in {2..10};do phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="11 11 11" --sym-fc3r --sym-fc2 --tsym --br -i $i -o sym-$i|tee std.sym-$i.out;done
+   % for i in {2..10};do phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="11 11 11" --sym-fc --br -i $i -o sym-$i|tee std.sym-$i.out;done
    % for i in {2..10};do egrep '^\s+300' std.sym-$i.out;done
      300.0     124.626    124.626    124.626     -0.000      0.000      0.000
      300.0     119.721    119.721    119.721     -0.000      0.000      0.000
@@ -365,7 +365,7 @@ AlN-LDA
      300.0     224.645    224.645    215.260     -0.000     -0.000     -0.000
      300.0     224.769    224.769    215.220     -0.000     -0.000     -0.000
      300.0     224.650    224.650    215.090     -0.000     -0.000     -0.000
-   % for i in {2..22};do phono3py --dim="3 3 2" -c POSCAR-unitcell --mesh="13 13 9" --sym-fc3r --sym-fc2 --tsym --br --nac -i $i -o sym-$i|tee std.sym-$i.out; done
+   % for i in {2..22};do phono3py --dim="3 3 2" -c POSCAR-unitcell --mesh="13 13 9" --sym-fc --br --nac -i $i -o sym-$i|tee std.sym-$i.out; done
    % for i in {2..22};do egrep '^\s+300\.0' std.sym-$i.out;done
      300.0     224.122    224.122    213.086      0.000     -0.000      0.000
      300.0     225.394    225.394    215.683      0.000     -0.000      0.000

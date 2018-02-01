@@ -17,6 +17,8 @@ def get_phonons_at_qpoints(frequencies,
      nac_factor,
      dielectric) = _extract_params(dm)
 
+    fc_p2s, fc_s2p = _get_fc_elements_mapping(dm)
+
     lapackepy.phonons_at_qpoints(
         frequencies,
         eigenvectors,
@@ -25,8 +27,8 @@ def get_phonons_at_qpoints(frequencies,
         svecs,
         multiplicity,
         masses,
-        dm.get_primitive_to_supercell_map(),
-        dm.get_supercell_to_primitive_map(),
+        fc_p2s,
+        fc_s2p,
         frequency_factor_to_THz,
         born,
         dielectric,
@@ -55,6 +57,8 @@ def set_phonon_c(dm,
      nac_factor,
      dielectric) = _extract_params(dm)
 
+    fc_p2s, fc_s2p = _get_fc_elements_mapping(dm)
+
     lapackepy.phonons_at_gridpoints(
         frequencies,
         eigenvectors,
@@ -66,8 +70,8 @@ def set_phonon_c(dm,
         svecs,
         multiplicity,
         masses,
-        dm.get_primitive_to_supercell_map(),
-        dm.get_supercell_to_primitive_map(),
+        fc_p2s,
+        fc_s2p,
         frequency_factor_to_THz,
         born,
         dielectric,
@@ -83,7 +87,7 @@ def set_phonon_py(grid_point,
                   grid_address,
                   mesh,
                   dynamical_matrix,
-                  frequency_factor_to_THz,                  
+                  frequency_factor_to_THz,
                   lapack_zheev_uplo):
     gp = grid_point
     if phonon_done[gp] == 0:
@@ -118,3 +122,20 @@ def _extract_params(dm):
             born,
             nac_factor,
             dielectric)
+
+def _get_fc_elements_mapping(dm):
+    p2s_map = dm.get_primitive_to_supercell_map()
+    s2p_map = dm.get_supercell_to_primitive_map()
+    fc = dm.get_force_constants()
+    if fc.shape[0] == fc.shape[1]: # full fc
+        fc_p2s = p2s_map
+        fc_s2p = s2p_map
+    else: # compact fc
+        primitive = dm.get_primitive()
+        p2p_map = primitive.get_primitive_to_primitive_map()
+        s2pp_map = np.array([p2p_map[s2p_map[i]] for i in range(len(s2p_map))],
+                            dtype='intc')
+        fc_p2s = np.arange(len(p2s_map), dtype='intc')
+        fc_s2p = s2pp_map
+
+    return fc_p2s, fc_s2p

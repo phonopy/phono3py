@@ -68,7 +68,7 @@ class JointDos(object):
         self._phonon_done = None
         self._frequencies = None
         self._eigenvectors = None
-            
+
         self._joint_dos = None
         self._frequency_points = None
 
@@ -94,7 +94,7 @@ class JointDos(object):
 
     def get_mesh_numbers(self):
         return self._mesh
-        
+
     def set_nac_q_direction(self, nac_q_direction=None):
         if nac_q_direction is not None:
             self._nac_q_direction = np.array(nac_q_direction, dtype='double')
@@ -116,20 +116,20 @@ class JointDos(object):
             itemsize = self._frequencies.itemsize
             self._eigenvectors = np.zeros((num_grid, num_band, num_band),
                                           dtype=("c%d" % (itemsize * 2)))
-            
+
         self._joint_dos = None
         self._frequency_points = None
         self.set_phonons(np.array([grid_point], dtype='intc'))
 
     def get_triplets_at_q(self):
         return self._triplets_at_q, self._weights_at_q
-        
+
     def get_grid_address(self):
         return self._grid_address
 
     def get_bz_map(self):
         return self._bz_map
-    
+
     def _run_c(self, lang='C'):
         if self._sigma is None:
             if lang == 'C':
@@ -141,7 +141,7 @@ class JointDos(object):
                 self._run_py_tetrahedron_method()
         else:
             self._run_c_with_g()
-                
+
     def _run_c_with_g(self):
         self.set_phonons(self._triplets_at_q.ravel())
         if self._sigma is None:
@@ -165,7 +165,7 @@ class JointDos(object):
                 freqs = self._frequencies[self._triplets_at_q[:, 1:]]
                 occ_phonons.append(np.where(freqs > self._cutoff_frequency,
                                             occupation(freqs, t), 0))
-        
+
         for i, freq_point in enumerate(self._frequency_points):
             g, _ = get_triplets_integration_weights(
                 self,
@@ -191,7 +191,7 @@ class JointDos(object):
                                                 self._weights_at_q)
 
         self._joint_dos = jdos / num_mesh
-    
+
     def _run_py_tetrahedron_method(self):
         thm = TetrahedronMethod(self._reciprocal_lattice, mesh=self._mesh)
         self._vertices = get_tetrahedra_vertices(
@@ -237,13 +237,13 @@ class JointDos(object):
             nac_params=self._nac_params,
             frequency_scale_factor=self._frequency_scale_factor,
             symprec=self._symprec)
-        
+
     def _set_triplets(self):
         if not self._is_mesh_symmetry:
             if self._log_level:
                 print("Triplets at q without considering symmetry")
                 sys.stdout.flush()
-            
+
             (self._triplets_at_q,
              self._weights_at_q,
              self._grid_address,

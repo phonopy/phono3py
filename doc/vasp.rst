@@ -25,7 +25,7 @@ Workflow
    In this case, ``disp_fc2.yaml`` and ``POSCAR_FC2-xxxxx`` files are
    also created.
 
-2. Run VASP for supercell force calculations 
+2. Run VASP for supercell force calculations
 
    To calculate forces on atoms in supercells, ``POSCAR-xxxxx`` (and
    ``POSCAR_FC2-xxxxx`` if they exist) are used as VASP (or any force
@@ -54,7 +54,7 @@ Workflow
 
    ``disp_fc2.yaml`` is necessary in this case and ``FORCES_FC2`` is
    created.
-   
+
 4. Create fc2.hdf and fc3.hdf
 
    ::
@@ -66,7 +66,7 @@ Workflow
    calculating fc2 and fc3 at every run time.
 
    When you use larger supercell for fc2 calculation::
-   
+
       % phono3py --dim_fc2="4 4 4" --dim="2 2 2" -c POSCAR-unitcell
 
    Similarly ``fc2.hdf5`` and ``fc3.hdf5`` are created from ``FORCES_FC3``,
@@ -115,4 +115,3 @@ Workflow
 
    Once this calculation runs without problem, separately calculated
    hdf5 files on grid points are no more necessary and may be deleted.
-

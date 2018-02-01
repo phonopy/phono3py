@@ -2,7 +2,7 @@ This is the example of silicon calculation. The supercell is 2x2x2 of the conven
 
 To create fc3.hdf5 and fc2.hdf5,
 
-% phono3py --dim="2 2 2" --sym-fc3r --sym-fc2 --tsym -c POSCAR-unitcell
+% phono3py --dim="2 2 2" --sym-fc -c POSCAR-unitcell
 
 Using 11x11x11 sampling mesh, lattice thermal conductivity is calculated by
 

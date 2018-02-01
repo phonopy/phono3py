@@ -21,7 +21,7 @@ class Interaction(object):
                  frequency_factor_to_THz=VaspToTHz,
                  unit_conversion=None,
                  is_mesh_symmetry=True,
-                 symmetrize_fc3_q=False,
+                 symmetrize_fc3q=False,
                  cutoff_frequency=None,
                  lapack_zheev_uplo='L'):
         self._fc3 = fc3
@@ -50,7 +50,7 @@ class Interaction(object):
         else:
             self._cutoff_frequency = cutoff_frequency
         self._is_mesh_symmetry = is_mesh_symmetry
-        self._symmetrize_fc3_q = symmetrize_fc3_q
+        self._symmetrize_fc3q = symmetrize_fc3q
         self._lapack_zheev_uplo = lapack_zheev_uplo
 
         self._symprec = symmetry.get_symmetry_tolerance()
@@ -326,7 +326,7 @@ class Interaction(object):
 
         num_band = self._primitive.get_number_of_atoms() * 3
 
-        if g_zero is None or self._symmetrize_fc3_q:
+        if g_zero is None or self._symmetrize_fc3q:
             _g_zero = np.zeros(self._interaction_strength.shape,
                                dtype='byte', order='C')
         else:
@@ -346,7 +346,7 @@ class Interaction(object):
                             self._p2s,
                             self._s2p,
                             self._band_indices,
-                            self._symmetrize_fc3_q,
+                            self._symmetrize_fc3q,
                             self._cutoff_frequency)
         self._interaction_strength *= self._unit_conversion
         self._g_zero = g_zero
