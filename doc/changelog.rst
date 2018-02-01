@@ -3,11 +3,17 @@
 Change Log
 ==========
 
-Nov-29-2017
--------------------
+Feb-1-2018: version 1.12.7
+----------------------------
 
-- Documentation of ``--write-phonon`` and ``--read-phonon`` options is
-  written.
+- ``--tsym`` option is removed. Now with ``--sym-fc3r`` and
+  ``--sym-fc2`` options,
+  translational invariance symmetry is also applied.
+- ``--sym-fc`` option is added. This is just an alias to specify both
+  ``--sym-fc3r`` and ``--sym-fc2`` together.
+- Documentation on ``--write-phonon`` and ``--read-phonon`` options is
+  written. These options are used to save harmonic phonon infromation
+  on strage.
 
 Nov-22-2017: version 1.12.5
 -----------------------------
