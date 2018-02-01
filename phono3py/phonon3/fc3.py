@@ -15,8 +15,6 @@ def get_fc3(supercell,
             disp_dataset,
             fc2,
             symmetry,
-            translational_symmetry_type=0,
-            is_permutation_symmetry=False,
             verbose=False):
     num_atom = supercell.get_number_of_atoms()
     fc3_least_atoms = np.zeros((num_atom, num_atom, num_atom, 3, 3, 3),
@@ -29,7 +27,6 @@ def get_fc3(supercell,
                              fc2,
                              symmetry,
                              False,
-                             False,
                              verbose)
     else:
         _get_fc3_least_atoms(fc3_least_atoms,
@@ -37,8 +34,7 @@ def get_fc3(supercell,
                              disp_dataset,
                              fc2,
                              symmetry,
-                             translational_symmetry_type,
-                             is_permutation_symmetry,
+                             False,
                              verbose)
 
     if verbose:
@@ -71,28 +67,8 @@ def get_fc3(supercell,
                    disp_dataset,
                    symmetry,
                    verbose=verbose)
-        if translational_symmetry_type:
-            if verbose:
-                print("Imposing translational invariance symmetry to fc3")
-            set_translational_invariance_fc3(
-                fc3, translational_symmetry_type=translational_symmetry_type)
-        if is_permutation_symmetry:
-            if verbose:
-                print("Imposing index permulation symmetry to fc3")
-            set_permutation_symmetry_fc3(fc3)
-    else:
-        if translational_symmetry_type:
-            if verbose:
-                print("Imposing translational invariance symmetry to fc3")
-            set_translational_invariance_fc3_per_index(
-                fc3, translational_symmetry_type=translational_symmetry_type)
-        if is_permutation_symmetry:
-            if verbose:
-                print("Imposing index permulation symmetry to fc3")
-            set_permutation_symmetry_fc3(fc3)
 
     return fc3
-
 
 def distribute_fc3(fc3_least_atoms,
                    first_disp_atoms,
@@ -267,15 +243,13 @@ def get_delta_fc2(dataset_second_atoms,
                   fc2,
                   supercell,
                   reduced_site_sym,
-                  translational_symmetry_type,
-                  is_permutation_symmetry,
+                  symmetrize,
                   symprec):
     disp_fc2 = get_constrained_fc2(supercell,
                                    dataset_second_atoms,
                                    atom1,
                                    reduced_site_sym,
-                                   translational_symmetry_type,
-                                   is_permutation_symmetry,
+                                   symmetrize,
                                    symprec)
     return disp_fc2 - fc2
 
@@ -283,8 +257,7 @@ def get_constrained_fc2(supercell,
                         dataset_second_atoms,
                         atom1,
                         reduced_site_sym,
-                        translational_symmetry_type,
-                        is_permutation_symmetry,
+                        symmetrize,
                         symprec):
     """
     dataset_second_atoms: [{'number': 7,
@@ -336,12 +309,8 @@ def get_constrained_fc2(supercell,
                                         dtype='double'),
                                symprec)
 
-    if translational_symmetry_type:
-        set_translational_invariance(
-            fc2,
-            translational_symmetry_type=translational_symmetry_type)
-
-    if is_permutation_symmetry:
+    if symmetrize:
+        set_translational_invariance(fc2)
         set_permutation_symmetry(fc2)
 
     return fc2
@@ -500,8 +469,7 @@ def _get_fc3_least_atoms(fc3,
                          disp_dataset,
                          fc2,
                          symmetry,
-                         translational_symmetry_type,
-                         is_permutation_symmetry,
+                         symmetrize_fc3r,
                          verbose):
     symprec = symmetry.get_symmetry_tolerance()
     unique_first_atom_nums = np.unique(
@@ -513,8 +481,7 @@ def _get_fc3_least_atoms(fc3,
                           fc2,
                           first_atom_num,
                           symmetry.get_site_symmetry(first_atom_num),
-                          translational_symmetry_type,
-                          is_permutation_symmetry,
+                          symmetrize_fc3r,
                           symprec,
                           verbose)
 
@@ -524,8 +491,7 @@ def _get_fc3_one_atom(fc3,
                       fc2,
                       first_atom_num,
                       site_symmetry,
-                      translational_symmetry_type,
-                      is_permutation_symmetry,
+                      symmetrize_fc3r,
                       symprec,
                       verbose):
     displacements_first = []
@@ -543,14 +509,13 @@ def _get_fc3_one_atom(fc3,
             reduced_site_sym = get_reduced_site_symmetry(
                 site_symmetry, direction, symprec)
             delta_fc2s.append(get_delta_fc2(
-                    dataset_first_atom['second_atoms'],
-                    dataset_first_atom['number'],
-                    fc2,
-                    supercell,
-                    reduced_site_sym,
-                    translational_symmetry_type,
-                    is_permutation_symmetry,
-                    symprec))
+                dataset_first_atom['second_atoms'],
+                dataset_first_atom['number'],
+                fc2,
+                supercell,
+                reduced_site_sym,
+                symmetrize_fc3r,
+                symprec))
 
     solve_fc3(fc3,
               first_atom_num,

@@ -56,22 +56,17 @@ def create_phono3py_force_constants(phono3py,
                                     log_level=1):
     read_fc3 = settings.get_read_fc3()
     read_fc2 = settings.get_read_fc2()
-    symmetrize_fc3_r = settings.get_is_symmetrize_fc3_r()
-    symmetrize_fc3_q = settings.get_is_symmetrize_fc3_q()
-    symmetrize_fc2 = settings.get_is_symmetrize_fc2()
-    if settings.get_is_translational_symmetry():
-        tsym_type = 1
-    elif settings.get_tsym_type() > 0:
-        tsym_type = settings.get_tsym_type()
-    else:
-        tsym_type = 0
+    symmetrize_fc3r = (settings.get_is_symmetrize_fc3_r() or
+                       settings.get_fc_symmetry())
+    symmetrize_fc3q = settings.get_is_symmetrize_fc3_q()
+    symmetrize_fc2 = (settings.get_is_symmetrize_fc2() or
+                      settings.get_fc_symmetry())
 
     if log_level:
         show_phono3py_force_constants_settings(read_fc3,
                                                read_fc2,
-                                               tsym_type,
-                                               symmetrize_fc3_r,
-                                               symmetrize_fc3_q,
+                                               symmetrize_fc3r,
+                                               symmetrize_fc3q,
                                                symmetrize_fc2,
                                                settings)
 
@@ -105,8 +100,7 @@ def create_phono3py_force_constants(phono3py,
             if not _create_phono3py_fc3(phono3py,
                                         force_to_eVperA,
                                         distance_to_A,
-                                        tsym_type,
-                                        symmetrize_fc3_r,
+                                        symmetrize_fc3r,
                                         symmetrize_fc2,
                                         settings.get_cutoff_fc3_distance(),
                                         input_filename,
@@ -121,6 +115,8 @@ def create_phono3py_force_constants(phono3py,
             show_drift_fc3(phono3py.get_fc3())
 
     # fc2
+    phonon_primitive = phono3py.get_phonon_primitive()
+    p2s_map = phonon_primitive.get_primitive_to_supercell_map()
     if read_fc2:
         if input_filename is None:
             filename = 'fc2.hdf5'
@@ -130,8 +126,9 @@ def create_phono3py_force_constants(phono3py,
         if log_level:
             print("Reading fc2 from %s" % filename)
         num_atom = phono3py.get_phonon_supercell().get_number_of_atoms()
-        phonon_fc2 = read_fc2_from_hdf5(filename=filename)
-        if phonon_fc2.shape[0] != num_atom:
+        phonon_fc2 = read_fc2_from_hdf5(filename=filename,
+                                        p2s_map=p2s_map)
+        if phonon_fc2.shape[1] != num_atom:
             print("Matrix shape of fc2 doesn't agree with supercell size.")
             if log_level:
                 print_error()
@@ -143,25 +140,21 @@ def create_phono3py_force_constants(phono3py,
             print("Solving fc2")
 
         if phonon_supercell_matrix is None:
-            if phono3py.get_fc2() is None:
-                if not _create_phono3py_fc2(phono3py,
-                                            force_to_eVperA,
-                                            distance_to_A,
-                                            tsym_type,
-                                            symmetrize_fc2,
-                                            input_filename,
-                                            settings.get_use_alm(),
-                                            log_level):
-                    print("fc2 was not created properly.")
-                    if log_level:
-                        print_error()
-                    sys.exit(1)
-
+            if not _create_phono3py_fc2(phono3py,
+                                        force_to_eVperA,
+                                        distance_to_A,
+                                        symmetrize_fc2,
+                                        input_filename,
+                                        settings.get_use_alm(),
+                                        log_level):
+                print("fc2 was not created properly.")
+                if log_level:
+                    print_error()
+                sys.exit(1)
         else:
             if not _create_phono3py_phonon_fc2(phono3py,
                                                force_to_eVperA,
                                                distance_to_A,
-                                               tsym_type,
                                                symmetrize_fc2,
                                                input_filename,
                                                settings.get_use_alm(),
@@ -176,7 +169,9 @@ def create_phono3py_force_constants(phono3py,
             filename = 'fc2.' + output_filename + '.hdf5'
         if log_level:
             print("Writing fc2 to %s" % filename)
-        write_fc2_to_hdf5(phono3py.get_fc2(), filename=filename)
+        write_fc2_to_hdf5(phono3py.get_fc2(),
+                          filename=filename,
+                          p2s_map=p2s_map)
 
     if log_level:
         show_drift_force_constants(phono3py.get_fc2(), name='fc2')
@@ -184,8 +179,7 @@ def create_phono3py_force_constants(phono3py,
 def _create_phono3py_fc3(phono3py,
                          force_to_eVperA,
                          distance_to_A,
-                         tsym_type,
-                         symmetrize_fc3_r,
+                         symmetrize_fc3r,
                          symmetrize_fc2,
                          cutoff_distance,
                          input_filename,
@@ -222,9 +216,7 @@ def _create_phono3py_fc3(phono3py,
         forces_fc3,
         displacement_dataset=disp_dataset,
         cutoff_distance=cutoff_distance,
-        translational_symmetry_type=tsym_type,
-        is_permutation_symmetry=symmetrize_fc3_r,
-        is_permutation_symmetry_fc2=symmetrize_fc2,
+        symmetrize_fc3r=symmetrize_fc3r,
         use_alm=use_alm)
     if output_filename is None:
         filename = 'fc3.hdf5'
@@ -239,7 +231,6 @@ def _create_phono3py_fc3(phono3py,
 def _create_phono3py_fc2(phono3py,
                          force_to_eVperA,
                          distance_to_A,
-                         tsym_type,
                          symmetrize_fc2,
                          input_filename,
                          use_alm,
@@ -273,8 +264,7 @@ def _create_phono3py_fc2(phono3py,
     phono3py.produce_fc2(
         forces_fc2,
         displacement_dataset=disp_dataset,
-        is_permutation_symmetry=symmetrize_fc2,
-        translational_symmetry_type=tsym_type,
+        symmetrize_fc2=symmetrize_fc2,
         use_alm=use_alm)
 
     return True
@@ -282,7 +272,6 @@ def _create_phono3py_fc2(phono3py,
 def _create_phono3py_phonon_fc2(phono3py,
                                 force_to_eVperA,
                                 distance_to_A,
-                                tsym_type,
                                 symmetrize_fc2,
                                 input_filename,
                                 use_alm,
@@ -317,8 +306,7 @@ def _create_phono3py_phonon_fc2(phono3py,
     phono3py.produce_fc2(
         forces_fc2,
         displacement_dataset=disp_dataset,
-        is_permutation_symmetry=symmetrize_fc2,
-        translational_symmetry_type=tsym_type,
+        symmetrize_fc2=symmetrize_fc2,
         use_alm=use_alm)
 
     return True
