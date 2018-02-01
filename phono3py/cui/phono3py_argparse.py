@@ -55,6 +55,7 @@ def get_parser():
                         delta_fc2=False,
                         delta_fc2_sets_mode=False,
                         displacement_distance=None,
+                        fc_symmetry=False,
                         force_sets_to_forces_fc2_mode=None,
                         forces_fc3=False,
                         forces_fc3_file=False,
@@ -127,7 +128,6 @@ def get_parser():
                         tmax=None,
                         tmin=None,
                         tstep=None,
-                        tsym_type=None,
                         uplo='L',
                         use_alm=False,
                         use_ave_pp=False,
@@ -224,6 +224,9 @@ def get_parser():
     parser.add_argument(
         "--fc3", dest="read_fc3", action="store_true",
         help="Read third order force constants")
+    parser.add_argument(
+        "--fc-symmetry", "--sym-fc", dest="fc_symmetry", action="store_true",
+        help="Symmetrize force constants")
     parser.add_argument(
         "--freq-scale", dest="frequency_scale_factor", type=float,
         help=("Squared scale factor multiplied with fc2. Therefore frequency "
@@ -411,12 +414,6 @@ def get_parser():
     parser.add_argument(
         "--tstep", dest="tstep",
         help="Calculated temperature step")
-    parser.add_argument(
-        "--tsym", dest="is_translational_symmetry", action="store_true",
-        help="Impose translational invariance condition")
-    parser.add_argument(
-        "--tsym-type", dest="tsym_type", type=int,
-        help="Imposing type of translational invariance")
     parser.add_argument(
         "--tolerance", dest="symprec", type=float,
         help="Symmetry tolerance to search")

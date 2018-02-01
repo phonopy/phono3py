@@ -12,7 +12,7 @@ structure, fc2 may be calculated separately by phonopy.
 
 After unzipping FORCES_FC3.lzma, to obtain fc3.hdf5 and normal fc2.hdf5,
 
-% phono3py --dim="3 3 2" --sym-fc3r --sym-fc2 --tsym -c POSCAR-unitcell
+% phono3py --dim="3 3 2" --sym-fc -c POSCAR-unitcell
 
 Using 13x13x9 sampling mesh, lattice thermal conductivity is calculated by
 
@@ -36,7 +36,7 @@ command creates FORCES_FC2 and disp_fc2.yaml from FORCE_SETS:
 
 To recreate fc2.hdf5, --dim_fc2 option is added to the list of options,
 
-% phono3py --dim="3 3 2" --dim_fc2="5 5 3" --sym-fc3r --sym-fc2 --tsym -c POSCAR-unitcell
+% phono3py --dim="3 3 2" --dim_fc2="5 5 3" --sym-fc -c POSCAR-unitcell
 
 With this fc2, the thermal conductivity is calculated by
 

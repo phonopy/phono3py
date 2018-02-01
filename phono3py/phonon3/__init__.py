@@ -3,8 +3,12 @@ from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.cells import get_supercell, get_primitive
 from phonopy.structure.atoms import PhonopyAtoms as Atoms
 from phonopy.units import VaspToTHz
-from phonopy.harmonic.force_constants import (get_fc2, set_permutation_symmetry,
-                                              set_translational_invariance)
+from phonopy.harmonic.force_constants import (
+    get_fc2,
+    symmetrize_force_constants,
+    symmetrize_compact_force_constants,
+    set_permutation_symmetry,
+    set_translational_invariance)
 from phonopy.harmonic.displacement import get_least_displacements
 from phonopy.harmonic.displacement import direction_to_displacement as \
      direction_to_displacement_fc2
@@ -42,7 +46,7 @@ class Phono3py(object):
                  frequency_factor_to_THz=VaspToTHz,
                  is_symmetry=True,
                  is_mesh_symmetry=True,
-                 symmetrize_fc3_q=False,
+                 symmetrize_fc3q=False,
                  symprec=1e-5,
                  log_level=0,
                  lapack_zheev_uplo='L'):
@@ -56,7 +60,7 @@ class Phono3py(object):
         self._is_symmetry = is_symmetry
         self._is_mesh_symmetry = is_mesh_symmetry
         self._lapack_zheev_uplo =  lapack_zheev_uplo
-        self._symmetrize_fc3_q = symmetrize_fc3_q
+        self._symmetrize_fc3q = symmetrize_fc3q
         self._cutoff_frequency = cutoff_frequency
         self._log_level = log_level
 
@@ -146,7 +150,7 @@ class Phono3py(object):
             unit_conversion=unit_conversion,
             cutoff_frequency=self._cutoff_frequency,
             is_mesh_symmetry=self._is_mesh_symmetry,
-            symmetrize_fc3_q=self._symmetrize_fc3_q,
+            symmetrize_fc3q=self._symmetrize_fc3q,
             lapack_zheev_uplo=self._lapack_zheev_uplo)
         self._interaction.set_nac_q_direction(nac_q_direction=nac_q_direction)
         self._interaction.set_dynamical_matrix(
@@ -208,9 +212,7 @@ class Phono3py(object):
     def produce_fc2(self,
                     forces_fc2,
                     displacement_dataset=None,
-                    is_translational_symmetry=False,
-                    is_permutation_symmetry=False,
-                    translational_symmetry_type=None,
+                    symmetrize_fc2=False,
                     use_alm=False):
         if displacement_dataset is None:
             disp_dataset = self._displacement_dataset
@@ -226,30 +228,31 @@ class Phono3py(object):
         else:
             for forces, disp1 in zip(forces_fc2, disp_dataset['first_atoms']):
                 disp1['forces'] = forces
+
+            # full fc
+            p2s_map = None
+            # compact fc
+            # p2s_map = self._phonon_primitive.get_primitive_to_supercell_map()
             self._fc2 = get_fc2(self._phonon_supercell,
                                 self._phonon_supercell_symmetry,
-                                disp_dataset)
-            if is_permutation_symmetry:
-                set_permutation_symmetry(self._fc2)
-            if is_translational_symmetry:
-                tsym_type = 1
-            else:
-                tsym_type = 0
-            if translational_symmetry_type:
-                tsym_type = translational_symmetry_type
-            if tsym_type:
-                set_translational_invariance(
-                    self._fc2,
-                    translational_symmetry_type=tsym_type)
+                                disp_dataset,
+                                atom_list=p2s_map)
+            if symmetrize_fc2:
+                if self._fc2.shape[0] == self._fc2.shape[1]:
+                    symmetrize_force_constants(self._fc2)
+                else:
+                    symmetrize_compact_force_constants(
+                        self._fc2,
+                        self._phonon_supercell,
+                        self._phonon_supercell_symmetry,
+                        self._phonon_primitive.get_supercell_to_primitive_map(),
+                        self._phonon_primitive.get_primitive_to_supercell_map())
 
     def produce_fc3(self,
                     forces_fc3,
                     displacement_dataset=None,
                     cutoff_distance=None, # set fc3 zero
-                    is_translational_symmetry=False,
-                    is_permutation_symmetry=False,
-                    is_permutation_symmetry_fc2=False,
-                    translational_symmetry_type=None,
+                    symmetrize_fc3r=False,
                     use_alm=False):
         if displacement_dataset is None:
             disp_dataset = self._displacement_dataset
@@ -265,15 +268,15 @@ class Phono3py(object):
         else:
             fc2, fc3 = self._get_fc3(forces_fc3,
                                      disp_dataset,
-                                     cutoff_distance,
-                                     is_translational_symmetry,
-                                     is_permutation_symmetry,
-                                     is_permutation_symmetry_fc2,
-                                     translational_symmetry_type)
+                                     cutoff_distance)
+            if symmetrize_fc3r:
+                set_translational_invariance_fc3(fc3)
+                set_permutation_symmetry_fc3(fc3)
+                symmetrize_force_constants(fc2)
 
         # Set fc2 and fc3
         self._fc3 = fc3
-        if self._fc2 is None:
+        if self._fc2 is None: # Normally self._fc2 is overwritten by produce_fc2
             self._fc2 = fc2
 
     def cutoff_fc3_by_zero(self, cutoff_distance, fc3=None):
@@ -703,27 +706,11 @@ class Phono3py(object):
     def _get_fc3(self,
                  forces_fc3,
                  disp_dataset,
-                 cutoff_distance,
-                 is_translational_symmetry,
-                 is_permutation_symmetry,
-                 is_permutation_symmetry_fc2,
-                 translational_symmetry_type):
+                 cutoff_distance):
         for forces, disp1 in zip(forces_fc3, disp_dataset['first_atoms']):
             disp1['forces'] = forces
+        # full fc2 is obtained.
         fc2 = get_fc2(self._supercell, self._symmetry, disp_dataset)
-        if is_permutation_symmetry_fc2:
-            set_permutation_symmetry(fc2)
-
-        if is_translational_symmetry:
-            tsym_type = 1
-        else:
-            tsym_type = 0
-        if translational_symmetry_type:
-            tsym_type = translational_symmetry_type
-        if tsym_type:
-            set_translational_invariance(
-                fc2,
-                translational_symmetry_type=tsym_type)
 
         count = len(disp_dataset['first_atoms'])
         for disp1 in disp_dataset['first_atoms']:
@@ -735,8 +722,6 @@ class Phono3py(object):
             disp_dataset,
             fc2,
             self._symmetry,
-            translational_symmetry_type=tsym_type,
-            is_permutation_symmetry=is_permutation_symmetry,
             verbose=self._log_level)
 
         # Set fc3 elements zero beyond cutoff_distance

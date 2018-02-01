@@ -19,7 +19,7 @@ for the CRYSTAL interface, so the -c crystal.o parameter is not needed
    (Here the pre-calculated forces are available as FORCES_FC2 and FORCES_FC3)
 
 4) Create force constant files fc2.hdf5 and fc3.hdf5:
-   phono3py --crystal --dim="2 2 2" --dim-fc2="4 4 4" --sym-fc3r --sym-fc2 --tsym
+   phono3py --crystal --dim="2 2 2" --dim-fc2="4 4 4" --sym-fc
 
 5) Thermal conductivity calculation:
    phono3py --crystal --fc3 --fc2 --dim="2 2 2" --dim_fc2="4 4 4" --mesh="20 20 20" --br

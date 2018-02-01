@@ -2,6 +2,9 @@ import os
 import numpy as np
 import h5py
 
+from phonopy.file_IO import (write_force_constants_to_hdf5,
+                             read_force_constants_hdf5)
+
 def write_cell_yaml(w, supercell):
     w.write("lattice:\n")
     for axis in supercell.get_cell():
@@ -325,20 +328,18 @@ def write_fc2_dat(force_constants, filename='fc2.dat'):
                 w.write("%20.14f %20.14f %20.14f\n" % tuple(vec))
             w.write("\n")
 
-def write_fc2_to_hdf5(force_constants, filename='fc2.hdf5'):
-    with h5py.File(filename, 'w') as w:
-        w.create_dataset('fc2', data=force_constants)
+def write_fc2_to_hdf5(force_constants,
+                      filename='fc2.hdf5',
+                      p2s_map=None):
+    write_force_constants_to_hdf5(force_constants,
+                                  filename=filename,
+                                  p2s_map=p2s_map)
 
-def read_fc2_from_hdf5(filename='fc2.hdf5'):
-    with h5py.File(filename, 'r') as f:
-        if 'fc2' in f.keys():
-            fc2 = f['fc2'][:]
-        elif 'force_constants' in f.keys():
-            fc2 = f['force_constants'][:]
-        else:
-            fc2 = None
-        return fc2
-    return None
+def read_fc2_from_hdf5(filename='fc2.hdf5',
+                       p2s_map=None):
+    return read_force_constants_hdf5(filename=filename,
+                                     p2s_map=p2s_map)
+
 
 def write_triplets(triplets,
                    weights,

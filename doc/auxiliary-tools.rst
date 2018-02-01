@@ -42,7 +42,7 @@ example found in the example directory.
 
 ::
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="11 11 11" --sym_fc3r --sym_fc2 --tsym --br
+   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="11 11 11" --sym-fc --br
 
 Then using the output file, ``kappa-m111111.hdf5``, run
 ``phono3py-kaccum`` as follows::
