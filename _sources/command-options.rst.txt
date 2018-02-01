@@ -168,17 +168,18 @@ Read 3rd order force constants from ``fc3.hdf5``.
 
 .. _symmetrization_option:
 
-``--sym-fc2``, ``--sym-fc3r``, ``--tsym``: Symmetries force constants
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``--sym-fc2``, ``--sym-fc3r``, ``--sym-fc``: Symmetries force constants
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tags: ``SYMMETRIZE_FC2``, ``.TRUE.`` or ``.FALSE.``)
 (Setting tags: ``SYMMETRIZE_FC3``, ``.TRUE.`` or ``.FALSE.``)
-(Setting tags: ``TRANSLATION``, ``.TRUE.`` or ``.FALSE.``)
+(Setting tags: ``FC_SYMMETRY``, ``.TRUE.`` or ``.FALSE.``)
 
 These are used to symmetrize second- and third-order force
-constants. ``--sym-fc2`` and ``--sym-fc3r`` symmetrize those in real
-space by the index exchange, respectively, and ``--tsym`` symmetrizes
-by the translational invariance, respectively.
+constants. With ``--sym-fc2`` and ``--sym-fc3r``,
+the index exchange of real space force constantsand translational
+invariance symmetry are applied, respectively. ``--sym-fc`` is an
+alias to set both of ``--sym-fc2`` and ``--sym-fc3r``.
 
 ..
    ``--sym-fc3q`` symmetrizes third-order force constants in normal

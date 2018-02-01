@@ -3,13 +3,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Change Log &#8212; Phono3py v.1.12.5</title>
+    <title>Change Log &#8212; Phono3py v.1.12.7</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.12.5',
+        VERSION:     '1.12.7',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -46,7 +46,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>1.12.5</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.12.7</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -68,7 +68,7 @@
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-from-source-code">Installation from source code</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-on-macos">Installation on macOS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#an-example-of-installation-process">An example of installation process</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#multithreading-and-its-controlling-macro">Multithreading and its controlling macro</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#multithreading-and-its-controlling-by-c-macro">Multithreading and its controlling by C macro</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#trouble-shooting">Trouble shooting</a></li>
 </ul>
 </li>
@@ -131,7 +131,7 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Change Log</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#nov-29-2017">Nov-29-2017</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#feb-1-2018-version-1-12-7">Feb-1-2018: version 1.12.7</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#nov-22-2017-version-1-12-5">Nov-22-2017: version 1.12.5</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#nov-17-2017-version-1-12-3">Nov-17-2017: version 1.12.3</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#jun-18-2017-version-1-11-13">Jun-18-2017: version 1.11.13</a></li>
@@ -175,7 +175,7 @@
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Change Log</a><ul>
-<li><a class="reference internal" href="#nov-29-2017">Nov-29-2017</a></li>
+<li><a class="reference internal" href="#feb-1-2018-version-1-12-7">Feb-1-2018: version 1.12.7</a></li>
 <li><a class="reference internal" href="#nov-22-2017-version-1-12-5">Nov-22-2017: version 1.12.5</a></li>
 <li><a class="reference internal" href="#nov-17-2017-version-1-12-3">Nov-17-2017: version 1.12.3</a></li>
 <li><a class="reference internal" href="#jun-18-2017-version-1-11-13">Jun-18-2017: version 1.11.13</a></li>
@@ -244,11 +244,17 @@
       
   <div class="section" id="change-log">
 <span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="nov-29-2017">
-<h2>Nov-29-2017<a class="headerlink" href="#nov-29-2017" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="feb-1-2018-version-1-12-7">
+<h2>Feb-1-2018: version 1.12.7<a class="headerlink" href="#feb-1-2018-version-1-12-7" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Documentation of <code class="docutils literal"><span class="pre">--write-phonon</span></code> and <code class="docutils literal"><span class="pre">--read-phonon</span></code> options is
-written.</li>
+<li><code class="docutils literal"><span class="pre">--tsym</span></code> option is removed. Now with <code class="docutils literal"><span class="pre">--sym-fc3r</span></code> and
+<code class="docutils literal"><span class="pre">--sym-fc2</span></code> options,
+translational invariance symmetry is also applied.</li>
+<li><code class="docutils literal"><span class="pre">--sym-fc</span></code> option is added. This is just an alias to specify both
+<code class="docutils literal"><span class="pre">--sym-fc3r</span></code> and <code class="docutils literal"><span class="pre">--sym-fc2</span></code> together.</li>
+<li>Documentation on <code class="docutils literal"><span class="pre">--write-phonon</span></code> and <code class="docutils literal"><span class="pre">--read-phonon</span></code> options is
+written. These options are used to save harmonic phonon infromation
+on strage.</li>
 </ul>
 </div>
 <div class="section" id="nov-22-2017-version-1-12-5">
@@ -576,7 +582,7 @@ when a mesh number is an even number, it is more carefully treated.</li>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.<br/>
     </p>
   </div>
 </footer>

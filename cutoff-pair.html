@@ -3,13 +3,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Crude force constants calculation by cutoff pair-distance &#8212; Phono3py v.1.12.5</title>
+    <title>Crude force constants calculation by cutoff pair-distance &#8212; Phono3py v.1.12.7</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '1.12.5',
+        VERSION:     '1.12.7',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -47,7 +47,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>1.12.5</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.12.7</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -69,7 +69,7 @@
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-from-source-code">Installation from source code</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-on-macos">Installation on macOS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#an-example-of-installation-process">An example of installation process</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#multithreading-and-its-controlling-macro">Multithreading and its controlling macro</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#multithreading-and-its-controlling-by-c-macro">Multithreading and its controlling by C macro</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#trouble-shooting">Trouble shooting</a></li>
 </ul>
 </li>
@@ -501,7 +501,7 @@ num_displacements_created: 111
   300.0     119.466    119.466    119.466     -0.000     -0.000      0.000
   300.0     119.447    119.447    119.447     -0.000     -0.000      0.000
   300.0     119.445    119.445    119.445     -0.000     -0.000      0.000
-% for i in {2..10};do phono3py --dim=&quot;2 2 2&quot; --pa=&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot; -c POSCAR-unitcell --mesh=&quot;11 11 11&quot; --sym-fc3r --sym-fc2 --tsym --br -i $i -o sym-$i|tee std.sym-$i.out;done
+% for i in {2..10};do phono3py --dim=&quot;2 2 2&quot; --pa=&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot; -c POSCAR-unitcell --mesh=&quot;11 11 11&quot; --sym-fc --br -i $i -o sym-$i|tee std.sym-$i.out;done
 % for i in {2..10};do egrep &#39;^\s+300&#39; std.sym-$i.out;done
   300.0     124.626    124.626    124.626     -0.000      0.000      0.000
   300.0     119.721    119.721    119.721     -0.000      0.000      0.000
@@ -586,7 +586,7 @@ num_displacements_created: 1254
   300.0     224.645    224.645    215.260     -0.000     -0.000     -0.000
   300.0     224.769    224.769    215.220     -0.000     -0.000     -0.000
   300.0     224.650    224.650    215.090     -0.000     -0.000     -0.000
-% for i in {2..22};do phono3py --dim=&quot;3 3 2&quot; -c POSCAR-unitcell --mesh=&quot;13 13 9&quot; --sym-fc3r --sym-fc2 --tsym --br --nac -i $i -o sym-$i|tee std.sym-$i.out; done
+% for i in {2..22};do phono3py --dim=&quot;3 3 2&quot; -c POSCAR-unitcell --mesh=&quot;13 13 9&quot; --sym-fc --br --nac -i $i -o sym-$i|tee std.sym-$i.out; done
 % for i in {2..22};do egrep &#39;^\s+300\.0&#39; std.sym-$i.out;done
   300.0     224.122    224.122    213.086      0.000     -0.000      0.000
   300.0     225.394    225.394    215.683      0.000     -0.000      0.000
@@ -635,7 +635,7 @@ num_displacements_created: 1254
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.<br/>
     </p>
   </div>
 </footer>

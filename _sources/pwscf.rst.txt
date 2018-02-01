@@ -64,7 +64,7 @@ Workflow
 
    ``fc3.hdf5`` and ``fc2.hdf5`` files are created by::
 
-      % phono3py --pwscf --dim="2 2 2" -c Si.in --sym_fc3r --sym_fc2 --tsym
+      % phono3py --pwscf --dim="2 2 2" -c Si.in --sym-fc
 
 5) Calculate lattice thermal conductivity, e.g., by::
 
