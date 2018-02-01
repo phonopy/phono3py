@@ -57,7 +57,7 @@ deploy:
         repo: atztogo/phono3py
         branch: rc
         tags: false
-        # python: 2.7
+        python: 2.7
 
     # testing anaconda
     - provider: script
@@ -79,7 +79,7 @@ deploy:
       on:
         branch: master
         tags: false
-        # python: 2.7  
+        python: 2.7  
 
     # production anaconda
     - provider: script
