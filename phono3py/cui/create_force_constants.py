@@ -33,7 +33,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
-from phonopy.harmonic.force_constants import show_drift_force_constants
+from phonopy.harmonic.force_constants import (
+    show_drift_force_constants,
+    symmetrize_force_constants,
+    symmetrize_compact_force_constants)
 from phono3py.phonon3.fc3 import show_drift_fc3
 from phono3py.file_IO import (parse_disp_fc3_yaml,
                               parse_disp_fc2_yaml,
@@ -45,6 +48,9 @@ from phono3py.file_IO import (parse_disp_fc3_yaml,
                               write_fc2_to_hdf5)
 from phono3py.cui.show_log import (show_phono3py_force_constants_settings,
                                    print_error, file_exists)
+from phono3py.phonon3.fc3 import (set_permutation_symmetry_fc3,
+                                  set_translational_invariance_fc3)
+
 
 def create_phono3py_force_constants(phono3py,
                                     phonon_supercell_matrix,
@@ -95,6 +101,11 @@ def create_phono3py_force_constants(phono3py,
                 if log_level:
                     print_error()
                 sys.exit(1)
+
+            if symmetrize_fc3r:
+                set_translational_invariance_fc3(fc3)
+                set_permutation_symmetry_fc3(fc3)
+
             phono3py.set_fc3(fc3)
         else: # fc3 from FORCES_FC3
             if not _create_phono3py_fc3(phono3py,
@@ -117,6 +128,7 @@ def create_phono3py_force_constants(phono3py,
     # fc2
     phonon_primitive = phono3py.get_phonon_primitive()
     p2s_map = phonon_primitive.get_primitive_to_supercell_map()
+    s2p_map = phonon_primitive.get_supercell_to_primitive_map()
     if read_fc2:
         if input_filename is None:
             filename = 'fc2.hdf5'
@@ -125,7 +137,9 @@ def create_phono3py_force_constants(phono3py,
         file_exists(filename, log_level)
         if log_level:
             print("Reading fc2 from %s" % filename)
-        num_atom = phono3py.get_phonon_supercell().get_number_of_atoms()
+
+        phonon_supercell = phono3py.get_phonon_supercell()
+        num_atom = phonon_supercell.get_number_of_atoms()
         phonon_fc2 = read_fc2_from_hdf5(filename=filename,
                                         p2s_map=p2s_map)
         if phonon_fc2.shape[1] != num_atom:
@@ -134,6 +148,16 @@ def create_phono3py_force_constants(phono3py,
                 print_error()
             sys.exit(1)
 
+        if symmetrize_fc2:
+            if phonon_fc2.shape[0] == phonon_fc2.shape[1]:
+                symmetrize_force_constants(phonon_fc2)
+            else:
+                symmetry = phono3py.get_phonon_supercell_symmetry()
+                symmetrize_compact_force_constants(phonon_fc2,
+                                                   phonon_supercell,
+                                                   symmetry,
+                                                   s2p_map,
+                                                   p2s_map)
         phono3py.set_fc2(phonon_fc2)
     else:
         if log_level:
