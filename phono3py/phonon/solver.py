@@ -1,42 +1,5 @@
 import numpy as np
 
-def get_phonons_at_qpoints(frequencies,
-                           eigenvectors,
-                           dm,
-                           qpoints,
-                           frequency_factor_to_THz,
-                           nac_q_direction=None,
-                           lapack_zheev_uplo='L'):
-    import phono3py._lapackepy as lapackepy
-
-    (svecs,
-     multiplicity,
-     masses,
-     rec_lattice,
-     born,
-     nac_factor,
-     dielectric) = _extract_params(dm)
-
-    fc_p2s, fc_s2p = _get_fc_elements_mapping(dm)
-
-    lapackepy.phonons_at_qpoints(
-        frequencies,
-        eigenvectors,
-        np.array(qpoints, dtype='double', order='C'),
-        dm.get_force_constants(),
-        svecs,
-        multiplicity,
-        masses,
-        fc_p2s,
-        fc_s2p,
-        frequency_factor_to_THz,
-        born,
-        dielectric,
-        rec_lattice,
-        nac_q_direction,
-        nac_factor,
-        lapack_zheev_uplo)
-
 def set_phonon_c(dm,
                  frequencies,
                  eigenvectors,

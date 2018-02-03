@@ -33,11 +33,47 @@
 /* POSSIBILITY OF SUCH DAMAGE. */
 
 #include <math.h>
+#include <string.h>
 #include <dynmat.h>
 #include <phonoc_array.h>
 #include <phonon.h>
 #include <lapack_wrapper.h>
 
+static void get_undone_phonons(Darray *frequencies,
+                               Carray *eigenvectors,
+                               const int *undone_grid_points,
+                               const int num_undone_grid_points,
+                               const int *grid_address,
+                               const int *mesh,
+                               const Darray *fc2,
+                               const Darray *svecs_fc2,
+                               const Iarray *multi_fc2,
+                               const double *masses_fc2,
+                               const int *p2s_fc2,
+                               const int *s2p_fc2,
+                               const double unit_conversion_factor,
+                               const double *born,
+                               const double *dielectric,
+                               const double *reciprocal_lattice,
+                               const double *q_direction,
+                               const double nac_factor,
+                               const char uplo);
+static int get_phonons(lapack_complex_double *eigvecs,
+                       double *freqs,
+                       const double q[3],
+                       const Darray *fc2,
+                       const double *masses,
+                       const int *p2s,
+                       const int *s2p,
+                       const Iarray *multi,
+                       const Darray *svecs,
+                       const double *born,
+                       const double *dielectric,
+                       const double *reciprocal_lattice,
+                       const double *q_direction,
+                       const double nac_factor,
+                       const double unit_conversion_factor,
+                       const char uplo);
 static int collect_undone_grid_points(int *undone,
                                       char *phonon_done,
                                       const int num_grid_points,
@@ -95,25 +131,45 @@ void set_phonons_at_gridpoints(Darray *frequencies,
   free(undone);
 }
 
-void get_undone_phonons(Darray *frequencies,
-                        Carray *eigenvectors,
-                        const int *undone_grid_points,
-                        const int num_undone_grid_points,
-                        const int *grid_address,
-                        const int *mesh,
-                        const Darray *fc2,
-                        const Darray *svecs_fc2,
-                        const Iarray *multi_fc2,
-                        const double *masses_fc2,
-                        const int *p2s_fc2,
-                        const int *s2p_fc2,
-                        const double unit_conversion_factor,
-                        const double *born,
-                        const double *dielectric,
-                        const double *reciprocal_lattice,
-                        const double *q_direction,
-                        const double nac_factor,
-                        const char uplo)
+static int collect_undone_grid_points(int *undone,
+                                      char *phonon_done,
+                                      const int num_grid_points,
+                                      const int *grid_points)
+{
+  int i, gp, num_undone;
+
+  num_undone = 0;
+  for (i = 0; i < num_grid_points; i++) {
+    gp = grid_points[i];
+    if (phonon_done[gp] == 0) {
+      undone[num_undone] = gp;
+      num_undone++;
+      phonon_done[gp] = 1;
+    }
+  }
+
+  return num_undone;
+}
+
+static void get_undone_phonons(Darray *frequencies,
+                               Carray *eigenvectors,
+                               const int *undone_grid_points,
+                               const int num_undone_grid_points,
+                               const int *grid_address,
+                               const int *mesh,
+                               const Darray *fc2,
+                               const Darray *svecs_fc2,
+                               const Iarray *multi_fc2,
+                               const double *masses_fc2,
+                               const int *p2s_fc2,
+                               const int *s2p_fc2,
+                               const double unit_conversion_factor,
+                               const double *born,
+                               const double *dielectric,
+                               const double *reciprocal_lattice,
+                               const double *q_direction,
+                               const double nac_factor,
+                               const char uplo)
 {
   int i, j, gp, num_band;
   double q[3];
@@ -168,27 +224,32 @@ void get_undone_phonons(Darray *frequencies,
   }
 }
 
-int get_phonons(lapack_complex_double *a,
-                double *w,
-                const double q[3],
-                const Darray *fc2,
-                const double *masses,
-                const int *p2s,
-                const int *s2p,
-                const Iarray *multi,
-                const Darray *svecs,
-                const double *born,
-                const double *dielectric,
-                const double *reciprocal_lattice,
-                const double *q_direction,
-                const double nac_factor,
-                const double unit_conversion_factor,
-                const char uplo)
+static int get_phonons(lapack_complex_double *eigvecs,
+                       double *freqs,
+                       const double q[3],
+                       const Darray *fc2,
+                       const double *masses,
+                       const int *p2s,
+                       const int *s2p,
+                       const Iarray *multi,
+                       const Darray *svecs,
+                       const double *born,
+                       const double *dielectric,
+                       const double *reciprocal_lattice,
+                       const double *q_direction,
+                       const double nac_factor,
+                       const double unit_conversion_factor,
+                       const char uplo)
 {
   int i, j, num_patom, num_satom, info;
   double q_cart[3];
-  double *charge_sum;
+  double *charge_sum, *eigvals;
   double inv_dielectric_factor, dielectric_factor, tmp_val;
+  lapack_complex_double* dynmat;
+
+  charge_sum = NULL;
+  eigvals = NULL;
+  dynmat = NULL;
 
   num_patom = multi->dims[1];
   num_satom = multi->dims[0];
@@ -237,7 +298,9 @@ int get_phonons(lapack_complex_double *a,
     charge_sum = NULL;
   }
 
-  get_dynamical_matrix_at_q((double*)a,
+  dynmat = (lapack_complex_double*) malloc(sizeof(lapack_complex_double) *
+                                           num_patom * num_patom * 9);
+  get_dynamical_matrix_at_q((double*)dynmat,
                             num_patom,
                             num_satom,
                             fc2->data,
@@ -251,34 +314,36 @@ int get_phonons(lapack_complex_double *a,
                             0);
   if (born) {
     free(charge_sum);
+    charge_sum = NULL;
   }
 
-  info = phonopy_zheev(w, a, num_patom * 3, uplo);
-
+  eigvals = (double*) malloc(sizeof(double) * num_patom * 3);
+  info = phonopy_zheev(eigvals, dynmat, num_patom * 3, uplo);
+  memcpy(eigvecs, dynmat,
+         sizeof(lapack_complex_double) * num_patom * num_patom * 9);
   for (i = 0; i < num_patom * 3; i++) {
-    w[i] =
-      sqrt(fabs(w[i])) * ((w[i] > 0) - (w[i] < 0)) * unit_conversion_factor;
+    freqs[i] =
+      sqrt(fabs(eigvals[i])) *
+      ((eigvals[i] > 0) - (eigvals[i] < 0)) * unit_conversion_factor;
   }
+
+  get_dynamical_matrix_at_q((double*)dynmat,
+                            num_patom,
+                            num_satom,
+                            fc2->data,
+                            q,
+                            svecs->data,
+                            multi->data,
+                            masses,
+                            s2p,
+                            p2s,
+                            charge_sum,
+                            0);
+
+  free(dynmat);
+  dynmat = NULL;
+  free(eigvals);
+  eigvals = NULL;
 
   return info;
-}
-
-static int collect_undone_grid_points(int *undone,
-                                      char *phonon_done,
-                                      const int num_grid_points,
-                                      const int *grid_points)
-{
-  int i, gp, num_undone;
-
-  num_undone = 0;
-  for (i = 0; i < num_grid_points; i++) {
-    gp = grid_points[i];
-    if (phonon_done[gp] == 0) {
-      undone[num_undone] = gp;
-      num_undone++;
-      phonon_done[gp] = 1;
-    }
-  }
-
-  return num_undone;
 }

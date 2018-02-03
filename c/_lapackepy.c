@@ -41,7 +41,6 @@
 #include <phonoc_array.h>
 
 static PyObject * py_set_phonons_at_gridpoints(PyObject *self, PyObject *args);
-static PyObject * py_get_phonons_at_qpoints(PyObject *self, PyObject *args);
 static PyObject * py_phonopy_pinv(PyObject *self, PyObject *args);
 static PyObject * py_phonopy_zheev(PyObject *self, PyObject *args);
 
@@ -67,8 +66,6 @@ static PyMethodDef _lapackepy_methods[] = {
   {"error_out", (PyCFunction)error_out, METH_NOARGS, NULL},
   {"phonons_at_gridpoints", py_set_phonons_at_gridpoints, METH_VARARGS,
    "Set phonons at grid points"},
-  {"phonons_at_qpoints", py_get_phonons_at_qpoints, METH_VARARGS,
-   "Get phonons at a q-point"},
   {"pinv", py_phonopy_pinv, METH_VARARGS, "Pseudo-inverse using Lapack dgesvd"},
   {"zheev", py_phonopy_zheev, METH_VARARGS, "Lapack zheev wrapper"},
   {NULL, NULL, 0, NULL}
@@ -250,126 +247,6 @@ static PyObject * py_set_phonons_at_gridpoints(PyObject *self, PyObject *args)
   free(fc2);
   free(svecs_fc2);
   free(multi_fc2);
-
-  Py_RETURN_NONE;
-}
-
-
-static PyObject * py_get_phonons_at_qpoints(PyObject *self, PyObject *args)
-{
-  PyArrayObject* frequencies_py;
-  PyArrayObject* eigenvectors_py;
-  PyArrayObject* qpoints_py;
-  PyArrayObject* shortest_vectors_py;
-  PyArrayObject* multiplicity_py;
-  PyArrayObject* fc2_py;
-  PyArrayObject* atomic_masses_py;
-  PyArrayObject* p2s_map_py;
-  PyArrayObject* s2p_map_py;
-  PyArrayObject* reciprocal_lattice_py;
-  PyArrayObject* born_effective_charge_py;
-  PyArrayObject* q_direction_py;
-  PyArrayObject* dielectric_constant_py;
-  double nac_factor, unit_conversion_factor;
-  char* uplo;
-
-  int i;
-  double* born;
-  double* dielectric;
-  double *q_dir;
-  double* freqs;
-  int num_band;
-  lapack_complex_double* eigvecs;
-  double (*qpoints)[3];
-  int num_q;
-  Darray* fc2;
-  Darray* svecs;
-  Iarray* multi;
-  double* masses;
-  int* p2s;
-  int* s2p;
-  double* rec_lat;
-
-  if (sizeof(lapack_complex_double) != sizeof(npy_complex128)) {
-    printf("***********************************************************\n");
-    printf("* sizeof(lapack_complex_double) != sizeof(npy_complex128) *\n");
-    printf("* Please report this problem to atz.togo@gmail.com        *\n");
-    printf("***********************************************************\n");
-    return NULL;
-  }
-
-  if (!PyArg_ParseTuple(args, "OOOOOOOOOdOOOOds",
-                        &frequencies_py,
-                        &eigenvectors_py,
-                        &qpoints_py,
-                        &fc2_py,
-                        &shortest_vectors_py,
-                        &multiplicity_py,
-                        &atomic_masses_py,
-                        &p2s_map_py,
-                        &s2p_map_py,
-                        &unit_conversion_factor,
-                        &born_effective_charge_py,
-                        &dielectric_constant_py,
-                        &reciprocal_lattice_py,
-                        &q_direction_py,
-                        &nac_factor,
-                        &uplo)) {
-    return NULL;
-  }
-
-  freqs = (double*)PyArray_DATA(frequencies_py);
-  num_band = PyArray_DIMS(frequencies_py)[1];
-  eigvecs = (lapack_complex_double*)PyArray_DATA(eigenvectors_py);
-  qpoints = (double(*)[3])PyArray_DATA(qpoints_py);
-  num_q = PyArray_DIMS(qpoints_py)[0];
-  fc2 = convert_to_darray(fc2_py);
-  svecs = convert_to_darray(shortest_vectors_py);
-  multi = convert_to_iarray(multiplicity_py);
-  masses = (double*)PyArray_DATA(atomic_masses_py);
-  p2s = (int*)PyArray_DATA(p2s_map_py);
-  s2p = (int*)PyArray_DATA(s2p_map_py);
-  rec_lat = (double*)PyArray_DATA(reciprocal_lattice_py);
-
-  if ((PyObject*)born_effective_charge_py == Py_None) {
-    born = NULL;
-  } else {
-    born = (double*)PyArray_DATA(born_effective_charge_py);
-  }
-  if ((PyObject*)dielectric_constant_py == Py_None) {
-    dielectric = NULL;
-  } else {
-    dielectric = (double*)PyArray_DATA(dielectric_constant_py);
-  }
-  if ((PyObject*)q_direction_py == Py_None) {
-    q_dir = NULL;
-  } else {
-    q_dir = (double*)PyArray_DATA(q_direction_py);
-  }
-
-#pragma omp parallel for
-  for (i = 0; i < num_q; i++) {
-    get_phonons(eigvecs + num_band * num_band * i,
-                freqs + num_band * i,
-                qpoints[i],
-                fc2,
-                masses,
-                p2s,
-                s2p,
-                multi,
-                svecs,
-                born,
-                dielectric,
-                rec_lat,
-                q_dir,
-                nac_factor,
-                unit_conversion_factor,
-                uplo[0]);
-  }
-
-  free(fc2);
-  free(svecs);
-  free(multi);
 
   Py_RETURN_NONE;
 }
