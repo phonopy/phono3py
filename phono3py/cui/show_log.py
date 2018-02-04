@@ -204,6 +204,11 @@ def show_phono3py_settings(settings,
         (settings.get_is_bterta() or settings.get_is_lbte())):
         print("Use averaged ph-ph interaction")
 
+    const_ave_pp = settings.get_constant_averaged_pp_interaction()
+    if (const_ave_pp is not None and
+        (settings.get_is_bterta() or settings.get_is_lbte())):
+        print("Constant ph-ph interaction: %6.3e" % const_ave_pp)
+
     if log_level > 1:
         print("Frequency factor to THz: %s" % frequency_factor_to_THz)
         if frequency_step is not None:
