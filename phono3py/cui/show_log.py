@@ -93,7 +93,7 @@ def show_phono3py_cells(symmetry,
     print("-" * 19 + " ratio (supercell for fc)/(primitive) " + "-" * 19)
     for vec in np.dot(supercell.get_cell(),
                       np.linalg.inv(primitive.get_cell())):
-        print(("%5.2f" * 3) % tuple(vec))
+        print(("  " + "%6.2f" * 3) % tuple(vec))
     if settings.get_phonon_supercell_matrix() is not None:
         print("-" * 19 + " primitive cell for harmonic phonon " + "-" * 20)
         print_cell(phonon_primitive)
