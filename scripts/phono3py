@@ -576,8 +576,10 @@ if log_level and run_mode is not None:
                            grid_points,
                            cutoff_frequency,
                            frequency_factor_to_THz,
+                           frequency_scale_factor,
                            frequency_step,
                            num_frequency_points,
+                           nac_params,
                            log_level)
 
 #############
