@@ -10,7 +10,7 @@ def set_phonon_c(dm,
                  frequency_factor_to_THz,
                  nac_q_direction,
                  lapack_zheev_uplo):
-    import phono3py._lapackepy as lapackepy
+    import phono3py._phono3py as phono3c
 
     (svecs,
      multiplicity,
@@ -22,7 +22,7 @@ def set_phonon_c(dm,
 
     fc_p2s, fc_s2p = _get_fc_elements_mapping(dm)
 
-    lapackepy.phonons_at_gridpoints(
+    phono3c.phonons_at_gridpoints(
         frequencies,
         eigenvectors,
         phonon_done,

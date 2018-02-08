@@ -38,7 +38,7 @@
 #include <phonoc_array.h>
 #include <lapack_wrapper.h>
 
-void set_phonons_at_gridpoints(Darray *frequencies,
+void get_phonons_at_gridpoints(Darray *frequencies,
                                Carray *eigenvectors,
                                char *phonon_done,
                                const Iarray *grid_points,
