@@ -31,6 +31,7 @@ if config_var is not None and "-Werror=declaration-after-statement" in config_va
 
 sources = ['c/_phono3py.c',
            'c/harmonic/dynmat.c',
+           'c/harmonic/phonon.c',
            'c/harmonic/lapack_wrapper.c',
            'c/harmonic/phonoc_array.c',
            'c/harmonic/phonoc_utils.c',

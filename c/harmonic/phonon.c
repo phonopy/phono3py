@@ -79,7 +79,7 @@ static int collect_undone_grid_points(int *undone,
                                       const int num_grid_points,
                                       const int *grid_points);
 
-void set_phonons_at_gridpoints(Darray *frequencies,
+void get_phonons_at_gridpoints(Darray *frequencies,
                                Carray *eigenvectors,
                                char *phonon_done,
                                const Iarray *grid_points,
@@ -245,11 +245,9 @@ static int get_phonons(lapack_complex_double *eigvecs,
   double q_cart[3];
   double *charge_sum, *eigvals;
   double inv_dielectric_factor, dielectric_factor, tmp_val;
-  lapack_complex_double* dynmat;
 
   charge_sum = NULL;
   eigvals = NULL;
-  dynmat = NULL;
 
   num_patom = multi->dims[1];
   num_satom = multi->dims[0];
@@ -298,9 +296,8 @@ static int get_phonons(lapack_complex_double *eigvecs,
     charge_sum = NULL;
   }
 
-  dynmat = (lapack_complex_double*) malloc(sizeof(lapack_complex_double) *
-                                           num_patom * num_patom * 9);
-  get_dynamical_matrix_at_q((double*)dynmat,
+  /* Store dynamical matrix in eigvecs array. */
+  get_dynamical_matrix_at_q((double*)eigvecs,
                             num_patom,
                             num_satom,
                             fc2->data,
@@ -317,33 +314,15 @@ static int get_phonons(lapack_complex_double *eigvecs,
     charge_sum = NULL;
   }
 
-  eigvals = (double*) malloc(sizeof(double) * num_patom * 3);
-  info = phonopy_zheev(eigvals, dynmat, num_patom * 3, uplo);
-  memcpy(eigvecs, dynmat,
-         sizeof(lapack_complex_double) * num_patom * num_patom * 9);
+  /* Store eigenvalues in freqs array. */
+  /* Eigenvectors are overwritten on eigvecs array. */
+  info = phonopy_zheev(freqs, eigvecs, num_patom * 3, uplo);
+
+  /* Sqrt of eigenvalues are re-stored in freqs array.*/
   for (i = 0; i < num_patom * 3; i++) {
-    freqs[i] =
-      sqrt(fabs(eigvals[i])) *
-      ((eigvals[i] > 0) - (eigvals[i] < 0)) * unit_conversion_factor;
+    freqs[i] = sqrt(fabs(freqs[i])) *
+      ((freqs[i] > 0) - (freqs[i] < 0)) * unit_conversion_factor;
   }
-
-  get_dynamical_matrix_at_q((double*)dynmat,
-                            num_patom,
-                            num_satom,
-                            fc2->data,
-                            q,
-                            svecs->data,
-                            multi->data,
-                            masses,
-                            s2p,
-                            p2s,
-                            charge_sum,
-                            0);
-
-  free(dynmat);
-  dynmat = NULL;
-  free(eigvals);
-  eigvals = NULL;
 
   return info;
 }
