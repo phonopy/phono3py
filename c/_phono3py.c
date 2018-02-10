@@ -300,8 +300,8 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
   double nac_factor, unit_conversion_factor;
   char* uplo;
 
-  double* born;
-  double* dielectric;
+  double (*born)[3][3];
+  double (*dielectric)[3];
   double *q_dir;
   double* freqs;
   lapack_complex_double* eigvecs;
@@ -315,7 +315,7 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
   double* masses_fc2;
   int* p2s_fc2;
   int* s2p_fc2;
-  double* rec_lat;
+  double (*rec_lat)[3];
   int num_patom;
   int num_satom;
   int num_phonons;
@@ -356,7 +356,7 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
   masses_fc2 = (double*)PyArray_DATA(py_masses_fc2);
   p2s_fc2 = (int*)PyArray_DATA(py_p2s_map_fc2);
   s2p_fc2 = (int*)PyArray_DATA(py_s2p_map_fc2);
-  rec_lat = (double*)PyArray_DATA(py_reciprocal_lattice);
+  rec_lat = (double(*)[3])PyArray_DATA(py_reciprocal_lattice);
   num_patom = PyArray_DIMS(py_multiplicity_fc2)[1];
   num_satom = PyArray_DIMS(py_multiplicity_fc2)[0];
   num_phonons = PyArray_DIMS(py_frequencies)[0];
@@ -364,12 +364,12 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
   if ((PyObject*)py_born_effective_charge == Py_None) {
     born = NULL;
   } else {
-    born = (double*)PyArray_DATA(py_born_effective_charge);
+    born = (double(*)[3][3])PyArray_DATA(py_born_effective_charge);
   }
   if ((PyObject*)py_dielectric_constant == Py_None) {
     dielectric = NULL;
   } else {
-    dielectric = (double*)PyArray_DATA(py_dielectric_constant);
+    dielectric = (double(*)[3])PyArray_DATA(py_dielectric_constant);
   }
   if ((PyObject*)py_q_direction == Py_None) {
     q_dir = NULL;
