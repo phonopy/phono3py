@@ -38,28 +38,32 @@
 #include <dynmat.h>
 #include <lapack_wrapper.h>
 
-void get_phonons_at_gridpoints(double *frequencies,
-                               lapack_complex_double *eigenvectors,
-                               char *phonon_done,
-                               const int num_phonons,
-                               const int *grid_points,
-                               const int num_grid_points,
-                               const int *grid_address,
-                               const int *mesh,
-                               const double *fc2,
-                               PHPYCONST double (*svecs_fc2)[27][3],
-                               const int *multi_fc2,
-                               const int num_patom,
-                               const int num_satom,
-                               const double *masses_fc2,
-                               const int *p2s_fc2,
-                               const int *s2p_fc2,
-                               const double unit_conversion_factor,
-                               PHPYCONST double (*born)[3][3],
-                               PHPYCONST double dielectric[3][3],
-                               PHPYCONST double reciprocal_lattice[3][3],
-                               const double q_direction[3],
-                               const double nac_factor,
-                               const char uplo);
+void
+phn_get_phonons_at_gridpoints(double *frequencies,
+                              lapack_complex_double *eigenvectors,
+                              char *phonon_done,
+                              const int num_phonons,
+                              const int *grid_points,
+                              const int num_grid_points,
+                              PHPYCONST int (*grid_address)[3],
+                              const int mesh[3],
+                              const double *fc2,
+                              PHPYCONST double(*svecs_fc2)[27][3],
+                              const int *multi_fc2,
+                              const int num_patom,
+                              const int num_satom,
+                              const double *masses_fc2,
+                              const int *p2s_fc2,
+                              const int *s2p_fc2,
+                              const double unit_conversion_factor,
+                              PHPYCONST double (*born)[3][3],
+                              PHPYCONST double dielectric[3][3],
+                              PHPYCONST double reciprocal_lattice[3][3],
+                              const double *q_direction, /* must be pointer */
+                              const double nac_factor,
+                              const double *dd_q0, /* For Gonze NAC */
+                              PHPYCONST double(*G_list)[3], /* For Gonze NAC */
+                              const double lambda, /* For Gonze NAC */
+                              const char uplo);
 
 #endif

@@ -46,8 +46,8 @@ static void get_undone_phonons(double *frequencies,
                                lapack_complex_double *eigenvectors,
                                const int *undone_grid_points,
                                const int num_undone_grid_points,
-                               const int *grid_address,
-                               const int *mesh,
+                               PHPYCONST int (*grid_address)[3],
+                               const int mesh[3],
                                const double *fc2,
                                PHPYCONST double(*svecs_fc2)[27][3],
                                const int *multi_fc2,
@@ -60,8 +60,11 @@ static void get_undone_phonons(double *frequencies,
                                PHPYCONST double (*born)[3][3],
                                PHPYCONST double dielectric[3][3],
                                PHPYCONST double reciprocal_lattice[3][3],
-                               const double q_direction[3],
+                               const double *q_direction,
                                const double nac_factor,
+                               const double *dd_q0, /* For Gonze NAC */
+                               PHPYCONST double(*G_list)[3], /* For Gonze NAC */
+                               const double lambda, /* For Gonze NAC */
                                const char uplo);
 static int get_phonons(lapack_complex_double *eigvecs,
                        double *freqs,
@@ -74,28 +77,34 @@ static int get_phonons(lapack_complex_double *eigvecs,
                        const int num_patom,
                        const int num_satom,
                        PHPYCONST double(*svecs)[27][3],
+                       const int is_wang_nac,
                        PHPYCONST double (*born)[3][3],
                        PHPYCONST double dielectric[3][3],
                        PHPYCONST double reciprocal_lattice[3][3],
-                       const double q_direction[3],
+                       const double *q_direction,
                        const double nac_factor,
+                       const double *dd_q0, /* For Gonze NAC */
+                       PHPYCONST double(*G_list)[3], /* For Gonze NAC */
+                       const double lambda, /* For Gonze NAC */
                        const double unit_conversion_factor,
                        const char uplo);
-static void get_dynamical_matrix(lapack_complex_double *dynmat,
-                                 const double q[3],
-                                 const double *fc2,
-                                 const double *masses,
-                                 const int *p2s,
-                                 const int *s2p,
-                                 const int *multi,
-                                 const int num_patom,
-                                 const int num_satom,
-                                 PHPYCONST double(*svecs)[27][3],
-                                 PHPYCONST double (*born)[3][3],
-                                 PHPYCONST double dielectric[3][3],
-                                 PHPYCONST double reciprocal_lattice[3][3],
-                                 const double q_direction[3],
-                                 const double nac_factor);
+static void
+get_dynamical_matrix(lapack_complex_double *dynmat,
+                     const double q[3],
+                     const double *fc2,
+                     const double *masses,
+                     const int *p2s,
+                     const int *s2p,
+                     const int *multi,
+                     const int num_patom,
+                     const int num_satom,
+                     PHPYCONST double(*svecs)[27][3],
+                     const int is_wang_nac,
+                     PHPYCONST double (*born)[3][3],
+                     PHPYCONST double dielectric[3][3],
+                     PHPYCONST double reciprocal_lattice[3][3],
+                     const double *q_direction,
+                     const double nac_factor);
 static void get_charge_sum(double (*charge_sum)[3][3],
                            const int num_patom,
                            const int num_satom,
@@ -103,32 +112,36 @@ static void get_charge_sum(double (*charge_sum)[3][3],
                            PHPYCONST double (*born)[3][3],
                            PHPYCONST double dielectric[3][3],
                            PHPYCONST double reciprocal_lattice[3][3],
-                           const double q_direction[3],
+                           const double *q_direction,
                            const double nac_factor);
 
-void get_phonons_at_gridpoints(double *frequencies,
-                               lapack_complex_double *eigenvectors,
-                               char *phonon_done,
-                               const int num_phonons,
-                               const int *grid_points,
-                               const int num_grid_points,
-                               const int *grid_address,
-                               const int *mesh,
-                               const double *fc2,
-                               PHPYCONST double(*svecs_fc2)[27][3],
-                               const int *multi_fc2,
-                               const int num_patom,
-                               const int num_satom,
-                               const double *masses_fc2,
-                               const int *p2s_fc2,
-                               const int *s2p_fc2,
-                               const double unit_conversion_factor,
-                               PHPYCONST double (*born)[3][3],
-                               PHPYCONST double dielectric[3][3],
-                               PHPYCONST double reciprocal_lattice[3][3],
-                               const double q_direction[3],
-                               const double nac_factor,
-                               const char uplo)
+void
+phn_get_phonons_at_gridpoints(double *frequencies,
+                              lapack_complex_double *eigenvectors,
+                              char *phonon_done,
+                              const int num_phonons,
+                              const int *grid_points,
+                              const int num_grid_points,
+                              PHPYCONST int (*grid_address)[3],
+                              const int mesh[3],
+                              const double *fc2,
+                              PHPYCONST double(*svecs_fc2)[27][3],
+                              const int *multi_fc2,
+                              const int num_patom,
+                              const int num_satom,
+                              const double *masses_fc2,
+                              const int *p2s_fc2,
+                              const int *s2p_fc2,
+                              const double unit_conversion_factor,
+                              PHPYCONST double (*born)[3][3],
+                              PHPYCONST double dielectric[3][3],
+                              PHPYCONST double reciprocal_lattice[3][3],
+                              const double *q_direction, /* must be pointer */
+                              const double nac_factor,
+                              const double *dd_q0, /* For Gonze NAC */
+                              PHPYCONST double(*G_list)[3], /* For Gonze NAC */
+                              const double lambda, /* For Gonze NAC */
+                              const char uplo)
 {
   int num_undone;
   int *undone;
@@ -159,6 +172,9 @@ void get_phonons_at_gridpoints(double *frequencies,
                      reciprocal_lattice,
                      q_direction,
                      nac_factor,
+                     dd_q0,
+                     G_list,
+                     lambda,
                      uplo);
 
   free(undone);
@@ -188,8 +204,8 @@ static void get_undone_phonons(double *frequencies,
                                lapack_complex_double *eigenvectors,
                                const int *undone_grid_points,
                                const int num_undone_grid_points,
-                               const int *grid_address,
-                               const int *mesh,
+                               PHPYCONST int (*grid_address)[3],
+                               const int mesh[3],
                                const double *fc2,
                                PHPYCONST double(*svecs_fc2)[27][3],
                                const int *multi_fc2,
@@ -202,64 +218,60 @@ static void get_undone_phonons(double *frequencies,
                                PHPYCONST double (*born)[3][3],
                                PHPYCONST double dielectric[3][3],
                                PHPYCONST double reciprocal_lattice[3][3],
-                               const double q_direction[3],
+                               const double *q_direction,
                                const double nac_factor,
+                               const double *dd_q0, /* For Gonze NAC */
+                               PHPYCONST double(*G_list)[3], /* For Gonze NAC */
+                               const double lambda, /* For Gonze NAC */
                                const char uplo)
 {
-  int i, j, gp, num_band;
+  int i, j, gp, num_band, is_wang_nac;
   double q[3];
 
   num_band = num_patom * 3;
 
 /* To avoid multithreaded BLAS in OpenMP loop */
 #ifndef MULTITHREADED_BLAS
-#pragma omp parallel for private(j, q, gp)
+#pragma omp parallel for private(j, q, gp, is_wang_nac)
 #endif
   for (i = 0; i < num_undone_grid_points; i++) {
     gp = undone_grid_points[i];
     for (j = 0; j < 3; j++) {
-      q[j] = ((double)grid_address[gp * 3 + j]) / mesh[j];
+      q[j] = ((double)grid_address[gp][j]) / mesh[j];
     }
 
-    if (gp == 0) {
-      get_phonons(eigenvectors + num_band * num_band * gp,
-                  frequencies + num_band * gp,
-                  q,
-                  fc2,
-                  masses_fc2,
-                  p2s_fc2,
-                  s2p_fc2,
-                  multi_fc2,
-                  num_patom,
-                  num_satom,
-                  svecs_fc2,
-                  born,
-                  dielectric,
-                  reciprocal_lattice,
-                  q_direction,
-                  nac_factor,
-                  unit_conversion_factor,
-                  uplo);
+    if (born && (!dd_q0)) {
+      if (gp == 0 && q_direction == NULL) {
+        is_wang_nac = 0;
+      } else {
+        is_wang_nac = 1;
+      }
     } else {
-      get_phonons(eigenvectors + num_band * num_band * gp,
-                  frequencies + num_band * gp,
-                  q,
-                  fc2,
-                  masses_fc2,
-                  p2s_fc2,
-                  s2p_fc2,
-                  multi_fc2,
-                  num_patom,
-                  num_satom,
-                  svecs_fc2,
-                  born,
-                  dielectric,
-                  reciprocal_lattice,
-                  NULL,
-                  nac_factor,
-                  unit_conversion_factor,
-                  uplo);
+      is_wang_nac = 0;
     }
+
+    get_phonons(eigenvectors + num_band * num_band * gp,
+                frequencies + num_band * gp,
+                q,
+                fc2,
+                masses_fc2,
+                p2s_fc2,
+                s2p_fc2,
+                multi_fc2,
+                num_patom,
+                num_satom,
+                svecs_fc2,
+                is_wang_nac,
+                born,
+                dielectric,
+                reciprocal_lattice,
+                q_direction,
+                nac_factor,
+                dd_q0,
+                G_list,
+                lambda,
+                unit_conversion_factor,
+                uplo);
   }
 }
 
@@ -274,11 +286,15 @@ static int get_phonons(lapack_complex_double *eigvecs,
                        const int num_patom,
                        const int num_satom,
                        PHPYCONST double(*svecs)[27][3],
+                       const int is_wang_nac,
                        PHPYCONST double (*born)[3][3],
                        PHPYCONST double dielectric[3][3],
                        PHPYCONST double reciprocal_lattice[3][3],
-                       const double q_direction[3],
+                       const double *q_direction,
                        const double nac_factor,
+                       const double *dd_q0, /* For Gonze NAC */
+                       PHPYCONST double(*G_list)[3], /* For Gonze NAC */
+                       const double lambda, /* For Gonze NAC */
                        const double unit_conversion_factor,
                        const char uplo)
 {
@@ -297,11 +313,18 @@ static int get_phonons(lapack_complex_double *eigvecs,
                        num_patom,
                        num_satom,
                        svecs,
+                       is_wang_nac,
                        born,
                        dielectric,
                        reciprocal_lattice,
                        q_direction,
                        nac_factor);
+
+
+  if (dd_q0) {
+    /* write gonze nac here */
+    ;
+  }
 
   /* Store eigenvalues in freqs array. */
   /* Eigenvectors are overwritten on eigvecs array. */
@@ -316,46 +339,40 @@ static int get_phonons(lapack_complex_double *eigvecs,
   return info;
 }
 
-static void get_dynamical_matrix(lapack_complex_double *dynmat,
-                                 const double q[3],
-                                 const double *fc2,
-                                 const double *masses,
-                                 const int *p2s,
-                                 const int *s2p,
-                                 const int *multi,
-                                 const int num_patom,
-                                 const int num_satom,
-                                 PHPYCONST double(*svecs)[27][3],
-                                 PHPYCONST double (*born)[3][3], /* Wang NAC unless NULL */
-                                 PHPYCONST double dielectric[3][3],
-                                 PHPYCONST double reciprocal_lattice[3][3],
-                                 const double q_direction[3],
-                                 const double nac_factor)
+static void
+get_dynamical_matrix(lapack_complex_double *dynmat,
+                     const double q[3],
+                     const double *fc2,
+                     const double *masses,
+                     const int *p2s,
+                     const int *s2p,
+                     const int *multi,
+                     const int num_patom,
+                     const int num_satom,
+                     PHPYCONST double(*svecs)[27][3],
+                     const int is_wang_nac,
+                     PHPYCONST double (*born)[3][3], /* Wang NAC unless NULL */
+                     PHPYCONST double dielectric[3][3],
+                     PHPYCONST double reciprocal_lattice[3][3],
+                     const double *q_direction,
+                     const double nac_factor)
 {
   double (*charge_sum)[3][3];
 
   charge_sum = NULL;
 
-  if (born) {
-    if (fabs(q[0]) < 1e-10 &&
-        fabs(q[1]) < 1e-10 &&
-        fabs(q[2]) < 1e-10 &&
-        (!q_direction)) {
-      /* Exact Gamma point */
-      ;
-    } else {
-      charge_sum = (double(*)[3][3])
-        malloc(sizeof(double[3][3]) * num_patom * num_patom * 9);
-      get_charge_sum(charge_sum,
-                     num_patom,
-                     num_satom,
-                     q,
-                     born,
-                     dielectric,
-                     reciprocal_lattice,
-                     q_direction,
-                     nac_factor);
-    }
+  if (is_wang_nac) {
+    charge_sum = (double(*)[3][3])
+      malloc(sizeof(double[3][3]) * num_patom * num_patom * 9);
+    get_charge_sum(charge_sum,
+                   num_patom,
+                   num_satom,
+                   q,
+                   born,
+                   dielectric,
+                   reciprocal_lattice,
+                   q_direction,
+                   nac_factor);
   }
 
   dym_get_dynamical_matrix_at_q((double*)dynmat,
@@ -370,7 +387,7 @@ static void get_dynamical_matrix(lapack_complex_double *dynmat,
                                 p2s,
                                 charge_sum,
                                 0);
-  if (charge_sum) {
+  if (is_wang_nac) {
     free(charge_sum);
     charge_sum = NULL;
   }
@@ -383,7 +400,7 @@ static void get_charge_sum(double (*charge_sum)[3][3],
                            PHPYCONST double (*born)[3][3],
                            PHPYCONST double dielectric[3][3],
                            PHPYCONST double reciprocal_lattice[3][3],
-                           const double q_direction[3],
+                           const double *q_direction,
                            const double nac_factor)
 {
   int i, j;

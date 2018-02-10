@@ -24,15 +24,20 @@ def set_phonon_c(dm,
         nac_dataset = dm.get_Gonze_nac_dataset()
         if nac_dataset[0] is None:
             dm.make_Gonze_nac_dataset(verbose=True)
-            nac_dataset = dm.get_Gonze_nac_dataset()
-        (Gonze_force_constants,
-         dd_q0,
-         G_cutoff,
-         G_list,
-         Lambda) = nac_dataset
+            gonze_nac_dataset = dm.get_Gonze_nac_dataset()
+        (gonze_fc, # fc where the dipole-diple contribution is removed.
+         dd_q0,    # second term of dipole-dipole expression.
+         G_cutoff, # Cutoff radius in reciprocal space. This will not be used.
+         G_list,   # List of G points where d-d interactions are integrated.
+         Lambda) = gonze_nac_dataset # Convergence parameter
+        fc = gonze_fc
+    else:
+        dd_q0 = None
+        G_list = None
+        Lambda = 0
+        fc = dm.get_force_constants()
 
-    fc_p2s, fc_s2p = _get_fc_elements_mapping(dm)
-
+    fc_p2s, fc_s2p = _get_fc_elements_mapping(dm, fc)
     phono3c.phonons_at_gridpoints(
         frequencies,
         eigenvectors,
@@ -40,7 +45,7 @@ def set_phonon_c(dm,
         grid_points,
         grid_address,
         np.array(mesh, dtype='intc'),
-        dm.get_force_constants(),
+        fc,
         svecs,
         multiplicity,
         masses,
@@ -52,6 +57,9 @@ def set_phonon_c(dm,
         rec_lattice,
         nac_q_direction,
         nac_factor,
+        dd_q0,
+        G_list,
+        Lambda,
         lapack_zheev_uplo)
 
 def set_phonon_py(grid_point,
@@ -97,10 +105,9 @@ def _extract_params(dm):
             nac_factor,
             dielectric)
 
-def _get_fc_elements_mapping(dm):
+def _get_fc_elements_mapping(dm, fc):
     p2s_map = dm.get_primitive_to_supercell_map()
     s2p_map = dm.get_supercell_to_primitive_map()
-    fc = dm.get_force_constants()
     if fc.shape[0] == fc.shape[1]: # full fc
         fc_p2s = p2s_map
         fc_s2p = s2p_map
