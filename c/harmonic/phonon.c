@@ -39,6 +39,10 @@
 #include <phonon.h>
 #include <lapack_wrapper.h>
 
+static int collect_undone_grid_points(int *undone,
+                                      char *phonon_done,
+                                      const int num_grid_points,
+                                      const int *grid_points);
 static void get_undone_phonons(Darray *frequencies,
                                Carray *eigenvectors,
                                const int *undone_grid_points,
@@ -74,10 +78,27 @@ static int get_phonons(lapack_complex_double *eigvecs,
                        const double nac_factor,
                        const double unit_conversion_factor,
                        const char uplo);
-static int collect_undone_grid_points(int *undone,
-                                      char *phonon_done,
-                                      const int num_grid_points,
-                                      const int *grid_points);
+static void get_dynamical_matrix(lapack_complex_double *dynmat,
+                                 const double q[3],
+                                 const Darray *fc2,
+                                 const double *masses,
+                                 const int *p2s,
+                                 const int *s2p,
+                                 const Iarray *multi,
+                                 const Darray *svecs,
+                                 const double *born,
+                                 const double *dielectric,
+                                 const double *reciprocal_lattice,
+                                 const double *q_direction,
+                                 const double nac_factor);
+static double * get_charge_sum(const int num_patom,
+                               const int num_satom,
+                               const double q[3],
+                               const double *born, /* Wang NAC unless NULL */
+                               const double *dielectric,
+                               const double *reciprocal_lattice,
+                               const double *q_direction,
+                               const double nac_factor);
 
 void get_phonons_at_gridpoints(Darray *frequencies,
                                Carray *eigenvectors,
@@ -241,88 +262,144 @@ static int get_phonons(lapack_complex_double *eigvecs,
                        const double unit_conversion_factor,
                        const char uplo)
 {
-  int i, j, num_patom, num_satom, info;
-  double q_cart[3];
-  double *charge_sum, *eigvals;
-  double inv_dielectric_factor, dielectric_factor, tmp_val;
+  int i, num_band, info;
 
-  charge_sum = NULL;
-  eigvals = NULL;
-
-  num_patom = multi->dims[1];
-  num_satom = multi->dims[0];
-
-  if (born) {
-    if (fabs(q[0]) < 1e-10 && fabs(q[1]) < 1e-10 && fabs(q[2]) < 1e-10 &&
-        (!q_direction)) {
-      charge_sum = NULL;
-    } else {
-      charge_sum = (double*) malloc(sizeof(double) * num_patom * num_patom * 9);
-      if (q_direction) {
-        for (i = 0; i < 3; i++) {
-          q_cart[i] = 0.0;
-          for (j = 0; j < 3; j++) {
-            q_cart[i] += reciprocal_lattice[i * 3 + j] * q_direction[j];
-          }
-        }
-      } else {
-        for (i = 0; i < 3; i++) {
-          q_cart[i] = 0.0;
-          for (j = 0; j < 3; j++) {
-            q_cart[i] += reciprocal_lattice[i * 3 + j] * q[j];
-          }
-        }
-      }
-
-      inv_dielectric_factor = 0.0;
-      for (i = 0; i < 3; i++) {
-        tmp_val = 0.0;
-        for (j = 0; j < 3; j++) {
-          tmp_val += dielectric[i * 3 + j] * q_cart[j];
-        }
-        inv_dielectric_factor += tmp_val * q_cart[i];
-      }
-      /* N = num_satom / num_patom = number of prim-cell in supercell */
-      /* N is used for Wang's method. */
-      dielectric_factor = nac_factor /
-        inv_dielectric_factor / num_satom * num_patom;
-      get_charge_sum(charge_sum,
-                     num_patom,
-                     dielectric_factor,
-                     q_cart,
-                     born);
-    }
-  } else {
-    charge_sum = NULL;
-  }
+  num_band = multi->dims[1] * 3;
 
   /* Store dynamical matrix in eigvecs array. */
-  get_dynamical_matrix_at_q((double*)eigvecs,
-                            num_patom,
-                            num_satom,
-                            fc2->data,
-                            q,
-                            svecs->data,
-                            multi->data,
-                            masses,
-                            s2p,
-                            p2s,
-                            charge_sum,
-                            0);
-  if (born) {
-    free(charge_sum);
-    charge_sum = NULL;
-  }
+  get_dynamical_matrix(eigvecs,
+                       q,
+                       fc2,
+                       masses,
+                       p2s,
+                       s2p,
+                       multi,
+                       svecs,
+                       born,
+                       dielectric,
+                       reciprocal_lattice,
+                       q_direction,
+                       nac_factor);
 
   /* Store eigenvalues in freqs array. */
   /* Eigenvectors are overwritten on eigvecs array. */
-  info = phonopy_zheev(freqs, eigvecs, num_patom * 3, uplo);
+  info = phonopy_zheev(freqs, eigvecs, num_band, uplo);
 
   /* Sqrt of eigenvalues are re-stored in freqs array.*/
-  for (i = 0; i < num_patom * 3; i++) {
+  for (i = 0; i < num_band; i++) {
     freqs[i] = sqrt(fabs(freqs[i])) *
       ((freqs[i] > 0) - (freqs[i] < 0)) * unit_conversion_factor;
   }
 
   return info;
+}
+
+static void get_dynamical_matrix(lapack_complex_double *dynmat,
+                                 const double q[3],
+                                 const Darray *fc2,
+                                 const double *masses,
+                                 const int *p2s,
+                                 const int *s2p,
+                                 const Iarray *multi,
+                                 const Darray *svecs,
+                                 const double *born, /* Wang NAC unless NULL */
+                                 const double *dielectric,
+                                 const double *reciprocal_lattice,
+                                 const double *q_direction,
+                                 const double nac_factor)
+{
+  int num_patom, num_satom;
+  double *charge_sum;
+
+  charge_sum = NULL;
+
+  num_patom = multi->dims[1];
+  num_satom = multi->dims[0];
+
+  if (born) {
+    charge_sum = get_charge_sum(num_patom,
+                                num_satom,
+                                q,
+                                born,
+                                dielectric,
+                                reciprocal_lattice,
+                                q_direction,
+                                nac_factor);
+  } else {
+    charge_sum = NULL;
+  }
+
+  dym_get_dynamical_matrix_at_q((double*)dynmat,
+                                num_patom,
+                                num_satom,
+                                fc2->data,
+                                q,
+                                svecs->data,
+                                multi->data,
+                                masses,
+                                s2p,
+                                p2s,
+                                charge_sum,
+                                0);
+  if (charge_sum) {
+    free(charge_sum);
+    charge_sum = NULL;
+  }
+}
+
+static double * get_charge_sum(const int num_patom,
+                               const int num_satom,
+                               const double q[3],
+                               const double *born,
+                               const double *dielectric,
+                               const double *reciprocal_lattice,
+                               const double *q_direction,
+                               const double nac_factor)
+{
+  int i, j;
+  double inv_dielectric_factor, dielectric_factor, tmp_val;
+  double q_cart[3];
+  double *charge_sum;
+
+  if (fabs(q[0]) < 1e-10 && fabs(q[1]) < 1e-10 && fabs(q[2]) < 1e-10 &&
+      (!q_direction)) {
+    charge_sum = NULL;
+  } else {
+    charge_sum = (double*) malloc(sizeof(double) * num_patom * num_patom * 9);
+    if (q_direction) {
+      for (i = 0; i < 3; i++) {
+        q_cart[i] = 0.0;
+        for (j = 0; j < 3; j++) {
+          q_cart[i] += reciprocal_lattice[i * 3 + j] * q_direction[j];
+        }
+      }
+    } else {
+      for (i = 0; i < 3; i++) {
+        q_cart[i] = 0.0;
+        for (j = 0; j < 3; j++) {
+          q_cart[i] += reciprocal_lattice[i * 3 + j] * q[j];
+        }
+      }
+    }
+
+    inv_dielectric_factor = 0.0;
+    for (i = 0; i < 3; i++) {
+      tmp_val = 0.0;
+      for (j = 0; j < 3; j++) {
+        tmp_val += dielectric[i * 3 + j] * q_cart[j];
+      }
+      inv_dielectric_factor += tmp_val * q_cart[i];
+    }
+    /* N = num_satom / num_patom = number of prim-cell in supercell */
+    /* N is used for Wang's method. */
+    dielectric_factor = nac_factor /
+      inv_dielectric_factor / num_satom * num_patom;
+    dym_get_charge_sum(charge_sum,
+                       num_patom,
+                       dielectric_factor,
+                       q_cart,
+                       born);
+  }
+
+  return charge_sum;
 }

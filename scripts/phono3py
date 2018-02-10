@@ -492,6 +492,8 @@ if settings.get_is_nac():
                   nac_params['factor'])
     else:
         nac_params['factor'] = nac_factor
+    if settings.get_nac_method() is not None:
+        nac_params['method'] = settings.get_nac_method()
 
     if log_level:
         print("-" * 27 + " Dielectric constant " + "-" * 28)
