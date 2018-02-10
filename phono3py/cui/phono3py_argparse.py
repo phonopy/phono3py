@@ -101,6 +101,8 @@ def get_parser():
                         mass_variances=None,
                         mesh_numbers=None,
                         mesh_divisors=None,
+                        nac_method=None,
+                        nac_q_direction=None,
                         no_kappa_stars=False,
                         output_filename=None,
                         phonon_supercell_dimension=None,
@@ -111,7 +113,6 @@ def get_parser():
                         qe_mode=False,
                         qpoints=None,
                         quiet=False,
-                        q_direction=None,
                         read_amplitude=False,
                         read_collision=None,
                         read_fc2=False,
@@ -306,6 +307,9 @@ def get_parser():
         "--nac", dest="is_nac", action="store_true",
         help="Non-analytical term correction")
     parser.add_argument(
+        "--nac-method", dest="nac_method",
+        help="Non-analytical term correction method: Wang (default) or Gonze")
+    parser.add_argument(
         "--nodiag", dest="is_nodiag", action="store_true",
         help="Set displacements parallel to axes")
     parser.add_argument(
@@ -349,7 +353,7 @@ def get_parser():
         "--qpoints", dest="qpoints",
         help="Calculate at specified q-points")
     parser.add_argument(
-        "--q-direction", dest="q_direction",
+        "--q-direction", dest="nac_q_direction",
         help="q-vector direction at q->0 for non-analytical term correction")
     parser.add_argument(
         "-q", "--quiet", dest="quiet", action="store_true",
