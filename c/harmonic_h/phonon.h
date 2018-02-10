@@ -35,18 +35,22 @@
 #ifndef __phonon_H__
 #define __phonon_H__
 
-#include <phonoc_array.h>
+#include <dynmat.h>
 #include <lapack_wrapper.h>
 
-void get_phonons_at_gridpoints(Darray *frequencies,
-                               Carray *eigenvectors,
+void get_phonons_at_gridpoints(double *frequencies,
+                               lapack_complex_double *eigenvectors,
                                char *phonon_done,
-                               const Iarray *grid_points,
+                               const int num_phonons,
+                               const int *grid_points,
+                               const int num_grid_points,
                                const int *grid_address,
                                const int *mesh,
-                               const Darray *fc2,
-                               const Darray *svecs_fc2,
-                               const Iarray *multi_fc2,
+                               const double *fc2,
+                               PHPYCONST double (*svecs_fc2)[27][3],
+                               const int *multi_fc2,
+                               const int num_patom,
+                               const int num_satom,
                                const double *masses_fc2,
                                const int *p2s_fc2,
                                const int *s2p_fc2,

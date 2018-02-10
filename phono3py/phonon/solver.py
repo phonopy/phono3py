@@ -20,6 +20,17 @@ def set_phonon_c(dm,
      nac_factor,
      dielectric) = _extract_params(dm)
 
+    if dm.is_nac() and dm.get_nac_method() == 'gonze':
+        nac_dataset = dm.get_Gonze_nac_dataset()
+        if nac_dataset[0] is None:
+            dm.make_Gonze_nac_dataset(verbose=True)
+            nac_dataset = dm.get_Gonze_nac_dataset()
+        (Gonze_force_constants,
+         dd_q0,
+         G_cutoff,
+         G_list,
+         Lambda) = nac_dataset
+
     fc_p2s, fc_s2p = _get_fc_elements_mapping(dm)
 
     phono3c.phonons_at_gridpoints(

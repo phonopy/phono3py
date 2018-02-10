@@ -35,7 +35,6 @@
 #include <math.h>
 #include <string.h>
 #include <dynmat.h>
-#include <phonoc_array.h>
 #include <phonon.h>
 #include <lapack_wrapper.h>
 
@@ -43,15 +42,17 @@ static int collect_undone_grid_points(int *undone,
                                       char *phonon_done,
                                       const int num_grid_points,
                                       const int *grid_points);
-static void get_undone_phonons(Darray *frequencies,
-                               Carray *eigenvectors,
+static void get_undone_phonons(double *frequencies,
+                               lapack_complex_double *eigenvectors,
                                const int *undone_grid_points,
                                const int num_undone_grid_points,
                                const int *grid_address,
                                const int *mesh,
-                               const Darray *fc2,
-                               const Darray *svecs_fc2,
-                               const Iarray *multi_fc2,
+                               const double *fc2,
+                               PHPYCONST double(*svecs_fc2)[27][3],
+                               const int *multi_fc2,
+                               const int num_patom,
+                               const int num_satom,
                                const double *masses_fc2,
                                const int *p2s_fc2,
                                const int *s2p_fc2,
@@ -65,12 +66,14 @@ static void get_undone_phonons(Darray *frequencies,
 static int get_phonons(lapack_complex_double *eigvecs,
                        double *freqs,
                        const double q[3],
-                       const Darray *fc2,
+                       const double *fc2,
                        const double *masses,
                        const int *p2s,
                        const int *s2p,
-                       const Iarray *multi,
-                       const Darray *svecs,
+                       const int *multi,
+                       const int num_patom,
+                       const int num_satom,
+                       PHPYCONST double(*svecs)[27][3],
                        const double *born,
                        const double *dielectric,
                        const double *reciprocal_lattice,
@@ -80,12 +83,14 @@ static int get_phonons(lapack_complex_double *eigvecs,
                        const char uplo);
 static void get_dynamical_matrix(lapack_complex_double *dynmat,
                                  const double q[3],
-                                 const Darray *fc2,
+                                 const double *fc2,
                                  const double *masses,
                                  const int *p2s,
                                  const int *s2p,
-                                 const Iarray *multi,
-                                 const Darray *svecs,
+                                 const int *multi,
+                                 const int num_patom,
+                                 const int num_satom,
+                                 PHPYCONST double(*svecs)[27][3],
                                  const double *born,
                                  const double *dielectric,
                                  const double *reciprocal_lattice,
@@ -100,15 +105,19 @@ static double * get_charge_sum(const int num_patom,
                                const double *q_direction,
                                const double nac_factor);
 
-void get_phonons_at_gridpoints(Darray *frequencies,
-                               Carray *eigenvectors,
+void get_phonons_at_gridpoints(double *frequencies,
+                               lapack_complex_double *eigenvectors,
                                char *phonon_done,
-                               const Iarray *grid_points,
+                               const int num_phonons,
+                               const int *grid_points,
+                               const int num_grid_points,
                                const int *grid_address,
                                const int *mesh,
-                               const Darray *fc2,
-                               const Darray *svecs_fc2,
-                               const Iarray *multi_fc2,
+                               const double *fc2,
+                               PHPYCONST double(*svecs_fc2)[27][3],
+                               const int *multi_fc2,
+                               const int num_patom,
+                               const int num_satom,
                                const double *masses_fc2,
                                const int *p2s_fc2,
                                const int *s2p_fc2,
@@ -123,11 +132,11 @@ void get_phonons_at_gridpoints(Darray *frequencies,
   int num_undone;
   int *undone;
 
-  undone = (int*)malloc(sizeof(int) * frequencies->dims[0]);
+  undone = (int*)malloc(sizeof(int) * num_phonons);
   num_undone = collect_undone_grid_points(undone,
                                           phonon_done,
-                                          grid_points->dims[0],
-                                          grid_points->data);
+                                          num_grid_points,
+                                          grid_points);
 
   get_undone_phonons(frequencies,
                      eigenvectors,
@@ -138,6 +147,8 @@ void get_phonons_at_gridpoints(Darray *frequencies,
                      fc2,
                      svecs_fc2,
                      multi_fc2,
+                     num_patom,
+                     num_satom,
                      masses_fc2,
                      p2s_fc2,
                      s2p_fc2,
@@ -172,15 +183,17 @@ static int collect_undone_grid_points(int *undone,
   return num_undone;
 }
 
-static void get_undone_phonons(Darray *frequencies,
-                               Carray *eigenvectors,
+static void get_undone_phonons(double *frequencies,
+                               lapack_complex_double *eigenvectors,
                                const int *undone_grid_points,
                                const int num_undone_grid_points,
                                const int *grid_address,
                                const int *mesh,
-                               const Darray *fc2,
-                               const Darray *svecs_fc2,
-                               const Iarray *multi_fc2,
+                               const double *fc2,
+                               PHPYCONST double(*svecs_fc2)[27][3],
+                               const int *multi_fc2,
+                               const int num_patom,
+                               const int num_satom,
                                const double *masses_fc2,
                                const int *p2s_fc2,
                                const int *s2p_fc2,
@@ -195,7 +208,7 @@ static void get_undone_phonons(Darray *frequencies,
   int i, j, gp, num_band;
   double q[3];
 
-  num_band = frequencies->dims[1];
+  num_band = num_patom * 3;
 
 /* To avoid multithreaded BLAS in OpenMP loop */
 #ifndef MULTITHREADED_BLAS
@@ -208,14 +221,16 @@ static void get_undone_phonons(Darray *frequencies,
     }
 
     if (gp == 0) {
-      get_phonons(eigenvectors->data + num_band * num_band * gp,
-                  frequencies->data + num_band * gp,
+      get_phonons(eigenvectors + num_band * num_band * gp,
+                  frequencies + num_band * gp,
                   q,
                   fc2,
                   masses_fc2,
                   p2s_fc2,
                   s2p_fc2,
                   multi_fc2,
+                  num_patom,
+                  num_satom,
                   svecs_fc2,
                   born,
                   dielectric,
@@ -225,14 +240,16 @@ static void get_undone_phonons(Darray *frequencies,
                   unit_conversion_factor,
                   uplo);
     } else {
-      get_phonons(eigenvectors->data + num_band * num_band * gp,
-                  frequencies->data + num_band * gp,
+      get_phonons(eigenvectors + num_band * num_band * gp,
+                  frequencies + num_band * gp,
                   q,
                   fc2,
                   masses_fc2,
                   p2s_fc2,
                   s2p_fc2,
                   multi_fc2,
+                  num_patom,
+                  num_satom,
                   svecs_fc2,
                   born,
                   dielectric,
@@ -248,12 +265,14 @@ static void get_undone_phonons(Darray *frequencies,
 static int get_phonons(lapack_complex_double *eigvecs,
                        double *freqs,
                        const double q[3],
-                       const Darray *fc2,
+                       const double *fc2,
                        const double *masses,
                        const int *p2s,
                        const int *s2p,
-                       const Iarray *multi,
-                       const Darray *svecs,
+                       const int *multi,
+                       const int num_patom,
+                       const int num_satom,
+                       PHPYCONST double(*svecs)[27][3],
                        const double *born,
                        const double *dielectric,
                        const double *reciprocal_lattice,
@@ -264,7 +283,7 @@ static int get_phonons(lapack_complex_double *eigvecs,
 {
   int i, num_band, info;
 
-  num_band = multi->dims[1] * 3;
+  num_band = num_patom * 3;
 
   /* Store dynamical matrix in eigvecs array. */
   get_dynamical_matrix(eigvecs,
@@ -274,6 +293,8 @@ static int get_phonons(lapack_complex_double *eigvecs,
                        p2s,
                        s2p,
                        multi,
+                       num_patom,
+                       num_satom,
                        svecs,
                        born,
                        dielectric,
@@ -296,25 +317,23 @@ static int get_phonons(lapack_complex_double *eigvecs,
 
 static void get_dynamical_matrix(lapack_complex_double *dynmat,
                                  const double q[3],
-                                 const Darray *fc2,
+                                 const double *fc2,
                                  const double *masses,
                                  const int *p2s,
                                  const int *s2p,
-                                 const Iarray *multi,
-                                 const Darray *svecs,
+                                 const int *multi,
+                                 const int num_patom,
+                                 const int num_satom,
+                                 PHPYCONST double(*svecs)[27][3],
                                  const double *born, /* Wang NAC unless NULL */
                                  const double *dielectric,
                                  const double *reciprocal_lattice,
                                  const double *q_direction,
                                  const double nac_factor)
 {
-  int num_patom, num_satom;
   double *charge_sum;
 
   charge_sum = NULL;
-
-  num_patom = multi->dims[1];
-  num_satom = multi->dims[0];
 
   if (born) {
     charge_sum = get_charge_sum(num_patom,
@@ -332,10 +351,10 @@ static void get_dynamical_matrix(lapack_complex_double *dynmat,
   dym_get_dynamical_matrix_at_q((double*)dynmat,
                                 num_patom,
                                 num_satom,
-                                fc2->data,
+                                fc2,
                                 q,
-                                svecs->data,
-                                multi->data,
+                                svecs,
+                                multi,
                                 masses,
                                 s2p,
                                 p2s,
