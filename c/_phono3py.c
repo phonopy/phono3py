@@ -289,6 +289,7 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
   PyArrayObject* py_mesh;
   PyArrayObject* py_shortest_vectors_fc2;
   PyArrayObject* py_multiplicity_fc2;
+  PyArrayObject* py_positions_fc2;
   PyArrayObject* py_fc2;
   PyArrayObject* py_masses_fc2;
   PyArrayObject* py_p2s_map_fc2;
@@ -316,6 +317,7 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
   double* fc2;
   double(*svecs_fc2)[27][3];
   int* multi_fc2;
+  double (*positions_fc2)[3];
   double* masses_fc2;
   int* p2s_fc2;
   int* s2p_fc2;
@@ -326,8 +328,9 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
   int num_satom;
   int num_phonons;
   int num_grid_points;
+  int num_G_points;
 
-  if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOdOOOOdOOds",
+  if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOdOOOOdOOds",
                         &py_frequencies,
                         &py_eigenvectors,
                         &py_phonon_done,
@@ -337,6 +340,7 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
                         &py_fc2,
                         &py_shortest_vectors_fc2,
                         &py_multiplicity_fc2,
+                        &py_positions_fc2,
                         &py_masses_fc2,
                         &py_p2s_map_fc2,
                         &py_s2p_map_fc2,
@@ -399,34 +403,68 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
     G_list = NULL;
   } else {
     G_list = (double(*)[3])PyArray_DATA(py_G_list);
+    num_G_points = PyArray_DIMS(py_G_list)[0];
+  }
+  if ((PyObject*)py_positions_fc2 == Py_None) {
+    positions_fc2 = NULL;
+  } else {
+    positions_fc2 = (double(*)[3])PyArray_DATA(py_positions_fc2);
   }
 
-  phn_get_phonons_at_gridpoints(freqs,
-                                eigvecs,
-                                phonon_done,
-                                num_phonons,
-                                grid_points,
-                                num_grid_points,
-                                grid_address,
-                                mesh,
-                                fc2,
-                                svecs_fc2,
-                                multi_fc2,
-                                num_patom,
-                                num_satom,
-                                masses_fc2,
-                                p2s_fc2,
-                                s2p_fc2,
-                                unit_conversion_factor,
-                                born,
-                                dielectric,
-                                rec_lat,
-                                q_dir,
-                                nac_factor,
-                                dd_q0,
-                                G_list,
-                                lambda,
-                                uplo[0]);
+  if (!dd_q0) {
+    phn_get_phonons_at_gridpoints(freqs,
+                                  eigvecs,
+                                  phonon_done,
+                                  num_phonons,
+                                  grid_points,
+                                  num_grid_points,
+                                  grid_address,
+                                  mesh,
+                                  fc2,
+                                  svecs_fc2,
+                                  multi_fc2,
+                                  num_patom,
+                                  num_satom,
+                                  masses_fc2,
+                                  p2s_fc2,
+                                  s2p_fc2,
+                                  unit_conversion_factor,
+                                  born,
+                                  dielectric,
+                                  rec_lat,
+                                  q_dir,
+                                  nac_factor,
+                                  uplo[0]);
+  } else {
+    phn_get_gonze_phonons_at_gridpoints(freqs,
+                                        eigvecs,
+                                        phonon_done,
+                                        num_phonons,
+                                        grid_points,
+                                        num_grid_points,
+                                        grid_address,
+                                        mesh,
+                                        fc2,
+                                        svecs_fc2,
+                                        multi_fc2,
+                                        positions_fc2,
+                                        num_patom,
+                                        num_satom,
+                                        masses_fc2,
+                                        p2s_fc2,
+                                        s2p_fc2,
+                                        unit_conversion_factor,
+                                        born,
+                                        dielectric,
+                                        rec_lat,
+                                        q_dir,
+                                        nac_factor,
+                                        dd_q0,
+                                        G_list,
+                                        num_G_points,
+                                        lambda,
+                                        uplo[0]);
+  }
 
   Py_RETURN_NONE;
 }

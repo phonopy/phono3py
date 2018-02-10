@@ -16,6 +16,7 @@ def set_phonon_c(dm,
      multiplicity,
      masses,
      rec_lattice,
+     positions,
      born,
      nac_factor,
      dielectric) = _extract_params(dm)
@@ -32,6 +33,7 @@ def set_phonon_c(dm,
          Lambda) = gonze_nac_dataset # Convergence parameter
         fc = gonze_fc
     else:
+        positions = None
         dd_q0 = None
         G_list = None
         Lambda = 0
@@ -48,6 +50,7 @@ def set_phonon_c(dm,
         fc,
         svecs,
         multiplicity,
+        positions,
         masses,
         fc_p2s,
         fc_s2p,
@@ -88,6 +91,7 @@ def _extract_params(dm):
     masses = np.array(dm.get_primitive().get_masses(), dtype='double')
     rec_lattice = np.array(
         np.linalg.inv(dm.get_primitive().get_cell()), dtype='double', order='C')
+    positions = dm.get_primitive().get_scaled_positions()
     if dm.is_nac():
         born = dm.get_born_effective_charges()
         nac_factor = dm.get_nac_factor()
@@ -101,6 +105,7 @@ def _extract_params(dm):
             multiplicity,
             masses,
             rec_lattice,
+            positions,
             born,
             nac_factor,
             dielectric)
