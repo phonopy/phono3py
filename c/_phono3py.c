@@ -401,6 +401,7 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
   }
   if ((PyObject*)py_G_list == Py_None) {
     G_list = NULL;
+    num_G_points = 0;
   } else {
     G_list = (double(*)[3])PyArray_DATA(py_G_list);
     num_G_points = PyArray_DIMS(py_G_list)[0];

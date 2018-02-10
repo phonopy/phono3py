@@ -8,22 +8,22 @@ def set_phonon_c(dm,
                  grid_address,
                  mesh,
                  frequency_factor_to_THz,
-                 nac_q_direction,
+                 nac_q_direction, # in reduced coordinates
                  lapack_zheev_uplo):
     import phono3py._phono3py as phono3c
 
     (svecs,
      multiplicity,
      masses,
-     rec_lattice,
+     rec_lattice, # column vectors
      positions,
      born,
      nac_factor,
      dielectric) = _extract_params(dm)
 
     if dm.is_nac() and dm.get_nac_method() == 'gonze':
-        nac_dataset = dm.get_Gonze_nac_dataset()
-        if nac_dataset[0] is None:
+        gonze_nac_dataset = dm.get_Gonze_nac_dataset()
+        if gonze_nac_dataset[0] is None:
             dm.make_Gonze_nac_dataset(verbose=True)
             gonze_nac_dataset = dm.get_Gonze_nac_dataset()
         (gonze_fc, # fc where the dipole-diple contribution is removed.
@@ -91,7 +91,8 @@ def _extract_params(dm):
     masses = np.array(dm.get_primitive().get_masses(), dtype='double')
     rec_lattice = np.array(
         np.linalg.inv(dm.get_primitive().get_cell()), dtype='double', order='C')
-    positions = dm.get_primitive().get_scaled_positions()
+    positions = np.array(dm.get_primitive().get_positions(),
+                         dtype='double', order='C')
     if dm.is_nac():
         born = dm.get_born_effective_charges()
         nac_factor = dm.get_nac_factor()
