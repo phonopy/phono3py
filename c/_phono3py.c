@@ -281,105 +281,115 @@ PyInit__phono3py(void)
 
 static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
 {
-  PyArrayObject* frequencies;
-  PyArrayObject* eigenvectors;
-  PyArrayObject* phonon_done_py;
-  PyArrayObject* grid_points_py;
-  PyArrayObject* grid_address_py;
-  PyArrayObject* mesh_py;
-  PyArrayObject* shortest_vectors_fc2;
-  PyArrayObject* multiplicity_fc2;
-  PyArrayObject* fc2_py;
-  PyArrayObject* atomic_masses_fc2;
-  PyArrayObject* p2s_map_fc2;
-  PyArrayObject* s2p_map_fc2;
-  PyArrayObject* reciprocal_lattice;
-  PyArrayObject* born_effective_charge;
-  PyArrayObject* q_direction;
-  PyArrayObject* dielectric_constant;
+  PyArrayObject* py_frequencies;
+  PyArrayObject* py_eigenvectors;
+  PyArrayObject* py_phonon_done;
+  PyArrayObject* py_grid_points;
+  PyArrayObject* py_grid_address;
+  PyArrayObject* py_mesh;
+  PyArrayObject* py_shortest_vectors_fc2;
+  PyArrayObject* py_multiplicity_fc2;
+  PyArrayObject* py_fc2;
+  PyArrayObject* py_masses_fc2;
+  PyArrayObject* py_p2s_map_fc2;
+  PyArrayObject* py_s2p_map_fc2;
+  PyArrayObject* py_reciprocal_lattice;
+  PyArrayObject* py_born_effective_charge;
+  PyArrayObject* py_q_direction;
+  PyArrayObject* py_dielectric_constant;
   double nac_factor, unit_conversion_factor;
   char* uplo;
 
   double* born;
   double* dielectric;
   double *q_dir;
-  Darray* freqs;
-  Carray* eigvecs;
+  double* freqs;
+  lapack_complex_double* eigvecs;
   char* phonon_done;
-  Iarray* grid_points;
+  int* grid_points;
   int* grid_address;
   int* mesh;
-  Darray* fc2;
-  Darray* svecs_fc2;
-  Iarray* multi_fc2;
+  double* fc2;
+  double(*svecs_fc2)[27][3];
+  int* multi_fc2;
   double* masses_fc2;
   int* p2s_fc2;
   int* s2p_fc2;
   double* rec_lat;
+  int num_patom;
+  int num_satom;
+  int num_phonons;
+  int num_grid_points;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOdOOOOds",
-                        &frequencies,
-                        &eigenvectors,
-                        &phonon_done_py,
-                        &grid_points_py,
-                        &grid_address_py,
-                        &mesh_py,
-                        &fc2_py,
-                        &shortest_vectors_fc2,
-                        &multiplicity_fc2,
-                        &atomic_masses_fc2,
-                        &p2s_map_fc2,
-                        &s2p_map_fc2,
+                        &py_frequencies,
+                        &py_eigenvectors,
+                        &py_phonon_done,
+                        &py_grid_points,
+                        &py_grid_address,
+                        &py_mesh,
+                        &py_fc2,
+                        &py_shortest_vectors_fc2,
+                        &py_multiplicity_fc2,
+                        &py_masses_fc2,
+                        &py_p2s_map_fc2,
+                        &py_s2p_map_fc2,
                         &unit_conversion_factor,
-                        &born_effective_charge,
-                        &dielectric_constant,
-                        &reciprocal_lattice,
-                        &q_direction,
+                        &py_born_effective_charge,
+                        &py_dielectric_constant,
+                        &py_reciprocal_lattice,
+                        &py_q_direction,
                         &nac_factor,
                         &uplo)) {
     return NULL;
   }
 
-  freqs = convert_to_darray(frequencies);
-  /* npy_cdouble and lapack_complex_double may not be compatible. */
-  /* So eigenvectors should not be used in Python side */
-  eigvecs = convert_to_carray(eigenvectors);
-  phonon_done = (char*)PyArray_DATA(phonon_done_py);
-  grid_points = convert_to_iarray(grid_points_py);
-  grid_address = (int*)PyArray_DATA(grid_address_py);
-  mesh = (int*)PyArray_DATA(mesh_py);
-  fc2 = convert_to_darray(fc2_py);
-  svecs_fc2 = convert_to_darray(shortest_vectors_fc2);
-  multi_fc2 = convert_to_iarray(multiplicity_fc2);
-  masses_fc2 = (double*)PyArray_DATA(atomic_masses_fc2);
-  p2s_fc2 = (int*)PyArray_DATA(p2s_map_fc2);
-  s2p_fc2 = (int*)PyArray_DATA(s2p_map_fc2);
-  rec_lat = (double*)PyArray_DATA(reciprocal_lattice);
-  if ((PyObject*)born_effective_charge == Py_None) {
+  freqs = (double*)PyArray_DATA(py_frequencies);
+  eigvecs = (lapack_complex_double*)PyArray_DATA(py_eigenvectors);
+  phonon_done = (char*)PyArray_DATA(py_phonon_done);
+  grid_points = (int*)PyArray_DATA(py_grid_points);
+  grid_address = (int*)PyArray_DATA(py_grid_address);
+  mesh = (int*)PyArray_DATA(py_mesh);
+  fc2 = (double*)PyArray_DATA(py_fc2);
+  svecs_fc2 = (double(*)[27][3])PyArray_DATA(py_shortest_vectors_fc2);
+  multi_fc2 = (int*)PyArray_DATA(py_multiplicity_fc2);
+  masses_fc2 = (double*)PyArray_DATA(py_masses_fc2);
+  p2s_fc2 = (int*)PyArray_DATA(py_p2s_map_fc2);
+  s2p_fc2 = (int*)PyArray_DATA(py_s2p_map_fc2);
+  rec_lat = (double*)PyArray_DATA(py_reciprocal_lattice);
+  num_patom = PyArray_DIMS(py_multiplicity_fc2)[1];
+  num_satom = PyArray_DIMS(py_multiplicity_fc2)[0];
+  num_phonons = PyArray_DIMS(py_frequencies)[0];
+  num_grid_points = PyArray_DIMS(py_grid_points)[0];
+  if ((PyObject*)py_born_effective_charge == Py_None) {
     born = NULL;
   } else {
-    born = (double*)PyArray_DATA(born_effective_charge);
+    born = (double*)PyArray_DATA(py_born_effective_charge);
   }
-  if ((PyObject*)dielectric_constant == Py_None) {
+  if ((PyObject*)py_dielectric_constant == Py_None) {
     dielectric = NULL;
   } else {
-    dielectric = (double*)PyArray_DATA(dielectric_constant);
+    dielectric = (double*)PyArray_DATA(py_dielectric_constant);
   }
-  if ((PyObject*)q_direction == Py_None) {
+  if ((PyObject*)py_q_direction == Py_None) {
     q_dir = NULL;
   } else {
-    q_dir = (double*)PyArray_DATA(q_direction);
+    q_dir = (double*)PyArray_DATA(py_q_direction);
   }
 
   get_phonons_at_gridpoints(freqs,
                             eigvecs,
                             phonon_done,
+                            num_phonons,
                             grid_points,
+                            num_grid_points,
                             grid_address,
                             mesh,
                             fc2,
                             svecs_fc2,
                             multi_fc2,
+                            num_patom,
+                            num_satom,
                             masses_fc2,
                             p2s_fc2,
                             s2p_fc2,
@@ -390,13 +400,6 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
                             q_dir,
                             nac_factor,
                             uplo[0]);
-
-  free(freqs);
-  free(eigvecs);
-  free(grid_points);
-  free(fc2);
-  free(svecs_fc2);
-  free(multi_fc2);
 
   Py_RETURN_NONE;
 }
