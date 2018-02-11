@@ -116,7 +116,7 @@ def create_phono3py_force_constants(phono3py,
                                         settings.get_cutoff_fc3_distance(),
                                         input_filename,
                                         output_filename,
-                                        settings.get_use_alm(),
+                                        settings.get_use_alm_fc3(),
                                         log_level):
                     print("fc3 was not created properly.")
                     if log_level:
@@ -169,7 +169,7 @@ def create_phono3py_force_constants(phono3py,
                                         distance_to_A,
                                         symmetrize_fc2,
                                         input_filename,
-                                        settings.get_use_alm(),
+                                        settings.get_use_alm_fc2(),
                                         log_level):
                 print("fc2 was not created properly.")
                 if log_level:
@@ -181,7 +181,7 @@ def create_phono3py_force_constants(phono3py,
                                                distance_to_A,
                                                symmetrize_fc2,
                                                input_filename,
-                                               settings.get_use_alm(),
+                                               settings.get_use_alm_fc2(),
                                                log_level):
                     print("fc2 was not created properly.")
                     if log_level:

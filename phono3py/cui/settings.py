@@ -48,7 +48,8 @@ class Phono3pySettings(Settings):
         self._scattering_event_class = None # scattering event class 1 or 2
         self._sigma_cutoff_width = None
         self._temperatures = None
-        self._use_alm = False
+        self._use_alm_fc2 = False
+        self._use_alm_fc3 = False
         self._use_ave_pp = False
         self._write_collision = False
         self._write_gamma_detail = False
@@ -309,11 +310,17 @@ class Phono3pySettings(Settings):
     def get_temperatures(self):
         return self._temperatures
 
-    def set_use_alm(self, use_alm):
-        self._use_alm = use_alm
+    def set_use_alm_fc2(self, use_alm_fc2):
+        self._use_alm_fc2 = use_alm_fc2
 
-    def get_use_alm(self):
-        return self._use_alm
+    def get_use_alm_fc2(self):
+        return self._use_alm_fc2
+
+    def set_use_alm_fc3(self, use_alm_fc3):
+        self._use_alm_fc3 = use_alm_fc3
+
+    def get_use_alm_fc3(self):
+        return self._use_alm_fc3
 
     def set_use_ave_pp(self, use_ave_pp):
         self._use_ave_pp = use_ave_pp
@@ -544,9 +551,13 @@ class Phono3pyConfParser(ConfParser):
             if self._args.temperatures is not None:
                 self._confs['temperatures'] = self._args.temperatures
 
-        if 'use_alm' in self._args:
-            if self._args.use_alm:
-                self._confs['use_alm'] = '.true.'
+        if 'use_alm_fc2' in self._args:
+            if self._args.use_alm_fc2:
+                self._confs['use_alm_fc2'] = '.true.'
+
+        if 'use_alm_fc3' in self._args:
+            if self._args.use_alm_fc3:
+                self._confs['use_alm_fc3'] = '.true.'
 
         if 'use_ave_pp' in self._args:
             if self._args.use_ave_pp:
@@ -789,9 +800,13 @@ class Phono3pyConfParser(ConfParser):
                 else:
                     self.set_parameter('temperatures', vals)
 
-            if conf_key == 'use_alm':
-                if confs['use_alm'].lower() == '.true.':
-                    self.set_parameter('use_alm', True)
+            if conf_key == 'use_alm_fc2':
+                if confs['use_alm_fc2'].lower() == '.true.':
+                    self.set_parameter('use_alm_fc2', True)
+
+            if conf_key == 'use_alm_fc3':
+                if confs['use_alm_fc3'].lower() == '.true.':
+                    self.set_parameter('use_alm_fc3', True)
 
             if conf_key == 'use_ave_pp':
                 if confs['use_ave_pp'].lower() == '.true.':
@@ -1006,9 +1021,13 @@ class Phono3pyConfParser(ConfParser):
         if 'temperatures' in params:
             self._settings.set_temperatures(params['temperatures'])
 
-        # Use ALM for creating force constants
-        if 'use_alm' in params:
-            self._settings.set_use_alm(params['use_alm'])
+        # Use ALM for creating fc2
+        if 'use_alm_fc2' in params:
+            self._settings.set_use_alm_fc2(params['use_alm_fc2'])
+
+        # Use ALM for creating fc3
+        if 'use_alm_fc3' in params:
+            self._settings.set_use_alm_fc3(params['use_alm_fc3'])
 
         # Use averaged ph-ph interaction
         if 'use_ave_pp' in params:

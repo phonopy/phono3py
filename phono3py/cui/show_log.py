@@ -118,7 +118,7 @@ def show_phono3py_force_constants_settings(read_fc3,
 
     if not (settings.get_is_isotope() or
             settings.get_is_joint_dos()):
-        if settings.get_use_alm() and not read_fc3:
+        if settings.get_use_alm_fc3() and not read_fc3:
             print("Use ALM for getting fc3")
         else:
             print("Imposing translational and index exchange symmetry to fc3: "

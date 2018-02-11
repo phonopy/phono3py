@@ -130,7 +130,8 @@ def get_parser():
                         tmin=None,
                         tstep=None,
                         uplo='L',
-                        use_alm=False,
+                        use_alm_fc2=False,
+                        use_alm_fc3=False,
                         use_ave_pp=False,
                         verbose=False,
                         write_collision=False,
@@ -144,8 +145,11 @@ def get_parser():
         "--abinit", dest="abinit_mode", action="store_true",
         help="Invoke Abinit mode")
     parser.add_argument(
-        "--alm", dest="use_alm", action="store_true",
-        help="Use ALM for creating force constants")
+        "--alm-fc2", dest="use_alm_fc2", action="store_true",
+        help="Use ALM for creating 2nd order force constants")
+    parser.add_argument(
+        "--alm-fc3", dest="use_alm_fc3", action="store_true",
+        help="Use ALM for creating 3rd order force constants")
     parser.add_argument(
         "--amplitude", dest="displacement_distance", type=float,
         help="Distance of displacements")
