@@ -1,5 +1,5 @@
 import numpy as np
-from phonopy.phonon.group_velocity import get_group_velocity
+from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.phonon.thermal_properties import mode_cv as get_mode_cv
 from phonopy.units import THzToEv, EV, THz, Angstrom
@@ -110,6 +110,15 @@ class Conductivity(object):
 
         self._grid_point_count = None
         self._set_grid_properties(grid_points)
+
+        self._gv_obj = GroupVelocity(
+            self._dm,
+            q_length=self._gv_delta_q,
+            symmetry=self._symmetry,
+            frequency_factor_to_THz=self._frequency_factor_to_THz,
+            log_level=self._log_level)
+        # gv_delta_q may be changed.
+        self._gv_delta_q = self._gv_obj.get_q_length()
 
     def __iter__(self):
         return self
@@ -360,12 +369,8 @@ class Conductivity(object):
             self._gv_sum2[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
 
     def _get_gv(self, q):
-        return get_group_velocity(
-            q,
-            self._dm,
-            q_length=self._gv_delta_q,
-            symmetry=self._symmetry,
-            frequency_factor_to_THz=self._frequency_factor_to_THz)
+        self._gv_obj.set_q_points([q])
+        return self._gv_obj.get_group_velocity()[0]
 
     def _get_gv_by_gv(self, i_irgp, i_data):
         rotation_map = get_grid_points_by_rotations(
