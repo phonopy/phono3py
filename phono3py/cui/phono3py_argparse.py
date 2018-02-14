@@ -64,8 +64,6 @@ def get_parser():
                         frequency_conversion_factor=None,
                         fpitch=None,
                         frequency_scale_factor=None,
-                        num_frequency_points=None,
-                        freq_scale=None,
                         gamma_unit_conversion=None,
                         grid_addresses=None,
                         grid_points=None,
@@ -104,6 +102,7 @@ def get_parser():
                         nac_method=None,
                         nac_q_direction=None,
                         no_kappa_stars=False,
+                        num_frequency_points=None,
                         output_filename=None,
                         phonon_supercell_dimension=None,
                         pinv_cutoff=None,
@@ -222,7 +221,7 @@ def get_parser():
         help="Supercell dimension for extra fc2")
     parser.add_argument(
         "--factor", dest="frequency_conversion_factor", type=float,
-        help="Conversion factor to favorite frequency unit")
+        help="Frequency unit conversion factor")
     parser.add_argument(
         "--fc2", dest="read_fc2", action="store_true",
         help="Read second order force constants")
@@ -234,8 +233,9 @@ def get_parser():
         help="Symmetrize force constants")
     parser.add_argument(
         "--freq-scale", dest="frequency_scale_factor", type=float,
-        help=("Squared scale factor multiplied with fc2. Therefore frequency "
-              "is changed but the contribution from NAC is not changed."))
+        help=("Squared scale factor multiplied as fc2 * factor^2. Therefore "
+              "frequency is changed but the contribution from NAC is not "
+              "changed."))
     parser.add_argument(
         "--freq-pitch", dest="fpitch", type=float,
         help="Pitch in frequency for spectrum")

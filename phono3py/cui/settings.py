@@ -12,7 +12,6 @@ class Phono3pySettings(Settings):
         self._create_displacements = False
         self._cutoff_fc3_distance = None
         self._cutoff_pair_distance = None
-        self._frequency_scale_factor = None
         self._gamma_conversion_factor = None
         self._grid_addresses = None
         self._grid_points = None
@@ -93,12 +92,6 @@ class Phono3pySettings(Settings):
 
     def get_cutoff_pair_distance(self):
         return self._cutoff_pair_distance
-
-    def set_frequency_scale_factor(self, frequency_scale_factor):
-        self._frequency_scale_factor = frequency_scale_factor
-
-    def get_frequency_scale_factor(self):
-        return self._frequency_scale_factor
 
     def set_gamma_conversion_factor(self, gamma_conversion_factor):
         self._gamma_conversion_factor = gamma_conversion_factor
@@ -398,11 +391,6 @@ class Phono3pyConfParser(ConfParser):
             if cutoff_pair is not None:
                 self._confs['cutoff_pair_distance'] = cutoff_pair
 
-        if 'frequency_scale_factor' in self._args:
-            freq_scale = self._args.frequency_scale_factor
-            if freq_scale is not None:
-                self._confs['frequency_scale_factor'] = freq_scale
-
         if 'gamma_conversion_factor' in self._args:
             g_conv_factor = self._args.gamma_conversion_factor
             if g_conv_factor is not None:
@@ -629,10 +617,6 @@ class Phono3pyConfParser(ConfParser):
             if conf_key == 'cutoff_pair_distance':
                 self.set_parameter('cutoff_pair_distance',
                                    float(confs['cutoff_pair_distance']))
-
-            if conf_key == 'frequency_scale_factor':
-                self.set_parameter('frequency_scale_factor',
-                                   float(confs['frequency_scale_factor']))
 
             if conf_key == 'full_pp':
                 if confs['full_pp'].lower() == '.true.':
@@ -868,12 +852,6 @@ class Phono3pyConfParser(ConfParser):
         if 'cutoff_pair_distance' in params:
             self._settings.set_cutoff_pair_distance(
                 params['cutoff_pair_distance'])
-
-        # This scale factor is multiplied to frequencies only, i.e., changes
-        # frequencies but assumed not to change the physical unit
-        if 'frequency_scale_factor' in params:
-            self._settings.set_frequency_scale_factor(
-                params['frequency_scale_factor'])
 
         # Gamma unit conversion factor
         if 'gamma_conversion_factor' in params:
