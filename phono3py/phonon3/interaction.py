@@ -25,7 +25,10 @@ class Interaction(object):
                  symmetrize_fc3q=False,
                  cutoff_frequency=None,
                  lapack_zheev_uplo='L'):
-        self._fc3 = fc3 * frequency_scale_factor ** 2
+        if frequency_scale_factor is None:
+            self._set_fc3(fc3)
+        else:
+            self._set_fc3(fc3 * frequency_scale_factor ** 2)
         self._supercell = supercell
         self._primitive = primitive
         self._mesh = np.array(mesh, dtype='intc')
@@ -314,6 +317,16 @@ class Interaction(object):
     def delete_interaction_strength(self):
         self._interaction_strength = None
         self._g_zero = None
+
+    def _set_fc3(self, fc3):
+        if (type(fc3) == np.ndarray and
+            fc3.dtype == np.dtype('double') and
+            fc3.flags.aligned and
+            fc3.flags.owndata and
+            fc3.flags.c_contiguous):
+            self._fc3 = fc3
+        else:
+            self._fc3 = np.array(fc3, dtype='double', order='C')
 
     def _set_band_indices(self, band_indices):
         num_band = self._primitive.get_number_of_atoms() * 3

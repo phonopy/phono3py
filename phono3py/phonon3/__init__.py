@@ -147,6 +147,7 @@ class Phono3py(object):
             band_indices=self._band_indices_flatten,
             constant_averaged_interaction=constant_averaged_interaction,
             frequency_factor_to_THz=self._frequency_factor_to_THz,
+            frequency_scale_factor=frequency_scale_factor,
             unit_conversion=unit_conversion,
             cutoff_frequency=self._cutoff_frequency,
             is_mesh_symmetry=self._is_mesh_symmetry,
