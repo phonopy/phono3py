@@ -157,8 +157,7 @@ class Phono3py(object):
             self._fc2,
             self._phonon_supercell,
             self._phonon_primitive,
-            nac_params=self._nac_params,
-            frequency_scale_factor=frequency_scale_factor)
+            nac_params=self._nac_params)
 
     def set_phonon_data(self, frequencies, eigenvectors, grid_address):
         if self._interaction is not None:

@@ -19,12 +19,13 @@ class Interaction(object):
                  band_indices=None,
                  constant_averaged_interaction=None,
                  frequency_factor_to_THz=VaspToTHz,
+                 frequency_scale_factor=None,
                  unit_conversion=None,
                  is_mesh_symmetry=True,
                  symmetrize_fc3q=False,
                  cutoff_frequency=None,
                  lapack_zheev_uplo='L'):
-        self._fc3 = fc3
+        self._fc3 = fc3 * frequency_scale_factor ** 2
         self._supercell = supercell
         self._primitive = primitive
         self._mesh = np.array(mesh, dtype='intc')
@@ -34,6 +35,7 @@ class Interaction(object):
         self._set_band_indices(band_indices)
         self._constant_averaged_interaction = constant_averaged_interaction
         self._frequency_factor_to_THz = frequency_factor_to_THz
+        self._frequency_scale_factor = frequency_scale_factor
 
         # Unit to eV^2
         if unit_conversion is None:
@@ -258,14 +260,13 @@ class Interaction(object):
                              supercell,
                              primitive,
                              nac_params=None,
-                             frequency_scale_factor=None,
                              decimals=None):
         self._dm = get_dynamical_matrix(
             fc2,
             supercell,
             primitive,
             nac_params=nac_params,
-            frequency_scale_factor=frequency_scale_factor,
+            frequency_scale_factor=self._frequency_scale_factor,
             decimals=decimals,
             symprec=self._symprec)
         self.set_phonons(np.arange(len(self._grid_address), dtype='intc'))

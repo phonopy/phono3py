@@ -233,9 +233,9 @@ def get_parser():
         help="Symmetrize force constants")
     parser.add_argument(
         "--freq-scale", dest="frequency_scale_factor", type=float,
-        help=("Squared scale factor multiplied as fc2 * factor^2. Therefore "
-              "frequency is changed but the contribution from NAC is not "
-              "changed."))
+        help=("Factor multiplied as fc2 * factor^2 and fc3 * factor^2. "
+              "Phonon frequency is changed but the contribution from NAC is "
+              "not changed."))
     parser.add_argument(
         "--freq-pitch", dest="fpitch", type=float,
         help="Pitch in frequency for spectrum")
