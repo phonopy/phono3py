@@ -102,7 +102,7 @@ static void pinv_from_eigensolution(double *data,
 static void show_colmat_info(const PyArrayObject *collision_matrix_py,
                              const int i_sigma,
                              const int i_temp,
-                             const int adrs_shift);
+                             const long adrs_shift);
 
 struct module_state {
   PyObject *error;
@@ -1117,7 +1117,8 @@ static PyObject * py_symmetrize_collision_matrix(PyObject *self, PyObject *args)
   int num_temp;
   int num_grid_points;
   int num_band;
-  int i, j, k, l, num_column, adrs_shift;
+  int i, j, k, l, num_column;
+  long adrs_shift;
   double val;
 
   if (!PyArg_ParseTuple(args, "O",
@@ -1748,7 +1749,8 @@ static PyObject * py_inverse_collision_matrix_libflame(PyObject *self, PyObject 
   int num_temp;
   int num_ir_grid_points;
   int num_band;
-  int num_column, adrs_shift;
+  int num_column;
+  long adrs_shift;
 
   if (!PyArg_ParseTuple(args, "OOiid",
                         &py_collision_matrix,
@@ -1791,7 +1793,8 @@ py_diagonalize_collision_matrix(PyObject *self, PyObject *args)
   int num_temp;
   int num_grid_point;
   int num_band;
-  int num_column, adrs_shift, info;
+  int num_column, info;
+  long adrs_shift;
 
   if (!PyArg_ParseTuple(args, "OOiidii",
                         &py_collision_matrix,
@@ -1818,7 +1821,8 @@ py_diagonalize_collision_matrix(PyObject *self, PyObject *args)
   adrs_shift = (i_sigma * num_column * num_column * num_temp +
                 i_temp * num_column * num_column);
 
-  show_colmat_info(py_collision_matrix, i_sigma, i_temp, adrs_shift);
+  /* show_colmat_info(py_collision_matrix, i_sigma, i_temp, adrs_shift); */
+
   info = phonopy_dsyev(collision_matrix + adrs_shift,
                        eigvals, num_column, solver);
   if (is_pinv) {
@@ -1841,7 +1845,8 @@ static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args)
   int num_temp;
   int num_grid_point;
   int num_band;
-  int num_column, adrs_shift;
+  int num_column;
+  long adrs_shift;
 
   if (!PyArg_ParseTuple(args, "OOiidi",
                         &py_collision_matrix,
@@ -1962,7 +1967,7 @@ static void pinv_from_eigensolution(double *data,
 static void show_colmat_info(const PyArrayObject *py_collision_matrix,
                              const int i_sigma,
                              const int i_temp,
-                             const int adrs_shift)
+                             const long adrs_shift)
 {
   int i;
 
@@ -1975,5 +1980,5 @@ static void show_colmat_info(const PyArrayObject *py_collision_matrix,
       printf("), ");
     }
   }
-  printf("Data shift:%d [%d, %d]\n", adrs_shift, i_sigma, i_temp);
+  printf("Data shift:%ld [%d, %d]\n", adrs_shift, i_sigma, i_temp);
 }
