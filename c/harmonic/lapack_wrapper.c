@@ -145,7 +145,7 @@ int phonopy_dsyev(double *data,
 
   switch (algorithm) {
   case 0: /* dsyev */
-    info = LAPACKE_dsyev(LAPACK_ROW_MAJOR,
+    info = LAPACKE_dsyev(LAPACK_COL_MAJOR,
                          'V',
                          'U',
                          (lapack_int)size,
@@ -154,7 +154,7 @@ int phonopy_dsyev(double *data,
                          eigvals);
     break;
   case 1: /* dsyevd */
-    info = LAPACKE_dsyevd(LAPACK_ROW_MAJOR,
+    info = LAPACKE_dsyevd(LAPACK_COL_MAJOR,
                           'V',
                           'U',
                           (lapack_int)size,

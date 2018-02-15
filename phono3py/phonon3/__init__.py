@@ -147,6 +147,7 @@ class Phono3py(object):
             band_indices=self._band_indices_flatten,
             constant_averaged_interaction=constant_averaged_interaction,
             frequency_factor_to_THz=self._frequency_factor_to_THz,
+            frequency_scale_factor=frequency_scale_factor,
             unit_conversion=unit_conversion,
             cutoff_frequency=self._cutoff_frequency,
             is_mesh_symmetry=self._is_mesh_symmetry,
@@ -157,8 +158,7 @@ class Phono3py(object):
             self._fc2,
             self._phonon_supercell,
             self._phonon_primitive,
-            nac_params=self._nac_params,
-            frequency_scale_factor=frequency_scale_factor)
+            nac_params=self._nac_params)
 
     def set_phonon_data(self, frequencies, eigenvectors, grid_address):
         if self._interaction is not None:

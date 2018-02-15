@@ -12,7 +12,6 @@ class Phono3pySettings(Settings):
         self._create_displacements = False
         self._cutoff_fc3_distance = None
         self._cutoff_pair_distance = None
-        self._frequency_scale_factor = None
         self._gamma_conversion_factor = None
         self._grid_addresses = None
         self._grid_points = None
@@ -48,7 +47,8 @@ class Phono3pySettings(Settings):
         self._scattering_event_class = None # scattering event class 1 or 2
         self._sigma_cutoff_width = None
         self._temperatures = None
-        self._use_alm = False
+        self._use_alm_fc2 = False
+        self._use_alm_fc3 = False
         self._use_ave_pp = False
         self._write_collision = False
         self._write_gamma_detail = False
@@ -92,12 +92,6 @@ class Phono3pySettings(Settings):
 
     def get_cutoff_pair_distance(self):
         return self._cutoff_pair_distance
-
-    def set_frequency_scale_factor(self, frequency_scale_factor):
-        self._frequency_scale_factor = frequency_scale_factor
-
-    def get_frequency_scale_factor(self):
-        return self._frequency_scale_factor
 
     def set_gamma_conversion_factor(self, gamma_conversion_factor):
         self._gamma_conversion_factor = gamma_conversion_factor
@@ -309,11 +303,17 @@ class Phono3pySettings(Settings):
     def get_temperatures(self):
         return self._temperatures
 
-    def set_use_alm(self, use_alm):
-        self._use_alm = use_alm
+    def set_use_alm_fc2(self, use_alm_fc2):
+        self._use_alm_fc2 = use_alm_fc2
 
-    def get_use_alm(self):
-        return self._use_alm
+    def get_use_alm_fc2(self):
+        return self._use_alm_fc2
+
+    def set_use_alm_fc3(self, use_alm_fc3):
+        self._use_alm_fc3 = use_alm_fc3
+
+    def get_use_alm_fc3(self):
+        return self._use_alm_fc3
 
     def set_use_ave_pp(self, use_ave_pp):
         self._use_ave_pp = use_ave_pp
@@ -390,11 +390,6 @@ class Phono3pyConfParser(ConfParser):
             cutoff_pair = self._args.cutoff_pair_distance
             if cutoff_pair is not None:
                 self._confs['cutoff_pair_distance'] = cutoff_pair
-
-        if 'frequency_scale_factor' in self._args:
-            freq_scale = self._args.frequency_scale_factor
-            if freq_scale is not None:
-                self._confs['frequency_scale_factor'] = freq_scale
 
         if 'gamma_conversion_factor' in self._args:
             g_conv_factor = self._args.gamma_conversion_factor
@@ -544,9 +539,13 @@ class Phono3pyConfParser(ConfParser):
             if self._args.temperatures is not None:
                 self._confs['temperatures'] = self._args.temperatures
 
-        if 'use_alm' in self._args:
-            if self._args.use_alm:
-                self._confs['use_alm'] = '.true.'
+        if 'use_alm_fc2' in self._args:
+            if self._args.use_alm_fc2:
+                self._confs['use_alm_fc2'] = '.true.'
+
+        if 'use_alm_fc3' in self._args:
+            if self._args.use_alm_fc3:
+                self._confs['use_alm_fc3'] = '.true.'
 
         if 'use_ave_pp' in self._args:
             if self._args.use_ave_pp:
@@ -618,10 +617,6 @@ class Phono3pyConfParser(ConfParser):
             if conf_key == 'cutoff_pair_distance':
                 self.set_parameter('cutoff_pair_distance',
                                    float(confs['cutoff_pair_distance']))
-
-            if conf_key == 'frequency_scale_factor':
-                self.set_parameter('frequency_scale_factor',
-                                   float(confs['frequency_scale_factor']))
 
             if conf_key == 'full_pp':
                 if confs['full_pp'].lower() == '.true.':
@@ -789,9 +784,13 @@ class Phono3pyConfParser(ConfParser):
                 else:
                     self.set_parameter('temperatures', vals)
 
-            if conf_key == 'use_alm':
-                if confs['use_alm'].lower() == '.true.':
-                    self.set_parameter('use_alm', True)
+            if conf_key == 'use_alm_fc2':
+                if confs['use_alm_fc2'].lower() == '.true.':
+                    self.set_parameter('use_alm_fc2', True)
+
+            if conf_key == 'use_alm_fc3':
+                if confs['use_alm_fc3'].lower() == '.true.':
+                    self.set_parameter('use_alm_fc3', True)
 
             if conf_key == 'use_ave_pp':
                 if confs['use_ave_pp'].lower() == '.true.':
@@ -853,12 +852,6 @@ class Phono3pyConfParser(ConfParser):
         if 'cutoff_pair_distance' in params:
             self._settings.set_cutoff_pair_distance(
                 params['cutoff_pair_distance'])
-
-        # This scale factor is multiplied to frequencies only, i.e., changes
-        # frequencies but assumed not to change the physical unit
-        if 'frequency_scale_factor' in params:
-            self._settings.set_frequency_scale_factor(
-                params['frequency_scale_factor'])
 
         # Gamma unit conversion factor
         if 'gamma_conversion_factor' in params:
@@ -1006,9 +999,13 @@ class Phono3pyConfParser(ConfParser):
         if 'temperatures' in params:
             self._settings.set_temperatures(params['temperatures'])
 
-        # Use ALM for creating force constants
-        if 'use_alm' in params:
-            self._settings.set_use_alm(params['use_alm'])
+        # Use ALM for creating fc2
+        if 'use_alm_fc2' in params:
+            self._settings.set_use_alm_fc2(params['use_alm_fc2'])
+
+        # Use ALM for creating fc3
+        if 'use_alm_fc3' in params:
+            self._settings.set_use_alm_fc3(params['use_alm_fc3'])
 
         # Use averaged ph-ph interaction
         if 'use_ave_pp' in params:

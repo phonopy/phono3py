@@ -621,23 +621,28 @@ class Conductivity_RTA(Conductivity):
             self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
             self._collision.set_integration_weights()
 
+            if self._log_level:
+                text = "Collisions will be calculated with "
+                if sigma is None:
+                    text += "tetrahedron method."
+                else:
+                    text += "sigma=%s" % sigma
+                    if self._sigma_cutoff is None:
+                        text += "."
+                    else:
+                        text += "(%4.2f SD)." % self._sigma_cutoff
+                print(text)
+
             if self._use_ave_pp:
                 self._collision.set_averaged_pp_interaction(
                     self._averaged_pp_interaction[i])
             else:
-                if self._log_level:
-                    text = "Collisions will be calculated with "
-                    if sigma is None:
-                        text += "tetrahedron method."
-                    else:
-                        text += "sigma=%s" % sigma
-                        if self._sigma_cutoff is None:
-                            text += "."
-                        else:
-                            text += "(%4.2f SD)." % self._sigma_cutoff
-                    print(text)
-
-                if j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
+                const_ave_pp = self._pp.get_constant_averaged_interaction()
+                if const_ave_pp is not None:
+                    if self._log_level:
+                        print("Constant ph-ph interaction of %6.3e is used." %
+                              const_ave_pp)
+                elif j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
                     if self._log_level:
                         print("Existing ph-ph interaction is used.")
                 else:
@@ -658,7 +663,7 @@ class Conductivity_RTA(Conductivity):
                 self._gamma_detail_at_q[:] = 0
 
             if self._log_level:
-                print("Calculating collisions at temperatures")
+                print("Calculating collisions at temperatures...")
             for k, t in enumerate(self._temperatures):
                 self._collision.set_temperature(t)
                 self._collision.run()

@@ -151,7 +151,7 @@ class Phono3pyYaml(object):
                 lines.append("  - [ %21.15f, %21.15f, %21.15f ] # %s" %
                              (v[0], v[1], v[2], a))
             lines.append("")
-            
+
         if self._unitcell is not None:
             lines.append("unit_cell:")
             count = 0
@@ -258,4 +258,3 @@ class Phono3pyYaml(object):
                          scaled_positions=_points)
         else:
             return None
-        
