@@ -1166,6 +1166,7 @@ class Conductivity_LBTE(Conductivity):
             return np.zeros_like(X.reshape(-1, 3))
 
     def _get_Y(self, i_sigma, i_temp, X):
+        solver, pinv_method = self._select_solver()
         num_band = self._primitive.get_number_of_atoms() * 3
 
         if self._is_reducible_collision_matrix:
@@ -1177,14 +1178,17 @@ class Conductivity_LBTE(Conductivity):
         v = self._collision_matrix[i_sigma, i_temp].reshape(size, size)
 
         w = self._collision_eigenvalues[i_sigma, i_temp]
-        if self._pinv_solver % 10 in [0, 1, 2, 3, 4, 5]:
+        if solver in [0, 1, 2, 3, 4, 5]:
             if self._log_level:
                 print("Calculating pseudo-inv of collision matrix by np.dot "
                       "(cutoff=%-.1e)" % self._pinv_cutoff)
                 sys.stdout.flush()
 
+            # Transpose eigvecs because it was solved by column major order
+            if solver in [1, 2]:
+                v = v.T
+
             e = np.zeros_like(w)
-            pinv_method = self._pinv_solver // 10
             if pinv_method not in [0, 1]:
                 pinv_method = 0
             for l, val in enumerate(w):
@@ -1230,13 +1234,7 @@ class Conductivity_LBTE(Conductivity):
 
         return I
 
-    def _diagonalize_collision_matrix(self, i_sigma, i_temp, size):
-        """Diagonalize collision matrix
-        Args:
-           size: The following value is expected:
-              ir-colmat:  num_ir_grid_points * num_band * 3
-              red-colmat: num_mesh_points * num_band
-        """
+    def _select_solver(self):
         solver = self._pinv_solver % 10
         pinv_method = self._pinv_solver // 10
 
@@ -1251,6 +1249,18 @@ class Conductivity_LBTE(Conductivity):
             solver = 1
         if pinv_method not in [0, 1]:
             pinv_method = 0
+
+        return solver, pinv_method
+
+    def _diagonalize_collision_matrix(self, i_sigma, i_temp, size):
+        """Diagonalize collision matrix
+        Args:
+           size: The following value is expected:
+              ir-colmat:  num_ir_grid_points * num_band * 3
+              red-colmat: num_mesh_points * num_band
+        """
+
+        solver, pinv_method = self._select_solver()
 
         if solver in [1, 2]: # dsyev: safer and slower than dsyevd and smallest
                              #        memory usage

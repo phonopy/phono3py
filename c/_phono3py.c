@@ -1867,7 +1867,7 @@ static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args)
   adrs_shift = (i_sigma * num_column * num_column * num_temp +
                 i_temp * num_column * num_column);
 
-  show_colmat_info(py_collision_matrix, i_sigma, i_temp, adrs_shift);
+  /* show_colmat_info(py_collision_matrix, i_sigma, i_temp, adrs_shift); */
 
   pinv_from_eigensolution(collision_matrix + adrs_shift,
                           eigvals, num_column, cutoff, pinv_method);
