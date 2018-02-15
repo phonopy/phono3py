@@ -97,7 +97,7 @@ def get_phono3py_configurations(settings):
         frequency_step = None
 
     if settings.get_frequency_scale_factor() is None:
-        frequency_scale_factor = 1.0
+        frequency_scale_factor = None
     else:
         frequency_scale_factor = settings.get_frequency_scale_factor()
 

@@ -986,7 +986,7 @@ def read_pp_from_hdf5(mesh,
             remlen = 0
             if 'g_zero_bits_reminder' in f:
                 z_rem = f['g_zero_bits_reminder'][:]
-                remlen = np.prod(pp_shape) - len(z)
+                remlen = np.prod(pp_shape) - bytelen * 8
 
             bits = np.unpackbits(z)
             if not bits.flags['C_CONTIGUOUS']:

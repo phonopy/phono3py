@@ -19,12 +19,16 @@ class Interaction(object):
                  band_indices=None,
                  constant_averaged_interaction=None,
                  frequency_factor_to_THz=VaspToTHz,
+                 frequency_scale_factor=None,
                  unit_conversion=None,
                  is_mesh_symmetry=True,
                  symmetrize_fc3q=False,
                  cutoff_frequency=None,
                  lapack_zheev_uplo='L'):
-        self._fc3 = fc3
+        if frequency_scale_factor is None:
+            self._set_fc3(fc3)
+        else:
+            self._set_fc3(fc3 * frequency_scale_factor ** 2)
         self._supercell = supercell
         self._primitive = primitive
         self._mesh = np.array(mesh, dtype='intc')
@@ -34,6 +38,7 @@ class Interaction(object):
         self._set_band_indices(band_indices)
         self._constant_averaged_interaction = constant_averaged_interaction
         self._frequency_factor_to_THz = frequency_factor_to_THz
+        self._frequency_scale_factor = frequency_scale_factor
 
         # Unit to eV^2
         if unit_conversion is None:
@@ -205,7 +210,7 @@ class Interaction(object):
         if self._nac_q_direction is not None:
             if (grid_address[grid_point] == 0).all():
                 self._phonon_done[grid_point] = 0
-                self.set_phonons(np.array([0], dtype='intc'))
+                self.set_phonons(np.array([grid_point], dtype='intc'))
                 rotations = []
                 for r in self._symmetry.get_pointgroup_operations():
                     dq = self._nac_q_direction
@@ -258,14 +263,13 @@ class Interaction(object):
                              supercell,
                              primitive,
                              nac_params=None,
-                             frequency_scale_factor=None,
                              decimals=None):
         self._dm = get_dynamical_matrix(
             fc2,
             supercell,
             primitive,
             nac_params=nac_params,
-            frequency_scale_factor=frequency_scale_factor,
+            frequency_scale_factor=self._frequency_scale_factor,
             decimals=decimals,
             symprec=self._symprec)
         self.set_phonons(np.arange(len(self._grid_address), dtype='intc'))
@@ -313,6 +317,16 @@ class Interaction(object):
     def delete_interaction_strength(self):
         self._interaction_strength = None
         self._g_zero = None
+
+    def _set_fc3(self, fc3):
+        if (type(fc3) == np.ndarray and
+            fc3.dtype == np.dtype('double') and
+            fc3.flags.aligned and
+            fc3.flags.owndata and
+            fc3.flags.c_contiguous):
+            self._fc3 = fc3
+        else:
+            self._fc3 = np.array(fc3, dtype='double', order='C')
 
     def _set_band_indices(self, band_indices):
         num_band = self._primitive.get_number_of_atoms() * 3

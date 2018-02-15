@@ -64,8 +64,6 @@ def get_parser():
                         frequency_conversion_factor=None,
                         fpitch=None,
                         frequency_scale_factor=None,
-                        num_frequency_points=None,
-                        freq_scale=None,
                         gamma_unit_conversion=None,
                         grid_addresses=None,
                         grid_points=None,
@@ -101,7 +99,10 @@ def get_parser():
                         mass_variances=None,
                         mesh_numbers=None,
                         mesh_divisors=None,
+                        nac_method=None,
+                        nac_q_direction=None,
                         no_kappa_stars=False,
+                        num_frequency_points=None,
                         output_filename=None,
                         phonon_supercell_dimension=None,
                         pinv_cutoff=None,
@@ -111,7 +112,6 @@ def get_parser():
                         qe_mode=False,
                         qpoints=None,
                         quiet=False,
-                        q_direction=None,
                         read_amplitude=False,
                         read_collision=None,
                         read_fc2=False,
@@ -129,7 +129,8 @@ def get_parser():
                         tmin=None,
                         tstep=None,
                         uplo='L',
-                        use_alm=False,
+                        use_alm_fc2=False,
+                        use_alm_fc3=False,
                         use_ave_pp=False,
                         verbose=False,
                         write_collision=False,
@@ -143,8 +144,11 @@ def get_parser():
         "--abinit", dest="abinit_mode", action="store_true",
         help="Invoke Abinit mode")
     parser.add_argument(
-        "--alm", dest="use_alm", action="store_true",
-        help="Use ALM for creating force constants")
+        "--alm-fc2", dest="use_alm_fc2", action="store_true",
+        help="Use ALM for creating 2nd order force constants")
+    parser.add_argument(
+        "--alm-fc3", dest="use_alm_fc3", action="store_true",
+        help="Use ALM for creating 3rd order force constants")
     parser.add_argument(
         "--amplitude", dest="displacement_distance", type=float,
         help="Distance of displacements")
@@ -217,7 +221,7 @@ def get_parser():
         help="Supercell dimension for extra fc2")
     parser.add_argument(
         "--factor", dest="frequency_conversion_factor", type=float,
-        help="Conversion factor to favorite frequency unit")
+        help="Frequency unit conversion factor")
     parser.add_argument(
         "--fc2", dest="read_fc2", action="store_true",
         help="Read second order force constants")
@@ -229,8 +233,9 @@ def get_parser():
         help="Symmetrize force constants")
     parser.add_argument(
         "--freq-scale", dest="frequency_scale_factor", type=float,
-        help=("Squared scale factor multiplied with fc2. Therefore frequency "
-              "is changed but the contribution from NAC is not changed."))
+        help=("Factor multiplied as fc2 * factor^2 and fc3 * factor^2. "
+              "Phonon frequency is changed but the contribution from NAC is "
+              "not changed."))
     parser.add_argument(
         "--freq-pitch", dest="fpitch", type=float,
         help="Pitch in frequency for spectrum")
@@ -306,6 +311,9 @@ def get_parser():
         "--nac", dest="is_nac", action="store_true",
         help="Non-analytical term correction")
     parser.add_argument(
+        "--nac-method", dest="nac_method",
+        help="Non-analytical term correction method: Wang (default) or Gonze")
+    parser.add_argument(
         "--nodiag", dest="is_nodiag", action="store_true",
         help="Set displacements parallel to axes")
     parser.add_argument(
@@ -349,7 +357,7 @@ def get_parser():
         "--qpoints", dest="qpoints",
         help="Calculate at specified q-points")
     parser.add_argument(
-        "--q-direction", dest="q_direction",
+        "--q-direction", dest="nac_q_direction",
         help="q-vector direction at q->0 for non-analytical term correction")
     parser.add_argument(
         "-q", "--quiet", dest="quiet", action="store_true",

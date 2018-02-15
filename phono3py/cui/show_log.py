@@ -93,7 +93,7 @@ def show_phono3py_cells(symmetry,
     print("-" * 19 + " ratio (supercell for fc)/(primitive) " + "-" * 19)
     for vec in np.dot(supercell.get_cell(),
                       np.linalg.inv(primitive.get_cell())):
-        print(("%5.2f" * 3) % tuple(vec))
+        print(("  " + "%6.2f" * 3) % tuple(vec))
     if settings.get_phonon_supercell_matrix() is not None:
         print("-" * 19 + " primitive cell for harmonic phonon " + "-" * 20)
         print_cell(phonon_primitive)
@@ -104,7 +104,7 @@ def show_phono3py_cells(symmetry,
               "-" * 15)
         for vec in np.dot(phonon_supercell.get_cell(),
                           np.linalg.inv(phonon_primitive.get_cell())):
-            print(("%5.2f" * 3) % tuple(vec))
+            print(("%7.2f" * 3) % tuple(vec))
 
 def show_phono3py_force_constants_settings(read_fc3,
                                            read_fc2,
@@ -113,15 +113,12 @@ def show_phono3py_force_constants_settings(read_fc3,
                                            is_symmetrize_fc2,
                                            settings):
     print("-" * 29 + " Force constants " + "-" * 30)
-    if not read_fc2:
-        print("Imposing translational and index exchange symmetry to fc2: %s" %
-              is_symmetrize_fc2)
+    print("Imposing translational and index exchange symmetry to fc2: %s" %
+          is_symmetrize_fc2)
 
-    if not (read_fc3 or
-            settings.get_is_isotope() or
+    if not (settings.get_is_isotope() or
             settings.get_is_joint_dos()):
-
-        if settings.get_use_alm():
+        if settings.get_use_alm_fc3() and not read_fc3:
             print("Use ALM for getting fc3")
         else:
             print("Imposing translational and index exchange symmetry to fc3: "
@@ -143,12 +140,17 @@ def show_phono3py_settings(settings,
                            grid_points,
                            cutoff_frequency,
                            frequency_factor_to_THz,
+                           frequency_scale_factor,
                            frequency_step,
                            num_frequency_points,
+                           nac_params,
                            log_level):
     print("-" * 33 + " Settings " + "-" * 33)
     if settings.get_is_nac():
-        print("Non-analytical term correction: %s" % settings.get_is_nac())
+        print("Non-analytical term correction (NAC): %s"
+              % settings.get_is_nac())
+        if nac_params:
+            print("NAC unit conversion factor: %9.5f" % nac_params['factor'])
     if mesh is not None:
         print("Mesh sampling: [ %d %d %d ]" % tuple(mesh))
     if mesh_divs is not None and settings.get_is_bterta():
@@ -207,11 +209,22 @@ def show_phono3py_settings(settings,
         (settings.get_is_bterta() or settings.get_is_lbte())):
         print("Use averaged ph-ph interaction")
 
-    if log_level > 1:
-        print("Frequency factor to THz: %s" % frequency_factor_to_THz)
+    const_ave_pp = settings.get_constant_averaged_pp_interaction()
+    if (const_ave_pp is not None and
+        (settings.get_is_bterta() or settings.get_is_lbte())):
+        print("Constant ph-ph interaction: %6.3e" % const_ave_pp)
+
+    print("Frequency conversion factor to THz: %9.5f" %
+          frequency_factor_to_THz)
+    if frequency_scale_factor is not None:
+        print("Frequency scale factor: %8.5f" % frequency_scale_factor)
+
+    if (settings.get_is_joint_dos() or
+        settings.get_is_imag_self_energy()):
         if frequency_step is not None:
             print("Frequency step for spectrum: %s" % frequency_step)
         if num_frequency_points is not None:
             print("Number of frequency sampling points: %d" %
                   num_frequency_points)
+
     sys.stdout.flush()

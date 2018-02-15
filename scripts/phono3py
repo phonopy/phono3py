@@ -477,6 +477,43 @@ if args.show_num_triplets:
         print_end()
     sys.exit(0)
 
+##################################
+# Non-analytical term correction #
+##################################
+if settings.get_is_nac():
+    file_exists('BORN', log_level)
+    nac_params = parse_BORN(phonon_primitive)
+    nac_factor = Hartree * Bohr
+    if nac_params['factor'] is not None:
+        if log_level:
+            print("-" * 22 + " Non-analytical term correction " + "-" * 22)
+            print("Default NAC unit conversion factor is %6.4f." % nac_factor)
+            print("But instead the value in BORN file %f is used." %
+                  nac_params['factor'])
+    else:
+        nac_params['factor'] = nac_factor
+    if settings.get_nac_method() is not None:
+        nac_params['method'] = settings.get_nac_method()
+
+    if log_level:
+        print("-" * 27 + " Dielectric constant " + "-" * 28)
+        for v in nac_params['dielectric']:
+            print("         %12.7f %12.7f %12.7f" % tuple(v))
+        print("-" * 26 + " Born effective charges " + "-" * 26)
+        symbols = phonon_primitive.get_chemical_symbols()
+        for i, (z, s) in enumerate(zip(nac_params['born'], symbols)):
+            for j, v in enumerate(z):
+                if j == 0:
+                    text = "%5d %-2s" % (i + 1, s)
+                else:
+                    text = "        "
+                print("%s %12.7f %12.7f %12.7f" % ((text,) + tuple(v)))
+
+    nac_q_direction = settings.get_nac_q_direction()
+else:
+    nac_params = None
+    nac_q_direction = None
+
 ###################
 # Force constants #
 ###################
@@ -488,25 +525,6 @@ create_phono3py_force_constants(phono3py,
                                 input_filename=input_filename,
                                 output_filename=output_filename,
                                 log_level=log_level)
-
-##################################
-# Non-analytical term correction #
-##################################
-if settings.get_is_nac():
-    file_exists('BORN', log_level)
-    nac_params = parse_BORN(phonon_primitive)
-    nac_factor = Hartree * Bohr
-    if nac_params['factor'] is not None:
-        print("-" * 22 + " Non-analytical term correction " + "-" * 22)
-        print("Default NAC unit conversion factor is %6.4f." % nac_factor)
-        print("But instead the value in BORN file %f is used." %
-              nac_params['factor'])
-    else:
-        nac_params['factor'] = nac_factor
-    nac_q_direction = settings.get_nac_q_direction()
-else:
-    nac_params = None
-    nac_q_direction = None
 
 ##############################
 # Phonon Gruneisen parameter #
@@ -560,8 +578,10 @@ if log_level and run_mode is not None:
                            grid_points,
                            cutoff_frequency,
                            frequency_factor_to_THz,
+                           frequency_scale_factor,
                            frequency_step,
                            num_frequency_points,
+                           nac_params,
                            log_level)
 
 #############

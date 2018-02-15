@@ -1,42 +1,5 @@
 import numpy as np
 
-def get_phonons_at_qpoints(frequencies,
-                           eigenvectors,
-                           dm,
-                           qpoints,
-                           frequency_factor_to_THz,
-                           nac_q_direction=None,
-                           lapack_zheev_uplo='L'):
-    import phono3py._lapackepy as lapackepy
-
-    (svecs,
-     multiplicity,
-     masses,
-     rec_lattice,
-     born,
-     nac_factor,
-     dielectric) = _extract_params(dm)
-
-    fc_p2s, fc_s2p = _get_fc_elements_mapping(dm)
-
-    lapackepy.phonons_at_qpoints(
-        frequencies,
-        eigenvectors,
-        np.array(qpoints, dtype='double', order='C'),
-        dm.get_force_constants(),
-        svecs,
-        multiplicity,
-        masses,
-        fc_p2s,
-        fc_s2p,
-        frequency_factor_to_THz,
-        born,
-        dielectric,
-        rec_lattice,
-        nac_q_direction,
-        nac_factor,
-        lapack_zheev_uplo)
-
 def set_phonon_c(dm,
                  frequencies,
                  eigenvectors,
@@ -45,30 +8,49 @@ def set_phonon_c(dm,
                  grid_address,
                  mesh,
                  frequency_factor_to_THz,
-                 nac_q_direction,
+                 nac_q_direction, # in reduced coordinates
                  lapack_zheev_uplo):
-    import phono3py._lapackepy as lapackepy
+    import phono3py._phono3py as phono3c
 
     (svecs,
      multiplicity,
      masses,
-     rec_lattice,
+     rec_lattice, # column vectors
+     positions,
      born,
      nac_factor,
      dielectric) = _extract_params(dm)
 
-    fc_p2s, fc_s2p = _get_fc_elements_mapping(dm)
+    if dm.is_nac() and dm.get_nac_method() == 'gonze':
+        gonze_nac_dataset = dm.get_Gonze_nac_dataset()
+        if gonze_nac_dataset[0] is None:
+            dm.make_Gonze_nac_dataset(verbose=True)
+            gonze_nac_dataset = dm.get_Gonze_nac_dataset()
+        (gonze_fc, # fc where the dipole-diple contribution is removed.
+         dd_q0,    # second term of dipole-dipole expression.
+         G_cutoff, # Cutoff radius in reciprocal space. This will not be used.
+         G_list,   # List of G points where d-d interactions are integrated.
+         Lambda) = gonze_nac_dataset # Convergence parameter
+        fc = gonze_fc
+    else:
+        positions = None
+        dd_q0 = None
+        G_list = None
+        Lambda = 0
+        fc = dm.get_force_constants()
 
-    lapackepy.phonons_at_gridpoints(
+    fc_p2s, fc_s2p = _get_fc_elements_mapping(dm, fc)
+    phono3c.phonons_at_gridpoints(
         frequencies,
         eigenvectors,
         phonon_done,
         grid_points,
         grid_address,
         np.array(mesh, dtype='intc'),
-        dm.get_force_constants(),
+        fc,
         svecs,
         multiplicity,
+        positions,
         masses,
         fc_p2s,
         fc_s2p,
@@ -78,6 +60,9 @@ def set_phonon_c(dm,
         rec_lattice,
         nac_q_direction,
         nac_factor,
+        dd_q0,
+        G_list,
+        Lambda,
         lapack_zheev_uplo)
 
 def set_phonon_py(grid_point,
@@ -106,6 +91,8 @@ def _extract_params(dm):
     masses = np.array(dm.get_primitive().get_masses(), dtype='double')
     rec_lattice = np.array(
         np.linalg.inv(dm.get_primitive().get_cell()), dtype='double', order='C')
+    positions = np.array(dm.get_primitive().get_positions(),
+                         dtype='double', order='C')
     if dm.is_nac():
         born = dm.get_born_effective_charges()
         nac_factor = dm.get_nac_factor()
@@ -119,14 +106,14 @@ def _extract_params(dm):
             multiplicity,
             masses,
             rec_lattice,
+            positions,
             born,
             nac_factor,
             dielectric)
 
-def _get_fc_elements_mapping(dm):
+def _get_fc_elements_mapping(dm, fc):
     p2s_map = dm.get_primitive_to_supercell_map()
     s2p_map = dm.get_supercell_to_primitive_map()
-    fc = dm.get_force_constants()
     if fc.shape[0] == fc.shape[1]: # full fc
         fc_p2s = p2s_map
         fc_s2p = s2p_map

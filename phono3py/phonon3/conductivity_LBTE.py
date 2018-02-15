@@ -315,15 +315,8 @@ def _write_kappa(lbte,
 
             if write_LBTE_solution:
                 if pinv_solver is not None:
-                    solver = pinv_solver
-                    if pinv_solver == 0:
-                        try:
-                            import scipy.linalg
-                        except ImportError:
-                            solver = 1
-                        else:
-                            solver = 8
-                    if solver % 10 in [1, 2, 8]:
+                    solver, pinv_method = _select_solver(pinv_solver)
+                    if solver in [3, 4, 5]:
                         write_unitary_matrix_to_hdf5(
                             temperatures,
                             mesh,
@@ -331,6 +324,15 @@ def _write_kappa(lbte,
                             sigma=sigma,
                             sigma_cutoff=sigma_cutoff,
                             filename=filename)
+                    # elif solver in [1, 2]:
+                    #     write_unitary_matrix_to_hdf5(
+                    #         temperatures,
+                    #         mesh,
+                    #         unitary_matrix=unitary_matrix,
+                    #         sigma=sigma,
+                    #         sigma_cutoff=sigma_cutoff,
+                    #         filename=filename)
+
 
 def _set_collision_from_file(lbte,
                              indices='all',
@@ -601,6 +603,25 @@ def _collect_collision_band(colmat_at_sigma,
     temperatures[:] = temperatures_at_band
 
     return True
+
+def _select_solver(pinv_solver):
+    solver = pinv_solver % 10
+    pinv_method = pinv_solver // 10
+
+    if solver == 0: # default solver
+        try:
+            import scipy.linalg
+        except ImportError:
+            solver = 1
+        else:
+            solver = 4
+    elif solver not in range(1, 7):
+        solver = 1
+    if pinv_method not in [0, 1]:
+        pinv_method = 0
+
+    return solver, pinv_method
+
 
 class Conductivity_LBTE(Conductivity):
     def __init__(self,
@@ -1066,29 +1087,31 @@ class Conductivity_LBTE(Conductivity):
         return weights
 
     def _symmetrize_collision_matrix(self):
-        if self._log_level:
-            print("- Making collision matrix symmetric...")
+        solver, pinv_method = _select_solver(self._pinv_solver)
+
+        if solver == 1:
+            if self._log_level:
+                print("- Making collision matrix symmetric with the build-in "
+                      "module...")
+                sys.stdout.flush()
+
+            import phono3py._phono3py as phono3c
             sys.stdout.flush()
-
-        # C-API implementation causes segmentation fault in specific
-        # cases. The reason is not clear, but it seems to happen when
-        # using large memory space. Passing data to C-API is doubted.
-        #
-        # import phono3py._phono3py as phono3c
-        # print(self._collision_matrix.flags)
-        # print(self._collision_matrix.shape)
-        # sys.stdout.flush()
-        # phono3c.symmetrize_collision_matrix(self._collision_matrix)
-
-        if self._is_reducible_collision_matrix:
-            size = np.prod(self._collision_matrix.shape[2:4])
+            phono3c.symmetrize_collision_matrix(self._collision_matrix)
         else:
-            size = np.prod(self._collision_matrix.shape[2:5])
-        for i in range(self._collision_matrix.shape[0]):
-            for j in range(self._collision_matrix.shape[1]):
-                col_mat = self._collision_matrix[i, j].reshape(size, size)
-                col_mat += col_mat.T
-                col_mat /= 2
+            if self._log_level:
+                print("- Making collision matrix symmetric ...")
+                sys.stdout.flush()
+
+            if self._is_reducible_collision_matrix:
+                size = np.prod(self._collision_matrix.shape[2:4])
+            else:
+                size = np.prod(self._collision_matrix.shape[2:5])
+            for i in range(self._collision_matrix.shape[0]):
+                for j in range(self._collision_matrix.shape[1]):
+                    col_mat = self._collision_matrix[i, j].reshape(size, size)
+                    col_mat += col_mat.T
+                    col_mat /= 2
 
     def _average_collision_matrix_by_degeneracy(self):
         # Average matrix elements belonging to degenerate bands
@@ -1166,6 +1189,7 @@ class Conductivity_LBTE(Conductivity):
             return np.zeros_like(X.reshape(-1, 3))
 
     def _get_Y(self, i_sigma, i_temp, X):
+        solver, pinv_method = _select_solver(self._pinv_solver)
         num_band = self._primitive.get_number_of_atoms() * 3
 
         if self._is_reducible_collision_matrix:
@@ -1177,14 +1201,17 @@ class Conductivity_LBTE(Conductivity):
         v = self._collision_matrix[i_sigma, i_temp].reshape(size, size)
 
         w = self._collision_eigenvalues[i_sigma, i_temp]
-        if self._pinv_solver % 10 in [0, 1, 2, 3, 4, 5]:
+        if solver in [0, 1, 2, 3, 4, 5]:
             if self._log_level:
                 print("Calculating pseudo-inv of collision matrix by np.dot "
                       "(cutoff=%-.1e)" % self._pinv_cutoff)
                 sys.stdout.flush()
 
+            # Transpose eigvecs because it was solved by column major order
+            if solver in [1, 2]:
+                v = v.T
+
             e = np.zeros_like(w)
-            pinv_method = self._pinv_solver // 10
             if pinv_method not in [0, 1]:
                 pinv_method = 0
             for l, val in enumerate(w):
@@ -1198,7 +1225,7 @@ class Conductivity_LBTE(Conductivity):
                 Y = np.dot(v, X1)
             else:
                 Y = np.dot(v, e * np.dot(v.T, X.ravel())).reshape(-1, 3)
-        else: # This is slower as far as tested.
+        else: # solver=6 This is slower as far as tested.
             import phono3py._phono3py as phono3c
             if self._log_level:
                 print("Calculating pseudo-inv of collision matrix "
@@ -1237,20 +1264,8 @@ class Conductivity_LBTE(Conductivity):
               ir-colmat:  num_ir_grid_points * num_band * 3
               red-colmat: num_mesh_points * num_band
         """
-        solver = self._pinv_solver % 10
-        pinv_method = self._pinv_solver // 10
 
-        if solver == 0: # default solver
-            try:
-                import scipy.linalg
-            except ImportError:
-                solver = 1
-            else:
-                solver = 4
-        elif solver not in range(1, 7):
-            solver = 1
-        if pinv_method not in [0, 1]:
-            pinv_method = 0
+        solver, pinv_method = _select_solver(self._pinv_solver)
 
         if solver in [1, 2]: # dsyev: safer and slower than dsyevd and smallest
                              #        memory usage
