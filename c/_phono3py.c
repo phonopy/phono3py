@@ -1142,7 +1142,7 @@ static PyObject * py_symmetrize_collision_matrix(PyObject *self, PyObject *args)
     for (j = 0; j < num_temp; j++) {
       adrs_shift = (i * num_column * num_column * num_temp +
                     j * num_column * num_column);
-      show_colmat_info(py_collision_matrix, i, j, adrs_shift);
+      /* show_colmat_info(py_collision_matrix, i, j, adrs_shift); */
 #pragma omp parallel for private(l, val)
       for (k = 0; k < num_column; k++) {
         for (l = k + 1; l < num_column; l++) {

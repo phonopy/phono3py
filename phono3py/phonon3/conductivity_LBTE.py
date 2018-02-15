@@ -1087,25 +1087,31 @@ class Conductivity_LBTE(Conductivity):
         return weights
 
     def _symmetrize_collision_matrix(self):
-        if self._log_level:
-            print("- Making collision matrix symmetric...")
+        solver, pinv_method = _select_solver(self._pinv_solver)
+
+        if solver == 1:
+            if self._log_level:
+                print("- Making collision matrix symmetric with the build-in "
+                      "module...")
+                sys.stdout.flush()
+
+            import phono3py._phono3py as phono3c
             sys.stdout.flush()
-
-        # import phono3py._phono3py as phono3c
-        # print(self._collision_matrix.flags)
-        # print(self._collision_matrix.shape)
-        # sys.stdout.flush()
-        # phono3c.symmetrize_collision_matrix(self._collision_matrix)
-
-        if self._is_reducible_collision_matrix:
-            size = np.prod(self._collision_matrix.shape[2:4])
+            phono3c.symmetrize_collision_matrix(self._collision_matrix)
         else:
-            size = np.prod(self._collision_matrix.shape[2:5])
-        for i in range(self._collision_matrix.shape[0]):
-            for j in range(self._collision_matrix.shape[1]):
-                col_mat = self._collision_matrix[i, j].reshape(size, size)
-                col_mat += col_mat.T
-                col_mat /= 2
+            if self._log_level:
+                print("- Making collision matrix symmetric ...")
+                sys.stdout.flush()
+
+            if self._is_reducible_collision_matrix:
+                size = np.prod(self._collision_matrix.shape[2:4])
+            else:
+                size = np.prod(self._collision_matrix.shape[2:5])
+            for i in range(self._collision_matrix.shape[0]):
+                for j in range(self._collision_matrix.shape[1]):
+                    col_mat = self._collision_matrix[i, j].reshape(size, size)
+                    col_mat += col_mat.T
+                    col_mat /= 2
 
     def _average_collision_matrix_by_degeneracy(self):
         # Average matrix elements belonging to degenerate bands
