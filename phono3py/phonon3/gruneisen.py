@@ -59,6 +59,10 @@ def get_gruneisen_parameters(fc2,
         filename = 'gruneisen.' + output_filename
     gruneisen.write(filename=filename)
 
+    if log_level:
+        print("Gruneisen parameters are written in %s" %
+              (filename + ".hdf5"))
+
 class Gruneisen(object):
     def __init__(self,
                  fc2,
