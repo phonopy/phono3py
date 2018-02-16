@@ -548,7 +548,7 @@ if settings.get_is_gruneisen():
                                          phono3py.get_fc3(),
                                          supercell,
                                          primitive,
-                                         settings.get_bands(),
+                                         settings.get_band_indices(),
                                          mesh,
                                          settings.get_qpoints(),
                                          nac_params=nac_params,
