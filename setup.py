@@ -86,6 +86,10 @@ if os.path.isfile("mkl.py"):
     #
     # For linking MKL, the following page is helpful:
     # https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
+    #
+    # The following setting worked for the python 2.7 and 3.6
+    # environments of conda, however failed for the built-in python
+    # 2.7 in Ubuntu 16.04.3 LTS.
 
     print("MKL LAPACKE is to be used.")
     print("Use of icc is assumed (CC='icc').")
