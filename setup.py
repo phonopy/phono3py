@@ -83,53 +83,39 @@ if os.path.isfile("mkl.py"):
     # is not necessarily compipled with icc. If phonopy is also
     # compiled with icc, link libraries have to be specified in
     # phonopy/setup.py, too.
+    #
+    # For linking MKL, the following page is helpful:
+    # https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor
+
+    print("MKL LAPACKE is to be used.")
+    print("Use of icc is assumed (CC='icc').")
 
     from mkl import (extra_link_args_lapacke, include_dirs_lapacke,
                      library_dirs_lapacke)
 
-    #### Example(1) of mkl.py ####
-    # intel_dir = "/opt/intel/composer_xe_2015.7.235"
-    # extra_link_args_lapacke = ['-L%s/mkl/lib/intel64' % intel_dir,
-    #                            '-lmkl_intel_ilp64',
-    #                            '-lmkl_intel_thread',
-    #                            '-lmkl_core',
-    #                            '-lmkl_avx2',
-    #                            '-L%s/compiler/lib/intel64' % intel_dir,
-    #                            '-liomp5',
-    #                            '-lsvml',
-    #                            '-lirc',
-    #                            '-limf',
-    #                            '-lpthread']
-    # library_dirs_lapacke = []
-    # include_dirs_lapacke = ['%s/mkl/include' % intel_dir,
-    #                         '%s/compiler/include' % intel_dir]
-
-    #### Example(2) of mkl.py ####
+    #### Example of mkl.py ####
+    # For 2015
+    # intel_dir = "/opt/intel/composer_xe_2015.7.235/compiler"
+    # For 2016
     # intel_dir = "/opt/intel/parallel_studio_xe_2016"
-    # extra_link_args_lapacke = ['-L%s/mkl/lib/intel64' % intel_dir,
-    #                            '-lmkl_intel_ilp64',
-    #                            '-lmkl_intel_thread',
-    #                            '-lmkl_core',
-    #                            '-lmkl_avx2',
-    #                            '-L%s/lib/intel64' % intel_dir,
-    #                            '-liomp5',
+    #
+    # extra_link_args_lapacke = ['-L%s/lib/intel64' % intel_dir,
     #                            '-lsvml',
-    #                            '-lirc',
+    #                            '-liomp5',
     #                            '-limf',
     #                            '-lpthread']
     # library_dirs_lapacke = []
-    # include_dirs_lapacke = ['%s/mkl/include' % intel_dir,
-    #                         '%s/include' % intel_dir]
+    # include_dirs_lapacke = []
 
-    print("MKL LAPACKE is to be used.")
-    print("Use of icc is assumed (CC='icc').")
     if use_setuptools:
-        extra_compile_args += ['-openmp',
+        extra_compile_args += ['-mkl=parallel',
+                               '-DMKL_ILP64',
                                '-DMKL_LAPACKE',
                                '-DMULTITHREADED_BLAS']
     else:
-        extra_compile_args += ['-openmp']
-        define_macros += [('MKL_LAPACKE', None),
+        extra_compile_args += ['-mkl=parallel']
+        define_macros += [('MKL_ILP64', None),
+                          ('MKL_LAPACKE', None),
                           ('MULTITHREADED_BLAS', None)]
 elif os.path.isfile("libopenblas.py"):
     # This supposes that multithread openBLAS is used.
