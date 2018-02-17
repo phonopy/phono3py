@@ -316,23 +316,16 @@ def _write_kappa(lbte,
             if write_LBTE_solution:
                 if pinv_solver is not None:
                     solver, pinv_method = _select_solver(pinv_solver)
-                    if solver in [3, 4, 5]:
+                    if solver in [1, 2, 3, 4, 5]:
                         write_unitary_matrix_to_hdf5(
                             temperatures,
                             mesh,
                             unitary_matrix=unitary_matrix,
                             sigma=sigma,
                             sigma_cutoff=sigma_cutoff,
-                            filename=filename)
-                    # elif solver in [1, 2]:
-                    #     write_unitary_matrix_to_hdf5(
-                    #         temperatures,
-                    #         mesh,
-                    #         unitary_matrix=unitary_matrix,
-                    #         sigma=sigma,
-                    #         sigma_cutoff=sigma_cutoff,
-                    #         filename=filename)
-
+                            solver=solver,
+                            filename=filename,
+                            verbose=log_level)
 
 def _set_collision_from_file(lbte,
                              indices='all',
@@ -605,19 +598,24 @@ def _collect_collision_band(colmat_at_sigma,
     return True
 
 def _select_solver(pinv_solver):
+    default_solver = 4
+    solver_numbers = (1, 2, 3, 4, 5, 6)
+
     solver = pinv_solver % 10
     pinv_method = pinv_solver // 10
-
     if solver == 0: # default solver
-        try:
-            import scipy.linalg
-        except ImportError:
-            solver = 1
+        if default_solver in (4, 5, 6):
+            try:
+                import scipy.linalg
+            except ImportError:
+                solver = 1
+            else:
+                solver = default_solver
         else:
-            solver = 4
-    elif solver not in range(1, 7):
-        solver = 1
-    if pinv_method not in [0, 1]:
+            solver = default_solver
+    elif solver not in solver_numbers:
+        solver = default_solver
+    if pinv_method not in (0, 1):
         pinv_method = 0
 
     return solver, pinv_method
@@ -1199,6 +1197,9 @@ class Conductivity_LBTE(Conductivity):
             num_ir_grid_points = len(self._ir_grid_points)
             size = num_ir_grid_points * num_band * 3
         v = self._collision_matrix[i_sigma, i_temp].reshape(size, size)
+        # Transpose eigvecs because colmat was solved by column major order
+        if solver in [1, 2]:
+            v = v.T
 
         w = self._collision_eigenvalues[i_sigma, i_temp]
         if solver in [0, 1, 2, 3, 4, 5]:
@@ -1206,10 +1207,6 @@ class Conductivity_LBTE(Conductivity):
                 print("Calculating pseudo-inv of collision matrix by np.dot "
                       "(cutoff=%-.1e)" % self._pinv_cutoff)
                 sys.stdout.flush()
-
-            # Transpose eigvecs because it was solved by column major order
-            if solver in [1, 2]:
-                v = v.T
 
             e = np.zeros_like(w)
             if pinv_method not in [0, 1]:

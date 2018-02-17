@@ -616,7 +616,16 @@ def write_unitary_matrix_to_hdf5(temperature,
                                  unitary_matrix=None,
                                  sigma=None,
                                  sigma_cutoff=None,
-                                 filename=None):
+                                 solver=None,
+                                 filename=None,
+                                 verbose=False):
+    """Write eigenvectors of collision matrices at temperatures.
+
+    Depending on the choice of the solver, eigenvectors are sotred in
+    either column-wise or row-wise.
+
+    """
+
     suffix = _get_filename_suffix(mesh,
                                   sigma=sigma,
                                   sigma_cutoff=sigma_cutoff,
@@ -626,23 +635,26 @@ def write_unitary_matrix_to_hdf5(temperature,
         w.create_dataset('temperature', data=temperature)
         if unitary_matrix is not None:
             w.create_dataset('unitary_matrix', data=unitary_matrix)
+        if solver is not None:
+            w.create_dataset('solver', data=solver)
 
-        if len(temperature) > 1:
-            text = "Unitary matrices "
-        else:
-            text = "Unitary matrix "
-        if sigma is not None:
-            text += "at sigma %s" % _del_zeros(sigma)
-            if sigma_cutoff is not None:
-                text += "(%4.2f SD)" % sigma_cutoff
-        if len(temperature) > 1:
-            text += " were written into "
-        else:
-            text += " was written into "
-        if sigma is not None:
-            text += "\n"
-        text += "\"%s\"." % hdf5_filename
-        print(text)
+        if verbose:
+            if len(temperature) > 1:
+                text = "Unitary matrices "
+            else:
+                text = "Unitary matrix "
+            if sigma is not None:
+                text += "at sigma %s " % _del_zeros(sigma)
+                if sigma_cutoff is not None:
+                    text += "(%4.2f SD) " % sigma_cutoff
+            if len(temperature) > 1:
+                text += "were written into "
+            else:
+                text += "was written into "
+            if sigma is not None:
+                text += "\n"
+            text += "\"%s\"." % hdf5_filename
+            print(text)
 
 def write_collision_eigenvalues_to_hdf5(temperatures,
                                         mesh,
