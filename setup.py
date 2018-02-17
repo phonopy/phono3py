@@ -78,6 +78,11 @@ library_dirs_lapacke = []
 if os.path.isfile("mkl.py"):
     # This supposes that MKL multithread BLAS is used.
     # This is invoked when mkl.py exists on the current directory.
+    #
+    # icc is necessary to compile phono3py for using MKL, but phonopy
+    # is not necessarily compipled with icc. If phonopy is also
+    # compiled with icc, link libraries have to be specified in
+    # phonopy/setup.py, too.
 
     from mkl import (extra_link_args_lapacke, include_dirs_lapacke,
                      library_dirs_lapacke)
