@@ -598,7 +598,13 @@ def _collect_collision_band(colmat_at_sigma,
     return True
 
 def _select_solver(pinv_solver):
-    default_solver = 4
+    try:
+        import phono3py._phono3py as phono3c
+        default_solver = phono3c.default_colmat_solver()
+    except ImportError:
+        print("Phono3py C-routine is not compiled correctly.")
+        default_solver = 4
+
     solver_numbers = (1, 2, 3, 4, 5, 6)
 
     solver = pinv_solver % 10
