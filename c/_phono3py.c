@@ -89,6 +89,7 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args);
 static PyObject *
 py_diagonalize_collision_matrix(PyObject *self, PyObject *args);
 static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args);
+static PyObject * py_get_default_colmat_solver(PyObject *self, PyObject *args);
 
 #ifdef LIBFLAME
 static PyObject * py_inverse_collision_matrix_libflame(PyObject *self, PyObject *args);
@@ -212,6 +213,10 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_pinv_from_eigensolution,
    METH_VARARGS,
    "Pseudo-inverse from eigensolution"},
+  {"default_colmat_solver",
+   (PyCFunction)py_get_default_colmat_solver,
+   METH_VARARGS,
+   "Return default collison matrix solver by integer value"},
 #ifdef LIBFLAME
   {"inverse_collision_matrix_libflame",
    (PyCFunction)py_inverse_collision_matrix_libflame,
@@ -1878,6 +1883,20 @@ static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args)
                           eigvals, num_column, cutoff, pinv_method);
 
   Py_RETURN_NONE;
+}
+
+static PyObject * py_get_default_colmat_solver(PyObject *self, PyObject *args)
+{
+  if (!PyArg_ParseTuple(args, "")) {
+    return NULL;
+  }
+
+#ifdef MKL_LAPACKE
+  return PyLong_FromLong((long) 1);
+#else
+  return PyLong_FromLong((long) 4);
+#endif
+
 }
 
 static void pinv_from_eigensolution(double *data,

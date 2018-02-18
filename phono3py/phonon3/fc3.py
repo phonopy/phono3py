@@ -134,6 +134,7 @@ def distribute_fc3(fc3_least_atoms,
                                        rot_cart_inv)
 
             except ImportError:
+                print("Phono3py C-routine is not compiled correctly.")
                 for j in range(num_atom):
                     j_rot = atom_mapping[j]
                     for k in range(num_atom):
@@ -149,6 +150,7 @@ def set_permutation_symmetry_fc3(fc3):
         import phono3py._phono3py as phono3c
         phono3c.permutation_symmetry_fc3(fc3)
     except ImportError:
+        print("Phono3py C-routine is not compiled correctly.")
         num_atom = fc3.shape[0]
         for i in range(num_atom):
             for j in range(i, num_atom):
@@ -333,6 +335,7 @@ def solve_fc3(fc3,
             import phono3py._lapackepy as lapackepy
             solver = "lapacke-dgesvd"
         except ImportError:
+            print("Phono3py C-routine is not compiled correctly.")
             solver = "numpy"
 
     if verbose:
