@@ -63,24 +63,32 @@ installation of LAPACKE are explained.
 MKL LAPACKE (with multithread BLAS)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-MKL LAPACKE can be used by creating ``mkl.py`` file with the following
-content that gives locations of the necessary MKL libraries, e.g.,::
+Phono3py can be compiled with MKL for using LAPACKE.  If ``setup.py``
+finds the file named ``mkl.py``, the contents of ``mkl.py`` is read
+and those are included in the compilation setting.  For example, the
+following setting prepared as ``mkl.py`` seems working on Ubuntu 16.04
+system::
 
-   extra_link_args_lapacke += ['-L/opt/intel/mkl/lib/intel64',
-                               '-lmkl_intel_ilp64', '-lmkl_intel_thread',
-                               '-lmkl_core']
-   library_dirs_lapacke += []
-   include_dirs_lapacke += ['/opt/intel/mkl/include']
+   intel_root = "/opt/intel/composer_xe_2015.7.235"
+   mkl_root = "%s/mkl" % intel_root
+   compiler_root = "%s/compiler" % intel_root
 
-When ``setup.py`` finds the file named ``mkl.py``, this is
-included and the following C macros are activated::
+   mkl_extra_link_args_lapacke = ['-L%s/lib/intel64' % mkl_root,
+                                  '-lmkl_rt']
+   mkl_extra_link_args_lapacke += ['-L%s/lib/intel64' % compiler_root,
+                                   '-lsvml',
+                                   '-liomp5',
+                                   '-limf',
+                                   '-lpthread']
+   mkl_include_dirs_lapacke = ["%s/include" % mkl_root]
 
-   if use_setuptools:
-       extra_compile_args += ['-DMKL_LAPACKE',
-                              '-DMULTITHREADED_BLAS']
-   else:
-       define_macros += [('MKL_LAPACKE', None),
-                         ('MULTITHREADED_BLAS', None)]
+This setting considers to use ``icc`` but it may be compiled with
+``gcc``. With ``gcc``, the compiler related setting shown above (i.e.,
+around ``compiler_root``) is unnecessary. To achieve this
+installation, not only the MKL library but also the header file are
+necessary. The libraries are linked dynamically, so in most of the
+cases, ``LD_LIBRARY_PATH`` environment variable has to be correctly
+specified to let phono3py find those libraries.
 
 OpenBLAS provided by conda (with multithread BLAS)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
