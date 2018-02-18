@@ -66,9 +66,5 @@ int phonopy_dsyev(double *data,
                   double *eigvals,
                   const int size,
                   const int algorithm);
-int phonopy_pinv_dsyev(double *data,
-                       double *eigvals,
-                       const int size,
-                       const int algorithm);
 
 #endif

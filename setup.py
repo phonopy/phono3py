@@ -57,12 +57,10 @@ include_dirs = ['c/harmonic_h',
                 'c/anharmonic_h',
                 'c/spglib_h',
                 'c/kspclib_h'] + include_dirs_numpy
-library_dirs = []
 define_macros = []
 
 extra_link_args_lapacke = []
 include_dirs_lapacke = []
-library_dirs_lapacke = []
 
 # C macro definitions:
 # - MULTITHREADED_BLAS
@@ -79,16 +77,35 @@ if os.path.isfile("mkl.py"):
     # This supposes that MKL multithread BLAS is used.
     # This is invoked when mkl.py exists on the current directory.
 
-    #### Example of mkl.py ####
-    # extra_link_args_lapacke += ['-L/opt/intel/mkl/lib/intel64',
-    #                            '-lmkl_intel_ilp64', '-lmkl_intel_thread',
-    #                            '-lmkl_core']
-    # library_dirs_lapacke += []
-    # include_dirs_lapacke += ['/opt/intel/mkl/include']
-
     print("MKL LAPACKE is to be used.")
-    from mkl import (extra_link_args_lapacke, include_dirs_lapacke,
-                     library_dirs_lapacke)
+    print("Use of icc is assumed (CC='icc').")
+
+    from mkl import mkl_extra_link_args_lapacke, mkl_include_dirs_lapacke
+
+    #### Examples of mkl.py ####
+    # For 2015
+    # intel_root = "/opt/intel/composer_xe_2015.7.235"
+    # mkl_root = "%s/mkl" % intel_root
+    # compiler_root = "%s/compiler" % intel_root
+    #
+    # For 2016
+    # intel_root = "/opt/intel/parallel_studio_xe_2016"
+    # mkl_root = "%s/mkl" % intel_root
+    # compiler_root = "%s" % intel_root
+    #
+    # For both
+    # mkl_extra_link_args_lapacke = ['-L%s/lib/intel64' % mkl_root,
+    #                                '-lmkl_rt']
+    # mkl_extra_link_args_lapacke += ['-L%s/lib/intel64' % compiler_root,
+    #                                 '-lsvml',
+    #                                 '-liomp5',
+    #                                 '-limf',
+    #                                 '-lpthread']
+    # mkl_include_dirs_lapacke = ["%s/include" % mkl_root]
+
+    extra_link_args_lapacke += mkl_extra_link_args_lapacke
+    include_dirs_lapacke += mkl_include_dirs_lapacke
+
     if use_setuptools:
         extra_compile_args += ['-DMKL_LAPACKE',
                                '-DMULTITHREADED_BLAS']
@@ -104,7 +121,6 @@ elif os.path.isfile("libopenblas.py"):
 
     from libopenblas import extra_link_args_lapacke
     include_dirs_lapacke += []
-    library_dirs_lapacke += []
     if use_setuptools:
         extra_compile_args += ['-DMULTITHREADED_BLAS']
     else:
@@ -118,12 +134,10 @@ elif (platform.system() == 'Darwin' and
     # % sudo port install OpenBLAS +gcc6
     extra_link_args_lapacke += ['/opt/local/lib/libopenblas.a']
     include_dirs_lapacke += ['/opt/local/include']
-    library_dirs_lapacke += []
 elif os.path.isfile('/usr/lib/liblapacke.so'):
     # This supposes that lapacke with single-thread BLAS is installed on system.
     extra_link_args_lapacke += ['-llapacke', '-llapack', '-lblas']
     include_dirs_lapacke += []
-    library_dirs_lapacke += []
 else:
     # Here is the default lapacke linkage setting.
     # Please modify according to your system environment.
@@ -140,7 +154,6 @@ else:
     # % conda install numpy scipy h5py pyyaml matplotlib openblas
     extra_link_args_lapacke += ['-lopenblas']
     include_dirs_lapacke += []
-    library_dirs_lapacke += []
     if use_setuptools:
         extra_compile_args += ['-DMULTITHREADED_BLAS']
     else:
@@ -151,13 +164,11 @@ else:
 
 extra_link_args += extra_link_args_lapacke
 include_dirs += include_dirs_lapacke
-library_dirs += library_dirs_lapacke
 extension_phono3py = Extension(
     'phono3py._phono3py',
     include_dirs=include_dirs,
     extra_compile_args=extra_compile_args,
     extra_link_args=extra_link_args,
-    library_dirs=library_dirs,
     define_macros=define_macros,
     sources=sources)
 
@@ -194,7 +205,7 @@ extension_lapackepy = Extension(
     'phono3py._lapackepy',
     extra_compile_args=extra_compile_args,
     extra_link_args=extra_link_args,
-    include_dirs=include_dirs,
+    include_dirs=(include_dirs_lapackepy + include_dirs_lapacke),
     sources=sources_lapackepy)
 
 if __name__ == '__main__':
