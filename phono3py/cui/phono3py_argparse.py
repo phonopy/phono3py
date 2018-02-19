@@ -112,7 +112,6 @@ def get_parser():
                         qe_mode=False,
                         qpoints=None,
                         quiet=False,
-                        read_amplitude=False,
                         read_collision=None,
                         read_fc2=False,
                         read_fc3=False,
@@ -362,9 +361,6 @@ def get_parser():
     parser.add_argument(
         "-q", "--quiet", dest="quiet", action="store_true",
         help="Print out smallest information")
-    # parser.add_argument(
-    #     "--read_amplitude", dest="read_amplitude", action="store_true",
-    #     help="Read phonon-phonon interaction amplitudes")
     parser.add_argument(
         "--read-collision", dest="read_collision",
         help="Read collision matrix and Gammas from files")
