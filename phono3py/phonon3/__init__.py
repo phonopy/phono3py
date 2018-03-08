@@ -7,6 +7,7 @@ from phonopy.harmonic.force_constants import (
     get_fc2,
     symmetrize_force_constants,
     symmetrize_compact_force_constants,
+    set_translational_invariance,
     set_permutation_symmetry,
     set_translational_invariance)
 from phonopy.harmonic.displacement import get_least_displacements
@@ -238,6 +239,7 @@ class Phono3py(object):
                                 disp_dataset,
                                 atom_list=p2s_map)
             if symmetrize_fc2:
+                set_translational_invariance(self._fc2)
                 if self._fc2.shape[0] == self._fc2.shape[1]:
                     symmetrize_force_constants(self._fc2)
                 else:
@@ -272,6 +274,7 @@ class Phono3py(object):
             if symmetrize_fc3r:
                 set_translational_invariance_fc3(fc3)
                 set_permutation_symmetry_fc3(fc3)
+                set_translational_invariance(fc2)
                 symmetrize_force_constants(fc2)
 
         # Set fc2 and fc3
@@ -534,16 +537,28 @@ class Phono3py(object):
     def get_frequency_shift(self,
                             grid_points,
                             temperatures=np.arange(0, 1001, 10, dtype='double'),
+                            epsilons=None,
                             output_filename=None):
+        """Frequency shift from lowest order diagram is calculated.
+
+        Args:
+            epslins(list of float):
+               The value to avoid divergence. When multiple values are given
+               frequency shifts for those values are returned.
+
+        """
+
         if self._interaction is None:
             self.set_phph_interaction()
         if epsilons is None:
-            epsilons = [0.1]
+            _epsilons = [0.1]
+        else:
+            _epsilon = epsilons
         self._grid_points = grid_points
         get_frequency_shift(self._interaction,
                             self._grid_points,
                             self._band_indices,
-                            self._sigmas,
+                            _epsilons,
                             temperatures,
                             output_filename=output_filename,
                             log_level=self._log_level)
