@@ -544,12 +544,14 @@ if settings.get_is_gruneisen():
             print_error()
         sys.exit(1)
 
+    rotations = phono3py.get_primitive_symmetry().get_pointgroup_operations()
     gruneisen = get_gruneisen_parameters(phono3py.get_fc2(),
                                          phono3py.get_fc3(),
                                          supercell,
                                          primitive,
                                          settings.get_band_indices(),
                                          mesh,
+                                         rotations,
                                          settings.get_qpoints(),
                                          nac_params=nac_params,
                                          nac_q_direction=nac_q_direction,
