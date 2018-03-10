@@ -34,12 +34,12 @@ def get_frequency_shift(interaction,
                 fst.set_temperature(t)
                 fst.run()
                 delta[i] = fst.get_frequency_shift()
-    
+
             for i, bi in enumerate(band_indices):
                 pos = 0
                 for j in range(i):
                     pos += len(band_indices[j])
-    
+
                 write_frequency_shift(gp,
                                       bi,
                                       temperatures,
@@ -74,7 +74,7 @@ class FrequencyShift(object):
         self.set_epsilon(epsilon)
 
     def run(self):
-        if self._pp_strength is None:        
+        if self._pp_strength is None:
             self.run_interaction()
 
         num_band0 = self._pp_strength.shape[1]
@@ -89,7 +89,7 @@ class FrequencyShift(object):
         (self._triplets_at_q,
          self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
         self._band_indices = self._pp.get_band_indices()
-        
+
         mesh = self._pp.get_mesh_numbers()
         num_grid = np.prod(mesh)
 
@@ -129,7 +129,7 @@ class FrequencyShift(object):
             (self._triplets_at_q,
              self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
             self._grid_point = self._triplets_at_q[0, 0]
-        
+
     def set_epsilon(self, epsilon):
         if epsilon is None:
             self._epsilon = None
@@ -141,13 +141,13 @@ class FrequencyShift(object):
             self._temperature = None
         else:
             self._temperature = float(temperature)
-        
+
     def _run_with_band_indices(self):
         if self._lang == 'C':
             self._run_c_with_band_indices()
         else:
             self._run_py_with_band_indices()
-    
+
     def _run_c_with_band_indices(self):
         import phono3py._phono3py as phono3c
         phono3c.frequency_shift_at_bands(self._frequency_shifts,

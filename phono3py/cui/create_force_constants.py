@@ -33,7 +33,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+import numpy as np
 from phonopy.harmonic.force_constants import (
+    distribute_force_constants,
     show_drift_force_constants,
     symmetrize_force_constants,
     symmetrize_compact_force_constants)
@@ -127,6 +129,8 @@ def create_phono3py_force_constants(phono3py,
 
     # fc2
     phonon_primitive = phono3py.get_phonon_primitive()
+    phonon_supercell = phono3py.get_phonon_supercell()
+    phonon_symmetry = phono3py.get_phonon_supercell_symmetry()
     p2s_map = phonon_primitive.get_primitive_to_supercell_map()
     s2p_map = phonon_primitive.get_supercell_to_primitive_map()
     if read_fc2:
@@ -138,7 +142,6 @@ def create_phono3py_force_constants(phono3py,
         if log_level:
             print("Reading fc2 from %s" % filename)
 
-        phonon_supercell = phono3py.get_phonon_supercell()
         num_atom = phonon_supercell.get_number_of_atoms()
         phonon_fc2 = read_fc2_from_hdf5(filename=filename,
                                         p2s_map=p2s_map)
@@ -152,10 +155,9 @@ def create_phono3py_force_constants(phono3py,
             if phonon_fc2.shape[0] == phonon_fc2.shape[1]:
                 symmetrize_force_constants(phonon_fc2)
             else:
-                symmetry = phono3py.get_phonon_supercell_symmetry()
                 symmetrize_compact_force_constants(phonon_fc2,
                                                    phonon_supercell,
-                                                   symmetry,
+                                                   phonon_symmetry,
                                                    s2p_map,
                                                    p2s_map)
         phono3py.set_fc2(phonon_fc2)
@@ -198,7 +200,34 @@ def create_phono3py_force_constants(phono3py,
                           p2s_map=p2s_map)
 
     if log_level:
-        show_drift_force_constants(phono3py.get_fc2(), name='fc2')
+        fc_orig = phono3py.get_fc2()
+        if fc_orig.shape[0] == fc_orig.shape[1]:
+            show_drift_force_constants(fc_orig, name='fc2')
+        else:
+            if fc_orig.shape[1] > 2000:
+                show_drift_force_constants(fc_orig, name='fc2')
+                print("  ** only the 2nd drift value is meaningful **")
+            else:
+                p2s_map = phonon_primitive.get_primitive_to_supercell_map()
+                lattice = np.array(phonon_supercell.get_cell().T,
+                                   dtype='double', order='C')
+                positions = phonon_supercell.get_scaled_positions()
+                rotations = phonon_symmetry.get_symmetry_operations()['rotations']
+                trans = phonon_symmetry.get_symmetry_operations()['translations']
+                symprec = phonon_symmetry.get_symmetry_tolerance()
+                n_satom = phonon_supercell.get_number_of_atoms()
+                fc = np.zeros((n_satom, n_satom, 3, 3), dtype='double', order='C')
+                for i_p, i_s in enumerate(p2s_map):
+                    fc[i_s] = fc_orig[i_p]
+                distribute_force_constants(fc,
+                                           np.arange(n_satom, dtype='intc'),
+                                           p2s_map,
+                                           lattice,
+                                           positions,
+                                           rotations,
+                                           trans,
+                                           symprec)
+                show_drift_force_constants(fc, name='fc2')
 
 def _create_phono3py_fc3(phono3py,
                          force_to_eVperA,

@@ -497,10 +497,6 @@ class Phono3pyConfParser(ConfParser):
             if pp_conv_factor is not None:
                 self._confs['pp_conversion_factor'] = pp_conv_factor
 
-        if 'read_amplitude' in self._args:
-            if self._args.read_amplitude:
-                self._confs['read_amplitude'] = '.true.'
-
         if 'read_fc2' in self._args:
             if self._args.read_fc2:
                 self._confs['read_fc2'] = '.true.'
@@ -580,7 +576,9 @@ class Phono3pyConfParser(ConfParser):
 
         for conf_key in confs.keys():
             if conf_key == 'create_displacements':
-                if confs['create_displacements'].lower() == '.true.':
+                if confs['create_displacements'].lower() == '.false.':
+                    self.set_parameter('create_displacements', False)
+                elif confs['create_displacements'].lower() == '.true.':
                     self.set_parameter('create_displacements', True)
 
             if conf_key == 'dim_fc2':
@@ -619,7 +617,9 @@ class Phono3pyConfParser(ConfParser):
                                    float(confs['cutoff_pair_distance']))
 
             if conf_key == 'full_pp':
-                if confs['full_pp'].lower() == '.true.':
+                if confs['full_pp'].lower() == '.false.':
+                    self.set_parameter('is_full_pp', False)
+                elif confs['full_pp'].lower() == '.true.':
                     self.set_parameter('is_full_pp', True)
 
             if conf_key == 'gamma_conversion_factor':
@@ -642,59 +642,87 @@ class Phono3pyConfParser(ConfParser):
                 self.set_parameter('grid_points', vals)
 
             if conf_key == 'ion_clamped':
-                if confs['ion_clamped'].lower() == '.true.':
+                if confs['ion_clamped'].lower() == '.false.':
+                    self.set_parameter('ion_clamped', False)
+                elif confs['ion_clamped'].lower() == '.true.':
                     self.set_parameter('ion_clamped', True)
 
             if conf_key == 'bterta':
-                if confs['bterta'].lower() == '.true.':
+                if confs['bterta'].lower() == '.false.':
+                    self.set_parameter('is_bterta', False)
+                elif confs['bterta'].lower() == '.true.':
                     self.set_parameter('is_bterta', True)
 
             if conf_key == 'frequency_shift':
-                if confs['frequency_shift'].lower() == '.true.':
+                if confs['frequency_shift'].lower() == '.false.':
+                    self.set_parameter('is_frequency_shift', False)
+                elif confs['frequency_shift'].lower() == '.true.':
                     self.set_parameter('is_frequency_shift', True)
 
             if conf_key == 'gruneisen':
-                if confs['gruneisen'].lower() == '.true.':
+                if confs['gruneisen'].lower() == '.false.':
+                    self.set_parameter('is_gruneisen', False)
+                elif confs['gruneisen'].lower() == '.true.':
                     self.set_parameter('is_gruneisen', True)
 
             if conf_key == 'imag_self_energy':
-                if confs['imag_self_energy'].lower() == '.true.':
+                if confs['imag_self_energy'].lower() == '.false.':
+                    self.set_parameter('is_imag_self_energy', False)
+                elif confs['imag_self_energy'].lower() == '.true.':
                     self.set_parameter('is_imag_self_energy', True)
 
             if conf_key == 'isotope':
-                if confs['isotope'].lower() == '.true.':
+                if confs['isotope'].lower() == '.false.':
+                    self.set_parameter('is_isotope', False)
+                elif confs['isotope'].lower() == '.true.':
                     self.set_parameter('is_isotope', True)
 
             if conf_key == 'joint_dos':
-                if confs['joint_dos'].lower() == '.true.':
+                if confs['joint_dos'].lower() == '.false.':
+                    self.set_parameter('is_joint_dos', False)
+                elif confs['joint_dos'].lower() == '.true.':
                     self.set_parameter('is_joint_dos', True)
 
             if conf_key == 'lbte':
-                if confs['lbte'].lower() == '.true.':
+                if confs['lbte'].lower() == '.false.':
+                    self.set_parameter('is_lbte', False)
+                elif confs['lbte'].lower() == '.true.':
                     self.set_parameter('is_lbte', True)
 
             if conf_key == 'linewidth':
-                if confs['linewidth'].lower() == '.true.':
+                if confs['linewidth'].lower() == '.false.':
+                    self.set_parameter('is_linewidth', False)
+                elif confs['linewidth'].lower() == '.true.':
                     self.set_parameter('is_linewidth', True)
 
             if conf_key == 'N_U':
-                if confs['N_U'].lower() == '.true.':
+                if confs['N_U'].lower() == '.false.':
+                    self.set_parameter('is_N_U', False)
+                elif confs['N_U'].lower() == '.true.':
                     self.set_parameter('is_N_U', True)
 
             if conf_key == 'reducible_collision_matrix':
-                if confs['reducible_collision_matrix'].lower() == '.true.':
+                if confs['reducible_collision_matrix'].lower() == '.false.':
+                    self.set_parameter('is_reducible_collision_matrix', False)
+                elif confs['reducible_collision_matrix'].lower() == '.true.':
                     self.set_parameter('is_reducible_collision_matrix', True)
 
             if conf_key == 'symmetrize_fc2':
-                if confs['symmetrize_fc2'].lower() == '.true.':
+                if confs['symmetrize_fc2'].lower() == '.false.':
+                    self.set_parameter('is_symmetrize_fc2', False)
+                elif confs['symmetrize_fc2'].lower() == '.true.':
                     self.set_parameter('is_symmetrize_fc2', True)
 
             if conf_key == 'symmetrize_fc3_q':
-                if confs['symmetrize_fc3_q'].lower() == '.true.':
+                if confs['symmetrize_fc3_q'].lower() == '.false.':
+                    self.set_parameter('is_symmetrize_fc3_q', False)
+                elif confs['symmetrize_fc3_q'].lower() == '.true.':
                     self.set_parameter('is_symmetrize_fc3_q', True)
 
             if conf_key == 'symmetrize_fc3_r':
-                if confs['symmetrize_fc3_r'].lower() == '.true.':
+                if confs['symmetrize_fc3_r'].lower() == '.false.':
+                    self.set_parameter('is_symmetrize_fc3_r', False)
+                elif confs['symmetrize_fc3_r'].lower() == '.true.':
                     self.set_parameter('is_symmetrize_fc3_r', True)
 
             if conf_key == 'mass_variances':
@@ -727,6 +755,8 @@ class Phono3pyConfParser(ConfParser):
             if conf_key == 'kappa_star':
                 if confs['kappa_star'].lower() == '.false.':
                     self.set_parameter('is_kappa_star', False)
+                elif confs['kappa_star'].lower() == '.true.':
+                    self.set_parameter('is_kappa_star', True)
 
             if conf_key == 'pinv_cutoff':
                 self.set_parameter('pinv_cutoff', float(confs['pinv_cutoff']))
@@ -738,10 +768,6 @@ class Phono3pyConfParser(ConfParser):
                 self.set_parameter('pp_conversion_factor',
                                    float(confs['pp_conversion_factor']))
 
-            if conf_key == 'read_amplitude':
-                if confs['read_amplitude'].lower() == '.true.':
-                    self.set_parameter('read_amplitude', True)
-
             if conf_key == 'read_collision':
                 if confs['read_collision'] == 'all':
                     self.set_parameter('read_collision', 'all')
@@ -750,23 +776,33 @@ class Phono3pyConfParser(ConfParser):
                     self.set_parameter('read_collision', vals)
 
             if conf_key == 'read_fc2':
-                if confs['read_fc2'].lower() == '.true.':
+                if confs['read_fc2'].lower() == '.false.':
+                    self.set_parameter('read_fc2', False)
+                elif confs['read_fc2'].lower() == '.true.':
                     self.set_parameter('read_fc2', True)
 
             if conf_key == 'read_fc3':
-                if confs['read_fc3'].lower() == '.true.':
+                if confs['read_fc3'].lower() == '.false.':
+                    self.set_parameter('read_fc3', False)
+                elif confs['read_fc3'].lower() == '.true.':
                     self.set_parameter('read_fc3', True)
 
             if conf_key == 'read_gamma':
-                if confs['read_gamma'].lower() == '.true.':
+                if confs['read_gamma'].lower() == '.false.':
+                    self.set_parameter('read_gamma', False)
+                elif confs['read_gamma'].lower() == '.true.':
                     self.set_parameter('read_gamma', True)
 
             if conf_key == 'read_phonon':
-                if confs['read_phonon'].lower() == '.true.':
+                if confs['read_phonon'].lower() == '.false.':
+                    self.set_parameter('read_phonon', False)
+                elif confs['read_phonon'].lower() == '.true.':
                     self.set_parameter('read_phonon', True)
 
             if conf_key == 'read_pp':
-                if confs['read_pp'].lower() == '.true.':
+                if confs['read_pp'].lower() == '.false.':
+                    self.set_parameter('read_pp', False)
+                elif confs['read_pp'].lower() == '.true.':
                     self.set_parameter('read_pp', True)
 
             if conf_key == 'scattering_event_class':
@@ -785,39 +821,57 @@ class Phono3pyConfParser(ConfParser):
                     self.set_parameter('temperatures', vals)
 
             if conf_key == 'use_alm_fc2':
-                if confs['use_alm_fc2'].lower() == '.true.':
+                if confs['use_alm_fc2'].lower() == '.false.':
+                    self.set_parameter('use_alm_fc2', False)
+                elif confs['use_alm_fc2'].lower() == '.true.':
                     self.set_parameter('use_alm_fc2', True)
 
             if conf_key == 'use_alm_fc3':
-                if confs['use_alm_fc3'].lower() == '.true.':
+                if confs['use_alm_fc3'].lower() == '.false.':
+                    self.set_parameter('use_alm_fc3', False)
+                elif confs['use_alm_fc3'].lower() == '.true.':
                     self.set_parameter('use_alm_fc3', True)
 
             if conf_key == 'use_ave_pp':
-                if confs['use_ave_pp'].lower() == '.true.':
+                if confs['use_ave_pp'].lower() == '.false.':
+                    self.set_parameter('use_ave_pp', False)
+                elif confs['use_ave_pp'].lower() == '.true.':
                     self.set_parameter('use_ave_pp', True)
 
             if conf_key == 'write_gamma_detail':
-                if confs['write_gamma_detail'].lower() == '.true.':
+                if confs['write_gamma_detail'].lower() == '.false.':
+                    self.set_parameter('write_gamma_detail', False)
+                elif confs['write_gamma_detail'].lower() == '.true.':
                     self.set_parameter('write_gamma_detail', True)
 
             if conf_key == 'write_gamma':
-                if confs['write_gamma'].lower() == '.true.':
+                if confs['write_gamma'].lower() == '.false.':
+                    self.set_parameter('write_gamma', False)
+                elif confs['write_gamma'].lower() == '.true.':
                     self.set_parameter('write_gamma', True)
 
             if conf_key == 'write_collision':
-                if confs['write_collision'].lower() == '.true.':
+                if confs['write_collision'].lower() == '.false.':
+                    self.set_parameter('write_collision', False)
+                elif confs['write_collision'].lower() == '.true.':
                     self.set_parameter('write_collision', True)
 
             if conf_key == 'write_phonon':
-                if confs['write_phonon'].lower() == '.true.':
+                if confs['write_phonon'].lower() == '.false.':
+                    self.set_parameter('write_phonon', False)
+                elif confs['write_phonon'].lower() == '.true.':
                     self.set_parameter('write_phonon', True)
 
             if conf_key == 'write_pp':
-                if confs['write_pp'].lower() == '.true.':
+                if confs['write_pp'].lower() == '.false.':
+                    self.set_parameter('write_pp', False)
+                elif confs['write_pp'].lower() == '.true.':
                     self.set_parameter('write_pp', True)
 
             if conf_key == 'write_LBTE_solution':
-                if confs['write_LBTE_solution'].lower() == '.true.':
+                if confs['write_LBTE_solution'].lower() == '.false.':
+                    self.set_parameter('write_LBTE_solution', False)
+                elif confs['write_LBTE_solution'].lower() == '.true.':
                     self.set_parameter('write_LBTE_solution', True)
 
     def _set_settings(self):
