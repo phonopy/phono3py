@@ -21,6 +21,7 @@ before_install:
     - export C_INCLUDE_PATH=${HOME}/.miniconda/include:${C_INCLUDE_PATH}
     - export LD_LIBRARY_PATH=${HOME}/.miniconda/lib:${LD_LIBRARY_PATH}
     - conda update --yes conda
+    - conda install --yes setuptools
     - conda info -a
 
 install:

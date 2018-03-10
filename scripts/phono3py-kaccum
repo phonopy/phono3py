@@ -31,7 +31,7 @@ def show_tensor(kdos, temperatures, sampling_points, args):
         print('')
 
 def show_scalar(gdos, temperatures, sampling_points, args):
-    if args.pqj:
+    if args.pqj or args.gruneisen or args.gv_norm:
         for f, g in zip(sampling_points, gdos[0]):
             print("%f %e %e" % (f, g[0], g[1]))
     else:
@@ -327,22 +327,25 @@ if __name__ == '__main__':
         help="Unit cell filename")
     parser.add_argument(
         '--gv', action='store_true',
-        help='Calculate gv_x_gv (tensor)')
+        help='Calculate for gv_x_gv (tensor)')
     parser.add_argument(
         '--pqj', action='store_true',
-        help='Calculate Pqj (scalar)')
+        help='Calculate for Pqj (scalar)')
     parser.add_argument(
         '--cv', action='store_true',
-        help='Calculate Cv (scalar)')
+        help='Calculate for Cv (scalar)')
     parser.add_argument(
         '--tau', action='store_true',
-        help='Calculate lifetimes (scalar)')
+        help='Calculate for lifetimes (scalar)')
     parser.add_argument(
         '--gamma', action='store_true',
-        help='Calculate Gamma (scalar)')
+        help='Calculate for Gamma (scalar)')
     parser.add_argument(
-        '--gv_norm', action='store_true',
-        help='Calculate |g_v| (scalar)')
+        '--gruneisen', action='store_true',
+        help='Calculate for mode-Gruneisen parameters squared (scalar)')
+    parser.add_argument(
+        '--gv-norm', action='store_true',
+        help='Calculate for |g_v| (scalar)')
     parser.add_argument(
         '--mfp', action='store_true',
         help='Mean free path is used instead of frequency')
@@ -405,7 +408,10 @@ if __name__ == '__main__':
     else:
         mesh = np.array([int(x) for x in args.mesh.split()], dtype='intc')
 
-    temperatures = f['temperature'][:]
+    if 'temperature' in f:
+        temperatures = f['temperature'][:]
+    else:
+        temperatures = None
     weights = f['weight'][:]
 
     if args.no_kappa_stars:
@@ -438,7 +444,10 @@ if __name__ == '__main__':
         unit_conversion = primitive.get_volume()
         mode_prop = gv_sum2.reshape((1,) + gv_sum2.shape) / unit_conversion
     else:
-        mode_prop = f['mode_kappa'][:]
+        if 'mode_kappa' in f:
+            mode_prop = f['mode_kappa'][:]
+        else:
+            mode_prop = None
 
     frequencies = f['frequency'][:]
     conditions = frequencies > 0
@@ -450,7 +459,8 @@ if __name__ == '__main__':
     #######
     # Run #
     #######
-    if args.gamma or args.pqj or args.cv or args.tau or args.gv_norm:
+    if (args.gamma or args.gruneisen or args.pqj or
+        args.cv or args.tau or args.gv_norm):
         if args.pqj:
             mode_prop = f['ave_pp'][:].reshape((1,) + f['ave_pp'].shape)
         elif args.cv:
@@ -464,9 +474,13 @@ if __name__ == '__main__':
             mode_prop = mode_prop.reshape((1,) + mode_prop.shape)
         elif args.gamma:
             mode_prop = f['gamma'][:]
+        elif args.gruneisen:
+            mode_prop = f['gruneisen'][:].reshape((1,) + f['gruneisen'].shape)
+            mode_prop **= 2
         else:
             raise
-        if args.temperature is not None and not args.gv_norm and not args.pqj:
+        if (args.temperature is not None and
+            not (args.gv_norm or args.pqj or args.gruneisen)):
             temperatures, mode_prop = set_T_target(temperatures,
                                                    mode_prop,
                                                    args.temperature)

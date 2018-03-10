@@ -13,6 +13,7 @@ def get_gruneisen_parameters(fc2,
                              primitive,
                              band_paths,
                              mesh,
+                             rotations,
                              qpoints,
                              nac_params=None,
                              nac_q_direction=None,
@@ -46,7 +47,9 @@ def get_gruneisen_parameters(fc2,
                           symprec=symprec)
 
     if mesh is not None:
-        gruneisen.set_sampling_mesh(mesh, is_gamma_center=True)
+        gruneisen.set_sampling_mesh(mesh,
+                                    rotations=rotations,
+                                    is_gamma_center=True)
     elif band_paths is not None:
         gruneisen.set_band_structure(band_paths)
     elif qpoints is not None:
@@ -132,6 +135,7 @@ class Gruneisen(object):
 
     def set_sampling_mesh(self,
                           mesh,
+                          rotations=None,
                           shift=None,
                           is_gamma_center=False):
         self._run_mode = 'mesh'
@@ -140,7 +144,8 @@ class Gruneisen(object):
             self._mesh,
             np.linalg.inv(self._pcell.get_cell()),
             q_mesh_shift=shift,
-            is_gamma_center=is_gamma_center)
+            is_gamma_center=is_gamma_center,
+            rotations=rotations)
 
     def set_band_structure(self, paths):
         self._run_mode = 'band'
