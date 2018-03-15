@@ -441,6 +441,8 @@ if __name__ == '__main__':
                                    mesh,
                                    ir_grid_points,
                                    grid_address)
+
+        # gv x gv is divied by primitive cell volume.
         unit_conversion = primitive.get_volume()
         mode_prop = gv_sum2.reshape((1,) + gv_sum2.shape) / unit_conversion
     else:
@@ -451,7 +453,7 @@ if __name__ == '__main__':
 
     frequencies = f['frequency'][:]
     conditions = frequencies > 0
-    if not conditions.all():
+    if conditions.sum() > 3:
         sys.stderr.write("# Imaginary frequencies are found. "
                          "They are set to be zero.\n")
         frequencies = np.where(conditions, frequencies, 0)
