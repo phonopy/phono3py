@@ -19,12 +19,12 @@ conductivity calculation is loaded and thermal conductivity tensor at
 300 K is watched.
 
 ::
-   
+
 
    In [1]: import h5py
-   
+
    In [2]: f = h5py.File("kappa-m111111.hdf5")
-   
+
    In [3]: list(f)
    Out[3]:
    [u'frequency',
@@ -39,10 +39,10 @@ conductivity calculation is loaded and thermal conductivity tensor at
     u'qpoint',
     u'temperature',
     u'weight']
-   
+
    In [4]: f['kappa'].shape
    Out[4]: (101, 6)
-   
+
    In [5]: f['kappa'][:]
    Out[5]:
    array([[  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,
@@ -58,7 +58,7 @@ conductivity calculation is loaded and thermal conductivity tensor at
              1.74843437e-18,   0.00000000e+00,  -2.28116103e-18],
           [  6.43792061e+00,   6.43792061e+00,   6.43792061e+00,
              1.73090513e-18,   0.00000000e+00,  -2.25828616e-18]])
-   
+
    In [6]: f['temperature'][:]
    Out[6]:
    array([    0.,    10.,    20.,    30.,    40.,    50.,    60.,    70.,
@@ -74,16 +74,16 @@ conductivity calculation is loaded and thermal conductivity tensor at
             800.,   810.,   820.,   830.,   840.,   850.,   860.,   870.,
             880.,   890.,   900.,   910.,   920.,   930.,   940.,   950.,
             960.,   970.,   980.,   990.,  1000.])
-   
+
    In [7]: f['kappa'][30]
    Out[7]:
    array([  2.18146513e+01,   2.18146513e+01,   2.18146513e+01,
             5.84389577e-18,   0.00000000e+00,  -7.63278476e-18])
-   
+
    In [8]: g = f['gamma'][30]
-   
+
    In [9]: import numpy as np
-   
+
    In [10]: g = np.where(g > 0, g, -1)
 
    In [11]: lifetime = np.where(g > 0, 1.0 / (2 * 2 * np.pi * g), 0)
@@ -111,7 +111,7 @@ mesh
 (Versions 1.10.11 or later)
 
 The numbers of mesh points for reciprocal space sampling along
-reciprocal axes, :math:`a^*, b^*, c^*` 
+reciprocal axes, :math:`a^*, b^*, c^*`
 
 frequency
 ^^^^^^^^^^
@@ -130,7 +130,7 @@ is in the ordinal frequency not the angular frequency.
 The array shape for all grid-points (irreducible q-points) is
 (temperature, irreducible q-point, phonon band).
 
-The array shape for a specific grid-point is 
+The array shape for a specific grid-point is
 (temperature, phonon band).
 
 Phonon lifetime (:math:`\tau_\lambda=1/2\Gamma_\lambda(\omega_\lambda)`) may
@@ -143,9 +143,9 @@ previous section to show how to obtain phonon lifetime in pico
 second::
 
    In [8]: g = f['gamma'][30]
-   
+
    In [9]: import numpy as np
-   
+
    In [10]: g = np.where(g > 0, g, -1)
 
    In [11]: lifetime = np.where(g > 0, 1.0 / (2 * 2 * np.pi * g), 0)
@@ -163,7 +163,7 @@ group_velocity
 ^^^^^^^^^^^^^^^
 
 Phonon group velocity, :math:`\nabla_\mathbf{q}\omega_\lambda`. The
-physical unit is :math:`\text{THz}\cdot\text{\AA}`, where THz
+physical unit is :math:`\text{THz}\cdot\text{Angstrom}`, where THz
 is in the ordinal frequency not the angular frequency.
 
 The array shape is (irreducible q-point, phonon band, 3 = Cartesian coordinates).
@@ -228,7 +228,7 @@ Outer products of group velocities for k-stars
    \mathbf{v}_{\mathbf{q}j}.
 
 The physical unit is
-:math:`\text{THz}^2\cdot\text{\AA}^2`, where THz is in the
+:math:`\text{THz}^2\cdot\text{Angstrom}^2`, where THz is in the
 ordinal frequency not the angular frequency.
 
 The array shape is (irreducible q-point, phonon band, 6 = (xx, yy, zz,
@@ -293,5 +293,3 @@ calculated by::
 
    kappa_unit_conversion / weight.sum() * heat_capacity[30, 2, 0] *
    gv_by_gv[2, 0] / (2 * gamma[30, 2, 0])
-
-

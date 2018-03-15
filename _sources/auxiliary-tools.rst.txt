@@ -190,7 +190,8 @@ convergence.
 ^^^^^^^^^
 
 Outer product of group velocities :math:`\mathbf{v}_\lambda \otimes
-\mathbf{v}_\lambda` (in THz^2 x Angstrom^2)
+\mathbf{v}_\lambda` divided by primitive cell volume (in :math:`\text{THz}^2 /
+\text{Angstrom}`)
 
 ``--average``
 ^^^^^^^^^^^^^^
@@ -233,12 +234,12 @@ Modal heat capacity :math:`C_\lambda` (in eV/K)
 ^^^^^^^^^^^^^^
 
 Absolute value of group velocity :math:`|\mathbf{v}_\lambda|` (in
-THz x Angstrom)
+:math:`\text{THz}\cdot\text{Angstrom}`)
 
 ``--pqj``
 ^^^^^^^^^^^^^^
 
-Averaged phonon-phonon interaction :math:`P_{\mathbf{q}j}` (in eV^2)
+Averaged phonon-phonon interaction :math:`P_{\mathbf{q}j}` (in :math:`\text{eV}^2`)
 
 .. _auxiliary_tools_kdeplot:
 

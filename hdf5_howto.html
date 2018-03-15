@@ -2,20 +2,12 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>How to read the results stored in hdf5 files &#8212; Phono3py v.1.12.7</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.12.7',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -33,8 +25,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -98,12 +89,12 @@
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">How to read the results stored in hdf5 files</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#how-to-use-hdf5-python-library">How to use HDF5 python library</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#details-of-kappa-hdf5-file">Details of <code class="docutils literal"><span class="pre">kappa-*.hdf5</span></code> file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#details-of-kappa-hdf5-file">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kaccum"><code class="docutils literal"><span class="pre">phono3py-kaccum</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kdeplot"><code class="docutils literal"><span class="pre">phono3py-kdeplot</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kaccum"><code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kdeplot"><code class="docutils literal notranslate"><span class="pre">phono3py-kdeplot</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a><ul>
@@ -177,7 +168,7 @@
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">How to read the results stored in hdf5 files</a><ul>
 <li><a class="reference internal" href="#how-to-use-hdf5-python-library">How to use HDF5 python library</a></li>
-<li><a class="reference internal" href="#details-of-kappa-hdf5-file">Details of <code class="docutils literal"><span class="pre">kappa-*.hdf5</span></code> file</a><ul>
+<li><a class="reference internal" href="#details-of-kappa-hdf5-file">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a><ul>
 <li><a class="reference internal" href="#mesh">mesh</a></li>
 <li><a class="reference internal" href="#frequency">frequency</a></li>
 <li><a class="reference internal" href="#gamma">gamma</a></li>
@@ -242,7 +233,7 @@
 <div class="contents local topic" id="contents">
 <ul class="simple">
 <li><a class="reference internal" href="#how-to-use-hdf5-python-library" id="id1">How to use HDF5 python library</a></li>
-<li><a class="reference internal" href="#details-of-kappa-hdf5-file" id="id2">Details of <code class="docutils literal"><span class="pre">kappa-*.hdf5</span></code> file</a><ul>
+<li><a class="reference internal" href="#details-of-kappa-hdf5-file" id="id2">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a><ul>
 <li><a class="reference internal" href="#mesh" id="id3">mesh</a></li>
 <li><a class="reference internal" href="#frequency" id="id4">frequency</a></li>
 <li><a class="reference internal" href="#gamma" id="id5">gamma</a></li>
@@ -263,14 +254,14 @@
 </div>
 <div class="section" id="how-to-use-hdf5-python-library">
 <h2><a class="toc-backref" href="#id1">How to use HDF5 python library</a><a class="headerlink" href="#how-to-use-hdf5-python-library" title="Permalink to this headline">¶</a></h2>
-<p>It is assumed that <code class="docutils literal"><span class="pre">python-h5py</span></code> is installed on the computer you
+<p>It is assumed that <code class="docutils literal notranslate"><span class="pre">python-h5py</span></code> is installed on the computer you
 interactively use. In the following, how to see the contents of
-<code class="docutils literal"><span class="pre">.hdf5</span></code> files in the interactive mode of Python. Usually for running
-interactive python, <code class="docutils literal"><span class="pre">ipython</span></code> is recommended to use but not the
+<code class="docutils literal notranslate"><span class="pre">.hdf5</span></code> files in the interactive mode of Python. Usually for running
+interactive python, <code class="docutils literal notranslate"><span class="pre">ipython</span></code> is recommended to use but not the
 plain python. In the following example, an MgO result of thermal
 conductivity calculation is loaded and thermal conductivity tensor at
 300 K is watched.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span> <span class="nn">h5py</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span> <span class="nn">h5py</span>
 
 <span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">f</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;kappa-m111111.hdf5&quot;</span><span class="p">)</span>
 
@@ -340,22 +331,22 @@ conductivity calculation is loaded and thermal conductivity tensor at
 </div>
 </div>
 <div class="section" id="details-of-kappa-hdf5-file">
-<span id="kappa-hdf5-file"></span><h2><a class="toc-backref" href="#id2">Details of <code class="docutils literal"><span class="pre">kappa-*.hdf5</span></code> file</a><a class="headerlink" href="#details-of-kappa-hdf5-file" title="Permalink to this headline">¶</a></h2>
-<p>Files name, e.g. <code class="docutils literal"><span class="pre">kappa-m323220.hdf5</span></code>, is determined by some
-specific options. <code class="docutils literal"><span class="pre">mxxx</span></code>, show the numbers of sampling
-mesh. <code class="docutils literal"><span class="pre">sxxx</span></code> and <code class="docutils literal"><span class="pre">gxxx</span></code> appear optionally. <code class="docutils literal"><span class="pre">sxxx</span></code> gives the
+<span id="kappa-hdf5-file"></span><h2><a class="toc-backref" href="#id2">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a><a class="headerlink" href="#details-of-kappa-hdf5-file" title="Permalink to this headline">¶</a></h2>
+<p>Files name, e.g. <code class="docutils literal notranslate"><span class="pre">kappa-m323220.hdf5</span></code>, is determined by some
+specific options. <code class="docutils literal notranslate"><span class="pre">mxxx</span></code>, show the numbers of sampling
+mesh. <code class="docutils literal notranslate"><span class="pre">sxxx</span></code> and <code class="docutils literal notranslate"><span class="pre">gxxx</span></code> appear optionally. <code class="docutils literal notranslate"><span class="pre">sxxx</span></code> gives the
 smearing width in the smearing method for Brillouin zone integration
-for phonon lifetime, and <code class="docutils literal"><span class="pre">gxxx</span></code> denotes the grid number. Using the
-command option of <code class="docutils literal"><span class="pre">-o</span></code>, the file name can be modified slightly. For
-example <code class="docutils literal"><span class="pre">-o</span> <span class="pre">nac</span></code> gives <code class="docutils literal"><span class="pre">kappa-m323220.nac.hdf5</span></code> to
-memorize the option <code class="docutils literal"><span class="pre">--nac</span></code> was used.</p>
-<p>Currently <code class="docutils literal"><span class="pre">kappa-*.hdf5</span></code> file (not for the specific grid points)
+for phonon lifetime, and <code class="docutils literal notranslate"><span class="pre">gxxx</span></code> denotes the grid number. Using the
+command option of <code class="docutils literal notranslate"><span class="pre">-o</span></code>, the file name can be modified slightly. For
+example <code class="docutils literal notranslate"><span class="pre">-o</span> <span class="pre">nac</span></code> gives <code class="docutils literal notranslate"><span class="pre">kappa-m323220.nac.hdf5</span></code> to
+memorize the option <code class="docutils literal notranslate"><span class="pre">--nac</span></code> was used.</p>
+<p>Currently <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file (not for the specific grid points)
 contains the properties shown below.</p>
 <div class="section" id="mesh">
 <h3><a class="toc-backref" href="#id3">mesh</a><a class="headerlink" href="#mesh" title="Permalink to this headline">¶</a></h3>
 <p>(Versions 1.10.11 or later)</p>
 <p>The numbers of mesh points for reciprocal space sampling along
-reciprocal axes, <span class="math">\(a^*, b^*, c^*\)</span></p>
+reciprocal axes, <span class="math notranslate">\(a^*, b^*, c^*\)</span></p>
 </div>
 <div class="section" id="frequency">
 <h3><a class="toc-backref" href="#id4">frequency</a><a class="headerlink" href="#frequency" title="Permalink to this headline">¶</a></h3>
@@ -371,15 +362,15 @@ is in the ordinal frequency not the angular frequency.</p>
 (temperature, irreducible q-point, phonon band).</p>
 <p>The array shape for a specific grid-point is
 (temperature, phonon band).</p>
-<p>Phonon lifetime (<span class="math">\(\tau_\lambda=1/2\Gamma_\lambda(\omega_\lambda)\)</span>) may
-be estimated from <code class="docutils literal"><span class="pre">gamma</span></code>. <span class="math">\(2\pi\)</span> has to be multiplied with
-<code class="docutils literal"><span class="pre">gamma</span></code> values in the hdf5 file to convert the unit of ordinal
-frequency to angular frequency. Zeros in <code class="docutils literal"><span class="pre">gamma</span></code> values mean that
+<p>Phonon lifetime (<span class="math notranslate">\(\tau_\lambda=1/2\Gamma_\lambda(\omega_\lambda)\)</span>) may
+be estimated from <code class="docutils literal notranslate"><span class="pre">gamma</span></code>. <span class="math notranslate">\(2\pi\)</span> has to be multiplied with
+<code class="docutils literal notranslate"><span class="pre">gamma</span></code> values in the hdf5 file to convert the unit of ordinal
+frequency to angular frequency. Zeros in <code class="docutils literal notranslate"><span class="pre">gamma</span></code> values mean that
 those elements were not calculated such as for three acoustic modes at
-<span class="math">\(\Gamma\)</span> point. The below is the copy-and-paste from the
+<span class="math notranslate">\(\Gamma\)</span> point. The below is the copy-and-paste from the
 previous section to show how to obtain phonon lifetime in pico
 second:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="n">g</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">][</span><span class="mi">30</span><span class="p">]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="n">g</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">][</span><span class="mi">30</span><span class="p">]</span>
 
 <span class="n">In</span> <span class="p">[</span><span class="mi">9</span><span class="p">]:</span> <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
@@ -391,21 +382,21 @@ second:</p>
 </div>
 <div class="section" id="gamma-isotope">
 <h3><a class="toc-backref" href="#id6">gamma_isotope</a><a class="headerlink" href="#gamma-isotope" title="Permalink to this headline">¶</a></h3>
-<p>Isotope scattering of <span class="math">\(1/2\tau^\mathrm{iso}_\lambda\)</span>.
+<p>Isotope scattering of <span class="math notranslate">\(1/2\tau^\mathrm{iso}_\lambda\)</span>.
 The physical unit is same as that of gamma.</p>
 <p>The array shape is same as that of frequency.</p>
 </div>
 <div class="section" id="group-velocity">
 <h3><a class="toc-backref" href="#id7">group_velocity</a><a class="headerlink" href="#group-velocity" title="Permalink to this headline">¶</a></h3>
-<p>Phonon group velocity, <span class="math">\(\nabla_\mathbf{q}\omega_\lambda\)</span>. The
-physical unit is <span class="math">\(\text{THz}\cdot\text{\AA}\)</span>, where THz
+<p>Phonon group velocity, <span class="math notranslate">\(\nabla_\mathbf{q}\omega_\lambda\)</span>. The
+physical unit is <span class="math notranslate">\(\text{THz}\cdot\text{Angstrom}\)</span>, where THz
 is in the ordinal frequency not the angular frequency.</p>
 <p>The array shape is (irreducible q-point, phonon band, 3 = Cartesian coordinates).</p>
 </div>
 <div class="section" id="heat-capacity">
 <h3><a class="toc-backref" href="#id8">heat_capacity</a><a class="headerlink" href="#heat-capacity" title="Permalink to this headline">¶</a></h3>
 <p>Mode-heat-capacity defined by</p>
-<div class="math">
+<div class="math notranslate">
 \[C_\lambda = k_\mathrm{B}
  \left(\frac{\hbar\omega_\lambda}{k_\mathrm{B} T} \right)^2
  \frac{\exp(\hbar\omega_\lambda/k_\mathrm{B}
@@ -420,13 +411,13 @@ is in the ordinal frequency not the angular frequency.</p>
 </div>
 <div class="section" id="mode-kappa">
 <span id="output-mode-kappa"></span><h3><a class="toc-backref" href="#id10">mode-kappa</a><a class="headerlink" href="#mode-kappa" title="Permalink to this headline">¶</a></h3>
-<p>Thermal conductivity tensors at k-stars (<span class="math">\({}^*\mathbf{k}\)</span>):</p>
-<div class="math">
+<p>Thermal conductivity tensors at k-stars (<span class="math notranslate">\({}^*\mathbf{k}\)</span>):</p>
+<div class="math notranslate">
 \[\sum_{\mathbf{q} \in {}^*\mathbf{k}} \kappa_{\mathbf{q}j}.\]</div>
-<p>The sum of this over <span class="math">\({}^*\mathbf{k}\)</span> corresponding to
-irreducible q-points gives <span class="math">\(\kappa\)</span> (<a class="reference internal" href="#output-kappa"><span class="std std-ref">kappa</span></a>).</p>
+<p>The sum of this over <span class="math notranslate">\({}^*\mathbf{k}\)</span> corresponding to
+irreducible q-points gives <span class="math notranslate">\(\kappa\)</span> (<a class="reference internal" href="#output-kappa"><span class="std std-ref">kappa</span></a>).</p>
 <p>The physical unit is W/m-K. Each tensor element is the sum of tensor
-elements on the members of <span class="math">\({}^*\mathbf{k}\)</span>, i.e., symmetrically
+elements on the members of <span class="math notranslate">\({}^*\mathbf{k}\)</span>, i.e., symmetrically
 equivalent q-points by crystallographic point group and time reversal
 symmetry.</p>
 <p>The array shape is (temperature, irreducible q-point, phonon band, 6 =
@@ -435,13 +426,13 @@ symmetry.</p>
 <div class="section" id="gv-by-gv">
 <h3><a class="toc-backref" href="#id11">gv_by_gv</a><a class="headerlink" href="#gv-by-gv" title="Permalink to this headline">¶</a></h3>
 <p>Outer products of group velocities for k-stars
-(<span class="math">\({}^*\mathbf{k}\)</span>) for each irreducible q-point and phonon band
-(<span class="math">\(j\)</span>):</p>
-<div class="math">
+(<span class="math notranslate">\({}^*\mathbf{k}\)</span>) for each irreducible q-point and phonon band
+(<span class="math notranslate">\(j\)</span>):</p>
+<div class="math notranslate">
 \[\sum_{\mathbf{q} \in {}^*\mathbf{k}} \mathbf{v}_{\mathbf{q}j} \otimes
 \mathbf{v}_{\mathbf{q}j}.\]</div>
 <p>The physical unit is
-<span class="math">\(\text{THz}^2\cdot\text{\AA}^2\)</span>, where THz is in the
+<span class="math notranslate">\(\text{THz}^2\cdot\text{Angstrom}^2\)</span>, where THz is in the
 ordinal frequency not the angular frequency.</p>
 <p>The array shape is (irreducible q-point, phonon band, 6 = (xx, yy, zz,
 yz, xz, xy)).</p>
@@ -464,33 +455,33 @@ the number of mesh grid points.</p>
 </div>
 <div class="section" id="ave-pp">
 <h3><a class="toc-backref" href="#id15">ave_pp</a><a class="headerlink" href="#ave-pp" title="Permalink to this headline">¶</a></h3>
-<p>Averaged phonon-phonon interaction in <span class="math">\(\text{eV}^2\)</span>,
-<span class="math">\(P_{\mathbf{q}j}\)</span>:</p>
-<div class="math">
+<p>Averaged phonon-phonon interaction in <span class="math notranslate">\(\text{eV}^2\)</span>,
+<span class="math notranslate">\(P_{\mathbf{q}j}\)</span>:</p>
+<div class="math notranslate">
 \[P_{\mathbf{q}j} = \frac{1}{(3n_\mathrm{a})^2} \sum_{\lambda'\lambda''}
 |\Phi_{\lambda\lambda'\lambda''}|^2.\]</div>
 <p>This is not going to be calculated in the RTA thermal coductivity
-calculation mode by default. To calculate this, <code class="docutils literal"><span class="pre">--full_pp</span></code> option
+calculation mode by default. To calculate this, <code class="docutils literal notranslate"><span class="pre">--full_pp</span></code> option
 has to be specified (see <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full-pp: Calculate all elements of phonon-phonon interaction strength</span></a>).</p>
 </div>
 <div class="section" id="kappa-unit-conversion">
 <h3><a class="toc-backref" href="#id16">kappa_unit_conversion</a><a class="headerlink" href="#kappa-unit-conversion" title="Permalink to this headline">¶</a></h3>
 <p>This is used to convert the physical unit of lattice thermal
-conductivity made of <code class="docutils literal"><span class="pre">heat_capacity</span></code>, <code class="docutils literal"><span class="pre">group_velocity</span></code>, and
-<code class="docutils literal"><span class="pre">gamma</span></code>, to W/m-K. In the single mode relaxation time (SMRT) method,
+conductivity made of <code class="docutils literal notranslate"><span class="pre">heat_capacity</span></code>, <code class="docutils literal notranslate"><span class="pre">group_velocity</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">gamma</span></code>, to W/m-K. In the single mode relaxation time (SMRT) method,
 a mode contribution to the lattice thermal conductivity is given by</p>
-<div class="math">
+<div class="math notranslate">
 \[\kappa_\lambda = \frac{1}{NV_0} C_\lambda \mathbf{v}_\lambda \otimes
 \mathbf{v}_\lambda \tau_\lambda^{\mathrm{SMRT}}.\]</div>
-<p>For example of some single mode, <span class="math">\(\kappa_{\lambda,{xx}}\)</span> is calculated by:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">kappa_unit_conversion</span> <span class="o">/</span> <span class="n">weight</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="n">heat_capacity</span><span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span>
+<p>For example of some single mode, <span class="math notranslate">\(\kappa_{\lambda,{xx}}\)</span> is calculated by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">kappa_unit_conversion</span> <span class="o">/</span> <span class="n">weight</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="n">heat_capacity</span><span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span>
 <span class="n">group_velocity</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>where <span class="math">\(1/V_0\)</span> is included in <code class="docutils literal"><span class="pre">kappa_unit_conversion</span></code>.
+<p>where <span class="math notranslate">\(1/V_0\)</span> is included in <code class="docutils literal notranslate"><span class="pre">kappa_unit_conversion</span></code>.
 Similary mode-kappa (defined at <a class="reference internal" href="#output-mode-kappa"><span class="std std-ref">mode-kappa</span></a>) is
 calculated by:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">kappa_unit_conversion</span> <span class="o">/</span> <span class="n">weight</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="n">heat_capacity</span><span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">kappa_unit_conversion</span> <span class="o">/</span> <span class="n">weight</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">*</span> <span class="n">heat_capacity</span><span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span>
 <span class="n">gv_by_gv</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">gamma</span><span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
@@ -518,7 +509,7 @@ calculated by:</p>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.<br/>
     </p>
   </div>
 </footer>

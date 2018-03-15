@@ -2,20 +2,12 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Tips &#8212; Phono3py v.1.12.7</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.12.7',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -33,8 +25,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -98,12 +89,12 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">How to read the results stored in hdf5 files</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#how-to-use-hdf5-python-library">How to use HDF5 python library</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#details-of-kappa-hdf5-file">Details of <code class="docutils literal"><span class="pre">kappa-*.hdf5</span></code> file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#details-of-kappa-hdf5-file">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kaccum"><code class="docutils literal"><span class="pre">phono3py-kaccum</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kdeplot"><code class="docutils literal"><span class="pre">phono3py-kdeplot</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kaccum"><code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kdeplot"><code class="docutils literal notranslate"><span class="pre">phono3py-kdeplot</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a><ul>
@@ -259,7 +250,7 @@ respect to number of mesh points along an axis from n=19 to 65. This
 is calculated with RTA and the linear tetrahedron method. Within the
 methods and phono3py implementation, it is converging at around n=55,
 however this computational demand is not trivial. As far as observing
-this result, an extrapolation to <span class="math">\(1/n \rightarrow 0\)</span> seems not a
+this result, an extrapolation to <span class="math notranslate">\(1/n \rightarrow 0\)</span> seems not a
 good idea, since it gives overestimation in the case of this Si
 example. This plot tells that we have to decide how much value is
 acceptable as lattice thermal conductivity value. Therefore it
@@ -269,15 +260,15 @@ integration to let other people reproduce the computational results.</p>
 <p>In case the smearing method is necessary to use, the convergence of
 q-point mesh together with smearing width has to be checked
 carefully. Since smearing parameter is used to approximate delta
-functions, small <code class="docutils literal"><span class="pre">sigma</span></code> value is better to describe the detailed
+functions, small <code class="docutils literal notranslate"><span class="pre">sigma</span></code> value is better to describe the detailed
 structure of three-phonon-space, however it requires a denser sampling
 mesh to converge the result. To check the convergence with respect to
-the <code class="docutils literal"><span class="pre">sigma</span></code> value, multiple sigma values can be set. This can be
+the <code class="docutils literal notranslate"><span class="pre">sigma</span></code> value, multiple sigma values can be set. This can be
 computationally efficient, since it is avoided to re-calculate
-phonon-phonon interaction strength for different <code class="docutils literal"><span class="pre">sigma</span></code> values in
+phonon-phonon interaction strength for different <code class="docutils literal notranslate"><span class="pre">sigma</span></code> values in
 this case. Convergence with respect to the sampling mesh and smearing
 parameter strongly depends on materials. For Si example, a
-<span class="math">\(20\times 20\times 20\)</span> sampling mesh (or 8000 reducible sampling
+<span class="math notranslate">\(20\times 20\times 20\)</span> sampling mesh (or 8000 reducible sampling
 points) and 0.1 THz smearing value for reciprocal of the volume of an
 atom may be a good starting choice. The tetrahedron method requires no
 such parameter as the smearing width.</p>
@@ -314,7 +305,7 @@ exchange-correlational potential, etc, should be reconsidered.</p>
 <div class="section" id="displacement-distance-of-atoms">
 <h3><a class="toc-backref" href="#id5">Displacement distance of atoms</a><a class="headerlink" href="#displacement-distance-of-atoms" title="Permalink to this headline">¶</a></h3>
 <p>The phono3py default displacement distance is 0.03
-<span class="math">\(\text{\AA}\)</span>. In some cases, accurate result may not be obtained
+<span class="math notranslate">\(\text{Angstrom}\)</span>. In some cases, accurate result may not be obtained
 due to the numerical noise of the force calculator. Usually increasing
 the displacement distance by the <a class="reference internal" href="command-options.html#amplitude-option"><span class="std std-ref">amplitude option</span></a> reduces the numerical noise, but as its drawback
 higher order anharmonicity is involved (renormalized) into fc3 and fc2.</p>
@@ -322,13 +313,13 @@ higher order anharmonicity is involved (renormalized) into fc3 and fc2.</p>
 </div>
 <div class="section" id="file-format-compatibility-with-phonopy">
 <span id="file-format-compatibility"></span><h2><a class="toc-backref" href="#id6">File format compatibility with phonopy</a><a class="headerlink" href="#file-format-compatibility-with-phonopy" title="Permalink to this headline">¶</a></h2>
-<p><code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> and <code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> are not compatible with
-phonopy’s <code class="docutils literal"><span class="pre">disp.yaml</span></code>. <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal"><span class="pre">FORCES_FC2</span></code> are not
-compatible with phonopy’s <code class="docutils literal"><span class="pre">FORCE_SETS</span></code>. But <code class="docutils literal"><span class="pre">FORCE_SETS</span></code> can be
-created using <a class="reference internal" href="command-options.html#cfs-option"><span class="std std-ref">–cfs</span></a>, and <code class="docutils literal"><span class="pre">FORCES_FC2</span></code> and
-<code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> can be created using <a class="reference internal" href="command-options.html#fs2f2-option"><span class="std std-ref">–fs2f2</span></a>. In addition, if <code class="docutils literal"><span class="pre">fc2.hdf5</span></code> is renamed to
-<code class="docutils literal"><span class="pre">force_constants.hdf5</span></code>, it is used in phonopy with <code class="docutils literal"><span class="pre">--hdf5</span></code> and
-<code class="docutils literal"><span class="pre">--readfc</span></code> option.</p>
+<p><code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code> are not compatible with
+phonopy’s <code class="docutils literal notranslate"><span class="pre">disp.yaml</span></code>. <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> are not
+compatible with phonopy’s <code class="docutils literal notranslate"><span class="pre">FORCE_SETS</span></code>. But <code class="docutils literal notranslate"><span class="pre">FORCE_SETS</span></code> can be
+created using <a class="reference internal" href="command-options.html#cfs-option"><span class="std std-ref">–cfs</span></a>, and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> and
+<code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code> can be created using <a class="reference internal" href="command-options.html#fs2f2-option"><span class="std std-ref">–fs2f2</span></a>. In addition, if <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> is renamed to
+<code class="docutils literal notranslate"><span class="pre">force_constants.hdf5</span></code>, it is used in phonopy with <code class="docutils literal notranslate"><span class="pre">--hdf5</span></code> and
+<code class="docutils literal notranslate"><span class="pre">--readfc</span></code> option.</p>
 </div>
 </div>
 
@@ -352,7 +343,7 @@ created using <a class="reference internal" href="command-options.html#cfs-optio
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.<br/>
     </p>
   </div>
 </footer>

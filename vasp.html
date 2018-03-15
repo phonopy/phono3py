@@ -2,20 +2,12 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>VASP &amp; phono3py calculation &#8212; Phono3py v.1.12.7</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.12.7',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -33,8 +25,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body>
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -98,12 +89,12 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">How to read the results stored in hdf5 files</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#how-to-use-hdf5-python-library">How to use HDF5 python library</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#details-of-kappa-hdf5-file">Details of <code class="docutils literal"><span class="pre">kappa-*.hdf5</span></code> file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#details-of-kappa-hdf5-file">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kaccum"><code class="docutils literal"><span class="pre">phono3py-kaccum</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kdeplot"><code class="docutils literal"><span class="pre">phono3py-kdeplot</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kaccum"><code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kdeplot"><code class="docutils literal notranslate"><span class="pre">phono3py-kdeplot</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a><ul>
@@ -227,92 +218,92 @@
 <ol class="arabic">
 <li><p class="first">Create POSCARs with displacements</p>
 <p>This is the same way as usual phonopy:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
 </pre></div>
 </div>
-<p><code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> and <code class="docutils literal"><span class="pre">POSCAR-xxxxx</span></code> files are created.</p>
+<p><code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">POSCAR-xxxxx</span></code> files are created.</p>
 <p>If you want to use larger supercell size for
 second-order force constants (fc2) calculation than that
 for third-order force constants (fc3) calculation:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim_fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim_fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
 </pre></div>
 </div>
-<p>In this case, <code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> and <code class="docutils literal"><span class="pre">POSCAR_FC2-xxxxx</span></code> files are
+<p>In this case, <code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">POSCAR_FC2-xxxxx</span></code> files are
 also created.</p>
 </li>
 <li><p class="first">Run VASP for supercell force calculations</p>
-<p>To calculate forces on atoms in supercells, <code class="docutils literal"><span class="pre">POSCAR-xxxxx</span></code> (and
-<code class="docutils literal"><span class="pre">POSCAR_FC2-xxxxx</span></code> if they exist) are used as VASP (or any force
+<p>To calculate forces on atoms in supercells, <code class="docutils literal notranslate"><span class="pre">POSCAR-xxxxx</span></code> (and
+<code class="docutils literal notranslate"><span class="pre">POSCAR_FC2-xxxxx</span></code> if they exist) are used as VASP (or any force
 calculator) calculations.</p>
 <p>It is supposed that each force calculation is executed under the
-directory named <code class="docutils literal"><span class="pre">disp-xxxxx</span></code> (and <code class="docutils literal"><span class="pre">disp_fc2-xxxxx</span></code>), where
-<code class="docutils literal"><span class="pre">xxxxx</span></code> is sequential number.</p>
+directory named <code class="docutils literal notranslate"><span class="pre">disp-xxxxx</span></code> (and <code class="docutils literal notranslate"><span class="pre">disp_fc2-xxxxx</span></code>), where
+<code class="docutils literal notranslate"><span class="pre">xxxxx</span></code> is sequential number.</p>
 </li>
-<li><p class="first">Collect <code class="docutils literal"><span class="pre">vasprun.xml</span></code>’s</p>
+<li><p class="first">Collect <code class="docutils literal notranslate"><span class="pre">vasprun.xml</span></code>’s</p>
 <p>When VASP is used as the force calculator, force sets to calculate
 fc3 and fc2 are created as follows.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="p">{</span><span class="mf">00001.</span><span class="o">.</span><span class="mi">00755</span><span class="p">}</span><span class="o">/</span><span class="n">vasprun</span><span class="o">.</span><span class="n">xml</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="p">{</span><span class="mf">00001.</span><span class="o">.</span><span class="mi">00755</span><span class="p">}</span><span class="o">/</span><span class="n">vasprun</span><span class="o">.</span><span class="n">xml</span>
 </pre></div>
 </div>
 <p>where 0755 is an example of the index of the last displacement
-supercell. To perform this collection, <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> created at
-step 1 is required. Then <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> is created.</p>
+supercell. To perform this collection, <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> created at
+step 1 is required. Then <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> is created.</p>
 <p>When you use larger supercell for fc2 calculation:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf2</span> <span class="n">disp_fc2</span><span class="o">-</span><span class="p">{</span><span class="mf">00001.</span><span class="o">.</span><span class="mi">00002</span><span class="p">}</span><span class="o">/</span><span class="n">vasprun</span><span class="o">.</span><span class="n">xml</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf2</span> <span class="n">disp_fc2</span><span class="o">-</span><span class="p">{</span><span class="mf">00001.</span><span class="o">.</span><span class="mi">00002</span><span class="p">}</span><span class="o">/</span><span class="n">vasprun</span><span class="o">.</span><span class="n">xml</span>
 </pre></div>
 </div>
-<p><code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code> is necessary in this case and <code class="docutils literal"><span class="pre">FORCES_FC2</span></code> is
+<p><code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code> is necessary in this case and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> is
 created.</p>
 </li>
 <li><p class="first">Create fc2.hdf and fc3.hdf</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
 </pre></div>
 </div>
-<p><code class="docutils literal"><span class="pre">fc2.hdf5</span></code> and <code class="docutils literal"><span class="pre">fc3.hdf5</span></code> are created from <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> and
-<code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code>. This step is not mandatory, but you can avoid
+<p><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> are created from <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and
+<code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code>. This step is not mandatory, but you can avoid
 calculating fc2 and fc3 at every run time.</p>
 <p>When you use larger supercell for fc2 calculation:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim_fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim_fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
 </pre></div>
 </div>
-<p>Similarly <code class="docutils literal"><span class="pre">fc2.hdf5</span></code> and <code class="docutils literal"><span class="pre">fc3.hdf5</span></code> are created from <code class="docutils literal"><span class="pre">FORCES_FC3</span></code>,
-<code class="docutils literal"><span class="pre">FORCES_FC2</span></code>, <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code>, and <code class="docutils literal"><span class="pre">disp_fc2.yaml</span></code>.</p>
+<p>Similarly <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> are created from <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code>,
+<code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>, <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code>, and <code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code>.</p>
 </li>
 <li><p class="first">Thermal conductivity calculation</p>
 <p>An example of thermal conductivity calculation is:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
   <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span>
 </pre></div>
 </div>
 <p>or with larger supercell for fc2:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim_fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim_fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
   <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span>
 </pre></div>
 </div>
-<p>This calculation may take very long time. <code class="docutils literal"><span class="pre">--thm</span></code> invokes a
+<p>This calculation may take very long time. <code class="docutils literal notranslate"><span class="pre">--thm</span></code> invokes a
 tetrahedron method for Brillouin zone integration for phonon
 lifetime calculation, which is the default option. Instead,
-<code class="docutils literal"><span class="pre">--sigma</span></code> option can be used with the smearing widths.</p>
+<code class="docutils literal notranslate"><span class="pre">--sigma</span></code> option can be used with the smearing widths.</p>
 <p>In this command, phonon lifetimes at many grid points are
 calculated in series. The phonon lifetime calculation at each grid
 point can be separately calculated since they
 are independent and no communication is necessary at the
 computation. The procedure is as follows:</p>
-<p>First run the same command with the addition option of <code class="docutils literal"><span class="pre">--wgp</span></code>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
+<p>First run the same command with the addition option of <code class="docutils literal notranslate"><span class="pre">--wgp</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
   <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">wgp</span>
 </pre></div>
 </div>
-<p><code class="docutils literal"><span class="pre">ir_grid_points.yaml</span></code> is obtained. In this file, irreducible
+<p><code class="docutils literal notranslate"><span class="pre">ir_grid_points.yaml</span></code> is obtained. In this file, irreducible
 q-points are shown. Then distribute calculations of phonon
-lifetimes on grid points with <code class="docutils literal"><span class="pre">--write_gamma</span></code> option by:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
+lifetimes on grid points with <code class="docutils literal notranslate"><span class="pre">--write_gamma</span></code> option by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
   <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">write_gamma</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="s2">&quot;[grid ponit(s)]&quot;</span>
 </pre></div>
 </div>
 <p>After finishing all distributed calculations, run with
-<code class="docutils literal"><span class="pre">--read_gamma</span></code> option:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
+<code class="docutils literal notranslate"><span class="pre">--read_gamma</span></code> option:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
   <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">read_gamma</span>
 </pre></div>
 </div>
@@ -343,7 +334,7 @@ hdf5 files on grid points are no more necessary and may be deleted.</p>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.6.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.<br/>
     </p>
   </div>
 </footer>
