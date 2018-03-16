@@ -158,11 +158,17 @@ class Interaction(object):
         return self._cutoff_frequency
 
     def get_averaged_interaction(self):
+        """Return sum over phonon triplets of interaction strength
+
+        See Eq.(21) of PRB 91, 094306 (2015)
+
+        """
+
+        # v[triplet, band0, band, band]
         v = self._interaction_strength
         w = self._weights_at_q
-        v_sum = v.sum(axis=2).sum(axis=2)
-        num_band = self._primitive.get_number_of_atoms() * 3
-        return np.dot(w, v_sum) / num_band ** 2
+        v_sum = np.dot(w, v.sum(axis=2).sum(axis=2))
+        return v_sum / np.prod(v.shape[2:])
 
     def get_primitive_and_supercell_correspondence(self):
         return (self._smallest_vectors,
