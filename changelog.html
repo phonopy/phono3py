@@ -122,6 +122,7 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#mar-16-2018-version-1-12-9">Mar-16-2018: version 1.12.9</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#feb-1-2018-version-1-12-7">Feb-1-2018: version 1.12.7</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#nov-22-2017-version-1-12-5">Nov-22-2017: version 1.12.5</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#nov-17-2017-version-1-12-3">Nov-17-2017: version 1.12.3</a></li>
@@ -166,6 +167,7 @@
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Change Log</a><ul>
+<li><a class="reference internal" href="#mar-16-2018-version-1-12-9">Mar-16-2018: version 1.12.9</a></li>
 <li><a class="reference internal" href="#feb-1-2018-version-1-12-7">Feb-1-2018: version 1.12.7</a></li>
 <li><a class="reference internal" href="#nov-22-2017-version-1-12-5">Nov-22-2017: version 1.12.5</a></li>
 <li><a class="reference internal" href="#nov-17-2017-version-1-12-3">Nov-17-2017: version 1.12.3</a></li>
@@ -235,6 +237,16 @@
       
   <div class="section" id="change-log">
 <span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="mar-16-2018-version-1-12-9">
+<h2>Mar-16-2018: version 1.12.9<a class="headerlink" href="#mar-16-2018-version-1-12-9" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Definition of <code class="docutils literal notranslate"><span class="pre">mode_kappa</span></code> values in output hdf5 file is
+changed. Previously they were divided by number of grid points, but
+now not. Therefore users who compute <code class="docutils literal notranslate"><span class="pre">kappa</span></code> from <code class="docutils literal notranslate"><span class="pre">mode_kappa</span></code>
+need to be careful about this change. This does not affect to
+<code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code> results.</li>
+</ul>
+</div>
 <div class="section" id="feb-1-2018-version-1-12-7">
 <h2>Feb-1-2018: version 1.12.7<a class="headerlink" href="#feb-1-2018-version-1-12-7" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">

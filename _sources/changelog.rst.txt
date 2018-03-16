@@ -3,6 +3,15 @@
 Change Log
 ==========
 
+Mar-16-2018: version 1.12.9
+----------------------------
+
+- Definition of ``mode_kappa`` values in output hdf5 file is
+  changed. Previously they were divided by number of grid points, but
+  now not. Therefore users who compute ``kappa`` from ``mode_kappa``
+  need to be careful about this change. This does not affect to
+  ``phono3py-kaccum`` results.
+
 Feb-1-2018: version 1.12.7
 ----------------------------
 
