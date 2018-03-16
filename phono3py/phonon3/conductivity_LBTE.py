@@ -1318,6 +1318,7 @@ class Conductivity_LBTE(Conductivity):
         self._collision_eigenvalues[i_sigma, i_temp] = w
 
     def _set_kappa(self, i_sigma, i_temp, weights):
+        N = self._num_sampling_grid_points
         if self._is_reducible_collision_matrix:
             X = self._get_X(i_temp, weights, self._gv)
             num_mesh_points = np.prod(self._mesh)
@@ -1334,7 +1335,7 @@ class Conductivity_LBTE(Conductivity):
                                  i_temp)
             self._mode_kappa[i_sigma, i_temp] /= len(self._rotations_cartesian)
             self._kappa[i_sigma, i_temp] = (
-                self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
+                self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N)
         else:
             X = self._get_X(i_temp, weights, self._gv)
             num_ir_grid_points = len(self._ir_grid_points)
@@ -1354,9 +1355,10 @@ class Conductivity_LBTE(Conductivity):
             #                               i_temp)
 
             self._kappa[i_sigma, i_temp] = (
-                self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0))
+                self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N)
 
     def _set_kappa_RTA(self, i_sigma, i_temp, weights):
+        N = self._num_sampling_grid_points
         num_band = self._primitive.get_number_of_atoms() * 3
         X = self._get_X(i_temp, weights, self._gv)
         Y = np.zeros_like(X)
@@ -1388,7 +1390,8 @@ class Conductivity_LBTE(Conductivity):
             g = len(self._rotations_cartesian)
             self._mode_kappa_RTA[i_sigma, i_temp] /= g
             self._kappa_RTA[i_sigma, i_temp] = (
-                self._mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0))
+                self._mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) /
+                N)
         else:
             # This RTA is supposed to be the same as conductivity_RTA.
             num_ir_grid_points = len(self._ir_grid_points)
@@ -1419,7 +1422,8 @@ class Conductivity_LBTE(Conductivity):
                                  i_sigma,
                                  i_temp)
             self._kappa_RTA[i_sigma, i_temp] = (
-                self._mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0))
+                self._mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) /
+                N)
 
     def _set_mode_kappa(self,
                         mode_kappa,
@@ -1455,8 +1459,7 @@ class Conductivity_LBTE(Conductivity):
         # Collision matrix is half of that defined in Chaput's paper.
         # Therefore here 2 is not necessary multiplied.
         # sum_k = sum_k + sum_k.T is equivalent to I(a,b) + I(b,a).
-        mode_kappa[i_sigma, i_temp] *= (
-            self._conversion_factor * Kb * t ** 2 / np.prod(self._mesh))
+        mode_kappa[i_sigma, i_temp] *= self._conversion_factor * Kb * t ** 2
 
     def _set_mode_kappa_from_mfp(self,
                                  weights,
@@ -1474,7 +1477,7 @@ class Conductivity_LBTE(Conductivity):
                 for k, vxf in enumerate(
                         ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))):
                     self._mode_kappa[i_sigma, i_temp, i, j, k] = sum_k[vxf]
-        self._mode_kappa *= - self._conversion_factor / np.prod(self._mesh)
+        self._mode_kappa *= - self._conversion_factor
 
     def _set_mean_free_path(self, i_sigma, i_temp, weights, Y):
         if self._is_reducible_collision_matrix:

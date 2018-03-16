@@ -126,7 +126,14 @@ def get_grid_symmetry(primitive, mesh, weights, qpoints):
      grid_address,
      grid_mapping_table) = get_ir_grid_points(mesh, rotations)
 
-    np.testing.assert_array_equal(weights, weights_for_check)
+    try:
+        np.testing.assert_array_equal(weights, weights_for_check)
+    except:
+        print("*******************************")
+        print("** Might forget --pa option? **")
+        print("*******************************")
+        raise
+
     qpoints_for_check = grid_address[ir_grid_points] / mesh.astype('double')
     diff_q = qpoints - qpoints_for_check
     np.testing.assert_almost_equal(diff_q, np.rint(diff_q))
@@ -441,6 +448,8 @@ if __name__ == '__main__':
                                    mesh,
                                    ir_grid_points,
                                    grid_address)
+
+        # gv x gv is divied by primitive cell volume.
         unit_conversion = primitive.get_volume()
         mode_prop = gv_sum2.reshape((1,) + gv_sum2.shape) / unit_conversion
     else:
@@ -451,7 +460,7 @@ if __name__ == '__main__':
 
     frequencies = f['frequency'][:]
     conditions = frequencies > 0
-    if not conditions.all():
+    if np.logical_not(conditions).sum() > 3:
         sys.stderr.write("# Imaginary frequencies are found. "
                          "They are set to be zero.\n")
         frequencies = np.where(conditions, frequencies, 0)
@@ -530,9 +539,6 @@ if __name__ == '__main__':
                                                 grid_mapping_table,
                                                 ir_grid_points,
                                                 args.num_sampling_points)
-            # Already mode_kappa is divided by num_mesh.
-            # But tetrahedron method divides it again. So it has to repair.
-            kdos *= np.prod(mesh)
             show_tensor(kdos, temperatures, sampling_points, args)
         else:
             if args.temperature is not None and not args.gv:
@@ -547,9 +553,4 @@ if __name__ == '__main__':
                                                  grid_mapping_table,
                                                  ir_grid_points,
                                                  args.num_sampling_points)
-            if not args.gv:
-                # Already mode_kappa is divided by num_mesh.
-                # But tetrahedron method divides it again. So it has to repair.
-                kdos *= np.prod(mesh)
-
             show_tensor(kdos, temperatures, sampling_points, args)

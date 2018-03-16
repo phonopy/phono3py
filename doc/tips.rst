@@ -101,7 +101,7 @@ Displacement distance of atoms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The phono3py default displacement distance is 0.03
-:math:`\text{\AA}`. In some cases, accurate result may not be obtained
+:math:`\text{Angstrom}`. In some cases, accurate result may not be obtained
 due to the numerical noise of the force calculator. Usually increasing
 the displacement distance by the :ref:`amplitude option
 <amplitude_option>` reduces the numerical noise, but as its drawback

@@ -38,12 +38,12 @@ unit systems used for the calculators are summarized below.
    Abinit  | au (bohr)  eV/Angstrom  au
 
 ``FORCES_FC2`` and ``disp_fc2.yaml`` have the same physical units as
-``FORCES_FC3`` and ``disp_fc3.yaml``, respectively. 
+``FORCES_FC3`` and ``disp_fc3.yaml``, respectively.
 
 Always (irrespective of calculator interface) the physical units of
 2nd and 3rd order force constants that are to be stored in
-``fc2.hdf5`` and ``fc3.hdf5`` are ``eV/Angstrom^2`` and
-``eV/Angstrom^3``, respectively.
+``fc2.hdf5`` and ``fc3.hdf5`` are :math:`\text{eV}/\text{Angstrom}^2` and
+:math:`\text{eV}/\text{Angstrom}^3`, respectively.
 
 .. _default_unit_cell_file_name_for_calculator:
 
@@ -51,8 +51,8 @@ Default unit cell file name
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Default unit cell file names are also changed according to the calculators::
-    
-   VASP    | POSCAR     
+
+   VASP    | POSCAR
    Pwscf   | unitcell.in
    CRYSTAL | crystal.o
    Abinit  | unitcell.in
@@ -70,4 +70,3 @@ Default displacement distances created by ``-d`` option without
    Pwscf   | 0.06 au (bohr)
    CRYSTAL | 0.03 Angstrom
    Abinit  | 0.06 au (bohr)
-

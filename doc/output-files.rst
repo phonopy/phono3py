@@ -55,7 +55,7 @@ See the detail at :ref:`kappa_hdf5_file`.
 ^^^^^^^^^^^^^
 
 Third order force constants (in real space) are stored in
-:math:`\mathrm{eV}/\mathrm{\AA}^3`. 
+:math:`\mathrm{eV}/\text{Angstrom}^3`.
 
 In phono3py, this is stored in the numpy array ``dtype='double'`` and
 ``order='C'`` in the shape of::
@@ -93,7 +93,7 @@ e.g., the face centring,
    0 & \frac{{1}}{2} & \frac{{1}}{2} \\
    \frac{{1}}{2} & 0 & \frac{{1}}{2} \\
    \frac{{1}}{2} & \frac{{1}}{2} & 0
-   \end{pmatrix} = 
+   \end{pmatrix} =
    (\mathbf{a}_\text{s}, \mathbf{b}_\text{s}, \mathbf{c}_\text{s})
    \begin{pmatrix}
    0 & \frac{{1}}{4} & \frac{{1}}{4} \\
@@ -104,12 +104,12 @@ e.g., the face centring,
 So what you have to set is ``--pa="0 1/4 1/4  1/4 0 1/4  1/4 1/4 0"``.
 
 .. _fc2_hdf5_file:
-      
+
 ``fc2.hdf5``
 ^^^^^^^^^^^^^
 
 Second order force constants are stored in
-:math:`\mathrm{eV}/\mathrm{\AA}^3`.
+:math:`\mathrm{eV}/\text{Angstrom}^2`.
 
 In phono3py, this is stored in the numpy array ``dtype='double'`` and
 ``order='C'`` in the shape of::
@@ -133,13 +133,13 @@ Q-point triplet contributions to imaginary parts of self energies at
 phonon frequencies (half linewidths) are stored in THz.  See
 :ref:`write_detailed_gamma_option`.
 
-Simple text file 
+Simple text file
 -----------------
 
 ``gammas-*.dat``
 ^^^^^^^^^^^^^^^^^
 
-Imaginary parts of self energies with respect to frequency 
+Imaginary parts of self energies with respect to frequency
 :math:`\Gamma_\lambda(\omega)` are stored in THz. See :ref:`ise_option`.
 
 ``jdos-*.dat``
@@ -149,5 +149,3 @@ Joint densities of states are stored in Thz. See :ref:`jdos_option`.
 
 ``linewidth-*.dat``
 ^^^^^^^^^^^^^^^^^^^^
-
-
