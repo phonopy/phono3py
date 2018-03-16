@@ -51,7 +51,7 @@ conductivity calculation is loaded and thermal conductivity tensor at
              1.20936823e-15,   0.00000000e+00,  -2.05720313e-15],
           [  1.37552313e+03,   1.37552313e+03,   1.37552313e+03,
              2.81132320e-16,   0.00000000e+00,  -5.00076366e-16],
-	  ...,
+          ...,
           [  6.56974871e+00,   6.56974871e+00,   6.56974871e+00,
              1.76632276e-18,   0.00000000e+00,  -2.30450472e-18],
           [  6.50316555e+00,   6.50316555e+00,   6.50316555e+00,
@@ -205,7 +205,13 @@ Thermal conductivity tensors at k-stars (:math:`{}^*\mathbf{k}`):
    \sum_{\mathbf{q} \in {}^*\mathbf{k}} \kappa_{\mathbf{q}j}.
 
 The sum of this over :math:`{}^*\mathbf{k}` corresponding to
-irreducible q-points gives :math:`\kappa` (:ref:`output_kappa`).
+irreducible q-points divided by number of grid points gives
+:math:`\kappa` (:ref:`output_kappa`), e.g.,::
+
+   kappa_xx_at_index_30 = mode_kappa[30, :, :, 0].sum()/ weight.sum()
+
+Be careful that until version 1.12.7, mode-kappa values were divided
+by number of grid points.
 
 The physical unit is W/m-K. Each tensor element is the sum of tensor
 elements on the members of :math:`{}^*\mathbf{k}`, i.e., symmetrically
@@ -214,6 +220,7 @@ symmetry.
 
 The array shape is (temperature, irreducible q-point, phonon band, 6 =
 (xx, yy, zz, yz, xz, xy)).
+
 
 gv_by_gv
 ^^^^^^^^^
@@ -279,17 +286,15 @@ a mode contribution to the lattice thermal conductivity is given by
 
 .. math::
 
-   \kappa_\lambda = \frac{1}{NV_0} C_\lambda \mathbf{v}_\lambda \otimes
+   \kappa_\lambda = \frac{1}{V_0} C_\lambda \mathbf{v}_\lambda \otimes
    \mathbf{v}_\lambda \tau_\lambda^{\mathrm{SMRT}}.
 
 For example of some single mode, :math:`\kappa_{\lambda,{xx}}` is calculated by::
 
-   kappa_unit_conversion / weight.sum() * heat_capacity[30, 2, 0] *
-   group_velocity[2, 0, 0] ** 2 / (2 * gamma[30, 2, 0])
+   kappa_unit_conversion / weight.sum() * heat_capacity[30, 2, 0] * group_velocity[2, 0, 0] ** 2 / (2 * gamma[30, 2, 0])
 
 where :math:`1/V_0` is included in ``kappa_unit_conversion``.
 Similary mode-kappa (defined at :ref:`output_mode_kappa`) is
 calculated by::
 
-   kappa_unit_conversion / weight.sum() * heat_capacity[30, 2, 0] *
-   gv_by_gv[2, 0] / (2 * gamma[30, 2, 0])
+   kappa_unit_conversion * heat_capacity[30, 2, 0] * gv_by_gv[2, 0] / (2 * gamma[30, 2, 0])
