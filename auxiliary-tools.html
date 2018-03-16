@@ -4,7 +4,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Auxiliary tools &#8212; Phono3py v.1.12.7</title>
+    <title>Auxiliary tools &#8212; Phono3py v.1.12.8</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -38,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>1.12.7</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.12.8</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -305,12 +305,12 @@ path are calculated using this command.</p>
 <p>For example, cumulative thermal conductivity is defined by</p>
 <div class="math notranslate">
 \[\kappa^\text{c}(\omega) =
- \int^\omega_0 \sum_\lambda
+ \int^\omega_0 \frac{1}{N} \sum_\lambda
 \kappa_\lambda \delta(\omega_\lambda - \omega') d\omega'\]</div>
 <p><span class="math notranslate">\(\kappa_\lambda\)</span> is the contribution to <span class="math notranslate">\(\kappa\)</span> from the
 phonon mode <span class="math notranslate">\(\lambda\)</span>, which is defined as</p>
 <div class="math notranslate">
-\[\kappa_\lambda =
+\[\kappa_\lambda = \frac{1}{V_0}
 C_\lambda \mathbf{v}_\lambda \otimes \mathbf{v}_\lambda
 \tau_\lambda.\]</div>
 <p>(The notations are found in <a class="reference external" href="http://arxiv.org/abs/1501.00691">http://arxiv.org/abs/1501.00691</a>.)</p>
@@ -403,17 +403,17 @@ is defined in the single-mode RTA by a vector</p>
 <p>The MFP cumulative <span class="math notranslate">\(\kappa^\text{c}(l)\)</span> is given by</p>
 <div class="math notranslate">
 \[\kappa^\text{c}(l) =
- \int^l_0 \sum_\lambda
+ \int^l_0 \frac{1}{N} \sum_\lambda
 \kappa_\lambda \delta(l_\lambda - l') dl'\]</div>
 <p>where <span class="math notranslate">\(l_\lambda = |\mathbf{l}_\lambda|\)</span> and
 <span class="math notranslate">\(\kappa_\lambda\)</span> is the contribution to <span class="math notranslate">\(\kappa\)</span> from the
 phonon mode <span class="math notranslate">\(\lambda\)</span> in the single-mode RTA, which is defined
 as</p>
 <div class="math notranslate">
-\[\kappa_\lambda = C_\lambda \mathbf{v}_\lambda \otimes
-\mathbf{v}_\lambda \tau_\lambda = C_\lambda \mathbf{v}_\lambda \otimes
-\mathbf{l}_\lambda.\]</div>
-<p>The unit of MFP is Angstrom.</p>
+\[\kappa_\lambda = \frac{1}{V_0} C_\lambda \mathbf{v}_\lambda \otimes
+\mathbf{v}_\lambda \tau_\lambda = \frac{1}{V_0} C_\lambda
+\mathbf{v}_\lambda \otimes \mathbf{l}_\lambda.\]</div>
+<p>The physical unit of MFP is Angstrom.</p>
 <p>The figure below shows the results of Si example with the
 <span class="math notranslate">\(19\times 19\times 19\)</span> and <span class="math notranslate">\(11\times 11\times 11\)</span> sampling
 meshes used for the lattice thermal conductivity calculation. They look
