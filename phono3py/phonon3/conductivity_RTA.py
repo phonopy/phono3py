@@ -521,8 +521,8 @@ class Conductivity_RTA(Conductivity):
                             print("=" * 61)
                         np.seterr(**old_settings)
 
-        self._mode_kappa /= self._num_sampling_grid_points
-        self._kappa = self._mode_kappa.sum(axis=2).sum(axis=2)
+        N = self._num_sampling_grid_points
+        self._kappa = self._mode_kappa.sum(axis=2).sum(axis=2) / N
 
     def get_gamma_N_U(self):
         return (self._gamma_N, self._gamma_U)

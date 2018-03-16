@@ -20,7 +20,7 @@ For example, cumulative thermal conductivity is defined by
 .. math::
 
    \kappa^\text{c}(\omega) =
-    \int^\omega_0 \sum_\lambda
+    \int^\omega_0 \frac{1}{N} \sum_\lambda
    \kappa_\lambda \delta(\omega_\lambda - \omega') d\omega'
 
 :math:`\kappa_\lambda` is the contribution to :math:`\kappa` from the
@@ -28,7 +28,7 @@ phonon mode :math:`\lambda`, which is defined as
 
 .. math::
 
-   \kappa_\lambda =
+   \kappa_\lambda = \frac{1}{V_0}
    C_\lambda \mathbf{v}_\lambda \otimes \mathbf{v}_\lambda
    \tau_\lambda.
 
@@ -152,7 +152,7 @@ The MFP cumulative :math:`\kappa^\text{c}(l)` is given by
 .. math::
 
    \kappa^\text{c}(l) =
-    \int^l_0 \sum_\lambda
+    \int^l_0 \frac{1}{N} \sum_\lambda
    \kappa_\lambda \delta(l_\lambda - l') dl'
 
 where :math:`l_\lambda = |\mathbf{l}_\lambda|` and
@@ -162,11 +162,11 @@ as
 
 .. math::
 
-   \kappa_\lambda = C_\lambda \mathbf{v}_\lambda \otimes
-   \mathbf{v}_\lambda \tau_\lambda = C_\lambda \mathbf{v}_\lambda \otimes
-   \mathbf{l}_\lambda.
+   \kappa_\lambda = \frac{1}{V_0} C_\lambda \mathbf{v}_\lambda \otimes
+   \mathbf{v}_\lambda \tau_\lambda = \frac{1}{V_0} C_\lambda
+   \mathbf{v}_\lambda \otimes \mathbf{l}_\lambda.
 
-The unit of MFP is Angstrom.
+The physical unit of MFP is Angstrom.
 
 The figure below shows the results of Si example with the
 :math:`19\times 19\times 19` and :math:`11\times 11\times 11` sampling
@@ -190,7 +190,8 @@ convergence.
 ^^^^^^^^^
 
 Outer product of group velocities :math:`\mathbf{v}_\lambda \otimes
-\mathbf{v}_\lambda` (in THz^2 x Angstrom^2)
+\mathbf{v}_\lambda` divided by primitive cell volume (in :math:`\text{THz}^2 /
+\text{Angstrom}`)
 
 ``--average``
 ^^^^^^^^^^^^^^
@@ -233,12 +234,12 @@ Modal heat capacity :math:`C_\lambda` (in eV/K)
 ^^^^^^^^^^^^^^
 
 Absolute value of group velocity :math:`|\mathbf{v}_\lambda|` (in
-THz x Angstrom)
+:math:`\text{THz}\cdot\text{Angstrom}`)
 
 ``--pqj``
 ^^^^^^^^^^^^^^
 
-Averaged phonon-phonon interaction :math:`P_{\mathbf{q}j}` (in eV^2)
+Averaged phonon-phonon interaction :math:`P_{\mathbf{q}j}` (in :math:`\text{eV}^2`)
 
 .. _auxiliary_tools_kdeplot:
 

@@ -19,12 +19,12 @@ conductivity calculation is loaded and thermal conductivity tensor at
 300 K is watched.
 
 ::
-   
+
 
    In [1]: import h5py
-   
+
    In [2]: f = h5py.File("kappa-m111111.hdf5")
-   
+
    In [3]: list(f)
    Out[3]:
    [u'frequency',
@@ -39,10 +39,10 @@ conductivity calculation is loaded and thermal conductivity tensor at
     u'qpoint',
     u'temperature',
     u'weight']
-   
+
    In [4]: f['kappa'].shape
    Out[4]: (101, 6)
-   
+
    In [5]: f['kappa'][:]
    Out[5]:
    array([[  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,
@@ -51,14 +51,14 @@ conductivity calculation is loaded and thermal conductivity tensor at
              1.20936823e-15,   0.00000000e+00,  -2.05720313e-15],
           [  1.37552313e+03,   1.37552313e+03,   1.37552313e+03,
              2.81132320e-16,   0.00000000e+00,  -5.00076366e-16],
-	  ...,
+          ...,
           [  6.56974871e+00,   6.56974871e+00,   6.56974871e+00,
              1.76632276e-18,   0.00000000e+00,  -2.30450472e-18],
           [  6.50316555e+00,   6.50316555e+00,   6.50316555e+00,
              1.74843437e-18,   0.00000000e+00,  -2.28116103e-18],
           [  6.43792061e+00,   6.43792061e+00,   6.43792061e+00,
              1.73090513e-18,   0.00000000e+00,  -2.25828616e-18]])
-   
+
    In [6]: f['temperature'][:]
    Out[6]:
    array([    0.,    10.,    20.,    30.,    40.,    50.,    60.,    70.,
@@ -74,16 +74,16 @@ conductivity calculation is loaded and thermal conductivity tensor at
             800.,   810.,   820.,   830.,   840.,   850.,   860.,   870.,
             880.,   890.,   900.,   910.,   920.,   930.,   940.,   950.,
             960.,   970.,   980.,   990.,  1000.])
-   
+
    In [7]: f['kappa'][30]
    Out[7]:
    array([  2.18146513e+01,   2.18146513e+01,   2.18146513e+01,
             5.84389577e-18,   0.00000000e+00,  -7.63278476e-18])
-   
+
    In [8]: g = f['gamma'][30]
-   
+
    In [9]: import numpy as np
-   
+
    In [10]: g = np.where(g > 0, g, -1)
 
    In [11]: lifetime = np.where(g > 0, 1.0 / (2 * 2 * np.pi * g), 0)
@@ -111,7 +111,7 @@ mesh
 (Versions 1.10.11 or later)
 
 The numbers of mesh points for reciprocal space sampling along
-reciprocal axes, :math:`a^*, b^*, c^*` 
+reciprocal axes, :math:`a^*, b^*, c^*`
 
 frequency
 ^^^^^^^^^^
@@ -130,7 +130,7 @@ is in the ordinal frequency not the angular frequency.
 The array shape for all grid-points (irreducible q-points) is
 (temperature, irreducible q-point, phonon band).
 
-The array shape for a specific grid-point is 
+The array shape for a specific grid-point is
 (temperature, phonon band).
 
 Phonon lifetime (:math:`\tau_\lambda=1/2\Gamma_\lambda(\omega_\lambda)`) may
@@ -143,9 +143,9 @@ previous section to show how to obtain phonon lifetime in pico
 second::
 
    In [8]: g = f['gamma'][30]
-   
+
    In [9]: import numpy as np
-   
+
    In [10]: g = np.where(g > 0, g, -1)
 
    In [11]: lifetime = np.where(g > 0, 1.0 / (2 * 2 * np.pi * g), 0)
@@ -163,7 +163,7 @@ group_velocity
 ^^^^^^^^^^^^^^^
 
 Phonon group velocity, :math:`\nabla_\mathbf{q}\omega_\lambda`. The
-physical unit is :math:`\text{THz}\cdot\text{\AA}`, where THz
+physical unit is :math:`\text{THz}\cdot\text{Angstrom}`, where THz
 is in the ordinal frequency not the angular frequency.
 
 The array shape is (irreducible q-point, phonon band, 3 = Cartesian coordinates).
@@ -205,7 +205,13 @@ Thermal conductivity tensors at k-stars (:math:`{}^*\mathbf{k}`):
    \sum_{\mathbf{q} \in {}^*\mathbf{k}} \kappa_{\mathbf{q}j}.
 
 The sum of this over :math:`{}^*\mathbf{k}` corresponding to
-irreducible q-points gives :math:`\kappa` (:ref:`output_kappa`).
+irreducible q-points divided by number of grid points gives
+:math:`\kappa` (:ref:`output_kappa`), e.g.,::
+
+   kappa_xx_at_index_30 = mode_kappa[30, :, :, 0].sum()/ weight.sum()
+
+Be careful that until version 1.12.7, mode-kappa values were divided
+by number of grid points.
 
 The physical unit is W/m-K. Each tensor element is the sum of tensor
 elements on the members of :math:`{}^*\mathbf{k}`, i.e., symmetrically
@@ -214,6 +220,7 @@ symmetry.
 
 The array shape is (temperature, irreducible q-point, phonon band, 6 =
 (xx, yy, zz, yz, xz, xy)).
+
 
 gv_by_gv
 ^^^^^^^^^
@@ -228,7 +235,7 @@ Outer products of group velocities for k-stars
    \mathbf{v}_{\mathbf{q}j}.
 
 The physical unit is
-:math:`\text{THz}^2\cdot\text{\AA}^2`, where THz is in the
+:math:`\text{THz}^2\cdot\text{Angstrom}^2`, where THz is in the
 ordinal frequency not the angular frequency.
 
 The array shape is (irreducible q-point, phonon band, 6 = (xx, yy, zz,
@@ -279,19 +286,15 @@ a mode contribution to the lattice thermal conductivity is given by
 
 .. math::
 
-   \kappa_\lambda = \frac{1}{NV_0} C_\lambda \mathbf{v}_\lambda \otimes
+   \kappa_\lambda = \frac{1}{V_0} C_\lambda \mathbf{v}_\lambda \otimes
    \mathbf{v}_\lambda \tau_\lambda^{\mathrm{SMRT}}.
 
 For example of some single mode, :math:`\kappa_{\lambda,{xx}}` is calculated by::
 
-   kappa_unit_conversion / weight.sum() * heat_capacity[30, 2, 0] *
-   group_velocity[2, 0, 0] ** 2 / (2 * gamma[30, 2, 0])
+   kappa_unit_conversion / weight.sum() * heat_capacity[30, 2, 0] * group_velocity[2, 0, 0] ** 2 / (2 * gamma[30, 2, 0])
 
 where :math:`1/V_0` is included in ``kappa_unit_conversion``.
 Similary mode-kappa (defined at :ref:`output_mode_kappa`) is
 calculated by::
 
-   kappa_unit_conversion / weight.sum() * heat_capacity[30, 2, 0] *
-   gv_by_gv[2, 0] / (2 * gamma[30, 2, 0])
-
-
+   kappa_unit_conversion * heat_capacity[30, 2, 0] * gv_by_gv[2, 0] / (2 * gamma[30, 2, 0])
