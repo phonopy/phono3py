@@ -780,7 +780,10 @@ class Conductivity_RTA(Conductivity):
         gp = self._grid_points[i]
         frequencies = self._frequencies[gp][self._pp.get_band_indices()]
         gv = self._gv[i]
-        ave_pp = self._averaged_pp_interaction[i]
+        if self._averaged_pp_interaction is not None:
+            ave_pp = self._averaged_pp_interaction[i]
+        else:
+            ave_pp = None
         self._show_log_value_names()
 
         if self._log_level > 1:
