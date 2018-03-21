@@ -501,7 +501,7 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   char* g_zero;
   int *grid_address;
   int *mesh;
-  Darray *fc3;
+  double *fc3;
   Darray *svecs;
   Iarray *multi;
   double *masses;
@@ -539,7 +539,7 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   g_zero = (char*)PyArray_DATA(py_g_zero);
   grid_address = (int*)PyArray_DATA(py_grid_address);
   mesh = (int*)PyArray_DATA(py_mesh);
-  fc3 = convert_to_darray(py_fc3);
+  fc3 = (double*)PyArray_DATA(py_fc3);
   svecs = convert_to_darray(py_shortest_vectors);
   multi = convert_to_iarray(py_multiplicities);
   masses = (double*)PyArray_DATA(py_masses);
@@ -555,6 +555,7 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
                   grid_address,
                   mesh,
                   fc3,
+                  1,
                   svecs,
                   multi,
                   masses,
@@ -568,7 +569,6 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   free(freqs);
   free(eigvecs);
   free(triplets);
-  free(fc3);
   free(svecs);
   free(multi);
 
