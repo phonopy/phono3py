@@ -38,12 +38,6 @@
 #include <phonoc_array.h>
 #include <lapack_wrapper.h>
 
-lapack_complex_double get_phase_factor(const double q[],
-                                       const Darray *shortest_vectors,
-                                       const int *multiplicity,
-                                       const int pi0,
-                                       const int si,
-                                       const int qi);
 double bose_einstein(const double x, const double t);
 double gaussian(const double x, const double sigma);
 double inv_sinh_occupation(const double x, const double t);
