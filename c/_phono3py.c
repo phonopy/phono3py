@@ -496,18 +496,20 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
 
   Darray *fc3_normal_squared;
   Darray *freqs;
-  Carray *eigvecs;
+  lapack_complex_double *eigvecs;
   Iarray *triplets;
   char* g_zero;
   int *grid_address;
   int *mesh;
   double *fc3;
-  Darray *svecs;
-  Iarray *multi;
+  double *svecs;
+  int *multi;
   double *masses;
   int *p2s;
   int *s2p;
   int *band_indices;
+  int svecs_dims[3];
+  int i;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOid",
                         &py_fc3_normal_squared,
@@ -534,14 +536,17 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   freqs = convert_to_darray(py_frequencies);
   /* npy_cdouble and lapack_complex_double may not be compatible. */
   /* So eigenvectors should not be used in Python side */
-  eigvecs = convert_to_carray(py_eigenvectors);
+  eigvecs = (lapack_complex_double*)PyArray_DATA(py_eigenvectors);
   triplets = convert_to_iarray(py_grid_point_triplets);
   g_zero = (char*)PyArray_DATA(py_g_zero);
   grid_address = (int*)PyArray_DATA(py_grid_address);
   mesh = (int*)PyArray_DATA(py_mesh);
   fc3 = (double*)PyArray_DATA(py_fc3);
-  svecs = convert_to_darray(py_shortest_vectors);
-  multi = convert_to_iarray(py_multiplicities);
+  svecs = (double*)PyArray_DATA(py_shortest_vectors);
+  for (i = 0; i < 3; i++) {
+    svecs_dims[i] = PyArray_DIMS(py_shortest_vectors)[i];
+  }
+  multi = (int*)PyArray_DATA(py_multiplicities);
   masses = (double*)PyArray_DATA(py_masses);
   p2s = (int*)PyArray_DATA(py_p2s_map);
   s2p = (int*)PyArray_DATA(py_s2p_map);
@@ -557,6 +562,7 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
                   fc3,
                   1,
                   svecs,
+                  svecs_dims,
                   multi,
                   masses,
                   p2s,
@@ -567,10 +573,7 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
 
   free(fc3_normal_squared);
   free(freqs);
-  free(eigvecs);
   free(triplets);
-  free(svecs);
-  free(multi);
 
   Py_RETURN_NONE;
 }
@@ -608,13 +611,15 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   int *bz_map;
   int *mesh;
   double *fc3;
-  Darray *svecs;
+  double *svecs;
   int *multi;
   double *masses;
   int *p2s;
   int *s2p;
   Iarray *band_indices;
   Darray *temperatures;
+  int svecs_dims[3];
+  int i;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOOOOiid",
                         &py_gamma,
@@ -650,7 +655,10 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   bz_map = (int*)PyArray_DATA(py_bz_map);
   mesh = (int*)PyArray_DATA(py_mesh);
   fc3 = (double*)PyArray_DATA(py_fc3);
-  svecs = convert_to_darray(py_shortest_vectors);
+  svecs = (double*)PyArray_DATA(py_shortest_vectors);
+  for (i = 0; i < 3; i++) {
+    svecs_dims[i] = PyArray_DIMS(py_shortest_vectors)[i];
+  }
   multi = (int*)PyArray_DATA(py_multiplicities);
   masses = (double*)PyArray_DATA(py_masses);
   p2s = (int*)PyArray_DATA(py_p2s_map);
@@ -669,6 +677,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
                        mesh,
                        fc3,
                        svecs,
+                       svecs_dims,
                        multi,
                        masses,
                        p2s,
@@ -681,8 +690,6 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
 
   free(triplets);
   triplets = NULL;
-  free(svecs);
-  svecs = NULL;
   free(band_indices);
   band_indices = NULL;
   free(temperatures);
@@ -722,13 +729,15 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
   int *grid_address;
   int *mesh;
   double *fc3;
-  Darray *svecs;
+  double *svecs;
   int *multi;
   double *masses;
   int *p2s;
   int *s2p;
   Iarray *band_indices;
   Darray *temperatures;
+  int svecs_dims[3];
+  int i;
 
   if (!PyArg_ParseTuple(args, "OddOOOOOOOOOOOOOOiid",
                         &py_gamma,
@@ -762,7 +771,10 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
   grid_address = (int*)PyArray_DATA(py_grid_address);
   mesh = (int*)PyArray_DATA(py_mesh);
   fc3 = (double*)PyArray_DATA(py_fc3);
-  svecs = convert_to_darray(py_shortest_vectors);
+  svecs = (double*)PyArray_DATA(py_shortest_vectors);
+  for (i = 0; i < 3; i++) {
+    svecs_dims[i] = PyArray_DIMS(py_shortest_vectors)[i];
+  }
   multi = (int*)PyArray_DATA(py_multiplicities);
   masses = (double*)PyArray_DATA(py_masses);
   p2s = (int*)PyArray_DATA(py_p2s_map);
@@ -781,6 +793,7 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
                                   mesh,
                                   fc3,
                                   svecs,
+                                  svecs_dims,
                                   multi,
                                   masses,
                                   p2s,
@@ -793,8 +806,6 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
 
   free(triplets);
   triplets = NULL;
-  free(svecs);
-  svecs = NULL;
   free(band_indices);
   band_indices = NULL;
   free(temperatures);

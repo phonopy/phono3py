@@ -38,30 +38,18 @@
 #include <phonoc_array.h>
 #include <lapack_wrapper.h>
 
-typedef struct {
-  double *fc3;
-  int is_compressed_fc3;
-
-  /* shortest vectors in supercell [n_satom, n_patom, 27, 3] */
-  double *svecs;
-  int *multi;
-  int svecs_shape[3]; /* of first three dims */
-
-  int *p2s_map;
-  int *s2p_map;
-} fc3_dataset;
-
 void get_interaction(Darray *fc3_normal_squared,
                      const char *g_zero,
                      const Darray *frequencies,
-                     const Carray *eigenvectors,
+                     const lapack_complex_double *eigenvectors,
                      const Iarray *triplets,
                      const int *grid_address,
                      const int *mesh,
                      const double *fc3,
-                     const int is_compressed_fc3,
-                     const Darray *shortest_vectors,
-                     const Iarray *multiplicity,
+                     const int is_compact_fc3,
+                     const double *shortest_vectors,
+                     const int svecs_dims[3],
+                     const int *multiplicity,
                      const double *masses,
                      const int *p2s_map,
                      const int *s2p_map,
@@ -79,8 +67,9 @@ void get_interaction_at_triplet(double *fc3_normal_squared,
                                 const int *grid_address,
                                 const int *mesh,
                                 const double *fc3,
-                                const int is_compressed_fc3,
-                                const Darray *shortest_vectors,
+                                const int is_compact_fc3,
+                                const double *shortest_vectors,
+                                const int svecs_dims[3],
                                 const int *multiplicity,
                                 const double *masses,
                                 const int *p2s_map,
