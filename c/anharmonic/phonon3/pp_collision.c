@@ -58,7 +58,8 @@ static void get_collision(double *ise,
                           const int *grid_address,
                           const int *mesh,
                           const double *fc3,
-                          const Darray *shortest_vectors,
+                          const double *shortest_vectors,
+                          const int svecs_dims[3],
                           const int *multiplicity,
                           const double *masses,
                           const int *p2s_map,
@@ -86,7 +87,8 @@ void ppc_get_pp_collision(double *imag_self_energy,
                           const int *bz_map, /* thm */
                           const int *mesh, /* thm */
                           const double *fc3,
-                          const Darray *shortest_vectors,
+                          const double *shortest_vectors,
+                          const int svecs_dims[3],
                           const int *multiplicity,
                           const double *masses,
                           const int *p2s_map,
@@ -109,7 +111,7 @@ void ppc_get_pp_collision(double *imag_self_energy,
   g_zero = NULL;
 
   num_band0 = band_indices->dims[0];
-  num_band = shortest_vectors->dims[1] * 3;
+  num_band = svecs_dims[1] * 3;
   num_band_prod = num_band0 * num_band * num_band;
   num_triplets = triplets->dims[0];
   num_temps = temperatures->dims[0];
@@ -163,6 +165,7 @@ void ppc_get_pp_collision(double *imag_self_energy,
                   mesh,
                   fc3,
                   shortest_vectors,
+                  svecs_dims,
                   multiplicity,
                   masses,
                   p2s_map,
@@ -204,7 +207,8 @@ void ppc_get_pp_collision_with_sigma(
   const int *grid_address,
   const int *mesh,
   const double *fc3,
-  const Darray *shortest_vectors,
+  const double *shortest_vectors,
+  const int svecs_dims[3],
   const int *multiplicity,
   const double *masses,
   const int *p2s_map,
@@ -227,7 +231,7 @@ void ppc_get_pp_collision_with_sigma(
   g_zero = NULL;
 
   num_band0 = band_indices->dims[0];
-  num_band = shortest_vectors->dims[1] * 3;
+  num_band = svecs_dims[1] * 3;
   num_band_prod = num_band0 * num_band * num_band;
   num_triplets = triplets->dims[0];
   num_temps = temperatures->dims[0];
@@ -280,6 +284,7 @@ void ppc_get_pp_collision_with_sigma(
                   mesh,
                   fc3,
                   shortest_vectors,
+                  svecs_dims,
                   multiplicity,
                   masses,
                   p2s_map,
@@ -324,7 +329,8 @@ static void get_collision(double *ise,
                           const int *grid_address,
                           const int *mesh,
                           const double *fc3,
-                          const Darray *shortest_vectors,
+                          const double *shortest_vectors,
+                          const int svecs_dims[3],
                           const int *multiplicity,
                           const double *masses,
                           const int *p2s_map,
@@ -366,7 +372,9 @@ static void get_collision(double *ise,
     grid_address,
     mesh,
     fc3,
+    1,
     shortest_vectors,
+    svecs_dims,
     multiplicity,
     masses,
     p2s_map,

@@ -456,6 +456,7 @@ class Conductivity_RTA(Conductivity):
         self._gamma_detail_at_q = None
         self._gamma_unit_conversion = gamma_unit_conversion
         self._use_ave_pp = use_ave_pp
+        self._use_const_ave_pp = None
         self._averaged_pp_interaction = None
         self._num_ignored_phonon_modes = None
         self._num_sampling_grid_points = None
@@ -484,6 +485,8 @@ class Conductivity_RTA(Conductivity):
                               gv_delta_q=gv_delta_q,
                               is_full_pp=is_full_pp,
                               log_level=log_level)
+
+        self._use_const_ave_pp = self._pp.get_constant_averaged_interaction()
 
         if self._temperatures is not None:
             self._allocate_values()
@@ -560,11 +563,9 @@ class Conductivity_RTA(Conductivity):
             if self._log_level:
                 print("Number of triplets: %d" % num_triplets)
 
-            const_ave_pp = self._pp.get_constant_averaged_interaction()
             if (self._is_full_pp or
                 self._use_ave_pp or
-                # self._sigmas[0] is not None or
-                const_ave_pp is not None or
+                self._use_const_ave_pp or
                 self._is_gamma_detail):
                 self._set_gamma_at_sigmas(i)
             else: # can save memory space
@@ -606,7 +607,7 @@ class Conductivity_RTA(Conductivity):
         if self._isotope is not None:
             self._gamma_iso = np.zeros(
                 (len(self._sigmas), num_grid_points, num_band0), dtype='double')
-        if self._is_full_pp or self._use_ave_pp:
+        if self._is_full_pp or self._use_ave_pp or self._use_const_ave_pp:
             self._averaged_pp_interaction = np.zeros(
                 (num_grid_points, num_band0), dtype='double')
         self._num_ignored_phonon_modes = np.zeros(
@@ -637,11 +638,13 @@ class Conductivity_RTA(Conductivity):
                 self._collision.set_averaged_pp_interaction(
                     self._averaged_pp_interaction[i])
             else:
-                const_ave_pp = self._pp.get_constant_averaged_interaction()
-                if const_ave_pp is not None:
+                if self._use_const_ave_pp:
                     if self._log_level:
                         print("Constant ph-ph interaction of %6.3e is used." %
-                              const_ave_pp)
+                              self._pp.get_constant_averaged_interaction())
+                    self._collision.run_interaction()
+                    self._averaged_pp_interaction[i] = (
+                        self._pp.get_averaged_interaction())
                 elif j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
                     if self._log_level:
                         print("Existing ph-ph interaction is used.")
@@ -777,7 +780,7 @@ class Conductivity_RTA(Conductivity):
         gp = self._grid_points[i]
         frequencies = self._frequencies[gp][self._pp.get_band_indices()]
         gv = self._gv[i]
-        if self._is_full_pp or self._use_ave_pp:
+        if self._averaged_pp_interaction is not None:
             ave_pp = self._averaged_pp_interaction[i]
         else:
             ave_pp = None
@@ -791,7 +794,7 @@ class Conductivity_RTA(Conductivity):
         sys.stdout.flush()
 
     def _show_log_values(self, frequencies, gv, ave_pp):
-        if self._is_full_pp or self._use_ave_pp:
+        if self._is_full_pp or self._use_ave_pp or self._use_const_ave_pp:
             for f, v, pp in zip(frequencies, gv, ave_pp):
                 print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e" %
                       (f, v[0], v[1], v[2], np.linalg.norm(v), pp))
@@ -813,7 +816,9 @@ class Conductivity_RTA(Conductivity):
 
                 print(" k*%-2d (%5.2f %5.2f %5.2f)" %
                       ((i + 1,) + tuple(np.dot(rot, q))))
-                if self._is_full_pp or self._use_ave_pp:
+                if (self._is_full_pp or
+                    self._use_ave_pp or
+                    self._use_const_ave_pp):
                     for f, v, pp in zip(frequencies,
                                         np.dot(rot_c, gv.T).T,
                                         ave_pp):
@@ -826,7 +831,7 @@ class Conductivity_RTA(Conductivity):
         print('')
 
     def _show_log_value_names(self):
-        if self._is_full_pp or self._use_ave_pp:
+        if self._is_full_pp or self._use_ave_pp or self._use_const_ave_pp:
             text = "Frequency     group velocity (x, y, z)     |gv|       Pqj"
         else:
             text = "Frequency     group velocity (x, y, z)     |gv|"
