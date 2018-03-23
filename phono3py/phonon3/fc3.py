@@ -1,6 +1,7 @@
 import sys
 import numpy as np
-from phonopy.harmonic.force_constants import (similarity_transformation,
+from phonopy.harmonic.force_constants import (get_fc2,
+                                              similarity_transformation,
                                               set_permutation_symmetry,
                                               distribute_force_constants,
                                               solve_force_constants,
@@ -12,11 +13,12 @@ from phono3py.phonon3.displacement_fc3 import (get_reduced_site_symmetry,
 from phonopy.structure.cells import get_equivalent_smallest_vectors
 
 def get_fc3(supercell,
+            primitive,
             disp_dataset,
-            fc2,
             symmetry,
             is_compact_fc3=False,
             verbose=False):
+    fc2 = get_fc2(supercell, symmetry, disp_dataset)
     fc3 = _get_fc3_least_atoms(supercell,
                                disp_dataset,
                                fc2,
@@ -55,7 +57,7 @@ def get_fc3(supercell,
                    symmetry,
                    verbose=verbose)
 
-    return fc3
+    return fc2, fc3
 
 def distribute_fc3(fc3,
                    first_disp_atoms,
