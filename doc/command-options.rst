@@ -485,7 +485,8 @@ due to delta functions in calculation of
 
 But using this option, full elements of phonon-phonon interaction
 strength are calculated and averaged phonon-phonon interaction
-strength (:math:`P_{\mathbf{q}j}`) is also given.
+strength (:math:`P_{\mathbf{q}j}`, see :ref:`--ave-pp
+<ave_pp_option>`) is also given and stored.
 
 Physical properties
 --------------------
@@ -848,19 +849,42 @@ For spectrum like calculations of imaginary part of self energy and
 JDOS, number of sampling frequency points is controlled by
 ``--num-freq-points`` or ``--freq-pitch``.
 
+.. _ave_pp_option:
+
 ``--ave-pp``: Use averaged phonon-phonon interaction strength
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``USE_AVE_PP``, ``.TRUE.`` or ``.FALSE.``)
 
-Averaged phonon-phonon interaction strength (:math:`P_{\mathbf{q}j}`)
+Averaged phonon-phonon interaction strength (:math:`P_{\mathbf{q}j}=P_\lambda`)
 is used to calculate imaginary part of self energy in thermal
-conductivity calculation. This option works only when ``--read-gamma``
+conductivity calculation. :math:`P_\lambda` is defined as
+
+.. math::
+
+   P_\lambda = \frac{1}{(3n_\text{a})^2}\sum_{\lambda'
+   \lambda''}|\Phi_{\lambda \lambda' \lambda''}|^2,
+
+where :math:`n_\text{a}` is the number of atoms in unit cell. This is
+roughly constant with respect to the sampling mesh density for
+converged :math:`|\Phi_{\lambda \lambda' \lambda''}|^2`. Then for all
+:math:`\mathbf{q}',j',j''`,
+
+.. math::
+
+   |\Phi_{\mathbf{q}j,\mathbf{q}'j',\mathbf{G-q-q'}j''}|^2 :=
+   P_{\mathbf{q}j} / N,
+
+where :math:`N` is the number of grid points on the sampling
+mesh. :math:`\Phi_{\lambda \lambda' \lambda''} \equiv 0` unless
+:math:`\mathbf{q} + \mathbf{q}' + \mathbf{q}'' = \mathbf{G}`.
+
+This option works only when ``--read-gamma``
 and ``--br`` options are activated where the averaged phonon-phonon
 interaction that is read from ``kappa-mxxx(-sx-sdx).hdf5`` file is
 used if it exists in the file. Therefore the averaged phonon-phonon
 interaction has to be stored before using this option (see
-:ref:`full_pp_option`). The calculation result **overwrites**
+:ref:`--full-pp <full_pp_option>`). The calculation result **overwrites**
 ``kappa-mxxx(-sx-sdx).hdf5`` file. Therefore to use this option
 together with ``-o`` option is strongly recommended.
 
@@ -883,10 +907,11 @@ Then
 (Setting tag: ``CONSTANT_AVERAGED_PP_INTERACTION``, ``.TRUE.`` or ``.FALSE.``)
 
 Averaged phonon-phonon interaction (:math:`P_{\mathbf{q}j}`) is
-replaced by this constant value in thermal conductivity
-calculation. This option works only when ``--br`` options are
-activated. Therefore third-order force constants are not necessary to
-input. The physical unit of the value is :math:`\text{eV}^2`.
+replaced by this constant value and :math:`|\Phi_{\lambda \lambda'
+\lambda''}|^2` are set as written in :ref:`--ave-pp <ave_pp_option>` for thermal
+conductivity calculation. This option works only when ``--br`` options
+are activated. Therefore third-order force constants are not necessary
+to input. The physical unit of the value is :math:`\text{eV}^2`.
 
 ::
 
