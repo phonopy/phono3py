@@ -123,6 +123,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#mar-16-2018-version-1-12-9">Mar-16-2018: version 1.12.9</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#feb-1-2018-version-1-12-7">Feb-1-2018: version 1.12.7</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#nov-22-2017-version-1-12-5">Nov-22-2017: version 1.12.5</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#nov-17-2017-version-1-12-3">Nov-17-2017: version 1.12.3</a></li>
@@ -702,7 +703,7 @@ due to delta functions in calculation of
 \right]\right\}.\]</div>
 <p>But using this option, full elements of phonon-phonon interaction
 strength are calculated and averaged phonon-phonon interaction
-strength (<span class="math notranslate">\(P_{\mathbf{q}j}\)</span>) is also given.</p>
+strength (<span class="math notranslate">\(P_{\mathbf{q}j}\)</span>, see <a class="reference internal" href="#ave-pp-option"><span class="std std-ref">–ave-pp</span></a>) is also given and stored.</p>
 </div>
 </div>
 <div class="section" id="physical-properties">
@@ -998,16 +999,30 @@ JDOS, number of sampling frequency points is controlled by
 <code class="docutils literal notranslate"><span class="pre">--num-freq-points</span></code> or <code class="docutils literal notranslate"><span class="pre">--freq-pitch</span></code>.</p>
 </div>
 <div class="section" id="ave-pp-use-averaged-phonon-phonon-interaction-strength">
-<h3><a class="toc-backref" href="#id51"><code class="docutils literal notranslate"><span class="pre">--ave-pp</span></code>: Use averaged phonon-phonon interaction strength</a><a class="headerlink" href="#ave-pp-use-averaged-phonon-phonon-interaction-strength" title="Permalink to this headline">¶</a></h3>
+<span id="ave-pp-option"></span><h3><a class="toc-backref" href="#id51"><code class="docutils literal notranslate"><span class="pre">--ave-pp</span></code>: Use averaged phonon-phonon interaction strength</a><a class="headerlink" href="#ave-pp-use-averaged-phonon-phonon-interaction-strength" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">USE_AVE_PP</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
-<p>Averaged phonon-phonon interaction strength (<span class="math notranslate">\(P_{\mathbf{q}j}\)</span>)
+<p>Averaged phonon-phonon interaction strength (<span class="math notranslate">\(P_{\mathbf{q}j}=P_\lambda\)</span>)
 is used to calculate imaginary part of self energy in thermal
-conductivity calculation. This option works only when <code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code>
+conductivity calculation. <span class="math notranslate">\(P_\lambda\)</span> is defined as</p>
+<div class="math notranslate">
+\[P_\lambda = \frac{1}{(3n_\text{a})^2}\sum_{\lambda'
+\lambda''}|\Phi_{\lambda \lambda' \lambda''}|^2,\]</div>
+<p>where <span class="math notranslate">\(n_\text{a}\)</span> is the number of atoms in unit cell. This is
+roughly constant with respect to the sampling mesh density for
+converged <span class="math notranslate">\(|\Phi_{\lambda \lambda' \lambda''}|^2\)</span>. Then for all
+<span class="math notranslate">\(\mathbf{q}',j',j''\)</span>,</p>
+<div class="math notranslate">
+\[|\Phi_{\mathbf{q}j,\mathbf{q}'j',\mathbf{G-q-q'}j''}|^2 :=
+P_{\mathbf{q}j} / N,\]</div>
+<p>where <span class="math notranslate">\(N\)</span> is the number of grid points on the sampling
+mesh. <span class="math notranslate">\(\Phi_{\lambda \lambda' \lambda''} \equiv 0\)</span> unless
+<span class="math notranslate">\(\mathbf{q} + \mathbf{q}' + \mathbf{q}'' = \mathbf{G}\)</span>.</p>
+<p>This option works only when <code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code>
 and <code class="docutils literal notranslate"><span class="pre">--br</span></code> options are activated where the averaged phonon-phonon
 interaction that is read from <code class="docutils literal notranslate"><span class="pre">kappa-mxxx(-sx-sdx).hdf5</span></code> file is
 used if it exists in the file. Therefore the averaged phonon-phonon
 interaction has to be stored before using this option (see
-<a class="reference internal" href="#full-pp-option"><span class="std std-ref">--full-pp: Calculate all elements of phonon-phonon interaction strength</span></a>). The calculation result <strong>overwrites</strong>
+<a class="reference internal" href="#full-pp-option"><span class="std std-ref">–full-pp</span></a>). The calculation result <strong>overwrites</strong>
 <code class="docutils literal notranslate"><span class="pre">kappa-mxxx(-sx-sdx).hdf5</span></code> file. Therefore to use this option
 together with <code class="docutils literal notranslate"><span class="pre">-o</span></code> option is strongly recommended.</p>
 <p>First, run full conductivity calculation,</p>
@@ -1024,10 +1039,11 @@ together with <code class="docutils literal notranslate"><span class="pre">-o</s
 <h3><a class="toc-backref" href="#id52"><code class="docutils literal notranslate"><span class="pre">--const-ave-pp</span></code>: Use constant phonon-phonon interaction strength</a><a class="headerlink" href="#const-ave-pp-use-constant-phonon-phonon-interaction-strength" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">CONSTANT_AVERAGED_PP_INTERACTION</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Averaged phonon-phonon interaction (<span class="math notranslate">\(P_{\mathbf{q}j}\)</span>) is
-replaced by this constant value in thermal conductivity
-calculation. This option works only when <code class="docutils literal notranslate"><span class="pre">--br</span></code> options are
-activated. Therefore third-order force constants are not necessary to
-input. The physical unit of the value is <span class="math notranslate">\(\text{eV}^2\)</span>.</p>
+replaced by this constant value and <span class="math notranslate">\(|\Phi_{\lambda \lambda'
+\lambda''}|^2\)</span> are set as written in <a class="reference internal" href="#ave-pp-option"><span class="std std-ref">–ave-pp</span></a> for thermal
+conductivity calculation. This option works only when <code class="docutils literal notranslate"><span class="pre">--br</span></code> options
+are activated. Therefore third-order force constants are not necessary
+to input. The physical unit of the value is <span class="math notranslate">\(\text{eV}^2\)</span>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;3 3 2&quot;</span> <span class="o">-</span><span class="n">v</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;32 32 20&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> \
   <span class="o">--</span><span class="n">const</span><span class="o">-</span><span class="n">ave</span><span class="o">-</span><span class="n">pp</span><span class="o">=</span><span class="mf">1e-10</span>
 </pre></div>
