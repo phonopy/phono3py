@@ -727,22 +727,20 @@ class Phono3py(object):
                  forces_fc3,
                  disp_dataset,
                  cutoff_distance):
-        for forces, disp1 in zip(forces_fc3, disp_dataset['first_atoms']):
-            disp1['forces'] = forces
-        # full fc2 is obtained.
-        fc2 = get_fc2(self._supercell, self._symmetry, disp_dataset)
-
-        count = len(disp_dataset['first_atoms'])
+        count = 0
+        for disp1 in disp_dataset['first_atoms']:
+            disp1['forces'] = forces_fc3[count]
+            count += 1
         for disp1 in disp_dataset['first_atoms']:
             for disp2 in disp1['second_atoms']:
                 disp2['delta_forces'] = forces_fc3[count] - disp1['forces']
                 count += 1
-        fc3 = get_fc3(
-            self._supercell,
-            disp_dataset,
-            fc2,
-            self._symmetry,
-            verbose=self._log_level)
+
+        fc2, fc3 = get_fc3(self._supercell,
+                           self._primitive,
+                           disp_dataset,
+                           self._symmetry,
+                           verbose=self._log_level)
 
         # Set fc3 elements zero beyond cutoff_distance
         if cutoff_distance:

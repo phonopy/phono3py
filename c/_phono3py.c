@@ -510,6 +510,7 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   int *band_indices;
   int svecs_dims[3];
   int i;
+  int is_compact_fc3;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOid",
                         &py_fc3_normal_squared,
@@ -542,6 +543,11 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   grid_address = (int*)PyArray_DATA(py_grid_address);
   mesh = (int*)PyArray_DATA(py_mesh);
   fc3 = (double*)PyArray_DATA(py_fc3);
+  if (PyArray_DIMS(py_fc3)[0] == PyArray_DIMS(py_fc3)[1]) {
+    is_compact_fc3 = 0;
+  } else {
+    is_compact_fc3 = 1;
+  }
   svecs = (double*)PyArray_DATA(py_shortest_vectors);
   for (i = 0; i < 3; i++) {
     svecs_dims[i] = PyArray_DIMS(py_shortest_vectors)[i];
@@ -560,7 +566,7 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
                   grid_address,
                   mesh,
                   fc3,
-                  1,
+                  is_compact_fc3,
                   svecs,
                   svecs_dims,
                   multi,
@@ -620,6 +626,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   Darray *temperatures;
   int svecs_dims[3];
   int i;
+  int is_compact_fc3;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOOOOiid",
                         &py_gamma,
@@ -655,6 +662,11 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   bz_map = (int*)PyArray_DATA(py_bz_map);
   mesh = (int*)PyArray_DATA(py_mesh);
   fc3 = (double*)PyArray_DATA(py_fc3);
+  if (PyArray_DIMS(py_fc3)[0] == PyArray_DIMS(py_fc3)[1]) {
+    is_compact_fc3 = 0;
+  } else {
+    is_compact_fc3 = 1;
+  }
   svecs = (double*)PyArray_DATA(py_shortest_vectors);
   for (i = 0; i < 3; i++) {
     svecs_dims[i] = PyArray_DIMS(py_shortest_vectors)[i];
@@ -676,6 +688,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
                        bz_map,
                        mesh,
                        fc3,
+                       is_compact_fc3,
                        svecs,
                        svecs_dims,
                        multi,
@@ -738,6 +751,7 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
   Darray *temperatures;
   int svecs_dims[3];
   int i;
+  int is_compact_fc3;
 
   if (!PyArg_ParseTuple(args, "OddOOOOOOOOOOOOOOiid",
                         &py_gamma,
@@ -771,6 +785,11 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
   grid_address = (int*)PyArray_DATA(py_grid_address);
   mesh = (int*)PyArray_DATA(py_mesh);
   fc3 = (double*)PyArray_DATA(py_fc3);
+  if (PyArray_DIMS(py_fc3)[0] == PyArray_DIMS(py_fc3)[1]) {
+    is_compact_fc3 = 0;
+  } else {
+    is_compact_fc3 = 1;
+  }
   svecs = (double*)PyArray_DATA(py_shortest_vectors);
   for (i = 0; i < 3; i++) {
     svecs_dims[i] = PyArray_DIMS(py_shortest_vectors)[i];
@@ -792,6 +811,7 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
                                   grid_address,
                                   mesh,
                                   fc3,
+                                  is_compact_fc3,
                                   svecs,
                                   svecs_dims,
                                   multi,
@@ -1343,20 +1363,17 @@ static PyObject * py_get_thm_isotope_strength(PyObject *self, PyObject *args)
 
 static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
 {
-  PyArrayObject *force_constants_third_copy;
   PyArrayObject *force_constants_third;
   int third_atom;
   PyArrayObject *rotation_cart_inv;
   PyArrayObject *atom_mapping_py;
 
-  double *fc3_copy;
   double *fc3;
   double *rot_cart_inv;
   int *atom_mapping;
   int num_atom;
 
-  if (!PyArg_ParseTuple(args, "OOiOO",
-                        &force_constants_third_copy,
+  if (!PyArg_ParseTuple(args, "OiOO",
                         &force_constants_third,
                         &third_atom,
                         &atom_mapping_py,
@@ -1364,14 +1381,12 @@ static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  fc3_copy = (double*)PyArray_DATA(force_constants_third_copy);
   fc3 = (double*)PyArray_DATA(force_constants_third);
   rot_cart_inv = (double*)PyArray_DATA(rotation_cart_inv);
   atom_mapping = (int*)PyArray_DATA(atom_mapping_py);
   num_atom = PyArray_DIMS(atom_mapping_py)[0];
 
-  distribute_fc3(fc3_copy,
-                 fc3,
+  distribute_fc3(fc3,
                  third_atom,
                  atom_mapping,
                  num_atom,
