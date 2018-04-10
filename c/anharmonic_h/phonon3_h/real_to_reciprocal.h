@@ -41,6 +41,7 @@
 void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
                             const double q[9],
                             const double *fc3,
+                            const int is_compact_fc3,
                             const double *shortest_vectors,
                             const int svecs_dims[3],
                             const int *multiplicity,

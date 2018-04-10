@@ -51,6 +51,8 @@ Ubuntu linux, it is installed by::
 
    % sudo apt-get install libgomp1
 
+.. _install_lapacke:
+
 Installation of LAPACKE
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -59,6 +61,8 @@ matrices. LAPACK*E* is the C-wrapper of LAPACK and LAPACK relies on
 BLAS. Both single-thread or multithread BLAS can be
 used in phono3py. In the following, multiple different ways of
 installation of LAPACKE are explained.
+
+.. _install_mkl_lapacke:
 
 MKL LAPACKE (with multithread BLAS)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -89,6 +93,8 @@ installation, not only the MKL library but also the header file are
 necessary. The libraries are linked dynamically, so in most of the
 cases, ``LD_LIBRARY_PATH`` environment variable has to be correctly
 specified to let phono3py find those libraries.
+
+.. _install_openblas_lapacke:
 
 OpenBLAS provided by conda (with multithread BLAS)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

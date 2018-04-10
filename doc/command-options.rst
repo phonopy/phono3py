@@ -189,6 +189,8 @@ When those force constants are not read from the hdf5 files,
 symmetrized force constants in real space are written into those hdf5
 files.
 
+.. _cf3_option:
+
 ``--cf3``: Create ``FORCES_FC3``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -384,6 +386,8 @@ grid points and their grid addresses in integers. Q-points
 corresponding to grid points are calculated divided these integers by
 sampling mesh numbers for respective reciprocal axes.
 
+.. _stp_option:
+
 ``--stp``: Show number of triplets to be calculated for each grid point
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -485,7 +489,8 @@ due to delta functions in calculation of
 
 But using this option, full elements of phonon-phonon interaction
 strength are calculated and averaged phonon-phonon interaction
-strength (:math:`P_{\mathbf{q}j}`) is also given.
+strength (:math:`P_{\mathbf{q}j}`, see :ref:`--ave-pp
+<ave_pp_option>`) is also given and stored.
 
 Physical properties
 --------------------
@@ -560,31 +565,34 @@ free path. The value is given in micrometre. The default value, 1
 metre, is just used to avoid divergence of phonon lifetime and the
 contribution to the thermal conducitivity is considered negligible.
 
-.. _cf3_option:
+``--tmax``, ``--tmin``, ``--tstep``: Temperature range
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``--tmax``, ``--tmin``, ``--tstep``, ``--ts``: Temperatures
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``TMAX``, ``TMIN``, ``TSTEP``, ``TEMPERATURES``)
+(Setting tag: ``TMAX``, ``TMIN``, ``TSTEP``)
 
 
 Temperatures at equal interval are specified by ``--tmax``,
-``--tmin``, ``--tstep``. See phonopy ``TMAX``, ``TMIN``, ``TSTEP``
-tags (``--tmax``, ``--tmin``, ``--tstep`` options) at
-http://atztogo.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep .
+``--tmin``, ``--tstep``. See phonopy's document for the same tags at
+http://atztogo.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep
+.
 
 ::
 
-   % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" \
-     -c POSCAR-unitcell --br --tmin=100 --tmax=1000 --tstep=50
+   % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" -c POSCAR-unitcell --br --tmin=100 --tmax=1000 --tstep=50
 
 
-Specific temperatures are given by ``--ts``.
+.. _ts_option:
+
+``--ts``: Temperatures
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+(Setting tag: ``TEMPERATURES``)
+
+Specific temperatures are specified by ``--ts``.
 
 ::
 
-   % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" \
-     -c POSCAR-unitcell --br --ts="200 300 400"
+   % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" -c POSCAR-unitcell --br --ts="200 300 400"
 
 ``--nac``: Non-analytical term correction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -848,19 +856,42 @@ For spectrum like calculations of imaginary part of self energy and
 JDOS, number of sampling frequency points is controlled by
 ``--num-freq-points`` or ``--freq-pitch``.
 
+.. _ave_pp_option:
+
 ``--ave-pp``: Use averaged phonon-phonon interaction strength
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 (Setting tag: ``USE_AVE_PP``, ``.TRUE.`` or ``.FALSE.``)
 
-Averaged phonon-phonon interaction strength (:math:`P_{\mathbf{q}j}`)
+Averaged phonon-phonon interaction strength (:math:`P_{\mathbf{q}j}=P_\lambda`)
 is used to calculate imaginary part of self energy in thermal
-conductivity calculation. This option works only when ``--read-gamma``
+conductivity calculation. :math:`P_\lambda` is defined as
+
+.. math::
+
+   P_\lambda = \frac{1}{(3n_\text{a})^2}\sum_{\lambda'
+   \lambda''}|\Phi_{\lambda \lambda' \lambda''}|^2,
+
+where :math:`n_\text{a}` is the number of atoms in unit cell. This is
+roughly constant with respect to the sampling mesh density for
+converged :math:`|\Phi_{\lambda \lambda' \lambda''}|^2`. Then for all
+:math:`\mathbf{q}',j',j''`,
+
+.. math::
+
+   |\Phi_{\mathbf{q}j,\mathbf{q}'j',\mathbf{G-q-q'}j''}|^2 :=
+   P_{\mathbf{q}j} / N,
+
+where :math:`N` is the number of grid points on the sampling
+mesh. :math:`\Phi_{\lambda \lambda' \lambda''} \equiv 0` unless
+:math:`\mathbf{q} + \mathbf{q}' + \mathbf{q}'' = \mathbf{G}`.
+
+This option works only when ``--read-gamma``
 and ``--br`` options are activated where the averaged phonon-phonon
 interaction that is read from ``kappa-mxxx(-sx-sdx).hdf5`` file is
 used if it exists in the file. Therefore the averaged phonon-phonon
 interaction has to be stored before using this option (see
-:ref:`full_pp_option`). The calculation result **overwrites**
+:ref:`--full-pp <full_pp_option>`). The calculation result **overwrites**
 ``kappa-mxxx(-sx-sdx).hdf5`` file. Therefore to use this option
 together with ``-o`` option is strongly recommended.
 
@@ -883,10 +914,11 @@ Then
 (Setting tag: ``CONSTANT_AVERAGED_PP_INTERACTION``, ``.TRUE.`` or ``.FALSE.``)
 
 Averaged phonon-phonon interaction (:math:`P_{\mathbf{q}j}`) is
-replaced by this constant value in thermal conductivity
-calculation. This option works only when ``--br`` options are
-activated. Therefore third-order force constants are not necessary to
-input. The physical unit of the value is :math:`\text{eV}^2`.
+replaced by this constant value and :math:`|\Phi_{\lambda \lambda'
+\lambda''}|^2` are set as written in :ref:`--ave-pp <ave_pp_option>` for thermal
+conductivity calculation. This option works only when ``--br`` options
+are activated. Therefore third-order force constants are not necessary
+to input. The physical unit of the value is :math:`\text{eV}^2`.
 
 ::
 

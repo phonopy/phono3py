@@ -50,8 +50,7 @@ static void set_permutation_symmetry_fc3_elem(double *fc3_elem,
                                               const int c,
                                               const int num_atom);
 
-void distribute_fc3(double *fc3_copy,
-                    const double *fc3,
+void distribute_fc3(double *fc3,
                     const int third_atom,
                     const int *atom_mapping,
                     const int num_atom,
@@ -61,7 +60,7 @@ void distribute_fc3(double *fc3_copy,
 
   for (i = 0; i < num_atom; i++) {
     for (j = 0; j < num_atom; j++) {
-      tensor3_rotation(fc3_copy +
+      tensor3_rotation(fc3 +
                        27 * num_atom * num_atom * third_atom +
                        27 * num_atom * i +
                        27 * j,
@@ -82,23 +81,6 @@ void tensor3_rotation(double *rot_tensor,
 
   for (l = 0; l < 27; l++) {
     rot_tensor[l] = tensor3_rotation_elem(tensor, rot_cartesian, l);
-  }
-}
-
-void set_permutation_symmetry_fc3(double *fc3, const int num_atom)
-{
-  double fc3_elem[27];
-  int i, j, k;
-
-#pragma omp parallel for private(j, k, fc3_elem)
-  for (i = 0; i < num_atom; i++) {
-    for (j = i; j < num_atom; j++) {
-      for (k = j; k < num_atom; k++) {
-        set_permutation_symmetry_fc3_elem(fc3_elem, fc3, i, j, k, num_atom);
-        copy_permutation_symmetry_fc3_elem(fc3, fc3_elem,
-                                           i, j, k, num_atom);
-      }
-    }
   }
 }
 
@@ -125,6 +107,22 @@ static double tensor3_rotation_elem(const double *tensor,
   return sum;
 }
 
+void set_permutation_symmetry_fc3(double *fc3, const int num_atom)
+{
+  double fc3_elem[27];
+  int i, j, k;
+
+#pragma omp parallel for private(j, k, fc3_elem)
+  for (i = 0; i < num_atom; i++) {
+    for (j = i; j < num_atom; j++) {
+      for (k = j; k < num_atom; k++) {
+        set_permutation_symmetry_fc3_elem(fc3_elem, fc3, i, j, k, num_atom);
+        copy_permutation_symmetry_fc3_elem(fc3, fc3_elem,
+                                           i, j, k, num_atom);
+      }
+    }
+  }
+}
 
 static void copy_permutation_symmetry_fc3_elem(double *fc3,
                                                const double fc3_elem[27],

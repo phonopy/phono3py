@@ -1,6 +1,7 @@
 import sys
 import numpy as np
-from phonopy.harmonic.force_constants import (similarity_transformation,
+from phonopy.harmonic.force_constants import (get_fc2,
+                                              similarity_transformation,
                                               set_permutation_symmetry,
                                               distribute_force_constants,
                                               solve_force_constants,
@@ -12,30 +13,19 @@ from phono3py.phonon3.displacement_fc3 import (get_reduced_site_symmetry,
 from phonopy.structure.cells import get_equivalent_smallest_vectors
 
 def get_fc3(supercell,
+            primitive,
             disp_dataset,
-            fc2,
             symmetry,
+            is_compact_fc3=False,
             verbose=False):
-    num_atom = supercell.get_number_of_atoms()
-    fc3_least_atoms = np.zeros((num_atom, num_atom, num_atom, 3, 3, 3),
-                               dtype='double')
-
-    if 'cutoff_distance' in disp_dataset:
-        _get_fc3_least_atoms(fc3_least_atoms,
-                             supercell,
-                             disp_dataset,
-                             fc2,
-                             symmetry,
-                             False,
-                             verbose)
-    else:
-        _get_fc3_least_atoms(fc3_least_atoms,
-                             supercell,
-                             disp_dataset,
-                             fc2,
-                             symmetry,
-                             False,
-                             verbose)
+    fc2 = get_fc2(supercell, symmetry, disp_dataset)
+    fc3 = _get_fc3_least_atoms(supercell,
+                               disp_dataset,
+                               fc2,
+                               symmetry,
+                               False,
+                               is_compact_fc3=is_compact_fc3,
+                               verbose=verbose)
 
     if verbose:
         print("Expanding fc3")
@@ -48,15 +38,14 @@ def get_fc3(supercell,
     lattice = supercell.get_cell().T
     positions = supercell.get_scaled_positions()
 
-    fc3 = distribute_fc3(fc3_least_atoms,
-                         first_disp_atoms,
-                         lattice,
-                         positions,
-                         rotations,
-                         translations,
-                         symprec,
-                         overwrite=False,
-                         verbose=verbose)
+    distribute_fc3(fc3,
+                   first_disp_atoms,
+                   lattice,
+                   positions,
+                   rotations,
+                   translations,
+                   symprec,
+                   verbose=verbose)
 
     if 'cutoff_distance' in disp_dataset:
         if verbose:
@@ -68,24 +57,18 @@ def get_fc3(supercell,
                    symmetry,
                    verbose=verbose)
 
-    return fc3
+    return fc2, fc3
 
-def distribute_fc3(fc3_least_atoms,
+def distribute_fc3(fc3,
                    first_disp_atoms,
                    lattice,
                    positions,
                    rotations,
                    translations,
                    symprec,
-                   overwrite=True,
                    verbose=False):
     num_atom = len(positions)
     atom_mapping = np.zeros(num_atom, dtype='intc')
-
-    if overwrite:
-        fc3 = fc3_least_atoms
-    else:
-        fc3 = np.zeros((num_atom, num_atom, num_atom, 3, 3, 3), dtype='double')
 
     for i in range(num_atom):
         # if i in first_disp_atoms:
@@ -120,7 +103,7 @@ def distribute_fc3(fc3_least_atoms,
         rot_cart_inv = np.array(similarity_transformation(lattice, rot).T,
                                 dtype='double', order='C')
 
-        if not (overwrite and i == i_rot):
+        if i != i_rot:
             if verbose > 2:
                 print("    [ %d, x, x ] to [ %d, x, x ]" % (i_rot + 1, i + 1))
                 sys.stdout.flush()
@@ -128,7 +111,6 @@ def distribute_fc3(fc3_least_atoms,
             try:
                 import phono3py._phono3py as phono3c
                 phono3c.distribute_fc3(fc3,
-                                       fc3_least_atoms,
                                        i,
                                        atom_mapping,
                                        rot_cart_inv)
@@ -140,10 +122,7 @@ def distribute_fc3(fc3_least_atoms,
                     for k in range(num_atom):
                         k_rot = atom_mapping[k]
                         fc3[i, j, k] = third_rank_tensor_rotation(
-                            rot_cart_inv, fc3_least_atoms[i_rot, j_rot, k_rot])
-
-    if not overwrite:
-        return fc3
+                            rot_cart_inv, fc3[i_rot, j_rot, k_rot])
 
 def set_permutation_symmetry_fc3(fc3):
     try:
@@ -389,7 +368,7 @@ def cutoff_fc3(fc3,
                verbose=False):
     if verbose:
         print("Building atom mapping table...")
-    fc3_done = _get_fc3_done(supercell, disp_dataset, symmetry)
+    fc3_done = _get_fc3_done(supercell, disp_dataset, symmetry, fc3.shape[:3])
 
     if verbose:
         print("Creating contracted fc3...")
@@ -467,16 +446,18 @@ def _set_permutation_symmetry_fc3_elem_with_cutoff(fc3, fc3_done, a, b, c):
             tensor3[i, j, k] /= sum_done
     return tensor3
 
-def _get_fc3_least_atoms(fc3,
-                         supercell,
+def _get_fc3_least_atoms(supercell,
                          disp_dataset,
                          fc2,
                          symmetry,
-                         symmetrize_fc3r,
-                         verbose):
-    symprec = symmetry.get_symmetry_tolerance()
+                         symmetrize_fc3r=False,
+                         is_compact_fc3=False,
+                         verbose=True):
+    num_atom = supercell.get_number_of_atoms()
     unique_first_atom_nums = np.unique(
         [x['number'] for x in disp_dataset['first_atoms']])
+    fc3 = np.zeros((num_atom, num_atom, num_atom, 3, 3, 3), dtype='double')
+    symprec = symmetry.get_symmetry_tolerance()
     for first_atom_num in unique_first_atom_nums:
         _get_fc3_one_atom(fc3,
                           supercell,
@@ -487,6 +468,7 @@ def _get_fc3_least_atoms(fc3,
                           symmetrize_fc3r,
                           symprec,
                           verbose)
+    return fc3
 
 def _get_fc3_one_atom(fc3,
                       supercell,
@@ -548,9 +530,9 @@ def _third_rank_tensor_rotation_elem(rot, tensor, l, m, n):
                 sum_elems += rot[l, i] * rot[m, j] * rot[n, k] * tensor[i, j, k]
     return sum_elems
 
-def _get_fc3_done(supercell, disp_dataset, symmetry):
+def _get_fc3_done(supercell, disp_dataset, symmetry, array_shape):
     num_atom = supercell.get_number_of_atoms()
-    fc3_done = np.zeros((num_atom, num_atom, num_atom), dtype='byte')
+    fc3_done = np.zeros(array_shape, dtype='byte')
     symprec = symmetry.get_symmetry_tolerance()
     lattice = supercell.get_cell().T
     positions = supercell.get_scaled_positions()
