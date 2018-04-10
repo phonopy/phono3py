@@ -189,6 +189,8 @@ When those force constants are not read from the hdf5 files,
 symmetrized force constants in real space are written into those hdf5
 files.
 
+.. _cf3_option:
+
 ``--cf3``: Create ``FORCES_FC3``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -384,6 +386,8 @@ grid points and their grid addresses in integers. Q-points
 corresponding to grid points are calculated divided these integers by
 sampling mesh numbers for respective reciprocal axes.
 
+.. _stp_option:
+
 ``--stp``: Show number of triplets to be calculated for each grid point
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -561,31 +565,34 @@ free path. The value is given in micrometre. The default value, 1
 metre, is just used to avoid divergence of phonon lifetime and the
 contribution to the thermal conducitivity is considered negligible.
 
-.. _cf3_option:
+``--tmax``, ``--tmin``, ``--tstep``: Temperature range
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``--tmax``, ``--tmin``, ``--tstep``, ``--ts``: Temperatures
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``TMAX``, ``TMIN``, ``TSTEP``, ``TEMPERATURES``)
+(Setting tag: ``TMAX``, ``TMIN``, ``TSTEP``)
 
 
 Temperatures at equal interval are specified by ``--tmax``,
-``--tmin``, ``--tstep``. See phonopy ``TMAX``, ``TMIN``, ``TSTEP``
-tags (``--tmax``, ``--tmin``, ``--tstep`` options) at
-http://atztogo.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep .
+``--tmin``, ``--tstep``. See phonopy's document for the same tags at
+http://atztogo.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep
+.
 
 ::
 
-   % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" \
-     -c POSCAR-unitcell --br --tmin=100 --tmax=1000 --tstep=50
+   % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" -c POSCAR-unitcell --br --tmin=100 --tmax=1000 --tstep=50
 
 
-Specific temperatures are given by ``--ts``.
+.. _ts_option:
+
+``--ts``: Temperatures
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+(Setting tag: ``TEMPERATURES``)
+
+Specific temperatures are specified by ``--ts``.
 
 ::
 
-   % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" \
-     -c POSCAR-unitcell --br --ts="200 300 400"
+   % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" -c POSCAR-unitcell --br --ts="200 300 400"
 
 ``--nac``: Non-analytical term correction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

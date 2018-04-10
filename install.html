@@ -2,16 +2,27 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
     <title>Installation &#8212; Phono3py v.1.12.9</title>
+    
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.12.9',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
@@ -25,7 +36,8 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head><body>
+  </head>
+  <body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -89,12 +101,12 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">How to read the results stored in hdf5 files</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#how-to-use-hdf5-python-library">How to use HDF5 python library</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#details-of-kappa-hdf5-file">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#details-of-kappa-hdf5-file">Details of <code class="docutils literal"><span class="pre">kappa-*.hdf5</span></code> file</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kaccum"><code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kdeplot"><code class="docutils literal notranslate"><span class="pre">phono3py-kdeplot</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kaccum"><code class="docutils literal"><span class="pre">phono3py-kaccum</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kdeplot"><code class="docutils literal"><span class="pre">phono3py-kdeplot</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a><ul>
@@ -262,8 +274,8 @@ phono3py.</p>
 <h2><a class="toc-backref" href="#id1">Installation using conda</a><a class="headerlink" href="#installation-using-conda" title="Permalink to this headline">¶</a></h2>
 <p>Using conda is the easiest way for installation of phono3py if you are
 using usual 64 bit linux system. The conda packages for 64bit linux
-are also found at <code class="docutils literal notranslate"><span class="pre">atztogo</span></code> channel:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">atztogo</span> <span class="n">phono3py</span>
+are also found at <code class="docutils literal"><span class="pre">atztogo</span></code> channel:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">atztogo</span> <span class="n">phono3py</span>
 </pre></div>
 </div>
 <p>All dependent packages are installed simultaneously.</p>
@@ -271,41 +283,41 @@ are also found at <code class="docutils literal notranslate"><span class="pre">a
 <div class="section" id="installation-using-pip">
 <h2><a class="toc-backref" href="#id2">Installation using pip</a><a class="headerlink" href="#installation-using-pip" title="Permalink to this headline">¶</a></h2>
 <p>PyPI packages are prepared for phonopy and phono3py releases. When
-installing with PyPI, <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> is executed locally to compile the
+installing with PyPI, <code class="docutils literal"><span class="pre">setup.py</span></code> is executed locally to compile the
 part of the code written in C, so a few libraries such as
 lapacke must exist in the system. Those necessary libraries are
 explained in the next section.</p>
 </div>
 <div class="section" id="installation-from-source-code">
 <h2><a class="toc-backref" href="#id3">Installation from source code</a><a class="headerlink" href="#installation-from-source-code" title="Permalink to this headline">¶</a></h2>
-<p>When installing phono3py using <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> from the source code, a
-few libraries are required before running <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> script.</p>
+<p>When installing phono3py using <code class="docutils literal"><span class="pre">setup.py</span></code> from the source code, a
+few libraries are required before running <code class="docutils literal"><span class="pre">setup.py</span></code> script.</p>
 <p>For phono3py, OpenMP library is necessary for the multithreding
 support. In additon, BLAS, LAPACK, and LAPACKE are also needed. These
 packages are probably installed using the package manager for each OS
 or conda.</p>
-<p>When using gcc to compile phono3py, <code class="docutils literal notranslate"><span class="pre">libgomp1</span></code> is necessary to
+<p>When using gcc to compile phono3py, <code class="docutils literal"><span class="pre">libgomp1</span></code> is necessary to
 enable OpenMP multithreading support. This library is probably
 installed already in your system. If you don’t have it and you use
 Ubuntu linux, it is installed by:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">libgomp1</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">libgomp1</span>
 </pre></div>
 </div>
 <div class="section" id="installation-of-lapacke">
-<h3><a class="toc-backref" href="#id4">Installation of LAPACKE</a><a class="headerlink" href="#installation-of-lapacke" title="Permalink to this headline">¶</a></h3>
+<span id="install-lapacke"></span><h3><a class="toc-backref" href="#id4">Installation of LAPACKE</a><a class="headerlink" href="#installation-of-lapacke" title="Permalink to this headline">¶</a></h3>
 <p>LAPACK library is used in a few parts of the code to diagonalize
 matrices. LAPACK*E* is the C-wrapper of LAPACK and LAPACK relies on
 BLAS. Both single-thread or multithread BLAS can be
 used in phono3py. In the following, multiple different ways of
 installation of LAPACKE are explained.</p>
 <div class="section" id="mkl-lapacke-with-multithread-blas">
-<h4><a class="toc-backref" href="#id5">MKL LAPACKE (with multithread BLAS)</a><a class="headerlink" href="#mkl-lapacke-with-multithread-blas" title="Permalink to this headline">¶</a></h4>
-<p>Phono3py can be compiled with MKL for using LAPACKE.  If <code class="docutils literal notranslate"><span class="pre">setup.py</span></code>
-finds the file named <code class="docutils literal notranslate"><span class="pre">mkl.py</span></code>, the contents of <code class="docutils literal notranslate"><span class="pre">mkl.py</span></code> is read
+<span id="install-mkl-lapacke"></span><h4><a class="toc-backref" href="#id5">MKL LAPACKE (with multithread BLAS)</a><a class="headerlink" href="#mkl-lapacke-with-multithread-blas" title="Permalink to this headline">¶</a></h4>
+<p>Phono3py can be compiled with MKL for using LAPACKE.  If <code class="docutils literal"><span class="pre">setup.py</span></code>
+finds the file named <code class="docutils literal"><span class="pre">mkl.py</span></code>, the contents of <code class="docutils literal"><span class="pre">mkl.py</span></code> is read
 and those are included in the compilation setting.  For example, the
-following setting prepared as <code class="docutils literal notranslate"><span class="pre">mkl.py</span></code> seems working on Ubuntu 16.04
+following setting prepared as <code class="docutils literal"><span class="pre">mkl.py</span></code> seems working on Ubuntu 16.04
 system:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">intel_root</span> <span class="o">=</span> <span class="s2">&quot;/opt/intel/composer_xe_2015.7.235&quot;</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">intel_root</span> <span class="o">=</span> <span class="s2">&quot;/opt/intel/composer_xe_2015.7.235&quot;</span>
 <span class="n">mkl_root</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/mkl&quot;</span> <span class="o">%</span> <span class="n">intel_root</span>
 <span class="n">compiler_root</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/compiler&quot;</span> <span class="o">%</span> <span class="n">intel_root</span>
 
@@ -319,29 +331,29 @@ system:</p>
 <span class="n">mkl_include_dirs_lapacke</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/include&quot;</span> <span class="o">%</span> <span class="n">mkl_root</span><span class="p">]</span>
 </pre></div>
 </div>
-<p>This setting considers to use <code class="docutils literal notranslate"><span class="pre">icc</span></code> but it may be compiled with
-<code class="docutils literal notranslate"><span class="pre">gcc</span></code>. With <code class="docutils literal notranslate"><span class="pre">gcc</span></code>, the compiler related setting shown above (i.e.,
-around <code class="docutils literal notranslate"><span class="pre">compiler_root</span></code>) is unnecessary. To achieve this
+<p>This setting considers to use <code class="docutils literal"><span class="pre">icc</span></code> but it may be compiled with
+<code class="docutils literal"><span class="pre">gcc</span></code>. With <code class="docutils literal"><span class="pre">gcc</span></code>, the compiler related setting shown above (i.e.,
+around <code class="docutils literal"><span class="pre">compiler_root</span></code>) is unnecessary. To achieve this
 installation, not only the MKL library but also the header file are
 necessary. The libraries are linked dynamically, so in most of the
-cases, <code class="docutils literal notranslate"><span class="pre">LD_LIBRARY_PATH</span></code> environment variable has to be correctly
+cases, <code class="docutils literal"><span class="pre">LD_LIBRARY_PATH</span></code> environment variable has to be correctly
 specified to let phono3py find those libraries.</p>
 </div>
 <div class="section" id="openblas-provided-by-conda-with-multithread-blas">
-<h4><a class="toc-backref" href="#id6">OpenBLAS provided by conda (with multithread BLAS)</a><a class="headerlink" href="#openblas-provided-by-conda-with-multithread-blas" title="Permalink to this headline">¶</a></h4>
+<span id="install-openblas-lapacke"></span><h4><a class="toc-backref" href="#id6">OpenBLAS provided by conda (with multithread BLAS)</a><a class="headerlink" href="#openblas-provided-by-conda-with-multithread-blas" title="Permalink to this headline">¶</a></h4>
 <p>The installtion of LAPACKE is easy by conda. It is:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">openblas</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">openblas</span>
 </pre></div>
 </div>
 <p>or if the python libraries are not yet installed:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">openblas</span> <span class="n">numpy</span> <span class="n">scipy</span> <span class="n">h5py</span> <span class="n">pyyaml</span> <span class="n">matplotlib</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">openblas</span> <span class="n">numpy</span> <span class="n">scipy</span> <span class="n">h5py</span> <span class="n">pyyaml</span> <span class="n">matplotlib</span>
 </pre></div>
 </div>
 <p>This openblas package contains BLAS, LAPACK, and LAPACKE. When this
-<code class="docutils literal notranslate"><span class="pre">libopenblas</span></code> is linked and the <code class="docutils literal notranslate"><span class="pre">else</span></code> statement of the C macro
-definition section in <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> is executed, the following macro
+<code class="docutils literal"><span class="pre">libopenblas</span></code> is linked and the <code class="docutils literal"><span class="pre">else</span></code> statement of the C macro
+definition section in <code class="docutils literal"><span class="pre">setup.py</span></code> is executed, the following macro
 are activated:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">use_setuptools</span><span class="p">:</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">use_setuptools</span><span class="p">:</span>
     <span class="n">extra_compile_args</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;-DMULTITHREADED_BLAS&#39;</span><span class="p">]</span>
 <span class="k">else</span><span class="p">:</span>
     <span class="n">define_macros</span> <span class="o">+=</span> <span class="p">[(</span><span class="s1">&#39;MULTITHREADED_BLAS&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)]</span>
@@ -352,49 +364,49 @@ are activated:</p>
 <h4><a class="toc-backref" href="#id7">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a><a class="headerlink" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas" title="Permalink to this headline">¶</a></h4>
 <p>In the versions of Ubuntu-12.10 or later, LAPACKE
 (<a class="reference external" href="http://www.netlib.org/lapack/lapacke.html">http://www.netlib.org/lapack/lapacke.html</a>) can be installed from the
-package manager (<code class="docutils literal notranslate"><span class="pre">liblapacke</span></code> and <code class="docutils literal notranslate"><span class="pre">liblapacke-dev</span></code>):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">liblapack</span><span class="o">-</span><span class="n">dev</span> <span class="n">liblapacke</span><span class="o">-</span><span class="n">dev</span>
+package manager (<code class="docutils literal"><span class="pre">liblapacke</span></code> and <code class="docutils literal"><span class="pre">liblapacke-dev</span></code>):</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">liblapack</span><span class="o">-</span><span class="n">dev</span> <span class="n">liblapacke</span><span class="o">-</span><span class="n">dev</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="compiling-netlib-lapacke">
 <h4><a class="toc-backref" href="#id8">Compiling Netlib LAPACKE</a><a class="headerlink" href="#compiling-netlib-lapacke" title="Permalink to this headline">¶</a></h4>
 <p>The compilation procedure is found at the LAPACKE web site. After
-creating the LAPACKE library, <code class="docutils literal notranslate"><span class="pre">liblapacke.a</span></code> (or the dynamic link
-library), <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> must be properly modified to link it. As an
+creating the LAPACKE library, <code class="docutils literal"><span class="pre">liblapacke.a</span></code> (or the dynamic link
+library), <code class="docutils literal"><span class="pre">setup.py</span></code> must be properly modified to link it. As an
 example, the procedure of compiling LAPACKE is shown below.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">tar</span> <span class="n">xvfz</span> <span class="n">lapack</span><span class="o">-</span><span class="mf">3.6</span><span class="o">.</span><span class="mf">0.</span><span class="n">tgz</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">tar</span> <span class="n">xvfz</span> <span class="n">lapack</span><span class="o">-</span><span class="mf">3.6</span><span class="o">.</span><span class="mf">0.</span><span class="n">tgz</span>
 <span class="o">%</span> <span class="n">cd</span> <span class="n">lapack</span><span class="o">-</span><span class="mf">3.6</span><span class="o">.</span><span class="mi">0</span>
 <span class="o">%</span> <span class="n">cp</span> <span class="n">make</span><span class="o">.</span><span class="n">inc</span><span class="o">.</span><span class="n">example</span> <span class="n">make</span><span class="o">.</span><span class="n">inc</span>
 <span class="o">%</span> <span class="n">make</span> <span class="n">lapackelib</span>
 </pre></div>
 </div>
 <p>BLAS, LAPACK, and LAPACKE, these all may have to be compiled
-with <code class="docutils literal notranslate"><span class="pre">-fPIC</span></code> option to use it with python.</p>
+with <code class="docutils literal"><span class="pre">-fPIC</span></code> option to use it with python.</p>
 </div>
 <div class="section" id="openblas-provided-by-macports-with-single-thread-blas">
 <h4><a class="toc-backref" href="#id9">OpenBLAS provided by MacPorts (with single-thread BLAS)</a><a class="headerlink" href="#openblas-provided-by-macports-with-single-thread-blas" title="Permalink to this headline">¶</a></h4>
-<p>MacPorts, the <code class="docutils literal notranslate"><span class="pre">OpenBLAS</span></code> package contains not only BLAS but also
-LAPACK and LAPACKE in <code class="docutils literal notranslate"><span class="pre">libopenblas</span></code>.</p>
+<p>MacPorts, the <code class="docutils literal"><span class="pre">OpenBLAS</span></code> package contains not only BLAS but also
+LAPACK and LAPACKE in <code class="docutils literal"><span class="pre">libopenblas</span></code>.</p>
 </div>
 </div>
 <div class="section" id="building-using-setup-py">
 <h3><a class="toc-backref" href="#id10">Building using setup.py</a><a class="headerlink" href="#building-using-setup-py" title="Permalink to this headline">¶</a></h3>
 <p>If package installation is not possible or you want to compile with
 special compiler or special options, phono3py is built using
-setup.py. In this case, manual modification of <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> may be
+setup.py. In this case, manual modification of <code class="docutils literal"><span class="pre">setup.py</span></code> may be
 needed.</p>
 <ol class="arabic">
 <li><p class="first">Download the latest source code at</p>
 <p><a class="reference external" href="https://pypi.python.org/pypi/phono3py">https://pypi.python.org/pypi/phono3py</a></p>
 </li>
 <li><p class="first">and extract it:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">tar</span> <span class="n">xvfz</span> <span class="n">phono3py</span><span class="o">-</span><span class="mf">1.11</span><span class="o">.</span><span class="mf">13.39</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">tar</span> <span class="n">xvfz</span> <span class="n">phono3py</span><span class="o">-</span><span class="mf">1.11</span><span class="o">.</span><span class="mf">13.39</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>
 <span class="o">%</span> <span class="n">cd</span> <span class="n">phono3py</span><span class="o">-</span><span class="mf">1.11</span><span class="o">.</span><span class="mf">13.39</span>
 </pre></div>
 </div>
 <p>The other option is using git to clone the phonopy repository from github:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">atztogo</span><span class="o">/</span><span class="n">phono3py</span><span class="o">.</span><span class="n">git</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">atztogo</span><span class="o">/</span><span class="n">phono3py</span><span class="o">.</span><span class="n">git</span>
 <span class="o">%</span> <span class="n">cd</span> <span class="n">phono3py</span>
 </pre></div>
 </div>
@@ -403,13 +415,13 @@ needed.</p>
 <ol class="arabic" start="2">
 <li><p class="first">Set up C-libraries for python C-API and python codes. This can be
 done as follows:</p>
-<p>Run <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> script:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span>
+<p>Run <code class="docutils literal"><span class="pre">setup.py</span></code> script:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span>
 </pre></div>
 </div>
 </li>
-<li><p class="first">Set <span class="target" id="index-0"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">$PATH</span></code> and <span class="target" id="index-1"></span><code class="xref std std-envvar docutils literal notranslate"><span class="pre">$PYTHONPATH</span></code></p>
-<p><code class="docutils literal notranslate"><span class="pre">PATH</span></code> and <code class="docutils literal notranslate"><span class="pre">PYTHONPATH</span></code> are set in the same way as phonopy, see
+<li><p class="first">Set <span class="target" id="index-0"></span><code class="xref std std-envvar docutils literal"><span class="pre">$PATH</span></code> and <span class="target" id="index-1"></span><code class="xref std std-envvar docutils literal"><span class="pre">$PYTHONPATH</span></code></p>
+<p><code class="docutils literal"><span class="pre">PATH</span></code> and <code class="docutils literal"><span class="pre">PYTHONPATH</span></code> are set in the same way as phonopy, see
 <a class="reference external" href="https://atztogo.github.io/phonopy/install.html#building-using-setup-py">https://atztogo.github.io/phonopy/install.html#building-using-setup-py</a>.</p>
 </li>
 </ol>
@@ -433,41 +445,41 @@ procedure is summarized in the next section.</p>
 <li><p class="first">Download miniconda package</p>
 <p>Miniconda is downloaded at <a class="reference external" href="https://conda.io/miniconda.html">https://conda.io/miniconda.html</a>.</p>
 <p>For usual 64-bit Linux system:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">repo</span><span class="o">.</span><span class="n">continuum</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">miniconda</span><span class="o">/</span><span class="n">Miniconda3</span><span class="o">-</span><span class="n">latest</span><span class="o">-</span><span class="n">Linux</span><span class="o">-</span><span class="n">x86_64</span><span class="o">.</span><span class="n">sh</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">repo</span><span class="o">.</span><span class="n">continuum</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">miniconda</span><span class="o">/</span><span class="n">Miniconda3</span><span class="o">-</span><span class="n">latest</span><span class="o">-</span><span class="n">Linux</span><span class="o">-</span><span class="n">x86_64</span><span class="o">.</span><span class="n">sh</span>
 </pre></div>
 </div>
 <p>For macOS, it is assumed that gcc compiler is installed on your system. The
 compiler such as default clang on macOS can’t handle OpenMP, so it
 can’t be used. The gcc compiler may be installed using homebrew,
 e.g.:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">brew</span> <span class="n">install</span> <span class="n">gcc</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">brew</span> <span class="n">install</span> <span class="n">gcc</span>
 </pre></div>
 </div>
 <p>or using MacPort, e.g.:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">sudo</span> <span class="n">port</span> <span class="n">install</span> <span class="n">gcc7</span> <span class="n">wget</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">sudo</span> <span class="n">port</span> <span class="n">install</span> <span class="n">gcc7</span> <span class="n">wget</span>
 </pre></div>
 </div>
 <p>where wget is optional. Then download using wget:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">repo</span><span class="o">.</span><span class="n">continuum</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">miniconda</span><span class="o">/</span><span class="n">Miniconda3</span><span class="o">-</span><span class="n">latest</span><span class="o">-</span><span class="n">MacOSX</span><span class="o">-</span><span class="n">x86_64</span><span class="o">.</span><span class="n">sh</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">repo</span><span class="o">.</span><span class="n">continuum</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">miniconda</span><span class="o">/</span><span class="n">Miniconda3</span><span class="o">-</span><span class="n">latest</span><span class="o">-</span><span class="n">MacOSX</span><span class="o">-</span><span class="n">x86_64</span><span class="o">.</span><span class="n">sh</span>
 </pre></div>
 </div>
 </li>
 <li><p class="first">Install conda packages</p>
 <p>It is supposed to have the following environment variable:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export PATH=~/.miniconda3/bin:$PATH
+<div class="highlight-default"><div class="highlight"><pre><span></span>export PATH=~/.miniconda3/bin:$PATH
 </pre></div>
 </div>
 <p>Then install and update conda:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>% bash miniconda.sh -b -p $HOME/.miniconda3
+<div class="highlight-default"><div class="highlight"><pre><span></span>% bash miniconda.sh -b -p $HOME/.miniconda3
 % conda update conda
 </pre></div>
 </div>
 <p>The necessary python libraries and openBLAS are installed by:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">numpy</span> <span class="n">scipy</span> <span class="n">h5py</span> <span class="n">pyyaml</span> <span class="n">matplotlib</span> <span class="n">openblas</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">numpy</span> <span class="n">scipy</span> <span class="n">h5py</span> <span class="n">pyyaml</span> <span class="n">matplotlib</span> <span class="n">openblas</span>
 </pre></div>
 </div>
 <p>Install the latest phonopy and phono3py:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">export</span> <span class="n">CC</span><span class="o">=</span><span class="n">gcc</span> <span class="c1"># only for macOS (macport), CC=gcc-7 for homebrew</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">export</span> <span class="n">CC</span><span class="o">=</span><span class="n">gcc</span> <span class="c1"># only for macOS (macport), CC=gcc-7 for homebrew</span>
 <span class="o">%</span> <span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">atztogo</span><span class="o">/</span><span class="n">phonopy</span><span class="o">.</span><span class="n">git</span>
 <span class="o">%</span> <span class="n">cd</span> <span class="n">phonopy</span>
 <span class="o">%</span> <span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="o">--</span><span class="n">user</span>
@@ -478,7 +490,7 @@ e.g.:</p>
 <span class="o">%</span> <span class="n">cd</span> <span class="o">..</span>
 </pre></div>
 </div>
-<p>Environment variables <code class="docutils literal notranslate"><span class="pre">PATH</span></code> and <code class="docutils literal notranslate"><span class="pre">PYTHONPATH</span></code> must be set
+<p>Environment variables <code class="docutils literal"><span class="pre">PATH</span></code> and <code class="docutils literal"><span class="pre">PYTHONPATH</span></code> must be set
 appropriately to use phono3py. See see
 <a class="reference external" href="https://atztogo.github.io/phonopy/install.html#building-using-setup-py">https://atztogo.github.io/phonopy/install.html#building-using-setup-py</a>
 and
@@ -489,20 +501,20 @@ and
 <div class="section" id="multithreading-and-its-controlling-by-c-macro">
 <h2><a class="toc-backref" href="#id13">Multithreading and its controlling by C macro</a><a class="headerlink" href="#multithreading-and-its-controlling-by-c-macro" title="Permalink to this headline">¶</a></h2>
 <p>Phono3py uses multithreading concurrency in two ways. One is that
-written in the code with OpenMP <code class="docutils literal notranslate"><span class="pre">parallel</span> <span class="pre">for</span></code>. The other is
+written in the code with OpenMP <code class="docutils literal"><span class="pre">parallel</span> <span class="pre">for</span></code>. The other is
 achieved by using multithreaded BLAS. The BLAS multithreading is
 depending on which BLAS library is chosen by users and the number of
 threads to be used may be controlled by the library’s environment
-variables (e.g., <code class="docutils literal notranslate"><span class="pre">OPENBLAS_NUM_THREADS</span></code> or <code class="docutils literal notranslate"><span class="pre">MKL_NUM_THREADS</span></code>). In
+variables (e.g., <code class="docutils literal"><span class="pre">OPENBLAS_NUM_THREADS</span></code> or <code class="docutils literal"><span class="pre">MKL_NUM_THREADS</span></code>). In
 the phono3py C code, these two are written in a nested way, but of
 course the nested use of multiple multithreadings has to be
 avoided. The outer loop of the nesting is done by the OpenMP
-<code class="docutils literal notranslate"><span class="pre">parallel</span> <span class="pre">for</span></code> code. The inner loop calls LAPACKE functions and then
+<code class="docutils literal"><span class="pre">parallel</span> <span class="pre">for</span></code> code. The inner loop calls LAPACKE functions and then
 the LAPACKE functions call the BLAS routines. If both of the inner and
 outer multithreadings can be activated, the inner multithreading must
 be deactivated at the compilation time. This is achieved by setting
-the C macro <code class="docutils literal notranslate"><span class="pre">MULTITHREADED_BLAS</span></code>, which can be written in
-<code class="docutils literal notranslate"><span class="pre">setup.py</span></code>. Deactivating the multithreading of BLAS using the
+the C macro <code class="docutils literal"><span class="pre">MULTITHREADED_BLAS</span></code>, which can be written in
+<code class="docutils literal"><span class="pre">setup.py</span></code>. Deactivating the multithreading of BLAS using the
 environment variables is not recommended because it is used in the
 non-nested parts of the code and these multithreadings are
 unnecessary to be deactivated.</p>
@@ -537,7 +549,7 @@ unnecessary to be deactivated.</p>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.<br/>
     </p>
   </div>
 </footer>

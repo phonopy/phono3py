@@ -2,16 +2,27 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
     <title>Pwscf &amp; phono3py calculation &#8212; Phono3py v.1.12.9</title>
+    
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.12.9',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
@@ -25,7 +36,8 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head><body>
+  </head>
+  <body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -89,12 +101,12 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">How to read the results stored in hdf5 files</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#how-to-use-hdf5-python-library">How to use HDF5 python library</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#details-of-kappa-hdf5-file">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#details-of-kappa-hdf5-file">Details of <code class="docutils literal"><span class="pre">kappa-*.hdf5</span></code> file</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kaccum"><code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kdeplot"><code class="docutils literal notranslate"><span class="pre">phono3py-kdeplot</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kaccum"><code class="docutils literal"><span class="pre">phono3py-kaccum</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kdeplot"><code class="docutils literal"><span class="pre">phono3py-kdeplot</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a><ul>
@@ -218,14 +230,14 @@
 calculation environment based on DFPT. But the document here explains how
 to calculate phonon-phonon interaction and related properties using
 phono3py, i.e., using the finite displacement and supercell approach.</p>
-<p>An example for pwscf is found in the <code class="docutils literal notranslate"><span class="pre">example-phono3py/Si-pwscf</span></code> directory.</p>
-<p>To invoke the Pwscf interface, <code class="docutils literal notranslate"><span class="pre">--pwscf</span></code> option has to be always
+<p>An example for pwscf is found in the <code class="docutils literal"><span class="pre">example-phono3py/Si-pwscf</span></code> directory.</p>
+<p>To invoke the Pwscf interface, <code class="docutils literal"><span class="pre">--pwscf</span></code> option has to be always
 specified:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">arguments</span><span class="p">]</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">arguments</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>When the file name of the unit cell is different from the default one
-(see <a class="reference internal" href="interfaces.html#default-unit-cell-file-name-for-calculator"><span class="std std-ref">Default unit cell file name</span></a>), <code class="docutils literal notranslate"><span class="pre">-c</span></code> option
+(see <a class="reference internal" href="interfaces.html#default-unit-cell-file-name-for-calculator"><span class="std std-ref">Default unit cell file name</span></a>), <code class="docutils literal"><span class="pre">-c</span></code> option
 is used to specify the file name. Pwscf unit cell file parser used in
 phono3py is the same as that in phonopy. It can read
 only limited number of keywords that are shown in the phonopy web site
@@ -234,44 +246,44 @@ only limited number of keywords that are shown in the phonopy web site
 <span id="pwscf-workflow"></span><h2>Workflow<a class="headerlink" href="#workflow" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic">
 <li><p class="first">Create supercells with displacements</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">Si</span><span class="o">.</span><span class="ow">in</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">Si</span><span class="o">.</span><span class="ow">in</span>
 </pre></div>
 </div>
 <p>In this example, probably 111 different supercells with
-displacements are created. Supercell files (<code class="docutils literal notranslate"><span class="pre">supercell-xxx.in</span></code>)
+displacements are created. Supercell files (<code class="docutils literal"><span class="pre">supercell-xxx.in</span></code>)
 are created but they contain only the crystal
 structures. Calculation setting has to be added before running the
 calculation.</p>
 </li>
 <li><p class="first">Run Pwscf for supercell force calculations</p>
-<p>Let’s assume that the calculations have been made in <code class="docutils literal notranslate"><span class="pre">disp-xxx</span></code>
-directories with the file names of <code class="docutils literal notranslate"><span class="pre">Si-supercell.in</span></code>. Then after
-finishing those calculations, <code class="docutils literal notranslate"><span class="pre">Si-supercell.out</span></code> may be created
+<p>Let’s assume that the calculations have been made in <code class="docutils literal"><span class="pre">disp-xxx</span></code>
+directories with the file names of <code class="docutils literal"><span class="pre">Si-supercell.in</span></code>. Then after
+finishing those calculations, <code class="docutils literal"><span class="pre">Si-supercell.out</span></code> may be created
 in each directory.</p>
 </li>
 <li><p class="first">Collect forces</p>
-<p><code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> is obtained with <code class="docutils literal notranslate"><span class="pre">--cf3</span></code> options collecting the
+<p><code class="docutils literal"><span class="pre">FORCES_FC3</span></code> is obtained with <code class="docutils literal"><span class="pre">--cf3</span></code> options collecting the
 forces on atoms in Pwscf calculation results:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="mi">00001</span><span class="o">/</span><span class="n">Si</span><span class="o">-</span><span class="n">supercell</span><span class="o">.</span><span class="n">out</span> <span class="n">disp</span><span class="o">-</span><span class="mi">00002</span><span class="o">/</span><span class="n">Si</span><span class="o">-</span><span class="n">supercell</span><span class="o">.</span><span class="n">out</span> <span class="o">...</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="mi">00001</span><span class="o">/</span><span class="n">Si</span><span class="o">-</span><span class="n">supercell</span><span class="o">.</span><span class="n">out</span> <span class="n">disp</span><span class="o">-</span><span class="mi">00002</span><span class="o">/</span><span class="n">Si</span><span class="o">-</span><span class="n">supercell</span><span class="o">.</span><span class="n">out</span> <span class="o">...</span>
 </pre></div>
 </div>
 <p>or in recent bash or zsh:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="p">{</span><span class="mf">00001.</span><span class="o">.</span><span class="mi">00111</span><span class="p">}</span><span class="o">/</span><span class="n">Si</span><span class="o">-</span><span class="n">supercell</span><span class="o">.</span><span class="n">out</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="p">{</span><span class="mf">00001.</span><span class="o">.</span><span class="mi">00111</span><span class="p">}</span><span class="o">/</span><span class="n">Si</span><span class="o">-</span><span class="n">supercell</span><span class="o">.</span><span class="n">out</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> is used to create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code>, therefore it
+<p><code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> is used to create <code class="docutils literal"><span class="pre">FORCES_FC3</span></code>, therefore it
 must exist in current directory.</p>
 </li>
 </ol>
 <ol class="arabic" start="4">
 <li><p class="first">Calculate 3rd and 2nd order force constants</p>
-<p><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> files are created by:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">Si</span><span class="o">.</span><span class="ow">in</span> <span class="o">--</span><span class="n">sym</span><span class="o">-</span><span class="n">fc</span>
+<p><code class="docutils literal"><span class="pre">fc3.hdf5</span></code> and <code class="docutils literal"><span class="pre">fc2.hdf5</span></code> files are created by:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">Si</span><span class="o">.</span><span class="ow">in</span> <span class="o">--</span><span class="n">sym</span><span class="o">-</span><span class="n">fc</span>
 </pre></div>
 </div>
 </li>
 <li><p class="first">Calculate lattice thermal conductivity, e.g., by:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">Si</span><span class="o">.</span><span class="ow">in</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> \
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">pwscf</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">Si</span><span class="o">.</span><span class="ow">in</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> \
    <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">br</span>
 </pre></div>
 </div>
@@ -300,7 +312,7 @@ must exist in current directory.</p>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.<br/>
     </p>
   </div>
 </footer>

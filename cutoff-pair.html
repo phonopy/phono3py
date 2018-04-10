@@ -2,16 +2,27 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
     <title>Crude force constants calculation by cutoff pair-distance &#8212; Phono3py v.1.12.9</title>
+    
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.12.9',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
@@ -25,7 +36,8 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head><body>
+  </head>
+  <body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -89,12 +101,12 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">How to read the results stored in hdf5 files</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#how-to-use-hdf5-python-library">How to use HDF5 python library</a></li>
-<li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#details-of-kappa-hdf5-file">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#details-of-kappa-hdf5-file">Details of <code class="docutils literal"><span class="pre">kappa-*.hdf5</span></code> file</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kaccum"><code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kdeplot"><code class="docutils literal notranslate"><span class="pre">phono3py-kdeplot</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kaccum"><code class="docutils literal"><span class="pre">phono3py-kaccum</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kdeplot"><code class="docutils literal"><span class="pre">phono3py-kdeplot</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a><ul>
@@ -172,10 +184,10 @@
 <li><a class="reference internal" href="#usage">Usage</a><ul>
 <li><a class="reference internal" href="#creating-supercells-with-displacements">Creating supercells with displacements</a><ul>
 <li><a class="reference internal" href="#supercell-files">Supercell files</a></li>
-<li><a class="reference internal" href="#special-disp-fc3-yaml">Special <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code></a></li>
+<li><a class="reference internal" href="#special-disp-fc3-yaml">Special <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#making-forces-fc3">Making <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a></li>
+<li><a class="reference internal" href="#making-forces-fc3">Making <code class="docutils literal"><span class="pre">FORCES_FC3</span></code></a></li>
 <li><a class="reference internal" href="#running-phonon-phonon-interaction-calculation">Running phonon-phonon interaction calculation</a></li>
 </ul>
 </li>
@@ -235,7 +247,7 @@
 <li><a class="reference internal" href="#what-is-cutff-pair-distance-in-phono3py" id="id1">What is cutff pair-distance in phono3py?</a></li>
 <li><a class="reference internal" href="#usage" id="id2">Usage</a><ul>
 <li><a class="reference internal" href="#creating-supercells-with-displacements" id="id3">Creating supercells with displacements</a></li>
-<li><a class="reference internal" href="#making-forces-fc3" id="id4">Making <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a></li>
+<li><a class="reference internal" href="#making-forces-fc3" id="id4">Making <code class="docutils literal"><span class="pre">FORCES_FC3</span></code></a></li>
 <li><a class="reference internal" href="#running-phonon-phonon-interaction-calculation" id="id5">Running phonon-phonon interaction calculation</a></li>
 </ul>
 </li>
@@ -248,11 +260,11 @@
 </div>
 <div class="section" id="what-is-cutff-pair-distance-in-phono3py">
 <h2><a class="toc-backref" href="#id1">What is cutff pair-distance in phono3py?</a><a class="headerlink" href="#what-is-cutff-pair-distance-in-phono3py" title="Permalink to this headline">¶</a></h2>
-<p>Using <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> option, number of supercells with
+<p>Using <code class="docutils literal"><span class="pre">--cutoff-pair</span></code> option, number of supercells with
 displacements to be calculated is reduced. But of course this
 sacrifices the accuracy of third-order force constants (fc3).</p>
 <p>In phono3py, to obtain supercell-fc3,
-<span class="math notranslate">\(\Phi_{\alpha\beta\gamma}(jl, j'l', j''l'')\)</span>, forces in many
+<span class="math">\(\Phi_{\alpha\beta\gamma}(jl, j'l', j''l'')\)</span>, forces in many
 supercells having different pairs of displaced atoms are computed
 using some force-calculator such as ab-initio code. In the phono3py
 default behaviour, full elements of supercell-fc3 are computed. In
@@ -262,28 +274,28 @@ be huge and beyond our computational resource.</p>
 <p>Sometimes we may expect that interaction range of fc3 among triplets
 of atoms is shorter than chosen supercell size. If it is the case, we
 may be allowed to omit computing some elements of supercell-fc3. This
-is what achieved by <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> option.</p>
+is what achieved by <code class="docutils literal"><span class="pre">--cutoff-pair</span></code> option.</p>
 <p>A supercell-fc3 element is specified by three atomic
 displacements. Two of three are finitely displaced
-(<span class="math notranslate">\(\Delta\mathbf{r}_1\)</span> and <span class="math notranslate">\(\Delta\mathbf{r}_2\)</span>) but one of
+(<span class="math">\(\Delta\mathbf{r}_1\)</span> and <span class="math">\(\Delta\mathbf{r}_2\)</span>) but one of
 them is included in a force given by the force calculator such as
-<span class="math notranslate">\(\mathbf{F}_3=-\frac{\partial V}{\partial\mathbf{r}_3}\)</span>. The
-cutoff distance <span class="math notranslate">\(d_\text{cut}\)</span> is defined as the upper bound of
+<span class="math">\(\mathbf{F}_3=-\frac{\partial V}{\partial\mathbf{r}_3}\)</span>. The
+cutoff distance <span class="math">\(d_\text{cut}\)</span> is defined as the upper bound of
 the distance between the atoms 1 and 2. By this, the set of atomic
-pairs <span class="math notranslate">\(\{(\mathbf{r}_1,\mathbf{r}_2)| |\mathbf{r}_1 -
+pairs <span class="math">\(\{(\mathbf{r}_1,\mathbf{r}_2)| |\mathbf{r}_1 -
 \mathbf{r}_2| &lt; d_\text{cut}\}\)</span> is selected for the supercell-fc3
 calculation. By this, when three distances among the three atoms of
-triplets are all larger than <span class="math notranslate">\(d_\text{cut}\)</span>, those fc3 elements
+triplets are all larger than <span class="math">\(d_\text{cut}\)</span>, those fc3 elements
 can not be obtained and so they are simply set zero.</p>
 </div>
 <div class="section" id="usage">
 <h2><a class="toc-backref" href="#id2">Usage</a><a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="creating-supercells-with-displacements">
 <h3><a class="toc-backref" href="#id3">Creating supercells with displacements</a><a class="headerlink" href="#creating-supercells-with-displacements" title="Permalink to this headline">¶</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> option is employed when creating supercells with
-displacements, therefore this option must be used with <code class="docutils literal notranslate"><span class="pre">-d</span></code> option
+<p><code class="docutils literal"><span class="pre">--cutoff-pair</span></code> option is employed when creating supercells with
+displacements, therefore this option must be used with <code class="docutils literal"><span class="pre">-d</span></code> option
 when running phono3py, for example for the Si example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cutoff</span><span class="o">-</span><span class="n">pair</span><span class="o">=</span><span class="mi">5</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cutoff</span><span class="o">-</span><span class="n">pair</span><span class="o">=</span><span class="mi">5</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
         <span class="n">_</span>                      <span class="n">_____</span>
   <span class="n">_</span> <span class="n">__</span> <span class="o">|</span> <span class="o">|</span><span class="n">__</span>   <span class="n">___</span>  <span class="n">_</span> <span class="n">__</span>   <span class="n">___</span><span class="o">|</span><span class="n">___</span> <span class="o">/</span> <span class="n">_</span> <span class="n">__</span>  <span class="n">_</span>   <span class="n">_</span>
  <span class="o">|</span> <span class="s1">&#39;_ \| &#39;</span><span class="n">_</span> \ <span class="o">/</span> <span class="n">_</span> \<span class="o">|</span> <span class="s1">&#39;_ \ / _ \ |_ \| &#39;</span><span class="n">_</span> \<span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span>
@@ -320,49 +332,49 @@ when running phono3py, for example for the Si example:</p>
       <span class="mi">51</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">Number</span> <span class="pre">of</span> <span class="pre">displacements:</span> <span class="pre">111</span></code> shows the number of supercells with
-displacements when this is run without <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code>
-option. <code class="docutils literal notranslate"><span class="pre">Number</span> <span class="pre">of</span> <span class="pre">displacement</span> <span class="pre">supercell</span> <span class="pre">files</span> <span class="pre">created:</span> <span class="pre">51</span></code> gives
+<p><code class="docutils literal"><span class="pre">Number</span> <span class="pre">of</span> <span class="pre">displacements:</span> <span class="pre">111</span></code> shows the number of supercells with
+displacements when this is run without <code class="docutils literal"><span class="pre">--cutoff-pair</span></code>
+option. <code class="docutils literal"><span class="pre">Number</span> <span class="pre">of</span> <span class="pre">displacement</span> <span class="pre">supercell</span> <span class="pre">files</span> <span class="pre">created:</span> <span class="pre">51</span></code> gives
 the contracted number of supercells with displacements by
-<code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> option. There number of <code class="docutils literal notranslate"><span class="pre">POSCAR-0xxxx</span></code> files is found
-51. At this step, a special <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> is created. This
+<code class="docutils literal"><span class="pre">--cutoff-pair</span></code> option. There number of <code class="docutils literal"><span class="pre">POSCAR-0xxxx</span></code> files is found
+51. At this step, a special <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> is created. This
 contains information on this contraction and used in the other
 calculation step, therefore this file must be kept carefully.</p>
 <div class="section" id="supercell-files">
 <h4>Supercell files<a class="headerlink" href="#supercell-files" title="Permalink to this headline">¶</a></h4>
-<p><code class="docutils literal notranslate"><span class="pre">POSCAR-xxxxx</span></code> (in the other calculator interface, the prefix of the
+<p><code class="docutils literal"><span class="pre">POSCAR-xxxxx</span></code> (in the other calculator interface, the prefix of the
 filename is different) are not generated if distance between a pair of
 atoms to be displaced is larger than the specified cutoff pair
-distance. The indexing number (<code class="docutils literal notranslate"><span class="pre">xxxxx</span></code>) corresponds to that of the
-case without setting this option, i.e., the same <code class="docutils literal notranslate"><span class="pre">POSCAR-xxxxx</span></code>
+distance. The indexing number (<code class="docutils literal"><span class="pre">xxxxx</span></code>) corresponds to that of the
+case without setting this option, i.e., the same <code class="docutils literal"><span class="pre">POSCAR-xxxxx</span></code>
 files are created for the same configurations of pairs of
-displacements but <code class="docutils literal notranslate"><span class="pre">POSCAR-xxxxx</span></code> files not being included are not
+displacements but <code class="docutils literal"><span class="pre">POSCAR-xxxxx</span></code> files not being included are not
 generated. The reason of this indexing is that it can be useful when
 changing the cutoff-pair-distance.</p>
 </div>
 <div class="section" id="special-disp-fc3-yaml">
-<h4>Special <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code><a class="headerlink" href="#special-disp-fc3-yaml" title="Permalink to this headline">¶</a></h4>
-<p>Using <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> option together with <code class="docutils literal notranslate"><span class="pre">-d</span></code> option, a special
-<code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> is created. This contains information on distances
+<h4>Special <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code><a class="headerlink" href="#special-disp-fc3-yaml" title="Permalink to this headline">¶</a></h4>
+<p>Using <code class="docutils literal"><span class="pre">--cutoff-pair</span></code> option together with <code class="docutils literal"><span class="pre">-d</span></code> option, a special
+<code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> is created. This contains information on distances
 between displaced atomic-pairs and whether those pairs are to be
-computed or not. This special <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> is necessary to create
+computed or not. This special <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> is necessary to create
 fc3, therefore be careful not to overwrite it by running the option
-<code class="docutils literal notranslate"><span class="pre">-d</span></code> without <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> or with different <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code>
+<code class="docutils literal"><span class="pre">-d</span></code> without <code class="docutils literal"><span class="pre">--cutoff-pair</span></code> or with different <code class="docutils literal"><span class="pre">--cutoff-pair</span></code>
 with different value.</p>
 </div>
 </div>
 <div class="section" id="making-forces-fc3">
-<h3><a class="toc-backref" href="#id4">Making <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a><a class="headerlink" href="#making-forces-fc3" title="Permalink to this headline">¶</a></h3>
-<p>To create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code>, only output files of the supercells created
-using <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> option are passed to <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> as the
-arguments. The special <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> file is necessary to be
+<h3><a class="toc-backref" href="#id4">Making <code class="docutils literal"><span class="pre">FORCES_FC3</span></code></a><a class="headerlink" href="#making-forces-fc3" title="Permalink to this headline">¶</a></h3>
+<p>To create <code class="docutils literal"><span class="pre">FORCES_FC3</span></code>, only output files of the supercells created
+using <code class="docutils literal"><span class="pre">--cutoff-pair</span></code> option are passed to <code class="docutils literal"><span class="pre">phono3py</span></code> as the
+arguments. The special <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> file is necessary to be
 located at current directory.</p>
 <p>An example is shown below for the Si example. Here, it is supposed
-that forces are calculated using VASP in <code class="docutils literal notranslate"><span class="pre">disp-xxxxx</span></code>
+that forces are calculated using VASP in <code class="docutils literal"><span class="pre">disp-xxxxx</span></code>
 directories. After running force calculations, there should be the
 output file containing forces in each directory (for VASP
-<code class="docutils literal notranslate"><span class="pre">vasprun.xml</span></code>).</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="p">{</span><span class="mi">00001</span><span class="p">,</span><span class="mi">00002</span><span class="p">,</span><span class="mi">00003</span><span class="p">,</span><span class="mi">00016</span><span class="p">,</span><span class="mi">00017</span><span class="p">,</span><span class="mi">00018</span><span class="p">,</span><span class="mi">00019</span><span class="p">,</span><span class="mi">00024</span><span class="p">,</span><span class="mi">00025</span><span class="p">,</span><span class="mi">00026</span><span class="p">,</span><span class="mi">00027</span><span class="p">,</span><span class="mi">00032</span><span class="p">,</span><span class="mi">00033</span><span class="p">,</span><span class="mi">00034</span><span class="p">,</span><span class="mi">00035</span><span class="p">,</span><span class="mi">00036</span><span class="p">,</span><span class="mi">00037</span><span class="p">,</span><span class="mi">00038</span><span class="p">,</span><span class="mi">00039</span><span class="p">,</span><span class="mi">00040</span><span class="p">,</span><span class="mi">00041</span><span class="p">,</span><span class="mi">00042</span><span class="p">,</span><span class="mi">00043</span><span class="p">,</span><span class="mi">00070</span><span class="p">,</span><span class="mi">00071</span><span class="p">,</span><span class="mi">00072</span><span class="p">,</span><span class="mi">00073</span><span class="p">,</span><span class="mi">00074</span><span class="p">,</span><span class="mi">00075</span><span class="p">,</span><span class="mi">00076</span><span class="p">,</span><span class="mi">00077</span><span class="p">,</span><span class="mi">00078</span><span class="p">,</span><span class="mi">00079</span><span class="p">,</span><span class="mi">00080</span><span class="p">,</span><span class="mi">00081</span><span class="p">,</span><span class="mi">00082</span><span class="p">,</span><span class="mi">00083</span><span class="p">,</span><span class="mi">00084</span><span class="p">,</span><span class="mi">00085</span><span class="p">,</span><span class="mi">00086</span><span class="p">,</span><span class="mi">00087</span><span class="p">,</span><span class="mi">00088</span><span class="p">,</span><span class="mi">00089</span><span class="p">,</span><span class="mi">00096</span><span class="p">,</span><span class="mi">00097</span><span class="p">,</span><span class="mi">00098</span><span class="p">,</span><span class="mi">00099</span><span class="p">,</span><span class="mi">00100</span><span class="p">,</span><span class="mi">00101</span><span class="p">,</span><span class="mi">00102</span><span class="p">,</span><span class="mi">00103</span><span class="p">}</span><span class="o">/</span><span class="n">vasprun</span><span class="o">.</span><span class="n">xml</span>
+<code class="docutils literal"><span class="pre">vasprun.xml</span></code>).</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="p">{</span><span class="mi">00001</span><span class="p">,</span><span class="mi">00002</span><span class="p">,</span><span class="mi">00003</span><span class="p">,</span><span class="mi">00016</span><span class="p">,</span><span class="mi">00017</span><span class="p">,</span><span class="mi">00018</span><span class="p">,</span><span class="mi">00019</span><span class="p">,</span><span class="mi">00024</span><span class="p">,</span><span class="mi">00025</span><span class="p">,</span><span class="mi">00026</span><span class="p">,</span><span class="mi">00027</span><span class="p">,</span><span class="mi">00032</span><span class="p">,</span><span class="mi">00033</span><span class="p">,</span><span class="mi">00034</span><span class="p">,</span><span class="mi">00035</span><span class="p">,</span><span class="mi">00036</span><span class="p">,</span><span class="mi">00037</span><span class="p">,</span><span class="mi">00038</span><span class="p">,</span><span class="mi">00039</span><span class="p">,</span><span class="mi">00040</span><span class="p">,</span><span class="mi">00041</span><span class="p">,</span><span class="mi">00042</span><span class="p">,</span><span class="mi">00043</span><span class="p">,</span><span class="mi">00070</span><span class="p">,</span><span class="mi">00071</span><span class="p">,</span><span class="mi">00072</span><span class="p">,</span><span class="mi">00073</span><span class="p">,</span><span class="mi">00074</span><span class="p">,</span><span class="mi">00075</span><span class="p">,</span><span class="mi">00076</span><span class="p">,</span><span class="mi">00077</span><span class="p">,</span><span class="mi">00078</span><span class="p">,</span><span class="mi">00079</span><span class="p">,</span><span class="mi">00080</span><span class="p">,</span><span class="mi">00081</span><span class="p">,</span><span class="mi">00082</span><span class="p">,</span><span class="mi">00083</span><span class="p">,</span><span class="mi">00084</span><span class="p">,</span><span class="mi">00085</span><span class="p">,</span><span class="mi">00086</span><span class="p">,</span><span class="mi">00087</span><span class="p">,</span><span class="mi">00088</span><span class="p">,</span><span class="mi">00089</span><span class="p">,</span><span class="mi">00096</span><span class="p">,</span><span class="mi">00097</span><span class="p">,</span><span class="mi">00098</span><span class="p">,</span><span class="mi">00099</span><span class="p">,</span><span class="mi">00100</span><span class="p">,</span><span class="mi">00101</span><span class="p">,</span><span class="mi">00102</span><span class="p">,</span><span class="mi">00103</span><span class="p">}</span><span class="o">/</span><span class="n">vasprun</span><span class="o">.</span><span class="n">xml</span>
         <span class="n">_</span>                      <span class="n">_____</span>
   <span class="n">_</span> <span class="n">__</span> <span class="o">|</span> <span class="o">|</span><span class="n">__</span>   <span class="n">___</span>  <span class="n">_</span> <span class="n">__</span>   <span class="n">___</span><span class="o">|</span><span class="n">___</span> <span class="o">/</span> <span class="n">_</span> <span class="n">__</span>  <span class="n">_</span>   <span class="n">_</span>
  <span class="o">|</span> <span class="s1">&#39;_ \| &#39;</span><span class="n">_</span> \ <span class="o">/</span> <span class="n">_</span> \<span class="o">|</span> <span class="s1">&#39;_ \ / _ \ |_ \| &#39;</span><span class="n">_</span> \<span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span>
@@ -383,14 +395,14 @@ output file containing forces in each directory (for VASP
 </div>
 <p>Using <a class="reference internal" href="command-options.html#cf3-file-option"><span class="std std-ref">–cf3_file option</span></a> may be recommended
 when the number of force files is large.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>% for i in `ls POSCAR-0*|sed s/POSCAR-//`;do echo disp-$i/vasprun.xml;done &gt; file_list.dat
+<div class="highlight-default"><div class="highlight"><pre><span></span>% for i in `ls POSCAR-0*|sed s/POSCAR-//`;do echo disp-$i/vasprun.xml;done &gt; file_list.dat
 % phono3py --cf3_file file_list.dat
 </pre></div>
 </div>
-<p>Using a python script, <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> is easily parsed. So
+<p>Using a python script, <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> is easily parsed. So
 it is also easy to create the file list by a python
 script:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env python</span>
 <span class="kn">import</span> <span class="nn">yaml</span>
 
 <span class="n">file_name_tmpl</span> <span class="o">=</span> <span class="s2">&quot;disp-</span><span class="si">%05d</span><span class="s2">/vasprun.xml&quot;</span>
@@ -410,9 +422,9 @@ script:</p>
 </div>
 <div class="section" id="running-phonon-phonon-interaction-calculation">
 <h3><a class="toc-backref" href="#id5">Running phonon-phonon interaction calculation</a><a class="headerlink" href="#running-phonon-phonon-interaction-calculation" title="Permalink to this headline">¶</a></h3>
-<p>To create fc3, <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> option is not necessary but the
-special <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> is required.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
+<p>To create fc3, <code class="docutils literal"><span class="pre">--cutoff-pair</span></code> option is not necessary but the
+special <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> is required.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
 <span class="o">...</span>
 
 <span class="n">Displacement</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="n">read</span> <span class="kn">from</span> <span class="nn">disp_fc3.yaml.</span>
@@ -436,9 +448,9 @@ special <code class="docutils literal notranslate"><span class="pre">disp_fc3.ya
   \<span class="n">___</span><span class="o">|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>\<span class="n">__</span><span class="p">,</span><span class="n">_</span><span class="o">|</span>
 </pre></div>
 </div>
-<p>Once <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> are created, <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code>
-option and the special <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> are not needed anymore.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">br</span>
+<p>Once <code class="docutils literal"><span class="pre">fc3.hdf5</span></code> and <code class="docutils literal"><span class="pre">fc2.hdf5</span></code> are created, <code class="docutils literal"><span class="pre">--cutoff-pair</span></code>
+option and the special <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code> are not needed anymore.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">br</span>
 <span class="o">...</span>
 
   <span class="mf">300.0</span>     <span class="mf">118.778</span>    <span class="mf">118.778</span>    <span class="mf">118.778</span>     <span class="o">-</span><span class="mf">0.000</span>     <span class="o">-</span><span class="mf">0.000</span>      <span class="mf">0.000</span>
@@ -452,11 +464,11 @@ option and the special <code class="docutils literal notranslate"><span class="p
 <h2><a class="toc-backref" href="#id6">The Test</a><a class="headerlink" href="#the-test" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="si-pbe">
 <h3><a class="toc-backref" href="#id7">Si-PBE</a><a class="headerlink" href="#si-pbe" title="Permalink to this headline">¶</a></h3>
-<p>For testing, thermal conductivities with respect to <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code>
-values are calculated as follows. Note that if <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> for full
-fc3 elements exists, the same <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> file can be used for
-generating contracted fc3 for each special <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>% egrep &#39;^\s+distance&#39; disp_fc3.yaml|awk &#39;{print $2}&#39;|sort|uniq
+<p>For testing, thermal conductivities with respect to <code class="docutils literal"><span class="pre">--cutoff-pair</span></code>
+values are calculated as follows. Note that if <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> for full
+fc3 elements exists, the same <code class="docutils literal"><span class="pre">FORCES_FC3</span></code> file can be used for
+generating contracted fc3 for each special <code class="docutils literal"><span class="pre">disp_fc3.yaml</span></code>.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>% egrep &#39;^\s+distance&#39; disp_fc3.yaml|awk &#39;{print $2}&#39;|sort|uniq
 0.000000
 2.366961
 3.865232
@@ -509,7 +521,7 @@ num_displacements_created: 111
 </div>
 <div class="section" id="aln-lda">
 <h3><a class="toc-backref" href="#id8">AlN-LDA</a><a class="headerlink" href="#aln-lda" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>% egrep &#39;^\s+distance&#39; disp_fc3.yaml|awk &#39;{print $2}&#39;|sort|uniq
+<div class="highlight-default"><div class="highlight"><pre><span></span>% egrep &#39;^\s+distance&#39; disp_fc3.yaml|awk &#39;{print $2}&#39;|sort|uniq
 0.000000
 1.889907
 1.901086
@@ -627,7 +639,7 @@ num_displacements_created: 1254
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.1.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.2.<br/>
     </p>
   </div>
 </footer>
