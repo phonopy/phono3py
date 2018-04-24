@@ -296,7 +296,7 @@ def solve_fc3(first_atom_num,
             solver = "lapacke-dgesvd"
         except ImportError:
             print("Phono3py C-routine is not compiled correctly.")
-            solver = "numpy"
+            solver = "numpy.linalg.pinv"
 
     if verbose:
         text = ("Computing fc3[ %d, x, x ] using %s with " %
@@ -328,7 +328,6 @@ def solve_fc3(first_atom_num,
                                                  positions,
                                                  site_symmetry,
                                                  symprec)
-
     rot_disps = get_rotated_displacement(displacements_first, site_sym_cart)
 
     if "numpy" in solver:
@@ -436,21 +435,28 @@ def _get_fc3_least_atoms(supercell,
                          symmetry,
                          is_compact_fc3=False,
                          verbose=True):
+    symprec = symmetry.get_symmetry_tolerance()
     num_satom = supercell.get_number_of_atoms()
     unique_first_atom_nums = np.unique(
         [x['number'] for x in disp_dataset['first_atoms']])
+
     if is_compact_fc3:
         num_patom = primitive.get_number_of_atoms()
         s2p_map = primitive.get_supercell_to_primitive_map()
         p2p_map = primitive.get_primitive_to_primitive_map()
-        first_atom_nums = [p2p_map[s2p_map[i]] for i in unique_first_atom_nums]
+        first_atom_nums = []
+        for i in unique_first_atom_nums:
+            if i != s2p_map[i]:
+                print("Something wrong in disp_fc3.yaml")
+                raise RuntimeError
+            else:
+                first_atom_nums.append(i)
         fc3 = np.zeros((num_patom, num_satom, num_satom, 3, 3, 3), dtype='double')
     else:
         first_atom_nums = unique_first_atom_nums
         fc3 = np.zeros((num_satom, num_satom, num_satom, 3, 3, 3), dtype='double')
-    symprec = symmetry.get_symmetry_tolerance()
 
-    for first_atom_num  in first_atom_nums:
+    for first_atom_num in first_atom_nums:
         site_symmetry = symmetry.get_site_symmetry(first_atom_num)
         displacements_first = []
         delta_fc2s = []
@@ -474,13 +480,18 @@ def _get_fc3_least_atoms(supercell,
                     reduced_site_sym,
                     symprec))
 
-        fc3[first_atom_num] = solve_fc3(first_atom_num,
-                                        supercell,
-                                        site_symmetry,
-                                        displacements_first,
-                                        delta_fc2s,
-                                        symprec,
-                                        verbose=verbose)
+        fc3_first = solve_fc3(first_atom_num,
+                              supercell,
+                              site_symmetry,
+                              displacements_first,
+                              delta_fc2s,
+                              symprec,
+                              verbose=verbose)
+        if is_compact_fc3:
+            fc3[p2p_map[s2p_map[first_atom_num]]] = fc3_first
+        else:
+            fc3[first_atom_num] = fc3_first
+
     return fc3
 
 

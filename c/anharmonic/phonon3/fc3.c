@@ -63,7 +63,7 @@ static void set_permutation_symmetry_compact_fc3(double * fc3,
                                                  const int is_transpose);
 
 void fc3_distribute_fc3(double *fc3,
-                        const int third_atom,
+                        const int first_disp_atom,
                         const int *atom_mapping,
                         const int num_atom,
                         const double *rot_cart)
@@ -72,15 +72,16 @@ void fc3_distribute_fc3(double *fc3,
 
   for (i = 0; i < num_atom; i++) {
     for (j = 0; j < num_atom; j++) {
-      tensor3_rotation(fc3 +
-                       27 * num_atom * num_atom * third_atom +
-                       27 * num_atom * i +
-                       27 * j,
-                       fc3 +
-                       27 * num_atom * num_atom * atom_mapping[third_atom] +
-                       27 * num_atom * atom_mapping[i] +
-                       27 * atom_mapping[j],
-                       rot_cart);
+      tensor3_rotation(
+        fc3 +
+        27 * num_atom * num_atom * first_disp_atom +
+        27 * num_atom * i +
+        27 * j,
+        fc3 +
+        27 * num_atom * num_atom * atom_mapping[first_disp_atom] +
+        27 * num_atom * atom_mapping[i] +
+        27 * atom_mapping[j],
+        rot_cart);
     }
   }
 }

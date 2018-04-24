@@ -182,7 +182,7 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_set_permutation_symmetry_fc3,
    METH_VARARGS,
    "Set permutation symmetry for fc3"},
-  {"transpose_compact_fc3",
+  {"transpose_compact_fc3o",
    (PyCFunction)py_transpose_compact_fc3,
    METH_VARARGS,
    "Transpose compact fc3"},
@@ -1369,7 +1369,7 @@ static PyObject * py_get_thm_isotope_strength(PyObject *self, PyObject *args)
 static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
 {
   PyArrayObject *force_constants_third;
-  int third_atom;
+  int first_disp_atom;
   PyArrayObject *rotation_cart_inv;
   PyArrayObject *atom_mapping_py;
 
@@ -1380,7 +1380,7 @@ static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
 
   if (!PyArg_ParseTuple(args, "OiOO",
                         &force_constants_third,
-                        &third_atom,
+                        &first_disp_atom,
                         &atom_mapping_py,
                         &rotation_cart_inv)) {
     return NULL;
@@ -1392,7 +1392,7 @@ static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
   num_atom = PyArray_DIMS(atom_mapping_py)[0];
 
   fc3_distribute_fc3(fc3,
-                     third_atom,
+                     first_disp_atom,
                      atom_mapping,
                      num_atom,
                      rot_cart_inv);
@@ -1408,8 +1408,7 @@ py_set_permutation_symmetry_fc3(PyObject *self, PyObject *args)
   double *fc3;
   int num_atom;
 
-  if (!PyArg_ParseTuple(args, "O",
-                        &py_fc3)) {
+  if (!PyArg_ParseTuple(args, "O", &py_fc3)) {
     return NULL;
   }
 
