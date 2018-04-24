@@ -165,49 +165,23 @@ def set_permutation_symmetry_fc3_elem(fc3, a, b, c, divisor=6):
                             fc3[c, b, a, k, j, i]) / divisor
     return tensor3
 
-def set_translational_invariance_fc3(fc3,
-                                     translational_symmetry_type=1):
+def set_translational_invariance_fc3(fc3):
     for i in range(3):
-        set_translational_invariance_fc3_per_index(
-            fc3,
-            index=i,
-            translational_symmetry_type=translational_symmetry_type)
+        set_translational_invariance_fc3_per_index(fc3, index=i)
 
-def set_translational_invariance_fc3_per_index(fc3,
-                                               index=0,
-                                               translational_symmetry_type=1):
+def set_translational_invariance_fc3_per_index(fc3, index=0):
     for i in range(fc3.shape[(1 + index) % 3]):
         for j in range(fc3.shape[(2 + index) % 3]):
             for k, l, m in list(np.ndindex(3, 3, 3)):
-                if translational_symmetry_type == 2: # Type 2
-                    if index == 0:
-                        fc_abs = np.abs(fc3[:, i, j, k, l, m])
-                        fc_sum = np.sum(fc3[:, i, j, k, l, m])
-                        fc_abs_sum = np.sum(fc_abs)
-                        fc3[:, i, j, k, l, m] -= (
-                            fc_sum / fc_abs_sum * fc_abs)
-                    elif index == 1:
-                        fc_abs = np.abs(fc3[i, :, j, k, l, m])
-                        fc_sum = np.sum(fc3[i, :, j, k, l, m])
-                        fc_abs_sum = np.sum(fc_abs)
-                        fc3[i, :, j, k, l, m] -= (
-                            fc_sum / fc_abs_sum * fc_abs)
-                    elif index == 2:
-                        fc_abs = np.abs(fc3[i, j, :, k, l, m])
-                        fc_sum = np.sum(fc3[i, j, :, k, l, m])
-                        fc_abs_sum = np.sum(fc_abs)
-                        fc3[i, j, :, k, l, m] -= (
-                            fc_sum / fc_abs_sum * fc_abs)
-                else: # Type 1
-                    if index == 0:
-                        fc3[:, i, j, k, l, m] -= np.sum(
-                            fc3[:, i, j, k, l, m]) / fc3.shape[0]
-                    elif index == 1:
-                        fc3[j, :, i, k, l, m] -= np.sum(
-                            fc3[j, :, i, k, l, m]) / fc3.shape[1]
-                    elif index == 2:
-                        fc3[i, j, :, k, l, m] -= np.sum(
-                            fc3[i, j, :, k, l, m]) / fc3.shape[2]
+                if index == 0:
+                    fc3[:, i, j, k, l, m] -= np.sum(
+                        fc3[:, i, j, k, l, m]) / fc3.shape[0]
+                elif index == 1:
+                    fc3[j, :, i, k, l, m] -= np.sum(
+                        fc3[j, :, i, k, l, m]) / fc3.shape[1]
+                elif index == 2:
+                    fc3[i, j, :, k, l, m] -= np.sum(
+                        fc3[i, j, :, k, l, m]) / fc3.shape[2]
 
 def third_rank_tensor_rotation(rot_cart, tensor):
     rot_tensor = np.zeros((3,3,3), dtype='double')

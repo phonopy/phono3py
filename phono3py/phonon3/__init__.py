@@ -9,8 +9,7 @@ from phonopy.harmonic.force_constants import (
     symmetrize_compact_force_constants,
     set_translational_invariance_per_index,
     set_translational_invariance,
-    set_permutation_symmetry,
-    set_translational_invariance)
+    set_permutation_symmetry)
 from phonopy.harmonic.displacement import get_least_displacements
 from phonopy.harmonic.displacement import direction_to_displacement as \
      direction_to_displacement_fc2
@@ -303,16 +302,11 @@ class Phono3py(object):
         if self._fc3 is not None:
             set_permutation_symmetry_fc3(self._fc3)
 
-    def set_translational_invariance(self,
-                                     translational_symmetry_type=1):
+    def set_translational_invariance(self):
         if self._fc2 is not None:
-            set_translational_invariance(
-                self._fc2,
-                translational_symmetry_type=translational_symmetry_type)
+            set_translational_invariance(self._fc2)
         if self._fc3 is not None:
-            set_translational_invariance_fc3(
-                self._fc3,
-                translational_symmetry_type=translational_symmetry_type)
+            set_translational_invariance_fc3(self._fc3)
 
     def get_version(self):
         return __version__
