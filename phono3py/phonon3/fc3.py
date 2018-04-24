@@ -7,10 +7,12 @@ from phonopy.harmonic.force_constants import (get_fc2,
                                               solve_force_constants,
                                               get_rotated_displacement,
                                               get_positions_sent_by_rot_inv,
-                                              set_translational_invariance)
+                                              set_translational_invariance,
+                                              get_nsym_list_and_s2pp)
 from phono3py.phonon3.displacement_fc3 import (get_reduced_site_symmetry,
                                                get_bond_symmetry)
-from phonopy.structure.cells import get_equivalent_smallest_vectors
+from phonopy.structure.cells import (get_equivalent_smallest_vectors,
+                                     compute_all_sg_permutations)
 
 def get_fc3(supercell,
             primitive,
@@ -23,7 +25,6 @@ def get_fc3(supercell,
                                disp_dataset,
                                fc2,
                                symmetry,
-                               False,
                                is_compact_fc3=is_compact_fc3,
                                verbose=verbose)
 
@@ -71,24 +72,23 @@ def distribute_fc3(fc3,
     atom_mapping = np.zeros(num_atom, dtype='intc')
 
     for i in range(num_atom):
-        # if i in first_disp_atoms:
-        #     continue
+        if i in first_disp_atoms:
+            continue
 
         for atom_index_done in first_disp_atoms:
-            rot_num = _get_atom_mapping_by_symmetry(lattice,
-                                                    positions,
-                                                    i,
-                                                    atom_index_done,
-                                                    rotations,
-                                                    translations,
-                                                    symprec)
-            if rot_num > -1:
+            pos_rot = np.dot(rotations, positions[i]) + translations
+            diffs = pos_rot - positions[atom_index_done]
+            diffs -= np.rint(diffs)
+            dists = np.sqrt((np.dot(diffs, lattice.T) ** 2).sum(axis=1))
+            map_sym = np.where(dists < symprec)[0]
+
+            if len(map_sym) > 0:
                 i_rot = atom_index_done
-                rot = rotations[rot_num]
-                trans = translations[rot_num]
+                rot = rotations[map_sym[0]]
+                trans = translations[map_sym[0]]
                 break
 
-        if rot_num < 0:
+        if len(map_sym) == 0:
             print("Position or symmetry may be wrong.")
             raise ValueError
 
@@ -136,14 +136,6 @@ def set_permutation_symmetry_fc3(fc3):
                 for k in range(j, num_atom):
                     fc3_elem = set_permutation_symmetry_fc3_elem(fc3, i, j, k)
                     copy_permutation_symmetry_fc3_elem(fc3, fc3_elem, i, j, k)
-
-def set_permutation_symmetry_fc3_deprecated(fc3):
-    fc3_sym = np.zeros(fc3.shape, dtype='double')
-    for (i, j, k) in list(np.ndindex(fc3.shape[:3])):
-        fc3_sym[i, j, k] = set_permutation_symmetry_fc3_elem(fc3, i, j, k)
-
-    for (i, j, k) in list(np.ndindex(fc3.shape[:3])):
-        fc3[i, j, k] = fc3_sym[i, j, k]
 
 def copy_permutation_symmetry_fc3_elem(fc3, fc3_elem, a, b, c):
     for (i, j, k) in list(np.ndindex(3, 3, 3)):
@@ -198,13 +190,11 @@ def get_delta_fc2(dataset_second_atoms,
                   fc2,
                   supercell,
                   reduced_site_sym,
-                  symmetrize,
                   symprec):
     disp_fc2 = get_constrained_fc2(supercell,
                                    dataset_second_atoms,
                                    atom1,
                                    reduced_site_sym,
-                                   symmetrize,
                                    symprec)
     return disp_fc2 - fc2
 
@@ -212,7 +202,6 @@ def get_constrained_fc2(supercell,
                         dataset_second_atoms,
                         atom1,
                         reduced_site_sym,
-                        symmetrize,
                         symprec):
     """
     dataset_second_atoms: [{'number': 7,
@@ -253,21 +242,20 @@ def get_constrained_fc2(supercell,
     # Shift positions according to set atom1 is at origin
     pos_center = positions[atom1].copy()
     positions -= pos_center
+    rotations = np.array(reduced_site_sym, dtype='intc', order='C')
+    translations = np.zeros((len(reduced_site_sym), 3),
+                            dtype='double', order='C')
+    permutations = compute_all_sg_permutations(positions,
+                                               rotations,
+                                               translations,
+                                               lattice,
+                                               symprec)
     distribute_force_constants(fc2,
                                range(num_atom),
                                atom_list,
                                lattice,
-                               positions,
-                               np.array(reduced_site_sym,
-                                        dtype='intc', order='C'),
-                               np.zeros((len(reduced_site_sym), 3),
-                                        dtype='double'),
-                               symprec)
-
-    if symmetrize:
-        set_translational_invariance(fc2)
-        set_permutation_symmetry(fc2)
-
+                               rotations,
+                               permutations)
     return fc2
 
 
@@ -424,7 +412,6 @@ def _get_fc3_least_atoms(supercell,
                          disp_dataset,
                          fc2,
                          symmetry,
-                         symmetrize_fc3r=False,
                          is_compact_fc3=False,
                          verbose=True):
     num_atom = supercell.get_number_of_atoms()
@@ -439,7 +426,6 @@ def _get_fc3_least_atoms(supercell,
                           fc2,
                           first_atom_num,
                           symmetry.get_site_symmetry(first_atom_num),
-                          symmetrize_fc3r,
                           symprec,
                           verbose)
     return fc3
@@ -450,7 +436,6 @@ def _get_fc3_one_atom(fc3,
                       fc2,
                       first_atom_num,
                       site_symmetry,
-                      symmetrize_fc3r,
                       symprec,
                       verbose):
     displacements_first = []
@@ -473,7 +458,6 @@ def _get_fc3_one_atom(fc3,
                 fc2,
                 supercell,
                 reduced_site_sym,
-                symmetrize_fc3r,
                 symprec))
 
     solve_fc3(fc3,
@@ -515,13 +499,13 @@ def _get_fc3_done(supercell, disp_dataset, symmetry, array_shape):
 
     atom_mapping = []
     for rot, trans in zip(rotations, translations):
-        atom_indices = []
-        for rot_pos in (np.dot(positions, rot.T) + trans):
-            diffs = positions - rot_pos
-            diffs -= np.rint(diffs)
-            diffs = np.dot(diffs, lattice.T)
-            dists = np.sqrt(np.sum(diffs ** 2, axis=1))
-            atom_indices.append((np.where(dists < symprec))[0][0])
+        atom_indices = [
+            _get_atom_by_symmetry(lattice,
+                                  positions,
+                                  rot,
+                                  trans,
+                                  i,
+                                  symprec) for i in range(num_atom)]
         atom_mapping.append(atom_indices)
 
     for dataset_first_atom in disp_dataset['first_atoms']:
@@ -538,16 +522,14 @@ def _get_fc3_done(supercell, disp_dataset, symmetry, array_shape):
         positions_shifted = positions - positions[first_atom_num]
         least_second_atom_nums = np.unique(least_second_atom_nums)
 
-        second_atom_nums = []
         for red_rot in reduced_site_sym:
-            for i in least_second_atom_nums:
-                second_atom_nums.append(
-                    _get_atom_by_symmetry(lattice,
-                                          positions_shifted,
-                                          red_rot,
-                                          np.zeros(3, dtype='double'),
-                                          i,
-                                          symprec))
+            second_atom_nums = [
+                _get_atom_by_symmetry(lattice,
+                                      positions_shifted,
+                                      red_rot,
+                                      np.zeros(3, dtype='double'),
+                                      i,
+                                      symprec) for i in least_second_atom_nums]
         second_atom_nums = np.unique(second_atom_nums)
 
         for i in range(len(rotations)):
@@ -562,34 +544,14 @@ def _get_atom_by_symmetry(lattice,
                           rotation,
                           trans,
                           atom_number,
-                          symprec=1e-5):
+                          symprec):
     rot_pos = np.dot(positions[atom_number], rotation.T) + trans
-    for i, pos in enumerate(positions):
-        diff = pos - rot_pos
-        diff -= np.rint(diff)
-        dist = np.linalg.norm(np.dot(lattice, diff))
-        if dist < symprec:
-            return i
-
-    print("Position or symmetry is wrong.")
-    raise ValueError
-
-def _get_atom_mapping_by_symmetry(lattice,
-                                  positions,
-                                  atom_search,
-                                  atom_target,
-                                  rotations,
-                                  translations,
-                                  symprec):
-    map_sym = -1
-
-    for i, (r, t) in enumerate(zip(rotations, translations)):
-        rot_pos = np.dot(positions[atom_search], r.T) + t
-        diff = rot_pos - positions[atom_target]
-        diff -= np.rint(diff)
-        dist = np.linalg.norm(np.dot(lattice, diff))
-        if dist < symprec:
-            map_sym = i
-            break
-
-    return map_sym
+    diffs = positions - rot_pos
+    diffs -= np.rint(diffs)
+    dists = np.sqrt((np.dot(diffs, lattice.T) ** 2).sum(axis=1))
+    rot_atoms = np.where(dists < symprec)[0] # only one should be found
+    if len(rot_atoms) > 0:
+        return rot_atoms[0]
+    else:
+        print("Position or symmetry is wrong.")
+        raise ValueError

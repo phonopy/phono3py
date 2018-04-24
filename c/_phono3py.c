@@ -77,6 +77,7 @@ static PyObject * py_get_isotope_strength(PyObject *self, PyObject *args);
 static PyObject * py_get_thm_isotope_strength(PyObject *self, PyObject *args);
 static PyObject * py_set_permutation_symmetry_fc3(PyObject *self,
                                                   PyObject *args);
+static PyObject * py_transpose_compact_fc3(PyObject *self, PyObject *args);
 static PyObject * py_get_neighboring_gird_points(PyObject *self, PyObject *args);
 static PyObject * py_set_integration_weights(PyObject *self, PyObject *args);
 static PyObject *
@@ -181,6 +182,10 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_set_permutation_symmetry_fc3,
    METH_VARARGS,
    "Set permutation symmetry for fc3"},
+  {"transpose_compact_fc3",
+   (PyCFunction)py_transpose_compact_fc3,
+   METH_VARARGS,
+   "Transpose compact fc3"},
   {"neighboring_grid_points",
    (PyCFunction)py_get_neighboring_gird_points,
    METH_VARARGS,
@@ -1386,16 +1391,17 @@ static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
   atom_mapping = (int*)PyArray_DATA(atom_mapping_py);
   num_atom = PyArray_DIMS(atom_mapping_py)[0];
 
-  distribute_fc3(fc3,
-                 third_atom,
-                 atom_mapping,
-                 num_atom,
-                 rot_cart_inv);
+  fc3_distribute_fc3(fc3,
+                     third_atom,
+                     atom_mapping,
+                     num_atom,
+                     rot_cart_inv);
 
   Py_RETURN_NONE;
 }
 
-static PyObject * py_set_permutation_symmetry_fc3(PyObject *self, PyObject *args)
+static PyObject *
+py_set_permutation_symmetry_fc3(PyObject *self, PyObject *args)
 {
   PyArrayObject *py_fc3;
 
@@ -1410,7 +1416,126 @@ static PyObject * py_set_permutation_symmetry_fc3(PyObject *self, PyObject *args
   fc3 = (double*)PyArray_DATA(py_fc3);
   num_atom = PyArray_DIMS(py_fc3)[0];
 
-  set_permutation_symmetry_fc3(fc3, num_atom);
+  fc3_set_permutation_symmetry_fc3(fc3, num_atom);
+
+  Py_RETURN_NONE;
+}
+
+/* static PyObject * */
+/* py_set_permutation_symmetry_compact_fc3(PyObject *self, PyObject *args) */
+/* { */
+/*   PyArrayObject* py_fc3; */
+/*   PyArrayObject* py_permutations; */
+/*   PyArrayObject* py_s2pp_map; */
+/*   PyArrayObject* py_p2s_map; */
+/*   PyArrayObject* py_nsym_list; */
+/*   int level; */
+/*   double *fc3; */
+/*   int *perms; */
+/*   int *s2pp; */
+/*   int *p2s; */
+/*   int *nsym_list; */
+
+/*   int n_patom, n_satom, i, j, k, l, n; */
+/*   double sum; */
+
+/*   if (!PyArg_ParseTuple(args, "OOOOOi", */
+/*                         &py_fc3, */
+/*                         &py_permutations, */
+/*                         &py_s2pp_map, */
+/*                         &py_p2s_map, */
+/*                         &py_nsym_list, */
+/*                         &level)) { */
+/*     return NULL; */
+/*   } */
+
+/*   fc3 = (double*)PyArray_DATA(py_fc3); */
+/*   perms = (int*)PyArray_DATA(py_permutations); */
+/*   s2pp = (int*)PyArray_DATA(py_s2pp_map); */
+/*   p2s = (int*)PyArray_DATA(py_p2s_map); */
+/*   nsym_list = (int*)PyArray_DATA(py_nsym_list); */
+/*   n_patom = PyArray_DIMS(py_fc3)[0]; */
+/*   n_satom = PyArray_DIMS(py_fc3)[1]; */
+
+/*   if (level > 0) { */
+/*     for (n = 0; n < level; n++) { */
+/*       /\* transpose only *\/ */
+/*       fc3_set_permutation_symmetry_compact_fc3(fc3, */
+/*                                                p2s, */
+/*                                                s2pp, */
+/*                                                nsym_list, */
+/*                                                perms, */
+/*                                                n_satom, */
+/*                                                n_patom, */
+/*                                                1); */
+/*       for (i = 0; i < n_patom; i++) { */
+/*         for (k = 0; k < 3; k++) { */
+/*           for (l = 0; l < 3; l++) { */
+/*             sum = 0; */
+/*             for (j = 0; j < n_satom; j++) { */
+/*               sum += fc3[i * n_satom * 9 + j * 9 + k * 3 + l]; */
+/*             } */
+/*             sum /= n_satom; */
+/*             for (j = 0; j < n_satom; j++) { */
+/*               fc3[i * n_satom * 9 + j * 9 + k * 3 + l] -= sum; */
+/*             } */
+/*           } */
+/*         } */
+/*       } */
+/*     } */
+/*   } */
+
+/*   fc3_set_permutation_symmetry_compact_fc3(fc3, */
+/*                                            p2s, */
+/*                                            s2pp, */
+/*                                            nsym_list, */
+/*                                            perms, */
+/*                                            n_satom, */
+/*                                            n_patom, */
+/*                                            0); */
+
+/*   Py_RETURN_NONE; */
+/* } */
+
+static PyObject * py_transpose_compact_fc3(PyObject *self, PyObject *args)
+{
+  PyArrayObject* py_fc3;
+  PyArrayObject* py_permutations;
+  PyArrayObject* py_s2pp_map;
+  PyArrayObject* py_p2s_map;
+  PyArrayObject* py_nsym_list;
+  double *fc3;
+  int *s2pp;
+  int *p2s;
+  int *nsym_list;
+  int *perms;
+  int n_patom, n_satom;
+
+  if (!PyArg_ParseTuple(args, "OOOOO",
+                        &py_fc3,
+                        &py_permutations,
+                        &py_s2pp_map,
+                        &py_p2s_map,
+                        &py_nsym_list)) {
+    return NULL;
+  }
+
+  fc3 = (double*)PyArray_DATA(py_fc3);
+  perms = (int*)PyArray_DATA(py_permutations);
+  s2pp = (int*)PyArray_DATA(py_s2pp_map);
+  p2s = (int*)PyArray_DATA(py_p2s_map);
+  nsym_list = (int*)PyArray_DATA(py_nsym_list);
+  n_patom = PyArray_DIMS(py_fc3)[0];
+  n_satom = PyArray_DIMS(py_fc3)[1];
+
+  fc3_set_permutation_symmetry_compact_fc3(fc3,
+                                           p2s,
+                                           s2pp,
+                                           nsym_list,
+                                           perms,
+                                           n_satom,
+                                           n_patom,
+                                           1);
 
   Py_RETURN_NONE;
 }

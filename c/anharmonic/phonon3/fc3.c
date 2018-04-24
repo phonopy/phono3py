@@ -32,8 +32,12 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
+#include <stdlib.h>
 #include <phonon3_h/fc3.h>
 
+static void tensor3_rotation(double *rot_tensor,
+                             const double *tensor,
+                             const double *rot_cartesian);
 static double tensor3_rotation_elem(const double *tensor,
                                     const double *r,
                                     const int pos);
@@ -49,12 +53,20 @@ static void set_permutation_symmetry_fc3_elem(double *fc3_elem,
                                               const int b,
                                               const int c,
                                               const int num_atom);
+static void set_permutation_symmetry_compact_fc3(double * fc3,
+                                                 const int p2s[],
+                                                 const int s2pp[],
+                                                 const int nsym_list[],
+                                                 const int perms[],
+                                                 const int n_satom,
+                                                 const int n_patom,
+                                                 const int is_transpose);
 
-void distribute_fc3(double *fc3,
-                    const int third_atom,
-                    const int *atom_mapping,
-                    const int num_atom,
-                    const double *rot_cart)
+void fc3_distribute_fc3(double *fc3,
+                        const int third_atom,
+                        const int *atom_mapping,
+                        const int num_atom,
+                        const double *rot_cart)
 {
   int i, j;
 
@@ -73,9 +85,38 @@ void distribute_fc3(double *fc3,
   }
 }
 
-void tensor3_rotation(double *rot_tensor,
-                      const double *tensor,
-                      const double *rot_cartesian)
+void fc3_set_permutation_symmetry_fc3(double *fc3, const int num_atom)
+{
+  double fc3_elem[27];
+  int i, j, k;
+
+#pragma omp parallel for private(j, k, fc3_elem)
+  for (i = 0; i < num_atom; i++) {
+    for (j = i; j < num_atom; j++) {
+      for (k = j; k < num_atom; k++) {
+        set_permutation_symmetry_fc3_elem(fc3_elem, fc3, i, j, k, num_atom);
+        copy_permutation_symmetry_fc3_elem(fc3, fc3_elem,
+                                           i, j, k, num_atom);
+      }
+    }
+  }
+}
+
+void fc3_set_permutation_symmetry_compact_fc3(double * fc3,
+                                              const int p2s[],
+                                              const int s2pp[],
+                                              const int nsym_list[],
+                                              const int perms[],
+                                              const int n_satom,
+                                              const int n_patom,
+                                              const int is_transpose)
+{
+  ;
+}
+
+static void tensor3_rotation(double *rot_tensor,
+                             const double *tensor,
+                             const double *rot_cartesian)
 {
   int l;
 
@@ -105,23 +146,6 @@ static double tensor3_rotation_elem(const double *tensor,
     }
   }
   return sum;
-}
-
-void set_permutation_symmetry_fc3(double *fc3, const int num_atom)
-{
-  double fc3_elem[27];
-  int i, j, k;
-
-#pragma omp parallel for private(j, k, fc3_elem)
-  for (i = 0; i < num_atom; i++) {
-    for (j = i; j < num_atom; j++) {
-      for (k = j; k < num_atom; k++) {
-        set_permutation_symmetry_fc3_elem(fc3_elem, fc3, i, j, k, num_atom);
-        copy_permutation_symmetry_fc3_elem(fc3, fc3_elem,
-                                           i, j, k, num_atom);
-      }
-    }
-  }
 }
 
 static void copy_permutation_symmetry_fc3_elem(double *fc3,
@@ -199,4 +223,77 @@ static void set_permutation_symmetry_fc3_elem(double *fc3_elem,
       }
     }
   }
+}
+
+static void set_permutation_symmetry_compact_fc3(double * fc,
+                                                 const int p2s[],
+                                                 const int s2pp[],
+                                                 const int nsym_list[],
+                                                 const int perms[],
+                                                 const int n_satom,
+                                                 const int n_patom,
+                                                 const int is_transpose)
+{
+  int i, j, k, l, i_p, j_p, i_trans;
+  size_t m, n;
+  double fc_elem;
+  char *done;
+
+  done = NULL;
+  done = (char*)malloc(sizeof(char) * n_satom * n_patom);
+  for (i = 0; i < n_satom * n_patom; i++) {
+    done[i] = 0;
+  }
+
+  for (j = 0; j < n_satom; j++) {
+    j_p = s2pp[j];
+    for (i_p = 0; i_p < n_patom; i_p++) {
+      i = p2s[i_p];
+      if (i == j) { /* diagnoal part */
+        for (k = 0; k < 3; k++) {
+          for (l = 0; l < 3; l++) {
+            if (l > k) {
+              m = i_p * n_satom * 9 + i * 9 + k * 3 + l;
+              n = i_p * n_satom * 9 + i * 9 + l * 3 + k;
+              if (is_transpose) {
+                fc_elem = fc[m];
+                fc[m] = fc[n];
+                fc[n] = fc_elem;
+              } else {
+                fc[m] = (fc[m] + fc[n]) / 2;
+                fc[n] = fc[m];
+              }
+            }
+          }
+        }
+      }
+      if (!done[i_p * n_satom + j]) {
+        /* (j, i) -- nsym_list[j] --> (j', i') */
+        /* nsym_list[j] translates j to j' where j' is in */
+        /* primitive cell. The same translation sends i to i' */
+        /* where i' is not necessarily to be in primitive cell. */
+        /* Thus, i' = perms[nsym_list[j] * n_satom + i] */
+        i_trans = perms[nsym_list[j] * n_satom + i];
+        done[i_p * n_satom + j] = 1;
+        done[j_p * n_satom + i_trans] = 1;
+        for (k = 0; k < 3; k++) {
+          for (l = 0; l < 3; l++) {
+            m = i_p * n_satom * 9 + j * 9 + k * 3 + l;
+            n = j_p * n_satom * 9 + i_trans * 9 + l * 3 + k;
+            if (is_transpose) {
+              fc_elem = fc[m];
+              fc[m] = fc[n];
+              fc[n] = fc_elem;
+            } else {
+              fc[m] = (fc[n] + fc[m]) / 2;
+              fc[n] = fc[m];
+            }
+          }
+        }
+      }
+    }
+  }
+
+  free(done);
+  done = NULL;
 }
