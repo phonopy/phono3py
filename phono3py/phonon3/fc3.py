@@ -22,6 +22,7 @@ def get_fc3(supercell,
             verbose=False):
     fc2 = get_fc2(supercell, symmetry, disp_dataset)
     fc3 = _get_fc3_least_atoms(supercell,
+                               primitive,
                                disp_dataset,
                                fc2,
                                symmetry,
@@ -114,7 +115,6 @@ def distribute_fc3(fc3,
                                        i,
                                        atom_mapping,
                                        rot_cart_inv)
-
             except ImportError:
                 print("Phono3py C-routine is not compiled correctly.")
                 for j in range(num_atom):
@@ -136,6 +136,26 @@ def set_permutation_symmetry_fc3(fc3):
                 for k in range(j, num_atom):
                     fc3_elem = set_permutation_symmetry_fc3_elem(fc3, i, j, k)
                     copy_permutation_symmetry_fc3_elem(fc3, fc3_elem, i, j, k)
+
+def transpose_compact_fc3(fc3, primitive):
+    try:
+        import phono3py._phono3py as phono3c
+        s2p_map = primitive.get_supercell_to_primitive_map()
+        p2s_map = primitive.get_primitive_to_supercell_map()
+        p2p_map = primitive.get_primitive_to_primitive_map()
+        permutations = primitive.get_atomic_permutations()
+        s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map,
+                                                     p2p_map,
+                                                     permutations)
+        phono3c.transpose_compact_fc3(fc3,
+                                      permutations,
+                                      s2pp_map,
+                                      p2s_map,
+                                      nsym_list)
+    except ImportError:
+        print("Phono3py C-routine is not compiled correctly.")
+        sys.exit(1)
+
 
 def copy_permutation_symmetry_fc3_elem(fc3, fc3_elem, a, b, c):
     for (i, j, k) in list(np.ndindex(3, 3, 3)):
@@ -259,8 +279,7 @@ def get_constrained_fc2(supercell,
     return fc2
 
 
-def solve_fc3(fc3,
-              first_atom_num,
+def solve_fc3(first_atom_num,
               supercell,
               site_symmetry,
               displacements_first,
@@ -319,9 +338,11 @@ def solve_fc3(fc3,
                          dtype='double')
         lapackepy.pinv(inv_U, rot_disps, 1e-13)
 
-    for (i, j) in list(np.ndindex(num_atom, num_atom)):
-        fc3[first_atom_num, i, j] = np.dot(inv_U, _get_rotated_fc2s(
+    fc3 = np.zeros((num_atom, num_atom, 3, 3, 3), dtype='double', order='C')
+    for i, j in np.ndindex(num_atom, num_atom):
+        fc3[i, j] = np.dot(inv_U, _get_rotated_fc2s(
                 i, j, delta_fc2s, rot_map_syms, site_sym_cart)).reshape(3, 3, 3)
+    return fc3
 
 def cutoff_fc3(fc3,
                supercell,
@@ -409,66 +430,58 @@ def _set_permutation_symmetry_fc3_elem_with_cutoff(fc3, fc3_done, a, b, c):
     return tensor3
 
 def _get_fc3_least_atoms(supercell,
+                         primitive,
                          disp_dataset,
                          fc2,
                          symmetry,
                          is_compact_fc3=False,
                          verbose=True):
-    num_atom = supercell.get_number_of_atoms()
+    num_satom = supercell.get_number_of_atoms()
     unique_first_atom_nums = np.unique(
         [x['number'] for x in disp_dataset['first_atoms']])
-    fc3 = np.zeros((num_atom, num_atom, num_atom, 3, 3, 3), dtype='double')
+    if is_compact_fc3:
+        num_patom = primitive.get_number_of_atoms()
+        s2p_map = primitive.get_supercell_to_primitive_map()
+        p2p_map = primitive.get_primitive_to_primitive_map()
+        first_atom_nums = [p2p_map[s2p_map[i]] for i in unique_first_atom_nums]
+        fc3 = np.zeros((num_patom, num_satom, num_satom, 3, 3, 3), dtype='double')
+    else:
+        first_atom_nums = unique_first_atom_nums
+        fc3 = np.zeros((num_satom, num_satom, num_satom, 3, 3, 3), dtype='double')
     symprec = symmetry.get_symmetry_tolerance()
-    for first_atom_num in unique_first_atom_nums:
-        _get_fc3_one_atom(fc3,
-                          supercell,
-                          disp_dataset,
-                          fc2,
-                          first_atom_num,
-                          symmetry.get_site_symmetry(first_atom_num),
-                          symprec,
-                          verbose)
+
+    for first_atom_num  in first_atom_nums:
+        site_symmetry = symmetry.get_site_symmetry(first_atom_num)
+        displacements_first = []
+        delta_fc2s = []
+        for dataset_first_atom in disp_dataset['first_atoms']:
+            if first_atom_num != dataset_first_atom['number']:
+                continue
+
+            displacements_first.append(dataset_first_atom['displacement'])
+            if 'delta_fc2' in dataset_first_atom:
+                delta_fc2s.append(dataset_first_atom['delta_fc2'])
+            else:
+                direction = np.dot(dataset_first_atom['displacement'],
+                                   np.linalg.inv(supercell.get_cell()))
+                reduced_site_sym = get_reduced_site_symmetry(
+                    site_symmetry, direction, symprec)
+                delta_fc2s.append(get_delta_fc2(
+                    dataset_first_atom['second_atoms'],
+                    dataset_first_atom['number'],
+                    fc2,
+                    supercell,
+                    reduced_site_sym,
+                    symprec))
+
+        fc3[first_atom_num] = solve_fc3(first_atom_num,
+                                        supercell,
+                                        site_symmetry,
+                                        displacements_first,
+                                        delta_fc2s,
+                                        symprec,
+                                        verbose=verbose)
     return fc3
-
-def _get_fc3_one_atom(fc3,
-                      supercell,
-                      disp_dataset,
-                      fc2,
-                      first_atom_num,
-                      site_symmetry,
-                      symprec,
-                      verbose):
-    displacements_first = []
-    delta_fc2s = []
-    for dataset_first_atom in disp_dataset['first_atoms']:
-        if first_atom_num != dataset_first_atom['number']:
-            continue
-
-        displacements_first.append(dataset_first_atom['displacement'])
-        if 'delta_fc2' in dataset_first_atom:
-            delta_fc2s.append(dataset_first_atom['delta_fc2'])
-        else:
-            direction = np.dot(dataset_first_atom['displacement'],
-                               np.linalg.inv(supercell.get_cell()))
-            reduced_site_sym = get_reduced_site_symmetry(
-                site_symmetry, direction, symprec)
-            delta_fc2s.append(get_delta_fc2(
-                dataset_first_atom['second_atoms'],
-                dataset_first_atom['number'],
-                fc2,
-                supercell,
-                reduced_site_sym,
-                symprec))
-
-    solve_fc3(fc3,
-              first_atom_num,
-              supercell,
-              site_symmetry,
-              displacements_first,
-              delta_fc2s,
-              symprec,
-              verbose=verbose)
-
 
 
 def _get_rotated_fc2s(i, j, fc2s, rot_map_syms, site_sym_cart):
