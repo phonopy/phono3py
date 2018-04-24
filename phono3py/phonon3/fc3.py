@@ -10,7 +10,8 @@ from phonopy.harmonic.force_constants import (get_fc2,
                                               set_translational_invariance)
 from phono3py.phonon3.displacement_fc3 import (get_reduced_site_symmetry,
                                                get_bond_symmetry)
-from phonopy.structure.cells import get_equivalent_smallest_vectors
+from phonopy.structure.cells import (get_equivalent_smallest_vectors,
+                                     compute_all_sg_permutations)
 
 def get_fc3(supercell,
             primitive,
@@ -266,16 +267,20 @@ def get_constrained_fc2(supercell,
     # Shift positions according to set atom1 is at origin
     pos_center = positions[atom1].copy()
     positions -= pos_center
+    rotations = np.array(reduced_site_sym, dtype='intc', order='C')
+    translations = np.zeros((len(reduced_site_sym), 3),
+                            dtype='double', order='C')
+    permutations = compute_all_sg_permutations(positions,
+                                               rotations,
+                                               translations,
+                                               lattice,
+                                               symprec)
     distribute_force_constants(fc2,
                                range(num_atom),
                                atom_list,
                                lattice,
-                               positions,
-                               np.array(reduced_site_sym,
-                                        dtype='intc', order='C'),
-                               np.zeros((len(reduced_site_sym), 3),
-                                        dtype='double'),
-                               symprec)
+                               rotations,
+                               permutations)
     return fc2
 
 
