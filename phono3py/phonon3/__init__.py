@@ -241,23 +241,24 @@ class Phono3py(object):
                                 disp_dataset,
                                 atom_list=p2s_map)
             if symmetrize_fc2:
-                if self._fc2.shape[0] == self._fc2.shape[1]:
-                    for n in range(level):
-                        set_translational_invariance_per_index(self._fc2,
-                                                               index=(n % 2))
-                    symmetrize_force_constants(self._fc2)
-                else:
+                if is_compact_fc:
                     symmetrize_compact_force_constants(
                         self._fc2,
                         self._phonon_supercell,
                         self._phonon_primitive,
                         level=level)
+                else:
+                    for n in range(level):
+                        set_translational_invariance_per_index(self._fc2,
+                                                               index=(n % 2))
+                    symmetrize_force_constants(self._fc2)
 
     def produce_fc3(self,
                     forces_fc3,
                     displacement_dataset=None,
                     cutoff_distance=None, # set fc3 zero
                     symmetrize_fc3r=False,
+                    level=2,
                     is_compact_fc=False,
                     use_alm=False):
         if displacement_dataset is None:
@@ -277,10 +278,20 @@ class Phono3py(object):
                                      cutoff_distance,
                                      is_compact_fc=is_compact_fc)
             if symmetrize_fc3r:
-                set_translational_invariance_fc3(fc3)
-                set_permutation_symmetry_fc3(fc3)
-                set_translational_invariance(fc2)
-                symmetrize_force_constants(fc2)
+                if is_compact_fc:
+                    symmetrize_compact_force_constants(
+                        fc2,
+                        self._supercell,
+                        self._primitive,
+                        level=level)
+                else:
+                    set_translational_invariance_fc3(fc3)
+                    set_permutation_symmetry_fc3(fc3)
+                    if self._fc2 is None:
+                        for n in range(level):
+                            set_translational_invariance_per_index(
+                                fc2, index=(n % 2))
+                        symmetrize_force_constants(fc2)
 
         # Set fc2 and fc3
         self._fc3 = fc3

@@ -20,6 +20,8 @@ def get_fc3(supercell,
             symmetry,
             is_compact_fc=False,
             verbose=False):
+    # fc2 has to be full matrix to compute delta-fc2
+    # p2s_map elements are extracted if is_compact_fc=True at the last part.
     fc2 = get_fc2(supercell, symmetry, disp_dataset)
     fc3 = _get_fc3_least_atoms(supercell,
                                primitive,
@@ -70,6 +72,10 @@ def get_fc3(supercell,
                    disp_dataset,
                    symmetry,
                    verbose=verbose)
+
+    if is_compact_fc:
+        p2s_map = primitive.get_primitive_to_supercell_map()
+        fc2 = np.array(fc2[p2s_map], dtype='double', order='C')
 
     return fc2, fc3
 
