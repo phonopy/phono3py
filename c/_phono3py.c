@@ -1369,7 +1369,8 @@ static PyObject * py_get_thm_isotope_strength(PyObject *self, PyObject *args)
 static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
 {
   PyArrayObject *force_constants_third;
-  int first_disp_atom;
+  int target;
+  int source;
   PyArrayObject *rotation_cart_inv;
   PyArrayObject *atom_mapping_py;
 
@@ -1378,9 +1379,10 @@ static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
   int *atom_mapping;
   int num_atom;
 
-  if (!PyArg_ParseTuple(args, "OiOO",
+  if (!PyArg_ParseTuple(args, "OiiOO",
                         &force_constants_third,
-                        &first_disp_atom,
+                        &target,
+                        &source,
                         &atom_mapping_py,
                         &rotation_cart_inv)) {
     return NULL;
@@ -1392,7 +1394,8 @@ static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
   num_atom = PyArray_DIMS(atom_mapping_py)[0];
 
   fc3_distribute_fc3(fc3,
-                     first_disp_atom,
+                     target,
+                     source,
                      atom_mapping,
                      num_atom,
                      rot_cart_inv);

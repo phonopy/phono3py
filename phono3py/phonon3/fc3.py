@@ -28,33 +28,37 @@ def get_fc3(supercell,
                                symmetry,
                                is_compact_fc3=is_compact_fc3,
                                verbose=verbose)
-
     if verbose:
         print("Expanding fc3")
 
     first_disp_atoms = np.unique(
         [x['number'] for x in disp_dataset['first_atoms']])
     rotations = symmetry.get_symmetry_operations()['rotations']
-    translations = symmetry.get_symmetry_operations()['translations']
-    symprec = symmetry.get_symmetry_tolerance()
     lattice = supercell.get_cell().T
-    positions = supercell.get_scaled_positions()
     permutations = symmetry.get_atomic_permutations()
+
+    if is_compact_fc3:
+        s2p_map = primitive.get_supercell_to_primitive_map()
+        p2p_map = primitive.get_primitive_to_primitive_map()
+        s2compact = np.array([p2p_map[i] for i in s2p_map], dtype='intc')
+    else:
+        s2compact = np.arange(supercell.get_number_of_atoms(), dtype='intc')
 
     distribute_fc3(fc3,
                    first_disp_atoms,
                    lattice,
-                   positions,
                    rotations,
-                   translations,
                    permutations,
-                   symprec,
+                   s2compact,
                    verbose=verbose)
 
     if 'cutoff_distance' in disp_dataset:
         if verbose:
             print("Cutting-off fc3 (cut-off distance: %f)" %
                   disp_dataset['cutoff_distance'])
+        if is_compact_fc3:
+            print("cutoff_fc3 doesn't support compact-fc3 yet.")
+            raise ValueError
         cutoff_fc3(fc3,
                    supercell,
                    disp_dataset,
@@ -66,11 +70,9 @@ def get_fc3(supercell,
 def distribute_fc3(fc3,
                    first_disp_atoms,
                    lattice,
-                   positions,
                    rotations,
-                   translations,
                    permutations,
-                   symprec,
+                   s2compact,
                    verbose=False):
     """Distribute fc3
 
@@ -83,15 +85,26 @@ def distribute_fc3(fc3,
         atom_mapping[i_target] = i_done
         fc3[i_target, j_target, k_target] = R_inv[i_done, j, k]
 
+    Parameters
+    ----------
+
+    s2compact: ndarray
+        Maps supercell index to compact index. For full-fc3,
+        s2compact=np.arange(n_satom).
+        shape=(n_satom,)
+        dtype=intc
+
     """
 
-    num_atom = len(positions)
-    atom_mapping = np.zeros(num_atom, dtype='intc')
+    n_satom = fc3.shape[1]
+    vacancies = [i for i in range(n_satom)
+                 if s2compact[i] not in s2compact[first_disp_atoms]]
+    target_atoms = []
+    for i in vacancies:
+        if s2compact[i] not in s2compact[target_atoms]:
+            target_atoms.append(i)
 
-    for i_target in range(num_atom):
-        if i_target in first_disp_atoms:
-            continue
-
+    for i_target in target_atoms:
         for i_done in first_disp_atoms:
             rot_indices = np.where(permutations[:, i_target] == i_done)[0]
             if len(rot_indices) > 0:
@@ -107,8 +120,6 @@ def distribute_fc3(fc3,
             print("Position or symmetry may be wrong.")
             raise RuntimeError
 
-        assert i_target != i_done
-
         if verbose > 2:
             print("    [ %d, x, x ] to [ %d, x, x ]" %
                   (i_done + 1, i_target + 1))
@@ -117,14 +128,15 @@ def distribute_fc3(fc3,
         try:
             import phono3py._phono3py as phono3c
             phono3c.distribute_fc3(fc3,
-                                   i_target,
+                                   int(s2compact[i_target]),
+                                   int(s2compact[i_done]),
                                    atom_mapping,
                                    rot_cart_inv)
         except ImportError:
             print("Phono3py C-routine is not compiled correctly.")
-            for j in range(num_atom):
+            for j in range(n_satom):
                 j_rot = atom_mapping[j]
-                for k in range(num_atom):
+                for k in range(n_satom):
                     k_rot = atom_mapping[k]
                     fc3[i_target, j, k] = third_rank_tensor_rotation(
                         rot_cart_inv, fc3[i_done, j_rot, k_rot])
@@ -456,10 +468,12 @@ def _get_fc3_least_atoms(supercell,
                 raise RuntimeError
             else:
                 first_atom_nums.append(i)
-        fc3 = np.zeros((num_patom, num_satom, num_satom, 3, 3, 3), dtype='double')
+        fc3 = np.zeros((num_patom, num_satom, num_satom, 3, 3, 3),
+                       dtype='double', order='C')
     else:
         first_atom_nums = unique_first_atom_nums
-        fc3 = np.zeros((num_satom, num_satom, num_satom, 3, 3, 3), dtype='double')
+        fc3 = np.zeros((num_satom, num_satom, num_satom, 3, 3, 3),
+                       dtype='double', order='C')
 
     for first_atom_num in first_atom_nums:
         site_symmetry = symmetry.get_site_symmetry(first_atom_num)

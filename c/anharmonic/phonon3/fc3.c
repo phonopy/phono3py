@@ -64,6 +64,7 @@ static void set_permutation_symmetry_compact_fc3(double * fc3,
 
 void fc3_distribute_fc3(double *fc3,
                         const int target,
+                        const int source,
                         const int *atom_mapping,
                         const int num_atom,
                         const double *rot_cart)
@@ -78,7 +79,7 @@ void fc3_distribute_fc3(double *fc3,
         27 * num_atom * i +
         27 * j,
         fc3 +
-        27 * num_atom * num_atom * atom_mapping[target] +
+        27 * num_atom * num_atom * source +
         27 * num_atom * atom_mapping[i] +
         27 * atom_mapping[j],
         rot_cart);

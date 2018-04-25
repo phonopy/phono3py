@@ -734,6 +734,7 @@ class Phono3py(object):
                            self._primitive,
                            disp_dataset,
                            self._symmetry,
+                           is_compact_fc3=False,
                            verbose=self._log_level)
 
         # Set fc3 elements zero beyond cutoff_distance
