@@ -36,7 +36,7 @@
 #define __fc3_H__
 
 void fc3_distribute_fc3(double *fc3,
-                        const int first_disp_atom,
+                        const int target,
                         const int *atom_mapping,
                         const int num_atom,
                         const double *rot_cart);

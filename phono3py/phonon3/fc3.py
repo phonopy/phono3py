@@ -39,6 +39,7 @@ def get_fc3(supercell,
     symprec = symmetry.get_symmetry_tolerance()
     lattice = supercell.get_cell().T
     positions = supercell.get_scaled_positions()
+    permutations = symmetry.get_atomic_permutations()
 
     distribute_fc3(fc3,
                    first_disp_atoms,
@@ -46,6 +47,7 @@ def get_fc3(supercell,
                    positions,
                    rotations,
                    translations,
+                   permutations,
                    symprec,
                    verbose=verbose)
 
@@ -67,62 +69,65 @@ def distribute_fc3(fc3,
                    positions,
                    rotations,
                    translations,
+                   permutations,
                    symprec,
                    verbose=False):
+    """Distribute fc3
+
+    fc3[i, :, :, 0:3, 0:3, 0:3] where i=indices done are distributed to
+    symmetrically equivalent fc3 elements by tensor rotations.
+
+    Search symmetry operation (R, t) that performs
+        i_target -> i_done
+    and
+        atom_mapping[i_target] = i_done
+        fc3[i_target, j_target, k_target] = R_inv[i_done, j, k]
+
+    """
+
     num_atom = len(positions)
     atom_mapping = np.zeros(num_atom, dtype='intc')
 
-    for i in range(num_atom):
-        if i in first_disp_atoms:
+    for i_target in range(num_atom):
+        if i_target in first_disp_atoms:
             continue
 
-        for atom_index_done in first_disp_atoms:
-            pos_rot = np.dot(rotations, positions[i]) + translations
-            diffs = pos_rot - positions[atom_index_done]
-            diffs -= np.rint(diffs)
-            dists = np.sqrt((np.dot(diffs, lattice.T) ** 2).sum(axis=1))
-            map_sym = np.where(dists < symprec)[0]
-
-            if len(map_sym) > 0:
-                i_rot = atom_index_done
-                rot = rotations[map_sym[0]]
-                trans = translations[map_sym[0]]
+        for i_done in first_disp_atoms:
+            rot_indices = np.where(permutations[:, i_target] == i_done)[0]
+            if len(rot_indices) > 0:
+                atom_mapping = np.array(permutations[rot_indices[0]],
+                                        dtype='intc')
+                rot = rotations[rot_indices[0]]
+                rot_cart_inv = np.array(
+                    similarity_transformation(lattice, rot).T,
+                    dtype='double', order='C')
                 break
 
-        if len(map_sym) == 0:
+        if len(rot_indices) == 0:
             print("Position or symmetry may be wrong.")
-            raise ValueError
+            raise RuntimeError
 
-        for j in range(num_atom):
-            atom_mapping[j] = _get_atom_by_symmetry(lattice,
-                                                    positions,
-                                                    rot,
-                                                    trans,
-                                                    j,
-                                                    symprec)
+        assert i_target != i_done
 
-        rot_cart_inv = np.array(similarity_transformation(lattice, rot).T,
-                                dtype='double', order='C')
+        if verbose > 2:
+            print("    [ %d, x, x ] to [ %d, x, x ]" %
+                  (i_done + 1, i_target + 1))
+            sys.stdout.flush()
 
-        if i != i_rot:
-            if verbose > 2:
-                print("    [ %d, x, x ] to [ %d, x, x ]" % (i_rot + 1, i + 1))
-                sys.stdout.flush()
-
-            try:
-                import phono3py._phono3py as phono3c
-                phono3c.distribute_fc3(fc3,
-                                       i,
-                                       atom_mapping,
-                                       rot_cart_inv)
-            except ImportError:
-                print("Phono3py C-routine is not compiled correctly.")
-                for j in range(num_atom):
-                    j_rot = atom_mapping[j]
-                    for k in range(num_atom):
-                        k_rot = atom_mapping[k]
-                        fc3[i, j, k] = third_rank_tensor_rotation(
-                            rot_cart_inv, fc3[i_rot, j_rot, k_rot])
+        try:
+            import phono3py._phono3py as phono3c
+            phono3c.distribute_fc3(fc3,
+                                   i_target,
+                                   atom_mapping,
+                                   rot_cart_inv)
+        except ImportError:
+            print("Phono3py C-routine is not compiled correctly.")
+            for j in range(num_atom):
+                j_rot = atom_mapping[j]
+                for k in range(num_atom):
+                    k_rot = atom_mapping[k]
+                    fc3[i_target, j, k] = third_rank_tensor_rotation(
+                        rot_cart_inv, fc3[i_done, j_rot, k_rot])
 
 def set_permutation_symmetry_fc3(fc3):
     try:
