@@ -18,7 +18,7 @@ def get_fc3(supercell,
             primitive,
             disp_dataset,
             symmetry,
-            is_compact_fc3=False,
+            is_compact_fc=False,
             verbose=False):
     fc2 = get_fc2(supercell, symmetry, disp_dataset)
     fc3 = _get_fc3_least_atoms(supercell,
@@ -26,7 +26,7 @@ def get_fc3(supercell,
                                disp_dataset,
                                fc2,
                                symmetry,
-                               is_compact_fc3=is_compact_fc3,
+                               is_compact_fc=is_compact_fc,
                                verbose=verbose)
     if verbose:
         print("Expanding fc3")
@@ -37,15 +37,21 @@ def get_fc3(supercell,
     lattice = supercell.get_cell().T
     permutations = symmetry.get_atomic_permutations()
 
-    if is_compact_fc3:
+    if is_compact_fc:
         s2p_map = primitive.get_supercell_to_primitive_map()
+        p2s_map = primitive.get_primitive_to_supercell_map()
         p2p_map = primitive.get_primitive_to_primitive_map()
         s2compact = np.array([p2p_map[i] for i in s2p_map], dtype='intc')
+        for i in first_disp_atoms:
+            assert i in p2s_map
+        target_atoms = [i for i in p2s_map if i not in first_disp_atoms]
     else:
         s2compact = np.arange(supercell.get_number_of_atoms(), dtype='intc')
+        target_atoms = [i for i in s2compact if i not in first_disp_atoms]
 
     distribute_fc3(fc3,
                    first_disp_atoms,
+                   target_atoms,
                    lattice,
                    rotations,
                    permutations,
@@ -56,7 +62,7 @@ def get_fc3(supercell,
         if verbose:
             print("Cutting-off fc3 (cut-off distance: %f)" %
                   disp_dataset['cutoff_distance'])
-        if is_compact_fc3:
+        if is_compact_fc:
             print("cutoff_fc3 doesn't support compact-fc3 yet.")
             raise ValueError
         cutoff_fc3(fc3,
@@ -69,6 +75,7 @@ def get_fc3(supercell,
 
 def distribute_fc3(fc3,
                    first_disp_atoms,
+                   target_atoms,
                    lattice,
                    rotations,
                    permutations,
@@ -88,6 +95,8 @@ def distribute_fc3(fc3,
     Parameters
     ----------
 
+    target_atoms: list or ndarray
+        Supercell atom indices to which fc3 are distributed.
     s2compact: ndarray
         Maps supercell index to compact index. For full-fc3,
         s2compact=np.arange(n_satom).
@@ -97,13 +106,6 @@ def distribute_fc3(fc3,
     """
 
     n_satom = fc3.shape[1]
-    vacancies = [i for i in range(n_satom)
-                 if s2compact[i] not in s2compact[first_disp_atoms]]
-    target_atoms = []
-    for i in vacancies:
-        if s2compact[i] not in s2compact[target_atoms]:
-            target_atoms.append(i)
-
     for i_target in target_atoms:
         for i_done in first_disp_atoms:
             rot_indices = np.where(permutations[:, i_target] == i_done)[0]
@@ -450,14 +452,14 @@ def _get_fc3_least_atoms(supercell,
                          disp_dataset,
                          fc2,
                          symmetry,
-                         is_compact_fc3=False,
+                         is_compact_fc=False,
                          verbose=True):
     symprec = symmetry.get_symmetry_tolerance()
     num_satom = supercell.get_number_of_atoms()
     unique_first_atom_nums = np.unique(
         [x['number'] for x in disp_dataset['first_atoms']])
 
-    if is_compact_fc3:
+    if is_compact_fc:
         num_patom = primitive.get_number_of_atoms()
         s2p_map = primitive.get_supercell_to_primitive_map()
         p2p_map = primitive.get_primitive_to_primitive_map()
@@ -506,7 +508,7 @@ def _get_fc3_least_atoms(supercell,
                               delta_fc2s,
                               symprec,
                               verbose=verbose)
-        if is_compact_fc3:
+        if is_compact_fc:
             fc3[p2p_map[s2p_map[first_atom_num]]] = fc3_first
         else:
             fc3[first_atom_num] = fc3_first

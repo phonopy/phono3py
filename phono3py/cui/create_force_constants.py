@@ -200,34 +200,10 @@ def create_phono3py_force_constants(phono3py,
                           p2s_map=p2s_map)
 
     if log_level:
-        fc_orig = phono3py.get_fc2()
-        if fc_orig.shape[0] == fc_orig.shape[1]:
-            show_drift_force_constants(fc_orig, name='fc2')
-        else:
-            if fc_orig.shape[1] > 2000:
-                show_drift_force_constants(fc_orig, name='fc2')
-                print("  ** only the 2nd drift value is meaningful **")
-            else:
-                p2s_map = phonon_primitive.get_primitive_to_supercell_map()
-                lattice = np.array(phonon_supercell.get_cell().T,
-                                   dtype='double', order='C')
-                positions = phonon_supercell.get_scaled_positions()
-                rotations = phonon_symmetry.get_symmetry_operations()['rotations']
-                trans = phonon_symmetry.get_symmetry_operations()['translations']
-                symprec = phonon_symmetry.get_symmetry_tolerance()
-                n_satom = phonon_supercell.get_number_of_atoms()
-                fc = np.zeros((n_satom, n_satom, 3, 3), dtype='double', order='C')
-                for i_p, i_s in enumerate(p2s_map):
-                    fc[i_s] = fc_orig[i_p]
-                distribute_force_constants(fc,
-                                           np.arange(n_satom, dtype='intc'),
-                                           p2s_map,
-                                           lattice,
-                                           positions,
-                                           rotations,
-                                           trans,
-                                           symprec)
-                show_drift_force_constants(fc, name='fc2')
+        show_drift_force_constants(phono3py.get_fc2(),
+                                   supercell=phonon_supercell,
+                                   primitive=phonon_primitive,
+                                   name='fc2')
 
 def _create_phono3py_fc3(phono3py,
                          force_to_eVperA,
@@ -264,20 +240,20 @@ def _create_phono3py_fc3(phono3py,
         return False
 
     _convert_force_unit(forces_fc3, force_to_eVperA)
+    phono3py.produce_fc3(forces_fc3,
+                         displacement_dataset=disp_dataset,
+                         cutoff_distance=cutoff_distance,
+                         symmetrize_fc3r=symmetrize_fc3r,
+                         use_alm=use_alm)
 
-    phono3py.produce_fc3(
-        forces_fc3,
-        displacement_dataset=disp_dataset,
-        cutoff_distance=cutoff_distance,
-        symmetrize_fc3r=symmetrize_fc3r,
-        use_alm=use_alm)
     if output_filename is None:
         filename = 'fc3.hdf5'
     else:
         filename = 'fc3.' + output_filename + '.hdf5'
     if log_level:
         print("Writing fc3 to %s" % filename)
-    write_fc3_to_hdf5(phono3py.get_fc3(), filename=filename)
+    p2s_map = phono3py.get_primitive().get_primitive_to_supercell_map()
+    write_fc3_to_hdf5(phono3py.get_fc3(), filename=filename, p2s_map=p2s_map)
 
     return True
 

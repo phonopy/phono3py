@@ -3,7 +3,8 @@ import numpy as np
 import h5py
 
 from phonopy.file_IO import (write_force_constants_to_hdf5,
-                             read_force_constants_hdf5)
+                             read_force_constants_hdf5,
+                             check_force_constants_indices)
 
 def write_cell_yaml(w, supercell):
     w.write("lattice:\n")
@@ -309,13 +310,40 @@ def read_fc4_from_hdf5(filename='fc4.hdf5'):
     f.close()
     return fc4
 
-def write_fc3_to_hdf5(force_constants_third, filename='fc3.hdf5'):
-    with h5py.File(filename, 'w') as w:
-        w.create_dataset('fc3', data=force_constants_third)
+def write_fc3_to_hdf5(fc3,
+                      filename='fc3.hdf5',
+                      p2s_map=None):
+    """Write third-order force constants in hdf5 format.
 
-def read_fc3_from_hdf5(filename='fc3.hdf5'):
+    Parameters
+    ----------
+    force_constants: ndarray
+        Force constants
+        shape=(n_satom,n_satom,3,3) or (n_patom,n_satom,3,3)
+        dtype=double
+    filename: str
+        Filename to be saved
+    p2s_map: ndarray
+        Primitive atom indices in supercell index system
+        shape=(n_patom,)
+        dtype=intc
+
+    """
+
+    with h5py.File(filename, 'w') as w:
+        w.create_dataset('fc3', data=fc3)
+        if p2s_map is not None:
+            w.create_dataset('p2s_map', data=p2s_map)
+
+def read_fc3_from_hdf5(filename='fc3.hdf5', p2s_map=None):
     with h5py.File(filename, 'r') as f:
         fc3 = f['fc3'][:]
+        if 'p2s_map' in f:
+            p2s_map_in_file = f['p2s_map'][:]
+            check_force_constants_indices(fc3.shape[:2],
+                                          p2s_map_in_file,
+                                          p2s_map,
+                                          filename)
         return fc3
     return None
 

@@ -215,6 +215,7 @@ class Phono3py(object):
                     displacement_dataset=None,
                     symmetrize_fc2=False,
                     level=2,
+                    is_compact_fc=False,
                     use_alm=False):
         if displacement_dataset is None:
             disp_dataset = self._displacement_dataset
@@ -231,10 +232,10 @@ class Phono3py(object):
             for forces, disp1 in zip(forces_fc2, disp_dataset['first_atoms']):
                 disp1['forces'] = forces
 
-            # full fc
-            p2s_map = None
-            # compact fc
-            # p2s_map = self._phonon_primitive.get_primitive_to_supercell_map()
+            if is_compact_fc:
+                p2s_map = self._phonon_primitive.get_primitive_to_supercell_map()
+            else:
+                p2s_map = None
             self._fc2 = get_fc2(self._phonon_supercell,
                                 self._phonon_supercell_symmetry,
                                 disp_dataset,
@@ -249,9 +250,7 @@ class Phono3py(object):
                     symmetrize_compact_force_constants(
                         self._fc2,
                         self._phonon_supercell,
-                        self._phonon_supercell_symmetry,
-                        self._phonon_primitive.get_supercell_to_primitive_map(),
-                        self._phonon_primitive.get_primitive_to_supercell_map(),
+                        self._phonon_primitive,
                         level=level)
 
     def produce_fc3(self,
@@ -259,6 +258,7 @@ class Phono3py(object):
                     displacement_dataset=None,
                     cutoff_distance=None, # set fc3 zero
                     symmetrize_fc3r=False,
+                    is_compact_fc=False,
                     use_alm=False):
         if displacement_dataset is None:
             disp_dataset = self._displacement_dataset
@@ -274,7 +274,8 @@ class Phono3py(object):
         else:
             fc2, fc3 = self._get_fc3(forces_fc3,
                                      disp_dataset,
-                                     cutoff_distance)
+                                     cutoff_distance,
+                                     is_compact_fc=is_compact_fc)
             if symmetrize_fc3r:
                 set_translational_invariance_fc3(fc3)
                 set_permutation_symmetry_fc3(fc3)
@@ -720,7 +721,8 @@ class Phono3py(object):
     def _get_fc3(self,
                  forces_fc3,
                  disp_dataset,
-                 cutoff_distance):
+                 cutoff_distance,
+                 is_compact_fc=False):
         count = 0
         for disp1 in disp_dataset['first_atoms']:
             disp1['forces'] = forces_fc3[count]
@@ -734,7 +736,7 @@ class Phono3py(object):
                            self._primitive,
                            disp_dataset,
                            self._symmetry,
-                           is_compact_fc3=False,
+                           is_compact_fc=is_compact_fc,
                            verbose=self._log_level)
 
         # Set fc3 elements zero beyond cutoff_distance
