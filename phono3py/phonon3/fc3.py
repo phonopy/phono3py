@@ -112,6 +112,8 @@ def distribute_fc3(fc3,
     """
 
     n_satom = fc3.shape[1]
+    identity = np.eye(3, dtype='intc')
+    rot_candits = [identity,]
     for i_target in target_atoms:
         for i_done in first_disp_atoms:
             rot_indices = np.where(permutations[:, i_target] == i_done)[0]
@@ -162,7 +164,7 @@ def set_permutation_symmetry_fc3(fc3):
                     fc3_elem = set_permutation_symmetry_fc3_elem(fc3, i, j, k)
                     copy_permutation_symmetry_fc3_elem(fc3, fc3_elem, i, j, k)
 
-def transpose_compact_fc3(fc3, primitive):
+def set_permutation_symmetry_compact_fc3(fc3, primitive):
     try:
         import phono3py._phono3py as phono3c
         s2p_map = primitive.get_supercell_to_primitive_map()
@@ -172,15 +174,16 @@ def transpose_compact_fc3(fc3, primitive):
         s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map,
                                                      p2p_map,
                                                      permutations)
-        phono3c.transpose_compact_fc3(fc3,
-                                      permutations,
-                                      s2pp_map,
-                                      p2s_map,
-                                      nsym_list)
+        phono3c.permutation_symmetry_compact_fc3(fc3,
+                                                 permutations,
+                                                 s2pp_map,
+                                                 p2s_map,
+                                                 nsym_list)
     except ImportError:
-        print("Phono3py C-routine is not compiled correctly.")
-        sys.exit(1)
+        text = ("Import error at phono3c.permutation_symmetry_compact_fc3. "
+                "Corresponding python code is not implemented.")
 
+        raise RuntimeError
 
 def copy_permutation_symmetry_fc3_elem(fc3, fc3_elem, a, b, c):
     for (i, j, k) in list(np.ndindex(3, 3, 3)):

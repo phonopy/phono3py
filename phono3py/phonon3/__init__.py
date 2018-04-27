@@ -29,6 +29,7 @@ from phono3py.file_IO import write_joint_dos, write_phonon_to_hdf5
 from phono3py.other.isotope import Isotope
 from phono3py.phonon3.fc3 import (get_fc3,
                                   set_permutation_symmetry_fc3,
+                                  set_permutation_symmetry_compact_fc3,
                                   set_translational_invariance_fc3,
                                   cutoff_fc3_by_zero)
 
@@ -243,10 +244,7 @@ class Phono3py(object):
             if symmetrize_fc2:
                 if is_compact_fc:
                     symmetrize_compact_force_constants(
-                        self._fc2,
-                        self._phonon_supercell,
-                        self._phonon_primitive,
-                        level=level)
+                        self._fc2, self._phonon_primitive, level=level)
                 else:
                     for n in range(level):
                         set_translational_invariance_per_index(self._fc2,
@@ -279,11 +277,9 @@ class Phono3py(object):
                                      is_compact_fc=is_compact_fc)
             if symmetrize_fc3r:
                 if is_compact_fc:
+                    set_permutation_symmetry_compact_fc3(fc3, self._primitive)
                     symmetrize_compact_force_constants(
-                        fc2,
-                        self._supercell,
-                        self._primitive,
-                        level=level)
+                        fc2, self._primitive, level=level)
                 else:
                     set_translational_invariance_fc3(fc3)
                     set_permutation_symmetry_fc3(fc3)

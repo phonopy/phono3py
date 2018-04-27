@@ -59,8 +59,7 @@ static void set_permutation_symmetry_compact_fc3(double * fc3,
                                                  const int nsym_list[],
                                                  const int perms[],
                                                  const int n_satom,
-                                                 const int n_patom,
-                                                 const int is_transpose);
+                                                 const int n_patom);
 static void transpose_compact_fc3_type01(double * fc3,
                                          const int p2s[],
                                          const int s2pp[],
@@ -125,8 +124,7 @@ void fc3_set_permutation_symmetry_compact_fc3(double * fc3,
                                               const int nsym_list[],
                                               const int perms[],
                                               const int n_satom,
-                                              const int n_patom,
-                                              const int is_transpose)
+                                              const int n_patom)
 {
   set_permutation_symmetry_compact_fc3(fc3,
                                        p2s,
@@ -134,8 +132,7 @@ void fc3_set_permutation_symmetry_compact_fc3(double * fc3,
                                        nsym_list,
                                        perms,
                                        n_satom,
-                                       n_patom,
-                                       is_transpose);
+                                       n_patom);
 }
 
 void fc3_transpose_compact_fc3(double * fc3,
@@ -290,13 +287,91 @@ static void set_permutation_symmetry_compact_fc3(double * fc3,
                                                  const int nsym_list[],
                                                  const int perms[],
                                                  const int n_satom,
-                                                 const int n_patom,
-                                                 const int is_transpose)
+                                                 const int n_patom)
 {
   /* fc3 shape=(n_patom, n_satom, n_satom, 3, 3, 3)          */
   /* 1D indexing:                                            */
   /*     i * n_satom * n_satom * 27 + j * n_satom * 27 +     */
   /*     k * 27 + l * 9 + m * 3 + n                          */
+  int i, j, k, l, m, n, i_p, j_p, k_p, done_any;
+  int i_trans_j, k_trans_j, i_trans_k, j_trans_k;
+  size_t adrs[6];
+  double fc3_elem[3][3][3];
+  char *done;
+
+  done = NULL;
+  done = (char*)malloc(sizeof(char) * n_patom * n_satom * n_satom);
+  for (i = 0; i < n_patom * n_satom * n_satom; i++) {
+    done[i] = 0;
+  }
+
+  for (i_p = 0; i_p < n_patom; i_p++) {
+    i = p2s[i_p];
+    for (j = 0; j < n_satom; j++) {
+      j_p = s2pp[j];
+      i_trans_j = perms[nsym_list[j] * n_satom + i];
+      for (k = 0; k < n_satom; k++) {
+        k_p = s2pp[k];
+        k_trans_j = perms[nsym_list[j] * n_satom + k];
+        i_trans_k = perms[nsym_list[k] * n_satom + i];
+        j_trans_k = perms[nsym_list[k] * n_satom + j];
+
+        /* ijk, ikj, jik, jki, kij, kji */
+        adrs[0] = i_p * n_satom * n_satom + j * n_satom + k;
+        adrs[1] = i_p * n_satom * n_satom + k * n_satom + j;
+        adrs[2] = j_p * n_satom * n_satom + i_trans_j * n_satom + k_trans_j;
+        adrs[3] = j_p * n_satom * n_satom + k_trans_j * n_satom + i_trans_j;
+        adrs[4] = k_p * n_satom * n_satom + i_trans_k * n_satom + j_trans_k;
+        adrs[5] = k_p * n_satom * n_satom + j_trans_k * n_satom + i_trans_k;
+
+        done_any = 0;
+        for (l = 0; l < 6; l++) {
+          if (done[adrs[l]]) {
+            done_any = 1;
+            break;
+          }
+        }
+        if (done_any) {
+          continue;
+        }
+
+        for (l = 0; l < 6; l++) {
+          done[adrs[l]] = 1;
+          adrs[l] *= 27;
+        }
+
+        for (l = 0; l < 3; l++) {
+          for (m = 0; m < 3; m++) {
+            for (n = 0; n < 3; n++) {
+              fc3_elem[l][m][n] = fc3[adrs[0] + l * 9 + m * 3 + n];
+              fc3_elem[l][m][n] += fc3[adrs[1] + l * 9 + n * 3 + m];
+              fc3_elem[l][m][n] += fc3[adrs[2] + m * 9 + l * 3 + n];
+              fc3_elem[l][m][n] += fc3[adrs[3] + m * 9 + n * 3 + l];
+              fc3_elem[l][m][n] += fc3[adrs[4] + n * 9 + l * 3 + m];
+              fc3_elem[l][m][n] += fc3[adrs[5] + n * 9 + m * 3 + l];
+              fc3_elem[l][m][n] /= 6;
+            }
+          }
+        }
+        for (l = 0; l < 3; l++) {
+          for (m = 0; m < 3; m++) {
+            for (n = 0; n < 3; n++) {
+              fc3[adrs[0] + l * 9 + m * 3 + n] = fc3_elem[l][m][n];
+              fc3[adrs[1] + l * 9 + n * 3 + m] = fc3_elem[l][m][n];
+              fc3[adrs[2] + m * 9 + l * 3 + n] = fc3_elem[l][m][n];
+              fc3[adrs[3] + m * 9 + n * 3 + l] = fc3_elem[l][m][n];
+              fc3[adrs[4] + n * 9 + l * 3 + m] = fc3_elem[l][m][n];
+              fc3[adrs[5] + n * 9 + m * 3 + l] = fc3_elem[l][m][n];
+            }
+          }
+        }
+      }
+    }
+  }
+
+  free(done);
+  done = NULL;
+
 
 }
 

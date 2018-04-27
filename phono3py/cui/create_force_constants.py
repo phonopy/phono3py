@@ -173,9 +173,8 @@ def create_phono3py_force_constants(phono3py,
             if phonon_fc2.shape[0] == phonon_fc2.shape[1]:
                 symmetrize_force_constants(phonon_fc2)
             else:
-                symmetrize_compact_force_constants(phonon_fc2,
-                                                   phonon_supercell,
-                                                   phonon_primitive)
+                symmetrize_compact_force_constants(phonon_fc2, phonon_primitive)
+
         phono3py.set_fc2(phonon_fc2)
     else:
         if log_level:
