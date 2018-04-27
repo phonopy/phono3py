@@ -296,7 +296,6 @@ def get_constrained_fc2(supercell,
                                                lattice,
                                                symprec)
     distribute_force_constants(fc2,
-                               range(num_atom),
                                atom_list,
                                lattice,
                                rotations,
@@ -404,27 +403,79 @@ def cutoff_fc3_by_zero(fc3, supercell, cutoff_distance, symprec=1e-5):
                 fc3[i, j, k] = 0
                 break
 
-def show_drift_fc3(fc3, name="fc3"):
-    num_atom = fc3.shape[0]
-    maxval1 = 0
-    maxval2 = 0
-    maxval3 = 0
-    klm1 = [0, 0, 0]
-    klm2 = [0, 0, 0]
-    klm3 = [0, 0, 0]
-    for i, j, k, l, m in list(np.ndindex((num_atom, num_atom, 3, 3, 3))):
-        val1 = fc3[:, i, j, k, l, m].sum()
-        val2 = fc3[i, :, j, k, l, m].sum()
-        val3 = fc3[i, j, :, k, l, m].sum()
-        if abs(val1) > abs(maxval1):
-            maxval1 = val1
-            klm1 = [k, l, m]
-        if abs(val2) > abs(maxval2):
-            maxval2 = val2
-            klm2 = [k, l, m]
-        if abs(val3) > abs(maxval3):
-            maxval3 = val3
-            klm3 = [k, l, m]
+def show_drift_fc3(fc3,
+                   primitive=None,
+                   name="fc3"):
+    if fc3.shape[0] == fc3.shape[1]:
+       num_atom = fc3.shape[0]
+       maxval1 = 0
+       maxval2 = 0
+       maxval3 = 0
+       klm1 = [0, 0, 0]
+       klm2 = [0, 0, 0]
+       klm3 = [0, 0, 0]
+       for i, j, k, l, m in list(np.ndindex((num_atom, num_atom, 3, 3, 3))):
+           val1 = fc3[:, i, j, k, l, m].sum()
+           val2 = fc3[i, :, j, k, l, m].sum()
+           val3 = fc3[i, j, :, k, l, m].sum()
+           if abs(val1) > abs(maxval1):
+               maxval1 = val1
+               klm1 = [k, l, m]
+           if abs(val2) > abs(maxval2):
+               maxval2 = val2
+               klm2 = [k, l, m]
+           if abs(val3) > abs(maxval3):
+               maxval3 = val3
+               klm3 = [k, l, m]
+    else:
+        try:
+            import phono3py._phono3py as phono3c
+            s2p_map = primitive.get_supercell_to_primitive_map()
+            p2s_map = primitive.get_primitive_to_supercell_map()
+            p2p_map = primitive.get_primitive_to_primitive_map()
+            permutations = primitive.get_atomic_permutations()
+            s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map,
+                                                         p2p_map,
+                                                         permutations)
+            num_patom = fc3.shape[0]
+            num_satom = fc3.shape[1]
+            maxval1 = 0
+            maxval2 = 0
+            maxval3 = 0
+            klm1 = [0, 0, 0]
+            klm2 = [0, 0, 0]
+            klm3 = [0, 0, 0]
+            phono3c.transpose_compact_fc3(fc3,
+                                          permutations,
+                                          s2pp_map,
+                                          p2s_map,
+                                          nsym_list,
+                                          0)
+            for i, j, k, l, m in np.ndindex((num_patom, num_satom, 3, 3, 3)):
+                val1 = fc3[i, :, j, k, l, m].sum()
+                if abs(val1) > abs(maxval1):
+                    maxval1 = val1
+                    klm1 = [k, l, m]
+            phono3c.transpose_compact_fc3(fc3,
+                                          permutations,
+                                          s2pp_map,
+                                          p2s_map,
+                                          nsym_list,
+                                          0)
+            for i, j, k, l, m in np.ndindex((num_patom, num_satom, 3, 3, 3)):
+                val2 = fc3[i, :, j, k, l, m].sum()
+                val3 = fc3[i, j, :, k, l, m].sum()
+                if abs(val2) > abs(maxval2):
+                    maxval2 = val2
+                    klm2 = [k, l, m]
+                if abs(val3) > abs(maxval3):
+                    maxval3 = val3
+                    klm3 = [k, l, m]
+        except ImportError:
+            text = ("Import error at phono3c.tranpose_compact_fc3. "
+                    "Corresponding python code is not implemented.")
+            raise RuntimeError(text)
+
     text = "max drift of %s: " % name
     text += "%f (%s%s%s) " % (maxval1,
                               "xyz"[klm1[0]], "xyz"[klm1[1]], "xyz"[klm1[2]])
@@ -433,6 +484,7 @@ def show_drift_fc3(fc3, name="fc3"):
     text += "%f (%s%s%s)" % (maxval3,
                              "xyz"[klm3[0]], "xyz"[klm3[1]], "xyz"[klm3[2]])
     print(text)
+
 
 def _set_permutation_symmetry_fc3_elem_with_cutoff(fc3, fc3_done, a, b, c):
     sum_done = (fc3_done[a, b, c] +

@@ -50,5 +50,13 @@ void fc3_set_permutation_symmetry_compact_fc3(double * fc3,
                                               const int n_satom,
                                               const int n_patom,
                                               const int is_transpose);
+void fc3_transpose_compact_fc3(double * fc3,
+                               const int p2s[],
+                               const int s2pp[],
+                               const int nsym_list[],
+                               const int perms[],
+                               const int n_satom,
+                               const int n_patom,
+                               const int t_type);
 
 #endif

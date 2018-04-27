@@ -135,7 +135,8 @@ def create_phono3py_force_constants(phono3py,
                         print_error()
                     sys.exit(1)
         if log_level:
-            show_drift_fc3(phono3py.get_fc3())
+            show_drift_fc3(phono3py.get_fc3(),
+                           primitive=phono3py.get_primitive())
 
     # fc2
     phonon_primitive = phono3py.get_phonon_primitive()
@@ -218,7 +219,6 @@ def create_phono3py_force_constants(phono3py,
 
     if log_level:
         show_drift_force_constants(phono3py.get_fc2(),
-                                   supercell=phonon_supercell,
                                    primitive=phonon_primitive,
                                    name='fc2')
 

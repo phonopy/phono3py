@@ -182,7 +182,7 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_set_permutation_symmetry_fc3,
    METH_VARARGS,
    "Set permutation symmetry for fc3"},
-  {"transpose_compact_fc3o",
+  {"transpose_compact_fc3",
    (PyCFunction)py_transpose_compact_fc3,
    METH_VARARGS,
    "Transpose compact fc3"},
@@ -1506,6 +1506,8 @@ static PyObject * py_transpose_compact_fc3(PyObject *self, PyObject *args)
   PyArrayObject* py_s2pp_map;
   PyArrayObject* py_p2s_map;
   PyArrayObject* py_nsym_list;
+  int t_type;
+
   double *fc3;
   int *s2pp;
   int *p2s;
@@ -1513,12 +1515,13 @@ static PyObject * py_transpose_compact_fc3(PyObject *self, PyObject *args)
   int *perms;
   int n_patom, n_satom;
 
-  if (!PyArg_ParseTuple(args, "OOOOO",
+  if (!PyArg_ParseTuple(args, "OOOOOi",
                         &py_fc3,
                         &py_permutations,
                         &py_s2pp_map,
                         &py_p2s_map,
-                        &py_nsym_list)) {
+                        &py_nsym_list,
+                        &t_type)) {
     return NULL;
   }
 
@@ -1530,14 +1533,14 @@ static PyObject * py_transpose_compact_fc3(PyObject *self, PyObject *args)
   n_patom = PyArray_DIMS(py_fc3)[0];
   n_satom = PyArray_DIMS(py_fc3)[1];
 
-  fc3_set_permutation_symmetry_compact_fc3(fc3,
-                                           p2s,
-                                           s2pp,
-                                           nsym_list,
-                                           perms,
-                                           n_satom,
-                                           n_patom,
-                                           1);
+  fc3_transpose_compact_fc3(fc3,
+                            p2s,
+                            s2pp,
+                            nsym_list,
+                            perms,
+                            n_satom,
+                            n_patom,
+                            t_type);
 
   Py_RETURN_NONE;
 }

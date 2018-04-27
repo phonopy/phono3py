@@ -61,6 +61,21 @@ static void set_permutation_symmetry_compact_fc3(double * fc3,
                                                  const int n_satom,
                                                  const int n_patom,
                                                  const int is_transpose);
+static void transpose_compact_fc3_type01(double * fc3,
+                                         const int p2s[],
+                                         const int s2pp[],
+                                         const int nsym_list[],
+                                         const int perms[],
+                                         const int n_satom,
+                                         const int n_patom,
+                                         const int t_type);
+static void transpose_compact_fc3_type2(double * fc3,
+                                        const int p2s[],
+                                        const int s2pp[],
+                                        const int nsym_list[],
+                                        const int perms[],
+                                        const int n_satom,
+                                        const int n_patom);
 
 void fc3_distribute_fc3(double *fc3,
                         const int target,
@@ -69,7 +84,7 @@ void fc3_distribute_fc3(double *fc3,
                         const int num_atom,
                         const double *rot_cart)
 {
-  size_t i, j;
+  int i, j;
 
   for (i = 0; i < num_atom; i++) {
     for (j = 0; j < num_atom; j++) {
@@ -90,7 +105,7 @@ void fc3_distribute_fc3(double *fc3,
 void fc3_set_permutation_symmetry_fc3(double *fc3, const int num_atom)
 {
   double fc3_elem[27];
-  size_t i, j, k;
+  int i, j, k;
 
 #pragma omp parallel for private(j, k, fc3_elem)
   for (i = 0; i < num_atom; i++) {
@@ -113,14 +128,56 @@ void fc3_set_permutation_symmetry_compact_fc3(double * fc3,
                                               const int n_patom,
                                               const int is_transpose)
 {
-  ;
+  set_permutation_symmetry_compact_fc3(fc3,
+                                       p2s,
+                                       s2pp,
+                                       nsym_list,
+                                       perms,
+                                       n_satom,
+                                       n_patom,
+                                       is_transpose);
+}
+
+void fc3_transpose_compact_fc3(double * fc3,
+                               const int p2s[],
+                               const int s2pp[],
+                               const int nsym_list[],
+                               const int perms[],
+                               const int n_satom,
+                               const int n_patom,
+                               const int t_type)
+{
+  /* Three types of index permutations                       */
+  /*     t_type=0: dim[0] <-> dim[1]                         */
+  /*     t_type=1: dim[0] <-> dim[2]                         */
+  /*     t_type=2: dim[1] <-> dim[2]                         */
+  if (t_type == 0 || t_type == 1) {
+    transpose_compact_fc3_type01(fc3,
+                                 p2s,
+                                 s2pp,
+                                 nsym_list,
+                                 perms,
+                                 n_satom,
+                                 n_patom,
+                                 t_type);
+  } else {
+    if (t_type == 2) {
+      transpose_compact_fc3_type2(fc3,
+                                  p2s,
+                                  s2pp,
+                                  nsym_list,
+                                  perms,
+                                  n_satom,
+                                  n_patom);
+    }
+  }
 }
 
 static void tensor3_rotation(double *rot_tensor,
                              const double *tensor,
                              const double *rot_cartesian)
 {
-  size_t l;
+  int l;
 
   for (l = 0; l < 27; l++) {
     rot_tensor[l] = tensor3_rotation_elem(tensor, rot_cartesian, l);
@@ -131,7 +188,7 @@ static double tensor3_rotation_elem(const double *tensor,
                                     const double *r,
                                     const int pos)
 {
-  size_t i, j, k, l, m, n;
+  int i, j, k, l, m, n;
   double sum;
 
   l = pos / 9;
@@ -157,7 +214,7 @@ static void copy_permutation_symmetry_fc3_elem(double *fc3,
                                                const int c,
                                                const int num_atom)
 {
-  size_t i, j, k;
+  int i, j, k;
 
   for (i = 0; i < 3; i++) {
     for (j = 0; j < 3; j++) {
@@ -198,7 +255,7 @@ static void set_permutation_symmetry_fc3_elem(double *fc3_elem,
                                               const int c,
                                               const int num_atom)
 {
-  size_t i, j, k;
+  int i, j, k;
 
   for (i = 0; i < 3; i++) {
     for (j = 0; j < 3; j++) {
@@ -237,20 +294,30 @@ static void set_permutation_symmetry_compact_fc3(double * fc3,
                                                  const int is_transpose)
 {
   /* fc3 shape=(n_patom, n_satom, n_satom, 3, 3, 3)          */
-  /* 1D indexing :                                           */
+  /* 1D indexing:                                            */
   /*     i * n_satom * n_satom * 27 + j * n_satom * 27 +     */
   /*     k * 27 + l * 9 + m * 3 + n                          */
-  /* Two types of index permutations                         */
-  /*     type=0: dim[0] <-> dim[1]                           */
-  /*     type=1: dim[1] <-> dim[2]                           */
 
-  size_t i, j, k, l, m, n, i_p, j_p, i_trans, adrs, adrs_t;
+}
+
+static void transpose_compact_fc3_type01(double * fc3,
+                                         const int p2s[],
+                                         const int s2pp[],
+                                         const int nsym_list[],
+                                         const int perms[],
+                                         const int n_satom,
+                                         const int n_patom,
+                                         const int t_type)
+{
+  /* Three types of index permutations                       */
+  /*     t_type=0: dim[0] <-> dim[1]                         */
+  /*     t_type=1: dim[0] <-> dim[2]                         */
+  /*     t_type=2: dim[1] <-> dim[2]                         */
+  int i, j, k, l, m, n, i_p, j_p, i_trans, k_trans;
+  size_t adrs, adrs_t;
   double fc3_elem[3][3][3];
   char *done;
 
-  /**********/
-  /* type=0 */
-  /**********/
   done = NULL;
   done = (char*)malloc(sizeof(char) * n_satom * n_patom);
   for (i = 0; i < n_satom * n_patom; i++) {
@@ -271,16 +338,19 @@ static void set_permutation_symmetry_compact_fc3(double * fc3,
         done[i_p * n_satom + j] = 1;
         done[j_p * n_satom + i_trans] = 1;
         for (k = 0; k < n_satom; k++) {
-          adrs = (i_p * n_satom * n_satom + j * n_satom + k) * 27;
-          adrs_t = (j_p * n_satom * n_satom + i_trans * n_satom + k) * 27;
-          for (l = 0; l < 3; l++) {
-            for (m = 0; m < 3; m++) {
-              for (n = 0; n < 3; n++) {
-                fc3_elem[l][m][n] = fc3[adrs + l * 9 + m * 3 + n];
+          k_trans = perms[nsym_list[j] * n_satom + k];
+
+          switch (t_type) {
+          case 0:
+            adrs = (i_p * n_satom * n_satom + j * n_satom + k) * 27;
+            adrs_t = (j_p * n_satom * n_satom + i_trans * n_satom + k_trans) * 27;
+            for (l = 0; l < 3; l++) {
+              for (m = 0; m < 3; m++) {
+                for (n = 0; n < 3; n++) {
+                  fc3_elem[l][m][n] = fc3[adrs + l * 9 + m * 3 + n];
+                }
               }
             }
-          }
-          if (is_transpose) {
             if (adrs != adrs_t) {
               for (l = 0; l < 3; l++) {
                 for (m = 0; m < 3; m++) {
@@ -289,8 +359,6 @@ static void set_permutation_symmetry_compact_fc3(double * fc3,
                   }
                 }
               }
-            } else {
-              printf("adrs %d, adrs_t %d\n", adrs, adrs_t);
             }
             for (l = 0; l < 3; l++) {
               for (m = 0; m < 3; m++) {
@@ -299,7 +367,36 @@ static void set_permutation_symmetry_compact_fc3(double * fc3,
                 }
               }
             }
-          }
+            break;
+          case 1:
+            adrs = (i_p * n_satom * n_satom + k * n_satom + j) * 27;
+            adrs_t = (j_p * n_satom * n_satom + k_trans * n_satom + i_trans) * 27;
+            for (l = 0; l < 3; l++) {
+              for (m = 0; m < 3; m++) {
+                for (n = 0; n < 3; n++) {
+                  fc3_elem[l][m][n] = fc3[adrs + l * 9 + m * 3 + n];
+                }
+              }
+            }
+            if (adrs != adrs_t) {
+              for (l = 0; l < 3; l++) {
+                for (m = 0; m < 3; m++) {
+                  for (n = 0; n < 3; n++) {
+                    fc3[adrs + l * 9 + m * 3 + n] = fc3[adrs_t + n * 9 + m * 3 + l];
+                  }
+                }
+              }
+            }
+            for (l = 0; l < 3; l++) {
+              for (m = 0; m < 3; m++) {
+                for (n = 0; n < 3; n++) {
+                  fc3[adrs_t + n * 9 + m * 3 + l] = fc3_elem[l][m][n];
+                }
+              }
+            }
+            break;
+          } /* end switch */
+
         }
       }
     }
@@ -307,4 +404,49 @@ static void set_permutation_symmetry_compact_fc3(double * fc3,
 
   free(done);
   done = NULL;
+}
+
+static void transpose_compact_fc3_type2(double * fc3,
+                                        const int p2s[],
+                                        const int s2pp[],
+                                        const int nsym_list[],
+                                        const int perms[],
+                                        const int n_satom,
+                                        const int n_patom)
+{
+  int j, k, l, m, n, i_p;
+  size_t adrs, adrs_t;
+  double fc3_elem[3][3][3];
+
+  for (i_p = 0; i_p < n_patom; i_p++) {
+    for (j = 0; j < n_satom; j++) {
+      for (k = j; k < n_satom; k++) { /* k >= j */
+        adrs = (i_p * n_satom * n_satom + j * n_satom + k) * 27;
+        adrs_t = (i_p * n_satom * n_satom + k * n_satom + j) * 27;
+        for (l = 0; l < 3; l++) {
+          for (m = 0; m < 3; m++) {
+            for (n = 0; n < 3; n++) {
+              fc3_elem[l][m][n] = fc3[adrs + l * 9 + m * 3 + n];
+            }
+          }
+        }
+        if (k != j) {
+          for (l = 0; l < 3; l++) {
+            for (m = 0; m < 3; m++) {
+              for (n = 0; n < 3; n++) {
+                fc3[adrs + l * 9 + m * 3 + n] = fc3[adrs_t + l * 9 + n * 3 + m];
+              }
+            }
+          }
+        }
+        for (l = 0; l < 3; l++) {
+          for (m = 0; m < 3; m++) {
+            for (n = 0; n < 3; n++) {
+              fc3[adrs_t + l * 9 + n * 3 + m] = fc3_elem[l][m][n];
+            }
+          }
+        }
+      }
+    }
+  }
 }
