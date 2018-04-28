@@ -209,6 +209,38 @@ def set_translational_invariance_fc3(fc3):
     for i in range(3):
         set_translational_invariance_fc3_per_index(fc3, index=i)
 
+def set_translational_invariance_compact_fc3(fc3, primitive):
+    try:
+        import phono3py._phono3py as phono3c
+        s2p_map = primitive.get_supercell_to_primitive_map()
+        p2s_map = primitive.get_primitive_to_supercell_map()
+        p2p_map = primitive.get_primitive_to_primitive_map()
+        permutations = primitive.get_atomic_permutations()
+        s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map,
+                                                     p2p_map,
+                                                     permutations)
+        phono3c.transpose_compact_fc3(fc3,
+                                      permutations,
+                                      s2pp_map,
+                                      p2s_map,
+                                      nsym_list,
+                                      0) # dim[0] <--> dim[1]
+        set_translational_invariance_fc3_per_index(fc3, index=1)
+        phono3c.transpose_compact_fc3(fc3,
+                                      permutations,
+                                      s2pp_map,
+                                      p2s_map,
+                                      nsym_list,
+                                      0) # dim[0] <--> dim[1]
+        set_translational_invariance_fc3_per_index(fc3, index=1)
+        set_translational_invariance_fc3_per_index(fc3, index=2)
+
+    except ImportError:
+        text = ("Import error at phono3c.tranpose_compact_fc3. "
+                "Corresponding python code is not implemented.")
+        raise RuntimeError(text)
+
+
 def set_translational_invariance_fc3_per_index(fc3, index=0):
     for i in range(fc3.shape[(1 + index) % 3]):
         for j in range(fc3.shape[(2 + index) % 3]):
@@ -453,7 +485,7 @@ def show_drift_fc3(fc3,
                                           s2pp_map,
                                           p2s_map,
                                           nsym_list,
-                                          0)
+                                          0) # dim[0] <--> dim[1]
             for i, j, k, l, m in np.ndindex((num_patom, num_satom, 3, 3, 3)):
                 val1 = fc3[i, :, j, k, l, m].sum()
                 if abs(val1) > abs(maxval1):
@@ -464,7 +496,7 @@ def show_drift_fc3(fc3,
                                           s2pp_map,
                                           p2s_map,
                                           nsym_list,
-                                          0)
+                                          0) # dim[0] <--> dim[1]
             for i, j, k, l, m in np.ndindex((num_patom, num_satom, 3, 3, 3)):
                 val2 = fc3[i, :, j, k, l, m].sum()
                 val3 = fc3[i, j, :, k, l, m].sum()

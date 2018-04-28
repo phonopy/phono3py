@@ -7,9 +7,9 @@ from phonopy.harmonic.force_constants import (
     get_fc2,
     symmetrize_force_constants,
     symmetrize_compact_force_constants,
-    set_translational_invariance_per_index,
     set_translational_invariance,
-    set_permutation_symmetry)
+    set_permutation_symmetry,
+    get_nsym_list_and_s2pp)
 from phonopy.harmonic.displacement import get_least_displacements
 from phonopy.harmonic.displacement import direction_to_displacement as \
      direction_to_displacement_fc2
@@ -31,6 +31,7 @@ from phono3py.phonon3.fc3 import (get_fc3,
                                   set_permutation_symmetry_fc3,
                                   set_permutation_symmetry_compact_fc3,
                                   set_translational_invariance_fc3,
+                                  set_translational_invariance_compact_fc3,
                                   cutoff_fc3_by_zero)
 
 class Phono3py(object):
@@ -215,7 +216,6 @@ class Phono3py(object):
                     forces_fc2,
                     displacement_dataset=None,
                     symmetrize_fc2=False,
-                    level=2,
                     is_compact_fc=False,
                     use_alm=False):
         if displacement_dataset is None:
@@ -244,11 +244,8 @@ class Phono3py(object):
             if symmetrize_fc2:
                 if is_compact_fc:
                     symmetrize_compact_force_constants(
-                        self._fc2, self._phonon_primitive, level=level)
+                        self._fc2, self._phonon_primitive)
                 else:
-                    for n in range(level):
-                        set_translational_invariance_per_index(self._fc2,
-                                                               index=(n % 2))
                     symmetrize_force_constants(self._fc2)
 
     def produce_fc3(self,
@@ -256,7 +253,6 @@ class Phono3py(object):
                     displacement_dataset=None,
                     cutoff_distance=None, # set fc3 zero
                     symmetrize_fc3r=False,
-                    level=2,
                     is_compact_fc=False,
                     use_alm=False):
         if displacement_dataset is None:
@@ -277,16 +273,15 @@ class Phono3py(object):
                                      is_compact_fc=is_compact_fc)
             if symmetrize_fc3r:
                 if is_compact_fc:
+                    set_translational_invariance_compact_fc3(
+                        fc3, self._primitive)
                     set_permutation_symmetry_compact_fc3(fc3, self._primitive)
-                    symmetrize_compact_force_constants(
-                        fc2, self._primitive, level=level)
+                    if self._fc2 is None:
+                        symmetrize_compact_force_constants(fc2, self._primitive)
                 else:
                     set_translational_invariance_fc3(fc3)
                     set_permutation_symmetry_fc3(fc3)
                     if self._fc2 is None:
-                        for n in range(level):
-                            set_translational_invariance_per_index(
-                                fc2, index=(n % 2))
                         symmetrize_force_constants(fc2)
 
         # Set fc2 and fc3
