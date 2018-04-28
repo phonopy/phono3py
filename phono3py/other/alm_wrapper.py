@@ -78,7 +78,7 @@ def get_fc3(supercell,
     natom = supercell.get_number_of_atoms()
     force = np.array(forces_fc3, dtype='double', order='C')
     disp = np.zeros_like(force)
-    lattice = supercell.get_cell()
+    lattice = supercell.get_cell().T
     positions = supercell.get_scaled_positions()
     numbers = supercell.get_atomic_numbers()
     indices = _set_disp_fc3(disp, disp_dataset)
