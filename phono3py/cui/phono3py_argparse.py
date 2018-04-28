@@ -72,6 +72,7 @@ def get_parser():
                         input_output_filename=None,
                         ion_clamped=False,
                         is_bterta=False,
+                        is_compact_fc=False,
                         is_decay_channel=False,
                         is_displacement=False,
                         is_frequency_shift=False,
@@ -183,6 +184,9 @@ def get_parser():
     parser.add_argument(
         "--cf3-file", "--create-f3-from-file", dest="forces_fc3_file", nargs=1,
         help="Create FORCES_FC3 from file name list")
+    parser.add_argument(
+        "--cfc", "--compact-fc", dest="is_compact_fc", action="store_true",
+        help="Use compact force cosntants")
     parser.add_argument(
         "--cfs", "--create-force-sets", dest="force_sets_mode",
         action="store_true",
