@@ -35,6 +35,7 @@
 import numpy as np
 from phono3py.phonon3.fc3 import distribute_fc3
 from phonopy.harmonic.force_constants import distribute_force_constants
+from phonopy.structure.cells import compute_all_sg_permutations
 
 def get_fc2(supercell,
             forces_fc2,
@@ -56,9 +57,10 @@ def get_fc2(supercell,
           "------------------------------")
 
     from alm import ALM
-    with ALM(lattice, positions, numbers, 1) as alm:
+    with ALM(lattice, positions, numbers) as alm:
+        alm.find_force_constant(1, [-1])
         alm.set_displacement_and_force(disp, force)
-        alm.run_fitting()
+        info = alm.optimize()
         fc2_alm = alm.get_fc(1)
 
     print("-------------------------------"
@@ -89,16 +91,18 @@ def get_fc3(supercell,
           "------------------------------")
 
     from alm import ALM
-    with ALM(lattice, positions, numbers, 2) as alm:
-        alm.set_displacement_and_force(disp[indices], force[indices])
+    with ALM(lattice, positions, numbers) as alm:
         if 'cutoff_distance' in disp_dataset:
             cut_d = disp_dataset['cutoff_distance']
             nkd = len(np.unique(numbers))
             rcs = np.ones((2, nkd, nkd), dtype='double')
             rcs[0] *= -1
             rcs[1] *= cut_d
-            alm.set_cutoff_radii(rcs)
-        alm.run_fitting()
+        else:
+            rcs = [-1, -1]
+        alm.find_force_constant(2, rcs)
+        alm.set_displacement_and_force(disp[indices], force[indices])
+        info = alm.optimize()
         fc2_alm = alm.get_fc(1)
         fc3_alm = alm.get_fc(2)
 
@@ -139,7 +143,7 @@ def _set_disp_fc3(disp, disp_dataset):
     assert count == len(disp)
 
     return indices
-                                       
+
 def _expand_fc2(fc2_alm, supercell, pure_trans, rotations, symprec=1e-5):
     natom = supercell.get_number_of_atoms()
     fc2 = np.zeros((natom, natom, 3, 3), dtype='double', order='C')
@@ -155,20 +159,23 @@ def _expand_fc2(fc2_alm, supercell, pure_trans, rotations, symprec=1e-5):
 
     lattice = np.array(supercell.get_cell().T, dtype='double', order='C')
     positions = supercell.get_scaled_positions()
+    permutations = compute_all_sg_permutations(positions,
+                                               rotations,
+                                               pure_trans,
+                                               lattice,
+                                               symprec)
     distribute_force_constants(fc2,
-                               range(natom),
                                first_atoms,
                                lattice,
-                               positions,
                                rotations,
-                               pure_trans,
-                               symprec)
+                               permutations)
+
     return fc2
 
 def _expand_fc3(fc3_alm, supercell, pure_trans, rotations, symprec=1e-5):
+    (fc_values, elem_indices) = fc3_alm
     natom = supercell.get_number_of_atoms()
     fc3 = np.zeros((natom, natom, natom, 3, 3, 3), dtype='double', order='C')
-    (fc_values, elem_indices) = fc3_alm
     first_atoms = np.unique(elem_indices[:, 0] // 3)
 
     for (fc, indices) in zip(fc_values, elem_indices):
@@ -186,15 +193,21 @@ def _expand_fc3(fc3_alm, supercell, pure_trans, rotations, symprec=1e-5):
 
     lattice = np.array(supercell.get_cell().T, dtype='double', order='C')
     positions = supercell.get_scaled_positions()
+    s2compact = np.arange(supercell.get_number_of_atoms(), dtype='intc')
+    target_atoms = [i for i in s2compact if i not in first_atoms]
+    permutations = compute_all_sg_permutations(positions,
+                                               rotations,
+                                               pure_trans,
+                                               lattice,
+                                               symprec)
     distribute_fc3(fc3,
                    first_atoms,
+                   target_atoms,
                    lattice,
-                   positions,
                    rotations,
-                   pure_trans,
-                   symprec,
-                   overwrite=True,
-                   verbose=True)
+                   permutations,
+                   s2compact,
+                   verbose=3)
     return fc3
 
 def _collect_pure_translations(symmetry):
