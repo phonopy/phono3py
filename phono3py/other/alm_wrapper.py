@@ -44,7 +44,7 @@ def get_fc2(supercell,
     natom = supercell.get_number_of_atoms()
     force = np.array(forces_fc2, dtype='double', order='C')
     disp = np.zeros_like(force)
-    lattice = supercell.get_cell()
+    lattice = supercell.get_cell().T
     positions = supercell.get_scaled_positions()
     numbers = supercell.get_atomic_numbers()
     _set_disp_fc2(disp, disp_dataset)
@@ -58,7 +58,9 @@ def get_fc2(supercell,
 
     from alm import ALM
     with ALM(lattice, positions, numbers) as alm:
-        alm.find_force_constant(1, [-1])
+        nkd = len(np.unique(numbers))
+        rcs = -np.ones((1, nkd, nkd), dtype='double')
+        alm.find_force_constant(1, rcs)
         alm.set_displacement_and_force(disp, force)
         info = alm.optimize()
         fc2_alm = alm.get_fc(1)
@@ -92,14 +94,14 @@ def get_fc3(supercell,
 
     from alm import ALM
     with ALM(lattice, positions, numbers) as alm:
+        nkd = len(np.unique(numbers))
         if 'cutoff_distance' in disp_dataset:
             cut_d = disp_dataset['cutoff_distance']
-            nkd = len(np.unique(numbers))
             rcs = np.ones((2, nkd, nkd), dtype='double')
             rcs[0] *= -1
             rcs[1] *= cut_d
         else:
-            rcs = [-1, -1]
+            rcs = -np.ones((2, nkd, nkd), dtype='double')
         alm.find_force_constant(2, rcs)
         alm.set_displacement_and_force(disp[indices], force[indices])
         info = alm.optimize()
