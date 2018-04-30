@@ -76,7 +76,8 @@ def get_fc2(supercell,
 def get_fc3(supercell,
             forces_fc3,
             disp_dataset,
-            symmetry):
+            symmetry,
+            verbose=True):
     natom = supercell.get_number_of_atoms()
     force = np.array(forces_fc3, dtype='double', order='C')
     disp = np.zeros_like(force)
@@ -88,9 +89,10 @@ def get_fc3(supercell,
     rotations = np.array([np.eye(3, dtype='intc')] * len(pure_trans),
                          dtype='intc', order='C')
 
-    print("------------------------------"
-          " ALM FC3 start "
-          "------------------------------")
+    if verbose:
+        print("------------------------------"
+              " ALM FC3 start "
+              "------------------------------")
 
     from alm import ALM
     with ALM(lattice, positions, numbers) as alm:
@@ -108,12 +110,21 @@ def get_fc3(supercell,
         fc2_alm = alm.get_fc(1)
         fc3_alm = alm.get_fc(2)
 
-    print("-------------------------------"
-          " ALM FC3 end "
-          "-------------------------------")
+    if verbose:
+       print("-------------------------------"
+             " ALM FC3 end "
+             "-------------------------------")
 
-    fc2 = _expand_fc2(fc2_alm, supercell, pure_trans, rotations)
-    fc3 = _expand_fc3(fc3_alm, supercell, pure_trans, rotations)
+    fc2 = _expand_fc2(fc2_alm,
+                      supercell,
+                      pure_trans,
+                      rotations,
+                      verbose=verbose)
+    fc3 = _expand_fc3(fc3_alm,
+                      supercell,
+                      pure_trans,
+                      rotations,
+                      verbose=verbose)
 
     return fc2, fc3
 
@@ -146,7 +157,12 @@ def _set_disp_fc3(disp, disp_dataset):
 
     return indices
 
-def _expand_fc2(fc2_alm, supercell, pure_trans, rotations, symprec=1e-5):
+def _expand_fc2(fc2_alm,
+                supercell,
+                pure_trans,
+                rotations,
+                symprec=1e-5,
+                verbose=True):
     natom = supercell.get_number_of_atoms()
     fc2 = np.zeros((natom, natom, 3, 3), dtype='double', order='C')
     (fc_values, elem_indices) = fc2_alm
@@ -174,24 +190,23 @@ def _expand_fc2(fc2_alm, supercell, pure_trans, rotations, symprec=1e-5):
 
     return fc2
 
-def _expand_fc3(fc3_alm, supercell, pure_trans, rotations, symprec=1e-5):
+def _expand_fc3(fc3_alm,
+                supercell,
+                pure_trans,
+                rotations,
+                symprec=1e-5,
+                verbose=True):
     (fc_values, elem_indices) = fc3_alm
+
     natom = supercell.get_number_of_atoms()
     fc3 = np.zeros((natom, natom, natom, 3, 3, 3), dtype='double', order='C')
     first_atoms = np.unique(elem_indices[:, 0] // 3)
 
     for (fc, indices) in zip(fc_values, elem_indices):
-        v1 = indices[0] // 3
-        c1 = indices[0] % 3
-        v2 = indices[1] // 3
-        c2 = indices[1] % 3
-        v3 = indices[2] // 3
-        c3 = indices[2] % 3
-        if v2 == v3 and c2 == c3:
-            fc3[v1, v2, v3, c1, c2, c3] = fc
-        else:
-            fc3[v1, v2, v3, c1, c2, c3] = fc
-            fc3[v1, v3, v2, c1, c3, c2] = fc
+        v1, v2, v3 = indices // 3
+        c1, c2, c3 = indices % 3
+        fc3[v1, v2, v3, c1, c2, c3] = fc
+        fc3[v1, v3, v2, c1, c3, c2] = fc
 
     lattice = np.array(supercell.get_cell().T, dtype='double', order='C')
     positions = supercell.get_scaled_positions()
@@ -202,6 +217,9 @@ def _expand_fc3(fc3_alm, supercell, pure_trans, rotations, symprec=1e-5):
                                                pure_trans,
                                                lattice,
                                                symprec)
+    if verbose:
+        print("Expanding fc3")
+
     distribute_fc3(fc3,
                    first_atoms,
                    target_atoms,
@@ -209,7 +227,7 @@ def _expand_fc3(fc3_alm, supercell, pure_trans, rotations, symprec=1e-5):
                    rotations,
                    permutations,
                    s2compact,
-                   verbose=3)
+                   verbose=verbose)
     return fc3
 
 def _collect_pure_translations(symmetry):

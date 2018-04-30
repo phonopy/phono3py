@@ -177,9 +177,6 @@ def create_phono3py_force_constants(phono3py,
 
         phono3py.set_fc2(phonon_fc2)
     else:
-        if log_level:
-            print("Solving fc2")
-
         if phonon_supercell_matrix is None:
             if not _create_phono3py_fc2(phono3py,
                                         force_to_eVperA,
@@ -238,7 +235,7 @@ def _create_phono3py_fc3(phono3py,
         filename = 'disp_fc3.' + input_filename + '.yaml'
     file_exists(filename, log_level)
     if log_level:
-        print("Displacement dataset is read from %s." % filename)
+        print("Displacement dataset for fc3 is read from %s." % filename)
     disp_dataset = parse_disp_fc3_yaml(filename=filename)
     num_atom = phono3py.get_supercell().get_number_of_atoms()
     if disp_dataset['natom'] != num_atom:
@@ -288,7 +285,7 @@ def _create_phono3py_fc2(phono3py,
     else:
         filename = 'disp_fc3.' + input_filename + '.yaml'
     if log_level:
-        print("Displacement dataset is read from %s." % filename)
+        print("Displacement dataset for fc2 is read from %s." % filename)
     file_exists(filename, log_level)
     disp_dataset = parse_disp_fc3_yaml(filename=filename)
     num_atom = phono3py.get_supercell().get_number_of_atoms()
