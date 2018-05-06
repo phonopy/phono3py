@@ -4,7 +4,8 @@ import h5py
 
 from phonopy.file_IO import (write_force_constants_to_hdf5,
                              read_force_constants_hdf5,
-                             check_force_constants_indices)
+                             check_force_constants_indices,
+                             get_cell_from_disp_yaml)
 
 def write_cell_yaml(w, supercell):
     w.write("lattice:\n")
@@ -1178,7 +1179,7 @@ def write_ir_grid_points(mesh,
         w.write("  q-point:      [ %12.7f, %12.7f, %12.7f ]\n" %
                 tuple(grid_address[g].astype('double') / mesh))
 
-def parse_disp_fc2_yaml(filename="disp_fc2.yaml"):
+def parse_disp_fc2_yaml(filename="disp_fc2.yaml", return_cell=False):
     dataset = _parse_yaml(filename)
     natom = dataset['natom']
     new_dataset = {}
@@ -1191,9 +1192,13 @@ def parse_disp_fc2_yaml(filename="disp_fc2.yaml"):
         new_first_atoms.append({'number': atom1, 'displacement': disp1})
     new_dataset['first_atoms'] = new_first_atoms
 
-    return new_dataset
+    if return_cell:
+        cell = get_cell_from_disp_yaml(dataset)
+        return new_dataset, cell
+    else:
+        return new_dataset
 
-def parse_disp_fc3_yaml(filename="disp_fc3.yaml"):
+def parse_disp_fc3_yaml(filename="disp_fc3.yaml", return_cell=False):
     dataset = _parse_yaml(filename)
     natom = dataset['natom']
     new_dataset = {}
@@ -1222,7 +1227,11 @@ def parse_disp_fc3_yaml(filename="disp_fc3.yaml"):
                                 'second_atoms': new_second_atoms})
     new_dataset['first_atoms'] = new_first_atoms
 
-    return new_dataset
+    if return_cell:
+        cell = get_cell_from_disp_yaml(dataset)
+        return new_dataset, cell
+    else:
+        return new_dataset
 
 def parse_disp_fc4_yaml(filename="disp_fc4.yaml"):
     dataset = _parse_yaml(filename)
