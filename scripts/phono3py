@@ -169,8 +169,21 @@ if args.forces_fc3 or args.forces_fc3_file:
                                 num_atoms,
                                 num_disps,
                                 force_filenames,
-                                disp_filename,
+                                disp_filename=disp_filename,
+                                check_number_of_files=True,
                                 verbose=(log_level > 0))
+
+    if args.forces_fc3z:
+        force_filename = args.forces_fc3z
+        file_exists(force_filename, log_level)
+        force_set_zero = get_force_sets(interface_mode,
+                                        num_atoms,
+                                        1,
+                                        [force_filename,],
+                                        verbose=(log_level > 0))[0]
+        for fs in force_sets:
+            fs -= force_set_zero
+
     if force_sets:
         write_FORCES_FC3(disp_dataset, force_sets, filename="FORCES_FC3")
         if log_level:

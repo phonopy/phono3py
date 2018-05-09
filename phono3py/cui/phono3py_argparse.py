@@ -57,9 +57,10 @@ def get_parser():
                         displacement_distance=None,
                         fc_symmetry=False,
                         force_sets_to_forces_fc2_mode=None,
+                        forces_fc2=False,
                         forces_fc3=False,
+                        forces_fc3z=False,
                         forces_fc3_file=False,
-                        forces_fc2_mode=False,
                         force_sets_mode=False,
                         frequency_conversion_factor=None,
                         fpitch=None,
@@ -182,7 +183,10 @@ def get_parser():
         "--cf3", "--create-f3", dest="forces_fc3", nargs='+',
         help="Create FORCES_FC3")
     parser.add_argument(
-        "--cf3-file", "--create-f3-from-file", dest="forces_fc3_file", nargs=1,
+        "--cf3z", "--create-f3z", dest="forces_fc3z",
+        help="Remove recidual forces for fc3 supercell forces")
+    parser.add_argument(
+        "--cf3-file", "--create-f3-from-file", dest="forces_fc3_file",
         help="Create FORCES_FC3 from file name list")
     parser.add_argument(
         "--cfc", "--compact-fc", dest="is_compact_fc", action="store_true",

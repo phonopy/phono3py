@@ -32,6 +32,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import sys
 import numpy as np
 from phono3py.phonon3.fc3 import distribute_fc3
 from phonopy.harmonic.force_constants import distribute_force_constants
@@ -57,6 +58,7 @@ def get_fc2(supercell,
           "------------------------------")
 
     from alm import ALM
+    sys.stdout.flush()
     with ALM(lattice, positions, numbers) as alm:
         nkd = len(np.unique(numbers))
         rcs = -np.ones((1, nkd, nkd), dtype='double')
@@ -95,6 +97,7 @@ def get_fc3(supercell,
               "------------------------------")
 
     from alm import ALM
+    sys.stdout.flush()
     with ALM(lattice, positions, numbers) as alm:
         nkd = len(np.unique(numbers))
         if 'cutoff_distance' in disp_dataset:
