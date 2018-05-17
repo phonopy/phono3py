@@ -3,6 +3,11 @@
 Change Log
 ==========
 
+May-17-2018: version 1.13.1
+----------------------------
+
+- Compact force constants are implemented (See :ref:`compact_fc_option`).
+
 Mar-16-2018: version 1.12.9
 ----------------------------
 

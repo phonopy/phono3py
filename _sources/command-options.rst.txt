@@ -166,6 +166,33 @@ Read 2nd order force constants from ``fc2.hdf5``.
 
 Read 3rd order force constants from ``fc3.hdf5``.
 
+.. _compact_fc_option:
+
+``--cfc`` or ``--compact-fc``: Compact force constants
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(Setting tag: ``COMPACT_FC``, ``.TRUE.`` or ``.FALSE.``)
+
+When creating force constants from ``FORCES_FC3`` and/or
+``FORCES_FC2``, force constants that use smaller data size are
+created. The shape of the data array is ``(num_patom, num_satom)`` for
+fc2 and ``(num_patom, num_satom, num_satom)`` for fc3, where
+``num_patom`` and ``num_satom`` are the numbers of atoms in primtive
+cell and supercell. In the full size force constants case,
+``num_patom`` is replaced by ``num_satom``. Therefore if the supercell
+dimension is large, this reduction of data size becomes large.  If the
+input crystal structure has centring :ref:`--pa <pa_option>` is
+necessary to have smallest data size. In this case, ``--pa`` option
+has to be specified on reading. Otherwise phono3py can recognize if
+``fc2.hdf5`` and ``fc3.hdf5`` are compact or full automatically. When
+using with ``--sym-fc``, the calculated results will become slightly
+different due to imperfect symmetrization scheme that phono3py
+employs.
+
+::
+
+   % phono3py --dim="2 2 2" --cfc --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell
+
 .. _symmetrization_option:
 
 ``--sym-fc2``, ``--sym-fc3r``, ``--sym-fc``: Symmetries force constants
