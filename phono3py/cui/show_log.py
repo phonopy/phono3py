@@ -113,8 +113,11 @@ def show_phono3py_force_constants_settings(read_fc3,
                                            is_symmetrize_fc2,
                                            settings):
     print("-" * 29 + " Force constants " + "-" * 30)
-    print("Imposing translational and index exchange symmetry to fc2: %s" %
-          is_symmetrize_fc2)
+    if settings.get_use_alm_fc2() and not read_fc2:
+        print("Use ALM for getting fc2")
+    else:
+        print("Imposing translational and index exchange symmetry to fc2: %s" %
+              is_symmetrize_fc2)
 
     if not (settings.get_is_isotope() or
             settings.get_is_joint_dos()):

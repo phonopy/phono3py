@@ -375,7 +375,7 @@ if __name__ == '__main__':
         '--smearing', action='store_true',
         help='Use smearing method (only for scalar density)')
     parser.add_argument(
-        '--pwscf', dest="pwscf_mode",
+        '--qe', '--pwscf', dest="qe_mode",
         action="store_true", help="Invoke Pwscf mode")
     parser.add_argument(
         '--crystal', dest="crystal_mode",
@@ -391,8 +391,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     interface_mode = None
-    if args.pwscf_mode:
-        interface_mode = 'pwscf'
+    if args.qe_mode:
+        interface_mode = 'qe'
     elif args.crystal_mode:
         interface_mode = 'crystal'
     elif args.abinit_mode:
