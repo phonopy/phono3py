@@ -12,11 +12,13 @@ How to use HDF5 python library
 
 It is assumed that ``python-h5py`` is installed on the computer you
 interactively use. In the following, how to see the contents of
-``.hdf5`` files in the interactive mode of Python. Usually for running
-interactive python, ``ipython`` is recommended to use but not the
-plain python. In the following example, an MgO result of thermal
-conductivity calculation is loaded and thermal conductivity tensor at
-300 K is watched.
+``.hdf5`` files in the interactive mode of Python. The basic usage of
+reading ``.hdf5`` files using ``h5py`` is found at `here
+<http://docs.h5py.org/en/latest/high/dataset.html#reading-writing-data>`_.
+Usually for running interactive python, ``ipython`` is recommended to
+use but not the plain python. In the following example, an MgO result
+of thermal conductivity calculation is loaded and thermal conductivity
+tensor at 300 K is watched.
 
 ::
 
@@ -27,18 +29,18 @@ conductivity calculation is loaded and thermal conductivity tensor at
 
    In [3]: list(f)
    Out[3]:
-   [u'frequency',
-    u'gamma',
-    u'group_velocity',
-    u'gv_by_gv',
-    u'heat_capacity',
-    u'kappa',
-    u'kappa_unit_conversion',
-    u'mesh',
-    u'mode_kappa',
-    u'qpoint',
-    u'temperature',
-    u'weight']
+   ['frequency',
+    'gamma',
+    'group_velocity',
+    'gv_by_gv',
+    'heat_capacity',
+    'kappa',
+    'kappa_unit_conversion',
+    'mesh',
+    'mode_kappa',
+    'qpoint',
+    'temperature',
+    'weight']
 
    In [4]: f['kappa'].shape
    Out[4]: (101, 6)
@@ -47,17 +49,17 @@ conductivity calculation is loaded and thermal conductivity tensor at
    Out[5]:
    array([[  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,
              0.00000000e+00,   0.00000000e+00,   0.00000000e+00],
-          [  5.86834069e+03,   5.86834069e+03,   5.86834069e+03,
-             1.20936823e-15,   0.00000000e+00,  -2.05720313e-15],
-          [  1.37552313e+03,   1.37552313e+03,   1.37552313e+03,
-             2.81132320e-16,   0.00000000e+00,  -5.00076366e-16],
+          [  2.11702476e+05,   2.11702476e+05,   2.11702476e+05,
+             6.64531043e-13,   6.92618921e-13,  -1.34727352e-12],
+          [  3.85304024e+04,   3.85304024e+04,   3.85304024e+04,
+             3.52531412e-13,   3.72706406e-13,  -7.07290889e-13],
           ...,
-          [  6.56974871e+00,   6.56974871e+00,   6.56974871e+00,
-             1.76632276e-18,   0.00000000e+00,  -2.30450472e-18],
-          [  6.50316555e+00,   6.50316555e+00,   6.50316555e+00,
-             1.74843437e-18,   0.00000000e+00,  -2.28116103e-18],
-          [  6.43792061e+00,   6.43792061e+00,   6.43792061e+00,
-             1.73090513e-18,   0.00000000e+00,  -2.25828616e-18]])
+          [  2.95769356e+01,   2.95769356e+01,   2.95769356e+01,
+             3.01803322e-16,   3.21661793e-16,  -6.05271364e-16],
+          [  2.92709650e+01,   2.92709650e+01,   2.92709650e+01,
+             2.98674274e-16,   3.18330655e-16,  -5.98999091e-16],
+          [  2.89713297e+01,   2.89713297e+01,   2.89713297e+01,
+             2.95610215e-16,   3.15068595e-16,  -5.92857003e-16]])
 
    In [6]: f['temperature'][:]
    Out[6]:
@@ -77,16 +79,21 @@ conductivity calculation is loaded and thermal conductivity tensor at
 
    In [7]: f['kappa'][30]
    Out[7]:
-   array([  2.18146513e+01,   2.18146513e+01,   2.18146513e+01,
-            5.84389577e-18,   0.00000000e+00,  -7.63278476e-18])
+   array([  1.09089896e+02,   1.09089896e+02,   1.09089896e+02,
+            1.12480528e-15,   1.19318349e-15,  -2.25126057e-15])
 
-   In [8]: g = f['gamma'][30]
+   In [8]: f['mode_kappa'][30, :, :, :].sum(axis=0).sum(axis=0) / weight.sum()
+   Out[8]:
+   array([  1.09089896e+02,   1.09089896e+02,   1.09089896e+02,
+            1.12480528e-15,   1.19318349e-15,  -2.25126057e-15])
 
-   In [9]: import numpy as np
+   In [9]: g = f['gamma'][30]
 
-   In [10]: g = np.where(g > 0, g, -1)
+   In [10]: import numpy as np
 
-   In [11]: lifetime = np.where(g > 0, 1.0 / (2 * 2 * np.pi * g), 0)
+   In [11]: g = np.where(g > 0, g, -1)
+
+   In [12]: lifetime = np.where(g > 0, 1.0 / (2 * 2 * np.pi * g), 0)
 
 .. _kappa_hdf5_file:
 
@@ -289,12 +296,29 @@ a mode contribution to the lattice thermal conductivity is given by
    \kappa_\lambda = \frac{1}{V_0} C_\lambda \mathbf{v}_\lambda \otimes
    \mathbf{v}_\lambda \tau_\lambda^{\mathrm{SMRT}}.
 
-For example of some single mode, :math:`\kappa_{\lambda,{xx}}` is calculated by::
+For example, :math:`\kappa_{\lambda,{xx}}` is calculated by::
 
-   kappa_unit_conversion / weight.sum() * heat_capacity[30, 2, 0] * group_velocity[2, 0, 0] ** 2 / (2 * gamma[30, 2, 0])
+   In [1]: import h5py
 
-where :math:`1/V_0` is included in ``kappa_unit_conversion``.
-Similary mode-kappa (defined at :ref:`output_mode_kappa`) is
-calculated by::
+   In [2]: f = h5py.File("kappa-m111111.hdf5")
 
-   kappa_unit_conversion * heat_capacity[30, 2, 0] * gv_by_gv[2, 0] / (2 * gamma[30, 2, 0])
+   In [3]: kappa_unit_conversion = f['kappa_unit_conversion'][()]
+
+   In [4]: weight = f['weight'][:]
+
+   In [5]: heat_capacity = f['heat_capacity'][:]
+
+   In [6]: gv_by_gv = f['gv_by_gv'][:]
+
+   In [7]: gamma = f['gamma'][:]
+
+   In [8]: kappa_unit_conversion * heat_capacity[30, 2, 0] * gv_by_gv[2, 0] / (2 * gamma[30, 2, 0])
+
+   Out[8]:
+   array([  1.02050241e+03,   1.02050241e+03,   1.02050241e+03,
+            4.40486382e-15,   0.00000000e+00,  -4.40486382e-15])
+
+   In [9]: f['mode_kappa'][30, 2, 0]
+   Out[9]:
+   array([  1.02050201e+03,   1.02050201e+03,   1.02050201e+03,
+            4.40486209e-15,   0.00000000e+00,  -4.40486209e-15])
