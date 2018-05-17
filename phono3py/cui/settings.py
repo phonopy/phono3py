@@ -17,6 +17,7 @@ class Phono3pySettings(Settings):
         self._grid_points = None
         self._ion_clamped = False
         self._is_bterta = False
+        self._is_compact_fc = False
         self._is_frequency_shift = False
         self._is_full_pp = False
         self._is_gruneisen = False
@@ -122,6 +123,12 @@ class Phono3pySettings(Settings):
 
     def get_is_bterta(self):
         return self._is_bterta
+
+    def set_is_compact_fc(self, is_compact_fc):
+        self._is_compact_fc = is_compact_fc
+
+    def get_is_compact_fc(self):
+        return self._is_compact_fc
 
     def set_is_frequency_shift(self, is_frequency_shift):
         self._is_frequency_shift = is_frequency_shift
@@ -412,6 +419,10 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_bterta:
                 self._confs['bterta'] = '.true.'
 
+        if 'is_compact_fc' in self._args:
+            if self._args.is_compact_fc:
+                self._confs['compact_fc'] = '.true.'
+
         if 'is_gruneisen' in self._args:
             if self._args.is_gruneisen:
                 self._confs['gruneisen'] = '.true.'
@@ -652,6 +663,12 @@ class Phono3pyConfParser(ConfParser):
                     self.set_parameter('is_bterta', False)
                 elif confs['bterta'].lower() == '.true.':
                     self.set_parameter('is_bterta', True)
+
+            if conf_key == 'compact_fc':
+                if confs['compact_fc'].lower() == '.false.':
+                    self.set_parameter('is_compact_fc', False)
+                elif confs['compact_fc'].lower() == '.true.':
+                    self.set_parameter('is_compact_fc', True)
 
             if conf_key == 'frequency_shift':
                 if confs['frequency_shift'].lower() == '.false.':
@@ -927,6 +944,10 @@ class Phono3pyConfParser(ConfParser):
         # Calculate thermal conductivity in BTE-RTA
         if 'is_bterta' in params:
             self._settings.set_is_bterta(params['is_bterta'])
+
+        # Compact force constants or full force constants
+        if 'is_compact_fc' in params:
+            self._settings.set_is_compact_fc(params['is_compact_fc'])
 
         # Calculate frequency_shifts
         if 'is_frequency_shift' in params:

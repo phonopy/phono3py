@@ -1,3 +1,37 @@
+# Copyright (C) 2016 Atsushi Togo
+# All rights reserved.
+#
+# This file is part of phonopy.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+#
+# * Neither the name of the phonopy project nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
 import numpy as np
 from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.cells import get_supercell, get_primitive
@@ -7,10 +41,9 @@ from phonopy.harmonic.force_constants import (
     get_fc2,
     symmetrize_force_constants,
     symmetrize_compact_force_constants,
-    set_translational_invariance_per_index,
     set_translational_invariance,
     set_permutation_symmetry,
-    set_translational_invariance)
+    get_nsym_list_and_s2pp)
 from phonopy.harmonic.displacement import get_least_displacements
 from phonopy.harmonic.displacement import direction_to_displacement as \
      direction_to_displacement_fc2
@@ -30,7 +63,9 @@ from phono3py.file_IO import write_joint_dos, write_phonon_to_hdf5
 from phono3py.other.isotope import Isotope
 from phono3py.phonon3.fc3 import (get_fc3,
                                   set_permutation_symmetry_fc3,
+                                  set_permutation_symmetry_compact_fc3,
                                   set_translational_invariance_fc3,
+                                  set_translational_invariance_compact_fc3,
                                   cutoff_fc3_by_zero)
 
 class Phono3py(object):
@@ -215,7 +250,7 @@ class Phono3py(object):
                     forces_fc2,
                     displacement_dataset=None,
                     symmetrize_fc2=False,
-                    level=2,
+                    is_compact_fc=False,
                     use_alm=False):
         if displacement_dataset is None:
             disp_dataset = self._displacement_dataset
@@ -232,34 +267,27 @@ class Phono3py(object):
             for forces, disp1 in zip(forces_fc2, disp_dataset['first_atoms']):
                 disp1['forces'] = forces
 
-            # full fc
-            p2s_map = None
-            # compact fc
-            # p2s_map = self._phonon_primitive.get_primitive_to_supercell_map()
+            if is_compact_fc:
+                p2s_map = self._phonon_primitive.get_primitive_to_supercell_map()
+            else:
+                p2s_map = None
             self._fc2 = get_fc2(self._phonon_supercell,
                                 self._phonon_supercell_symmetry,
                                 disp_dataset,
                                 atom_list=p2s_map)
             if symmetrize_fc2:
-                if self._fc2.shape[0] == self._fc2.shape[1]:
-                    for n in range(level):
-                        set_translational_invariance_per_index(self._fc2,
-                                                               index=(n % 2))
-                    symmetrize_force_constants(self._fc2)
-                else:
+                if is_compact_fc:
                     symmetrize_compact_force_constants(
-                        self._fc2,
-                        self._phonon_supercell,
-                        self._phonon_supercell_symmetry,
-                        self._phonon_primitive.get_supercell_to_primitive_map(),
-                        self._phonon_primitive.get_primitive_to_supercell_map(),
-                        level=level)
+                        self._fc2, self._phonon_primitive)
+                else:
+                    symmetrize_force_constants(self._fc2)
 
     def produce_fc3(self,
                     forces_fc3,
                     displacement_dataset=None,
                     cutoff_distance=None, # set fc3 zero
                     symmetrize_fc3r=False,
+                    is_compact_fc=False,
                     use_alm=False):
         if displacement_dataset is None:
             disp_dataset = self._displacement_dataset
@@ -275,12 +303,20 @@ class Phono3py(object):
         else:
             fc2, fc3 = self._get_fc3(forces_fc3,
                                      disp_dataset,
-                                     cutoff_distance)
+                                     cutoff_distance,
+                                     is_compact_fc=is_compact_fc)
             if symmetrize_fc3r:
-                set_translational_invariance_fc3(fc3)
-                set_permutation_symmetry_fc3(fc3)
-                set_translational_invariance(fc2)
-                symmetrize_force_constants(fc2)
+                if is_compact_fc:
+                    set_translational_invariance_compact_fc3(
+                        fc3, self._primitive)
+                    set_permutation_symmetry_compact_fc3(fc3, self._primitive)
+                    if self._fc2 is None:
+                        symmetrize_compact_force_constants(fc2, self._primitive)
+                else:
+                    set_translational_invariance_fc3(fc3)
+                    set_permutation_symmetry_fc3(fc3)
+                    if self._fc2 is None:
+                        symmetrize_force_constants(fc2)
 
         # Set fc2 and fc3
         self._fc3 = fc3
@@ -303,16 +339,11 @@ class Phono3py(object):
         if self._fc3 is not None:
             set_permutation_symmetry_fc3(self._fc3)
 
-    def set_translational_invariance(self,
-                                     translational_symmetry_type=1):
+    def set_translational_invariance(self):
         if self._fc2 is not None:
-            set_translational_invariance(
-                self._fc2,
-                translational_symmetry_type=translational_symmetry_type)
+            set_translational_invariance(self._fc2)
         if self._fc3 is not None:
-            set_translational_invariance_fc3(
-                self._fc3,
-                translational_symmetry_type=translational_symmetry_type)
+            set_translational_invariance_fc3(self._fc3)
 
     def get_version(self):
         return __version__
@@ -726,7 +757,8 @@ class Phono3py(object):
     def _get_fc3(self,
                  forces_fc3,
                  disp_dataset,
-                 cutoff_distance):
+                 cutoff_distance,
+                 is_compact_fc=False):
         count = 0
         for disp1 in disp_dataset['first_atoms']:
             disp1['forces'] = forces_fc3[count]
@@ -740,6 +772,7 @@ class Phono3py(object):
                            self._primitive,
                            disp_dataset,
                            self._symmetry,
+                           is_compact_fc=is_compact_fc,
                            verbose=self._log_level)
 
         # Set fc3 elements zero beyond cutoff_distance

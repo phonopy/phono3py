@@ -96,9 +96,18 @@ def create_phono3py_force_constants(phono3py,
             file_exists(filename, log_level)
             if log_level:
                 print("Reading fc3 from %s" % filename)
-            fc3 = read_fc3_from_hdf5(filename=filename)
+
+            p2s_map = phono3py.get_primitive().get_primitive_to_supercell_map()
+            try:
+                fc3 = read_fc3_from_hdf5(filename=filename, p2s_map=p2s_map)
+            except RuntimeError:
+                import traceback
+                traceback.print_exc()
+                if log_level:
+                    print_error()
+                sys.exit(1)
             num_atom = phono3py.get_supercell().get_number_of_atoms()
-            if fc3.shape[0] != num_atom:
+            if fc3.shape[1] != num_atom:
                 print("Matrix shape of fc3 doesn't agree with supercell size.")
                 if log_level:
                     print_error()
@@ -118,6 +127,7 @@ def create_phono3py_force_constants(phono3py,
                                         settings.get_cutoff_fc3_distance(),
                                         input_filename,
                                         output_filename,
+                                        settings.get_is_compact_fc(),
                                         settings.get_use_alm_fc3(),
                                         log_level):
                     print("fc3 was not created properly.")
@@ -125,7 +135,8 @@ def create_phono3py_force_constants(phono3py,
                         print_error()
                     sys.exit(1)
         if log_level:
-            show_drift_fc3(phono3py.get_fc3())
+            show_drift_fc3(phono3py.get_fc3(),
+                           primitive=phono3py.get_primitive())
 
     # fc2
     phonon_primitive = phono3py.get_phonon_primitive()
@@ -143,8 +154,15 @@ def create_phono3py_force_constants(phono3py,
             print("Reading fc2 from %s" % filename)
 
         num_atom = phonon_supercell.get_number_of_atoms()
-        phonon_fc2 = read_fc2_from_hdf5(filename=filename,
-                                        p2s_map=p2s_map)
+        try:
+            phonon_fc2 = read_fc2_from_hdf5(filename=filename, p2s_map=p2s_map)
+        except RuntimeError:
+            import traceback
+            traceback.print_exc()
+            if log_level:
+                print_error()
+            sys.exit(1)
+
         if phonon_fc2.shape[1] != num_atom:
             print("Matrix shape of fc2 doesn't agree with supercell size.")
             if log_level:
@@ -155,22 +173,17 @@ def create_phono3py_force_constants(phono3py,
             if phonon_fc2.shape[0] == phonon_fc2.shape[1]:
                 symmetrize_force_constants(phonon_fc2)
             else:
-                symmetrize_compact_force_constants(phonon_fc2,
-                                                   phonon_supercell,
-                                                   phonon_symmetry,
-                                                   s2p_map,
-                                                   p2s_map)
+                symmetrize_compact_force_constants(phonon_fc2, phonon_primitive)
+
         phono3py.set_fc2(phonon_fc2)
     else:
-        if log_level:
-            print("Solving fc2")
-
         if phonon_supercell_matrix is None:
             if not _create_phono3py_fc2(phono3py,
                                         force_to_eVperA,
                                         distance_to_A,
                                         symmetrize_fc2,
                                         input_filename,
+                                        settings.get_is_compact_fc(),
                                         settings.get_use_alm_fc2(),
                                         log_level):
                 print("fc2 was not created properly.")
@@ -183,6 +196,7 @@ def create_phono3py_force_constants(phono3py,
                                                distance_to_A,
                                                symmetrize_fc2,
                                                input_filename,
+                                               settings.get_is_compact_fc(),
                                                settings.get_use_alm_fc2(),
                                                log_level):
                     print("fc2 was not created properly.")
@@ -200,34 +214,9 @@ def create_phono3py_force_constants(phono3py,
                           p2s_map=p2s_map)
 
     if log_level:
-        fc_orig = phono3py.get_fc2()
-        if fc_orig.shape[0] == fc_orig.shape[1]:
-            show_drift_force_constants(fc_orig, name='fc2')
-        else:
-            if fc_orig.shape[1] > 2000:
-                show_drift_force_constants(fc_orig, name='fc2')
-                print("  ** only the 2nd drift value is meaningful **")
-            else:
-                p2s_map = phonon_primitive.get_primitive_to_supercell_map()
-                lattice = np.array(phonon_supercell.get_cell().T,
-                                   dtype='double', order='C')
-                positions = phonon_supercell.get_scaled_positions()
-                rotations = phonon_symmetry.get_symmetry_operations()['rotations']
-                trans = phonon_symmetry.get_symmetry_operations()['translations']
-                symprec = phonon_symmetry.get_symmetry_tolerance()
-                n_satom = phonon_supercell.get_number_of_atoms()
-                fc = np.zeros((n_satom, n_satom, 3, 3), dtype='double', order='C')
-                for i_p, i_s in enumerate(p2s_map):
-                    fc[i_s] = fc_orig[i_p]
-                distribute_force_constants(fc,
-                                           np.arange(n_satom, dtype='intc'),
-                                           p2s_map,
-                                           lattice,
-                                           positions,
-                                           rotations,
-                                           trans,
-                                           symprec)
-                show_drift_force_constants(fc, name='fc2')
+        show_drift_force_constants(phono3py.get_fc2(),
+                                   primitive=phonon_primitive,
+                                   name='fc2')
 
 def _create_phono3py_fc3(phono3py,
                          force_to_eVperA,
@@ -237,6 +226,7 @@ def _create_phono3py_fc3(phono3py,
                          cutoff_distance,
                          input_filename,
                          output_filename,
+                         is_compact_fc,
                          use_alm,
                          log_level):
     if input_filename is None:
@@ -245,7 +235,7 @@ def _create_phono3py_fc3(phono3py,
         filename = 'disp_fc3.' + input_filename + '.yaml'
     file_exists(filename, log_level)
     if log_level:
-        print("Displacement dataset is read from %s." % filename)
+        print("Displacement dataset for fc3 is read from %s." % filename)
     disp_dataset = parse_disp_fc3_yaml(filename=filename)
     num_atom = phono3py.get_supercell().get_number_of_atoms()
     if disp_dataset['natom'] != num_atom:
@@ -264,20 +254,21 @@ def _create_phono3py_fc3(phono3py,
         return False
 
     _convert_force_unit(forces_fc3, force_to_eVperA)
+    phono3py.produce_fc3(forces_fc3,
+                         displacement_dataset=disp_dataset,
+                         cutoff_distance=cutoff_distance,
+                         symmetrize_fc3r=symmetrize_fc3r,
+                         is_compact_fc=is_compact_fc,
+                         use_alm=use_alm)
 
-    phono3py.produce_fc3(
-        forces_fc3,
-        displacement_dataset=disp_dataset,
-        cutoff_distance=cutoff_distance,
-        symmetrize_fc3r=symmetrize_fc3r,
-        use_alm=use_alm)
     if output_filename is None:
         filename = 'fc3.hdf5'
     else:
         filename = 'fc3.' + output_filename + '.hdf5'
     if log_level:
         print("Writing fc3 to %s" % filename)
-    write_fc3_to_hdf5(phono3py.get_fc3(), filename=filename)
+    p2s_map = phono3py.get_primitive().get_primitive_to_supercell_map()
+    write_fc3_to_hdf5(phono3py.get_fc3(), filename=filename, p2s_map=p2s_map)
 
     return True
 
@@ -286,6 +277,7 @@ def _create_phono3py_fc2(phono3py,
                          distance_to_A,
                          symmetrize_fc2,
                          input_filename,
+                         is_compact_fc,
                          use_alm,
                          log_level):
     if input_filename is None:
@@ -293,7 +285,7 @@ def _create_phono3py_fc2(phono3py,
     else:
         filename = 'disp_fc3.' + input_filename + '.yaml'
     if log_level:
-        print("Displacement dataset is read from %s." % filename)
+        print("Displacement dataset for fc2 is read from %s." % filename)
     file_exists(filename, log_level)
     disp_dataset = parse_disp_fc3_yaml(filename=filename)
     num_atom = phono3py.get_supercell().get_number_of_atoms()
@@ -318,6 +310,7 @@ def _create_phono3py_fc2(phono3py,
         forces_fc2,
         displacement_dataset=disp_dataset,
         symmetrize_fc2=symmetrize_fc2,
+        is_compact_fc=is_compact_fc,
         use_alm=use_alm)
 
     return True
@@ -327,6 +320,7 @@ def _create_phono3py_phonon_fc2(phono3py,
                                 distance_to_A,
                                 symmetrize_fc2,
                                 input_filename,
+                                is_compact_fc,
                                 use_alm,
                                 log_level):
     if input_filename is None:
@@ -360,6 +354,7 @@ def _create_phono3py_phonon_fc2(phono3py,
         forces_fc2,
         displacement_dataset=disp_dataset,
         symmetrize_fc2=symmetrize_fc2,
+        is_compact_fc=is_compact_fc,
         use_alm=use_alm)
 
     return True
