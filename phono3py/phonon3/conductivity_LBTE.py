@@ -1204,7 +1204,7 @@ class Conductivity_LBTE(Conductivity):
             size = num_ir_grid_points * num_band * 3
         v = self._collision_matrix[i_sigma, i_temp].reshape(size, size)
         # Transpose eigvecs because colmat was solved by column major order
-        if solver in [1, 2]:
+        if solver in [1, 2, 4]:
             v = v.T
 
         w = self._collision_eigenvalues[i_sigma, i_temp]
@@ -1305,8 +1305,8 @@ class Conductivity_LBTE(Conductivity):
             import scipy.linalg
             col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
                 size, size)
-            w, col_mat[:], info = scipy.linalg.lapack.dsyev(col_mat)
-        elif solver in [5, 6]: # fully scipy dsyev & numpy
+            w, _, info = scipy.linalg.lapack.dsyev(col_mat.T, overwrite_a=1)
+        elif solver in [5, 6]: # fully scipy dsyevd & numpy
             if self._log_level:
                 print("Diagonalizing by scipy.linalg.lapack.dsyevd...")
                 sys.stdout.flush()
