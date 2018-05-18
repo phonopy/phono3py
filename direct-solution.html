@@ -121,6 +121,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#may-17-2018-version-1-13-1">May-17-2018: version 1.13.1</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#mar-16-2018-version-1-12-9">Mar-16-2018: version 1.12.9</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#feb-1-2018-version-1-12-7">Feb-1-2018: version 1.12.7</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#nov-22-2017-version-1-12-5">Nov-22-2017: version 1.12.5</a></li>
@@ -319,14 +320,13 @@ collision matrix at one temperature point is <span class="math notranslate">\((\
 irreducible grid points} \times \text{number of bands} \times 3)^2\)</span>
 for the symmetrized collision matrix.</p>
 <p>These collision matrices contain real values and are supposed to be
-64bit float symmetric matrices. During the diagonalization, depending
-on the choice of the solver, around 2 to 3 times more memory space
-than that of the collision matrix is required.</p>
+64bit float symmetric matrices. During the diagonalization with LAPACK
+<code class="docutils literal notranslate"><span class="pre">dsyev</span></code> solver, around 1.2 times more memory space of that needed
+for the collision matrix is required.</p>
 <p>When phono3py runs with <a class="reference internal" href="command-options.html#wgp-option"><span class="std std-ref">–wgp option</span></a> together with
-<code class="docutils literal notranslate"><span class="pre">--write-collision</span></code> option, estimated memory space needed for
-storing collision matrix is presented. With <a class="reference internal" href="command-options.html#stp-option"><span class="std std-ref">–stp option</span></a>,
-estimated memory space needed for ph-ph interaction strengths is
-shown.</p>
+<code class="docutils literal notranslate"><span class="pre">--lbte</span></code> option, estimated memory space needed for storing collision
+matrix is presented. With <a class="reference internal" href="command-options.html#stp-option"><span class="std std-ref">–stp option</span></a>, estimated
+memory space needed for ph-ph interaction strengths is shown.</p>
 </div>
 <div class="section" id="work-load-distribution">
 <h2><a class="toc-backref" href="#id6">Work load distribution</a><a class="headerlink" href="#work-load-distribution" title="Permalink to this headline">¶</a></h2>
