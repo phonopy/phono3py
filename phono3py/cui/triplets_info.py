@@ -47,7 +47,7 @@ def write_grid_points(primitive,
                       temperatures=None,
                       coarse_mesh_shifts=None,
                       is_kappa_star=True,
-                      write_collision=False,
+                      is_lbte=False,
                       symprec=1e-5):
     print("-" * 76)
     if mesh is None:
@@ -76,22 +76,32 @@ def write_grid_points(primitive,
         print("Ir-grid points are written into \"ir_grid_points.yaml\".")
         print("Grid addresses are written into \"%s\"." % gadrs_hdf5_fname)
 
-        if write_collision and temperatures is not None:
+        if is_lbte and temperatures is not None:
             num_temp = len(temperatures)
             num_sigma = len(sigmas)
-            num_ir_grid_points = len(ir_grid_points)
+            num_ir_gp = len(ir_grid_points)
             num_band = primitive.get_number_of_atoms() * 3
+            num_gp = len(bz_grid_address)
             if band_indices is None:
                 num_band0 = num_band
             else:
                 num_band0 = len(band_indices)
-            size = (num_sigma * num_temp *
-                    num_band0 * 3 * num_ir_grid_points * num_band * 3) * 8 / 1e9
-            print("Memory size needed for collision matrix at each grid point: "
-                  "%.2f Gb" % size)
-            size = (num_ir_grid_points * num_band * 3) ** 2 * 8 / 1e9
-            print("Memory size needed for one full collision matrix: %.2f Gb"
+            print("Memory requirements:")
+            size = (num_band0 * 3 * num_ir_gp * num_band * 3) * 8 / 1.0e9
+            print("- Piece of collision matrix at each grid point, temp and "
+                  "sigma: %.2f Gb" % size)
+            size = (num_ir_gp * num_band * 3) ** 2 * 8 / 1.0e9
+            print("- Full collision matrix at each temp and sigma: %.2f Gb"
                   % size)
+            size = num_gp * (num_band ** 2 * 16 + num_band * 8 + 1) / 1.0e9
+            print("- Phonons: %.2f Gb" % size)
+            size = num_gp * 5 * 4 / 1.0e9
+            print("- Grid point information: %.2f Gb" % size)
+            size = (num_ir_gp * num_band0 *
+                    (3 + 6 + num_temp * 2 + num_sigma * num_temp * 15 + 2) *
+                    8 / 1.0e9)
+            print("- Phonon properties: %.2f Gb" % size)
+
 
 
 def show_num_triplets(primitive,

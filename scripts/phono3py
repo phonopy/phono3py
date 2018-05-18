@@ -466,7 +466,8 @@ if args.write_grid_points:
                       temperatures=temperatures,
                       coarse_mesh_shifts=coarse_mesh_shifts,
                       is_kappa_star=settings.get_is_kappa_star(),
-                      write_collision=settings.get_write_collision(),
+                      is_lbte=(settings.get_write_collision() or
+                               settings.get_is_lbte()),
                       symprec=symprec)
 
     if log_level:
