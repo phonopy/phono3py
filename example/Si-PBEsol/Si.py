@@ -59,7 +59,6 @@ def run_thermal_conductivity(phono3py):
 def create_supercells_with_displacements(phono3py):
     phono3py.generate_displacements(distance=0.03)
     scells_with_disps = phono3py.get_supercells_with_displacements()
-    print(len(scells_with_disps))
 
     # from phonopy.interface.vasp import write_vasp
     # for i, scell in enumerate(scells_with_disps):
@@ -68,7 +67,35 @@ def create_supercells_with_displacements(phono3py):
 
     # A dataset of displacements. The dictionary format is shown at
     # phono3py.phonon3.displacement_fc3.get_third_order_displacements.
+    print("Displacement sets")
     disp_dataset = phono3py.get_displacement_dataset()
+    count = 0
+    for i, disp1 in enumerate(disp_dataset['first_atoms']):
+        print("%4d: %4d                %s" % (
+            count + 1,
+            disp1['number'] + 1,
+            np.around(disp1['displacement'], decimals=3)))
+        count += 1
+
+    distances = []
+    for i, disp1 in enumerate(disp_dataset['first_atoms']):
+        for j, disp2 in enumerate(disp1['second_atoms']):
+            print("%4d: %4d-%4d (%6.3f)  %s %s" % (
+                count + 1,
+                disp1['number'] + 1,
+                disp2['number'] + 1,
+                disp2['pair_distance'],
+                np.around(disp1['displacement'], decimals=3),
+                np.around(disp2['displacement'], decimals=3)))
+            distances.append(disp2['pair_distance'])
+            count += 1
+
+    # Find unique pair distances
+    distances = np.array(distances)
+    distances_int = (distances * 1e5).astype(int)
+    unique_distances = np.unique(distances_int) * 1e-5 # up to 5 decimals
+    print("Unique pair distances")
+    print(unique_distances)
 
     # FORCES_FC3 is created as follows:
     from phono3py.file_IO import write_FORCES_FC3
@@ -88,5 +115,5 @@ if __name__ == '__main__':
                         mesh=mesh,
                         log_level=1) # log_level=0 make phono3py quiet
 
-    # create_supercells_with_displacements(phono3py)
+    create_supercells_with_displacements(phono3py)
     run_thermal_conductivity(phono3py)
