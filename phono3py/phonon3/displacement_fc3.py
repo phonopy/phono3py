@@ -44,35 +44,56 @@ def direction_to_displacement(dataset,
                                 'displacement': disp_cart1,
                                 'second_atoms': new_second_atoms})
     new_dataset['first_atoms'] = new_first_atoms
-    
+
     return new_dataset
 
 def get_third_order_displacements(cell,
                                   symmetry,
                                   is_plusminus='auto',
                                   is_diagonal=False):
-    # Atoms 1, 2, and 3 are defined as follows:
-    #
-    # Atom 1: The first displaced atom. Third order force constant
-    #         between Atoms 1, 2, and 3 is calculated.
-    # Atom 2: The second displaced atom. Second order force constant
-    #         between Atoms 2 and 3 is calculated.
-    # Atom 3: Force is mesuared on this atom.
+    """Create dispalcement dataset
+
+    Note
+    ----
+    Atoms 1, 2, and 3 are defined as follows:
+
+    Atom 1: The first displaced atom. Third order force constant
+            between Atoms 1, 2, and 3 is calculated.
+    Atom 2: The second displaced atom. Second order force constant
+            between Atoms 2 and 3 is calculated.
+    Atom 3: Force is mesuared on this atom.
+
+    Parameters
+    ----------
+    cell : PhonopyAtoms
+        Supercell
+    symmetry : Symmetry
+        Symmetry of supercell
+    is_plusminus : str or bool, optional
+        Type of displacements, plus only (False), always plus and minus (True),
+        and plus and minus depending on site symmetry ('auto').
+    is_diagonal : bool, optional
+        Whether allow diagonal displacements of Atom 2 or not
+
+    Returns
+    -------
+    dict
+        Data structure is like:
+        {'natom': 64,
+         'cutoff_distance': 4.000000,
+         'first_atoms':
+          [{'number': atom1,
+            'displacement': [0.03, 0., 0.],
+            'second_atoms': [ {'number': atom2,
+                               'displacement': [0., -0.03, 0.],
+                               'distance': 2.353},
+                              {'number': ... }, ... ] },
+           {'number': atom1, ... } ]}
+
+    """
 
     positions = cell.get_scaled_positions()
     lattice = cell.get_cell().T
-
-    # Least displacements for third order force constants in yaml file
-    #
-    # Data structure
-    # [{'number': atom1,
-    #   'displacement': [0.00000, 0.007071, 0.007071],
-    #   'second_atoms': [ {'number': atom2,
-    #                      'displacements': [[0.007071, 0.000000, 0.007071],
-    #                                        [-0.007071, 0.000000, -0.007071]
-    #                                        ,...]},
-    #                     {'number': ... } ] },
-    #  {'number': atom1, ... } ]
 
     # Least displacements of first atoms (Atom 1) are searched by
     # using respective site symmetries of the original crystal.
@@ -92,7 +113,7 @@ def get_third_order_displacements(cell,
                      'direction': disp1,
                      'second_atoms': []}
 
-        # Reduced site symmetry at the first atom with respect to 
+        # Reduced site symmetry at the first atom with respect to
         # the displacement of the first atoms.
         reduced_site_sym = get_reduced_site_symmetry(site_sym, disp1, symprec)
         # Searching orbits (second atoms) with respect to
@@ -121,7 +142,7 @@ def get_third_order_displacements(cell,
             dds_atom2['distance'] = min_distance
             dds_atom1['second_atoms'].append(dds_atom2)
         dds.append(dds_atom1)
-    
+
     return dds
 
 def get_next_displacements(atom1,
@@ -135,7 +156,7 @@ def get_next_displacements(atom1,
     reduced_bond_sym = get_bond_symmetry(
         reduced_site_sym,
         lattice,
-        positions, 
+        positions,
         atom1,
         atom2,
         symprec)
@@ -143,7 +164,7 @@ def get_next_displacements(atom1,
     # Since displacement of first atom breaks translation
     # symmetry, the crystal symmetry is reduced to point
     # symmetry and it is equivalent to the site symmetry
-    # on the first atom. Therefore site symmetry on the 
+    # on the first atom. Therefore site symmetry on the
     # second atom with the displacement is equivalent to
     # this bond symmetry.
     if is_diagonal:
@@ -227,6 +248,5 @@ def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
             raise ValueError
         else:
             orbits.append(mapping)
-        
-    return np.array(orbits)
 
+    return np.array(orbits)

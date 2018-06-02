@@ -105,15 +105,14 @@ for the symmetrized collision matrix.
    collision matrix.
 
 These collision matrices contain real values and are supposed to be
-64bit float symmetric matrices. During the diagonalization, depending
-on the choice of the solver, around 2 to 3 times more memory space
-than that of the collision matrix is required.
+64bit float symmetric matrices. During the diagonalization with LAPACK
+``dsyev`` solver, around 1.2 times more memory space of that needed
+for the collision matrix is required.
 
 When phono3py runs with :ref:`--wgp option <wgp_option>` together with
-``--write-collision`` option, estimated memory space needed for
-storing collision matrix is presented. With :ref:`--stp option <stp_option>`,
-estimated memory space needed for ph-ph interaction strengths is
-shown.
+``--lbte`` option, estimated memory space needed for storing collision
+matrix is presented. With :ref:`--stp option <stp_option>`, estimated
+memory space needed for ph-ph interaction strengths is shown.
 
 Work load distribution
 -----------------------

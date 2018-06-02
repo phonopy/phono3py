@@ -581,6 +581,7 @@ class ImagSelfEnergy(object):
             _g_zero,
             self._cutoff_frequency)
 
+        self._detailed_imag_self_energy *= self._unit_conversion
         self._ise_N *= self._unit_conversion
         self._ise_U *= self._unit_conversion
         self._imag_self_energy = self._ise_N + self._ise_U
