@@ -5,7 +5,6 @@ from phonopy.phonon.degeneracy import degenerate_sets
 from phono3py.phonon3.triplets import (get_triplets_integration_weights,
                                        gaussian, occupation)
 from phono3py.file_IO import (write_gamma_detail_to_hdf5,
-                              write_linewidth_at_grid_point,
                               write_imag_self_energy_at_grid_point)
 
 def get_imag_self_energy(interaction,

@@ -49,9 +49,7 @@ from phonopy.harmonic.displacement import direction_to_displacement as \
      direction_to_displacement_fc2
 from phono3py.version import __version__
 from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
-                                               write_imag_self_energy,
-                                               get_linewidth,
-                                               write_linewidth)
+                                               write_imag_self_energy)
 from phono3py.phonon3.frequency_shift import get_frequency_shift
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.conductivity_RTA import get_thermal_conductivity_RTA
@@ -138,9 +136,6 @@ class Phono3py(object):
         # Imaginary part of self energy at frequency points
         self._imag_self_energy = None
         self._scattering_event_class = None
-
-        # Linewidth (Imaginary part of self energy x 2) at temperatures
-        self._linewidth = None
 
         self._grid_points = None
         self._frequency_points = None
