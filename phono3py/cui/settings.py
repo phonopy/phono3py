@@ -26,7 +26,6 @@ class Phono3pySettings(Settings):
         self._is_joint_dos = False
         self._is_kappa_star = True
         self._is_lbte = False
-        self._is_linewidth = False
         self._is_N_U = False
         self._is_reducible_collision_matrix = False
         self._is_symmetrize_fc2 = False
@@ -177,12 +176,6 @@ class Phono3pySettings(Settings):
 
     def get_is_lbte(self):
         return self._is_lbte
-
-    def set_is_linewidth(self, is_linewidth):
-        self._is_linewidth = is_linewidth
-
-    def get_is_linewidth(self):
-        return self._is_linewidth
 
     def set_is_N_U(self, is_N_U):
         self._is_N_U = is_N_U
@@ -459,10 +452,6 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_lbte:
                 self._confs['lbte'] = '.true.'
 
-        if 'is_linewidth' in self._args:
-            if self._args.is_linewidth:
-                self._confs['linewidth'] = '.true.'
-
         if 'is_N_U' in self._args:
             if self._args.is_N_U:
                 self._confs['N_U'] = '.true.'
@@ -705,12 +694,6 @@ class Phono3pyConfParser(ConfParser):
                     self.set_parameter('is_lbte', False)
                 elif confs['lbte'].lower() == '.true.':
                     self.set_parameter('is_lbte', True)
-
-            if conf_key == 'linewidth':
-                if confs['linewidth'].lower() == '.false.':
-                    self.set_parameter('is_linewidth', False)
-                elif confs['linewidth'].lower() == '.true.':
-                    self.set_parameter('is_linewidth', True)
 
             if conf_key == 'N_U':
                 if confs['N_U'].lower() == '.false.':
@@ -976,10 +959,6 @@ class Phono3pyConfParser(ConfParser):
         # Calculate thermal conductivity in LBTE with Chaput's method
         if 'is_lbte' in params:
             self._settings.set_is_lbte(params['is_lbte'])
-
-        # Calculate linewidths
-        if 'is_linewidth' in params:
-            self._settings.set_is_linewidth(params['is_linewidth'])
 
         # Calculate Normal and Umklapp processes
         if 'is_N_U' in params:

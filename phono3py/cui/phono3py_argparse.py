@@ -81,7 +81,6 @@ def get_parser():
                         is_gruneisen=False,
                         is_isotope=False,
                         is_joint_dos=False,
-                        is_linewidth=False,
                         is_lbte=False,
                         is_nac=False,
                         is_nodiag=False,
@@ -299,9 +298,6 @@ def get_parser():
     parser.add_argument(
         "--loglevel", dest="log_level", type=int,
         help="Log level")
-    parser.add_argument(
-        "--lw", "--linewidth", dest="is_linewidth", action="store_true",
-        help="Calculate linewidths")
     parser.add_argument(
         "--mass", dest="masses",
         help="Same as MASS tag")

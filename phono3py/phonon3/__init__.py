@@ -49,9 +49,7 @@ from phonopy.harmonic.displacement import direction_to_displacement as \
      direction_to_displacement_fc2
 from phono3py.version import __version__
 from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
-                                               write_imag_self_energy,
-                                               get_linewidth,
-                                               write_linewidth)
+                                               write_imag_self_energy)
 from phono3py.phonon3.frequency_shift import get_frequency_shift
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.conductivity_RTA import get_thermal_conductivity_RTA
@@ -138,9 +136,6 @@ class Phono3py(object):
         # Imaginary part of self energy at frequency points
         self._imag_self_energy = None
         self._scattering_event_class = None
-
-        # Linewidth (Imaginary part of self energy x 2) at temperatures
-        self._linewidth = None
 
         self._grid_points = None
         self._frequency_points = None
@@ -426,7 +421,8 @@ class Phono3py(object):
                              num_frequency_points=None,
                              temperatures=None,
                              scattering_event_class=None,
-                             write_gamma_detail=False):
+                             write_gamma_detail=False,
+                             output_filename=None):
         if self._interaction is None:
             self.set_phph_interaction()
         if temperatures is None:
@@ -443,6 +439,7 @@ class Phono3py(object):
             temperatures=temperatures,
             scattering_event_class=scattering_event_class,
             write_detail=write_gamma_detail,
+            output_filename=output_filename,
             log_level=self._log_level)
 
     def write_imag_self_energy(self, filename=None):
@@ -457,31 +454,6 @@ class Phono3py(object):
             scattering_event_class=self._scattering_event_class,
             filename=filename,
             is_mesh_symmetry=self._is_mesh_symmetry)
-
-    def run_linewidth(self,
-                      grid_points,
-                      temperatures=np.arange(0, 1001, 10, dtype='double'),
-                      write_gamma_detail=False):
-        if self._interaction is None:
-            self.set_phph_interaction()
-        self._grid_points = grid_points
-        self._temperatures = temperatures
-        self._linewidth = get_linewidth(self._interaction,
-                                        grid_points,
-                                        self._sigmas,
-                                        temperatures=temperatures,
-                                        write_detail=write_gamma_detail,
-                                        log_level=self._log_level)
-
-    def write_linewidth(self, filename=None):
-        write_linewidth(self._linewidth,
-                        self._band_indices,
-                        self._mesh,
-                        self._grid_points,
-                        self._sigmas,
-                        self._temperatures,
-                        filename=filename,
-                        is_mesh_symmetry=self._is_mesh_symmetry)
 
     def run_thermal_conductivity(
             self,

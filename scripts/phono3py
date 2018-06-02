@@ -309,8 +309,6 @@ elif settings.get_is_joint_dos():
 elif (settings.get_is_isotope() and
       not (settings.get_is_bterta() or settings.get_is_lbte())):
     run_mode = "isotope"
-elif settings.get_is_linewidth():
-    run_mode = "linewidth"
 elif settings.get_is_imag_self_energy():
     run_mode = "imag_self_energy"
 elif settings.get_is_frequency_shift():
@@ -715,18 +713,7 @@ if run_mode is not None:
                 print_error()
             sys.exit(1)
 
-if run_mode == "linewidth":
-    if grid_points is None:
-        print("Grid point(s) has to be specified with --gp or --ga option.")
-        if log_level:
-            print_error()
-        sys.exit(1)
-    phono3py.run_linewidth(
-        grid_points,
-        temperatures=temperatures,
-        write_gamma_detail=settings.get_write_gamma_detail())
-    phono3py.write_linewidth(filename=output_filename)
-elif run_mode == "imag_self_energy":
+if run_mode == "imag_self_energy":
     if grid_points is None:
         print("Grid point(s) has to be specified with --gp or --ga option.")
         if log_level:
@@ -738,7 +725,8 @@ elif run_mode == "imag_self_energy":
         num_frequency_points=num_frequency_points,
         temperatures=temperature_points,
         scattering_event_class=settings.get_scattering_event_class(),
-        write_gamma_detail=settings.get_write_gamma_detail())
+        write_gamma_detail=settings.get_write_gamma_detail(),
+        output_filename=output_filename)
     phono3py.write_imag_self_energy(filename=output_filename)
 elif run_mode == "frequency_shift":
     phono3py.get_frequency_shift(
