@@ -16,6 +16,7 @@ def get_imag_self_energy(interaction,
                          temperatures=None,
                          scattering_event_class=None, # class 1 or 2
                          write_detail=False,
+                         output_filename=None,
                          log_level=0):
     """Imaginary part of self energy at frequency points
 
@@ -130,7 +131,7 @@ def get_imag_self_energy(interaction,
             gamma_sigmas.append(gamma)
 
             if write_detail:
-                filename = write_gamma_detail_to_hdf5(
+                full_filename = write_gamma_detail_to_hdf5(
                     temperatures,
                     mesh,
                     gamma_detail=detailed_gamma,
@@ -138,11 +139,12 @@ def get_imag_self_energy(interaction,
                     triplet=triplets,
                     weight=weights,
                     sigma=sigma,
-                    frequency_points=frequency_points_at_sigma)
+                    frequency_points=frequency_points_at_sigma,
+                    filename=output_filename)
 
                 if log_level:
                     print("Contribution of each triplet to imaginary part of "
-                          "self energy is written in\n\"%s\"." % filename)
+                          "self energy is written in\n\"%s\"." % full_filename)
 
         imag_self_energy.append(gamma_sigmas)
         frequency_points.append(fp_sigmas)
@@ -165,111 +167,6 @@ def get_frequency_points(f_min,
             f_min, f_max, num_frequency_points), dtype='double')
 
     return frequency_points
-
-def get_linewidth(interaction,
-                  grid_points,
-                  sigmas,
-                  temperatures=np.arange(0, 1001, 10, dtype='double'),
-                  write_detail=False,
-                  log_level=0):
-    ise = ImagSelfEnergy(interaction, with_detail=write_detail)
-    band_indices = interaction.get_band_indices()
-    mesh = interaction.get_mesh_numbers()
-    gamma = np.zeros(
-        (len(grid_points), len(sigmas), len(temperatures), len(band_indices)),
-        dtype='double')
-
-    print("--------------------------------"
-          " Linewidth "
-          "---------------------------------")
-    for i, gp in enumerate(grid_points):
-        ise.set_grid_point(gp)
-        if log_level:
-            print("======================= Grid point %d (%d/%d) "
-                  "=======================" %
-                  (gp, i + 1, len(grid_points)))
-            weights = interaction.get_triplets_at_q()[1]
-            print("Number of ir-triplets: "
-                  "%d / %d" % (len(weights), weights.sum()))
-            print("Calculating ph-ph interaction...")
-        ise.run_interaction()
-        frequencies = interaction.get_phonons()[0]
-        if log_level:
-            adrs = interaction.get_grid_address()[gp]
-            q = adrs.astype('double') / mesh
-            print("q-point: %s" % q)
-            print("Phonon frequency:")
-            print("%s" % frequencies[gp])
-            sys.stdout.flush()
-
-        if write_detail:
-            triplets, weights, _, _ = interaction.get_triplets_at_q()
-
-        for j, sigma in enumerate(sigmas):
-            if log_level:
-                text = "Calculating linewidths with "
-                if sigma is None:
-                    text += "tetrahedron method"
-                else:
-                    text += "sigma=%s" % sigma
-                print(text)
-            ise.set_sigma(sigma)
-            ise.set_integration_weights()
-
-            if write_detail:
-                num_band0 = len(interaction.get_band_indices())
-                num_band = frequencies.shape[1]
-                num_temp = len(temperatures)
-                num_triplets = len(weights)
-                detailed_gamma = np.zeros(
-                    (num_temp, num_triplets, num_band0, num_band, num_band),
-                    dtype='double')
-
-            for k, t in enumerate(temperatures):
-                ise.set_temperature(t)
-                ise.run()
-                gamma[i, j, k] = ise.get_imag_self_energy()
-                if write_detail:
-                    detailed_gamma[k] = ise.get_detailed_imag_self_energy()
-
-            if write_detail:
-                filename = write_gamma_detail_to_hdf5(
-                    temperatures,
-                    mesh,
-                    gamma_detail=detailed_gamma,
-                    grid_point=gp,
-                    triplet=triplets,
-                    weight=weights,
-                    sigma=sigma)
-
-                if log_level:
-                    print("Contribution of each triplet to imaginary part of "
-                          "self energy is written in\n\"%s\"." % filename)
-    return gamma
-
-def write_linewidth(linewidth,
-                    band_indices,
-                    mesh,
-                    grid_points,
-                    sigmas,
-                    temperatures,
-                    filename=None,
-                    is_mesh_symmetry=True):
-    for i, gp in enumerate(grid_points):
-        for j, sigma in enumerate(sigmas):
-            for k, bi in enumerate(band_indices):
-                pos = 0
-                for l in range(k):
-                    pos += len(band_indices[l])
-                write_linewidth_at_grid_point(
-                    gp,
-                    bi,
-                    temperatures,
-                    linewidth[i, j, :, pos:(pos+len(bi))],
-                    mesh,
-                    sigma=sigma,
-                    filename=filename,
-                    is_mesh_symmetry=is_mesh_symmetry)
 
 def write_imag_self_energy(imag_self_energy,
                            mesh,
