@@ -438,8 +438,7 @@ separately calculated.
 
 ::
 
-   % phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" \
-     -c POSCAR-unitcell --nac --gp="34" --bi="4 5, 6"
+   % phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" -c POSCAR-unitcell --nac --gp="34" --bi="4 5, 6"
 
 Brillouin zone integration
 ---------------------------
@@ -573,8 +572,7 @@ without isotope calculation::
 
 Then running with isotope calculation::
 
-   % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br \
-     --read-gamma --mv="1.97e-4 1.97e-4 0 0"
+   % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --read-gamma --mv="1.97e-4 1.97e-4 0 0"
 
 In the result hdf5 file, currently isotope scattering strength is not
 written out, i.e., ``gamma`` is still imaginary part of self energy of
@@ -620,6 +618,8 @@ Specific temperatures are specified by ``--ts``.
 ::
 
    % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" -c POSCAR-unitcell --br --ts="200 300 400"
+
+.. _nac_option:
 
 ``--nac``: Non-analytical term correction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -708,24 +708,7 @@ triplet                                (symmetry reduced set of triplets at a gr
 weight                                 (symmetry reduced set of triplets at a grid point,), Weight of each triplet to imaginary part of self energy
 ====================================== =============================================================================================================================================
 
-Q-points corresponding to grid point indices are calculated from
-grid addresses and sampling mesh numbers given in
-``grid_address-mxxx.hdf5`` that is obtained by ``--wgp`` option. A
-python script to obtain q-point triplets is shown below.
-
-.. code-block:: python
-
-    import h5py
-    import numpy as np
-
-    f = h5py.File("gamma_detail-mxxx-gx.hdf5")
-    g = h5py.File("grid_address-mxxx.hdf5")
-    grid_address = f['grid_address'][:]
-    triplets = g['triplet'][:]
-    mesh = f['mesh'][:]
-    q = grid_address[triplets] / np.array(mesh, dtype='double')
-
-Imaginary part of self energy or linewidth/2 is recovered by the
+Imaginary part of self energy (linewidth/2) is recovered by the
 following script:
 
 .. code-block:: python
@@ -733,11 +716,12 @@ following script:
     import h5py
     import numpy as np
 
-    f = h5py.File("gamma_detail-mxxx-gx.hdf5")
-    temp = 30 # index of temperature
-    gamma_tp = f['gamma_detail'][:].sum(axis=-1).sum(axis=-1)
-    weight = f['weight'][:]
-    gamma = np.dot(weight, gamma_tp[temp])
+    gd = h5py.File("gamma_detail-mxxx-gx.hdf5")
+    temp_index = 30 # index of temperature
+    temperature = gd['temperature'][temp_index]
+    gamma_tp = gd['gamma_detail'][:].sum(axis=-1).sum(axis=-1)
+    weight = gd['weight'][:]
+    gamma = np.dot(weight, gamma_tp[temp_index])
 
 For example, for ``--lw`` or ``--br``, this ``gamma`` gives
 :math:`\Gamma_\lambda(\omega_\lambda)` of the band indices at the grid
@@ -748,6 +732,29 @@ type file are averaged, but the ``gamma`` obtained here in this way
 are not symmetrized. Apart from this symmetrization, the values must
 be equivalent between them.
 
+To understand each contribution of triptle to imaginary part of self
+energy, reading ``phonon-mxxx.hdf5`` is useful (see
+:ref:`write_phonon_option`). For example,
+phonon triplets of three phonon scatterings are obtained by
+
+.. code-block:: python
+
+    import h5py
+    import numpy as np
+
+    gd = h5py.File("gamma_detail-mxxx-gx.hdf5", 'r')
+    ph = h5py.File("phonon-mxxx.hdf5", 'r')
+    gp1 = gd['grid_point'][()]
+    triplets = gd['triplet'][:] # Sets of (gp1, gp2, gp3) where gp1 is fixed
+    mesh = gd['mesh'][:]
+    grid_address = ph['grid_address'][:]
+    q_triplets = grid_address[triplets] / mesh.astype('double')
+    # Phonons of triplets[2]
+    phonon_tp = [(ph['frequency'][i], ph['eigenvector'][i]) for i in triplets[2]]
+    # Fractions of contributions of tripltes at this grid point and temperture index 30
+    gamma_sum_over_bands = np.dot(weight, gd['gamma_detail'][30].sum(axis=-1).sum(axis=-1).sum(axis=-1))
+    contrib_tp = [gd['gamma_detail'][30, i].sum() / gamma_sum_over_bands for i in range(len(weight))]
+    np.dot(weight, contrib_tp) # is one
 ..
    ``--write-amplitude``
    ~~~~~~~~~~~~~~~~~~~~~~
@@ -763,12 +770,45 @@ be equivalent between them.
 
 Phonon frequencies, eigenvectors, and grid point addresses are stored
 in ``phonon-mxxx.hdf5`` file. After writing phonons, phono3py stops
-without going to calculation.
+without going to calculation. :ref:`--pa <pa_option>` and :ref:`--nac
+<nac_option>` may be required depending on calculation setting.
 
 ::
 
-   % phono3py --fc2 --dim="2 2  2" --mesh="16 16 16" -c POSCAR-unitcell \
-     --nac --write-phoonon
+   % phono3py --fc2 --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" --mesh="11 11 11" -c POSCAR-unitcell --nac --write-phoonon
+
+Contents of ``phonon-mxxx.hdf5`` are watched by::
+
+    In [1]: import h5py
+
+    In [2]: ph = h5py.File("phonon-m111111.hdf5", 'r')
+
+    In [3]: list(ph)
+    Out[3]: ['eigenvector', 'frequency', 'grid_address', 'mesh']
+
+    In [4]: ph['mesh'][:]
+    Out[4]: array([11, 11, 11], dtype=int32)
+
+    In [5]: ph['grid_address'].shape
+    Out[5]: (1367, 3)
+
+    In [6]: ph['frequency'].shape
+    Out[6]: (1367, 6)
+
+    In [7]: ph['eigenvector'].shape
+    Out[7]: (1367, 6, 6)
+
+The first axis of ``ph['grid_address']``, ``ph['frequency']``, and
+``ph['eigenvector']`` corresponds to the number of q-points where
+phonons are calculated. Here the number of phonons may not be equal to
+product of mesh numbers (:math:`1367 \neq 11^3`). This is because all
+q-points on Brillouin zone boundary are included, i.e., even if
+multiple q-points are translationally equivalent, those phonons are
+stored separately though these phonons are physically equivalent
+within the equations employed in phono3py. Here Brillouin zone is
+defined by Wigner–Seitz cell of reciprocal primitive basis
+vectors. This is convenient to categorize phonon triplets into Umklapp
+and Normal scatterings based on the Brillouin zone.
 
 .. _read_phonon_option:
 
@@ -779,12 +819,13 @@ Phonon frequencies, eigenvectors, and grid point addresses are read
 from ``phonon-mxxx.hdf5`` file and the calculation is continued using
 these phonon values. This is useful when we want to use fixed phonon
 eigenvectors that can be different for degenerate bands when using
-different eigenvalue solvers or different CPU architectures.
+different eigenvalue solvers or different CPU
+architectures. :ref:`--pa <pa_option>` and :ref:`--nac <nac_option>`
+may be required depending on calculation setting.
 
 ::
 
-   % phono3py --fc2 --fc3 --dim="2 2  2" --mesh="16 16 16" -c POSCAR-unitcell \
-     --nac --read-phoonon --br
+   % phono3py --fc2 --fc3 --dim="2 2  2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" --mesh="11 11 11" -c POSCAR-unitcell --nac --read-phoonon --br
 
 .. _ise_option:
 
@@ -800,8 +841,7 @@ with respect to frequency in THz (without :math:`2\pi`).
 
 ::
 
-   % phono3py --fc3 --fc2 --dim="2 2  2" --mesh="16 16 16" -c POSCAR-unitcell \
-     --nac --q-direction="1 0 0" --gp=0 --ise --bi="4 5, 6"
+   % phono3py --fc3 --fc2 --dim="2 2  2" --mesh="16 16 16" -c POSCAR-unitcell --nac --q-direction="1 0 0" --gp=0 --ise --bi="4 5, 6"
 
 .. _lw_option:
 
@@ -816,8 +856,7 @@ respect to temperature. The output is written to
 
 ::
 
-   % phono3py --fc3 --fc2 --dim="2 2  2" --mesh="16 16 16" -c POSCAR-unitcell \
-     --nac --q-direction="1 0 0" --gp=0 --lw --bi="4 5, 6"
+   % phono3py --fc3 --fc2 --dim="2 2  2" --mesh="16 16 16" -c POSCAR-unitcell --nac --q-direction="1 0 0" --gp=0 --lw --bi="4 5, 6"
 
 
 .. _jdos_option:
@@ -846,8 +885,7 @@ values given as follows, respectively,
 
 ::
 
-   % phono3py --fc2 --dim="2 2 2" -c POSCAR-unitcell --mesh="16 16 16" \
-     --nac --jdos --ga="0 0 0  8 8 8"
+   % phono3py --fc2 --dim="2 2 2" -c POSCAR-unitcell --mesh="16 16 16" --nac --jdos --ga="0 0 0  8 8 8"
 
 When temperatures are specified, two classes of weighted JDOS are
 calculated. The result is written into
@@ -871,8 +909,7 @@ the values given as follows, respectively,
 
 ::
 
-   % phono3py --fc2 --dim="2 2 2" -c POSCAR-unitcell --mesh="16 16 16" \
-     --nac --jdos --ga="0 0 0  8 8 8" --ts=300
+   % phono3py --fc2 --dim="2 2 2" -c POSCAR-unitcell --mesh="16 16 16" --nac --jdos --ga="0 0 0  8 8 8" --ts=300
 
 ``--num-freq-points``, ``--freq-pitch``: Sampling frequency for distribution functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -932,8 +969,7 @@ Then
 
 ::
 
-   % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br \
-     --read-gamma --ave-pp -o ave_pp
+   % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --read-gamma --ave-pp -o ave_pp
 
 ``--const-ave-pp``: Use constant phonon-phonon interaction strength
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -949,8 +985,7 @@ to input. The physical unit of the value is :math:`\text{eV}^2`.
 
 ::
 
-   % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br \
-     --const-ave-pp=1e-10
+   % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --const-ave-pp=1e-10
 
 ``--gruneisen``: Mode-Gruneisen parameter from 3rd order force constants
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -961,13 +996,11 @@ Mode-Gruneisen-parameters are calculated from fc3.
 
 Mesh sampling mode::
 
-   % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="16 16 16"
-     -c POSCAR-unitcell --nac --gruneisen
+   % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="16 16 16" -c POSCAR-unitcell --nac --gruneisen
 
 Band path mode::
 
-   % phono3py --fc3 --fc2 --dim="2 2 2" -v \
-     -c POSCAR-unitcell --nac --gruneisen --band="0 0 0  0 0 1/2"
+   % phono3py --fc3 --fc2 --dim="2 2 2" -v -c POSCAR-unitcell --nac --gruneisen --band="0 0 0  0 0 1/2"
 
 Input and output file names
 ----------------------------

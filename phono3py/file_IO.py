@@ -1207,21 +1207,21 @@ def parse_disp_fc3_yaml(filename="disp_fc3.yaml", return_cell=False):
         new_dataset['cutoff_distance'] = dataset['cutoff_distance']
     new_first_atoms = []
     for first_atoms in dataset['first_atoms']:
-        first_atoms['number'] -= 1
-        atom1 = first_atoms['number']
+        atom1 = first_atoms['number'] - 1
         disp1 = first_atoms['displacement']
         new_second_atoms = []
         for second_atom in first_atoms['second_atoms']:
-            second_atom['number'] -= 1
-            atom2 = second_atom['number']
+            disp2_dataset = {'number': second_atom['number'] - 1}
             if 'included' in second_atom:
                 included = second_atom['included']
             else:
                 included = True
+            disp2_dataset.update({'included': included})
+            if 'distance' in second_atom:
+                disp2_dataset.update({'pair_distance': second_atom['distance']})
             for disp2 in second_atom['displacements']:
-                new_second_atoms.append({'number': atom2,
-                                         'displacement': disp2,
-                                         'included': included})
+                disp2_dataset.update({'displacement': disp2})
+                new_second_atoms.append(disp2_dataset.copy())
         new_first_atoms.append({'number': atom1,
                                 'displacement': disp1,
                                 'second_atoms': new_second_atoms})
