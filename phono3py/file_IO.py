@@ -1075,7 +1075,8 @@ def write_gamma_detail_to_hdf5(temperature,
                                band_index=None,
                                sigma=None,
                                sigma_cutoff=None,
-                               filename=None):
+                               filename=None,
+                               verbose=True):
     if band_index is None:
         band_indices = None
     else:
@@ -1107,6 +1108,32 @@ def write_gamma_detail_to_hdf5(temperature,
             w.create_dataset('sigma_cutoff_width', data=sigma_cutoff)
         if frequency_points is not None:
             w.create_dataset('frequency_point', data=frequency_points)
+
+        if verbose:
+            text = ""
+            text += "Phonon triplets contributions to Gamma "
+            if grid_point is not None:
+                text += "at gp-%d " % grid_point
+                if band_index is not None:
+                    text += "and band_index-%d\n" % (band_index + 1)
+            if sigma is not None:
+                if grid_point is not None:
+                    text += "and "
+                else:
+                    text += "at "
+                text += "sigma %s" % sigma
+                if sigma_cutoff is None:
+                    text += "\n"
+                else:
+                    text += "(%4.2f SD)\n" % sigma_cutoff
+                text += "were written into "
+            else:
+                text += "were written into "
+                if band_index is None:
+                    text += "\n"
+            text += "\"%s\"." % full_filename
+            print(text)
+
         return full_filename
 
     return None

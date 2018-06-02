@@ -100,16 +100,34 @@ def _write_gamma_detail(br, interaction, i, filename=None, verbose=True):
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()
     triplets, weights, _, _ = interaction.get_triplets_at_q()
-    for j, sigma in enumerate(sigmas):
-        write_gamma_detail_to_hdf5(
-            temperatures,
-            mesh,
-            gamma_detail=gamma_detail,
-            grid_point=gp,
-            sigma=sigma,
-            sigma_cutoff=sigma_cutoff,
-            triplet=triplets,
-            weight=weights)
+    if all_bands_exist(interaction):
+        for j, sigma in enumerate(sigmas):
+            write_gamma_detail_to_hdf5(
+                temperatures,
+                mesh,
+                gamma_detail=gamma_detail,
+                grid_point=gp,
+                triplet=triplets,
+                weight=weights,
+                sigma=sigma,
+                sigma_cutoff=sigma_cutoff,
+                filename=filename,
+                verbose=verbose)
+    else:
+        for j, sigma in enumerate(sigmas):
+            for k, bi in enumerate(interaction.get_band_indices()):
+                write_gamma_detail_to_hdf5(
+                    temperatures,
+                    mesh,
+                    gamma_detail=gamma_detail[:, :, k, :, :],
+                    grid_point=gp,
+                    triplet=triplets,
+                    weight=weights,
+                    band_index=bi,
+                    sigma=sigma,
+                    sigma_cutoff=sigma_cutoff,
+                    filename=filename,
+                    verbose=verbose)
 
 def _write_gamma(br, interaction, i, filename=None, verbose=True):
     grid_points = br.get_grid_points()
