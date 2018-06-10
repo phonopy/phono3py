@@ -270,7 +270,8 @@ class Interaction(object):
                              primitive,
                              nac_params=None,
                              solve_dynamical_matrices=True,
-                             decimals=None):
+                             decimals=None,
+                             verbose=False):
         self._dm = get_dynamical_matrix(
             fc2,
             supercell,
@@ -281,7 +282,20 @@ class Interaction(object):
             symprec=self._symprec)
 
         if solve_dynamical_matrices:
-            self.set_phonons()
+            self.set_phonons(verbose=verbose)
+        else:
+            self.set_phonons(np.array([0], dtype='intc'), verbose=verbose)
+
+        if (self._grid_address[0] == 0).all():
+            if np.sum(self._frequencies[0] < self._cutoff_frequency) < 3:
+                for i, f in enumerate(self._frequencies[0, :3]):
+                    if not (f < self._cutoff_frequency):
+                        self._frequencies[0, i] = 0
+                        print("=" * 26 + " Warning " + "=" * 26)
+                        print(" Phonon frequency of band index %d at Gamma "
+                              "is calculated to be %f." % (i + 1, f))
+                        print(" But this frequency is forced to be zero.")
+                        print("=" * 61)
 
     def set_nac_q_direction(self, nac_q_direction=None):
         if nac_q_direction is not None:
@@ -307,22 +321,12 @@ class Interaction(object):
             self._eigenvectors[:] = eigenvectors
             return True
 
-    def set_phonons(self, grid_points=None):
+    def set_phonons(self, grid_points=None, verbose=False):
         if grid_points is None:
             _grid_points = np.arange(len(self._grid_address), dtype='intc')
         else:
             _grid_points = grid_points
-        self._set_phonon_c(_grid_points)
-        if (self._grid_address[0] == 0).all():
-            if np.sum(self._frequencies[0] < self._cutoff_frequency) < 3:
-                for i, f in enumerate(self._frequencies[0, :3]):
-                    if not (f < self._cutoff_frequency):
-                        self._frequencies[0, i] = 0
-                        print("=" * 26 + " Warning " + "=" * 26)
-                        print(" Phonon frequency of band index %d at Gamma "
-                              "is calculated to be %f." % (i + 1, f))
-                        print(" But this frequency is forced to be zero.")
-                        print("=" * 61)
+        self._set_phonon_c(_grid_points, verbose=verbose)
 
     def delete_interaction_strength(self):
         self._interaction_strength = None
@@ -375,7 +379,7 @@ class Interaction(object):
         self._interaction_strength *= self._unit_conversion
         self._g_zero = g_zero
 
-    def _set_phonon_c(self, grid_points):
+    def _set_phonon_c(self, grid_points, verbose=False):
         set_phonon_c(self._dm,
                      self._frequencies,
                      self._eigenvectors,
@@ -385,7 +389,8 @@ class Interaction(object):
                      self._mesh,
                      self._frequency_factor_to_THz,
                      self._nac_q_direction,
-                     self._lapack_zheev_uplo)
+                     self._lapack_zheev_uplo,
+                     verbose=verbose)
 
     def _run_py(self):
         r2r = RealToReciprocal(self._fc3,

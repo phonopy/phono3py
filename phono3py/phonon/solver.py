@@ -9,7 +9,8 @@ def set_phonon_c(dm,
                  mesh,
                  frequency_factor_to_THz,
                  nac_q_direction, # in reduced coordinates
-                 lapack_zheev_uplo):
+                 lapack_zheev_uplo,
+                 verbose=False):
     import phono3py._phono3py as phono3c
 
     (svecs,
@@ -24,7 +25,7 @@ def set_phonon_c(dm,
     if dm.is_nac() and dm.get_nac_method() == 'gonze':
         gonze_nac_dataset = dm.get_Gonze_nac_dataset()
         if gonze_nac_dataset[0] is None:
-            dm.make_Gonze_nac_dataset(verbose=True)
+            dm.make_Gonze_nac_dataset(verbose=verbose)
             gonze_nac_dataset = dm.get_Gonze_nac_dataset()
         (gonze_fc, # fc where the dipole-diple contribution is removed.
          dd_q0,    # second term of dipole-dipole expression.
