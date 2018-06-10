@@ -123,6 +123,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#june-2-2018-version-1-13-1-x">June-2-2018: version 1.13.1.x</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#may-17-2018-version-1-13-1">May-17-2018: version 1.13.1</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#mar-16-2018-version-1-12-9">Mar-16-2018: version 1.12.9</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#feb-1-2018-version-1-12-7">Feb-1-2018: version 1.12.7</a></li>
@@ -227,8 +228,8 @@ specified:</p>
 <p>When the file name of the unit cell is different from the default one
 (see <a class="reference internal" href="interfaces.html#default-unit-cell-file-name-for-calculator"><span class="std std-ref">Default unit cell file name</span></a>), <code class="docutils literal notranslate"><span class="pre">-c</span></code> option
 is used to specify the file name. CRYSTAL unit cell file parser used in
-phono3py is the same as that in phonopy. It can read
-only limited number of keywords that are shown in the phonopy web site
+phono3py is the same as that in phonopy. It reads a limited number of
+keywords that are documented in the phonopy web site
 (<a class="reference external" href="http://atztogo.github.io/phonopy/crystal.html#crystal-interface">http://atztogo.github.io/phonopy/crystal.html#crystal-interface</a>).</p>
 <div class="section" id="workflow">
 <span id="crystal-workflow"></span><h2>Workflow<a class="headerlink" href="#workflow" title="Permalink to this headline">¶</a></h2>
@@ -238,7 +239,7 @@ so the -c crystal.o parameter is not needed.</p>
 <ol class="arabic">
 <li><p class="first">Create supercells with displacements
 (4x4x4 for 2nd order FC, 2x2x2 for 3rd order FC)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">crystal</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">dim_fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">-</span><span class="n">d</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">crystal</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">dim</span><span class="o">-</span><span class="n">fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">-</span><span class="n">d</span>
 </pre></div>
 </div>
 <p>57 supercell files (<code class="docutils literal notranslate"><span class="pre">supercell-xxx.d12/.ext</span></code>) for the third order
@@ -260,11 +261,11 @@ CRYSTAL input files in the step 1.</li>
 <p>Note that supercells with displacements must not be relaxed in the
 force calculations, because atomic forces induced by a small atomic
 displacement are what we need for phonon calculation. To get accurate
-forces, TOLDEE parameter should be 10 or higher. Phonopy includes this
+forces, TOLDEE parameter should be 10 or higher. Phono3py includes this
 parameter and the necessary GRADCAL keyword automatically in the inputs.</p>
 <p>Then, CRYSTAL supercell calculations are executed to obtain forces on
 atoms, e.g., as follows:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">runcry14</span> <span class="n">supercell</span><span class="o">-</span><span class="mf">001.</span><span class="n">d12</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">runcry17</span> <span class="n">supercell</span><span class="o">-</span><span class="mf">001.</span><span class="n">d12</span>
 </pre></div>
 </div>
 </li>
@@ -278,14 +279,13 @@ atoms, e.g., as follows:</p>
 <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>, therefore they must exist in current directory.</p>
 </li>
 <li><p class="first">Calculate 3rd and 2nd order force constants in files <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">crystal</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">dim_fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">--</span><span class="n">sym</span><span class="o">-</span><span class="n">fc</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">crystal</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">dim</span><span class="o">-</span><span class="n">fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">--</span><span class="n">sym</span><span class="o">-</span><span class="n">fc</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">--sym-fc</span></code> is used to symmetrize second- and third-order force
-constants.</p>
+<p><code class="docutils literal notranslate"><span class="pre">--sym-fc</span></code> is used to symmetrize second- and third-order force constants.</p>
 </li>
 <li><p class="first">Thermal conductivity calculation:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">crystal</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">dim_fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;20 20 20&quot;</span> <span class="o">--</span><span class="n">br</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">crystal</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">dim</span><span class="o">-</span><span class="n">fc2</span><span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;20 20 20&quot;</span> <span class="o">--</span><span class="n">br</span>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">--br</span></code> invokes the Relaxation Time Approximation.
