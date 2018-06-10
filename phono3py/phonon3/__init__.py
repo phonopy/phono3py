@@ -168,7 +168,8 @@ class Phono3py(object):
                              nac_q_direction=None,
                              constant_averaged_interaction=None,
                              frequency_scale_factor=None,
-                             unit_conversion=None):
+                             unit_conversion=None,
+                             solve_dynamical_matrices=True):
         self._nac_params = nac_params
         self._interaction = Interaction(
             self._supercell,
@@ -190,7 +191,9 @@ class Phono3py(object):
             self._fc2,
             self._phonon_supercell,
             self._phonon_primitive,
-            nac_params=self._nac_params)
+            nac_params=self._nac_params,
+            solve_dynamical_matrices=solve_dynamical_matrices,
+            verbose=self._log_level)
 
     def set_phonon_data(self, frequencies, eigenvectors, grid_address):
         if self._interaction is not None:
