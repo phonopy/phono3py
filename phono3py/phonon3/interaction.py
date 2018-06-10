@@ -269,7 +269,9 @@ class Interaction(object):
                              supercell,
                              primitive,
                              nac_params=None,
-                             decimals=None):
+                             solve_dynamical_matrices=True,
+                             decimals=None,
+                             verbose=False):
         self._dm = get_dynamical_matrix(
             fc2,
             supercell,
@@ -278,7 +280,12 @@ class Interaction(object):
             frequency_scale_factor=self._frequency_scale_factor,
             decimals=decimals,
             symprec=self._symprec)
-        self.set_phonons(np.arange(len(self._grid_address), dtype='intc'))
+
+        if solve_dynamical_matrices:
+            self.set_phonons(verbose=verbose)
+        else:
+            self.set_phonons(np.array([0], dtype='intc'), verbose=verbose)
+
         if (self._grid_address[0] == 0).all():
             if np.sum(self._frequencies[0] < self._cutoff_frequency) < 3:
                 for i, f in enumerate(self._frequencies[0, :3]):
@@ -314,11 +321,12 @@ class Interaction(object):
             self._eigenvectors[:] = eigenvectors
             return True
 
-    def set_phonons(self, grid_points):
-        # for i, grid_triplet in enumerate(self._triplets_at_q):
-        #     for gp in grid_triplet:
-        #         self._set_phonon_py(gp)
-        self._set_phonon_c(grid_points)
+    def set_phonons(self, grid_points=None, verbose=False):
+        if grid_points is None:
+            _grid_points = np.arange(len(self._grid_address), dtype='intc')
+        else:
+            _grid_points = grid_points
+        self._set_phonon_c(_grid_points, verbose=verbose)
 
     def delete_interaction_strength(self):
         self._interaction_strength = None
@@ -371,7 +379,7 @@ class Interaction(object):
         self._interaction_strength *= self._unit_conversion
         self._g_zero = g_zero
 
-    def _set_phonon_c(self, grid_points):
+    def _set_phonon_c(self, grid_points, verbose=False):
         set_phonon_c(self._dm,
                      self._frequencies,
                      self._eigenvectors,
@@ -381,7 +389,8 @@ class Interaction(object):
                      self._mesh,
                      self._frequency_factor_to_THz,
                      self._nac_q_direction,
-                     self._lapack_zheev_uplo)
+                     self._lapack_zheev_uplo,
+                     verbose=verbose)
 
     def _run_py(self):
         r2r = RealToReciprocal(self._fc3,
