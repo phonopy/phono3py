@@ -3,6 +3,12 @@
 Change Log
 ==========
 
+June-2-2018: version 1.13.1.x
+------------------------------
+
+- ``--lw`` (linewidth) option was removed. Use ``--br`` option and
+  find 2*gamma values as linewidths in ``kappa-xxx.hdf5`` file.
+
 May-17-2018: version 1.13.1
 ----------------------------
 

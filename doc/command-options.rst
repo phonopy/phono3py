@@ -700,7 +700,7 @@ detailed information.
 
 ====================================== =============================================================================================================================================
 gamma_detail for ``--ise``             (temperature, sampling frequency point, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz (without :math:`2\pi`)
-gamma_detail for ``--lw`` and ``--br`` (temperature, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz (without :math:`2\pi`)
+gamma_detail for ``--br``              (temperature, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz (without :math:`2\pi`)
 mesh                                   Numbers of sampling mesh along reciprocal axes.
 frequency_point for ``--ise``          Sampling frequency points in THz (without :math:`2\pi`), i.e., :math:`\omega` in :math:`\Gamma_\lambda(\omega)`
 temperature                            (temperature,), Temperatures in K
@@ -723,7 +723,7 @@ following script:
     weight = gd['weight'][:]
     gamma = np.dot(weight, gamma_tp[temp_index])
 
-For example, for ``--lw`` or ``--br``, this ``gamma`` gives
+For example, for ``--br``, this ``gamma`` gives
 :math:`\Gamma_\lambda(\omega_\lambda)` of the band indices at the grid
 point indicated by :math:`\lambda` at the temperature of index 30. If
 any bands are degenerated, those ``gamma`` in
@@ -842,22 +842,6 @@ with respect to frequency in THz (without :math:`2\pi`).
 ::
 
    % phono3py --fc3 --fc2 --dim="2 2  2" --mesh="16 16 16" -c POSCAR-unitcell --nac --q-direction="1 0 0" --gp=0 --ise --bi="4 5, 6"
-
-.. _lw_option:
-
-``--lw``: Line width
-~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``LINEWIDTH``, ``.TRUE.`` or ``.FALSE.``)
-
-Linewidth :math:`2\Gamma_\lambda(\omega_\lambda)` is calculated with
-respect to temperature. The output is written to
-``linewidth-mxxx-gx(-sx)-bx.dat`` in THz (without :math:`2\pi`).
-
-::
-
-   % phono3py --fc3 --fc2 --dim="2 2  2" --mesh="16 16 16" -c POSCAR-unitcell --nac --q-direction="1 0 0" --gp=0 --lw --bi="4 5, 6"
-
 
 .. _jdos_option:
 
