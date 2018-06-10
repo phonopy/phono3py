@@ -269,6 +269,7 @@ class Interaction(object):
                              supercell,
                              primitive,
                              nac_params=None,
+                             solve_dynamical_matrices=True,
                              decimals=None):
         self._dm = get_dynamical_matrix(
             fc2,
@@ -278,17 +279,9 @@ class Interaction(object):
             frequency_scale_factor=self._frequency_scale_factor,
             decimals=decimals,
             symprec=self._symprec)
-        self.set_phonons(np.arange(len(self._grid_address), dtype='intc'))
-        if (self._grid_address[0] == 0).all():
-            if np.sum(self._frequencies[0] < self._cutoff_frequency) < 3:
-                for i, f in enumerate(self._frequencies[0, :3]):
-                    if not (f < self._cutoff_frequency):
-                        self._frequencies[0, i] = 0
-                        print("=" * 26 + " Warning " + "=" * 26)
-                        print(" Phonon frequency of band index %d at Gamma "
-                              "is calculated to be %f." % (i + 1, f))
-                        print(" But this frequency is forced to be zero.")
-                        print("=" * 61)
+
+        if solve_dynamical_matrices:
+            self.set_phonons()
 
     def set_nac_q_direction(self, nac_q_direction=None):
         if nac_q_direction is not None:
@@ -314,11 +307,22 @@ class Interaction(object):
             self._eigenvectors[:] = eigenvectors
             return True
 
-    def set_phonons(self, grid_points):
-        # for i, grid_triplet in enumerate(self._triplets_at_q):
-        #     for gp in grid_triplet:
-        #         self._set_phonon_py(gp)
-        self._set_phonon_c(grid_points)
+    def set_phonons(self, grid_points=None):
+        if grid_points is None:
+            _grid_points = np.arange(len(self._grid_address), dtype='intc')
+        else:
+            _grid_points = grid_points
+        self._set_phonon_c(_grid_points)
+        if (self._grid_address[0] == 0).all():
+            if np.sum(self._frequencies[0] < self._cutoff_frequency) < 3:
+                for i, f in enumerate(self._frequencies[0, :3]):
+                    if not (f < self._cutoff_frequency):
+                        self._frequencies[0, i] = 0
+                        print("=" * 26 + " Warning " + "=" * 26)
+                        print(" Phonon frequency of band index %d at Gamma "
+                              "is calculated to be %f." % (i + 1, f))
+                        print(" But this frequency is forced to be zero.")
+                        print("=" * 61)
 
     def delete_interaction_strength(self):
         self._interaction_strength = None
