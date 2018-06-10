@@ -17,8 +17,8 @@ specified::
 When the file name of the unit cell is different from the default one
 (see :ref:`default_unit_cell_file_name_for_calculator`), ``-c`` option
 is used to specify the file name. CRYSTAL unit cell file parser used in
-phono3py is the same as that in phonopy. It can read
-only limited number of keywords that are shown in the phonopy web site
+phono3py is the same as that in phonopy. It reads a limited number of 
+keywords that are documented in the phonopy web site
 (http://atztogo.github.io/phonopy/crystal.html#crystal-interface).
 
 .. _crystal_workflow:
@@ -35,7 +35,7 @@ so the -c crystal.o parameter is not needed.
 
    ::
 
-      % phono3py --crystal --dim="2 2 2" --dim_fc2="4 4 4" -d
+      % phono3py --crystal --dim="2 2 2" --dim-fc2="4 4 4" -d
 
    57 supercell files (``supercell-xxx.d12/.ext``) for the third order
    force constants are created. In addition, one supercell file
@@ -57,13 +57,13 @@ so the -c crystal.o parameter is not needed.
    Note that supercells with displacements must not be relaxed in the
    force calculations, because atomic forces induced by a small atomic
    displacement are what we need for phonon calculation. To get accurate
-   forces, TOLDEE parameter should be 10 or higher. Phonopy includes this
+   forces, TOLDEE parameter should be 10 or higher. Phono3py includes this
    parameter and the necessary GRADCAL keyword automatically in the inputs.
 
    Then, CRYSTAL supercell calculations are executed to obtain forces on
    atoms, e.g., as follows::
 
-     % runcry14 supercell-001.d12
+     % runcry17 supercell-001.d12
 
 3) Collect forces in ``FORCES_FC3`` and ``FORCES_FC2``::
 
@@ -76,14 +76,13 @@ so the -c crystal.o parameter is not needed.
 
 4) Calculate 3rd and 2nd order force constants in files ``fc3.hdf5`` and ``fc2.hdf5``::
 
-      % phono3py --crystal --dim="2 2 2" --dim_fc2="4 4 4" --sym-fc
+      % phono3py --crystal --dim="2 2 2" --dim-fc2="4 4 4" --sym-fc
 
-   ``--sym-fc`` is used to symmetrize second- and third-order force
-   constants.
+   ``--sym-fc`` is used to symmetrize second- and third-order force constants.
 
 5) Thermal conductivity calculation::
 
-     % phono3py --crystal --fc3 --fc2 --dim="2 2 2" --dim_fc2="4 4 4" --mesh="20 20 20" --br
+     % phono3py --crystal --fc3 --fc2 --dim="2 2 2" --dim-fc2="4 4 4" --mesh="20 20 20" --br
 
    ``--br`` invokes the Relaxation Time Approximation.
    Add ``--isotope`` for isotope scattering.
