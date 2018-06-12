@@ -10,9 +10,10 @@ from phonopy.harmonic.force_constants import (get_fc2,
                                               set_translational_invariance,
                                               get_nsym_list_and_s2pp)
 from phono3py.phonon3.displacement_fc3 import (get_reduced_site_symmetry,
-                                               get_bond_symmetry)
-from phonopy.structure.cells import (get_equivalent_smallest_vectors,
-                                     compute_all_sg_permutations)
+                                               get_bond_symmetry,
+                                               get_equivalent_smallest_vectors)
+from phonopy.structure.cells import compute_all_sg_permutations
+
 
 def get_fc3(supercell,
             primitive,
