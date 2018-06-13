@@ -301,7 +301,6 @@ class Phono3py(object):
         else:
             fc2, fc3 = self._get_fc3(forces_fc3,
                                      disp_dataset,
-                                     cutoff_distance,
                                      is_compact_fc=is_compact_fc)
             if symmetrize_fc3r:
                 if is_compact_fc:
@@ -732,7 +731,6 @@ class Phono3py(object):
     def _get_fc3(self,
                  forces_fc3,
                  disp_dataset,
-                 cutoff_distance,
                  is_compact_fc=False):
         count = 0
         for disp1 in disp_dataset['first_atoms']:
@@ -749,13 +747,6 @@ class Phono3py(object):
                            self._symmetry,
                            is_compact_fc=is_compact_fc,
                            verbose=self._log_level)
-
-        # Set fc3 elements zero beyond cutoff_distance
-        if cutoff_distance:
-            if self._log_level:
-                print("Cutting-off fc3 by zero (cut-off distance: %f)" %
-                      cutoff_distance)
-            self.cutoff_fc3_by_zero(cutoff_distance, fc3=fc3)
 
         return fc2, fc3
 

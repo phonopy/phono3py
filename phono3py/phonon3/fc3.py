@@ -431,7 +431,7 @@ def cutoff_fc3_by_zero(fc3, supercell, cutoff_distance, symprec=1e-5):
             min_distances[i, j] = np.linalg.norm(
                 np.dot(lattice,
                        get_equivalent_smallest_vectors(
-                           i, j, supercell, lattice.T, symprec)[0]))
+                           i, j, supercell, symprec)[0]))
 
     for i, j, k in np.ndindex(num_atom, num_atom, num_atom):
         for pair in ((i, j), (j, k), (k, i)):
