@@ -32,6 +32,7 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -82,6 +83,7 @@ get_pre_phase_factor(const int i,
                      const double q[9],
                      const double *shortest_vectors,
                      const int svecs_dims[3],
+                     const int *multiplicity,
                      const int *p2s_map);
 
 /* fc3_reciprocal[num_patom, num_patom, num_patom, 3, 3, 3] */
@@ -156,7 +158,7 @@ real_to_reciprocal_single_thread(lapack_complex_double *fc3_reciprocal,
       }
     }
     pre_phase_factor = get_pre_phase_factor(
-      i, q, shortest_vectors, svecs_dims, p2s_map);
+      i, q, shortest_vectors, svecs_dims, multiplicity, p2s_map);
     adrs_shift = i * num_patom * num_patom * 27;
     for (j = 0; j < num_patom * num_patom * 27; j++) {
       fc3_reciprocal[adrs_shift + j] =
@@ -202,7 +204,7 @@ real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
 
     }
     pre_phase_factor = get_pre_phase_factor(
-      i, q, shortest_vectors, svecs_dims, p2s_map);
+      i, q, shortest_vectors, svecs_dims, multiplicity, p2s_map);
     adrs_shift = i * num_patom * num_patom * 27;
 #pragma omp parallel for
     for (j = 0; j < num_patom * num_patom * 27; j++) {
@@ -285,6 +287,7 @@ get_pre_phase_factor(const int i,
                      const double q[9],
                      const double *shortest_vectors,
                      const int svecs_dims[3],
+                     const int *multiplicity,
                      const int *p2s_map)
 {
   int j;
@@ -297,6 +300,9 @@ get_pre_phase_factor(const int i,
       p2s_map[i] * svecs_dims[1] * svecs_dims[2] * 3 + j] *
       (q[j] + q[3 + j] + q[6 + j]);
   }
+
+  assert(multiplicity[p2s_map[i] * svecs_dims[1]] == 1);
+
   pre_phase *= M_2PI;
   pre_phase_factor = lapack_make_complex_double(cos(pre_phase),
                                                 sin(pre_phase));
