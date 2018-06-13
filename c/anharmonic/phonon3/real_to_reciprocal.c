@@ -76,7 +76,7 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
                                         const int pi2);
 static lapack_complex_double get_phase_factor(const double q[],
                                               const int qi,
-                                              const double *svecs,
+                                              const double *shortest_vectors,
                                               const int multi);
 static lapack_complex_double
 get_pre_phase_factor(const int i,
@@ -311,7 +311,7 @@ get_pre_phase_factor(const int i,
 
 static lapack_complex_double get_phase_factor(const double q[],
                                               const int qi,
-                                              const double *svecs,
+                                              const double *shortest_vectors,
                                               const int multi)
 {
   int i, j;
@@ -322,7 +322,7 @@ static lapack_complex_double get_phase_factor(const double q[],
   for (i = 0; i < multi; i++) {
     phase = 0;
     for (j = 0; j < 3; j++) {
-      phase += q[qi * 3 + j] * svecs[i * 3 + j];
+      phase += q[qi * 3 + j] * shortest_vectors[i * 3 + j];
     }
     sum_real += cos(M_2PI * phase);
     sum_imag += sin(M_2PI * phase);
