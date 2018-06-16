@@ -512,7 +512,7 @@ def show_drift_fc3(fc3,
                     "Corresponding python code is not implemented.")
             raise RuntimeError(text)
 
-    text = "max drift of %s: " % name
+    text = "Max drift of %s: " % name
     text += "%f (%s%s%s) " % (maxval1,
                               "xyz"[klm1[0]], "xyz"[klm1[1]], "xyz"[klm1[2]])
     text += "%f (%s%s%s) " % (maxval2,
