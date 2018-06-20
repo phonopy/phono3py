@@ -4,7 +4,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Direct solution of &#8212; Phono3py v.1.13.1</title>
+    <title>Direct solution of linearized phonon Boltzmann equation &#8212; Phono3py v.1.13.3</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -18,6 +18,8 @@
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="External tools" href="external-tools.html" />
+    <link rel="prev" title="Auxiliary tools" href="auxiliary-tools.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -36,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>1.13.1</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.13.3</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -51,7 +53,7 @@
      href="index.html">Site <b class="caret"></b></a>
   <ul class="dropdown-menu globaltoc"
       role="menu"
-      aria-labelledby="dLabelGlobalToc"><ul>
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-using-conda">Installation using conda</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-using-pip">Installation using pip</a></li>
@@ -95,6 +97,14 @@
 <li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kdeplot"><code class="docutils literal notranslate"><span class="pre">phono3py-kdeplot</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Direct solution of linearized phonon Boltzmann equation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation-of-collision-matrix-diagonalization-solvers">Installation of collision matrix diagonalization solvers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#solver-choice-for-diagonalization">Solver choice for diagonalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#memory-usage">Memory usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#work-load-distribution">Work load distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cutoff-parameter-of-pseudo-inversion">Cutoff parameter of pseudo inversion</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="workload-distribution.html#how-to-do-it">How to do it</a></li>
 <li class="toctree-l2"><a class="reference internal" href="workload-distribution.html#a-convenient-script">A convenient script</a></li>
@@ -118,10 +128,11 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="citation.html#citation-of-phono3py">Citation of phono3py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="citation.html#citation-of-direct-solution-of-lbte-lbte">Citation of direct solution of LBTE (<code class="docutils literal notranslate"><span class="pre">--lbte</span></code>)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="changelog.html#june-2-2018-version-1-13-1-x">June-2-2018: version 1.13.1.x</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#june-2-2018-version-1-13-1-3">June-2-2018: version 1.13.1.3</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#may-17-2018-version-1-13-1">May-17-2018: version 1.13.1</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#mar-16-2018-version-1-12-9">Mar-16-2018: version 1.12.9</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#feb-1-2018-version-1-12-7">Feb-1-2018: version 1.12.7</a></li>
@@ -167,7 +178,7 @@
   <ul class="dropdown-menu localtoc"
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">Direct solution of</a><ul>
+<li><a class="reference internal" href="#">Direct solution of linearized phonon Boltzmann equation</a><ul>
 <li><a class="reference internal" href="#installation-of-collision-matrix-diagonalization-solvers">Installation of collision matrix diagonalization solvers</a><ul>
 <li><a class="reference internal" href="#mkl-linked-scipy">MKL linked scipy</a></li>
 <li><a class="reference internal" href="#openblas-or-mkl-via-lapacke">OpenBLAS or MKL via LAPACKE</a><ul>
@@ -195,6 +206,14 @@
             
               
                 
+  <li>
+    <a href="auxiliary-tools.html" title="Previous Chapter: Auxiliary tools"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Auxiliary tools</span>
+    </a>
+  </li>
+  <li>
+    <a href="external-tools.html" title="Next Chapter: External tools"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">External tools &raquo;</span>
+    </a>
+  </li>
               
             
             
@@ -220,10 +239,10 @@
   <div class="row">
     <div class="col-md-12 content">
       
-  <div class="section" id="direct-solution-of">
-<h1>Direct solution of<a class="headerlink" href="#direct-solution-of" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="direct-solution-of-linearized-phonon-boltzmann-equation">
+<span id="direct-solution"></span><h1>Direct solution of linearized phonon Boltzmann equation<a class="headerlink" href="#direct-solution-of-linearized-phonon-boltzmann-equation" title="Permalink to this headline">¶</a></h1>
 <p>This page explains how to use the direct solution of LBTE by
-<a class="reference external" href="https://doi.org/10.1103/PhysRevLett.110.265506">L. Chaput, Phys. Rev. Lett. 110, 265506 (2013)</a>.</p>
+<a class="reference external" href="https://doi.org/10.1103/PhysRevLett.110.265506">L. Chaput, Phys. Rev. Lett. 110, 265506 (2013)</a> (<a class="reference internal" href="citation.html#citation-direct-solution-lbte"><span class="std std-ref">citation</span></a>).</p>
 <div class="contents local topic" id="contents">
 <ul class="simple">
 <li><a class="reference internal" href="#installation-of-collision-matrix-diagonalization-solvers" id="id1">Installation of collision matrix diagonalization solvers</a><ul>

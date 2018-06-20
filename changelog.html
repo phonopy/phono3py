@@ -4,7 +4,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Change Log &#8212; Phono3py v.1.13.1</title>
+    <title>Change Log &#8212; Phono3py v.1.13.3</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" src="_static/documentation_options.js"></script>
@@ -37,7 +37,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>1.13.1</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.13.3</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -96,6 +96,14 @@
 <li class="toctree-l2"><a class="reference internal" href="auxiliary-tools.html#phono3py-kdeplot"><code class="docutils literal notranslate"><span class="pre">phono3py-kdeplot</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="direct-solution.html">Direct solution of linearized phonon Boltzmann equation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="direct-solution.html#installation-of-collision-matrix-diagonalization-solvers">Installation of collision matrix diagonalization solvers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="direct-solution.html#solver-choice-for-diagonalization">Solver choice for diagonalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="direct-solution.html#memory-usage">Memory usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="direct-solution.html#work-load-distribution">Work load distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="direct-solution.html#cutoff-parameter-of-pseudo-inversion">Cutoff parameter of pseudo inversion</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="workload-distribution.html#how-to-do-it">How to do it</a></li>
 <li class="toctree-l2"><a class="reference internal" href="workload-distribution.html#a-convenient-script">A convenient script</a></li>
@@ -119,10 +127,11 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="citation.html#citation-of-phono3py">Citation of phono3py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="citation.html#citation-of-direct-solution-of-lbte-lbte">Citation of direct solution of LBTE (<code class="docutils literal notranslate"><span class="pre">--lbte</span></code>)</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Change Log</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#june-2-2018-version-1-13-1-x">June-2-2018: version 1.13.1.x</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#june-20-2018-version-1-13-3">June-20-2018: version 1.13.3</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#may-17-2018-version-1-13-1">May-17-2018: version 1.13.1</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#mar-16-2018-version-1-12-9">Mar-16-2018: version 1.12.9</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#feb-1-2018-version-1-12-7">Feb-1-2018: version 1.12.7</a></li>
@@ -169,7 +178,7 @@
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Change Log</a><ul>
-<li><a class="reference internal" href="#june-2-2018-version-1-13-1-x">June-2-2018: version 1.13.1.x</a></li>
+<li><a class="reference internal" href="#june-20-2018-version-1-13-3">June-20-2018: version 1.13.3</a></li>
 <li><a class="reference internal" href="#may-17-2018-version-1-13-1">May-17-2018: version 1.13.1</a></li>
 <li><a class="reference internal" href="#mar-16-2018-version-1-12-9">Mar-16-2018: version 1.12.9</a></li>
 <li><a class="reference internal" href="#feb-1-2018-version-1-12-7">Feb-1-2018: version 1.12.7</a></li>
@@ -241,11 +250,14 @@
       
   <div class="section" id="change-log">
 <span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="june-2-2018-version-1-13-1-x">
-<h2>June-2-2018: version 1.13.1.x<a class="headerlink" href="#june-2-2018-version-1-13-1-x" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="june-20-2018-version-1-13-3">
+<h2>June-20-2018: version 1.13.3<a class="headerlink" href="#june-20-2018-version-1-13-3" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><code class="docutils literal notranslate"><span class="pre">--lw</span></code> (linewidth) option was removed. Use <code class="docutils literal notranslate"><span class="pre">--br</span></code> option and
 find 2*gamma values as linewidths in <code class="docutils literal notranslate"><span class="pre">kappa-xxx.hdf5</span></code> file.</li>
+<li>Documentation of <code class="docutils literal notranslate"><span class="pre">--lbte</span></code> option is available at
+<a class="reference internal" href="direct-solution.html#direct-solution"><span class="std std-ref">Direct solution of linearized phonon Boltzmann equation</span></a>.</li>
+<li>This version is dependent on phonopy&gt;=1.13.2.</li>
 </ul>
 </div>
 <div class="section" id="may-17-2018-version-1-13-1">

@@ -25,4 +25,29 @@ If you have used phono3py, please cite the following article:
      doi = {10.1103/PhysRevB.91.094306},
    }
 
-  
+.. _citation_direct_solution_lbte:
+
+Citation of direct solution of LBTE (``--lbte``)
+-------------------------------------------------
+
+If you have used direct solution of LBTE in phono3py, please cite the
+following article:
+
+- "Direct Solution to the Linearized Phonon Boltzmann Equation"
+  Laurent Chaput, Phys. Rev. Lett., **110**, 265506 (2013)
+
+::
+
+   @article{Laurent-phph-2011,
+     title = {Phonon-phonon interactions in transition metals},
+     author = {Chaput, Laurent and Togo, Atsushi and Tanaka, Isao and Hug, Gilles},
+     journal = {Phys. Rev. B},
+     volume = {84},
+     issue = {9},
+     pages = {094302},
+     numpages = {6},
+     year = {2011},
+     month = {Sep},
+     doi = {10.1103/PhysRevB.84.094302},
+     publisher = {American Physical Society}
+   }
