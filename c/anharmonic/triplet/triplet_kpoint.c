@@ -179,7 +179,8 @@ static int get_ir_triplets_at_q(int map_triplets[],
                                 int grid_address[][3],
                                 const int grid_point,
                                 const int mesh[3],
-                                const MatINT * rot_reciprocal);
+                                const MatINT * rot_reciprocal,
+                                const int swappable);
 static int get_BZ_triplets_at_q(int triplets[][3],
                                 const int grid_point,
                                 TPLCONST int bz_grid_address[][3],
@@ -200,7 +201,8 @@ int tpk_get_ir_triplets_at_q(int map_triplets[],
                              const int grid_point,
                              const int mesh[3],
                              const int is_time_reversal,
-                             const MatINT * rotations)
+                             const MatINT * rotations,
+                             const int swappable)
 {
   int num_ir;
   MatINT *rot_reciprocal;
@@ -211,7 +213,8 @@ int tpk_get_ir_triplets_at_q(int map_triplets[],
                                 grid_address,
                                 grid_point,
                                 mesh,
-                                rot_reciprocal);
+                                rot_reciprocal,
+                                swappable);
   mat_free_MatINT(rot_reciprocal);
   return num_ir;
 }
@@ -238,7 +241,8 @@ static int get_ir_triplets_at_q(int map_triplets[],
                                 int grid_address[][3],
                                 const int grid_point,
                                 const int mesh[3],
-                                const MatINT * rot_reciprocal)
+                                const MatINT * rot_reciprocal,
+                                const int swappable)
 {
   int i, j, num_grid, q_2, num_ir_q, num_ir_triplets, ir_grid_point;
   int mesh_double[3], is_shift[3];
@@ -300,12 +304,21 @@ static int get_ir_triplets_at_q(int map_triplets[],
   }
 
   num_ir_triplets = 0;
-  for (i = 0; i < num_ir_q; i++) {
-    ir_grid_point = ir_grid_points[i];
-    q_2 = third_q[i];
-    if (map_triplets[map_q[q_2]] > -1) {
-      map_triplets[ir_grid_point] = map_q[q_2];
-    } else {
+
+  if (swappable) { /* search q1 <-> q2 */
+    for (i = 0; i < num_ir_q; i++) {
+      ir_grid_point = ir_grid_points[i];
+      q_2 = third_q[i];
+      if (map_triplets[map_q[q_2]] > -1) {
+        map_triplets[ir_grid_point] = map_q[q_2];
+      } else {
+        map_triplets[ir_grid_point] = ir_grid_point;
+        num_ir_triplets++;
+      }
+    }
+  } else {
+    for (i = 0; i < num_ir_q; i++) {
+      ir_grid_point = ir_grid_points[i];
       map_triplets[ir_grid_point] = ir_grid_point;
       num_ir_triplets++;
     }

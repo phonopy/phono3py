@@ -54,8 +54,8 @@ int tpl_get_triplets_reciprocal_mesh_at_q(int map_triplets[],
                                           const int mesh[3],
                                           const int is_time_reversal,
                                           const int num_rot,
-                                          TPLCONST int rotations[][3][3]);
-
+                                          TPLCONST int rotations[][3][3],
+                                          const int swappable);
 /* Irreducible grid-point-triplets in BZ are stored. */
 /* triplets are recovered from grid_point and triplet_weights. */
 /* BZ boundary is considered in this recovery. Therefore grid addresses */

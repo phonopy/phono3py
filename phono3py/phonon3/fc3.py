@@ -431,7 +431,7 @@ def cutoff_fc3_by_zero(fc3, supercell, cutoff_distance, symprec=1e-5):
             min_distances[i, j] = np.linalg.norm(
                 np.dot(lattice,
                        get_equivalent_smallest_vectors(
-                           i, j, supercell, lattice.T, symprec)[0]))
+                           i, j, supercell, symprec)[0]))
 
     for i, j, k in np.ndindex(num_atom, num_atom, num_atom):
         for pair in ((i, j), (j, k), (k, i)):
@@ -512,7 +512,7 @@ def show_drift_fc3(fc3,
                     "Corresponding python code is not implemented.")
             raise RuntimeError(text)
 
-    text = "max drift of %s: " % name
+    text = "Max drift of %s: " % name
     text += "%f (%s%s%s) " % (maxval1,
                               "xyz"[klm1[0]], "xyz"[klm1[1]], "xyz"[klm1[2]])
     text += "%f (%s%s%s) " % (maxval2,

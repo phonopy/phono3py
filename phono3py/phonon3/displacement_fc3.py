@@ -2,7 +2,7 @@ import numpy as np
 from phonopy.harmonic.displacement import (get_least_displacements,
                                            directions_axis, get_displacement,
                                            is_minus_displacement)
-from phonopy.structure.cells import get_reduced_bases
+from phonopy.structure.cells import get_reduced_bases, get_smallest_vectors
 
 def direction_to_displacement(dataset,
                               distance,
@@ -132,13 +132,11 @@ def get_third_order_displacements(cell,
                                                symprec,
                                                is_diagonal)
 
-            min_distance = np.linalg.norm(
-                np.dot(lattice, get_equivalent_smallest_vectors(
-                    atom1,
-                    atom2,
-                    cell,
-                    lattice.T,
-                    symprec)[0]))
+            min_vec = get_equivalent_smallest_vectors(atom1,
+                                                      atom2,
+                                                      cell,
+                                                      symprec)[0]
+            min_distance = np.linalg.norm(np.dot(lattice, min_vec))
             dds_atom2['distance'] = min_distance
             dds_atom1['second_atoms'].append(dds_atom2)
         dds.append(dds_atom1)
@@ -251,65 +249,13 @@ def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
 
     return np.array(orbits)
 
-#
-# Shortest pairs of atoms in supercell (Wigner-Seitz like)
-#
-# This is currently no longer used in phonopy, but still used by
-# phono3py. In phono3py, this is used to measure the shortest distance
-# between arbitrary pair of atoms in supercell. Therefore this method
-# may be moved to phono3py, but this way of use can also happen in
-# phonopy in the future, so let's keep it for a while.
-#
 def get_equivalent_smallest_vectors(atom_number_supercell,
                                     atom_number_primitive,
                                     supercell,
-                                    primitive_lattice,
                                     symprec):
-    reduced_bases = get_reduced_bases(supercell.get_cell(), symprec)
-    reduced_bases_inv = np.linalg.inv(reduced_bases)
-    cart_positions = supercell.get_positions()
-
-    # Atomic positions are confined into the delaunay-reduced superlattice.
-    # Their positions will lie in the range -0.5 < x < 0.5, so that vectors
-    # drawn between them have components in the range -1 < x < 1.
-    def reduced_frac_pos(i):
-        vec = np.dot(cart_positions[i], reduced_bases_inv)
-        return vec - np.rint(vec)
-    p_pos = reduced_frac_pos(atom_number_primitive)
-    s_pos = reduced_frac_pos(atom_number_supercell)
-
-    # The vector arrow is from the atom in the primitive cell to the
-    # atom in the supercell.
-    differences = _get_equivalent_smallest_vectors_simple(s_pos - p_pos,
-                                                          reduced_bases,
-                                                          symprec)
-
-    # Return fractional coords in the basis of the primitive cell
-    #  rather than the supercell.
-    relative_scale = reduced_bases.dot(np.linalg.inv(primitive_lattice))
-    return differences.dot(relative_scale)
-
-# Given:
-#  - A delaunay-reduced lattice (row vectors)
-#  - A fractional vector (with respect to that lattice)
-#      whose coords lie in the range (-1 < x < 1)
-# Produce:
-#  - All fractional vectors of shortest length that are translationally
-#      equivalent to that vector under the lattice.
-def _get_equivalent_smallest_vectors_simple(frac_vector,
-                                            reduced_bases, # row vectors
-                                            symprec):
-
-    # Try all nearby images of the vector
-    lattice_points = np.array([
-        [i, j, k] for i in (-1, 0, 1)
-                  for j in (-1, 0, 1)
-                  for k in (-1, 0, 1)
-    ])
-    candidates = frac_vector + lattice_points
-
-    # Filter out the best ones by computing cartesian lengths.
-    # (A "clever" optimizer might try to skip the square root calculation here,
-    #  but he would be wrong; we're comparing a *difference* to the tolerance)
-    lengths = np.sqrt(np.sum(np.dot(candidates, reduced_bases)**2, axis=1))
-    return candidates[lengths - lengths.min() < symprec]
+    s_pos = supercell.get_scaled_positions()
+    svecs, multi = get_smallest_vectors(supercell.get_cell(),
+                                        [s_pos[atom_number_supercell]],
+                                        [s_pos[atom_number_primitive]],
+                                        symprec=symprec)
+    return svecs[0, 0]

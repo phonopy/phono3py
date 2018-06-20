@@ -17,12 +17,14 @@ def get_triplets_at_q(grid_point,
                       point_group, # real space point group of space group
                       primitive_lattice, # column vectors
                       is_time_reversal=True,
+                      swappable=True,
                       stores_triplets_map=False):
     map_triplets, map_q, grid_address = _get_triplets_reciprocal_mesh_at_q(
         grid_point,
         mesh,
         point_group,
-        is_time_reversal=is_time_reversal)
+        is_time_reversal=is_time_reversal,
+        swappable=swappable)
     bz_grid_address, bz_map = spg.relocate_BZ_grid_address(grid_address,
                                                            mesh,
                                                            primitive_lattice)
@@ -259,6 +261,7 @@ def get_coarse_ir_grid_points(primitive,
 def get_number_of_triplets(primitive,
                            mesh,
                            grid_point,
+                           swappable=True,
                            symprec=1e-5):
     mesh = np.array(mesh, dtype='intc')
     symmetry = Symmetry(primitive, symprec)
@@ -268,7 +271,8 @@ def get_number_of_triplets(primitive,
         grid_point,
         mesh,
         point_group,
-        primitive_lattice)
+        primitive_lattice,
+        swappable=swappable)
 
     return len(triplets_at_q)
 
@@ -375,7 +379,32 @@ def get_tetrahedra_vertices(relative_address,
 def _get_triplets_reciprocal_mesh_at_q(fixed_grid_number,
                                        mesh,
                                        rotations,
-                                       is_time_reversal=True):
+                                       is_time_reversal=True,
+                                       swappable=True):
+    """Search symmetry reduced triplets fixing one q-point
+
+    Triplets of (q0, q1, q2) are searched.
+
+    Parameters
+    ----------
+    fixed_grid_number : int
+        Grid point of q0
+    mesh : array_like
+        Mesh numbers
+        dtype='intc'
+        shape=(3,)
+    rotations : array_like
+        Rotation matrices in real space. Note that those in reciprocal space
+        mean these matrices transposed (local terminology).
+        dtype='intc'
+        shape=(n_rot, 3, 3)
+    is_time_reversal : bool
+        Inversion symemtry is added if it doesn't exist.
+    swappable : bool
+        q1 and q2 can be swapped. By this number of triplets decreases.
+
+    """
+
     import phono3py._phono3py as phono3c
 
     map_triplets = np.zeros(np.prod(mesh), dtype='intc')
@@ -389,7 +418,8 @@ def _get_triplets_reciprocal_mesh_at_q(fixed_grid_number,
         fixed_grid_number,
         np.array(mesh, dtype='intc'),
         is_time_reversal * 1,
-        np.array(rotations, dtype='intc', order='C'))
+        np.array(rotations, dtype='intc', order='C'),
+        swappable * 1)
 
     return map_triplets, map_q, mesh_points
 
