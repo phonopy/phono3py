@@ -138,6 +138,7 @@ def show_num_triplets(primitive,
         num_triplets = get_number_of_triplets(primitive,
                                               mesh,
                                               gp,
+                                              swappable=True,
                                               symprec=symprec)
         q = grid_address[gp] / np.array(mesh, dtype='double')
         size = num_triplets * num_band0 * num_band ** 2 * 8 / 1e6

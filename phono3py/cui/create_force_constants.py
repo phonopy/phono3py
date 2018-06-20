@@ -124,7 +124,6 @@ def create_phono3py_force_constants(phono3py,
                                         distance_to_A,
                                         symmetrize_fc3r,
                                         symmetrize_fc2,
-                                        settings.get_cutoff_fc3_distance(),
                                         input_filename,
                                         output_filename,
                                         settings.get_is_compact_fc(),
@@ -134,6 +133,14 @@ def create_phono3py_force_constants(phono3py,
                     if log_level:
                         print_error()
                     sys.exit(1)
+
+        cutoff_distance = settings.get_cutoff_fc3_distance()
+        if cutoff_distance is not None and cutoff_distance > 0:
+            if log_level:
+                print("Cutting-off fc3 by zero (cut-off distance: %f)" %
+                      cutoff_distance)
+            phono3py.cutoff_fc3_by_zero(cutoff_distance)
+
         if log_level:
             show_drift_fc3(phono3py.get_fc3(),
                            primitive=phono3py.get_primitive())
@@ -223,7 +230,6 @@ def _create_phono3py_fc3(phono3py,
                          distance_to_A,
                          symmetrize_fc3r,
                          symmetrize_fc2,
-                         cutoff_distance,
                          input_filename,
                          output_filename,
                          is_compact_fc,
@@ -256,7 +262,6 @@ def _create_phono3py_fc3(phono3py,
     _convert_force_unit(forces_fc3, force_to_eVperA)
     phono3py.produce_fc3(forces_fc3,
                          displacement_dataset=disp_dataset,
-                         cutoff_distance=cutoff_distance,
                          symmetrize_fc3r=symmetrize_fc3r,
                          is_compact_fc=is_compact_fc,
                          use_alm=use_alm)

@@ -46,7 +46,8 @@ static int get_triplets_reciprocal_mesh_at_q(int map_triplets[],
                                              const int mesh[3],
                                              const int is_time_reversal,
                                              const int num_rot,
-                                             TPLCONST int rotations[][3][3]);
+                                             TPLCONST int rotations[][3][3],
+                                             const int swappable);
 
 
 int tpl_get_BZ_triplets_at_q(int triplets[][3],
@@ -73,7 +74,8 @@ int tpl_get_triplets_reciprocal_mesh_at_q(int map_triplets[],
                                           const int mesh[3],
                                           const int is_time_reversal,
                                           const int num_rot,
-                                          TPLCONST int rotations[][3][3])
+                                          TPLCONST int rotations[][3][3],
+                                          const int swappable)
 {
   return get_triplets_reciprocal_mesh_at_q(map_triplets,
                                            map_q,
@@ -82,7 +84,8 @@ int tpl_get_triplets_reciprocal_mesh_at_q(int map_triplets[],
                                            mesh,
                                            is_time_reversal,
                                            num_rot,
-                                           rotations);
+                                           rotations,
+                                           swappable);
 }
 
 void tpl_get_integration_weight(double *iw,
@@ -210,7 +213,8 @@ static int get_triplets_reciprocal_mesh_at_q(int map_triplets[],
                                              const int mesh[3],
                                              const int is_time_reversal,
                                              const int num_rot,
-                                             TPLCONST int rotations[][3][3])
+                                             TPLCONST int rotations[][3][3],
+                                             const int swappable)
 {
   MatINT *rot_real;
   int i, num_ir;
@@ -226,7 +230,8 @@ static int get_triplets_reciprocal_mesh_at_q(int map_triplets[],
                                     grid_point,
                                     mesh,
                                     is_time_reversal,
-                                    rot_real);
+                                    rot_real,
+                                    swappable);
 
   mat_free_MatINT(rot_real);
 

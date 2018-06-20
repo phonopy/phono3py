@@ -1661,6 +1661,7 @@ py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
   PyArrayObject *py_rotations;
   int fixed_grid_number;
   int is_time_reversal;
+  int swappable;
 
   int (*grid_address)[3];
   int *map_triplets_int;
@@ -1670,14 +1671,15 @@ py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
   int num_rot;
   int num_ir;
 
-  if (!PyArg_ParseTuple(args, "OOOiOiO",
+  if (!PyArg_ParseTuple(args, "OOOiOiOi",
                         &py_map_triplets,
                         &py_map_q,
                         &py_grid_address,
                         &fixed_grid_number,
                         &py_mesh,
                         &is_time_reversal,
-                        &py_rotations)) {
+                        &py_rotations,
+                        &swappable)) {
     return NULL;
   }
 
@@ -1694,7 +1696,8 @@ py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
                                                  mesh_int,
                                                  is_time_reversal,
                                                  num_rot,
-                                                 rot);
+                                                 rot,
+                                                 swappable);
 
   return PyLong_FromLong((long) num_ir);
 }

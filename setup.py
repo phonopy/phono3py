@@ -242,7 +242,8 @@ if __name__ == '__main__':
               author_email='atz.togo@gmail.com',
               url='http://atztogo.github.io/phono3py/',
               packages=packages_phono3py,
-              requires=['numpy', 'PyYAML', 'matplotlib', 'h5py', 'phonopy'],
+              install_requires=['numpy', 'PyYAML', 'matplotlib', 'h5py',
+                                'phonopy>=1.13.2'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
               ext_modules=[extension_lapackepy, extension_phono3py])
