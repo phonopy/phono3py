@@ -1,9 +1,11 @@
-Direct solution of
-===================================================
+.. _direct_solution:
+
+Direct solution of linearized phonon Boltzmann equation
+========================================================
 
 This page explains how to use the direct solution of LBTE by
 `L. Chaput, Phys. Rev. Lett. 110, 265506 (2013)
-<https://doi.org/10.1103/PhysRevLett.110.265506>`_.
+<https://doi.org/10.1103/PhysRevLett.110.265506>`_ (:ref:`citation <citation_direct_solution_lbte>`).
 
 .. contents::
    :depth: 2

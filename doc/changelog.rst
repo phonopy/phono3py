@@ -3,11 +3,14 @@
 Change Log
 ==========
 
-June-2-2018: version 1.13.1.x
-------------------------------
+June-20-2018: version 1.13.3
+----------------------------
 
 - ``--lw`` (linewidth) option was removed. Use ``--br`` option and
   find 2*gamma values as linewidths in ``kappa-xxx.hdf5`` file.
+- Documentation of ``--lbte`` option is available at
+  :ref:`direct_solution`.
+- This version is dependent on phonopy>=1.13.2.
 
 May-17-2018: version 1.13.1
 ----------------------------
