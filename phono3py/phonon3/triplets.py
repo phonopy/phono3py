@@ -15,10 +15,73 @@ def occupation(x, t):
 def get_triplets_at_q(grid_point,
                       mesh,
                       point_group, # real space point group of space group
-                      primitive_lattice, # column vectors
+                      reciprocal_lattice, # column vectors
                       is_time_reversal=True,
                       swappable=True,
                       stores_triplets_map=False):
+    """
+
+    Parameters
+    ----------
+    grid_point : int
+        A grid point
+    mesh : array_like
+        Mesh numbers
+        dtype='intc'
+        shape=(3,)
+    mesh : array_like
+        Mesh numbers
+        dtype='intc'
+        shape=(3,)
+    point_group : array_like
+        Rotation matrices in real space. Note that those in reciprocal space
+        mean these matrices transposed (local terminology).
+        dtype='intc'
+        shape=(n_rot, 3, 3)
+    reciprocal_lattice : array_like
+        Reciprocal primitive basis vectors given as column vectors
+        dtype='double'
+        shape=(3, 3)
+    is_time_reversal : bool
+        Inversion symemtry is added if it doesn't exist.
+    swappable : bool
+        q1 and q2 can be swapped. By this number of triplets decreases.
+
+    Returns
+    -------
+    triplets_at_q : ndarray
+        Symmetry reduced number of triplets are stored as grid point integer
+        numbers.
+        dtype='intc'
+        shape=(n_triplets, 3)
+    weights : ndarray
+        Weights of triplets in Brillouin zone
+        dtype='intc'
+        shape=(n_triplets,)
+    bz_grid_address : ndarray
+        Integer grid address of the points in Brillouin zone including surface.
+        The first prod(mesh) numbers of points are independent. But the rest of
+        points are translational-symmetrically equivalent to some other points.
+        dtype='intc'
+        shape=(n_grid_points, 3)
+    bz_map : ndarray
+        Grid point mapping table containing BZ surface.
+        dtype='intc'
+        shape=(prod(mesh*2),)
+    map_tripelts : ndarray or None
+        Returns when stores_triplets_map=True, otherwise None is returned.
+        Mapping table of all triplets to symmetrically independent tripelts.
+        dtype='intc'
+        shape=(prod(mesh),)
+    map_q : ndaary or None
+        Returns when stores_triplets_map=True, otherwise None is returned.
+        Irreducible q-points stabilized by q-point of specified grid_point.
+        dtype='intc'
+        shape=(prod(mesh),)
+
+    """
+
+
     map_triplets, map_q, grid_address = _get_triplets_reciprocal_mesh_at_q(
         grid_point,
         mesh,
@@ -27,7 +90,7 @@ def get_triplets_at_q(grid_point,
         swappable=swappable)
     bz_grid_address, bz_map = spg.relocate_BZ_grid_address(grid_address,
                                                            mesh,
-                                                           primitive_lattice)
+                                                           reciprocal_lattice)
     triplets_at_q, weights = _get_BZ_triplets_at_q(
         grid_point,
         bz_grid_address,
@@ -61,13 +124,13 @@ def get_triplets_third_q_list(grid_point,
 
 def get_nosym_triplets_at_q(grid_point,
                             mesh,
-                            primitive_lattice,
+                            reciprocal_lattice,
                             stores_triplets_map=False):
     grid_address = get_grid_address(mesh)
     map_triplets = np.arange(len(grid_address), dtype='intc')
     bz_grid_address, bz_map = spg.relocate_BZ_grid_address(grid_address,
                                                            mesh,
-                                                           primitive_lattice)
+                                                           reciprocal_lattice)
     triplets_at_q, weights = _get_BZ_triplets_at_q(
         grid_point,
         bz_grid_address,
@@ -92,11 +155,11 @@ def get_grid_address(mesh):
 
     return grid_address
 
-def get_bz_grid_address(mesh, primitive_lattice, with_boundary=False):
+def get_bz_grid_address(mesh, reciprocal_lattice, with_boundary=False):
     grid_address = get_grid_address(mesh)
     bz_grid_address, bz_map = spg.relocate_BZ_grid_address(grid_address,
                                                            mesh,
-                                                           primitive_lattice)
+                                                           reciprocal_lattice)
     if with_boundary:
         return bz_grid_address, bz_map
     else:
@@ -248,10 +311,10 @@ def get_coarse_ir_grid_points(primitive,
         grid_address = get_grid_address(mesh)
         ir_grid_weights = ir_grid_weights
 
-    primitive_lattice = np.linalg.inv(primitive.get_cell())
+    reciprocal_lattice = np.linalg.inv(primitive.get_cell())
     bz_grid_address, bz_map = spg.relocate_BZ_grid_address(grid_address,
                                                            mesh,
-                                                           primitive_lattice)
+                                                           reciprocal_lattice)
 
     return (ir_grid_points,
             ir_grid_weights,
@@ -266,12 +329,12 @@ def get_number_of_triplets(primitive,
     mesh = np.array(mesh, dtype='intc')
     symmetry = Symmetry(primitive, symprec)
     point_group = symmetry.get_pointgroup_operations()
-    primitive_lattice = np.linalg.inv(primitive.get_cell())
+    reciprocal_lattice = np.linalg.inv(primitive.get_cell())
     triplets_at_q, _, _, _, _, _ = get_triplets_at_q(
         grid_point,
         mesh,
         point_group,
-        primitive_lattice,
+        reciprocal_lattice,
         swappable=swappable)
 
     return len(triplets_at_q)
