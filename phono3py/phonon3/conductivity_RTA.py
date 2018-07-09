@@ -191,7 +191,7 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
                     ave_pp_ik = None
                 else:
                     ave_pp_ik = ave_pp[i, k]
-                frequencies = interaction.get_phonons()[0][gp, k]
+                frequencies = interaction.get_phonons()[0][gp, bi]
                 if gamma_isotope is not None:
                     gamma_isotope_at_sigma = gamma_isotope[j, i, k]
                 else:
