@@ -227,14 +227,37 @@
 properties using the supercell approach. For example, the following
 physical properties are obtained:</p>
 <ul class="simple">
-<li>Lattice thermal conductivity</li>
+<li>Lattice thermal conductivity (RTA and <a class="reference internal" href="direct-solution.html#direct-solution"><span class="std std-ref">direct solution of LBTE</span></a>)</li>
 <li>Phonon lifetime/linewidth</li>
 <li>Imaginary part of self energy</li>
 <li>Joint density of states (JDOS) and weighted-JDOS</li>
 </ul>
-<p>The theoretical background is summarized in the paper found at
-<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevB.91.094306">http://dx.doi.org/10.1103/PhysRevB.91.094306</a> or the draft in arxiv at
-<a class="reference external" href="http://arxiv.org/abs/1501.00691">http://arxiv.org/abs/1501.00691</a> .</p>
+<p>Some papers that may introduce phono3py well:</p>
+<ul class="simple">
+<li>Theoretical background is summarized in this paper:
+<a class="reference external" href="http://dx.doi.org/10.1103/PhysRevB.91.094306">http://dx.doi.org/10.1103/PhysRevB.91.094306</a> (arxiv
+<a class="reference external" href="http://arxiv.org/abs/1501.00691">http://arxiv.org/abs/1501.00691</a>).</li>
+<li>Introduction to phono3py application:
+<a class="reference external" href="https://doi.org/10.1103/PhysRevB.97.224306">https://doi.org/10.1103/PhysRevB.97.224306</a> (open access).</li>
+</ul>
+<p>The source code is found at <a class="reference external" href="https://github.com/atztogo/phono3py">https://github.com/atztogo/phono3py</a>
+(BSD-3-Clause). The code is written in Python extended with C and
+written as:</p>
+<ul class="simple">
+<li>Works at least on Linux systems and MacOS easily.</li>
+<li>Each calculation is distributed over CPU-cores by OpenMP.</li>
+<li>Phonon lifetime (or ph-ph collision) calculations of respective
+phonon modes can be executed as independent calculations.</li>
+<li>Thermal conductivity calculations are highly efficiently
+distributed over nodes (see <a class="reference internal" href="workload-distribution.html#workload-distribution"><span class="std std-ref">Workload distribution</span></a>).</li>
+<li>User interfaces for <a class="reference internal" href="vasp.html#vasp-interface"><span class="std std-ref">VASP</span></a>,
+<a class="reference internal" href="pwscf.html#pwscf-interface"><span class="std std-ref">QE</span></a>, <a class="reference internal" href="crystal.html#crystal-interface"><span class="std std-ref">CRYSTAL</span></a>, and Abinit
+are built in (see <a class="reference internal" href="interfaces.html#calculator-interfaces"><span class="std std-ref">Interfaces to calculators</span></a>).</li>
+<li>API is prepared to operate from Python script (<a class="reference external" href="https://github.com/atztogo/phono3py/blob/master/example/Si-PBEsol/Si.py">example</a>)</li>
+</ul>
+<p>Some tools to analyze the calculated results are prepared (see
+<a class="reference internal" href="auxiliary-tools.html#auxiliary-tools"><span class="std std-ref">Auxiliary tools</span></a>).</p>
+<p><a class="reference internal" href="_images/Si-kaccum.png"><img alt="i0" src="_images/Si-kaccum.png" style="width: 20%;" /></a> <a class="reference internal" href="_images/Si-kaccum-MFP.png"><img alt="iMFP" src="_images/Si-kaccum-MFP.png" style="width: 20%;" /></a> <a class="reference internal" href="_images/Si-kdeplot.png"><img alt="ikde" src="_images/Si-kdeplot.png" style="width: 22%;" /></a></p>
 <div class="section" id="documentation">
 <h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
@@ -265,7 +288,7 @@ mailing list:</p>
 </div>
 <div class="section" id="license">
 <h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
-<p>New BSD</p>
+<p>BSD-3-Clause (New BSD)</p>
 </div>
 <div class="section" id="contact">
 <h2>Contact<a class="headerlink" href="#contact" title="Permalink to this headline">¶</a></h2>
