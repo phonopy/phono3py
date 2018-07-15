@@ -1,15 +1,17 @@
 .. _examples_link:
 
 Examples
-=========
+========
 
 .. contents::
    :depth: 2
    :local:
 
-Example files are stored in the ``example`` directory of distributed
-source package that can be downloaded at
-https://pypi.python.org/pypi/phono3py .
+Example files are found at
+https://github.com/atztogo/phono3py/tree/master/example. The same are
+found in the example directory of the phono3py package downloaded at
+https://github.com/atztogo/phono3py/archive/master.zip.
+
 
 Examples of silicon with VASP and Pwscf as calculators are given in
 the ``example`` directory. An example using phono3py API is found in

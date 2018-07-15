@@ -3,11 +3,11 @@
 Interfaces to calculators
 ==========================
 
-Currently the built-in interfaces for VASP, Pwscf, and CRYSTAL are
-prepared. VASP is the default interface and no special option is
-necessary to invoke it, but for the other interfaces, each special
-option has to be specified, e.g. ``--pwscf``, ``--crystal``, or
-``--abinit``.
+Currently the built-in interfaces for VASP, QUANTUM ESPRESSO (QE),
+CRYSTAL, and Abinit are prepared. VASP is the default interface and no
+special option is necessary to invoke it, but for the other
+interfaces, each special option has to be specified, e.g. ``--qe``,
+``--crystal``, or ``--abinit``.
 
 .. toctree::
    :maxdepth: 1
@@ -33,7 +33,7 @@ unit systems used for the calculators are summarized below.
            | unit-cell  FORCES_FC3   disp_fc3.yaml
    -----------------------------------------------
    VASP    | Angstrom   eV/Angstrom  Angstrom
-   Pwscf   | au (bohr)  Ry/au        au
+   QE      | au (bohr)  Ry/au        au
    CRYSTAL | Angstrom   eV/Angstrom  Angstrom
    Abinit  | au (bohr)  eV/Angstrom  au
 
@@ -53,7 +53,7 @@ Default unit cell file name
 Default unit cell file names are also changed according to the calculators::
 
    VASP    | POSCAR
-   Pwscf   | unitcell.in
+   QE      | unitcell.in
    CRYSTAL | crystal.o
    Abinit  | unitcell.in
 
@@ -67,6 +67,6 @@ Default displacement distances created by ``-d`` option without
 ``--amplitude`` option are respectively as follows::
 
    VASP    | 0.03 Angstrom
-   Pwscf   | 0.06 au (bohr)
+   QE      | 0.06 au (bohr)
    CRYSTAL | 0.03 Angstrom
    Abinit  | 0.06 au (bohr)
