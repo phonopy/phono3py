@@ -112,13 +112,14 @@ def _extract_params(dm):
             nac_factor,
             dielectric)
 
+
 def _get_fc_elements_mapping(dm, fc):
-    p2s_map = dm.get_primitive_to_supercell_map()
-    s2p_map = dm.get_supercell_to_primitive_map()
-    if fc.shape[0] == fc.shape[1]: # full fc
+    p2s_map = dm.get_primitive().get_primitive_to_supercell_map()
+    s2p_map = dm.get_primitive().get_supercell_to_primitive_map()
+    if fc.shape[0] == fc.shape[1]:  # full fc
         fc_p2s = p2s_map
         fc_s2p = s2p_map
-    else: # compact fc
+    else:  # compact fc
         primitive = dm.get_primitive()
         p2p_map = primitive.get_primitive_to_primitive_map()
         s2pp_map = np.array([p2p_map[s2p_map[i]] for i in range(len(s2p_map))],
