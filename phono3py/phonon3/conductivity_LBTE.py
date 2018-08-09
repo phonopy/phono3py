@@ -143,11 +143,14 @@ def _write_pp(lbte,
     sigmas = lbte.get_sigmas()
     sigma_cutoff = lbte.get_sigma_cutoff_width()
     mesh = lbte.get_mesh_numbers()
+    triplets, weights, _, _ = pp.get_triplets_at_q()
 
     write_pp_to_hdf5(mesh,
                      pp=pp.get_interaction_strength(),
                      g_zero=pp.get_zero_value_positions(),
                      grid_point=grid_points[i],
+                     triplet=triplets,
+                     weight=weights,
                      sigma=sigmas[-1],
                      sigma_cutoff=sigma_cutoff,
                      filename=filename)
@@ -936,7 +939,7 @@ class Conductivity_LBTE(Conductivity):
                     if len(self._sigmas) > 1:
                         print("Multiple sigmas or mixing smearing and "
                               "tetrahedron method is not supported.")
-                if (_g_zero != g_zero).any():
+                if _g_zero is not None and (_g_zero != g_zero).any():
                     raise ValueError("Inconsistency found in g_zero.")
                 self._collision.set_interaction_strength(pp)
             elif j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
