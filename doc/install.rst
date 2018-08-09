@@ -3,6 +3,12 @@
 Installation
 =============
 
+MPI is not used in phono3py, so the installation is expected to be
+easy. The detailed installation processes for different environments
+are described below. The easiest installation with a good computation
+performance is achieved by using the phono3py conda package (see
+:ref:`install_an_example`).
+
 .. contents::
    :depth: 3
    :local:
@@ -197,6 +203,9 @@ the recommended installation process is written at
 https://atztogo.github.io/phonopy/MacOSX.html, which is more-or-less
 the same as phonopy, but with openblas, too. An example of the
 procedure is summarized in the next section.
+
+
+.. _install_an_example:
 
 An example of installation process
 -----------------------------------
