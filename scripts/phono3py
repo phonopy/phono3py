@@ -586,7 +586,7 @@ if settings.get_is_gruneisen():
 ##################
 if mesh is None:
     print("")
-    print("Q-point mesh (--mesh) has to be specified.")
+    print("Q-point mesh has to be specified with --mesh option.")
     print("")
     if log_level:
         print_error()
