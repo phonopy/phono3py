@@ -42,8 +42,7 @@ from phonopy.harmonic.force_constants import (
     symmetrize_force_constants,
     symmetrize_compact_force_constants,
     set_translational_invariance,
-    set_permutation_symmetry,
-    get_nsym_list_and_s2pp)
+    set_permutation_symmetry)
 from phonopy.harmonic.displacement import get_least_displacements
 from phonopy.harmonic.displacement import direction_to_displacement as \
      direction_to_displacement_fc2
@@ -65,6 +64,7 @@ from phono3py.phonon3.fc3 import (get_fc3,
                                   set_translational_invariance_fc3,
                                   set_translational_invariance_compact_fc3,
                                   cutoff_fc3_by_zero)
+
 
 class Phono3py(object):
     def __init__(self,
@@ -94,7 +94,7 @@ class Phono3py(object):
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._is_symmetry = is_symmetry
         self._is_mesh_symmetry = is_mesh_symmetry
-        self._lapack_zheev_uplo =  lapack_zheev_uplo
+        self._lapack_zheev_uplo = lapack_zheev_uplo
         self._symmetrize_fc3q = symmetrize_fc3q
         self._cutoff_frequency = cutoff_frequency
         self._log_level = log_level
@@ -103,7 +103,7 @@ class Phono3py(object):
         self._unitcell = unitcell
         self._supercell_matrix = supercell_matrix
         self._primitive_matrix = primitive_matrix
-        self._phonon_supercell_matrix = phonon_supercell_matrix # optional
+        self._phonon_supercell_matrix = phonon_supercell_matrix  # optional
         self._supercell = None
         self._primitive = None
         self._phonon_supercell = None
@@ -131,7 +131,7 @@ class Phono3py(object):
         self._phonon_supercells_with_displacements = None
 
         # Thermal conductivity
-        self._thermal_conductivity = None # conductivity_RTA object
+        self._thermal_conductivity = None  # conductivity_RTA object
 
         # Imaginary part of self energy at frequency points
         self._imag_self_energy = None
@@ -161,7 +161,8 @@ class Phono3py(object):
             self._band_indices = [np.arange(num_band, dtype='intc')]
         else:
             self._band_indices = band_indices
-        self._band_indices_flatten = np.hstack(self._band_indices).astype('intc')
+        self._band_indices_flatten = np.hstack(
+            self._band_indices).astype('intc')
 
     def set_phph_interaction(self,
                              nac_params=None,
@@ -170,6 +171,10 @@ class Phono3py(object):
                              frequency_scale_factor=None,
                              unit_conversion=None,
                              solve_dynamical_matrices=True):
+        if self._mesh is None:
+            print("'mesh' has to be set in Phono3py instantiation.")
+            raise RuntimeError
+
         self._nac_params = nac_params
         self._interaction = Interaction(
             self._supercell,
@@ -256,7 +261,7 @@ class Phono3py(object):
             disp_dataset = displacement_dataset
 
         if use_alm:
-            from phono3py.other.alm_wrapper  import get_fc2 as get_fc2_alm
+            from phono3py.other.alm_wrapper import get_fc2 as get_fc2_alm
             self._fc2 = get_fc2_alm(self._phonon_supercell,
                                     forces_fc2,
                                     disp_dataset,
@@ -283,7 +288,7 @@ class Phono3py(object):
     def produce_fc3(self,
                     forces_fc3,
                     displacement_dataset=None,
-                    cutoff_distance=None, # set fc3 zero
+                    cutoff_distance=None,  # set fc3 zero
                     symmetrize_fc3r=False,
                     is_compact_fc=False,
                     use_alm=False):
@@ -293,7 +298,7 @@ class Phono3py(object):
             disp_dataset = displacement_dataset
 
         if use_alm:
-            from phono3py.other.alm_wrapper  import get_fc3 as get_fc3_alm
+            from phono3py.other.alm_wrapper import get_fc3 as get_fc3_alm
             fc2, fc3 = get_fc3_alm(self._supercell,
                                    forces_fc3,
                                    disp_dataset,
@@ -308,7 +313,8 @@ class Phono3py(object):
                         fc3, self._primitive)
                     set_permutation_symmetry_compact_fc3(fc3, self._primitive)
                     if self._fc2 is None:
-                        symmetrize_compact_force_constants(fc2, self._primitive)
+                        symmetrize_compact_force_constants(fc2,
+                                                           self._primitive)
                 else:
                     set_translational_invariance_fc3(fc3)
                     set_permutation_symmetry_fc3(fc3)
@@ -317,7 +323,9 @@ class Phono3py(object):
 
         # Set fc2 and fc3
         self._fc3 = fc3
-        if self._fc2 is None: # Normally self._fc2 is overwritten by produce_fc2
+
+        # Normally self._fc2 is overwritten in produce_fc2
+        if self._fc2 is None:
             self._fc2 = fc2
 
     def cutoff_fc3_by_zero(self, cutoff_distance, fc3=None):
@@ -325,7 +333,7 @@ class Phono3py(object):
             _fc3 = self._fc3
         else:
             _fc3 = fc3
-        cutoff_fc3_by_zero(_fc3, # overwritten
+        cutoff_fc3_by_zero(_fc3,  # overwritten
                            self._supercell,
                            cutoff_distance,
                            self._symprec)
@@ -464,17 +472,17 @@ class Phono3py(object):
             is_isotope=False,
             mass_variances=None,
             grid_points=None,
-            boundary_mfp=None, # in micrometre
+            boundary_mfp=None,  # in micrometre
             use_ave_pp=False,
             gamma_unit_conversion=None,
             mesh_divisors=None,
             coarse_mesh_shifts=None,
             is_reducible_collision_matrix=False,
             is_kappa_star=True,
-            gv_delta_q=None, # for group velocity
+            gv_delta_q=None,  # for group velocity
             is_full_pp=False,
-            pinv_cutoff=1.0e-8, # for pseudo-inversion of collision matrix
-            pinv_solver=0, # solver of pseudo-inversion of collision matrix
+            pinv_cutoff=1.0e-8,  # for pseudo-inversion of collision matrix
+            pinv_solver=0,  # solver of pseudo-inversion of collision matrix
             write_gamma=False,
             read_gamma=False,
             is_N_U=False,
@@ -544,11 +552,12 @@ class Phono3py(object):
     def get_thermal_conductivity(self):
         return self._thermal_conductivity
 
-    def get_frequency_shift(self,
-                            grid_points,
-                            temperatures=np.arange(0, 1001, 10, dtype='double'),
-                            epsilons=None,
-                            output_filename=None):
+    def get_frequency_shift(
+            self,
+            grid_points,
+            temperatures=np.arange(0, 1001, 10, dtype='double'),
+            epsilons=None,
+            output_filename=None):
         """Frequency shift from lowest order diagram is calculated.
 
         Args:
@@ -563,7 +572,7 @@ class Phono3py(object):
         if epsilons is None:
             _epsilons = [0.1]
         else:
-            _epsilon = epsilons
+            _epsilons = epsilons
         self._grid_points = grid_points
         get_frequency_shift(self._interaction,
                             self._grid_points,
@@ -634,13 +643,11 @@ class Phono3py(object):
                 self._phonon_supercell,
                 self._phonon_supercell_matrix,
                 self._primitive_matrix)
-            if self._primitive is not None:
-                if (self._primitive.get_atomic_numbers() !=
-                    self._phonon_primitive.get_atomic_numbers()).any():
-                    print("********************* Warning *********************")
-                    print(" Primitive cells for fc2 and fc3 can be different.")
-                    print("********************* Warning *********************")
-
+            if (self._primitive is not None and
+                (self._primitive.get_atomic_numbers() !=
+                 self._phonon_primitive.get_atomic_numbers()).any()):
+                print(" Primitive cells for fc2 and fc3 can be different.")
+                raise RuntimeError
 
     def _build_phonon_supercells_with_displacements(self,
                                                     supercell,
@@ -755,7 +762,7 @@ class Phono3pyIsotope(object):
     def __init__(self,
                  mesh,
                  primitive,
-                 mass_variances=None, # length of list is num_atom.
+                 mass_variances=None,  # length of list is num_atom.
                  band_indices=None,
                  sigmas=None,
                  frequency_factor_to_THz=VaspToTHz,
@@ -803,7 +810,6 @@ class Phono3pyIsotope(object):
                         print("%8.3f     %5.3e" % (f, g))
             else:
                 print("sigma or tetrahedron method has to be set.")
-
 
     def set_dynamical_matrix(self,
                              fc2,
