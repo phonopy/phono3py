@@ -511,6 +511,7 @@ class Phono3py(object):
                 is_reducible_collision_matrix=is_reducible_collision_matrix,
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
+                is_full_pp=is_full_pp,
                 pinv_cutoff=pinv_cutoff,
                 pinv_solver=pinv_solver,
                 write_collision=write_collision,

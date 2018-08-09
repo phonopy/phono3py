@@ -426,8 +426,8 @@ def cutoff_fc3_by_zero(fc3, supercell, cutoff_distance, symprec=1e-5):
     num_atom = supercell.get_number_of_atoms()
     lattice = supercell.get_cell().T
     min_distances = np.zeros((num_atom, num_atom), dtype='double')
-    for i in range(num_atom): # run in supercell
-        for j in range(num_atom): # run in primitive
+    for i in range(num_atom):  # run in supercell
+        for j in range(num_atom):  # run in primitive
             min_distances[i, j] = np.linalg.norm(
                 np.dot(lattice,
                        get_equivalent_smallest_vectors(
@@ -443,26 +443,26 @@ def show_drift_fc3(fc3,
                    primitive=None,
                    name="fc3"):
     if fc3.shape[0] == fc3.shape[1]:
-       num_atom = fc3.shape[0]
-       maxval1 = 0
-       maxval2 = 0
-       maxval3 = 0
-       klm1 = [0, 0, 0]
-       klm2 = [0, 0, 0]
-       klm3 = [0, 0, 0]
-       for i, j, k, l, m in list(np.ndindex((num_atom, num_atom, 3, 3, 3))):
-           val1 = fc3[:, i, j, k, l, m].sum()
-           val2 = fc3[i, :, j, k, l, m].sum()
-           val3 = fc3[i, j, :, k, l, m].sum()
-           if abs(val1) > abs(maxval1):
-               maxval1 = val1
-               klm1 = [k, l, m]
-           if abs(val2) > abs(maxval2):
-               maxval2 = val2
-               klm2 = [k, l, m]
-           if abs(val3) > abs(maxval3):
-               maxval3 = val3
-               klm3 = [k, l, m]
+        num_atom = fc3.shape[0]
+        maxval1 = 0
+        maxval2 = 0
+        maxval3 = 0
+        klm1 = [0, 0, 0]
+        klm2 = [0, 0, 0]
+        klm3 = [0, 0, 0]
+        for i, j, k, l, m in list(np.ndindex((num_atom, num_atom, 3, 3, 3))):
+            val1 = fc3[:, i, j, k, l, m].sum()
+            val2 = fc3[i, :, j, k, l, m].sum()
+            val3 = fc3[i, j, :, k, l, m].sum()
+            if abs(val1) > abs(maxval1):
+                maxval1 = val1
+                klm1 = [k, l, m]
+            if abs(val2) > abs(maxval2):
+                maxval2 = val2
+                klm2 = [k, l, m]
+            if abs(val3) > abs(maxval3):
+                maxval3 = val3
+                klm3 = [k, l, m]
     else:
         try:
             import phono3py._phono3py as phono3c
