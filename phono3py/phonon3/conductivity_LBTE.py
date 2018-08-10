@@ -4,15 +4,15 @@ import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
 from phono3py.phonon3.conductivity import (Conductivity, all_bands_exist,
                                            unit_to_WmK)
+from phono3py.phonon3.conductivity import write_pp as _write_pp
 from phono3py.phonon3.collision_matrix import CollisionMatrix
-from phono3py.phonon3.triplets import (get_grid_points_by_rotations,
-                                       get_all_triplets)
+from phono3py.phonon3.triplets import get_grid_points_by_rotations
 from phono3py.file_IO import (write_kappa_to_hdf5,
                               write_collision_to_hdf5,
                               read_collision_from_hdf5,
                               write_collision_eigenvalues_to_hdf5,
                               write_unitary_matrix_to_hdf5,
-                              write_pp_to_hdf5, read_pp_from_hdf5)
+                              read_pp_from_hdf5)
 from phonopy.units import THzToEv, Kb
 
 
@@ -98,7 +98,7 @@ def get_thermal_conductivity_LBTE(
         if write_pp:
             _write_pp(lbte,
                       interaction,
-                      i=i,
+                      i,
                       filename=output_filename)
 
         if write_collision:
@@ -134,39 +134,6 @@ def get_thermal_conductivity_LBTE(
                 log_level=log_level)
 
     return lbte
-
-
-def _write_pp(lbte,
-              pp,
-              i=None,
-              filename=None):
-    grid_point = lbte.get_grid_points()[i]
-    sigmas = lbte.get_sigmas()
-    sigma_cutoff = lbte.get_sigma_cutoff_width()
-    mesh = lbte.get_mesh_numbers()
-    triplets, weights, map_triplets, _ = pp.get_triplets_at_q()
-    grid_address = pp.get_grid_address()
-    bz_map = pp.get_bz_map()
-    all_triplets = get_all_triplets(grid_point,
-                                    grid_address,
-                                    bz_map,
-                                    mesh)
-
-    write_pp_to_hdf5(mesh,
-                     pp=pp.get_interaction_strength(),
-                     g_zero=pp.get_zero_value_positions(),
-                     grid_point=grid_point,
-                     triplet=triplets,
-                     weight=weights,
-                     triplet_map=map_triplets,
-                     triplet_all=all_triplets,
-                     sigma=sigmas[-1],
-                     sigma_cutoff=sigma_cutoff,
-                     filename=filename)
-
-    if len(sigmas) > 1:
-        print("Multiple smearing parameters were given. The last one in ")
-        print("ph-ph interaction calculations was written in the file.")
 
 
 def _write_collision(lbte,

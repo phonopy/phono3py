@@ -205,7 +205,7 @@ class Interaction(object):
              grid_address,
              bz_map,
              triplets_map_at_q,
-             ir_map_at_q)= get_triplets_at_q(
+             ir_map_at_q) = get_triplets_at_q(
                  grid_point,
                  self._mesh,
                  self._symmetry.get_pointgroup_operations(),

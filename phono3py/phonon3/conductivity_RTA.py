@@ -1,14 +1,16 @@
 import sys
 import numpy as np
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
-from phono3py.file_IO import (write_kappa_to_hdf5, write_triplets,
+from phono3py.file_IO import (write_kappa_to_hdf5,
                               read_gamma_from_hdf5, write_grid_address,
                               write_gamma_detail_to_hdf5)
 from phono3py.phonon3.conductivity import (Conductivity, all_bands_exist,
                                            unit_to_WmK)
+from phono3py.phonon3.conductivity import write_pp as _write_pp
 from phono3py.phonon3.imag_self_energy import (ImagSelfEnergy,
                                                average_by_degeneracy)
-from phono3py.phonon3.triplets import get_grid_points_by_rotations
+from phono3py.phonon3.triplets import (get_grid_points_by_rotations,
+                                       get_all_triplets)
 
 
 def get_thermal_conductivity_RTA(
@@ -30,8 +32,9 @@ def get_thermal_conductivity_RTA(
         is_full_pp=False,
         write_gamma=False,
         read_gamma=False,
-        write_kappa=False,
         is_N_U=False,
+        write_kappa=False,
+        write_pp=False,
         write_gamma_detail=False,
         input_filename=None,
         output_filename=None,
@@ -67,6 +70,11 @@ def get_thermal_conductivity_RTA(
             return False
 
     for i in br:
+        if write_pp and is_full_pp:
+            _write_pp(br,
+                      interaction,
+                      i,
+                      filename=output_filename)
         if write_gamma:
             _write_gamma(br,
                          interaction,
@@ -79,8 +87,6 @@ def get_thermal_conductivity_RTA(
                                 i,
                                 filename=output_filename,
                                 verbose=log_level)
-        if log_level > 1 and read_gamma is False:
-            _write_triplets(interaction)
 
     if write_kappa:
         if grid_points is None and all_bands_exist(interaction):
@@ -102,6 +108,16 @@ def _write_gamma_detail(br, interaction, i, filename=None, verbose=True):
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()
     triplets, weights, map_triplets, _ = interaction.get_triplets_at_q()
+    grid_address = interaction.get_grid_address()
+    bz_map = interaction.get_bz_map()
+    if map_triplets is None:
+        all_triplets = None
+    else:
+        all_triplets = get_all_triplets(gp,
+                                        grid_address,
+                                        bz_map,
+                                        mesh)
+
     if all_bands_exist(interaction):
         for j, sigma in enumerate(sigmas):
             write_gamma_detail_to_hdf5(
@@ -112,6 +128,7 @@ def _write_gamma_detail(br, interaction, i, filename=None, verbose=True):
                 triplet=triplets,
                 weight=weights,
                 triplet_map=map_triplets,
+                triplet_all=all_triplets,
                 sigma=sigma,
                 sigma_cutoff=sigma_cutoff,
                 filename=filename,
@@ -228,19 +245,6 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
                     kappa_unit_conversion=unit_to_WmK / volume,
                     filename=filename,
                     verbose=verbose)
-
-
-def _write_triplets(interaction, filename=None):
-    triplets, weights = interaction.get_triplets_at_q()[:2]
-    grid_address = interaction.get_grid_address()
-    mesh = interaction.get_mesh_numbers()
-    write_triplets(triplets,
-                   weights,
-                   mesh,
-                   grid_address,
-                   grid_point=triplets[0, 0],
-                   filename=filename)
-    write_grid_address(grid_address, mesh, filename=filename)
 
 
 def _write_kappa(br, volume, filename=None, log_level=0):
@@ -583,7 +587,10 @@ class Conductivity_RTA(Conductivity):
                 self._collision.set_grid_point(grid_point)
                 self._set_gamma_at_sigmas(i)
         else:
-            self._collision.set_grid_point(grid_point)
+            self._collision.set_grid_point(
+                grid_point,
+                stores_triplets_map=(self._is_full_pp or
+                                     self._is_gamma_detail))
             num_triplets = len(self._pp.get_triplets_at_q()[0])
             if self._log_level:
                 print("Number of triplets: %d" % num_triplets)

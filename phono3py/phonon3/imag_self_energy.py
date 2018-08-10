@@ -341,12 +341,12 @@ class ImagSelfEnergy(object):
     def get_unit_conversion_factor(self):
         return self._unit_conversion
 
-    def set_grid_point(self, grid_point=None):
+    def set_grid_point(self, grid_point=None, stores_triplets_map=False):
         if grid_point is None:
             self._grid_point = None
         else:
             self._pp.set_grid_point(grid_point,
-                                    stores_triplets_map=self._with_detail)
+                                    stores_triplets_map=stores_triplets_map)
             self._pp_strength = None
             (self._triplets_at_q,
              self._weights_at_q) = self._pp.get_triplets_at_q()[:2]

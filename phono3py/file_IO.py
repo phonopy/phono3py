@@ -1002,6 +1002,7 @@ def write_gamma_detail_to_hdf5(temperature,
                                triplet=None,
                                weight=None,
                                triplet_map=None,
+                               triplet_all=None,
                                frequency_points=None,
                                band_index=None,
                                sigma=None,
@@ -1031,6 +1032,8 @@ def write_gamma_detail_to_hdf5(temperature,
             w.create_dataset('weight', data=weight)
         if triplet_map is not None:
             w.create_dataset('triplet_map', data=triplet_map)
+        if triplet_all is not None:
+            w.create_dataset('triplet_all', data=triplet_all)
         if grid_point is not None:
             w.create_dataset('grid_point', data=grid_point)
         if band_index is not None:
