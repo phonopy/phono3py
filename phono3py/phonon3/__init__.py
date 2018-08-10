@@ -545,6 +545,7 @@ class Phono3py(object):
                 read_gamma=read_gamma,
                 is_N_U=is_N_U,
                 write_kappa=write_kappa,
+                write_pp=write_pp,
                 write_gamma_detail=write_gamma_detail,
                 input_filename=input_filename,
                 output_filename=output_filename,

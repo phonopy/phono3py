@@ -860,6 +860,8 @@ def write_pp_to_hdf5(mesh,
                      grid_point=None,
                      triplet=None,
                      weight=None,
+                     triplet_map=None,
+                     triplet_all=None,
                      sigma=None,
                      sigma_cutoff=None,
                      filename=None,
@@ -880,6 +882,10 @@ def write_pp_to_hdf5(mesh,
                     w.create_dataset('triplet', data=triplet)
                 if weight is not None:
                     w.create_dataset('weight', data=weight)
+                if triplet_map is not None:
+                    w.create_dataset('triplet_map', data=triplet_map)
+                if triplet_all is not None:
+                    w.create_dataset('triplet_all', data=triplet_all)
             else:
                 x = g_zero.ravel()
                 nonzero_pp = np.array(pp.ravel()[x == 0], dtype='double')
@@ -995,6 +1001,8 @@ def write_gamma_detail_to_hdf5(temperature,
                                grid_point=None,
                                triplet=None,
                                weight=None,
+                               triplet_map=None,
+                               triplet_all=None,
                                frequency_points=None,
                                band_index=None,
                                sigma=None,
@@ -1022,6 +1030,10 @@ def write_gamma_detail_to_hdf5(temperature,
             w.create_dataset('triplet', data=triplet)
         if weight is not None:
             w.create_dataset('weight', data=weight)
+        if triplet_map is not None:
+            w.create_dataset('triplet_map', data=triplet_map)
+        if triplet_all is not None:
+            w.create_dataset('triplet_all', data=triplet_all)
         if grid_point is not None:
             w.create_dataset('grid_point', data=grid_point)
         if band_index is not None:
