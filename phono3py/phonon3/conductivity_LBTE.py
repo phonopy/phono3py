@@ -143,7 +143,7 @@ def _write_pp(lbte,
     sigmas = lbte.get_sigmas()
     sigma_cutoff = lbte.get_sigma_cutoff_width()
     mesh = lbte.get_mesh_numbers()
-    triplets, weights, _, _ = pp.get_triplets_at_q()
+    triplets, weights, map_triplets, _ = pp.get_triplets_at_q()
 
     write_pp_to_hdf5(mesh,
                      pp=pp.get_interaction_strength(),
@@ -151,6 +151,7 @@ def _write_pp(lbte,
                      grid_point=grid_points[i],
                      triplet=triplets,
                      weight=weights,
+                     triplet_map=map_triplets,
                      sigma=sigmas[-1],
                      sigma_cutoff=sigma_cutoff,
                      filename=filename)
