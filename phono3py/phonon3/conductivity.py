@@ -3,14 +3,17 @@ from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.phonon.thermal_properties import mode_cv as get_mode_cv
 from phonopy.units import THzToEv, EV, THz, Angstrom
+from phono3py.file_IO import write_pp_to_hdf5
 from phono3py.phonon3.triplets import (get_grid_address, reduce_grid_points,
                                        get_ir_grid_points,
                                        from_coarse_to_dense_grid_points,
-                                       get_grid_points_by_rotations)
+                                       get_grid_points_by_rotations,
+                                       get_all_triplets)
 from phono3py.other.isotope import Isotope
 
 unit_to_WmK = ((THz * Angstrom) ** 2 / (Angstrom ** 3) * EV / THz /
-               (2 * np.pi)) # 2pi comes from definition of lifetime.
+               (2 * np.pi))  # 2pi comes from definition of lifetime.
+
 
 def all_bands_exist(interaction):
     band_indices = interaction.get_band_indices()
@@ -19,6 +22,42 @@ def all_bands_exist(interaction):
         if (band_indices - np.arange(num_band) == 0).all():
             return True
     return False
+
+
+def write_pp(conductivity,
+             pp,
+             i,
+             filename=None):
+    grid_point = conductivity.get_grid_points()[i]
+    sigmas = conductivity.get_sigmas()
+    sigma_cutoff = conductivity.get_sigma_cutoff_width()
+    mesh = conductivity.get_mesh_numbers()
+    triplets, weights, map_triplets, _ = pp.get_triplets_at_q()
+    grid_address = pp.get_grid_address()
+    bz_map = pp.get_bz_map()
+    if map_triplets is None:
+        all_triplets = None
+    else:
+        all_triplets = get_all_triplets(grid_point,
+                                        grid_address,
+                                        bz_map,
+                                        mesh)
+
+    if len(sigmas) > 1:
+        print("Multiple smearing parameters were given. The last one in ")
+        print("ph-ph interaction calculations was written in the file.")
+
+    write_pp_to_hdf5(mesh,
+                     pp=pp.get_interaction_strength(),
+                     g_zero=pp.get_zero_value_positions(),
+                     grid_point=grid_point,
+                     triplet=triplets,
+                     weight=weights,
+                     triplet_map=map_triplets,
+                     triplet_all=all_triplets,
+                     sigma=sigmas[-1],
+                     sigma_cutoff=sigma_cutoff,
+                     filename=filename)
 
 
 class Conductivity(object):
@@ -33,9 +72,9 @@ class Conductivity(object):
                  mass_variances=None,
                  mesh_divisors=None,
                  coarse_mesh_shifts=None,
-                 boundary_mfp=None, # in micrometre
+                 boundary_mfp=None,  # in micrometre
                  is_kappa_star=True,
-                 gv_delta_q=None, # finite difference for group veolocity
+                 gv_delta_q=None,  # finite difference for group veolocity
                  is_full_pp=False,
                  log_level=0):
         if sigmas is None:
@@ -45,7 +84,7 @@ class Conductivity(object):
         self._sigma_cutoff = sigma_cutoff
         self._pp = interaction
         self._is_full_pp = is_full_pp
-        self._collision = None # has to be set derived class
+        self._collision = None  # has to be set derived class
         if temperatures is None:
             self._temperatures = None
         else:
@@ -215,7 +254,7 @@ class Conductivity(object):
         self._grid_address = self._pp.get_grid_address()
         self._pp.set_nac_q_direction(nac_q_direction=None)
 
-        if grid_points is not None: # Specify grid points
+        if grid_points is not None:  # Specify grid points
             self._grid_points = reduce_grid_points(
                 self._mesh_divisors,
                 self._grid_address,
@@ -223,7 +262,7 @@ class Conductivity(object):
                 coarse_mesh_shifts=self._coarse_mesh_shifts)
             (self._ir_grid_points,
              self._ir_grid_weights) = self._get_ir_grid_points()
-        elif not self._is_kappa_star: # All grid points
+        elif not self._is_kappa_star:  # All grid points
             coarse_grid_address = get_grid_address(self._coarse_mesh)
             coarse_grid_points = np.arange(np.prod(self._coarse_mesh),
                                            dtype='intc')
@@ -236,7 +275,7 @@ class Conductivity(object):
             self._grid_weights = np.ones(len(self._grid_points), dtype='intc')
             self._ir_grid_points = self._grid_points
             self._ir_grid_weights = self._grid_weights
-        else: # Automatic sampling
+        else:  # Automatic sampling
             self._grid_points, self._grid_weights = self._get_ir_grid_points()
             self._ir_grid_points = self._grid_points
             self._ir_grid_weights = self._grid_weights
@@ -389,7 +428,7 @@ class Conductivity(object):
         if self._grid_weights is not None:
             if order_kstar != self._grid_weights[i_irgp]:
                 if self._log_level:
-                    print("*" * 33  + "Warning" + "*" * 33)
+                    print("*" * 33 + "Warning" + "*" * 33)
                     print(" Number of elements in k* is unequal "
                           "to number of equivalent grid-points.")
                     print("*" * 73)

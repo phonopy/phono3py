@@ -1,9 +1,8 @@
-import sys
 import numpy as np
 from phonopy.units import THzToEv, Kb
 from phonopy.harmonic.force_constants import similarity_transformation
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
-from phono3py.phonon3.triplets import get_triplets_third_q_list
+
 
 class CollisionMatrix(ImagSelfEnergy):
     """
@@ -67,7 +66,6 @@ class CollisionMatrix(ImagSelfEnergy):
 
         num_band0 = self._pp_strength.shape[1]
         num_band = self._pp_strength.shape[2]
-        num_triplets = len(self._triplets_at_q)
         self._imag_self_energy = np.zeros(num_band0, dtype='double')
 
         if self._is_reducible_collision_matrix:
@@ -96,11 +94,6 @@ class CollisionMatrix(ImagSelfEnergy):
              self._ir_map_at_q) = self._pp.get_triplets_at_q()
             self._grid_address = self._pp.get_grid_address()
             self._grid_point = grid_point
-            self._third_q_list = get_triplets_third_q_list(
-                grid_point,
-                self._grid_address,
-                self._pp.get_bz_map(),
-                self._mesh)
             self._bz_map = self._pp.get_bz_map()
             self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
 
@@ -147,7 +140,6 @@ class CollisionMatrix(ImagSelfEnergy):
                                            self._cutoff_frequency)
 
     def _run_py_collision_matrix(self):
-        num_mesh_points = np.prod(self._mesh)
         num_band0 = self._pp_strength.shape[1]
         num_band = self._pp_strength.shape[2]
         gp2tp_map = self._get_gp2tp_map()
@@ -168,7 +160,8 @@ class CollisionMatrix(ImagSelfEnergy):
 
     def _run_py_reducible_collision_matrix(self):
         num_mesh_points = np.prod(self._mesh)
-        num_band = self._pp_strength.shape[1]
+        num_band0 = self._pp_strength.shape[1]
+        num_band = self._pp_strength.shape[2]
         gp2tp_map = self._get_gp2tp_map()
 
         for i in range(num_mesh_points):
