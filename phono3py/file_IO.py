@@ -861,6 +861,7 @@ def write_pp_to_hdf5(mesh,
                      triplet=None,
                      weight=None,
                      triplet_map=None,
+                     triplet_all=None,
                      sigma=None,
                      sigma_cutoff=None,
                      filename=None,
@@ -883,6 +884,8 @@ def write_pp_to_hdf5(mesh,
                     w.create_dataset('weight', data=weight)
                 if triplet_map is not None:
                     w.create_dataset('triplet_map', data=triplet_map)
+                if triplet_all is not None:
+                    w.create_dataset('triplet_all', data=triplet_all)
             else:
                 x = g_zero.ravel()
                 nonzero_pp = np.array(pp.ravel()[x == 0], dtype='double')

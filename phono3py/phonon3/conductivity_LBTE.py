@@ -5,7 +5,8 @@ from phonopy.phonon.degeneracy import degenerate_sets
 from phono3py.phonon3.conductivity import (Conductivity, all_bands_exist,
                                            unit_to_WmK)
 from phono3py.phonon3.collision_matrix import CollisionMatrix
-from phono3py.phonon3.triplets import get_grid_points_by_rotations
+from phono3py.phonon3.triplets import (get_grid_points_by_rotations,
+                                       get_all_triplets)
 from phono3py.file_IO import (write_kappa_to_hdf5,
                               write_collision_to_hdf5,
                               read_collision_from_hdf5,
@@ -139,19 +140,26 @@ def _write_pp(lbte,
               pp,
               i=None,
               filename=None):
-    grid_points = lbte.get_grid_points()
+    grid_point = lbte.get_grid_points()[i]
     sigmas = lbte.get_sigmas()
     sigma_cutoff = lbte.get_sigma_cutoff_width()
     mesh = lbte.get_mesh_numbers()
     triplets, weights, map_triplets, _ = pp.get_triplets_at_q()
+    grid_address = pp.get_grid_address()
+    bz_map = pp.get_bz_map()
+    all_triplets = get_all_triplets(grid_point,
+                                    grid_address,
+                                    bz_map,
+                                    mesh)
 
     write_pp_to_hdf5(mesh,
                      pp=pp.get_interaction_strength(),
                      g_zero=pp.get_zero_value_positions(),
-                     grid_point=grid_points[i],
+                     grid_point=grid_point,
                      triplet=triplets,
                      weight=weights,
                      triplet_map=map_triplets,
+                     triplet_all=all_triplets,
                      sigma=sigmas[-1],
                      sigma_cutoff=sigma_cutoff,
                      filename=filename)

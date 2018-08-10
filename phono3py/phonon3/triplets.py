@@ -117,18 +117,18 @@ def get_triplets_at_q(grid_point,
     return triplets_at_q, weights, bz_grid_address, bz_map, map_triplets, map_q
 
 
-def get_triplets_third_q_list(grid_point,
-                              bz_grid_address,
-                              bz_map,
-                              mesh):
-    triplets_at_q, weights = _get_BZ_triplets_at_q(
+def get_all_triplets(grid_point,
+                     bz_grid_address,
+                     bz_map,
+                     mesh):
+    triplets_at_q, _ = _get_BZ_triplets_at_q(
         grid_point,
         bz_grid_address,
         bz_map,
-        np.arange(len(bz_grid_address), dtype='intc'),
+        np.arange(np.prod(mesh), dtype='intc'),
         mesh)
 
-    return np.array(triplets_at_q[:, 2], dtype='intc')
+    return triplets_at_q
 
 
 def get_nosym_triplets_at_q(grid_point,
