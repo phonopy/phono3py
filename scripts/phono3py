@@ -155,8 +155,8 @@ if args.forces_fc3 or args.forces_fc3_file:
             if d2['included']:
                 num_disps += 1
     if args.forces_fc3_file:
-        file_exists(args.forces_fc3_file[0], log_level)
-        force_filenames = [x.strip() for x in open(args.forces_fc3_file[0])]
+        file_exists(args.forces_fc3_file, log_level)
+        force_filenames = [x.strip() for x in open(args.forces_fc3_file)]
     else:
         force_filenames = args.forces_fc3
 
