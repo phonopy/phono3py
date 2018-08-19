@@ -38,17 +38,22 @@ from phono3py.phonon3.fc3 import distribute_fc3
 from phonopy.harmonic.force_constants import distribute_force_constants
 from phonopy.structure.cells import compute_all_sg_permutations
 
+
 def get_fc2(supercell,
             forces_fc2,
             disp_dataset,
             symmetry):
     natom = supercell.get_number_of_atoms()
+    assert natom == disp_dataset['natom']
     force = np.array(forces_fc2, dtype='double', order='C')
-    disp = np.zeros_like(force)
+    print(force.shape)
+
     lattice = supercell.get_cell().T
     positions = supercell.get_scaled_positions()
     numbers = supercell.get_atomic_numbers()
-    _set_disp_fc2(disp, disp_dataset)
+    disp = _get_disp_fc2(disp_dataset)
+    print(disp.shape)
+
     pure_trans = _collect_pure_translations(symmetry)
     rotations = np.array([np.eye(3, dtype='intc')] * len(pure_trans),
                          dtype='intc', order='C')
@@ -75,18 +80,20 @@ def get_fc2(supercell,
 
     return fc2
 
+
 def get_fc3(supercell,
             forces_fc3,
             disp_dataset,
             symmetry,
             verbose=True):
     natom = supercell.get_number_of_atoms()
+    assert natom == disp_dataset['natom']
+
     force = np.array(forces_fc3, dtype='double', order='C')
-    disp = np.zeros_like(force)
     lattice = supercell.get_cell().T
     positions = supercell.get_scaled_positions()
     numbers = supercell.get_atomic_numbers()
-    indices = _set_disp_fc3(disp, disp_dataset)
+    disp, indices = _get_disp_fc3(disp_dataset)
     pure_trans = _collect_pure_translations(symmetry)
     rotations = np.array([np.eye(3, dtype='intc')] * len(pure_trans),
                          dtype='intc', order='C')
@@ -114,9 +121,9 @@ def get_fc3(supercell,
         fc3_alm = alm.get_fc(2)
 
     if verbose:
-       print("-------------------------------"
-             " ALM FC3 end "
-             "-------------------------------")
+        print("-------------------------------"
+              " ALM FC3 end "
+              "-------------------------------")
 
     fc2 = _expand_fc2(fc2_alm,
                       supercell,
@@ -131,13 +138,50 @@ def get_fc3(supercell,
 
     return fc2, fc3
 
-def _set_disp_fc2(disp, disp_dataset):
+
+def _get_disp_fc2(disp_dataset):
     count = 0
+    natom = disp_dataset['natom']
+    disp = np.zeros((len(disp_dataset['first_atoms']), natom, 3),
+                    dtype='double', order='C')
     for disp1 in disp_dataset['first_atoms']:
         disp[count, disp1['number']] = disp1['displacement']
         count += 1
+    return disp
 
-def _set_disp_fc3(disp, disp_dataset):
+def _get_disp_fc3(disp_dataset):
+    """Create displacements of atoms for ALM input
+
+    Note
+    ----
+    Dipslacements of all atoms in supercells for all displacement
+    configurations in phono3py are returned, i.e., most of
+    displacements are zero. Only the configurations with 'included' ==
+    True are included in the list of indices that is returned, too.
+
+    Parameters
+    ----------
+    disp_dataset : dict
+        Displacement dataset that may be obtained by
+        file_IO.parse_disp_fc3_yaml.
+
+    Returns
+    -------
+    disp : ndarray
+        Displacements of atoms in supercells of all displacement
+        configurations.
+        shape=(ndisp, natom, 3)
+        dtype='double'
+    indices : list of int
+        The indices of the displacement configurations with 'included' == True.
+
+    """
+
+    natom = disp_dataset['natom']
+    ndisp = len(disp_dataset['first_atoms'])
+    for disp1 in disp_dataset['first_atoms']:
+        ndisp += len(disp1['second_atoms'])
+    disp = np.zeros((ndisp, natom, 3), dtype='double', order='C')
     indices = []
     count = 0
     for disp1 in disp_dataset['first_atoms']:
@@ -156,9 +200,8 @@ def _set_disp_fc3(disp, disp_dataset):
             disp[count, disp2['number']] = disp2['displacement']
             count += 1
 
-    assert count == len(disp)
+    return disp, indices
 
-    return indices
 
 def _expand_fc2(fc2_alm,
                 supercell,
@@ -192,6 +235,7 @@ def _expand_fc2(fc2_alm,
                                permutations)
 
     return fc2
+
 
 def _expand_fc3(fc3_alm,
                 supercell,
@@ -232,6 +276,7 @@ def _expand_fc3(fc3_alm,
                    s2compact,
                    verbose=verbose)
     return fc3
+
 
 def _collect_pure_translations(symmetry):
     pure_trans = []
