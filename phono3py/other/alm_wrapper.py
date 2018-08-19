@@ -46,14 +46,10 @@ def get_fc2(supercell,
     natom = supercell.get_number_of_atoms()
     assert natom == disp_dataset['natom']
     force = np.array(forces_fc2, dtype='double', order='C')
-    print(force.shape)
-
     lattice = supercell.get_cell().T
     positions = supercell.get_scaled_positions()
     numbers = supercell.get_atomic_numbers()
     disp = _get_disp_fc2(disp_dataset)
-    print(disp.shape)
-
     pure_trans = _collect_pure_translations(symmetry)
     rotations = np.array([np.eye(3, dtype='intc')] * len(pure_trans),
                          dtype='intc', order='C')
