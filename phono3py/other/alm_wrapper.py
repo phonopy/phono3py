@@ -42,7 +42,8 @@ from phonopy.structure.cells import compute_all_sg_permutations
 def get_fc2(supercell,
             forces_fc2,
             disp_dataset,
-            symmetry):
+            symmetry,
+            log_level=0):
     natom = supercell.get_number_of_atoms()
     assert natom == disp_dataset['natom']
     force = np.array(forces_fc2, dtype='double', order='C')
@@ -54,13 +55,15 @@ def get_fc2(supercell,
     rotations = np.array([np.eye(3, dtype='intc')] * len(pure_trans),
                          dtype='intc', order='C')
 
-    print("------------------------------"
-          " ALM FC2 start "
-          "------------------------------")
+    if log_level:
+        print("------------------------------"
+              " ALM FC2 start "
+              "------------------------------")
 
     from alm import ALM
     sys.stdout.flush()
     with ALM(lattice, positions, numbers) as alm:
+        alm.set_verbosity(log_level)
         nkd = len(np.unique(numbers))
         rcs = -np.ones((1, nkd, nkd), dtype='double')
         alm.find_force_constant(1, rcs)
@@ -68,9 +71,10 @@ def get_fc2(supercell,
         info = alm.optimize()
         fc2_alm = alm.get_fc(1)
 
-    print("-------------------------------"
-          " ALM FC2 end "
-          "-------------------------------")
+    if log_level:
+        print("-------------------------------"
+              " ALM FC2 end "
+              "-------------------------------")
 
     fc2 = _expand_fc2(fc2_alm, supercell, pure_trans, rotations)
 
@@ -81,7 +85,7 @@ def get_fc3(supercell,
             forces_fc3,
             disp_dataset,
             symmetry,
-            verbose=True):
+            log_level=0):
     natom = supercell.get_number_of_atoms()
     assert natom == disp_dataset['natom']
 
@@ -94,7 +98,7 @@ def get_fc3(supercell,
     rotations = np.array([np.eye(3, dtype='intc')] * len(pure_trans),
                          dtype='intc', order='C')
 
-    if verbose:
+    if log_level:
         print("------------------------------"
               " ALM FC3 start "
               "------------------------------")
@@ -102,6 +106,7 @@ def get_fc3(supercell,
     from alm import ALM
     sys.stdout.flush()
     with ALM(lattice, positions, numbers) as alm:
+        alm.set_verbosity(log_level)
         nkd = len(np.unique(numbers))
         if 'cutoff_distance' in disp_dataset:
             cut_d = disp_dataset['cutoff_distance']
@@ -116,7 +121,7 @@ def get_fc3(supercell,
         fc2_alm = alm.get_fc(1)
         fc3_alm = alm.get_fc(2)
 
-    if verbose:
+    if log_level:
         print("-------------------------------"
               " ALM FC3 end "
               "-------------------------------")
@@ -125,12 +130,12 @@ def get_fc3(supercell,
                       supercell,
                       pure_trans,
                       rotations,
-                      verbose=verbose)
+                      verbose=(log_level > 0))
     fc3 = _expand_fc3(fc3_alm,
                       supercell,
                       pure_trans,
                       rotations,
-                      verbose=verbose)
+                      verbose=(log_level > 0))
 
     return fc2, fc3
 

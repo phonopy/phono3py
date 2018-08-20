@@ -265,7 +265,8 @@ class Phono3py(object):
             self._fc2 = get_fc2_alm(self._phonon_supercell,
                                     forces_fc2,
                                     disp_dataset,
-                                    self._phonon_supercell_symmetry)
+                                    self._phonon_supercell_symmetry,
+                                    log_level=self._log_level)
         else:
             for forces, disp1 in zip(forces_fc2, disp_dataset['first_atoms']):
                 disp1['forces'] = forces
@@ -302,7 +303,8 @@ class Phono3py(object):
             fc2, fc3 = get_fc3_alm(self._supercell,
                                    forces_fc3,
                                    disp_dataset,
-                                   self._symmetry)
+                                   self._symmetry,
+                                   log_level=self._log_level)
         else:
             fc2, fc3 = self._get_fc3(forces_fc3,
                                      disp_dataset,
