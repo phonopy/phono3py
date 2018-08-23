@@ -109,7 +109,7 @@ def get_parser():
                         pinv_cutoff=None,
                         pinv_solver=None,
                         pp_unit_conversion=None,
-                        primitive_axis=None,
+                        primitive_axes=None,
                         qe_mode=False,
                         qpoints=None,
                         quiet=False,
@@ -339,8 +339,8 @@ def get_parser():
         "-o", dest="output_filename",
         help="Output filename extension")
     parser.add_argument(
-        "--pa", "--primitive-axis", dest="primitive_axis",
-        help="Same as PRIMITIVE_AXIS tags")
+        "--pa", "--primitive-axis", "--primitive-axes", dest="primitive_axes",
+        help="Same as PRIMITIVE_AXES tags")
     parser.add_argument(
         "--pinv-cutoff", dest="pinv_cutoff", type=float,
         help="Cutoff frequency (THz) for pseudo inversion of collision matrix")
