@@ -246,7 +246,9 @@ if __name__ == '__main__':
                                 'phonopy>=1.13.2'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
-              ext_modules=[extension_lapackepy, extension_phono3py])
+              ext_modules=[extension_lapackepy, extension_phono3py],
+              test_suite='nose.collector',
+              tests_require=['nose'])
     else:
         setup(name='phono3py',
               version=version_number,
@@ -258,4 +260,6 @@ if __name__ == '__main__':
               requires=['numpy', 'PyYAML', 'matplotlib', 'h5py', 'phonopy'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
-              ext_modules=[extension_lapackepy, extension_phono3py])
+              ext_modules=[extension_lapackepy, extension_phono3py],
+              test_suite='nose.collector',
+              tests_require=['nose'])
