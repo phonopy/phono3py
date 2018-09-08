@@ -363,14 +363,14 @@ class Phono3pyConfParser(ConfParser):
         self._settings = Phono3pySettings()
         if filename is not None:
             ConfParser.__init__(self, filename=filename)
-            self.parse_conf() # self.parameters[key] = val
+            self.parse_conf()  # self.parameters[key] = val
             self._parse_conf()
             self._set_settings()
         if args is not None:
             ConfParser.__init__(self, args=args)
-            self.read_options() # store data in self._confs
+            self.read_options()  # store data in self._confs
             self._read_options()
-            self.parse_conf() # self.parameters[key] = val
+            self.parse_conf()  # self.parameters[key] = val
             self._parse_conf()
             self._set_settings()
 
@@ -378,7 +378,7 @@ class Phono3pyConfParser(ConfParser):
         if 'phonon_supercell_dimension' in self._args:
             dim_fc2 = self._args.phonon_supercell_dimension
             if dim_fc2 is not None:
-                self._confs['dim_fc2'] = dim_fc2
+                self._confs['dim_fc2'] = " ".join(dim_fc2)
 
         if 'boundary_mfp' in self._args:
             if self._args.boundary_mfp is not None:
@@ -405,12 +405,13 @@ class Phono3pyConfParser(ConfParser):
                 self._confs['gamma_conversion_factor'] = g_conv_factor
 
         if 'grid_addresses' in self._args:
-            if self._args.grid_addresses is not None:
-                self._confs['grid_addresses'] = self._args.grid_addresses
+            grid_adrs = self._args.grid_addresses
+            if grid_adrs is not None:
+                self._confs['grid_addresses'] = " ".join(grid_adrs)
 
         if 'grid_points' in self._args:
             if self._args.grid_points is not None:
-                self._confs['grid_points'] = self._args.grid_points
+                self._confs['grid_points'] = " ".join(self._args.grid_points)
 
         if 'ion_clamped' in self._args:
             if self._args.ion_clamped:
@@ -481,16 +482,18 @@ class Phono3pyConfParser(ConfParser):
                 self._confs['symmetrize_fc3_r'] = '.true.'
 
         if 'mass_variances' in self._args:
-            if self._args.mass_variances is not None:
-                self._confs['mass_variances'] = self._args.mass_variances
+            mass_variances = self._args.mass_variances
+            if mass_variances is not None:
+                self._confs['mass_variances'] = " ".join(mass_variances)
 
         if 'max_freepath' in self._args:
             if self._args.max_freepath is not None:
                 self._confs['max_freepath'] = self._args.max_freepath
 
         if 'mesh_divisors' in self._args:
-            if self._args.mesh_divisors is not None:
-                self._confs['mesh_divisors'] = self._args.mesh_divisors
+            mesh_divisors = self._args.mesh_divisors
+            if mesh_divisors is not None:
+                self._confs['mesh_divisors'] = " ".join(mesh_divisors)
 
         if 'pinv_cutoff' in self._args:
             if self._args.pinv_cutoff is not None:
@@ -541,7 +544,7 @@ class Phono3pyConfParser(ConfParser):
 
         if 'temperatures' in self._args:
             if self._args.temperatures is not None:
-                self._confs['temperatures'] = self._args.temperatures
+                self._confs['temperatures'] = " ".join(self._args.temperatures)
 
         if 'use_alm_fc2' in self._args:
             if self._args.use_alm_fc2:

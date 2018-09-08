@@ -35,6 +35,7 @@
 import sys
 from phonopy.cui.phonopy_argparse import fix_deprecated_option_names
 
+
 def get_parser():
     deprecated = fix_deprecated_option_names(sys.argv)
 
@@ -156,14 +157,14 @@ def get_parser():
         "--ave-pp", dest="use_ave_pp", action="store_true",
         help="Use averaged ph-ph interaction")
     parser.add_argument(
-        "--band", dest="band_paths",
+        "--band", nargs='+', dest="band_paths",
         help="Band structure paths calculated for Gruneisen parameter")
     parser.add_argument(
         "--band-points", dest="band_points", type=int,
         help=("Number of points calculated on a band segment in the band "
               "structure Gruneisen parameter calculation"))
     parser.add_argument(
-        "--bi", "--band-indices", dest="band_indices",
+        "--bi", "--band-indices", nargs='+', dest="band_indices",
         help="Band indices where life time is calculated")
     parser.add_argument(
         "--boundary-mfp", "--bmfp", dest="boundary_mfp", type=float,
@@ -204,8 +205,8 @@ def get_parser():
         "--cutoff-fc3", "--cutoff-fc3-distance", dest="cutoff_fc3_distance",
         type=float,
         help=("Cutoff distance of third-order force constants. Elements where "
-              "any pair of atoms has larger distance than cut-off distance are "
-              "set zero."))
+              "any pair of atoms has larger distance than cut-off distance "
+              "are set zero."))
     parser.add_argument(
         "--cutoff-freq", "--cutoff-frequency", dest="cutoff_frequency",
         type=float,
@@ -220,10 +221,10 @@ def get_parser():
         "-d", "--disp", dest="is_displacement", action="store_true",
         help="As first stage, get least displacements")
     parser.add_argument(
-        "--dim", dest="supercell_dimension",
+        "--dim", nargs='+', dest="supercell_dimension",
         help="Supercell dimension")
     parser.add_argument(
-        "--dim-fc2", dest="phonon_supercell_dimension",
+        "--dim-fc2", nargs='+', dest="phonon_supercell_dimension",
         help="Supercell dimension for extra fc2")
     parser.add_argument(
         "--factor", dest="frequency_conversion_factor", type=float,
@@ -259,13 +260,13 @@ def get_parser():
               "strength are needed, i.e., to calculate average ph-ph "
               "interaction strength."))
     parser.add_argument(
-        "--ga", "--grid-addresses", dest="grid_addresses",
+        "--ga", "--grid-addresses", nargs='+', dest="grid_addresses",
         help="Fixed grid addresses where anharmonic properties are calculated")
     parser.add_argument(
         "--gamma-unit-conversion", dest="gamma_unit_conversion", type=float,
         help="Conversion factor for gamma")
     parser.add_argument(
-        "--gp", "--grid-points", dest="grid_points",
+        "--gp", "--grid-points", nargs='+', dest="grid_points",
         help="Fixed grid points where anharmonic properties are calculated")
     parser.add_argument(
         "--gruneisen", dest="is_gruneisen", action="store_true",
@@ -299,16 +300,16 @@ def get_parser():
         "--loglevel", dest="log_level", type=int,
         help="Log level")
     parser.add_argument(
-        "--mass", dest="masses",
+        "--mass", nargs='+', dest="masses",
         help="Same as MASS tag")
     parser.add_argument(
-        "--md", "--mesh-divisors", dest="mesh_divisors",
+        "--md", "--mesh-divisors", nargs='+', dest="mesh_divisors",
         help="Divisors for mesh numbers")
     parser.add_argument(
-        "--mesh", dest="mesh_numbers",
+        "--mesh", nargs='+', dest="mesh_numbers",
         help="Mesh numbers")
     parser.add_argument(
-        "--mv", "--mass-variances", dest="mass_variances",
+        "--mv", "--mass-variances", nargs='+', dest="mass_variances",
         help="Mass variance parameters for isotope scattering")
     parser.add_argument(
         "--nac", dest="is_nac", action="store_true",
@@ -339,7 +340,8 @@ def get_parser():
         "-o", dest="output_filename",
         help="Output filename extension")
     parser.add_argument(
-        "--pa", "--primitive-axis", "--primitive-axes", dest="primitive_axes",
+        "--pa", "--primitive-axis", "--primitive-axes", nargs='+',
+        dest="primitive_axes",
         help="Same as PRIMITIVE_AXES tags")
     parser.add_argument(
         "--pinv-cutoff", dest="pinv_cutoff", type=float,
@@ -357,10 +359,10 @@ def get_parser():
         "--qe", "--pwscf", dest="qe_mode",
         action="store_true", help="Invoke Quantum espresso (QE) mode")
     parser.add_argument(
-        "--qpoints", dest="qpoints",
+        "--qpoints", nargs='+', dest="qpoints",
         help="Calculate at specified q-points")
     parser.add_argument(
-        "--q-direction", dest="nac_q_direction",
+        "--q-direction", nargs='+', dest="nac_q_direction",
         help="q-vector direction at q->0 for non-analytical term correction")
     parser.add_argument(
         "-q", "--quiet", dest="quiet", action="store_true",
@@ -386,9 +388,9 @@ def get_parser():
         help=("Scattering event class 1 or 2 to draw imaginary part of self "
               "energy"))
     parser.add_argument(
-        "--sigma", dest="sigma",
-        help=("A sigma value or multiple sigma values (separated by space) for "
-              "smearing function"))
+        "--sigma", nargs='+', dest="sigma",
+        help=("A sigma value or multiple sigma values (separated by space) "
+              "for smearing function"))
     parser.add_argument(
         "--sigma-cutoff", dest="sigma_cutoff_width", type=float,
         help="Cutoff width of smearing function (ratio to sigma value)")
@@ -417,7 +419,7 @@ def get_parser():
         "--tmin", dest="tmin",
         help="Minimum calculated temperature")
     parser.add_argument(
-        "--ts", dest="temperatures",
+        "--ts", nargs='+', dest="temperatures",
         help="Temperatures for damping functions")
     parser.add_argument(
         "--tstep", dest="tstep",
