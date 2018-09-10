@@ -7,7 +7,7 @@
     <title>Crude force constants calculation by cutoff pair-distance &#8212; Phono3py v.1.13.3</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -263,7 +263,7 @@
 displacements to be calculated is reduced. But of course this
 sacrifices the accuracy of third-order force constants (fc3).</p>
 <p>In phono3py, to obtain supercell-fc3,
-<span class="math notranslate">\(\Phi_{\alpha\beta\gamma}(jl, j'l', j''l'')\)</span>, forces in many
+<span class="math notranslate nohighlight">\(\Phi_{\alpha\beta\gamma}(jl, j'l', j''l'')\)</span>, forces in many
 supercells having different pairs of displaced atoms are computed
 using some force-calculator such as ab-initio code. In the phono3py
 default behaviour, full elements of supercell-fc3 are computed. In
@@ -276,15 +276,15 @@ may be allowed to omit computing some elements of supercell-fc3. This
 is what achieved by <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> option.</p>
 <p>A supercell-fc3 element is specified by three atomic
 displacements. Two of three are finitely displaced
-(<span class="math notranslate">\(\Delta\mathbf{r}_1\)</span> and <span class="math notranslate">\(\Delta\mathbf{r}_2\)</span>) but one of
+(<span class="math notranslate nohighlight">\(\Delta\mathbf{r}_1\)</span> and <span class="math notranslate nohighlight">\(\Delta\mathbf{r}_2\)</span>) but one of
 them is included in a force given by the force calculator such as
-<span class="math notranslate">\(\mathbf{F}_3=-\frac{\partial V}{\partial\mathbf{r}_3}\)</span>. The
-cutoff distance <span class="math notranslate">\(d_\text{cut}\)</span> is defined as the upper bound of
+<span class="math notranslate nohighlight">\(\mathbf{F}_3=-\frac{\partial V}{\partial\mathbf{r}_3}\)</span>. The
+cutoff distance <span class="math notranslate nohighlight">\(d_\text{cut}\)</span> is defined as the upper bound of
 the distance between the atoms 1 and 2. By this, the set of atomic
-pairs <span class="math notranslate">\(\{(\mathbf{r}_1,\mathbf{r}_2)| |\mathbf{r}_1 -
+pairs <span class="math notranslate nohighlight">\(\{(\mathbf{r}_1,\mathbf{r}_2)| |\mathbf{r}_1 -
 \mathbf{r}_2| &lt; d_\text{cut}\}\)</span> is selected for the supercell-fc3
 calculation. By this, when three distances among the three atoms of
-triplets are all larger than <span class="math notranslate">\(d_\text{cut}\)</span>, those fc3 elements
+triplets are all larger than <span class="math notranslate nohighlight">\(d_\text{cut}\)</span>, those fc3 elements
 can not be obtained and so they are simply set zero.</p>
 </div>
 <div class="section" id="usage">
@@ -638,7 +638,7 @@ num_displacements_created: 1254
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.6.<br/>
     </p>
   </div>
 </footer>

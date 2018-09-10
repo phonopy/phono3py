@@ -322,3 +322,19 @@ For example, :math:`\kappa_{\lambda,{xx}}` is calculated by::
    Out[9]:
    array([  1.02050201e+03,   1.02050201e+03,   1.02050201e+03,
             4.40486209e-15,   0.00000000e+00,  -4.40486209e-15])
+
+How to know grid point number corresponding to grid address
+------------------------------------------------------------
+
+Runngin with ``--write-gamma``, hdf5 files are written out file names
+with grid point numbers such as ``kappa-m202020-g4200.hdf5``. You may
+want to know the grid point number with given grid address. This is
+done using ``get_grid_point_from_address`` as follows::
+
+   In [1]: from phono3py.phonon3.triplets import get_grid_point_from_address
+
+   In [2]: get_grid_point_from_address([0, 10, 10], [20, 20, 20])
+   Out[2]: 4200
+
+Here the first argument of this method is the grid address and the
+second argument is the mesh numbers.
