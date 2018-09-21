@@ -44,8 +44,7 @@ from phonopy.harmonic.force_constants import (
     set_translational_invariance,
     set_permutation_symmetry)
 from phonopy.harmonic.displacement import get_least_displacements
-from phonopy.harmonic.displacement import direction_to_displacement as \
-     direction_to_displacement_fc2
+from phonopy.harmonic.displacement import directions_to_displacement_dataset
 from phono3py.version import __version__
 from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
                                                write_imag_self_energy)
@@ -244,7 +243,7 @@ class Phono3py(object):
                 self._phonon_supercell_symmetry,
                 is_plusminus=is_plusminus,
                 is_diagonal=False)
-            self._phonon_displacement_dataset = direction_to_displacement_fc2(
+            self._phonon_displacement_dataset = directions_to_displacement_dataset(
                 phonon_displacement_directions,
                 distance,
                 self._phonon_supercell)
