@@ -128,8 +128,7 @@ def write_FORCES_FC2(disp_dataset,
             w.write("%15.10f %15.10f %15.10f\n" % tuple(forces))
 
 
-def write_FORCES_FC3(disp_dataset, forces_fc3, fp=None,
-                     with_comment_lines=True, filename="FORCES_FC3"):
+def write_FORCES_FC3(disp_dataset, forces_fc3, fp=None, filename="FORCES_FC3"):
     if fp is None:
         w = open(filename, 'w')
     else:
@@ -146,12 +145,10 @@ def write_FORCES_FC3(disp_dataset, forces_fc3, fp=None,
         atom1 = disp1['number']
         for disp2 in disp1['second_atoms']:
             atom2 = disp2['number']
-            if with_comment_lines:
-                w.write("# File: %-5d\n" % (count + 1))
-                w.write("# %-5d " % (atom1 + 1))
+            w.write("# File: %-5d\n" % (count + 1))
+            w.write("# %-5d " % (atom1 + 1))
             w.write("%20.16f %20.16f %20.16f\n" % tuple(disp1['displacement']))
-            if with_comment_lines:
-                w.write("# %-5d " % (atom2 + 1))
+            w.write("# %-5d " % (atom2 + 1))
             w.write("%20.16f %20.16f %20.16f\n" % tuple(disp2['displacement']))
 
             # For supercell calculation reduction

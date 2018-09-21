@@ -50,7 +50,7 @@ def get_fc2(supercell,
     lattice = supercell.get_cell().T
     positions = supercell.get_scaled_positions()
     numbers = supercell.get_atomic_numbers()
-    disp = _get_disp_fc2(disp_dataset)
+    disp = _get_alm_disp_fc2(disp_dataset)
     pure_trans = _collect_pure_translations(symmetry)
     rotations = np.array([np.eye(3, dtype='intc')] * len(pure_trans),
                          dtype='intc', order='C')
@@ -93,7 +93,7 @@ def get_fc3(supercell,
     lattice = supercell.get_cell().T
     positions = supercell.get_scaled_positions()
     numbers = supercell.get_atomic_numbers()
-    disp, indices = _get_disp_fc3(disp_dataset)
+    disp, indices = _get_alm_disp_fc3(disp_dataset)
     pure_trans = _collect_pure_translations(symmetry)
     rotations = np.array([np.eye(3, dtype='intc')] * len(pure_trans),
                          dtype='intc', order='C')
@@ -140,7 +140,35 @@ def get_fc3(supercell,
     return fc2, fc3
 
 
-def _get_disp_fc2(disp_dataset):
+def write_DFILE_and_FFILE(disp_dataset, forces_fc3,
+                          dfilename="DFILE", ffilename="FFILE"):
+    """Write displacements and forces to DFILE and FFILE in ALM formats.
+
+    Parameters
+    ----------
+    disp_dataset : dict
+        Phono3py displacement data set
+    forces_fc3 : array_like
+        Sets of supercell forces
+        shape=(n_disp, n_atoms, 3)
+    dfilename : str, optional, default="DFILE"
+        Output filename of sets of supercell displacements.
+    ffilename : str, optional, default="FFILE"
+        Output filename of sets of supercell forces.
+
+    """
+
+    disp, indices = _get_alm_disp_fc3(disp_dataset)
+    force = np.array(forces_fc3, dtype='double', order='C')
+    for filename, data in zip((dfilename, ffilename),
+                              (disp[indices], force[indices])):
+        with open(filename, 'w') as w:
+            for d_supercell in data:
+                for d_atom in d_supercell:
+                    w.write("  %21.16f %21.16f %21.16f\n" % tuple(d_atom))
+
+
+def _get_alm_disp_fc2(disp_dataset):
     count = 0
     natom = disp_dataset['natom']
     disp = np.zeros((len(disp_dataset['first_atoms']), natom, 3),
@@ -150,7 +178,8 @@ def _get_disp_fc2(disp_dataset):
         count += 1
     return disp
 
-def _get_disp_fc3(disp_dataset):
+
+def _get_alm_disp_fc3(disp_dataset):
     """Create displacements of atoms for ALM input
 
     Note
