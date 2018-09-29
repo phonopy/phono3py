@@ -66,7 +66,7 @@ def get_fc2(supercell,
         alm.set_verbosity(log_level)
         nkd = len(np.unique(numbers))
         rcs = -np.ones((1, nkd, nkd), dtype='double')
-        alm.find_force_constant(1, rcs)
+        alm.define(1, rcs)
         alm.set_displacement_and_force(disp, force)
         info = alm.optimize()
         fc2_alm = alm.get_fc(1)
@@ -115,7 +115,7 @@ def get_fc3(supercell,
             rcs[1] *= cut_d
         else:
             rcs = -np.ones((2, nkd, nkd), dtype='double')
-        alm.find_force_constant(2, rcs)
+        alm.define(2, rcs)
         alm.set_displacement_and_force(disp[indices], force[indices])
         info = alm.optimize()
         fc2_alm = alm.get_fc(1)
