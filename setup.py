@@ -27,7 +27,7 @@ if cc == 'gcc' or cc is None:
     # Suppose using homebrew gcc whereas conda is used as general environment.
     # This is to avoid linking conda libgomp that is incompatible with
     # homebrew gcc.
-    if 'gcc-' in os.environ['CC']:
+    if 'CC' in os.environ and 'gcc-' in os.environ['CC']:
         try:
             v = int(os.environ['CC'].split('-')[1])
         except ValueError:
