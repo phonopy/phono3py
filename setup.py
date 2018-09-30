@@ -1,5 +1,6 @@
 import numpy
 import platform
+import sysconfig
 import os
 
 try:
@@ -20,12 +21,30 @@ if 'CC' in os.environ:
     if 'gcc' in os.environ['CC']:
         cc = 'gcc'
 if cc == 'gcc' or cc is None:
-    extra_link_args.append('-lgomp')
+    libgomp = '-lgomp'
+
+    # For macOS:
+    # Suppose using homebrew gcc whereas conda is used as general environment.
+    # This is to avoid linking conda libgomp that is incompatible with
+    # homebrew gcc.
+    if 'gcc-' in os.environ['CC']:
+        try:
+            v = int(os.environ['CC'].split('-')[1])
+        except ValueError:
+            pass
+        else:
+            ary = [os.sep, "usr", "local", "opt", "gcc@%d" % v, "lib", "gcc",
+                   "%d" % v, "libgomp.a"]
+            libgomp_a = os.path.join(*ary)
+            if os.path.isfile(libgomp_a):
+                libgomp = libgomp_a
+
+    extra_link_args.append(libgomp)
 
 # Workaround Python issue 21121
-import sysconfig
 config_var = sysconfig.get_config_var("CFLAGS")
-if config_var is not None and "-Werror=declaration-after-statement" in config_var:
+if (config_var is not None and
+    "-Werror=declaration-after-statement" in config_var):
     os.environ['CFLAGS'] = config_var.replace(
         "-Werror=declaration-after-statement", "")
 
