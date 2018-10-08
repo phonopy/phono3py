@@ -540,6 +540,17 @@ the results, ``--write-gamma`` option has to be specified and the
 physical properties belonging to the grid
 points are written into ``kappa-mxxx-gx(-sx).hdf5``.
 
+``--lbte``: Thermal conductivity with direct solution of LBTE
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(Setting tag: ``BTERTA``, ``.TRUE.`` or ``.FALSE.``)
+
+Run calculation of lattice thermal conductivity tensor with a direct
+solution of linearized phonon Boltzmann equation. The basis usage of
+this option is equivalent to that of ``--br``. More detail is
+documented at :ref:`direct_solution`.
+
+
 ``--isotope``: Phonon-isotope scattering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

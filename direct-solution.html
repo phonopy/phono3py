@@ -11,7 +11,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
@@ -90,6 +90,7 @@
 <li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">How to read the results stored in hdf5 files</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#how-to-use-hdf5-python-library">How to use HDF5 python library</a></li>
 <li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#details-of-kappa-hdf5-file">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hdf5_howto.html#how-to-know-grid-point-number-corresponding-to-grid-address">How to know grid point number corresponding to grid address</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a><ul>
@@ -98,11 +99,12 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Direct solution of linearized phonon Boltzmann equation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#installation-of-collision-matrix-diagonalization-solvers">Installation of collision matrix diagonalization solvers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#solver-choice-for-diagonalization">Solver choice for diagonalization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-use">How to use</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#memory-usage">Memory usage</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#work-load-distribution">Work load distribution</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#cutoff-parameter-of-pseudo-inversion">Cutoff parameter of pseudo inversion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation-of-diagonalization-solvers-with-multithreaded-blas">Installation of diagonalization solvers with multithreaded BLAS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#solver-choice-for-diagonalization">Solver choice for diagonalization</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a><ul>
@@ -179,7 +181,15 @@
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Direct solution of linearized phonon Boltzmann equation</a><ul>
-<li><a class="reference internal" href="#installation-of-collision-matrix-diagonalization-solvers">Installation of collision matrix diagonalization solvers</a><ul>
+<li><a class="reference internal" href="#how-to-use">How to use</a></li>
+<li><a class="reference internal" href="#memory-usage">Memory usage</a></li>
+<li><a class="reference internal" href="#work-load-distribution">Work load distribution</a><ul>
+<li><a class="reference internal" href="#distribution-of-collision-matrix">Distribution of collision matrix</a></li>
+<li><a class="reference internal" href="#distribution-of-phonon-phonon-interaction-strengths">Distribution of phonon-phonon interaction strengths</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#cutoff-parameter-of-pseudo-inversion">Cutoff parameter of pseudo inversion</a></li>
+<li><a class="reference internal" href="#installation-of-diagonalization-solvers-with-multithreaded-blas">Installation of diagonalization solvers with multithreaded BLAS</a><ul>
 <li><a class="reference internal" href="#mkl-linked-scipy">MKL linked scipy</a></li>
 <li><a class="reference internal" href="#openblas-or-mkl-via-lapacke">OpenBLAS or MKL via LAPACKE</a><ul>
 <li><a class="reference internal" href="#openblas">OpenBLAS</a></li>
@@ -189,13 +199,6 @@
 </ul>
 </li>
 <li><a class="reference internal" href="#solver-choice-for-diagonalization">Solver choice for diagonalization</a></li>
-<li><a class="reference internal" href="#memory-usage">Memory usage</a></li>
-<li><a class="reference internal" href="#work-load-distribution">Work load distribution</a><ul>
-<li><a class="reference internal" href="#distribution-of-collision-matrix">Distribution of collision matrix</a></li>
-<li><a class="reference internal" href="#distribution-of-phonon-phonon-interaction-strengths">Distribution of phonon-phonon interaction strengths</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#cutoff-parameter-of-pseudo-inversion">Cutoff parameter of pseudo inversion</a></li>
 </ul>
 </li>
 </ul>
@@ -245,111 +248,91 @@
 <a class="reference external" href="https://doi.org/10.1103/PhysRevLett.110.265506">L. Chaput, Phys. Rev. Lett. 110, 265506 (2013)</a> (<a class="reference internal" href="citation.html#citation-direct-solution-lbte"><span class="std std-ref">citation</span></a>).</p>
 <div class="contents local topic" id="contents">
 <ul class="simple">
-<li><a class="reference internal" href="#installation-of-collision-matrix-diagonalization-solvers" id="id1">Installation of collision matrix diagonalization solvers</a><ul>
-<li><a class="reference internal" href="#mkl-linked-scipy" id="id2">MKL linked scipy</a></li>
-<li><a class="reference internal" href="#openblas-or-mkl-via-lapacke" id="id3">OpenBLAS or MKL via LAPACKE</a></li>
+<li><a class="reference internal" href="#how-to-use" id="id1">How to use</a></li>
+<li><a class="reference internal" href="#memory-usage" id="id2">Memory usage</a></li>
+<li><a class="reference internal" href="#work-load-distribution" id="id3">Work load distribution</a><ul>
+<li><a class="reference internal" href="#distribution-of-collision-matrix" id="id4">Distribution of collision matrix</a></li>
+<li><a class="reference internal" href="#distribution-of-phonon-phonon-interaction-strengths" id="id5">Distribution of phonon-phonon interaction strengths</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#solver-choice-for-diagonalization" id="id4">Solver choice for diagonalization</a></li>
-<li><a class="reference internal" href="#memory-usage" id="id5">Memory usage</a></li>
-<li><a class="reference internal" href="#work-load-distribution" id="id6">Work load distribution</a><ul>
-<li><a class="reference internal" href="#distribution-of-collision-matrix" id="id7">Distribution of collision matrix</a></li>
-<li><a class="reference internal" href="#distribution-of-phonon-phonon-interaction-strengths" id="id8">Distribution of phonon-phonon interaction strengths</a></li>
+<li><a class="reference internal" href="#cutoff-parameter-of-pseudo-inversion" id="id6">Cutoff parameter of pseudo inversion</a></li>
+<li><a class="reference internal" href="#installation-of-diagonalization-solvers-with-multithreaded-blas" id="id7">Installation of diagonalization solvers with multithreaded BLAS</a><ul>
+<li><a class="reference internal" href="#mkl-linked-scipy" id="id8">MKL linked scipy</a></li>
+<li><a class="reference internal" href="#openblas-or-mkl-via-lapacke" id="id9">OpenBLAS or MKL via LAPACKE</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#cutoff-parameter-of-pseudo-inversion" id="id9">Cutoff parameter of pseudo inversion</a></li>
+<li><a class="reference internal" href="#solver-choice-for-diagonalization" id="id10">Solver choice for diagonalization</a></li>
 </ul>
 </div>
-<div class="section" id="installation-of-collision-matrix-diagonalization-solvers">
-<h2><a class="toc-backref" href="#id1">Installation of collision matrix diagonalization solvers</a><a class="headerlink" href="#installation-of-collision-matrix-diagonalization-solvers" title="Permalink to this headline">¶</a></h2>
-<p>For the collision matrix diagonalization that is computationally and
-memory demanding, there are a few choices shown below. Multithreaded
-BLAS is necessary to achieve it in a reasonable computatin time with
-many cores such as 20 cores per node. This is also a memory demanding
-calculation.</p>
-<div class="section" id="mkl-linked-scipy">
-<h3><a class="toc-backref" href="#id2">MKL linked scipy</a><a class="headerlink" href="#mkl-linked-scipy" title="Permalink to this headline">¶</a></h3>
-<p>Scipy (also numpy) has an interface to LAPACK dsyev
-(<code class="docutils literal notranslate"><span class="pre">scipy.linalg.lapack.dsyev</span></code>). An MKL LAPACK linked scipy (also
-numpy) gives very good computing performance and is easily obtained
-using the anaconda package manager. In this choice, usual installation
-of LAPACKE is necessary for running <code class="docutils literal notranslate"><span class="pre">dgesvd</span></code> and <code class="docutils literal notranslate"><span class="pre">zheev</span></code>. When
-using anaconda, installing OpenBLAS is the easiest way to do. See
-<a class="reference internal" href="install.html#install-openblas-lapacke"><span class="std std-ref">OpenBLAS provided by conda (with multithread BLAS)</span></a></p>
+<div class="section" id="how-to-use">
+<h2><a class="toc-backref" href="#id1">How to use</a><a class="headerlink" href="#how-to-use" title="Permalink to this headline">¶</a></h2>
+<p>As written in the following sections, this calculation requires large
+memory space. When running multiple temperature points, simply the
+memory space needed is multiplied by the number of the temperature
+points. Therefore it is normally recommended to specify <a class="reference internal" href="command-options.html#ts-option"><span class="std std-ref">–ts
+option</span></a>. An example to run with the direct solution of
+LBTE for <code class="docutils literal notranslate"><span class="pre">example/Si-PBEsol</span></code> is as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">sym</span><span class="o">-</span><span class="n">fc</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
+<span class="o">...</span>
+
+<span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="mi">300</span>
+<span class="o">...</span>
+
+<span class="o">===================</span> <span class="n">End</span> <span class="n">of</span> <span class="n">collection</span> <span class="n">of</span> <span class="n">collisions</span> <span class="o">===================</span>
+<span class="o">-</span> <span class="n">Averaging</span> <span class="n">collision</span> <span class="n">matrix</span> <span class="n">elements</span> <span class="n">by</span> <span class="n">phonon</span> <span class="n">degeneracy</span> <span class="p">[</span><span class="mf">0.031</span><span class="n">s</span><span class="p">]</span>
+<span class="o">-</span> <span class="n">Making</span> <span class="n">collision</span> <span class="n">matrix</span> <span class="n">symmetric</span> <span class="p">(</span><span class="n">built</span><span class="o">-</span><span class="ow">in</span><span class="p">)</span> <span class="p">[</span><span class="mf">0.000</span><span class="n">s</span><span class="p">]</span>
+<span class="o">-----------</span> <span class="n">Thermal</span> <span class="n">conductivity</span> <span class="p">(</span><span class="n">W</span><span class="o">/</span><span class="n">m</span><span class="o">-</span><span class="n">k</span><span class="p">)</span> <span class="k">with</span> <span class="n">tetrahedron</span> <span class="n">method</span> <span class="o">-----------</span>
+<span class="n">Diagonalizing</span> <span class="n">by</span> <span class="n">lapacke</span> <span class="n">dsyev</span><span class="o">...</span> <span class="p">[</span><span class="mf">0.111</span><span class="n">s</span><span class="p">]</span>
+<span class="n">Calculating</span> <span class="n">pseudo</span><span class="o">-</span><span class="n">inv</span> <span class="k">with</span> <span class="n">cutoff</span><span class="o">=</span><span class="mf">1.0e-08</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">)</span> <span class="p">[</span><span class="mf">0.001</span><span class="n">s</span><span class="p">]</span>
+<span class="c1">#  T(K)        xx         yy         zz         yz         xz         xy</span>
+  <span class="mf">300.0</span>     <span class="mf">111.588</span>    <span class="mf">111.588</span>    <span class="mf">111.588</span>      <span class="mf">0.000</span>      <span class="mf">0.000</span>     <span class="o">-</span><span class="mf">0.000</span>
+  <span class="p">(</span><span class="n">RTA</span><span class="p">)</span>     <span class="mf">109.009</span>    <span class="mf">109.009</span>    <span class="mf">109.009</span>      <span class="mf">0.000</span>      <span class="mf">0.000</span>     <span class="o">-</span><span class="mf">0.000</span>
+<span class="o">----------------------------------------------------------------------------</span>
+
+<span class="n">Thermal</span> <span class="n">conductivity</span> <span class="ow">and</span> <span class="n">related</span> <span class="n">properties</span> <span class="n">were</span> <span class="n">written</span> <span class="n">into</span>
+<span class="s2">&quot;kappa-m111111.hdf5&quot;</span><span class="o">.</span>
+<span class="n">Eigenvalues</span> <span class="n">of</span> <span class="n">collision</span> <span class="n">matrix</span> <span class="n">were</span> <span class="n">written</span> <span class="n">into</span> <span class="s2">&quot;coleigs-m111111.hdf5&quot;</span>
+                 <span class="n">_</span>
+   <span class="n">___</span> <span class="n">_</span> <span class="n">__</span>   <span class="n">__</span><span class="o">|</span> <span class="o">|</span>
+  <span class="o">/</span> <span class="n">_</span> \ <span class="s1">&#39;_ \ / _` |</span>
+ <span class="o">|</span>  <span class="n">__</span><span class="o">/</span> <span class="o">|</span> <span class="o">|</span> <span class="o">|</span> <span class="p">(</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span>
+  \<span class="n">___</span><span class="o">|</span><span class="n">_</span><span class="o">|</span> <span class="o">|</span><span class="n">_</span><span class="o">|</span>\<span class="n">__</span><span class="p">,</span><span class="n">_</span><span class="o">|</span>
+</pre></div>
 </div>
-<div class="section" id="openblas-or-mkl-via-lapacke">
-<h3><a class="toc-backref" href="#id3">OpenBLAS or MKL via LAPACKE</a><a class="headerlink" href="#openblas-or-mkl-via-lapacke" title="Permalink to this headline">¶</a></h3>
-<p>Using LAPACKE via python C-API is implemented. By this, phono3py can
-use LAPACK dsyev. This uses smaller memory space than using MKL linked
-scipy. Practically there are two choices, OpenBLAS and MKL. For MKL,
-proper installatin of the MKL package is necessary. The MKL
-library installed obtained from anaconda can not be used.</p>
-<div class="section" id="openblas">
-<h4>OpenBLAS<a class="headerlink" href="#openblas" title="Permalink to this headline">¶</a></h4>
-<p>Use of OpenBLAS is an easy choice if the anaconda package is used.
-See <a class="reference internal" href="install.html#install-openblas-lapacke"><span class="std std-ref">OpenBLAS provided by conda (with multithread BLAS)</span></a>.</p>
-</div>
-<div class="section" id="mkl">
-<h4>MKL<a class="headerlink" href="#mkl" title="Permalink to this headline">¶</a></h4>
-<p>The BLAS multithread performance may be better in that in MKL. Using
-MKL-LAPACK via MKL-LAPACKE via python C-API is also implemented if the
-link is succeeded. See <a class="reference internal" href="install.html#install-mkl-lapacke"><span class="std std-ref">MKL LAPACKE (with multithread BLAS)</span></a>.</p>
-</div>
-</div>
-</div>
-<div class="section" id="solver-choice-for-diagonalization">
-<h2><a class="toc-backref" href="#id4">Solver choice for diagonalization</a><a class="headerlink" href="#solver-choice-for-diagonalization" title="Permalink to this headline">¶</a></h2>
-<p>For larger systems, diagonalization of collision matrix takes longest
-time and requires large memory space. Phono3py relies on LAPACK for
-the diagonalization and so the performance is dependent on the choice
-of the diagonalization solver.</p>
-<p>Using multithreaded BLAS with many-core computing node, computing time
-may be well reduced and the calculation can finish in a realistic
-time.  Currently scipy, numpy and LAPACKE can be used as the LAPACK
-wrapper in phono3py. Scipy and numpy distributed by anaconda are MKL
-linked, therefore MKL multithread BLAS is used through
-them. Multithreaded OpenBLAS is installed by conda and can be used via
-LAPACKE in phono3py. MKL LAPACK and BLAS are also able to be used via
-LAPACKE in phono3py with appropriate setting in <code class="docutils literal notranslate"><span class="pre">setup.py</span></code>.</p>
-<p>Using <code class="docutils literal notranslate"><span class="pre">--pinv-solver=[number]</span></code>, one of the following solver is
-chosen:</p>
-<ol class="arabic simple">
-<li>Lapacke <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>: Smaller memory consumption than <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code>, but
-slower. This is the default solver when MKL LAPACKE is integrated or
-scipy is not installed.</li>
-<li>Lapacke <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code>: Larger memory consumption than <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>, but
-faster. This is not recommended because sometimes a wrong result is
-obtained.</li>
-<li>Numpy’s <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code> (<code class="docutils literal notranslate"><span class="pre">linalg.eigh</span></code>). This is not recommended
-because sometimes a wrong result is obtained.</li>
-<li>Scipy’s <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>: This is the default solver when scipy is
-installed and MKL LAPACKE is not integrated.</li>
-<li>Scipy’s <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code>. This is not recommended because sometimes a
-wrong result is obtained.</li>
-</ol>
-<p>The solver choices other than <code class="docutils literal notranslate"><span class="pre">--pinv-solver=1</span></code> and
-<code class="docutils literal notranslate"><span class="pre">--pinv-solver=4</span></code> are dangerous and not recommend. They exist just
-for the tests.</p>
 </div>
 <div class="section" id="memory-usage">
-<h2><a class="toc-backref" href="#id5">Memory usage</a><a class="headerlink" href="#memory-usage" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id2">Memory usage</a><a class="headerlink" href="#memory-usage" title="Permalink to this headline">¶</a></h2>
 <p>The direct solution of LBTE needs diagonalization of a large collision
 matrix, which requires large memory space.  This is the largest
 limitation of using this method. The memory size needed for one
-collision matrix at one temperature point is <span class="math notranslate nohighlight">\((\text{number of
+collision matrix at a temperature point is <span class="math notranslate nohighlight">\((\text{number of
 irreducible grid points} \times \text{number of bands} \times 3)^2\)</span>
 for the symmetrized collision matrix.</p>
 <p>These collision matrices contain real values and are supposed to be
-64bit float symmetric matrices. During the diagonalization with LAPACK
-<code class="docutils literal notranslate"><span class="pre">dsyev</span></code> solver, around 1.2 times more memory space of that needed
-for the collision matrix is required.</p>
+64bit float symmetric matrices. During the diagonalization of each
+collision matrix with LAPACK <code class="docutils literal notranslate"><span class="pre">dsyev</span></code> solver, around 1.2 times more
+memory space is consumed in total.</p>
 <p>When phono3py runs with <a class="reference internal" href="command-options.html#wgp-option"><span class="std std-ref">–wgp option</span></a> together with
 <code class="docutils literal notranslate"><span class="pre">--lbte</span></code> option, estimated memory space needed for storing collision
-matrix is presented. With <a class="reference internal" href="command-options.html#stp-option"><span class="std std-ref">–stp option</span></a>, estimated
+matrix is presented. An example for <code class="docutils literal notranslate"><span class="pre">example/Si-PBEsol</span></code> is as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;40 40 40&quot;</span> <span class="o">--</span><span class="n">wgp</span> <span class="o">--</span><span class="n">lbte</span>
+<span class="o">...</span>
+
+<span class="n">Memory</span> <span class="n">requirements</span><span class="p">:</span>
+<span class="o">-</span> <span class="n">Piece</span> <span class="n">of</span> <span class="n">collision</span> <span class="n">matrix</span> <span class="n">at</span> <span class="n">each</span> <span class="n">grid</span> <span class="n">point</span><span class="p">,</span> <span class="n">temp</span> <span class="ow">and</span> <span class="n">sigma</span><span class="p">:</span> <span class="mf">0.00</span> <span class="n">Gb</span>
+<span class="o">-</span> <span class="n">Full</span> <span class="n">collision</span> <span class="n">matrix</span> <span class="n">at</span> <span class="n">each</span> <span class="n">temp</span> <span class="ow">and</span> <span class="n">sigma</span><span class="p">:</span> <span class="mf">7.15</span> <span class="n">Gb</span>
+<span class="o">-</span> <span class="n">Phonons</span><span class="p">:</span> <span class="mf">0.04</span> <span class="n">Gb</span>
+<span class="o">-</span> <span class="n">Grid</span> <span class="n">point</span> <span class="n">information</span><span class="p">:</span> <span class="mf">0.00</span> <span class="n">Gb</span>
+<span class="o">-</span> <span class="n">Phonon</span> <span class="n">properties</span><span class="p">:</span> <span class="mf">0.14</span> <span class="n">Gb</span>
+
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>With <a class="reference internal" href="command-options.html#stp-option"><span class="std std-ref">–stp option</span></a>, estimated
 memory space needed for ph-ph interaction strengths is shown.</p>
 </div>
 <div class="section" id="work-load-distribution">
-<h2><a class="toc-backref" href="#id6">Work load distribution</a><a class="headerlink" href="#work-load-distribution" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id3">Work load distribution</a><a class="headerlink" href="#work-load-distribution" title="Permalink to this headline">¶</a></h2>
 <p>The other difficulty compared with RTA is the workload
 distribution. Currently there are two ways to distribute the
 calculation: (1) Collision matrix is divided and the pieces are
@@ -362,7 +345,7 @@ each computing node are stored in an hdf5 file. Increasing the
 calculation size, e.g., larger mesh numbers or larger number of atoms
 in the primitive cell, large files are created.</p>
 <div class="section" id="distribution-of-collision-matrix">
-<span id="distribution-colmat"></span><h3><a class="toc-backref" href="#id7">Distribution of collision matrix</a><a class="headerlink" href="#distribution-of-collision-matrix" title="Permalink to this headline">¶</a></h3>
+<span id="distribution-colmat"></span><h3><a class="toc-backref" href="#id4">Distribution of collision matrix</a><a class="headerlink" href="#distribution-of-collision-matrix" title="Permalink to this headline">¶</a></h3>
 <p>A full collision matrix is divided into pieces at grid points of
 irreducible part of Brillouin zone. Each piece is calculated
 independently from the other pieces. After finishing the calculations
@@ -402,47 +385,43 @@ file names of the results at different temperatures.</li>
 </ol>
 <p>Examples of command options are shown below using <code class="docutils literal notranslate"><span class="pre">Si-PBE</span></code> example.
 Irreducible grid point indices are obtained by <a class="reference internal" href="command-options.html#wgp-option"><span class="std std-ref">–wgp option</span></a>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="mi">300</span> <span class="o">--</span><span class="n">wgp</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">wgp</span>
 </pre></div>
 </div>
 <p>and the information is given in <code class="docutils literal notranslate"><span class="pre">ir_grid_points.yaml</span></code>. For
 distribution of collision matrix calculation (see also <a class="reference internal" href="workload-distribution.html#workload-distribution"><span class="std std-ref">Workload distribution</span></a>):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="mi">300</span> <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">collision</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="s2">&quot;grid_point_numbers...&quot;</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="mi">300</span> <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">collision</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="s2">&quot;grid_point_numbers...&quot;</span>
 </pre></div>
 </div>
 <p>To collect distributed pieces of the collision matrix:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="mi">300</span> <span class="o">--</span><span class="n">read</span><span class="o">-</span><span class="n">collision</span><span class="o">=</span><span class="mi">0</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="mi">300</span> <span class="o">--</span><span class="n">read</span><span class="o">-</span><span class="n">collision</span><span class="o">=</span><span class="mi">0</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="distribution-of-phonon-phonon-interaction-strengths">
-<h3><a class="toc-backref" href="#id8">Distribution of phonon-phonon interaction strengths</a><a class="headerlink" href="#distribution-of-phonon-phonon-interaction-strengths" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id5">Distribution of phonon-phonon interaction strengths</a><a class="headerlink" href="#distribution-of-phonon-phonon-interaction-strengths" title="Permalink to this headline">¶</a></h3>
 <p>The distribution of pieces of collision matrix is straightforward and
 is recommended to use if the number of temperature points is
-small. However increasing data file size, time taking for network
-communication becomes non-negligible. In this case, the distribution
-over ph-ph interaction strengths can be another choice. Since, without
-using <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">–full-pp option</span></a>, the tetrahedron method
-or smearing approach with <a class="reference internal" href="command-options.html#sigma-cutoff-option"><span class="std std-ref">–sigma-cutoff option</span></a> results in the sparse ph-ph interaction
-strength data array, i.e., most of the elements are zero, the file
+small. However increasing data file size, network communication
+becomes to require long time to send the files from a master node to
+computation nodes. In this case, the distribution over ph-ph
+interaction strengths can be another choice. Since, without using
+<a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">–full-pp option</span></a>, the tetrahedron method or
+smearing approach with <a class="reference internal" href="command-options.html#sigma-cutoff-option"><span class="std std-ref">–sigma-cutoff option</span></a> results in the sparse ph-ph interaction
+strength data array, i.e., most of the elements are zero, the data
 size can be reduced by only storing non-zero elements. Not like the
 collision matrix, the ph-ph interaction strengths in phono3py are
-independent from temperature. Once stored, they are used to create the
-collision matrices at temperatures. Using <code class="docutils literal notranslate"><span class="pre">--write-pp</span></code> and
-<code class="docutils literal notranslate"><span class="pre">--read-pp</span></code>, they are written into and read from hdf5 files at grid
-points.</p>
-<p>In this approach, the computer environment for writing and reading the
-hdf5 files should be almost the same. If they are different, phonon
-eigenvectors for degenerate bands are often computed differently,
-although with almost the same eigenvalues, and these different
-eigenvectors would induce slightly different results. Probably the
-difference will be negligible, but if most secured results are
-expected, it is recommended to use <a class="reference internal" href="command-options.html#write-phonon-option"><span class="std std-ref">–write-phonon option</span></a> and <a class="reference internal" href="command-options.html#read-phonon-option"><span class="std std-ref">–read-phonon option</span></a> by which the same phonon eigenvectors are
-employed throughout the calculation.</p>
+independent from temperature though it is not the case if the force
+constants provided are temperature dependent. Once
+stored, they are used to create the collision matrices at
+temperatures. Using <code class="docutils literal notranslate"><span class="pre">--write-pp</span></code> and <code class="docutils literal notranslate"><span class="pre">--read-pp</span></code>, they are written
+into and read from hdf5 files at grid points.</p>
+<p>It is also recommended to use <a class="reference internal" href="command-options.html#write-phonon-option"><span class="std std-ref">–write-phonon option</span></a> and <a class="reference internal" href="command-options.html#read-phonon-option"><span class="std std-ref">–read-phonon option</span></a> to use identical phonon eigenvectors among the
+distributed nodes.</p>
 <p>The summary of the procedure is as follows:</p>
 <ol class="arabic simple">
 <li>Running at each grid point with <a class="reference internal" href="command-options.html#gp-option"><span class="std std-ref">–gp</span></a> (or
-<a class="reference internal" href="command-options.html#ga-option"><span class="std std-ref">–ga</span></a>) option and saving the ph-ph interaction
+<a class="reference internal" href="command-options.html#ga-option"><span class="std std-ref">–ga</span></a>) option and storing the ph-ph interaction
 strengths to an hdf5 file with <code class="docutils literal notranslate"><span class="pre">--write-pp</span></code> option. This calculation
 has to be done at all irreducible grid points.</li>
 <li>Running with <code class="docutils literal notranslate"><span class="pre">--read-pp</span></code> option and without <a class="reference internal" href="command-options.html#gp-option"><span class="std std-ref">–gp</span></a> (or
@@ -454,36 +433,34 @@ temperatures.</li>
 </ol>
 <p>Examples of command options are shown below using <code class="docutils literal notranslate"><span class="pre">Si-PBE</span></code> example.
 Irreducible grid point indices are obtained by <a class="reference internal" href="command-options.html#wgp-option"><span class="std std-ref">–wgp option</span></a>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="mi">300</span> <span class="o">--</span><span class="n">wgp</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">wgp</span>
 </pre></div>
 </div>
-<p>and the information is given in <code class="docutils literal notranslate"><span class="pre">ir_grid_points.yaml</span></code>. Optionally
-all phonons on mesh grid points are saved by:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">phonon</span>
+<p>and the grid point information is provided in
+<code class="docutils literal notranslate"><span class="pre">ir_grid_points.yaml</span></code>. All phonons on mesh grid points are saved
+by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">phonon</span>
 </pre></div>
 </div>
-<p>For distribution of collision matrix calculation (see also <a class="reference internal" href="workload-distribution.html#workload-distribution"><span class="std std-ref">Workload distribution</span></a>):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="mi">300</span> <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">pp</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="s2">&quot;grid_point_numbers...&quot;</span>
+<p>For distribution of ph-ph interaction strength calculation (see also
+<a class="reference internal" href="workload-distribution.html#workload-distribution"><span class="std std-ref">Workload distribution</span></a>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="mi">300</span> <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">pp</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="s2">&quot;grid_point_numbers...&quot;</span> <span class="o">--</span><span class="n">read</span><span class="o">-</span><span class="n">phonon</span>
 </pre></div>
 </div>
-<p>If the phonon data file was created by <code class="docutils literal notranslate"><span class="pre">--write-phonon</span></code> option in
-the previous step:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="mi">300</span> <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">pp</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="s2">&quot;grid_point_numbers...&quot;</span> <span class="o">--</span><span class="n">read</span><span class="o">-</span><span class="n">phonon</span>
+<p>Here one temperature has to be specified but any one of temperatures
+is OK since ph-ph interaction strength computed here is assumed to be
+temperature independent. Then the computed ph-ph interaction strengths
+are read and used to compute collision matrix and lattice thermal
+conductivity at a temperature by</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="mi">300</span> <span class="o">--</span><span class="n">read</span><span class="o">-</span><span class="n">pp</span> <span class="o">--</span><span class="n">read</span><span class="o">-</span><span class="n">phonon</span>
 </pre></div>
 </div>
-<p>not to recalculate phonons but read from the file. To collect
-distributed pieces of the collision matrix:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="mi">300</span> <span class="o">--</span><span class="n">read</span><span class="o">-</span><span class="n">pp</span>
-</pre></div>
-</div>
-<p>Again if the phonon data file exists:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">pa</span><span class="o">=</span><span class="s2">&quot;0 1/2 1/2 1/2 0 1/2 1/2 1/2 0&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">lbte</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="mi">300</span> <span class="o">--</span><span class="n">read</span><span class="o">-</span><span class="n">pp</span> <span class="o">--</span><span class="n">read</span><span class="o">-</span><span class="n">phonon</span>
-</pre></div>
-</div>
+<p>This last command is repeated at different temperatures to obtain the
+properties at multiple temperatures.</p>
 </div>
 </div>
 <div class="section" id="cutoff-parameter-of-pseudo-inversion">
-<span id="diagonzalization-solver"></span><h2><a class="toc-backref" href="#id9">Cutoff parameter of pseudo inversion</a><a class="headerlink" href="#cutoff-parameter-of-pseudo-inversion" title="Permalink to this headline">¶</a></h2>
+<span id="diagonzalization-solver"></span><h2><a class="toc-backref" href="#id6">Cutoff parameter of pseudo inversion</a><a class="headerlink" href="#cutoff-parameter-of-pseudo-inversion" title="Permalink to this headline">¶</a></h2>
 <p>To achieve a pseudo inversion, a cutoff parameter is used to find null
 space, i.e., to select the nearly zero eigenvalues. The default cutoff
 value is <code class="docutils literal notranslate"><span class="pre">1e-8</span></code>, and this hopefully works in many cases. But if a
@@ -514,6 +491,76 @@ is a good sign. The values whose absolute values are smaller than
 as null spaces.</span></p>
 </div>
 </div>
+<div class="section" id="installation-of-diagonalization-solvers-with-multithreaded-blas">
+<h2><a class="toc-backref" href="#id7">Installation of diagonalization solvers with multithreaded BLAS</a><a class="headerlink" href="#installation-of-diagonalization-solvers-with-multithreaded-blas" title="Permalink to this headline">¶</a></h2>
+<p>Multithreaded BLAS is recommended to use for the calculation of the
+direct solution of LBTE since the diagonalization of the collision
+matrix is computationally demanding. A few examples of how to install
+multithreded BLAS libraries are presented below.</p>
+<div class="section" id="mkl-linked-scipy">
+<h3><a class="toc-backref" href="#id8">MKL linked scipy</a><a class="headerlink" href="#mkl-linked-scipy" title="Permalink to this headline">¶</a></h3>
+<p>Scipy (also numpy) has an interface to LAPACK dsyev
+(<code class="docutils literal notranslate"><span class="pre">scipy.linalg.lapack.dsyev</span></code>). An MKL LAPACK linked scipy (also
+numpy) gives very good computing performance and is easily obtained
+using the anaconda package manager. In this choice, usual installation
+of LAPACKE is necessary for running <code class="docutils literal notranslate"><span class="pre">dgesvd</span></code> and <code class="docutils literal notranslate"><span class="pre">zheev</span></code>. When
+using anaconda, installing OpenBLAS is the easiest way to do. See
+<a class="reference internal" href="install.html#install-openblas-lapacke"><span class="std std-ref">OpenBLAS provided by conda (with multithread BLAS)</span></a></p>
+</div>
+<div class="section" id="openblas-or-mkl-via-lapacke">
+<h3><a class="toc-backref" href="#id9">OpenBLAS or MKL via LAPACKE</a><a class="headerlink" href="#openblas-or-mkl-via-lapacke" title="Permalink to this headline">¶</a></h3>
+<p>Using LAPACKE via python C-API is implemented. By this, phono3py can
+use LAPACK dsyev. This uses smaller memory space than using MKL linked
+scipy. Practically there are two choices, OpenBLAS and MKL. For MKL,
+proper installatin of the MKL package is necessary. The MKL
+library installed obtained from anaconda can not be used.</p>
+<div class="section" id="openblas">
+<h4>OpenBLAS<a class="headerlink" href="#openblas" title="Permalink to this headline">¶</a></h4>
+<p>Use of OpenBLAS is an easy choice if the anaconda package is used.
+See <a class="reference internal" href="install.html#install-openblas-lapacke"><span class="std std-ref">OpenBLAS provided by conda (with multithread BLAS)</span></a>.</p>
+</div>
+<div class="section" id="mkl">
+<h4>MKL<a class="headerlink" href="#mkl" title="Permalink to this headline">¶</a></h4>
+<p>The BLAS multithread performance may be better in that in MKL. Using
+MKL-LAPACK via MKL-LAPACKE via python C-API is also implemented if the
+link is succeeded. See <a class="reference internal" href="install.html#install-mkl-lapacke"><span class="std std-ref">MKL LAPACKE (with multithread BLAS)</span></a>.</p>
+</div>
+</div>
+</div>
+<div class="section" id="solver-choice-for-diagonalization">
+<h2><a class="toc-backref" href="#id10">Solver choice for diagonalization</a><a class="headerlink" href="#solver-choice-for-diagonalization" title="Permalink to this headline">¶</a></h2>
+<p>For larger systems, diagonalization of collision matrix takes longest
+time and requires large memory space. Phono3py relies on LAPACK for
+the diagonalization and so the performance is dependent on the choice
+of the diagonalization solver.</p>
+<p>Using multithreaded BLAS with many-core computing node, computing time
+may be well reduced and the calculation can finish in a realistic
+time.  Currently scipy, numpy and LAPACKE can be used as the LAPACK
+wrapper in phono3py. Scipy and numpy distributed by anaconda are MKL
+linked, therefore MKL multithread BLAS is used through
+them. Multithreaded OpenBLAS is installed by conda and can be used via
+LAPACKE in phono3py. MKL LAPACK and BLAS are also able to be used via
+LAPACKE in phono3py with appropriate setting in <code class="docutils literal notranslate"><span class="pre">setup.py</span></code>.</p>
+<p>Using <code class="docutils literal notranslate"><span class="pre">--pinv-solver=[number]</span></code>, one of the following solver is
+chosen:</p>
+<ol class="arabic simple">
+<li>Lapacke <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>: Smaller memory consumption than <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code>, but
+slower. This is the default solver when MKL LAPACKE is integrated or
+scipy is not installed.</li>
+<li>Lapacke <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code>: Larger memory consumption than <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>, but
+faster. This is not recommended because sometimes a wrong result is
+obtained.</li>
+<li>Numpy’s <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code> (<code class="docutils literal notranslate"><span class="pre">linalg.eigh</span></code>). This is not recommended
+because sometimes a wrong result is obtained.</li>
+<li>Scipy’s <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>: This is the default solver when scipy is
+installed and MKL LAPACKE is not integrated.</li>
+<li>Scipy’s <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code>. This is not recommended because sometimes a
+wrong result is obtained.</li>
+</ol>
+<p>The solver choices other than <code class="docutils literal notranslate"><span class="pre">--pinv-solver=1</span></code> and
+<code class="docutils literal notranslate"><span class="pre">--pinv-solver=4</span></code> are dangerous and not recommend. They exist just
+for the tests.</p>
+</div>
 </div>
 
 
@@ -536,7 +583,7 @@ as null spaces.</span></p>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.6.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.<br/>
     </p>
   </div>
 </footer>
