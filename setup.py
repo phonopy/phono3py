@@ -18,6 +18,7 @@ cc = None
 if 'CC' in os.environ:
     if 'clang' in os.environ['CC']:
         cc = 'clang'
+        libgomp = '-lomp'
     if 'gcc' in os.environ['CC']:
         cc = 'gcc'
 if cc == 'gcc' or cc is None:

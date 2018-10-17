@@ -8,7 +8,7 @@ class Phono3pySettings(Settings):
         self._boundary_mfp = 1.0e6 # In micrometre. The default value is
                                    # just set to avoid divergence.
         self._coarse_mesh_shifts = None
-        self._constant_averaged_pp_interaction = None
+        self._const_ave_pp = None
         self._create_displacements = False
         self._cutoff_fc3_distance = None
         self._cutoff_pair_distance = None
@@ -76,10 +76,10 @@ class Phono3pySettings(Settings):
         return self._create_displacements
 
     def set_constant_averaged_pp_interaction(self, ave_pp):
-        self._constant_averaged_pp_interaction = ave_pp
+        self._const_ave_pp = ave_pp
 
     def get_constant_averaged_pp_interaction(self):
-        return self._constant_averaged_pp_interaction
+        return self._const_ave_pp
 
     def set_cutoff_fc3_distance(self, cutoff_fc3_distance):
         self._cutoff_fc3_distance = cutoff_fc3_distance
@@ -384,10 +384,10 @@ class Phono3pyConfParser(ConfParser):
             if self._args.boundary_mfp is not None:
                 self._confs['boundary_mfp'] = self._args.boundary_mfp
 
-        if 'constant_averaged_pp_interaction' in self._args:
-            const_ave_pp = self._args.constant_averaged_pp_interaction
+        if 'const_ave_pp' in self._args:
+            const_ave_pp = self._args.const_ave_pp
             if const_ave_pp is not None:
-                self._confs['constant_averaged_pp_interaction'] = const_ave_pp
+                self._confs['const_ave_pp'] = const_ave_pp
 
         if 'cutoff_fc3_distance' in self._args:
             cutoff_fc3 = self._args.cutoff_fc3_distance
@@ -548,11 +548,11 @@ class Phono3pyConfParser(ConfParser):
 
         if 'use_alm_fc2' in self._args:
             if self._args.use_alm_fc2:
-                self._confs['use_alm_fc2'] = '.true.'
+                self._confs['alm_fc2'] = '.true.'
 
         if 'use_alm_fc3' in self._args:
             if self._args.use_alm_fc3:
-                self._confs['use_alm_fc3'] = '.true.'
+                self._confs['alm_fc3'] = '.true.'
 
         if 'use_ave_pp' in self._args:
             if self._args.use_ave_pp:
@@ -614,10 +614,9 @@ class Phono3pyConfParser(ConfParser):
                 self.set_parameter('boundary_mfp',
                                    float(confs['boundary_mfp']))
 
-            if conf_key == 'constant_averaged_pp_interaction':
-                self.set_parameter(
-                    'constant_averaged_pp_interaction',
-                    float(confs['constant_averaged_pp_interaction']))
+            if conf_key in ('constant_averaged_pp_interaction'
+                            'const_ave_pp'):
+                self.set_parameter('const_ave_pp', float(confs['const_ave_pp']))
 
             if conf_key == 'cutoff_fc3_distance':
                 self.set_parameter('cutoff_fc3_distance',
@@ -831,17 +830,17 @@ class Phono3pyConfParser(ConfParser):
                 else:
                     self.set_parameter('temperatures', vals)
 
-            if conf_key == 'use_alm_fc2':
-                if confs['use_alm_fc2'].lower() == '.false.':
-                    self.set_parameter('use_alm_fc2', False)
-                elif confs['use_alm_fc2'].lower() == '.true.':
-                    self.set_parameter('use_alm_fc2', True)
+            if conf_key == 'alm_fc2':
+                if confs['alm_fc2'].lower() == '.false.':
+                    self.set_parameter('alm_fc2', False)
+                elif confs['alm_fc2'].lower() == '.true.':
+                    self.set_parameter('alm_fc2', True)
 
-            if conf_key == 'use_alm_fc3':
-                if confs['use_alm_fc3'].lower() == '.false.':
-                    self.set_parameter('use_alm_fc3', False)
-                elif confs['use_alm_fc3'].lower() == '.true.':
-                    self.set_parameter('use_alm_fc3', True)
+            if conf_key == 'alm_fc3':
+                if confs['alm_fc3'].lower() == '.false.':
+                    self.set_parameter('alm_fc3', False)
+                elif confs['alm_fc3'].lower() == '.true.':
+                    self.set_parameter('alm_fc3', True)
 
             if conf_key == 'use_ave_pp':
                 if confs['use_ave_pp'].lower() == '.false.':
@@ -903,9 +902,9 @@ class Phono3pyConfParser(ConfParser):
             self._settings.set_boundary_mfp(params['boundary_mfp'])
 
         # Peierls type approximation for squared ph-ph interaction strength
-        if 'constant_averaged_pp_interaction' in params:
+        if 'const_ave_pp' in params:
             self._settings.set_constant_averaged_pp_interaction(
-                params['constant_averaged_pp_interaction'])
+                params['const_ave_pp'])
 
         # Cutoff distance of third-order force constants. Elements where any
         # pair of atoms has larger distance than cut-off distance are set zero.
@@ -1065,12 +1064,12 @@ class Phono3pyConfParser(ConfParser):
             self._settings.set_temperatures(params['temperatures'])
 
         # Use ALM for creating fc2
-        if 'use_alm_fc2' in params:
-            self._settings.set_use_alm_fc2(params['use_alm_fc2'])
+        if 'alm_fc2' in params:
+            self._settings.set_use_alm_fc2(params['alm_fc2'])
 
         # Use ALM for creating fc3
-        if 'use_alm_fc3' in params:
-            self._settings.set_use_alm_fc3(params['use_alm_fc3'])
+        if 'alm_fc3' in params:
+            self._settings.set_use_alm_fc3(params['alm_fc3'])
 
         # Use averaged ph-ph interaction
         if 'use_ave_pp' in params:

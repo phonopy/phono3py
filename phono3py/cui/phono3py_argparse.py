@@ -47,7 +47,7 @@ def get_parser():
                         band_paths=None,
                         band_points=None,
                         cell_filename=None,
-                        constant_averaged_pp_interaction=None,
+                        const_ave_pp=None,
                         crystal_mode=False,
                         cutoff_fc3_distance=None,
                         cutoff_frequency=None,
@@ -196,7 +196,7 @@ def get_parser():
         action="store_true",
         help="Create phonopy FORCE_SETS from FORCES_FC2")
     parser.add_argument(
-        "--const-ave-pp", dest="constant_averaged_pp_interaction", type=float,
+        "--const-ave-pp", dest="const_ave_pp", type=float,
         help="Set constant averaged ph-ph interaction (Pqj)")
     parser.add_argument(
         "--crystal", dest="crystal_mode", action="store_true",
