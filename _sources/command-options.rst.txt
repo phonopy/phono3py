@@ -969,7 +969,7 @@ Then
 ``--const-ave-pp``: Use constant phonon-phonon interaction strength
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-(Setting tag: ``CONSTANT_AVERAGED_PP_INTERACTION``, ``.TRUE.`` or ``.FALSE.``)
+(Setting tag: ``CONST_AVE_PP``, ``.TRUE.`` or ``.FALSE.``)
 
 Averaged phonon-phonon interaction (:math:`P_{\mathbf{q}j}`) is
 replaced by this constant value and :math:`|\Phi_{\lambda \lambda'
