@@ -107,11 +107,22 @@ OpenBLAS provided by conda (with multithread BLAS)
 
 The installtion of LAPACKE is easy by conda. It is::
 
-   % conda install openblas
+   % conda install -c conda-forge openblas
 
-or if the python libraries are not yet installed::
+The recent change of openblas package provided from anaconda makes to
+install nomkl, i.e., numpy and scipy with Intel MKL cannot be used
+together with openblas. At this moment, this is avoided to install
+openblas from conda-forge channel. If the python libraries are not yet
+installed::
 
-   % conda install openblas numpy scipy h5py pyyaml matplotlib
+   % conda install numpy scipy h5py pyyaml matplotlib
+   % conda install -c conda-forge openblas
+
+When using hdf5 files from NFS mouted location, the latest h5py may
+not work. In this case, installation of an older version is
+recommended::
+
+   % conda install hdf5=1.8.18
 
 This openblas package contains BLAS, LAPACK, and LAPACKE. When this
 ``libopenblas`` is linked and the ``else`` statement of the C macro
@@ -198,11 +209,11 @@ macOS. But it requires a basic knowledge on UNIX and python. So if
 you are afraid of that, please prepare a computer or a virtual machine
 with a normal linux OS such as Ubuntu-linux-64bit 14.04 or 16.04.
 
-If you think you are familiar with macOS, unix system, and python,
-the recommended installation process is written at
-https://atztogo.github.io/phonopy/MacOSX.html, which is more-or-less
-the same as phonopy, but with openblas, too. An example of the
-procedure is summarized in the next section.
+If you think you are familiar with macOS, unix system, and python, the
+recommended installation process is written at
+https://atztogo.github.io/phonopy/install.html#using-phonopy-on-mac-os-x,
+which is more-or-less the same as phonopy, but with openblas, too. An
+example of the procedure is summarized in the next section.
 
 
 .. _install_an_example:
@@ -233,6 +244,11 @@ An example of installation process
 
      % wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
 
+   Conda provided compiler (gcc for linux and clang for macOS) can be
+   also used instead of system provided compiler, brew, or
+   macport. The detail can be found at
+   https://conda.io/docs/user-guide/tasks/build-packages/compiler-tools.html.
+
 2. Install conda packages
 
    It is supposed to have the following environment variable::
@@ -246,7 +262,14 @@ An example of installation process
 
    The necessary python libraries and openBLAS are installed by::
 
-     % conda install numpy scipy h5py pyyaml matplotlib openblas
+     % conda install numpy scipy h5py pyyaml matplotlib
+     % conda install -c conda-forge openblas
+
+   When using hdf5 files from NFS mouted location, the latest h5py may
+   not work. In this case, installation of an older version is
+   recommended::
+
+     % conda install hdf5=1.8.18
 
    Install the latest phonopy and phono3py::
 

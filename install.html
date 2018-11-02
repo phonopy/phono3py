@@ -348,11 +348,22 @@ specified to let phono3py find those libraries.</p>
 <div class="section" id="openblas-provided-by-conda-with-multithread-blas">
 <span id="install-openblas-lapacke"></span><h4><a class="toc-backref" href="#id6">OpenBLAS provided by conda (with multithread BLAS)</a><a class="headerlink" href="#openblas-provided-by-conda-with-multithread-blas" title="Permalink to this headline">¶</a></h4>
 <p>The installtion of LAPACKE is easy by conda. It is:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">openblas</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">openblas</span>
 </pre></div>
 </div>
-<p>or if the python libraries are not yet installed:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">openblas</span> <span class="n">numpy</span> <span class="n">scipy</span> <span class="n">h5py</span> <span class="n">pyyaml</span> <span class="n">matplotlib</span>
+<p>The recent change of openblas package provided from anaconda makes to
+install nomkl, i.e., numpy and scipy with Intel MKL cannot be used
+together with openblas. At this moment, this is avoided to install
+openblas from conda-forge channel. If the python libraries are not yet
+installed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">numpy</span> <span class="n">scipy</span> <span class="n">h5py</span> <span class="n">pyyaml</span> <span class="n">matplotlib</span>
+<span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">openblas</span>
+</pre></div>
+</div>
+<p>When using hdf5 files from NFS mouted location, the latest h5py may
+not work. In this case, installation of an older version is
+recommended:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">hdf5</span><span class="o">=</span><span class="mf">1.8</span><span class="o">.</span><span class="mi">18</span>
 </pre></div>
 </div>
 <p>This openblas package contains BLAS, LAPACK, and LAPACKE. When this
@@ -439,11 +450,11 @@ done as follows:</p>
 macOS. But it requires a basic knowledge on UNIX and python. So if
 you are afraid of that, please prepare a computer or a virtual machine
 with a normal linux OS such as Ubuntu-linux-64bit 14.04 or 16.04.</p>
-<p>If you think you are familiar with macOS, unix system, and python,
-the recommended installation process is written at
-<a class="reference external" href="https://atztogo.github.io/phonopy/MacOSX.html">https://atztogo.github.io/phonopy/MacOSX.html</a>, which is more-or-less
-the same as phonopy, but with openblas, too. An example of the
-procedure is summarized in the next section.</p>
+<p>If you think you are familiar with macOS, unix system, and python, the
+recommended installation process is written at
+<a class="reference external" href="https://atztogo.github.io/phonopy/install.html#using-phonopy-on-mac-os-x">https://atztogo.github.io/phonopy/install.html#using-phonopy-on-mac-os-x</a>,
+which is more-or-less the same as phonopy, but with openblas, too. An
+example of the procedure is summarized in the next section.</p>
 </div>
 <div class="section" id="an-example-of-installation-process">
 <span id="install-an-example"></span><h2><a class="toc-backref" href="#id12">An example of installation process</a><a class="headerlink" href="#an-example-of-installation-process" title="Permalink to this headline">¶</a></h2>
@@ -469,6 +480,10 @@ e.g.:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">repo</span><span class="o">.</span><span class="n">continuum</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">miniconda</span><span class="o">/</span><span class="n">Miniconda3</span><span class="o">-</span><span class="n">latest</span><span class="o">-</span><span class="n">MacOSX</span><span class="o">-</span><span class="n">x86_64</span><span class="o">.</span><span class="n">sh</span>
 </pre></div>
 </div>
+<p>Conda provided compiler (gcc for linux and clang for macOS) can be
+also used instead of system provided compiler, brew, or
+macport. The detail can be found at
+<a class="reference external" href="https://conda.io/docs/user-guide/tasks/build-packages/compiler-tools.html">https://conda.io/docs/user-guide/tasks/build-packages/compiler-tools.html</a>.</p>
 </li>
 <li><p class="first">Install conda packages</p>
 <p>It is supposed to have the following environment variable:</p>
@@ -481,7 +496,14 @@ e.g.:</p>
 </pre></div>
 </div>
 <p>The necessary python libraries and openBLAS are installed by:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">numpy</span> <span class="n">scipy</span> <span class="n">h5py</span> <span class="n">pyyaml</span> <span class="n">matplotlib</span> <span class="n">openblas</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">numpy</span> <span class="n">scipy</span> <span class="n">h5py</span> <span class="n">pyyaml</span> <span class="n">matplotlib</span>
+<span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">openblas</span>
+</pre></div>
+</div>
+<p>When using hdf5 files from NFS mouted location, the latest h5py may
+not work. In this case, installation of an older version is
+recommended:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">conda</span> <span class="n">install</span> <span class="n">hdf5</span><span class="o">=</span><span class="mf">1.8</span><span class="o">.</span><span class="mi">18</span>
 </pre></div>
 </div>
 <p>Install the latest phonopy and phono3py:</p>
