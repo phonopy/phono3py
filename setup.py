@@ -19,16 +19,17 @@ if 'CC' in os.environ:
     if 'clang' in os.environ['CC']:
         cc = 'clang'
         libgomp = '-lomp'
-    if 'gcc' in os.environ['CC']:
+    if 'gcc' in os.environ['CC'] or 'gnu-cc' in os.environ['CC']:
         cc = 'gcc'
 if cc == 'gcc' or cc is None:
     libgomp = '-lgomp'
 
-    # For macOS:
-    # Suppose using homebrew gcc whereas conda is used as general environment.
-    # This is to avoid linking conda libgomp that is incompatible with
-    # homebrew gcc.
     if 'CC' in os.environ and 'gcc-' in os.environ['CC']:
+        # For macOS & homebrew gcc:
+        # Using conda's gcc is more recommended though. Suppose using
+        # homebrew gcc whereas conda is used as general environment.
+        # This is to avoid linking conda libgomp that is incompatible
+        # with homebrew gcc.
         try:
             v = int(os.environ['CC'].split('-')[1])
         except ValueError:
@@ -72,7 +73,7 @@ sources = ['c/_phono3py.c',
            'c/kspclib/kgrid.c',
            'c/kspclib/tetrahedron_method.c']
 
-extra_compile_args = ['-fopenmp',]
+extra_compile_args = ['-fopenmp', ]
 include_dirs = ['c/harmonic_h',
                 'c/anharmonic_h',
                 'c/spglib_h',
@@ -154,16 +155,28 @@ elif (platform.system() == 'Darwin' and
     # % sudo port install OpenBLAS +gcc6
     extra_link_args_lapacke += ['/opt/local/lib/libopenblas.a']
     include_dirs_lapacke += ['/opt/local/include']
+elif ('CONDA_PREFIX' in os.environ and
+      os.path.isfile(
+          os.path.join(os.environ['CONDA_PREFIX'], 'lib', 'libopenblas.so'))):
+    # This is for the system prepared with conda openblas.
+    extra_link_args_lapacke += ['-lopenblas']
+    include_dirs_lapacke += [
+        os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
+    if use_setuptools:
+        extra_compile_args += ['-DMULTITHREADED_BLAS']
+    else:
+        define_macros += [('MULTITHREADED_BLAS', None)]
 elif os.path.isfile('/usr/lib/liblapacke.so'):
-    # This supposes that lapacke with single-thread BLAS is installed on system.
+    # This supposes that lapacke with single-thread BLAS is installed on
+    # system.
     extra_link_args_lapacke += ['-llapacke', '-llapack', '-lblas']
     include_dirs_lapacke += []
 else:
     # Here is the default lapacke linkage setting.
     # Please modify according to your system environment.
     # Without using multithreaded BLAS, DMULTITHREADED_BLAS is better to be
-    # removed to activate OpenMP multithreading harmonic phonon calculation, but
-    # this is not mandatory.
+    # removed to activate OpenMP multithreading harmonic phonon calculation,
+    # but this is not mandatory.
     #
     # The below supposes that lapacke with multithread openblas is used.
     # Even if using single-thread BLAS and deactivating OpenMP
@@ -233,18 +246,19 @@ if __name__ == '__main__':
     with open("phono3py/version.py") as w:
         for line in w:
             if "__version__" in line:
-                for i, num in enumerate(line.split()[2].strip('\"').split('.')):
+                for i, num in enumerate(
+                        line.split()[2].strip('\"').split('.')):
                     version_nums[i] = int(num)
 
     # To deploy to pypi by travis-CI
     if os.path.isfile("__nanoversion__.txt"):
         with open('__nanoversion__.txt') as nv:
             nanoversion = 0
-            try :
+            try:
                 for line in nv:
                     nanoversion = int(line.strip())
                     break
-            except ValueError :
+            except ValueError:
                 nanoversion = 0
             if nanoversion:
                 version_nums.append(nanoversion)
