@@ -871,12 +871,13 @@ values given as follows, respectively,
 .. math::
 
    &D_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
-   \sum_{\lambda_1,\lambda_2}
-   \left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2}) +
-   \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2}) \right], \\
+   \sum_{\lambda',\lambda''} \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'')
+   \left[\delta(\omega+\omega_{\lambda'}-\omega_{\lambda''}) +
+   \delta(\omega-\omega_{\lambda'}+\omega_{\lambda''}) \right], \\
    &D_2^{(2)}(\mathbf{q}, \omega) = \frac{1}{N}
-   \sum_{\lambda_1,\lambda_2}\delta(\omega-\omega_{\lambda_1}
-   -\omega_{\lambda_2}).
+   \sum_{\lambda',\lambda''}
+   \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'') \delta(\omega-\omega_{\lambda'}
+   -\omega_{\lambda''}).
 
 ::
 
