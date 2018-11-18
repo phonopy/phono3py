@@ -1034,12 +1034,13 @@ column is the frequency, and the second and third columns are the
 values given as follows, respectively,</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}&amp;D_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
-\sum_{\lambda_1,\lambda_2}
-\left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2}) +
-\delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2}) \right], \\
+\sum_{\lambda',\lambda''} \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'')
+\left[\delta(\omega+\omega_{\lambda'}-\omega_{\lambda''}) +
+\delta(\omega-\omega_{\lambda'}+\omega_{\lambda''}) \right], \\
 &amp;D_2^{(2)}(\mathbf{q}, \omega) = \frac{1}{N}
-\sum_{\lambda_1,\lambda_2}\delta(\omega-\omega_{\lambda_1}
--\omega_{\lambda_2}).\end{split}\]</div>
+\sum_{\lambda',\lambda''}
+\Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'') \delta(\omega-\omega_{\lambda'}
+-\omega_{\lambda''}).\end{split}\]</div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span> <span class="o">--</span><span class="n">nac</span> <span class="o">--</span><span class="n">jdos</span> <span class="o">--</span><span class="n">ga</span><span class="o">=</span><span class="s2">&quot;0 0 0  8 8 8&quot;</span>
 </pre></div>
 </div>
