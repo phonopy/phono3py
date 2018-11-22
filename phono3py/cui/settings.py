@@ -374,6 +374,7 @@ class Phono3pyConfParser(ConfParser):
             self._parse_conf()
             self._set_settings()
             confs.update(self._confs)
+        self._confs = confs
 
     def _read_options(self):
         self.read_options()  # store data in self._confs
