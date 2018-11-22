@@ -1,9 +1,8 @@
 import sys
 import numpy as np
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
-from phono3py.file_IO import (write_kappa_to_hdf5,
-                              read_gamma_from_hdf5, write_grid_address,
-                              write_gamma_detail_to_hdf5)
+from phono3py.file_IO import (write_kappa_to_hdf5, read_gamma_from_hdf5,
+                              write_gamma_detail_to_hdf5, read_pp_from_hdf5)
 from phono3py.phonon3.conductivity import (Conductivity, all_bands_exist,
                                            unit_to_WmK)
 from phono3py.phonon3.conductivity import write_pp as _write_pp
@@ -35,6 +34,7 @@ def get_thermal_conductivity_RTA(
         is_N_U=False,
         write_kappa=False,
         write_pp=False,
+        read_pp=False,
         write_gamma_detail=False,
         input_filename=None,
         output_filename=None,
@@ -60,6 +60,9 @@ def get_thermal_conductivity_RTA(
         is_kappa_star=is_kappa_star,
         gv_delta_q=gv_delta_q,
         is_full_pp=is_full_pp,
+        read_pp=read_pp,
+        store_pp=write_pp,
+        pp_filename=input_filename,
         is_N_U=is_N_U,
         is_gamma_detail=write_gamma_detail,
         log_level=log_level)
@@ -70,7 +73,7 @@ def get_thermal_conductivity_RTA(
             return False
 
     for i in br:
-        if write_pp and is_full_pp:
+        if write_pp:
             _write_pp(br,
                       interaction,
                       i,
@@ -445,6 +448,9 @@ class Conductivity_RTA(Conductivity):
                  is_kappa_star=True,
                  gv_delta_q=None,
                  is_full_pp=False,
+                 read_pp=False,
+                 store_pp=False,
+                 pp_filename=None,
                  is_N_U=False,
                  is_gamma_detail=False,
                  log_level=0):
@@ -517,6 +523,9 @@ class Conductivity_RTA(Conductivity):
                               log_level=log_level)
 
         self._use_const_ave_pp = self._pp.get_constant_averaged_interaction()
+        self._read_pp = read_pp
+        self._store_pp = store_pp
+        self._pp_filename = pp_filename
 
         if self._temperatures is not None:
             self._allocate_values()
@@ -596,6 +605,8 @@ class Conductivity_RTA(Conductivity):
                 print("Number of triplets: %d" % num_triplets)
 
             if (self._is_full_pp or
+                self._read_pp or
+                self._store_pp or
                 self._use_ave_pp or
                 self._use_const_ave_pp or
                 self._is_gamma_detail):
@@ -669,27 +680,42 @@ class Conductivity_RTA(Conductivity):
                         text += "(%4.2f SD)." % self._sigma_cutoff
                 print(text)
 
-            if self._use_ave_pp:
+            if self._read_pp:
+                pp, _g_zero = read_pp_from_hdf5(
+                    self._mesh,
+                    grid_point=self._grid_points[i],
+                    sigma=sigma,
+                    sigma_cutoff=self._sigma_cutoff,
+                    filename=self._pp_filename,
+                    verbose=(self._log_level > 0))
+                _, g_zero = self._collision.get_integration_weights()
+                if self._log_level:
+                    if len(self._sigmas) > 1:
+                        print("Multiple sigmas or mixing smearing and "
+                              "tetrahedron method is not supported.")
+                if _g_zero is not None and (_g_zero != g_zero).any():
+                    raise ValueError("Inconsistency found in g_zero.")
+                self._collision.set_interaction_strength(pp)
+            elif self._use_ave_pp:
                 self._collision.set_averaged_pp_interaction(
                     self._averaged_pp_interaction[i])
+            elif self._use_const_ave_pp:
+                if self._log_level:
+                    print("Constant ph-ph interaction of %6.3e is used." %
+                          self._pp.get_constant_averaged_interaction())
+                self._collision.run_interaction()
+                self._averaged_pp_interaction[i] = (
+                    self._pp.get_averaged_interaction())
+            elif j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
+                if self._log_level:
+                    print("Existing ph-ph interaction is used.")
             else:
-                if self._use_const_ave_pp:
-                    if self._log_level:
-                        print("Constant ph-ph interaction of %6.3e is used." %
-                              self._pp.get_constant_averaged_interaction())
-                    self._collision.run_interaction()
+                if self._log_level:
+                    print("Calculating ph-ph interaction...")
+                self._collision.run_interaction(is_full_pp=self._is_full_pp)
+                if self._is_full_pp:
                     self._averaged_pp_interaction[i] = (
                         self._pp.get_averaged_interaction())
-                elif j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
-                    if self._log_level:
-                        print("Existing ph-ph interaction is used.")
-                else:
-                    if self._log_level:
-                        print("Calculating ph-ph interaction...")
-                    self._collision.run_interaction(is_full_pp=self._is_full_pp)
-                    if self._is_full_pp:
-                        self._averaged_pp_interaction[i] = (
-                            self._pp.get_averaged_interaction())
 
             # Number of triplets depends on q-point.
             # So this is allocated each time.
