@@ -38,7 +38,8 @@ import sys
 import numpy as np
 from phonopy.file_IO import parse_BORN, write_FORCE_SETS, parse_FORCE_SETS
 from phonopy.units import VaspToTHz, Bohr, Rydberg, Hartree
-from phonopy.interface import read_crystal_structure, get_force_sets
+from phonopy.interface import (read_crystal_structure, get_force_sets,
+                               get_default_physical_units)
 from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phono3py.version import __version__
 from phono3py.file_IO import (parse_disp_fc2_yaml, parse_disp_fc3_yaml,
@@ -66,8 +67,10 @@ def finalize_phono3py(log_level,
                       interface_mode,
                       filename="phono3py.yaml"):
     if log_level > 0:
+        units = get_default_physical_units(interface_mode)
         ph3py_yaml = Phono3pyYaml(configuration=phono3py_conf.get_configures(),
-                                  calculator=interface_mode)
+                                  calculator=interface_mode,
+                                  physical_units=units)
         ph3py_yaml.set_phonon_info(phono3py)
         with open(filename, 'w') as w:
             w.write(str(ph3py_yaml))
@@ -584,7 +587,7 @@ if settings.get_is_gruneisen():
 ##################
 # Check settings #
 ##################
-if mesh is None:
+if mesh is None and run_mode is not None:
     print("")
     print("Q-point mesh has to be specified with --mesh option.")
     print("")

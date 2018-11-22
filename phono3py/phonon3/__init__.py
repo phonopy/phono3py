@@ -44,8 +44,7 @@ from phonopy.harmonic.force_constants import (
     set_translational_invariance,
     set_permutation_symmetry)
 from phonopy.harmonic.displacement import get_least_displacements
-from phonopy.harmonic.displacement import direction_to_displacement as \
-     direction_to_displacement_fc2
+from phonopy.harmonic.displacement import directions_to_displacement_dataset
 from phono3py.version import __version__
 from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
                                                write_imag_self_energy)
@@ -244,7 +243,7 @@ class Phono3py(object):
                 self._phonon_supercell_symmetry,
                 is_plusminus=is_plusminus,
                 is_diagonal=False)
-            self._phonon_displacement_dataset = direction_to_displacement_fc2(
+            self._phonon_displacement_dataset = directions_to_displacement_dataset(
                 phonon_displacement_directions,
                 distance,
                 self._phonon_supercell)
@@ -265,7 +264,8 @@ class Phono3py(object):
             self._fc2 = get_fc2_alm(self._phonon_supercell,
                                     forces_fc2,
                                     disp_dataset,
-                                    self._phonon_supercell_symmetry)
+                                    self._phonon_supercell_symmetry,
+                                    log_level=self._log_level)
         else:
             for forces, disp1 in zip(forces_fc2, disp_dataset['first_atoms']):
                 disp1['forces'] = forces
@@ -302,7 +302,8 @@ class Phono3py(object):
             fc2, fc3 = get_fc3_alm(self._supercell,
                                    forces_fc3,
                                    disp_dataset,
-                                   self._symmetry)
+                                   self._symmetry,
+                                   log_level=self._log_level)
         else:
             fc2, fc3 = self._get_fc3(forces_fc3,
                                      disp_dataset,

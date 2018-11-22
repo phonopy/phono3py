@@ -540,6 +540,17 @@ the results, ``--write-gamma`` option has to be specified and the
 physical properties belonging to the grid
 points are written into ``kappa-mxxx-gx(-sx).hdf5``.
 
+``--lbte``: Thermal conductivity with direct solution of LBTE
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+(Setting tag: ``BTERTA``, ``.TRUE.`` or ``.FALSE.``)
+
+Run calculation of lattice thermal conductivity tensor with a direct
+solution of linearized phonon Boltzmann equation. The basis usage of
+this option is equivalent to that of ``--br``. More detail is
+documented at :ref:`direct_solution`.
+
+
 ``--isotope``: Phonon-isotope scattering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -860,12 +871,13 @@ values given as follows, respectively,
 .. math::
 
    &D_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
-   \sum_{\lambda_1,\lambda_2}
-   \left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2}) +
-   \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2}) \right], \\
+   \sum_{\lambda',\lambda''} \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'')
+   \left[\delta(\omega+\omega_{\lambda'}-\omega_{\lambda''}) +
+   \delta(\omega-\omega_{\lambda'}+\omega_{\lambda''}) \right], \\
    &D_2^{(2)}(\mathbf{q}, \omega) = \frac{1}{N}
-   \sum_{\lambda_1,\lambda_2}\delta(\omega-\omega_{\lambda_1}
-   -\omega_{\lambda_2}).
+   \sum_{\lambda',\lambda''}
+   \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'') \delta(\omega-\omega_{\lambda'}
+   -\omega_{\lambda''}).
 
 ::
 
@@ -958,7 +970,7 @@ Then
 ``--const-ave-pp``: Use constant phonon-phonon interaction strength
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-(Setting tag: ``CONSTANT_AVERAGED_PP_INTERACTION``, ``.TRUE.`` or ``.FALSE.``)
+(Setting tag: ``CONST_AVE_PP``, ``.TRUE.`` or ``.FALSE.``)
 
 Averaged phonon-phonon interaction (:math:`P_{\mathbf{q}j}`) is
 replaced by this constant value and :math:`|\Phi_{\lambda \lambda'
