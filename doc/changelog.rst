@@ -3,6 +3,16 @@
 Change Log
 ==========
 
+Nov-22-2018: version 1.14.3
+----------------------------
+- Update to work with phonopy v1.14.2.
+- Ph-ph interaction can be read (``--read-pp``) and write
+  (``--write-pp``) in RTA thermal conductivity calculation, too. Mind
+  that the data stored are different with and without
+  ``--full-pp``. Wihtout ``--full-pp`` the data are stored in
+  complicated way to save data side, so it is not considered readable
+  by usual users.
+
 June-20-2018: version 1.13.3
 ----------------------------
 
