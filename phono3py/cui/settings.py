@@ -361,20 +361,22 @@ class Phono3pySettings(Settings):
 class Phono3pyConfParser(ConfParser):
     def __init__(self, filename=None, args=None):
         self._settings = Phono3pySettings()
+        confs = {}
         if filename is not None:
             ConfParser.__init__(self, filename=filename)
-            self.parse_conf()  # self.parameters[key] = val
+            self.read_file()  # store .conf file setting in self._confs
             self._parse_conf()
             self._set_settings()
+            confs.update(self._confs)
         if args is not None:
             ConfParser.__init__(self, args=args)
-            self.read_options()  # store data in self._confs
             self._read_options()
-            self.parse_conf()  # self.parameters[key] = val
             self._parse_conf()
             self._set_settings()
+            confs.update(self._confs)
 
     def _read_options(self):
+        self.read_options()  # store data in self._confs
         if 'phonon_supercell_dimension' in self._args:
             dim_fc2 = self._args.phonon_supercell_dimension
             if dim_fc2 is not None:
@@ -583,6 +585,7 @@ class Phono3pyConfParser(ConfParser):
                 self._confs['write_LBTE_solution'] = '.true.'
 
     def _parse_conf(self):
+        self.parse_conf()
         confs = self._confs
 
         for conf_key in confs.keys():
@@ -885,7 +888,7 @@ class Phono3pyConfParser(ConfParser):
                     self.set_parameter('write_LBTE_solution', True)
 
     def _set_settings(self):
-        ConfParser.set_settings(self)
+        self.set_settings()
         params = self._parameters
 
         # Is getting least displacements?
