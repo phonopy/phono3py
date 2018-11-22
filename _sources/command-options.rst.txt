@@ -766,13 +766,6 @@ phonon triplets of three phonon scatterings are obtained by
     gamma_sum_over_bands = np.dot(weight, gd['gamma_detail'][30].sum(axis=-1).sum(axis=-1).sum(axis=-1))
     contrib_tp = [gd['gamma_detail'][30, i].sum() / gamma_sum_over_bands for i in range(len(weight))]
     np.dot(weight, contrib_tp) # is one
-..
-   ``--write-amplitude``
-   ~~~~~~~~~~~~~~~~~~~~~~
-
-   Interaction strengths of triplets are written into file in hdf5
-   format. This file can be huge and usually it is not recommended to
-   write it out.
 
 .. _write_phonon_option:
 
@@ -837,6 +830,32 @@ may be required depending on calculation setting.
 ::
 
    % phono3py --fc2 --fc3 --dim="2 2  2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" --mesh="11 11 11" -c POSCAR-unitcell --nac --read-phoonon --br
+
+.. _write_read_pp_option:
+
+``--write-pp`` and ``--read-pp``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Phonon-phonon (ph-ph) intraction strengths are written to and read
+from ``pp-mxxx-gx.hdf5``. This works only in the calculation of
+lattice thermal conductivity, i.e., usable only with ``--br`` or
+``--lbte``. The stored data are different with and without specifying
+``--full-pp`` option. In the former case, all the ph-ph interaction
+strengths among considered phonon triplets are stored in a simple
+manner, but in the later case, only necessary elements to calculate
+collisions are stored in a complicated way. In the case of RTA
+conductivity calculation, in writing and reading, ph-ph interaction
+strength has to be stored in memory, so there is overhead in memory
+than usual RTA calculation.
+
+::
+
+   % phono3py --fc2 --fc3 --dim="2 2  2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" --mesh="11 11 11" -c POSCAR-unitcell --nac --write-pp --br --gp=1
+
+::
+
+   % phono3py --fc2 --dim="2 2  2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" --mesh="11 11 11" -c POSCAR-unitcell --nac --read-pp --br --gp=1
+
 
 .. _ise_option:
 
