@@ -249,6 +249,7 @@ if __name__ == '__main__':
                 for i, num in enumerate(
                         line.split()[2].strip('\"').split('.')):
                     version_nums[i] = num
+                break
 
     # To deploy to pypi by travis-CI
     if os.path.isfile("__nanoversion__.txt"):
