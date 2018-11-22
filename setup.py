@@ -248,7 +248,7 @@ if __name__ == '__main__':
             if "__version__" in line:
                 for i, num in enumerate(
                         line.split()[2].strip('\"').split('.')):
-                    version_nums[i] = int(num)
+                    version_nums[i] = num
 
     # To deploy to pypi by travis-CI
     if os.path.isfile("__nanoversion__.txt"):
@@ -267,17 +267,20 @@ if __name__ == '__main__':
         print("Failed to get version number in setup.py.")
         raise
 
-    version_number = ".".join(["%d" % n for n in version_nums])
+    version = ".".join(["%s" % n for n in version_nums[:3]])
+    if len(version_nums) > 3:
+        version += "-%d" % version_nums[3]
+
     if use_setuptools:
         setup(name='phono3py',
-              version=version_number,
+              version=version,
               description='This is the phono3py module.',
               author='Atsushi Togo',
               author_email='atz.togo@gmail.com',
               url='http://atztogo.github.io/phono3py/',
               packages=packages_phono3py,
               install_requires=['numpy', 'PyYAML', 'matplotlib', 'h5py',
-                                'phonopy>=1.13.2'],
+                                'phonopy>=1.14.2'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
               ext_modules=[extension_lapackepy, extension_phono3py],
@@ -285,7 +288,7 @@ if __name__ == '__main__':
               tests_require=['nose'])
     else:
         setup(name='phono3py',
-              version=version_number,
+              version=version,
               description='This is the phono3py module.',
               author='Atsushi Togo',
               author_email='atz.togo@gmail.com',

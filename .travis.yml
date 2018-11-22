@@ -26,8 +26,8 @@ before_install:
 
 install:
     - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy h5py pyyaml matplotlib openblas
-    # - conda install --yes -c atztogo phonopy
-    - pip install https://github.com/atztogo/phonopy/archive/develop.zip --user
+    - conda install --yes -c atztogo phonopy
+    # - pip install https://github.com/atztogo/phonopy/archive/develop.zip --user
     - pwd
     - ./get_nanoversion.sh
     - cat __nanoversion__.txt
@@ -49,6 +49,7 @@ deploy:
     - provider: pypi
       server: https://test.pypi.org/legacy/
       skip_cleanup: true
+      skip_existing: true
       distributions: sdist
       user: atztogo
       password:
@@ -72,6 +73,7 @@ deploy:
     # production pypi
     - provider: pypi
       skip_cleanup: true
+      skip_existing: true
       distributions: sdist
       user: atztogo
       password:

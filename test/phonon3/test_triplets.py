@@ -2,7 +2,7 @@ import unittest
 import os
 import numpy as np
 
-from phonopy.interface.phonopy_yaml import get_unitcell_from_phonopy_yaml
+from phonopy.interface.phonopy_yaml import read_cell_yaml
 from phono3py.phonon3.triplets import (get_grid_point_from_address,
                                        get_grid_point_from_address_py)
 
@@ -11,8 +11,7 @@ data_dir = os.path.dirname(os.path.abspath(__file__))
 
 class TestTriplets(unittest.TestCase):
     def setUp(self):
-        self._cell = get_unitcell_from_phonopy_yaml(
-            os.path.join(data_dir, "POSCAR.yaml"))
+        self._cell = read_cell_yaml(os.path.join(data_dir, "POSCAR.yaml"))
 
     def tearDown(self):
         pass
