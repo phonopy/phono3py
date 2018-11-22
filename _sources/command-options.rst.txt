@@ -9,12 +9,14 @@ are replaced by those with dashes ``-``. Those tag names are unchanged.
 Command-user-interface of phono3py is operated with a variety of
 command options. Here those command options are explained.
 
-Using the latest phono3py and phonopy, a configuration file with
-setting tags can be used instead of and together with the command
-options. The setting tags are mostly equivalent to the most command
-options, but when both are set simultaneously, the command options are
-preferred. An example of configuration (e.g., saved in a file
-``setting.conf``) is as follow::
+**At the current release v1.14.3, reading configuration file doesn't
+work. If this is needed, please try the develop branch of phono3py on
+github. This will be fixed in the next release.** A configuration
+file with setting tags like phonopy can be used instead of and
+together with the command options. The setting tags are mostly
+equivalent to the most command options, but when both are set
+simultaneously, the command options are preferred. An example of
+configuration (e.g., saved in a file ``setting.conf``) is as follow::
 
    DIM = 2 2 2
    DIM_FC2 = 4 4 4
@@ -30,7 +32,7 @@ where the setting tag names are case insensitive. This is run by
 
 ::
 
-   % phono3py [comannd options] setting.conf
+   % phono3py setting.conf [comannd options]
 
 .. contents::
    :depth: 2

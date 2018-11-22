@@ -302,12 +302,14 @@
 are replaced by those with dashes <code class="docutils literal notranslate"><span class="pre">-</span></code>. Those tag names are unchanged.</p>
 <p>Command-user-interface of phono3py is operated with a variety of
 command options. Here those command options are explained.</p>
-<p>Using the latest phono3py and phonopy, a configuration file with
-setting tags can be used instead of and together with the command
-options. The setting tags are mostly equivalent to the most command
-options, but when both are set simultaneously, the command options are
-preferred. An example of configuration (e.g., saved in a file
-<code class="docutils literal notranslate"><span class="pre">setting.conf</span></code>) is as follow:</p>
+<p><strong>At the current release v1.14.3, reading configuration file doesn’t
+work. If this is needed, please try the develop branch of phono3py on
+github. This will be fixed in the next release.</strong> A configuration
+file with setting tags like phonopy can be used instead of and
+together with the command options. The setting tags are mostly
+equivalent to the most command options, but when both are set
+simultaneously, the command options are preferred. An example of
+configuration (e.g., saved in a file <code class="docutils literal notranslate"><span class="pre">setting.conf</span></code>) is as follow:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DIM</span> <span class="o">=</span> <span class="mi">2</span> <span class="mi">2</span> <span class="mi">2</span>
 <span class="n">DIM_FC2</span> <span class="o">=</span> <span class="mi">4</span> <span class="mi">4</span> <span class="mi">4</span>
 <span class="n">PRIMITIVE_AXIS</span> <span class="o">=</span> <span class="mi">0</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span> <span class="mi">0</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span> <span class="mi">0</span>
@@ -320,7 +322,7 @@ preferred. An example of configuration (e.g., saved in a file
 </pre></div>
 </div>
 <p>where the setting tag names are case insensitive. This is run by</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="p">[</span><span class="n">comannd</span> <span class="n">options</span><span class="p">]</span> <span class="n">setting</span><span class="o">.</span><span class="n">conf</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="n">setting</span><span class="o">.</span><span class="n">conf</span> <span class="p">[</span><span class="n">comannd</span> <span class="n">options</span><span class="p">]</span>
 </pre></div>
 </div>
 <div class="contents local topic" id="contents">
