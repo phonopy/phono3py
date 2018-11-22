@@ -181,34 +181,6 @@ def write_fc3_dat(force_constants_third, filename='fc3.dat'):
                     w.write("\n")
 
 
-def write_fc4_dat(fc4, filename='fc4.dat'):
-    w = open(filename, 'w')
-    for (i, j, k, l) in list(np.ndindex(fc4.shape[:4])):
-        tensor4 = fc4[i, j, k, l]
-        w.write(" %d - %d - %d - %d (%f)\n" % (i + 1, j + 1, k + 1, l + 1,
-                                               np.abs(tensor4).sum()))
-        for tensor3 in tensor4:
-            for tensor2 in tensor3:
-                for vec in tensor2:
-                    w.write("%20.14f %20.14f %20.14f\n" % tuple(vec))
-                w.write("\n")
-            w.write("\n")
-        w.write("\n")
-
-
-def write_fc4_to_hdf5(force_constants_fourth, filename='fc4.hdf5'):
-    w = h5py.File(filename, 'w')
-    w.create_dataset('fc4', data=force_constants_fourth)
-    w.close()
-
-
-def read_fc4_from_hdf5(filename='fc4.hdf5'):
-    f = h5py.File(filename, 'r')
-    fc4 = f['fc4'][:]
-    f.close()
-    return fc4
-
-
 def write_fc3_to_hdf5(fc3,
                       filename='fc3.hdf5',
                       p2s_map=None):
@@ -1202,45 +1174,6 @@ def parse_disp_fc3_yaml(filename="disp_fc3.yaml", return_cell=False):
         return new_dataset, cell
     else:
         return new_dataset
-
-
-def parse_disp_fc4_yaml(filename="disp_fc4.yaml"):
-    dataset = _parse_yaml(filename)
-    natom = dataset['natom']
-    new_dataset = {}
-    new_dataset['natom'] = natom
-    new_first_atoms = []
-    for first_atoms in dataset['first_atoms']:
-        first_atoms['number'] -= 1
-        atom1 = first_atoms['number']
-        disp1 = first_atoms['displacement']
-        new_second_atoms = []
-        for second_atoms in first_atoms['second_atoms']:
-            second_atoms['number'] -= 1
-            atom2 = second_atoms['number']
-            disp2 = second_atoms['displacement']
-            new_third_atoms = []
-            for third_atoms in second_atoms['third_atoms']:
-                third_atoms['number'] -= 1
-                atom3 = third_atoms['number']
-                for disp3 in third_atoms['displacements']:
-                    new_third_atoms.append(
-                        {'number': atom3, 'displacement': disp3})
-            new_second_atoms.append(
-                {'number': atom2,
-                 'displacement': disp2,
-                 'third_atoms': new_third_atoms})
-        new_first_atoms.append(
-            {'number': atom1,
-             'displacement': disp1,
-             'second_atoms': new_second_atoms})
-    new_dataset['first_atoms'] = new_first_atoms
-
-    new_dataset['num_first_displacements'] = dataset['num_first_displacements']
-    new_dataset['num_second_displacements'] = dataset['num_second_displacements']
-    new_dataset['num_third_displacements'] = dataset['num_third_displacements']
-
-    return new_dataset
 
 
 def parse_FORCES_FC2(disp_dataset, filename="FORCES_FC2"):

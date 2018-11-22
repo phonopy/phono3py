@@ -48,19 +48,16 @@ except ImportError:
     from yaml import Loader, Dumper
 
 from phonopy.structure.atoms import PhonopyAtoms as Atoms
-from phonopy.interface.phonopy_yaml import get_physical_unit_yaml_lines
 
-def get_unitcell_from_phono3py_yaml(filename):
-    ph3_yaml = Phono3pyYaml()
-    ph3_yaml.read(filename)
-    return ph3_yaml.get_unitcell()
 
 class Phono3pyYaml(object):
     def __init__(self,
                  configuration=None,
-                 calculator=None):
+                 calculator=None,
+                 physical_units=None):
         self._configuration = configuration
         self._calculator = calculator
+        self._physical_units = physical_units
 
         self._unitcell = None
         self._primitive = None
@@ -124,10 +121,17 @@ class Phono3pyYaml(object):
         if self._configuration is not None:
             lines.append("  configuration:")
             for key in self._configuration:
-                lines.append("    %s: \"%s\"" % (key, self._configuration[key]))
+                lines.append("    %s: \"%s\"" %
+                             (key, self._configuration[key]))
             lines.append("")
 
-        lines += get_physical_unit_yaml_lines(self._calculator)
+        lines.append("physical_unit:")
+        lines.append("  atomic_mass: \"AMU\"")
+        units = self._physical_units
+        if units is not None:
+            if units['length_unit'] is not None:
+                lines.append("  length: \"%s\"" % units['length_unit'])
+        lines.append("")
 
         if self._supercell_matrix is not None:
             lines.append("supercell_matrix:")

@@ -29,10 +29,6 @@ def get_triplets_at_q(grid_point,
         Mesh numbers
         dtype='intc'
         shape=(3,)
-    mesh : array_like
-        Mesh numbers
-        dtype='intc'
-        shape=(3,)
     point_group : array_like
         Rotation matrices in real space. Note that those in reciprocal space
         mean these matrices transposed (local terminology).
@@ -186,6 +182,26 @@ def get_grid_point_from_address_py(address, mesh):
 
 
 def get_grid_point_from_address(address, mesh):
+    """Grid point number is given by grid address.
+
+    Parameters
+    ----------
+    address : array_like
+        Grid address.
+        dtype='intc'
+        shape=(3,)
+    mesh : array_like
+        Mesh numbers.
+        dtype='intc'
+        shape=(3,)
+
+    Returns
+    -------
+    int
+        Grid point number.
+
+    """
+
     return spg.get_grid_point_from_address(address, mesh)
 
 
