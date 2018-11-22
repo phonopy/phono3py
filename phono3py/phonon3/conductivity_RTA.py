@@ -61,7 +61,7 @@ def get_thermal_conductivity_RTA(
         gv_delta_q=gv_delta_q,
         is_full_pp=is_full_pp,
         read_pp=read_pp,
-        write_pp=write_pp,
+        store_pp=write_pp,
         pp_filename=input_filename,
         is_N_U=is_N_U,
         is_gamma_detail=write_gamma_detail,
@@ -449,7 +449,7 @@ class Conductivity_RTA(Conductivity):
                  gv_delta_q=None,
                  is_full_pp=False,
                  read_pp=False,
-                 write_pp=False,
+                 store_pp=False,
                  pp_filename=None,
                  is_N_U=False,
                  is_gamma_detail=False,
@@ -524,7 +524,7 @@ class Conductivity_RTA(Conductivity):
 
         self._use_const_ave_pp = self._pp.get_constant_averaged_interaction()
         self._read_pp = read_pp
-        self._write_pp = write_pp
+        self._store_pp = store_pp
         self._pp_filename = pp_filename
 
         if self._temperatures is not None:
@@ -606,7 +606,7 @@ class Conductivity_RTA(Conductivity):
 
             if (self._is_full_pp or
                 self._read_pp or
-                self._write_pp or
+                self._store_pp or
                 self._use_ave_pp or
                 self._use_const_ave_pp or
                 self._is_gamma_detail):
