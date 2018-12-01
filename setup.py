@@ -281,7 +281,7 @@ if __name__ == '__main__':
               url='http://atztogo.github.io/phono3py/',
               packages=packages_phono3py,
               install_requires=['numpy', 'PyYAML', 'matplotlib', 'h5py',
-                                'phonopy>=1.14.2'],
+                                'phonopy>=1.15.0-beta'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
               ext_modules=[extension_lapackepy, extension_phono3py],
