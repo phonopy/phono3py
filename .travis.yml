@@ -26,8 +26,12 @@ before_install:
 
 install:
     - conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy h5py pyyaml matplotlib openblas
-    - conda install --yes -c atztogo phonopy
-    # - pip install https://github.com/atztogo/phonopy/archive/develop.zip --user
+    - echo $TRAVIS_BRANCH
+    - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
+        conda install --yes -c atztogo phonopy
+      else
+        pip install https://github.com/atztogo/phonopy/archive/develop.zip --user
+      fi
     - pwd
     - ./get_nanoversion.sh
     - cat __nanoversion__.txt
