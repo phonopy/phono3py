@@ -351,8 +351,12 @@ class Phono3py(object):
         if self._fc3 is not None:
             set_translational_invariance_fc3(self._fc3)
 
-    def get_version(self):
+    @property
+    def version(self):
         return __version__
+
+    def get_version(self):
+        return self.version
 
     def get_interaction_strength(self):
         return self._interaction
@@ -369,17 +373,33 @@ class Phono3py(object):
     def set_fc3(self, fc3):
         self._fc3 = fc3
 
-    def get_nac_params(self):
+    @property
+    def nac_params(self):
         return self._nac_params
 
-    def get_primitive(self):
+    def get_nac_params(self):
+        return self.nac_params
+
+    @property
+    def primitive(self):
         return self._primitive
 
-    def get_unitcell(self):
+    def get_primitive(self):
+        return self.primitive
+
+    @property
+    def unitcell(self):
         return self._unitcell
 
-    def get_supercell(self):
+    def get_unitcell(self):
+        return self.unitcell
+
+    @property
+    def supercell(self):
         return self._supercell
+
+    def get_supercell(self):
+        return self.supercell
 
     def get_phonon_supercell(self):
         return self._phonon_supercell
@@ -387,27 +407,49 @@ class Phono3py(object):
     def get_phonon_primitive(self):
         return self._phonon_primitive
 
-    def get_symmetry(self):
+    @property
+    def symmetry(self):
         """return symmetry of supercell"""
         return self._symmetry
 
-    def get_primitive_symmetry(self):
+    def get_symmetry(self):
+        return self.symmetry
+
+    @property
+    def primitive_symmetry(self):
+        """return symmetry of primitive cell"""
         return self._primitive_symmetry
+
+    def get_primitive_symmetry(self):
+        """return symmetry of primitive cell"""
+        return self.primitive_symmetry
 
     def get_phonon_supercell_symmetry(self):
         return self._phonon_supercell_symmetry
 
-    def get_supercell_matrix(self):
+    @property
+    def supercell_matrix(self):
         return self._supercell_matrix
 
-    def get_primitive_matrix(self):
+    def get_supercell_matrix(self):
+        return self.supercell_matrix
+
+    @property
+    def primitive_matrix(self):
         return self._primitive_matrix
+
+    def get_primitive_matrix(self):
+        return self.primitive_matrix
 
     def set_displacement_dataset(self, dataset):
         self._displacement_dataset = dataset
 
-    def get_displacement_dataset(self):
+    @property
+    def displacement_dataset(self):
         return self._displacement_dataset
+
+    def get_displacement_dataset(self):
+        return self.displacement_dataset
 
     def get_phonon_displacement_dataset(self):
         return self._phonon_displacement_dataset
