@@ -255,7 +255,10 @@ class Phono3py(object):
                     is_compact_fc=False,
                     use_alm=False):
         if displacement_dataset is None:
-            disp_dataset = self._displacement_dataset
+            if self._phonon_displacement_dataset is None:
+                disp_dataset = self._displacement_dataset
+            else:
+                disp_dataset = self._phonon_displacement_dataset
         else:
             disp_dataset = displacement_dataset
 
@@ -271,7 +274,7 @@ class Phono3py(object):
                 disp1['forces'] = forces
 
             if is_compact_fc:
-                p2s_map = self._phonon_primitive.get_primitive_to_supercell_map()
+                p2s_map = self._phonon_primitive.p2s_map
             else:
                 p2s_map = None
             self._fc2 = get_fc2(self._phonon_supercell,
