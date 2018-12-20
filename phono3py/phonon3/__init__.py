@@ -255,7 +255,7 @@ class Phono3py(object):
                     is_compact_fc=False,
                     use_alm=False):
         if displacement_dataset is None:
-            disp_dataset = self._displacement_dataset
+            disp_dataset = self._phonon_displacement_dataset
         else:
             disp_dataset = displacement_dataset
 
