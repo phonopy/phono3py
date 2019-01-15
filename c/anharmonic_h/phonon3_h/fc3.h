@@ -41,6 +41,14 @@ void fc3_distribute_fc3(double *fc3,
                         const int *atom_mapping,
                         const size_t num_atom,
                         const double *rot_cart);
+void fc3_rotate_delta_fc2(double (*fc3)[3][3][3],
+                          PHPYCONST double (*delta_fc2s)[3][3],
+                          const double *inv_U,
+                          PHPYCONST double (*site_sym_cart)[3][3],
+                          const int *rot_map_syms,
+                          const size_t num_atom,
+                          const size_t num_site_sym,
+                          const size_t num_disp);
 void fc3_set_permutation_symmetry_fc3(double *fc3, const size_t num_atom);
 void fc3_set_permutation_symmetry_compact_fc3(double * fc3,
                                               const int p2s[],

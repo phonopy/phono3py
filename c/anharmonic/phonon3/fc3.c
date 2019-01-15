@@ -33,8 +33,21 @@
 /* POSSIBILITY OF SUCH DAMAGE. */
 
 #include <stdlib.h>
+#include <phonoc_const.h>
 #include <phonon3_h/fc3.h>
 
+static void rotate_delta_fc2s(double (*rot_delta_fc2s)[3][3],
+                              const int i_atom,
+                              const int j_atom,
+                              PHPYCONST double (*delta_fc2s)[3][3],
+                              PHPYCONST double (*site_sym_cart)[3][3],
+                              const int *rot_map_sym,
+                              const size_t num_atom,
+                              const size_t num_site_sym,
+                              const size_t num_disp);
+static void tensor2_rotation(double rot_tensor[3][3],
+                             PHPYCONST double tensor[3][3],
+                             PHPYCONST double r[3][3]);
 static void tensor3_rotation(double *rot_tensor,
                              const double *tensor,
                              const double *rot_cartesian);
@@ -95,6 +108,50 @@ void fc3_distribute_fc3(double *fc3,
       tensor3_rotation(fc3 + adrs_out, fc3 + adrs_in, rot_cart);
     }
   }
+}
+
+void fc3_rotate_delta_fc2(double (*fc3)[3][3][3],
+                          PHPYCONST double (*delta_fc2s)[3][3],
+                          const double *inv_U,
+                          PHPYCONST double (*site_sym_cart)[3][3],
+                          const int *rot_map_syms,
+                          const size_t num_atom,
+                          const size_t num_site_sym,
+                          const size_t num_disp)
+{
+  int i_atoms, i, j, k, l, m, n;
+  double (*rot_delta_fc2s)[3][3];
+
+  rot_delta_fc2s = (double(*)[3][3]) malloc(sizeof(double[3][3])
+                                            * num_site_sym * num_disp);
+  for (i_atoms = 0; i_atoms < num_atom * num_atom; i_atoms++) {
+    i = i_atoms / num_atom;
+    j = i_atoms % num_atom;
+    rotate_delta_fc2s(rot_delta_fc2s,
+                      i,
+                      j,
+                      delta_fc2s,
+                      site_sym_cart,
+                      rot_map_syms,
+                      num_atom,
+                      num_site_sym,
+                      num_disp);
+    for (k = 0; k < 3; k++) {
+      for (l = 0; l < 3; l++) {
+        for (m = 0; m < 3; m++) {
+          fc3[i_atoms][k][l][m] = 0;
+          for (n = 0; n < num_site_sym * num_disp; n++) {
+            fc3[i_atoms][k][l][m] +=
+              inv_U[k * num_site_sym * num_disp + n]
+              * rot_delta_fc2s[n][l][m];
+          }
+        }
+      }
+    }
+  }
+
+  free(rot_delta_fc2s);
+  rot_delta_fc2s = NULL;
 }
 
 void fc3_set_permutation_symmetry_fc3(double *fc3, const size_t num_atom)
@@ -162,6 +219,52 @@ void fc3_transpose_compact_fc3(double * fc3,
                                   perms,
                                   n_satom,
                                   n_patom);
+    }
+  }
+}
+
+static void rotate_delta_fc2s(double (*rot_delta_fc2s)[3][3],
+                              const int i_atom,
+                              const int j_atom,
+                              PHPYCONST double (*delta_fc2s)[3][3],
+                              PHPYCONST double (*site_sym_cart)[3][3],
+                              const int *rot_map_sym,
+                              const size_t num_atom,
+                              const size_t num_site_sym,
+                              const size_t num_disp)
+{
+  int i, j;
+
+  for (i = 0; i < num_disp; i++) {
+    for (j = 0; j < num_site_sym; j++) {
+      tensor2_rotation(rot_delta_fc2s[i * num_site_sym + j],
+                       delta_fc2s[i * num_atom * num_atom
+                                  + rot_map_sym[j * num_atom + i_atom] * num_atom
+                                  + rot_map_sym[j * num_atom + j_atom]],
+                       site_sym_cart[j]);
+    }
+  }
+}
+
+static void tensor2_rotation(double rot_tensor[3][3],
+                             PHPYCONST double tensor[3][3],
+                             PHPYCONST double r[3][3])
+{
+  int i, j, k, l;
+
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
+      rot_tensor[i][j] = 0;
+    }
+  }
+
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
+      for (k = 0; k < 3; k++) {
+        for (l = 0; l < 3; l++) {
+          rot_tensor[i][j] += r[i][k] * r[j][l] * tensor[k][l];
+        }
+      }
     }
   }
 }

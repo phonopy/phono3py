@@ -73,6 +73,7 @@ static PyObject * py_get_reducible_collision_matrix(PyObject *self,
 static PyObject * py_symmetrize_collision_matrix(PyObject *self,
                                                  PyObject *args);
 static PyObject * py_distribute_fc3(PyObject *self, PyObject *args);
+static PyObject * py_rotate_delta_fc2s(PyObject *self, PyObject *args);
 static PyObject * py_get_isotope_strength(PyObject *self, PyObject *args);
 static PyObject * py_get_thm_isotope_strength(PyObject *self, PyObject *args);
 static PyObject *
@@ -174,6 +175,10 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_distribute_fc3,
    METH_VARARGS,
    "Distribute least fc3 to full fc3"},
+  {"rotate_delta_fc2s",
+   (PyCFunction)py_rotate_delta_fc2s,
+   METH_VARARGS,
+   "Rotate delta fc2s"},
   {"isotope_strength",
    (PyCFunction)py_get_isotope_strength,
    METH_VARARGS,
@@ -1385,7 +1390,7 @@ static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
   double *fc3;
   double *rot_cart_inv;
   int *atom_mapping;
-  int num_atom;
+  npy_intp num_atom;
 
   if (!PyArg_ParseTuple(args, "OiiOO",
                         &force_constants_third,
@@ -1411,13 +1416,66 @@ static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+static PyObject * py_rotate_delta_fc2s(PyObject *self, PyObject *args)
+{
+  PyArrayObject *py_fc3;
+  PyArrayObject *py_delta_fc2s;
+  PyArrayObject *py_inv_U;
+  PyArrayObject *py_site_sym_cart;
+  PyArrayObject *py_rot_map_syms;
+
+  double (*fc3)[3][3][3];
+  double (*delta_fc2s)[3][3];
+  double *inv_U;
+  double (*site_sym_cart)[3][3];
+  int *rot_map_syms;
+  npy_intp num_atom;
+  npy_intp num_disp;
+  npy_intp num_site_sym;
+
+  if (!PyArg_ParseTuple(args, "OOOOO",
+                        &py_fc3,
+                        &py_delta_fc2s,
+                        &py_inv_U,
+                        &py_site_sym_cart,
+                        &py_rot_map_syms)) {
+    return NULL;
+  }
+
+  /* (num_atom, num_atom, 3, 3, 3) */
+  fc3 = (double(*)[3][3][3])PyArray_DATA(py_fc3);
+  /* (n_u1, num_atom, num_atom, 3, 3) */
+  delta_fc2s = (double(*)[3][3])PyArray_DATA(py_delta_fc2s);
+  /* (3, n_u1 * n_sym) */
+  inv_U = (double*)PyArray_DATA(py_inv_U);
+  /* (n_sym, 3, 3) */
+  site_sym_cart = (double(*)[3][3])PyArray_DATA(py_site_sym_cart);
+  /* (n_sym, natom) */
+  rot_map_syms = (int*)PyArray_DATA(py_rot_map_syms);
+
+  num_atom = PyArray_DIMS(py_fc3)[0];
+  num_disp = PyArray_DIMS(py_delta_fc2s)[0];
+  num_site_sym = PyArray_DIMS(py_site_sym_cart)[0];
+
+  fc3_rotate_delta_fc2(fc3,
+                       delta_fc2s,
+                       inv_U,
+                       site_sym_cart,
+                       rot_map_syms,
+                       num_atom,
+                       num_site_sym,
+                       num_disp);
+
+  Py_RETURN_NONE;
+}
+
 static PyObject *
 py_set_permutation_symmetry_fc3(PyObject *self, PyObject *args)
 {
   PyArrayObject *py_fc3;
 
   double *fc3;
-  int num_atom;
+  npy_intp num_atom;
 
   if (!PyArg_ParseTuple(args, "O", &py_fc3)) {
     return NULL;
@@ -1445,7 +1503,7 @@ py_set_permutation_symmetry_compact_fc3(PyObject *self, PyObject *args)
   int *p2s;
   int *nsym_list;
   int *perms;
-  int n_patom, n_satom;
+  npy_intp n_patom, n_satom;
 
   if (!PyArg_ParseTuple(args, "OOOOO",
                         &py_fc3,
@@ -1489,7 +1547,7 @@ static PyObject * py_transpose_compact_fc3(PyObject *self, PyObject *args)
   int *p2s;
   int *nsym_list;
   int *perms;
-  int n_patom, n_satom;
+  npy_intp n_patom, n_satom;
 
   if (!PyArg_ParseTuple(args, "OOOOOi",
                         &py_fc3,
