@@ -118,7 +118,7 @@ def create_phono3py_force_constants(phono3py,
                 set_permutation_symmetry_fc3(fc3)
 
             phono3py.set_fc3(fc3)
-        else: # fc3 from FORCES_FC3
+        else:  # fc3 from FORCES_FC3
             if not _create_phono3py_fc3(phono3py,
                                         force_to_eVperA,
                                         distance_to_A,
@@ -255,9 +255,8 @@ def _create_phono3py_fc3(phono3py,
     file_exists("FORCES_FC3", log_level)
     if log_level:
         print("Sets of supercell forces are read from %s." % "FORCES_FC3")
+        sys.stdout.flush()
     forces_fc3 = parse_FORCES_FC3(disp_dataset)
-    if not forces_fc3:
-        return False
 
     _convert_force_unit(forces_fc3, force_to_eVperA)
     phono3py.produce_fc3(forces_fc3,

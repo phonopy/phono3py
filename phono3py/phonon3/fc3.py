@@ -1,4 +1,5 @@
 import sys
+import logging
 import numpy as np
 from phonopy.harmonic.force_constants import (get_fc2,
                                               similarity_transformation,
@@ -11,6 +12,8 @@ from phono3py.phonon3.displacement_fc3 import (get_reduced_site_symmetry,
                                                get_bond_symmetry,
                                                get_equivalent_smallest_vectors)
 from phonopy.structure.cells import compute_all_sg_permutations
+
+logger = logging.getLogger(__name__)
 
 
 def get_fc3(supercell,
@@ -275,6 +278,7 @@ def get_delta_fc2(dataset_second_atoms,
                   supercell,
                   reduced_site_sym,
                   symprec):
+    logger.debug("get_delta_fc2")
     disp_fc2 = get_constrained_fc2(supercell,
                                    dataset_second_atoms,
                                    atom1,
@@ -352,6 +356,8 @@ def solve_fc3(first_atom_num,
               pinv_solver="numpy",
               verbose=False):
 
+    logger.debug("solve_fc3")
+
     if pinv_solver == "numpy":
         solver = "numpy.linalg.pinv"
     else:
@@ -389,11 +395,16 @@ def solve_fc3(first_atom_num,
     positions = supercell.get_scaled_positions()
     pos_center = positions[first_atom_num].copy()
     positions -= pos_center
+
+    logger.debug("get_positions_sent_by_rot_inv")
+
     rot_map_syms = get_positions_sent_by_rot_inv(lattice,
                                                  positions,
                                                  site_symmetry,
                                                  symprec)
     rot_disps = get_rotated_displacement(displacements_first, site_sym_cart)
+
+    logger.debug("pinv")
 
     if "numpy" in solver:
         inv_U = np.array(np.linalg.pinv(rot_disps), dtype='double', order='C')
@@ -403,6 +414,8 @@ def solve_fc3(first_atom_num,
         lapackepy.pinv(inv_U, rot_disps, 1e-13)
 
     fc3 = np.zeros((num_atom, num_atom, 3, 3, 3), dtype='double', order='C')
+
+    logger.debug("rotate_delta_fc2s")
 
     try:
         import phono3py._phono3py as phono3c

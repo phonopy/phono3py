@@ -62,6 +62,11 @@ from phono3py.cui.create_force_constants import create_phono3py_force_constants
 from phono3py.cui.phono3py_yaml import Phono3pyYaml
 
 
+# import logging
+# logging.basicConfig()
+# logging.getLogger("phono3py.phonon3.fc3").setLevel(level=logging.DEBUG)
+
+
 def finalize_phono3py(log_level,
                       phonop3y_conf,
                       phono3py,
