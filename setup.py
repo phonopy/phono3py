@@ -19,7 +19,8 @@ lib_omp = None
 if 'CC' in os.environ:
     if 'clang' in os.environ['CC']:
         cc = 'clang'
-        lib_omp = '-lomp'
+        # lib_omp = '-liomp5'
+        # lib_omp = '-lomp'
     if 'gcc' in os.environ['CC'] or 'gnu-cc' in os.environ['CC']:
         cc = 'gcc'
 if cc == 'gcc' or cc is None:
