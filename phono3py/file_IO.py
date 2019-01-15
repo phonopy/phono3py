@@ -1190,21 +1190,26 @@ def parse_FORCES_FC2(disp_dataset, filename="FORCES_FC2"):
     return forces_fc2
 
 
-def parse_FORCES_FC3(disp_dataset, filename="FORCES_FC3"):
+def parse_FORCES_FC3(disp_dataset, filename="FORCES_FC3", use_loadtxt=False):
     num_atom = disp_dataset['natom']
     num_disp = len(disp_dataset['first_atoms'])
     for disp1 in disp_dataset['first_atoms']:
         num_disp += len(disp1['second_atoms'])
 
-    forces_fc3 = []
-    with open(filename, 'r') as f3:
-        for i in range(num_disp):
-            forces = _parse_force_lines(f3, num_atom)
-            if forces is None:
-                return []
-            else:
-                forces_fc3.append(forces)
-    return forces_fc3
+    if use_loadtxt:
+        forces_fc3 = np.loadtxt(filename)
+        return forces_fc3.reshape((num_disp, -1, 3))
+    else:
+        forces_fc3 = np.zeros((num_disp, num_atom, 3),
+                              dtype='double', order='C')
+        with open(filename, 'r') as f3:
+            for i in range(num_disp):
+                forces = _parse_force_lines(f3, num_atom)
+                if forces is None:
+                    raise RuntimeError("Failed to parse %s." % filename)
+                else:
+                    forces_fc3[i] = forces
+        return forces_fc3
 
 
 def parse_QPOINTS3(filename='QPOINTS3'):
@@ -1216,8 +1221,7 @@ def parse_QPOINTS3(filename='QPOINTS3'):
         line_array = [float(x) for x in line.strip().split()]
 
         if len(line_array) < 9:
-            print("QPOINTS3 format is invalid.")
-            raise ValueError
+            raise RuntimeError("Failed to parse %s." % filename)
         else:
             qpoints3.append(line_array[0:9])
 
