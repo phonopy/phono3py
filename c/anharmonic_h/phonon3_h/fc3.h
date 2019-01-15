@@ -39,23 +39,23 @@ void fc3_distribute_fc3(double *fc3,
                         const int target,
                         const int source,
                         const int *atom_mapping,
-                        const int num_atom,
+                        const size_t num_atom,
                         const double *rot_cart);
-void fc3_set_permutation_symmetry_fc3(double *fc3, const int num_atom);
+void fc3_set_permutation_symmetry_fc3(double *fc3, const size_t num_atom);
 void fc3_set_permutation_symmetry_compact_fc3(double * fc3,
                                               const int p2s[],
                                               const int s2pp[],
                                               const int nsym_list[],
                                               const int perms[],
-                                              const int n_satom,
-                                              const int n_patom);
+                                              const size_t n_satom,
+                                              const size_t n_patom);
 void fc3_transpose_compact_fc3(double * fc3,
                                const int p2s[],
                                const int s2pp[],
                                const int nsym_list[],
                                const int perms[],
-                               const int n_satom,
-                               const int n_patom,
+                               const size_t n_satom,
+                               const size_t n_patom,
                                const int t_type);
 
 #endif
