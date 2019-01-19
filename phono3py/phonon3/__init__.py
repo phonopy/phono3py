@@ -239,6 +239,21 @@ class Phono3py(object):
             cutoff_distance=cutoff_pair_distance)
 
         if self._phonon_supercell_matrix is not None:
+            # 'is_diagonal=False' below is made intentionally. For
+            # third-order force constants, we need better accuracy,
+            # and I expect this choice is better for it, but not very
+            # sure. In phono3py, two atoms are displaced for each
+            # configuration and the displacements are chosen, first
+            # displacement from the perfect supercell, then second
+            # displacement, considering symmetry. If I choose
+            # is_diagonal=False for the first displacement, the
+            # symmetry is less broken and the number of second
+            # displacements can be smaller than in the case of
+            # is_diagonal=True for the first displacement. These are
+            # all my expectation when I designed phono3py in the early
+            # time, and in fact now I guess not very different. If
+            # these are little different, then I should not surprise
+            # users to change the default behaviour.
             phonon_displacement_directions = get_least_displacements(
                 self._phonon_supercell_symmetry,
                 is_plusminus=is_plusminus,
