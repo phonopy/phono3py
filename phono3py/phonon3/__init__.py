@@ -242,18 +242,32 @@ class Phono3py(object):
             # 'is_diagonal=False' below is made intentionally. For
             # third-order force constants, we need better accuracy,
             # and I expect this choice is better for it, but not very
-            # sure. In phono3py, two atoms are displaced for each
+            # sure.
+            # In phono3py, two atoms are displaced for each
             # configuration and the displacements are chosen, first
             # displacement from the perfect supercell, then second
             # displacement, considering symmetry. If I choose
             # is_diagonal=False for the first displacement, the
             # symmetry is less broken and the number of second
             # displacements can be smaller than in the case of
-            # is_diagonal=True for the first displacement. These are
-            # all my expectation when I designed phono3py in the early
-            # time, and in fact now I guess not very different. If
-            # these are little different, then I should not surprise
-            # users to change the default behaviour.
+            # is_diagonal=True for the first displacement.  This is
+            # done in the call get_least_displacements() in
+            # phonon3.displacement_fc3.get_third_order_displacements().
+            #
+            # The call get_least_displacements() is only for the
+            # second order force constants, but 'is_diagonal=False' to
+            # be consistent with the above function call, and also for
+            # the accuracy when calculating ph-ph interaction
+            # strength because displacement directions are better to be
+            # close to perpendicular each other to fit force constants.
+            #
+            # On the discussion of the accuracy, these are just my
+            # expectation when I designed phono3py in the early time,
+            # and in fact now I guess not very different. If these are
+            # little different, then I should not surprise users to
+            # change the default behaviour. At this moment, this is
+            # open question and we will have more advance and should
+            # have better specificy external software on this.
             phonon_displacement_directions = get_least_displacements(
                 self._phonon_supercell_symmetry,
                 is_plusminus=is_plusminus,
