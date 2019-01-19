@@ -45,6 +45,7 @@ class Phono3pyYaml(PhonopyYaml):
         self._physical_units = None
         self._show_force_constants = None  # to be False
         self._show_displacements = None  # to be False
+        self._settings = {}
 
         PhonopyYaml.__init__(self,
                              configuration=configuration,
@@ -65,3 +66,5 @@ class Phono3pyYaml(PhonopyYaml):
 
         # Overwrite this
         self._command_name = "phono3py"
+        for key in self._settings:
+            self._settings[key] = False
