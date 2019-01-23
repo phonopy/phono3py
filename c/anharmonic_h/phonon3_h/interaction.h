@@ -77,7 +77,7 @@ void get_interaction_at_triplet(double *fc3_normal_squared,
                                 const int *band_indices,
                                 const int symmetrize_fc3_q,
                                 const double cutoff_frequency,
-                                const int triplet_index,
-                                const int num_triplets,
+                                const size_t triplet_index,
+                                const size_t num_triplets,
                                 const int openmp_at_bands);
 #endif
