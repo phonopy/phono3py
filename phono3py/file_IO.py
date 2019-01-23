@@ -1330,7 +1330,8 @@ def _parse_yaml(file_yaml):
     except ImportError:
         from yaml import Loader, Dumper
 
-    string = open(file_yaml).read()
+    with open(file_yaml) as f:
+        string = f.read()
     data = yaml.load(string, Loader=Loader)
     return data
 
