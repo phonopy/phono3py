@@ -46,20 +46,20 @@
 #endif
 
 static lapack_complex_double fc3_sum_in_reciprocal_to_normal
-(const int bi0,
- const int bi1,
- const int bi2,
+(const size_t bi0,
+ const size_t bi1,
+ const size_t bi2,
  const lapack_complex_double *eigvecs0,
  const lapack_complex_double *eigvecs1,
  const lapack_complex_double *eigvecs2,
  const lapack_complex_double *fc3_reciprocal,
  const double *masses,
- const int num_atom);
+ const size_t num_atom);
 
 static double get_fc3_sum
-(const int j,
- const int k,
- const int bi,
+(const size_t j,
+ const size_t k,
+ const size_t bi,
  const double *freqs0,
  const double *freqs1,
  const double *freqs2,
@@ -68,13 +68,13 @@ static double get_fc3_sum
  const lapack_complex_double *eigvecs2,
  const lapack_complex_double *fc3_reciprocal,
  const double *masses,
- const int num_atom,
+ const size_t num_atom,
  const double cutoff_frequency);
 
 void reciprocal_to_normal_squared
 (double *fc3_normal_squared,
  PHPYCONST int (*g_pos)[4],
- const int num_g_pos,
+ const size_t num_g_pos,
  const lapack_complex_double *fc3_reciprocal,
  const double *freqs0,
  const double *freqs1,
@@ -84,12 +84,12 @@ void reciprocal_to_normal_squared
  const lapack_complex_double *eigvecs2,
  const double *masses,
  const int *band_indices,
- const int num_band0,
- const int num_band,
+ const size_t num_band0,
+ const size_t num_band,
  const double cutoff_frequency,
  const int openmp_at_bands)
 {
-  int i, num_atom;
+  size_t i, num_atom;
 
 #ifdef MEASURE_R2N
   double loopTotalCPUTime, loopTotalWallTime;
@@ -132,9 +132,9 @@ void reciprocal_to_normal_squared
 }
 
 static double get_fc3_sum
-(const int j,
- const int k,
- const int bi,
+(const size_t j,
+ const size_t k,
+ const size_t bi,
  const double *freqs0,
  const double *freqs1,
  const double *freqs2,
@@ -143,7 +143,7 @@ static double get_fc3_sum
  const lapack_complex_double *eigvecs2,
  const lapack_complex_double *fc3_reciprocal,
  const double *masses,
- const int num_atom,
+ const size_t num_atom,
  const double cutoff_frequency)
 {
   double fff, sum_real, sum_imag;
@@ -166,17 +166,17 @@ static double get_fc3_sum
 }
 
 static lapack_complex_double fc3_sum_in_reciprocal_to_normal
-(const int bi0,
- const int bi1,
- const int bi2,
+(const size_t bi0,
+ const size_t bi1,
+ const size_t bi2,
  const lapack_complex_double *eigvecs0,
  const lapack_complex_double *eigvecs1,
  const lapack_complex_double *eigvecs2,
  const lapack_complex_double *fc3_reciprocal,
  const double *masses,
- const int num_atom)
+ const size_t num_atom)
 {
-  int i, j, k, l, m, n, index_l, index_lm, baseIndex;
+  size_t baseIndex, index_l, index_lm, i, j, k, l, m, n;
   double sum_real, sum_imag, mmm, mass_l, mass_lm;
   lapack_complex_double eig_prod, eig_prod1;
 

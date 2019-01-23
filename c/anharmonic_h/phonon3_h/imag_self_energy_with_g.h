@@ -60,8 +60,8 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
  const double temperature,
  const double cutoff_frequency);
 void ise_imag_self_energy_at_triplet(double *imag_self_energy,
-                                     const int num_band0,
-                                     const int num_band,
+                                     const size_t num_band0,
+                                     const size_t num_band,
                                      const double *fc3_normal_squared,
                                      const double *frequencies,
                                      const int *triplets,
@@ -69,14 +69,14 @@ void ise_imag_self_energy_at_triplet(double *imag_self_energy,
                                      const double *g1,
                                      const double *g2_3,
                                      PHPYCONST int (*g_pos)[4],
-                                     const int num_g_pos,
+                                     const size_t num_g_pos,
                                      const double *temperatures,
-                                     const int num_temps,
+                                     const size_t num_temps,
                                      const double cutoff_frequency,
                                      const int openmp_at_bands);
 int ise_set_g_pos(int (*g_pos)[4],
-                  const int num_band0,
-                  const int num_band,
+                  const size_t num_band0,
+                  const size_t num_band,
                   const char *g_zero);
 
 #endif

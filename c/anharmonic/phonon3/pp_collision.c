@@ -45,8 +45,8 @@
 #include <lapack_wrapper.h>
 
 static void get_collision(double *ise,
-                          const int num_band0,
-                          const int num_band,
+                          const size_t num_band0,
+                          const size_t num_band,
                           const int num_temps,
                           const double *temperatures,
                           const double *g,
@@ -75,7 +75,7 @@ static void finalize_ise(double *imag_self_energy,
                          const int *triplets,
                          const int num_triplets,
                          const int num_temps,
-                         const int num_band0,
+                         const size_t num_band0,
                          const int is_NU);
 
 void ppc_get_pp_collision(double *imag_self_energy,
@@ -101,7 +101,8 @@ void ppc_get_pp_collision(double *imag_self_energy,
                           const int symmetrize_fc3_q,
                           const double cutoff_frequency)
 {
-  int i, num_band, num_band0, num_band_prod, num_triplets, num_temps;
+  int i;
+  size_t num_band, num_band0, num_band_prod, num_triplets, num_temps;
   int openmp_per_triplets;
   double *ise, *freqs_at_gp, *g;
   char *g_zero;
@@ -223,7 +224,8 @@ void ppc_get_pp_collision_with_sigma(
   const int symmetrize_fc3_q,
   const double cutoff_frequency)
 {
-  int i, num_band, num_band0, num_band_prod, num_triplets, num_temps;
+  int i;
+  size_t num_band, num_band0, num_band_prod, num_triplets, num_temps;
   int openmp_per_triplets, const_adrs_shift;
   double cutoff;
   double *ise, *freqs_at_gp, *g;
@@ -321,8 +323,8 @@ void ppc_get_pp_collision_with_sigma(
 }
 
 static void get_collision(double *ise,
-                          const int num_band0,
-                          const int num_band,
+                          const size_t num_band0,
+                          const size_t num_band,
                           const int num_temps,
                           const double *temperatures,
                           const double *g,
@@ -346,7 +348,8 @@ static void get_collision(double *ise,
                           const double cutoff_frequency,
                           const int openmp_per_triplets)
 {
-  int i, num_band_prod, num_g_pos;
+  int i;
+  size_t num_band_prod, num_g_pos;
   double *fc3_normal_squared;
   int (*g_pos)[4];
 
@@ -421,7 +424,7 @@ static void finalize_ise(double *imag_self_energy,
                          const int *triplets,
                          const int num_triplets,
                          const int num_temps,
-                         const int num_band0,
+                         const size_t num_band0,
                          const int is_NU)
 {
   int i, j, k, is_N;

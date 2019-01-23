@@ -71,9 +71,9 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
                                         const int *multiplicity,
                                         const int *p2s,
                                         const int *s2p,
-                                        const int pi0,
-                                        const int pi1,
-                                        const int pi2);
+                                        const size_t pi0,
+                                        const size_t pi1,
+                                        const size_t pi2);
 static lapack_complex_double get_phase_factor(const double q[],
                                               const int qi,
                                               const double *shortest_vectors,
@@ -133,7 +133,8 @@ real_to_reciprocal_single_thread(lapack_complex_double *fc3_reciprocal,
                                  const int *p2s_map,
                                  const int *s2p_map)
 {
-  int i, j, k, num_patom, adrs_shift;
+  int i, j, k;
+  size_t num_patom, adrs_shift;
   lapack_complex_double pre_phase_factor;
 
   num_patom = svecs_dims[1];
@@ -178,7 +179,8 @@ real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
                           const int *p2s_map,
                           const int *s2p_map)
 {
-  int i, j, k, jk, num_patom, adrs_shift;
+  int i, j, k, jk;
+  size_t num_patom, adrs_shift;
   lapack_complex_double pre_phase_factor;
 
   num_patom = svecs_dims[1];
@@ -223,11 +225,12 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
                                         const int *multiplicity,
                                         const int *p2s,
                                         const int *s2p,
-                                        const int pi0,
-                                        const int pi1,
-                                        const int pi2)
+                                        const size_t pi0,
+                                        const size_t pi1,
+                                        const size_t pi2)
 {
-  int i, j, k, l, num_satom, adrs_shift, adrs_vec1, adrs_vec2 ;
+  int i, j, k, l;
+  size_t num_satom, adrs_shift, adrs_vec1, adrs_vec2 ;
   lapack_complex_double phase_factor, phase_factor1, phase_factor2;
   double fc3_rec_real[27], fc3_rec_imag[27];
 

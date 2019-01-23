@@ -41,16 +41,16 @@
 
 static void _get_collision_matrix(double *collision_matrix,
                                   const double *fc3_normal_squared,
-                                  const int num_band0,
-                                  const int num_band,
+                                  const size_t num_band0,
+                                  const size_t num_band,
                                   const double *frequencies,
                                   const int *triplets,
                                   const int *triplets_map,
-                                  const int num_gp,
+                                  const size_t num_gp,
                                   const int *stabilized_gp_map,
                                   const int *rot_BZ_grid_points,
-                                  const int num_ir_gp,
-                                  const int num_rot,
+                                  const size_t num_ir_gp,
+                                  const size_t num_rot,
                                   const double *rotations_cartesian,
                                   const double *g,
                                   const double temperature,
@@ -59,29 +59,29 @@ static void _get_collision_matrix(double *collision_matrix,
 static void
 _get_reducible_collision_matrix(double *collision_matrix,
                                 const double *fc3_normal_squared,
-                                const int num_band0,
-                                const int num_band,
+                                const size_t num_band0,
+                                const size_t num_band,
                                 const double *frequencies,
                                 const int *triplets,
                                 const int *triplets_map,
-                                const int num_gp,
+                                const size_t num_gp,
                                 const int *stabilized_gp_map,
                                 const double *g,
                                 const double temperature,
                                 const double unit_conversion_factor,
                                 const double cutoff_frequency);
 static void get_inv_sinh(double *inv_sinh,
-                         const int gp,
+                         const size_t gp,
                          const double temperature,
                          const double *frequencies,
                          const int *triplets,
                          const int *triplets_map,
                          const int *stabilized_gp_map,
-                         const int ti,
-                         const int num_band,
+                         const size_t ti,
+                         const size_t num_band,
                          const double cutoff_frequency);
-static int *create_gp2tp_map(const int *triplets,
-                             const int num_gp);
+static size_t *create_gp2tp_map(const int *triplets,
+                                const size_t num_gp);
 
 void col_get_collision_matrix(double *collision_matrix,
                               const Darray *fc3_normal_squared,
@@ -96,7 +96,7 @@ void col_get_collision_matrix(double *collision_matrix,
                               const double unit_conversion_factor,
                               const double cutoff_frequency)
 {
-  int num_triplets, num_ir_gp, num_rot, num_gp, num_band0, num_band;
+  size_t num_triplets, num_ir_gp, num_rot, num_gp, num_band0, num_band;
 
   num_triplets = fc3_normal_squared->dims[0];
   num_band0 = fc3_normal_squared->dims[1];
@@ -136,7 +136,7 @@ void col_get_reducible_collision_matrix(double *collision_matrix,
                                         const double unit_conversion_factor,
                                         const double cutoff_frequency)
 {
-  int num_triplets, num_gp, num_band, num_band0;
+  size_t num_triplets, num_gp, num_band, num_band0;
 
   num_triplets = fc3_normal_squared->dims[0];
   num_band0 = fc3_normal_squared->dims[1];
@@ -161,24 +161,24 @@ void col_get_reducible_collision_matrix(double *collision_matrix,
 
 static void _get_collision_matrix(double *collision_matrix,
                                   const double *fc3_normal_squared,
-                                  const int num_band0,
-                                  const int num_band,
+                                  const size_t num_band0,
+                                  const size_t num_band,
                                   const double *frequencies,
                                   const int *triplets,
                                   const int *triplets_map,
-                                  const int num_gp,
+                                  const size_t num_gp,
                                   const int *stabilized_gp_map,
                                   const int *rot_BZ_grid_points,
-                                  const int num_ir_gp,
-                                  const int num_rot,
+                                  const size_t num_ir_gp,
+                                  const size_t num_rot,
                                   const double *rotations_cartesian,
                                   const double *g,
                                   const double temperature,
                                   const double unit_conversion_factor,
                                   const double cutoff_frequency)
 {
-  int i, j, k, l, m, n, ti, r_gp;
-  int *gp2tp_map;
+  size_t i, j, k, l, m, n, ti, r_gp;
+  size_t *gp2tp_map;
   double collision;
   double *inv_sinh;
 
@@ -236,20 +236,20 @@ static void _get_collision_matrix(double *collision_matrix,
 static void
 _get_reducible_collision_matrix(double *collision_matrix,
                                 const double *fc3_normal_squared,
-                                const int num_band0,
-                                const int num_band,
+                                const size_t num_band0,
+                                const size_t num_band,
                                 const double *frequencies,
                                 const int *triplets,
                                 const int *triplets_map,
-                                const int num_gp,
+                                const size_t num_gp,
                                 const int *stabilized_gp_map,
                                 const double *g,
                                 const double temperature,
                                 const double unit_conversion_factor,
                                 const double cutoff_frequency)
 {
-  int i, j, k, l, ti;
-  int *gp2tp_map;
+  size_t i, j, k, l, ti;
+  size_t *gp2tp_map;
   double collision;
   double *inv_sinh;
 
@@ -296,17 +296,17 @@ _get_reducible_collision_matrix(double *collision_matrix,
 }
 
 static void get_inv_sinh(double *inv_sinh,
-                         const int gp,
+                         const size_t gp,
                          const double temperature,
                          const double *frequencies,
                          const int *triplets,
                          const int *triplets_map,
                          const int *stabilized_gp_map,
-                         const int ti,
-                         const int num_band,
+                         const size_t ti,
+                         const size_t num_band,
                          const double cutoff_frequency)
 {
-  int i, gp2;
+  size_t i, gp2;
   double f;
 
   if (triplets_map[gp] == stabilized_gp_map[gp]) {
@@ -324,11 +324,11 @@ static void get_inv_sinh(double *inv_sinh,
   }
 }
 
-static int *create_gp2tp_map(const int *triplets_map,
-                             const int num_gp)
+static size_t *create_gp2tp_map(const int *triplets_map,
+                                const size_t num_gp)
 {
-  int i, max_i, count;
-  int *gp2tp_map;
+  size_t i, max_i, count;
+  size_t *gp2tp_map;
 
   max_i = 0;
   for (i = 0; i < num_gp; i++) {
@@ -337,7 +337,7 @@ static int *create_gp2tp_map(const int *triplets_map,
     }
   }
 
-  gp2tp_map = (int*)malloc(sizeof(int) * (max_i + 1));
+  gp2tp_map = (size_t*)malloc(sizeof(size_t) * (max_i + 1));
   for (i = 0; i < max_i + 1; i++) {
     gp2tp_map[i] = 0;
   }
@@ -348,7 +348,7 @@ static int *create_gp2tp_map(const int *triplets_map,
       gp2tp_map[i] = count;
       count++;
     }
-  }
+ }
 
   return gp2tp_map;
 }
