@@ -1259,7 +1259,8 @@ static PyObject * py_expand_collision_matrix(PyObject *self, PyObject *args)
   assert(num_grid_points == PyArray_DIMS(py_rot_grid_points)[1]);
 
   multi = (size_t*)malloc(sizeof(size_t) * num_ir_gp);
-  colmat_copy = NULL;
+  colmat_copy = (double*)malloc(sizeof(double) * num_bgb);
+  /* colmat_copy = NULL; */
 
 #pragma omp parallel for schedule(guided) private(j, ir_gp)
   for (i = 0; i < num_ir_gp; i++) {
@@ -1276,19 +1277,20 @@ static PyObject * py_expand_collision_matrix(PyObject *self, PyObject *args)
     for (j = 0; j < num_temp; j++) {
       adrs_shift = (i * num_column * num_column * num_temp +
                     j * num_column * num_column);
-#pragma omp parallel for private(ir_gp, adrs_shift_plus, colmat_copy, l, gp_r, m, n, p)
+/* #pragma omp parallel for private(ir_gp, adrs_shift_plus, colmat_copy, l, gp_r, m, n, p) */
       for (k = 0; k < num_ir_gp; k++) {
         ir_gp = ir_grid_points[k];
         adrs_shift_plus = adrs_shift + ir_gp * num_bgb;
-        colmat_copy = (double*)malloc(sizeof(double) * num_bgb);
+        /* colmat_copy = (double*)malloc(sizeof(double) * num_bgb); */
         for (l = 0; l < num_bgb; l++) {
           colmat_copy[l] = collision_matrix[adrs_shift_plus + l] / multi[k];
           collision_matrix[adrs_shift_plus + l] = 0;
         }
         for (l = 0; l < num_rot; l++) {
           gp_r = rot_grid_points[l * num_grid_points + ir_gp];
-          for (m = 0; m < num_band; m++) {
-            for (n = 0; n < num_grid_points; n++) {
+#pragma omp parallel for private(m, p)
+          for (n = 0; n < num_grid_points; n++) {
+            for (m = 0; m < num_band; m++) {
               for (p = 0; p < num_band; p++) {
                 collision_matrix[
                   adrs_shift + gp_r * num_bgb + m * num_grid_points * num_band
@@ -1298,16 +1300,16 @@ static PyObject * py_expand_collision_matrix(PyObject *self, PyObject *args)
             }
           }
         }
-        free(colmat_copy);
-        colmat_copy = NULL;
+        /* free(colmat_copy); */
+        /* colmat_copy = NULL; */
       }
     }
   }
 
   free(multi);
   multi = NULL;
-  /* free(colmat_copy); */
-  /* colmat_copy = NULL; */
+  free(colmat_copy);
+  colmat_copy = NULL;
 
   Py_RETURN_NONE;
 }
