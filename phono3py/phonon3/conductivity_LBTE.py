@@ -1027,6 +1027,11 @@ class Conductivity_LBTE(Conductivity):
                         j, k, i, l, i, l] += main_diagonal[l]
 
     def _expand_collisions(self):
+        start = time.time()
+        if self._log_level:
+            sys.stdout.write("- Expand properties to all grid points ")
+            sys.stdout.flush()
+
         num_mesh_points = np.prod(self._mesh)
         num_rot = len(self._point_operations)
         rot_grid_points = np.zeros(
@@ -1038,9 +1043,26 @@ class Conductivity_LBTE(Conductivity):
                 self._point_operations,
                 self._mesh)
 
+        try:
+            import phono3py._phono3py as phono3c
+            phono3c.expand_collision_matrix(self._collision_matrix,
+                                            self._ir_grid_points,
+                                            rot_grid_points)
+        except ImportError:
+            print("Phono3py C-routine is not compiled correctly.")
+            for i, ir_gp in enumerate(self._ir_grid_points):
+                multi = (rot_grid_points[:, ir_gp] == ir_gp).sum()
+                colmat_irgp = self._collision_matrix[:, :, ir_gp, :, :, :].copy()
+                colmat_irgp /= multi
+                self._collision_matrix[:, :, ir_gp, :, :, :] = 0
+                for j, r in enumerate(self._rotations_cartesian):
+                    gp_r = rot_grid_points[j, ir_gp]
+                    for k in range(num_mesh_points):
+                        gp_c = rot_grid_points[j, k]
+                        self._collision_matrix[:, :, gp_r, :, gp_c, :] += (
+                            colmat_irgp[:, :, :, k, :])
+
         for i, ir_gp in enumerate(self._ir_grid_points):
-            colmat_irgp = self._collision_matrix[:, :, ir_gp, :, :, :].copy()
-            self._collision_matrix[:, :, ir_gp, :, :, :] = 0
             gv_irgp = self._gv[ir_gp].copy()
             self._gv[ir_gp] = 0
             cv_irgp = self._cv[:, ir_gp, :].copy()
@@ -1056,12 +1078,12 @@ class Conductivity_LBTE(Conductivity):
                 self._gamma[:, :, gp_r, :] += gamma_irgp / multi
                 if self._gamma_iso is not None:
                     self._gamma_iso[:, gp_r, :] += gamma_iso_irgp / multi
-                for k in range(num_mesh_points):
-                    gp_c = rot_grid_points[j, k]
-                    self._collision_matrix[:, :, gp_r, :, gp_c, :] += (
-                        colmat_irgp[:, :, :, k, :] / multi)
                 self._gv[gp_r] += np.dot(gv_irgp, r.T) / multi
                 self._cv[:, gp_r, :] += cv_irgp / multi
+
+        if self._log_level:
+            print("[%.3fs]" % (time.time() - start))
+            sys.stdout.flush()
 
     def _get_weights(self):
         """Weights used for collision matrix and |X> and |f>

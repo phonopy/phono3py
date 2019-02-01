@@ -33,6 +33,7 @@
 /* POSSIBILITY OF SUCH DAMAGE. */
 
 #include <Python.h>
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -72,6 +73,7 @@ static PyObject * py_get_reducible_collision_matrix(PyObject *self,
                                                     PyObject *args);
 static PyObject * py_symmetrize_collision_matrix(PyObject *self,
                                                  PyObject *args);
+static PyObject * py_expand_collision_matrix(PyObject *self, PyObject *args);
 static PyObject * py_distribute_fc3(PyObject *self, PyObject *args);
 static PyObject * py_rotate_delta_fc2s(PyObject *self, PyObject *args);
 static PyObject * py_get_isotope_strength(PyObject *self, PyObject *args);
@@ -171,6 +173,10 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_symmetrize_collision_matrix,
    METH_VARARGS,
    "Symmetrize collision matrix"},
+  {"expand_collision_matrix",
+   (PyCFunction)py_expand_collision_matrix,
+   METH_VARARGS,
+   "Expand collision matrix"},
   {"distribute_fc3",
    (PyCFunction)py_distribute_fc3,
    METH_VARARGS,
@@ -1211,6 +1217,95 @@ static PyObject * py_symmetrize_collision_matrix(PyObject *self, PyObject *args)
       }
     }
   }
+
+  Py_RETURN_NONE;
+}
+
+static PyObject * py_expand_collision_matrix(PyObject *self, PyObject *args)
+{
+  PyArrayObject *py_collision_matrix;
+  PyArrayObject *py_ir_grid_points;
+  PyArrayObject *py_rot_grid_points;
+
+  double *collision_matrix;
+  int *rot_grid_points;
+  int *ir_grid_points;
+  size_t i, j, k, l, m, n, p;
+  size_t adrs_shift, adrs_shift_plus,  num_column, ir_gp, num_bgb, gp_r;
+  npy_intp num_band, num_grid_points, num_temp, num_sigma, num_rot, num_ir_gp;
+  size_t *multi;
+  double *colmat_copy;
+
+  if (!PyArg_ParseTuple(args, "OOO",
+                        &py_collision_matrix,
+                        &py_ir_grid_points,
+                        &py_rot_grid_points)) {
+    return NULL;
+  }
+
+  collision_matrix = (double*)PyArray_DATA(py_collision_matrix);
+  rot_grid_points = (int*)PyArray_DATA(py_rot_grid_points);
+  ir_grid_points = (int*)PyArray_DATA(py_ir_grid_points);
+  num_sigma = PyArray_DIMS(py_collision_matrix)[0];
+  num_temp = PyArray_DIMS(py_collision_matrix)[1];
+  num_grid_points = PyArray_DIMS(py_collision_matrix)[2];
+  num_band = PyArray_DIMS(py_collision_matrix)[3];
+  num_rot = PyArray_DIMS(py_rot_grid_points)[0];
+  num_ir_gp = PyArray_DIMS(py_ir_grid_points)[0];
+
+  num_column = num_grid_points * num_band;
+  num_bgb = num_band * num_grid_points * num_band;
+
+  assert(num_grid_points == PyArray_DIMS(py_rot_grid_points)[1]);
+
+  multi = (size_t*)malloc(sizeof(size_t) * num_ir_gp);
+  colmat_copy =
+    (double*)malloc(sizeof(double) * num_bgb);
+
+#pragma omp parallel for schedule(guided) private(j, ir_gp)
+  for (i = 0; i < num_ir_gp; i++) {
+    ir_gp = ir_grid_points[i];
+    multi[i] = 0;
+    for (j = 0; j < num_rot; j++) {
+      if (rot_grid_points[j * num_grid_points + ir_gp] == ir_gp) {
+        multi[i]++;
+      }
+    }
+  }
+
+  for (i = 0; i < num_sigma; i++) {
+    for (j = 0; j < num_temp; j++) {
+      adrs_shift = (i * num_column * num_column * num_temp +
+                    j * num_column * num_column);
+/* #pragma omp parallel for private(l, val, multi, ir_gp, adrs_shift_plus, gp_r, m, n, p) */
+      for (k = 0; k < num_ir_gp; k++) {
+        ir_gp = ir_grid_points[k];
+        adrs_shift_plus = adrs_shift + ir_gp * num_bgb;
+        for (l = 0; l < num_bgb; l++) {
+          colmat_copy[l] = collision_matrix[adrs_shift_plus + l] / multi[k];
+          collision_matrix[adrs_shift_plus + l] = 0;
+        }
+        for (l = 0; l < num_rot; l++) {
+          gp_r = rot_grid_points[l * num_grid_points + ir_gp];
+          for (m = 0; m < num_band; m++) {
+            for (n = 0; n < num_grid_points; n++) {
+              for (p = 0; p < num_band; p++) {
+                collision_matrix[
+                  adrs_shift + gp_r * num_bgb + m * num_grid_points * num_band
+                  + rot_grid_points[l * num_grid_points + n] * num_band + p] +=
+                  colmat_copy[m * num_grid_points * num_band + n * num_band + p];
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  free(multi);
+  multi = NULL;
+  free(colmat_copy);
+  colmat_copy = NULL;
 
   Py_RETURN_NONE;
 }
