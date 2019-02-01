@@ -1090,7 +1090,6 @@ class Conductivity_LBTE(Conductivity):
                 sys.stdout.flush()
 
             import phono3py._phono3py as phono3c
-            sys.stdout.flush()
             phono3c.symmetrize_collision_matrix(self._collision_matrix)
         else:
             if self._log_level:
