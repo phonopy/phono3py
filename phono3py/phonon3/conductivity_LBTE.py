@@ -1029,7 +1029,7 @@ class Conductivity_LBTE(Conductivity):
     def _expand_collisions(self):
         start = time.time()
         if self._log_level:
-            sys.stdout.write("- Expand properties to all grid points ")
+            sys.stdout.write("- Expanding properties to all grid points ")
             sys.stdout.flush()
 
         num_mesh_points = np.prod(self._mesh)
