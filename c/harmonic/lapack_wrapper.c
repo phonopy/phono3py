@@ -43,6 +43,12 @@ MKL_Complex16 lapack_make_complex_double( double re, double im ) {
   z.imag = im;
   return z;
 }
+#ifndef LAPACKE_malloc
+#define LAPACKE_malloc( size ) malloc( size )
+#endif
+#ifndef LAPACKE_free
+#define LAPACKE_free( p )      free( p )
+#endif
 #endif
 
 int phonopy_zheev(double *w,
@@ -201,11 +207,11 @@ int phonopy_dsyev(double *data,
 
   end:
     if (iwork) {
-      free(iwork);
+      LAPACKE_free(iwork);
       iwork = NULL;
     }
     if (work) {
-      free(work);
+      LAPACKE_free(work);
       work = NULL;
     }
 
