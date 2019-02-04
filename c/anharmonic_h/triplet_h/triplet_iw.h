@@ -35,34 +35,35 @@
 #ifndef __triplet_iw_H__
 #define __triplet_iw_H__
 
+#include <stddef.h>
 #include <triplet_h/triplet.h>
 
 void
 tpi_get_integration_weight(double *iw,
                            char *iw_zero,
-                           const double frequency_points[],
-                           const int num_band0,
+                           const double *frequency_points,
+                           const size_t num_band0,
                            TPLCONST int tp_relative_grid_address[2][24][4][3],
                            const int mesh[3],
-                           const int triplets[3],
+                           const size_t triplets[3],
                            const int num_triplets,
-                           TPLCONST int bz_grid_address[][3],
-                           const int bz_map[],
-                           const double frequencies[],
-                           const int num_band,
-                           const int num_iw,
+                           TPLCONST int (*bz_grid_address)[3],
+                           const size_t *bz_map,
+                           const double *frequencies,
+                           const size_t num_band,
+                           const size_t num_iw,
                            const int openmp_per_bands);
 void tpi_get_integration_weight_with_sigma(double *iw,
                                            char *iw_zero,
                                            const double sigma,
                                            const double cutoff,
-                                           const double frequency_points[],
-                                           const int num_band0,
-                                           const int triplet[3],
-                                           const int const_adrs_shift,
-                                           const double frequencies[],
-                                           const int num_band,
-                                           const int num_iw,
+                                           const double *frequency_points,
+                                           const size_t num_band0,
+                                           const size_t triplet[3],
+                                           const size_t const_adrs_shift,
+                                           const double *frequencies,
+                                           const size_t num_band,
+                                           const size_t num_iw,
                                            const int openmp_per_bands);
 
 #endif

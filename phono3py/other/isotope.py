@@ -41,6 +41,7 @@ from phonopy.structure.atoms import isotope_data
 from phono3py.phonon.solver import set_phonon_c, set_phonon_py
 from phono3py.phonon3.triplets import get_bz_grid_address, gaussian
 
+
 def get_mass_variances(primitive):
     symbols = primitive.get_chemical_symbols()
     mass_variances = []
@@ -53,11 +54,12 @@ def get_mass_variances(primitive):
 
     return np.array(mass_variances, dtype='double')
 
+
 class Isotope(object):
     def __init__(self,
                  mesh,
                  primitive,
-                 mass_variances=None, # length of list is num_atom.
+                 mass_variances=None,  # length of list is num_atom.
                  band_indices=None,
                  sigma=None,
                  frequency_factor_to_THz=VaspToTHz,
@@ -103,7 +105,7 @@ class Isotope(object):
         else:
             self._band_indices = np.array(self._band_indices, dtype='intc')
 
-        self._grid_points = np.arange(np.prod(self._mesh), dtype='intc')
+        self._grid_points = np.arange(np.prod(self._mesh), dtype='uintp')
 
         if self._grid_address is None:
             primitive_lattice = np.linalg.inv(self._primitive.get_cell())
@@ -206,14 +208,15 @@ class Isotope(object):
         num_grid_points = len(self._grid_points)
         num_band = self._primitive.get_number_of_atoms() * 3
         self._integration_weights = np.zeros(
-            (num_grid_points, len(self._band_indices), num_band), dtype='double')
+            (num_grid_points, len(self._band_indices), num_band),
+            dtype='double')
         self._set_integration_weights_c(thm)
 
     def _set_integration_weights_c(self, thm):
         import phono3py._phono3py as phono3c
         unique_vertices = thm.get_unique_tetrahedra_vertices()
         neighboring_grid_points = np.zeros(
-            len(unique_vertices) * len(self._grid_points), dtype='intc')
+            len(unique_vertices) * len(self._grid_points), dtype='uintp')
         phono3c.neighboring_grid_points(
             neighboring_grid_points,
             self._grid_points,
@@ -221,7 +224,9 @@ class Isotope(object):
             self._mesh,
             self._grid_address,
             self._bz_map)
-        self._set_phonon_c(np.unique(neighboring_grid_points))
+        unique_grid_points = np.array(np.unique(neighboring_grid_points),
+                                      dtype='uintp')
+        self._set_phonon_c(unique_grid_points)
         freq_points = np.array(
             self._frequencies[self._grid_point, self._band_indices],
             dtype='double', order='C')
@@ -248,7 +253,8 @@ class Isotope(object):
 
             for bi, frequencies in enumerate(tfreqs):
                 thm.set_tetrahedra_omegas(frequencies)
-                thm.run(self._frequencies[self._grid_point, self._band_indices])
+                thm.run(self._frequencies[self._grid_point,
+                                          self._band_indices])
                 iw = thm.get_integration_weight()
                 self._integration_weights[i, :, bi] = iw
 

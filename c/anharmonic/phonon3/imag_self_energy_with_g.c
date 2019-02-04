@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <phonoc_array.h>
 #include <phonoc_utils.h>
 #include <phonoc_const.h>
@@ -47,7 +48,7 @@ detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
                                      const size_t num_band,
                                      const double *fc3_normal_squared,
                                      const double *frequencies,
-                                     const int *triplets,
+                                     const size_t triplet[3],
                                      const double *g1,
                                      const double *g2_3,
                                      const char *g_zero,
@@ -75,14 +76,14 @@ static void set_occupations(double *n1,
                             double *n2,
                             const size_t num_band,
                             const double temperature,
-                            const int *triplets,
+                            const size_t triplet[3],
                             const double *frequencies,
                             const double cutoff_frequency);
 
 void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
                                               const Darray *fc3_normal_squared,
                                               const double *frequencies,
-                                              const int *triplets,
+                                              const size_t (*triplets)[3],
                                               const int *weights,
                                               const double *g,
                                               const char *g_zero,
@@ -116,7 +117,7 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
       num_band,
       fc3_normal_squared->data + i * num_band_prod,
       frequencies,
-      triplets + i * 3,
+      triplets[i],
       weights[i],
       g + i * num_band_prod,
       g + (i + num_triplets) * num_band_prod,
@@ -151,7 +152,7 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
  double *imag_self_energy_U,
  const Darray *fc3_normal_squared,
  const double *frequencies,
- const int *triplets,
+ const size_t (*triplets)[3],
  const int *weights,
  const int *grid_address,
  const double *g,
@@ -184,7 +185,7 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
        num_band,
        fc3_normal_squared->data + i * num_band_prod,
        frequencies,
-       triplets + i * 3,
+       triplets[i],
        g + i * num_band_prod,
        g + (i + num_triplets) * num_band_prod,
        g_zero + i * num_band_prod,
@@ -195,7 +196,7 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
 
   is_N = (int*)malloc(sizeof(int) * num_triplets);
   for (i = 0; i < num_triplets; i++) {
-    is_N[i] = tpl_is_N(triplets + i * 3, grid_address);
+    is_N[i] = tpl_is_N(triplets[i], grid_address);
   }
 
   for (i = 0; i < num_band0; i++) {
@@ -225,7 +226,7 @@ void ise_imag_self_energy_at_triplet(double *imag_self_energy,
                                      const size_t num_band,
                                      const double *fc3_normal_squared,
                                      const double *frequencies,
-                                     const int *triplets,
+                                     const size_t triplet[3],
                                      const int triplet_weight,
                                      const double *g1,
                                      const double *g2_3,
@@ -246,7 +247,7 @@ void ise_imag_self_energy_at_triplet(double *imag_self_energy,
                     n2 + i * num_band,
                     num_band,
                     temperatures[i],
-                    triplets,
+                    triplet,
                     frequencies,
                     cutoff_frequency);
   }
@@ -318,7 +319,7 @@ detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
                                      const size_t num_band,
                                      const double *fc3_normal_squared,
                                      const double *frequencies,
-                                     const int *triplets,
+                                     const size_t triplet[3],
                                      const double *g1,
                                      const double *g2_3,
                                      const char *g_zero,
@@ -340,7 +341,7 @@ detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
                     n2,
                     num_band,
                     temperatures[i],
-                    triplets,
+                    triplet,
                     frequencies,
                     cutoff_frequency);
 
@@ -436,7 +437,7 @@ static void set_occupations(double *n1,
                             double *n2,
                             const size_t num_band,
                             const double temperature,
-                            const int *triplets,
+                            const size_t triplet[3],
                             const double *frequencies,
                             const double cutoff_frequency)
 {
@@ -444,8 +445,8 @@ static void set_occupations(double *n1,
   double f1, f2;
 
   for (j = 0; j < num_band; j++) {
-    f1 = frequencies[triplets[1] * num_band + j];
-    f2 = frequencies[triplets[2] * num_band + j];
+    f1 = frequencies[triplet[1] * num_band + j];
+    f2 = frequencies[triplet[2] * num_band + j];
     if (f1 > cutoff_frequency) {
       n1[j] = bose_einstein(f1, temperature);
     } else {

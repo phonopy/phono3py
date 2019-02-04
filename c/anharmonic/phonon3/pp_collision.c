@@ -53,7 +53,7 @@ static void get_collision(double *ise,
                           const char *g_zero,
                           const double *frequencies,
                           const lapack_complex_double *eigenvectors,
-                          const int *triplets,
+                          const size_t triplet[3],
                           const int weight,
                           const int *grid_address,
                           const int *mesh,
@@ -72,7 +72,7 @@ static void get_collision(double *ise,
 static void finalize_ise(double *imag_self_energy,
                          const double *ise,
                          const int *grid_address,
-                         const int *triplets,
+                         const size_t (*triplets)[3],
                          const size_t num_triplets,
                          const size_t num_temps,
                          const size_t num_band0,
@@ -82,10 +82,11 @@ void ppc_get_pp_collision(double *imag_self_energy,
                           PHPYCONST int relative_grid_address[24][4][3], /* thm */
                           const double *frequencies,
                           const lapack_complex_double *eigenvectors,
-                          const Iarray *triplets,
+                          const size_t (*triplets)[3],
+                          const size_t num_triplets,
                           const int *weights,
                           const int *grid_address, /* thm */
-                          const int *bz_map, /* thm */
+                          const size_t *bz_map, /* thm */
                           const int *mesh, /* thm */
                           const double *fc3,
                           const int is_compact_fc3,
@@ -102,7 +103,7 @@ void ppc_get_pp_collision(double *imag_self_energy,
                           const double cutoff_frequency)
 {
   size_t i;
-  size_t num_band, num_band0, num_band_prod, num_triplets, num_temps;
+  size_t num_band, num_band0, num_band_prod, num_temps;
   int openmp_per_triplets;
   double *ise, *freqs_at_gp, *g;
   char *g_zero;
@@ -116,13 +117,12 @@ void ppc_get_pp_collision(double *imag_self_energy,
   num_band0 = band_indices->dims[0];
   num_band = svecs_dims[1] * 3;
   num_band_prod = num_band0 * num_band * num_band;
-  num_triplets = triplets->dims[0];
   num_temps = temperatures->dims[0];
   ise = (double*)malloc(sizeof(double) * num_triplets * num_temps * num_band0);
   freqs_at_gp = (double*)malloc(sizeof(double) * num_band0);
   for (i = 0; i < num_band0; i++) {
-    freqs_at_gp[i] = frequencies[triplets->data[0] * num_band +
-                                 band_indices->data[i]];
+    freqs_at_gp[i] = frequencies[triplets[0][0] * num_band
+                                 + band_indices->data[i]];
   }
 
   if (num_triplets > num_band) {
@@ -144,7 +144,7 @@ void ppc_get_pp_collision(double *imag_self_energy,
                                num_band0,
                                tp_relative_grid_address,
                                mesh,
-                               triplets->data + i * 3,
+                               triplets[i],
                                1,
                                (int(*)[3])grid_address,
                                bz_map,
@@ -162,7 +162,7 @@ void ppc_get_pp_collision(double *imag_self_energy,
                   g_zero,
                   frequencies,
                   eigenvectors,
-                  triplets->data + i * 3,
+                  triplets[i],
                   weights[i],
                   grid_address,
                   mesh,
@@ -188,7 +188,7 @@ void ppc_get_pp_collision(double *imag_self_energy,
   finalize_ise(imag_self_energy,
                ise,
                grid_address,
-               triplets->data,
+               triplets,
                num_triplets,
                num_temps,
                num_band0,
@@ -206,7 +206,8 @@ void ppc_get_pp_collision_with_sigma(
   const double sigma_cutoff,
   const double *frequencies,
   const lapack_complex_double *eigenvectors,
-  const Iarray *triplets,
+  const size_t (*triplets)[3],
+  const size_t num_triplets,
   const int *weights,
   const int *grid_address,
   const int *mesh,
@@ -225,7 +226,7 @@ void ppc_get_pp_collision_with_sigma(
   const double cutoff_frequency)
 {
   size_t i;
-  size_t num_band, num_band0, num_band_prod, num_triplets, num_temps;
+  size_t num_band, num_band0, num_band_prod, num_temps;
   int openmp_per_triplets, const_adrs_shift;
   double cutoff;
   double *ise, *freqs_at_gp, *g;
@@ -239,14 +240,13 @@ void ppc_get_pp_collision_with_sigma(
   num_band0 = band_indices->dims[0];
   num_band = svecs_dims[1] * 3;
   num_band_prod = num_band0 * num_band * num_band;
-  num_triplets = triplets->dims[0];
   num_temps = temperatures->dims[0];
   const_adrs_shift = num_band_prod;
 
   ise = (double*)malloc(sizeof(double) * num_triplets * num_temps * num_band0);
   freqs_at_gp = (double*)malloc(sizeof(double) * num_band0);
   for (i = 0; i < num_band0; i++) {
-    freqs_at_gp[i] = frequencies[triplets->data[0] * num_band +
+    freqs_at_gp[i] = frequencies[triplets[0][0] * num_band +
                                  band_indices->data[i]];
   }
 
@@ -268,7 +268,7 @@ void ppc_get_pp_collision_with_sigma(
                                           cutoff,
                                           freqs_at_gp,
                                           num_band0,
-                                          triplets->data + i * 3,
+                                          triplets[i],
                                           const_adrs_shift,
                                           frequencies,
                                           num_band,
@@ -284,7 +284,7 @@ void ppc_get_pp_collision_with_sigma(
                   g_zero,
                   frequencies,
                   eigenvectors,
-                  triplets->data + i * 3,
+                  triplets[i],
                   weights[i],
                   grid_address,
                   mesh,
@@ -310,7 +310,7 @@ void ppc_get_pp_collision_with_sigma(
   finalize_ise(imag_self_energy,
                ise,
                grid_address,
-               triplets->data,
+               triplets,
                num_triplets,
                num_temps,
                num_band0,
@@ -331,7 +331,7 @@ static void get_collision(double *ise,
                           const char *g_zero,
                           const double *frequencies,
                           const lapack_complex_double *eigenvectors,
-                          const int *triplets,
+                          const size_t triplet[3],
                           const int weight,
                           const int *grid_address,
                           const int *mesh,
@@ -369,7 +369,7 @@ static void get_collision(double *ise,
                             num_band,
                             g_zero);
 
-  get_interaction_at_triplet(
+  itr_get_interaction_at_triplet(
     fc3_normal_squared,
     num_band0,
     num_band,
@@ -377,7 +377,7 @@ static void get_collision(double *ise,
     num_g_pos,
     frequencies,
     eigenvectors,
-    triplets,
+    triplet,
     grid_address,
     mesh,
     fc3,
@@ -401,7 +401,7 @@ static void get_collision(double *ise,
     num_band,
     fc3_normal_squared,
     frequencies,
-    triplets,
+    triplet,
     weight,
     g,
     g + num_band_prod,
@@ -421,7 +421,7 @@ static void get_collision(double *ise,
 static void finalize_ise(double *imag_self_energy,
                          const double *ise,
                          const int *grid_address,
-                         const int *triplets,
+                         const size_t (*triplets)[3],
                          const size_t num_triplets,
                          const size_t num_temps,
                          const size_t num_band0,
@@ -435,7 +435,7 @@ static void finalize_ise(double *imag_self_energy,
       imag_self_energy[i] = 0;
     }
     for (i = 0; i < num_triplets; i++) {
-      is_N = tpl_is_N(triplets + i * 3, grid_address);
+      is_N = tpl_is_N(triplets[i], grid_address);
       for (j = 0; j < num_temps; j++) {
         for (k = 0; k < num_band0; k++) {
           if (is_N) {
