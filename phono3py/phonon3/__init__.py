@@ -210,7 +210,7 @@ class Phono3py(object):
     def write_phonons(self, filename=None):
         if self._interaction is not None:
             grid_address = self._interaction.get_grid_address()
-            grid_points = np.arange(len(grid_address), dtype='intc')
+            grid_points = np.arange(len(grid_address), dtype='uintp')
             self._interaction.set_phonons(grid_points)
             freqs, eigvecs, _ = self._interaction.get_phonons()
             hdf5_filename = write_phonon_to_hdf5(freqs,

@@ -528,7 +528,7 @@ def _get_BZ_triplets_at_q(grid_point,
                           mesh):
     import phono3py._phono3py as phono3c
 
-    weights = np.zeros_like(map_triplets)
+    weights = np.zeros(len(map_triplets), dtype='intc')
     for g in map_triplets:
         weights[g] += 1
     ir_weights = np.extract(weights > 0, weights)
@@ -542,7 +542,7 @@ def _get_BZ_triplets_at_q(grid_point,
                                           np.array(mesh, dtype='intc'))
     assert num_ir_ret == len(ir_weights)
 
-    return triplets, ir_weights
+    return triplets, np.array(ir_weights, dtype='intc')
 
 
 def _set_triplets_integration_weights_c(g,

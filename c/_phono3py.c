@@ -1053,7 +1053,7 @@ static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args)
   PyArrayObject *py_frequencies;
   PyArrayObject *py_triplets;
   PyArrayObject *py_triplets_map;
-  PyArrayObject *py_stabilized_gp_map;
+  PyArrayObject *py_map_q;
   PyArrayObject *py_g;
   PyArrayObject *py_rotated_grid_points;
   PyArrayObject *py_rotations_cartesian;
@@ -1063,10 +1063,11 @@ static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args)
   double *collision_matrix;
   double *g;
   double *frequencies;
-  int *triplets;
-  Iarray *triplets_map;
-  int *stabilized_gp_map;
-  Iarray *rotated_grid_points;
+  size_t (*triplets)[3];
+  size_t *triplets_map;
+  size_t *map_q;
+  size_t *rotated_grid_points;
+  npy_intp num_gp, num_ir_gp, num_rot;
   double *rotations_cartesian;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOddd",
@@ -1076,7 +1077,7 @@ static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args)
                         &py_g,
                         &py_triplets,
                         &py_triplets_map,
-                        &py_stabilized_gp_map,
+                        &py_map_q,
                         &py_rotated_grid_points,
                         &py_rotations_cartesian,
                         &temperature,
@@ -1089,31 +1090,36 @@ static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args)
   collision_matrix = (double*)PyArray_DATA(py_collision_matrix);
   g = (double*)PyArray_DATA(py_g);
   frequencies = (double*)PyArray_DATA(py_frequencies);
-  triplets = (int*)PyArray_DATA(py_triplets);
-  triplets_map = convert_to_iarray(py_triplets_map);
-  stabilized_gp_map = (int*)PyArray_DATA(py_stabilized_gp_map);
-  rotated_grid_points = convert_to_iarray(py_rotated_grid_points);
+  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
+  triplets_map = (size_t*)PyArray_DATA(py_triplets_map);
+  num_gp = PyArray_DIMS(py_triplets_map)[0];
+  map_q = (size_t*)PyArray_DATA(py_map_q);
+  rotated_grid_points = (size_t*)PyArray_DATA(py_rotated_grid_points);
+  num_ir_gp = PyArray_DIMS(py_rotated_grid_points)[0];
+  num_rot = PyArray_DIMS(py_rotated_grid_points)[1];
   rotations_cartesian = (double*)PyArray_DATA(py_rotations_cartesian);
+
+  assert(num_rot == PyArray_DIMS(py_rotations_cartesian)[0]);
+  assert(num_gp == PyArray_DIMS(py_frequencies)[0]);
 
   col_get_collision_matrix(collision_matrix,
                            fc3_normal_squared,
                            frequencies,
                            triplets,
                            triplets_map,
-                           stabilized_gp_map,
+                           map_q,
                            rotated_grid_points,
                            rotations_cartesian,
                            g,
+                           num_ir_gp,
+                           num_gp,
+                           num_rot,
                            temperature,
                            unit_conversion_factor,
                            cutoff_frequency);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;
-  free(triplets_map);
-  triplets_map = NULL;
-  free(rotated_grid_points);
-  rotated_grid_points = NULL;
 
   Py_RETURN_NONE;
 }
@@ -1125,7 +1131,7 @@ static PyObject * py_get_reducible_collision_matrix(PyObject *self, PyObject *ar
   PyArrayObject *py_frequencies;
   PyArrayObject *py_triplets;
   PyArrayObject *py_triplets_map;
-  PyArrayObject *py_stabilized_gp_map;
+  PyArrayObject *py_map_q;
   PyArrayObject *py_g;
   double temperature, unit_conversion_factor, cutoff_frequency;
 
@@ -1133,9 +1139,10 @@ static PyObject * py_get_reducible_collision_matrix(PyObject *self, PyObject *ar
   double *collision_matrix;
   double *g;
   double *frequencies;
-  int *triplets;
-  Iarray *triplets_map;
-  int *stabilized_gp_map;
+  size_t (*triplets)[3];
+  size_t *triplets_map;
+  npy_intp num_gp;
+  size_t *map_q;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOddd",
                         &py_collision_matrix,
@@ -1144,7 +1151,7 @@ static PyObject * py_get_reducible_collision_matrix(PyObject *self, PyObject *ar
                         &py_g,
                         &py_triplets,
                         &py_triplets_map,
-                        &py_stabilized_gp_map,
+                        &py_map_q,
                         &temperature,
                         &unit_conversion_factor,
                         &cutoff_frequency)) {
@@ -1155,25 +1162,25 @@ static PyObject * py_get_reducible_collision_matrix(PyObject *self, PyObject *ar
   collision_matrix = (double*)PyArray_DATA(py_collision_matrix);
   g = (double*)PyArray_DATA(py_g);
   frequencies = (double*)PyArray_DATA(py_frequencies);
-  triplets = (int*)PyArray_DATA(py_triplets);
-  triplets_map = convert_to_iarray(py_triplets_map);
-  stabilized_gp_map = (int*)PyArray_DATA(py_stabilized_gp_map);
+  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
+  triplets_map = (size_t*)PyArray_DATA(py_triplets_map);
+  num_gp = PyArray_DIMS(py_triplets_map)[0];
+  map_q = (size_t*)PyArray_DATA(py_map_q);
 
   col_get_reducible_collision_matrix(collision_matrix,
                                      fc3_normal_squared,
                                      frequencies,
                                      triplets,
                                      triplets_map,
-                                     stabilized_gp_map,
+                                     map_q,
                                      g,
+                                     num_gp,
                                      temperature,
                                      unit_conversion_factor,
                                      cutoff_frequency);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;
-  free(triplets_map);
-  triplets_map = NULL;
 
   Py_RETURN_NONE;
 }
@@ -1232,8 +1239,8 @@ static PyObject * py_expand_collision_matrix(PyObject *self, PyObject *args)
   PyArrayObject *py_rot_grid_points;
 
   double *collision_matrix;
-  int *rot_grid_points;
-  int *ir_grid_points;
+  size_t *rot_grid_points;
+  size_t *ir_grid_points;
   size_t i, j, k, l, m, n, p;
   size_t adrs_shift, adrs_shift_plus,  num_column, ir_gp, num_bgb, gp_r;
   npy_intp num_band, num_grid_points, num_temp, num_sigma, num_rot, num_ir_gp;
@@ -1248,8 +1255,8 @@ static PyObject * py_expand_collision_matrix(PyObject *self, PyObject *args)
   }
 
   collision_matrix = (double*)PyArray_DATA(py_collision_matrix);
-  rot_grid_points = (int*)PyArray_DATA(py_rot_grid_points);
-  ir_grid_points = (int*)PyArray_DATA(py_ir_grid_points);
+  rot_grid_points = (size_t*)PyArray_DATA(py_rot_grid_points);
+  ir_grid_points = (size_t*)PyArray_DATA(py_ir_grid_points);
   num_sigma = PyArray_DIMS(py_collision_matrix)[0];
   num_temp = PyArray_DIMS(py_collision_matrix)[1];
   num_grid_points = PyArray_DIMS(py_collision_matrix)[2];

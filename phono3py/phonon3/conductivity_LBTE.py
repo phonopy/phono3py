@@ -856,7 +856,7 @@ class Conductivity_LBTE(Conductivity):
                                              6), dtype='double')
             self._rot_grid_points = np.zeros(
                 (len(self._ir_grid_points), len(self._point_operations)),
-                dtype='intc')
+                dtype='uintp')
             for i, ir_gp in enumerate(self._ir_grid_points):
                 self._rot_grid_points[i] = get_grid_points_by_rotations(
                     self._grid_address[ir_gp],
@@ -1031,8 +1031,7 @@ class Conductivity_LBTE(Conductivity):
 
         num_mesh_points = np.prod(self._mesh)
         num_rot = len(self._point_operations)
-        rot_grid_points = np.zeros(
-            (num_rot, num_mesh_points), dtype='intc')
+        rot_grid_points = np.zeros((num_rot, num_mesh_points), dtype='uintp')
 
         for i in range(num_mesh_points):
             rot_grid_points[:, i] = get_grid_points_by_rotations(
