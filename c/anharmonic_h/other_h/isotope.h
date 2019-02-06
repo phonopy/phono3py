@@ -37,31 +37,30 @@
 
 #include <lapack_wrapper.h>
 
-void get_isotope_scattering_strength(double *gamma,
-                                     const int grid_point,
-                                     const double *mass_variances,
-                                     const double *frequencies,
-                                     const lapack_complex_double *eigenvectors,
-                                     const int num_grid_points,
-                                     const int *band_indices,
-                                     const int num_band,
-                                     const int num_band0,
-                                     const double sigma,
-                                     const double cutoff_frequency);
-
 void
-get_thm_isotope_scattering_strength(double *gamma,
-                                    const int grid_point,
-                                    const int *ir_grid_points,
-                                    const int *weights,
+iso_get_isotope_scattering_strength(double *gamma,
+                                    const size_t grid_point,
                                     const double *mass_variances,
                                     const double *frequencies,
                                     const lapack_complex_double *eigenvectors,
-                                    const int num_grid_points,
+                                    const size_t num_grid_points,
                                     const int *band_indices,
-                                    const int num_band,
-                                    const int num_band0,
-                                    const double *integration_weights,
+                                    const size_t num_band,
+                                    const size_t num_band0,
+                                    const double sigma,
                                     const double cutoff_frequency);
-
+void iso_get_thm_isotope_scattering_strength
+(double *gamma,
+ const size_t grid_point,
+ const size_t *ir_grid_points,
+ const int *weights,
+ const double *mass_variances,
+ const double *frequencies,
+ const lapack_complex_double *eigenvectors,
+ const size_t num_grid_points,
+ const int *band_indices,
+ const size_t num_band,
+ const size_t num_band0,
+ const double *integration_weights,
+ const double cutoff_frequency);
 #endif

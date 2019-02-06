@@ -32,6 +32,7 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
+#include <stddef.h>
 #include <math.h>
 #include <phonoc_utils.h>
 #include <triplet_h/triplet.h>
@@ -39,8 +40,8 @@
 #include <tetrahedron_method.h>
 
 static void set_freq_vertices(double freq_vertices[3][24][4],
-                              const double frequencies[],
-                              TPLCONST int vertices[2][24][4],
+                              const double *frequencies,
+                              TPLCONST size_t vertices[2][24][4],
                               const int num_band,
                               const int b1,
                               const int b2);
@@ -49,32 +50,31 @@ static int set_g(double g[3],
                  TPLCONST double freq_vertices[3][24][4]);
 static int in_tetrahedra(const double f0, TPLCONST double freq_vertices[24][4]);
 static void get_triplet_tetrahedra_vertices(
-  int vertices[2][24][4],
+  size_t vertices[2][24][4],
   TPLCONST int tp_relative_grid_address[2][24][4][3],
   const int mesh[3],
-  const int triplet[3],
-  TPLCONST int bz_grid_address[][3],
-  const int bz_map[]);
+  const size_t triplet[3],
+  TPLCONST int (*bz_grid_address)[3],
+  const size_t *bz_map);
 
 void
 tpi_get_integration_weight(double *iw,
                            char *iw_zero,
-                           const double frequency_points[],
-                           const int num_band0,
+                           const double *frequency_points,
+                           const size_t num_band0,
                            TPLCONST int tp_relative_grid_address[2][24][4][3],
                            const int mesh[3],
-                           const int triplets[3],
-                           const int num_triplets,
-                           TPLCONST int bz_grid_address[][3],
-                           const int bz_map[],
-                           const double frequencies[],
-                           const int num_band,
-                           const int num_iw,
+                           const size_t triplets[3],
+                           const size_t num_triplets,
+                           TPLCONST int (*bz_grid_address)[3],
+                           const size_t *bz_map,
+                           const double *frequencies,
+                           const size_t num_band,
+                           const size_t num_iw,
                            const int openmp_per_bands)
 {
-  int j, b1, b2, b12, num_band_prod;
-  int vertices[2][24][4];
-  int adrs_shift;
+  size_t j, b1, b2, b12, num_band_prod, adrs_shift;
+  size_t vertices[2][24][4];
   double g[3];
   double freq_vertices[3][24][4];
 
@@ -111,16 +111,16 @@ void tpi_get_integration_weight_with_sigma(double *iw,
                                            char *iw_zero,
                                            const double sigma,
                                            const double cutoff,
-                                           const double frequency_points[],
-                                           const int num_band0,
-                                           const int triplet[3],
-                                           const int const_adrs_shift,
-                                           const double frequencies[],
-                                           const int num_band,
-                                           const int num_iw,
+                                           const double *frequency_points,
+                                           const size_t num_band0,
+                                           const size_t triplet[3],
+                                           const size_t const_adrs_shift,
+                                           const double *frequencies,
+                                           const size_t num_band,
+                                           const size_t num_iw,
                                            const int openmp_per_bands)
 {
-  int j, b12, b1, b2, adrs_shift;
+  size_t j, b12, b1, b2, adrs_shift;
   double f0, f1, f2, g0, g1, g2;
 
 #pragma omp parallel for private(j, b1, b2, f0, f1, f2, g0, g1, g2, adrs_shift) if (openmp_per_bands)
@@ -159,8 +159,8 @@ void tpi_get_integration_weight_with_sigma(double *iw,
 }
 
 static void set_freq_vertices(double freq_vertices[3][24][4],
-                              const double frequencies[],
-                              TPLCONST int vertices[2][24][4],
+                              const double *frequencies,
+                              TPLCONST size_t vertices[2][24][4],
                               const int num_band,
                               const int b1,
                               const int b2)
@@ -238,24 +238,24 @@ static int in_tetrahedra(const double f0, TPLCONST double freq_vertices[24][4])
 }
 
 static void get_triplet_tetrahedra_vertices(
-  int vertices[2][24][4],
+  size_t vertices[2][24][4],
   TPLCONST int tp_relative_grid_address[2][24][4][3],
   const int mesh[3],
-  const int triplet[3],
-  TPLCONST int bz_grid_address[][3],
-  const int bz_map[])
+  const size_t triplet[3],
+  TPLCONST int (*bz_grid_address)[3],
+  const size_t *bz_map)
 {
   int i, j;
 
   for (i = 0; i < 2; i++) {
     for (j = 0; j < 24; j++) {
-      thm_get_neighboring_grid_points(vertices[i][j],
-                                      triplet[i + 1],
-                                      tp_relative_grid_address[i][j],
-                                      4,
-                                      mesh,
-                                      bz_grid_address,
-                                      bz_map);
+      thm_get_dense_neighboring_grid_points(vertices[i][j],
+                                            triplet[i + 1],
+                                            tp_relative_grid_address[i][j],
+                                            4,
+                                            mesh,
+                                            bz_grid_address,
+                                            bz_map);
     }
   }
 }

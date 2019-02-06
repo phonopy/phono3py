@@ -35,12 +35,13 @@
 #ifndef __imag_self_energy_with_g_H__
 #define __imag_self_energy_with_g_H__
 
+#include <stddef.h>
 #include <phonoc_array.h>
 
 void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
                                               const Darray *fc3_normal_squared,
                                               const double *frequencies,
-                                              const int *triplets,
+                                              const size_t (*triplets)[3],
                                               const int *weights,
                                               const double *g,
                                               const char *g_zero,
@@ -52,7 +53,7 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
  double *imag_self_energy_U,
  const Darray *fc3_normal_squared,
  const double *frequencies,
- const int *triplets,
+ const size_t (*triplets)[3],
  const int *weights,
  const int *grid_address,
  const double *g,
@@ -64,7 +65,7 @@ void ise_imag_self_energy_at_triplet(double *imag_self_energy,
                                      const size_t num_band,
                                      const double *fc3_normal_squared,
                                      const double *frequencies,
-                                     const int *triplets,
+                                     const size_t triplet[3],
                                      const int triplet_weight,
                                      const double *g1,
                                      const double *g2_3,

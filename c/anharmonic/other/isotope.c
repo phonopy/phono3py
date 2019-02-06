@@ -38,19 +38,20 @@
 #include <other_h/isotope.h>
 #include <lapack_wrapper.h>
 
-void get_isotope_scattering_strength(double *gamma,
-                                     const int grid_point,
-                                     const double *mass_variances,
-                                     const double *frequencies,
-                                     const lapack_complex_double *eigenvectors,
-                                     const int num_grid_points,
-                                     const int *band_indices,
-                                     const int num_band,
-                                     const int num_band0,
-                                     const double sigma,
-                                     const double cutoff_frequency)
+void
+iso_get_isotope_scattering_strength(double *gamma,
+                                    const size_t grid_point,
+                                    const double *mass_variances,
+                                    const double *frequencies,
+                                    const lapack_complex_double *eigenvectors,
+                                    const size_t num_grid_points,
+                                    const int *band_indices,
+                                    const size_t num_band,
+                                    const size_t num_band0,
+                                    const double sigma,
+                                    const double cutoff_frequency)
 {
-  int i, j, k, l, m;
+  size_t i, j, k, l, m;
   double *e0_r, *e0_i, e1_r, e1_i, a, b, f, *f0, dist, sum_g, sum_g_k;
 
   e0_r = (double*)malloc(sizeof(double) * num_band * num_band0);
@@ -118,26 +119,29 @@ void get_isotope_scattering_strength(double *gamma,
   }
 
   free(f0);
+  f0 = NULL;
   free(e0_r);
+  e0_r = NULL;
   free(e0_i);
+  e0_i = NULL;
 }
 
-void
-get_thm_isotope_scattering_strength(double *gamma,
-                                    const int grid_point,
-                                    const int *ir_grid_points,
-                                    const int *weights,
-                                    const double *mass_variances,
-                                    const double *frequencies,
-                                    const lapack_complex_double *eigenvectors,
-                                    const int num_grid_points,
-                                    const int *band_indices,
-                                    const int num_band,
-                                    const int num_band0,
-                                    const double *integration_weights,
-                                    const double cutoff_frequency)
+void iso_get_thm_isotope_scattering_strength
+(double *gamma,
+ const size_t grid_point,
+ const size_t *ir_grid_points,
+ const int *weights,
+ const double *mass_variances,
+ const double *frequencies,
+ const lapack_complex_double *eigenvectors,
+ const size_t num_grid_points,
+ const int *band_indices,
+ const size_t num_band,
+ const size_t num_band0,
+ const double *integration_weights,
+ const double cutoff_frequency)
 {
-  int i, j, k, l, m, gp;
+  size_t i, j, k, l, m, gp;
   double *e0_r, *e0_i, *f0, *gamma_ij;
   double e1_r, e1_i, a, b, f, dist, sum_g_k;
 
@@ -219,7 +223,11 @@ get_thm_isotope_scattering_strength(double *gamma,
   }
 
   free(gamma_ij);
+  gamma_ij = NULL;
   free(f0);
+  f0 = NULL;
   free(e0_r);
+  e0_r = NULL;
   free(e0_i);
+  e0_i = NULL;
 }
