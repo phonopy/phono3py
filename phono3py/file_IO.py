@@ -190,14 +190,13 @@ def write_fc3_to_hdf5(fc3,
     ----------
     force_constants: ndarray
         Force constants
-        shape=(n_satom,n_satom,3,3) or (n_patom,n_satom,3,3)
-        dtype=double
+        shape=(n_satom, n_satom, n_satom, 3, 3, 3) or
+        (n_patom, n_satom, n_satom,3,3,3), dtype=double
     filename: str
-        Filename to be saved
-    p2s_map: ndarray
+        Filename to be used.
+    p2s_map: ndarray, optional
         Primitive atom indices in supercell index system
-        shape=(n_patom,)
-        dtype=intc
+        shape=(n_patom,), dtype=intc
 
     """
 
