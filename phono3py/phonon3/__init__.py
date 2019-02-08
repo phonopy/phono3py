@@ -548,6 +548,7 @@ class Phono3py(object):
             mass_variances=None,
             grid_points=None,
             boundary_mfp=None,  # in micrometre
+            solve_collective_phonon=False,
             use_ave_pp=False,
             gamma_unit_conversion=None,
             mesh_divisors=None,
@@ -583,6 +584,7 @@ class Phono3py(object):
                 mass_variances=mass_variances,
                 grid_points=grid_points,
                 boundary_mfp=boundary_mfp,
+                solve_collective_phonon=solve_collective_phonon,
                 is_reducible_collision_matrix=is_reducible_collision_matrix,
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,

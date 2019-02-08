@@ -2096,14 +2096,19 @@ py_diagonalize_collision_matrix(PyObject *self, PyObject *args)
 
   collision_matrix = (double*)PyArray_DATA(py_collision_matrix);
   eigvals = (double*)PyArray_DATA(py_eigenvalues);
-  num_temp = PyArray_DIM(py_collision_matrix, 1);
-  num_grid_point = PyArray_DIM(py_collision_matrix, 2);
-  num_band = PyArray_DIM(py_collision_matrix, 3);
 
-  if (PyArray_NDIM(py_collision_matrix) == 8) {
-    num_column = num_grid_point * num_band * 3;
+  if (PyArray_NDIM(py_collision_matrix) == 2) {
+    num_temp = 1;
+    num_column = PyArray_DIM(py_collision_matrix, 1);
   } else {
-    num_column = num_grid_point * num_band;
+    num_temp = PyArray_DIM(py_collision_matrix, 1);
+    num_grid_point = PyArray_DIM(py_collision_matrix, 2);
+    num_band = PyArray_DIM(py_collision_matrix, 3);
+    if (PyArray_NDIM(py_collision_matrix) == 8) {
+      num_column = num_grid_point * num_band * 3;
+    } else {
+      num_column = num_grid_point * num_band;
+    }
   }
   adrs_shift = (i_sigma * num_column * num_column * num_temp +
                 i_temp * num_column * num_column);

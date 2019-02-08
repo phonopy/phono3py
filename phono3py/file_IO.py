@@ -190,14 +190,13 @@ def write_fc3_to_hdf5(fc3,
     ----------
     force_constants: ndarray
         Force constants
-        shape=(n_satom,n_satom,3,3) or (n_patom,n_satom,3,3)
-        dtype=double
+        shape=(n_satom, n_satom, n_satom, 3, 3, 3) or
+        (n_patom, n_satom, n_satom,3,3,3), dtype=double
     filename: str
-        Filename to be saved
-    p2s_map: ndarray
+        Filename to be used.
+    p2s_map: ndarray, optional
         Primitive atom indices in supercell index system
-        shape=(n_patom,)
-        dtype=intc
+        shape=(n_patom,), dtype=intc
 
     """
 
@@ -607,6 +606,7 @@ def write_kappa_to_hdf5(temperature,
                         mode_kappa=None,
                         kappa_RTA=None,  # RTA calculated in LBTE
                         mode_kappa_RTA=None,  # RTA calculated in LBTE
+                        mode_kappa_collective=None,
                         gamma=None,
                         gamma_isotope=None,
                         gamma_N=None,
@@ -655,6 +655,9 @@ def write_kappa_to_hdf5(temperature,
             w.create_dataset('kappa_RTA', data=kappa_RTA)
         if mode_kappa_RTA is not None:
             w.create_dataset('mode_kappa_RTA', data=mode_kappa_RTA)
+        if mode_kappa_collective is not None:
+            w.create_dataset('mode_kappa_collective',
+                             data=mode_kappa_collective)
         if gamma is not None:
             w.create_dataset('gamma', data=gamma)
         if gamma_isotope is not None:
