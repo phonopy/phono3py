@@ -44,8 +44,9 @@ class Phono3pySettings(Settings):
         self._pinv_cutoff = 1.0e-8
         self._pinv_solver = 0
         self._pp_conversion_factor = None
-        self._scattering_event_class = None # scattering event class 1 or 2
+        self._scattering_event_class = None  # scattering event class 1 or 2
         self._sigma_cutoff_width = None
+        self._solve_collective_phonons = False
         self._temperatures = None
         self._use_alm_fc2 = False
         self._use_alm_fc3 = False
@@ -297,6 +298,12 @@ class Phono3pySettings(Settings):
     def get_sigma_cutoff_width(self):
         return self._sigma_cutoff_width
 
+    def set_solve_collective_phonon(self, solve_collective_phonon):
+        self._solve_collective_phonon = solve_collective_phonon
+
+    def get_solve_collective_phonon(self):
+        return self._solve_collective_phonon
+
     def set_temperatures(self, temperatures):
         self._temperatures = temperatures
 
@@ -544,6 +551,10 @@ class Phono3pyConfParser(ConfParser):
             sigma_cutoff = self._args.sigma_cutoff_width
             if sigma_cutoff is not None:
                 self._confs['sigma_cutoff_width'] = sigma_cutoff
+
+        if 'solve_collective_phonon' in self._args:
+            if self._args.solve_collective_phonon:
+                self._confs['collective_phonon'] = '.true.'
 
         if 'temperatures' in self._args:
             if self._args.temperatures is not None:
@@ -827,6 +838,12 @@ class Phono3pyConfParser(ConfParser):
                 self.set_parameter('sigma_cutoff_width',
                                    float(confs['sigma_cutoff_width']))
 
+            if conf_key == 'collective_phonon':
+                if confs['collective_phonon'].lower() == '.false.':
+                    self.set_parameter('collective_phonon', False)
+                elif confs['collective_phonon'].lower() == '.true.':
+                    self.set_parameter('collective_phonon', True)
+
             if conf_key == 'temperatures':
                 vals = [fracval(x) for x in confs['temperatures'].split()]
                 if len(vals) < 1:
@@ -1062,6 +1079,11 @@ class Phono3pyConfParser(ConfParser):
         # Cutoff width of smearing function (ratio to sigma value)
         if 'sigma_cutoff_width' in params:
             self._settings.set_sigma_cutoff_width(params['sigma_cutoff_width'])
+
+        # Solve collective phonons
+        if 'collective_phonon' in params:
+            self._settings.set_solve_collective_phonon(
+                params['collective_phonon'])
 
         # Temperatures
         if 'temperatures' in params:

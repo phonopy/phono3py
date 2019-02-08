@@ -123,6 +123,7 @@ def get_parser():
                         show_num_triplets=False,
                         sigma=None,
                         sigma_cutoff=None,
+                        solve_collective_phonon=False,
                         supercell_dimension=None,
                         symprec=1e-5,
                         temperatures=None,
@@ -195,6 +196,10 @@ def get_parser():
         "--cfs", "--create-force-sets", dest="force_sets_mode",
         action="store_true",
         help="Create phonopy FORCE_SETS from FORCES_FC2")
+    parser.add_argument(
+        "--cph", "--collective-phonon", dest="solve_collective_phonon",
+        action="store_true",
+        help="Solve collective phonons")
     parser.add_argument(
         "--const-ave-pp", dest="const_ave_pp", type=float,
         help="Set constant averaged ph-ph interaction (Pqj)")

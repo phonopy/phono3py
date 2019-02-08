@@ -26,6 +26,7 @@ def get_thermal_conductivity_LBTE(
         mass_variances=None,
         grid_points=None,
         boundary_mfp=None,  # in micrometre
+        solve_collective_phonon=False,
         is_reducible_collision_matrix=False,
         is_kappa_star=True,
         gv_delta_q=1e-4,  # for group velocity
@@ -65,6 +66,7 @@ def get_thermal_conductivity_LBTE(
         is_isotope=is_isotope,
         mass_variances=mass_variances,
         boundary_mfp=boundary_mfp,
+        solve_collective_phonon=solve_collective_phonon,
         is_reducible_collision_matrix=is_reducible_collision_matrix,
         is_kappa_star=is_kappa_star,
         gv_delta_q=gv_delta_q,
@@ -242,9 +244,13 @@ def _write_kappa(lbte,
         gv_by_gv = lbte.get_gv_by_gv()[ir_gp]
         mode_cv = lbte.get_mode_heat_capacities()[:, ir_gp, :]
         mode_kappa = lbte.get_mode_kappa()[:, :, ir_gp, :, :]
+        mode_kappa_col = lbte.get_mode_kappa_collective()
+        if mode_kappa_col is not None:
+            mode_kappa_col = mode_kappa_col[:, :, ir_gp, :, :]
         mode_kappa_RTA = lbte.get_mode_kappa_RTA()[:, :, ir_gp, :, :]
         for i, w in enumerate(weights):
             mode_kappa[:, :, i, :, :] *= w
+            mode_kappa_col[:, :, i, :, :] *= w
             mode_kappa_RTA[:, :, i, :, :] *= w
         mfp = lbte.get_mean_free_path()[:, :, ir_gp, :, :]
     else:
@@ -255,6 +261,7 @@ def _write_kappa(lbte,
         gv_by_gv = lbte.get_gv_by_gv()
         mode_cv = lbte.get_mode_heat_capacities()
         mode_kappa = lbte.get_mode_kappa()
+        mode_kappa_col = lbte.get_mode_kappa_collective()
         mode_kappa_RTA = lbte.get_mode_kappa_RTA()
         mfp = lbte.get_mean_free_path()
 
@@ -263,6 +270,10 @@ def _write_kappa(lbte,
             gamma_isotope_at_sigma = gamma_isotope[i]
         else:
             gamma_isotope_at_sigma = None
+        if mode_kappa_col is not None:
+            mode_kappa_col_at_sigma = mode_kappa_col[i]
+        else:
+            mode_kappa_col_at_sigma = None
         write_kappa_to_hdf5(temperatures,
                             mesh,
                             frequency=frequencies,
@@ -274,6 +285,7 @@ def _write_kappa(lbte,
                             mode_kappa=mode_kappa[i],
                             kappa_RTA=kappa_RTA[i],
                             mode_kappa_RTA=mode_kappa_RTA[i],
+                            mode_kappa_collective=mode_kappa_col_at_sigma,
                             gamma=gamma[i],
                             gamma_isotope=gamma_isotope_at_sigma,
                             averaged_pp_interaction=ave_pp,
@@ -740,6 +752,7 @@ class Conductivity_LBTE(Conductivity):
                  is_isotope=False,
                  mass_variances=None,
                  boundary_mfp=None,  # in micrometre
+                 solve_collective_phonon=False,
                  is_reducible_collision_matrix=False,
                  is_kappa_star=True,
                  gv_delta_q=None,  # finite difference for group veolocity
@@ -772,6 +785,12 @@ class Conductivity_LBTE(Conductivity):
         self._grid_address = None
         self._ir_grid_points = None
         self._ir_grid_weights = None
+
+        self._kappa = None
+        self._mode_kappa = None
+        self._kappa_RTA = None
+        self._mode_kappa_RTA = None
+        self._mode_kappa_collective = None
 
         self._read_gamma = False
         self._read_gamma_iso = False
@@ -811,6 +830,7 @@ class Conductivity_LBTE(Conductivity):
                               log_level=log_level)
 
         self._is_reducible_collision_matrix = is_reducible_collision_matrix
+        self._solve_collective_phonon = solve_collective_phonon
         if not self._is_kappa_star:
             self._is_reducible_collision_matrix = True
         self._collision_matrix = None
@@ -855,6 +875,9 @@ class Conductivity_LBTE(Conductivity):
 
     def get_mode_kappa_RTA(self):
         return self._mode_kappa_RTA
+
+    def get_mode_kappa_collective(self):
+        return self._mode_kappa_collective
 
     def delete_gp_collision_and_pp(self):
         self._collision.delete_integration_weights()
@@ -947,6 +970,13 @@ class Conductivity_LBTE(Conductivity):
                                              num_mesh_points,
                                              num_band,
                                              6), dtype='double', order='C')
+            if self._solve_collective_phonon:
+                self._mode_kappa_collective = np.zeros(
+                    (len(self._sigmas),
+                     num_temp,
+                     num_mesh_points,
+                     num_band,
+                     6), dtype='double', order='C')
             self._collision = CollisionMatrix(
                 self._pp,
                 is_reducible_collision_matrix=True,
@@ -972,6 +1002,12 @@ class Conductivity_LBTE(Conductivity):
                                              num_grid_points,
                                              num_band0,
                                              6), dtype='double')
+            if self._solve_collective_phonon:
+                self._mode_kappa_collective = np.zeros((len(self._sigmas),
+                                                        num_temp,
+                                                        num_grid_points,
+                                                        num_band0,
+                                                        6), dtype='double')
             self._rot_grid_points = np.zeros(
                 (len(self._ir_grid_points), len(self._point_operations)),
                 dtype='uintp')
@@ -1393,16 +1429,31 @@ class Conductivity_LBTE(Conductivity):
         return e
 
     def _get_I(self, a, b, size, plus_transpose=False):
-        r_sum = np.zeros((3, 3), dtype='double')
+        """Return I matrix in Chaput's PRL paper.
+
+        None is returned if I is zero matrix.
+
+        """
+        r_sum = np.zeros((3, 3), dtype='double', order='C')
         for r in self._rotations_cartesian:
             for i in range(3):
                 for j in range(3):
                     r_sum[i, j] += r[a, i] * r[b, j]
         if plus_transpose:
             r_sum += r_sum.T
-        return np.kron(np.eye(size), r_sum)
 
-    def _set_kappa(self, i_sigma, i_temp, weights, method=None):
+        # Return None not to consume computer for diagonalization
+        if (np.abs(r_sum) < 1e-10).all():
+            return None
+
+        # Same as np.kron(np.eye(size), r_sum), but writen as below
+        # to be sure the values in memory C-congiguous with 'double'.
+        I_mat = np.zeros((3 * size, 3 * size), dtype='double', order='C')
+        for i in range(size):
+            I_mat[(i * 3):((i + 1) * 3), (i * 3):((i + 1) * 3)] = r_sum
+        return I_mat
+
+    def _set_kappa(self, i_sigma, i_temp, weights):
         N = self._num_sampling_grid_points
         if self._is_reducible_collision_matrix:
             X = self._get_X(i_temp, weights, self._gv)
@@ -1422,7 +1473,7 @@ class Conductivity_LBTE(Conductivity):
             self._kappa[i_sigma, i_temp] = (
                 self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N)
         else:
-            if method == "chaput":
+            if self._solve_collective_phonon:
                 self._set_mode_kappa_Chaput(i_sigma, i_temp, weights)
             else:
                 X = self._get_X(i_temp, weights, self._gv)
@@ -1550,6 +1601,13 @@ class Conductivity_LBTE(Conductivity):
         mode_kappa[i_sigma, i_temp] *= self._conversion_factor * Kb * t ** 2
 
     def _set_mode_kappa_Chaput(self, i_sigma, i_temp, weights):
+        """Calculate mode kappa by the way in Laurent Chaput's PRL paper.
+
+        This gives the different result from _set_mode_kappa and requires more
+        memory space.
+
+        """
+
         X = self._get_X(i_temp, weights, self._gv).ravel()
         num_ir_grid_points = len(self._ir_grid_points)
         num_band = self._primitive.get_number_of_atoms() * 3
@@ -1565,19 +1623,31 @@ class Conductivity_LBTE(Conductivity):
         np.dot(v, (e * v).T, out=omega_inv)
         elems = ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))
         for i, vxf in enumerate(elems):
-            I_mat = self._get_I(vxf[0], vxf[1], num_ir_grid_points * num_band,
-                                plus_transpose=True)
-            core = np.dot(I_mat, omega_inv)
-            I_mat = None
-            vals = (X * np.dot(core, X)).reshape(-1, 3).sum(axis=1)
+            mat = self._get_I(vxf[0], vxf[1], num_ir_grid_points * num_band,
+                              plus_transpose=True)
+            if mat is None:
+                self._mode_kappa[i_sigma, i_temp, :, :, i] = 0
+                self._mode_kappa_collective[i_sigma, i_temp, :, :, i] = 0
+            else:
+                np.dot(mat, omega_inv, out=mat)
+                vals = (X * np.dot(mat, X)).reshape(-1, 3).sum(axis=1)
+                vals = vals.reshape(num_ir_grid_points, num_band)
+                self._mode_kappa[i_sigma, i_temp, :, :, i] = vals
 
-            w = diagonalize_collision_matrix(core,
-                                             pinv_solver=self._pinv_solver,
-                                             log_level=self._log_level)
-            self._mode_kappa[i_sigma, i_temp, :, :, i] = vals.reshape(
-                num_ir_grid_points, num_band)
+                w = diagonalize_collision_matrix(mat,
+                                                 pinv_solver=self._pinv_solver,
+                                                 log_level=self._log_level)
+                if solver in [1, 2, 4, 5]:
+                    mat = mat.T
+                vals = (np.dot(mat.T, X) ** 2 * w).reshape(-1, 3).sum(axis=1)
+                vals = vals.reshape(num_ir_grid_points, num_band)
+                self._mode_kappa_collective[i_sigma, i_temp, :, :, i] = vals
+                # Each element of squared eigenvector gives the contribution
+                # of each phonon mode to mode kappa.
 
-        self._mode_kappa[i_sigma, i_temp] *= self._conversion_factor * Kb * t ** 2
+        factor = self._conversion_factor * Kb * t ** 2
+        self._mode_kappa_collective[i_sigma, i_temp] *= factor
+        self._mode_kappa[i_sigma, i_temp] *= factor
 
     def _set_mode_kappa_from_mfp(self,
                                  weights,
