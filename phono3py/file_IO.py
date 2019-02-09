@@ -183,25 +183,32 @@ def write_fc3_dat(force_constants_third, filename='fc3.dat'):
 
 def write_fc3_to_hdf5(fc3,
                       filename='fc3.hdf5',
-                      p2s_map=None):
+                      p2s_map=None,
+                      compression=None):
     """Write third-order force constants in hdf5 format.
 
     Parameters
     ----------
-    force_constants: ndarray
+    force_constants : ndarray
         Force constants
         shape=(n_satom, n_satom, n_satom, 3, 3, 3) or
         (n_patom, n_satom, n_satom,3,3,3), dtype=double
-    filename: str
+    filename : str
         Filename to be used.
-    p2s_map: ndarray, optional
+    p2s_map : ndarray, optional
         Primitive atom indices in supercell index system
         shape=(n_patom,), dtype=intc
+    compression : str or int, optional
+        h5py's lossless compression filters. See the detail at docstring of
+        h5py.Group.create_dataset. Default is None.
 
     """
 
     with h5py.File(filename, 'w') as w:
-        w.create_dataset('fc3', data=fc3)
+        if compression is None:
+            w.create_dataset('fc3', data=fc3)
+        else:
+            w.create_dataset('fc3', data=fc3, compression=compression)
         if p2s_map is not None:
             w.create_dataset('p2s_map', data=p2s_map)
 
@@ -215,7 +222,12 @@ def read_fc3_from_hdf5(filename='fc3.hdf5', p2s_map=None):
                                           p2s_map_in_file,
                                           p2s_map,
                                           filename)
-        return fc3
+        if fc3.dtype == np.double and fc3.flags.c_contiguous:
+            return fc3
+        else:
+            msg = ("%s has to be read by h5py as numpy ndarray of "
+                   "dtype='double' and c_contiguous.")
+            raise TypeError(msg)
     return None
 
 
