@@ -1135,8 +1135,6 @@ class Conductivity_LBTE(Conductivity):
                     self._collision_eigenvalues[j, k] = w
 
                     self._set_kappa(j, k, weights)
-                    # print("spectra")
-                    # print(self._get_spectra(j, k, weights))
 
                     if self._log_level:
                         print(("#%6s       " + " %-10s" * 6) %
@@ -1625,23 +1623,24 @@ class Conductivity_LBTE(Conductivity):
         for i, vxf in enumerate(elems):
             mat = self._get_I(vxf[0], vxf[1], num_ir_grid_points * num_band,
                               plus_transpose=True)
+            self._mode_kappa_collective[i_sigma, i_temp, :, :, i] = 0
             if mat is None:
                 self._mode_kappa[i_sigma, i_temp, :, :, i] = 0
-                self._mode_kappa_collective[i_sigma, i_temp, :, :, i] = 0
             else:
                 np.dot(mat, omega_inv, out=mat)
                 vals = (X * np.dot(mat, X)).reshape(-1, 3).sum(axis=1)
                 vals = vals.reshape(num_ir_grid_points, num_band)
                 self._mode_kappa[i_sigma, i_temp, :, :, i] = vals
-
                 w = diagonalize_collision_matrix(mat,
                                                  pinv_solver=self._pinv_solver,
                                                  log_level=self._log_level)
                 if solver in [1, 2, 4, 5]:
                     mat = mat.T
-                vals = (np.dot(mat.T, X) ** 2 * w).reshape(-1, 3).sum(axis=1)
-                vals = vals.reshape(num_ir_grid_points, num_band)
-                self._mode_kappa_collective[i_sigma, i_temp, :, :, i] = vals
+                spectra = np.dot(mat.T, X) ** 2 * w
+                for s, eigvec in zip(spectra, mat.T):
+                    vals = s * (eigvec ** 2).reshape(-1, 3).sum(axis=1)
+                    vals = vals.reshape(num_ir_grid_points, num_band)
+                    self._mode_kappa_collective[i_sigma, i_temp, :, :, i] += vals
                 # Each element of squared eigenvector gives the contribution
                 # of each phonon mode to mode kappa.
 
@@ -1676,7 +1675,8 @@ class Conductivity_LBTE(Conductivity):
         num_band = self._primitive.get_number_of_atoms() * 3
         # Collision matrix is half of that defined in Chaput's paper.
         # Therefore Y is divided by 2.
-        for i, f_gp in enumerate((Y / 2).reshape(num_grid_points, num_band, 3)):
+        for i, f_gp in enumerate(
+                (Y / 2).reshape(num_grid_points, num_band, 3)):
             for j, f in enumerate(f_gp):
                 cv = self._cv[i_temp, i, j]
                 if cv < 1e-10:
@@ -1684,25 +1684,7 @@ class Conductivity_LBTE(Conductivity):
                 self._mfp[i_sigma, i_temp, i, j] = (
                     - 2 * t * np.sqrt(Kb / cv) / weights[i] * f / (2 * np.pi))
 
-    def _get_spectra(self, i_sigma, i_temp, weights):
-        import scipy.linalg
-        num_band = self._primitive.get_number_of_atoms() * 3
-        num_ir_grid_points = len(self._ir_grid_points)
-        inv_col_mat = self._collision_matrix[i_sigma, i_temp].reshape(
-            num_ir_grid_points * num_band * 3,
-            num_ir_grid_points * num_band * 3)
-        X = self._get_X(i_temp, weights, self._gv)
-        num_band = self._primitive.get_number_of_atoms() * 3
-        I = self._get_I(2, 2, num_ir_grid_points * num_band)
-        inv_col_mat[:] = np.dot(inv_col_mat, I.T)
-        w, inv_col_mat[:], info = scipy.linalg.lapack.dsyev(inv_col_mat)
-        for i, x in enumerate(w):
-            if i % 8 == 0:
-                print("")
-            sys.stdout.write("%f " % x)
-
     def _show_log(self, i):
-        q = self._qpoints[i]
         gp = self._grid_points[i]
         frequencies = self._frequencies[gp]
         if self._is_reducible_collision_matrix:
