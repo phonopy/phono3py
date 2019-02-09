@@ -46,7 +46,7 @@ class Phono3pySettings(Settings):
         self._pp_conversion_factor = None
         self._scattering_event_class = None  # scattering event class 1 or 2
         self._sigma_cutoff_width = None
-        self._solve_collective_phonons = False
+        self._solve_collective_phonon = False
         self._temperatures = None
         self._use_alm_fc2 = False
         self._use_alm_fc3 = False
