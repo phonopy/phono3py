@@ -226,7 +226,7 @@ def read_fc3_from_hdf5(filename='fc3.hdf5', p2s_map=None):
             return fc3
         else:
             msg = ("%s has to be read by h5py as numpy ndarray of "
-                   "dtype='double' and c_contiguous.")
+                   "dtype='double' and c_contiguous." % filename)
             raise TypeError(msg)
     return None
 
@@ -618,7 +618,7 @@ def write_kappa_to_hdf5(temperature,
                         mode_kappa=None,
                         kappa_RTA=None,  # RTA calculated in LBTE
                         mode_kappa_RTA=None,  # RTA calculated in LBTE
-                        mode_kappa_collective=None,
+                        f_vector=None,
                         gamma=None,
                         gamma_isotope=None,
                         gamma_N=None,
@@ -667,9 +667,8 @@ def write_kappa_to_hdf5(temperature,
             w.create_dataset('kappa_RTA', data=kappa_RTA)
         if mode_kappa_RTA is not None:
             w.create_dataset('mode_kappa_RTA', data=mode_kappa_RTA)
-        if mode_kappa_collective is not None:
-            w.create_dataset('mode_kappa_collective',
-                             data=mode_kappa_collective)
+        if f_vector is not None:
+            w.create_dataset('f_vector', data=f_vector)
         if gamma is not None:
             w.create_dataset('gamma', data=gamma)
         if gamma_isotope is not None:
