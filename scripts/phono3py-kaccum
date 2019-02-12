@@ -7,18 +7,18 @@ from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.interface import read_crystal_structure
 from phono3py.phonon3.triplets import (get_ir_grid_points,
                                        get_grid_points_by_rotations,
-                                       get_grid_address,
-                                       from_coarse_to_dense_grid_points)
+                                       get_grid_address)
 from phonopy.phonon.dos import NormalDistribution
 
 epsilon = 1.0e-8
+
 
 def show_tensor(kdos, temperatures, sampling_points, args):
     for i, kdos_t in enumerate(kdos):
         if not args.gv:
             print("# %d K" % temperatures[i])
 
-        for f, k in zip(sampling_points[i], kdos_t): # show kappa_xx
+        for f, k in zip(sampling_points[i], kdos_t):  # show kappa_xx
             if args.average:
                 print(("%13.5f " * 3) %
                       (f, k[0][:3].sum() / 3, k[1][:3].sum() / 3))
@@ -29,6 +29,7 @@ def show_tensor(kdos, temperatures, sampling_points, args):
 
         print('')
         print('')
+
 
 def show_scalar(gdos, temperatures, sampling_points, args):
     if args.pqj or args.gruneisen or args.gv_norm:
@@ -42,6 +43,7 @@ def show_scalar(gdos, temperatures, sampling_points, args):
             print('')
             print('')
 
+
 def set_T_target(temperatures,
                  mode_prop,
                  T_target,
@@ -49,12 +51,13 @@ def set_T_target(temperatures,
     for i, t in enumerate(temperatures):
         if np.abs(t - args.temperature) < epsilon:
             temperatures = temperatures[i:i+1]
-            mode_prop = mode_prop[i:i+1,:,:]
+            mode_prop = mode_prop[i:i+1, :, :]
             if mean_freepath is not None:
                 mean_freepath = mean_freepath[i:i+1]
                 return temperatures, mode_prop, mean_freepath
             else:
                 return temperatures, mode_prop
+
 
 def run_prop_dos(frequencies,
                  mode_prop,
@@ -84,6 +87,7 @@ def get_mfp(g, gv):
     mean_freepath = np.where(g > 0, gv_norm / (2 * 2 * np.pi * g), 0)
     return mean_freepath
 
+
 def run_mfp_dos(mean_freepath,
                 mode_prop,
                 primitive,
@@ -95,7 +99,7 @@ def run_mfp_dos(mean_freepath,
     kdos = []
     sampling_points = []
     for i, mfp in enumerate(mean_freepath):
-        kappa_dos = KappaDOS(mode_prop[i:i+1,:,:],
+        kappa_dos = KappaDOS(mode_prop[i:i+1, :, :],
                              primitive,
                              mfp,
                              mesh,
@@ -111,12 +115,14 @@ def run_mfp_dos(mean_freepath,
 
     return kdos, sampling_points
 
+
 def fracval(frac):
     if frac.find('/') == -1:
         return float(frac)
     else:
         x = frac.split('/')
         return float(x[0]) / float(x[1])
+
 
 def get_grid_symmetry(primitive, mesh, weights, qpoints):
     symmetry = Symmetry(primitive)
@@ -139,6 +145,7 @@ def get_grid_symmetry(primitive, mesh, weights, qpoints):
     np.testing.assert_almost_equal(diff_q, np.rint(diff_q))
 
     return ir_grid_points, grid_address, grid_mapping_table
+
 
 def get_gv_by_gv(gv,
                  symmetry,
@@ -169,6 +176,7 @@ def get_gv_by_gv(gv,
             gv_sum2[i, :, j] = gv_by_gv[:, vxv[0], vxv[1]]
 
     return gv_sum2
+
 
 class KappaDOS(object):
     def __init__(self,
@@ -204,7 +212,6 @@ class KappaDOS(object):
         return self._frequency_points, self._kdos
 
     def _run_tetrahedron_method(self):
-        num_freqs = len(self._frequency_points)
         thm = self._tetrahedron_mesh
         for j, value in enumerate(('J', 'I')):
             thm.set(value=value, frequency_points=self._frequency_points)
@@ -214,6 +221,7 @@ class KappaDOS(object):
                 # mode_kappa[temp, ir_gp, band, tensor_elem]
                 self._kdos[:, :, j] += np.transpose(
                     np.dot(iw, self._mode_kappa[:, i]), axes=(1, 0, 2))
+
 
 class GammaDOS(object):
     def __init__(self,
@@ -238,6 +246,7 @@ class GammaDOS(object):
         self._frequency_points = np.linspace(min_freq,
                                              max_freq,
                                              self._num_fpoints)
+
 
 class GammaDOSsmearing(GammaDOS):
     def __init__(self,
@@ -267,6 +276,7 @@ class GammaDOSsmearing(GammaDOS):
             for j, g_t in enumerate(self._gamma):
                 self._gdos[j, i, 1] = np.sum(np.dot(self._ir_grid_weights,
                                                     dos * g_t)) / num_gp
+
 
 class GammaDOStetrahedron(GammaDOS):
     def __init__(self,
@@ -303,7 +313,6 @@ class GammaDOStetrahedron(GammaDOS):
             self._ir_grid_points)
 
     def _run_tetrahedron_method(self):
-        num_freqs = len(self._frequency_points)
         thm = self._tetrahedron_mesh
         for j, value in enumerate(('J', 'I')):
             thm.set(value=value, frequency_points=self._frequency_points)
@@ -313,6 +322,7 @@ class GammaDOStetrahedron(GammaDOS):
                 # gamma[temp, ir_gp, band]
                 self._gdos[:, :, j] += np.dot(
                     self._gamma[:, i] * self._ir_grid_weights[i], iw.T)
+
 
 if __name__ == '__main__':
     """Incremental kappa with respect to frequency and the derivative"""
@@ -421,10 +431,10 @@ if __name__ == '__main__':
         temperatures = None
     weights = f['weight'][:]
 
-    if args.no_kappa_stars:
+    if args.no_kappa_stars or (weights == 1).all():
         grid_address = get_grid_address(mesh)
-        ir_grid_points = np.arange(np.prod(mesh), dtype='intc')
-        grid_mapping_table = np.arange(np.prod(mesh), dtype='intc')
+        ir_grid_points = np.arange(np.prod(mesh), dtype='uintp')
+        grid_mapping_table = np.arange(np.prod(mesh), dtype='uintp')
     else:
         (ir_grid_points,
          grid_address,
@@ -439,7 +449,7 @@ if __name__ == '__main__':
     if args.gv:
         if 'gv_by_gv' in f:
             gv_sum2 = f['gv_by_gv'][:]
-        else: # For backward compatibility. This will be removed someday.
+        else:  # For backward compatibility. This will be removed someday.
             gv = f['group_velocity'][:]
             symmetry = Symmetry(primitive)
             gv_sum2 = get_gv_by_gv(gv,
@@ -477,9 +487,10 @@ if __name__ == '__main__':
         elif args.tau:
             g = f['gamma'][:]
             g = np.where(g > 0, g, -1)
-            mode_prop = np.where(g > 0, 1.0 / (2 * 2 * np.pi * g), 0) # tau
+            mode_prop = np.where(g > 0, 1.0 / (2 * 2 * np.pi * g), 0)  # tau
         elif args.gv_norm:
-            mode_prop = np.sqrt((f['group_velocity'][:, :, :] ** 2).sum(axis=2))
+            mode_prop = np.sqrt(
+                (f['group_velocity'][:, :, :] ** 2).sum(axis=2))
             mode_prop = mode_prop.reshape((1,) + mode_prop.shape)
         elif args.gamma:
             mode_prop = f['gamma'][:]
