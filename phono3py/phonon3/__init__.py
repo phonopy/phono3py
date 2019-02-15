@@ -55,7 +55,7 @@ from phono3py.phonon3.conductivity_LBTE import get_thermal_conductivity_LBTE
 from phono3py.phonon3.joint_dos import JointDos
 from phono3py.phonon3.displacement_fc3 import (get_third_order_displacements,
                                                direction_to_displacement)
-from phono3py.file_IO import write_joint_dos, write_phonon_to_hdf5
+from phono3py.file_IO import write_joint_dos
 from phono3py.other.isotope import Isotope
 from phono3py.phonon3.fc3 import (get_fc3,
                                   set_permutation_symmetry_fc3,
@@ -207,20 +207,14 @@ class Phono3py(object):
         else:
             return False
 
-    def write_phonons(self, filename=None):
+    def get_phonon_data(self):
         if self._interaction is not None:
             grid_address = self._interaction.get_grid_address()
-            grid_points = np.arange(len(grid_address), dtype='uintp')
-            self._interaction.set_phonons(grid_points)
             freqs, eigvecs, _ = self._interaction.get_phonons()
-            hdf5_filename = write_phonon_to_hdf5(freqs,
-                                                 eigvecs,
-                                                 grid_address,
-                                                 self._mesh,
-                                                 filename=filename)
-            return hdf5_filename
+            return freqs, eigvecs, grid_address
         else:
-            return False
+            msg = "set_phph_interaction has to be done."
+            raise RuntimeError(msg)
 
     def generate_displacements(self,
                                distance=0.03,
@@ -569,6 +563,7 @@ class Phono3py(object):
             write_pp=False,
             read_pp=False,
             write_LBTE_solution=False,
+            compression=None,
             input_filename=None,
             output_filename=None):
         if self._interaction is None:
@@ -597,6 +592,7 @@ class Phono3py(object):
                 write_pp=write_pp,
                 read_pp=read_pp,
                 write_LBTE_solution=write_LBTE_solution,
+                compression=compression,
                 input_filename=input_filename,
                 output_filename=output_filename,
                 log_level=self._log_level)
@@ -625,6 +621,7 @@ class Phono3py(object):
                 write_pp=write_pp,
                 read_pp=read_pp,
                 write_gamma_detail=write_gamma_detail,
+                compression=compression,
                 input_filename=input_filename,
                 output_filename=output_filename,
                 log_level=self._log_level)

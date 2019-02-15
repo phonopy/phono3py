@@ -70,6 +70,7 @@ def get_parser():
                         grid_addresses=None,
                         grid_points=None,
                         gv_delta_q=None,
+                        hdf5_compression=None,
                         input_filename=None,
                         input_output_filename=None,
                         ion_clamped=False,
@@ -279,6 +280,9 @@ def get_parser():
     parser.add_argument(
         "--gv-delta-q", dest="gv_delta_q", type=float,
         help="Delta-q distance used for group velocity calculation")
+    parser.add_argument(
+        "--hdf5-compression", dest="hdf5_compression",
+        help="hdf5 compression filter")
     parser.add_argument(
         "-i", dest="input_filename",
         help="Input filename extension")

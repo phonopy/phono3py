@@ -37,6 +37,7 @@ import sys
 import numpy as np
 from phonopy.structure.cells import print_cell
 
+
 def file_exists(filename, log_level):
     if os.path.exists(filename):
         return True
@@ -47,6 +48,7 @@ def file_exists(filename, log_level):
             print_error()
         sys.exit(1)
 
+
 # AA is created at http://www.network-science.de/ascii/.
 def print_phono3py():
     print("""        _                      _____
@@ -56,9 +58,11 @@ def print_phono3py():
  | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
  |_|                                |_|    |___/ """)
 
+
 def print_version(version):
     print(" " * 42 + "%s" % version)
     print('')
+
 
 def print_end():
     print("""                 _
@@ -68,6 +72,7 @@ def print_end():
   \___|_| |_|\__,_|
 """)
 
+
 def print_error():
     print("""  ___ _ __ _ __ ___  _ __
  / _ \ '__| '__/ _ \| '__|
@@ -75,9 +80,11 @@ def print_error():
  \___|_|  |_|  \___/|_|
 """)
 
+
 def print_error_message(message):
     print('')
     print(message)
+
 
 def show_phono3py_cells(symmetry,
                         primitive,
@@ -106,6 +113,7 @@ def show_phono3py_cells(symmetry,
                           np.linalg.inv(phonon_primitive.get_cell())):
             print(("%7.2f" * 3) % tuple(vec))
 
+
 def show_phono3py_force_constants_settings(read_fc3,
                                            read_fc2,
                                            is_symmetrize_fc3_r,
@@ -132,6 +140,7 @@ def show_phono3py_force_constants_settings(read_fc3,
     if settings.get_cutoff_fc3_distance() is not None:
         print("FC3 cutoff distance: %s" % settings.get_cutoff_fc3_distance())
 
+
 def show_phono3py_settings(settings,
                            mesh,
                            mesh_divs,
@@ -148,7 +157,7 @@ def show_phono3py_settings(settings,
                            num_frequency_points,
                            nac_params,
                            log_level):
-    print("-" * 33 + " Settings " + "-" * 33)
+    print("-" * 27 + " Calculation settings " + "-" * 27)
     if settings.get_is_nac():
         print("Non-analytical term correction (NAC): %s"
               % settings.get_is_nac())

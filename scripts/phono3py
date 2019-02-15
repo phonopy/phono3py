@@ -39,12 +39,13 @@ import numpy as np
 from phonopy.file_IO import parse_BORN, write_FORCE_SETS, parse_FORCE_SETS
 from phonopy.units import VaspToTHz, Bohr, Rydberg, Hartree
 from phonopy.cui.collect_cell_info import collect_cell_info
-from phonopy.interface import (read_crystal_structure, get_force_sets,
+from phonopy.interface import (get_force_sets,
                                get_default_physical_units, get_interface_mode)
 from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phono3py.version import __version__
 from phono3py.file_IO import (parse_disp_fc2_yaml, parse_disp_fc3_yaml,
                               write_disp_fc2_yaml, read_phonon_from_hdf5,
+                              write_phonon_to_hdf5,
                               parse_FORCES_FC2, parse_FORCES_FC3,
                               write_FORCES_FC2, write_FORCES_FC3)
 from phono3py.cui.settings import Phono3pyConfParser
@@ -144,6 +145,14 @@ output_filename = args.output_filename
 if args.input_output_filename is not None:
     input_filename = args.input_output_filename
     output_filename = args.input_output_filename
+
+# HDF5 compression filter
+try:
+    compression = int(args.hdf5_compression)
+except ValueError:  # str
+    compression = args.hdf5_compression
+except TypeError:  # None
+    compression = args.hdf5_compression
 
 #####################
 # Create FORCES_FC3 #
@@ -357,13 +366,6 @@ if type(cell_info) is str:
 (unitcell, supercell_matrix, primitive_matrix, is_primitive_axes_auto,
  unitcell_filename, optional_structure_info, interface_mode) = cell_info
 
-# unitcell, optional_structure_file_information = read_crystal_structure(
-#     filename=settings.get_cell_filename(),
-#     interface_mode=interface_mode,
-#     chemical_symbols=settings.get_chemical_symbols(),
-#     yaml_mode=settings.get_yaml_mode())
-# unitcell_filename = optional_structure_info[0]
-
 if unitcell is None:
     print_error_message("Crystal structure file of %s could not be found." %
                         unitcell_filename)
@@ -480,6 +482,15 @@ if log_level:
                         phonon_primitive,
                         phonon_supercell,
                         settings)
+    if input_filename or output_filename or compression:
+        print("-" * 29 + " General settings " + "-" * 29)
+        if output_filename:
+            print("Output filename is modified by %s." % output_filename)
+        if input_filename:
+            print("Input filename is modified by %s." % input_filename)
+        if compression:
+            print("HDF5 data compression filter: %s" % compression)
+
 
 #####################################################
 # Write ir-grid points and grid addresses, and exit #
@@ -495,6 +506,7 @@ if args.write_grid_points:
                       is_kappa_star=settings.get_is_kappa_star(),
                       is_lbte=(settings.get_write_collision() or
                                settings.get_is_lbte()),
+                      compression=compression,
                       symprec=symprec)
 
     if log_level:
@@ -563,6 +575,7 @@ create_phono3py_force_constants(phono3py,
                                 settings,
                                 force_to_eVperA=force_to_eVperA,
                                 distance_to_A=distance_to_A,
+                                compression=compression,
                                 input_filename=input_filename,
                                 output_filename=output_filename,
                                 log_level=log_level)
@@ -731,11 +744,16 @@ if run_mode is not None:
         constant_averaged_interaction=ave_pp,
         frequency_scale_factor=frequency_scale_factor,
         unit_conversion=settings.get_pp_conversion_factor(),
-        solve_dynamical_matrices=(not (settings.get_read_phonon() or
-                                       settings.get_write_phonon())))
+        solve_dynamical_matrices=(not settings.get_read_phonon()))
 
     if settings.get_write_phonon():
-        filename = phono3py.write_phonons(filename=output_filename)
+        freqs, eigvecs, grid_address = phono3py.get_phonon_data()
+        filename = write_phonon_to_hdf5(freqs,
+                                        eigvecs,
+                                        grid_address,
+                                        mesh,
+                                        compression=compression,
+                                        filename=output_filename)
         if filename:
             if log_level:
                 print("Phonons are written into \"%s\"." % filename)
@@ -811,6 +829,7 @@ elif run_mode == "conductivity-RTA" or run_mode == "conductivity-LBTE":
         write_pp=settings.get_write_pp(),
         read_pp=settings.get_read_pp(),
         write_LBTE_solution=settings.get_write_LBTE_solution(),
+        compression=compression,
         input_filename=input_filename,
         output_filename=output_filename)
 else:

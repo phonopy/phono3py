@@ -33,9 +33,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
-import numpy as np
 from phonopy.harmonic.force_constants import (
-    distribute_force_constants,
     show_drift_force_constants,
     symmetrize_force_constants,
     symmetrize_compact_force_constants)
@@ -59,6 +57,7 @@ def create_phono3py_force_constants(phono3py,
                                     settings,
                                     force_to_eVperA=None,
                                     distance_to_A=None,
+                                    compression=None,
                                     input_filename=None,
                                     output_filename=None,
                                     log_level=1):
@@ -128,6 +127,7 @@ def create_phono3py_force_constants(phono3py,
                                         output_filename,
                                         settings.get_is_compact_fc(),
                                         settings.get_use_alm_fc3(),
+                                        compression,
                                         log_level):
                     print("fc3 was not created properly.")
                     if log_level:
@@ -234,6 +234,7 @@ def _create_phono3py_fc3(phono3py,
                          output_filename,
                          is_compact_fc,
                          use_alm,
+                         compression,
                          log_level):
     if input_filename is None:
         filename = 'disp_fc3.yaml'
@@ -272,7 +273,8 @@ def _create_phono3py_fc3(phono3py,
     if log_level:
         print("Writing fc3 to %s" % filename)
     p2s_map = phono3py.get_primitive().get_primitive_to_supercell_map()
-    write_fc3_to_hdf5(phono3py.get_fc3(), filename=filename, p2s_map=p2s_map)
+    write_fc3_to_hdf5(phono3py.get_fc3(), filename=filename, p2s_map=p2s_map,
+                      compression=compression)
 
     return True
 

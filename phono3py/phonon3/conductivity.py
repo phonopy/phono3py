@@ -28,7 +28,8 @@ def all_bands_exist(interaction):
 def write_pp(conductivity,
              pp,
              i,
-             filename=None):
+             filename=None,
+             compression=None):
     grid_point = conductivity.get_grid_points()[i]
     sigmas = conductivity.get_sigmas()
     sigma_cutoff = conductivity.get_sigma_cutoff_width()
@@ -58,7 +59,8 @@ def write_pp(conductivity,
                      triplet_all=all_triplets,
                      sigma=sigmas[-1],
                      sigma_cutoff=sigma_cutoff,
-                     filename=filename)
+                     filename=filename,
+                     compression=compression)
 
 
 class Conductivity(object):

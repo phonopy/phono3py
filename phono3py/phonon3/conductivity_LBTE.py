@@ -39,6 +39,7 @@ def get_thermal_conductivity_LBTE(
         write_pp=False,
         read_pp=False,
         write_LBTE_solution=False,
+        compression=None,
         input_filename=None,
         output_filename=None,
         log_level=0):
@@ -46,8 +47,7 @@ def get_thermal_conductivity_LBTE(
     if sigmas is None:
         sigmas = []
     if log_level:
-        print("-------------------- Lattice thermal conducitivity (LBTE) "
-              "--------------------")
+        print("-" * 19 + " Lattice thermal conducitivity (LBTE) " + "-" * 19)
         print("Cutoff frequency of pseudo inversion of collision matrix: %s" %
               pinv_cutoff)
 
@@ -101,7 +101,8 @@ def get_thermal_conductivity_LBTE(
             _write_pp(lbte,
                       interaction,
                       i,
-                      filename=output_filename)
+                      filename=output_filename,
+                      compression=compression)
 
         if write_collision:
             _write_collision(
@@ -132,6 +133,7 @@ def get_thermal_conductivity_LBTE(
                 is_reducible_collision_matrix=is_reducible_collision_matrix,
                 write_LBTE_solution=write_LBTE_solution,
                 pinv_solver=pinv_solver,
+                compression=compression,
                 filename=output_filename,
                 log_level=log_level)
 
@@ -217,6 +219,7 @@ def _write_kappa(lbte,
                  is_reducible_collision_matrix=False,
                  write_LBTE_solution=False,
                  pinv_solver=None,
+                 compression=None,
                  filename=None,
                  log_level=0):
     temperatures = lbte.get_temperatures()
@@ -273,6 +276,7 @@ def _write_kappa(lbte,
                             sigma=sigma,
                             sigma_cutoff=sigma_cutoff,
                             kappa_unit_conversion=unit_to_WmK / volume,
+                            compression=compression,
                             filename=filename,
                             verbose=log_level)
 

@@ -199,16 +199,14 @@ def write_fc3_to_hdf5(fc3,
         Primitive atom indices in supercell index system
         shape=(n_patom,), dtype=intc
     compression : str or int, optional
-        h5py's lossless compression filters. See the detail at docstring of
-        h5py.Group.create_dataset. Default is None.
+        h5py's lossless compression filters (e.g., "gzip", "lzf", "szip").
+        See the detail at docstring of h5py.Group.create_dataset. Default is
+        None.
 
     """
 
     with h5py.File(filename, 'w') as w:
-        if compression is None:
-            w.create_dataset('fc3', data=fc3)
-        else:
-            w.create_dataset('fc3', data=fc3, compression=compression)
+        w.create_dataset('fc3', data=fc3, compression=compression)
         if p2s_map is not None:
             w.create_dataset('p2s_map', data=p2s_map)
 
@@ -304,13 +302,16 @@ def write_grid_address(grid_address, mesh, filename=None):
 def write_grid_address_to_hdf5(grid_address,
                                mesh,
                                grid_mapping_table,
+                               compression=None,
                                filename=None):
     suffix = _get_filename_suffix(mesh, filename=filename)
     full_filename = "grid_address" + suffix + ".hdf5"
     with h5py.File(full_filename, 'w') as w:
         w.create_dataset('mesh', data=mesh)
-        w.create_dataset('grid_address', data=grid_address)
-        w.create_dataset('grid_mapping_table', data=grid_mapping_table)
+        w.create_dataset('grid_address', data=grid_address,
+                         compression=compression)
+        w.create_dataset('grid_mapping_table', data=grid_mapping_table,
+                         compression=compression)
         return full_filename
     return None
 
@@ -632,6 +633,7 @@ def write_kappa_to_hdf5(temperature,
                         sigma=None,
                         sigma_cutoff=None,
                         kappa_unit_conversion=None,
+                        compression=None,
                         filename=None,
                         verbose=True):
     if band_index is None:
@@ -650,39 +652,53 @@ def write_kappa_to_hdf5(temperature,
         w.create_dataset('temperature', data=temperature)
         w.create_dataset('mesh', data=mesh)
         if frequency is not None:
-            w.create_dataset('frequency', data=frequency)
+            w.create_dataset('frequency', data=frequency,
+                             compression=compression)
         if group_velocity is not None:
-            w.create_dataset('group_velocity', data=group_velocity)
+            w.create_dataset('group_velocity', data=group_velocity,
+                             compression=compression)
         if gv_by_gv is not None:
             w.create_dataset('gv_by_gv', data=gv_by_gv)
         if mean_free_path is not None:
-            w.create_dataset('mean_free_path', data=mean_free_path)
+            w.create_dataset('mean_free_path', data=mean_free_path,
+                             compression=compression)
         if heat_capacity is not None:
-            w.create_dataset('heat_capacity', data=heat_capacity)
+            w.create_dataset('heat_capacity', data=heat_capacity,
+                             compression=compression)
         if kappa is not None:
             w.create_dataset('kappa', data=kappa)
         if mode_kappa is not None:
-            w.create_dataset('mode_kappa', data=mode_kappa)
+            w.create_dataset('mode_kappa', data=mode_kappa,
+                             compression=compression)
         if kappa_RTA is not None:
             w.create_dataset('kappa_RTA', data=kappa_RTA)
         if mode_kappa_RTA is not None:
-            w.create_dataset('mode_kappa_RTA', data=mode_kappa_RTA)
+            w.create_dataset('mode_kappa_RTA', data=mode_kappa_RTA,
+                             compression=compression)
         if f_vector is not None:
-            w.create_dataset('f_vector', data=f_vector)
+            w.create_dataset('f_vector', data=f_vector,
+                             compression=compression)
         if gamma is not None:
-            w.create_dataset('gamma', data=gamma)
+            w.create_dataset('gamma', data=gamma,
+                             compression=compression)
         if gamma_isotope is not None:
-            w.create_dataset('gamma_isotope', data=gamma_isotope)
+            w.create_dataset('gamma_isotope', data=gamma_isotope,
+                             compression=compression)
         if gamma_N is not None:
-            w.create_dataset('gamma_N', data=gamma_N)
+            w.create_dataset('gamma_N', data=gamma_N,
+                             compression=compression)
         if gamma_U is not None:
-            w.create_dataset('gamma_U', data=gamma_U)
+            w.create_dataset('gamma_U', data=gamma_U,
+                             compression=compression)
         if averaged_pp_interaction is not None:
-            w.create_dataset('ave_pp', data=averaged_pp_interaction)
+            w.create_dataset('ave_pp', data=averaged_pp_interaction,
+                             compression=compression)
         if qpoint is not None:
-            w.create_dataset('qpoint', data=qpoint)
+            w.create_dataset('qpoint', data=qpoint,
+                             compression=compression)
         if weight is not None:
-            w.create_dataset('weight', data=weight)
+            w.create_dataset('weight', data=weight,
+                             compression=compression)
         if grid_point is not None:
             w.create_dataset('grid_point', data=grid_point)
         if band_index is not None:
@@ -852,7 +868,8 @@ def write_pp_to_hdf5(mesh,
                      sigma_cutoff=None,
                      filename=None,
                      verbose=True,
-                     check_consistency=False):
+                     check_consistency=False,
+                     compression=None):
     suffix = _get_filename_suffix(mesh,
                                   grid_point=grid_point,
                                   sigma=sigma,
@@ -863,15 +880,20 @@ def write_pp_to_hdf5(mesh,
     with h5py.File(full_filename, 'w') as w:
         if pp is not None:
             if g_zero is None:
-                w.create_dataset('pp', data=pp)
+                w.create_dataset('pp', data=pp,
+                                 compression=compression)
                 if triplet is not None:
-                    w.create_dataset('triplet', data=triplet)
+                    w.create_dataset('triplet', data=triplet,
+                                     compression=compression)
                 if weight is not None:
-                    w.create_dataset('weight', data=weight)
+                    w.create_dataset('weight', data=weight,
+                                     compression=compression)
                 if triplet_map is not None:
-                    w.create_dataset('triplet_map', data=triplet_map)
+                    w.create_dataset('triplet_map', data=triplet_map,
+                                     compression=compression)
                 if triplet_all is not None:
-                    w.create_dataset('triplet_all', data=triplet_all)
+                    w.create_dataset('triplet_all', data=triplet_all,
+                                     compression=compression)
             else:
                 x = g_zero.ravel()
                 nonzero_pp = np.array(pp.ravel()[x == 0], dtype='double')
@@ -882,15 +904,21 @@ def write_pp_to_hdf5(mesh,
                 if remlen != 0:
                     z_rem = np.packbits(x[bytelen * 8:])
 
-                w.create_dataset('nonzero_pp', data=nonzero_pp)
-                w.create_dataset('pp_shape', data=pp.shape)
-                w.create_dataset('g_zero_bits', data=z)
+                w.create_dataset('nonzero_pp', data=nonzero_pp,
+                                 compression=compression)
+                w.create_dataset('pp_shape', data=pp.shape,
+                                 compression=compression)
+                w.create_dataset('g_zero_bits', data=z,
+                                 compression=compression)
                 if remlen != 0:
                     w.create_dataset('g_zero_bits_reminder', data=z_rem)
 
-        if check_consistency and g_zero is not None:
-            w.create_dataset('pp', data=pp)
-            w.create_dataset('g_zero', data=g_zero)
+                # This is only for the test and coupled with read_pp_from_hdf5.
+                if check_consistency:
+                    w.create_dataset('pp', data=pp,
+                                     compression=compression)
+                    w.create_dataset('g_zero', data=g_zero,
+                                     compression=compression)
 
         if verbose:
             text = ""
@@ -993,6 +1021,7 @@ def write_gamma_detail_to_hdf5(temperature,
                                band_index=None,
                                sigma=None,
                                sigma_cutoff=None,
+                               compression=None,
                                filename=None,
                                verbose=True):
     if band_index is None:
@@ -1011,15 +1040,20 @@ def write_gamma_detail_to_hdf5(temperature,
         w.create_dataset('temperature', data=temperature)
         w.create_dataset('mesh', data=mesh)
         if gamma_detail is not None:
-            w.create_dataset('gamma_detail', data=gamma_detail)
+            w.create_dataset('gamma_detail', data=gamma_detail,
+                             compression=compression)
         if triplet is not None:
-            w.create_dataset('triplet', data=triplet)
+            w.create_dataset('triplet', data=triplet,
+                             compression=compression)
         if weight is not None:
-            w.create_dataset('weight', data=weight)
+            w.create_dataset('weight', data=weight,
+                             compression=compression)
         if triplet_map is not None:
-            w.create_dataset('triplet_map', data=triplet_map)
+            w.create_dataset('triplet_map', data=triplet_map,
+                             compression=compression)
         if triplet_all is not None:
-            w.create_dataset('triplet_all', data=triplet_all)
+            w.create_dataset('triplet_all', data=triplet_all,
+                             compression=compression)
         if grid_point is not None:
             w.create_dataset('grid_point', data=grid_point)
         if band_index is not None:
@@ -1065,15 +1099,19 @@ def write_phonon_to_hdf5(frequency,
                          eigenvector,
                          grid_address,
                          mesh,
+                         compression=None,
                          filename=None):
     suffix = _get_filename_suffix(mesh, filename=filename)
     full_filename = "phonon" + suffix + ".hdf5"
 
     with h5py.File(full_filename, 'w') as w:
         w.create_dataset('mesh', data=mesh)
-        w.create_dataset('grid_address', data=grid_address)
-        w.create_dataset('frequency', data=frequency)
-        w.create_dataset('eigenvector', data=eigenvector)
+        w.create_dataset('grid_address', data=grid_address,
+                         compression=compression)
+        w.create_dataset('frequency', data=frequency,
+                         compression=compression)
+        w.create_dataset('eigenvector', data=eigenvector,
+                         compression=compression)
         return full_filename
 
     return None
