@@ -12,7 +12,6 @@
 # serve to show the default.
 
 import sys, os
-import sphinx_bootstrap_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -94,7 +93,64 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 # html_theme = 'default'
+# Add any paths that contain custom themes here, relative to this directory.
+#html_theme_path = []
+
+################
+# guzzle theme #
+################
+# import guzzle_sphinx_theme
+
+# html_theme_path = guzzle_sphinx_theme.html_theme_path()
+# html_theme = 'guzzle_sphinx_theme'
+
+# # Register the theme as an extension to generate a sitemap.xml
+# extensions.append("guzzle_sphinx_theme")
+
+# # Guzzle theme options (see theme.conf for more information)
+# html_theme_options = {
+
+#     # Set the path to a special layout to include for the homepage
+#     "index_template": "special_index.html",
+
+#     # Set the name of the project to appear in the left sidebar.
+#     "project_nav_name": "Project Name",
+
+#     # Set your Disqus short name to enable comments
+#     "disqus_comments_shortname": "my_disqus_comments_short_name",
+
+#     # Set you GA account ID to enable tracking
+#     "google_analytics_account": "my_ga_account",
+
+#     # Path to a touch icon
+#     "touch_icon": "",
+
+#     # Specify a base_url used to generate sitemap.xml links. If not
+#     # specified, then no sitemap will be built.
+#     "base_url": "",
+
+#     # Allow a separate homepage from the master_doc
+#     "homepage": "index",
+
+#     # Allow the project link to be overriden to a custom URL.
+#     "projectlink": "http://myproject.url",
+
+#     # Visible levels of the global TOC; -1 means unlimited
+#     # "globaltoc_depth": 3,
+
+#     # If False, expand all TOC entries
+#     # "globaltoc_collapse": False,
+
+#     # If True, show hidden TOC entries
+#     # "globaltoc_includehidden": False,
+# }
+
+###################
+# bootstrap theme #
+###################
+import sphinx_bootstrap_theme
 html_theme = 'bootstrap'
+html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -168,11 +224,6 @@ html_theme_options = {
 
     'nosidebar': "true",
 }
-
-
-# Add any paths that contain custom themes here, relative to this directory.
-#html_theme_path = []
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".

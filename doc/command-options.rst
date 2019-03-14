@@ -902,7 +902,7 @@ values given as follows, respectively,
 
 ::
 
-   % phono3py --fc2 --dim="2 2 2" -c POSCAR-unitcell --mesh="16 16 16" --nac --jdos --ga="0 0 0  8 8 8"
+   % phono3py --fc2 --dim="2 2 2" -c POSCAR-unitcell --mesh="16 16 16" --jdos --ga="0 0 0  8 8 8"
 
 When temperatures are specified, two classes of weighted JDOS are
 calculated. The result is written into
@@ -926,7 +926,16 @@ the values given as follows, respectively,
 
 ::
 
-   % phono3py --fc2 --dim="2 2 2" -c POSCAR-unitcell --mesh="16 16 16" --nac --jdos --ga="0 0 0  8 8 8" --ts=300
+   % phono3py --fc2 --dim="2 2 2" -c POSCAR-unitcell --mesh="16 16 16" --jdos --ga="0 0 0  8 8 8" --ts=300
+
+This is an example of ``Si-PBEsol``.
+
+.. |Si-JDOS| image:: Si-JDOS.png
+                     :width: 50%
+
+|Si-JDOS|
+
+
 
 ``--num-freq-points``, ``--freq-pitch``: Sampling frequency for distribution functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1019,8 +1028,18 @@ Band path mode::
 
    % phono3py --fc3 --fc2 --dim="2 2 2" -v -c POSCAR-unitcell --nac --gruneisen --band="0 0 0  0 0 1/2"
 
-Input and output file names
-----------------------------
+File I/O
+--------
+
+``--hdf5-compression``: Choice of HDF5 compression filter
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Most of phono3py HDF5 output file is compressed by default with the
+``gzip`` compression filter. To avoid compression,
+``--hdf5-compression=None`` has to be set. Other filters (``lzf`` or
+integer values of 0 to 9) may be used, see h5py
+documentation
+(http://docs.h5py.org/en/stable/high/dataset.html#filter-pipeline).
 
 .. _output_filename_option:
 
