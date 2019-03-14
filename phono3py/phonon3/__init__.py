@@ -34,7 +34,8 @@
 
 import numpy as np
 from phonopy.structure.symmetry import Symmetry
-from phonopy.structure.cells import get_supercell, get_primitive
+from phonopy.structure.cells import (get_supercell, get_primitive,
+                                     guess_primitive_matrix)
 from phonopy.structure.atoms import PhonopyAtoms as Atoms
 from phonopy.units import VaspToTHz
 from phonopy.harmonic.force_constants import (
@@ -101,7 +102,10 @@ class Phono3py(object):
         # Create supercell and primitive cell
         self._unitcell = unitcell
         self._supercell_matrix = supercell_matrix
-        self._primitive_matrix = primitive_matrix
+        if type(primitive_matrix) is str and primitive_matrix == 'auto':
+            self._primitive_matrix = self._guess_primitive_matrix()
+        else:
+            self._primitive_matrix = primitive_matrix
         self._phonon_supercell_matrix = phonon_supercell_matrix  # optional
         self._supercell = None
         self._primitive = None
@@ -797,6 +801,9 @@ class Phono3py(object):
             t_mat = np.dot(inv_supercell_matrix, primitive_matrix)
 
         return get_primitive(supercell, t_mat, self._symprec)
+
+    def _guess_primitive_matrix(self):
+        return guess_primitive_matrix(self._unitcell, symprec=self._symprec)
 
     def _set_masses(self, masses):
         p_masses = np.array(masses)
