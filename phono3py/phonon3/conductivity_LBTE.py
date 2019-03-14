@@ -1392,14 +1392,20 @@ class Conductivity_LBTE(Conductivity):
             else:
                 Y = np.dot(v, X.ravel()).reshape(-1, 3)
 
+        self._set_f_vectors(Y, num_grid_points, weights)
+
         if self._log_level:
             print("[%.3fs]" % (time.time() - start))
             sys.stdout.flush()
 
-        self._f_vectors[:] = (Y.reshape(num_grid_points, num_band * 3).T
-                              / weights).T.reshape(self._f_vectors.shape)
-
         return Y
+
+    def _set_f_vectors(self, Y, num_grid_points, weights):
+        # Collision matrix is half of that defined in Chaput's paper.
+        # Therefore Y is divided by 2.
+        num_band = self._primitive.get_number_of_atoms() * 3
+        self._f_vectors[:] = ((Y / 2).reshape(num_grid_points, num_band * 3).T
+                              / weights).T.reshape(self._f_vectors.shape)
 
     def _get_eigvals_pinv(self, i_sigma, i_temp):
         w = self._collision_eigenvalues[i_sigma, i_temp]
@@ -1604,8 +1610,7 @@ class Conductivity_LBTE(Conductivity):
         omega_inv = np.empty(v.shape, dtype='double', order='C')
         np.dot(v, (e * v).T, out=omega_inv)
         Y = np.dot(omega_inv, X)
-        self._f_vectors[:] = (Y.reshape(num_ir_grid_points, num_band * 3).T
-                              / weights).T.reshape(self._f_vectors.shape)
+        self._set_f_vectors(Y, num_ir_grid_points, weights)
         elems = ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))
         for i, vxf in enumerate(elems):
             mat = self._get_I(vxf[0], vxf[1], num_ir_grid_points * num_band)
@@ -1648,22 +1653,15 @@ class Conductivity_LBTE(Conductivity):
         self._mode_kappa *= - self._conversion_factor
 
     def _set_mean_free_path(self, i_sigma, i_temp, weights, Y):
-        if self._is_reducible_collision_matrix:
-            num_grid_points = np.prod(self._mesh)
-        else:
-            num_grid_points = len(self._ir_grid_points)
         t = self._temperatures[i_temp]
-        num_band = self._primitive.get_number_of_atoms() * 3
-        # Collision matrix is half of that defined in Chaput's paper.
-        # Therefore Y is divided by 2.
-        for i, f_gp in enumerate(
-                (Y / 2).reshape(num_grid_points, num_band, 3)):
+        # shape = (num_grid_points, num_band, 3),
+        for i, f_gp in enumerate(self._f_vectors):
             for j, f in enumerate(f_gp):
                 cv = self._cv[i_temp, i, j]
                 if cv < 1e-10:
                     continue
                 self._mfp[i_sigma, i_temp, i, j] = (
-                    - 2 * t * np.sqrt(Kb / cv) / weights[i] * f / (2 * np.pi))
+                    - 2 * t * np.sqrt(Kb / cv) * f / (2 * np.pi))
 
     def _show_log(self, i):
         gp = self._grid_points[i]
