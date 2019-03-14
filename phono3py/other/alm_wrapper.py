@@ -68,7 +68,7 @@ def get_fc2(supercell,
         rcs = -np.ones((1, nkd, nkd), dtype='double')
         alm.define(1, rcs)
         alm.set_displacement_and_force(disp, force)
-        info = alm.optimize()
+        info = alm.optimize(solver='SimplicialLDLT')
         fc2_alm = alm.get_fc(1)
 
     if log_level:
@@ -117,7 +117,7 @@ def get_fc3(supercell,
             rcs = -np.ones((2, nkd, nkd), dtype='double')
         alm.define(2, rcs)
         alm.set_displacement_and_force(disp[indices], force[indices])
-        info = alm.optimize()
+        info = alm.optimize(solver='SimplicialLDLT')
         fc2_alm = alm.get_fc(1)
         fc3_alm = alm.get_fc(2)
 
