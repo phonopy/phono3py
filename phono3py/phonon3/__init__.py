@@ -978,41 +978,49 @@ class Phono3pyJointDos(object):
             log_level=self._log_level)
 
     def run(self, grid_points):
-        for gp in grid_points:
+        if self._log_level:
+            print("--------------------------------- Joint DOS "
+                  "---------------------------------")
+            print("Sampling mesh: [ %d %d %d ]" % tuple(self._mesh))
+
+        for i, gp in enumerate(grid_points):
             self._jdos.set_grid_point(gp)
 
             if self._log_level:
                 weights = self._jdos.get_triplets_at_q()[1]
-                print("--------------------------------- Joint DOS "
-                      "---------------------------------")
-                print("Grid point: %d" % gp)
-                print("Number of ir-triplets: "
-                      "%d / %d" % (len(weights), weights.sum()))
+                print("======================= "
+                      "Grid point %d (%d/%d) "
+                      "=======================" % (gp, i + 1, len(grid_points)))
                 adrs = self._jdos.get_grid_address()[gp]
                 q = adrs.astype('double') / self._mesh
-                print("q-point: %s" % q)
-                print("Phonon frequency:")
-                frequencies = self._jdos.get_phonons()[0]
-                print("%s" % frequencies[gp])
+                print("q-point: (%5.2f %5.2f %5.2f)" % tuple(q))
+                print("Number of triplets: %d" % len(weights))
+                print("Frequency")
+                for f in self._jdos.get_phonons()[0][gp]:
+                    print("%8.3f" % f)
 
             if self._sigmas:
                 for sigma in self._sigmas:
-                    if sigma is None:
-                        print("Tetrahedron method")
-                    else:
-                        print("Sigma: %s" % sigma)
+                    if self._log_level:
+                        if sigma is None:
+                            print("Tetrahedron method is used.")
+                        else:
+                            print("Smearing method with sigma=%s is used." % sigma)
                     self._jdos.set_sigma(sigma)
                     self._jdos.run()
-                    self._write(gp, sigma=sigma)
+                    filename = self._write(gp, sigma=sigma)
+                    if self._log_level:
+                        print("JDOS is written into \"%s\"." % filename)
             else:
-                print("sigma or tetrahedron method has to be set.")
+                if self._log_level:
+                    print("sigma or tetrahedron method has to be set.")
 
     def _write(self, gp, sigma=None):
-        write_joint_dos(gp,
-                        self._mesh,
-                        self._jdos.get_frequency_points(),
-                        self._jdos.get_joint_dos(),
-                        sigma=sigma,
-                        temperatures=self._temperatures,
-                        filename=self._filename,
-                        is_mesh_symmetry=self._is_mesh_symmetry)
+        return write_joint_dos(gp,
+                               self._mesh,
+                               self._jdos.get_frequency_points(),
+                               self._jdos.get_joint_dos(),
+                               sigma=sigma,
+                               temperatures=self._temperatures,
+                               filename=self._filename,
+                               is_mesh_symmetry=self._is_mesh_symmetry)

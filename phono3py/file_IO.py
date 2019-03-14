@@ -370,27 +370,27 @@ def write_joint_dos(gp,
                     filename=None,
                     is_mesh_symmetry=True):
     if temperatures is None:
-        _write_joint_dos_at_t(gp,
-                              mesh,
-                              frequencies,
-                              jdos,
-                              sigma=sigma,
-                              temperature=None,
-                              filename=filename,
-                              is_mesh_symmetry=is_mesh_symmetry)
+        return _write_joint_dos_at_t(gp,
+                                     mesh,
+                                     frequencies,
+                                     jdos,
+                                     sigma=sigma,
+                                     temperature=None,
+                                     filename=filename,
+                                     is_mesh_symmetry=is_mesh_symmetry)
     else:
         for jdos_at_t, t in zip(jdos, temperatures):
-            _write_joint_dos_at_t(gp,
-                                  mesh,
-                                  frequencies,
-                                  jdos_at_t,
-                                  sigma=sigma,
-                                  temperature=t,
-                                  filename=filename,
-                                  is_mesh_symmetry=is_mesh_symmetry)
+            return _write_joint_dos_at_t(gp,
+                                         mesh,
+                                         frequencies,
+                                         jdos_at_t,
+                                         sigma=sigma,
+                                         temperature=t,
+                                         filename=filename,
+                                         is_mesh_symmetry=is_mesh_symmetry)
 
 
-def _write_joint_dos_at_t(gp,
+def _write_joint_dos_at_t(grid_point,
                           mesh,
                           frequencies,
                           jdos,
@@ -398,9 +398,11 @@ def _write_joint_dos_at_t(gp,
                           temperature=None,
                           filename=None,
                           is_mesh_symmetry=True):
-    jdos_filename = "jdos-m%d%d%d-g%d" % (mesh[0], mesh[1], mesh[2], gp)
-    if sigma is not None:
-        jdos_filename += ("-s%f" % sigma).rstrip('0').rstrip('\.')
+    suffix = _get_filename_suffix(mesh,
+                                  grid_point=grid_point,
+                                  sigma=sigma,
+                                  filename=filename)
+    jdos_filename = "jdos%s" % suffix
     if temperature is not None:
         jdos_filename += ("-t%f" % temperature).rstrip('0').rstrip('\.')
     if not is_mesh_symmetry:
@@ -409,13 +411,12 @@ def _write_joint_dos_at_t(gp,
         jdos_filename += ".%s" % filename
     jdos_filename += ".dat"
 
-    w = open(jdos_filename, 'w')
-    for omega, vals in zip(frequencies, jdos):
-        w.write("%15.7f" % omega)
-        w.write((" %20.15e" * len(vals)) % tuple(vals))
-        w.write("\n")
-    w.close()
-
+    with open(jdos_filename, 'w') as w:
+        for omega, vals in zip(frequencies, jdos):
+            w.write("%15.7f" % omega)
+            w.write((" %20.15e" * len(vals)) % tuple(vals))
+            w.write("\n")
+        return jdos_filename
 
 def write_linewidth_at_grid_point(gp,
                                   band_indices,

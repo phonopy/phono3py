@@ -70,7 +70,7 @@ def get_parser():
                         grid_addresses=None,
                         grid_points=None,
                         gv_delta_q=None,
-                        hdf5_compression=None,
+                        hdf5_compression="gzip",
                         input_filename=None,
                         input_output_filename=None,
                         ion_clamped=False,

@@ -151,6 +151,8 @@ try:
     compression = int(args.hdf5_compression)
 except ValueError:  # str
     compression = args.hdf5_compression
+    if compression.lower() == "none":
+        compression = None
 except TypeError:  # None
     compression = args.hdf5_compression
 
