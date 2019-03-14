@@ -467,6 +467,10 @@ class Phono3py(object):
     def get_primitive_matrix(self):
         return self.primitive_matrix
 
+    @property
+    def unit_conversion_factor(self):
+        return self._frequency_factor_to_THz
+
     def set_displacement_dataset(self, dataset):
         self._displacement_dataset = dataset
 
