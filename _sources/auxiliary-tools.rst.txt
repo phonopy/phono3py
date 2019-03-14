@@ -74,10 +74,19 @@ correspond to 300 K,
 
 The plot like below is displayed.
 
-.. |i0| image:: Si-kaccum.png
+.. |Si-kaccum| image:: Si-kaccum.png
         :width: 50%
 
-|i0|
+|Si-kaccum|
+
+With :math:`19\times 19\times 19` mesh:
+
+.. |Si-kaccum-m191919| image:: Si-kaccum-m191919.png
+        :width: 25%
+
+|Si-kaccum-m191919|
+
+
 
 General options
 ~~~~~~~~~~~~~~~~
@@ -99,7 +108,7 @@ POSCAR-unitcell``.
 Let ``phono3py-kaccum`` read a Pwscf unit cell file with ``-c``
 option, for example::
 
-   phono3py-kaccum --pwscf --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c Si.in --temperature=300 kappa-m191919.hdf5
+   phono3py-kaccum --pwscf --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c Si.in kappa-m191919.hdf5
 
 .. |ipwscf| image:: Si-kaccum-pwscf.png
                     :width: 25%
