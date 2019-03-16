@@ -195,8 +195,8 @@ if args.forces_fc3 or args.forces_fc3_file:
                                 check_number_of_files=True,
                                 verbose=(log_level > 0))
 
-    if args.forces_fc3z:
-        force_filename = args.forces_fc3z
+    if args.forces_fcz:
+        force_filename = args.forces_fcz
         file_exists(force_filename, log_level)
         force_set_zero = get_force_sets(interface_mode,
                                         num_atoms,
@@ -205,6 +205,10 @@ if args.forces_fc3 or args.forces_fc3_file:
                                         verbose=(log_level > 0))[0]
         for fs in force_sets:
             fs -= force_set_zero
+
+        if log_level > 0:
+            print("Forces in \'%s\' were subtracted from supercell forces."
+                  % force_filename)
 
     if force_sets:
         write_FORCES_FC3(disp_dataset, force_sets, filename="FORCES_FC3")
@@ -247,6 +251,22 @@ if args.forces_fc2:
                                 force_filenames,
                                 disp_filename,
                                 verbose=(log_level > 0))
+
+    if args.forces_fcz:
+        force_filename = args.forces_fcz
+        file_exists(force_filename, log_level)
+        force_set_zero = get_force_sets(interface_mode,
+                                        num_atoms,
+                                        1,
+                                        [force_filename, ],
+                                        verbose=(log_level > 0))[0]
+        for fs in force_sets:
+            fs -= force_set_zero
+
+        if log_level > 0:
+            print("Forces in \'%s\' were subtracted from supercell forces."
+                  % force_filename)
+
     if force_sets:
         write_FORCES_FC2(disp_dataset,
                          forces_fc2=force_sets,

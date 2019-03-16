@@ -87,7 +87,7 @@ def create_phono3py_force_constants(phono3py,
         settings.get_constant_averaged_pp_interaction() is not None):
         pass
     else:
-        if read_fc3: # Read fc3.hdf5
+        if read_fc3:  # Read fc3.hdf5
             if input_filename is None:
                 filename = 'fc3.hdf5'
             else:
@@ -148,9 +148,7 @@ def create_phono3py_force_constants(phono3py,
     # fc2
     phonon_primitive = phono3py.get_phonon_primitive()
     phonon_supercell = phono3py.get_phonon_supercell()
-    phonon_symmetry = phono3py.get_phonon_supercell_symmetry()
     p2s_map = phonon_primitive.get_primitive_to_supercell_map()
-    s2p_map = phonon_primitive.get_supercell_to_primitive_map()
     if read_fc2:
         if input_filename is None:
             filename = 'fc2.hdf5'
@@ -180,7 +178,8 @@ def create_phono3py_force_constants(phono3py,
             if phonon_fc2.shape[0] == phonon_fc2.shape[1]:
                 symmetrize_force_constants(phonon_fc2)
             else:
-                symmetrize_compact_force_constants(phonon_fc2, phonon_primitive)
+                symmetrize_compact_force_constants(phonon_fc2,
+                                                   phonon_primitive)
 
         phono3py.set_fc2(phonon_fc2)
     else:
@@ -218,12 +217,14 @@ def create_phono3py_force_constants(phono3py,
             print("Writing fc2 to %s" % filename)
         write_fc2_to_hdf5(phono3py.get_fc2(),
                           filename=filename,
-                          p2s_map=p2s_map)
+                          p2s_map=p2s_map,
+                          compression=compression)
 
     if log_level:
         show_drift_force_constants(phono3py.get_fc2(),
                                    primitive=phonon_primitive,
                                    name='fc2')
+
 
 def _create_phono3py_fc3(phono3py,
                          force_to_eVperA,
@@ -278,6 +279,7 @@ def _create_phono3py_fc3(phono3py,
 
     return True
 
+
 def _create_phono3py_fc2(phono3py,
                          force_to_eVperA,
                          distance_to_A,
@@ -320,6 +322,7 @@ def _create_phono3py_fc2(phono3py,
         use_alm=use_alm)
 
     return True
+
 
 def _create_phono3py_phonon_fc2(phono3py,
                                 force_to_eVperA,
@@ -365,11 +368,13 @@ def _create_phono3py_phonon_fc2(phono3py,
 
     return True
 
+
 def _convert_force_unit(force_sets, force_to_eVperA):
     if force_to_eVperA is not None:
         for forces in force_sets:
             if forces is not None:
                 forces *= force_to_eVperA
+
 
 def _convert_displacement_unit(disp_dataset, distance_to_A, is_fc2=False):
     if distance_to_A is not None:

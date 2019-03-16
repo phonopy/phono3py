@@ -289,21 +289,22 @@ class Phono3py(object):
         else:
             disp_dataset = displacement_dataset
 
+        for forces, disp1 in zip(forces_fc2, disp_dataset['first_atoms']):
+            disp1['forces'] = forces
+
+        if is_compact_fc:
+            p2s_map = self._phonon_primitive.p2s_map
+        else:
+            p2s_map = None
+
         if use_alm:
-            from phono3py.other.alm_wrapper import get_fc2 as get_fc2_alm
+            from phonopy.interface.alm import get_fc2 as get_fc2_alm
             self._fc2 = get_fc2_alm(self._phonon_supercell,
-                                    forces_fc2,
+                                    self._phonon_primitive,
                                     disp_dataset,
-                                    self._phonon_supercell_symmetry,
+                                    atom_list=p2s_map,
                                     log_level=self._log_level)
         else:
-            for forces, disp1 in zip(forces_fc2, disp_dataset['first_atoms']):
-                disp1['forces'] = forces
-
-            if is_compact_fc:
-                p2s_map = self._phonon_primitive.p2s_map
-            else:
-                p2s_map = None
             self._fc2 = get_fc2(self._phonon_supercell,
                                 self._phonon_supercell_symmetry,
                                 disp_dataset,
@@ -330,9 +331,11 @@ class Phono3py(object):
         if use_alm:
             from phono3py.other.alm_wrapper import get_fc3 as get_fc3_alm
             fc2, fc3 = get_fc3_alm(self._supercell,
+                                   self._primitive,
                                    forces_fc3,
                                    disp_dataset,
                                    self._symmetry,
+                                   is_compact_fc=is_compact_fc,
                                    log_level=self._log_level)
         else:
             fc2, fc3 = self._get_fc3(forces_fc3,

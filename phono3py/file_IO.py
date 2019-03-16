@@ -199,7 +199,7 @@ def write_fc3_to_hdf5(fc3,
         Primitive atom indices in supercell index system
         shape=(n_patom,), dtype=intc
     compression : str or int, optional
-        h5py's lossless compression filters (e.g., "gzip", "lzf", "szip").
+        h5py's lossless compression filters (e.g., "gzip", "lzf").
         See the detail at docstring of h5py.Group.create_dataset. Default is
         None.
 
@@ -241,10 +241,19 @@ def write_fc2_dat(force_constants, filename='fc2.dat'):
 
 def write_fc2_to_hdf5(force_constants,
                       filename='fc2.hdf5',
-                      p2s_map=None):
-    write_force_constants_to_hdf5(force_constants,
-                                  filename=filename,
-                                  p2s_map=p2s_map)
+                      p2s_map=None,
+                      compression=None):
+    try:
+        write_force_constants_to_hdf5(force_constants,
+                                      filename=filename,
+                                      p2s_map=p2s_map,
+                                      compression=compression)
+    except TypeError:
+        # This fills the gap between versions with/without compression
+        # in phonopy.
+        write_force_constants_to_hdf5(force_constants,
+                                      filename=filename,
+                                      p2s_map=p2s_map)
 
 
 def read_fc2_from_hdf5(filename='fc2.hdf5',
