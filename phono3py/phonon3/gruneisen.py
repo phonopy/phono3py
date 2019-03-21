@@ -2,10 +2,9 @@ import sys
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import (DynamicalMatrix,
                                                DynamicalMatrixNAC)
-from phonopy.structure.cells import get_supercell
-from phono3py.file_IO import write_fc3_dat, write_fc2_dat
 from phonopy.units import VaspToTHz
 from phonopy.structure.grid_points import get_qpoints
+
 
 def get_gruneisen_parameters(fc2,
                              fc3,
@@ -50,10 +49,14 @@ def get_gruneisen_parameters(fc2,
         gruneisen.set_sampling_mesh(mesh,
                                     rotations=rotations,
                                     is_gamma_center=True)
+        filename_ext = ".hdf5"
     elif band_paths is not None:
         gruneisen.set_band_structure(band_paths)
+        filename_ext = ".yaml"
     elif qpoints is not None:
         gruneisen.set_qpoints(qpoints)
+        filename_ext = ".yaml"
+
     gruneisen.run()
 
     if output_filename is None:
@@ -64,7 +67,8 @@ def get_gruneisen_parameters(fc2,
 
     if log_level:
         print("Gruneisen parameters are written in %s" %
-              (filename + ".hdf5"))
+              (filename + filename_ext))
+
 
 class Gruneisen(object):
     def __init__(self,
@@ -139,7 +143,7 @@ class Gruneisen(object):
                           shift=None,
                           is_gamma_center=False):
         self._run_mode = 'mesh'
-        self._mesh = mesh
+        self._mesh = np.array(mesh, dtype='intc')
         self._qpoints, self._weights = get_qpoints(
             self._mesh,
             np.linalg.inv(self._pcell.get_cell()),
@@ -164,8 +168,9 @@ class Gruneisen(object):
         if self._gruneisen_parameters is not None:
             if self._run_mode == 'band':
                 self._write_band_yaml(filename + ".yaml")
-            elif self._run_mode == 'qpoints' or self._run_mode == 'mesh':
-                # self._write_mesh_yaml(filename + ".yaml")
+            elif self._run_mode == 'qpoints':
+                self._write_mesh_yaml(filename + ".yaml")
+            elif self._run_mode == 'mesh':
                 self._write_mesh_hdf5(filename + ".hdf5")
 
     def _write_mesh_yaml(self, filename):
@@ -238,7 +243,7 @@ class Gruneisen(object):
         frequencies = []
         for i, q in enumerate(qpoints):
             if self._dm.is_nac():
-                if (np.abs(q) < 1e-5).all(): # If q is almost at Gamma
+                if (np.abs(q) < 1e-5).all():  # If q is almost at Gamma
                     if self._run_mode == 'band':
                         # Direction estimated from neighboring point
                         if i > 0:
@@ -249,12 +254,13 @@ class Gruneisen(object):
                             q_dir = None
                         g, omega2 = self._get_gruneisen_tensor(
                             q, nac_q_direction=q_dir)
-                    else: # Specified q-vector
+                    else:  # Specified q-vector
                         g, omega2 = self._get_gruneisen_tensor(
                             q, nac_q_direction=self._nac_q_direction)
-                else: # If q is away from Gamma-point, then q-vector
-                    g, omega2 = self._get_gruneisen_tensor(q, nac_q_direction=q)
-            else: # Without NAC
+                else:  # If q is away from Gamma-point, then q-vector
+                    g, omega2 = self._get_gruneisen_tensor(
+                        q, nac_q_direction=q)
+            else:  # Without NAC
                 g, omega2 = self._get_gruneisen_tensor(q)
             gruneisen_parameters.append(g)
             frequencies.append(

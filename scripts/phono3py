@@ -42,6 +42,7 @@ from phonopy.cui.collect_cell_info import collect_cell_info
 from phonopy.interface import (get_force_sets,
                                get_default_physical_units, get_interface_mode)
 from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
+from phonopy.phonon.band_structure import get_band_qpoints
 from phono3py.version import __version__
 from phono3py.file_IO import (parse_disp_fc2_yaml, parse_disp_fc3_yaml,
                               write_disp_fc2_yaml, read_phonon_from_hdf5,
@@ -607,7 +608,7 @@ create_phono3py_force_constants(phono3py,
 ##############################
 if settings.get_is_gruneisen():
     if (mesh is None and
-        settings.get_bands() is None and
+        settings.get_band_paths() is None and
         settings.get_qpoints() is None):
         print("An option of --mesh, --band, or --qpoints has to be specified.")
         if log_level:
@@ -620,13 +621,23 @@ if settings.get_is_gruneisen():
             print_error()
         sys.exit(1)
 
-    rotations = phono3py.get_primitive_symmetry().get_pointgroup_operations()
+    if settings.get_band_paths() is not None:
+        if settings.get_band_points() is None:
+            npoints = 51
+        else:
+            npoints = settings.get_band_points()
+        band_paths = settings.get_band_paths()
+        bands = get_band_qpoints(band_paths, npoints=npoints)
+    else:
+        bands = None
+
+    rotations = phono3py.primitive_symmetry.get_pointgroup_operations()
     gruneisen = get_gruneisen_parameters(
         phono3py.get_fc2(),
         phono3py.get_fc3(),
         supercell,
         primitive,
-        settings.get_band_indices(),
+        bands,
         mesh,
         rotations,
         settings.get_qpoints(),
