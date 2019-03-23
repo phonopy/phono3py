@@ -5,6 +5,7 @@ class Phono3pySettings(Settings):
     def __init__(self):
         Settings.__init__(self)
 
+        self._alm_options = None
         self._boundary_mfp = 1.0e6 # In micrometre. The default value is
                                    # just set to avoid divergence.
         self._coarse_mesh_shifts = None
@@ -57,6 +58,12 @@ class Phono3pySettings(Settings):
         self._write_phonon = False
         self._write_pp = False
         self._write_LBTE_solution = False
+
+    def set_alm_options(self, alm_options):
+        self._alm_options = alm_options
+
+    def get_alm_options(self):
+        return self._alm_options
 
     def set_boundary_mfp(self, boundary_mfp):
         self._boundary_mfp = boundary_mfp
@@ -390,6 +397,10 @@ class Phono3pyConfParser(ConfParser):
             if dim_fc2 is not None:
                 self._confs['dim_fc2'] = " ".join(dim_fc2)
 
+        if 'alm_options' in self._args:
+            if self._args.alm_options is not None:
+                self._confs['alm_options'] = self._args.alm_options
+
         if 'boundary_mfp' in self._args:
             if self._args.boundary_mfp is not None:
                 self._confs['boundary_mfp'] = self._args.boundary_mfp
@@ -660,7 +671,6 @@ class Phono3pyConfParser(ConfParser):
                 else:
                     self.setting_error("Grid addresses are incorrectly set.")
 
-
             if conf_key == 'grid_points':
                 vals = [int(x) for x in
                         confs['grid_points'].replace(',', ' ').split()]
@@ -850,6 +860,9 @@ class Phono3pyConfParser(ConfParser):
                     self.setting_error("Temperatures are incorrectly set.")
                 else:
                     self.set_parameter('temperatures', vals)
+
+            if conf_key == 'alm_options':
+                self.set_parameter('alm_options', confs['alm_options'])
 
             if conf_key == 'alm_fc2':
                 if confs['alm_fc2'].lower() == '.false.':
@@ -1088,6 +1101,10 @@ class Phono3pyConfParser(ConfParser):
         # Temperatures
         if 'temperatures' in params:
             self._settings.set_temperatures(params['temperatures'])
+
+        # List of ALM options as string separated by ','
+        if 'alm_options' in params:
+            self._settings.set_alm_options(params['alm_options'])
 
         # Use ALM for creating fc2
         if 'alm_fc2' in params:

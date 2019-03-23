@@ -43,6 +43,7 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description="Phono3py command-line-tool")
     parser.set_defaults(abinit_mode=False,
+                        alm_options=None,
                         band_indices=None,
                         band_paths=None,
                         band_points=None,
@@ -152,6 +153,9 @@ def get_parser():
     parser.add_argument(
         "--alm-fc3", dest="use_alm_fc3", action="store_true",
         help="Use ALM for creating 3rd order force constants")
+    parser.add_argument(
+        "--alm-options", dest="alm_options",
+        help="List of ALM options as string separated by commas")
     parser.add_argument(
         "--amplitude", dest="displacement_distance", type=float,
         help="Distance of displacements")

@@ -280,7 +280,8 @@ class Phono3py(object):
                     displacement_dataset=None,
                     symmetrize_fc2=False,
                     is_compact_fc=False,
-                    use_alm=False):
+                    use_alm=False,
+                    alm_options=None):
         if displacement_dataset is None:
             if self._phonon_displacement_dataset is None:
                 disp_dataset = self._displacement_dataset
@@ -303,6 +304,7 @@ class Phono3py(object):
                                     self._phonon_primitive,
                                     disp_dataset,
                                     atom_list=p2s_map,
+                                    alm_options=alm_options,
                                     log_level=self._log_level)
         else:
             self._fc2 = get_fc2(self._phonon_supercell,
@@ -322,7 +324,8 @@ class Phono3py(object):
                     cutoff_distance=None,  # set fc3 zero
                     symmetrize_fc3r=False,
                     is_compact_fc=False,
-                    use_alm=False):
+                    use_alm=False,
+                    alm_options=None):
         if displacement_dataset is None:
             disp_dataset = self._displacement_dataset
         else:
@@ -335,6 +338,7 @@ class Phono3py(object):
                                    forces_fc3,
                                    disp_dataset,
                                    self._symmetry,
+                                   alm_options=alm_options,
                                    is_compact_fc=is_compact_fc,
                                    log_level=self._log_level)
         else:

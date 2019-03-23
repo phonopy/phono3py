@@ -42,10 +42,10 @@ def get_fc3(supercell,
             forces_fc3,
             disp_dataset,
             symmetry,
+            alm_options=None,
             is_compact_fc=False,
             log_level=0):
-    natom = supercell.get_number_of_atoms()
-    assert natom == disp_dataset['natom']
+    assert supercell.get_number_of_atoms() == disp_dataset['natom']
 
     force = np.array(forces_fc3, dtype='double', order='C')
     lattice = supercell.get_cell().T
@@ -67,22 +67,85 @@ def get_fc3(supercell,
         if log_level == 1:
             print("Use -v option to watch detailed ALM log.")
         print("")
+        sys.stdout.flush()
+
+    _alm_options = {}
+    if alm_options is not None:
+        _alm_options.update(alm_options)
+    if 'cutoff_distance' in disp_dataset:
+        _alm_options['cutoff_distance'] = disp_dataset['cutoff_distance']
+
+    fc2, fc3 = optimize(lattice, positions, numbers,
+                        disp[indices],
+                        force[indices],
+                        alm_options=_alm_options,
+                        p2s_map=p2s_map,
+                        p2p_map=p2p_map,
+                        log_level=log_level)
+
+    if log_level:
+        print("-------------------------------"
+              " ALM FC3 end "
+              "-------------------------------")
+
+    return fc2, fc3
+
+
+def optimize(lattice,
+             positions,
+             numbers,
+             displacements,
+             forces,
+             alm_options=None,
+             p2s_map=None,
+             p2p_map=None,
+             log_level=0):
+    """Calculate force constants
+
+    lattice : array_like
+        Basis vectors. a, b, c are given as column vectors.
+        shape=(3, 3), dtype='double'
+    positions : array_like
+        Fractional coordinates of atomic points.
+        shape=(num_atoms, 3), dtype='double'
+    numbers : array_like
+        Atomic numbers.
+        shape=(num_atoms,), dtype='intc'
+    displacements : array_like
+        Atomic displacement patterns in supercells in Cartesian.
+        dtype='double', shape=(supercells, num_atoms, 3)
+    forces : array_like
+        Forces in supercells.
+        dtype='double', shape=(supercells, num_atoms, 3)
+    alm_options : dict, optional
+        Default is None.
+        List of keys
+            cutoff_distance : float
+            solver : str
+                Either 'SimplicialLDLT' or 'dense'. Default is
+                'SimplicialLDLT'.
+
+    """
 
     from alm import ALM
-    sys.stdout.flush()
     with ALM(lattice, positions, numbers) as alm:
+        natom = len(numbers)
         alm.set_verbosity(log_level)
         nkd = len(np.unique(numbers))
-        if 'cutoff_distance' in disp_dataset:
-            cut_d = disp_dataset['cutoff_distance']
+        if 'cutoff_distance' not in alm_options:
+            rcs = -np.ones((2, nkd, nkd), dtype='double')
+        elif type(alm_options['cutoff_distance']) is float:
             rcs = np.ones((2, nkd, nkd), dtype='double')
             rcs[0] *= -1
-            rcs[1] *= cut_d
-        else:
-            rcs = -np.ones((2, nkd, nkd), dtype='double')
+            rcs[1] *= alm_options['cutoff_distance']
         alm.define(2, rcs)
-        alm.set_displacement_and_force(disp[indices], force[indices])
-        info = alm.optimize(solver='SimplicialLDLT')
+        alm.set_displacement_and_force(displacements, forces)
+
+        if 'solver' in alm_options:
+            solver = alm_options['solver']
+        else:
+            solver = 'SimplicialLDLT'
+        info = alm.optimize(solver=solver)
         fc2 = extract_fc2_from_alm(alm,
                                    natom,
                                    atom_list=p2s_map,
@@ -92,13 +155,7 @@ def get_fc3(supercell,
                                     natom,
                                     p2s_map=p2s_map,
                                     p2p_map=p2p_map)
-
-    if log_level:
-        print("-------------------------------"
-              " ALM FC3 end "
-              "-------------------------------")
-
-    return fc2, fc3
+        return fc2, fc3
 
 
 def _extract_fc3_from_alm(alm,

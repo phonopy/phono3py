@@ -69,6 +69,18 @@ def create_phono3py_force_constants(phono3py,
     symmetrize_fc2 = (settings.get_is_symmetrize_fc2() or
                       settings.get_fc_symmetry())
 
+    if settings.get_use_alm_fc2():
+        symmetrize_fc2 = False
+    if settings.get_use_alm_fc3():
+        symmetrize_fc3r = False
+    alm_options = None
+    if settings.get_use_alm_fc3() or settings.get_use_alm_fc2():
+        if settings.get_alm_options() is not None:
+            alm_options = {}
+            for option_str in settings.get_alm_options().split(","):
+                key, val = option_str.split('=')[:2]
+                alm_options[key.lower()] = val
+
     if log_level:
         show_phono3py_force_constants_settings(read_fc3,
                                                read_fc2,
@@ -127,6 +139,7 @@ def create_phono3py_force_constants(phono3py,
                                         output_filename,
                                         settings.get_is_compact_fc(),
                                         settings.get_use_alm_fc3(),
+                                        alm_options,
                                         compression,
                                         log_level):
                     print("fc3 was not created properly.")
@@ -191,6 +204,7 @@ def create_phono3py_force_constants(phono3py,
                                         input_filename,
                                         settings.get_is_compact_fc(),
                                         settings.get_use_alm_fc2(),
+                                        alm_options,
                                         log_level):
                 print("fc2 was not created properly.")
                 if log_level:
@@ -204,6 +218,7 @@ def create_phono3py_force_constants(phono3py,
                                                input_filename,
                                                settings.get_is_compact_fc(),
                                                settings.get_use_alm_fc2(),
+                                               alm_options,
                                                log_level):
                     print("fc2 was not created properly.")
                     if log_level:
@@ -235,6 +250,7 @@ def _create_phono3py_fc3(phono3py,
                          output_filename,
                          is_compact_fc,
                          use_alm,
+                         alm_options,
                          compression,
                          log_level):
     if input_filename is None:
@@ -265,7 +281,8 @@ def _create_phono3py_fc3(phono3py,
                          displacement_dataset=disp_dataset,
                          symmetrize_fc3r=symmetrize_fc3r,
                          is_compact_fc=is_compact_fc,
-                         use_alm=use_alm)
+                         use_alm=use_alm,
+                         alm_options=alm_options)
 
     if output_filename is None:
         filename = 'fc3.hdf5'
@@ -287,6 +304,7 @@ def _create_phono3py_fc2(phono3py,
                          input_filename,
                          is_compact_fc,
                          use_alm,
+                         alm_options,
                          log_level):
     if input_filename is None:
         filename = 'disp_fc3.yaml'
@@ -319,7 +337,8 @@ def _create_phono3py_fc2(phono3py,
         displacement_dataset=disp_dataset,
         symmetrize_fc2=symmetrize_fc2,
         is_compact_fc=is_compact_fc,
-        use_alm=use_alm)
+        use_alm=use_alm,
+        alm_options=alm_options)
 
     return True
 
@@ -331,6 +350,7 @@ def _create_phono3py_phonon_fc2(phono3py,
                                 input_filename,
                                 is_compact_fc,
                                 use_alm,
+                                alm_options,
                                 log_level):
     if input_filename is None:
         filename = 'disp_fc2.yaml'
@@ -364,7 +384,8 @@ def _create_phono3py_phonon_fc2(phono3py,
         displacement_dataset=disp_dataset,
         symmetrize_fc2=symmetrize_fc2,
         is_compact_fc=is_compact_fc,
-        use_alm=use_alm)
+        use_alm=use_alm,
+        alm_options=alm_options)
 
     return True
 
