@@ -20,7 +20,7 @@ configuration (e.g., saved in a file ``setting.conf``) is as follow::
 
    DIM = 2 2 2
    DIM_FC2 = 4 4 4
-   PRIMITIVE_AXIS = 0 1/2 1/2 1/2 0 1/2 1/2 1/2 0
+   PRIMITIVE_AXES = 0 1/2 1/2 1/2 0 1/2 1/2 1/2 0
    MESH = 11 11 11
    BTERTA = .TRUE.
    NAC = .TRUE.
@@ -145,13 +145,13 @@ usual phono3py run without ``--dim-fc2`` option.
 
 .. _pa_option:
 
-``--pa``, ``--primitive-axis``: Transformation matrix to primitive cell
+``--pa``, ``--primitive-axes``: Transformation matrix to primitive cell
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-(Setting tag: ``PRIMITIVE_AXIS``)
+(Setting tag: ``PRIMITIVE_AXES``)
 
 Transformation matrix from a non-primitive cell to the primitive
-cell. See phonopy ``PRIMITIVE_AXIS`` tag (``--pa`` option) at
+cell. See phonopy ``PRIMITIVE_AXES`` tag (``--pa`` option) at
 http://atztogo.github.io/phonopy/setting-tags.html#primitive-axis
 
 ``--fc2``: Read 2nd order force constants
@@ -1030,6 +1030,8 @@ Band path mode::
 
 File I/O
 --------
+
+.. _hdf5_compression_option:
 
 ``--hdf5-compression``: Choice of HDF5 compression filter
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
