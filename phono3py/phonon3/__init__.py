@@ -46,6 +46,7 @@ from phonopy.harmonic.force_constants import (
     set_permutation_symmetry)
 from phonopy.harmonic.displacement import get_least_displacements
 from phonopy.harmonic.displacement import directions_to_displacement_dataset
+from phonopy.phonon.mesh import length2mesh
 from phono3py.version import __version__
 from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
                                                write_imag_self_energy)
@@ -151,11 +152,21 @@ class Phono3py(object):
 
         # Setup interaction
         self._interaction = None
-        self._mesh = None
+        self._mesh_numbers = None
         self._band_indices = None
         self._band_indices_flatten = None
         if mesh is not None:
-            self._mesh = np.array(mesh, dtype='intc')
+            _mesh = np.array(mesh)
+            mesh_nums = None
+            if _mesh.shape:
+                if _mesh.shape == (3,):
+                    mesh_nums = mesh
+            else:
+                mesh_nums = length2mesh(mesh, self._primitive.get_cell())
+            if mesh_nums is None:
+                msg = "mesh has inappropriate type."
+                raise TypeError(msg)
+            self._mesh_numbers = mesh_nums
         self.set_band_indices(band_indices)
 
     def set_band_indices(self, band_indices):
@@ -174,7 +185,7 @@ class Phono3py(object):
                              frequency_scale_factor=None,
                              unit_conversion=None,
                              solve_dynamical_matrices=True):
-        if self._mesh is None:
+        if self._mesh_numbers is None:
             print("'mesh' has to be set in Phono3py instantiation.")
             raise RuntimeError
 
@@ -182,7 +193,7 @@ class Phono3py(object):
         self._interaction = Interaction(
             self._supercell,
             self._primitive,
-            self._mesh,
+            self._mesh_numbers,
             self._primitive_symmetry,
             fc3=self._fc3,
             band_indices=self._band_indices_flatten,
@@ -438,11 +449,19 @@ class Phono3py(object):
     def get_supercell(self):
         return self.supercell
 
-    def get_phonon_supercell(self):
+    @property
+    def phonon_supercell(self):
         return self._phonon_supercell
 
-    def get_phonon_primitive(self):
+    def get_phonon_supercell(self):
+        return self.phonon_supercell
+
+    @property
+    def phonon_primitive(self):
         return self._phonon_primitive
+
+    def get_phonon_primitive(self):
+        return self.phonon_primitive
 
     @property
     def symmetry(self):
@@ -470,6 +489,13 @@ class Phono3py(object):
 
     def get_supercell_matrix(self):
         return self.supercell_matrix
+
+    @property
+    def phonon_supercell_matrix(self):
+        return self._phonon_supercell_matrix
+
+    def get_phonon_supercell_matrix(self):
+        return self.phonon_supercell_matrix
 
     @property
     def primitive_matrix(self):
@@ -509,6 +535,10 @@ class Phono3py(object):
                       self._phonon_displacement_dataset)
         return self._phonon_supercells_with_displacements
 
+    @property
+    def mesh_numbers(self):
+        return self._mesh_numbers
+
     def run_imag_self_energy(self,
                              grid_points,
                              frequency_step=None,
@@ -539,7 +569,7 @@ class Phono3py(object):
     def write_imag_self_energy(self, filename=None):
         write_imag_self_energy(
             self._imag_self_energy,
-            self._mesh,
+            self._mesh_numbers,
             self._grid_points,
             self._band_indices,
             self._frequency_points,
@@ -868,7 +898,7 @@ class Phono3pyIsotope(object):
             self._sigmas = [None]
         else:
             self._sigmas = sigmas
-        self._mesh = mesh
+        self._mesh_numbers = mesh
         self._iso = Isotope(mesh,
                             primitive,
                             mass_variances=mass_variances,
@@ -885,7 +915,7 @@ class Phono3pyIsotope(object):
             print("--------------- Isotope scattering ---------------")
             print("Grid point: %d" % gp)
             adrs = self._iso.get_grid_address()[gp]
-            q = adrs.astype('double') / self._mesh
+            q = adrs.astype('double') / self._mesh_numbers
             print("q-point: %s" % q)
 
             if self._sigmas:
@@ -951,7 +981,7 @@ class Phono3pyJointDos(object):
             self._sigmas = sigmas
         self._supercell = supercell
         self._primitive = primitive
-        self._mesh = mesh
+        self._mesh_numbers = mesh
         self._fc2 = fc2
         self._nac_params = nac_params
         self._nac_q_direction = nac_q_direction
@@ -967,7 +997,7 @@ class Phono3pyJointDos(object):
         self._log_level = log_level
 
         self._jdos = JointDos(
-            self._mesh,
+            self._mesh_numbers,
             self._primitive,
             self._supercell,
             self._fc2,
@@ -988,7 +1018,7 @@ class Phono3pyJointDos(object):
         if self._log_level:
             print("--------------------------------- Joint DOS "
                   "---------------------------------")
-            print("Sampling mesh: [ %d %d %d ]" % tuple(self._mesh))
+            print("Sampling mesh: [ %d %d %d ]" % tuple(self._mesh_numbers))
 
         for i, gp in enumerate(grid_points):
             self._jdos.set_grid_point(gp)
@@ -999,7 +1029,7 @@ class Phono3pyJointDos(object):
                       "Grid point %d (%d/%d) "
                       "=======================" % (gp, i + 1, len(grid_points)))
                 adrs = self._jdos.get_grid_address()[gp]
-                q = adrs.astype('double') / self._mesh
+                q = adrs.astype('double') / self._mesh_numbers
                 print("q-point: (%5.2f %5.2f %5.2f)" % tuple(q))
                 print("Number of triplets: %d" % len(weights))
                 print("Frequency")
@@ -1024,7 +1054,7 @@ class Phono3pyJointDos(object):
 
     def _write(self, gp, sigma=None):
         return write_joint_dos(gp,
-                               self._mesh,
+                               self._mesh_numbers,
                                self._jdos.get_frequency_points(),
                                self._jdos.get_joint_dos(),
                                sigma=sigma,

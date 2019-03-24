@@ -858,7 +858,7 @@ class Conductivity_RTA(Conductivity):
             ave_pp = None
         self._show_log_value_names()
 
-        if self._log_level > 1:
+        if self._log_level > 2:
             self._show_log_values_on_kstar(frequencies, gv, ave_pp, gp, q)
         else:
             self._show_log_values(frequencies, gv, ave_pp)
