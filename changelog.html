@@ -11,8 +11,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
@@ -134,6 +133,7 @@
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#mar-24-2019-version-1-16-0">Mar-24-2019: Version 1.16.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#nov-22-2018-version-1-14-3">Nov-22-2018: version 1.14.3</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#june-20-2018-version-1-13-3">June-20-2018: version 1.13.3</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#may-17-2018-version-1-13-1">May-17-2018: version 1.13.1</a></li>
@@ -182,6 +182,7 @@
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Change Log</a><ul>
+<li><a class="reference internal" href="#mar-24-2019-version-1-16-0">Mar-24-2019: Version 1.16.0</a></li>
 <li><a class="reference internal" href="#nov-22-2018-version-1-14-3">Nov-22-2018: version 1.14.3</a></li>
 <li><a class="reference internal" href="#june-20-2018-version-1-13-3">June-20-2018: version 1.13.3</a></li>
 <li><a class="reference internal" href="#may-17-2018-version-1-13-1">May-17-2018: version 1.13.1</a></li>
@@ -255,6 +256,33 @@
       
   <div class="section" id="change-log">
 <span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="mar-24-2019-version-1-16-0">
+<h2>Mar-24-2019: Version 1.16.0<a class="headerlink" href="#mar-24-2019-version-1-16-0" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Bug fixes and catching up the updates of phonopy.</li>
+<li>Most of hdf5 output files are compressed by <code class="docutils literal notranslate"><span class="pre">gzip</span></code> as
+default. This compression can be set off, see
+<a class="reference internal" href="command-options.html#hdf5-compression-option"><span class="std std-ref">--hdf5-compression: Choice of HDF5 compression filter</span></a>.</li>
+<li>(Experimental) <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command accepts <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type
+file as an input crystal structure by <code class="docutils literal notranslate"><span class="pre">-c</span></code> option. When <code class="docutils literal notranslate"><span class="pre">DIM</span></code>
+and any structure file are not given, <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>
+(primary) or <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> (secondary) is searched in the current
+directory. Then <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file is used as the input.
+By this, semi-automatic phono3py mode is invocked, which acts as<ol class="arabic">
+<li><code class="docutils literal notranslate"><span class="pre">supercell_matrix</span></code> corresponding to <code class="docutils literal notranslate"><span class="pre">DIM</span></code> in the
+<code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file is used if it exists.</li>
+<li><code class="docutils literal notranslate"><span class="pre">phonon_supercell_matrix</span></code>  corresponding to <code class="docutils literal notranslate"><span class="pre">DIM_FC2</span></code> in the
+<code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file is used if it exists.</li>
+<li><code class="docutils literal notranslate"><span class="pre">primitive_matrix</span></code> in the <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file
+is used if it exists. Otherwise, set <code class="docutils literal notranslate"><span class="pre">PRIMITIVE_AXES</span> <span class="pre">=</span> <span class="pre">AUTO</span></code>
+when <code class="docutils literal notranslate"><span class="pre">PRIMITIVE_AXES</span></code> is not given.</li>
+<li>NAC params are read (<code class="docutils literal notranslate"><span class="pre">NAC</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>) if NAC params are
+contained (primary) in the <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file or if
+<code class="docutils literal notranslate"><span class="pre">BORN</span></code> file exists in the current directory (secondary).</li>
+</ol>
+</li>
+</ul>
+</div>
 <div class="section" id="nov-22-2018-version-1-14-3">
 <h2>Nov-22-2018: version 1.14.3<a class="headerlink" href="#nov-22-2018-version-1-14-3" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
@@ -631,7 +659,7 @@ when a mesh number is an even number, it is more carefully treated.</li>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.<br/>
     </p>
   </div>
 </footer>
