@@ -43,6 +43,7 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description="Phono3py command-line-tool")
     parser.set_defaults(abinit_mode=False,
+                        alm_options=None,
                         band_indices=None,
                         band_paths=None,
                         band_points=None,
@@ -60,7 +61,7 @@ def get_parser():
                         force_sets_to_forces_fc2_mode=None,
                         forces_fc2=None,
                         forces_fc3=None,
-                        forces_fc3z=None,
+                        forces_fcz=None,
                         forces_fc3_file=None,
                         force_sets_mode=False,
                         frequency_conversion_factor=None,
@@ -70,6 +71,7 @@ def get_parser():
                         grid_addresses=None,
                         grid_points=None,
                         gv_delta_q=None,
+                        hdf5_compression="gzip",
                         input_filename=None,
                         input_output_filename=None,
                         ion_clamped=False,
@@ -123,6 +125,7 @@ def get_parser():
                         show_num_triplets=False,
                         sigma=None,
                         sigma_cutoff=None,
+                        solve_collective_phonon=False,
                         supercell_dimension=None,
                         symprec=1e-5,
                         temperatures=None,
@@ -150,6 +153,9 @@ def get_parser():
     parser.add_argument(
         "--alm-fc3", dest="use_alm_fc3", action="store_true",
         help="Use ALM for creating 3rd order force constants")
+    parser.add_argument(
+        "--alm-options", dest="alm_options",
+        help="List of ALM options as string separated by commas")
     parser.add_argument(
         "--amplitude", dest="displacement_distance", type=float,
         help="Distance of displacements")
@@ -183,8 +189,8 @@ def get_parser():
         "--cf3", "--create-f3", dest="forces_fc3", nargs='+',
         help="Create FORCES_FC3")
     parser.add_argument(
-        "--cf3z", "--create-f3z", dest="forces_fc3z",
-        help="Remove recidual forces for fc3 supercell forces")
+        "--cfz", "--subtract-forces", dest="forces_fcz",
+        help="Subtract recidual forces from supercell forces")
     parser.add_argument(
         "--cf3-file", "--create-f3-from-file", dest="forces_fc3_file",
         help="Create FORCES_FC3 from file name list")
@@ -195,6 +201,10 @@ def get_parser():
         "--cfs", "--create-force-sets", dest="force_sets_mode",
         action="store_true",
         help="Create phonopy FORCE_SETS from FORCES_FC2")
+    parser.add_argument(
+        "--cph", "--collective-phonon", dest="solve_collective_phonon",
+        action="store_true",
+        help="Solve collective phonons")
     parser.add_argument(
         "--const-ave-pp", dest="const_ave_pp", type=float,
         help="Set constant averaged ph-ph interaction (Pqj)")
@@ -274,6 +284,9 @@ def get_parser():
     parser.add_argument(
         "--gv-delta-q", dest="gv_delta_q", type=float,
         help="Delta-q distance used for group velocity calculation")
+    parser.add_argument(
+        "--hdf5-compression", dest="hdf5_compression",
+        help="hdf5 compression filter")
     parser.add_argument(
         "-i", dest="input_filename",
         help="Input filename extension")

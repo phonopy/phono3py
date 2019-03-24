@@ -34,149 +34,155 @@
 
 import sys
 import numpy as np
-from phono3py.phonon3.fc3 import distribute_fc3
-from phonopy.harmonic.force_constants import distribute_force_constants
-from phonopy.structure.cells import compute_all_sg_permutations
-
-
-def get_fc2(supercell,
-            forces_fc2,
-            disp_dataset,
-            symmetry,
-            log_level=0):
-    natom = supercell.get_number_of_atoms()
-    assert natom == disp_dataset['natom']
-    force = np.array(forces_fc2, dtype='double', order='C')
-    lattice = supercell.get_cell().T
-    positions = supercell.get_scaled_positions()
-    numbers = supercell.get_atomic_numbers()
-    disp = _get_alm_disp_fc2(disp_dataset)
-    pure_trans = _collect_pure_translations(symmetry)
-    rotations = np.array([np.eye(3, dtype='intc')] * len(pure_trans),
-                         dtype='intc', order='C')
-
-    if log_level:
-        print("------------------------------"
-              " ALM FC2 start "
-              "------------------------------")
-
-    from alm import ALM
-    sys.stdout.flush()
-    with ALM(lattice, positions, numbers) as alm:
-        alm.set_verbosity(log_level)
-        nkd = len(np.unique(numbers))
-        rcs = -np.ones((1, nkd, nkd), dtype='double')
-        alm.define(1, rcs)
-        alm.set_displacement_and_force(disp, force)
-        info = alm.optimize()
-        fc2_alm = alm.get_fc(1)
-
-    if log_level:
-        print("-------------------------------"
-              " ALM FC2 end "
-              "-------------------------------")
-
-    fc2 = _expand_fc2(fc2_alm, supercell, pure_trans, rotations)
-
-    return fc2
+from phonopy.interface.alm import extract_fc2_from_alm
 
 
 def get_fc3(supercell,
+            primitive,
             forces_fc3,
             disp_dataset,
             symmetry,
+            alm_options=None,
+            is_compact_fc=False,
             log_level=0):
-    natom = supercell.get_number_of_atoms()
-    assert natom == disp_dataset['natom']
+    assert supercell.get_number_of_atoms() == disp_dataset['natom']
 
     force = np.array(forces_fc3, dtype='double', order='C')
     lattice = supercell.get_cell().T
     positions = supercell.get_scaled_positions()
     numbers = supercell.get_atomic_numbers()
     disp, indices = _get_alm_disp_fc3(disp_dataset)
-    pure_trans = _collect_pure_translations(symmetry)
-    rotations = np.array([np.eye(3, dtype='intc')] * len(pure_trans),
-                         dtype='intc', order='C')
+    if is_compact_fc:
+        p2s_map = primitive.p2s_map
+        p2p_map = primitive.p2p_map
+    else:
+        p2s_map = None
+        p2p_map = None
 
     if log_level:
         print("------------------------------"
               " ALM FC3 start "
               "------------------------------")
+        print("ALM by T. Tadano, https://github.com/ttadano/ALM")
+        if log_level == 1:
+            print("Use -v option to watch detailed ALM log.")
+        print("")
+        sys.stdout.flush()
 
-    from alm import ALM
-    sys.stdout.flush()
-    with ALM(lattice, positions, numbers) as alm:
-        alm.set_verbosity(log_level)
-        nkd = len(np.unique(numbers))
-        if 'cutoff_distance' in disp_dataset:
-            cut_d = disp_dataset['cutoff_distance']
-            rcs = np.ones((2, nkd, nkd), dtype='double')
-            rcs[0] *= -1
-            rcs[1] *= cut_d
-        else:
-            rcs = -np.ones((2, nkd, nkd), dtype='double')
-        alm.define(2, rcs)
-        alm.set_displacement_and_force(disp[indices], force[indices])
-        info = alm.optimize()
-        fc2_alm = alm.get_fc(1)
-        fc3_alm = alm.get_fc(2)
+    _alm_options = {}
+    if alm_options is not None:
+        _alm_options.update(alm_options)
+    if 'cutoff_distance' in disp_dataset:
+        _alm_options['cutoff_distance'] = disp_dataset['cutoff_distance']
+
+    fc2, fc3 = optimize(lattice, positions, numbers,
+                        disp[indices],
+                        force[indices],
+                        alm_options=_alm_options,
+                        p2s_map=p2s_map,
+                        p2p_map=p2p_map,
+                        log_level=log_level)
 
     if log_level:
         print("-------------------------------"
               " ALM FC3 end "
               "-------------------------------")
 
-    fc2 = _expand_fc2(fc2_alm,
-                      supercell,
-                      pure_trans,
-                      rotations,
-                      verbose=(log_level > 0))
-    fc3 = _expand_fc3(fc3_alm,
-                      supercell,
-                      pure_trans,
-                      rotations,
-                      verbose=(log_level > 0))
-
     return fc2, fc3
 
 
-def write_DFILE_and_FFILE(disp_dataset, forces_fc3,
-                          dfilename="DFILE", ffilename="FFILE"):
-    """Write displacements and forces to DFILE and FFILE in ALM formats.
+def optimize(lattice,
+             positions,
+             numbers,
+             displacements,
+             forces,
+             alm_options=None,
+             p2s_map=None,
+             p2p_map=None,
+             log_level=0):
+    """Calculate force constants
 
-    Parameters
-    ----------
-    disp_dataset : dict
-        Phono3py displacement data set
-    forces_fc3 : array_like
-        Sets of supercell forces
-        shape=(n_disp, n_atoms, 3)
-    dfilename : str, optional, default="DFILE"
-        Output filename of sets of supercell displacements.
-    ffilename : str, optional, default="FFILE"
-        Output filename of sets of supercell forces.
+    lattice : array_like
+        Basis vectors. a, b, c are given as column vectors.
+        shape=(3, 3), dtype='double'
+    positions : array_like
+        Fractional coordinates of atomic points.
+        shape=(num_atoms, 3), dtype='double'
+    numbers : array_like
+        Atomic numbers.
+        shape=(num_atoms,), dtype='intc'
+    displacements : array_like
+        Atomic displacement patterns in supercells in Cartesian.
+        dtype='double', shape=(supercells, num_atoms, 3)
+    forces : array_like
+        Forces in supercells.
+        dtype='double', shape=(supercells, num_atoms, 3)
+    alm_options : dict, optional
+        Default is None.
+        List of keys
+            cutoff_distance : float
+            solver : str
+                Either 'SimplicialLDLT' or 'dense'. Default is
+                'SimplicialLDLT'.
 
     """
 
-    disp, indices = _get_alm_disp_fc3(disp_dataset)
-    force = np.array(forces_fc3, dtype='double', order='C')
-    for filename, data in zip((dfilename, ffilename),
-                              (disp[indices], force[indices])):
-        with open(filename, 'w') as w:
-            for d_supercell in data:
-                for d_atom in d_supercell:
-                    w.write("  %21.16f %21.16f %21.16f\n" % tuple(d_atom))
+    from alm import ALM
+    with ALM(lattice, positions, numbers) as alm:
+        natom = len(numbers)
+        alm.set_verbosity(log_level)
+        nkd = len(np.unique(numbers))
+        if 'cutoff_distance' not in alm_options:
+            rcs = -np.ones((2, nkd, nkd), dtype='double')
+        elif type(alm_options['cutoff_distance']) is float:
+            rcs = np.ones((2, nkd, nkd), dtype='double')
+            rcs[0] *= -1
+            rcs[1] *= alm_options['cutoff_distance']
+        alm.define(2, rcs)
+        alm.set_displacement_and_force(displacements, forces)
+
+        if 'solver' in alm_options:
+            solver = alm_options['solver']
+        else:
+            solver = 'SimplicialLDLT'
+        info = alm.optimize(solver=solver)
+        fc2 = extract_fc2_from_alm(alm,
+                                   natom,
+                                   atom_list=p2s_map,
+                                   p2s_map=p2s_map,
+                                   p2p_map=p2p_map)
+        fc3 = _extract_fc3_from_alm(alm,
+                                    natom,
+                                    p2s_map=p2s_map,
+                                    p2p_map=p2p_map)
+        return fc2, fc3
 
 
-def _get_alm_disp_fc2(disp_dataset):
-    count = 0
-    natom = disp_dataset['natom']
-    disp = np.zeros((len(disp_dataset['first_atoms']), natom, 3),
-                    dtype='double', order='C')
-    for disp1 in disp_dataset['first_atoms']:
-        disp[count, disp1['number']] = disp1['displacement']
-        count += 1
-    return disp
+def _extract_fc3_from_alm(alm,
+                          natom,
+                          p2s_map=None,
+                          p2p_map=None):
+    p2s_map_alm = alm.getmap_primitive_to_supercell()[0]
+    if (p2s_map is not None and
+        len(p2s_map_alm) == len(p2s_map) and
+        (p2s_map_alm == p2s_map).all()):
+        fc3 = np.zeros((len(p2s_map), natom, natom, 3, 3, 3),
+                       dtype='double', order='C')
+        for (fc, indices) in zip(*alm.get_fc(2, mode='origin')):
+            v1, v2, v3 = indices // 3
+            c1, c2, c3 = indices % 3
+            fc3[p2p_map[v1], v2, v3, c1, c2, c3] = fc
+            fc3[p2p_map[v1], v3, v2, c1, c3, c2] = fc
+    else:
+        fc3 = np.zeros((natom, natom, natom, 3, 3, 3),
+                       dtype='double', order='C')
+        for (fc, indices) in zip(*alm.get_fc(2, mode='all')):
+            v1, v2, v3 = indices // 3
+            c1, c2, c3 = indices % 3
+            fc3[v1, v2, v3, c1, c2, c3] = fc
+            fc3[v1, v3, v2, c1, c3, c2] = fc
+
+    return fc3
 
 
 def _get_alm_disp_fc3(disp_dataset):
@@ -231,88 +237,3 @@ def _get_alm_disp_fc3(disp_dataset):
             count += 1
 
     return disp, indices
-
-
-def _expand_fc2(fc2_alm,
-                supercell,
-                pure_trans,
-                rotations,
-                symprec=1e-5,
-                verbose=True):
-    natom = supercell.get_number_of_atoms()
-    fc2 = np.zeros((natom, natom, 3, 3), dtype='double', order='C')
-    (fc_values, elem_indices) = fc2_alm
-    first_atoms = np.unique(elem_indices[:, 0] // 3)
-
-    for (fc, indices) in zip(fc_values, elem_indices):
-        v1 = indices[0] // 3
-        c1 = indices[0] % 3
-        v2 = indices[1] // 3
-        c2 = indices[1] % 3
-        fc2[v1, v2, c1, c2] = fc
-
-    lattice = np.array(supercell.get_cell().T, dtype='double', order='C')
-    positions = supercell.get_scaled_positions()
-    permutations = compute_all_sg_permutations(positions,
-                                               rotations,
-                                               pure_trans,
-                                               lattice,
-                                               symprec)
-    distribute_force_constants(fc2,
-                               first_atoms,
-                               lattice,
-                               rotations,
-                               permutations)
-
-    return fc2
-
-
-def _expand_fc3(fc3_alm,
-                supercell,
-                pure_trans,
-                rotations,
-                symprec=1e-5,
-                verbose=True):
-    (fc_values, elem_indices) = fc3_alm
-
-    natom = supercell.get_number_of_atoms()
-    fc3 = np.zeros((natom, natom, natom, 3, 3, 3), dtype='double', order='C')
-    first_atoms = np.unique(elem_indices[:, 0] // 3)
-
-    for (fc, indices) in zip(fc_values, elem_indices):
-        v1, v2, v3 = indices // 3
-        c1, c2, c3 = indices % 3
-        fc3[v1, v2, v3, c1, c2, c3] = fc
-        fc3[v1, v3, v2, c1, c3, c2] = fc
-
-    lattice = np.array(supercell.get_cell().T, dtype='double', order='C')
-    positions = supercell.get_scaled_positions()
-    s2compact = np.arange(supercell.get_number_of_atoms(), dtype='intc')
-    target_atoms = [i for i in s2compact if i not in first_atoms]
-    permutations = compute_all_sg_permutations(positions,
-                                               rotations,
-                                               pure_trans,
-                                               lattice,
-                                               symprec)
-    if verbose:
-        print("Expanding fc3")
-
-    distribute_fc3(fc3,
-                   first_atoms,
-                   target_atoms,
-                   lattice,
-                   rotations,
-                   permutations,
-                   s2compact,
-                   verbose=verbose)
-    return fc3
-
-
-def _collect_pure_translations(symmetry):
-    pure_trans = []
-    rotations = symmetry.get_symmetry_operations()['rotations']
-    translations = symmetry.get_symmetry_operations()['translations']
-    for r, t in zip(rotations, translations):
-        if (r == np.eye(3, dtype='intc')).all():
-            pure_trans.append(t)
-    return np.array(pure_trans, dtype='double', order='C')

@@ -37,23 +37,24 @@
 #ifndef __triplet_kpoint_H__
 #define __triplet_kpoint_H__
 
+#include <stddef.h>
 #include <mathfunc.h>
 #include <triplet_h/triplet.h>
 
-int tpk_get_ir_triplets_at_q(int map_triplets[],
-                             int map_q[],
-                             int grid_address[][3],
-                             const int grid_point,
-                             const int mesh[3],
-                             const int is_time_reversal,
-                             const MatINT * rotations,
-                             const int swappable);
-int tpk_get_BZ_triplets_at_q(int triplets[][3],
-                             const int grid_point,
-                             TPLCONST int bz_grid_address[][3],
-                             const int bz_map[],
-                             const int map_triplets[],
-                             const int num_map_triplets,
-                             const int mesh[3]);
+size_t tpk_get_ir_triplets_at_q(size_t *map_triplets,
+                                size_t *map_q,
+                                int (*grid_address)[3],
+                                const int grid_point,
+                                const int mesh[3],
+                                const int is_time_reversal,
+                                const MatINT * rotations,
+                                const int swappable);
+size_t tpk_get_BZ_triplets_at_q(size_t (*triplets)[3],
+                                const size_t grid_point,
+                                TPLCONST int (*bz_grid_address)[3],
+                                const size_t *bz_map,
+                                const size_t *map_triplets,
+                                const size_t num_map_triplets,
+                                const int mesh[3]);
 
 #endif

@@ -7,9 +7,20 @@ meshes with Gamma-centre in the basal plane and off-Gamma-centre along
 c-axis were employed for the unit cell, fc3 supercell, and fc2
 supercell, respectively. For the DFPT calculation of Born effective
 charges and dielectric constant, the 12x12x8 k-point sampling mesh
-with the similar shift was used.  For the better shape of phonon band
-structure, fc2 may be calculated separately by phonopy.
+with the similar shift was used.
 
+Perfect and displaced supercells were created by
+
+% phono3py --dim="3 3 2" --dim_fc2="5 5 3" -c POSCAR-unitcell -d
+
+Then the forces were calculated with the above settings. FORCES_FC3
+and FORCES_FC2 were created with subtracting residual forces of
+perfect supercell from all displaed supercell forces by
+
+% phono3py --cf3 disp-{00001..01254}/vasprun.xml --cfz disp-00000/vasprun.xml
+% phono3py --cf2 disp-{00001..00006}/vasprun.xml --cfz disp-00000/vasprun.xml
+
+In the example directory, FORCES_FC3 is compressed to FORCES_FC3.lzma.
 After unzipping FORCES_FC3.lzma, to obtain fc3.hdf5 and normal fc2.hdf5,
 
 % phono3py --dim="3 3 2" --sym-fc -c POSCAR-unitcell
@@ -28,19 +39,15 @@ the Born effective charges and dielectric constant from BORN file:
 
 This changes thermal conductivity at 300 K to k_xx=224.5 and
 k_zz=214.9. The shape of phonon band structure is important to
-fullfill energy and momentum conservations. FORCE_SETS for fc2
-calculated with phonopy can be reused in phono3py. The following
-command creates FORCES_FC2 and disp_fc2.yaml from FORCE_SETS:
+fullfill energy and momentum conservations. Use of larger supercell of
+fc2 may change the shape of phonon band structure. To see it,
+--dim-fc2 option is used to recreate fc2.hdf5,
 
-% phono3py --fs2f2
-
-To recreate fc2.hdf5, --dim_fc2 option is added to the list of options,
-
-% phono3py --dim="3 3 2" --dim_fc2="5 5 3" --sym-fc -c POSCAR-unitcell
+% phono3py --dim="3 3 2" --dim-fc2="5 5 3" --sym-fc -c POSCAR-unitcell
 
 With this fc2, the thermal conductivity is calculated by
 
-% phono3py --dim="3 3 2" --dim_fc2="5 5 3" -c POSCAR-unitcell --mesh="13 13 9" --fc3 --fc2 --br --nac
+% phono3py --dim="3 3 2" --dim-fc2="5 5 3" -c POSCAR-unitcell --mesh="13 13 9" --fc3 --fc2 --br --nac
 
 k_xx=229.4 and k_zz=214.7 are obtained. In the case of this example,
 we can see that the larger fc2 supercell contributes little, which

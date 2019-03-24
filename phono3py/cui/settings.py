@@ -5,6 +5,7 @@ class Phono3pySettings(Settings):
     def __init__(self):
         Settings.__init__(self)
 
+        self._alm_options = None
         self._boundary_mfp = 1.0e6 # In micrometre. The default value is
                                    # just set to avoid divergence.
         self._coarse_mesh_shifts = None
@@ -44,8 +45,9 @@ class Phono3pySettings(Settings):
         self._pinv_cutoff = 1.0e-8
         self._pinv_solver = 0
         self._pp_conversion_factor = None
-        self._scattering_event_class = None # scattering event class 1 or 2
+        self._scattering_event_class = None  # scattering event class 1 or 2
         self._sigma_cutoff_width = None
+        self._solve_collective_phonon = False
         self._temperatures = None
         self._use_alm_fc2 = False
         self._use_alm_fc3 = False
@@ -56,6 +58,12 @@ class Phono3pySettings(Settings):
         self._write_phonon = False
         self._write_pp = False
         self._write_LBTE_solution = False
+
+    def set_alm_options(self, alm_options):
+        self._alm_options = alm_options
+
+    def get_alm_options(self):
+        return self._alm_options
 
     def set_boundary_mfp(self, boundary_mfp):
         self._boundary_mfp = boundary_mfp
@@ -297,6 +305,12 @@ class Phono3pySettings(Settings):
     def get_sigma_cutoff_width(self):
         return self._sigma_cutoff_width
 
+    def set_solve_collective_phonon(self, solve_collective_phonon):
+        self._solve_collective_phonon = solve_collective_phonon
+
+    def get_solve_collective_phonon(self):
+        return self._solve_collective_phonon
+
     def set_temperatures(self, temperatures):
         self._temperatures = temperatures
 
@@ -361,24 +375,31 @@ class Phono3pySettings(Settings):
 class Phono3pyConfParser(ConfParser):
     def __init__(self, filename=None, args=None):
         self._settings = Phono3pySettings()
+        confs = {}
         if filename is not None:
             ConfParser.__init__(self, filename=filename)
-            self.parse_conf()  # self.parameters[key] = val
+            self.read_file()  # store .conf file setting in self._confs
             self._parse_conf()
             self._set_settings()
+            confs.update(self._confs)
         if args is not None:
             ConfParser.__init__(self, args=args)
-            self.read_options()  # store data in self._confs
             self._read_options()
-            self.parse_conf()  # self.parameters[key] = val
             self._parse_conf()
             self._set_settings()
+            confs.update(self._confs)
+        self._confs = confs
 
     def _read_options(self):
+        self.read_options()  # store data in self._confs
         if 'phonon_supercell_dimension' in self._args:
             dim_fc2 = self._args.phonon_supercell_dimension
             if dim_fc2 is not None:
                 self._confs['dim_fc2'] = " ".join(dim_fc2)
+
+        if 'alm_options' in self._args:
+            if self._args.alm_options is not None:
+                self._confs['alm_options'] = self._args.alm_options
 
         if 'boundary_mfp' in self._args:
             if self._args.boundary_mfp is not None:
@@ -542,6 +563,10 @@ class Phono3pyConfParser(ConfParser):
             if sigma_cutoff is not None:
                 self._confs['sigma_cutoff_width'] = sigma_cutoff
 
+        if 'solve_collective_phonon' in self._args:
+            if self._args.solve_collective_phonon:
+                self._confs['collective_phonon'] = '.true.'
+
         if 'temperatures' in self._args:
             if self._args.temperatures is not None:
                 self._confs['temperatures'] = " ".join(self._args.temperatures)
@@ -583,6 +608,7 @@ class Phono3pyConfParser(ConfParser):
                 self._confs['write_LBTE_solution'] = '.true.'
 
     def _parse_conf(self):
+        self.parse_conf()
         confs = self._confs
 
         for conf_key in confs.keys():
@@ -644,7 +670,6 @@ class Phono3pyConfParser(ConfParser):
                                        np.reshape(vals, (-1, 3)))
                 else:
                     self.setting_error("Grid addresses are incorrectly set.")
-
 
             if conf_key == 'grid_points':
                 vals = [int(x) for x in
@@ -823,12 +848,21 @@ class Phono3pyConfParser(ConfParser):
                 self.set_parameter('sigma_cutoff_width',
                                    float(confs['sigma_cutoff_width']))
 
+            if conf_key == 'collective_phonon':
+                if confs['collective_phonon'].lower() == '.false.':
+                    self.set_parameter('collective_phonon', False)
+                elif confs['collective_phonon'].lower() == '.true.':
+                    self.set_parameter('collective_phonon', True)
+
             if conf_key == 'temperatures':
                 vals = [fracval(x) for x in confs['temperatures'].split()]
                 if len(vals) < 1:
                     self.setting_error("Temperatures are incorrectly set.")
                 else:
                     self.set_parameter('temperatures', vals)
+
+            if conf_key == 'alm_options':
+                self.set_parameter('alm_options', confs['alm_options'])
 
             if conf_key == 'alm_fc2':
                 if confs['alm_fc2'].lower() == '.false.':
@@ -885,7 +919,7 @@ class Phono3pyConfParser(ConfParser):
                     self.set_parameter('write_LBTE_solution', True)
 
     def _set_settings(self):
-        ConfParser.set_settings(self)
+        self.set_settings()
         params = self._parameters
 
         # Is getting least displacements?
@@ -1059,9 +1093,18 @@ class Phono3pyConfParser(ConfParser):
         if 'sigma_cutoff_width' in params:
             self._settings.set_sigma_cutoff_width(params['sigma_cutoff_width'])
 
+        # Solve collective phonons
+        if 'collective_phonon' in params:
+            self._settings.set_solve_collective_phonon(
+                params['collective_phonon'])
+
         # Temperatures
         if 'temperatures' in params:
             self._settings.set_temperatures(params['temperatures'])
+
+        # List of ALM options as string separated by ','
+        if 'alm_options' in params:
+            self._settings.set_alm_options(params['alm_options'])
 
         # Use ALM for creating fc2
         if 'alm_fc2' in params:

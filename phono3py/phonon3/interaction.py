@@ -1,13 +1,13 @@
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
-from phonopy.units import (VaspToTHz, Hbar, EV, Angstrom, THz, AMU,
-                           PlanckConstant)
+from phonopy.units import VaspToTHz, Hbar, EV, Angstrom, THz, AMU
 from phono3py.phonon.solver import set_phonon_c, set_phonon_py
 from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
 from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
 from phono3py.phonon3.triplets import (get_triplets_at_q,
                                        get_nosym_triplets_at_q,
                                        get_bz_grid_address)
+
 
 class Interaction(object):
     def __init__(self,
@@ -216,7 +216,7 @@ class Interaction(object):
         if self._nac_q_direction is not None:
             if (grid_address[grid_point] == 0).all():
                 self._phonon_done[grid_point] = 0
-                self.set_phonons(np.array([grid_point], dtype='intc'))
+                self.set_phonons(np.array([grid_point], dtype='uintp'))
                 rotations = []
                 for r in self._symmetry.get_pointgroup_operations():
                     dq = self._nac_q_direction
@@ -284,7 +284,7 @@ class Interaction(object):
         if solve_dynamical_matrices:
             self.set_phonons(verbose=verbose)
         else:
-            self.set_phonons(np.array([0], dtype='intc'), verbose=verbose)
+            self.set_phonons(np.array([0], dtype='uintp'), verbose=verbose)
 
         if (self._grid_address[0] == 0).all():
             if np.sum(self._frequencies[0] < self._cutoff_frequency) < 3:
@@ -323,7 +323,7 @@ class Interaction(object):
 
     def set_phonons(self, grid_points=None, verbose=False):
         if grid_points is None:
-            _grid_points = np.arange(len(self._grid_address), dtype='intc')
+            _grid_points = np.arange(len(self._grid_address), dtype='uintp')
         else:
             _grid_points = grid_points
         self._set_phonon_c(_grid_points, verbose=verbose)
@@ -351,8 +351,6 @@ class Interaction(object):
 
     def _run_c(self, g_zero):
         import phono3py._phono3py as phono3c
-
-        num_band = self._primitive.get_number_of_atoms() * 3
 
         if g_zero is None or self._symmetrize_fc3q:
             _g_zero = np.zeros(self._interaction_strength.shape,
