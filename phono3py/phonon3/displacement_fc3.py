@@ -97,6 +97,8 @@ def get_third_order_displacements(cell,
 
     # Least displacements of first atoms (Atom 1) are searched by
     # using respective site symmetries of the original crystal.
+    # 'is_diagonal=False' below is made intentionally to expect
+    # better accuracy.
     disps_first = get_least_displacements(symmetry,
                                           is_plusminus=is_plusminus,
                                           is_diagonal=False)

@@ -33,8 +33,21 @@
 /* POSSIBILITY OF SUCH DAMAGE. */
 
 #include <stdlib.h>
+#include <phonoc_const.h>
 #include <phonon3_h/fc3.h>
 
+static void rotate_delta_fc2s(double (*rot_delta_fc2s)[3][3],
+                              const size_t i_atom,
+                              const size_t j_atom,
+                              PHPYCONST double (*delta_fc2s)[3][3],
+                              PHPYCONST double (*site_sym_cart)[3][3],
+                              const int *rot_map_sym,
+                              const size_t num_atom,
+                              const size_t num_site_sym,
+                              const size_t num_disp);
+static void tensor2_rotation(double rot_tensor[3][3],
+                             PHPYCONST double tensor[3][3],
+                             PHPYCONST double r[3][3]);
 static void tensor3_rotation(double *rot_tensor,
                              const double *tensor,
                              const double *rot_cartesian);
@@ -46,65 +59,104 @@ static void copy_permutation_symmetry_fc3_elem(double *fc3,
                                                const int a,
                                                const int b,
                                                const int c,
-                                               const int num_atom);
+                                               const size_t num_atom);
 static void set_permutation_symmetry_fc3_elem(double *fc3_elem,
                                               const double *fc3,
                                               const int a,
                                               const int b,
                                               const int c,
-                                              const int num_atom);
+                                              const size_t num_atom);
 static void set_permutation_symmetry_compact_fc3(double * fc3,
                                                  const int p2s[],
                                                  const int s2pp[],
                                                  const int nsym_list[],
                                                  const int perms[],
-                                                 const int n_satom,
-                                                 const int n_patom);
+                                                 const size_t n_satom,
+                                                 const size_t n_patom);
 static void transpose_compact_fc3_type01(double * fc3,
                                          const int p2s[],
                                          const int s2pp[],
                                          const int nsym_list[],
                                          const int perms[],
-                                         const int n_satom,
-                                         const int n_patom,
+                                         const size_t n_satom,
+                                         const size_t n_patom,
                                          const int t_type);
 static void transpose_compact_fc3_type2(double * fc3,
                                         const int p2s[],
                                         const int s2pp[],
                                         const int nsym_list[],
                                         const int perms[],
-                                        const int n_satom,
-                                        const int n_patom);
+                                        const size_t n_satom,
+                                        const size_t n_patom);
 
 void fc3_distribute_fc3(double *fc3,
                         const int target,
                         const int source,
                         const int *atom_mapping,
-                        const int num_atom,
+                        const size_t num_atom,
                         const double *rot_cart)
 {
-  int i, j;
+  size_t i, j, adrs_out, adrs_in;
 
   for (i = 0; i < num_atom; i++) {
     for (j = 0; j < num_atom; j++) {
-      tensor3_rotation(
-        fc3 +
-        27 * num_atom * num_atom * target +
-        27 * num_atom * i +
-        27 * j,
-        fc3 +
-        27 * num_atom * num_atom * source +
-        27 * num_atom * atom_mapping[i] +
-        27 * atom_mapping[j],
-        rot_cart);
+      adrs_out = (num_atom * num_atom * target + num_atom * i + j) * 27;
+      adrs_in = (num_atom * num_atom * source
+                 + num_atom * atom_mapping[i]
+                 + atom_mapping[j]) * 27;
+      tensor3_rotation(fc3 + adrs_out, fc3 + adrs_in, rot_cart);
     }
   }
 }
 
-void fc3_set_permutation_symmetry_fc3(double *fc3, const int num_atom)
+void fc3_rotate_delta_fc2(double (*fc3)[3][3][3],
+                          PHPYCONST double (*delta_fc2s)[3][3],
+                          const double *inv_U,
+                          PHPYCONST double (*site_sym_cart)[3][3],
+                          const int *rot_map_syms,
+                          const size_t num_atom,
+                          const size_t num_site_sym,
+                          const size_t num_disp)
+{
+  size_t i_atoms, i, j, k, l, m, n;
+  double (*rot_delta_fc2s)[3][3];
+
+  rot_delta_fc2s = (double(*)[3][3]) malloc(sizeof(double[3][3])
+                                            * num_site_sym * num_disp);
+  for (i_atoms = 0; i_atoms < num_atom * num_atom; i_atoms++) {
+    i = i_atoms / num_atom;
+    j = i_atoms % num_atom;
+    rotate_delta_fc2s(rot_delta_fc2s,
+                      i,
+                      j,
+                      delta_fc2s,
+                      site_sym_cart,
+                      rot_map_syms,
+                      num_atom,
+                      num_site_sym,
+                      num_disp);
+    for (k = 0; k < 3; k++) {
+      for (l = 0; l < 3; l++) {
+        for (m = 0; m < 3; m++) {
+          fc3[i_atoms][k][l][m] = 0;
+          for (n = 0; n < num_site_sym * num_disp; n++) {
+            fc3[i_atoms][k][l][m] +=
+              inv_U[k * num_site_sym * num_disp + n]
+              * rot_delta_fc2s[n][l][m];
+          }
+        }
+      }
+    }
+  }
+
+  free(rot_delta_fc2s);
+  rot_delta_fc2s = NULL;
+}
+
+void fc3_set_permutation_symmetry_fc3(double *fc3, const size_t num_atom)
 {
   double fc3_elem[27];
-  int i, j, k;
+  size_t i, j, k;
 
 #pragma omp parallel for private(j, k, fc3_elem)
   for (i = 0; i < num_atom; i++) {
@@ -123,8 +175,8 @@ void fc3_set_permutation_symmetry_compact_fc3(double * fc3,
                                               const int s2pp[],
                                               const int nsym_list[],
                                               const int perms[],
-                                              const int n_satom,
-                                              const int n_patom)
+                                              const size_t n_satom,
+                                              const size_t n_patom)
 {
   set_permutation_symmetry_compact_fc3(fc3,
                                        p2s,
@@ -140,8 +192,8 @@ void fc3_transpose_compact_fc3(double * fc3,
                                const int s2pp[],
                                const int nsym_list[],
                                const int perms[],
-                               const int n_satom,
-                               const int n_patom,
+                               const size_t n_satom,
+                               const size_t n_patom,
                                const int t_type)
 {
   /* Three types of index permutations                       */
@@ -170,11 +222,57 @@ void fc3_transpose_compact_fc3(double * fc3,
   }
 }
 
+static void rotate_delta_fc2s(double (*rot_delta_fc2s)[3][3],
+                              const size_t i_atom,
+                              const size_t j_atom,
+                              PHPYCONST double (*delta_fc2s)[3][3],
+                              PHPYCONST double (*site_sym_cart)[3][3],
+                              const int *rot_map_sym,
+                              const size_t num_atom,
+                              const size_t num_site_sym,
+                              const size_t num_disp)
+{
+  size_t i, j;
+
+  for (i = 0; i < num_disp; i++) {
+    for (j = 0; j < num_site_sym; j++) {
+      tensor2_rotation(rot_delta_fc2s[i * num_site_sym + j],
+                       delta_fc2s[i * num_atom * num_atom
+                                  + rot_map_sym[j * num_atom + i_atom] * num_atom
+                                  + rot_map_sym[j * num_atom + j_atom]],
+                       site_sym_cart[j]);
+    }
+  }
+}
+
+static void tensor2_rotation(double rot_tensor[3][3],
+                             PHPYCONST double tensor[3][3],
+                             PHPYCONST double r[3][3])
+{
+  size_t i, j, k, l;
+
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
+      rot_tensor[i][j] = 0;
+    }
+  }
+
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
+      for (k = 0; k < 3; k++) {
+        for (l = 0; l < 3; l++) {
+          rot_tensor[i][j] += r[i][k] * r[j][l] * tensor[k][l];
+        }
+      }
+    }
+  }
+}
+
 static void tensor3_rotation(double *rot_tensor,
                              const double *tensor,
                              const double *rot_cartesian)
 {
-  int l;
+  size_t l;
 
   for (l = 0; l < 27; l++) {
     rot_tensor[l] = tensor3_rotation_elem(tensor, rot_cartesian, l);
@@ -185,7 +283,7 @@ static double tensor3_rotation_elem(const double *tensor,
                                     const double *r,
                                     const int pos)
 {
-  int i, j, k, l, m, n;
+  size_t i, j, k, l, m, n;
   double sum;
 
   l = pos / 9;
@@ -209,9 +307,9 @@ static void copy_permutation_symmetry_fc3_elem(double *fc3,
                                                const int a,
                                                const int b,
                                                const int c,
-                                               const int num_atom)
+                                               const size_t num_atom)
 {
-  int i, j, k;
+  size_t i, j, k;
 
   for (i = 0; i < 3; i++) {
     for (j = 0; j < 3; j++) {
@@ -250,9 +348,9 @@ static void set_permutation_symmetry_fc3_elem(double *fc3_elem,
                                               const int a,
                                               const int b,
                                               const int c,
-                                              const int num_atom)
+                                              const size_t num_atom)
 {
-  int i, j, k;
+  size_t i, j, k;
 
   for (i = 0; i < 3; i++) {
     for (j = 0; j < 3; j++) {
@@ -286,15 +384,16 @@ static void set_permutation_symmetry_compact_fc3(double * fc3,
                                                  const int s2pp[],
                                                  const int nsym_list[],
                                                  const int perms[],
-                                                 const int n_satom,
-                                                 const int n_patom)
+                                                 const size_t n_satom,
+                                                 const size_t n_patom)
 {
   /* fc3 shape=(n_patom, n_satom, n_satom, 3, 3, 3)          */
   /* 1D indexing:                                            */
   /*     i * n_satom * n_satom * 27 + j * n_satom * 27 +     */
   /*     k * 27 + l * 9 + m * 3 + n                          */
-  int i, j, k, l, m, n, i_p, j_p, k_p, done_any;
-  int i_trans_j, k_trans_j, i_trans_k, j_trans_k;
+  size_t i, j, k, l, m, n, i_p, j_p, k_p;
+  int done_any;
+  size_t i_trans_j, k_trans_j, i_trans_k, j_trans_k;
   size_t adrs[6];
   double fc3_elem[3][3][3];
   char *done;
@@ -380,15 +479,15 @@ static void transpose_compact_fc3_type01(double * fc3,
                                          const int s2pp[],
                                          const int nsym_list[],
                                          const int perms[],
-                                         const int n_satom,
-                                         const int n_patom,
+                                         const size_t n_satom,
+                                         const size_t n_patom,
                                          const int t_type)
 {
   /* Three types of index permutations                       */
   /*     t_type=0: dim[0] <-> dim[1]                         */
   /*     t_type=1: dim[0] <-> dim[2]                         */
   /*     t_type=2: dim[1] <-> dim[2]                         */
-  int i, j, k, l, m, n, i_p, j_p, i_trans, k_trans;
+  size_t i, j, k, l, m, n, i_p, j_p, i_trans, k_trans;
   size_t adrs, adrs_t;
   double fc3_elem[3][3][3];
   char *done;
@@ -486,10 +585,10 @@ static void transpose_compact_fc3_type2(double * fc3,
                                         const int s2pp[],
                                         const int nsym_list[],
                                         const int perms[],
-                                        const int n_satom,
-                                        const int n_patom)
+                                        const size_t n_satom,
+                                        const size_t n_patom)
 {
-  int j, k, l, m, n, i_p;
+  size_t j, k, l, m, n, i_p;
   size_t adrs, adrs_t;
   double fc3_elem[3][3][3];
 

@@ -36,6 +36,7 @@ def get_thermal_conductivity_RTA(
         write_pp=False,
         read_pp=False,
         write_gamma_detail=False,
+        compression=None,
         input_filename=None,
         output_filename=None,
         log_level=0):
@@ -77,17 +78,20 @@ def get_thermal_conductivity_RTA(
             _write_pp(br,
                       interaction,
                       i,
+                      compression=compression,
                       filename=output_filename)
         if write_gamma:
             _write_gamma(br,
                          interaction,
                          i,
+                         compression=compression,
                          filename=output_filename,
                          verbose=log_level)
         if write_gamma_detail:
             _write_gamma_detail(br,
                                 interaction,
                                 i,
+                                compression=compression,
                                 filename=output_filename,
                                 verbose=log_level)
 
@@ -96,13 +100,15 @@ def get_thermal_conductivity_RTA(
             br.set_kappa_at_sigmas()
             _write_kappa(br,
                          interaction.get_primitive().get_volume(),
+                         compression=compression,
                          filename=output_filename,
                          log_level=log_level)
 
     return br
 
 
-def _write_gamma_detail(br, interaction, i, filename=None, verbose=True):
+def _write_gamma_detail(br, interaction, i, compression=None, filename=None,
+                        verbose=True):
     gamma_detail = br.get_gamma_detail_at_q()
     temperatures = br.get_temperatures()
     mesh = br.get_mesh_numbers()
@@ -134,6 +140,7 @@ def _write_gamma_detail(br, interaction, i, filename=None, verbose=True):
                 triplet_all=all_triplets,
                 sigma=sigma,
                 sigma_cutoff=sigma_cutoff,
+                compression=compression,
                 filename=filename,
                 verbose=verbose)
     else:
@@ -149,11 +156,13 @@ def _write_gamma_detail(br, interaction, i, filename=None, verbose=True):
                     band_index=bi,
                     sigma=sigma,
                     sigma_cutoff=sigma_cutoff,
+                    compression=compression,
                     filename=filename,
                     verbose=verbose)
 
 
-def _write_gamma(br, interaction, i, filename=None, verbose=True):
+def _write_gamma(br, interaction, i, compression=None, filename=None,
+                 verbose=True):
     grid_points = br.get_grid_points()
     group_velocities = br.get_group_velocities()
     gv_by_gv = br.get_gv_by_gv()
@@ -206,6 +215,7 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
                                 sigma=sigma,
                                 sigma_cutoff=sigma_cutoff,
                                 kappa_unit_conversion=unit_to_WmK / volume,
+                                compression=compression,
                                 filename=filename,
                                 verbose=verbose)
     else:
@@ -250,7 +260,7 @@ def _write_gamma(br, interaction, i, filename=None, verbose=True):
                     verbose=verbose)
 
 
-def _write_kappa(br, volume, filename=None, log_level=0):
+def _write_kappa(br, volume, compression=None, filename=None, log_level=0):
     temperatures = br.get_temperatures()
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()
@@ -326,6 +336,7 @@ def _write_kappa(br, volume, filename=None, log_level=0):
                             sigma=sigma,
                             sigma_cutoff=sigma_cutoff,
                             kappa_unit_conversion=unit_to_WmK / volume,
+                            compression=compression,
                             filename=filename,
                             verbose=log_level)
 
@@ -847,7 +858,7 @@ class Conductivity_RTA(Conductivity):
             ave_pp = None
         self._show_log_value_names()
 
-        if self._log_level > 1:
+        if self._log_level > 2:
             self._show_log_values_on_kstar(frequencies, gv, ave_pp, gp, q)
         else:
             self._show_log_values(frequencies, gv, ave_pp)

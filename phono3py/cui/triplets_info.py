@@ -32,12 +32,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import numpy as np
 from phono3py.file_IO import (write_ir_grid_points,
                               write_grid_address_to_hdf5)
 from phono3py.phonon3.triplets import (get_coarse_ir_grid_points,
                                        get_number_of_triplets)
+
 
 def write_grid_points(primitive,
                       mesh,
@@ -48,7 +48,9 @@ def write_grid_points(primitive,
                       coarse_mesh_shifts=None,
                       is_kappa_star=True,
                       is_lbte=False,
-                      symprec=1e-5):
+                      compression=None,
+                      symprec=1e-5,
+                      filename=None):
     print("-" * 76)
     if mesh is None:
         print("To write grid points, mesh numbers have to be specified.")
@@ -71,7 +73,9 @@ def write_grid_points(primitive,
                              np.linalg.inv(primitive.get_cell()))
         gadrs_hdf5_fname = write_grid_address_to_hdf5(bz_grid_address,
                                                       mesh,
-                                                      grid_mapping_table)
+                                                      grid_mapping_table,
+                                                      compression=compression,
+                                                      filename=filename)
 
         print("Ir-grid points are written into \"ir_grid_points.yaml\".")
         print("Grid addresses are written into \"%s\"." % gadrs_hdf5_fname)
@@ -101,7 +105,6 @@ def write_grid_points(primitive,
                     (3 + 6 + num_temp * 2 + num_sigma * num_temp * 15 + 2) *
                     8 / 1.0e9)
             print("- Phonon properties: %.2f Gb" % size)
-
 
 
 def show_num_triplets(primitive,

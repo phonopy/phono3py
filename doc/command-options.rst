@@ -9,16 +9,18 @@ are replaced by those with dashes ``-``. Those tag names are unchanged.
 Command-user-interface of phono3py is operated with a variety of
 command options. Here those command options are explained.
 
-Using the latest phono3py and phonopy, a configuration file with
-setting tags can be used instead of and together with the command
-options. The setting tags are mostly equivalent to the most command
-options, but when both are set simultaneously, the command options are
-preferred. An example of configuration (e.g., saved in a file
-``setting.conf``) is as follow::
+**At the current release v1.14.3, reading configuration file doesn't
+work. If this is needed, please try the develop branch of phono3py on
+github. This will be fixed in the next release.** A configuration
+file with setting tags like phonopy can be used instead of and
+together with the command options. The setting tags are mostly
+equivalent to the most command options, but when both are set
+simultaneously, the command options are preferred. An example of
+configuration (e.g., saved in a file ``setting.conf``) is as follow::
 
    DIM = 2 2 2
    DIM_FC2 = 4 4 4
-   PRIMITIVE_AXIS = 0 1/2 1/2 1/2 0 1/2 1/2 1/2 0
+   PRIMITIVE_AXES = 0 1/2 1/2 1/2 0 1/2 1/2 1/2 0
    MESH = 11 11 11
    BTERTA = .TRUE.
    NAC = .TRUE.
@@ -30,7 +32,7 @@ where the setting tag names are case insensitive. This is run by
 
 ::
 
-   % phono3py [comannd options] setting.conf
+   % phono3py setting.conf [comannd options]
 
 .. contents::
    :depth: 2
@@ -143,13 +145,13 @@ usual phono3py run without ``--dim-fc2`` option.
 
 .. _pa_option:
 
-``--pa``, ``--primitive-axis``: Transformation matrix to primitive cell
+``--pa``, ``--primitive-axes``: Transformation matrix to primitive cell
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-(Setting tag: ``PRIMITIVE_AXIS``)
+(Setting tag: ``PRIMITIVE_AXES``)
 
 Transformation matrix from a non-primitive cell to the primitive
-cell. See phonopy ``PRIMITIVE_AXIS`` tag (``--pa`` option) at
+cell. See phonopy ``PRIMITIVE_AXES`` tag (``--pa`` option) at
 http://atztogo.github.io/phonopy/setting-tags.html#primitive-axis
 
 ``--fc2``: Read 2nd order force constants
@@ -850,11 +852,11 @@ than usual RTA calculation.
 
 ::
 
-   % phono3py --fc2 --fc3 --dim="2 2  2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" --mesh="11 11 11" -c POSCAR-unitcell --nac --write-pp --br --gp=1
+   % phono3py --fc2 --fc3 --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" --mesh="11 11 11" -c POSCAR-unitcell --nac --write-pp --br --gp=1
 
 ::
 
-   % phono3py --fc2 --dim="2 2  2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" --mesh="11 11 11" -c POSCAR-unitcell --nac --read-pp --br --gp=1
+   % phono3py --fc2 --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" --mesh="11 11 11" -c POSCAR-unitcell --nac --read-pp --br --gp=1
 
 
 .. _ise_option:
@@ -871,7 +873,7 @@ with respect to frequency in THz (without :math:`2\pi`).
 
 ::
 
-   % phono3py --fc3 --fc2 --dim="2 2  2" --mesh="16 16 16" -c POSCAR-unitcell --nac --q-direction="1 0 0" --gp=0 --ise --bi="4 5, 6"
+   % phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" -c POSCAR-unitcell --nac --q-direction="1 0 0" --gp=0 --ise --bi="4 5, 6"
 
 .. _jdos_option:
 
@@ -900,7 +902,7 @@ values given as follows, respectively,
 
 ::
 
-   % phono3py --fc2 --dim="2 2 2" -c POSCAR-unitcell --mesh="16 16 16" --nac --jdos --ga="0 0 0  8 8 8"
+   % phono3py --fc2 --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="16 16 16" --jdos --ga="0 0 0  8 8 8"
 
 When temperatures are specified, two classes of weighted JDOS are
 calculated. The result is written into
@@ -924,7 +926,16 @@ the values given as follows, respectively,
 
 ::
 
-   % phono3py --fc2 --dim="2 2 2" -c POSCAR-unitcell --mesh="16 16 16" --nac --jdos --ga="0 0 0  8 8 8" --ts=300
+   % phono3py --fc2 --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="16 16 16" --jdos --ga="0 0 0  8 8 8" --ts=300
+
+This is an example of ``Si-PBEsol``.
+
+.. |Si-JDOS| image:: Si-JDOS.png
+                     :width: 50%
+
+|Si-JDOS|
+
+
 
 ``--num-freq-points``, ``--freq-pitch``: Sampling frequency for distribution functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1017,8 +1028,20 @@ Band path mode::
 
    % phono3py --fc3 --fc2 --dim="2 2 2" -v -c POSCAR-unitcell --nac --gruneisen --band="0 0 0  0 0 1/2"
 
-Input and output file names
-----------------------------
+File I/O
+--------
+
+.. _hdf5_compression_option:
+
+``--hdf5-compression``: Choice of HDF5 compression filter
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Most of phono3py HDF5 output file is compressed by default with the
+``gzip`` compression filter. To avoid compression,
+``--hdf5-compression=None`` has to be set. Other filters (``lzf`` or
+integer values of 0 to 9) may be used, see h5py
+documentation
+(http://docs.h5py.org/en/stable/high/dataset.html#filter-pipeline).
 
 .. _output_filename_option:
 

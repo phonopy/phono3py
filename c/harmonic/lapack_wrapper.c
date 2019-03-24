@@ -43,6 +43,12 @@ MKL_Complex16 lapack_make_complex_double( double re, double im ) {
   z.imag = im;
   return z;
 }
+#ifndef LAPACKE_malloc
+#define LAPACKE_malloc( size ) malloc( size )
+#endif
+#ifndef LAPACKE_free
+#define LAPACKE_free( p )      free( p )
+#endif
 #endif
 
 int phonopy_zheev(double *w,
@@ -141,7 +147,18 @@ int phonopy_dsyev(double *data,
 {
   lapack_int info;
 
+  lapack_int liwork;
+  long lwork;
+  lapack_int* iwork;
+  double* work;
+  lapack_int iwork_query;
+  double work_query;
+
   info = 0;
+  liwork = -1;
+  lwork = -1;
+  iwork = NULL;
+  work = NULL;
 
   switch (algorithm) {
   case 0: /* dsyev */
@@ -154,13 +171,57 @@ int phonopy_dsyev(double *data,
                          eigvals);
     break;
   case 1: /* dsyevd */
-    info = LAPACKE_dsyevd(LAPACK_COL_MAJOR,
-                          'V',
-                          'U',
-                          (lapack_int)size,
-                          data,
-                          (lapack_int)size,
-                          eigvals);
+    info = LAPACKE_dsyevd_work(LAPACK_COL_MAJOR,
+                               'V',
+                               'U',
+                               (lapack_int)size,
+                               data,
+                               (lapack_int)size,
+                               eigvals,
+                               &work_query,
+                               lwork,
+                               &iwork_query,
+                               liwork);
+    liwork = iwork_query;
+    lwork = (long)work_query;
+    /* printf("liwork %d, lwork %ld\n", liwork, lwork); */
+    if ((iwork = (lapack_int*)LAPACKE_malloc(sizeof(lapack_int) * liwork))
+        == NULL) {
+      goto end;
+    };
+    if ((work = (double*)LAPACKE_malloc(sizeof(double) * lwork)) == NULL) {
+      goto end;
+    }
+
+    info = LAPACKE_dsyevd_work(LAPACK_COL_MAJOR,
+                               'V',
+                               'U',
+                               (lapack_int)size,
+                               data,
+                               (lapack_int)size,
+                               eigvals,
+                               work,
+                               lwork,
+                               iwork,
+                               liwork);
+
+  end:
+    if (iwork) {
+      LAPACKE_free(iwork);
+      iwork = NULL;
+    }
+    if (work) {
+      LAPACKE_free(work);
+      work = NULL;
+    }
+
+    /* info = LAPACKE_dsyevd(LAPACK_COL_MAJOR, */
+    /*                       'V', */
+    /*                       'U', */
+    /*                       (lapack_int)size, */
+    /*                       data, */
+    /*                       (lapack_int)size, */
+    /*                       eigvals); */
     break;
   }
 

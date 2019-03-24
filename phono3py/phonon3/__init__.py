@@ -34,7 +34,8 @@
 
 import numpy as np
 from phonopy.structure.symmetry import Symmetry
-from phonopy.structure.cells import get_supercell, get_primitive
+from phonopy.structure.cells import (get_supercell, get_primitive,
+                                     guess_primitive_matrix)
 from phonopy.structure.atoms import PhonopyAtoms as Atoms
 from phonopy.units import VaspToTHz
 from phonopy.harmonic.force_constants import (
@@ -45,6 +46,7 @@ from phonopy.harmonic.force_constants import (
     set_permutation_symmetry)
 from phonopy.harmonic.displacement import get_least_displacements
 from phonopy.harmonic.displacement import directions_to_displacement_dataset
+from phonopy.phonon.mesh import length2mesh
 from phono3py.version import __version__
 from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
                                                write_imag_self_energy)
@@ -55,7 +57,7 @@ from phono3py.phonon3.conductivity_LBTE import get_thermal_conductivity_LBTE
 from phono3py.phonon3.joint_dos import JointDos
 from phono3py.phonon3.displacement_fc3 import (get_third_order_displacements,
                                                direction_to_displacement)
-from phono3py.file_IO import write_joint_dos, write_phonon_to_hdf5
+from phono3py.file_IO import write_joint_dos
 from phono3py.other.isotope import Isotope
 from phono3py.phonon3.fc3 import (get_fc3,
                                   set_permutation_symmetry_fc3,
@@ -101,7 +103,10 @@ class Phono3py(object):
         # Create supercell and primitive cell
         self._unitcell = unitcell
         self._supercell_matrix = supercell_matrix
-        self._primitive_matrix = primitive_matrix
+        if type(primitive_matrix) is str and primitive_matrix == 'auto':
+            self._primitive_matrix = self._guess_primitive_matrix()
+        else:
+            self._primitive_matrix = primitive_matrix
         self._phonon_supercell_matrix = phonon_supercell_matrix  # optional
         self._supercell = None
         self._primitive = None
@@ -147,11 +152,21 @@ class Phono3py(object):
 
         # Setup interaction
         self._interaction = None
-        self._mesh = None
+        self._mesh_numbers = None
         self._band_indices = None
         self._band_indices_flatten = None
         if mesh is not None:
-            self._mesh = np.array(mesh, dtype='intc')
+            _mesh = np.array(mesh)
+            mesh_nums = None
+            if _mesh.shape:
+                if _mesh.shape == (3,):
+                    mesh_nums = mesh
+            else:
+                mesh_nums = length2mesh(mesh, self._primitive.get_cell())
+            if mesh_nums is None:
+                msg = "mesh has inappropriate type."
+                raise TypeError(msg)
+            self._mesh_numbers = mesh_nums
         self.set_band_indices(band_indices)
 
     def set_band_indices(self, band_indices):
@@ -170,7 +185,7 @@ class Phono3py(object):
                              frequency_scale_factor=None,
                              unit_conversion=None,
                              solve_dynamical_matrices=True):
-        if self._mesh is None:
+        if self._mesh_numbers is None:
             print("'mesh' has to be set in Phono3py instantiation.")
             raise RuntimeError
 
@@ -178,7 +193,7 @@ class Phono3py(object):
         self._interaction = Interaction(
             self._supercell,
             self._primitive,
-            self._mesh,
+            self._mesh_numbers,
             self._primitive_symmetry,
             fc3=self._fc3,
             band_indices=self._band_indices_flatten,
@@ -207,20 +222,14 @@ class Phono3py(object):
         else:
             return False
 
-    def write_phonons(self, filename=None):
+    def get_phonon_data(self):
         if self._interaction is not None:
             grid_address = self._interaction.get_grid_address()
-            grid_points = np.arange(len(grid_address), dtype='intc')
-            self._interaction.set_phonons(grid_points)
             freqs, eigvecs, _ = self._interaction.get_phonons()
-            hdf5_filename = write_phonon_to_hdf5(freqs,
-                                                 eigvecs,
-                                                 grid_address,
-                                                 self._mesh,
-                                                 filename=filename)
-            return hdf5_filename
+            return freqs, eigvecs, grid_address
         else:
-            return False
+            msg = "set_phph_interaction has to be done."
+            raise RuntimeError(msg)
 
     def generate_displacements(self,
                                distance=0.03,
@@ -239,6 +248,35 @@ class Phono3py(object):
             cutoff_distance=cutoff_pair_distance)
 
         if self._phonon_supercell_matrix is not None:
+            # 'is_diagonal=False' below is made intentionally. For
+            # third-order force constants, we need better accuracy,
+            # and I expect this choice is better for it, but not very
+            # sure.
+            # In phono3py, two atoms are displaced for each
+            # configuration and the displacements are chosen, first
+            # displacement from the perfect supercell, then second
+            # displacement, considering symmetry. If I choose
+            # is_diagonal=False for the first displacement, the
+            # symmetry is less broken and the number of second
+            # displacements can be smaller than in the case of
+            # is_diagonal=True for the first displacement.  This is
+            # done in the call get_least_displacements() in
+            # phonon3.displacement_fc3.get_third_order_displacements().
+            #
+            # The call get_least_displacements() is only for the
+            # second order force constants, but 'is_diagonal=False' to
+            # be consistent with the above function call, and also for
+            # the accuracy when calculating ph-ph interaction
+            # strength because displacement directions are better to be
+            # close to perpendicular each other to fit force constants.
+            #
+            # On the discussion of the accuracy, these are just my
+            # expectation when I designed phono3py in the early time,
+            # and in fact now I guess not very different. If these are
+            # little different, then I should not surprise users to
+            # change the default behaviour. At this moment, this is
+            # open question and we will have more advance and should
+            # have better specificy external software on this.
             phonon_displacement_directions = get_least_displacements(
                 self._phonon_supercell_symmetry,
                 is_plusminus=is_plusminus,
@@ -253,27 +291,33 @@ class Phono3py(object):
                     displacement_dataset=None,
                     symmetrize_fc2=False,
                     is_compact_fc=False,
-                    use_alm=False):
+                    use_alm=False,
+                    alm_options=None):
         if displacement_dataset is None:
-            disp_dataset = self._displacement_dataset
+            if self._phonon_displacement_dataset is None:
+                disp_dataset = self._displacement_dataset
+            else:
+                disp_dataset = self._phonon_displacement_dataset
         else:
             disp_dataset = displacement_dataset
 
+        for forces, disp1 in zip(forces_fc2, disp_dataset['first_atoms']):
+            disp1['forces'] = forces
+
+        if is_compact_fc:
+            p2s_map = self._phonon_primitive.p2s_map
+        else:
+            p2s_map = None
+
         if use_alm:
-            from phono3py.other.alm_wrapper import get_fc2 as get_fc2_alm
+            from phonopy.interface.alm import get_fc2 as get_fc2_alm
             self._fc2 = get_fc2_alm(self._phonon_supercell,
-                                    forces_fc2,
+                                    self._phonon_primitive,
                                     disp_dataset,
-                                    self._phonon_supercell_symmetry,
+                                    atom_list=p2s_map,
+                                    alm_options=alm_options,
                                     log_level=self._log_level)
         else:
-            for forces, disp1 in zip(forces_fc2, disp_dataset['first_atoms']):
-                disp1['forces'] = forces
-
-            if is_compact_fc:
-                p2s_map = self._phonon_primitive.get_primitive_to_supercell_map()
-            else:
-                p2s_map = None
             self._fc2 = get_fc2(self._phonon_supercell,
                                 self._phonon_supercell_symmetry,
                                 disp_dataset,
@@ -291,7 +335,8 @@ class Phono3py(object):
                     cutoff_distance=None,  # set fc3 zero
                     symmetrize_fc3r=False,
                     is_compact_fc=False,
-                    use_alm=False):
+                    use_alm=False,
+                    alm_options=None):
         if displacement_dataset is None:
             disp_dataset = self._displacement_dataset
         else:
@@ -300,9 +345,12 @@ class Phono3py(object):
         if use_alm:
             from phono3py.other.alm_wrapper import get_fc3 as get_fc3_alm
             fc2, fc3 = get_fc3_alm(self._supercell,
+                                   self._primitive,
                                    forces_fc3,
                                    disp_dataset,
                                    self._symmetry,
+                                   alm_options=alm_options,
+                                   is_compact_fc=is_compact_fc,
                                    log_level=self._log_level)
         else:
             fc2, fc3 = self._get_fc3(forces_fc3,
@@ -351,8 +399,12 @@ class Phono3py(object):
         if self._fc3 is not None:
             set_translational_invariance_fc3(self._fc3)
 
-    def get_version(self):
+    @property
+    def version(self):
         return __version__
+
+    def get_version(self):
+        return self.version
 
     def get_interaction_strength(self):
         return self._interaction
@@ -369,45 +421,102 @@ class Phono3py(object):
     def set_fc3(self, fc3):
         self._fc3 = fc3
 
-    def get_nac_params(self):
+    @property
+    def nac_params(self):
         return self._nac_params
 
-    def get_primitive(self):
+    def get_nac_params(self):
+        return self.nac_params
+
+    @property
+    def primitive(self):
         return self._primitive
 
-    def get_unitcell(self):
+    def get_primitive(self):
+        return self.primitive
+
+    @property
+    def unitcell(self):
         return self._unitcell
 
-    def get_supercell(self):
+    def get_unitcell(self):
+        return self.unitcell
+
+    @property
+    def supercell(self):
         return self._supercell
 
-    def get_phonon_supercell(self):
+    def get_supercell(self):
+        return self.supercell
+
+    @property
+    def phonon_supercell(self):
         return self._phonon_supercell
 
-    def get_phonon_primitive(self):
+    def get_phonon_supercell(self):
+        return self.phonon_supercell
+
+    @property
+    def phonon_primitive(self):
         return self._phonon_primitive
 
-    def get_symmetry(self):
+    def get_phonon_primitive(self):
+        return self.phonon_primitive
+
+    @property
+    def symmetry(self):
         """return symmetry of supercell"""
         return self._symmetry
 
-    def get_primitive_symmetry(self):
+    def get_symmetry(self):
+        return self.symmetry
+
+    @property
+    def primitive_symmetry(self):
+        """return symmetry of primitive cell"""
         return self._primitive_symmetry
+
+    def get_primitive_symmetry(self):
+        """return symmetry of primitive cell"""
+        return self.primitive_symmetry
 
     def get_phonon_supercell_symmetry(self):
         return self._phonon_supercell_symmetry
 
-    def get_supercell_matrix(self):
+    @property
+    def supercell_matrix(self):
         return self._supercell_matrix
 
-    def get_primitive_matrix(self):
+    def get_supercell_matrix(self):
+        return self.supercell_matrix
+
+    @property
+    def phonon_supercell_matrix(self):
+        return self._phonon_supercell_matrix
+
+    def get_phonon_supercell_matrix(self):
+        return self.phonon_supercell_matrix
+
+    @property
+    def primitive_matrix(self):
         return self._primitive_matrix
+
+    def get_primitive_matrix(self):
+        return self.primitive_matrix
+
+    @property
+    def unit_conversion_factor(self):
+        return self._frequency_factor_to_THz
 
     def set_displacement_dataset(self, dataset):
         self._displacement_dataset = dataset
 
-    def get_displacement_dataset(self):
+    @property
+    def displacement_dataset(self):
         return self._displacement_dataset
+
+    def get_displacement_dataset(self):
+        return self.displacement_dataset
 
     def get_phonon_displacement_dataset(self):
         return self._phonon_displacement_dataset
@@ -425,6 +534,10 @@ class Phono3py(object):
                       self._phonon_supercell,
                       self._phonon_displacement_dataset)
         return self._phonon_supercells_with_displacements
+
+    @property
+    def mesh_numbers(self):
+        return self._mesh_numbers
 
     def run_imag_self_energy(self,
                              grid_points,
@@ -456,7 +569,7 @@ class Phono3py(object):
     def write_imag_self_energy(self, filename=None):
         write_imag_self_energy(
             self._imag_self_energy,
-            self._mesh,
+            self._mesh_numbers,
             self._grid_points,
             self._band_indices,
             self._frequency_points,
@@ -474,6 +587,7 @@ class Phono3py(object):
             mass_variances=None,
             grid_points=None,
             boundary_mfp=None,  # in micrometre
+            solve_collective_phonon=False,
             use_ave_pp=False,
             gamma_unit_conversion=None,
             mesh_divisors=None,
@@ -494,6 +608,7 @@ class Phono3py(object):
             write_pp=False,
             read_pp=False,
             write_LBTE_solution=False,
+            compression=None,
             input_filename=None,
             output_filename=None):
         if self._interaction is None:
@@ -509,6 +624,7 @@ class Phono3py(object):
                 mass_variances=mass_variances,
                 grid_points=grid_points,
                 boundary_mfp=boundary_mfp,
+                solve_collective_phonon=solve_collective_phonon,
                 is_reducible_collision_matrix=is_reducible_collision_matrix,
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
@@ -521,6 +637,7 @@ class Phono3py(object):
                 write_pp=write_pp,
                 read_pp=read_pp,
                 write_LBTE_solution=write_LBTE_solution,
+                compression=compression,
                 input_filename=input_filename,
                 output_filename=output_filename,
                 log_level=self._log_level)
@@ -549,6 +666,7 @@ class Phono3py(object):
                 write_pp=write_pp,
                 read_pp=read_pp,
                 write_gamma_detail=write_gamma_detail,
+                compression=compression,
                 input_filename=input_filename,
                 output_filename=output_filename,
                 log_level=self._log_level)
@@ -721,6 +839,9 @@ class Phono3py(object):
 
         return get_primitive(supercell, t_mat, self._symprec)
 
+    def _guess_primitive_matrix(self):
+        return guess_primitive_matrix(self._unitcell, symprec=self._symprec)
+
     def _set_masses(self, masses):
         p_masses = np.array(masses)
         self._primitive.set_masses(p_masses)
@@ -777,7 +898,7 @@ class Phono3pyIsotope(object):
             self._sigmas = [None]
         else:
             self._sigmas = sigmas
-        self._mesh = mesh
+        self._mesh_numbers = mesh
         self._iso = Isotope(mesh,
                             primitive,
                             mass_variances=mass_variances,
@@ -794,7 +915,7 @@ class Phono3pyIsotope(object):
             print("--------------- Isotope scattering ---------------")
             print("Grid point: %d" % gp)
             adrs = self._iso.get_grid_address()[gp]
-            q = adrs.astype('double') / self._mesh
+            q = adrs.astype('double') / self._mesh_numbers
             print("q-point: %s" % q)
 
             if self._sigmas:
@@ -860,7 +981,7 @@ class Phono3pyJointDos(object):
             self._sigmas = sigmas
         self._supercell = supercell
         self._primitive = primitive
-        self._mesh = mesh
+        self._mesh_numbers = mesh
         self._fc2 = fc2
         self._nac_params = nac_params
         self._nac_q_direction = nac_q_direction
@@ -876,7 +997,7 @@ class Phono3pyJointDos(object):
         self._log_level = log_level
 
         self._jdos = JointDos(
-            self._mesh,
+            self._mesh_numbers,
             self._primitive,
             self._supercell,
             self._fc2,
@@ -894,41 +1015,49 @@ class Phono3pyJointDos(object):
             log_level=self._log_level)
 
     def run(self, grid_points):
-        for gp in grid_points:
+        if self._log_level:
+            print("--------------------------------- Joint DOS "
+                  "---------------------------------")
+            print("Sampling mesh: [ %d %d %d ]" % tuple(self._mesh_numbers))
+
+        for i, gp in enumerate(grid_points):
             self._jdos.set_grid_point(gp)
 
             if self._log_level:
                 weights = self._jdos.get_triplets_at_q()[1]
-                print("--------------------------------- Joint DOS "
-                      "---------------------------------")
-                print("Grid point: %d" % gp)
-                print("Number of ir-triplets: "
-                      "%d / %d" % (len(weights), weights.sum()))
+                print("======================= "
+                      "Grid point %d (%d/%d) "
+                      "=======================" % (gp, i + 1, len(grid_points)))
                 adrs = self._jdos.get_grid_address()[gp]
-                q = adrs.astype('double') / self._mesh
-                print("q-point: %s" % q)
-                print("Phonon frequency:")
-                frequencies = self._jdos.get_phonons()[0]
-                print("%s" % frequencies[gp])
+                q = adrs.astype('double') / self._mesh_numbers
+                print("q-point: (%5.2f %5.2f %5.2f)" % tuple(q))
+                print("Number of triplets: %d" % len(weights))
+                print("Frequency")
+                for f in self._jdos.get_phonons()[0][gp]:
+                    print("%8.3f" % f)
 
             if self._sigmas:
                 for sigma in self._sigmas:
-                    if sigma is None:
-                        print("Tetrahedron method")
-                    else:
-                        print("Sigma: %s" % sigma)
+                    if self._log_level:
+                        if sigma is None:
+                            print("Tetrahedron method is used.")
+                        else:
+                            print("Smearing method with sigma=%s is used." % sigma)
                     self._jdos.set_sigma(sigma)
                     self._jdos.run()
-                    self._write(gp, sigma=sigma)
+                    filename = self._write(gp, sigma=sigma)
+                    if self._log_level:
+                        print("JDOS is written into \"%s\"." % filename)
             else:
-                print("sigma or tetrahedron method has to be set.")
+                if self._log_level:
+                    print("sigma or tetrahedron method has to be set.")
 
     def _write(self, gp, sigma=None):
-        write_joint_dos(gp,
-                        self._mesh,
-                        self._jdos.get_frequency_points(),
-                        self._jdos.get_joint_dos(),
-                        sigma=sigma,
-                        temperatures=self._temperatures,
-                        filename=self._filename,
-                        is_mesh_symmetry=self._is_mesh_symmetry)
+        return write_joint_dos(gp,
+                               self._mesh_numbers,
+                               self._jdos.get_frequency_points(),
+                               self._jdos.get_joint_dos(),
+                               sigma=sigma,
+                               temperatures=self._temperatures,
+                               filename=self._filename,
+                               is_mesh_symmetry=self._is_mesh_symmetry)

@@ -15,14 +15,16 @@ except ImportError:
 include_dirs_numpy = [numpy.get_include()]
 extra_link_args = []
 cc = None
+lib_omp = None
 if 'CC' in os.environ:
     if 'clang' in os.environ['CC']:
         cc = 'clang'
-        libgomp = '-lomp'
+        # lib_omp = '-liomp5'
+        # lib_omp = '-lomp'
     if 'gcc' in os.environ['CC'] or 'gnu-cc' in os.environ['CC']:
         cc = 'gcc'
 if cc == 'gcc' or cc is None:
-    libgomp = '-lgomp'
+    lib_omp = '-lgomp'
 
     if 'CC' in os.environ and 'gcc-' in os.environ['CC']:
         # For macOS & homebrew gcc:
@@ -39,9 +41,10 @@ if cc == 'gcc' or cc is None:
                    "%d" % v, "libgomp.a"]
             libgomp_a = os.path.join(*ary)
             if os.path.isfile(libgomp_a):
-                libgomp = libgomp_a
+                lib_omp = libgomp_a
 
-    extra_link_args.append(libgomp)
+if lib_omp:
+    extra_link_args.append(lib_omp)
 
 # Workaround Python issue 21121
 config_var = sysconfig.get_config_var("CFLAGS")
@@ -156,8 +159,10 @@ elif (platform.system() == 'Darwin' and
     extra_link_args_lapacke += ['/opt/local/lib/libopenblas.a']
     include_dirs_lapacke += ['/opt/local/include']
 elif ('CONDA_PREFIX' in os.environ and
-      os.path.isfile(
-          os.path.join(os.environ['CONDA_PREFIX'], 'lib', 'libopenblas.so'))):
+      (os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
+                                   'lib', 'libopenblas.so')) or
+       os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
+                                   'lib', 'libopenblas.dylib')))):
     # This is for the system prepared with conda openblas.
     extra_link_args_lapacke += ['-lopenblas']
     include_dirs_lapacke += [
@@ -281,7 +286,7 @@ if __name__ == '__main__':
               url='http://atztogo.github.io/phono3py/',
               packages=packages_phono3py,
               install_requires=['numpy', 'PyYAML', 'matplotlib', 'h5py',
-                                'phonopy>=1.14.2'],
+                                'phonopy>=2.1.2'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
               ext_modules=[extension_lapackepy, extension_phono3py],

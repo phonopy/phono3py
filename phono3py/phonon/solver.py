@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def set_phonon_c(dm,
                  frequencies,
                  eigenvectors,
@@ -8,7 +9,7 @@ def set_phonon_c(dm,
                  grid_address,
                  mesh,
                  frequency_factor_to_THz,
-                 nac_q_direction, # in reduced coordinates
+                 nac_q_direction,  # in reduced coordinates
                  lapack_zheev_uplo,
                  verbose=False):
     import phono3py._phono3py as phono3c
@@ -16,7 +17,7 @@ def set_phonon_c(dm,
     (svecs,
      multiplicity,
      masses,
-     rec_lattice, # column vectors
+     rec_lattice,  # column vectors
      positions,
      born,
      nac_factor,
@@ -27,11 +28,11 @@ def set_phonon_c(dm,
         if gonze_nac_dataset[0] is None:
             dm.make_Gonze_nac_dataset(verbose=verbose)
             gonze_nac_dataset = dm.get_Gonze_nac_dataset()
-        (gonze_fc, # fc where the dipole-diple contribution is removed.
-         dd_q0,    # second term of dipole-dipole expression.
-         G_cutoff, # Cutoff radius in reciprocal space. This will not be used.
-         G_list,   # List of G points where d-d interactions are integrated.
-         Lambda) = gonze_nac_dataset # Convergence parameter
+        (gonze_fc,  # fc where the dipole-diple contribution is removed.
+         dd_q0,     # second term of dipole-dipole expression.
+         G_cutoff,  # Cutoff radius in reciprocal space. This will not be used.
+         G_list,    # List of G points where d-d interactions are integrated.
+         Lambda) = gonze_nac_dataset  # Convergence parameter
         fc = gonze_fc
     else:
         positions = None
@@ -39,6 +40,9 @@ def set_phonon_c(dm,
         G_list = None
         Lambda = 0
         fc = dm.get_force_constants()
+
+    assert grid_points.dtype == 'uintp'
+    assert grid_points.flags.c_contiguous
 
     fc_p2s, fc_s2p = _get_fc_elements_mapping(dm, fc)
     phono3c.phonons_at_gridpoints(
@@ -66,6 +70,7 @@ def set_phonon_c(dm,
         Lambda,
         lapack_zheev_uplo)
 
+
 def set_phonon_py(grid_point,
                   phonon_done,
                   frequencies,
@@ -87,11 +92,12 @@ def set_phonon_py(grid_point,
                            * frequency_factor_to_THz)
         eigenvectors[gp] = eigvecs
 
+
 def _extract_params(dm):
     svecs, multiplicity = dm.get_shortest_vectors()
     masses = np.array(dm.get_primitive().get_masses(), dtype='double')
-    rec_lattice = np.array(
-        np.linalg.inv(dm.get_primitive().get_cell()), dtype='double', order='C')
+    rec_lattice = np.array(np.linalg.inv(dm.get_primitive().get_cell()),
+                           dtype='double', order='C')
     positions = np.array(dm.get_primitive().get_positions(),
                          dtype='double', order='C')
     if dm.is_nac():

@@ -33,9 +33,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
-import numpy as np
 from phonopy.harmonic.force_constants import (
-    distribute_force_constants,
     show_drift_force_constants,
     symmetrize_force_constants,
     symmetrize_compact_force_constants)
@@ -59,6 +57,7 @@ def create_phono3py_force_constants(phono3py,
                                     settings,
                                     force_to_eVperA=None,
                                     distance_to_A=None,
+                                    compression=None,
                                     input_filename=None,
                                     output_filename=None,
                                     log_level=1):
@@ -69,6 +68,22 @@ def create_phono3py_force_constants(phono3py,
     symmetrize_fc3q = settings.get_is_symmetrize_fc3_q()
     symmetrize_fc2 = (settings.get_is_symmetrize_fc2() or
                       settings.get_fc_symmetry())
+
+    if settings.get_use_alm_fc2():
+        symmetrize_fc2 = False
+    if settings.get_use_alm_fc3():
+        symmetrize_fc3r = False
+    alm_options = None
+    if settings.get_use_alm_fc3() or settings.get_use_alm_fc2():
+        if settings.get_alm_options() is not None:
+            alm_option_types = {'solver': str,
+                                'cutoff_distance': float}
+            alm_options = {}
+            for option_str in settings.get_alm_options().split(","):
+                key, val = [x.strip() for x in option_str.split('=')[:2]]
+                if key.lower() in alm_option_types:
+                    option_value = alm_option_types[key.lower()](val)
+                    alm_options[key.lower()] = option_value
 
     if log_level:
         show_phono3py_force_constants_settings(read_fc3,
@@ -88,7 +103,7 @@ def create_phono3py_force_constants(phono3py,
         settings.get_constant_averaged_pp_interaction() is not None):
         pass
     else:
-        if read_fc3: # Read fc3.hdf5
+        if read_fc3:  # Read fc3.hdf5
             if input_filename is None:
                 filename = 'fc3.hdf5'
             else:
@@ -118,7 +133,7 @@ def create_phono3py_force_constants(phono3py,
                 set_permutation_symmetry_fc3(fc3)
 
             phono3py.set_fc3(fc3)
-        else: # fc3 from FORCES_FC3
+        else:  # fc3 from FORCES_FC3
             if not _create_phono3py_fc3(phono3py,
                                         force_to_eVperA,
                                         distance_to_A,
@@ -128,6 +143,8 @@ def create_phono3py_force_constants(phono3py,
                                         output_filename,
                                         settings.get_is_compact_fc(),
                                         settings.get_use_alm_fc3(),
+                                        alm_options,
+                                        compression,
                                         log_level):
                     print("fc3 was not created properly.")
                     if log_level:
@@ -148,9 +165,7 @@ def create_phono3py_force_constants(phono3py,
     # fc2
     phonon_primitive = phono3py.get_phonon_primitive()
     phonon_supercell = phono3py.get_phonon_supercell()
-    phonon_symmetry = phono3py.get_phonon_supercell_symmetry()
     p2s_map = phonon_primitive.get_primitive_to_supercell_map()
-    s2p_map = phonon_primitive.get_supercell_to_primitive_map()
     if read_fc2:
         if input_filename is None:
             filename = 'fc2.hdf5'
@@ -180,7 +195,8 @@ def create_phono3py_force_constants(phono3py,
             if phonon_fc2.shape[0] == phonon_fc2.shape[1]:
                 symmetrize_force_constants(phonon_fc2)
             else:
-                symmetrize_compact_force_constants(phonon_fc2, phonon_primitive)
+                symmetrize_compact_force_constants(phonon_fc2,
+                                                   phonon_primitive)
 
         phono3py.set_fc2(phonon_fc2)
     else:
@@ -192,6 +208,7 @@ def create_phono3py_force_constants(phono3py,
                                         input_filename,
                                         settings.get_is_compact_fc(),
                                         settings.get_use_alm_fc2(),
+                                        alm_options,
                                         log_level):
                 print("fc2 was not created properly.")
                 if log_level:
@@ -205,6 +222,7 @@ def create_phono3py_force_constants(phono3py,
                                                input_filename,
                                                settings.get_is_compact_fc(),
                                                settings.get_use_alm_fc2(),
+                                               alm_options,
                                                log_level):
                     print("fc2 was not created properly.")
                     if log_level:
@@ -218,12 +236,14 @@ def create_phono3py_force_constants(phono3py,
             print("Writing fc2 to %s" % filename)
         write_fc2_to_hdf5(phono3py.get_fc2(),
                           filename=filename,
-                          p2s_map=p2s_map)
+                          p2s_map=p2s_map,
+                          compression=compression)
 
     if log_level:
         show_drift_force_constants(phono3py.get_fc2(),
                                    primitive=phonon_primitive,
                                    name='fc2')
+
 
 def _create_phono3py_fc3(phono3py,
                          force_to_eVperA,
@@ -234,6 +254,8 @@ def _create_phono3py_fc3(phono3py,
                          output_filename,
                          is_compact_fc,
                          use_alm,
+                         alm_options,
+                         compression,
                          log_level):
     if input_filename is None:
         filename = 'disp_fc3.yaml'
@@ -255,16 +277,16 @@ def _create_phono3py_fc3(phono3py,
     file_exists("FORCES_FC3", log_level)
     if log_level:
         print("Sets of supercell forces are read from %s." % "FORCES_FC3")
+        sys.stdout.flush()
     forces_fc3 = parse_FORCES_FC3(disp_dataset)
-    if not forces_fc3:
-        return False
 
     _convert_force_unit(forces_fc3, force_to_eVperA)
     phono3py.produce_fc3(forces_fc3,
                          displacement_dataset=disp_dataset,
                          symmetrize_fc3r=symmetrize_fc3r,
                          is_compact_fc=is_compact_fc,
-                         use_alm=use_alm)
+                         use_alm=use_alm,
+                         alm_options=alm_options)
 
     if output_filename is None:
         filename = 'fc3.hdf5'
@@ -273,9 +295,11 @@ def _create_phono3py_fc3(phono3py,
     if log_level:
         print("Writing fc3 to %s" % filename)
     p2s_map = phono3py.get_primitive().get_primitive_to_supercell_map()
-    write_fc3_to_hdf5(phono3py.get_fc3(), filename=filename, p2s_map=p2s_map)
+    write_fc3_to_hdf5(phono3py.get_fc3(), filename=filename, p2s_map=p2s_map,
+                      compression=compression)
 
     return True
+
 
 def _create_phono3py_fc2(phono3py,
                          force_to_eVperA,
@@ -284,6 +308,7 @@ def _create_phono3py_fc2(phono3py,
                          input_filename,
                          is_compact_fc,
                          use_alm,
+                         alm_options,
                          log_level):
     if input_filename is None:
         filename = 'disp_fc3.yaml'
@@ -316,9 +341,11 @@ def _create_phono3py_fc2(phono3py,
         displacement_dataset=disp_dataset,
         symmetrize_fc2=symmetrize_fc2,
         is_compact_fc=is_compact_fc,
-        use_alm=use_alm)
+        use_alm=use_alm,
+        alm_options=alm_options)
 
     return True
+
 
 def _create_phono3py_phonon_fc2(phono3py,
                                 force_to_eVperA,
@@ -327,6 +354,7 @@ def _create_phono3py_phonon_fc2(phono3py,
                                 input_filename,
                                 is_compact_fc,
                                 use_alm,
+                                alm_options,
                                 log_level):
     if input_filename is None:
         filename = 'disp_fc2.yaml'
@@ -360,15 +388,18 @@ def _create_phono3py_phonon_fc2(phono3py,
         displacement_dataset=disp_dataset,
         symmetrize_fc2=symmetrize_fc2,
         is_compact_fc=is_compact_fc,
-        use_alm=use_alm)
+        use_alm=use_alm,
+        alm_options=alm_options)
 
     return True
+
 
 def _convert_force_unit(force_sets, force_to_eVperA):
     if force_to_eVperA is not None:
         for forces in force_sets:
             if forces is not None:
                 forces *= force_to_eVperA
+
 
 def _convert_displacement_unit(disp_dataset, distance_to_A, is_fc2=False):
     if distance_to_A is not None:

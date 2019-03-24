@@ -12,6 +12,7 @@ from phono3py.phonon3.imag_self_energy import get_frequency_points
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
+
 class JointDos(object):
     def __init__(self,
                  mesh,
@@ -119,7 +120,7 @@ class JointDos(object):
 
         self._joint_dos = None
         self._frequency_points = None
-        self.set_phonons(np.array([grid_point], dtype='intc'))
+        self.set_phonons(np.array([grid_point], dtype='uintp'))
 
     def get_triplets_at_q(self):
         return self._triplets_at_q, self._weights_at_q

@@ -1,3 +1,4 @@
+import textwrap
 import numpy as np
 from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.harmonic.force_constants import similarity_transformation
@@ -27,7 +28,8 @@ def all_bands_exist(interaction):
 def write_pp(conductivity,
              pp,
              i,
-             filename=None):
+             filename=None,
+             compression=None):
     grid_point = conductivity.get_grid_points()[i]
     sigmas = conductivity.get_sigmas()
     sigma_cutoff = conductivity.get_sigma_cutoff_width()
@@ -57,7 +59,8 @@ def write_pp(conductivity,
                      triplet_all=all_triplets,
                      sigma=sigmas[-1],
                      sigma_cutoff=sigma_cutoff,
-                     filename=filename)
+                     filename=filename,
+                     compression=compression)
 
 
 class Conductivity(object):
@@ -150,12 +153,26 @@ class Conductivity(object):
         self._grid_point_count = None
         self._set_grid_properties(grid_points)
 
+        if (self._dm.is_nac() and
+            self._dm.get_nac_method() == 'gonze' and
+            self._gv_delta_q is None):
+            self._gv_delta_q = 1e-5
+            if self._log_level:
+                msg = "Group velocity calculation:\n"
+                text = ("Analytical derivative of dynamical matrix is not "
+                        "implemented for NAC by Gonze et al. Instead "
+                        "numerical derivative of it is used with dq=1e-5 "
+                        "for group velocity calculation.")
+                msg += textwrap.fill(text,
+                                     initial_indent="  ",
+                                     subsequent_indent="  ",
+                                     width=70)
+                print(msg)
         self._gv_obj = GroupVelocity(
             self._dm,
             q_length=self._gv_delta_q,
             symmetry=self._symmetry,
-            frequency_factor_to_THz=self._frequency_factor_to_THz,
-            log_level=self._log_level)
+            frequency_factor_to_THz=self._frequency_factor_to_THz)
         # gv_delta_q may be changed.
         self._gv_delta_q = self._gv_obj.get_q_length()
 
@@ -265,7 +282,7 @@ class Conductivity(object):
         elif not self._is_kappa_star:  # All grid points
             coarse_grid_address = get_grid_address(self._coarse_mesh)
             coarse_grid_points = np.arange(np.prod(self._coarse_mesh),
-                                           dtype='intc')
+                                           dtype='uintp')
             self._grid_points = from_coarse_to_dense_grid_points(
                 self._mesh,
                 self._mesh_divisors,

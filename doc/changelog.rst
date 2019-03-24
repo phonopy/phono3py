@@ -3,6 +3,30 @@
 Change Log
 ==========
 
+Mar-24-2019: Version 1.16.0
+---------------------------
+- Bug fixes and catching up the updates of phonopy.
+- Most of hdf5 output files are compressed by ``gzip`` as
+  default. This compression can be set off, see
+  :ref:`hdf5_compression_option`.
+- (Experimental) ``phono3py`` command accepts ``phono3py.yaml`` type
+  file as an input crystal structure by ``-c`` option. When ``DIM``
+  and any structure file are not given, ``phono3py_disp.yaml``
+  (primary) or ``phono3py.yaml`` (secondary) is searched in the current
+  directory. Then ``phono3py.yaml`` type file is used as the input.
+  By this, semi-automatic phono3py mode is invocked, which acts as
+
+  (1) ``supercell_matrix`` corresponding to ``DIM`` in the
+      ``phono3py.yaml`` type file is used if it exists.
+  (2) ``phonon_supercell_matrix``  corresponding to ``DIM_FC2`` in the
+      ``phono3py.yaml`` type file is used if it exists.
+  (3) ``primitive_matrix`` in the ``phono3py.yaml`` type file
+      is used if it exists. Otherwise, set ``PRIMITIVE_AXES = AUTO``
+      when ``PRIMITIVE_AXES`` is not given.
+  (4) NAC params are read (``NAC = .TRUE.``) if NAC params are
+      contained (primary) in the ``phono3py.yaml`` type file or if
+      ``BORN`` file exists in the current directory (secondary).
+
 Nov-22-2018: version 1.14.3
 ----------------------------
 - Update to work with phonopy v1.14.2.
