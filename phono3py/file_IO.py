@@ -1217,9 +1217,7 @@ def parse_disp_fc3_yaml(filename="disp_fc3.yaml", return_cell=False):
             disp2_dataset = {'number': second_atom['number'] - 1}
             if 'included' in second_atom:
                 included = second_atom['included']
-            else:
-                included = True
-            disp2_dataset.update({'included': included})
+                disp2_dataset.update({'included': included})
             if 'distance' in second_atom:
                 disp2_dataset.update(
                     {'pair_distance': second_atom['distance']})
