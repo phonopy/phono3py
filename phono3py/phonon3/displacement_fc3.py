@@ -2,7 +2,8 @@ import numpy as np
 from phonopy.harmonic.displacement import (get_least_displacements,
                                            directions_axis, get_displacement,
                                            is_minus_displacement)
-from phonopy.structure.cells import get_reduced_bases, get_smallest_vectors
+from phonopy.structure.cells import get_smallest_vectors
+
 
 def direction_to_displacement(dataset,
                               distance,
