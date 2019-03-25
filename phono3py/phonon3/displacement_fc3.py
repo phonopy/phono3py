@@ -48,6 +48,7 @@ def direction_to_displacement(dataset,
 
     return new_dataset
 
+
 def get_third_order_displacements(cell,
                                   symmetry,
                                   is_plusminus='auto',
@@ -146,6 +147,7 @@ def get_third_order_displacements(cell,
 
     return dds
 
+
 def get_next_displacements(atom1,
                            atom2,
                            reduced_site_sym,
@@ -188,6 +190,7 @@ def get_reduced_site_symmetry(site_sym, direction, symprec=1e-5):
             reduced_site_sym.append(rot)
     return np.array(reduced_site_sym, dtype='intc')
 
+
 def get_bond_symmetry(site_symmetry,
                       lattice,
                       positions,
@@ -211,6 +214,7 @@ def get_bond_symmetry(site_symmetry,
 
     return np.array(bond_sym)
 
+
 def get_least_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
     """Find least orbits for a centering atom"""
     orbits = _get_orbits(atom_index, cell, site_symmetry, symprec)
@@ -222,6 +226,7 @@ def get_least_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
                 mapping[num] = mapping[i]
 
     return np.unique(mapping)
+
 
 def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
     lattice = cell.get_cell().T
@@ -251,6 +256,7 @@ def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
             orbits.append(mapping)
 
     return np.array(orbits)
+
 
 def get_equivalent_smallest_vectors(atom_number_supercell,
                                     atom_number_primitive,
