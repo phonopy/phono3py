@@ -445,10 +445,18 @@ class Conductivity(object):
         if self._grid_weights is not None:
             if order_kstar != self._grid_weights[i_irgp]:
                 if self._log_level:
-                    print("*" * 33 + "Warning" + "*" * 33)
-                    print(" Number of elements in k* is unequal "
-                          "to number of equivalent grid-points.")
-                    print("*" * 73)
+                    text = ("Number of elements in k* is unequal "
+                            "to number of equivalent grid-points. "
+                            "This means that the mesh sampling grids break "
+                            "symmetry. Please check carefully "
+                            "the convergence over grid point densities.")
+                    msg = textwrap.fill(text,
+                                        initial_indent=" ",
+                                        subsequent_indent=" ",
+                                        width=70)
+                    print("*" * 30 + "Warning" + "*" * 30)
+                    print(msg)
+                    print("*" * 67)
 
         return gv_by_gv, order_kstar
 
