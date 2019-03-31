@@ -38,15 +38,18 @@ import numpy as np
 from phonopy.structure.cells import print_cell
 
 
-def file_exists(filename, log_level):
+def file_exists(filename, log_level, is_any=False):
     if os.path.exists(filename):
         return True
     else:
-        error_text = "%s not found." % filename
-        print(error_text)
-        if log_level > 0:
-            print_error()
-        sys.exit(1)
+        if is_any:
+            return False
+        else:
+            error_text = "\"%s\" was not found." % filename
+            print(error_text)
+            if log_level > 0:
+                print_error()
+            sys.exit(1)
 
 
 # AA is created at http://www.network-science.de/ascii/.
@@ -86,6 +89,55 @@ def print_error_message(message):
     print(message)
 
 
+def show_general_settings(settings,
+                          run_mode,
+                          is_primitive_axes_auto,
+                          primitive_matrix,
+                          supercell_matrix,
+                          phonon_supercell_matrix,
+                          cell_filename,
+                          input_filename,
+                          output_filename,
+                          compression,
+                          interface_mode):
+    print("-" * 29 + " General settings " + "-" * 29)
+    print("Run mode: %s" % run_mode)
+    if output_filename:
+        print("Output filename is modified by %s." % output_filename)
+    if input_filename:
+        print("Input filename is modified by %s." % input_filename)
+    if compression:
+        print("HDF5 data compression filter: %s" % compression)
+
+    if interface_mode:
+        print("Calculator interface: %s" % interface_mode)
+    print("Crystal structure was read from \"%s\"." % cell_filename)
+
+    if (np.diag(np.diag(supercell_matrix)) - supercell_matrix).any():
+        print("Supercell matrix (dim):")
+        for v in supercell_matrix:
+            print("  %s" % v)
+    else:
+        print("Supercell (dim): %s" % np.diag(supercell_matrix))
+    if phonon_supercell_matrix is not None:
+        if (np.diag(np.diag(phonon_supercell_matrix))
+            - phonon_supercell_matrix).any():
+            print("Phonon supercell matrix (dim-fc2):")
+            for v in phonon_supercell_matrix:
+                print("  %s" % v)
+        else:
+            print("Phonon supercell (dim-fc2): %s"
+                  % np.diag(phonon_supercell_matrix))
+    if is_primitive_axes_auto:
+        print("Primitive matrix (Auto):")
+        for v in primitive_matrix:
+            print("  %s" % v)
+    elif primitive_matrix is not None:
+        print("Primitive matrix:")
+        for v in primitive_matrix:
+            print("  %s" % v)
+
+
 def show_phono3py_cells(symmetry,
                         primitive,
                         supercell,
@@ -95,23 +147,15 @@ def show_phono3py_cells(symmetry,
     print("Spacegroup: %s" % symmetry.get_international_table())
     print("-" * 30 + " primitive cell " + "-" * 30)
     print_cell(primitive)
-    print("-" * 32 + " super cell " + "-" * 32)
+    print("-" * 32 + " supercell " + "-" * 33)
     print_cell(supercell, mapping=primitive.get_supercell_to_primitive_map())
-    print("-" * 19 + " ratio (supercell for fc)/(primitive) " + "-" * 19)
-    for vec in np.dot(supercell.get_cell(),
-                      np.linalg.inv(primitive.get_cell())):
-        print(("  " + "%6.2f" * 3) % tuple(vec))
     if settings.get_phonon_supercell_matrix() is not None:
         print("-" * 19 + " primitive cell for harmonic phonon " + "-" * 20)
         print_cell(phonon_primitive)
         print("-" * 21 + " supercell for harmonic phonon " + "-" * 22)
         print_cell(phonon_supercell,
                    mapping=phonon_primitive.get_supercell_to_primitive_map())
-        print("-" * 15 + " ratio (phonon supercell)/(phonon primitive) " +
-              "-" * 15)
-        for vec in np.dot(phonon_supercell.get_cell(),
-                          np.linalg.inv(phonon_primitive.get_cell())):
-            print(("%7.2f" * 3) % tuple(vec))
+    print("-" * 76)
 
 
 def show_phono3py_force_constants_settings(read_fc3,
@@ -163,6 +207,8 @@ def show_phono3py_settings(settings,
               % settings.get_is_nac())
         if nac_params:
             print("NAC unit conversion factor: %9.5f" % nac_params['factor'])
+        if settings.get_nac_q_direction() is not None:
+            print("NAC q-direction: %s" % settings.get_nac_q_direction())
     if mesh is not None:
         print("Mesh sampling: [ %d %d %d ]" % tuple(mesh))
     if mesh_divs is not None and settings.get_is_bterta():

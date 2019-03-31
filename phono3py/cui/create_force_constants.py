@@ -76,10 +76,14 @@ def create_phono3py_force_constants(phono3py,
     alm_options = None
     if settings.get_use_alm_fc3() or settings.get_use_alm_fc2():
         if settings.get_alm_options() is not None:
+            alm_option_types = {'solver': str,
+                                'cutoff_distance': float}
             alm_options = {}
             for option_str in settings.get_alm_options().split(","):
-                key, val = option_str.split('=')[:2]
-                alm_options[key.lower()] = val
+                key, val = [x.strip() for x in option_str.split('=')[:2]]
+                if key.lower() in alm_option_types:
+                    option_value = alm_option_types[key.lower()](val)
+                    alm_options[key.lower()] = option_value
 
     if log_level:
         show_phono3py_force_constants_settings(read_fc3,
@@ -138,6 +142,7 @@ def create_phono3py_force_constants(phono3py,
                                         input_filename,
                                         output_filename,
                                         settings.get_is_compact_fc(),
+                                        settings.get_cutoff_pair_distance(),
                                         settings.get_use_alm_fc3(),
                                         alm_options,
                                         compression,
@@ -249,6 +254,7 @@ def _create_phono3py_fc3(phono3py,
                          input_filename,
                          output_filename,
                          is_compact_fc,
+                         cutoff_pair_distance,
                          use_alm,
                          alm_options,
                          compression,
@@ -261,6 +267,13 @@ def _create_phono3py_fc3(phono3py,
     if log_level:
         print("Displacement dataset for fc3 is read from %s." % filename)
     disp_dataset = parse_disp_fc3_yaml(filename=filename)
+    if cutoff_pair_distance:
+        if ('cutoff_distance' not in disp_dataset or
+            'cutoff_distance' in disp_dataset and
+            cutoff_pair_distance < disp_dataset['cutoff_distance']):
+            disp_dataset['cutoff_distance'] = cutoff_pair_distance
+            if log_level:
+                print("Cutoff-pair-distance: %f" % cutoff_pair_distance)
     num_atom = phono3py.get_supercell().get_number_of_atoms()
     if disp_dataset['natom'] != num_atom:
         print("Number of atoms in supercell is not consistent with %s" %

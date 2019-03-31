@@ -33,6 +33,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from phonopy.interface.phonopy_yaml import PhonopyYaml
+import numpy as np
 
 
 class Phono3pyYaml(PhonopyYaml):
@@ -57,7 +58,12 @@ class Phono3pyYaml(PhonopyYaml):
         self.primitive = None
         self.supercell = None
         self.yaml = None
+        self.supercell_matrix = None
+        self.phonon_supercell_matrix = None
+        self.primitive_matrix = None
+        self.nac_params = None
         self._supercell_matrix = None
+        self._phonon_supercell_matrix = None
         self._primitive_matrix = None
         self._s2p_map = None
         self._u2p_map = None
@@ -68,3 +74,29 @@ class Phono3pyYaml(PhonopyYaml):
         self._command_name = "phono3py"
         for key in self._settings:
             self._settings[key] = False
+        self._settings['born_effective_charge'] = True
+        self._settings['dielectric_constant'] = True
+
+    def set_phonon_info(self, phono3py):
+        super(Phono3pyYaml, self).set_phonon_info(phono3py)
+        self._phonon_supercell_matrix = phono3py.phonon_supercell_matrix
+
+    def _load(self, fp):
+        super(Phono3pyYaml, self)._load(fp)
+        if 'phonon_supercell_matrix' in self.yaml:
+            self.phonon_supercell_matrix = np.array(
+                self.yaml['phonon_supercell_matrix'],
+                dtype='intc', order='C')
+
+    def __str__(self):
+        lines = self.get_yaml_lines()
+        if self._phonon_supercell_matrix is not None:
+            i = lines.index("supercell_matrix:")
+            i += 5
+            lines.insert(i, "phonon_supercell_matrix:")
+            for v in self._phonon_supercell_matrix:
+                i += 1
+                lines.insert(i, "- [ %3d, %3d, %3d ]" % tuple(v))
+            i += 1
+            lines.insert(i, "")
+        return "\n".join(lines)

@@ -691,8 +691,22 @@ def _get_fc3_done(supercell, disp_dataset, symmetry, array_shape):
             site_symmetry, direction, symprec)
         least_second_atom_nums = []
         for second_atoms in dataset_first_atom['second_atoms']:
-            if second_atoms['included']:
-                least_second_atom_nums.append(second_atoms['number'])
+            if 'included' in second_atoms:
+                if second_atoms['included']:
+                    least_second_atom_nums.append(second_atoms['number'])
+            elif 'cutoff_distance' in disp_dataset:
+                min_vec = get_equivalent_smallest_vectors(
+                    first_atom_num,
+                    second_atoms['number'],
+                    supercell,
+                    symprec)[0]
+                min_distance = np.linalg.norm(np.dot(lattice, min_vec))
+                if 'pair_distance' in second_atoms:
+                    assert (abs(min_distance - second_atoms['pair_distance'])
+                            < 1e-4)
+                if min_distance < disp_dataset['cutoff_distance']:
+                    least_second_atom_nums.append(second_atoms['number'])
+
         positions_shifted = positions - positions[first_atom_num]
         least_second_atom_nums = np.unique(least_second_atom_nums)
 

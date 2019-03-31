@@ -32,9 +32,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 from phono3py.phonon3 import Phono3py
 from phono3py.file_IO import write_disp_fc3_yaml, write_disp_fc2_yaml
+
 
 def create_phono3py_supercells(unitcell,
                                supercell_matrix,

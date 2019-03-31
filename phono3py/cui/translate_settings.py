@@ -36,6 +36,7 @@ import numpy as np
 from phonopy.units import VaspToTHz
 from phono3py.phonon3.triplets import get_grid_point_from_address
 
+
 def get_phono3py_configurations(settings):
     primitive_matrix = settings.get_primitive_matrix()
     supercell_matrix = settings.get_supercell_matrix()

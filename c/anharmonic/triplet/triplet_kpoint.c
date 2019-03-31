@@ -294,6 +294,9 @@ static size_t get_ir_triplets_at_q(size_t *map_triplets,
       ir_grid_points[num_ir_q] = i;
       num_ir_q++;
     }
+  }
+
+  for (i = 0; i < num_grid; i++) {
     map_triplets[i] = num_grid;  /* When not found, map_triplets == num_grid */
   }
 
@@ -316,7 +319,7 @@ static size_t get_ir_triplets_at_q(size_t *map_triplets,
       ir_grid_point = ir_grid_points[i];
       q_2 = third_q[i];
       if (map_triplets[map_q[q_2]] < num_grid) {
-        map_triplets[ir_grid_point] = map_q[q_2];
+        map_triplets[ir_grid_point] = map_triplets[map_q[q_2]];
       } else {
         map_triplets[ir_grid_point] = ir_grid_point;
         num_ir_triplets++;
