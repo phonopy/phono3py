@@ -34,6 +34,7 @@
 
 from phono3py.phonon3 import Phono3py
 from phono3py.file_IO import write_disp_fc3_yaml, write_disp_fc2_yaml
+from phonopy.structure.cells import determinant
 
 
 def create_phono3py_supercells(unitcell,
@@ -94,10 +95,12 @@ def create_phono3py_supercells(unitcell,
                                             width=5)
     elif interface_mode == 'crystal':
         conv_numbers = optional_structure_file_information[1]
+        # N_FC3 = num_unitcells_in_supercell (here for FC3 supercell)
+        N_FC3 = abs(determinant(supercell_matrix))
         write_supercells_with_displacements(supercell,
                                             cells_with_disps,
                                             conv_numbers,
-                                            supercell_matrix,
+                                            N_FC3,
                                             width=5,
                                             template_file="TEMPLATE3")
     elif interface_mode == 'abinit':
@@ -142,10 +145,12 @@ def create_phono3py_supercells(unitcell,
                                                 width=5)
         elif interface_mode == 'crystal':
             conv_numbers = optional_structure_file_information[1]
+            # N = num_unitcells_in_supercell (here for FC2 supercell)
+            N_FC2 = abs(determinant(phonon_supercell_matrix))
             write_supercells_with_displacements(phonon_supercell,
                                                 cells_with_disps,
                                                 conv_numbers,
-                                                phonon_supercell_matrix,
+                                                N_FC2,
                                                 pre_filename="supercell_fc2",
                                                 width=5,
                                                 template_file="TEMPLATE")
