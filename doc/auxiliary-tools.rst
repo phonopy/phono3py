@@ -120,6 +120,11 @@ option, for example::
 
 Analogous to ``--pwscf``, but to be used with the CRYSTAL interface.
 
+``--turbomole``
+^^^^^^^^^^^^^^^
+
+Analogous to ``--pwscf``, but to be used with the TURBOMOLE interface
+
 ``--temperature``
 ^^^^^^^^^^^^^^^^^^
 

@@ -62,6 +62,12 @@ See the detail at :ref:`pwscf_interface`.
 Using this option, CRYSTAL interface is invoked.
 See the detail at :ref:`crystal_interface`.
 
+``--turbomole``: TURBOMOLE interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using this option, TURBOMOLE interface is invoked.
+See the details at :ref:`turbomole_interface`.
+
 Force constants
 ----------------
 
