@@ -25,11 +25,10 @@ Workflow
 
 In the example Si-TURBOMOLE, the TURBOMOLE input file is ``control``.
 This is the default file name for the TURBOMOLE interface,
-so the -c control parameter is not needed.
+so the ``-c control`` parameter is not needed.
 
-1) Create supercells with displacements
-   2x2x2 conventional cell for 3rd order FC
-   3x3x3 conventional cell for 2nd order FC
+1) Create supercells with displacements (2x2x2 conventional cell for 
+   3rd order FC and 3x3x3 conventional cell for 2nd order FC)
 
    ::
 
