@@ -394,6 +394,9 @@ if __name__ == '__main__':
         '--abinit', dest="abinit_mode",
         action="store_true", help="Invoke Abinit mode")
     parser.add_argument(
+        '--turbomole', dest="turbomole_mode",
+        action="store_true", help="Invoke TURBOMOLE mode")
+    parser.add_argument(
         "--noks", "--no-kappa-stars",
         dest="no_kappa_stars", action="store_true",
         help="Deactivate summation of partial kappa at q-stars")
@@ -407,6 +410,8 @@ if __name__ == '__main__':
         interface_mode = 'crystal'
     elif args.abinit_mode:
         interface_mode = 'abinit'
+    elif args.turbomole_mode:
+        interface_mode = 'turbomole'
     if len(args.filenames) > 1:
         cell, _ = read_crystal_structure(args.filenames[0],
                                          interface_mode=interface_mode)

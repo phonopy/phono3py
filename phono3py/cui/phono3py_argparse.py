@@ -132,6 +132,7 @@ def get_parser():
                         tmax=None,
                         tmin=None,
                         tstep=None,
+                        turbomole_mode=False,
                         uplo='L',
                         use_alm_fc2=False,
                         use_alm_fc3=False,
@@ -440,6 +441,9 @@ def get_parser():
     parser.add_argument(
         "--tolerance", dest="symprec", type=float,
         help="Symmetry tolerance to search")
+    parser.add_argument(
+        "--turbomole", dest="turbomole_mode", action="store_true",
+        help="Invoke TURBOMOLE mode")
     parser.add_argument(
         "--uplo", dest="uplo",
         help="Lapack zheev UPLO")

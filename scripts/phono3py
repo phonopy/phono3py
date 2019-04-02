@@ -144,6 +144,7 @@ if deprecated:
 # pwscf         : Ry,      au,        AMU,         Ry/au
 # CRYSTAL       : eV,      Angstrom,  AMU,         eV/Angstrom
 # abinit        : hartree, au,        AMU,         eV/Angstrom
+# TURBOMOLE     : hartree, au,        AMU,         hartree/au
 #
 if args.qe_mode:
     interface_mode = 'qe'
@@ -163,6 +164,11 @@ elif args.abinit_mode:
     from phonopy.interface.abinit import write_supercells_with_displacements
     distance_to_A = Bohr
     force_to_eVperA = None
+elif args.turbomole_mode:
+    interface_mode = 'turbomole'
+    from phonopy.interface.turbomole import write_supercells_with_displacements
+    distance_to_A = Bohr
+    force_to_eVperA = Hartree / Bohr
 else:
     interface_mode = 'vasp'
     from phonopy.interface.vasp import write_supercells_with_displacements
