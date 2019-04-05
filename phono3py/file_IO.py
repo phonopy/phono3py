@@ -3,9 +3,9 @@ import numpy as np
 import h5py
 
 from phonopy.file_IO import (write_force_constants_to_hdf5,
-                             read_force_constants_hdf5,
                              check_force_constants_indices,
                              get_cell_from_disp_yaml)
+from phonopy.cui.load_helper import read_force_constants_from_hdf5
 
 
 def write_cell_yaml(w, supercell):
@@ -253,9 +253,9 @@ def write_fc2_to_hdf5(force_constants,
 
 def read_fc2_from_hdf5(filename='fc2.hdf5',
                        p2s_map=None):
-    return read_force_constants_hdf5(filename=filename,
-                                     p2s_map=p2s_map,
-                                     physical_unit='eV/Angstrom^2')
+    return read_force_constants_from_hdf5(filename=filename,
+                                          p2s_map=p2s_map,
+                                          calculator='vasp')
 
 
 def write_triplets(triplets,
