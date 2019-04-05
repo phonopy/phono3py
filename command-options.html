@@ -11,7 +11,8 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
@@ -19,7 +20,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Crude force constants calculation by cutoff pair-distance" href="cutoff-pair.html" />
-    <link rel="prev" title="CRYSTAL &amp; phono3py calculation" href="crystal.html" />
+    <link rel="prev" title="TURBOMOLE &amp; phono3py calculation" href="turbomole.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -65,10 +66,11 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, pwscf, CRYSTAL, Abinit)</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, pwscf, CRYSTAL, Abinit, TURBOMOLE)</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbomole.html">TURBOMOLE &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
 </ul>
 </li>
@@ -187,6 +189,7 @@
 <li><a class="reference internal" href="#c-unit-cell-filename"><code class="docutils literal notranslate"><span class="pre">-c</span></code>: Unit cell filename</a></li>
 <li><a class="reference internal" href="#pwscf-pwscf-quantum-espresso-interface"><code class="docutils literal notranslate"><span class="pre">--pwscf</span></code>: PWSCF (Quantum espresso) interface</a></li>
 <li><a class="reference internal" href="#crystal-crystal-interface"><code class="docutils literal notranslate"><span class="pre">--crystal</span></code>: CRYSTAL interface</a></li>
+<li><a class="reference internal" href="#turbomole-turbomole-interface"><code class="docutils literal notranslate"><span class="pre">--turbomole</span></code>: TURBOMOLE interface</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#force-constants">Force constants</a><ul>
@@ -266,7 +269,7 @@
               
                 
   <li>
-    <a href="crystal.html" title="Previous Chapter: CRYSTAL & phono3py calculation"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; CRYSTAL & pho...</span>
+    <a href="turbomole.html" title="Previous Chapter: TURBOMOLE & phono3py calculation"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; TURBOMOLE & p...</span>
     </a>
   </li>
   <li>
@@ -333,72 +336,73 @@ configuration (e.g., saved in a file <code class="docutils literal notranslate">
 <li><a class="reference internal" href="#c-unit-cell-filename" id="id2"><code class="docutils literal notranslate"><span class="pre">-c</span></code>: Unit cell filename</a></li>
 <li><a class="reference internal" href="#pwscf-pwscf-quantum-espresso-interface" id="id3"><code class="docutils literal notranslate"><span class="pre">--pwscf</span></code>: PWSCF (Quantum espresso) interface</a></li>
 <li><a class="reference internal" href="#crystal-crystal-interface" id="id4"><code class="docutils literal notranslate"><span class="pre">--crystal</span></code>: CRYSTAL interface</a></li>
+<li><a class="reference internal" href="#turbomole-turbomole-interface" id="id5"><code class="docutils literal notranslate"><span class="pre">--turbomole</span></code>: TURBOMOLE interface</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#force-constants" id="id5">Force constants</a><ul>
-<li><a class="reference internal" href="#d-create-displacements" id="id6"><code class="docutils literal notranslate"><span class="pre">-d</span></code>: Create displacements</a></li>
-<li><a class="reference internal" href="#amplitude-amplitude-of-displacements" id="id7"><code class="docutils literal notranslate"><span class="pre">--amplitude</span></code>: Amplitude of displacements</a></li>
-<li><a class="reference internal" href="#dim-supercell-dimension" id="id8"><code class="docutils literal notranslate"><span class="pre">--dim</span></code>: Supercell dimension</a></li>
-<li><a class="reference internal" href="#dim-fc2-supercell-dimension-for-2nd-order-force-constants" id="id9"><code class="docutils literal notranslate"><span class="pre">--dim-fc2</span></code>: Supercell dimension for 2nd order force constants</a></li>
-<li><a class="reference internal" href="#pa-primitive-axes-transformation-matrix-to-primitive-cell" id="id10"><code class="docutils literal notranslate"><span class="pre">--pa</span></code>, <code class="docutils literal notranslate"><span class="pre">--primitive-axes</span></code>: Transformation matrix to primitive cell</a></li>
-<li><a class="reference internal" href="#fc2-read-2nd-order-force-constants" id="id11"><code class="docutils literal notranslate"><span class="pre">--fc2</span></code>: Read 2nd order force constants</a></li>
-<li><a class="reference internal" href="#fc3-read-3nd-order-force-constants" id="id12"><code class="docutils literal notranslate"><span class="pre">--fc3</span></code>: Read 3nd order force constants</a></li>
-<li><a class="reference internal" href="#cfc-or-compact-fc-compact-force-constants" id="id13"><code class="docutils literal notranslate"><span class="pre">--cfc</span></code> or <code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code>: Compact force constants</a></li>
-<li><a class="reference internal" href="#sym-fc2-sym-fc3r-sym-fc-symmetries-force-constants" id="id14"><code class="docutils literal notranslate"><span class="pre">--sym-fc2</span></code>, <code class="docutils literal notranslate"><span class="pre">--sym-fc3r</span></code>, <code class="docutils literal notranslate"><span class="pre">--sym-fc</span></code>: Symmetries force constants</a></li>
-<li><a class="reference internal" href="#cf3-create-forces-fc3" id="id15"><code class="docutils literal notranslate"><span class="pre">--cf3</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a></li>
-<li><a class="reference internal" href="#cf3-file-create-forces-fc3-from-file-name-list" id="id16"><code class="docutils literal notranslate"><span class="pre">--cf3-file</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> from file name list</a></li>
-<li><a class="reference internal" href="#cf2-create-forces-fc2" id="id17"><code class="docutils literal notranslate"><span class="pre">--cf2</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code></a></li>
-<li><a class="reference internal" href="#fs2f2-or-force-sets-to-forces-fc2" id="id18"><code class="docutils literal notranslate"><span class="pre">--fs2f2</span></code> or <code class="docutils literal notranslate"><span class="pre">--force-sets-to-forces-fc2</span></code></a></li>
-<li><a class="reference internal" href="#cfs-or-create-force-sets" id="id19"><code class="docutils literal notranslate"><span class="pre">--cfs</span></code> or <code class="docutils literal notranslate"><span class="pre">--create-force-sets</span></code></a></li>
-<li><a class="reference internal" href="#cutoff-fc3-or-cutoff-fc3-distance" id="id20"><code class="docutils literal notranslate"><span class="pre">--cutoff-fc3</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-fc3-distance</span></code></a></li>
-<li><a class="reference internal" href="#cutoff-pair-or-cutoff-pair-distance" id="id21"><code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-pair-distance</span></code></a></li>
+<li><a class="reference internal" href="#force-constants" id="id6">Force constants</a><ul>
+<li><a class="reference internal" href="#d-create-displacements" id="id7"><code class="docutils literal notranslate"><span class="pre">-d</span></code>: Create displacements</a></li>
+<li><a class="reference internal" href="#amplitude-amplitude-of-displacements" id="id8"><code class="docutils literal notranslate"><span class="pre">--amplitude</span></code>: Amplitude of displacements</a></li>
+<li><a class="reference internal" href="#dim-supercell-dimension" id="id9"><code class="docutils literal notranslate"><span class="pre">--dim</span></code>: Supercell dimension</a></li>
+<li><a class="reference internal" href="#dim-fc2-supercell-dimension-for-2nd-order-force-constants" id="id10"><code class="docutils literal notranslate"><span class="pre">--dim-fc2</span></code>: Supercell dimension for 2nd order force constants</a></li>
+<li><a class="reference internal" href="#pa-primitive-axes-transformation-matrix-to-primitive-cell" id="id11"><code class="docutils literal notranslate"><span class="pre">--pa</span></code>, <code class="docutils literal notranslate"><span class="pre">--primitive-axes</span></code>: Transformation matrix to primitive cell</a></li>
+<li><a class="reference internal" href="#fc2-read-2nd-order-force-constants" id="id12"><code class="docutils literal notranslate"><span class="pre">--fc2</span></code>: Read 2nd order force constants</a></li>
+<li><a class="reference internal" href="#fc3-read-3nd-order-force-constants" id="id13"><code class="docutils literal notranslate"><span class="pre">--fc3</span></code>: Read 3nd order force constants</a></li>
+<li><a class="reference internal" href="#cfc-or-compact-fc-compact-force-constants" id="id14"><code class="docutils literal notranslate"><span class="pre">--cfc</span></code> or <code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code>: Compact force constants</a></li>
+<li><a class="reference internal" href="#sym-fc2-sym-fc3r-sym-fc-symmetries-force-constants" id="id15"><code class="docutils literal notranslate"><span class="pre">--sym-fc2</span></code>, <code class="docutils literal notranslate"><span class="pre">--sym-fc3r</span></code>, <code class="docutils literal notranslate"><span class="pre">--sym-fc</span></code>: Symmetries force constants</a></li>
+<li><a class="reference internal" href="#cf3-create-forces-fc3" id="id16"><code class="docutils literal notranslate"><span class="pre">--cf3</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a></li>
+<li><a class="reference internal" href="#cf3-file-create-forces-fc3-from-file-name-list" id="id17"><code class="docutils literal notranslate"><span class="pre">--cf3-file</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> from file name list</a></li>
+<li><a class="reference internal" href="#cf2-create-forces-fc2" id="id18"><code class="docutils literal notranslate"><span class="pre">--cf2</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code></a></li>
+<li><a class="reference internal" href="#fs2f2-or-force-sets-to-forces-fc2" id="id19"><code class="docutils literal notranslate"><span class="pre">--fs2f2</span></code> or <code class="docutils literal notranslate"><span class="pre">--force-sets-to-forces-fc2</span></code></a></li>
+<li><a class="reference internal" href="#cfs-or-create-force-sets" id="id20"><code class="docutils literal notranslate"><span class="pre">--cfs</span></code> or <code class="docutils literal notranslate"><span class="pre">--create-force-sets</span></code></a></li>
+<li><a class="reference internal" href="#cutoff-fc3-or-cutoff-fc3-distance" id="id21"><code class="docutils literal notranslate"><span class="pre">--cutoff-fc3</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-fc3-distance</span></code></a></li>
+<li><a class="reference internal" href="#cutoff-pair-or-cutoff-pair-distance" id="id22"><code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-pair-distance</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#reciprocal-space-sampling-mesh-and-grid-points-and-band-indices" id="id22">Reciprocal space sampling mesh and grid points, and band indices</a><ul>
-<li><a class="reference internal" href="#mesh-sampling-mesh" id="id23"><code class="docutils literal notranslate"><span class="pre">--mesh</span></code>: Sampling mesh</a></li>
-<li><a class="reference internal" href="#gp-grid-points-by-their-id" id="id24"><code class="docutils literal notranslate"><span class="pre">--gp</span></code>: Grid points by their ID</a></li>
-<li><a class="reference internal" href="#ga-grid-points-by-address-with-three-integer-values" id="id25"><code class="docutils literal notranslate"><span class="pre">--ga</span></code>: Grid points by address with three integer values</a></li>
-<li><a class="reference internal" href="#wgp-write-grid-point-information" id="id26"><code class="docutils literal notranslate"><span class="pre">--wgp</span></code>: Write grid point information</a></li>
-<li><a class="reference internal" href="#stp-show-number-of-triplets-to-be-calculated-for-each-grid-point" id="id27"><code class="docutils literal notranslate"><span class="pre">--stp</span></code>: Show number of triplets to be calculated for each grid point</a></li>
-<li><a class="reference internal" href="#bi-specific-band-index" id="id28"><code class="docutils literal notranslate"><span class="pre">--bi</span></code>: Specific band index</a></li>
+<li><a class="reference internal" href="#reciprocal-space-sampling-mesh-and-grid-points-and-band-indices" id="id23">Reciprocal space sampling mesh and grid points, and band indices</a><ul>
+<li><a class="reference internal" href="#mesh-sampling-mesh" id="id24"><code class="docutils literal notranslate"><span class="pre">--mesh</span></code>: Sampling mesh</a></li>
+<li><a class="reference internal" href="#gp-grid-points-by-their-id" id="id25"><code class="docutils literal notranslate"><span class="pre">--gp</span></code>: Grid points by their ID</a></li>
+<li><a class="reference internal" href="#ga-grid-points-by-address-with-three-integer-values" id="id26"><code class="docutils literal notranslate"><span class="pre">--ga</span></code>: Grid points by address with three integer values</a></li>
+<li><a class="reference internal" href="#wgp-write-grid-point-information" id="id27"><code class="docutils literal notranslate"><span class="pre">--wgp</span></code>: Write grid point information</a></li>
+<li><a class="reference internal" href="#stp-show-number-of-triplets-to-be-calculated-for-each-grid-point" id="id28"><code class="docutils literal notranslate"><span class="pre">--stp</span></code>: Show number of triplets to be calculated for each grid point</a></li>
+<li><a class="reference internal" href="#bi-specific-band-index" id="id29"><code class="docutils literal notranslate"><span class="pre">--bi</span></code>: Specific band index</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#brillouin-zone-integration" id="id29">Brillouin zone integration</a><ul>
-<li><a class="reference internal" href="#thm-tetrahedron-method-default-choice" id="id30"><code class="docutils literal notranslate"><span class="pre">--thm</span></code>: Tetrahedron method (default choice)</a></li>
-<li><a class="reference internal" href="#sigma-smearing-method" id="id31"><code class="docutils literal notranslate"><span class="pre">--sigma</span></code>: Smearing method</a></li>
-<li><a class="reference internal" href="#sigma-cutoff-cutoff-parameter-for-smearing-method" id="id32"><code class="docutils literal notranslate"><span class="pre">--sigma-cutoff</span></code>: Cutoff parameter for smearing method</a></li>
-<li><a class="reference internal" href="#full-pp-calculate-all-elements-of-phonon-phonon-interaction-strength" id="id33"><code class="docutils literal notranslate"><span class="pre">--full-pp</span></code>: Calculate all elements of phonon-phonon interaction strength</a></li>
+<li><a class="reference internal" href="#brillouin-zone-integration" id="id30">Brillouin zone integration</a><ul>
+<li><a class="reference internal" href="#thm-tetrahedron-method-default-choice" id="id31"><code class="docutils literal notranslate"><span class="pre">--thm</span></code>: Tetrahedron method (default choice)</a></li>
+<li><a class="reference internal" href="#sigma-smearing-method" id="id32"><code class="docutils literal notranslate"><span class="pre">--sigma</span></code>: Smearing method</a></li>
+<li><a class="reference internal" href="#sigma-cutoff-cutoff-parameter-for-smearing-method" id="id33"><code class="docutils literal notranslate"><span class="pre">--sigma-cutoff</span></code>: Cutoff parameter for smearing method</a></li>
+<li><a class="reference internal" href="#full-pp-calculate-all-elements-of-phonon-phonon-interaction-strength" id="id34"><code class="docutils literal notranslate"><span class="pre">--full-pp</span></code>: Calculate all elements of phonon-phonon interaction strength</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#physical-properties" id="id34">Physical properties</a><ul>
-<li><a class="reference internal" href="#br-thermal-conductivity-with-relaxation-time-approximation" id="id35"><code class="docutils literal notranslate"><span class="pre">--br</span></code>: Thermal conductivity with relaxation time approximation</a></li>
-<li><a class="reference internal" href="#lbte-thermal-conductivity-with-direct-solution-of-lbte" id="id36"><code class="docutils literal notranslate"><span class="pre">--lbte</span></code>: Thermal conductivity with direct solution of LBTE</a></li>
-<li><a class="reference internal" href="#isotope-phonon-isotope-scattering" id="id37"><code class="docutils literal notranslate"><span class="pre">--isotope</span></code>: Phonon-isotope scattering</a></li>
-<li><a class="reference internal" href="#mass-variances-or-mv-parameter-for-phonon-isotope-scattering" id="id38"><code class="docutils literal notranslate"><span class="pre">--mass-variances</span></code> or <code class="docutils literal notranslate"><span class="pre">--mv</span></code>: Parameter for phonon-isotope scattering</a></li>
-<li><a class="reference internal" href="#boundary-mfp-bmfp-very-simple-phonon-boundary-scattering-model" id="id39"><code class="docutils literal notranslate"><span class="pre">--boundary-mfp</span></code>, <code class="docutils literal notranslate"><span class="pre">--bmfp</span></code>: Very simple phonon-boundary scattering model</a></li>
-<li><a class="reference internal" href="#tmax-tmin-tstep-temperature-range" id="id40"><code class="docutils literal notranslate"><span class="pre">--tmax</span></code>, <code class="docutils literal notranslate"><span class="pre">--tmin</span></code>, <code class="docutils literal notranslate"><span class="pre">--tstep</span></code>: Temperature range</a></li>
-<li><a class="reference internal" href="#ts-temperatures" id="id41"><code class="docutils literal notranslate"><span class="pre">--ts</span></code>: Temperatures</a></li>
-<li><a class="reference internal" href="#nac-non-analytical-term-correction" id="id42"><code class="docutils literal notranslate"><span class="pre">--nac</span></code>: Non-analytical term correction</a></li>
-<li><a class="reference internal" href="#q-direction-direction-for-non-analytical-term-correction-at-mathbf-q-rightarrow-mathbf-0" id="id43"><code class="docutils literal notranslate"><span class="pre">--q-direction</span></code>: Direction for non-analytical term correction at <span class="math notranslate nohighlight">\(\mathbf{q}\rightarrow \mathbf{0}\)</span></a></li>
-<li><a class="reference internal" href="#nu-normal-and-umklapp-processes" id="id44"><code class="docutils literal notranslate"><span class="pre">--nu</span></code>: Normal and Umklapp processes</a></li>
-<li><a class="reference internal" href="#write-gamma" id="id45"><code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code></a></li>
-<li><a class="reference internal" href="#read-gamma" id="id46"><code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code></a></li>
-<li><a class="reference internal" href="#write-gamma-detail" id="id47"><code class="docutils literal notranslate"><span class="pre">--write-gamma-detail</span></code></a></li>
-<li><a class="reference internal" href="#write-phonon" id="id48"><code class="docutils literal notranslate"><span class="pre">--write-phonon</span></code></a></li>
-<li><a class="reference internal" href="#read-phonon" id="id49"><code class="docutils literal notranslate"><span class="pre">--read-phonon</span></code></a></li>
-<li><a class="reference internal" href="#write-pp-and-read-pp" id="id50"><code class="docutils literal notranslate"><span class="pre">--write-pp</span></code> and <code class="docutils literal notranslate"><span class="pre">--read-pp</span></code></a></li>
-<li><a class="reference internal" href="#ise-imaginary-part-of-self-energy" id="id51"><code class="docutils literal notranslate"><span class="pre">--ise</span></code>: Imaginary part of self energy</a></li>
-<li><a class="reference internal" href="#jdos-joint-density-of-states" id="id52"><code class="docutils literal notranslate"><span class="pre">--jdos</span></code>: Joint density of states</a></li>
-<li><a class="reference internal" href="#num-freq-points-freq-pitch-sampling-frequency-for-distribution-functions" id="id53"><code class="docutils literal notranslate"><span class="pre">--num-freq-points</span></code>, <code class="docutils literal notranslate"><span class="pre">--freq-pitch</span></code>: Sampling frequency for distribution functions</a></li>
-<li><a class="reference internal" href="#ave-pp-use-averaged-phonon-phonon-interaction-strength" id="id54"><code class="docutils literal notranslate"><span class="pre">--ave-pp</span></code>: Use averaged phonon-phonon interaction strength</a></li>
-<li><a class="reference internal" href="#const-ave-pp-use-constant-phonon-phonon-interaction-strength" id="id55"><code class="docutils literal notranslate"><span class="pre">--const-ave-pp</span></code>: Use constant phonon-phonon interaction strength</a></li>
-<li><a class="reference internal" href="#gruneisen-mode-gruneisen-parameter-from-3rd-order-force-constants" id="id56"><code class="docutils literal notranslate"><span class="pre">--gruneisen</span></code>: Mode-Gruneisen parameter from 3rd order force constants</a></li>
+<li><a class="reference internal" href="#physical-properties" id="id35">Physical properties</a><ul>
+<li><a class="reference internal" href="#br-thermal-conductivity-with-relaxation-time-approximation" id="id36"><code class="docutils literal notranslate"><span class="pre">--br</span></code>: Thermal conductivity with relaxation time approximation</a></li>
+<li><a class="reference internal" href="#lbte-thermal-conductivity-with-direct-solution-of-lbte" id="id37"><code class="docutils literal notranslate"><span class="pre">--lbte</span></code>: Thermal conductivity with direct solution of LBTE</a></li>
+<li><a class="reference internal" href="#isotope-phonon-isotope-scattering" id="id38"><code class="docutils literal notranslate"><span class="pre">--isotope</span></code>: Phonon-isotope scattering</a></li>
+<li><a class="reference internal" href="#mass-variances-or-mv-parameter-for-phonon-isotope-scattering" id="id39"><code class="docutils literal notranslate"><span class="pre">--mass-variances</span></code> or <code class="docutils literal notranslate"><span class="pre">--mv</span></code>: Parameter for phonon-isotope scattering</a></li>
+<li><a class="reference internal" href="#boundary-mfp-bmfp-very-simple-phonon-boundary-scattering-model" id="id40"><code class="docutils literal notranslate"><span class="pre">--boundary-mfp</span></code>, <code class="docutils literal notranslate"><span class="pre">--bmfp</span></code>: Very simple phonon-boundary scattering model</a></li>
+<li><a class="reference internal" href="#tmax-tmin-tstep-temperature-range" id="id41"><code class="docutils literal notranslate"><span class="pre">--tmax</span></code>, <code class="docutils literal notranslate"><span class="pre">--tmin</span></code>, <code class="docutils literal notranslate"><span class="pre">--tstep</span></code>: Temperature range</a></li>
+<li><a class="reference internal" href="#ts-temperatures" id="id42"><code class="docutils literal notranslate"><span class="pre">--ts</span></code>: Temperatures</a></li>
+<li><a class="reference internal" href="#nac-non-analytical-term-correction" id="id43"><code class="docutils literal notranslate"><span class="pre">--nac</span></code>: Non-analytical term correction</a></li>
+<li><a class="reference internal" href="#q-direction-direction-for-non-analytical-term-correction-at-mathbf-q-rightarrow-mathbf-0" id="id44"><code class="docutils literal notranslate"><span class="pre">--q-direction</span></code>: Direction for non-analytical term correction at <span class="math notranslate nohighlight">\(\mathbf{q}\rightarrow \mathbf{0}\)</span></a></li>
+<li><a class="reference internal" href="#nu-normal-and-umklapp-processes" id="id45"><code class="docutils literal notranslate"><span class="pre">--nu</span></code>: Normal and Umklapp processes</a></li>
+<li><a class="reference internal" href="#write-gamma" id="id46"><code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code></a></li>
+<li><a class="reference internal" href="#read-gamma" id="id47"><code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code></a></li>
+<li><a class="reference internal" href="#write-gamma-detail" id="id48"><code class="docutils literal notranslate"><span class="pre">--write-gamma-detail</span></code></a></li>
+<li><a class="reference internal" href="#write-phonon" id="id49"><code class="docutils literal notranslate"><span class="pre">--write-phonon</span></code></a></li>
+<li><a class="reference internal" href="#read-phonon" id="id50"><code class="docutils literal notranslate"><span class="pre">--read-phonon</span></code></a></li>
+<li><a class="reference internal" href="#write-pp-and-read-pp" id="id51"><code class="docutils literal notranslate"><span class="pre">--write-pp</span></code> and <code class="docutils literal notranslate"><span class="pre">--read-pp</span></code></a></li>
+<li><a class="reference internal" href="#ise-imaginary-part-of-self-energy" id="id52"><code class="docutils literal notranslate"><span class="pre">--ise</span></code>: Imaginary part of self energy</a></li>
+<li><a class="reference internal" href="#jdos-joint-density-of-states" id="id53"><code class="docutils literal notranslate"><span class="pre">--jdos</span></code>: Joint density of states</a></li>
+<li><a class="reference internal" href="#num-freq-points-freq-pitch-sampling-frequency-for-distribution-functions" id="id54"><code class="docutils literal notranslate"><span class="pre">--num-freq-points</span></code>, <code class="docutils literal notranslate"><span class="pre">--freq-pitch</span></code>: Sampling frequency for distribution functions</a></li>
+<li><a class="reference internal" href="#ave-pp-use-averaged-phonon-phonon-interaction-strength" id="id55"><code class="docutils literal notranslate"><span class="pre">--ave-pp</span></code>: Use averaged phonon-phonon interaction strength</a></li>
+<li><a class="reference internal" href="#const-ave-pp-use-constant-phonon-phonon-interaction-strength" id="id56"><code class="docutils literal notranslate"><span class="pre">--const-ave-pp</span></code>: Use constant phonon-phonon interaction strength</a></li>
+<li><a class="reference internal" href="#gruneisen-mode-gruneisen-parameter-from-3rd-order-force-constants" id="id57"><code class="docutils literal notranslate"><span class="pre">--gruneisen</span></code>: Mode-Gruneisen parameter from 3rd order force constants</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#file-i-o" id="id57">File I/O</a><ul>
-<li><a class="reference internal" href="#hdf5-compression-choice-of-hdf5-compression-filter" id="id58"><code class="docutils literal notranslate"><span class="pre">--hdf5-compression</span></code>: Choice of HDF5 compression filter</a></li>
-<li><a class="reference internal" href="#o-arranging-output-file-names" id="id59"><code class="docutils literal notranslate"><span class="pre">-o</span></code>: Arranging output file names</a></li>
-<li><a class="reference internal" href="#i-arranging-input-file-names" id="id60"><code class="docutils literal notranslate"><span class="pre">-i</span></code>: Arranging input file names</a></li>
+<li><a class="reference internal" href="#file-i-o" id="id58">File I/O</a><ul>
+<li><a class="reference internal" href="#hdf5-compression-choice-of-hdf5-compression-filter" id="id59"><code class="docutils literal notranslate"><span class="pre">--hdf5-compression</span></code>: Choice of HDF5 compression filter</a></li>
+<li><a class="reference internal" href="#o-arranging-output-file-names" id="id60"><code class="docutils literal notranslate"><span class="pre">-o</span></code>: Arranging output file names</a></li>
+<li><a class="reference internal" href="#i-arranging-input-file-names" id="id61"><code class="docutils literal notranslate"><span class="pre">-i</span></code>: Arranging input file names</a></li>
 </ul>
 </li>
 </ul>
@@ -422,11 +426,16 @@ See the detail at <a class="reference internal" href="pwscf.html#pwscf-interface
 <p>Using this option, CRYSTAL interface is invoked.
 See the detail at <a class="reference internal" href="crystal.html#crystal-interface"><span class="std std-ref">CRYSTAL &amp; phono3py calculation</span></a>.</p>
 </div>
+<div class="section" id="turbomole-turbomole-interface">
+<h3><a class="toc-backref" href="#id5"><code class="docutils literal notranslate"><span class="pre">--turbomole</span></code>: TURBOMOLE interface</a><a class="headerlink" href="#turbomole-turbomole-interface" title="Permalink to this headline">¶</a></h3>
+<p>Using this option, TURBOMOLE interface is invoked.
+See the details at <a class="reference internal" href="turbomole.html#turbomole-interface"><span class="std std-ref">TURBOMOLE &amp; phono3py calculation</span></a>.</p>
+</div>
 </div>
 <div class="section" id="force-constants">
-<h2><a class="toc-backref" href="#id5">Force constants</a><a class="headerlink" href="#force-constants" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id6">Force constants</a><a class="headerlink" href="#force-constants" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="d-create-displacements">
-<span id="create-displacements-option"></span><h3><a class="toc-backref" href="#id6"><code class="docutils literal notranslate"><span class="pre">-d</span></code>: Create displacements</a><a class="headerlink" href="#d-create-displacements" title="Permalink to this headline">¶</a></h3>
+<span id="create-displacements-option"></span><h3><a class="toc-backref" href="#id7"><code class="docutils literal notranslate"><span class="pre">-d</span></code>: Create displacements</a><a class="headerlink" href="#d-create-displacements" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">CREATE_DISPLACEMENTS</span></code>)</p>
 <p>Supercell with displacements are created. Using with <code class="docutils literal notranslate"><span class="pre">--amplitude</span></code>
 option, atomic displacement distances are controlled. With this
@@ -434,7 +443,7 @@ option, files for supercells with displacements and <code class="docutils litera
 file are created.</p>
 </div>
 <div class="section" id="amplitude-amplitude-of-displacements">
-<span id="amplitude-option"></span><h3><a class="toc-backref" href="#id7"><code class="docutils literal notranslate"><span class="pre">--amplitude</span></code>: Amplitude of displacements</a><a class="headerlink" href="#amplitude-amplitude-of-displacements" title="Permalink to this headline">¶</a></h3>
+<span id="amplitude-option"></span><h3><a class="toc-backref" href="#id8"><code class="docutils literal notranslate"><span class="pre">--amplitude</span></code>: Amplitude of displacements</a><a class="headerlink" href="#amplitude-amplitude-of-displacements" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">DISPLACEMENT_DISTANCE</span></code>)</p>
 <p>Atomic displacement distance is specified using this option.  This
 value may be increased for the weak interaction systems and descreased
@@ -443,13 +452,13 @@ when the force calculator is numerically very accurate.</p>
 <a class="reference internal" href="interfaces.html#default-displacement-distance-for-calculator"><span class="std std-ref">Default displacement distance created</span></a>.</p>
 </div>
 <div class="section" id="dim-supercell-dimension">
-<h3><a class="toc-backref" href="#id8"><code class="docutils literal notranslate"><span class="pre">--dim</span></code>: Supercell dimension</a><a class="headerlink" href="#dim-supercell-dimension" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id9"><code class="docutils literal notranslate"><span class="pre">--dim</span></code>: Supercell dimension</a><a class="headerlink" href="#dim-supercell-dimension" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">DIM</span></code>)</p>
 <p>Supercell size is specified. See the
 detail at <a class="reference external" href="http://atztogo.github.io/phonopy/setting-tags.html#dim">http://atztogo.github.io/phonopy/setting-tags.html#dim</a> .</p>
 </div>
 <div class="section" id="dim-fc2-supercell-dimension-for-2nd-order-force-constants">
-<span id="dim-fc2-option"></span><h3><a class="toc-backref" href="#id9"><code class="docutils literal notranslate"><span class="pre">--dim-fc2</span></code>: Supercell dimension for 2nd order force constants</a><a class="headerlink" href="#dim-fc2-supercell-dimension-for-2nd-order-force-constants" title="Permalink to this headline">¶</a></h3>
+<span id="dim-fc2-option"></span><h3><a class="toc-backref" href="#id10"><code class="docutils literal notranslate"><span class="pre">--dim-fc2</span></code>: Supercell dimension for 2nd order force constants</a><a class="headerlink" href="#dim-fc2-supercell-dimension-for-2nd-order-force-constants" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">DIM_FC2</span></code>)</p>
 <p>A larger and different supercell size for 2nd order force constants
 than that for 3rd order force constants can be specified with this
@@ -483,24 +492,24 @@ usual phono3py run without <code class="docutils literal notranslate"><span clas
 </div>
 </div>
 <div class="section" id="pa-primitive-axes-transformation-matrix-to-primitive-cell">
-<span id="pa-option"></span><h3><a class="toc-backref" href="#id10"><code class="docutils literal notranslate"><span class="pre">--pa</span></code>, <code class="docutils literal notranslate"><span class="pre">--primitive-axes</span></code>: Transformation matrix to primitive cell</a><a class="headerlink" href="#pa-primitive-axes-transformation-matrix-to-primitive-cell" title="Permalink to this headline">¶</a></h3>
+<span id="pa-option"></span><h3><a class="toc-backref" href="#id11"><code class="docutils literal notranslate"><span class="pre">--pa</span></code>, <code class="docutils literal notranslate"><span class="pre">--primitive-axes</span></code>: Transformation matrix to primitive cell</a><a class="headerlink" href="#pa-primitive-axes-transformation-matrix-to-primitive-cell" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">PRIMITIVE_AXES</span></code>)</p>
 <p>Transformation matrix from a non-primitive cell to the primitive
 cell. See phonopy <code class="docutils literal notranslate"><span class="pre">PRIMITIVE_AXES</span></code> tag (<code class="docutils literal notranslate"><span class="pre">--pa</span></code> option) at
 <a class="reference external" href="http://atztogo.github.io/phonopy/setting-tags.html#primitive-axis">http://atztogo.github.io/phonopy/setting-tags.html#primitive-axis</a></p>
 </div>
 <div class="section" id="fc2-read-2nd-order-force-constants">
-<h3><a class="toc-backref" href="#id11"><code class="docutils literal notranslate"><span class="pre">--fc2</span></code>: Read 2nd order force constants</a><a class="headerlink" href="#fc2-read-2nd-order-force-constants" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id12"><code class="docutils literal notranslate"><span class="pre">--fc2</span></code>: Read 2nd order force constants</a><a class="headerlink" href="#fc2-read-2nd-order-force-constants" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">READ_FC2</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Read 2nd order force constants from <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code>.</p>
 </div>
 <div class="section" id="fc3-read-3nd-order-force-constants">
-<h3><a class="toc-backref" href="#id12"><code class="docutils literal notranslate"><span class="pre">--fc3</span></code>: Read 3nd order force constants</a><a class="headerlink" href="#fc3-read-3nd-order-force-constants" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id13"><code class="docutils literal notranslate"><span class="pre">--fc3</span></code>: Read 3nd order force constants</a><a class="headerlink" href="#fc3-read-3nd-order-force-constants" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">READ_FC3</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Read 3rd order force constants from <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code>.</p>
 </div>
 <div class="section" id="cfc-or-compact-fc-compact-force-constants">
-<span id="compact-fc-option"></span><h3><a class="toc-backref" href="#id13"><code class="docutils literal notranslate"><span class="pre">--cfc</span></code> or <code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code>: Compact force constants</a><a class="headerlink" href="#cfc-or-compact-fc-compact-force-constants" title="Permalink to this headline">¶</a></h3>
+<span id="compact-fc-option"></span><h3><a class="toc-backref" href="#id14"><code class="docutils literal notranslate"><span class="pre">--cfc</span></code> or <code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code>: Compact force constants</a><a class="headerlink" href="#cfc-or-compact-fc-compact-force-constants" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">COMPACT_FC</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>When creating force constants from <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and/or
 <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>, force constants that use smaller data size are
@@ -522,7 +531,7 @@ employs.</p>
 </div>
 </div>
 <div class="section" id="sym-fc2-sym-fc3r-sym-fc-symmetries-force-constants">
-<span id="symmetrization-option"></span><h3><a class="toc-backref" href="#id14"><code class="docutils literal notranslate"><span class="pre">--sym-fc2</span></code>, <code class="docutils literal notranslate"><span class="pre">--sym-fc3r</span></code>, <code class="docutils literal notranslate"><span class="pre">--sym-fc</span></code>: Symmetries force constants</a><a class="headerlink" href="#sym-fc2-sym-fc3r-sym-fc-symmetries-force-constants" title="Permalink to this headline">¶</a></h3>
+<span id="symmetrization-option"></span><h3><a class="toc-backref" href="#id15"><code class="docutils literal notranslate"><span class="pre">--sym-fc2</span></code>, <code class="docutils literal notranslate"><span class="pre">--sym-fc3r</span></code>, <code class="docutils literal notranslate"><span class="pre">--sym-fc</span></code>: Symmetries force constants</a><a class="headerlink" href="#sym-fc2-sym-fc3r-sym-fc-symmetries-force-constants" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tags: <code class="docutils literal notranslate"><span class="pre">SYMMETRIZE_FC2</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)
 (Setting tags: <code class="docutils literal notranslate"><span class="pre">SYMMETRIZE_FC3</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)
 (Setting tags: <code class="docutils literal notranslate"><span class="pre">FC_SYMMETRY</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
@@ -536,7 +545,7 @@ symmetrized force constants in real space are written into those hdf5
 files.</p>
 </div>
 <div class="section" id="cf3-create-forces-fc3">
-<span id="cf3-option"></span><h3><a class="toc-backref" href="#id15"><code class="docutils literal notranslate"><span class="pre">--cf3</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a><a class="headerlink" href="#cf3-create-forces-fc3" title="Permalink to this headline">¶</a></h3>
+<span id="cf3-option"></span><h3><a class="toc-backref" href="#id16"><code class="docutils literal notranslate"><span class="pre">--cf3</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a><a class="headerlink" href="#cf3-create-forces-fc3" title="Permalink to this headline">¶</a></h3>
 <p>This is used to create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code>. <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> has to be
 located at the current directory.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="p">{</span><span class="mf">00001.</span><span class="o">.</span><span class="mi">00755</span><span class="p">}</span><span class="o">/</span><span class="n">vasprun</span><span class="o">.</span><span class="n">xml</span>
@@ -544,7 +553,7 @@ located at the current directory.</p>
 </div>
 </div>
 <div class="section" id="cf3-file-create-forces-fc3-from-file-name-list">
-<span id="cf3-file-option"></span><h3><a class="toc-backref" href="#id16"><code class="docutils literal notranslate"><span class="pre">--cf3-file</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> from file name list</a><a class="headerlink" href="#cf3-file-create-forces-fc3-from-file-name-list" title="Permalink to this headline">¶</a></h3>
+<span id="cf3-file-option"></span><h3><a class="toc-backref" href="#id17"><code class="docutils literal notranslate"><span class="pre">--cf3-file</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> from file name list</a><a class="headerlink" href="#cf3-file-create-forces-fc3-from-file-name-list" title="Permalink to this headline">¶</a></h3>
 <p>This is used to create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> from a file name
 list. <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> has to be located at the current directory.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf3</span><span class="o">-</span><span class="n">file</span> <span class="n">file_list</span><span class="o">.</span><span class="n">dat</span>
@@ -563,7 +572,7 @@ from the current directory and is expected to be like:</p>
 to be used together with <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> option.</p>
 </div>
 <div class="section" id="cf2-create-forces-fc2">
-<span id="cf2-option"></span><h3><a class="toc-backref" href="#id17"><code class="docutils literal notranslate"><span class="pre">--cf2</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code></a><a class="headerlink" href="#cf2-create-forces-fc2" title="Permalink to this headline">¶</a></h3>
+<span id="cf2-option"></span><h3><a class="toc-backref" href="#id18"><code class="docutils literal notranslate"><span class="pre">--cf2</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code></a><a class="headerlink" href="#cf2-create-forces-fc2" title="Permalink to this headline">¶</a></h3>
 <p>This is used to create <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>. <code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code> has to be
 located at the current directory. This is optional. <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> is
 necessary to run with <code class="docutils literal notranslate"><span class="pre">--dim_fc2</span></code> option.</p>
@@ -572,7 +581,7 @@ necessary to run with <code class="docutils literal notranslate"><span class="pr
 </div>
 </div>
 <div class="section" id="fs2f2-or-force-sets-to-forces-fc2">
-<span id="fs2f2-option"></span><h3><a class="toc-backref" href="#id18"><code class="docutils literal notranslate"><span class="pre">--fs2f2</span></code> or <code class="docutils literal notranslate"><span class="pre">--force-sets-to-forces-fc2</span></code></a><a class="headerlink" href="#fs2f2-or-force-sets-to-forces-fc2" title="Permalink to this headline">¶</a></h3>
+<span id="fs2f2-option"></span><h3><a class="toc-backref" href="#id19"><code class="docutils literal notranslate"><span class="pre">--fs2f2</span></code> or <code class="docutils literal notranslate"><span class="pre">--force-sets-to-forces-fc2</span></code></a><a class="headerlink" href="#fs2f2-or-force-sets-to-forces-fc2" title="Permalink to this headline">¶</a></h3>
 <p>Using this option, <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> and <code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code> are created
 from phonopy <code class="docutils literal notranslate"><span class="pre">FORCE_SETS</span></code> file.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fs2f2</span>
@@ -580,7 +589,7 @@ from phonopy <code class="docutils literal notranslate"><span class="pre">FORCE_
 </div>
 </div>
 <div class="section" id="cfs-or-create-force-sets">
-<span id="cfs-option"></span><h3><a class="toc-backref" href="#id19"><code class="docutils literal notranslate"><span class="pre">--cfs</span></code> or <code class="docutils literal notranslate"><span class="pre">--create-force-sets</span></code></a><a class="headerlink" href="#cfs-or-create-force-sets" title="Permalink to this headline">¶</a></h3>
+<span id="cfs-option"></span><h3><a class="toc-backref" href="#id20"><code class="docutils literal notranslate"><span class="pre">--cfs</span></code> or <code class="docutils literal notranslate"><span class="pre">--create-force-sets</span></code></a><a class="headerlink" href="#cfs-or-create-force-sets" title="Permalink to this headline">¶</a></h3>
 <p>Using this option, phonopy’s <code class="docutils literal notranslate"><span class="pre">FORCE_SETS</span></code> is created from
 <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cfs</span>
@@ -594,7 +603,7 @@ instead of <code class="docutils literal notranslate"><span class="pre">FORCES_F
 </div>
 </div>
 <div class="section" id="cutoff-fc3-or-cutoff-fc3-distance">
-<h3><a class="toc-backref" href="#id20"><code class="docutils literal notranslate"><span class="pre">--cutoff-fc3</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-fc3-distance</span></code></a><a class="headerlink" href="#cutoff-fc3-or-cutoff-fc3-distance" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id21"><code class="docutils literal notranslate"><span class="pre">--cutoff-fc3</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-fc3-distance</span></code></a><a class="headerlink" href="#cutoff-fc3-or-cutoff-fc3-distance" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">CUTOFF_FC3_DISTANCE</span></code>)</p>
 <p>This option is <strong>not</strong> used to reduce number of supercells with
 displacements, but this option is used to set zero in elements of
@@ -606,7 +615,7 @@ reduce the supercell size and the second choice is using
 <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> option.</p>
 </div>
 <div class="section" id="cutoff-pair-or-cutoff-pair-distance">
-<span id="cutoff-pair-option"></span><h3><a class="toc-backref" href="#id21"><code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-pair-distance</span></code></a><a class="headerlink" href="#cutoff-pair-or-cutoff-pair-distance" title="Permalink to this headline">¶</a></h3>
+<span id="cutoff-pair-option"></span><h3><a class="toc-backref" href="#id22"><code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-pair-distance</span></code></a><a class="headerlink" href="#cutoff-pair-or-cutoff-pair-distance" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">CUTOFF_PAIR_DISTANCE</span></code>)</p>
 <p>This option is only used together with <code class="docutils literal notranslate"><span class="pre">-d</span></code> option.</p>
 <p>A cutoff pair-distance in a supercell is used to reduce the number of
@@ -622,16 +631,16 @@ less numerical accuracy. More details are found in the following link:</p>
 </div>
 </div>
 <div class="section" id="reciprocal-space-sampling-mesh-and-grid-points-and-band-indices">
-<h2><a class="toc-backref" href="#id22">Reciprocal space sampling mesh and grid points, and band indices</a><a class="headerlink" href="#reciprocal-space-sampling-mesh-and-grid-points-and-band-indices" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id23">Reciprocal space sampling mesh and grid points, and band indices</a><a class="headerlink" href="#reciprocal-space-sampling-mesh-and-grid-points-and-band-indices" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="mesh-sampling-mesh">
-<h3><a class="toc-backref" href="#id23"><code class="docutils literal notranslate"><span class="pre">--mesh</span></code>: Sampling mesh</a><a class="headerlink" href="#mesh-sampling-mesh" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id24"><code class="docutils literal notranslate"><span class="pre">--mesh</span></code>: Sampling mesh</a><a class="headerlink" href="#mesh-sampling-mesh" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">MESH</span></code> or <code class="docutils literal notranslate"><span class="pre">MESH_NUMBERS</span></code>)</p>
 <p>Phonon triples are chosen on the grid points on the sampling mesh
 specified by this option. This mesh is made along reciprocal
 axes and is always Gamma-centered.</p>
 </div>
 <div class="section" id="gp-grid-points-by-their-id">
-<span id="gp-option"></span><h3><a class="toc-backref" href="#id24"><code class="docutils literal notranslate"><span class="pre">--gp</span></code>: Grid points by their ID</a><a class="headerlink" href="#gp-grid-points-by-their-id" title="Permalink to this headline">¶</a></h3>
+<span id="gp-option"></span><h3><a class="toc-backref" href="#id25"><code class="docutils literal notranslate"><span class="pre">--gp</span></code>: Grid points by their ID</a><a class="headerlink" href="#gp-grid-points-by-their-id" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">GRID_POINTS</span></code>)</p>
 <p>Grid points where imaginary part of self energy is calculated are
 specified. Indices of grid points are specified by space or comma
@@ -653,7 +662,7 @@ computer nodes.</p>
 </div>
 </div>
 <div class="section" id="ga-grid-points-by-address-with-three-integer-values">
-<span id="ga-option"></span><h3><a class="toc-backref" href="#id25"><code class="docutils literal notranslate"><span class="pre">--ga</span></code>: Grid points by address with three integer values</a><a class="headerlink" href="#ga-grid-points-by-address-with-three-integer-values" title="Permalink to this headline">¶</a></h3>
+<span id="ga-option"></span><h3><a class="toc-backref" href="#id26"><code class="docutils literal notranslate"><span class="pre">--ga</span></code>: Grid points by address with three integer values</a><a class="headerlink" href="#ga-grid-points-by-address-with-three-integer-values" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">GRID_ADDRESSES</span></code>)</p>
 <p>This option is used to specify grid points like <code class="docutils literal notranslate"><span class="pre">--gp</span></code> option but in
 the different way. For example with <code class="docutils literal notranslate"><span class="pre">--mesh=&quot;16</span> <span class="pre">16</span> <span class="pre">16&quot;</span></code>, a q-point
@@ -665,7 +674,7 @@ grid point indices as given by <code class="docutils literal notranslate"><span 
 by <code class="docutils literal notranslate"><span class="pre">--ga</span></code> option will not be shown in log files.</p>
 </div>
 <div class="section" id="wgp-write-grid-point-information">
-<span id="wgp-option"></span><h3><a class="toc-backref" href="#id26"><code class="docutils literal notranslate"><span class="pre">--wgp</span></code>: Write grid point information</a><a class="headerlink" href="#wgp-write-grid-point-information" title="Permalink to this headline">¶</a></h3>
+<span id="wgp-option"></span><h3><a class="toc-backref" href="#id27"><code class="docutils literal notranslate"><span class="pre">--wgp</span></code>: Write grid point information</a><a class="headerlink" href="#wgp-write-grid-point-information" title="Permalink to this headline">¶</a></h3>
 <p>Irreducible grid point indices are written into
 <code class="docutils literal notranslate"><span class="pre">ir_grid_points.yaml</span></code>. This information may be used when we want to
 calculate imaginary part of self energy at each grid point in
@@ -676,14 +685,14 @@ corresponding to grid points are calculated divided these integers by
 sampling mesh numbers for respective reciprocal axes.</p>
 </div>
 <div class="section" id="stp-show-number-of-triplets-to-be-calculated-for-each-grid-point">
-<span id="stp-option"></span><h3><a class="toc-backref" href="#id27"><code class="docutils literal notranslate"><span class="pre">--stp</span></code>: Show number of triplets to be calculated for each grid point</a><a class="headerlink" href="#stp-show-number-of-triplets-to-be-calculated-for-each-grid-point" title="Permalink to this headline">¶</a></h3>
+<span id="stp-option"></span><h3><a class="toc-backref" href="#id28"><code class="docutils literal notranslate"><span class="pre">--stp</span></code>: Show number of triplets to be calculated for each grid point</a><a class="headerlink" href="#stp-show-number-of-triplets-to-be-calculated-for-each-grid-point" title="Permalink to this headline">¶</a></h3>
 <p>Numbers of q-point triplets to be calculated for irreducible grid
 points for specified sampling mesh numbers are shown. This can be used
 to estimate how large a calculation is. Only those for specific grid
 points are shown by using with <code class="docutils literal notranslate"><span class="pre">--gp</span></code> or <code class="docutils literal notranslate"><span class="pre">--ga</span></code> option.</p>
 </div>
 <div class="section" id="bi-specific-band-index">
-<span id="bi-option"></span><h3><a class="toc-backref" href="#id28"><code class="docutils literal notranslate"><span class="pre">--bi</span></code>: Specific band index</a><a class="headerlink" href="#bi-specific-band-index" title="Permalink to this headline">¶</a></h3>
+<span id="bi-option"></span><h3><a class="toc-backref" href="#id29"><code class="docutils literal notranslate"><span class="pre">--bi</span></code>: Specific band index</a><a class="headerlink" href="#bi-specific-band-index" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">BAND_INDICES</span></code>)</p>
 <p>Specify band indices. The output file name will be, e.g.,
 <code class="docutils literal notranslate"><span class="pre">gammas-mxxx-gxx(-sx)-bx.dat</span></code> where <code class="docutils literal notranslate"><span class="pre">bxbx...</span></code> shows the band
@@ -696,9 +705,9 @@ separately calculated.</p>
 </div>
 </div>
 <div class="section" id="brillouin-zone-integration">
-<h2><a class="toc-backref" href="#id29">Brillouin zone integration</a><a class="headerlink" href="#brillouin-zone-integration" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id30">Brillouin zone integration</a><a class="headerlink" href="#brillouin-zone-integration" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="thm-tetrahedron-method-default-choice">
-<span id="thm-option"></span><h3><a class="toc-backref" href="#id30"><code class="docutils literal notranslate"><span class="pre">--thm</span></code>: Tetrahedron method (default choice)</a><a class="headerlink" href="#thm-tetrahedron-method-default-choice" title="Permalink to this headline">¶</a></h3>
+<span id="thm-option"></span><h3><a class="toc-backref" href="#id31"><code class="docutils literal notranslate"><span class="pre">--thm</span></code>: Tetrahedron method (default choice)</a><a class="headerlink" href="#thm-tetrahedron-method-default-choice" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">TETRAHEDRON</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Tetrahedron method is used for calculation of imaginary part of self
 energy. This is the default option. Therefore it is not necessary to
@@ -706,7 +715,7 @@ specify this unless both results by tetrahedron method and
 smearing method in one time execution are expected.</p>
 </div>
 <div class="section" id="sigma-smearing-method">
-<span id="sigma-option"></span><h3><a class="toc-backref" href="#id31"><code class="docutils literal notranslate"><span class="pre">--sigma</span></code>: Smearing method</a><a class="headerlink" href="#sigma-smearing-method" title="Permalink to this headline">¶</a></h3>
+<span id="sigma-option"></span><h3><a class="toc-backref" href="#id32"><code class="docutils literal notranslate"><span class="pre">--sigma</span></code>: Smearing method</a><a class="headerlink" href="#sigma-smearing-method" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">SIGMA</span></code>)</p>
 <p><span class="math notranslate nohighlight">\(\sigma\)</span> value of Gaussian function for smearing when
 calculating imaginary part of self energy. See the detail at
@@ -716,7 +725,7 @@ numerical values. This is used when we want to test several
 <span class="math notranslate nohighlight">\(\sigma\)</span> values simultaneously.</p>
 </div>
 <div class="section" id="sigma-cutoff-cutoff-parameter-for-smearing-method">
-<span id="sigma-cutoff-option"></span><h3><a class="toc-backref" href="#id32"><code class="docutils literal notranslate"><span class="pre">--sigma-cutoff</span></code>: Cutoff parameter for smearing method</a><a class="headerlink" href="#sigma-cutoff-cutoff-parameter-for-smearing-method" title="Permalink to this headline">¶</a></h3>
+<span id="sigma-cutoff-option"></span><h3><a class="toc-backref" href="#id33"><code class="docutils literal notranslate"><span class="pre">--sigma-cutoff</span></code>: Cutoff parameter for smearing method</a><a class="headerlink" href="#sigma-cutoff-cutoff-parameter-for-smearing-method" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">SIGMA_CUTOFF_WIDTH</span></code>)</p>
 <p>The tails of the Guassian functions that are used to replace delta
 functions in the equation shown at <a class="reference internal" href="#full-pp-option"><span class="std std-ref">–full-pp</span></a>
@@ -728,7 +737,7 @@ phonon-phonon interaction strength becomes much faster in exchange for
 it.</p>
 </div>
 <div class="section" id="full-pp-calculate-all-elements-of-phonon-phonon-interaction-strength">
-<span id="full-pp-option"></span><h3><a class="toc-backref" href="#id33"><code class="docutils literal notranslate"><span class="pre">--full-pp</span></code>: Calculate all elements of phonon-phonon interaction strength</a><a class="headerlink" href="#full-pp-calculate-all-elements-of-phonon-phonon-interaction-strength" title="Permalink to this headline">¶</a></h3>
+<span id="full-pp-option"></span><h3><a class="toc-backref" href="#id34"><code class="docutils literal notranslate"><span class="pre">--full-pp</span></code>: Calculate all elements of phonon-phonon interaction strength</a><a class="headerlink" href="#full-pp-calculate-all-elements-of-phonon-phonon-interaction-strength" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">FULL_PP</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>For thermal conductivity calculation using the linear tetrahedron
 method (from version 1.10.5) and smearing method with
@@ -753,9 +762,9 @@ strength (<span class="math notranslate nohighlight">\(P_{\mathbf{q}j}\)</span>,
 </div>
 </div>
 <div class="section" id="physical-properties">
-<h2><a class="toc-backref" href="#id34">Physical properties</a><a class="headerlink" href="#physical-properties" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id35">Physical properties</a><a class="headerlink" href="#physical-properties" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="br-thermal-conductivity-with-relaxation-time-approximation">
-<h3><a class="toc-backref" href="#id35"><code class="docutils literal notranslate"><span class="pre">--br</span></code>: Thermal conductivity with relaxation time approximation</a><a class="headerlink" href="#br-thermal-conductivity-with-relaxation-time-approximation" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id36"><code class="docutils literal notranslate"><span class="pre">--br</span></code>: Thermal conductivity with relaxation time approximation</a><a class="headerlink" href="#br-thermal-conductivity-with-relaxation-time-approximation" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">BTERTA</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Run calculation of lattice thermal conductivity tensor with the single
 mode relaxation time approximation (RTA) and linearized phonon
@@ -771,7 +780,7 @@ physical properties belonging to the grid
 points are written into <code class="docutils literal notranslate"><span class="pre">kappa-mxxx-gx(-sx).hdf5</span></code>.</p>
 </div>
 <div class="section" id="lbte-thermal-conductivity-with-direct-solution-of-lbte">
-<h3><a class="toc-backref" href="#id36"><code class="docutils literal notranslate"><span class="pre">--lbte</span></code>: Thermal conductivity with direct solution of LBTE</a><a class="headerlink" href="#lbte-thermal-conductivity-with-direct-solution-of-lbte" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id37"><code class="docutils literal notranslate"><span class="pre">--lbte</span></code>: Thermal conductivity with direct solution of LBTE</a><a class="headerlink" href="#lbte-thermal-conductivity-with-direct-solution-of-lbte" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">BTERTA</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Run calculation of lattice thermal conductivity tensor with a direct
 solution of linearized phonon Boltzmann equation. The basis usage of
@@ -779,7 +788,7 @@ this option is equivalent to that of <code class="docutils literal notranslate">
 documented at <a class="reference internal" href="direct-solution.html#direct-solution"><span class="std std-ref">Direct solution of linearized phonon Boltzmann equation</span></a>.</p>
 </div>
 <div class="section" id="isotope-phonon-isotope-scattering">
-<h3><a class="toc-backref" href="#id37"><code class="docutils literal notranslate"><span class="pre">--isotope</span></code>: Phonon-isotope scattering</a><a class="headerlink" href="#isotope-phonon-isotope-scattering" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id38"><code class="docutils literal notranslate"><span class="pre">--isotope</span></code>: Phonon-isotope scattering</a><a class="headerlink" href="#isotope-phonon-isotope-scattering" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">ISOTOPE</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Phonon-isotope scattering is calculated based on the formula by
 Shin-ichiro Tamura, Phys. Rev. B, <strong>27</strong>, 858 (1983). Mass variance
@@ -791,7 +800,7 @@ elements, which refers Laeter <em>et al.</em>, Pure Appl. Chem., <strong>75</str
 </div>
 </div>
 <div class="section" id="mass-variances-or-mv-parameter-for-phonon-isotope-scattering">
-<h3><a class="toc-backref" href="#id38"><code class="docutils literal notranslate"><span class="pre">--mass-variances</span></code> or <code class="docutils literal notranslate"><span class="pre">--mv</span></code>: Parameter for phonon-isotope scattering</a><a class="headerlink" href="#mass-variances-or-mv-parameter-for-phonon-isotope-scattering" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id39"><code class="docutils literal notranslate"><span class="pre">--mass-variances</span></code> or <code class="docutils literal notranslate"><span class="pre">--mv</span></code>: Parameter for phonon-isotope scattering</a><a class="headerlink" href="#mass-variances-or-mv-parameter-for-phonon-isotope-scattering" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">MASS_VARIANCES</span></code>)</p>
 <p>This option is used to include isotope effect by reading specified
 mass variance parameters. For example of GaN, this may be set like
@@ -811,7 +820,7 @@ written out, i.e., <code class="docutils literal notranslate"><span class="pre">
 ph-ph scattering.</p>
 </div>
 <div class="section" id="boundary-mfp-bmfp-very-simple-phonon-boundary-scattering-model">
-<h3><a class="toc-backref" href="#id39"><code class="docutils literal notranslate"><span class="pre">--boundary-mfp</span></code>, <code class="docutils literal notranslate"><span class="pre">--bmfp</span></code>: Very simple phonon-boundary scattering model</a><a class="headerlink" href="#boundary-mfp-bmfp-very-simple-phonon-boundary-scattering-model" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id40"><code class="docutils literal notranslate"><span class="pre">--boundary-mfp</span></code>, <code class="docutils literal notranslate"><span class="pre">--bmfp</span></code>: Very simple phonon-boundary scattering model</a><a class="headerlink" href="#boundary-mfp-bmfp-very-simple-phonon-boundary-scattering-model" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">BOUNDARY_MFP</span></code>)</p>
 <p>A most simple boundary scattering treatment is
 implemented. <span class="math notranslate nohighlight">\(v_g/L\)</span> is just used as the scattering rate, where
@@ -821,7 +830,7 @@ metre, is just used to avoid divergence of phonon lifetime and the
 contribution to the thermal conducitivity is considered negligible.</p>
 </div>
 <div class="section" id="tmax-tmin-tstep-temperature-range">
-<h3><a class="toc-backref" href="#id40"><code class="docutils literal notranslate"><span class="pre">--tmax</span></code>, <code class="docutils literal notranslate"><span class="pre">--tmin</span></code>, <code class="docutils literal notranslate"><span class="pre">--tstep</span></code>: Temperature range</a><a class="headerlink" href="#tmax-tmin-tstep-temperature-range" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id41"><code class="docutils literal notranslate"><span class="pre">--tmax</span></code>, <code class="docutils literal notranslate"><span class="pre">--tmin</span></code>, <code class="docutils literal notranslate"><span class="pre">--tstep</span></code>: Temperature range</a><a class="headerlink" href="#tmax-tmin-tstep-temperature-range" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">TMAX</span></code>, <code class="docutils literal notranslate"><span class="pre">TMIN</span></code>, <code class="docutils literal notranslate"><span class="pre">TSTEP</span></code>)</p>
 <p>Temperatures at equal interval are specified by <code class="docutils literal notranslate"><span class="pre">--tmax</span></code>,
 <code class="docutils literal notranslate"><span class="pre">--tmin</span></code>, <code class="docutils literal notranslate"><span class="pre">--tstep</span></code>. See phonopy’s document for the same tags at
@@ -832,7 +841,7 @@ contribution to the thermal conducitivity is considered negligible.</p>
 </div>
 </div>
 <div class="section" id="ts-temperatures">
-<span id="ts-option"></span><h3><a class="toc-backref" href="#id41"><code class="docutils literal notranslate"><span class="pre">--ts</span></code>: Temperatures</a><a class="headerlink" href="#ts-temperatures" title="Permalink to this headline">¶</a></h3>
+<span id="ts-option"></span><h3><a class="toc-backref" href="#id42"><code class="docutils literal notranslate"><span class="pre">--ts</span></code>: Temperatures</a><a class="headerlink" href="#ts-temperatures" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">TEMPERATURES</span></code>)</p>
 <p>Specific temperatures are specified by <code class="docutils literal notranslate"><span class="pre">--ts</span></code>.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">v</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">ts</span><span class="o">=</span><span class="s2">&quot;200 300 400&quot;</span>
@@ -840,7 +849,7 @@ contribution to the thermal conducitivity is considered negligible.</p>
 </div>
 </div>
 <div class="section" id="nac-non-analytical-term-correction">
-<span id="nac-option"></span><h3><a class="toc-backref" href="#id42"><code class="docutils literal notranslate"><span class="pre">--nac</span></code>: Non-analytical term correction</a><a class="headerlink" href="#nac-non-analytical-term-correction" title="Permalink to this headline">¶</a></h3>
+<span id="nac-option"></span><h3><a class="toc-backref" href="#id43"><code class="docutils literal notranslate"><span class="pre">--nac</span></code>: Non-analytical term correction</a><a class="headerlink" href="#nac-non-analytical-term-correction" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">NAC</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Non-analytical term correction for harmonic phonons. Like as phonopy,
 <code class="docutils literal notranslate"><span class="pre">BORN</span></code> file has to be put on the same directory. Always the default
@@ -848,14 +857,14 @@ value of unit conversion factor is used even if it is written in the
 first line of <code class="docutils literal notranslate"><span class="pre">BORN</span></code> file.</p>
 </div>
 <div class="section" id="q-direction-direction-for-non-analytical-term-correction-at-mathbf-q-rightarrow-mathbf-0">
-<h3><a class="toc-backref" href="#id43"><code class="docutils literal notranslate"><span class="pre">--q-direction</span></code>: Direction for non-analytical term correction at <span class="math notranslate nohighlight">\(\mathbf{q}\rightarrow \mathbf{0}\)</span></a><a class="headerlink" href="#q-direction-direction-for-non-analytical-term-correction-at-mathbf-q-rightarrow-mathbf-0" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id44"><code class="docutils literal notranslate"><span class="pre">--q-direction</span></code>: Direction for non-analytical term correction at <span class="math notranslate nohighlight">\(\mathbf{q}\rightarrow \mathbf{0}\)</span></a><a class="headerlink" href="#q-direction-direction-for-non-analytical-term-correction-at-mathbf-q-rightarrow-mathbf-0" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">Q_DIRECTION</span></code>)</p>
 <p>This is used with <code class="docutils literal notranslate"><span class="pre">--nac</span></code> to specify the direction to polarize in
 reciprocal space. See the detail at
 <a class="reference external" href="http://atztogo.github.io/phonopy/setting-tags.html#q-direction">http://atztogo.github.io/phonopy/setting-tags.html#q-direction</a> .</p>
 </div>
 <div class="section" id="nu-normal-and-umklapp-processes">
-<span id="normal-umklapp-option"></span><h3><a class="toc-backref" href="#id44"><code class="docutils literal notranslate"><span class="pre">--nu</span></code>: Normal and Umklapp processes</a><a class="headerlink" href="#nu-normal-and-umklapp-processes" title="Permalink to this headline">¶</a></h3>
+<span id="normal-umklapp-option"></span><h3><a class="toc-backref" href="#id45"><code class="docutils literal notranslate"><span class="pre">--nu</span></code>: Normal and Umklapp processes</a><a class="headerlink" href="#nu-normal-and-umklapp-processes" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">N_U</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Integration over q-point triplets for the calculation of
 <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega_\lambda)\)</span> is made separately for normal
@@ -864,7 +873,7 @@ and Umklapp processes, therefore the sum of them is usual
 choice of G-vector, is made based on the first Brillouin zone.</p>
 </div>
 <div class="section" id="write-gamma">
-<span id="write-gamma-option"></span><h3><a class="toc-backref" href="#id45"><code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code></a><a class="headerlink" href="#write-gamma" title="Permalink to this headline">¶</a></h3>
+<span id="write-gamma-option"></span><h3><a class="toc-backref" href="#id46"><code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code></a><a class="headerlink" href="#write-gamma" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">WRITE_GAMMA</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Imaginary parts of self energy at harmonic phonon frequencies
 <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega_\lambda)\)</span> are written into file in hdf5
@@ -874,7 +883,7 @@ format.  The result is written into <code class="docutils literal notranslate"><
 inserted, respectively, in front of <code class="docutils literal notranslate"><span class="pre">.hdf5</span></code>.</p>
 </div>
 <div class="section" id="read-gamma">
-<span id="read-gamma-option"></span><h3><a class="toc-backref" href="#id46"><code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code></a><a class="headerlink" href="#read-gamma" title="Permalink to this headline">¶</a></h3>
+<span id="read-gamma-option"></span><h3><a class="toc-backref" href="#id47"><code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code></a><a class="headerlink" href="#read-gamma" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">READ_GAMMA</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Imaginary parts of self energy at harmonic phonon frequencies
 <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega_\lambda)\)</span>
@@ -886,7 +895,7 @@ found, it tries to read <code class="docutils literal notranslate"><span class="
 <code class="docutils literal notranslate"><span class="pre">kappa-mxxx-gx-bx(-sx-sdx).hdf5</span></code> files for band indices are searched.</p>
 </div>
 <div class="section" id="write-gamma-detail">
-<span id="write-detailed-gamma-option"></span><h3><a class="toc-backref" href="#id47"><code class="docutils literal notranslate"><span class="pre">--write-gamma-detail</span></code></a><a class="headerlink" href="#write-gamma-detail" title="Permalink to this headline">¶</a></h3>
+<span id="write-detailed-gamma-option"></span><h3><a class="toc-backref" href="#id48"><code class="docutils literal notranslate"><span class="pre">--write-gamma-detail</span></code></a><a class="headerlink" href="#write-gamma-detail" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">WRITE_GAMMA_DETAIL</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Each q-point triplet contribution to imaginary part of self energy is
 written into <code class="docutils literal notranslate"><span class="pre">gamma_detail-mxxx-gx(-sx-sdx).hdf5</span></code> file. Be careful
@@ -967,7 +976,7 @@ phonon triplets of three phonon scatterings are obtained by</p>
 </div>
 </div>
 <div class="section" id="write-phonon">
-<span id="write-phonon-option"></span><h3><a class="toc-backref" href="#id48"><code class="docutils literal notranslate"><span class="pre">--write-phonon</span></code></a><a class="headerlink" href="#write-phonon" title="Permalink to this headline">¶</a></h3>
+<span id="write-phonon-option"></span><h3><a class="toc-backref" href="#id49"><code class="docutils literal notranslate"><span class="pre">--write-phonon</span></code></a><a class="headerlink" href="#write-phonon" title="Permalink to this headline">¶</a></h3>
 <p>Phonon frequencies, eigenvectors, and grid point addresses are stored
 in <code class="docutils literal notranslate"><span class="pre">phonon-mxxx.hdf5</span></code> file. After writing phonons, phono3py stops
 without going to calculation. <a class="reference internal" href="#pa-option"><span class="std std-ref">–pa</span></a> and <a class="reference internal" href="#nac-option"><span class="std std-ref">–nac</span></a> may be required depending on calculation setting.</p>
@@ -1008,7 +1017,7 @@ vectors. This is convenient to categorize phonon triplets into Umklapp
 and Normal scatterings based on the Brillouin zone.</p>
 </div>
 <div class="section" id="read-phonon">
-<span id="read-phonon-option"></span><h3><a class="toc-backref" href="#id49"><code class="docutils literal notranslate"><span class="pre">--read-phonon</span></code></a><a class="headerlink" href="#read-phonon" title="Permalink to this headline">¶</a></h3>
+<span id="read-phonon-option"></span><h3><a class="toc-backref" href="#id50"><code class="docutils literal notranslate"><span class="pre">--read-phonon</span></code></a><a class="headerlink" href="#read-phonon" title="Permalink to this headline">¶</a></h3>
 <p>Phonon frequencies, eigenvectors, and grid point addresses are read
 from <code class="docutils literal notranslate"><span class="pre">phonon-mxxx.hdf5</span></code> file and the calculation is continued using
 these phonon values. This is useful when we want to use fixed phonon
@@ -1021,7 +1030,7 @@ may be required depending on calculation setting.</p>
 </div>
 </div>
 <div class="section" id="write-pp-and-read-pp">
-<span id="write-read-pp-option"></span><h3><a class="toc-backref" href="#id50"><code class="docutils literal notranslate"><span class="pre">--write-pp</span></code> and <code class="docutils literal notranslate"><span class="pre">--read-pp</span></code></a><a class="headerlink" href="#write-pp-and-read-pp" title="Permalink to this headline">¶</a></h3>
+<span id="write-read-pp-option"></span><h3><a class="toc-backref" href="#id51"><code class="docutils literal notranslate"><span class="pre">--write-pp</span></code> and <code class="docutils literal notranslate"><span class="pre">--read-pp</span></code></a><a class="headerlink" href="#write-pp-and-read-pp" title="Permalink to this headline">¶</a></h3>
 <p>Phonon-phonon (ph-ph) intraction strengths are written to and read
 from <code class="docutils literal notranslate"><span class="pre">pp-mxxx-gx.hdf5</span></code>. This works only in the calculation of
 lattice thermal conductivity, i.e., usable only with <code class="docutils literal notranslate"><span class="pre">--br</span></code> or
@@ -1041,7 +1050,7 @@ than usual RTA calculation.</p>
 </div>
 </div>
 <div class="section" id="ise-imaginary-part-of-self-energy">
-<span id="ise-option"></span><h3><a class="toc-backref" href="#id51"><code class="docutils literal notranslate"><span class="pre">--ise</span></code>: Imaginary part of self energy</a><a class="headerlink" href="#ise-imaginary-part-of-self-energy" title="Permalink to this headline">¶</a></h3>
+<span id="ise-option"></span><h3><a class="toc-backref" href="#id52"><code class="docutils literal notranslate"><span class="pre">--ise</span></code>: Imaginary part of self energy</a><a class="headerlink" href="#ise-imaginary-part-of-self-energy" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">IMAG_SELF_ENERGY</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Imaginary part of self energy <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega)\)</span> is
 calculated with respect to <span class="math notranslate nohighlight">\(\omega\)</span>. The output is written to
@@ -1052,7 +1061,7 @@ with respect to frequency in THz (without <span class="math notranslate nohighli
 </div>
 </div>
 <div class="section" id="jdos-joint-density-of-states">
-<span id="jdos-option"></span><h3><a class="toc-backref" href="#id52"><code class="docutils literal notranslate"><span class="pre">--jdos</span></code>: Joint density of states</a><a class="headerlink" href="#jdos-joint-density-of-states" title="Permalink to this headline">¶</a></h3>
+<span id="jdos-option"></span><h3><a class="toc-backref" href="#id53"><code class="docutils literal notranslate"><span class="pre">--jdos</span></code>: Joint density of states</a><a class="headerlink" href="#jdos-joint-density-of-states" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">JOINT_DOS</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Two classes of joint density of states (JDOS) are calculated. The
 result is written into <code class="docutils literal notranslate"><span class="pre">jdos-mxxx-gx(-sx-sdx).dat</span></code> in
@@ -1096,14 +1105,14 @@ the values given as follows, respectively,</p>
 <p><a class="reference internal" href="_images/Si-JDOS.png"><img alt="Si-JDOS" src="_images/Si-JDOS.png" style="width: 50%;" /></a></p>
 </div>
 <div class="section" id="num-freq-points-freq-pitch-sampling-frequency-for-distribution-functions">
-<h3><a class="toc-backref" href="#id53"><code class="docutils literal notranslate"><span class="pre">--num-freq-points</span></code>, <code class="docutils literal notranslate"><span class="pre">--freq-pitch</span></code>: Sampling frequency for distribution functions</a><a class="headerlink" href="#num-freq-points-freq-pitch-sampling-frequency-for-distribution-functions" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id54"><code class="docutils literal notranslate"><span class="pre">--num-freq-points</span></code>, <code class="docutils literal notranslate"><span class="pre">--freq-pitch</span></code>: Sampling frequency for distribution functions</a><a class="headerlink" href="#num-freq-points-freq-pitch-sampling-frequency-for-distribution-functions" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">NUM_FREQUENCY_POINTS</span></code>)</p>
 <p>For spectrum like calculations of imaginary part of self energy and
 JDOS, number of sampling frequency points is controlled by
 <code class="docutils literal notranslate"><span class="pre">--num-freq-points</span></code> or <code class="docutils literal notranslate"><span class="pre">--freq-pitch</span></code>.</p>
 </div>
 <div class="section" id="ave-pp-use-averaged-phonon-phonon-interaction-strength">
-<span id="ave-pp-option"></span><h3><a class="toc-backref" href="#id54"><code class="docutils literal notranslate"><span class="pre">--ave-pp</span></code>: Use averaged phonon-phonon interaction strength</a><a class="headerlink" href="#ave-pp-use-averaged-phonon-phonon-interaction-strength" title="Permalink to this headline">¶</a></h3>
+<span id="ave-pp-option"></span><h3><a class="toc-backref" href="#id55"><code class="docutils literal notranslate"><span class="pre">--ave-pp</span></code>: Use averaged phonon-phonon interaction strength</a><a class="headerlink" href="#ave-pp-use-averaged-phonon-phonon-interaction-strength" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">USE_AVE_PP</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Averaged phonon-phonon interaction strength (<span class="math notranslate nohighlight">\(P_{\mathbf{q}j}=P_\lambda\)</span>)
 is used to calculate imaginary part of self energy in thermal
@@ -1139,7 +1148,7 @@ together with <code class="docutils literal notranslate"><span class="pre">-o</s
 </div>
 </div>
 <div class="section" id="const-ave-pp-use-constant-phonon-phonon-interaction-strength">
-<h3><a class="toc-backref" href="#id55"><code class="docutils literal notranslate"><span class="pre">--const-ave-pp</span></code>: Use constant phonon-phonon interaction strength</a><a class="headerlink" href="#const-ave-pp-use-constant-phonon-phonon-interaction-strength" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id56"><code class="docutils literal notranslate"><span class="pre">--const-ave-pp</span></code>: Use constant phonon-phonon interaction strength</a><a class="headerlink" href="#const-ave-pp-use-constant-phonon-phonon-interaction-strength" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">CONST_AVE_PP</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Averaged phonon-phonon interaction (<span class="math notranslate nohighlight">\(P_{\mathbf{q}j}\)</span>) is
 replaced by this constant value and <span class="math notranslate nohighlight">\(|\Phi_{\lambda \lambda'
@@ -1152,7 +1161,7 @@ to input. The physical unit of the value is <span class="math notranslate nohigh
 </div>
 </div>
 <div class="section" id="gruneisen-mode-gruneisen-parameter-from-3rd-order-force-constants">
-<h3><a class="toc-backref" href="#id56"><code class="docutils literal notranslate"><span class="pre">--gruneisen</span></code>: Mode-Gruneisen parameter from 3rd order force constants</a><a class="headerlink" href="#gruneisen-mode-gruneisen-parameter-from-3rd-order-force-constants" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id57"><code class="docutils literal notranslate"><span class="pre">--gruneisen</span></code>: Mode-Gruneisen parameter from 3rd order force constants</a><a class="headerlink" href="#gruneisen-mode-gruneisen-parameter-from-3rd-order-force-constants" title="Permalink to this headline">¶</a></h3>
 <p>(Setting tag: <code class="docutils literal notranslate"><span class="pre">GRUNEISEN</span></code>, <code class="docutils literal notranslate"><span class="pre">.TRUE.</span></code> or <code class="docutils literal notranslate"><span class="pre">.FALSE.</span></code>)</p>
 <p>Mode-Gruneisen-parameters are calculated from fc3.</p>
 <p>Mesh sampling mode:</p>
@@ -1166,9 +1175,9 @@ to input. The physical unit of the value is <span class="math notranslate nohigh
 </div>
 </div>
 <div class="section" id="file-i-o">
-<h2><a class="toc-backref" href="#id57">File I/O</a><a class="headerlink" href="#file-i-o" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id58">File I/O</a><a class="headerlink" href="#file-i-o" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="hdf5-compression-choice-of-hdf5-compression-filter">
-<span id="hdf5-compression-option"></span><h3><a class="toc-backref" href="#id58"><code class="docutils literal notranslate"><span class="pre">--hdf5-compression</span></code>: Choice of HDF5 compression filter</a><a class="headerlink" href="#hdf5-compression-choice-of-hdf5-compression-filter" title="Permalink to this headline">¶</a></h3>
+<span id="hdf5-compression-option"></span><h3><a class="toc-backref" href="#id59"><code class="docutils literal notranslate"><span class="pre">--hdf5-compression</span></code>: Choice of HDF5 compression filter</a><a class="headerlink" href="#hdf5-compression-choice-of-hdf5-compression-filter" title="Permalink to this headline">¶</a></h3>
 <p>Most of phono3py HDF5 output file is compressed by default with the
 <code class="docutils literal notranslate"><span class="pre">gzip</span></code> compression filter. To avoid compression,
 <code class="docutils literal notranslate"><span class="pre">--hdf5-compression=None</span></code> has to be set. Other filters (<code class="docutils literal notranslate"><span class="pre">lzf</span></code> or
@@ -1177,7 +1186,7 @@ documentation
 (<a class="reference external" href="http://docs.h5py.org/en/stable/high/dataset.html#filter-pipeline">http://docs.h5py.org/en/stable/high/dataset.html#filter-pipeline</a>).</p>
 </div>
 <div class="section" id="o-arranging-output-file-names">
-<span id="output-filename-option"></span><h3><a class="toc-backref" href="#id59"><code class="docutils literal notranslate"><span class="pre">-o</span></code>: Arranging output file names</a><a class="headerlink" href="#o-arranging-output-file-names" title="Permalink to this headline">¶</a></h3>
+<span id="output-filename-option"></span><h3><a class="toc-backref" href="#id60"><code class="docutils literal notranslate"><span class="pre">-o</span></code>: Arranging output file names</a><a class="headerlink" href="#o-arranging-output-file-names" title="Permalink to this headline">¶</a></h3>
 <p>Using this option, output file names are slightly modified. For example,
 specifying <code class="docutils literal notranslate"><span class="pre">-o</span> <span class="pre">iso</span></code>, a file name <code class="docutils literal notranslate"><span class="pre">kappa-m191919.hdf5</span></code> is changed
 to <code class="docutils literal notranslate"><span class="pre">kappa-m191919.iso.hdf5</span></code>.</p>
@@ -1191,7 +1200,7 @@ to <code class="docutils literal notranslate"><span class="pre">kappa-m191919.is
 </ul>
 </div>
 <div class="section" id="i-arranging-input-file-names">
-<span id="input-filename-option"></span><h3><a class="toc-backref" href="#id60"><code class="docutils literal notranslate"><span class="pre">-i</span></code>: Arranging input file names</a><a class="headerlink" href="#i-arranging-input-file-names" title="Permalink to this headline">¶</a></h3>
+<span id="input-filename-option"></span><h3><a class="toc-backref" href="#id61"><code class="docutils literal notranslate"><span class="pre">-i</span></code>: Arranging input file names</a><a class="headerlink" href="#i-arranging-input-file-names" title="Permalink to this headline">¶</a></h3>
 <p>Using this option, input file names are slightly modified. For example,
 specifying <code class="docutils literal notranslate"><span class="pre">-i</span> <span class="pre">iso</span> <span class="pre">--fc3</span></code>, a file name <code class="docutils literal notranslate"><span class="pre">fc3.iso.hdf5</span></code> is read
 instead of <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code>.</p>
@@ -1227,7 +1236,7 @@ instead of <code class="docutils literal notranslate"><span class="pre">fc3.hdf5
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.<br/>
     </p>
   </div>
 </footer>
