@@ -242,24 +242,20 @@ def write_fc2_dat(force_constants, filename='fc2.dat'):
 def write_fc2_to_hdf5(force_constants,
                       filename='fc2.hdf5',
                       p2s_map=None,
+                      physical_unit=None,
                       compression=None):
-    try:
-        write_force_constants_to_hdf5(force_constants,
-                                      filename=filename,
-                                      p2s_map=p2s_map,
-                                      compression=compression)
-    except TypeError:
-        # This fills the gap between versions with/without compression
-        # in phonopy.
-        write_force_constants_to_hdf5(force_constants,
-                                      filename=filename,
-                                      p2s_map=p2s_map)
+    write_force_constants_to_hdf5(force_constants,
+                                  filename=filename,
+                                  p2s_map=p2s_map,
+                                  physical_unit=physical_unit,
+                                  compression=compression)
 
 
 def read_fc2_from_hdf5(filename='fc2.hdf5',
                        p2s_map=None):
     return read_force_constants_hdf5(filename=filename,
-                                     p2s_map=p2s_map)
+                                     p2s_map=p2s_map,
+                                     physical_unit='eV/Angstrom^2')
 
 
 def write_triplets(triplets,

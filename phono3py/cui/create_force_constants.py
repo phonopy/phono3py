@@ -238,6 +238,7 @@ def create_phono3py_force_constants(phono3py,
         write_fc2_to_hdf5(phono3py.get_fc2(),
                           filename=filename,
                           p2s_map=p2s_map,
+                          physical_unit='eV/Angstrom^2',
                           compression=compression)
 
     if log_level:
