@@ -143,7 +143,7 @@ elif os.path.isfile("libopenblas.py"):
     #### Example of libopenblas.py ####
     # extra_link_args_lapacke += ['-lopenblas']
 
-    from libopenblas import extra_link_args_lapacke
+    from libopenblas import extra_link_args_lapacke, include_dirs_lapacke
     include_dirs_lapacke += []
     if use_setuptools:
         extra_compile_args += ['-DMULTITHREADED_BLAS']
@@ -286,7 +286,7 @@ if __name__ == '__main__':
               url='http://atztogo.github.io/phono3py/',
               packages=packages_phono3py,
               install_requires=['numpy', 'PyYAML', 'matplotlib', 'h5py',
-                                'phonopy>=2.1.2'],
+                                'phonopy>=2.1.3'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
               ext_modules=[extension_lapackepy, extension_phono3py],

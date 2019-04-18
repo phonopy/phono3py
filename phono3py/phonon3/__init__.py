@@ -156,17 +156,7 @@ class Phono3py(object):
         self._band_indices = None
         self._band_indices_flatten = None
         if mesh is not None:
-            _mesh = np.array(mesh)
-            mesh_nums = None
-            if _mesh.shape:
-                if _mesh.shape == (3,):
-                    mesh_nums = mesh
-            else:
-                mesh_nums = length2mesh(mesh, self._primitive.get_cell())
-            if mesh_nums is None:
-                msg = "mesh has inappropriate type."
-                raise TypeError(msg)
-            self._mesh_numbers = mesh_nums
+            self._set_mesh_numbers(mesh)
         self.set_band_indices(band_indices)
 
     def set_band_indices(self, band_indices):
@@ -859,6 +849,23 @@ class Phono3py(object):
             [p2p_map[x] for x in
              self._phonon_primitive.get_supercell_to_primitive_map()]]
         self._phonon_supercell.set_masses(s_masses)
+
+    def _set_mesh_numbers(self, mesh):
+        _mesh = np.array(mesh)
+        mesh_nums = None
+        if _mesh.shape:
+            if _mesh.shape == (3,):
+                mesh_nums = mesh
+        elif self._primitive_symmetry is None:
+            mesh_nums = length2mesh(mesh, self._primitive.get_cell())
+        else:
+            rotations = self._primitive_symmetry.get_pointgroup_operations()
+            mesh_nums = length2mesh(mesh, self._primitive.get_cell(),
+                                    rotations=rotations)
+        if mesh_nums is None:
+            msg = "mesh has inappropriate type."
+            raise TypeError(msg)
+        self._mesh_numbers = mesh_nums
 
     def _get_fc3(self,
                  forces_fc3,
