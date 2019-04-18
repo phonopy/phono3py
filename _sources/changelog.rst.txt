@@ -3,6 +3,21 @@
 Change Log
 ==========
 
+Apr-18-2019: Version 1.17.0
+---------------------------
+- ``--cfz`` option was made to subtract residual forces. See
+  :ref:`cfz_option`.
+- ``--cutoff-pair`` was made to override the cutoff pair distance
+  written in ``disp_fc3.yaml`` when using on calculating force
+  constants. This is useful when checking cutoff distance
+  dependency. So the use case of having fully computed ``FORCES_FC3``
+  is assumed.
+- TURBOMOLE interface is provided by Antti Karttunen
+  (``--turbomole``).
+- Compatibility of ``fc2.hdf5`` and ``force_constants.hdf5`` was
+  improved for all calculators to store physical unit information in
+  the hdf5 file. See :ref:`file_format_compatibility`.
+
 Mar-24-2019: Version 1.16.0
 ---------------------------
 - Bug fixes and catching up the updates of phonopy.
