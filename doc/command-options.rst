@@ -62,6 +62,12 @@ See the detail at :ref:`pwscf_interface`.
 Using this option, CRYSTAL interface is invoked.
 See the detail at :ref:`crystal_interface`.
 
+``--turbomole``: TURBOMOLE interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using this option, TURBOMOLE interface is invoked.
+See the details at :ref:`turbomole_interface`.
+
 Force constants
 ----------------
 
@@ -266,6 +272,24 @@ necessary to run with ``--dim_fc2`` option.
 ::
 
    % phono3py --cf2 disp_fc2-{00001..00002}/vasprun.xml
+
+.. _cfz_option:
+
+``--cfz``: Create ``FORCES_FC3`` and ``FORCES_FC2`` subtracting residual forces
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is used to create ``FORCES_FC3`` and ``FORCES_FC2`` subtracting
+residual forces combined with ``--cf3`` and ``--cf2``,
+respectively. In the following example, it is supposed that
+``disp3-00000/vasprun.xml`` and ``disp2-00000/vasprun.xml`` contain
+the forces of the perfect supercells. In ideal case, these forces are
+zero, but often they are not. Here, this is called "residual
+forces". Sometimes quality of force constants is improved in this way.
+
+::
+
+   % phono3py --cf3 disp3-{00001..01254}/vasprun.xml --cfz disp3-00000/vasprun.xml
+   % phono3py --cf2 disp2-{00001..00006}/vasprun.xml --cfz disp2-00000/vasprun.xml
 
 .. _fs2f2_option:
 

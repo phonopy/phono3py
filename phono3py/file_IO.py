@@ -3,9 +3,9 @@ import numpy as np
 import h5py
 
 from phonopy.file_IO import (write_force_constants_to_hdf5,
-                             read_force_constants_hdf5,
                              check_force_constants_indices,
                              get_cell_from_disp_yaml)
+from phonopy.cui.load_helper import read_force_constants_from_hdf5
 
 
 def write_cell_yaml(w, supercell):
@@ -242,24 +242,20 @@ def write_fc2_dat(force_constants, filename='fc2.dat'):
 def write_fc2_to_hdf5(force_constants,
                       filename='fc2.hdf5',
                       p2s_map=None,
+                      physical_unit=None,
                       compression=None):
-    try:
-        write_force_constants_to_hdf5(force_constants,
-                                      filename=filename,
-                                      p2s_map=p2s_map,
-                                      compression=compression)
-    except TypeError:
-        # This fills the gap between versions with/without compression
-        # in phonopy.
-        write_force_constants_to_hdf5(force_constants,
-                                      filename=filename,
-                                      p2s_map=p2s_map)
+    write_force_constants_to_hdf5(force_constants,
+                                  filename=filename,
+                                  p2s_map=p2s_map,
+                                  physical_unit=physical_unit,
+                                  compression=compression)
 
 
 def read_fc2_from_hdf5(filename='fc2.hdf5',
                        p2s_map=None):
-    return read_force_constants_hdf5(filename=filename,
-                                     p2s_map=p2s_map)
+    return read_force_constants_from_hdf5(filename=filename,
+                                          p2s_map=p2s_map,
+                                          calculator='vasp')
 
 
 def write_triplets(triplets,
@@ -1216,10 +1212,7 @@ def parse_disp_fc3_yaml(filename="disp_fc3.yaml", return_cell=False):
         for second_atom in first_atoms['second_atoms']:
             disp2_dataset = {'number': second_atom['number'] - 1}
             if 'included' in second_atom:
-                included = second_atom['included']
-            else:
-                included = True
-            disp2_dataset.update({'included': included})
+                disp2_dataset.update({'included': second_atom['included']})
             if 'distance' in second_atom:
                 disp2_dataset.update(
                     {'pair_distance': second_atom['distance']})

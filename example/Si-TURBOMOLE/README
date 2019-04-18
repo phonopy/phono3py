@@ -1,0 +1,35 @@
+Si lattice thermal conductivity
+
+The default file name for the TURBOMOLE interface is "control",
+so the -c control parameter is not needed
+
+1) Create displaced supercells
+   2x2x2 conventional cell for 3rd order FC
+   3x3x3 conventional cell for 2nd order FC
+   
+   phono3py  --turbomole --dim="2 2 2" --dim-fc2="3 3 3" -d
+
+   Complete TURBOMOLE inputs can be prepared manually
+
+2) Run the supercell inputs with TURBOMOLE
+   Here the supercells have been pre-calculated (outputs.tar.gz).
+
+3) Collect forces:
+
+   phono3py --turbomole --cf3 supercell-*
+   phono3py --turbomole --cf2 supercell_fc2-*
+
+   Here the pre-calculated forces are available as FORCES_FC2 and FORCES_FC3
+
+4) Create 2nd and 3rd order force constant files fc2.hdf5 and fc3.hdf5
+
+   phono3py --turbomole --dim="2 2 2" --dim-fc2="3 3 3" --sym-fc
+
+5) Thermal conductivity calculation
+   --primitive-axis is used to get the results for the primitive 2-atom cell
+
+   phono3py --turbomole --primitive-axis="0 1/2 1/2  1/2 0 1/2  1/2 1/2 0" --fc3 --fc2 --dim="2 2 2" --dim-fc2="3 3 3" --mesh="20 20 20" --br
+
+   --br ->  Relaxation time approximation
+   With 20x20x20 mesh, the lattice thermal conductivity at 300 K is 142 W m^-1 K^-1.
+

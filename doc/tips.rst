@@ -112,11 +112,16 @@ higher order anharmonicity is involved (renormalized) into fc3 and fc2.
 File format compatibility with phonopy
 ---------------------------------------
 
-``disp_fc3.yaml`` and ``disp_fc2.yaml`` are not compatible with
-phonopy's ``disp.yaml``. ``FORCES_FC3`` and ``FORCES_FC2`` are not
-compatible with phonopy's ``FORCE_SETS``. But ``FORCE_SETS`` can be
-created using :ref:`--cfs <cfs_option>`, and ``FORCES_FC2`` and
-``disp_fc2.yaml`` can be created using :ref:`--fs2f2
-<fs2f2_option>`. In addition, if ``fc2.hdf5`` is renamed to
-``force_constants.hdf5``, it is used in phonopy with ``--hdf5`` and
-``--readfc`` option.
+- ``disp_fc3.yaml`` and ``disp_fc2.yaml`` are not compatible with
+  phonopy's ``phonopy_disp.yaml``.
+- ``FORCES_FC3`` and ``FORCES_FC2`` are not
+  compatible with phonopy's ``FORCE_SETS``.
+- ``FORCE_SETS`` can be created using :ref:`--cfs <cfs_option>` from
+  ``FORCES_FC3`` and ``disp_fc3.yaml`` or ``FORCES_FC2`` and
+  ``disp_fc2.yaml`` (needs to specify ``--dim-fc2``).
+- ``FORCES_FC2`` and ``disp_fc2.yaml`` can be created using :ref:`--fs2f2
+  <fs2f2_option>` from ``FORCE_SETS``.
+- ``fc2.hdf5`` can be used in phonopy in the ``hdf5`` mode when it is
+  renamed to ``force_constants.hdf5``. In the previous combinations of
+  phonopy and phono3py, depending on the physical unit of force
+  constants of calculators, the direct compatibility is not guranteed.

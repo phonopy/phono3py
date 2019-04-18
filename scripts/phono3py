@@ -144,6 +144,7 @@ if deprecated:
 # pwscf         : Ry,      au,        AMU,         Ry/au
 # CRYSTAL       : eV,      Angstrom,  AMU,         eV/Angstrom
 # abinit        : hartree, au,        AMU,         eV/Angstrom
+# TURBOMOLE     : hartree, au,        AMU,         hartree/au
 #
 if args.qe_mode:
     interface_mode = 'qe'
@@ -163,6 +164,11 @@ elif args.abinit_mode:
     from phonopy.interface.abinit import write_supercells_with_displacements
     distance_to_A = Bohr
     force_to_eVperA = None
+elif args.turbomole_mode:
+    interface_mode = 'turbomole'
+    from phonopy.interface.turbomole import write_supercells_with_displacements
+    distance_to_A = Bohr
+    force_to_eVperA = Hartree / Bohr
 else:
     interface_mode = 'vasp'
     from phonopy.interface.vasp import write_supercells_with_displacements
@@ -202,7 +208,7 @@ if args.forces_fc3 or args.forces_fc3_file:
     num_disps = len(disp_dataset['first_atoms'])
     for d1 in disp_dataset['first_atoms']:
         for d2 in d1['second_atoms']:
-            if d2['included']:
+            if 'included' not in d2 or d2['included']:
                 num_disps += 1
     if args.forces_fc3_file:
         file_exists(args.forces_fc3_file, log_level)
