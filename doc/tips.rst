@@ -113,7 +113,7 @@ File format compatibility with phonopy
 ---------------------------------------
 
 - ``disp_fc3.yaml`` and ``disp_fc2.yaml`` are not compatible with
-  phonopy's ``disp.yaml``.
+  phonopy's ``phonopy_disp.yaml``.
 - ``FORCES_FC3`` and ``FORCES_FC2`` are not
   compatible with phonopy's ``FORCE_SETS``.
 - ``FORCE_SETS`` can be created using :ref:`--cfs <cfs_option>` from

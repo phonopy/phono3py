@@ -1,9 +1,9 @@
 .. _turbomole_interface:
 
 TURBOMOLE & phono3py calculation
-==============================
+================================
 
-The riper module of TURBOMOLE can be used to study periodic structures. 
+The riper module of TURBOMOLE can be used to study periodic structures.
 An example for TURBOMOLE is found in the ``example/Si-TURBOMOLE`` directory.
 
 To invoke the TURBOMOLE interface, ``--turbomole`` option has to be always
@@ -14,7 +14,7 @@ specified::
 When the file name of the unit cell is different from the default one
 (see :ref:`default_unit_cell_file_name_for_calculator`), ``-c`` option
 is used to specify the file name. TURBOMOLE unit cell file parser used in
-phono3py is the same as that in phonopy. It reads a limited number of 
+phono3py is the same as that in phonopy. It reads a limited number of
 keywords that are documented in the phonopy web site
 (http://atztogo.github.io/phonopy/turbomole.html#turbomole-interface).
 
@@ -27,7 +27,7 @@ In the example Si-TURBOMOLE, the TURBOMOLE input file is ``control``.
 This is the default file name for the TURBOMOLE interface,
 so the ``-c control`` parameter is not needed.
 
-1) Create supercells with displacements (2x2x2 conventional cell for 
+1) Create supercells with displacements (2x2x2 conventional cell for
    3rd order FC and 3x3x3 conventional cell for 2nd order FC)
 
    ::
@@ -46,8 +46,8 @@ so the ``-c control`` parameter is not needed.
    displacement are what we need for the phonon calculation. To get accurate
    forces, $scfconv should be 10. Phono3py includes this data group automatically
    in the ``control`` file. You also need to choose a k-point mesh for the force
-   calculations. TURBOMOLE data group $riper may need to be adjusted to improve 
-   SCF convergence (see example files in subdirectory supercell-00001 for 
+   calculations. TURBOMOLE data group $riper may need to be adjusted to improve
+   SCF convergence (see example files in subdirectory supercell-00001 for
    further details)
 
    Then, TURBOMOLE supercell calculations are executed to obtain forces on
