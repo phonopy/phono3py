@@ -149,6 +149,7 @@ void ppc_get_pp_collision(double *imag_self_energy,
                                (int(*)[3])grid_address,
                                bz_map,
                                frequencies,  /* used as f1 */
+                               num_band,
                                frequencies,  /* used as f2 */
                                num_band,
                                2,

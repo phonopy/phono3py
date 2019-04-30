@@ -43,7 +43,8 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
                               const double *frequencies1,
                               const double *frequencies2,
                               TPLCONST size_t vertices[2][24][4],
-                              const int num_band,
+                              const int num_band1,
+                              const int num_band2,
                               const int b1,
                               const int b2);
 static int set_g(double g[3],
@@ -71,8 +72,9 @@ tpi_get_integration_weight(double *iw,
                            TPLCONST int (*bz_grid_address)[3],
                            const size_t *bz_map,
                            const double *frequencies1,
+                           const size_t num_band1,
                            const double *frequencies2,
-                           const size_t num_band,
+                           const size_t num_band2,
                            const size_t tp_type,
                            const int openmp_per_bands)
 {
@@ -88,7 +90,7 @@ tpi_get_integration_weight(double *iw,
                                   bz_grid_address,
                                   bz_map);
 
-  num_band_prod = num_triplets * num_band0 * num_band * num_band;
+  num_band_prod = num_triplets * num_band0 * num_band1 * num_band2;
 
   /* tp_type: Type of integration weights stored */
   /* */
@@ -109,13 +111,13 @@ tpi_get_integration_weight(double *iw,
   }
 
 #pragma omp parallel for private(j, b1, b2, adrs_shift, g, freq_vertices) if (openmp_per_bands)
-  for (b12 = 0; b12 < num_band * num_band; b12++) {
-    b1 = b12 / num_band;
-    b2 = b12 % num_band;
+  for (b12 = 0; b12 < num_band1 * num_band2; b12++) {
+    b1 = b12 / num_band2;
+    b2 = b12 % num_band2;
     set_freq_vertices(freq_vertices, frequencies1, frequencies2,
-                      vertices, num_band, b1, b2);
+                      vertices, num_band1, num_band2, b1, b2);
     for (j = 0; j < num_band0; j++) {
-      adrs_shift = j * num_band * num_band + b1 * num_band + b2;
+      adrs_shift = j * num_band1 * num_band2 + b1 * num_band2 + b2;
       iw_zero[adrs_shift] = set_g(g, frequency_points[j], freq_vertices, max_i);
       if (tp_type == 2) {
         iw[adrs_shift] = g[2];
@@ -207,7 +209,8 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
                               const double *frequencies1,
                               const double *frequencies2,
                               TPLCONST size_t vertices[2][24][4],
-                              const int num_band,
+                              const int num_band1,
+                              const int num_band2,
                               const int b1,
                               const int b2)
 {
@@ -216,8 +219,8 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
 
   for (i = 0; i < 24; i++) {
     for (j = 0; j < 4; j++) {
-      f1 = frequencies1[vertices[0][i][j] * num_band + b1];
-      f2 = frequencies2[vertices[1][i][j] * num_band + b2];
+      f1 = frequencies1[vertices[0][i][j] * num_band1 + b1];
+      f2 = frequencies2[vertices[1][i][j] * num_band2 + b2];
       if (f1 < 0) {f1 = 0;}
       if (f2 < 0) {f2 = 0;}
       freq_vertices[0][i][j] = -f1 + f2;

@@ -573,14 +573,16 @@ def _set_triplets_integration_weights_c(g,
                 bz_map)
             interaction.set_phonons(np.unique(neighboring_grid_points))
 
+    frequencies = interaction.get_phonons()[0]
     phono3c.triplets_integration_weights(
         g,
         g_zero,
-        frequency_points,
+        frequency_points,  # f0
         thm.get_tetrahedra(),
         mesh,
         triplets_at_q,
-        interaction.get_phonons()[0],
+        frequencies,  # f1
+        frequencies,  # f2
         grid_address,
         bz_map)
 

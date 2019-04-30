@@ -98,8 +98,10 @@ void tpl_get_integration_weight(double *iw,
                                 const size_t num_triplets,
                                 TPLCONST int (*bz_grid_address)[3],
                                 const size_t *bz_map,
-                                const double *frequencies,
-                                const size_t num_band,
+                                const double *frequencies1,
+                                const size_t num_band1,
+                                const double *frequencies2,
+                                const size_t num_band2,
                                 const size_t tp_type,
                                 const int openmp_per_triplets,
                                 const int openmp_per_bands)
@@ -109,7 +111,7 @@ void tpl_get_integration_weight(double *iw,
 
   tpl_set_relative_grid_address(tp_relative_grid_address,
                                 relative_grid_address);
-  num_band_prod = num_band0 * num_band * num_band;
+  num_band_prod = num_band0 * num_band1 * num_band2;
 
 #pragma omp parallel for if (openmp_per_triplets)
   for (i = 0; i < num_triplets; i++) {
@@ -123,9 +125,10 @@ void tpl_get_integration_weight(double *iw,
                                num_triplets,
                                bz_grid_address,
                                bz_map,
-                               frequencies,  /* f1 */
-                               frequencies,  /* f2 */
-                               num_band,
+                               frequencies1,  /* f1 */
+                               num_band1,
+                               frequencies2,  /* f2 */
+                               num_band2,
                                tp_type,
                                openmp_per_bands);
   }
