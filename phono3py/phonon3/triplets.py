@@ -38,10 +38,10 @@ def get_triplets_at_q(grid_point,
         Reciprocal primitive basis vectors given as column vectors
         dtype='double'
         shape=(3, 3)
-    is_time_reversal : bool
-        Inversion symemtry is added if it doesn't exist.
-    swappable : bool
-        q1 and q2 can be swapped. By this number of triplets decreases.
+    is_time_reversal : bool, optional
+        Inversion symemtry is added if it doesn't exist. Default is True.
+    swappable : bool, optional
+        q1 and q2 among (q0, q1, q2) can be swapped. Deafult is True.
 
     Returns
     -------

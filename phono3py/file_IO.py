@@ -1345,6 +1345,22 @@ def parse_grid_address(filename):
     return np.array(grid_address)
 
 
+def get_filename_suffix(mesh,
+                        mesh_divisors=None,
+                        grid_point=None,
+                        band_indices=None,
+                        sigma=None,
+                        sigma_cutoff=None,
+                        filename=None):
+    return _get_filename_suffix(mesh,
+                                mesh_divisors=mesh_divisors,
+                                grid_point=grid_point,
+                                band_indices=band_indices,
+                                sigma=sigma,
+                                sigma_cutoff=sigma_cutoff,
+                                filename=filename)
+
+
 def _get_filename_suffix(mesh,
                          mesh_divisors=None,
                          grid_point=None,

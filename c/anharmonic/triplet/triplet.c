@@ -100,7 +100,7 @@ void tpl_get_integration_weight(double *iw,
                                 const size_t *bz_map,
                                 const double *frequencies,
                                 const size_t num_band,
-                                const size_t num_iw,
+                                const size_t tp_type,
                                 const int openmp_per_triplets,
                                 const int openmp_per_bands)
 {
@@ -115,7 +115,7 @@ void tpl_get_integration_weight(double *iw,
   for (i = 0; i < num_triplets; i++) {
     tpi_get_integration_weight(iw + i * num_band_prod,
                                iw_zero + i * num_band_prod,
-                               frequency_points,
+                               frequency_points,  /* f0 */
                                num_band0,
                                tp_relative_grid_address,
                                mesh,
@@ -123,9 +123,10 @@ void tpl_get_integration_weight(double *iw,
                                num_triplets,
                                bz_grid_address,
                                bz_map,
-                               frequencies,
+                               frequencies,  /* f1 */
+                               frequencies,  /* f2 */
                                num_band,
-                               num_iw,
+                               tp_type,
                                openmp_per_bands);
   }
 }
@@ -141,7 +142,7 @@ void tpl_get_integration_weight_with_sigma(double *iw,
                                            const size_t num_triplets,
                                            const double *frequencies,
                                            const size_t num_band,
-                                           const size_t num_iw)
+                                           const size_t tp_type)
 {
   size_t i, num_band_prod, const_adrs_shift;
   double cutoff;
@@ -163,7 +164,7 @@ void tpl_get_integration_weight_with_sigma(double *iw,
       const_adrs_shift,
       frequencies,
       num_band,
-      num_iw,
+      tp_type,
       0);
   }
 }
