@@ -584,7 +584,8 @@ def _set_triplets_integration_weights_c(g,
         frequencies,  # f1
         frequencies,  # f2
         grid_address,
-        bz_map)
+        bz_map,
+        g.shape[0])
 
 
 def _set_triplets_integration_weights_py(g, interaction, frequency_points):
