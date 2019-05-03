@@ -8,7 +8,7 @@ def set_phonon_c(dm,
                  grid_points,
                  grid_address,
                  mesh,
-                 frequency_factor_to_THz,
+                 frequency_conversion_factor,
                  nac_q_direction,  # in reduced coordinates
                  lapack_zheev_uplo,
                  verbose=False):
@@ -59,7 +59,7 @@ def set_phonon_c(dm,
         masses,
         fc_p2s,
         fc_s2p,
-        frequency_factor_to_THz,
+        frequency_conversion_factor,
         born,
         dielectric,
         rec_lattice,
@@ -78,7 +78,7 @@ def set_phonon_py(grid_point,
                   grid_address,
                   mesh,
                   dynamical_matrix,
-                  frequency_factor_to_THz,
+                  frequency_conversion_factor,
                   lapack_zheev_uplo):
     gp = grid_point
     if phonon_done[gp] == 0:
@@ -89,7 +89,7 @@ def set_phonon_py(grid_point,
         eigvals, eigvecs = np.linalg.eigh(dm, UPLO=lapack_zheev_uplo)
         eigvals = eigvals.real
         frequencies[gp] = (np.sqrt(np.abs(eigvals)) * np.sign(eigvals)
-                           * frequency_factor_to_THz)
+                           * frequency_conversion_factor)
         eigenvectors[gp] = eigvecs
 
 

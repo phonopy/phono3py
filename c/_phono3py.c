@@ -1916,9 +1916,11 @@ py_set_triplets_integration_weights(PyObject *self, PyObject *args)
   PyArrayObject *py_relative_grid_address;
   PyArrayObject *py_mesh;
   PyArrayObject *py_triplets;
-  PyArrayObject *py_frequencies;
+  PyArrayObject *py_frequencies1;
+  PyArrayObject *py_frequencies2;
   PyArrayObject *py_bz_grid_address;
   PyArrayObject *py_bz_map;
+  int tp_type;
 
   double *iw;
   char *iw_zero;
@@ -1928,19 +1930,21 @@ py_set_triplets_integration_weights(PyObject *self, PyObject *args)
   size_t (*triplets)[3];
   int (*bz_grid_address)[3];
   size_t *bz_map;
-  double *frequencies;
-  npy_intp num_band0, num_band, num_iw, num_triplets;
+  double *frequencies1, *frequencies2;
+  npy_intp num_band0, num_band1, num_band2, num_iw, num_triplets;
 
-  if (!PyArg_ParseTuple(args, "OOOOOOOOO",
+  if (!PyArg_ParseTuple(args, "OOOOOOOOOOi",
                         &py_iw,
                         &py_iw_zero,
                         &py_frequency_points,
                         &py_relative_grid_address,
                         &py_mesh,
                         &py_triplets,
-                        &py_frequencies,
+                        &py_frequencies1,
+                        &py_frequencies2,
                         &py_bz_grid_address,
-                        &py_bz_map)) {
+                        &py_bz_map,
+                        &tp_type)) {
     return NULL;
   }
 
@@ -1954,9 +1958,10 @@ py_set_triplets_integration_weights(PyObject *self, PyObject *args)
   num_triplets = PyArray_DIMS(py_triplets)[0];
   bz_grid_address = (int(*)[3])PyArray_DATA(py_bz_grid_address);
   bz_map = (size_t*)PyArray_DATA(py_bz_map);
-  frequencies = (double*)PyArray_DATA(py_frequencies);
-  num_band = PyArray_DIMS(py_frequencies)[1];
-  num_iw = PyArray_DIMS(py_iw)[0];
+  frequencies1 = (double*)PyArray_DATA(py_frequencies1);
+  frequencies2 = (double*)PyArray_DATA(py_frequencies2);
+  num_band1 = PyArray_DIMS(py_frequencies1)[1];
+  num_band2 = PyArray_DIMS(py_frequencies2)[1];
 
   tpl_get_integration_weight(iw,
                              iw_zero,
@@ -1968,9 +1973,11 @@ py_set_triplets_integration_weights(PyObject *self, PyObject *args)
                              num_triplets,
                              bz_grid_address,
                              bz_map,
-                             frequencies,
-                             num_band,
-                             num_iw,
+                             frequencies1,
+                             num_band1,
+                             frequencies2,
+                             num_band2,
+                             tp_type,
                              1,
                              0);
 
