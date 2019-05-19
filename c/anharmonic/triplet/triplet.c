@@ -110,7 +110,8 @@ void tpl_get_integration_weight(double *iw,
   int tp_relative_grid_address[2][24][4][3];
 
   tpl_set_relative_grid_address(tp_relative_grid_address,
-                                relative_grid_address);
+                                relative_grid_address,
+                                tp_type);
   num_band_prod = num_band0 * num_band1 * num_band2;
 
 #pragma omp parallel for if (openmp_per_triplets)
@@ -193,17 +194,27 @@ int tpl_is_N(const size_t triplet[3], const int *grid_address)
 
 void tpl_set_relative_grid_address(
   int tp_relative_grid_address[2][24][4][3],
-  TPLCONST int relative_grid_address[24][4][3])
+  TPLCONST int relative_grid_address[24][4][3],
+  const size_t tp_type)
 {
-  int i, j, k, l, sign;
+  size_t i, j, k, l;
+  int signs[2];
+
+  signs[0] = 1;
+  signs[1] = 1;
+  if ((tp_type == 2) || (tp_type == 3)) {
+    /* q1+q2+q3=G */
+    /* To set q2+1, q3-1 is needed to keep G */
+    signs[1] = -1;
+  }
+  /* tp_type == 4, q+k_i-k_f=G */
 
   for (i = 0; i < 2; i++) {
-    sign = 1 - i * 2;
     for (j = 0; j < 24; j++) {
       for (k = 0; k < 4; k++) {
         for (l = 0; l < 3; l++) {
           tp_relative_grid_address[i][j][k][l] =
-            relative_grid_address[j][k][l] * sign;
+            relative_grid_address[j][k][l] * signs[i];
         }
       }
     }

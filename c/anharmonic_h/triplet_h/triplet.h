@@ -103,6 +103,7 @@ void tpl_get_integration_weight_with_sigma(double *iw,
 int tpl_is_N(const size_t triplet[3], const int *grid_address);
 void tpl_set_relative_grid_address(
   int tp_relative_grid_address[2][24][4][3],
-  TPLCONST int relative_grid_address[24][4][3]);
+  TPLCONST int relative_grid_address[24][4][3],
+  const size_t tp_type);
 
 #endif

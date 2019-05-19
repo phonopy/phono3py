@@ -46,7 +46,8 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
                               const int num_band1,
                               const int num_band2,
                               const int b1,
-                              const int b2);
+                              const int b2,
+                              const size_t tp_type);
 static int set_g(double g[3],
                  const double f0,
                  TPLCONST double freq_vertices[3][24][4],
@@ -115,7 +116,7 @@ tpi_get_integration_weight(double *iw,
     b1 = b12 / num_band2;
     b2 = b12 % num_band2;
     set_freq_vertices(freq_vertices, frequencies1, frequencies2,
-                      vertices, num_band1, num_band2, b1, b2);
+                      vertices, num_band1, num_band2, b1, b2, tp_type);
     for (j = 0; j < num_band0; j++) {
       adrs_shift = j * num_band1 * num_band2 + b1 * num_band2 + b2;
       iw_zero[adrs_shift] = set_g(g, frequency_points[j], freq_vertices, max_i);
@@ -212,7 +213,8 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
                               const int num_band1,
                               const int num_band2,
                               const int b1,
-                              const int b2)
+                              const int b2,
+                              const size_t tp_type)
 {
   int i, j;
   double f1, f2;
@@ -221,11 +223,13 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
     for (j = 0; j < 4; j++) {
       f1 = frequencies1[vertices[0][i][j] * num_band1 + b1];
       f2 = frequencies2[vertices[1][i][j] * num_band2 + b2];
-      if (f1 < 0) {f1 = 0;}
-      if (f2 < 0) {f2 = 0;}
+      if ((tp_type == 2) || (tp_type == 3)) {
+        if (f1 < 0) {f1 = 0;}
+        if (f2 < 0) {f2 = 0;}
+        freq_vertices[1][i][j] = f1 - f2;
+        freq_vertices[2][i][j] = f1 + f2;
+      }
       freq_vertices[0][i][j] = -f1 + f2;
-      freq_vertices[1][i][j] = f1 - f2;
-      freq_vertices[2][i][j] = f1 + f2;
     }
   }
 }

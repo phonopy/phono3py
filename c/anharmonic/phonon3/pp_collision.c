@@ -132,7 +132,8 @@ void ppc_get_pp_collision(double *imag_self_energy,
   }
 
   tpl_set_relative_grid_address(tp_relative_grid_address,
-                                relative_grid_address);
+                                relative_grid_address,
+                                2);
 
 #pragma omp parallel for schedule(guided) private(g, g_zero) if (openmp_per_triplets)
   for (i = 0; i < num_triplets; i++) {
