@@ -44,39 +44,62 @@ def write_disp_fc3_yaml(dataset, supercell, filename='disp_fc3.yaml'):
     w.write("num_second_displacements: %d\n" % num_second)
     w.write("num_displacements_created: %d\n" % num_disp_files)
 
+    if 'duplicates' in dataset:
+        w.write("duplicates:\n")
+        for i in dataset['duplicates']:
+            w.write("- %d : %d\n" % (i + num_first + 1,
+                                     dataset['duplicates'][i] + num_first + 1))
+
     w.write("first_atoms:\n")
-    count1 = 1
-    count2 = num_first + 1
+    count1 = 0
+    count2 = 0
     for disp1 in dataset['first_atoms']:
         disp_cart1 = disp1['displacement']
         w.write("- number: %5d\n" % (disp1['number'] + 1))
         w.write("  displacement:\n")
         w.write("    [%20.16f,%20.16f,%20.16f ] # %05d\n" %
-                (disp_cart1[0], disp_cart1[1], disp_cart1[2], count1))
+                (disp_cart1[0], disp_cart1[1], disp_cart1[2], count1 + 1))
+        w.write("  displacement_id: %d\n" % (count1 + 1))
         w.write("  second_atoms:\n")
         count1 += 1
 
         included = None
-        atom2 = -1
-        for disp2 in disp1['second_atoms']:
-            if atom2 != disp2['number']:
-                atom2 = disp2['number']
-                if 'included' in disp2:
-                    included = disp2['included']
-                pair_distance = disp2['pair_distance']
-                w.write("  - number: %5d\n" % (atom2 + 1))
-                w.write("    distance: %f\n" % pair_distance)
-                if included is not None:
-                    if included:
-                        w.write("    included: %s\n" % "true")
-                    else:
-                        w.write("    included: %s\n" % "false")
-                w.write("    displacements:\n")
+        atom2_list = np.array([disp2['number']
+                               for disp2 in disp1['second_atoms']], dtype=int)
+        _, indices = np.unique(atom2_list, return_index=True)
+        for atom2 in atom2_list[indices]:
+            disp2_list = []
+            for disp2 in disp1['second_atoms']:
+                if disp2['number'] == atom2:
+                    disp2_list.append(disp2)
 
-            disp_cart2 = disp2['displacement']
-            w.write("    - [%20.16f,%20.16f,%20.16f ] # %05d\n" %
-                    (disp_cart2[0], disp_cart2[1], disp_cart2[2], count2))
-            count2 += 1
+            disp2 = disp2_list[0]
+            atom2 = disp2['number']
+            if 'included' in disp2:
+                included = disp2['included']
+            pair_distance = disp2['pair_distance']
+            w.write("  - number: %5d\n" % (atom2 + 1))
+            w.write("    distance: %f\n" % pair_distance)
+            if included is not None:
+                if included:
+                    w.write("    included: %s\n" % "true")
+                else:
+                    w.write("    included: %s\n" % "false")
+            w.write("    displacements:\n")
+
+            for disp2 in disp2_list:
+                # Assert all disp2s belonging to same atom2 appear straight.
+                assert disp2['id'] == count2
+
+                disp_cart2 = disp2['displacement']
+                w.write("    - [%20.16f,%20.16f,%20.16f ] # %05d\n" %
+                        (disp_cart2[0], disp_cart2[1], disp_cart2[2],
+                         count2 + num_first + 1))
+                count2 += 1
+
+            ids = ["%d" % (disp2['id'] + num_first + 1)
+                   for disp2 in disp2_list]
+            w.write("    displacement_ids: [ %s ]\n" % ', '.join(ids))
 
     write_cell_yaml(w, supercell)
 
