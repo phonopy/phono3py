@@ -130,7 +130,7 @@ def optimize(lattice,
     from alm import ALM
     with ALM(lattice, positions, numbers) as alm:
         natom = len(numbers)
-        alm.set_verbosity(log_level)
+        alm.set_verbosity((log_level > 1) * 1)
         nkd = len(np.unique(numbers))
         if 'cutoff_distance' not in alm_options:
             rcs = -np.ones((2, nkd, nkd), dtype='double')

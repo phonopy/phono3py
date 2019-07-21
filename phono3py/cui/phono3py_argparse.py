@@ -134,6 +134,7 @@ def get_parser():
                         tstep=None,
                         turbomole_mode=False,
                         uplo='L',
+                        use_alm=False,
                         use_alm_fc2=False,
                         use_alm_fc3=False,
                         use_ave_pp=False,
@@ -148,6 +149,10 @@ def get_parser():
     parser.add_argument(
         "--abinit", dest="abinit_mode", action="store_true",
         help="Invoke Abinit mode")
+    parser.add_argument(
+        "--alm", dest="use_alm", action="store_true",
+        help=("Use ALM for generating 2nd and 3rd force constants "
+              "in one fitting"))
     parser.add_argument(
         "--alm-fc2", dest="use_alm_fc2", action="store_true",
         help="Use ALM for creating 2nd order force constants")
