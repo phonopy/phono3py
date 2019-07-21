@@ -20,7 +20,7 @@ if 'CC' in os.environ:
     if 'clang' in os.environ['CC']:
         cc = 'clang'
         # lib_omp = '-liomp5'
-        # lib_omp = '-lomp'
+        lib_omp = '-lomp'
     if 'gcc' in os.environ['CC'] or 'gnu-cc' in os.environ['CC']:
         cc = 'gcc'
 if cc == 'gcc' or cc is None:
@@ -160,11 +160,11 @@ elif (platform.system() == 'Darwin' and
     include_dirs_lapacke += ['/opt/local/include']
 elif ('CONDA_PREFIX' in os.environ and
       (os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
-                                   'lib', 'libopenblas.so')) or
+                                   'lib', 'liblapacke.dylib')) or
        os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
-                                   'lib', 'libopenblas.dylib')))):
+                                   'lib', 'liblapacke.so')))):
     # This is for the system prepared with conda openblas.
-    extra_link_args_lapacke += ['-lopenblas']
+    extra_link_args_lapacke += ['-llapacke']
     include_dirs_lapacke += [
         os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
     if use_setuptools:
@@ -202,6 +202,8 @@ else:
 
 extra_link_args += extra_link_args_lapacke
 include_dirs += include_dirs_lapacke
+
+print("extra_link_args", extra_link_args)
 extension_phono3py = Extension(
     'phono3py._phono3py',
     include_dirs=include_dirs,
