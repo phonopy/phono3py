@@ -16,10 +16,11 @@ before_install:
     - bash miniconda.sh -b -p ${HOME}/.miniconda
     - export PATH=${HOME}/.miniconda/bin:${PATH}
     - conda init bash
+    - export C_INCLUDE_PATH=${CONDA_PREFIX}/include
     - conda update --yes conda
     - conda info -a
     # - conda create --yes -n travis -c conda-forge python=$TRAVIS_PYTHON_VERSION
-    - conda install --yes -c conda-forge python=$TRAVIS_PYTHON_VERSION
+    - conda install --yes -c conda-forge python=${TRAVIS_PYTHON_VERSION}
     # - conda activate travis
 
 install:
