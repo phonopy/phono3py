@@ -14,38 +14,6 @@ except ImportError:
 
 include_dirs_numpy = [numpy.get_include()]
 extra_link_args = []
-cc = None
-lib_omp = None
-if 'CC' in os.environ:
-    if 'clang' in os.environ['CC']:
-        cc = 'clang'
-        # lib_omp = '-liomp5'
-        lib_omp = '-lomp'
-    if 'gcc' in os.environ['CC'] or 'gnu-cc' in os.environ['CC']:
-        cc = 'gcc'
-if cc == 'gcc' or cc is None:
-    lib_omp = '-lgomp'
-
-    if 'CC' in os.environ and 'gcc-' in os.environ['CC']:
-        # For macOS & homebrew gcc:
-        # Using conda's gcc is more recommended though. Suppose using
-        # homebrew gcc whereas conda is used as general environment.
-        # This is to avoid linking conda libgomp that is incompatible
-        # with homebrew gcc.
-        try:
-            v = int(os.environ['CC'].split('-')[1])
-        except ValueError:
-            pass
-        else:
-            ary = [os.sep, "usr", "local", "opt", "gcc@%d" % v, "lib", "gcc",
-                   "%d" % v, "libgomp.a"]
-            libgomp_a = os.path.join(*ary)
-            if os.path.isfile(libgomp_a):
-                lib_omp = libgomp_a
-
-if lib_omp:
-    extra_link_args.append(lib_omp)
-
 # Workaround Python issue 21121
 config_var = sysconfig.get_config_var("CFLAGS")
 if (config_var is not None and
@@ -86,6 +54,8 @@ define_macros = []
 extra_link_args_lapacke = []
 include_dirs_lapacke = []
 
+
+use_mkl = False
 # C macro definitions:
 # - MULTITHREADED_BLAS
 #   This deactivates OpenMP multithread harmonic phonon calculation,
@@ -127,6 +97,7 @@ if os.path.isfile("mkl.py"):
     #                                 '-lpthread']
     # mkl_include_dirs_lapacke = ["%s/include" % mkl_root]
 
+    use_mkl = True
     extra_link_args_lapacke += mkl_extra_link_args_lapacke
     include_dirs_lapacke += mkl_include_dirs_lapacke
 
@@ -167,10 +138,20 @@ elif ('CONDA_PREFIX' in os.environ and
     extra_link_args_lapacke += ['-llapacke']
     include_dirs_lapacke += [
         os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
-    if use_setuptools:
-        extra_compile_args += ['-DMULTITHREADED_BLAS']
+    if os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
+                                   'include', 'mkl.h')):
+        use_mkl = True
+        if use_setuptools:
+            extra_compile_args += ['-DMKL_LAPACKE',
+                                   '-DMULTITHREADED_BLAS']
+        else:
+            define_macros += [('MKL_LAPACKE', None),
+                              ('MULTITHREADED_BLAS', None)]
     else:
-        define_macros += [('MULTITHREADED_BLAS', None)]
+        if use_setuptools:
+            extra_compile_args += ['-DMULTITHREADED_BLAS']
+        else:
+            define_macros += [('MULTITHREADED_BLAS', None)]
 elif os.path.isfile('/usr/lib/liblapacke.so'):
     # This supposes that lapacke with single-thread BLAS is installed on
     # system.
@@ -196,6 +177,39 @@ else:
         extra_compile_args += ['-DMULTITHREADED_BLAS']
     else:
         define_macros += [('MULTITHREADED_BLAS', None)]
+
+cc = None
+lib_omp = None
+if 'CC' in os.environ:
+    if 'clang' in os.environ['CC']:
+        cc = 'clang'
+        if not use_mkl:
+            lib_omp = '-lomp'
+        # lib_omp = '-liomp5'
+    if 'gcc' in os.environ['CC'] or 'gnu-cc' in os.environ['CC']:
+        cc = 'gcc'
+if cc == 'gcc' or cc is None:
+    lib_omp = '-lgomp'
+
+    if 'CC' in os.environ and 'gcc-' in os.environ['CC']:
+        # For macOS & homebrew gcc:
+        # Using conda's gcc is more recommended though. Suppose using
+        # homebrew gcc whereas conda is used as general environment.
+        # This is to avoid linking conda libgomp that is incompatible
+        # with homebrew gcc.
+        try:
+            v = int(os.environ['CC'].split('-')[1])
+        except ValueError:
+            pass
+        else:
+            ary = [os.sep, "usr", "local", "opt", "gcc@%d" % v, "lib", "gcc",
+                   "%d" % v, "libgomp.a"]
+            libgomp_a = os.path.join(*ary)
+            if os.path.isfile(libgomp_a):
+                lib_omp = libgomp_a
+
+if lib_omp:
+    extra_link_args.append(lib_omp)
 
 ## Uncomment below to measure reciprocal_to_normal_squared_openmp performance
 # define_macros += [('MEASURE_R2N', None)]
@@ -287,8 +301,8 @@ if __name__ == '__main__':
               author_email='atz.togo@gmail.com',
               url='http://atztogo.github.io/phono3py/',
               packages=packages_phono3py,
-              install_requires=['numpy', 'PyYAML', 'matplotlib', 'h5py',
-                                'phonopy>=2.1.3'],
+              install_requires=['numpy', 'scipy', 'PyYAML', 'matplotlib',
+                                'h5py', 'phonopy>=2.2.0'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
               ext_modules=[extension_lapackepy, extension_phono3py],
@@ -302,7 +316,8 @@ if __name__ == '__main__':
               author_email='atz.togo@gmail.com',
               url='http://atztogo.github.io/phono3py/',
               packages=packages_phono3py,
-              requires=['numpy', 'PyYAML', 'matplotlib', 'h5py', 'phonopy'],
+              requires=['numpy', 'scipy', 'PyYAML', 'matplotlib', 'h5py',
+                        'phonopy'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
               ext_modules=[extension_lapackepy, extension_phono3py],
