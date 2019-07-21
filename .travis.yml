@@ -1,5 +1,4 @@
 language: python
-sudo: false
 dist: trusty
 
 python:
@@ -20,7 +19,7 @@ before_install:
     - conda update --yes conda
     - conda info -a
     # - conda create --yes -n travis -c conda-forge python=$TRAVIS_PYTHON_VERSION
-    - conda install -c conda-forge python=$TRAVIS_PYTHON_VERSION
+    - conda install --yes -c conda-forge python=$TRAVIS_PYTHON_VERSION
     # - conda activate travis
 
 install:
