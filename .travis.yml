@@ -16,14 +16,15 @@ before_install:
     - echo $TRAVIS_PYTHON_VERSION
     - bash miniconda.sh -b -p ${HOME}/.miniconda
     - export PATH=${HOME}/.miniconda/bin:${PATH}
+    - conda init bash
     - conda update --yes conda
     - conda info -a
-    - conda create --yes -n travis -c conda-forge python=$TRAVIS_PYTHON_VERSION
-    - conda init bash
-    - conda activate travis
+    # - conda create --yes -n travis -c conda-forge python=$TRAVIS_PYTHON_VERSION
+    - conda install -c conda-forge python=$TRAVIS_PYTHON_VERSION
+    # - conda activate travis
 
 install:
-    - conda install --yes matplotlib pyyamlliblapacke clang_osx-64 clangxx_osx-64 llvm-openmp h5py
+    - conda install --yes -c conda-forge matplotlib pyyaml liblapacke clang_osx-64 clangxx_osx-64 llvm-openmp h5py
     - echo $TRAVIS_BRANCH
     - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
         conda install --yes -c atztogo phonopy;
