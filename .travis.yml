@@ -23,7 +23,7 @@ before_install:
     # - conda activate travis
 
 install:
-    - conda install --yes -c conda-forge matplotlib pyyaml liblapacke clang_osx-64 clangxx_osx-64 llvm-openmp h5py
+    - conda install --yes -c conda-forge matplotlib pyyaml liblapacke gcc_linux-64 gxx_linux-64 h5py
     - echo $TRAVIS_BRANCH
     - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
         conda install --yes -c atztogo phonopy;
