@@ -16,13 +16,17 @@ before_install:
     - bash miniconda.sh -b -p ${HOME}/.miniconda
     - export PATH=${HOME}/.miniconda/bin:${PATH}
     - conda update --yes conda
-    - conda init bash
-    - source ${HOME}/.bashrc
-    - export C_INCLUDE_PATH=${HOME}/.miniconda/include
+    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+        conda install --yes -c conda-forge python=${TRAVIS_PYTHON_VERSION};
+        export C_INCLUDE_PATH=${HOME}/.miniconda/include;
+      else
+        conda init bash;
+        source ${HOME}/.bashrc;
+        conda create --yes -n travis -c conda-forge python=$TRAVIS_PYTHON_VERSION;
+        conda activate travis;
+        export C_INCLUDE_PATH=${CONDA_PREFIX}/.miniconda/include;
+      fi
     - conda info -a
-    # - conda create --yes -n travis -c conda-forge python=$TRAVIS_PYTHON_VERSION
-    - conda install --yes -c conda-forge python=${TRAVIS_PYTHON_VERSION}
-    # - conda activate travis
 
 install:
     - conda install --yes -c conda-forge matplotlib pyyaml liblapacke gcc_linux-64 gxx_linux-64 h5py
