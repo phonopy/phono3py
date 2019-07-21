@@ -17,11 +17,10 @@ before_install:
     - bash miniconda.sh -b -p ${HOME}/.miniconda
     - export PATH=${HOME}/.miniconda/bin:${PATH}
     - conda update --yes conda
+    - conda info -a
     - conda create --yes -n travis -c conda-forge python=$TRAVIS_PYTHON_VERSION
     - conda init bash
     - conda activate travis
-    - export C_INCLUDE_PATH=${CONDA_PREFIX}/include:${C_INCLUDE_PATH}
-    - conda info -a
 
 install:
     - conda install --yes matplotlib pyyamlliblapacke clang_osx-64 clangxx_osx-64 llvm-openmp h5py
