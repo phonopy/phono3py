@@ -39,19 +39,27 @@ from phonopy.interface.alm import extract_fc2_from_alm
 
 def get_fc3(supercell,
             primitive,
-            forces_fc3,
             disp_dataset,
             symmetry,
+            forces_fc3=None,
             alm_options=None,
             is_compact_fc=False,
             log_level=0):
-    assert supercell.get_number_of_atoms() == disp_dataset['natom']
+    _alm_options = {}
+    if alm_options is not None:
+        _alm_options.update(alm_options)
 
-    force = np.array(forces_fc3, dtype='double', order='C')
-    lattice = supercell.get_cell().T
-    positions = supercell.get_scaled_positions()
-    numbers = supercell.get_atomic_numbers()
-    disp, indices = _get_alm_disp_fc3(disp_dataset)
+    if 'first_atoms' in disp_dataset:  # Type 1
+        assert supercell.get_number_of_atoms() == disp_dataset['natom']
+        disps, indices = _get_alm_disp_fc3(disp_dataset)
+        forces = np.array(forces_fc3, dtype='double', order='C')[indices]
+        dataset = {'displacements': disps[indices],
+                   'forces': forces[indices]}
+        if 'cutoff_distance' in disp_dataset:
+            _alm_options['cutoff_distance'] = disp_dataset['cutoff_distance']
+    else:  # Type 2
+        dataset = disp_dataset
+
     if is_compact_fc:
         p2s_map = primitive.p2s_map
         p2p_map = primitive.p2p_map
@@ -66,18 +74,14 @@ def get_fc3(supercell,
         print("ALM by T. Tadano, https://github.com/ttadano/ALM")
         if log_level == 1:
             print("Use -v option to watch detailed ALM log.")
-        print("")
+        if log_level > 1:
+            print("")
         sys.stdout.flush()
 
-    _alm_options = {}
-    if alm_options is not None:
-        _alm_options.update(alm_options)
-    if 'cutoff_distance' in disp_dataset:
-        _alm_options['cutoff_distance'] = disp_dataset['cutoff_distance']
-
-    fc2, fc3 = optimize(lattice, positions, numbers,
-                        disp[indices],
-                        force[indices],
+    fc2, fc3 = optimize(supercell.cell.T,
+                        supercell.scaled_positions,
+                        supercell.numbers,
+                        dataset,
                         alm_options=_alm_options,
                         p2s_map=p2s_map,
                         p2p_map=p2p_map,
@@ -94,8 +98,7 @@ def get_fc3(supercell,
 def optimize(lattice,
              positions,
              numbers,
-             displacements,
-             forces,
+             dataset,
              alm_options=None,
              p2s_map=None,
              p2p_map=None,
@@ -111,12 +114,12 @@ def optimize(lattice,
     numbers : array_like
         Atomic numbers.
         shape=(num_atoms,), dtype='intc'
-    displacements : array_like
-        Atomic displacement patterns in supercells in Cartesian.
-        dtype='double', shape=(supercells, num_atoms, 3)
-    forces : array_like
-        Forces in supercells.
-        dtype='double', shape=(supercells, num_atoms, 3)
+    dataset : dict
+        Displacements and forces given as displacement dataset of Type 2, i.e.,
+            {'displacements': ndarray, dtype='double', order='C',
+                              shape=(supercells, atoms in supercell, 3)
+             'forces': ndarray, dtype='double',, order='C',
+                              shape=(supercells, atoms in supercell, 3)}
     alm_options : dict, optional
         Default is None.
         List of keys
@@ -139,13 +142,14 @@ def optimize(lattice,
             rcs[0] *= -1
             rcs[1] *= alm_options['cutoff_distance']
         alm.define(2, rcs)
-        alm.set_displacement_and_force(displacements, forces)
+        alm.set_displacement_and_force(
+            dataset['displacements'], dataset['forces'])
 
         if 'solver' in alm_options:
             solver = alm_options['solver']
         else:
             solver = 'SimplicialLDLT'
-        info = alm.optimize(solver=solver)
+        alm.optimize(solver=solver)
         fc2 = extract_fc2_from_alm(alm,
                                    natom,
                                    atom_list=p2s_map,
