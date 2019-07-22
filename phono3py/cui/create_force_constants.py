@@ -264,8 +264,10 @@ def _create_phono3py_fc3(phono3py,
     natom = phono3py.supercell.get_number_of_atoms()
     disp_dataset = _get_type2_dataset(natom, filename="FORCES_FC3")
     if disp_dataset:
-        disp_dataset['forces'] *= force_to_eVperA
-        disp_dataset['displacements'] *= distance_to_A
+        if force_to_eVperA is not None:
+            disp_dataset['forces'] *= force_to_eVperA
+        if distance_to_A is not None:
+            disp_dataset['displacements'] *= distance_to_A
         forces_fc3 = None
     else:
         if input_filename is None:
@@ -372,8 +374,10 @@ def _create_phono3py_fc2(phono3py,
     natom = phono3py.supercell.get_number_of_atoms()
     disp_dataset = _get_type2_dataset(natom, filename="FORCES_FC3")
     if disp_dataset:
-        disp_dataset['forces'] *= force_to_eVperA
-        disp_dataset['displacements'] *= distance_to_A
+        if force_to_eVperA is not None:
+            disp_dataset['forces'] *= force_to_eVperA
+        if distance_to_A is not None:
+            disp_dataset['displacements'] *= distance_to_A
         forces_fc2 = None
     else:
         if input_filename is None:
@@ -425,8 +429,10 @@ def _create_phono3py_phonon_fc2(phono3py,
     natom = phono3py.supercell.get_number_of_atoms()
     disp_dataset = _get_type2_dataset(natom, filename="FORCES_FC3")
     if disp_dataset:
-        disp_dataset['forces'] *= force_to_eVperA
-        disp_dataset['displacements'] *= distance_to_A
+        if force_to_eVperA is not None:
+            disp_dataset['forces'] *= force_to_eVperA
+        if distance_to_A is not None:
+            disp_dataset['displacements'] *= distance_to_A
         forces_fc2 = None
     else:
         if input_filename is None:
