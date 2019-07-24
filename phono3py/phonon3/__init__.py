@@ -320,13 +320,64 @@ class Phono3py(object):
                     symmetrize_force_constants(self._fc2)
 
     def produce_fc3(self,
-                    forces_fc3,
+                    forces_fc3=None,
                     displacement_dataset=None,
                     cutoff_distance=None,  # set fc3 zero
                     symmetrize_fc3r=False,
                     is_compact_fc=False,
                     use_alm=False,
                     alm_options=None):
+        """Calculate fc3 from displacements and forces
+
+        Parameters
+        ----------
+        forces_fc3 : ndarray or None
+            Sets of supercell forces corresponding to sets of displacements.
+            shape=(supercells, atoms in supercell, 3), dtype='double'
+            When None, displacement_dataset is assumed to be given in type 2.
+        displacement_dataset : dict
+            Displacements in supercells. There are two types of formats.
+            Type 1. Two atomic displacement in each supercell:
+                {'natom': number of atoms in supercell,
+                 'first_atoms': [
+                   {'number': atom index of first displaced atom,
+                    'displacement': displacement in Cartesian coordinates,
+                    'second_atoms': [
+                      {'number': atom index of second displaced atom,
+                       'displacement': displacement in Cartesian coordinates},
+                      ... ] }, ... ] }
+            Type 2. All atomic displacements in each supercell:
+                {'displacements': ndarray, dtype='double', order='C',
+                                  shape=(supercells, atoms in supercell, 3)
+                 'forces': ndarray, dtype='double',, order='C',
+                                  shape=(supercells, atoms in supercell, 3)}
+            In type 2, displacements and forces can be given by numpy array
+            with different shape but that can be reshaped to
+            (supercells, natom, 3).
+        cutoff_distance : float
+            After creating force constants, fc elements where any pair
+            distance in atom triplets larger than cutoff_distance are set zero.
+        symmetrize_fc3r : bool
+            Only for type 1 displacement_dataset, translational and
+            permutation symmetries are applied after creating fc3. This
+            symmetrization is not very sophisticated and can break space
+            group symmetry, but often useful. If better symmetrization is
+            expected, it is recommended to use external force constants
+            calculator such as ALM. Default is False.
+        is_compact_fc : bool
+            fc3 shape is
+                False: (supercell, supercell, supecell, 3, 3, 3)
+                True: (primitive, supercell, supecell, 3, 3, 3)
+            where 'supercell' and 'primitive' indicate number of atoms in these
+            cells. Default is False.
+        use_alm : bool
+            Use ALM instead of built-in finite difference force constants
+            calculator.
+        alm_options : dict
+            Options for ALM.
+
+        """
+
         if displacement_dataset is None:
             disp_dataset = self._displacement_dataset
         else:
@@ -336,9 +387,9 @@ class Phono3py(object):
             from phono3py.other.alm_wrapper import get_fc3 as get_fc3_alm
             fc2, fc3 = get_fc3_alm(self._supercell,
                                    self._primitive,
-                                   forces_fc3,
                                    disp_dataset,
                                    self._symmetry,
+                                   forces_fc3=forces_fc3,
                                    alm_options=alm_options,
                                    is_compact_fc=is_compact_fc,
                                    log_level=self._log_level)

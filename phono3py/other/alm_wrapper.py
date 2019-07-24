@@ -39,19 +39,27 @@ from phonopy.interface.alm import extract_fc2_from_alm
 
 def get_fc3(supercell,
             primitive,
-            forces_fc3,
             disp_dataset,
             symmetry,
+            forces_fc3=None,
             alm_options=None,
             is_compact_fc=False,
             log_level=0):
-    assert supercell.get_number_of_atoms() == disp_dataset['natom']
+    _alm_options = {}
+    if alm_options is not None:
+        _alm_options.update(alm_options)
 
-    force = np.array(forces_fc3, dtype='double', order='C')
-    lattice = supercell.get_cell().T
-    positions = supercell.get_scaled_positions()
-    numbers = supercell.get_atomic_numbers()
-    disp, indices = _get_alm_disp_fc3(disp_dataset)
+    if 'first_atoms' in disp_dataset:  # Type 1
+        assert supercell.get_number_of_atoms() == disp_dataset['natom']
+        disps, indices = _get_alm_disp_fc3(disp_dataset)
+        forces = np.array(forces_fc3, dtype='double', order='C')[indices]
+        dataset = {'displacements': disps[indices],
+                   'forces': forces[indices]}
+        if 'cutoff_distance' in disp_dataset:
+            _alm_options['cutoff_distance'] = disp_dataset['cutoff_distance']
+    else:  # Type 2
+        dataset = disp_dataset
+
     if is_compact_fc:
         p2s_map = primitive.p2s_map
         p2p_map = primitive.p2p_map
@@ -64,20 +72,20 @@ def get_fc3(supercell,
               " ALM FC3 start "
               "------------------------------")
         print("ALM by T. Tadano, https://github.com/ttadano/ALM")
+        if _alm_options:
+            print("Settings:")
+            for key in alm_options:
+                print("    %s : %s" % (key, alm_options[key]))
         if log_level == 1:
             print("Use -v option to watch detailed ALM log.")
-        print("")
+        if log_level > 1:
+            print("")
         sys.stdout.flush()
 
-    _alm_options = {}
-    if alm_options is not None:
-        _alm_options.update(alm_options)
-    if 'cutoff_distance' in disp_dataset:
-        _alm_options['cutoff_distance'] = disp_dataset['cutoff_distance']
-
-    fc2, fc3 = optimize(lattice, positions, numbers,
-                        disp[indices],
-                        force[indices],
+    fc2, fc3 = optimize(supercell.cell.T,
+                        supercell.scaled_positions,
+                        supercell.numbers,
+                        dataset,
                         alm_options=_alm_options,
                         p2s_map=p2s_map,
                         p2p_map=p2p_map,
@@ -94,8 +102,7 @@ def get_fc3(supercell,
 def optimize(lattice,
              positions,
              numbers,
-             displacements,
-             forces,
+             dataset,
              alm_options=None,
              p2s_map=None,
              p2p_map=None,
@@ -111,12 +118,12 @@ def optimize(lattice,
     numbers : array_like
         Atomic numbers.
         shape=(num_atoms,), dtype='intc'
-    displacements : array_like
-        Atomic displacement patterns in supercells in Cartesian.
-        dtype='double', shape=(supercells, num_atoms, 3)
-    forces : array_like
-        Forces in supercells.
-        dtype='double', shape=(supercells, num_atoms, 3)
+    dataset : dict
+        Displacements and forces given as displacement dataset of Type 2, i.e.,
+            {'displacements': ndarray, dtype='double', order='C',
+                              shape=(supercells, atoms in supercell, 3)
+             'forces': ndarray, dtype='double',, order='C',
+                              shape=(supercells, atoms in supercell, 3)}
     alm_options : dict, optional
         Default is None.
         List of keys
@@ -124,28 +131,78 @@ def optimize(lattice,
             solver : str
                 Either 'SimplicialLDLT' or 'dense'. Default is
                 'SimplicialLDLT'.
+            cross_validation : int
+            l1_alpha : float,
+            l1_alpha_min : float,
+            l1_alpha_max : float,
+            num_l1_alpha : int,
+            l1_ratio': float,
+            linear_model : int,
+            ndata : int,
+            output_filename_prefix : str
 
     """
 
     from alm import ALM
     with ALM(lattice, positions, numbers) as alm:
-        natom = len(numbers)
-        alm.set_verbosity(log_level)
+        options = {key.lower(): alm_options[key] for key in alm_options}
         nkd = len(np.unique(numbers))
-        if 'cutoff_distance' not in alm_options:
+        if 'cutoff_distance' not in options:
             rcs = -np.ones((2, nkd, nkd), dtype='double')
-        elif type(alm_options['cutoff_distance']) is float:
+        elif type(options['cutoff_distance']) is float:
             rcs = np.ones((2, nkd, nkd), dtype='double')
             rcs[0] *= -1
-            rcs[1] *= alm_options['cutoff_distance']
-        alm.define(2, rcs)
-        alm.set_displacement_and_force(displacements, forces)
+            rcs[1] *= options['cutoff_distance']
+            del options['cutoff_distance']
 
-        if 'solver' in alm_options:
-            solver = alm_options['solver']
+        if 'ndata' in options:
+            ndata = options['ndata']
+            del options['ndata']
+        else:
+            ndata = len(dataset['displacements'])
+
+        if 'solver' in options:
+            solver = options['solver']
+            del options['solver']
         else:
             solver = 'SimplicialLDLT'
-        info = alm.optimize(solver=solver)
+
+        if 'output_filename_prefix' in options:
+            output_filename_prefix = options['output_filename_prefix']
+            del options['output_filename_prefix']
+        else:
+            output_filename_prefix = None
+
+        if 'cross_validation' in options and options['cross_validation'] > 0:
+            if 'linear_model' not in options:
+                options['linear_model'] = 2
+            elif 'linear_model' in options and options['linear_model'] != 2:
+                options['linear_model'] = 2
+                if log_level:
+                    for key in alm_options:
+                        if key.lower() == 'linear_model':
+                            print("%s was set to 2 to run cross validation.")
+
+        alm.set_verbosity((log_level > 1) * 1)
+        if output_filename_prefix:
+            alm.set_output_filename_prefix(output_filename_prefix)
+        alm.define(2, rcs)
+        alm.set_displacement_and_force(
+            dataset['displacements'][:ndata], dataset['forces'][:ndata])
+
+        if 'linear_model' in options and options['linear_model'] == 2:
+            if 'cross_validation' in options:
+                if options['cross_validation'] > 0:
+                    alm.set_optimizer_control(options)
+                    alm.optimize(solver=solver)
+                    options['cross_validation'] = 0
+                    options['l1_alpha'] = alm.get_cv_l1_alpha()
+            alm.set_optimizer_control(options)
+            alm.optimize(solver=solver)
+        else:
+            alm.optimize(solver=solver)
+
+        natom = len(numbers)
         fc2 = extract_fc2_from_alm(alm,
                                    natom,
                                    atom_list=p2s_map,

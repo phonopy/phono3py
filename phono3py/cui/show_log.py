@@ -158,28 +158,34 @@ def show_phono3py_cells(symmetry,
     print("-" * 76)
 
 
-def show_phono3py_force_constants_settings(read_fc3,
-                                           read_fc2,
-                                           is_symmetrize_fc3_r,
-                                           is_symmetrize_fc3_q,
-                                           is_symmetrize_fc2,
-                                           settings):
+def show_phono3py_force_constants_settings(settings):
+    read_fc3 = settings.get_read_fc3()
+    read_fc2 = settings.get_read_fc2()
+    symmetrize_fc3r = (settings.get_is_symmetrize_fc3_r() or
+                       settings.get_fc_symmetry())
+    symmetrize_fc3q = settings.get_is_symmetrize_fc3_q()
+    symmetrize_fc2 = (settings.get_is_symmetrize_fc2() or
+                      settings.get_fc_symmetry())
+
     print("-" * 29 + " Force constants " + "-" * 30)
     if settings.get_use_alm_fc2() and not read_fc2:
-        print("Use ALM for getting fc2")
+        print("Use ALM for getting fc2 (independent fit of fc2)")
+    elif settings.get_use_alm() and not read_fc2:
+        print("Use ALM for getting fc2 (simultaneous fit of fc2 and fc3)")
     else:
         print("Imposing translational and index exchange symmetry to fc2: %s" %
-              is_symmetrize_fc2)
+              symmetrize_fc2)
 
-    if not (settings.get_is_isotope() or
-            settings.get_is_joint_dos()):
-        if settings.get_use_alm_fc3() and not read_fc3:
-            print("Use ALM for getting fc3")
-        else:
-            print("Imposing translational and index exchange symmetry to fc3: "
-                  "%s" % is_symmetrize_fc3_r)
-            print(("Imposing symmetry of index exchange to fc3 in reciprocal "
-                   "space: %s") % is_symmetrize_fc3_q)
+    if settings.get_is_isotope() or settings.get_is_joint_dos():
+        pass
+    elif (settings.get_use_alm_fc3() or
+          settings.get_use_alm()) and not read_fc3:
+        print("Use ALM for getting fc3")
+    else:
+        print("Imposing translational and index exchange symmetry to fc3: "
+              "%s" % symmetrize_fc3r)
+        print(("Imposing symmetry of index exchange to fc3 in reciprocal "
+               "space: %s") % symmetrize_fc3q)
 
     if settings.get_cutoff_fc3_distance() is not None:
         print("FC3 cutoff distance: %s" % settings.get_cutoff_fc3_distance())

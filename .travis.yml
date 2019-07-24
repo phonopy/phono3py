@@ -29,7 +29,7 @@ before_install:
     - conda info -a
 
 install:
-    - conda install --yes -c conda-forge matplotlib pyyaml liblapacke gcc_linux-64 gxx_linux-64 h5py
+    - conda install --yes -c conda-forge matplotlib pyyaml liblapacke gcc_linux-64 gxx_linux-64 h5py scipy
     - echo $TRAVIS_BRANCH
     - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
         conda install --yes -c atztogo phonopy;
