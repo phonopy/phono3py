@@ -78,14 +78,23 @@ def create_phono3py_force_constants(phono3py,
         settings.get_use_alm_fc2() or
         settings.get_use_alm()):
         if settings.get_alm_options() is not None:
-            alm_option_types = {'solver': str,
-                                'cutoff_distance': float}
             alm_options = {}
+            alm_option_types = {'solver': str,
+                                'cutoff_distance': float,
+                                'cross_validation': int,
+                                'l1_alpha': float,
+                                'l1_alpha_min': float,
+                                'l1_alpha_max': float,
+                                'num_l1_alpha': int,
+                                'l1_ratio': float,
+                                'linear_model': int,
+                                'ndata': int,
+                                'output_filename_prefix': str}
             for option_str in settings.get_alm_options().split(","):
                 key, val = [x.strip() for x in option_str.split('=')[:2]]
                 if key.lower() in alm_option_types:
                     option_value = alm_option_types[key.lower()](val)
-                    alm_options[key.lower()] = option_value
+                    alm_options[key] = option_value
 
     if log_level:
         show_phono3py_force_constants_settings(settings)

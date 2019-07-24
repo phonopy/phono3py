@@ -72,6 +72,10 @@ def get_fc3(supercell,
               " ALM FC3 start "
               "------------------------------")
         print("ALM by T. Tadano, https://github.com/ttadano/ALM")
+        if _alm_options:
+            print("Settings:")
+            for key in alm_options:
+                print("    %s : %s" % (key, alm_options[key]))
         if log_level == 1:
             print("Use -v option to watch detailed ALM log.")
         if log_level > 1:
@@ -127,29 +131,78 @@ def optimize(lattice,
             solver : str
                 Either 'SimplicialLDLT' or 'dense'. Default is
                 'SimplicialLDLT'.
+            cross_validation : int
+            l1_alpha : float,
+            l1_alpha_min : float,
+            l1_alpha_max : float,
+            num_l1_alpha : int,
+            l1_ratio': float,
+            linear_model : int,
+            ndata : int,
+            output_filename_prefix : str
 
     """
 
     from alm import ALM
     with ALM(lattice, positions, numbers) as alm:
-        natom = len(numbers)
-        alm.set_verbosity((log_level > 1) * 1)
+        options = {key.lower(): alm_options[key] for key in alm_options}
         nkd = len(np.unique(numbers))
-        if 'cutoff_distance' not in alm_options:
+        if 'cutoff_distance' not in options:
             rcs = -np.ones((2, nkd, nkd), dtype='double')
-        elif type(alm_options['cutoff_distance']) is float:
+        elif type(options['cutoff_distance']) is float:
             rcs = np.ones((2, nkd, nkd), dtype='double')
             rcs[0] *= -1
-            rcs[1] *= alm_options['cutoff_distance']
-        alm.define(2, rcs)
-        alm.set_displacement_and_force(
-            dataset['displacements'], dataset['forces'])
+            rcs[1] *= options['cutoff_distance']
+            del options['cutoff_distance']
 
-        if 'solver' in alm_options:
-            solver = alm_options['solver']
+        if 'ndata' in options:
+            ndata = options['ndata']
+            del options['ndata']
+        else:
+            ndata = len(dataset['displacements'])
+
+        if 'solver' in options:
+            solver = options['solver']
+            del options['solver']
         else:
             solver = 'SimplicialLDLT'
-        alm.optimize(solver=solver)
+
+        if 'output_filename_prefix' in options:
+            output_filename_prefix = options['output_filename_prefix']
+            del options['output_filename_prefix']
+        else:
+            output_filename_prefix = None
+
+        if 'cross_validation' in options and options['cross_validation'] > 0:
+            if 'linear_model' not in options:
+                options['linear_model'] = 2
+            elif 'linear_model' in options and options['linear_model'] != 2:
+                options['linear_model'] = 2
+                if log_level:
+                    for key in alm_options:
+                        if key.lower() == 'linear_model':
+                            print("%s was set to 2 to run cross validation.")
+
+        alm.set_verbosity((log_level > 1) * 1)
+        if output_filename_prefix:
+            alm.set_output_filename_prefix(output_filename_prefix)
+        alm.define(2, rcs)
+        alm.set_displacement_and_force(
+            dataset['displacements'][:ndata], dataset['forces'][:ndata])
+
+        if 'linear_model' in options and options['linear_model'] == 2:
+            if 'cross_validation' in options:
+                if options['cross_validation'] > 0:
+                    alm.set_optimizer_control(options)
+                    alm.optimize(solver=solver)
+                    options['cross_validation'] = 0
+                    options['l1_alpha'] = alm.get_cv_l1_alpha()
+            alm.set_optimizer_control(options)
+            alm.optimize(solver=solver)
+        else:
+            alm.optimize(solver=solver)
+
+        natom = len(numbers)
         fc2 = extract_fc2_from_alm(alm,
                                    natom,
                                    atom_list=p2s_map,
