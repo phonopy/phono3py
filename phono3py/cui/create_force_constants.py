@@ -435,7 +435,7 @@ def _create_phono3py_phonon_fc2(phono3py,
                                 alm_options,
                                 log_level):
     file_exists("FORCES_FC2", log_level)
-    natom = phono3py.supercell.get_number_of_atoms()
+    natom = phono3py.phonon_supercell.get_number_of_atoms()
     disp_dataset = _get_type2_dataset(natom, filename="FORCES_FC3")
     if disp_dataset:
         if force_to_eVperA is not None:
