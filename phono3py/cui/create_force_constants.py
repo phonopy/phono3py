@@ -81,6 +81,7 @@ def create_phono3py_force_constants(phono3py,
             alm_options = {}
             alm_option_types = {'solver': str,
                                 'cutoff_distance': float,
+                                'debiase_after_l1opt': int,
                                 'cross_validation': int,
                                 'l1_alpha': float,
                                 'l1_alpha_min': float,

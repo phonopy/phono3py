@@ -75,7 +75,7 @@ def get_fc3(supercell,
         if _alm_options:
             print("Settings:")
             for key in alm_options:
-                print("    %s : %s" % (key, alm_options[key]))
+                print("  %s: %s" % (key, alm_options[key]))
         if log_level == 1:
             print("Use -v option to watch detailed ALM log.")
         if log_level > 1:
@@ -131,6 +131,7 @@ def optimize(lattice,
             solver : str
                 Either 'SimplicialLDLT' or 'dense'. Default is
                 'SimplicialLDLT'.
+            debiase_after_l1opt : int
             cross_validation : int
             l1_alpha : float,
             l1_alpha_min : float,
