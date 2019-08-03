@@ -248,7 +248,8 @@ scripts_phono3py = ['scripts/phono3py',
 ########################
 # _lapackepy extension #
 ########################
-include_dirs_lapackepy = ['c/harmonic_h',] + include_dirs_numpy
+include_dirs_lapackepy = (['c/harmonic_h',] + include_dirs_numpy
+                          + include_dirs_lapacke)
 sources_lapackepy = ['c/_lapackepy.c',
                      'c/harmonic/dynmat.c',
                      'c/harmonic/phonon.c',
@@ -259,7 +260,7 @@ extension_lapackepy = Extension(
     'phono3py._lapackepy',
     extra_compile_args=extra_compile_args,
     extra_link_args=extra_link_args,
-    include_dirs=(include_dirs_lapackepy + include_dirs_lapacke),
+    include_dirs=include_dirs_lapackepy,
     sources=sources_lapackepy)
 
 if __name__ == '__main__':
