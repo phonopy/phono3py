@@ -1268,15 +1268,19 @@ def parse_FORCES_FC2(disp_dataset, filename="FORCES_FC2"):
     return forces_fc2
 
 
-def parse_FORCES_FC3(disp_dataset, filename="FORCES_FC3", use_loadtxt=False):
+def parse_FORCES_FC3(disp_dataset,
+                     filename="FORCES_FC3",
+                     use_loadtxt=False,
+                     unit_conversion_factor=None):
+    """Parse type1 FORCES_FC3 and store forces in disp_dataset"""
+
     num_atom = disp_dataset['natom']
     num_disp = len(disp_dataset['first_atoms'])
     for disp1 in disp_dataset['first_atoms']:
         num_disp += len(disp1['second_atoms'])
 
     if use_loadtxt:
-        forces_fc3 = np.loadtxt(filename)
-        return forces_fc3.reshape((num_disp, -1, 3))
+        forces_fc3 = np.loadtxt(filename).reshape((num_disp, -1, 3))
     else:
         forces_fc3 = np.zeros((num_disp, num_atom, 3),
                               dtype='double', order='C')
@@ -1287,7 +1291,19 @@ def parse_FORCES_FC3(disp_dataset, filename="FORCES_FC3", use_loadtxt=False):
                     raise RuntimeError("Failed to parse %s." % filename)
                 else:
                     forces_fc3[i] = forces
-        return forces_fc3
+
+    if unit_conversion_factor is not None:
+        forces_fc3 *= unit_conversion_factor
+
+    i = 0
+    for disp1 in disp_dataset['first_atoms']:
+        disp1['forces'] = forces_fc3[i]
+        i += 1
+
+    for disp1 in disp_dataset['first_atoms']:
+        for disp2 in disp1['second_atoms']:
+            disp2['forces'] = forces_fc3[i]
+            i += 1
 
 
 def parse_QPOINTS3(filename='QPOINTS3'):

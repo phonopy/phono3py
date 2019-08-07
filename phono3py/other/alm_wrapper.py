@@ -39,26 +39,16 @@ from phonopy.interface.alm import extract_fc2_from_alm
 
 def get_fc3(supercell,
             primitive,
-            disp_dataset,
             symmetry,
-            forces_fc3=None,
-            alm_options=None,
+            displacements,
+            forces,
+            fc_calculator=None,
+            fc_calculator_options=None,
             is_compact_fc=False,
             log_level=0):
     _alm_options = {}
-    if alm_options is not None:
-        _alm_options.update(alm_options)
-
-    if 'first_atoms' in disp_dataset:  # Type 1
-        assert supercell.get_number_of_atoms() == disp_dataset['natom']
-        disps, indices = _get_alm_disp_fc3(disp_dataset)
-        forces = np.array(forces_fc3, dtype='double', order='C')[indices]
-        dataset = {'displacements': disps[indices],
-                   'forces': forces[indices]}
-        if 'cutoff_distance' in disp_dataset:
-            _alm_options['cutoff_distance'] = disp_dataset['cutoff_distance']
-    else:  # Type 2
-        dataset = disp_dataset
+    if fc_calculator_options is not None:
+        _alm_options.update(fc_calculator_options)
 
     if is_compact_fc:
         p2s_map = primitive.p2s_map
@@ -74,8 +64,8 @@ def get_fc3(supercell,
         print("ALM by T. Tadano, https://github.com/ttadano/ALM")
         if _alm_options:
             print("Settings:")
-            for key in alm_options:
-                print("  %s: %s" % (key, alm_options[key]))
+            for key, value in _alm_options.items():
+                print("  %s: %s" % (key, value))
         if log_level == 1:
             print("Use -v option to watch detailed ALM log.")
         if log_level > 1:
@@ -85,7 +75,8 @@ def get_fc3(supercell,
     fc2, fc3 = optimize(supercell.cell.T,
                         supercell.scaled_positions,
                         supercell.numbers,
-                        dataset,
+                        displacements,
+                        forces,
                         alm_options=_alm_options,
                         p2s_map=p2s_map,
                         p2p_map=p2p_map,
@@ -102,7 +93,8 @@ def get_fc3(supercell,
 def optimize(lattice,
              positions,
              numbers,
-             dataset,
+             displacements,
+             forces,
              alm_options=None,
              p2s_map=None,
              p2p_map=None,
@@ -118,12 +110,14 @@ def optimize(lattice,
     numbers : array_like
         Atomic numbers.
         shape=(num_atoms,), dtype='intc'
-    dataset : dict
-        Displacements and forces given as displacement dataset of Type 2, i.e.,
-            {'displacements': ndarray, dtype='double', order='C',
-                              shape=(supercells, atoms in supercell, 3)
-             'forces': ndarray, dtype='double',, order='C',
-                              shape=(supercells, atoms in supercell, 3)}
+    displacements: ndarray
+        Displacemetns of all atoms in supercells.
+        shape=(supercells, atoms in supercell, 3)
+        dtype='double', order='C',
+    forces: ndarray
+        Forces of all atoms in supercells.
+        shape=(supercells, atoms in supercell, 3)}
+        dtype='double', order='C'
     alm_options : dict, optional
         Default is None.
         List of keys
@@ -160,7 +154,7 @@ def optimize(lattice,
             ndata = options['ndata']
             del options['ndata']
         else:
-            ndata = len(dataset['displacements'])
+            ndata = len(displacements)
 
         if 'solver' in options:
             solver = options['solver']
@@ -188,8 +182,7 @@ def optimize(lattice,
         if output_filename_prefix:
             alm.set_output_filename_prefix(output_filename_prefix)
         alm.define(2, rcs)
-        alm.set_displacement_and_force(
-            dataset['displacements'][:ndata], dataset['forces'][:ndata])
+        alm.set_displacement_and_force(displacements[:ndata], forces[:ndata])
 
         if 'linear_model' in options and options['linear_model'] == 2:
             if 'cross_validation' in options:
@@ -243,8 +236,8 @@ def _extract_fc3_from_alm(alm,
     return fc3
 
 
-def _get_alm_disp_fc3(disp_dataset):
-    """Create displacements of atoms for ALM input
+def get_displacements_and_forces_fc3(disp_dataset):
+    """Returns displacements and forces from disp_dataset
 
     Note
     ----
@@ -271,27 +264,35 @@ def _get_alm_disp_fc3(disp_dataset):
 
     """
 
-    natom = disp_dataset['natom']
-    ndisp = len(disp_dataset['first_atoms'])
-    for disp1 in disp_dataset['first_atoms']:
-        ndisp += len(disp1['second_atoms'])
-    disp = np.zeros((ndisp, natom, 3), dtype='double', order='C')
-    indices = []
-    count = 0
-    for disp1 in disp_dataset['first_atoms']:
-        indices.append(count)
-        disp[count, disp1['number']] = disp1['displacement']
-        count += 1
-
-    for disp1 in disp_dataset['first_atoms']:
-        for disp2 in disp1['second_atoms']:
-            if 'included' in disp2:
-                if disp2['included']:
-                    indices.append(count)
-            else:
-                indices.append(count)
-            disp[count, disp1['number']] = disp1['displacement']
-            disp[count, disp2['number']] = disp2['displacement']
+    if 'first_atoms' in disp_dataset:
+        natom = disp_dataset['natom']
+        ndisp = len(disp_dataset['first_atoms'])
+        for disp1 in disp_dataset['first_atoms']:
+            ndisp += len(disp1['second_atoms'])
+        displacements = np.zeros((ndisp, natom, 3), dtype='double', order='C')
+        forces = np.zeros_like(displacements)
+        indices = []
+        count = 0
+        for disp1 in disp_dataset['first_atoms']:
+            indices.append(count)
+            displacements[count, disp1['number']] = disp1['displacement']
+            forces[count] = disp1['forces']
             count += 1
 
-    return disp, indices
+        for disp1 in disp_dataset['first_atoms']:
+            for disp2 in disp1['second_atoms']:
+                if 'included' in disp2:
+                    if disp2['included']:
+                        indices.append(count)
+                else:
+                    indices.append(count)
+                displacements[count, disp1['number']] = disp1['displacement']
+                displacements[count, disp2['number']] = disp2['displacement']
+                forces[count] = disp2['forces']
+                count += 1
+        return (np.array(displacements[indices], dtype='double', order='C'),
+                np.array(forces[indices], dtype='double', order='C'))
+    elif 'forces' in disp_dataset and 'displacements' in disp_dataset:
+        return disp_dataset['displacemens'], disp_dataset['forces']
+    else:
+        raise RuntimeError("disp_dataset doesn't contain correct information.")

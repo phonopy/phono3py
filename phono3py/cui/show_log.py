@@ -168,18 +168,15 @@ def show_phono3py_force_constants_settings(settings):
                       settings.get_fc_symmetry())
 
     print("-" * 29 + " Force constants " + "-" * 30)
-    if settings.get_use_alm_fc2() and not read_fc2:
-        print("Use ALM for getting fc2 (independent fit of fc2)")
-    elif settings.get_use_alm() and not read_fc2:
-        print("Use ALM for getting fc2 (simultaneous fit of fc2 and fc3)")
+    if settings.get_fc_calculator() == 'alm' and not read_fc2:
+        print("Use ALM for getting fc2 (simultaneous fit to fc2 and fc3)")
     else:
         print("Imposing translational and index exchange symmetry to fc2: %s" %
               symmetrize_fc2)
 
     if settings.get_is_isotope() or settings.get_is_joint_dos():
         pass
-    elif (settings.get_use_alm_fc3() or
-          settings.get_use_alm()) and not read_fc3:
+    elif settings.get_fc_calculator() == 'alm' and not read_fc3:
         print("Use ALM for getting fc3")
     else:
         print("Imposing translational and index exchange symmetry to fc3: "

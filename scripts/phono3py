@@ -40,8 +40,8 @@ from phonopy.file_IO import (get_born_parameters, write_FORCE_SETS,
                              parse_FORCE_SETS)
 from phonopy.units import VaspToTHz, Bohr, Rydberg, Hartree
 from phonopy.cui.collect_cell_info import collect_cell_info
-from phonopy.interface import (get_force_sets,
-                               get_default_physical_units, get_interface_mode)
+from phonopy.interface.calculator import (
+    get_force_sets, get_default_physical_units, get_interface_mode)
 from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phonopy.phonon.band_structure import get_band_qpoints
 from phono3py.version import __version__

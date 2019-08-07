@@ -1,16 +1,18 @@
 import sys
 import logging
 import numpy as np
-from phonopy.harmonic.force_constants import (get_fc2,
-                                              similarity_transformation,
-                                              distribute_force_constants,
-                                              solve_force_constants,
-                                              get_rotated_displacement,
-                                              get_positions_sent_by_rot_inv,
-                                              get_nsym_list_and_s2pp)
-from phono3py.phonon3.displacement_fc3 import (get_reduced_site_symmetry,
-                                               get_bond_symmetry,
-                                               get_equivalent_smallest_vectors)
+from phonopy.harmonic.force_constants import (
+    get_fc2,
+    similarity_transformation,
+    distribute_force_constants,
+    solve_force_constants,
+    get_rotated_displacement,
+    get_positions_sent_by_rot_inv,
+    get_nsym_list_and_s2pp)
+from phono3py.phonon3.displacement_fc3 import (
+    get_reduced_site_symmetry,
+    get_bond_symmetry,
+    get_equivalent_smallest_vectors)
 from phonopy.structure.cells import compute_all_sg_permutations
 
 logger = logging.getLogger(__name__)
