@@ -1254,7 +1254,9 @@ def parse_disp_fc3_yaml(filename="disp_fc3.yaml", return_cell=False):
         return new_dataset
 
 
-def parse_FORCES_FC2(disp_dataset, filename="FORCES_FC2"):
+def parse_FORCES_FC2(disp_dataset,
+                     filename="FORCES_FC2",
+                     unit_conversion_factor=None):
     num_atom = disp_dataset['natom']
     num_disp = len(disp_dataset['first_atoms'])
     forces_fc2 = []
@@ -1265,7 +1267,12 @@ def parse_FORCES_FC2(disp_dataset, filename="FORCES_FC2"):
                 return []
             else:
                 forces_fc2.append(forces)
-    return forces_fc2
+
+    for i, disp1 in enumerate(disp_dataset['first_atoms']):
+        if unit_conversion_factor is not None:
+            disp1['forces'] = forces_fc2[i] * unit_conversion_factor
+        else:
+            disp1['forces'] = forces_fc2[i]
 
 
 def parse_FORCES_FC3(disp_dataset,

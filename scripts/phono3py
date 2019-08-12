@@ -357,13 +357,11 @@ if args.force_sets_mode:
         file_exists(disp_filename, log_level)
         disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
         file_exists(forces_filename, log_level)
-        forces = parse_FORCES_FC2(disp_dataset, filename=forces_filename)
+        parse_FORCES_FC2(disp_dataset, filename=forces_filename)
 
         if log_level:
             print("Displacement dataset is read from %s." % disp_filename)
 
-        for force_set, disp1 in zip(forces, disp_dataset['first_atoms']):
-            disp1['forces'] = force_set
         write_FORCE_SETS(disp_dataset)
 
         if log_level:

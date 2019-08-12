@@ -67,21 +67,6 @@ def create_phono3py_force_constants(phono3py,
         symmetrize_fc2 = False
         symmetrize_fc3r = False
 
-    if settings.get_fc_calculator() == 'alm':
-        fc_calculator_options = None
-        if settings.get_fc_calculator_options() is not None:
-            from alm import optimizer_control_data_types
-            fc_calculator_options = {}
-            alm_option_types = {'cutoff_distance': float,
-                                'ndata': int,
-                                'output_filename_prefix': str}
-            alm_option_types.update(optimizer_control_data_types)
-            for option_str in settings.get_fc_calculator_options().split(","):
-                key, val = [x.strip() for x in option_str.split('=')[:2]]
-                if key.lower() in alm_option_types:
-                    option_value = alm_option_types[key.lower()](val)
-                    fc_calculator_options[key] = option_value
-
     if log_level:
         show_phono3py_force_constants_settings(settings)
 
@@ -114,7 +99,7 @@ def create_phono3py_force_constants(phono3py,
                     settings.get_is_compact_fc(),
                     settings.get_cutoff_pair_distance(),
                     settings.get_fc_calculator(),
-                    fc_calculator_options,
+                    settings.get_fc_calculator_options(),
                     compression,
                     log_level):
 
@@ -148,33 +133,35 @@ def create_phono3py_force_constants(phono3py,
         if phonon_supercell_matrix is None:
             if settings.get_fc_calculator() == 'alm':
                 pass
-            elif not _create_phono3py_fc2(phono3py,
-                                          force_to_eVperA,
-                                          distance_to_A,
-                                          symmetrize_fc2,
-                                          input_filename,
-                                          settings.get_is_compact_fc(),
-                                          settings.get_fc_calculator(),
-                                          fc_calculator_options,
-                                          log_level):
+            elif not _create_phono3py_fc2(
+                    phono3py,
+                    force_to_eVperA,
+                    distance_to_A,
+                    symmetrize_fc2,
+                    input_filename,
+                    settings.get_is_compact_fc(),
+                    settings.get_fc_calculator(),
+                    settings.get_fc_calculator_options(),
+                    log_level):
                 print("fc2 was not created properly.")
                 if log_level:
                     print_error()
                 sys.exit(1)
         else:
-            if not _create_phono3py_phonon_fc2(phono3py,
-                                               force_to_eVperA,
-                                               distance_to_A,
-                                               symmetrize_fc2,
-                                               input_filename,
-                                               settings.get_is_compact_fc(),
-                                               settings.get_fc_calculator(),
-                                               fc_calculator_options,
-                                               log_level):
-                    print("fc2 was not created properly.")
-                    if log_level:
-                        print_error()
-                    sys.exit(1)
+            if not _create_phono3py_phonon_fc2(
+                    phono3py,
+                    force_to_eVperA,
+                    distance_to_A,
+                    symmetrize_fc2,
+                    input_filename,
+                    settings.get_is_compact_fc(),
+                    settings.get_fc_calculator(),
+                    settings.get_fc_calculator_options(),
+                    log_level):
+                print("fc2 was not created properly.")
+                if log_level:
+                    print_error()
+                sys.exit(1)
         if output_filename is None:
             filename = 'fc2.hdf5'
         else:
@@ -391,14 +378,12 @@ def _create_phono3py_fc2(phono3py,
         if log_level:
             print("Sets of supercell forces are read from %s." % "FORCES_FC3")
 
-        forces_fc2 = parse_FORCES_FC2(disp_dataset, filename="FORCES_FC3")
-        if not forces_fc2:
-            return False
-
-        _convert_force_unit(forces_fc2, force_to_eVperA)
+        # forces are stored in disp_dataset.
+        parse_FORCES_FC2(disp_dataset,
+                         filename="FORCES_FC3",
+                         unit_conversion_factor=force_to_eVperA)
 
     phono3py.produce_fc2(
-        forces_fc2,
         displacement_dataset=disp_dataset,
         symmetrize_fc2=symmetrize_fc2,
         is_compact_fc=is_compact_fc,
@@ -425,7 +410,6 @@ def _create_phono3py_phonon_fc2(phono3py,
             disp_dataset['forces'] *= force_to_eVperA
         if distance_to_A is not None:
             disp_dataset['displacements'] *= distance_to_A
-        forces_fc2 = None
     else:
         if input_filename is None:
             filename = 'disp_fc2.yaml'
@@ -446,14 +430,11 @@ def _create_phono3py_phonon_fc2(phono3py,
         if log_level:
             print("Sets of supercell forces are read from %s." % "FORCES_FC2")
 
-        forces_fc2 = parse_FORCES_FC2(disp_dataset)
-        if not forces_fc2:
-            return False
-
-        _convert_force_unit(forces_fc2, force_to_eVperA)
+        # forces are stored in disp_dataset.
+        parse_FORCES_FC2(disp_dataset,
+                         unit_conversion_factor=force_to_eVperA)
 
     phono3py.produce_fc2(
-        forces_fc2,
         displacement_dataset=disp_dataset,
         symmetrize_fc2=symmetrize_fc2,
         is_compact_fc=is_compact_fc,
@@ -461,13 +442,6 @@ def _create_phono3py_phonon_fc2(phono3py,
         fc_calculator_options=fc_calculator_options)
 
     return True
-
-
-def _convert_force_unit(force_sets, force_to_eVperA):
-    if force_to_eVperA is not None:
-        for forces in force_sets:
-            if forces is not None:
-                forces *= force_to_eVperA
 
 
 def _convert_displacement_unit(disp_dataset, distance_to_A, is_fc2=False):

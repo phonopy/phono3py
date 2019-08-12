@@ -193,7 +193,7 @@ class Phono3py(object):
                 for disp2 in dataset['second_atoms']:
                     displacements[i, disp2['number']] = disp2['displacement']
                     i += 1
-        elif 'displacements' in self._displacement_dataset:
+        elif 'forces' in dataset or 'displacements' in dataset:
             displacements = dataset['displacements']
         else:
             raise RuntimeError("displacement dataset has wrong format.")
@@ -215,16 +215,16 @@ class Phono3py(object):
 
         """
 
+        dataset = self._displacement_dataset
         disps = np.array(displacements, dtype='double', order='C')
-        if (disps.ndim != 3 or
-            disps.shape[1:] != (self._supercell.get_number_of_atoms(), 3)):
+        natom = self._supercell.get_number_of_atoms()
+        if (disps.ndim != 3 or disps.shape[1:] != (natom, 3)):
             raise RuntimeError("Array shape of displacements is incorrect.")
 
-        if 'first_atoms' in self._displacement_dataset:
-            self._displacement_dataset = {'displacements': disps}
-        elif ('displacements' in self._displacement_dataset or
-              'forces' in self._displacement_dataset):
-            self._displacement_dataset['displacements'] = disps
+        if 'first_atoms' in dataset:
+            dataset = {'displacements': disps}
+        elif 'displacements' in dataset or 'forces' in dataset:
+            dataset['displacements'] = disps
 
     @property
     def forces(self):
@@ -265,17 +265,140 @@ class Phono3py(object):
         """
 
         forces = np.array(forces_fc3, dtype='double', order='C')
-        if 'first_atoms' in self._displacement_dataset:
+        dataset = self._displacement_dataset
+        if 'first_atoms' in dataset:
             i = 0
-            for disp1 in self._displacement_dataset['first_atoms']:
+            for disp1 in dataset['first_atoms']:
                 disp1['forces'] = forces[i]
                 i += 1
-            for disp1 in self._displacement_dataset['first_atoms']:
+            for disp1 in dataset['first_atoms']:
                 for disp2 in disp1['second_atoms']:
                     disp2['forces'] = forces[i]
                     i += 1
-        elif 'forces' in self._displacement_dataset:
-            self._displacement_dataset['forces'] = forces
+        elif 'displacements' in dataset or 'forces' in dataset:
+            dataset['forces'] = forces
+
+    @property
+    def phonon_displacements(self):
+        """Return displacements for harmonic phonons
+
+        Returns
+        -------
+        displacements : ndarray
+            Displacements of all atoms of all supercells in Cartesian
+            coordinates.
+            shape=(supercells, natom, 3), dtype='double', order='C'
+
+        """
+
+        if self._phonon_displacement_dataset is None:
+            raise RuntimeError("phonon_displacement_dataset does not exist.")
+
+        dataset = self._phonon_displacement_dataset
+        if 'first_atoms' in dataset:
+            num_scells = len(dataset['first_atoms'])
+            natom = self._phonon_supercells.get_number_of_atoms()
+            displacements = np.zeros(
+                (num_scells, natom, 3), dtype='double', order='C')
+            for i, disp1 in enumerate(dataset['first_atoms']):
+                displacements[i, disp1['number']] = disp1['displacement']
+        elif 'forces' in dataset or 'displacements' in dataset:
+            displacements = dataset['displacements']
+        else:
+            raise RuntimeError("displacement dataset has wrong format.")
+
+        return displacements
+
+    @phonon_displacements.setter
+    def phonno_displacements(self, displacements):
+        """Set displacemens
+
+        Parameters
+        ----------
+        displacemens : array_like
+            Atomic displacements of all atoms of all supercells.
+            Only type2 displacement dataset is supported, i.e., displacements
+            has to have the array shape of (supercells, natom, 3).
+            When displacement dataset is in type1, the type2 dataset is created
+            and force information is lost.
+
+        """
+
+        if self._phonon_displacement_dataset is None:
+            raise RuntimeError("phonon_displacement_dataset does not exist.")
+
+        dataset = self._phonon_displacement_dataset
+        disps = np.array(displacements, dtype='double', order='C')
+        natom = self._phonon_supercell.get_number_of_atoms()
+        if (disps.ndim != 3 or disps.shape[1:] != (natom, 3)):
+            raise RuntimeError("Array shape of displacements is incorrect.")
+
+        if 'first_atoms' in dataset:
+            dataset = {'displacements': disps}
+        elif 'displacements' in dataset or 'forces' in dataset:
+            dataset['displacements'] = disps
+
+    @property
+    def phonon_forces(self):
+        if self._phonon_displacement_dataset is None:
+            raise RuntimeError("phonon_displacement_dataset does not exist.")
+
+        dataset = self._phonon_displacement_dataset
+        if 'forces' in dataset:
+            return dataset['forces']
+        elif 'first_atoms' in dataset:
+            num_scells = len(dataset['first_atoms'])
+            forces = np.zeros(
+                (num_scells, self._supercells.get_number_of_atoms(), 3),
+                dtype='double', order='C')
+            for i, disp1 in enumerate(dataset['first_atoms']):
+                forces[i] = disp1['forces']
+            return forces
+        else:
+            raise RuntimeError("displacement dataset has wrong format.")
+
+    @phonon_forces.setter
+    def phonon_forces(self, forces_fc2):
+        """Set forces in displacement dataset.
+
+        Parameters
+        ----------
+        forces_fc2 : array_like
+            A set of atomic forces in displaced supercells. The order of
+            displaced supercells has to match with that in displacement
+            dataset.
+            shape=(displaced supercells, atoms in supercell, 3)
+
+        """
+
+        if self._phonon_displacement_dataset is None:
+            raise RuntimeError("phonon_displacement_dataset does not exist.")
+
+        forces = np.array(forces_fc2, dtype='double', order='C')
+        dataset = self._phonon_displacement_dataset
+        if 'first_atoms' in dataset:
+            i = 0
+            for i, disp1 in enumerate(dataset['first_atoms']):
+                disp1['forces'] = forces[i]
+                i += 1
+        elif 'displacements' in dataset or 'forces' in dataset:
+            dataset['forces'] = forces
+
+    @property
+    def dataset(self):
+        return self._displacement_dataset
+
+    @dataset.setter
+    def dataset(self, dataset):
+        self._displacement_dataset = dataset
+
+    @property
+    def phonon_dataset(self):
+        return self._phonon_displacement_dataset
+
+    @phonon_dataset.setter
+    def phonon_dataset(self, dataset):
+        self._phonon_displacement_dataset = dataset
 
     def set_band_indices(self, band_indices):
         if band_indices is None:
@@ -324,9 +447,8 @@ class Phono3py(object):
 
     def set_phonon_data(self, frequencies, eigenvectors, grid_address):
         if self._interaction is not None:
-            return self._interaction.set_phonon_data(frequencies,
-                                                     eigenvectors,
-                                                     grid_address)
+            return self._interaction.set_phonon_data(
+                frequencies, eigenvectors, grid_address)
         else:
             return False
 
@@ -395,12 +517,59 @@ class Phono3py(object):
                 self._phonon_supercell)
 
     def produce_fc2(self,
-                    forces_fc2,
+                    forces_fc2=None,
                     displacement_dataset=None,
                     symmetrize_fc2=False,
                     is_compact_fc=False,
                     fc_calculator=None,
                     fc_calculator_options=None):
+        """Calculate fc2 from displacements and forces
+
+        Parameters
+        ----------
+        forces_fc2 :
+            Dummy argument
+        displacement_dataset : dict
+            Displacements in supercells. There are two types of formats.
+            Type 1. Two atomic displacement in each supercell:
+                {'natom': number of atoms in supercell,
+                 'first_atoms': [
+                   {'number': atom index of first displaced atom,
+                    'displacement': displacement in Cartesian coordinates,
+                    'forces': forces on atoms in supercell,
+                    'second_atoms': [
+                      {'number': atom index of second displaced atom,
+                       'displacement': displacement in Cartesian coordinates},
+                       'forces': forces on atoms in supercell,
+                      ... ] }, ... ] }
+            Type 2. All atomic displacements in each supercell:
+                {'displacements': ndarray, dtype='double', order='C',
+                                  shape=(supercells, atoms in supercell, 3)
+                 'forces': ndarray, dtype='double',, order='C',
+                                  shape=(supercells, atoms in supercell, 3)}
+            In type 2, displacements and forces can be given by numpy array
+            with different shape but that can be reshaped to
+            (supercells, natom, 3).
+        symmetrize_fc2 : bool
+            Only for type 1 displacement_dataset, translational and
+            permutation symmetries are applied after creating fc3. This
+            symmetrization is not very sophisticated and can break space
+            group symmetry, but often useful. If better symmetrization is
+            expected, it is recommended to use external force constants
+            calculator such as ALM. Default is False.
+        is_compact_fc : bool
+            fc2 shape is
+                False: (supercell, supecell, 3, 3)
+                True: (primitive, supecell, 3, 3)
+            where 'supercell' and 'primitive' indicate number of atoms in these
+            cells. Default is False.
+        fc_calculator : str or None
+            Force constants calculator given by str.
+        fc_calculator_options : dict
+            Options for external force constants calculator.
+
+        """
+
         if displacement_dataset is None:
             if self._phonon_displacement_dataset is None:
                 disp_dataset = self._displacement_dataset
@@ -409,8 +578,11 @@ class Phono3py(object):
         else:
             disp_dataset = displacement_dataset
 
-        for forces, disp1 in zip(forces_fc2, disp_dataset['first_atoms']):
-            disp1['forces'] = forces
+        if forces_fc2 is not None:
+            self.phonon_forces = forces_fc2
+            msg = ("Forces have to be stored in disp_dataset as written in "
+                   "this method's docstring for the type1 dataset.")
+            warnings.warn(msg, DeprecationWarning)
 
         if is_compact_fc:
             p2s_map = self._phonon_primitive.p2s_map
@@ -424,7 +596,7 @@ class Phono3py(object):
                                 disps,
                                 forces,
                                 fc_calculator=fc_calculator,
-                                fc_options=fc_calculator_options,
+                                fc_calculator_options=fc_calculator_options,
                                 atom_list=p2s_map,
                                 log_level=self._log_level)
         else:
@@ -493,7 +665,7 @@ class Phono3py(object):
         fc_calculator : str or None
             Force constants calculator given by str.
         fc_calculator_options : dict
-            Options for ALM.
+            Options for external force constants calculator.
 
         """
 
@@ -501,19 +673,20 @@ class Phono3py(object):
             disp_dataset = self._displacement_dataset
         else:
             disp_dataset = displacement_dataset
-            if forces_fc3 is not None:
-                self.forces = forces_fc3
-                msg = ("Forces have to be stored in disp_dataset as written in "
-                       "this method's docstring for the type1 dataset.")
-                warnings.warn(msg, DeprecationWarning)
+
+        if forces_fc3 is not None:
+            self.forces = forces_fc3
+            msg = ("Forces have to be stored in disp_dataset as written in "
+                   "this method's docstring for the type1 dataset.")
+            warnings.warn(msg, DeprecationWarning)
 
         if fc_calculator is not None:
-            from phono3py.other.alm_wrapper import (
+
+            from phono3py.other.fc_calculator import (
                 get_fc3, get_displacements_and_forces_fc3)
             disps, forces = get_displacements_and_forces_fc3(disp_dataset)
             fc2, fc3 = get_fc3(self._supercell,
                                self._primitive,
-                               self._symmetry,
                                disps,
                                forces,
                                fc_calculator=fc_calculator,
@@ -521,9 +694,12 @@ class Phono3py(object):
                                is_compact_fc=is_compact_fc,
                                log_level=self._log_level)
         else:
-            fc2, fc3 = self._get_fc3(forces_fc3,
-                                     disp_dataset,
-                                     is_compact_fc=is_compact_fc)
+            fc2, fc3 = get_phono3py_fc3(self._supercell,
+                                        self._primitive,
+                                        disp_dataset,
+                                        self._symmetry,
+                                        is_compact_fc=is_compact_fc,
+                                        verbose=self._log_level)
             if symmetrize_fc3r:
                 if is_compact_fc:
                     set_translational_invariance_compact_fc3(
@@ -1044,28 +1220,6 @@ class Phono3py(object):
             msg = "mesh has inappropriate type."
             raise TypeError(msg)
         self._mesh_numbers = mesh_nums
-
-    def _get_fc3(self,
-                 forces_fc3,
-                 disp_dataset,
-                 is_compact_fc=False):
-        count = 0
-        for disp1 in disp_dataset['first_atoms']:
-            disp1['forces'] = forces_fc3[count]
-            count += 1
-        for disp1 in disp_dataset['first_atoms']:
-            for disp2 in disp1['second_atoms']:
-                disp2['delta_forces'] = forces_fc3[count] - disp1['forces']
-                count += 1
-
-        fc2, fc3 = get_phono3py_fc3(self._supercell,
-                                    self._primitive,
-                                    disp_dataset,
-                                    self._symmetry,
-                                    is_compact_fc=is_compact_fc,
-                                    verbose=self._log_level)
-
-        return fc2, fc3
 
 
 class Phono3pyIsotope(object):

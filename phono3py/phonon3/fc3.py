@@ -276,6 +276,7 @@ def third_rank_tensor_rotation(rot_cart, tensor):
 
 def get_delta_fc2(dataset_second_atoms,
                   atom1,
+                  forces1,
                   fc2,
                   supercell,
                   reduced_site_sym,
@@ -284,6 +285,7 @@ def get_delta_fc2(dataset_second_atoms,
     disp_fc2 = get_constrained_fc2(supercell,
                                    dataset_second_atoms,
                                    atom1,
+                                   forces1,
                                    reduced_site_sym,
                                    symprec)
     return disp_fc2 - fc2
@@ -292,12 +294,13 @@ def get_delta_fc2(dataset_second_atoms,
 def get_constrained_fc2(supercell,
                         dataset_second_atoms,
                         atom1,
+                        forces1,
                         reduced_site_sym,
                         symprec):
     """
     dataset_second_atoms: [{'number': 7,
                             'displacement': [],
-                            'delta_forces': []}, ...]
+                            'forces': []}, ...]
     """
     lattice = supercell.get_cell().T
     positions = supercell.get_scaled_positions()
@@ -320,7 +323,7 @@ def get_constrained_fc2(supercell,
                 symprec)
 
             disps2.append(disps_second['displacement'])
-            sets_of_forces.append(disps_second['delta_forces'])
+            sets_of_forces.append(disps_second['forces'] - forces1)
 
         solve_force_constants(fc2,
                               atom2,
@@ -625,6 +628,7 @@ def _get_fc3_least_atoms(supercell,
                 delta_fc2s.append(get_delta_fc2(
                     dataset_first_atom['second_atoms'],
                     dataset_first_atom['number'],
+                    dataset_first_atom['forces'],
                     fc2,
                     supercell,
                     reduced_site_sym,

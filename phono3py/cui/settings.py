@@ -47,7 +47,6 @@ class Phono3pySettings(Settings):
         self._scattering_event_class = None  # scattering event class 1 or 2
         self._sigma_cutoff_width = None
         self._solve_collective_phonon = False
-        self._temperatures = None
         self._use_ave_pp = False
         self._write_collision = False
         self._write_gamma_detail = False
@@ -302,12 +301,6 @@ class Phono3pySettings(Settings):
     def get_solve_collective_phonon(self):
         return self._solve_collective_phonon
 
-    def set_temperatures(self, temperatures):
-        self._temperatures = temperatures
-
-    def get_temperatures(self):
-        return self._temperatures
-
     def set_use_ave_pp(self, use_ave_pp):
         self._use_ave_pp = use_ave_pp
 
@@ -541,10 +534,6 @@ class Phono3pyConfParser(ConfParser):
         if 'solve_collective_phonon' in self._args:
             if self._args.solve_collective_phonon:
                 self._confs['collective_phonon'] = '.true.'
-
-        if 'temperatures' in self._args:
-            if self._args.temperatures is not None:
-                self._confs['temperatures'] = " ".join(self._args.temperatures)
 
         if 'use_ave_pp' in self._args:
             if self._args.use_ave_pp:
@@ -821,13 +810,6 @@ class Phono3pyConfParser(ConfParser):
                 elif confs['collective_phonon'].lower() == '.true.':
                     self.set_parameter('collective_phonon', True)
 
-            if conf_key == 'temperatures':
-                vals = [fracval(x) for x in confs['temperatures'].split()]
-                if len(vals) < 1:
-                    self.setting_error("Temperatures are incorrectly set.")
-                else:
-                    self.set_parameter('temperatures', vals)
-
             if conf_key == 'use_ave_pp':
                 if confs['use_ave_pp'].lower() == '.false.':
                     self.set_parameter('use_ave_pp', False)
@@ -1049,10 +1031,6 @@ class Phono3pyConfParser(ConfParser):
         if 'collective_phonon' in params:
             self._settings.set_solve_collective_phonon(
                 params['collective_phonon'])
-
-        # Temperatures
-        if 'temperatures' in params:
-            self._settings.set_temperatures(params['temperatures'])
 
         # Use averaged ph-ph interaction
         if 'use_ave_pp' in params:
