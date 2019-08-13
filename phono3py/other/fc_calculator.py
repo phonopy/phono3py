@@ -156,6 +156,6 @@ def get_displacements_and_forces_fc3(disp_dataset):
         return (np.array(displacements[indices], dtype='double', order='C'),
                 np.array(forces[indices], dtype='double', order='C'))
     elif 'forces' in disp_dataset and 'displacements' in disp_dataset:
-        return disp_dataset['displacemens'], disp_dataset['forces']
+        return disp_dataset['displacements'], disp_dataset['forces']
     else:
         raise RuntimeError("disp_dataset doesn't contain correct information.")

@@ -57,13 +57,12 @@ def create_phono3py_force_constants(phono3py,
                                     input_filename=None,
                                     output_filename=None,
                                     log_level=1):
-    symmetrize_fc3r = (settings.get_is_symmetrize_fc3_r() or
-                       settings.get_fc_symmetry())
-    symmetrize_fc2 = (settings.get_is_symmetrize_fc2() or
-                      settings.get_fc_symmetry())
-
-    # overwrite symmetrization settings when alm is used
-    if settings.get_fc_calculator() == 'alm':
+    if settings.get_fc_calculator() is None:
+        symmetrize_fc3r = (settings.get_is_symmetrize_fc3_r() or
+                           settings.get_fc_symmetry())
+        symmetrize_fc2 = (settings.get_is_symmetrize_fc2() or
+                          settings.get_fc_symmetry())
+    else:  # Rely on fc calculator the symmetrization of fc.
         symmetrize_fc2 = False
         symmetrize_fc3r = False
 
@@ -131,7 +130,7 @@ def create_phono3py_force_constants(phono3py,
                            log_level)
     else:
         if phonon_supercell_matrix is None:
-            if settings.get_fc_calculator() == 'alm':
+            if settings.get_fc_calculator() is not None:
                 pass
             elif not _create_phono3py_fc2(
                     phono3py,
@@ -246,6 +245,9 @@ def _create_phono3py_fc3(phono3py,
     natom = phono3py.supercell.get_number_of_atoms()
     disp_dataset = _get_type2_dataset(natom, filename="FORCES_FC3")
     if disp_dataset:  # type2
+        if log_level:
+            print("%d snapshots were found in %s."
+                  % (len(disp_dataset['displacements']), "FORCES_FC3"))
         if force_to_eVperA is not None:
             disp_dataset['forces'] *= force_to_eVperA
         if distance_to_A is not None:
@@ -353,11 +355,13 @@ def _create_phono3py_fc2(phono3py,
     natom = phono3py.supercell.get_number_of_atoms()
     disp_dataset = _get_type2_dataset(natom, filename="FORCES_FC3")
     if disp_dataset:
+        if log_level:
+            print("%d snapshots were found in %s."
+                  % (len(disp_dataset['displacements']), "FORCES_FC3"))
         if force_to_eVperA is not None:
             disp_dataset['forces'] *= force_to_eVperA
         if distance_to_A is not None:
             disp_dataset['displacements'] *= distance_to_A
-        forces_fc2 = None
     else:
         if input_filename is None:
             filename = 'disp_fc3.yaml'
@@ -404,8 +408,11 @@ def _create_phono3py_phonon_fc2(phono3py,
                                 log_level):
     file_exists("FORCES_FC2", log_level)
     natom = phono3py.phonon_supercell.get_number_of_atoms()
-    disp_dataset = _get_type2_dataset(natom, filename="FORCES_FC3")
+    disp_dataset = _get_type2_dataset(natom, filename="FORCES_FC2")
     if disp_dataset:
+        if log_level:
+            print("%d snapshots were found in %s."
+                  % (len(disp_dataset['displacements']), "FORCES_FC2"))
         if force_to_eVperA is not None:
             disp_dataset['forces'] *= force_to_eVperA
         if distance_to_A is not None:
