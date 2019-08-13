@@ -43,7 +43,6 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description="Phono3py command-line-tool")
     parser.set_defaults(abinit_mode=False,
-                        alm_options=None,
                         band_indices=None,
                         band_paths=None,
                         band_points=None,
@@ -57,6 +56,7 @@ def get_parser():
                         delta_fc2=False,
                         delta_fc2_sets_mode=False,
                         displacement_distance=None,
+                        fc_calculator_options=None,
                         fc_symmetry=False,
                         force_sets_to_forces_fc2_mode=None,
                         forces_fc2=None,
@@ -135,8 +135,6 @@ def get_parser():
                         turbomole_mode=False,
                         uplo='L',
                         use_alm=False,
-                        use_alm_fc2=False,
-                        use_alm_fc3=False,
                         use_ave_pp=False,
                         verbose=False,
                         write_collision=False,
@@ -153,15 +151,6 @@ def get_parser():
         "--alm", dest="use_alm", action="store_true",
         help=("Use ALM for generating 2nd and 3rd force constants "
               "in one fitting"))
-    parser.add_argument(
-        "--alm-fc2", dest="use_alm_fc2", action="store_true",
-        help="Use ALM for creating 2nd order force constants")
-    parser.add_argument(
-        "--alm-fc3", dest="use_alm_fc3", action="store_true",
-        help="Use ALM for creating 3rd order force constants")
-    parser.add_argument(
-        "--alm-options", dest="alm_options",
-        help="List of ALM options as string separated by commas")
     parser.add_argument(
         "--amplitude", dest="displacement_distance", type=float,
         help="Distance of displacements")
@@ -251,6 +240,11 @@ def get_parser():
     parser.add_argument(
         "--fc3", dest="read_fc3", action="store_true",
         help="Read third order force constants")
+    parser.add_argument(
+        "--fc-calc-opt", "--fc-calculator-options",
+        dest="fc_calculator_options",
+        help=("Options for force constants calculator as comma separated "
+              "string with the style of key = values"))
     parser.add_argument(
         "--fc-symmetry", "--sym-fc", dest="fc_symmetry", action="store_true",
         help="Symmetrize force constants")
