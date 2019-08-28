@@ -143,7 +143,7 @@ def write_FORCES_FC2(disp_dataset,
         w.write("# File: %-5d\n" % (i + 1))
         w.write("# %-5d " % (disp1['number'] + 1))
         w.write("%20.16f %20.16f %20.16f\n" % tuple(disp1['displacement']))
-        if forces_fc2 is None:
+        if 'forces' in disp1 and forces_fc2 is None:
             force_set = disp1['forces']
         else:
             force_set = forces_fc2[i]
@@ -151,7 +151,10 @@ def write_FORCES_FC2(disp_dataset,
             w.write("%15.10f %15.10f %15.10f\n" % tuple(forces))
 
 
-def write_FORCES_FC3(disp_dataset, forces_fc3, fp=None, filename="FORCES_FC3"):
+def write_FORCES_FC3(disp_dataset,
+                     forces_fc3=None,
+                     fp=None,
+                     filename="FORCES_FC3"):
     if fp is None:
         w = open(filename, 'w')
     else:
@@ -179,8 +182,12 @@ def write_FORCES_FC3(disp_dataset, forces_fc3, fp=None, filename="FORCES_FC3"):
             if 'included' in disp2:
                 included = disp2['included']
             if included:
-                for forces in forces_fc3[file_count]:
-                    w.write("%15.10f %15.10f %15.10f\n" % tuple(forces))
+                if 'forces' in disp2 and forces_fc3 is None:
+                    force_set = disp2['forces']
+                else:
+                    force_set = forces_fc3[file_count]
+                for force in force_set:
+                    w.write("%15.10f %15.10f %15.10f\n" % tuple(force))
                 file_count += 1
             else:
                 # for forces in forces_fc3[i]:

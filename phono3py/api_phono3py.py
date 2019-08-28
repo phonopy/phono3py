@@ -161,6 +161,13 @@ class Phono3py(object):
         self.set_band_indices(band_indices)
 
     @property
+    def thermal_conductivity(self):
+        return self._thermal_conductivity
+
+    def get_thermal_conductivity(self):
+        return self.thermal_conductivity
+
+    @property
     def displacements(self):
         """Return displacements
 
@@ -853,8 +860,12 @@ class Phono3py(object):
         self._displacement_dataset = dataset
 
     @property
-    def displacement_dataset(self):
+    def dataset(self):
         return self._displacement_dataset
+
+    @property
+    def displacement_dataset(self):
+        return self.dataset
 
     def get_displacement_dataset(self):
         return self.displacement_dataset
@@ -862,10 +873,14 @@ class Phono3py(object):
     def get_phonon_displacement_dataset(self):
         return self._phonon_displacement_dataset
 
-    def get_supercells_with_displacements(self):
+    @property
+    def supercells_with_displacements(self):
         if self._supercells_with_displacements is None:
             self._build_supercells_with_displacements()
         return self._supercells_with_displacements
+
+    def get_supercells_with_displacements(self):
+        return self.supercells_with_displacements()
 
     def get_phonon_supercells_with_displacements(self):
         if self._phonon_supercells_with_displacements is None:
@@ -1011,9 +1026,6 @@ class Phono3py(object):
                 input_filename=input_filename,
                 output_filename=output_filename,
                 log_level=self._log_level)
-
-    def get_thermal_conductivity(self):
-        return self._thermal_conductivity
 
     def get_frequency_shift(
             self,
