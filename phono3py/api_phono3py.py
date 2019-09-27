@@ -912,7 +912,7 @@ class Phono3py(object):
         return self._supercells_with_displacements
 
     def get_supercells_with_displacements(self):
-        return self.supercells_with_displacements()
+        return self.supercells_with_displacements
 
     @property
     def phonon_supercells_with_displacements(self):
