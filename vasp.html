@@ -2,9 +2,8 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>VASP &amp; phono3py calculation &#8212; Phono3py v.1.17.0</title>
+    <meta charset="utf-8" />
+    <title>VASP &amp; phono3py calculation &#8212; Phono3py v.1.18.0</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -13,10 +12,6 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="_static/language_data.js"></script>
     <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Pwscf &amp; phono3py calculation" href="pwscf.html" />
@@ -25,6 +20,10 @@
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="_static/bootstrap-sphinx.js "></script>
 
   </head><body>
 
@@ -39,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>1.17</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.18</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -60,7 +59,7 @@
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-using-pip">Installation using pip</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-from-source-code">Installation from source code</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-on-macos">Installation on macOS</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#an-example-of-installation-process">An example of installation process</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#an-example-of-installation-process-using-conda">An example of installation process using conda</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#multithreading-and-its-controlling-by-c-macro">Multithreading and its controlling by C macro</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#trouble-shooting">Trouble shooting</a></li>
 </ul>
@@ -136,6 +135,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#oct-9-2019-version-1-18-0">Oct-9-2019: Version 1.18.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#apr-18-2019-version-1-17-0">Apr-18-2019: Version 1.17.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#mar-24-2019-version-1-16-0">Mar-24-2019: Version 1.16.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#nov-22-2018-version-1-14-3">Nov-22-2018: version 1.14.3</a></li>
@@ -228,14 +228,14 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+    <div class="body col-md-12 content" role="main">
       
   <div class="section" id="vasp-phono3py-calculation">
 <span id="vasp-interface"></span><h1>VASP &amp; phono3py calculation<a class="headerlink" href="#vasp-phono3py-calculation" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="workflow">
 <span id="vasp-workflow"></span><h2>Workflow<a class="headerlink" href="#workflow" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic">
-<li><p class="first">Create POSCARs with displacements</p>
+<li><p>Create POSCARs with displacements</p>
 <p>This is the same way as usual phonopy:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">-</span><span class="n">d</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
 </pre></div>
@@ -250,7 +250,7 @@ for third-order force constants (fc3) calculation:</p>
 <p>In this case, <code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">POSCAR_FC2-xxxxx</span></code> files are
 also created.</p>
 </li>
-<li><p class="first">Run VASP for supercell force calculations</p>
+<li><p>Run VASP for supercell force calculations</p>
 <p>To calculate forces on atoms in supercells, <code class="docutils literal notranslate"><span class="pre">POSCAR-xxxxx</span></code> (and
 <code class="docutils literal notranslate"><span class="pre">POSCAR_FC2-xxxxx</span></code> if they exist) are used as VASP (or any force
 calculator) calculations.</p>
@@ -258,7 +258,7 @@ calculator) calculations.</p>
 directory named <code class="docutils literal notranslate"><span class="pre">disp-xxxxx</span></code> (and <code class="docutils literal notranslate"><span class="pre">disp_fc2-xxxxx</span></code>), where
 <code class="docutils literal notranslate"><span class="pre">xxxxx</span></code> is sequential number.</p>
 </li>
-<li><p class="first">Collect <code class="docutils literal notranslate"><span class="pre">vasprun.xml</span></code>’s</p>
+<li><p>Collect <code class="docutils literal notranslate"><span class="pre">vasprun.xml</span></code>’s</p>
 <p>When VASP is used as the force calculator, force sets to calculate
 fc3 and fc2 are created as follows.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">cf3</span> <span class="n">disp</span><span class="o">-</span><span class="p">{</span><span class="mf">00001.</span><span class="o">.</span><span class="mi">00755</span><span class="p">}</span><span class="o">/</span><span class="n">vasprun</span><span class="o">.</span><span class="n">xml</span>
@@ -274,7 +274,7 @@ step 1 is required. Then <code class="docutils literal notranslate"><span class=
 <p><code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code> is necessary in this case and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> is
 created.</p>
 </li>
-<li><p class="first">Create fc2.hdf and fc3.hdf</p>
+<li><p>Create fc2.hdf and fc3.hdf</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span>
 </pre></div>
 </div>
@@ -288,7 +288,7 @@ calculating fc2 and fc3 at every run time.</p>
 <p>Similarly <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> are created from <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code>,
 <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code>, <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code>, and <code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code>.</p>
 </li>
-<li><p class="first">Thermal conductivity calculation</p>
+<li><p>Thermal conductivity calculation</p>
 <p>An example of thermal conductivity calculation is:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> \
   <span class="o">-</span><span class="n">c</span> <span class="n">POSCAR</span><span class="o">-</span><span class="n">unitcell</span> <span class="o">--</span><span class="n">br</span>
@@ -353,7 +353,7 @@ hdf5 files on grid points are no more necessary and may be deleted.</p>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.1.2.<br/>
     </p>
   </div>
 </footer>

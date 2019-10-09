@@ -2,9 +2,8 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Command options / Setting tags &#8212; Phono3py v.1.17.0</title>
+    <meta charset="utf-8" />
+    <title>Command options / Setting tags &#8212; Phono3py v.1.18.0</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -13,10 +12,6 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="_static/language_data.js"></script>
     <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Crude force constants calculation by cutoff pair-distance" href="cutoff-pair.html" />
@@ -25,6 +20,10 @@
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="_static/bootstrap-sphinx.js "></script>
 
   </head><body>
 
@@ -39,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>1.17</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.18</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -60,7 +59,7 @@
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-using-pip">Installation using pip</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-from-source-code">Installation from source code</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-on-macos">Installation on macOS</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#an-example-of-installation-process">An example of installation process</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#an-example-of-installation-process-using-conda">An example of installation process using conda</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#multithreading-and-its-controlling-by-c-macro">Multithreading and its controlling by C macro</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#trouble-shooting">Trouble shooting</a></li>
 </ul>
@@ -136,6 +135,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#oct-9-2019-version-1-18-0">Oct-9-2019: Version 1.18.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#apr-18-2019-version-1-17-0">Apr-18-2019: Version 1.17.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#mar-24-2019-version-1-16-0">Mar-24-2019: Version 1.16.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#nov-22-2018-version-1-14-3">Nov-22-2018: version 1.14.3</a></li>
@@ -301,7 +301,7 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+    <div class="body col-md-12 content" role="main">
       
   <div class="section" id="command-options-setting-tags">
 <span id="command-options"></span><h1>Command options / Setting tags<a class="headerlink" href="#command-options-setting-tags" title="Permalink to this headline">¶</a></h1>
@@ -334,78 +334,84 @@ configuration (e.g., saved in a file <code class="docutils literal notranslate">
 </div>
 <div class="contents local topic" id="contents">
 <ul class="simple">
-<li><a class="reference internal" href="#calculator-interface" id="id1">Calculator interface</a><ul>
-<li><a class="reference internal" href="#c-unit-cell-filename" id="id2"><code class="docutils literal notranslate"><span class="pre">-c</span></code>: Unit cell filename</a></li>
-<li><a class="reference internal" href="#pwscf-pwscf-quantum-espresso-interface" id="id3"><code class="docutils literal notranslate"><span class="pre">--pwscf</span></code>: PWSCF (Quantum espresso) interface</a></li>
-<li><a class="reference internal" href="#crystal-crystal-interface" id="id4"><code class="docutils literal notranslate"><span class="pre">--crystal</span></code>: CRYSTAL interface</a></li>
-<li><a class="reference internal" href="#turbomole-turbomole-interface" id="id5"><code class="docutils literal notranslate"><span class="pre">--turbomole</span></code>: TURBOMOLE interface</a></li>
+<li><p><a class="reference internal" href="#calculator-interface" id="id1">Calculator interface</a></p>
+<ul>
+<li><p><a class="reference internal" href="#c-unit-cell-filename" id="id2"><code class="docutils literal notranslate"><span class="pre">-c</span></code>: Unit cell filename</a></p></li>
+<li><p><a class="reference internal" href="#pwscf-pwscf-quantum-espresso-interface" id="id3"><code class="docutils literal notranslate"><span class="pre">--pwscf</span></code>: PWSCF (Quantum espresso) interface</a></p></li>
+<li><p><a class="reference internal" href="#crystal-crystal-interface" id="id4"><code class="docutils literal notranslate"><span class="pre">--crystal</span></code>: CRYSTAL interface</a></p></li>
+<li><p><a class="reference internal" href="#turbomole-turbomole-interface" id="id5"><code class="docutils literal notranslate"><span class="pre">--turbomole</span></code>: TURBOMOLE interface</a></p></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#force-constants" id="id6">Force constants</a><ul>
-<li><a class="reference internal" href="#d-create-displacements" id="id7"><code class="docutils literal notranslate"><span class="pre">-d</span></code>: Create displacements</a></li>
-<li><a class="reference internal" href="#amplitude-amplitude-of-displacements" id="id8"><code class="docutils literal notranslate"><span class="pre">--amplitude</span></code>: Amplitude of displacements</a></li>
-<li><a class="reference internal" href="#dim-supercell-dimension" id="id9"><code class="docutils literal notranslate"><span class="pre">--dim</span></code>: Supercell dimension</a></li>
-<li><a class="reference internal" href="#dim-fc2-supercell-dimension-for-2nd-order-force-constants" id="id10"><code class="docutils literal notranslate"><span class="pre">--dim-fc2</span></code>: Supercell dimension for 2nd order force constants</a></li>
-<li><a class="reference internal" href="#pa-primitive-axes-transformation-matrix-to-primitive-cell" id="id11"><code class="docutils literal notranslate"><span class="pre">--pa</span></code>, <code class="docutils literal notranslate"><span class="pre">--primitive-axes</span></code>: Transformation matrix to primitive cell</a></li>
-<li><a class="reference internal" href="#fc2-read-2nd-order-force-constants" id="id12"><code class="docutils literal notranslate"><span class="pre">--fc2</span></code>: Read 2nd order force constants</a></li>
-<li><a class="reference internal" href="#fc3-read-3nd-order-force-constants" id="id13"><code class="docutils literal notranslate"><span class="pre">--fc3</span></code>: Read 3nd order force constants</a></li>
-<li><a class="reference internal" href="#cfc-or-compact-fc-compact-force-constants" id="id14"><code class="docutils literal notranslate"><span class="pre">--cfc</span></code> or <code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code>: Compact force constants</a></li>
-<li><a class="reference internal" href="#sym-fc2-sym-fc3r-sym-fc-symmetries-force-constants" id="id15"><code class="docutils literal notranslate"><span class="pre">--sym-fc2</span></code>, <code class="docutils literal notranslate"><span class="pre">--sym-fc3r</span></code>, <code class="docutils literal notranslate"><span class="pre">--sym-fc</span></code>: Symmetries force constants</a></li>
-<li><a class="reference internal" href="#cf3-create-forces-fc3" id="id16"><code class="docutils literal notranslate"><span class="pre">--cf3</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a></li>
-<li><a class="reference internal" href="#cf3-file-create-forces-fc3-from-file-name-list" id="id17"><code class="docutils literal notranslate"><span class="pre">--cf3-file</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> from file name list</a></li>
-<li><a class="reference internal" href="#cf2-create-forces-fc2" id="id18"><code class="docutils literal notranslate"><span class="pre">--cf2</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code></a></li>
-<li><a class="reference internal" href="#cfz-create-forces-fc3-and-forces-fc2-subtracting-residual-forces" id="id19"><code class="docutils literal notranslate"><span class="pre">--cfz</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> subtracting residual forces</a></li>
-<li><a class="reference internal" href="#fs2f2-or-force-sets-to-forces-fc2" id="id20"><code class="docutils literal notranslate"><span class="pre">--fs2f2</span></code> or <code class="docutils literal notranslate"><span class="pre">--force-sets-to-forces-fc2</span></code></a></li>
-<li><a class="reference internal" href="#cfs-or-create-force-sets" id="id21"><code class="docutils literal notranslate"><span class="pre">--cfs</span></code> or <code class="docutils literal notranslate"><span class="pre">--create-force-sets</span></code></a></li>
-<li><a class="reference internal" href="#cutoff-fc3-or-cutoff-fc3-distance" id="id22"><code class="docutils literal notranslate"><span class="pre">--cutoff-fc3</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-fc3-distance</span></code></a></li>
-<li><a class="reference internal" href="#cutoff-pair-or-cutoff-pair-distance" id="id23"><code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-pair-distance</span></code></a></li>
+<li><p><a class="reference internal" href="#force-constants" id="id6">Force constants</a></p>
+<ul>
+<li><p><a class="reference internal" href="#d-create-displacements" id="id7"><code class="docutils literal notranslate"><span class="pre">-d</span></code>: Create displacements</a></p></li>
+<li><p><a class="reference internal" href="#amplitude-amplitude-of-displacements" id="id8"><code class="docutils literal notranslate"><span class="pre">--amplitude</span></code>: Amplitude of displacements</a></p></li>
+<li><p><a class="reference internal" href="#dim-supercell-dimension" id="id9"><code class="docutils literal notranslate"><span class="pre">--dim</span></code>: Supercell dimension</a></p></li>
+<li><p><a class="reference internal" href="#dim-fc2-supercell-dimension-for-2nd-order-force-constants" id="id10"><code class="docutils literal notranslate"><span class="pre">--dim-fc2</span></code>: Supercell dimension for 2nd order force constants</a></p></li>
+<li><p><a class="reference internal" href="#pa-primitive-axes-transformation-matrix-to-primitive-cell" id="id11"><code class="docutils literal notranslate"><span class="pre">--pa</span></code>, <code class="docutils literal notranslate"><span class="pre">--primitive-axes</span></code>: Transformation matrix to primitive cell</a></p></li>
+<li><p><a class="reference internal" href="#fc2-read-2nd-order-force-constants" id="id12"><code class="docutils literal notranslate"><span class="pre">--fc2</span></code>: Read 2nd order force constants</a></p></li>
+<li><p><a class="reference internal" href="#fc3-read-3nd-order-force-constants" id="id13"><code class="docutils literal notranslate"><span class="pre">--fc3</span></code>: Read 3nd order force constants</a></p></li>
+<li><p><a class="reference internal" href="#cfc-or-compact-fc-compact-force-constants" id="id14"><code class="docutils literal notranslate"><span class="pre">--cfc</span></code> or <code class="docutils literal notranslate"><span class="pre">--compact-fc</span></code>: Compact force constants</a></p></li>
+<li><p><a class="reference internal" href="#sym-fc2-sym-fc3r-sym-fc-symmetries-force-constants" id="id15"><code class="docutils literal notranslate"><span class="pre">--sym-fc2</span></code>, <code class="docutils literal notranslate"><span class="pre">--sym-fc3r</span></code>, <code class="docutils literal notranslate"><span class="pre">--sym-fc</span></code>: Symmetries force constants</a></p></li>
+<li><p><a class="reference internal" href="#cf3-create-forces-fc3" id="id16"><code class="docutils literal notranslate"><span class="pre">--cf3</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a></p></li>
+<li><p><a class="reference internal" href="#cf3-file-create-forces-fc3-from-file-name-list" id="id17"><code class="docutils literal notranslate"><span class="pre">--cf3-file</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> from file name list</a></p></li>
+<li><p><a class="reference internal" href="#cf2-create-forces-fc2" id="id18"><code class="docutils literal notranslate"><span class="pre">--cf2</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code></a></p></li>
+<li><p><a class="reference internal" href="#cfz-create-forces-fc3-and-forces-fc2-subtracting-residual-forces" id="id19"><code class="docutils literal notranslate"><span class="pre">--cfz</span></code>: Create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> subtracting residual forces</a></p></li>
+<li><p><a class="reference internal" href="#fs2f2-or-force-sets-to-forces-fc2" id="id20"><code class="docutils literal notranslate"><span class="pre">--fs2f2</span></code> or <code class="docutils literal notranslate"><span class="pre">--force-sets-to-forces-fc2</span></code></a></p></li>
+<li><p><a class="reference internal" href="#cfs-or-create-force-sets" id="id21"><code class="docutils literal notranslate"><span class="pre">--cfs</span></code> or <code class="docutils literal notranslate"><span class="pre">--create-force-sets</span></code></a></p></li>
+<li><p><a class="reference internal" href="#cutoff-fc3-or-cutoff-fc3-distance" id="id22"><code class="docutils literal notranslate"><span class="pre">--cutoff-fc3</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-fc3-distance</span></code></a></p></li>
+<li><p><a class="reference internal" href="#cutoff-pair-or-cutoff-pair-distance" id="id23"><code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> or <code class="docutils literal notranslate"><span class="pre">--cutoff-pair-distance</span></code></a></p></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#reciprocal-space-sampling-mesh-and-grid-points-and-band-indices" id="id24">Reciprocal space sampling mesh and grid points, and band indices</a><ul>
-<li><a class="reference internal" href="#mesh-sampling-mesh" id="id25"><code class="docutils literal notranslate"><span class="pre">--mesh</span></code>: Sampling mesh</a></li>
-<li><a class="reference internal" href="#gp-grid-points-by-their-id" id="id26"><code class="docutils literal notranslate"><span class="pre">--gp</span></code>: Grid points by their ID</a></li>
-<li><a class="reference internal" href="#ga-grid-points-by-address-with-three-integer-values" id="id27"><code class="docutils literal notranslate"><span class="pre">--ga</span></code>: Grid points by address with three integer values</a></li>
-<li><a class="reference internal" href="#wgp-write-grid-point-information" id="id28"><code class="docutils literal notranslate"><span class="pre">--wgp</span></code>: Write grid point information</a></li>
-<li><a class="reference internal" href="#stp-show-number-of-triplets-to-be-calculated-for-each-grid-point" id="id29"><code class="docutils literal notranslate"><span class="pre">--stp</span></code>: Show number of triplets to be calculated for each grid point</a></li>
-<li><a class="reference internal" href="#bi-specific-band-index" id="id30"><code class="docutils literal notranslate"><span class="pre">--bi</span></code>: Specific band index</a></li>
+<li><p><a class="reference internal" href="#reciprocal-space-sampling-mesh-and-grid-points-and-band-indices" id="id24">Reciprocal space sampling mesh and grid points, and band indices</a></p>
+<ul>
+<li><p><a class="reference internal" href="#mesh-sampling-mesh" id="id25"><code class="docutils literal notranslate"><span class="pre">--mesh</span></code>: Sampling mesh</a></p></li>
+<li><p><a class="reference internal" href="#gp-grid-points-by-their-id" id="id26"><code class="docutils literal notranslate"><span class="pre">--gp</span></code>: Grid points by their ID</a></p></li>
+<li><p><a class="reference internal" href="#ga-grid-points-by-address-with-three-integer-values" id="id27"><code class="docutils literal notranslate"><span class="pre">--ga</span></code>: Grid points by address with three integer values</a></p></li>
+<li><p><a class="reference internal" href="#wgp-write-grid-point-information" id="id28"><code class="docutils literal notranslate"><span class="pre">--wgp</span></code>: Write grid point information</a></p></li>
+<li><p><a class="reference internal" href="#stp-show-number-of-triplets-to-be-calculated-for-each-grid-point" id="id29"><code class="docutils literal notranslate"><span class="pre">--stp</span></code>: Show number of triplets to be calculated for each grid point</a></p></li>
+<li><p><a class="reference internal" href="#bi-specific-band-index" id="id30"><code class="docutils literal notranslate"><span class="pre">--bi</span></code>: Specific band index</a></p></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#brillouin-zone-integration" id="id31">Brillouin zone integration</a><ul>
-<li><a class="reference internal" href="#thm-tetrahedron-method-default-choice" id="id32"><code class="docutils literal notranslate"><span class="pre">--thm</span></code>: Tetrahedron method (default choice)</a></li>
-<li><a class="reference internal" href="#sigma-smearing-method" id="id33"><code class="docutils literal notranslate"><span class="pre">--sigma</span></code>: Smearing method</a></li>
-<li><a class="reference internal" href="#sigma-cutoff-cutoff-parameter-for-smearing-method" id="id34"><code class="docutils literal notranslate"><span class="pre">--sigma-cutoff</span></code>: Cutoff parameter for smearing method</a></li>
-<li><a class="reference internal" href="#full-pp-calculate-all-elements-of-phonon-phonon-interaction-strength" id="id35"><code class="docutils literal notranslate"><span class="pre">--full-pp</span></code>: Calculate all elements of phonon-phonon interaction strength</a></li>
+<li><p><a class="reference internal" href="#brillouin-zone-integration" id="id31">Brillouin zone integration</a></p>
+<ul>
+<li><p><a class="reference internal" href="#thm-tetrahedron-method-default-choice" id="id32"><code class="docutils literal notranslate"><span class="pre">--thm</span></code>: Tetrahedron method (default choice)</a></p></li>
+<li><p><a class="reference internal" href="#sigma-smearing-method" id="id33"><code class="docutils literal notranslate"><span class="pre">--sigma</span></code>: Smearing method</a></p></li>
+<li><p><a class="reference internal" href="#sigma-cutoff-cutoff-parameter-for-smearing-method" id="id34"><code class="docutils literal notranslate"><span class="pre">--sigma-cutoff</span></code>: Cutoff parameter for smearing method</a></p></li>
+<li><p><a class="reference internal" href="#full-pp-calculate-all-elements-of-phonon-phonon-interaction-strength" id="id35"><code class="docutils literal notranslate"><span class="pre">--full-pp</span></code>: Calculate all elements of phonon-phonon interaction strength</a></p></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#physical-properties" id="id36">Physical properties</a><ul>
-<li><a class="reference internal" href="#br-thermal-conductivity-with-relaxation-time-approximation" id="id37"><code class="docutils literal notranslate"><span class="pre">--br</span></code>: Thermal conductivity with relaxation time approximation</a></li>
-<li><a class="reference internal" href="#lbte-thermal-conductivity-with-direct-solution-of-lbte" id="id38"><code class="docutils literal notranslate"><span class="pre">--lbte</span></code>: Thermal conductivity with direct solution of LBTE</a></li>
-<li><a class="reference internal" href="#isotope-phonon-isotope-scattering" id="id39"><code class="docutils literal notranslate"><span class="pre">--isotope</span></code>: Phonon-isotope scattering</a></li>
-<li><a class="reference internal" href="#mass-variances-or-mv-parameter-for-phonon-isotope-scattering" id="id40"><code class="docutils literal notranslate"><span class="pre">--mass-variances</span></code> or <code class="docutils literal notranslate"><span class="pre">--mv</span></code>: Parameter for phonon-isotope scattering</a></li>
-<li><a class="reference internal" href="#boundary-mfp-bmfp-very-simple-phonon-boundary-scattering-model" id="id41"><code class="docutils literal notranslate"><span class="pre">--boundary-mfp</span></code>, <code class="docutils literal notranslate"><span class="pre">--bmfp</span></code>: Very simple phonon-boundary scattering model</a></li>
-<li><a class="reference internal" href="#tmax-tmin-tstep-temperature-range" id="id42"><code class="docutils literal notranslate"><span class="pre">--tmax</span></code>, <code class="docutils literal notranslate"><span class="pre">--tmin</span></code>, <code class="docutils literal notranslate"><span class="pre">--tstep</span></code>: Temperature range</a></li>
-<li><a class="reference internal" href="#ts-temperatures" id="id43"><code class="docutils literal notranslate"><span class="pre">--ts</span></code>: Temperatures</a></li>
-<li><a class="reference internal" href="#nac-non-analytical-term-correction" id="id44"><code class="docutils literal notranslate"><span class="pre">--nac</span></code>: Non-analytical term correction</a></li>
-<li><a class="reference internal" href="#q-direction-direction-for-non-analytical-term-correction-at-mathbf-q-rightarrow-mathbf-0" id="id45"><code class="docutils literal notranslate"><span class="pre">--q-direction</span></code>: Direction for non-analytical term correction at <span class="math notranslate nohighlight">\(\mathbf{q}\rightarrow \mathbf{0}\)</span></a></li>
-<li><a class="reference internal" href="#nu-normal-and-umklapp-processes" id="id46"><code class="docutils literal notranslate"><span class="pre">--nu</span></code>: Normal and Umklapp processes</a></li>
-<li><a class="reference internal" href="#write-gamma" id="id47"><code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code></a></li>
-<li><a class="reference internal" href="#read-gamma" id="id48"><code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code></a></li>
-<li><a class="reference internal" href="#write-gamma-detail" id="id49"><code class="docutils literal notranslate"><span class="pre">--write-gamma-detail</span></code></a></li>
-<li><a class="reference internal" href="#write-phonon" id="id50"><code class="docutils literal notranslate"><span class="pre">--write-phonon</span></code></a></li>
-<li><a class="reference internal" href="#read-phonon" id="id51"><code class="docutils literal notranslate"><span class="pre">--read-phonon</span></code></a></li>
-<li><a class="reference internal" href="#write-pp-and-read-pp" id="id52"><code class="docutils literal notranslate"><span class="pre">--write-pp</span></code> and <code class="docutils literal notranslate"><span class="pre">--read-pp</span></code></a></li>
-<li><a class="reference internal" href="#ise-imaginary-part-of-self-energy" id="id53"><code class="docutils literal notranslate"><span class="pre">--ise</span></code>: Imaginary part of self energy</a></li>
-<li><a class="reference internal" href="#jdos-joint-density-of-states" id="id54"><code class="docutils literal notranslate"><span class="pre">--jdos</span></code>: Joint density of states</a></li>
-<li><a class="reference internal" href="#num-freq-points-freq-pitch-sampling-frequency-for-distribution-functions" id="id55"><code class="docutils literal notranslate"><span class="pre">--num-freq-points</span></code>, <code class="docutils literal notranslate"><span class="pre">--freq-pitch</span></code>: Sampling frequency for distribution functions</a></li>
-<li><a class="reference internal" href="#ave-pp-use-averaged-phonon-phonon-interaction-strength" id="id56"><code class="docutils literal notranslate"><span class="pre">--ave-pp</span></code>: Use averaged phonon-phonon interaction strength</a></li>
-<li><a class="reference internal" href="#const-ave-pp-use-constant-phonon-phonon-interaction-strength" id="id57"><code class="docutils literal notranslate"><span class="pre">--const-ave-pp</span></code>: Use constant phonon-phonon interaction strength</a></li>
-<li><a class="reference internal" href="#gruneisen-mode-gruneisen-parameter-from-3rd-order-force-constants" id="id58"><code class="docutils literal notranslate"><span class="pre">--gruneisen</span></code>: Mode-Gruneisen parameter from 3rd order force constants</a></li>
+<li><p><a class="reference internal" href="#physical-properties" id="id36">Physical properties</a></p>
+<ul>
+<li><p><a class="reference internal" href="#br-thermal-conductivity-with-relaxation-time-approximation" id="id37"><code class="docutils literal notranslate"><span class="pre">--br</span></code>: Thermal conductivity with relaxation time approximation</a></p></li>
+<li><p><a class="reference internal" href="#lbte-thermal-conductivity-with-direct-solution-of-lbte" id="id38"><code class="docutils literal notranslate"><span class="pre">--lbte</span></code>: Thermal conductivity with direct solution of LBTE</a></p></li>
+<li><p><a class="reference internal" href="#isotope-phonon-isotope-scattering" id="id39"><code class="docutils literal notranslate"><span class="pre">--isotope</span></code>: Phonon-isotope scattering</a></p></li>
+<li><p><a class="reference internal" href="#mass-variances-or-mv-parameter-for-phonon-isotope-scattering" id="id40"><code class="docutils literal notranslate"><span class="pre">--mass-variances</span></code> or <code class="docutils literal notranslate"><span class="pre">--mv</span></code>: Parameter for phonon-isotope scattering</a></p></li>
+<li><p><a class="reference internal" href="#boundary-mfp-bmfp-very-simple-phonon-boundary-scattering-model" id="id41"><code class="docutils literal notranslate"><span class="pre">--boundary-mfp</span></code>, <code class="docutils literal notranslate"><span class="pre">--bmfp</span></code>: Very simple phonon-boundary scattering model</a></p></li>
+<li><p><a class="reference internal" href="#tmax-tmin-tstep-temperature-range" id="id42"><code class="docutils literal notranslate"><span class="pre">--tmax</span></code>, <code class="docutils literal notranslate"><span class="pre">--tmin</span></code>, <code class="docutils literal notranslate"><span class="pre">--tstep</span></code>: Temperature range</a></p></li>
+<li><p><a class="reference internal" href="#ts-temperatures" id="id43"><code class="docutils literal notranslate"><span class="pre">--ts</span></code>: Temperatures</a></p></li>
+<li><p><a class="reference internal" href="#nac-non-analytical-term-correction" id="id44"><code class="docutils literal notranslate"><span class="pre">--nac</span></code>: Non-analytical term correction</a></p></li>
+<li><p><a class="reference internal" href="#q-direction-direction-for-non-analytical-term-correction-at-mathbf-q-rightarrow-mathbf-0" id="id45"><code class="docutils literal notranslate"><span class="pre">--q-direction</span></code>: Direction for non-analytical term correction at <span class="math notranslate nohighlight">\(\mathbf{q}\rightarrow \mathbf{0}\)</span></a></p></li>
+<li><p><a class="reference internal" href="#nu-normal-and-umklapp-processes" id="id46"><code class="docutils literal notranslate"><span class="pre">--nu</span></code>: Normal and Umklapp processes</a></p></li>
+<li><p><a class="reference internal" href="#write-gamma" id="id47"><code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code></a></p></li>
+<li><p><a class="reference internal" href="#read-gamma" id="id48"><code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code></a></p></li>
+<li><p><a class="reference internal" href="#write-gamma-detail" id="id49"><code class="docutils literal notranslate"><span class="pre">--write-gamma-detail</span></code></a></p></li>
+<li><p><a class="reference internal" href="#write-phonon" id="id50"><code class="docutils literal notranslate"><span class="pre">--write-phonon</span></code></a></p></li>
+<li><p><a class="reference internal" href="#read-phonon" id="id51"><code class="docutils literal notranslate"><span class="pre">--read-phonon</span></code></a></p></li>
+<li><p><a class="reference internal" href="#write-pp-and-read-pp" id="id52"><code class="docutils literal notranslate"><span class="pre">--write-pp</span></code> and <code class="docutils literal notranslate"><span class="pre">--read-pp</span></code></a></p></li>
+<li><p><a class="reference internal" href="#ise-imaginary-part-of-self-energy" id="id53"><code class="docutils literal notranslate"><span class="pre">--ise</span></code>: Imaginary part of self energy</a></p></li>
+<li><p><a class="reference internal" href="#jdos-joint-density-of-states" id="id54"><code class="docutils literal notranslate"><span class="pre">--jdos</span></code>: Joint density of states</a></p></li>
+<li><p><a class="reference internal" href="#num-freq-points-freq-pitch-sampling-frequency-for-distribution-functions" id="id55"><code class="docutils literal notranslate"><span class="pre">--num-freq-points</span></code>, <code class="docutils literal notranslate"><span class="pre">--freq-pitch</span></code>: Sampling frequency for distribution functions</a></p></li>
+<li><p><a class="reference internal" href="#ave-pp-use-averaged-phonon-phonon-interaction-strength" id="id56"><code class="docutils literal notranslate"><span class="pre">--ave-pp</span></code>: Use averaged phonon-phonon interaction strength</a></p></li>
+<li><p><a class="reference internal" href="#const-ave-pp-use-constant-phonon-phonon-interaction-strength" id="id57"><code class="docutils literal notranslate"><span class="pre">--const-ave-pp</span></code>: Use constant phonon-phonon interaction strength</a></p></li>
+<li><p><a class="reference internal" href="#gruneisen-mode-gruneisen-parameter-from-3rd-order-force-constants" id="id58"><code class="docutils literal notranslate"><span class="pre">--gruneisen</span></code>: Mode-Gruneisen parameter from 3rd order force constants</a></p></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#file-i-o" id="id59">File I/O</a><ul>
-<li><a class="reference internal" href="#hdf5-compression-choice-of-hdf5-compression-filter" id="id60"><code class="docutils literal notranslate"><span class="pre">--hdf5-compression</span></code>: Choice of HDF5 compression filter</a></li>
-<li><a class="reference internal" href="#o-arranging-output-file-names" id="id61"><code class="docutils literal notranslate"><span class="pre">-o</span></code>: Arranging output file names</a></li>
-<li><a class="reference internal" href="#i-arranging-input-file-names" id="id62"><code class="docutils literal notranslate"><span class="pre">-i</span></code>: Arranging input file names</a></li>
+<li><p><a class="reference internal" href="#file-i-o" id="id59">File I/O</a></p>
+<ul>
+<li><p><a class="reference internal" href="#hdf5-compression-choice-of-hdf5-compression-filter" id="id60"><code class="docutils literal notranslate"><span class="pre">--hdf5-compression</span></code>: Choice of HDF5 compression filter</a></p></li>
+<li><p><a class="reference internal" href="#o-arranging-output-file-names" id="id61"><code class="docutils literal notranslate"><span class="pre">-o</span></code>: Arranging output file names</a></p></li>
+<li><p><a class="reference internal" href="#i-arranging-input-file-names" id="id62"><code class="docutils literal notranslate"><span class="pre">-i</span></code>: Arranging input file names</a></p></li>
 </ul>
 </li>
 </ul>
@@ -919,32 +925,32 @@ written into <code class="docutils literal notranslate"><span class="pre">gamma_
 that this is large data.</p>
 <p>In the output file in hdf5, following keys are used to extract the
 detailed information.</p>
-<table border="1" class="docutils">
+<table class="docutils align-default">
 <colgroup>
-<col width="21%" />
-<col width="79%" />
+<col style="width: 21%" />
+<col style="width: 79%" />
 </colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td>gamma_detail for <code class="docutils literal notranslate"><span class="pre">--ise</span></code></td>
-<td>(temperature, sampling frequency point, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>)</td>
+<tbody>
+<tr class="row-odd"><td><p>gamma_detail for <code class="docutils literal notranslate"><span class="pre">--ise</span></code></p></td>
+<td><p>(temperature, sampling frequency point, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>)</p></td>
 </tr>
-<tr class="row-even"><td>gamma_detail for <code class="docutils literal notranslate"><span class="pre">--br</span></code></td>
-<td>(temperature, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>)</td>
+<tr class="row-even"><td><p>gamma_detail for <code class="docutils literal notranslate"><span class="pre">--br</span></code></p></td>
+<td><p>(temperature, symmetry reduced set of triplets at a grid point, band1, band2, band3) in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>)</p></td>
 </tr>
-<tr class="row-odd"><td>mesh</td>
-<td>Numbers of sampling mesh along reciprocal axes.</td>
+<tr class="row-odd"><td><p>mesh</p></td>
+<td><p>Numbers of sampling mesh along reciprocal axes.</p></td>
 </tr>
-<tr class="row-even"><td>frequency_point for <code class="docutils literal notranslate"><span class="pre">--ise</span></code></td>
-<td>Sampling frequency points in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>), i.e., <span class="math notranslate nohighlight">\(\omega\)</span> in <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega)\)</span></td>
+<tr class="row-even"><td><p>frequency_point for <code class="docutils literal notranslate"><span class="pre">--ise</span></code></p></td>
+<td><p>Sampling frequency points in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>), i.e., <span class="math notranslate nohighlight">\(\omega\)</span> in <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega)\)</span></p></td>
 </tr>
-<tr class="row-odd"><td>temperature</td>
-<td>(temperature,), Temperatures in K</td>
+<tr class="row-odd"><td><p>temperature</p></td>
+<td><p>(temperature,), Temperatures in K</p></td>
 </tr>
-<tr class="row-even"><td>triplet</td>
-<td>(symmetry reduced set of triplets at a grid point, 3), Triplets are given by the grid point indices (see below).</td>
+<tr class="row-even"><td><p>triplet</p></td>
+<td><p>(symmetry reduced set of triplets at a grid point, 3), Triplets are given by the grid point indices (see below).</p></td>
 </tr>
-<tr class="row-odd"><td>weight</td>
-<td>(symmetry reduced set of triplets at a grid point,), Weight of each triplet to imaginary part of self energy</td>
+<tr class="row-odd"><td><p>weight</p></td>
+<td><p>(symmetry reduced set of triplets at a grid point,), Weight of each triplet to imaginary part of self energy</p></td>
 </tr>
 </tbody>
 </table>
@@ -1209,11 +1215,11 @@ specifying <code class="docutils literal notranslate"><span class="pre">-o</span
 to <code class="docutils literal notranslate"><span class="pre">kappa-m191919.iso.hdf5</span></code>.</p>
 <p>This rule is applied to</p>
 <ul class="simple">
-<li><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">kappa-xxx.hdf5</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kappa-xxx.hdf5</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code></p></li>
 </ul>
 </div>
 <div class="section" id="i-arranging-input-file-names">
@@ -1223,11 +1229,11 @@ specifying <code class="docutils literal notranslate"><span class="pre">-i</span
 instead of <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code>.</p>
 <p>This rule is applied to</p>
 <ul class="simple">
-<li><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">kappa-xxx.hdf5</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code></li>
-<li><code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kappa-xxx.hdf5</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code></p></li>
 </ul>
 </div>
 </div>
@@ -1253,7 +1259,7 @@ instead of <code class="docutils literal notranslate"><span class="pre">fc3.hdf5
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.1.2.<br/>
     </p>
   </div>
 </footer>
