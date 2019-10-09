@@ -67,7 +67,7 @@ deploy:
     # testing anaconda
     - provider: script
       skip_cleanup: true
-      script: conda/anaconda_deploy.sh rc $ANACONDA_TOKEN $TRAVIS_BRANCH
+      script: conda/anaconda_deploy.sh rc $ANACONDA_TOKEN2 $TRAVIS_BRANCH
       on:
         repo: atztogo/phono3py
         branch: rc
@@ -90,7 +90,7 @@ deploy:
     # production anaconda
     - provider: script
       skip_cleanup: true
-      script: conda/anaconda_deploy.sh main $ANACONDA_TOKEN $TRAVIS_BRANCH
+      script: conda/anaconda_deploy.sh main $ANACONDA_TOKEN2 $TRAVIS_BRANCH
       on:
         repo: atztogo/phono3py
         branch: master
