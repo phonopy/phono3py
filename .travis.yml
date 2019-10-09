@@ -18,7 +18,6 @@ before_install:
     - conda update --yes conda
     - conda init bash
     - source $(conda info --root)/etc/profile.d/conda.sh
-    # - conda create --yes --name travis -c conda-forge python=$TRAVIS_PYTHON_VERSION
     - conda install --yes -c conda-forge python=$TRAVIS_PYTHON_VERSION
     - export CONDA_PREFIX=$HOME/.miniconda
     - export C_INCLUDE_PATH=$CONDA_PREFIX/include

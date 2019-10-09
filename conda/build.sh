@@ -1,10 +1,9 @@
 #!/bin/bash
 
-export PATH=${HOME}/.miniconda/bin:${PATH}
-export C_INCLUDE_PATH=${HOME}/.miniconda/include:${C_INCLUDE_PATH}
-export LD_LIBRARY_PATH=${HOME}/.miniconda/lib:${LD_LIBRARY_PATH}
-
-conda activate travis
+# export PATH=${HOME}/.miniconda/bin:${PATH}
+# export C_INCLUDE_PATH=${HOME}/.miniconda/include:${C_INCLUDE_PATH}
+# export LD_LIBRARY_PATH=${HOME}/.miniconda/lib:${LD_LIBRARY_PATH}
+# conda activate travis
 
 ./get_nanoversion.sh
 
