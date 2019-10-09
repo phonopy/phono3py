@@ -1,7 +1,6 @@
 import unittest
 import os
-import numpy as np
-from phono3py.phonon3 import Phono3py
+from phono3py import Phono3py
 
 data_dir = os.path.dirname(os.path.abspath(__file__))
 

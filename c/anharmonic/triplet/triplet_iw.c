@@ -40,14 +40,18 @@
 #include <tetrahedron_method.h>
 
 static void set_freq_vertices(double freq_vertices[3][24][4],
-                              const double *frequencies,
+                              const double *frequencies1,
+                              const double *frequencies2,
                               TPLCONST size_t vertices[2][24][4],
-                              const int num_band,
+                              const int num_band1,
+                              const int num_band2,
                               const int b1,
-                              const int b2);
+                              const int b2,
+                              const size_t tp_type);
 static int set_g(double g[3],
                  const double f0,
-                 TPLCONST double freq_vertices[3][24][4]);
+                 TPLCONST double freq_vertices[3][24][4],
+                 const size_t max_i);
 static int in_tetrahedra(const double f0, TPLCONST double freq_vertices[24][4]);
 static void get_triplet_tetrahedra_vertices(
   size_t vertices[2][24][4],
@@ -68,12 +72,14 @@ tpi_get_integration_weight(double *iw,
                            const size_t num_triplets,
                            TPLCONST int (*bz_grid_address)[3],
                            const size_t *bz_map,
-                           const double *frequencies,
-                           const size_t num_band,
-                           const size_t num_iw,
+                           const double *frequencies1,
+                           const size_t num_band1,
+                           const double *frequencies2,
+                           const size_t num_band2,
+                           const size_t tp_type,
                            const int openmp_per_bands)
 {
-  size_t j, b1, b2, b12, num_band_prod, adrs_shift;
+  size_t max_i, j, b1, b2, b12, num_band_prod, adrs_shift;
   size_t vertices[2][24][4];
   double g[3];
   double freq_vertices[3][24][4];
@@ -85,23 +91,49 @@ tpi_get_integration_weight(double *iw,
                                   bz_grid_address,
                                   bz_map);
 
-  num_band_prod = num_triplets * num_band0 * num_band * num_band;
+  num_band_prod = num_triplets * num_band0 * num_band1 * num_band2;
+
+  /* tp_type: Type of integration weights stored */
+  /* */
+  /* g0 -> \delta(f0 - (-f1 + f2)) */
+  /* g1 -> \delta(f0 - (f1 - f2)) */
+  /* g2 -> \delta(f0 - (f1 + f2)) */
+  /* */
+  /* tp_type = 2: (g[2], g[0] - g[1]) mainly for ph-ph */
+  /* tp_type = 3: (g[2], g[0] - g[1], g[0] + g[1] + g[2]) mainly for ph-ph */
+  /* tp_type = 4: (g[0]) mainly for el-ph phonon decay, */
+  /*              f0: ph, f1: el_i, f2: el_f */
+
+  if ((tp_type == 2) || (tp_type == 3)) {
+    max_i = 3;
+  }
+  if (tp_type == 4) {
+    max_i = 1;
+  }
 
 #pragma omp parallel for private(j, b1, b2, adrs_shift, g, freq_vertices) if (openmp_per_bands)
-  for (b12 = 0; b12 < num_band * num_band; b12++) {
-    b1 = b12 / num_band;
-    b2 = b12 % num_band;
-    set_freq_vertices
-      (freq_vertices, frequencies, vertices, num_band, b1, b2);
+  for (b12 = 0; b12 < num_band1 * num_band2; b12++) {
+    b1 = b12 / num_band2;
+    b2 = b12 % num_band2;
+    set_freq_vertices(freq_vertices, frequencies1, frequencies2,
+                      vertices, num_band1, num_band2, b1, b2, tp_type);
     for (j = 0; j < num_band0; j++) {
-      adrs_shift = j * num_band * num_band + b1 * num_band + b2;
-      iw_zero[adrs_shift] = set_g(g, frequency_points[j], freq_vertices);
-      iw[adrs_shift] = g[0];
-      adrs_shift += num_band_prod;
-      iw[adrs_shift] = g[1] - g[2];
-      if (num_iw == 3) {
+      adrs_shift = j * num_band1 * num_band2 + b1 * num_band2 + b2;
+      iw_zero[adrs_shift] = set_g(g, frequency_points[j], freq_vertices, max_i);
+      if (tp_type == 2) {
+        iw[adrs_shift] = g[2];
+        adrs_shift += num_band_prod;
+        iw[adrs_shift] = g[0] - g[1];
+      }
+      if (tp_type == 3) {
+        iw[adrs_shift] = g[2];
+        adrs_shift += num_band_prod;
+        iw[adrs_shift] = g[0] - g[1];
         adrs_shift += num_band_prod;
         iw[adrs_shift] = g[0] + g[1] + g[2];
+      }
+      if (tp_type == 4) {
+        iw[adrs_shift] = g[0];
       }
     }
   }
@@ -117,7 +149,7 @@ void tpi_get_integration_weight_with_sigma(double *iw,
                                            const size_t const_adrs_shift,
                                            const double *frequencies,
                                            const size_t num_band,
-                                           const size_t num_iw,
+                                           const size_t tp_type,
                                            const int openmp_per_bands)
 {
   size_t j, b12, b1, b2, adrs_shift;
@@ -133,79 +165,91 @@ void tpi_get_integration_weight_with_sigma(double *iw,
       f0 = frequency_points[j];
       adrs_shift = j * num_band * num_band + b1 * num_band + b2;
 
-      if (cutoff > 0 &&
-          fabs(f0 - f1 - f2) > cutoff &&
-          fabs(f0 + f1 - f2) > cutoff &&
-          fabs(f0 - f1 + f2) > cutoff) {
-        iw_zero[adrs_shift] = 1;
-        g0 = 0;
-        g1 = 0;
-        g2 = 0;
-      } else {
-        iw_zero[adrs_shift] = 0;
-        g0 = gaussian(f0 - f1 - f2, sigma);
-        g1 = gaussian(f0 + f1 - f2, sigma);
-        g2 = gaussian(f0 - f1 + f2, sigma);
+      if ((tp_type == 2) || (tp_type == 3)) {
+        if (cutoff > 0 &&
+            fabs(f0 + f1 - f2) > cutoff &&
+            fabs(f0 - f1 + f2) > cutoff &&
+            fabs(f0 - f1 - f2) > cutoff) {
+          iw_zero[adrs_shift] = 1;
+          g0 = 0;
+          g1 = 0;
+          g2 = 0;
+        } else {
+          iw_zero[adrs_shift] = 0;
+          g0 = gaussian(f0 + f1 - f2, sigma);
+          g1 = gaussian(f0 - f1 + f2, sigma);
+          g2 = gaussian(f0 - f1 - f2, sigma);
+        }
+        if (tp_type == 2) {
+          iw[adrs_shift] = g2;
+          adrs_shift += const_adrs_shift;
+          iw[adrs_shift] = g0 - g1;
+        }
+        if (tp_type == 3) {
+          iw[adrs_shift] = g2;
+          adrs_shift += const_adrs_shift;
+          iw[adrs_shift] = g0 - g1;
+          adrs_shift += const_adrs_shift;
+          iw[adrs_shift] = g0 + g1 + g2;
+        }
       }
-      iw[adrs_shift] = g0;
-      adrs_shift += const_adrs_shift;
-      iw[adrs_shift] = g1 - g2;
-      if (num_iw == 3) {
-        adrs_shift += const_adrs_shift;
-        iw[adrs_shift] = g0 + g1 + g2;
+      if (tp_type == 4) {
+        if (cutoff > 0 && fabs(f0 + f1 - f2) > cutoff) {
+          iw_zero[adrs_shift] = 1;
+          iw[adrs_shift] = 0;
+        } else {
+          iw_zero[adrs_shift] = 0;
+          iw[adrs_shift] = gaussian(f0 + f1 - f2, sigma);
+        }
       }
     }
   }
 }
 
 static void set_freq_vertices(double freq_vertices[3][24][4],
-                              const double *frequencies,
+                              const double *frequencies1,
+                              const double *frequencies2,
                               TPLCONST size_t vertices[2][24][4],
-                              const int num_band,
+                              const int num_band1,
+                              const int num_band2,
                               const int b1,
-                              const int b2)
+                              const int b2,
+                              const size_t tp_type)
 {
   int i, j;
   double f1, f2;
 
   for (i = 0; i < 24; i++) {
     for (j = 0; j < 4; j++) {
-      f1 = frequencies[vertices[0][i][j] * num_band + b1];
-      f2 = frequencies[vertices[1][i][j] * num_band + b2];
-      if (f1 < 0) {f1 = 0;}
-      if (f2 < 0) {f2 = 0;}
-      freq_vertices[0][i][j] = f1 + f2;
-      freq_vertices[1][i][j] = -f1 + f2;
-      freq_vertices[2][i][j] = f1 - f2;
+      f1 = frequencies1[vertices[0][i][j] * num_band1 + b1];
+      f2 = frequencies2[vertices[1][i][j] * num_band2 + b2];
+      if ((tp_type == 2) || (tp_type == 3)) {
+        if (f1 < 0) {f1 = 0;}
+        if (f2 < 0) {f2 = 0;}
+        freq_vertices[1][i][j] = f1 - f2;
+        freq_vertices[2][i][j] = f1 + f2;
+      }
+      freq_vertices[0][i][j] = -f1 + f2;
     }
   }
 }
 
 static int set_g(double g[3],
                  const double f0,
-                 TPLCONST double freq_vertices[3][24][4])
+                 TPLCONST double freq_vertices[3][24][4],
+                 const size_t max_i)
 {
-  int iw_zero;
+  int i, iw_zero;
 
   iw_zero = 1;
 
-  if (in_tetrahedra(f0, freq_vertices[0])) {
-    g[0] = thm_get_integration_weight(f0, freq_vertices[0], 'I');
-    iw_zero = 0;
-  } else {
-    g[0] = 0;
-  }
-  if (in_tetrahedra(f0, freq_vertices[1])) {
-    g[1] = thm_get_integration_weight(f0, freq_vertices[1], 'I');
-    iw_zero = 0;
-  } else {
-    g[1] = 0;
-  }
-  if (in_tetrahedra(f0, freq_vertices[2])) {
-    g[2] = thm_get_integration_weight(f0, freq_vertices[2], 'I');
-    iw_zero = 0;
-  } else {
-    g[2] = 0;
+  for (i = 0; i < max_i; i++) {
+    if (in_tetrahedra(f0, freq_vertices[i])) {
+      g[i] = thm_get_integration_weight(f0, freq_vertices[i], 'I');
+      iw_zero = 0;
+    } else {
+      g[i] = 0;
+    }
   }
 
   return iw_zero;

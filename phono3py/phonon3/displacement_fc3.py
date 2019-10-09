@@ -5,21 +5,51 @@ from phonopy.harmonic.displacement import (get_least_displacements,
 from phonopy.structure.cells import get_smallest_vectors
 
 
-def direction_to_displacement(dataset,
-                              distance,
+def direction_to_displacement(direction_dataset,
+                              displacement_distance,
                               supercell,
                               cutoff_distance=None):
+    """Convert displacement directions to those in Cartesian coordinates.
+
+    Parameters
+    ----------
+    direction_dataset : Return value of get_third_order_displacements
+    displacement_distance :
+
+
+    Returns
+    -------
+    dict
+        Data structure is like:
+        {'natom': 64,
+         'cutoff_distance': 4.000000,
+         'first_atoms':
+          [{'number': atom1,
+            'displacement': [0.03, 0., 0.],
+            'second_atoms': [ {'number': atom2,
+                               'displacement': [0., -0.03, 0.],
+                               'distance': 2.353},
+                              {'number': ... }, ... ] },
+           {'number': atom1, ... } ]}
+
+    """
+
+    duplicates = _find_duplicates(direction_dataset)
+    d3_count = 0
+
     lattice = supercell.get_cell().T
     new_dataset = {}
     new_dataset['natom'] = supercell.get_number_of_atoms()
+    new_dataset['duplicates'] = duplicates
+
     if cutoff_distance is not None:
         new_dataset['cutoff_distance'] = cutoff_distance
     new_first_atoms = []
-    for first_atoms in dataset:
+    for first_atoms in direction_dataset:
         atom1 = first_atoms['number']
         direction1 = first_atoms['direction']
         disp_cart1 = np.dot(direction1, lattice.T)
-        disp_cart1 *= distance / np.linalg.norm(disp_cart1)
+        disp_cart1 *= displacement_distance / np.linalg.norm(disp_cart1)
         new_second_atoms = []
         for second_atom in first_atoms['second_atoms']:
             atom2 = second_atom['number']
@@ -28,18 +58,17 @@ def direction_to_displacement(dataset,
                         pair_distance < cutoff_distance)
             for direction2 in second_atom['directions']:
                 disp_cart2 = np.dot(direction2, lattice.T)
-                disp_cart2 *= distance / np.linalg.norm(disp_cart2)
-                if cutoff_distance is None:
-                    new_second_atoms.append({'number': atom2,
-                                             'direction': direction2,
-                                             'displacement': disp_cart2,
-                                             'pair_distance': pair_distance})
-                else:
-                    new_second_atoms.append({'number': atom2,
-                                             'direction': direction2,
-                                             'displacement': disp_cart2,
-                                             'pair_distance': pair_distance,
-                                             'included': included})
+                norm = np.linalg.norm(disp_cart2)
+                disp_cart2 *= displacement_distance / norm
+                disp2_dict = {'id': d3_count,
+                              'number': atom2,
+                              'direction': direction2,
+                              'displacement': disp_cart2,
+                              'pair_distance': pair_distance}
+                if cutoff_distance is not None:
+                    disp2_dict['included'] = included
+                new_second_atoms.append(disp2_dict)
+                d3_count += 1
         new_first_atoms.append({'number': atom1,
                                 'direction': direction1,
                                 'displacement': disp_cart1,
@@ -79,18 +108,14 @@ def get_third_order_displacements(cell,
 
     Returns
     -------
-    dict
-        Data structure is like:
-        {'natom': 64,
-         'cutoff_distance': 4.000000,
-         'first_atoms':
-          [{'number': atom1,
-            'displacement': [0.03, 0., 0.],
-            'second_atoms': [ {'number': atom2,
-                               'displacement': [0., -0.03, 0.],
-                               'distance': 2.353},
-                              {'number': ... }, ... ] },
-           {'number': atom1, ... } ]}
+
+    [{'number': atom1,
+      'direction': [1, 0, 0],  # int
+      'second_atoms': [ {'number': atom2,
+                         'directions': [ [1, 0, 0], [-1, 0, 0], ... ]
+                         'distance': distance-between-atom1-and-atom2},
+                        {'number': ... }, ... ] },
+     {'number': atom1, ... } ]
 
     """
 
@@ -176,9 +201,9 @@ def get_next_displacements(atom1,
         disps_second = get_displacement(reduced_bond_sym, directions_axis)
     dds_atom2 = {'number': atom2, 'directions': []}
     for disp2 in disps_second:
-        dds_atom2['directions'].append(disp2)
+        dds_atom2['directions'].append(list(disp2))
         if is_minus_displacement(disp2, reduced_bond_sym):
-            dds_atom2['directions'].append(-disp2)
+            dds_atom2['directions'].append(list(-disp2))
 
     return dds_atom2
 
@@ -228,6 +253,18 @@ def get_least_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
     return np.unique(mapping)
 
 
+def get_equivalent_smallest_vectors(atom_number_supercell,
+                                    atom_number_primitive,
+                                    supercell,
+                                    symprec):
+    s_pos = supercell.get_scaled_positions()
+    svecs, multi = get_smallest_vectors(supercell.get_cell(),
+                                        [s_pos[atom_number_supercell]],
+                                        [s_pos[atom_number_primitive]],
+                                        symprec=symprec)
+    return svecs[0, 0]
+
+
 def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
     lattice = cell.get_cell().T
     positions = cell.get_scaled_positions()
@@ -258,13 +295,35 @@ def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
     return np.array(orbits)
 
 
-def get_equivalent_smallest_vectors(atom_number_supercell,
-                                    atom_number_primitive,
-                                    supercell,
-                                    symprec):
-    s_pos = supercell.get_scaled_positions()
-    svecs, multi = get_smallest_vectors(supercell.get_cell(),
-                                        [s_pos[atom_number_supercell]],
-                                        [s_pos[atom_number_primitive]],
-                                        symprec=symprec)
-    return svecs[0, 0]
+def _find_duplicates(direction_dataset):
+    """Returns index mapping for direction sets.
+
+    Returns
+    -------
+    ndarray:
+        [0, 1, 2, ..., 99, 0, 101, ...]
+        For this array v with index i, those elements v[i] != i give the
+        duplucates.
+
+    """
+
+    direction_sets = []
+    for direction1 in direction_dataset:
+        number1 = direction1['number']
+        d1 = direction1['direction']
+        for directions2 in direction1['second_atoms']:
+            number2 = directions2['number']
+            for d2 in directions2['directions']:
+                direction_sets.append([number1, ] + d1 + [number2, ] + d2)
+
+    index_mapping = np.arange(len(direction_sets))
+    for i, dset in enumerate(direction_sets):
+        dset_flip = dset[4:] + dset[:4]
+        for j, dset_comp in enumerate(direction_sets[i + 1:]):
+            if (dset == dset_comp or dset_flip == dset_comp):
+                index_mapping[i] = i + j + 1
+                break
+
+    duplicates = {j: i for i, j in enumerate(index_mapping) if i != j}
+
+    return duplicates

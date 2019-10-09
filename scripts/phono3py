@@ -40,18 +40,19 @@ from phonopy.file_IO import (get_born_parameters, write_FORCE_SETS,
                              parse_FORCE_SETS)
 from phonopy.units import VaspToTHz, Bohr, Rydberg, Hartree
 from phonopy.cui.collect_cell_info import collect_cell_info
-from phonopy.interface import (get_force_sets,
-                               get_default_physical_units, get_interface_mode)
+from phonopy.interface.calculator import (
+    get_force_sets, get_default_physical_units, get_interface_mode)
 from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phonopy.phonon.band_structure import get_band_qpoints
 from phono3py.version import __version__
 from phono3py.file_IO import (parse_disp_fc2_yaml, parse_disp_fc3_yaml,
                               write_disp_fc2_yaml, read_phonon_from_hdf5,
                               write_phonon_to_hdf5,
-                              parse_FORCES_FC2, parse_FORCES_FC3,
-                              write_FORCES_FC2, write_FORCES_FC3)
+                              parse_FORCES_FC2,
+                              write_FORCES_FC2, write_FORCES_FC3,
+                              get_lenghth_of_first_line)
 from phono3py.cui.settings import Phono3pyConfParser
-from phono3py.phonon3 import (Phono3py, Phono3pyJointDos, Phono3pyIsotope)
+from phono3py import Phono3py, Phono3pyJointDos, Phono3pyIsotope
 from phono3py.phonon3.gruneisen import get_gruneisen_parameters
 from phono3py.cui.phono3py_argparse import get_parser
 from phono3py.cui.show_log import (print_phono3py, print_version, print_end,
@@ -341,30 +342,37 @@ if args.force_sets_mode:
             disp_filename = 'disp_fc2.yaml'
         else:
             disp_filename = 'disp_fc2.' + input_filename + '.yaml'
-        file_exists(disp_filename, log_level)
-        disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
-        file_exists("FORCES_FC2", log_level)
-        forces = parse_FORCES_FC2(disp_dataset)
+        forces_filename = "FORCES_FC2"
     else:
         if input_filename is None:
             disp_filename = 'disp_fc3.yaml'
         else:
             disp_filename = 'disp_fc3.' + input_filename + '.yaml'
+        forces_filename = "FORCES_FC3"
+
+    with open(forces_filename, 'r') as f:
+        len_first_line = get_lenghth_of_first_line(f)
+
+    if len_first_line == 3:
         file_exists(disp_filename, log_level)
-        disp_dataset = parse_disp_fc3_yaml(filename=disp_filename)
-        file_exists("FORCES_FC3", log_level)
-        forces = parse_FORCES_FC3(disp_dataset)
+        disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
+        file_exists(forces_filename, log_level)
+        parse_FORCES_FC2(disp_dataset, filename=forces_filename)
 
-    if log_level:
-        print("Displacement dataset is read from %s." % disp_filename)
+        if log_level:
+            print("Displacement dataset is read from %s." % disp_filename)
 
-    for force_set, disp1 in zip(forces, disp_dataset['first_atoms']):
-        disp1['forces'] = force_set
-    write_FORCE_SETS(disp_dataset)
+        write_FORCE_SETS(disp_dataset)
 
-    if log_level:
-        print("FORCE_SETS has been created.")
-        print_end()
+        if log_level:
+            print("FORCE_SETS has been created.")
+            print_end()
+    else:
+        if log_level:
+            print("The file format of %s is already readable by phonopy."
+                  % forces_filename)
+            print_end()
+
     sys.exit(0)
 
 ##################

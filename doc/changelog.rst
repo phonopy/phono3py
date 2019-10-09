@@ -3,6 +3,11 @@
 Change Log
 ==========
 
+Oct-9-2019: Version 1.18.0
+---------------------------
+
+- Maintenance release
+
 Apr-18-2019: Version 1.17.0
 ---------------------------
 - ``--cfz`` option was made to subtract residual forces. See

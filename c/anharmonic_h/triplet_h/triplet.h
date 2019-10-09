@@ -81,9 +81,11 @@ void tpl_get_integration_weight(double *iw,
                                 const size_t num_triplets,
                                 TPLCONST int (*bz_grid_address)[3],
                                 const size_t *bz_map,
-                                const double *frequencies,
-                                const size_t num_band,
-                                const size_t num_iw,
+                                const double *frequencies1,
+                                const size_t num_band1,
+                                const double *frequencies2,
+                                const size_t num_band2,
+                                const size_t tp_type,
                                 const int openmp_per_triplets,
                                 const int openmp_per_bands);
 void tpl_get_integration_weight_with_sigma(double *iw,
@@ -96,11 +98,12 @@ void tpl_get_integration_weight_with_sigma(double *iw,
                                            const size_t num_triplets,
                                            const double *frequencies,
                                            const size_t num_band,
-                                           const size_t num_iw);
+                                           const size_t tp_type);
 
 int tpl_is_N(const size_t triplet[3], const int *grid_address);
 void tpl_set_relative_grid_address(
   int tp_relative_grid_address[2][24][4][3],
-  TPLCONST int relative_grid_address[24][4][3]);
+  TPLCONST int relative_grid_address[24][4][3],
+  const size_t tp_type);
 
 #endif

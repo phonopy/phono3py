@@ -38,10 +38,10 @@ def get_triplets_at_q(grid_point,
         Reciprocal primitive basis vectors given as column vectors
         dtype='double'
         shape=(3, 3)
-    is_time_reversal : bool
-        Inversion symemtry is added if it doesn't exist.
-    swappable : bool
-        q1 and q2 can be swapped. By this number of triplets decreases.
+    is_time_reversal : bool, optional
+        Inversion symemtry is added if it doesn't exist. Default is True.
+    swappable : bool, optional
+        q1 and q2 among (q0, q1, q2) can be swapped. Deafult is True.
 
     Returns
     -------
@@ -573,16 +573,19 @@ def _set_triplets_integration_weights_c(g,
                 bz_map)
             interaction.set_phonons(np.unique(neighboring_grid_points))
 
+    frequencies = interaction.get_phonons()[0]
     phono3c.triplets_integration_weights(
         g,
         g_zero,
-        frequency_points,
+        frequency_points,  # f0
         thm.get_tetrahedra(),
         mesh,
         triplets_at_q,
-        interaction.get_phonons()[0],
+        frequencies,  # f1
+        frequencies,  # f2
         grid_address,
-        bz_map)
+        bz_map,
+        g.shape[0])
 
 
 def _set_triplets_integration_weights_py(g, interaction, frequency_points):

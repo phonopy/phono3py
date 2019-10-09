@@ -196,8 +196,12 @@ class Conductivity(object):
     def get_mesh_divisors(self):
         return self._mesh_divisors
 
-    def get_mesh_numbers(self):
+    @property
+    def mesh_numbers(self):
         return self._mesh
+
+    def get_mesh_numbers(self):
+        return self.mesh_numbers
 
     def get_mode_heat_capacities(self):
         return self._cv
@@ -220,8 +224,12 @@ class Conductivity(object):
     def get_grid_weights(self):
         return self._grid_weights
 
-    def get_temperatures(self):
+    @property
+    def temperatures(self):
         return self._temperatures
+
+    def get_temperatures(self):
+        return self.temperatures
 
     def set_temperatures(self, temperatures):
         self._temperatures = temperatures
@@ -235,8 +243,12 @@ class Conductivity(object):
         self._gamma_iso = gamma_iso
         self._read_gamma_iso = True
 
-    def get_gamma(self):
+    @property
+    def gamma(self):
         return self._gamma
+
+    def get_gamma(self):
+        return self.gamma
 
     def get_gamma_isotope(self):
         return self._gamma_iso

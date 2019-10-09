@@ -49,9 +49,11 @@ tpi_get_integration_weight(double *iw,
                            const size_t num_triplets,
                            TPLCONST int (*bz_grid_address)[3],
                            const size_t *bz_map,
-                           const double *frequencies,
-                           const size_t num_band,
-                           const size_t num_iw,
+                           const double *frequencies1,
+                           const size_t num_band1,
+                           const double *frequencies2,
+                           const size_t num_band2,
+                           const size_t tp_type,
                            const int openmp_per_bands);
 void tpi_get_integration_weight_with_sigma(double *iw,
                                            char *iw_zero,
@@ -63,7 +65,7 @@ void tpi_get_integration_weight_with_sigma(double *iw,
                                            const size_t const_adrs_shift,
                                            const double *frequencies,
                                            const size_t num_band,
-                                           const size_t num_iw,
+                                           const size_t tp_type,
                                            const int openmp_per_bands);
 
 #endif
