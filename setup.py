@@ -170,9 +170,10 @@ else:
     # decrease is considered marginal.
     #
     # For conda: Try installing with dynamic link library of openblas by
-    # % conda install numpy scipy h5py pyyaml matplotlib openblas
-    extra_link_args_lapacke += ['-lopenblas']
-    include_dirs_lapacke += []
+    # % conda install numpy scipy h5py pyyaml matplotlib openblas libgfortran
+    extra_link_args_lapacke += ['-lopenblas', '-lgfortran']
+    include_dirs_lapacke += [
+        os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
     if use_setuptools:
         extra_compile_args += ['-DMULTITHREADED_BLAS']
     else:
