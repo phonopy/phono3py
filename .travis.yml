@@ -18,9 +18,11 @@ before_install:
     - conda update --yes conda
     - conda init bash
     - source $(conda info --root)/etc/profile.d/conda.sh
-    - conda create --yes --name travis -c conda-forge python=$TRAVIS_PYTHON_VERSION
-    - conda activate travis
+    # - conda create --yes --name travis -c conda-forge python=$TRAVIS_PYTHON_VERSION
+    - conda install --yes -c conda-forge python=$TRAVIS_PYTHON_VERSION
+    - export CONDA_PREFIX=$HOME/.miniconda
     - export C_INCLUDE_PATH=$CONDA_PREFIX/include
+    - export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 
 install:
     - conda install --yes -c conda-forge matplotlib pyyaml openblas libgfortran gcc_linux-64 gxx_linux-64 h5py scipy
