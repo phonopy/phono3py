@@ -32,7 +32,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from phono3py.phonon3 import Phono3py
+from phono3py import Phono3py
 from phono3py.file_IO import write_disp_fc3_yaml, write_disp_fc2_yaml
 from phonopy.structure.cells import determinant
 

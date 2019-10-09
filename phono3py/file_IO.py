@@ -44,39 +44,62 @@ def write_disp_fc3_yaml(dataset, supercell, filename='disp_fc3.yaml'):
     w.write("num_second_displacements: %d\n" % num_second)
     w.write("num_displacements_created: %d\n" % num_disp_files)
 
+    if 'duplicates' in dataset:
+        w.write("duplicates:\n")
+        for i in dataset['duplicates']:
+            w.write("- %d : %d\n" % (i + num_first + 1,
+                                     dataset['duplicates'][i] + num_first + 1))
+
     w.write("first_atoms:\n")
-    count1 = 1
-    count2 = num_first + 1
+    count1 = 0
+    count2 = 0
     for disp1 in dataset['first_atoms']:
         disp_cart1 = disp1['displacement']
         w.write("- number: %5d\n" % (disp1['number'] + 1))
         w.write("  displacement:\n")
         w.write("    [%20.16f,%20.16f,%20.16f ] # %05d\n" %
-                (disp_cart1[0], disp_cart1[1], disp_cart1[2], count1))
+                (disp_cart1[0], disp_cart1[1], disp_cart1[2], count1 + 1))
+        w.write("  displacement_id: %d\n" % (count1 + 1))
         w.write("  second_atoms:\n")
         count1 += 1
 
         included = None
-        atom2 = -1
-        for disp2 in disp1['second_atoms']:
-            if atom2 != disp2['number']:
-                atom2 = disp2['number']
-                if 'included' in disp2:
-                    included = disp2['included']
-                pair_distance = disp2['pair_distance']
-                w.write("  - number: %5d\n" % (atom2 + 1))
-                w.write("    distance: %f\n" % pair_distance)
-                if included is not None:
-                    if included:
-                        w.write("    included: %s\n" % "true")
-                    else:
-                        w.write("    included: %s\n" % "false")
-                w.write("    displacements:\n")
+        atom2_list = np.array([disp2['number']
+                               for disp2 in disp1['second_atoms']], dtype=int)
+        _, indices = np.unique(atom2_list, return_index=True)
+        for atom2 in atom2_list[indices]:
+            disp2_list = []
+            for disp2 in disp1['second_atoms']:
+                if disp2['number'] == atom2:
+                    disp2_list.append(disp2)
 
-            disp_cart2 = disp2['displacement']
-            w.write("    - [%20.16f,%20.16f,%20.16f ] # %05d\n" %
-                    (disp_cart2[0], disp_cart2[1], disp_cart2[2], count2))
-            count2 += 1
+            disp2 = disp2_list[0]
+            atom2 = disp2['number']
+            if 'included' in disp2:
+                included = disp2['included']
+            pair_distance = disp2['pair_distance']
+            w.write("  - number: %5d\n" % (atom2 + 1))
+            w.write("    distance: %f\n" % pair_distance)
+            if included is not None:
+                if included:
+                    w.write("    included: %s\n" % "true")
+                else:
+                    w.write("    included: %s\n" % "false")
+            w.write("    displacements:\n")
+
+            for disp2 in disp2_list:
+                # Assert all disp2s belonging to same atom2 appear straight.
+                assert disp2['id'] == count2
+
+                disp_cart2 = disp2['displacement']
+                w.write("    - [%20.16f,%20.16f,%20.16f ] # %05d\n" %
+                        (disp_cart2[0], disp_cart2[1], disp_cart2[2],
+                         count2 + num_first + 1))
+                count2 += 1
+
+            ids = ["%d" % (disp2['id'] + num_first + 1)
+                   for disp2 in disp2_list]
+            w.write("    displacement_ids: [ %s ]\n" % ', '.join(ids))
 
     write_cell_yaml(w, supercell)
 
@@ -120,7 +143,7 @@ def write_FORCES_FC2(disp_dataset,
         w.write("# File: %-5d\n" % (i + 1))
         w.write("# %-5d " % (disp1['number'] + 1))
         w.write("%20.16f %20.16f %20.16f\n" % tuple(disp1['displacement']))
-        if forces_fc2 is None:
+        if 'forces' in disp1 and forces_fc2 is None:
             force_set = disp1['forces']
         else:
             force_set = forces_fc2[i]
@@ -128,7 +151,10 @@ def write_FORCES_FC2(disp_dataset,
             w.write("%15.10f %15.10f %15.10f\n" % tuple(forces))
 
 
-def write_FORCES_FC3(disp_dataset, forces_fc3, fp=None, filename="FORCES_FC3"):
+def write_FORCES_FC3(disp_dataset,
+                     forces_fc3=None,
+                     fp=None,
+                     filename="FORCES_FC3"):
     if fp is None:
         w = open(filename, 'w')
     else:
@@ -156,8 +182,12 @@ def write_FORCES_FC3(disp_dataset, forces_fc3, fp=None, filename="FORCES_FC3"):
             if 'included' in disp2:
                 included = disp2['included']
             if included:
-                for forces in forces_fc3[file_count]:
-                    w.write("%15.10f %15.10f %15.10f\n" % tuple(forces))
+                if 'forces' in disp2 and forces_fc3 is None:
+                    force_set = disp2['forces']
+                else:
+                    force_set = forces_fc3[file_count]
+                for force in force_set:
+                    w.write("%15.10f %15.10f %15.10f\n" % tuple(force))
                 file_count += 1
             else:
                 # for forces in forces_fc3[i]:
@@ -1231,7 +1261,9 @@ def parse_disp_fc3_yaml(filename="disp_fc3.yaml", return_cell=False):
         return new_dataset
 
 
-def parse_FORCES_FC2(disp_dataset, filename="FORCES_FC2"):
+def parse_FORCES_FC2(disp_dataset,
+                     filename="FORCES_FC2",
+                     unit_conversion_factor=None):
     num_atom = disp_dataset['natom']
     num_disp = len(disp_dataset['first_atoms'])
     forces_fc2 = []
@@ -1242,18 +1274,27 @@ def parse_FORCES_FC2(disp_dataset, filename="FORCES_FC2"):
                 return []
             else:
                 forces_fc2.append(forces)
-    return forces_fc2
+
+    for i, disp1 in enumerate(disp_dataset['first_atoms']):
+        if unit_conversion_factor is not None:
+            disp1['forces'] = forces_fc2[i] * unit_conversion_factor
+        else:
+            disp1['forces'] = forces_fc2[i]
 
 
-def parse_FORCES_FC3(disp_dataset, filename="FORCES_FC3", use_loadtxt=False):
+def parse_FORCES_FC3(disp_dataset,
+                     filename="FORCES_FC3",
+                     use_loadtxt=False,
+                     unit_conversion_factor=None):
+    """Parse type1 FORCES_FC3 and store forces in disp_dataset"""
+
     num_atom = disp_dataset['natom']
     num_disp = len(disp_dataset['first_atoms'])
     for disp1 in disp_dataset['first_atoms']:
         num_disp += len(disp1['second_atoms'])
 
     if use_loadtxt:
-        forces_fc3 = np.loadtxt(filename)
-        return forces_fc3.reshape((num_disp, -1, 3))
+        forces_fc3 = np.loadtxt(filename).reshape((num_disp, -1, 3))
     else:
         forces_fc3 = np.zeros((num_disp, num_atom, 3),
                               dtype='double', order='C')
@@ -1264,7 +1305,19 @@ def parse_FORCES_FC3(disp_dataset, filename="FORCES_FC3", use_loadtxt=False):
                     raise RuntimeError("Failed to parse %s." % filename)
                 else:
                     forces_fc3[i] = forces
-        return forces_fc3
+
+    if unit_conversion_factor is not None:
+        forces_fc3 *= unit_conversion_factor
+
+    i = 0
+    for disp1 in disp_dataset['first_atoms']:
+        disp1['forces'] = forces_fc3[i]
+        i += 1
+
+    for disp1 in disp_dataset['first_atoms']:
+        for disp2 in disp1['second_atoms']:
+            disp2['forces'] = forces_fc3[i]
+            i += 1
 
 
 def parse_QPOINTS3(filename='QPOINTS3'):
@@ -1345,6 +1398,22 @@ def parse_grid_address(filename):
     return np.array(grid_address)
 
 
+def get_filename_suffix(mesh,
+                        mesh_divisors=None,
+                        grid_point=None,
+                        band_indices=None,
+                        sigma=None,
+                        sigma_cutoff=None,
+                        filename=None):
+    return _get_filename_suffix(mesh,
+                                mesh_divisors=mesh_divisors,
+                                grid_point=grid_point,
+                                band_indices=band_indices,
+                                sigma=sigma,
+                                sigma_cutoff=sigma_cutoff,
+                                filename=filename)
+
+
 def _get_filename_suffix(mesh,
                          mesh_divisors=None,
                          grid_point=None,
@@ -1423,3 +1492,16 @@ def _parse_force_constants_lines(fcthird_file, num_atom):
         return None
     else:
         return np.array(fc2).reshape(num_atom, num_atom, 3, 3)
+
+
+def get_lenghth_of_first_line(f):
+    for line in f:
+        if line.strip() == '':
+            continue
+        elif line.strip()[0] == '#':
+            continue
+        else:
+            f.seek(0)
+            return len(line.split())
+
+    raise RuntimeError("File doesn't contain relevant infomration.")

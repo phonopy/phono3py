@@ -132,7 +132,8 @@ void ppc_get_pp_collision(double *imag_self_energy,
   }
 
   tpl_set_relative_grid_address(tp_relative_grid_address,
-                                relative_grid_address);
+                                relative_grid_address,
+                                2);
 
 #pragma omp parallel for schedule(guided) private(g, g_zero) if (openmp_per_triplets)
   for (i = 0; i < num_triplets; i++) {
@@ -140,7 +141,7 @@ void ppc_get_pp_collision(double *imag_self_energy,
     g_zero = (char*)malloc(sizeof(char) * num_band_prod);
     tpi_get_integration_weight(g,
                                g_zero,
-                               freqs_at_gp,
+                               freqs_at_gp,  /* used as f0 */
                                num_band0,
                                tp_relative_grid_address,
                                mesh,
@@ -148,7 +149,9 @@ void ppc_get_pp_collision(double *imag_self_energy,
                                1,
                                (int(*)[3])grid_address,
                                bz_map,
-                               frequencies,
+                               frequencies,  /* used as f1 */
+                               num_band,
+                               frequencies,  /* used as f2 */
                                num_band,
                                2,
                                1 - openmp_per_triplets);

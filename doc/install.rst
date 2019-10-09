@@ -3,8 +3,7 @@
 Installation
 =============
 
-MPI is not used in phono3py, so the installation is expected to be
-easy. The detailed installation processes for different environments
+The detailed installation processes for different environments
 are described below. The easiest installation with a good computation
 performance is achieved by using the phono3py conda package (see
 :ref:`install_an_example`).
@@ -28,10 +27,10 @@ are also found at ``atztogo`` channel::
 
    % conda install -c atztogo phono3py
 
-All dependent packages are installed simultaneously.
+All dependent packages should be installed.
 
-Installation using pip
----------------------------
+Installation using pip is not recommended
+-----------------------------------------
 
 PyPI packages are prepared for phonopy and phono3py releases. When
 installing with PyPI, ``setup.py`` is executed locally to compile the
@@ -107,7 +106,7 @@ OpenBLAS provided by conda (with multithread BLAS)
 
 The installtion of LAPACKE is easy by conda. It is::
 
-   % conda install -c conda-forge openblas
+   % conda install -c conda-forge openblas libgfortran
 
 The recent change of openblas package provided from anaconda makes to
 install nomkl, i.e., numpy and scipy with Intel MKL cannot be used
@@ -115,8 +114,7 @@ together with openblas. At this moment, this is avoided to install
 openblas from conda-forge channel. If the python libraries are not yet
 installed::
 
-   % conda install numpy scipy h5py pyyaml matplotlib
-   % conda install -c conda-forge openblas
+   % conda install -c conda-forge numpy scipy h5py pyyaml matplotlib
 
 When using hdf5 files from NFS mouted location, the latest h5py may
 not work. In this case, installation of an older version is
@@ -133,6 +131,14 @@ are activated::
        extra_compile_args += ['-DMULTITHREADED_BLAS']
    else:
        define_macros += [('MULTITHREADED_BLAS', None)]
+
+Libraries or headers are not found at the build by ``setup.py``, the
+following setting may be of the help::
+
+    extra_link_args_lapacke += ['-lopenblas', '-lgfortran']
+    include_dirs_lapacke += [
+        os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
+
 
 Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -161,12 +167,6 @@ example, the procedure of compiling LAPACKE is shown below.
 BLAS, LAPACK, and LAPACKE, these all may have to be compiled
 with ``-fPIC`` option to use it with python.
 
-OpenBLAS provided by MacPorts (with single-thread BLAS)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-MacPorts, the ``OpenBLAS`` package contains not only BLAS but also
-LAPACK and LAPACKE in ``libopenblas``.
-
 Building using setup.py
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -192,34 +192,24 @@ needed.
 2. Set up C-libraries for python C-API and python codes. This can be
    done as follows:
 
-   Run ``setup.py`` script::
+   Run ``setup.py`` script via pip::
 
-      % python setup.py install --user
+      % pip install -e .
 
 3. Set :envvar:`$PATH` and :envvar:`$PYTHONPATH`
 
    ``PATH`` and ``PYTHONPATH`` are set in the same way as phonopy, see
    https://atztogo.github.io/phonopy/install.html#building-using-setup-py.
 
-Installation on macOS
------------------------
-
-macOS users may be able to install phonopy and phono3py on recent
-macOS. But it requires a basic knowledge on UNIX and python. So if
-you are afraid of that, please prepare a computer or a virtual machine
-with a normal linux OS such as Ubuntu-linux-64bit 14.04 or 16.04.
-
-If you think you are familiar with macOS, unix system, and python, the
-recommended installation process is written at
-https://atztogo.github.io/phonopy/install.html#using-phonopy-on-mac-os-x,
-which is more-or-less the same as phonopy, but with openblas, too. An
-example of the procedure is summarized in the next section.
-
-
 .. _install_an_example:
 
-An example of installation process
------------------------------------
+Installation instruction of latest development version of phono3py
+------------------------------------------------------------------
+
+When using conda, ``PYTHONPATH`` should not be set if possible because
+potentially wrong python libraries can be imported.
+
+This installation instruction supposes linux x86-64 environment.
 
 1. Download miniconda package
 
@@ -227,67 +217,85 @@ An example of installation process
 
    For usual 64-bit Linux system::
 
-     % wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+     % wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
 
-   For macOS, it is assumed that gcc compiler is installed on your system. The
-   compiler such as default clang on macOS can't handle OpenMP, so it
-   can't be used. The gcc compiler may be installed using homebrew,
-   e.g.::
+   For macOS::
 
-     % brew install gcc
+     % wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O ~/miniconda.sh
 
-   or using MacPort, e.g.::
+   The installation is made by
 
-     % sudo port install gcc7 wget
+   ::
 
-   where wget is optional. Then download using wget::
+      % bash ~/miniconda.sh -b -p $HOME/miniconda
+      % export PATH="$HOME/miniconda/bin:$PATH"
 
-     % wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+   The detailed installation instruction is found at https://conda.io/projects/conda/en/latest/user-guide/install/index.html.
 
-   Conda provided compiler (gcc for linux and clang for macOS) can be
-   also used instead of system provided compiler, brew, or
-   macport. The detail can be found at
-   https://conda.io/docs/user-guide/tasks/build-packages/compiler-tools.html.
+2. Initialization of conda and setup of conda environment
 
-2. Install conda packages
+   ::
 
-   It is supposed to have the following environment variable::
+      % conda init <your_shell>
 
-     export PATH=~/.miniconda3/bin:$PATH
+   ``<your_shell>`` is often ``bash`` but may be something else. It is
+   important that after running ``conda init``, your shell is needed
+   to be closed and restarted. See more information by ``conda init
+   --help``.
 
-   Then install and update conda::
+   Then conda allows to make conda installation isolated by using conda's
+   virtual environment.
 
-     % bash miniconda.sh -b -p $HOME/.miniconda3
-     % conda update conda
+   ::
 
-   The necessary python libraries and openBLAS are installed by::
+      % conda create -n phono3py -c conda-forge python=3.7
+      % conda activate phono3py
 
-     % conda install numpy scipy h5py pyyaml matplotlib
-     % conda install -c conda-forge openblas
+   Use of this is strongly recommended, otherwise proper settings of
+   ``CONDA_PREFIX``, ``C_INCLUDE_PATH``, and ``LD_LIBRARY_PATH`` will
+   be necessary.
+
+2. Installation of compiler from conda
+
+   For usual 64-bit Linux system::
+
+      % conda install -c conda-forge gcc_linux-64
+
+   For macOS::
+
+      % conda install -c conda-forge clang_osx-64 llvm-openmp
+
+3. Install necessary conda packages for phono3py
+
+   ::
+
+      % conda install -c conda-forge numpy scipy h5py pyyaml matplotlib openblas libgfortran
 
    When using hdf5 files from NFS mouted location, the latest h5py may
    not work. In this case, installation of an older version is
    recommended::
 
-     % conda install hdf5=1.8.18
+      % conda install -c conda-forge hdf5=1.8.18
 
    Install the latest phonopy and phono3py::
 
-     % export CC=gcc # only for macOS (macport), CC=gcc-7 for homebrew
-     % git clone https://github.com/atztogo/phonopy.git
-     % cd phonopy
-     % python setup.py install --user
-     % cd ..
-     % git clone https://github.com/atztogo/phono3py.git
-     % cd phono3py
-     % python setup.py install --user
-     % cd ..
+      % mkdir dev
+      % cd dev
+      % git clone https://github.com/atztogo/phonopy.git
+      % git clone https://github.com/atztogo/phono3py.git
+      % cd phonopy
+      % git checkout develop
+      % python setup.py build
+      % pip install -e .
+      % cd ../phono3py
+      % git checkout develop
+      % python setup.py build
+      % pip install -e .
 
-   Environment variables ``PATH`` and ``PYTHONPATH`` must be set
-   appropriately to use phono3py. See see
-   https://atztogo.github.io/phonopy/install.html#building-using-setup-py
-   and
-   https://atztogo.github.io/phonopy/install.html#set-correct-environment-variables-path-and-pythonpath.
+   The conda packages dependency can often change and this recipe may
+   not work properly. So if you find this instruction doesn't work, it
+   is very appreciated if letting us know it in the phonopy mailing
+   list.
 
 Multithreading and its controlling by C macro
 ----------------------------------------------

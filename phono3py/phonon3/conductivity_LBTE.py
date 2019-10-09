@@ -844,8 +844,12 @@ class Conductivity_LBTE(Conductivity):
     def get_f_vectors(self):
         return self._f_vectors
 
-    def get_collision_matrix(self):
+    @property
+    def collision_matrix(self):
         return self._collision_matrix
+
+    def get_collision_matrix(self):
+        return self.collision_matrix
 
     def get_collision_eigenvalues(self):
         return self._collision_eigenvalues
