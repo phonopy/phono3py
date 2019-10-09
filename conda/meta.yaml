@@ -34,7 +34,7 @@ requirements:
     - h5py
     - phonopy
     - openblas
-    - libgfortran
+    - libgfortran-ng
     - setuptools
     - nose
 
@@ -47,7 +47,7 @@ requirements:
     - h5py
     - phonopy
     - openblas
-    - libgfortran
+    - libgfortran-ng
 
 test:
   # Python imports
