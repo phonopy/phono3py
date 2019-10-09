@@ -18,9 +18,10 @@ before_install:
     - conda update --yes conda
     - conda init bash
     - source $(conda info --root)/etc/profile.d/conda.sh
-    - conda create --yes --name travis -c conda-forge python=$TRAVIS_PYTHON_VERSION
-    - conda activate travis
+    - conda install --yes -c conda-forge python=$TRAVIS_PYTHON_VERSION
+    - export CONDA_PREFIX=$HOME/.miniconda
     - export C_INCLUDE_PATH=$CONDA_PREFIX/include
+    - export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 
 install:
     - conda install --yes -c conda-forge matplotlib pyyaml openblas libgfortran gcc_linux-64 gxx_linux-64 h5py scipy
@@ -66,7 +67,7 @@ deploy:
     # testing anaconda
     - provider: script
       skip_cleanup: true
-      script: conda/anaconda_deploy.sh rc $ANACONDA_TOKEN $TRAVIS_BRANCH
+      script: conda/anaconda_deploy.sh rc $ANACONDA_TOKEN2 $TRAVIS_BRANCH
       on:
         repo: atztogo/phono3py
         branch: rc
@@ -89,7 +90,7 @@ deploy:
     # production anaconda
     - provider: script
       skip_cleanup: true
-      script: conda/anaconda_deploy.sh main $ANACONDA_TOKEN $TRAVIS_BRANCH
+      script: conda/anaconda_deploy.sh main $ANACONDA_TOKEN2 $TRAVIS_BRANCH
       on:
         repo: atztogo/phono3py
         branch: master

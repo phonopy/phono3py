@@ -28,20 +28,26 @@ requirements:
   build:
     - python
     - numpy
+    - scipy
     - matplotlib
     - pyyaml
     - h5py
     - phonopy
     - openblas
+    - libgfortran-ng
+    - setuptools
+    - nose
 
   run:
     - python
     - numpy
+    - scipy
     - matplotlib
     - pyyaml
     - h5py
     - phonopy
     - openblas
+    - libgfortran-ng
 
 test:
   # Python imports
