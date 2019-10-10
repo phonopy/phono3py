@@ -263,7 +263,7 @@ This installation instruction supposes linux x86-64 environment.
 
    For macOS::
 
-      % conda install -c conda-forge clang_osx-64 llvm-openmp
+      % conda install clang_osx-64 llvm-openmp
 
 3. Install necessary conda packages for phono3py
 
