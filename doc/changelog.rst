@@ -3,6 +3,11 @@
 Change Log
 ==========
 
+Oct-17-2019: Version 1.18.1
+---------------------------
+
+- Fix of phono3py-kaccum to follow the latest phonopy.
+
 Oct-9-2019: Version 1.18.0
 ---------------------------
 
