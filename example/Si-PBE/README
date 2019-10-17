@@ -10,9 +10,9 @@ Using 11x11x11 sampling mesh, lattice thermal conductivity is calculated by
 
 kappa-m111111.hdf5 is written as the result. The lattice thermal conductivity is calculated as 119.3 W/m-K at 300 K. This becomes, with 19x19x19 sampling mesh, 132.4 W/m-K.
 
-Accumulated lattice thermal conductivity is calculated using 'kaccum' script.
+Accumulated lattice thermal conductivity is calculated using 'phono3py-kaccum' script.
 
-% kaccum --mesh="11 11 11" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" POSCAR-unitcell kappa-m111111.hdf5 |tee kaccum.dat
+% phono3py-kaccum --mesh="11 11 11" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" POSCAR-unitcell kappa-m111111.hdf5 |tee kaccum.dat
 
 
 The file 'vasprun_xmls.tar.lzma' in this example contains vasprun.xml's that are used to generate FORCES_FC3. To test the FORCES_FC3 generation, after decompressing this file, the following command is executed at current directory:
