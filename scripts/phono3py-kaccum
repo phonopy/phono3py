@@ -4,7 +4,7 @@ import sys
 import numpy as np
 from phonopy.phonon.tetrahedron_mesh import TetrahedronMesh
 from phonopy.harmonic.force_constants import similarity_transformation
-from phonopy.interface import read_crystal_structure
+from phonopy.interface.calculator import read_crystal_structure
 from phono3py.phonon3.triplets import (get_ir_grid_points,
                                        get_grid_points_by_rotations,
                                        get_grid_address)
