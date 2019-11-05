@@ -36,3 +36,4 @@ from phono3py.version import __version__
 from phono3py.api_phono3py import Phono3py
 from phono3py.api_jointdos import Phono3pyJointDos
 from phono3py.api_isotope import Phono3pyIsotope
+from phono3py.cui.load import load

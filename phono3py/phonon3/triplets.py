@@ -27,17 +27,14 @@ def get_triplets_at_q(grid_point,
         A grid point
     mesh : array_like
         Mesh numbers
-        dtype='intc'
-        shape=(3,)
+        shape=(3,), dtype='intc'
     point_group : array_like
         Rotation matrices in real space. Note that those in reciprocal space
         mean these matrices transposed (local terminology).
-        dtype='intc'
-        shape=(n_rot, 3, 3)
+        shape=(n_rot, 3, 3), dtype='intc', order='C'
     reciprocal_lattice : array_like
         Reciprocal primitive basis vectors given as column vectors
-        dtype='double'
-        shape=(3, 3)
+        shape=(3, 3), dtype='double', order='C'
     is_time_reversal : bool, optional
         Inversion symemtry is added if it doesn't exist. Default is True.
     swappable : bool, optional
@@ -48,24 +45,20 @@ def get_triplets_at_q(grid_point,
     triplets_at_q : ndarray
         Symmetry reduced number of triplets are stored as grid point
         integer numbers.
-        dtype='uintp'
-        shape=(n_triplets, 3)
+        shape=(n_triplets, 3), dtype='uintp'
     weights : ndarray
         Weights of triplets in Brillouin zone
-        dtype='intc'
-        shape=(n_triplets,)
+        shape=(n_triplets,), dtype='intc'
     bz_grid_address : ndarray
         Integer grid address of the points in Brillouin zone including
         surface.  The first prod(mesh) numbers of points are
         independent. But the rest of points are
         translational-symmetrically equivalent to some other points.
-        dtype='intc'
-        shape=(n_grid_points, 3)
+        shape=(n_grid_points, 3), dtype='intc', order='C'
     bz_map : ndarray
         Grid point mapping table containing BZ surface. See more
         detail in spglib docstring.
-        dtype='uintp'
-        shape=(prod(mesh*2),)
+        shape=(prod(mesh*2),), dtype='uintp'
     map_tripelts : ndarray or None
         Returns when stores_triplets_map=True, otherwise None is
         returned.  Mapping table of all triplets to symmetrically
@@ -74,14 +67,12 @@ def get_triplets_at_q(grid_point,
         q+q'+q''=G. Considering q' is enough because q is fixed and
         q''=G-q-q' where G is automatically determined to choose
         smallest |G|.
-        dtype='uintp'
-        shape=(prod(mesh),)
+        shape=(prod(mesh),), dtype='uintp'
     map_q : ndarray or None
         Returns when stores_triplets_map=True, otherwise None is
         returned.  Irreducible q-points stabilized by q-point of
         specified grid_point.
-        dtype='uintp'
-        shape=(prod(mesh),)
+        shape=(prod(mesh),), dtype='uintp'
 
     """
 
@@ -192,12 +183,10 @@ def get_grid_point_from_address(address, mesh):
     ----------
     address : array_like
         Grid address.
-        dtype='intc'
-        shape=(3,)
+        shape=(3,), dtype='intc'
     mesh : array_like
         Mesh numbers.
-        dtype='intc'
-        shape=(3,)
+        shape=(3,), dtype='intc'
 
     Returns
     -------
