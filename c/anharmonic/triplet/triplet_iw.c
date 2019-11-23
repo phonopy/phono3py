@@ -226,10 +226,12 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
       if ((tp_type == 2) || (tp_type == 3)) {
         if (f1 < 0) {f1 = 0;}
         if (f2 < 0) {f2 = 0;}
+        freq_vertices[0][i][j] = -f1 + f2;
         freq_vertices[1][i][j] = f1 - f2;
         freq_vertices[2][i][j] = f1 + f2;
+      } else {
+        freq_vertices[0][i][j] = -f1 + f2;
       }
-      freq_vertices[0][i][j] = -f1 + f2;
     }
   }
 }
