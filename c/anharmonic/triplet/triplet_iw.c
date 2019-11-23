@@ -236,6 +236,15 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
   }
 }
 
+/* Integration weight g is calculated. */
+/* iw_zero = 1 means g[0] to g[max_i - 1] are all zero. */
+/* max_i depends on what we compute, e.g., ph-ph lifetime, */
+/* ph-ph collision matrix, and el-ph relaxation time. */
+/* iw_zero is definitely determined by in_tetrahedra in case that */
+/* f0 is out of the tetrahedra. */
+/* iw_zero=1 information can be used to omit to compute particles */
+/* interaction strength that is often heaviest part in throughout */
+/* calculation. */
 static int set_g(double g[3],
                  const double f0,
                  TPLCONST double freq_vertices[3][24][4],
