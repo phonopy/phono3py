@@ -437,7 +437,7 @@ class Conductivity(object):
             self._gv_sum2[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
 
     def _get_gv(self, q):
-        self._gv_obj.set_q_points([q])
+        self._gv_obj.run([q])
         return self._gv_obj.get_group_velocity()[0]
 
     def _get_gv_by_gv(self, i_irgp, i_data):
