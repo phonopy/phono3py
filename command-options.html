@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Command options / Setting tags &#8212; Phono3py v.1.18.1</title>
+    <title>Command options / Setting tags &#8212; Phono3py v.1.18.2</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -134,6 +134,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#dec-22-2019-version-1-18-2">Dec-22-2019: Version 1.18.2</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#oct-17-2019-version-1-18-1">Oct-17-2019: Version 1.18.1</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#oct-9-2019-version-1-18-0">Oct-9-2019: Version 1.18.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#apr-18-2019-version-1-17-0">Apr-18-2019: Version 1.17.0</a></li>
@@ -957,7 +958,7 @@ detailed information.</p>
 <p>Imaginary part of self energy (linewidth/2) is recovered by the
 following script:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">h5py</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="n">gd</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;gamma_detail-mxxx-gx.hdf5&quot;</span><span class="p">)</span>
 <span class="n">temp_index</span> <span class="o">=</span> <span class="mi">30</span> <span class="c1"># index of temperature</span>
@@ -980,7 +981,7 @@ energy, reading <code class="docutils literal notranslate"><span class="pre">pho
 <a class="reference internal" href="#write-phonon-option"><span class="std std-ref">--write-phonon</span></a>). For example,
 phonon triplets of three phonon scatterings are obtained by</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">h5py</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="n">gd</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;gamma_detail-mxxx-gx.hdf5&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
 <span class="n">ph</span> <span class="o">=</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;phonon-mxxx.hdf5&quot;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
@@ -1259,7 +1260,7 @@ instead of <code class="docutils literal notranslate"><span class="pre">fc3.hdf5
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.2.<br/>
     </p>
   </div>
 </footer>

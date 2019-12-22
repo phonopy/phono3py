@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Workload distribution &#8212; Phono3py v.1.18.1</title>
+    <title>Workload distribution &#8212; Phono3py v.1.18.2</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -134,6 +134,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#dec-22-2019-version-1-18-2">Dec-22-2019: Version 1.18.2</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#oct-17-2019-version-1-18-1">Oct-17-2019: Version 1.18.1</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#oct-9-2019-version-1-18-0">Oct-9-2019: Version 1.18.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#apr-18-2019-version-1-17-0">Apr-18-2019: Version 1.17.0</a></li>
@@ -310,7 +311,7 @@ indices for workload distribution.</p>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">gp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gps</span><span class="p">):</span>
         <span class="n">gp_lists</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="n">num</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gp</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">gp_set</span> <span class="ow">in</span> <span class="n">gp_lists</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">gp</span> <span class="k">for</span> <span class="n">gp</span> <span class="ow">in</span> <span class="n">gp_set</span><span class="p">]))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">gp</span> <span class="k">for</span> <span class="n">gp</span> <span class="ow">in</span> <span class="n">gp_set</span><span class="p">]))</span>
 </pre></div>
 </div>
 <p>Supposed that this script is saved as <code class="docutils literal notranslate"><span class="pre">divide_gps.py</span></code>,</p>
@@ -378,7 +379,7 @@ phono3py --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> 
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.2.<br/>
     </p>
   </div>
 </footer>

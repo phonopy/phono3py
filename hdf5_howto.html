@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>How to read the results stored in hdf5 files &#8212; Phono3py v.1.18.1</title>
+    <title>How to read the results stored in hdf5 files &#8212; Phono3py v.1.18.2</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -134,6 +134,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#dec-22-2019-version-1-18-2">Dec-22-2019: Version 1.18.2</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#oct-17-2019-version-1-18-1">Oct-17-2019: Version 1.18.1</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#oct-9-2019-version-1-18-0">Oct-9-2019: Version 1.18.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#apr-18-2019-version-1-17-0">Apr-18-2019: Version 1.17.0</a></li>
@@ -542,7 +543,7 @@ a mode contribution to the lattice thermal conductivity is given by</p>
 with grid point numbers such as <code class="docutils literal notranslate"><span class="pre">kappa-m202020-g4200.hdf5</span></code>. You may
 want to know the grid point number with given grid address. This is
 done using <code class="docutils literal notranslate"><span class="pre">get_grid_point_from_address</span></code> as follows:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">phono3py.phonon3.triplets</span> <span class="k">import</span> <span class="n">get_grid_point_from_address</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">phono3py.phonon3.triplets</span> <span class="kn">import</span> <span class="n">get_grid_point_from_address</span>
 
 <span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">get_grid_point_from_address</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">])</span>
 <span class="n">Out</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="mi">4200</span>
@@ -573,7 +574,7 @@ second argument is the mesh numbers.</p>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.2.<br/>
     </p>
   </div>
 </footer>
