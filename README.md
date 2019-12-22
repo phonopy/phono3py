@@ -1,5 +1,5 @@
 # phono3py
-A simulation package of phonon-phonon interaction related properties. Phonopy user documetation is found at http://atztogo.github.io/phono3py/.
+A simulation package of phonon-phonon interaction related properties. Phono3py user documetation is found at http://atztogo.github.io/phono3py/.
 
 ## Mailing list for questions
 

@@ -23,7 +23,7 @@ rm -r .buildinfo .doctrees *
 
 From the directory the sphinx doc is complied,
 ```
-rsync -avh _build/ <phonopy-repository-directory>/
+rsync -avh _build/ <phono3py-repository-directory>/
 ```
 
 Again, at the phono3py github top directory,
