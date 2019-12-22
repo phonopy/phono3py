@@ -153,28 +153,23 @@ if args.qe_mode:
         from phonopy.interface.qe import write_supercells_with_displacements
     except ImportError:  # to be compatible to older phonopy
         from phonopy.interface.pwscf import write_supercells_with_displacements
-    distance_to_A = Bohr
-    force_to_eVperA = Rydberg / Bohr
 elif args.crystal_mode:
     interface_mode = 'crystal'
     from phonopy.interface.crystal import write_supercells_with_displacements
-    distance_to_A = None
-    force_to_eVperA = None
 elif args.abinit_mode:
     interface_mode = 'abinit'
     from phonopy.interface.abinit import write_supercells_with_displacements
-    distance_to_A = Bohr
-    force_to_eVperA = None
 elif args.turbomole_mode:
     interface_mode = 'turbomole'
     from phonopy.interface.turbomole import write_supercells_with_displacements
-    distance_to_A = Bohr
-    force_to_eVperA = Hartree / Bohr
 else:
     interface_mode = 'vasp'
     from phonopy.interface.vasp import write_supercells_with_displacements
-    distance_to_A = None
-    force_to_eVperA = None
+
+units = get_default_physical_units(interface_mode)
+distance_to_A = units['distance_to_A']
+force_to_eVperA = units['force_to_eVperA']
+
 
 # Input and output filename extension
 input_filename = args.input_filename
@@ -511,6 +506,7 @@ phono3py = Phono3py(
     is_mesh_symmetry=settings.get_is_mesh_symmetry(),
     symmetrize_fc3q=settings.get_is_symmetrize_fc3_q(),
     symprec=symprec,
+    calculator=interface_mode,
     log_level=log_level,
     lapack_zheev_uplo=args.uplo)
 

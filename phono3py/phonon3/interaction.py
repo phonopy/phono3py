@@ -25,10 +25,6 @@ class Interaction(object):
                  symmetrize_fc3q=False,
                  cutoff_frequency=None,
                  lapack_zheev_uplo='L'):
-        if frequency_scale_factor is None:
-            self._set_fc3(fc3)
-        else:
-            self._set_fc3(fc3 * frequency_scale_factor ** 2)
         self._supercell = supercell
         self._primitive = primitive
         self._mesh = np.array(mesh, dtype='intc')
@@ -39,6 +35,8 @@ class Interaction(object):
         self._constant_averaged_interaction = constant_averaged_interaction
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._frequency_scale_factor = frequency_scale_factor
+
+        self._set_fc3(fc3)
 
         # Unit to eV^2
         if unit_conversion is None:
@@ -74,6 +72,7 @@ class Interaction(object):
         self._frequencies = None
         self._eigenvectors = None
         self._dm = None
+        self._nac_params = None
         self._nac_q_direction = None
 
         self._band_index_count = 0
@@ -105,33 +104,47 @@ class Interaction(object):
             self._interaction_strength[:] = (
                 self._constant_averaged_interaction / num_grid)
 
-    def get_interaction_strength(self):
+    @property
+    def interaction_strength(self):
         return self._interaction_strength
 
-    def set_interaction_strength(self, pp_strength, g_zero=None):
-        self._interaction_strength = pp_strength
-        self._g_zero = g_zero
+    def get_interaction_strength(self):
+        return self.interaction_strength
 
-    def get_zero_value_positions(self):
-        return self._g_zero
-
-    def get_mesh_numbers(self):
+    @property
+    def mesh_numbers(self):
         return self._mesh
 
-    def get_phonons(self):
-        return self._frequencies, self._eigenvectors, self._phonon_done
+    def get_mesh_numbers(self):
+        return self.mesh_numbers
 
-    def get_fc3(self):
+    @property
+    def fc3(self):
         return self._fc3
 
-    def get_dynamical_matrix(self):
+    def get_fc3(self):
+        return self.fc3
+
+    @property
+    def dynamical_matrix(self):
         return self._dm
 
-    def get_primitive(self):
+    def get_dynamical_matrix(self):
+        return self.dynamical_matrix
+
+    @property
+    def primitive(self):
         return self._primitive
 
-    def get_supercell(self):
+    def get_primitive(self):
+        return self.primitive
+
+    @property
+    def supercell(self):
         return self._supercell
+
+    def get_supercell(self):
+        return self.supercell
 
     def get_triplets_at_q(self):
         return (self._triplets_at_q,
@@ -139,14 +152,43 @@ class Interaction(object):
                 self._triplets_map_at_q,
                 self._ir_map_at_q)
 
-    def get_grid_address(self):
+    @property
+    def grid_address(self):
         return self._grid_address
 
-    def get_bz_map(self):
+    def get_grid_address(self):
+        return self.grid_address
+
+    @property
+    def bz_map(self):
         return self._bz_map
 
-    def get_band_indices(self):
+    def get_bz_map(self):
+        return self.bz_map
+
+    @property
+    def band_indices(self):
         return self._band_indices
+
+    def get_band_indices(self):
+        return self.band_indices
+
+    @property
+    def nac_params(self):
+        return self._nac_params
+
+    @property
+    def nac_q_direction(self):
+        return self._nac_q_direction
+
+    def get_nac_q_direction(self):
+        return self.nac_q_direction
+
+    def get_zero_value_positions(self):
+        return self._g_zero
+
+    def get_phonons(self):
+        return self._frequencies, self._eigenvectors, self._phonon_done
 
     def get_frequency_factor_to_THz(self):
         return self._frequency_factor_to_THz
@@ -177,14 +219,15 @@ class Interaction(object):
                 self._s2p,
                 self._masses)
 
-    def get_nac_q_direction(self):
-        return self._nac_q_direction
-
     def get_unit_conversion_factor(self):
         return self._unit_conversion
 
     def get_constant_averaged_interaction(self):
         return self._constant_averaged_interaction
+
+    def set_interaction_strength(self, pp_strength, g_zero=None):
+        self._interaction_strength = pp_strength
+        self._g_zero = g_zero
 
     def set_grid_point(self, grid_point, stores_triplets_map=False):
         reciprocal_lattice = np.linalg.inv(self._primitive.get_cell())
@@ -272,6 +315,7 @@ class Interaction(object):
                              solve_dynamical_matrices=True,
                              decimals=None,
                              verbose=False):
+        self._nac_params = nac_params
         self._dm = get_dynamical_matrix(
             fc2,
             supercell,
@@ -333,14 +377,23 @@ class Interaction(object):
         self._g_zero = None
 
     def _set_fc3(self, fc3):
+        if fc3 is None and self._constant_averaged_interaction is not None:
+            msg = ("fc3 can not be None unless constant_averaged_interaction "
+                   "is given.")
+            raise AttributeError(msg)
+
         if (type(fc3) == np.ndarray and
             fc3.dtype == np.dtype('double') and
             fc3.flags.aligned and
             fc3.flags.owndata and
-            fc3.flags.c_contiguous):
+            fc3.flags.c_contiguous and
+            self._frequency_scale_factor is None):
             self._fc3 = fc3
-        else:
+        elif self._frequency_scale_factor is None:
             self._fc3 = np.array(fc3, dtype='double', order='C')
+        else:
+            self._fc3 = np.array(fc3 * self._frequency_scale_factor ** 2,
+                                 dtype='double', order='C')
 
     def _set_band_indices(self, band_indices):
         num_band = self._primitive.get_number_of_atoms() * 3

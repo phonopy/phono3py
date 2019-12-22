@@ -3,6 +3,12 @@
 Change Log
 ==========
 
+Dec-22-2019: Version 1.18.2
+---------------------------
+
+- Initial version of phono3py loader (``phono3py.load``) was
+  implemented. See docstring of ``phono3py.load``.
+
 Oct-17-2019: Version 1.18.1
 ---------------------------
 
