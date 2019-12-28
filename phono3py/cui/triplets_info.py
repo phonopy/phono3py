@@ -48,7 +48,7 @@ def write_grid_points(primitive,
                       coarse_mesh_shifts=None,
                       is_kappa_star=True,
                       is_lbte=False,
-                      compression=None,
+                      compression="gzip",
                       symprec=1e-5,
                       filename=None):
     print("-" * 76)

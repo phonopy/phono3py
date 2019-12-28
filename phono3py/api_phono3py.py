@@ -657,10 +657,6 @@ class Phono3py(object):
             print("'mesh' has to be set in Phono3py instantiation.")
             raise RuntimeError
 
-        if self._fc3 is None:
-            print("'fc3' has to be set before calling this method.")
-            raise RuntimeError
-
         if self._fc2 is None:
             print("'fc2' has to be set before calling this method.")
             raise RuntimeError

@@ -53,7 +53,7 @@ def create_phono3py_force_constants(phono3py,
                                     settings,
                                     force_to_eVperA=None,
                                     distance_to_A=None,
-                                    compression=None,
+                                    compression="gzip",
                                     input_filename=None,
                                     output_filename=None,
                                     log_level=1):
@@ -77,7 +77,7 @@ def create_phono3py_force_constants(phono3py,
          not (settings.get_is_bterta() or settings.get_is_lbte())) or
         settings.get_read_gamma() or
         settings.get_read_pp() or
-        settings.get_write_phonon() or
+        (not settings.get_is_bterta() and settings.get_write_phonon()) or
         settings.get_constant_averaged_pp_interaction() is not None):
         pass
     else:

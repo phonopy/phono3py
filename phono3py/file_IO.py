@@ -214,7 +214,7 @@ def write_fc3_dat(force_constants_third, filename='fc3.dat'):
 def write_fc3_to_hdf5(fc3,
                       filename='fc3.hdf5',
                       p2s_map=None,
-                      compression=None):
+                      compression="gzip"):
     """Write third-order force constants in hdf5 format.
 
     Parameters
@@ -229,9 +229,9 @@ def write_fc3_to_hdf5(fc3,
         Primitive atom indices in supercell index system
         shape=(n_patom,), dtype=intc
     compression : str or int, optional
-        h5py's lossless compression filters (e.g., "gzip", "lzf").
-        See the detail at docstring of h5py.Group.create_dataset. Default is
-        None.
+        h5py's lossless compression filters (e.g., "gzip", "lzf"). None gives
+        no compression. See the detail at docstring of
+        h5py.Group.create_dataset. Default is "gzip".
 
     """
 
@@ -273,7 +273,7 @@ def write_fc2_to_hdf5(force_constants,
                       filename='fc2.hdf5',
                       p2s_map=None,
                       physical_unit=None,
-                      compression=None):
+                      compression="gzip"):
     write_force_constants_to_hdf5(force_constants,
                                   filename=filename,
                                   p2s_map=p2s_map,
@@ -337,7 +337,7 @@ def write_grid_address(grid_address, mesh, filename=None):
 def write_grid_address_to_hdf5(grid_address,
                                mesh,
                                grid_mapping_table,
-                               compression=None,
+                               compression="gzip",
                                filename=None):
     suffix = _get_filename_suffix(mesh, filename=filename)
     full_filename = "grid_address" + suffix + ".hdf5"
@@ -669,7 +669,7 @@ def write_kappa_to_hdf5(temperature,
                         sigma=None,
                         sigma_cutoff=None,
                         kappa_unit_conversion=None,
-                        compression=None,
+                        compression="gzip",
                         filename=None,
                         verbose=True):
     if band_index is None:
@@ -905,7 +905,7 @@ def write_pp_to_hdf5(mesh,
                      filename=None,
                      verbose=True,
                      check_consistency=False,
-                     compression=None):
+                     compression="gzip"):
     suffix = _get_filename_suffix(mesh,
                                   grid_point=grid_point,
                                   sigma=sigma,
@@ -940,8 +940,9 @@ def write_pp_to_hdf5(mesh,
                 if remlen != 0:
                     z_rem = np.packbits(x[bytelen * 8:])
 
+                # No compression for pp because already almost random.
                 w.create_dataset('nonzero_pp', data=nonzero_pp,
-                                 compression=compression)
+                                 compression=None)
                 w.create_dataset('pp_shape', data=pp.shape,
                                  compression=compression)
                 w.create_dataset('g_zero_bits', data=z,
@@ -1057,7 +1058,7 @@ def write_gamma_detail_to_hdf5(temperature,
                                band_index=None,
                                sigma=None,
                                sigma_cutoff=None,
-                               compression=None,
+                               compression="gzip",
                                filename=None,
                                verbose=True):
     if band_index is None:
@@ -1135,7 +1136,7 @@ def write_phonon_to_hdf5(frequency,
                          eigenvector,
                          grid_address,
                          mesh,
-                         compression=None,
+                         compression="gzip",
                          filename=None):
     suffix = _get_filename_suffix(mesh, filename=filename)
     full_filename = "phonon" + suffix + ".hdf5"

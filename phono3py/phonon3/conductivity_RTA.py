@@ -36,7 +36,7 @@ def get_thermal_conductivity_RTA(
         write_pp=False,
         read_pp=False,
         write_gamma_detail=False,
-        compression=None,
+        compression="gzip",
         input_filename=None,
         output_filename=None,
         log_level=0):
@@ -107,7 +107,7 @@ def get_thermal_conductivity_RTA(
     return br
 
 
-def _write_gamma_detail(br, interaction, i, compression=None, filename=None,
+def _write_gamma_detail(br, interaction, i, compression="gzip", filename=None,
                         verbose=True):
     gamma_detail = br.get_gamma_detail_at_q()
     temperatures = br.get_temperatures()
@@ -161,7 +161,7 @@ def _write_gamma_detail(br, interaction, i, compression=None, filename=None,
                     verbose=verbose)
 
 
-def _write_gamma(br, interaction, i, compression=None, filename=None,
+def _write_gamma(br, interaction, i, compression="gzip", filename=None,
                  verbose=True):
     grid_points = br.get_grid_points()
     group_velocities = br.get_group_velocities()
@@ -260,7 +260,7 @@ def _write_gamma(br, interaction, i, compression=None, filename=None,
                     verbose=verbose)
 
 
-def _write_kappa(br, volume, compression=None, filename=None, log_level=0):
+def _write_kappa(br, volume, compression="gzip", filename=None, log_level=0):
     temperatures = br.get_temperatures()
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()

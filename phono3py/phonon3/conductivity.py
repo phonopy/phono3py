@@ -29,7 +29,7 @@ def write_pp(conductivity,
              pp,
              i,
              filename=None,
-             compression=None):
+             compression="gzip"):
     grid_point = conductivity.get_grid_points()[i]
     sigmas = conductivity.get_sigmas()
     sigma_cutoff = conductivity.get_sigma_cutoff_width()

@@ -39,7 +39,7 @@ def get_thermal_conductivity_LBTE(
         write_pp=False,
         read_pp=False,
         write_LBTE_solution=False,
-        compression=None,
+        compression="gzip",
         input_filename=None,
         output_filename=None,
         log_level=0):
@@ -219,7 +219,7 @@ def _write_kappa(lbte,
                  is_reducible_collision_matrix=False,
                  write_LBTE_solution=False,
                  pinv_solver=None,
-                 compression=None,
+                 compression="gzip",
                  filename=None,
                  log_level=0):
     temperatures = lbte.get_temperatures()
