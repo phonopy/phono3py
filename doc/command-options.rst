@@ -3,20 +3,27 @@
 Command options / Setting tags
 =================================
 
-From phonopy v1.12.3, the command option names with underscores ``_``
-are replaced by those with dashes ``-``. Those tag names are unchanged.
+Phono3py is operated with command options or with a configuration file
+that contains setting tags. In this page, the command options are
+explained. Most of command options have their respective setting
+tags. So the configuration file can be equivalently used as explained at
+:ref:`command_options_setting_tags`.
 
-Command-user-interface of phono3py is operated with a variety of
-command options. Here those command options are explained.
+.. contents::
+   :depth: 2
+   :local:
 
-**At the current release v1.14.3, reading configuration file doesn't
-work. If this is needed, please try the develop branch of phono3py on
-github. This will be fixed in the next release.** A configuration
-file with setting tags like phonopy can be used instead of and
-together with the command options. The setting tags are mostly
-equivalent to the most command options, but when both are set
-simultaneously, the command options are preferred. An example of
-configuration (e.g., saved in a file ``setting.conf``) is as follow::
+.. _command_options_setting_tags:
+
+Note on configuration file and setting tags
+-------------------------------------------
+
+A configuration file with setting tags like phonopy can be used
+instead of and together with the command options. The setting tags are
+mostly equivalent to the respective most command options, but when
+both are set simultaneously, the command options are preferred. An
+example of configuration (e.g., saved in a file ``setting.conf``) is
+as follow::
 
    DIM = 2 2 2
    DIM_FC2 = 4 4 4
@@ -34,83 +41,55 @@ where the setting tag names are case insensitive. This is run by
 
    % phono3py setting.conf [comannd options]
 
-.. contents::
-   :depth: 2
-   :local:
+or
+
+::
+
+   % phono3py [comannd options] -- setting.conf
 
 Calculator interface
 ---------------------
 
-``-c``: Unit cell filename
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``CELL_FILENAME``)
+``-c`` (``CELL_FILENAME``): Unit cell filename
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
    % phono3py -c POSCAR-unitcell ... (many options)
 
-``--pwscf``: PWSCF (Quantum espresso) interface
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``--qe`` (``CALCULATOR = QE``): Quantum espresso interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Using this option, PWSCF interface is invoked.
 See the detail at :ref:`pwscf_interface`.
 
-``--crystal``: CRYSTAL interface
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``--crystal`` (``CALCULATOR = CRYSTAL``): CRYSTAL interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Using this option, CRYSTAL interface is invoked.
 See the detail at :ref:`crystal_interface`.
 
-``--turbomole``: TURBOMOLE interface
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``--turbomole`` (``CALCULATOR = TURBOMOLE``): TURBOMOLE interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Using this option, TURBOMOLE interface is invoked.
 See the details at :ref:`turbomole_interface`.
 
-Force constants
-----------------
+Supercell and primitive cell
+----------------------------
 
-.. _create_displacements_option:
+.. _dim_option:
 
-``-d``: Create displacements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``CREATE_DISPLACEMENTS``)
-
-Supercell with displacements are created. Using with ``--amplitude``
-option, atomic displacement distances are controlled. With this
-option, files for supercells with displacements and ``disp_fc3.yaml``
-file are created.
-
-.. _amplitude_option:
-
-``--amplitude``: Amplitude of displacements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``DISPLACEMENT_DISTANCE``)
-
-Atomic displacement distance is specified using this option.  This
-value may be increased for the weak interaction systems and descreased
-when the force calculator is numerically very accurate.
-
-The default value depends on calculator. See
-:ref:`default_displacement_distance_for_calculator`.
-
-``--dim``: Supercell dimension
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``DIM``)
+``--dim`` (``DIM``): Supercell dimension
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Supercell size is specified. See the
 detail at http://atztogo.github.io/phonopy/setting-tags.html#dim .
 
 .. _dim_fc2_option:
 
-``--dim-fc2``: Supercell dimension for 2nd order force constants
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``DIM_FC2``)
+``--dim-fc2`` (``DIM_FC2``): Supercell dimension for 2nd order force constants
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A larger and different supercell size for 2nd order force constants
 than that for 3rd order force constants can be specified with this
@@ -151,80 +130,42 @@ usual phono3py run without ``--dim-fc2`` option.
 
 .. _pa_option:
 
-``--pa``, ``--primitive-axes``: Transformation matrix to primitive cell
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``PRIMITIVE_AXES``)
+``--pa``, ``--primitive-axes`` (``PRIMITIVE_AXES``): Transformation matrix to primitive cell
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Transformation matrix from a non-primitive cell to the primitive
 cell. See phonopy ``PRIMITIVE_AXES`` tag (``--pa`` option) at
 http://atztogo.github.io/phonopy/setting-tags.html#primitive-axis
 
-``--fc2``: Read 2nd order force constants
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Displacement creation
+---------------------
 
-(Setting tag: ``READ_FC2``, ``.TRUE.`` or ``.FALSE.``)
+.. _create_displacements_option:
 
-Read 2nd order force constants from ``fc2.hdf5``.
+``-d`` (``CREATE_DISPLACEMENTS = .TRUE.``): Create displacements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``--fc3``: Read 3nd order force constants
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Supercell with displacements are created. Using with ``--amplitude``
+option, atomic displacement distances are controlled. With this
+option, files for supercells with displacements and ``disp_fc3.yaml``
+file are created.
 
-(Setting tag: ``READ_FC3``, ``.TRUE.`` or ``.FALSE.``)
+.. _amplitude_option:
 
-Read 3rd order force constants from ``fc3.hdf5``.
+``--amplitude`` (``DISPLACEMENT_DISTANCE``): Amplitude of displacements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. _compact_fc_option:
+Atomic displacement distance is specified using this option.  This
+value may be increased for the weak interaction systems and descreased
+when the force calculator is numerically very accurate.
 
-``--cfc`` or ``--compact-fc``: Compact force constants
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The default value depends on calculator. See
+:ref:`default_displacement_distance_for_calculator`.
 
-(Setting tag: ``COMPACT_FC``, ``.TRUE.`` or ``.FALSE.``)
+Utilities
+---------
 
-When creating force constants from ``FORCES_FC3`` and/or
-``FORCES_FC2``, force constants that use smaller data size are
-created. The shape of the data array is ``(num_patom, num_satom)`` for
-fc2 and ``(num_patom, num_satom, num_satom)`` for fc3, where
-``num_patom`` and ``num_satom`` are the numbers of atoms in primtive
-cell and supercell. In the full size force constants case,
-``num_patom`` is replaced by ``num_satom``. Therefore if the supercell
-dimension is large, this reduction of data size becomes large.  If the
-input crystal structure has centring :ref:`--pa <pa_option>` is
-necessary to have smallest data size. In this case, ``--pa`` option
-has to be specified on reading. Otherwise phono3py can recognize if
-``fc2.hdf5`` and ``fc3.hdf5`` are compact or full automatically. When
-using with ``--sym-fc``, the calculated results will become slightly
-different due to imperfect symmetrization scheme that phono3py
-employs.
-
-::
-
-   % phono3py --dim="2 2 2" --cfc --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell
-
-.. _symmetrization_option:
-
-``--sym-fc2``, ``--sym-fc3r``, ``--sym-fc``: Symmetries force constants
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tags: ``SYMMETRIZE_FC2``, ``.TRUE.`` or ``.FALSE.``)
-(Setting tags: ``SYMMETRIZE_FC3``, ``.TRUE.`` or ``.FALSE.``)
-(Setting tags: ``FC_SYMMETRY``, ``.TRUE.`` or ``.FALSE.``)
-
-These are used to symmetrize second- and third-order force
-constants. With ``--sym-fc2`` and ``--sym-fc3r``,
-the index exchange of real space force constantsand translational
-invariance symmetry are applied, respectively. ``--sym-fc`` is an
-alias to set both of ``--sym-fc2`` and ``--sym-fc3r``.
-
-..
-   ``--sym-fc3q`` symmetrizes third-order force constants in normal
-   coordinates by the index exchange.
-
-When those force constants are not read from the hdf5 files,
-symmetrized force constants in real space are written into those hdf5
-files.
-
-.. _cf3_option:
+These options have no respective configuration file tags.
 
 ``--cf3``: Create ``FORCES_FC3``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -323,108 +264,6 @@ instead of ``FORCES_FC3`` and ``disp_fc3.yaml``.
 
    % phono3py --cfs --dim-fc2="x x x"
 
-``--cutoff-fc3`` or ``--cutoff-fc3-distance``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``CUTOFF_FC3_DISTANCE``)
-
-This option is **not** used to reduce number of supercells with
-displacements, but this option is used to set zero in elements of
-given third-order force constants. The zero elements are selected by
-the condition that any pair-distance of atoms in each atom triplet is
-larger than the specified cut-off distance.
-
-If one wants to reduce number of supercells, the first choice is to
-reduce the supercell size and the second choice is using
-``--cutoff-pair`` option.
-
-.. _cutoff_pair_option:
-
-``--cutoff-pair`` or ``--cutoff-pair-distance``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``CUTOFF_PAIR_DISTANCE``)
-
-This option is only used together with ``-d`` option.
-
-A cutoff pair-distance in a supercell is used to reduce the number of
-necessary supercells with displacements to obtain third order force
-constants. As the drawback, a certain number of
-third-order-force-constants elements are abandoned or computed with
-less numerical accuracy. More details are found in the following link:
-
-.. toctree::
-   :maxdepth: 1
-
-   cutoff-pair
-
-Reciprocal space sampling mesh and grid points, and band indices
------------------------------------------------------------------
-
-``--mesh``: Sampling mesh
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``MESH`` or ``MESH_NUMBERS``)
-
-Phonon triples are chosen on the grid points on the sampling mesh
-specified by this option. This mesh is made along reciprocal
-axes and is always Gamma-centered.
-
-..
-   ``--md``
-   ~~~~~~~~~
-
-   Divisors of mesh numbers. Another sampling mesh is used to calculate
-   phonon lifetimes. :math:`8\times 8\times 8` mesh is used for the
-   calculation of phonon lifetimes when it is specified, e.g.,
-   ``--mesh="11 11 11" --md="2 2 2"``.
-
-.. _gp_option:
-
-``--gp``: Grid points by their ID
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``GRID_POINTS``)
-
-Grid points where imaginary part of self energy is calculated are
-specified. Indices of grid points are specified by space or comma
-(``,``) separated numbers. The mapping table between grid points to its
-indices is obtained by running with ``--loglevel=2`` option.
-
-::
-
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --write-gamma --gp="0 1 2 3 4 5"
-
-where ``--gp="0 1 2 3 4 5"`` can be also written
-``--gp="0,1,2,3,4,5"``. There is a similar option as this option,
-:ref:`--ga option <ga_option>`.
-
-``--ga`` option may be also useful when a workload of thermal
-conductivity calculation is expected to be distributed into different
-computer nodes.
-
-.. toctree::
-   :maxdepth: 1
-
-   workload-distribution
-
-
-.. _ga_option:
-
-``--ga``: Grid points by address with three integer values
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``GRID_ADDRESSES``)
-
-This option is used to specify grid points like ``--gp`` option but in
-the different way. For example with ``--mesh="16 16 16"``, a q-point
-of (0.5, 0.5, 0.5) is given by ``--ga="8 8 8"``. The values have to be
-integers. If you want to specify the point on a path, ``--ga="0 0 0 1
-1 1 2 2 2 3 3 3 ..."``, where each three values are recogninzed as a
-grid point. The grid points given by ``--ga`` option are translated to
-grid point indices as given by ``--gp`` option, and the values given
-by ``--ga`` option will not be shown in log files.
-
 .. _wgp_option:
 
 ``--wgp``: Write grid point information
@@ -449,12 +288,159 @@ points for specified sampling mesh numbers are shown. This can be used
 to estimate how large a calculation is. Only those for specific grid
 points are shown by using with ``--gp`` or ``--ga`` option.
 
+Force constants
+----------------
+
+``--fc2`` (``READ_FC2 = .TRUE.``): Read 2nd order force constants
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Read 2nd order force constants from ``fc2.hdf5``.
+
+``--fc3`` (``READ_FC3 = .TRUE.``): Read 3nd order force constants
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Read 3rd order force constants from ``fc3.hdf5``.
+
+.. _compact_fc_option:
+
+``--cfc`` or ``--compact-fc`` (``COMPACT_FC = .TRUE.``): Compact force constants
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When creating force constants from ``FORCES_FC3`` and/or
+``FORCES_FC2``, force constants that use smaller data size are
+created. The shape of the data array is ``(num_patom, num_satom)`` for
+fc2 and ``(num_patom, num_satom, num_satom)`` for fc3, where
+``num_patom`` and ``num_satom`` are the numbers of atoms in primtive
+cell and supercell. In the full size force constants case,
+``num_patom`` is replaced by ``num_satom``. Therefore if the supercell
+dimension is large, this reduction of data size becomes large.  If the
+input crystal structure has centring :ref:`--pa <pa_option>` is
+necessary to have smallest data size. In this case, ``--pa`` option
+has to be specified on reading. Otherwise phono3py can recognize if
+``fc2.hdf5`` and ``fc3.hdf5`` are compact or full automatically. When
+using with ``--sym-fc``, the calculated results will become slightly
+different due to imperfect symmetrization scheme that phono3py
+employs.
+
+::
+
+   % phono3py --dim="2 2 2" --cfc --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell
+
+.. _symmetrization_option:
+
+``--sym-fc`` (``FC_SYMMETRY = .TRUE.``): Symmetries force constants
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Second- and third-order force constants are symmetrized. The index
+exchange of real space force constantsand translational invariance
+symmetry are applied in a simple way. This symmetrization just removes
+drift force constants evenly from all elements and then applies
+averaging index-exchange equivalent elements. Therefore the different
+symmetries are not simultaneously enforced. For better symmetrization,
+it is recommended to use an external force constants calculator like ALM.
+
+The symmetrizations for the second and third orders can be
+independently applied by ``--sym-fc2`` (``SYMMETRIZE_FC2 = .TRUE.``)
+and ``--sym-fc3r`` (``SYMMETRIZE_FC3 = .TRUE.``), , respectively.
+
+..
+   ``--sym-fc3q`` symmetrizes third-order force constants in normal
+   coordinates by the index exchange.
+
+.. _cf3_option:
+
+``--cutoff-fc3`` or ``--cutoff-fc3-distance`` (``CUTOFF_FC3_DISTANCE``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This option is **not** used to reduce number of supercells with
+displacements, but this option is used to set zero in elements of
+given third-order force constants. The zero elements are selected by
+the condition that any pair-distance of atoms in each atom triplet is
+larger than the specified cut-off distance.
+
+If one wants to reduce number of supercells, the first choice is to
+reduce the supercell size and the second choice is using
+``--cutoff-pair`` option.
+
+.. _cutoff_pair_option:
+
+``--cutoff-pair`` or ``--cutoff-pair-distance`` (``CUTOFF_PAIR_DISTANCE``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This option is only used together with ``-d`` option.
+
+A cutoff pair-distance in a supercell is used to reduce the number of
+necessary supercells with displacements to obtain third order force
+constants. As the drawback, a certain number of
+third-order-force-constants elements are abandoned or computed with
+less numerical accuracy. More details are found in the following link:
+
+.. toctree::
+   :maxdepth: 1
+
+   cutoff-pair
+
+Reciprocal space sampling mesh and grid points, and band indices
+-----------------------------------------------------------------
+
+``--mesh`` (``MESH`` or ``MESH_NUMBERS``): Sampling mesh
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Phonon triples are chosen on the grid points on the sampling mesh
+specified by this option. This mesh is made along reciprocal
+axes and is always Gamma-centered.
+Except for that this mesh is always Gamma-centered, the setting is in
+the same way as written here, https://atztogo.github.io/phonopy/setting-tags.html#mesh-mp-or-mesh-numbers.
+
+..
+   ``--md``
+   ~~~~~~~~~
+
+   Divisors of mesh numbers. Another sampling mesh is used to calculate
+   phonon lifetimes. :math:`8\times 8\times 8` mesh is used for the
+   calculation of phonon lifetimes when it is specified, e.g.,
+   ``--mesh="11 11 11" --md="2 2 2"``.
+
+.. _gp_option:
+
+``--gp`` (``GRID_POINTS``): Grid points by their IDs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Grid points are specified, e.g., for selecting the q-points where
+imaginary parts of self energees are calculated. For thermal
+conducitivity calculation, this option can be used to distribute its
+calculation over q-points (see :ref:`workload_distribution`).
+
+Indices of grid points are specified by space or comma (``,``)
+separated numbers. The mapping table between grid points to its
+indices is obtained by running with ``--loglevel=2`` option.
+
+::
+
+   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --write-gamma --gp="0 1 2 3 4 5"
+
+where ``--gp="0 1 2 3 4 5"`` can be also written
+``--gp="0,1,2,3,4,5"``. ``--ga`` option below can be used similarly
+for the same purpose.
+
+.. _ga_option:
+
+``--ga`` (``GRID_ADDRESSES``): Grid points by address with three integer values
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This option is used to specify grid points like ``--gp`` option but in
+the different way. For example with ``--mesh="16 16 16"``, a q-point
+of (0.5, 0.5, 0.5) is given by ``--ga="8 8 8"``. The values have to be
+integers. If you want to specify the point on a path, ``--ga="0 0 0 1
+1 1 2 2 2 3 3 3 ..."``, where each three values are recogninzed as a
+grid point. The grid points given by ``--ga`` option are translated to
+grid point indices as given by ``--gp`` option, and the values given
+by ``--ga`` option will not be shown in log files.
+
 .. _bi_option:
 
-``--bi``: Specific band index
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``BAND_INDICES``)
+``--bi`` (``BAND_INDICES``): Specific band index
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Specify band indices. The output file name will be, e.g.,
 ``gammas-mxxx-gxx(-sx)-bx.dat`` where ``bxbx...`` shows the band
@@ -466,15 +452,17 @@ separately calculated.
 
    % phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" -c POSCAR-unitcell --nac --gp="34" --bi="4 5, 6"
 
+This option may be also useful to distribute the computational demand
+such like that the unit cell is large and the calculation of
+phonon-phonon interaction is heavy.
+
 Brillouin zone integration
 ---------------------------
 
 .. _thm_option:
 
-``--thm``: Tetrahedron method (default choice)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``TETRAHEDRON``, ``.TRUE.`` or ``.FALSE.``)
+``--thm`` (``TETRAHEDRON = .TRUE.``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Tetrahedron method is used for calculation of imaginary part of self
 energy. This is the default option. Therefore it is not necessary to
@@ -483,10 +471,8 @@ smearing method in one time execution are expected.
 
 .. _sigma_option:
 
-``--sigma``: Smearing method
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``SIGMA``)
+``--sigma`` (``SIGMA``): Smearing method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :math:`\sigma` value of Gaussian function for smearing when
 calculating imaginary part of self energy. See the detail at
@@ -498,10 +484,8 @@ numerical values. This is used when we want to test several
 
 .. _sigma_cutoff_option:
 
-``--sigma-cutoff``: Cutoff parameter for smearing method
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``SIGMA_CUTOFF_WIDTH``)
+``--sigma-cutoff`` (``SIGMA_CUTOFF_WIDTH``): Cutoff parameter for smearing method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The tails of the Guassian functions that are used to replace delta
 functions in the equation shown at :ref:`--full-pp <full_pp_option>`
@@ -514,10 +498,8 @@ it.
 
 .. _full_pp_option:
 
-``--full-pp``: Calculate all elements of phonon-phonon interaction strength
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``FULL_PP``, ``.TRUE.`` or ``.FALSE.``)
+``--full-pp`` (``FULL_PP = .TRUE.``): Calculate all elements of phonon-phonon interaction strength
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For thermal conductivity calculation using the linear tetrahedron
 method (from version 1.10.5) and smearing method with
@@ -547,10 +529,8 @@ strength (:math:`P_{\mathbf{q}j}`, see :ref:`--ave-pp
 Physical properties
 --------------------
 
-``--br``: Thermal conductivity with relaxation time approximation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``BTERTA``, ``.TRUE.`` or ``.FALSE.``)
+``--br`` (``BTERTA = .TRUE.``): Thermal conductivity with relaxation time approximation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Run calculation of lattice thermal conductivity tensor with the single
 mode relaxation time approximation (RTA) and linearized phonon
@@ -566,10 +546,8 @@ the results, ``--write-gamma`` option has to be specified and the
 physical properties belonging to the grid
 points are written into ``kappa-mxxx-gx(-sx).hdf5``.
 
-``--lbte``: Thermal conductivity with direct solution of LBTE
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``BTERTA``, ``.TRUE.`` or ``.FALSE.``)
+``--lbte`` (``BTERTA = .TRUE.``): Thermal conductivity with direct solution of LBTE
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Run calculation of lattice thermal conductivity tensor with a direct
 solution of linearized phonon Boltzmann equation. The basis usage of
@@ -577,10 +555,8 @@ this option is equivalent to that of ``--br``. More detail is
 documented at :ref:`direct_solution`.
 
 
-``--isotope``: Phonon-isotope scattering
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``ISOTOPE``, ``.TRUE.`` or ``.FALSE.``)
+``--isotope`` (``ISOTOPE =.TRUE.``): Phonon-isotope scattering
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Phonon-isotope scattering is calculated based on the formula by
 Shin-ichiro Tamura, Phys. Rev. B, **27**, 858 (1983). Mass variance
@@ -592,10 +568,8 @@ elements, which refers Laeter *et al.*, Pure Appl. Chem., **75**, 683
 
    % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --isotope
 
-``--mass-variances`` or ``--mv``: Parameter for phonon-isotope scattering
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``MASS_VARIANCES``)
+``--mass-variances`` or ``--mv`` (``MASS_VARIANCES``): Parameter for phonon-isotope scattering
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This option is used to include isotope effect by reading specified
 mass variance parameters. For example of GaN, this may be set like
@@ -615,10 +589,8 @@ In the result hdf5 file, currently isotope scattering strength is not
 written out, i.e., ``gamma`` is still imaginary part of self energy of
 ph-ph scattering.
 
-``--boundary-mfp``, ``--bmfp``: Very simple phonon-boundary scattering model
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``BOUNDARY_MFP``)
+``--boundary-mfp``, ``--bmfp`` (``BOUNDARY_MFP``): Very simple phonon-boundary scattering model
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A most simple boundary scattering treatment is
 implemented. :math:`v_g/L` is just used as the scattering rate, where
@@ -627,11 +599,8 @@ free path. The value is given in micrometre. The default value, 1
 metre, is just used to avoid divergence of phonon lifetime and the
 contribution to the thermal conducitivity is considered negligible.
 
-``--tmax``, ``--tmin``, ``--tstep``: Temperature range
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``TMAX``, ``TMIN``, ``TSTEP``)
-
+``--tmax``, ``--tmin``, ``--tstep`` (``TMAX``, ``TMIN``, ``TSTEP``): Temperature range
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Temperatures at equal interval are specified by ``--tmax``,
 ``--tmin``, ``--tstep``. See phonopy's document for the same tags at
@@ -645,10 +614,8 @@ http://atztogo.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep
 
 .. _ts_option:
 
-``--ts``: Temperatures
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``TEMPERATURES``)
+``--ts`` (``TEMPERATURES``): Temperatures
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Specific temperatures are specified by ``--ts``.
 
@@ -658,20 +625,16 @@ Specific temperatures are specified by ``--ts``.
 
 .. _nac_option:
 
-``--nac``: Non-analytical term correction
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``NAC``, ``.TRUE.`` or ``.FALSE.``)
+``--nac`` (``NAC = .TRUE.``): Non-analytical term correction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Non-analytical term correction for harmonic phonons. Like as phonopy,
 ``BORN`` file has to be put on the same directory. Always the default
 value of unit conversion factor is used even if it is written in the
 first line of ``BORN`` file.
 
-``--q-direction``: Direction for non-analytical term correction at :math:`\mathbf{q}\rightarrow \mathbf{0}`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``Q_DIRECTION``)
+``--q-direction`` (``Q_DIRECTION``): Direction for non-analytical term correction at :math:`\mathbf{q}\rightarrow \mathbf{0}`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is used with ``--nac`` to specify the direction to polarize in
 reciprocal space. See the detail at
@@ -680,10 +643,8 @@ http://atztogo.github.io/phonopy/setting-tags.html#q-direction .
 
 .. _normal_umklapp_option:
 
-``--nu``: Normal and Umklapp processes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``N_U``, ``.TRUE.`` or ``.FALSE.``)
+``--nu`` (``N_U = .TRUE.``): Normal and Umklapp processes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Integration over q-point triplets for the calculation of
 :math:`\Gamma_\lambda(\omega_\lambda)` is made separately for normal
@@ -693,10 +654,8 @@ choice of G-vector, is made based on the first Brillouin zone.
 
 .. _write_gamma_option:
 
-``--write-gamma``
-~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``WRITE_GAMMA``, ``.TRUE.`` or ``.FALSE.``)
+``--write-gamma`` (``WRITE_GAMMA = .TRUE.``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Imaginary parts of self energy at harmonic phonon frequencies
 :math:`\Gamma_\lambda(\omega_\lambda)` are written into file in hdf5
@@ -707,10 +666,8 @@ inserted, respectively, in front of ``.hdf5``.
 
 .. _read_gamma_option:
 
-``--read-gamma``
-~~~~~~~~~~~~~~~~
-
-(Setting tag: ``READ_GAMMA``, ``.TRUE.`` or ``.FALSE.``)
+``--read-gamma`` (``READ_GAMMA = .TRUE.``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Imaginary parts of self energy at harmonic phonon frequencies
 :math:`\Gamma_\lambda(\omega_\lambda)`
@@ -723,10 +680,8 @@ found, it tries to read ``kappa`` file for each grid point,
 
 .. _write_detailed_gamma_option:
 
-``--write-gamma-detail``
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``WRITE_GAMMA_DETAIL``, ``.TRUE.`` or ``.FALSE.``)
+``--write-gamma-detail`` (``WRITE_GAMMA_DETAIL = .TRUE.``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Each q-point triplet contribution to imaginary part of self energy is
 written into ``gamma_detail-mxxx-gx(-sx-sdx).hdf5`` file. Be careful
@@ -795,12 +750,11 @@ phonon triplets of three phonon scatterings are obtained by
 
 .. _write_phonon_option:
 
-``--write-phonon``
-~~~~~~~~~~~~~~~~~~~
+``--write-phonon`` (``WRITE_PHONON = .TRUE.``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Phonon frequencies, eigenvectors, and grid point addresses are stored
-in ``phonon-mxxx.hdf5`` file. After writing phonons, phono3py stops
-without going to calculation. :ref:`--pa <pa_option>` and :ref:`--nac
+in ``phonon-mxxx.hdf5`` file. :ref:`--pa <pa_option>` and :ref:`--nac
 <nac_option>` may be required depending on calculation setting.
 
 ::
@@ -842,8 +796,8 @@ and Normal scatterings based on the Brillouin zone.
 
 .. _read_phonon_option:
 
-``--read-phonon``
-~~~~~~~~~~~~~~~~~~
+``--read-phonon``  (``READ_PHONON = .TRUE.``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Phonon frequencies, eigenvectors, and grid point addresses are read
 from ``phonon-mxxx.hdf5`` file and the calculation is continued using
@@ -859,8 +813,8 @@ may be required depending on calculation setting.
 
 .. _write_read_pp_option:
 
-``--write-pp`` and ``--read-pp``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``--write-pp`` (``WRITE_PP = .TRUE.``) and ``--read-pp`` (``READ_PP = .TRUE.``)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Phonon-phonon (ph-ph) intraction strengths are written to and read
 from ``pp-mxxx-gx.hdf5``. This works only in the calculation of
@@ -885,10 +839,8 @@ than usual RTA calculation.
 
 .. _ise_option:
 
-``--ise``: Imaginary part of self energy
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``IMAG_SELF_ENERGY``, ``.TRUE.`` or ``.FALSE.``)
+``--ise`` (``IMAG_SELF_ENERGY = .TRUE.``): Imaginary part of self energy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Imaginary part of self energy :math:`\Gamma_\lambda(\omega)` is
 calculated with respect to :math:`\omega`. The output is written to
@@ -901,10 +853,8 @@ with respect to frequency in THz (without :math:`2\pi`).
 
 .. _jdos_option:
 
-``--jdos``: Joint density of states
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``JOINT_DOS``, ``.TRUE.`` or ``.FALSE.``)
+``--jdos`` (``JOINT_DOS = .TRUE.``): Joint density of states
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Two classes of joint density of states (JDOS) are calculated. The
 result is written into ``jdos-mxxx-gx(-sx-sdx).dat`` in
@@ -961,10 +911,8 @@ This is an example of ``Si-PBEsol``.
 
 
 
-``--num-freq-points``, ``--freq-pitch``: Sampling frequency for distribution functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``NUM_FREQUENCY_POINTS``)
+``--num-freq-points``, ``--freq-pitch`` (``NUM_FREQUENCY_POINTS``): Sampling frequency for distribution functions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For spectrum like calculations of imaginary part of self energy and
 JDOS, number of sampling frequency points is controlled by
@@ -972,10 +920,8 @@ JDOS, number of sampling frequency points is controlled by
 
 .. _ave_pp_option:
 
-``--ave-pp``: Use averaged phonon-phonon interaction strength
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``USE_AVE_PP``, ``.TRUE.`` or ``.FALSE.``)
+``--ave-pp`` (``USE_AVE_PP = .TRUE.``): Use averaged phonon-phonon interaction strength
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Averaged phonon-phonon interaction strength (:math:`P_{\mathbf{q}j}=P_\lambda`)
 is used to calculate imaginary part of self energy in thermal
@@ -1021,10 +967,8 @@ Then
 
    % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --read-gamma --ave-pp -o ave_pp
 
-``--const-ave-pp``: Use constant phonon-phonon interaction strength
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``CONST_AVE_PP``, ``.TRUE.`` or ``.FALSE.``)
+``--const-ave-pp`` (``CONST_AVE_PP = .TRUE.``): Use constant phonon-phonon interaction strength
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Averaged phonon-phonon interaction (:math:`P_{\mathbf{q}j}`) is
 replaced by this constant value and :math:`|\Phi_{\lambda \lambda'
@@ -1037,10 +981,8 @@ to input. The physical unit of the value is :math:`\text{eV}^2`.
 
    % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --const-ave-pp=1e-10
 
-``--gruneisen``: Mode-Gruneisen parameter from 3rd order force constants
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-(Setting tag: ``GRUNEISEN``, ``.TRUE.`` or ``.FALSE.``)
+``--gruneisen`` (``GRUNEISEN = .TRUE.``): Mode-Gruneisen parameter from 3rd order force constants
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Mode-Gruneisen-parameters are calculated from fc3.
 
@@ -1054,6 +996,8 @@ Band path mode::
 
 File I/O
 --------
+
+These options have no respective configuration file tags.
 
 .. _hdf5_compression_option:
 
@@ -1081,8 +1025,11 @@ This rule is applied to
 - ``fc3.hdf5``
 - ``fc2.hdf5``
 - ``kappa-xxx.hdf5``
+- ``phonon-xxx.hdf5``
+- ``pp-xxx.hdf5``
 - ``disp_fc3.yaml``
 - ``disp_fc2.yaml``
+- ``gamma_detail-xxx.hdf5`` (write only)
 
 .. _input_filename_option:
 
@@ -1098,5 +1045,12 @@ This rule is applied to
 - ``fc3.hdf5``
 - ``fc2.hdf5``
 - ``kappa-xxx.hdf5``
+- ``phonon-xxx.hdf5``
+- ``pp-xxx.hdf5``
 - ``disp_fc3.yaml``
 - ``disp_fc2.yaml``
+
+``--io``: Arranging input and output file names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is equivalent to setting ``-i`` and ``-o`` simultaneously.
