@@ -1093,7 +1093,7 @@ class Phono3py(object):
             write_pp=False,
             read_pp=False,
             write_LBTE_solution=False,
-            compression=None,
+            compression="gzip",
             input_filename=None,
             output_filename=None):
         if self._interaction is None:

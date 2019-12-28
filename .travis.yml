@@ -43,9 +43,9 @@ script:
     - tar xf vasprun_xmls.tar.lzma --lzma
     - phono3py --cf3 vasprun_xmls/disp-{00001..00111}/vasprun.xml
     - cd ../..
-    - cd example/Si-pwscf
+    - cd example/Si-QE
     - tar xf supercell_out.tar.lzma --lzma
-    - phono3py --pwscf --cf3 supercell_out/disp-{00001..00111}/Si.out
+    - phono3py --qe --cf3 supercell_out/disp-{00001..00111}/Si.out
     - cd ../..
 
 deploy:
