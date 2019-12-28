@@ -386,7 +386,7 @@ else:
 cell_info = collect_cell_info(
     supercell_matrix=settings.get_supercell_matrix(),
     primitive_matrix=settings.get_primitive_matrix(),
-    interface_mode=get_interface_mode(args),
+    interface_mode=settings.get_calculator(),
     cell_filename=settings.get_cell_filename(),
     chemical_symbols=settings.get_chemical_symbols(),
     command_name="phono3py",
