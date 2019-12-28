@@ -64,16 +64,20 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, pwscf, CRYSTAL, Abinit, TURBOMOLE)</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qe.html">QE (pw) &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="turbomole.html">TURBOMOLE &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#note-on-configuration-file-and-setting-tags">Note on configuration file and setting tags</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#calculator-interface">Calculator interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#supercell-and-primitive-cell">Supercell and primitive cell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#displacement-creation">Displacement creation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#utilities">Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#force-constants">Force constants</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#reciprocal-space-sampling-mesh-and-grid-points-and-band-indices">Reciprocal space sampling mesh and grid points, and band indices</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#brillouin-zone-integration">Brillouin zone integration</a></li>
@@ -497,7 +501,7 @@ the number of mesh grid points.</p>
 |\Phi_{\lambda\lambda'\lambda''}|^2.\]</div>
 <p>This is not going to be calculated in the RTA thermal coductivity
 calculation mode by default. To calculate this, <code class="docutils literal notranslate"><span class="pre">--full_pp</span></code> option
-has to be specified (see <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full-pp: Calculate all elements of phonon-phonon interaction strength</span></a>).</p>
+has to be specified (see <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full-pp (FULL_PP = .TRUE.): Calculate all elements of phonon-phonon interaction strength</span></a>).</p>
 </div>
 <div class="section" id="kappa-unit-conversion">
 <h3><a class="toc-backref" href="#id16">kappa_unit_conversion</a><a class="headerlink" href="#kappa-unit-conversion" title="Permalink to this headline">¶</a></h3>

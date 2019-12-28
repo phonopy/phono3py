@@ -63,16 +63,20 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, pwscf, CRYSTAL, Abinit, TURBOMOLE)</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qe.html">QE (pw) &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="turbomole.html">TURBOMOLE &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#note-on-configuration-file-and-setting-tags">Note on configuration file and setting tags</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#calculator-interface">Calculator interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#supercell-and-primitive-cell">Supercell and primitive cell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#displacement-creation">Displacement creation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#utilities">Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#force-constants">Force constants</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#reciprocal-space-sampling-mesh-and-grid-points-and-band-indices">Reciprocal space sampling mesh and grid points, and band indices</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#brillouin-zone-integration">Brillouin zone integration</a></li>
@@ -353,7 +357,7 @@ find 2*gamma values as linewidths in <code class="docutils literal notranslate">
 <div class="section" id="may-17-2018-version-1-13-1">
 <h2>May-17-2018: version 1.13.1<a class="headerlink" href="#may-17-2018-version-1-13-1" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Compact force constants are implemented (See <a class="reference internal" href="command-options.html#compact-fc-option"><span class="std std-ref">--cfc or --compact-fc: Compact force constants</span></a>).</p></li>
+<li><p>Compact force constants are implemented (See <a class="reference internal" href="command-options.html#compact-fc-option"><span class="std std-ref">--cfc or --compact-fc (COMPACT_FC = .TRUE.): Compact force constants</span></a>).</p></li>
 </ul>
 </div>
 <div class="section" id="mar-16-2018-version-1-12-9">
@@ -416,13 +420,13 @@ have to be put just after the option name like <code class="docutils literal not
 changed, for which the prefix phono3py- is added to the old names to
 avoid accidental conflict with other script names already existing
 under bin directory.</p></li>
-<li><p><a class="reference internal" href="command-options.html#sigma-cutoff-option"><span class="std std-ref">--sigma-cutoff: Cutoff parameter for smearing method</span></a> option was created.</p></li>
+<li><p><a class="reference internal" href="command-options.html#sigma-cutoff-option"><span class="std std-ref">--sigma-cutoff (SIGMA_CUTOFF_WIDTH): Cutoff parameter for smearing method</span></a> option was created.</p></li>
 </ul>
 </div>
 <div class="section" id="jun-18-2017-version-1-11-13">
 <h2>Jun-18-2017: version 1.11.13<a class="headerlink" href="#jun-18-2017-version-1-11-13" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p><a class="reference internal" href="command-options.html#normal-umklapp-option"><span class="std std-ref">--nu: Normal and Umklapp processes</span></a> option was made.</p></li>
+<li><p><a class="reference internal" href="command-options.html#normal-umklapp-option"><span class="std std-ref">--nu (N_U = .TRUE.): Normal and Umklapp processes</span></a> option was made.</p></li>
 <li><p>Many minor updates: fixing bugs, improving usabilities.</p></li>
 <li><p>Improve of <a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kaccum"><span class="std std-ref">phono3py-kaccum</span></a> and <a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kdeplot"><span class="std std-ref">phono3py-kdeplot</span></a>.</p></li>
 </ul>
@@ -488,7 +492,7 @@ phono3py-1.10.5 is based on the code close to phonopy-1.10.4.</p></li>
 linear tetrahedron method, only necessary part of phonon-phonon
 interaction strengh among phonons. This improves lifetime
 calculation performance, but as the drawback, averaged ph-ph
-interaction strength can not be given. See <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full-pp: Calculate all elements of phonon-phonon interaction strength</span></a>.</p></li>
+interaction strength can not be given. See <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full-pp (FULL_PP = .TRUE.): Calculate all elements of phonon-phonon interaction strength</span></a>.</p></li>
 <li><p>Pwscf interface (<a class="reference internal" href="interfaces.html#calculator-interfaces"><span class="std std-ref">Interfaces to calculators</span></a>)</p></li>
 </ul>
 </div>

@@ -64,16 +64,20 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Interfaces to calculators (VASP, pwscf, CRYSTAL, Abinit, TURBOMOLE)</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qe.html">Quantum ESPRESSO (pw) &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="turbomole.html">TURBOMOLE &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#calculator-specific-behaviors">Calculator specific behaviors</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#note-on-configuration-file-and-setting-tags">Note on configuration file and setting tags</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#calculator-interface">Calculator interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#supercell-and-primitive-cell">Supercell and primitive cell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#displacement-creation">Displacement creation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#utilities">Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#force-constants">Force constants</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#reciprocal-space-sampling-mesh-and-grid-points-and-band-indices">Reciprocal space sampling mesh and grid points, and band indices</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#brillouin-zone-integration">Brillouin zone integration</a></li>
@@ -246,7 +250,7 @@ interfaces, each special option has to be specified, e.g. <code class="docutils 
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pwscf.html">Pwscf &amp; phono3py calculation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qe.html">Quantum ESPRESSO (pw) &amp; phono3py calculation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="turbomole.html">TURBOMOLE &amp; phono3py calculation</a></li>
 </ul>
@@ -255,14 +259,14 @@ interfaces, each special option has to be specified, e.g. <code class="docutils 
 <h2>Calculator specific behaviors<a class="headerlink" href="#calculator-specific-behaviors" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="physical-unit">
 <h3>Physical unit<a class="headerlink" href="#physical-unit" title="Permalink to this headline">¶</a></h3>
-<p>The interfaces for VASP, Pwscf, CRYSTAL, Abinit, and TURBOMOLE are built in to
-the phono3py command.</p>
+<p>The interfaces for VASP, QE (pw), CRYSTAL, Abinit, and TURBOMOLE are
+built in to the phono3py command.</p>
 <p>For each calculator, each physical unit system is used. The physical
 unit systems used for the calculators are summarized below.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>          <span class="o">|</span> <span class="n">unit</span><span class="o">-</span><span class="n">cell</span>  <span class="n">FORCES_FC3</span>   <span class="n">disp_fc3</span><span class="o">.</span><span class="n">yaml</span>
 <span class="o">-----------------------------------------------</span>
 <span class="n">VASP</span>      <span class="o">|</span> <span class="n">Angstrom</span>   <span class="n">eV</span><span class="o">/</span><span class="n">Angstrom</span>  <span class="n">Angstrom</span>
-<span class="n">QE</span>        <span class="o">|</span> <span class="n">au</span> <span class="p">(</span><span class="n">bohr</span><span class="p">)</span>  <span class="n">Ry</span><span class="o">/</span><span class="n">au</span>        <span class="n">au</span>
+<span class="n">QE</span> <span class="p">(</span><span class="n">pw</span><span class="p">)</span>   <span class="o">|</span> <span class="n">au</span> <span class="p">(</span><span class="n">bohr</span><span class="p">)</span>  <span class="n">Ry</span><span class="o">/</span><span class="n">au</span>        <span class="n">au</span>
 <span class="n">CRYSTAL</span>   <span class="o">|</span> <span class="n">Angstrom</span>   <span class="n">eV</span><span class="o">/</span><span class="n">Angstrom</span>  <span class="n">Angstrom</span>
 <span class="n">Abinit</span>    <span class="o">|</span> <span class="n">au</span> <span class="p">(</span><span class="n">bohr</span><span class="p">)</span>  <span class="n">eV</span><span class="o">/</span><span class="n">Angstrom</span>  <span class="n">au</span>
 <span class="n">TURBOMOLE</span> <span class="o">|</span> <span class="n">au</span> <span class="p">(</span><span class="n">bohr</span><span class="p">)</span>  <span class="n">hartree</span><span class="o">/</span><span class="n">au</span>   <span class="n">au</span>

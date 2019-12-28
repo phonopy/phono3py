@@ -13,7 +13,7 @@ interfaces, each special option has to be specified, e.g. ``--qe``,
    :maxdepth: 1
 
    vasp
-   pwscf
+   qe
    crystal
    turbomole
 
@@ -23,8 +23,8 @@ Calculator specific behaviors
 Physical unit
 ^^^^^^^^^^^^^^
 
-The interfaces for VASP, Pwscf, CRYSTAL, Abinit, and TURBOMOLE are built in to
-the phono3py command.
+The interfaces for VASP, QE (pw), CRYSTAL, Abinit, and TURBOMOLE are
+built in to the phono3py command.
 
 For each calculator, each physical unit system is used. The physical
 unit systems used for the calculators are summarized below.
@@ -34,7 +34,7 @@ unit systems used for the calculators are summarized below.
              | unit-cell  FORCES_FC3   disp_fc3.yaml
    -----------------------------------------------
    VASP      | Angstrom   eV/Angstrom  Angstrom
-   QE        | au (bohr)  Ry/au        au
+   QE (pw)   | au (bohr)  Ry/au        au
    CRYSTAL   | Angstrom   eV/Angstrom  Angstrom
    Abinit    | au (bohr)  eV/Angstrom  au
    TURBOMOLE | au (bohr)  hartree/au   au

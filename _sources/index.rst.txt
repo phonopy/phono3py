@@ -31,7 +31,7 @@ written as:
 - Thermal conductivity calculations are highly efficiently
   distributed over nodes (see :ref:`workload_distribution`).
 - User interfaces for :ref:`VASP <vasp_interface>`,
-  :ref:`QE <pwscf_interface>`, :ref:`CRYSTAL <crystal_interface>`, 
+  :ref:`QE (pw) <qe_interface>`, :ref:`CRYSTAL <crystal_interface>`,
   :ref:`TURBOMOLE <turbomole_interface>`, and Abinit
   are built in (see :ref:`calculator_interfaces`).
 - API is prepared to operate from Python script (`example
@@ -59,7 +59,7 @@ Documentation
 
    install
    examples
-   Interfaces to calculators (VASP, pwscf, CRYSTAL, Abinit, TURBOMOLE) <interfaces>
+   Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE) <interfaces>
    command-options
    output-files
    hdf5_howto
