@@ -180,7 +180,7 @@ def create_phono3py_force_constants(phono3py,
                                    name='fc2')
 
 
-def get_dataset(natom,
+def parse_forces(natom,
                 force_to_eVperA,
                 distance_to_A,
                 cutoff_pair_distance=None,
@@ -338,13 +338,13 @@ def _create_phono3py_fc3(phono3py,
         disp_filename = 'disp_fc3.' + input_filename + '.yaml'
     natom = phono3py.supercell.get_number_of_atoms()
     try:
-        disp_dataset = get_dataset(natom,
-                                   force_to_eVperA,
-                                   distance_to_A,
-                                   cutoff_pair_distance=cutoff_pair_distance,
-                                   force_filename="FORCES_FC3",
-                                   disp_filename=disp_filename,
-                                   log_level=log_level)
+        disp_dataset = parse_forces(natom,
+                                    force_to_eVperA,
+                                    distance_to_A,
+                                    cutoff_pair_distance=cutoff_pair_distance,
+                                    force_filename="FORCES_FC3",
+                                    disp_filename=disp_filename,
+                                    log_level=log_level)
     except RuntimeError as e:
         if log_level:
             print(str(e))
@@ -389,13 +389,13 @@ def _create_phono3py_fc2(phono3py,
         disp_filename = 'disp_fc3.' + input_filename + '.yaml'
     natom = phono3py.supercell.get_number_of_atoms()
     try:
-        disp_dataset = get_dataset(natom,
-                                   force_to_eVperA,
-                                   distance_to_A,
-                                   force_filename="FORCES_FC3",
-                                   disp_filename=disp_filename,
-                                   is_fc2=True,
-                                   log_level=log_level)
+        disp_dataset = parse_forces(natom,
+                                    force_to_eVperA,
+                                    distance_to_A,
+                                    force_filename="FORCES_FC3",
+                                    disp_filename=disp_filename,
+                                    is_fc2=True,
+                                    log_level=log_level)
     except RuntimeError as e:
         if log_level:
             print(str(e))
@@ -429,13 +429,13 @@ def _create_phono3py_phonon_fc2(phono3py,
         disp_filename = 'disp_fc2.' + input_filename + '.yaml'
     natom = phono3py.phonon_supercell.get_number_of_atoms()
     try:
-        disp_dataset = get_dataset(natom,
-                                   force_to_eVperA,
-                                   distance_to_A,
-                                   force_filename="FORCES_FC2",
-                                   disp_filename=disp_filename,
-                                   is_fc2=True,
-                                   log_level=log_level)
+        disp_dataset = parse_forces(natom,
+                                    force_to_eVperA,
+                                    distance_to_A,
+                                    force_filename="FORCES_FC2",
+                                    disp_filename=disp_filename,
+                                    is_fc2=True,
+                                    log_level=log_level)
     except RuntimeError as e:
         if log_level:
             print(str(e))

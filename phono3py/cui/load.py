@@ -36,6 +36,7 @@ import os
 import numpy as np
 from phono3py import Phono3py
 from phono3py.cui.phono3py_yaml import Phono3pyYaml
+from phono3py.cui.create_force_constants import parse_forces
 from phono3py.file_IO import read_fc3_from_hdf5, read_fc2_from_hdf5
 from phonopy.interface.calculator import get_default_physical_units
 import phonopy.cui.load_helper as load_helper
@@ -73,7 +74,9 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
 
     When force_sets_filename and force_constants_filename are not given,
     'FORCES_FC3' and 'FORCES_FC2' are looked for in the current directory
-    as the default behaviour.
+    as the default behaviour. When 'FORCES_FC3' ('FORCES_FC2') is given in
+    the type-1 format, 'disp_fc3.yaml' ('disp_fc2.yaml') is also necessary
+    and read.
 
     Parameters
     ----------
@@ -139,25 +142,27 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         Filename corresponding to 'BORN', a file contains non-analytical term
         correction parameters.
         The priority for NAC is nac_params > born_filename > is_nac ('BORN').
-    forces_fc3_filename : str, optional
-        Filename of a file corresponding to 'FORCES_FC3', a file contains sets
-        of forces or optionally displacements (type-2). Default is None.
-        The priority for force constants is
+    forces_fc3_filename : sequence or str, optional
+        A two-elemental sequence of filenames corresponding to
+        ('FORCES_FC3', 'disp_fc3.yaml') in the type-1 format or a filename
+        (str) corresponding to 'FORCES_FC3' in the type-2 format.
+        Default is None. The priority to calculate or load force constants is
         fc3_filename > forces_fc3_filename > 'fc3.hdf5' > 'FORCES_FC3'.
-    forces_fc2_filename : str, optional
-        Filename of a file corresponding to 'FORCES_FC2', a file contains sets
-        of forces or optionally displacements (type-2). Default is None.
-        The priority for force constants is
+    forces_fc2_filename : str or tuple, optional
+        A two-elemental sequence of filenames corresponding to
+        ('FORCES_FC2', 'disp_fc2.yaml') in the type-1 format or a filename
+        (str) corresponding to 'FORCES_FC2' in the type-2 format.
+        Default is None. The priority to calculate or load force constants is
         fc2_filename > forces_fc2_filename > 'fc2.hdf5' > 'FORCES_FC2'.
     fc3_filename : str, optional
         Filename of a file corresponding to 'fc3.hdf5', a file contains
         third-order force constants. Default is None.
-        The priority for force constants is
+        The priority to calculate or load force constants is
         fc3_filename > forces_fc3_filename > 'fc3.hdf5' > 'FORCES_FC3'.
     fc2_filename : str, optional
         Filename of a file corresponding to 'fc2.hdf5', a file contains
         second-order force constants. Default is None.
-        The priority for force constants is
+        The priority to calculate or load force constants is
         fc2_filename > forces_fc2_filename > 'fc2.hdf5' > 'FORCES_FC2'.
     fc_calculator : str, optional
         Force constants calculator. Currently only 'alm'. Default is None.
@@ -241,12 +246,14 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
                                              is_nac,
                                              units['nac_factor'])
     _set_force_constants(ph3py,
+                         units,
                          dataset=None,
                          fc3_filename=fc3_filename,
                          fc2_filename=fc2_filename,
                          forces_fc3_filename=forces_fc3_filename,
                          forces_fc2_filename=forces_fc2_filename,
-                         fc_calculator=fc_calculator)
+                         fc_calculator=fc_calculator,
+                         log_level=log_level)
 
     if mesh is not None:
         ph3py.set_phph_interaction(
@@ -258,13 +265,16 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
 
 def _set_force_constants(
         ph3py,
+        units,
         dataset=None,
         fc3_filename=None,
         fc2_filename=None,
         forces_fc3_filename=None,
         forces_fc2_filename=None,
-        fc_calculator=None):
+        fc_calculator=None,
+        log_level=0):
     p2s_map = ph3py.primitive.p2s_map
+    natom = ph3py.supercell.get_number_of_atoms()
     if fc3_filename is not None:
         fc3 = read_fc3_from_hdf5(filename=fc3_filename, p2s_map=p2s_map)
         ph3py.fc3 = fc3
@@ -273,7 +283,15 @@ def _set_force_constants(
     elif os.path.isfile("fc3.hdf5"):
         ph3py.fc3 = read_fc3_from_hdf5(filename="fc3.hdf5", p2s_map=p2s_map)
     elif os.path.isfile("FORCES_FC3") and os.path.isfile("disp_fc3.yaml"):
-        pass
+        dataset = parse_forces(natom,
+                               units['force_to_eVperA'],
+                               units['distance_to_A'],
+                               force_filename="FORCES_FC3",
+                               disp_filename="disp_fc3.yaml",
+                               log_level=log_level)
+        ph3py.dataset = dataset
+        ph3py.produce_fc3()
+        ph3py.produce_fc2()
 
     if fc2_filename is not None:
         fc2 = read_fc2_from_hdf5(filename=fc2_filename, p2s_map=p2s_map)

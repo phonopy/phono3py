@@ -379,6 +379,10 @@ class Phono3py(object):
     def mesh_numbers(self):
         return self._mesh_numbers
 
+    @mesh_numbers.setter
+    def mesh_numbers(self, mesh):
+        self._set_mesh_numbers(mesh)
+
     @property
     def thermal_conductivity(self):
         return self._thermal_conductivity
@@ -1067,7 +1071,7 @@ class Phono3py(object):
     def run_thermal_conductivity(
             self,
             is_LBTE=False,
-            temperatures=np.arange(0, 1001, 10, dtype='double'),
+            temperatures=None,
             is_isotope=False,
             mass_variances=None,
             grid_points=None,
@@ -1098,11 +1102,16 @@ class Phono3py(object):
             output_filename=None):
         if self._interaction is None:
             self.set_phph_interaction()
+
         if is_LBTE:
+            if temperatures is None:
+                _temperatures = [300, ]
+            else:
+                _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_LBTE(
                 self._interaction,
                 self._primitive_symmetry,
-                temperatures=temperatures,
+                temperatures=_temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,
                 is_isotope=is_isotope,
@@ -1127,10 +1136,14 @@ class Phono3py(object):
                 output_filename=output_filename,
                 log_level=self._log_level)
         else:
+            if temperatures is None:
+                _temperatures = np.arange(0, 1001, 10, dtype='double')
+            else:
+                _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_RTA(
                 self._interaction,
                 self._primitive_symmetry,
-                temperatures=temperatures,
+                temperatures=_temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,
                 is_isotope=is_isotope,
@@ -1373,6 +1386,9 @@ class Phono3py(object):
         self._phonon_supercell.set_masses(s_masses)
 
     def _set_mesh_numbers(self, mesh):
+        # initialization related to mesh
+        self._interaction = None
+
         _mesh = np.array(mesh)
         mesh_nums = None
         if _mesh.shape:
