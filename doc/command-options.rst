@@ -60,8 +60,8 @@ Calculator interface
 ``--qe`` (``CALCULATOR = QE``): Quantum espresso interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Using this option, PWSCF interface is invoked.
-See the detail at :ref:`pwscf_interface`.
+Using this option, QE (pw) interface is invoked.
+See the detail at :ref:`qe_interface`.
 
 ``--crystal`` (``CALCULATOR = CRYSTAL``): CRYSTAL interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

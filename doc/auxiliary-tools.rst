@@ -102,13 +102,13 @@ See :ref:`pa_option`.
 Unit cell filename is specified with this option, e.g., ``-c
 POSCAR-unitcell``.
 
-``--pwscf``
-^^^^^^^^^^^^
+``--qe``
+^^^^^^^^
 
-Let ``phono3py-kaccum`` read a Pwscf unit cell file with ``-c``
+Let ``phono3py-kaccum`` read a QE (pw) unit cell file with ``-c``
 option, for example::
 
-   phono3py-kaccum --pwscf --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c Si.in kappa-m191919.hdf5
+   phono3py-kaccum --qe --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c Si.in kappa-m191919.hdf5
 
 .. |ipwscf| image:: Si-kaccum-pwscf.png
                     :width: 25%
@@ -118,12 +118,12 @@ option, for example::
 ``--crystal``
 ^^^^^^^^^^^^^
 
-Analogous to ``--pwscf``, but to be used with the CRYSTAL interface.
+Analogous to ``--qe``, but to be used with the CRYSTAL interface.
 
 ``--turbomole``
 ^^^^^^^^^^^^^^^
 
-Analogous to ``--pwscf``, but to be used with the TURBOMOLE interface
+Analogous to ``--qe``, but to be used with the TURBOMOLE interface
 
 ``--temperature``
 ^^^^^^^^^^^^^^^^^^
