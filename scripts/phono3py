@@ -50,7 +50,7 @@ from phono3py.file_IO import (parse_disp_fc2_yaml, parse_disp_fc3_yaml,
                               write_phonon_to_hdf5,
                               parse_FORCES_FC2,
                               write_FORCES_FC2, write_FORCES_FC3,
-                              get_lenghth_of_first_line)
+                              get_length_of_first_line)
 from phono3py.cui.settings import Phono3pyConfParser
 from phono3py import Phono3py, Phono3pyJointDos, Phono3pyIsotope
 from phono3py.phonon3.gruneisen import get_gruneisen_parameters
@@ -346,7 +346,7 @@ if args.force_sets_mode:
         forces_filename = "FORCES_FC3"
 
     with open(forces_filename, 'r') as f:
-        len_first_line = get_lenghth_of_first_line(f)
+        len_first_line = get_length_of_first_line(f)
 
     if len_first_line == 3:
         file_exists(disp_filename, log_level)

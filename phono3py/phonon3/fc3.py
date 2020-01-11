@@ -35,7 +35,7 @@ def get_fc3(supercell,
                                is_compact_fc=is_compact_fc,
                                verbose=verbose)
     if verbose:
-        print("Expanding fc3")
+        print("Expanding fc3.")
 
     first_disp_atoms = np.unique(
         [x['number'] for x in disp_dataset['first_atoms']])

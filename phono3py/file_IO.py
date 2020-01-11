@@ -1495,7 +1495,7 @@ def _parse_force_constants_lines(fcthird_file, num_atom):
         return np.array(fc2).reshape(num_atom, num_atom, 3, 3)
 
 
-def get_lenghth_of_first_line(f):
+def get_length_of_first_line(f):
     for line in f:
         if line.strip() == '':
             continue
