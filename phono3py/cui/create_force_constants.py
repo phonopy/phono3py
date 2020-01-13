@@ -1,7 +1,7 @@
-# Copyright (C) 2015 Atsushi Togo
+# Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
-# This file is part of phonopy.
+# This file is part of phono3py.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -116,13 +116,13 @@ def create_phono3py_force_constants(phono3py,
             phono3py.cutoff_fc3_by_zero(cutoff_distance)
 
         if log_level:
-            show_drift_fc3(phono3py.get_fc3(),
-                           primitive=phono3py.get_primitive())
+            show_drift_fc3(phono3py.fc3,
+                           primitive=phono3py.primitive)
 
     #######
     # fc2 #
     #######
-    phonon_primitive = phono3py.get_phonon_primitive()
+    phonon_primitive = phono3py.phonon_primitive
     p2s_map = phonon_primitive.p2s_map
     if settings.get_read_fc2():
         _read_phono3py_fc2(phono3py,
@@ -175,19 +175,19 @@ def create_phono3py_force_constants(phono3py,
                           compression=compression)
 
     if log_level:
-        show_drift_force_constants(phono3py.get_fc2(),
+        show_drift_force_constants(phono3py.fc2,
                                    primitive=phonon_primitive,
                                    name='fc2')
 
 
 def parse_forces(natom,
-                force_to_eVperA,
-                distance_to_A,
-                cutoff_pair_distance=None,
-                force_filename="FORCES_FC3",
-                disp_filename=None,
-                is_fc2=False,
-                log_level=0):
+                 force_to_eVperA,
+                 distance_to_A,
+                 cutoff_pair_distance=None,
+                 force_filename="FORCES_FC3",
+                 disp_filename=None,
+                 is_fc2=False,
+                 log_level=0):
     disp_dataset = _get_type2_dataset(natom, filename=force_filename)
     if disp_dataset:  # type2
         if log_level:
