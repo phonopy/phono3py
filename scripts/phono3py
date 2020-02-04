@@ -79,7 +79,7 @@ def finalize_phono3py(log_level,
                       filename="phono3py.yaml"):
     if log_level > 0:
         units = get_default_physical_units(interface_mode)
-        ph3py_yaml = Phono3pyYaml(configuration=phono3py_conf.get_configures(),
+        ph3py_yaml = Phono3pyYaml(configuration=phono3py_conf.confs,
                                   calculator=interface_mode,
                                   physical_units=units)
         ph3py_yaml.set_phonon_info(phono3py)
@@ -375,10 +375,10 @@ if args.force_sets_mode:
 ##################
 if len(args.conf_file) > 0:
     phono3py_conf = Phono3pyConfParser(filename=args.conf_file[0], args=args)
-    settings = phono3py_conf.get_settings()
+    settings = phono3py_conf.settings
 else:
     phono3py_conf = Phono3pyConfParser(args=args)
-    settings = phono3py_conf.get_settings()
+    settings = phono3py_conf.settings
 
 ##################################################
 # Set calculator interface and crystal structure #
