@@ -397,13 +397,12 @@ if type(cell_info) is str:
         print_error()
     sys.exit(1)
 (unitcell, supercell_matrix, primitive_matrix,
- unitcell_filename, optional_structure_info, interface_mode,
- has_read_phonopy_yaml) = cell_info
+ optional_structure_info, interface_mode, ph3py_yaml) = cell_info
+unitcell_filename = optional_structure_info[0]
 
-if has_read_phonopy_yaml:
-    ph3py = Phono3pyYaml()
-    ph3py.read(unitcell_filename)
-    phonon_supercell_matrix = ph3py.phonon_supercell_matrix
+if ph3py_yaml:
+    phonon_supercell_matrix = ph3py_yaml.phonon_supercell_matrix
+    print(ph3py_yaml)
 else:
     phonon_supercell_matrix = None
 
@@ -586,41 +585,41 @@ if args.show_num_triplets:
 ##################################
 # Non-analytical term correction #
 ##################################
-if settings.get_is_nac() or has_read_phonopy_yaml:
-    def read_nac_params_from_phonopy_yaml(unitcell_filename, log_level):
-        ph3_yaml = Phono3pyYaml()
-        ph3_yaml.read(unitcell_filename)
-        if ph3_yaml.nac_params is not None:
-            if log_level:
-                print("NAC parameters are read from \"%s\"."
-                      % unitcell_filename)
-            return ph3_yaml.nac_params
+if settings.get_is_nac() or ph3py_yaml:
+    def read_nac_params_from_phonopy_yaml(ph3py_yaml):
+        if ph3py_yaml.nac_params is not None:
+            return ph3py_yaml.nac_params
         else:
             return None
 
-    def read_BORN(phono3py, log_level):
+    def read_BORN(phono3py):
         with open("BORN") as f:
-            nac_params = get_born_parameters(
+            return get_born_parameters(
                 f, phono3py.phonon_primitive, phono3py.primitive_symmetry)
-            if log_level:
-                print("NAC parameters are read from \"%s\"." % "BORN")
-            return nac_params
 
-    if has_read_phonopy_yaml:
-        nac_params = read_nac_params_from_phonopy_yaml(unitcell_filename,
-                                                       log_level)
-        if nac_params is None and file_exists("BORN", log_level, is_any=True):
-            nac_params = read_BORN(phono3py, log_level)
-    elif file_exists("BORN", log_level):
-        nac_params = read_BORN(phono3py, log_level)
+    nac_params = None
+
+    if ph3py_yaml:
+        nac_params = read_nac_params_from_phonopy_yaml(ph3py_yaml)
+        if log_level:
+            if nac_params is None:
+                print("NAC parameters were not found in \"%s\"."
+                      % unitcell_filename)
+            else:
+                print("NAC parameters were read from \"%s\"."
+                      % unitcell_filename)
+
+    if nac_params is None and file_exists("BORN", log_level):
+        nac_params = read_BORN(phono3py)
+        if nac_params is not None and log_level:
+            print("NAC parameters were read from \"%s\"." % "BORN")
+
         if not nac_params:
             error_text = "BORN file could not be read correctly."
             print_error_message(error_text)
             if log_level > 0:
                 print_error()
             sys.exit(1)
-    else:
-        nac_params = None  # This would not happen though.
 
     nac_q_direction = settings.get_nac_q_direction()
 
