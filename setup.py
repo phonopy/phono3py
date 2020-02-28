@@ -67,16 +67,16 @@ use_mkl = False
 #   Phono3py complex values are handled based on those provided by Netlib
 #   lapacke. However MKL lapacke doesn't provide some macros and functions
 #   that provided Netlib. This macro defines those used in phono3py among them.
-if os.path.isfile("mkl.py"):
+if os.path.isfile("setup_mkl.py"):
     # This supposes that MKL multithread BLAS is used.
-    # This is invoked when mkl.py exists on the current directory.
+    # This is invoked when setup_mkl.py exists on the current directory.
 
     print("MKL LAPACKE is to be used.")
     print("Use of icc is assumed (CC='icc').")
 
-    from mkl import mkl_extra_link_args_lapacke, mkl_include_dirs_lapacke
+    from setup_mkl import mkl_extra_link_args_lapacke, mkl_include_dirs_lapacke
 
-    #### Examples of mkl.py ####
+    #### Examples of setup_mkl.py ####
     # For 2015
     # intel_root = "/opt/intel/composer_xe_2015.7.235"
     # mkl_root = "%s/mkl" % intel_root
