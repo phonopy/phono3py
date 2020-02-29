@@ -73,9 +73,9 @@ MKL LAPACKE (with multithread BLAS)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Phono3py can be compiled with MKL for using LAPACKE.  If ``setup.py``
-finds the file named ``mkl.py``, the contents of ``mkl.py`` is read
+finds the file named ``setup_mkl.py``, the contents of ``setup_mkl.py`` is read
 and those are included in the compilation setting.  For example, the
-following setting prepared as ``mkl.py`` seems working on Ubuntu 16.04
+following setting prepared as ``setup_mkl.py`` seems working on Ubuntu 16.04
 system::
 
    intel_root = "/opt/intel/composer_xe_2015.7.235"
