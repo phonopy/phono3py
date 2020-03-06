@@ -36,21 +36,21 @@
 
 import sys
 import numpy as np
-from phonopy.file_IO import (get_born_parameters, write_FORCE_SETS,
-                             parse_FORCE_SETS)
-from phonopy.units import VaspToTHz, Bohr, Rydberg, Hartree
+from phonopy.file_IO import (
+    get_born_parameters, write_FORCE_SETS, parse_FORCE_SETS)
+from phonopy.units import VaspToTHz, Bohr, Hartree
 from phonopy.cui.collect_cell_info import collect_cell_info
+from phonopy.cui.create_force_sets import check_number_of_force_files
 from phonopy.interface.calculator import (
-    get_force_sets, get_default_physical_units, get_interface_mode)
+    get_force_sets, get_default_physical_units)
 from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phonopy.phonon.band_structure import get_band_qpoints
 from phono3py.version import __version__
-from phono3py.file_IO import (parse_disp_fc2_yaml, parse_disp_fc3_yaml,
-                              write_disp_fc2_yaml, read_phonon_from_hdf5,
-                              write_phonon_to_hdf5,
-                              parse_FORCES_FC2,
-                              write_FORCES_FC2, write_FORCES_FC3,
-                              get_length_of_first_line)
+from phono3py.file_IO import (
+    parse_disp_fc2_yaml, parse_disp_fc3_yaml,
+    write_disp_fc2_yaml, read_phonon_from_hdf5, write_phonon_to_hdf5,
+    parse_FORCES_FC2, write_FORCES_FC2, write_FORCES_FC3,
+    get_length_of_first_line)
 from phono3py.cui.settings import Phono3pyConfParser
 from phono3py import Phono3py, Phono3pyJointDos, Phono3pyIsotope
 from phono3py.phonon3.gruneisen import get_gruneisen_parameters
@@ -197,9 +197,9 @@ if args.forces_fc3 or args.forces_fc3_file:
     else:
         disp_filename = 'disp_fc3.' + input_filename + '.yaml'
     file_exists(disp_filename, log_level)
-    if log_level:
-        print("Displacement dataset is read from %s." % disp_filename)
     disp_dataset = parse_disp_fc3_yaml(filename=disp_filename)
+    if log_level:
+        print("Displacement dataset was read from \"%s\"." % disp_filename)
     num_atoms = disp_dataset['natom']
     num_disps = len(disp_dataset['first_atoms'])
     for d1 in disp_dataset['first_atoms']:
@@ -219,13 +219,17 @@ if args.forces_fc3 or args.forces_fc3_file:
         print("Number of displacements: %d" % num_disps)
         print("Number of supercell files: %d" % len(force_filenames))
 
-    force_sets = get_force_sets(interface_mode,
-                                num_atoms,
-                                num_disps,
-                                force_filenames,
-                                disp_filename=disp_filename,
-                                check_number_of_files=True,
-                                verbose=(log_level > 0))
+    if not check_number_of_force_files(num_disps,
+                                       force_filenames,
+                                       disp_filename):
+        force_sets = []
+    else:
+        force_sets = get_force_sets(interface_mode,
+                                    num_atoms,
+                                    num_disps,
+                                    force_filenames,
+                                    disp_filename=disp_filename,
+                                    verbose=(log_level > 0))
 
     if args.forces_fcz:
         force_filename = args.forces_fcz
@@ -265,9 +269,9 @@ if args.forces_fc2:
     else:
         disp_filename = 'disp_fc2.' + input_filename + '.yaml'
     file_exists(disp_filename, log_level)
-    if log_level:
-        print("Displacement dataset is read from %s." % disp_filename)
     disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
+    if log_level:
+        print("Displacement dataset was read from \"%s\"." % disp_filename)
     num_atoms = disp_dataset['natom']
     num_disps = len(disp_dataset['first_atoms'])
     force_filenames = args.forces_fc2
@@ -353,10 +357,8 @@ if args.force_sets_mode:
         disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
         file_exists(forces_filename, log_level)
         parse_FORCES_FC2(disp_dataset, filename=forces_filename)
-
         if log_level:
-            print("Displacement dataset is read from %s." % disp_filename)
-
+            print("Displacement dataset was read from \"%s\"." % disp_filename)
         write_FORCE_SETS(disp_dataset)
 
         if log_level:
