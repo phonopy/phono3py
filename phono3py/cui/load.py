@@ -67,6 +67,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
          is_symmetry=True,
          symmetrize_fc=True,
          is_mesh_symmetry=True,
+         is_compact_fc=False,
          symprec=1e-5,
          log_level=0):
     """Create Phono3py instance from parameters and/or input files.
@@ -193,6 +194,12 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
     is_mesh_symmetry : bool, optional
         Setting False, reciprocal mesh symmetry is not considered.
         Default is True.
+    is_compact_fc : bool
+        fc3 shape is
+            False: (supercell, supercell, supecell, 3, 3, 3)
+            True: (primitive, supercell, supecell, 3, 3, 3)
+        where 'supercell' and 'primitive' indicate number of atoms in these
+        cells. Default is False.
     symprec : float, optional
         Tolerance used to find crystal symmetry. Default is 1e-5.
     log_level : int, optional
@@ -269,6 +276,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
                          forces_fc2_filename=forces_fc2_filename,
                          fc_calculator=fc_calculator,
                          symmetrize_fc=symmetrize_fc,
+                         is_compact_fc=is_compact_fc,
                          log_level=log_level)
 
     if mesh is not None:
@@ -290,14 +298,14 @@ def _set_force_constants(
         fc_calculator=None,
         fc_calculator_options=None,
         symmetrize_fc=True,
-        is_compact_fc=True,
+        is_compact_fc=False,
         log_level=0):
     p2s_map = ph3py.primitive.p2s_map
     if fc3_filename is not None:
         fc3 = read_fc3_from_hdf5(filename=fc3_filename, p2s_map=p2s_map)
         ph3py.fc3 = fc3
     elif forces_fc3_filename is not None:
-        if type(forces_fc3_filename) == str:
+        if type(forces_fc3_filename) is str:
             force_filename = forces_fc3_filename
             disp_filename = None
         else:
