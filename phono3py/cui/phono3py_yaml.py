@@ -37,51 +37,54 @@ import numpy as np
 
 
 class Phono3pyYaml(PhonopyYaml):
+
+    command_name = "phono3py"
+
     def __init__(self,
                  configuration=None,
                  calculator=None,
-                 physical_units=None):
+                 physical_units=None,
+                 settings=None):
+
         self.configuration = None
         self.calculator = None
         self.physical_units = None
-        self.settings = {}
+        self.settings = None
 
-        PhonopyYaml.__init__(self,
-                             configuration=configuration,
-                             calculator=calculator,
-                             physical_units=physical_units)
-
-        # Written in self.set_phonon_info
         self.unitcell = None
         self.primitive = None
         self.supercell = None
-        self.yaml = None
+        self.dataset = None
         self.supercell_matrix = None
-        self.phonon_supercell_matrix = None
         self.primitive_matrix = None
         self.nac_params = None
-        self.supercell_matrix = None
+        self.force_constants = None
+
+        self.symmetry = None  # symmetry of supercell
         self.s2p_map = None
         self.u2p_map = None
+        self.frequency_unit_conversion_factor = None
         self.version = None
 
-        # Overwrite this
-        self.command_name = "phono3py"
-        for key in self.settings:
-            self.settings[key] = False
-        self.settings['born_effective_charge'] = True
-        self.settings['dielectric_constant'] = True
+        #
+        # phono3py only
+        #
+        # With DIM_FC2 given
+        self.phonon_supercell_matrix = None
+        self.phonon_dataset = None
+        #
+        # same as self.supercell unless DIM_FC2 given
+        #
+        self.phonon_supercell = None
+        self.phonon_primitive = None
 
-    def set_phonon_info(self, phono3py):
-        super(Phono3pyYaml, self).set_phonon_info(phono3py)
-        self.phonon_supercell_matrix = phono3py.phonon_supercell_matrix
+        self._yaml = None
 
-    def _load(self, fp):
-        super(Phono3pyYaml, self)._load(fp)
-        if 'phonon_supercell_matrix' in self.yaml:
-            self.phonon_supercell_matrix = np.array(
-                self.yaml['phonon_supercell_matrix'],
-                dtype='intc', order='C')
+        super(Phono3pyYaml, self).__init__(
+            configuration=configuration,
+            calculator=calculator,
+            physical_units=physical_units,
+            settings=settings)
 
     def __str__(self):
         lines = self.get_yaml_lines()
@@ -95,3 +98,79 @@ class Phono3pyYaml(PhonopyYaml):
             i += 1
             lines.insert(i, "")
         return "\n".join(lines)
+
+    def set_phonon_info(self, phono3py):
+        super(Phono3pyYaml, self).set_phonon_info(phono3py)
+        self.phonon_supercell_matrix = phono3py.phonon_supercell_matrix
+        self.phonon_dataset = phono3py.phonon_dataset
+        self.phonon_primitive = phono3py.phonon_primitive
+        self.phonon_supercell = phono3py.phonon_supercell
+
+    def _load(self, fp):
+        super(Phono3pyYaml, self)._load(fp)
+        if 'phonon_supercell_matrix' in self._yaml:
+            self.phonon_supercell_matrix = np.array(
+                self._yaml['phonon_supercell_matrix'],
+                dtype='intc', order='C')
+
+    def _displacements_yaml_lines_type1(self, with_forces=False):
+        id_offset = len(self.dataset['first_atoms'])
+        lines = []
+        if 'second_atoms' in self.dataset['first_atoms'][0]:
+            lines.append("displacement_pairs:")
+        else:
+            lines.append("displacements:")
+
+        for i, d in enumerate(self.dataset['first_atoms']):
+            lines.append("- atom: %4d" % (d['number'] + 1))
+            lines.append("  displacement:")
+            lines.append("    [ %19.16f, %19.16f, %19.16f ]"
+                         % tuple(d['displacement']))
+            if with_forces and 'forces' in d:
+                lines.append("  forces:")
+                for f in d['forces']:
+                    lines.append("  - [ %19.16f, %19.16f, %19.16f ]" % tuple(f))
+            if 'second_atoms' in d:
+                lines += self._second_displacements_yaml_lines(
+                    d['second_atoms'], id_offset, with_forces=with_forces)
+        lines.append("")
+
+        if 'second_atoms' in self.dataset['first_atoms'][0]:
+            if 'duplicates' in self.dataset and self.dataset['duplicates']:
+                lines.append("displacement_pair_duplicates:")
+                for i in self.dataset['duplicates']:
+                    # id-i and id-j give the same displacement pairs.
+                    j = self.dataset['duplicates'][i]
+                    lines.append("- %d : %d"
+                                 % (i + id_offset + 1, j + id_offset + 1))
+
+                lines.append("")
+        return lines
+
+    def _second_displacements_yaml_lines(self,
+                                         dataset2,
+                                         id_offset,
+                                         with_forces=False):
+        lines = []
+        lines.append("  second_atoms:")
+        numbers = np.array([d['number'] for d in dataset2])
+        unique_numbers = np.unique(numbers)
+        for i in unique_numbers:
+            indices_eq_i = np.sort(np.where(numbers == i)[0])
+            lines.append("  - atom: %4d" % (i + 1))
+            lines.append("    pair_distance: %.8f"
+                         % dataset2[indices_eq_i[0]]['pair_distance'])
+            if 'included' in dataset2[indices_eq_i[0]]:
+                included = dataset2[indices_eq_i[0]]['included']
+                lines.append("    included: %s"
+                             % ("true" if included else "false"))
+            disp_ids = []
+            lines.append("    displacements:")
+            for j in indices_eq_i:
+                d = tuple(dataset2[j]['displacement'])
+                lines.append("    - [ %19.16f, %19.16f, %19.16f ]" % d)
+                disp_ids.append(dataset2[j]['id'] + id_offset + 1)
+            lines.append("    displacement_ids: [ %s ]"
+                         % ', '.join(["%d" % j for j in disp_ids]))
+
+        return lines

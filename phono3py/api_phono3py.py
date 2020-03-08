@@ -210,6 +210,11 @@ class Phono3py(object):
         self.fc2 = fc2
 
     @property
+    def force_constants(self):
+        """Alias to fc2"""
+        return self.fc2
+
+    @property
     def nac_params(self):
         if self._interaction is None:
             return None
