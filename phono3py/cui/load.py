@@ -35,7 +35,7 @@
 import os
 import numpy as np
 from phono3py import Phono3py
-from phono3py.cui.phono3py_yaml import Phono3pyYaml
+from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.cui.create_force_constants import parse_forces
 from phono3py.file_IO import read_fc3_from_hdf5, read_fc2_from_hdf5
 from phono3py.phonon3.fc3 import show_drift_fc3

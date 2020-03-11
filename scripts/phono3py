@@ -42,7 +42,7 @@ from phonopy.units import VaspToTHz, Bohr, Hartree
 from phonopy.cui.collect_cell_info import collect_cell_info
 from phonopy.cui.create_force_sets import check_number_of_force_files
 from phonopy.interface.calculator import (
-    get_force_sets, get_default_physical_units)
+    get_force_sets, get_default_physical_units, get_interface_mode)
 from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phonopy.phonon.band_structure import get_band_qpoints
 from phono3py.version import __version__
@@ -64,7 +64,7 @@ from phono3py.cui.triplets_info import write_grid_points, show_num_triplets
 from phono3py.cui.translate_settings import get_phono3py_configurations
 from phono3py.cui.create_supercells import create_phono3py_supercells
 from phono3py.cui.create_force_constants import create_phono3py_force_constants
-from phono3py.cui.phono3py_yaml import Phono3pyYaml
+from phono3py.interface.phono3py_yaml import Phono3pyYaml
 
 
 # import logging
@@ -147,29 +147,10 @@ if deprecated:
 # abinit        : hartree, au,        AMU,         eV/Angstrom
 # TURBOMOLE     : hartree, au,        AMU,         hartree/au
 #
-if args.qe_mode:
-    interface_mode = 'qe'
-    try:
-        from phonopy.interface.qe import write_supercells_with_displacements
-    except ImportError:  # to be compatible to older phonopy
-        from phonopy.interface.pwscf import write_supercells_with_displacements
-elif args.crystal_mode:
-    interface_mode = 'crystal'
-    from phonopy.interface.crystal import write_supercells_with_displacements
-elif args.abinit_mode:
-    interface_mode = 'abinit'
-    from phonopy.interface.abinit import write_supercells_with_displacements
-elif args.turbomole_mode:
-    interface_mode = 'turbomole'
-    from phonopy.interface.turbomole import write_supercells_with_displacements
-else:
-    interface_mode = 'vasp'
-    from phonopy.interface.vasp import write_supercells_with_displacements
-
+interface_mode = get_interface_mode(vars(args))
 units = get_default_physical_units(interface_mode)
 distance_to_A = units['distance_to_A']
 force_to_eVperA = units['force_to_eVperA']
-
 
 # Input and output filename extension
 input_filename = args.input_filename
@@ -382,6 +363,14 @@ else:
     phono3py_conf = Phono3pyConfParser(args=args)
     settings = phono3py_conf.settings
 
+##################################
+# Set default symmetry precision #
+##################################
+if settings.get_symmetry_tolerance() is None:
+    symprec = 1e-5
+else:
+    symprec = settings.get_symmetry_tolerance()
+
 ##################################################
 # Set calculator interface and crystal structure #
 ##################################################
@@ -392,7 +381,7 @@ cell_info = collect_cell_info(
     cell_filename=settings.get_cell_filename(),
     chemical_symbols=settings.get_chemical_symbols(),
     command_name="phono3py",
-    symprec=args.symprec)
+    symprec=symprec)
 if type(cell_info) is str:
     print_error_message(cell_info)
     if log_level > 0:
@@ -445,8 +434,6 @@ frequency_step = conf['frequency_step']
 frequency_scale_factor = conf['frequency_scale_factor']
 cutoff_frequency = conf['cutoff_frequency']
 
-symprec = args.symprec
-
 # Check supercell size
 if supercell_matrix is None:
     print_error_message("Supercell dimension (--dim) has to be specified.")
@@ -466,7 +453,6 @@ if settings.get_create_displacements():
         settings.get_is_plusminus_displacement(),
         settings.get_is_diagonal_displacement(),
         settings.get_cutoff_pair_distance(),
-        write_supercells_with_displacements,
         optional_structure_info,
         settings.get_is_symmetry(),
         symprec,

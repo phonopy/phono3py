@@ -66,7 +66,7 @@ from phono3py.phonon3.fc3 import (
     set_translational_invariance_compact_fc3,
     cutoff_fc3_by_zero)
 from phono3py.phonon3.fc3 import get_fc3 as get_phono3py_fc3
-from phono3py.cui.phono3py_yaml import Phono3pyYaml
+from phono3py.interface.phono3py_yaml import Phono3pyYaml
 
 
 class Phono3py(object):
