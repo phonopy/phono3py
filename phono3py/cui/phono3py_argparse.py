@@ -38,28 +38,14 @@ from phonopy.cui.phonopy_argparse import fix_deprecated_option_names
 
 def get_parser():
     deprecated = fix_deprecated_option_names(sys.argv)
-
     import argparse
+    from phonopy.interface.calculator import add_arguments_of_calculators
+    from phono3py.interface.calculator import calculator_info
+
     parser = argparse.ArgumentParser(
         description="Phono3py command-line-tool")
-    parser.set_defaults(abinit_mode=False,
-                        crystal_mode=False,
-                        qe_mode=False,
-                        turbomole_mode=False)
 
-    parser.add_argument(
-        "--abinit", dest="abinit_mode", action="store_true",
-        help="Invoke Abinit mode")
-    parser.add_argument(
-        "--crystal", dest="crystal_mode", action="store_true",
-        help="Invoke CRYSTAL mode")
-    parser.add_argument(
-        "--qe", "--pwscf", dest="qe_mode",
-        action="store_true", help="Invoke Quantum espresso (QE) mode")
-    parser.add_argument(
-        "--turbomole", dest="turbomole_mode", action="store_true",
-        help="Invoke TURBOMOLE mode")
-
+    add_arguments_of_calculators(parser, calculator_info)
 
     parser.add_argument(
         "--alm", dest="use_alm", action="store_true", default=False,
