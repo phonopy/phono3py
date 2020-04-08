@@ -1,7 +1,6 @@
 import sys
 import numpy as np
-from phonopy.harmonic.dynamical_matrix import (DynamicalMatrix,
-                                               DynamicalMatrixNAC)
+from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
 from phonopy.units import VaspToTHz
 from phonopy.structure.grid_points import get_qpoints
 
@@ -88,17 +87,11 @@ class Gruneisen(object):
         self._ion_clamped = ion_clamped
         self._factor = factor
         self._symprec = symprec
-        if nac_params is None:
-            self._dm = DynamicalMatrix(self._scell,
-                                       self._pcell,
-                                       self._fc2,
-                                       symprec=self._symprec)
-        else:
-            self._dm = DynamicalMatrixNAC(self._scell,
-                                          self._pcell,
-                                          self._fc2,
-                                          symprec=self._symprec)
-            self._dm.set_nac_params(nac_params)
+        self._dm = get_dynamical_matrix(self._fc2,
+                                        self._scell,
+                                        self._pcell,
+                                        nac_params=nac_params,
+                                        symprec=self._symprec)
         self._nac_q_direction = nac_q_direction
 
         (self._shortest_vectors,
