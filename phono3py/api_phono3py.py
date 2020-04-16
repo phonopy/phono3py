@@ -49,7 +49,7 @@ from phonopy.interface.fc_calculator import get_fc2
 from phonopy.harmonic.displacement import (
     get_least_displacements, directions_to_displacement_dataset,
     get_displacements_and_forces)
-from phonopy.phonon.mesh import length2mesh
+from phonopy.structure.grid_points import length2mesh
 from phono3py.version import __version__
 from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
                                                write_imag_self_energy)
