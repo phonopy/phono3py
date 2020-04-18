@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
     <title>Welcome to phono3py &#8212; Phono3py v.1.18.2</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Installation" href="install.html" />
@@ -115,9 +115,10 @@
 <li class="toctree-l2"><a class="reference internal" href="workload-distribution.html#a-convenient-script">A convenient script</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Crude force constants calculation by cutoff pair-distance</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="cutoff-pair.html#what-is-cutff-pair-distance-in-phono3py">What is cutff pair-distance in phono3py?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cutoff-pair.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cutoff-pair.html#a-script-extract-supercell-ids-from-disp-fc3-yaml">A script extract supercell IDs from <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="cutoff-pair.html#the-test">The Test</a></li>
 </ul>
 </li>
@@ -284,7 +285,7 @@ are built in (see <a class="reference internal" href="interfaces.html#calculator
 <li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="direct-solution.html">Direct solution of linearized phonon Boltzmann equation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Crude force constants calculation by cutoff pair-distance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
 <li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a></li>
 <li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
@@ -331,7 +332,7 @@ mailing list:</p>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.1.<br/>
     </p>
   </div>
 </footer>

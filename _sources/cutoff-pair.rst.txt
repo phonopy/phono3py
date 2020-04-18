@@ -1,7 +1,7 @@
 .. _command_cutoff_pair:
 
-Crude force constants calculation by cutoff pair-distance
-=============================================================
+Force constants calculation with cutoff pair-distance
+=====================================================
 
 Here the detail of the command option :ref:`--cutoff_pair
 <cutoff_pair_option>` is explained.
@@ -227,6 +227,61 @@ option and the special ``disp_fc3.yaml`` are not needed anymore.
      300.0     118.778    118.778    118.778     -0.000     -0.000      0.000
 
    ...
+
+
+A script extract supercell IDs from ``disp_fc3.yaml``
+-----------------------------------------------------
+
+The following script is an example to collect supercell IDs
+with the cutoff-pair distance, for which ``included: true`` is used
+to hook. ``duplicates`` in ``disp_fc3.yaml`` gives the pairs of
+exactly same supercells having different IDs. Therefore one of each
+pair is necessary to calculate. As a ratio, the number is not many,
+but if we want to save very much the computational demand, it is good
+to consider.
+
+::
+
+   #!/usr/bin/env python
+
+   import yaml
+   try:
+       from yaml import CLoader as Loader
+   except ImportError:
+       from yaml import Loader
+
+   with open("disp_fc3.yaml", 'r') as f:
+       data = yaml.load(f, Loader=Loader)
+
+   disp_ids = []
+   for data1 in data['first_atoms']:
+       disp_ids.append(data1['displacement_id'])
+
+   for data1 in data['first_atoms']:
+       for data2 in data1['second_atoms']:
+           if data2['included']:
+               disp_ids += data2['displacement_ids']
+
+   # # To remove duplicates
+   # duplicates = data['duplicates']
+   # print(len(duplicates))
+   # disp_ids_nodup = [i for i in disp_ids if i not in duplicates]
+
+   print(" ".join(["%05d" % i for i in disp_ids]))
+
+Even for the case that ``disp_fc3.yaml`` was created without
+``--cutoff-pair`` option, if we replace the line in the above script::
+
+           if data2['included']:
+
+by
+
+::
+
+           if data2['distance'] < 5.0:  # 5.0 is cutoff-pair distance
+
+we can find the supercell IDs almost equivalent to those obtained
+above for ``--cutoff-pair 5.0``.
 
 
 The Test

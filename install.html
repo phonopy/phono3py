@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
     <title>Installation &#8212; Phono3py v.1.18.2</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
-    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Examples" href="examples.html" />
@@ -66,7 +66,7 @@
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="qe.html">QE (pw) &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qe.html">Quantum ESPRESSO (pw) &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="turbomole.html">TURBOMOLE &amp; phono3py calculation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="interfaces.html#calculator-specific-behaviors">Calculator specific behaviors</a></li>
@@ -116,9 +116,10 @@
 <li class="toctree-l2"><a class="reference internal" href="workload-distribution.html#a-convenient-script">A convenient script</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Crude force constants calculation by cutoff pair-distance</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="cutoff-pair.html#what-is-cutff-pair-distance-in-phono3py">What is cutff pair-distance in phono3py?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="cutoff-pair.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cutoff-pair.html#a-script-extract-supercell-ids-from-disp-fc3-yaml">A script extract supercell IDs from <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="cutoff-pair.html#the-test">The Test</a></li>
 </ul>
 </li>
@@ -326,9 +327,9 @@ installation of LAPACKE are explained.</p>
 <div class="section" id="mkl-lapacke-with-multithread-blas">
 <span id="install-mkl-lapacke"></span><h4><a class="toc-backref" href="#id5">MKL LAPACKE (with multithread BLAS)</a><a class="headerlink" href="#mkl-lapacke-with-multithread-blas" title="Permalink to this headline">¶</a></h4>
 <p>Phono3py can be compiled with MKL for using LAPACKE.  If <code class="docutils literal notranslate"><span class="pre">setup.py</span></code>
-finds the file named <code class="docutils literal notranslate"><span class="pre">mkl.py</span></code>, the contents of <code class="docutils literal notranslate"><span class="pre">mkl.py</span></code> is read
+finds the file named <code class="docutils literal notranslate"><span class="pre">setup_mkl.py</span></code>, the contents of <code class="docutils literal notranslate"><span class="pre">setup_mkl.py</span></code> is read
 and those are included in the compilation setting.  For example, the
-following setting prepared as <code class="docutils literal notranslate"><span class="pre">mkl.py</span></code> seems working on Ubuntu 16.04
+following setting prepared as <code class="docutils literal notranslate"><span class="pre">setup_mkl.py</span></code> seems working on Ubuntu 16.04
 system:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">intel_root</span> <span class="o">=</span> <span class="s2">&quot;/opt/intel/composer_xe_2015.7.235&quot;</span>
 <span class="n">mkl_root</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">/mkl&quot;</span> <span class="o">%</span> <span class="n">intel_root</span>
@@ -588,7 +589,7 @@ unnecessary to be deactivated.</p>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.1.<br/>
     </p>
   </div>
 </footer>
