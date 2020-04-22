@@ -267,6 +267,9 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
                                              born_filename,
                                              is_nac,
                                              units['nac_factor'])
+    if _nac_params is not None:
+        ph3py.nac_params = _nac_params
+
     _set_force_constants(ph3py,
                          units,
                          dataset=None,
@@ -280,8 +283,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
                          log_level=log_level)
 
     if mesh is not None:
-        ph3py.set_phph_interaction(
-            nac_params=_nac_params,
+        ph3py.init_phph_interaction(
             frequency_scale_factor=frequency_scale_factor)
 
     return ph3py

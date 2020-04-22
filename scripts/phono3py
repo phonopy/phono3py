@@ -380,7 +380,7 @@ cell_info = collect_cell_info(
     interface_mode=settings.get_calculator(),
     cell_filename=settings.get_cell_filename(),
     chemical_symbols=settings.get_chemical_symbols(),
-    command_name="phono3py",
+    phonopy_yaml_cls=Phono3pyYaml,
     symprec=symprec)
 if type(cell_info) is str:
     print_error_message(cell_info)
@@ -393,7 +393,6 @@ unitcell_filename = optional_structure_info[0]
 
 if ph3py_yaml:
     phonon_supercell_matrix = ph3py_yaml.phonon_supercell_matrix
-    print(ph3py_yaml)
 else:
     phonon_supercell_matrix = None
 
@@ -616,6 +615,7 @@ if settings.get_is_nac() or ph3py_yaml:
             nac_params['factor'] = Hartree * Bohr
         if settings.get_nac_method() is not None:
             nac_params['method'] = settings.get_nac_method()
+        phono3py.nac_params = nac_params
 
         if log_level > 1:
             print("-" * 27 + " Dielectric constant " + "-" * 28)
@@ -633,40 +633,6 @@ if settings.get_is_nac() or ph3py_yaml:
 else:
     nac_params = None
     nac_q_direction = None
-
-# if settings.get_is_nac():
-#     file_exists('BORN', log_level)
-#     nac_params = parse_BORN(phonon_primitive)
-#     nac_factor = Hartree * Bohr
-#     if nac_params['factor'] is not None:
-#         if log_level:
-#             print("-" * 22 + " Non-analytical term correction " + "-" * 22)
-#             print("Default NAC unit conversion factor is %6.4f." % nac_factor)
-#             print("But instead the value in BORN file %f is used." %
-#                   nac_params['factor'])
-#     else:
-#         nac_params['factor'] = nac_factor
-#     if settings.get_nac_method() is not None:
-#         nac_params['method'] = settings.get_nac_method()
-
-#     if log_level > 1:
-#         print("-" * 27 + " Dielectric constant " + "-" * 28)
-#         for v in nac_params['dielectric']:
-#             print("         %12.7f %12.7f %12.7f" % tuple(v))
-#         print("-" * 26 + " Born effective charges " + "-" * 26)
-#         symbols = phonon_primitive.get_chemical_symbols()
-#         for i, (z, s) in enumerate(zip(nac_params['born'], symbols)):
-#             for j, v in enumerate(z):
-#                 if j == 0:
-#                     text = "%5d %-2s" % (i + 1, s)
-#                 else:
-#                     text = "        "
-#                 print("%s %12.7f %12.7f %12.7f" % ((text,) + tuple(v)))
-
-#     nac_q_direction = settings.get_nac_q_direction()
-# else:
-#     nac_params = None
-#     nac_q_direction = None
 
 ###################
 # Force constants #
@@ -849,12 +815,10 @@ if run_mode == "isotope":
 #############################
 if run_mode is not None:
     ave_pp = settings.get_constant_averaged_pp_interaction()
-    phono3py.set_phph_interaction(
-        nac_params=nac_params,
+    phono3py.init_phph_interaction(
         nac_q_direction=nac_q_direction,
         constant_averaged_interaction=ave_pp,
         frequency_scale_factor=frequency_scale_factor,
-        unit_conversion=settings.get_pp_conversion_factor(),
         solve_dynamical_matrices=(not settings.get_read_phonon()))
 
     if settings.get_write_phonon():
