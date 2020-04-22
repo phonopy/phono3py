@@ -39,6 +39,7 @@ import numpy as np
 class Phono3pyYaml(PhonopyYaml):
 
     command_name = "phono3py"
+    default_filenames = ("phono3py.yaml", )
 
     def __init__(self,
                  configuration=None,
