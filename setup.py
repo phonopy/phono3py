@@ -229,6 +229,7 @@ extension_phono3py = Extension(
 
 packages_phono3py = ['phono3py',
                      'phono3py.cui',
+                     'phono3py.interface',
                      'phono3py.other',
                      'phono3py.phonon',
                      'phono3py.phonon3']
