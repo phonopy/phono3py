@@ -40,7 +40,8 @@ class Phono3pyYaml(PhonopyYaml):
     def __init__(self,
                  configuration=None,
                  calculator=None,
-                 physical_units=None):
+                 physical_units=None,
+                 settings=None):
         self.configuration = None
         self.calculator = None
         self.physical_units = None
