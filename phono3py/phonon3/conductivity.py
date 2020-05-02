@@ -29,7 +29,7 @@ def write_pp(conductivity,
              pp,
              i,
              filename=None,
-             compression=None):
+             compression="gzip"):
     grid_point = conductivity.get_grid_points()[i]
     sigmas = conductivity.get_sigmas()
     sigma_cutoff = conductivity.get_sigma_cutoff_width()
@@ -250,14 +250,26 @@ class Conductivity(object):
     def get_gamma(self):
         return self.gamma
 
-    def get_gamma_isotope(self):
+    @property
+    def gamma_isotope(self):
         return self._gamma_iso
 
-    def get_kappa(self):
+    def get_gamma_isotope(self):
+        return self.gamma_isotope
+
+    @property
+    def kappa(self):
         return self._kappa
 
-    def get_mode_kappa(self):
+    def get_kappa(self):
+        return self.kappa
+
+    @property
+    def mode_kappa(self):
         return self._mode_kappa
+
+    def get_mode_kappa(self):
+        return self.mode_kappa
 
     def get_sigmas(self):
         return self._sigmas
@@ -314,10 +326,6 @@ class Conductivity(object):
                                  dtype='double', order='C')
 
         self._grid_point_count = 0
-        # set_phonons is unnecessary now because all phonons are calculated in
-        # self._pp.set_dynamical_matrix, though Gamma-point is an exception,
-        # which is treatd at self._pp.set_grid_point.
-        # self._pp.set_phonons(self._grid_points)
         self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
 
     def _get_gamma_isotope_at_sigmas(self, i):

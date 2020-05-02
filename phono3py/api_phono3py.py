@@ -49,7 +49,7 @@ from phonopy.interface.fc_calculator import get_fc2
 from phonopy.harmonic.displacement import (
     get_least_displacements, directions_to_displacement_dataset,
     get_displacements_and_forces)
-from phonopy.phonon.mesh import length2mesh
+from phonopy.structure.grid_points import length2mesh
 from phono3py.version import __version__
 from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
                                                write_imag_self_energy)
@@ -66,7 +66,7 @@ from phono3py.phonon3.fc3 import (
     set_translational_invariance_compact_fc3,
     cutoff_fc3_by_zero)
 from phono3py.phonon3.fc3 import get_fc3 as get_phono3py_fc3
-from phono3py.cui.phono3py_yaml import Phono3pyYaml
+from phono3py.interface.phono3py_yaml import Phono3pyYaml
 
 
 class Phono3py(object):
@@ -111,6 +111,7 @@ class Phono3py(object):
             self._primitive_matrix = self._guess_primitive_matrix()
         else:
             self._primitive_matrix = primitive_matrix
+        self._nac_params = None
         self._phonon_supercell_matrix = phonon_supercell_matrix  # optional
         self._supercell = None
         self._primitive = None
@@ -210,14 +211,38 @@ class Phono3py(object):
         self.fc2 = fc2
 
     @property
+    def force_constants(self):
+        """Alias to fc2"""
+        return self.fc2
+
+    @property
     def nac_params(self):
-        if self._interaction is None:
-            return None
-        else:
-            return self._interaction.nac_params
+        """Parameters for non-analytical term correction
+
+        dict
+            Parameters used for non-analytical term correction
+            'born': ndarray
+                Born effective charges
+                shape=(primitive cell atoms, 3, 3), dtype='double', order='C'
+            'factor': float
+                Unit conversion factor
+            'dielectric': ndarray
+                Dielectric constant tensor
+                shape=(3, 3), dtype='double', order='C'
+
+        """
+        return self._nac_params
 
     def get_nac_params(self):
         return self.nac_params
+
+    @nac_params.setter
+    def nac_params(self, nac_params):
+        self._nac_params = nac_params
+        self._init_dynamical_matrix()
+
+    def set_nac_params(self, nac_params):
+        self.nac_params = nac_params
 
     @property
     def primitive(self):
@@ -378,6 +403,10 @@ class Phono3py(object):
     @property
     def mesh_numbers(self):
         return self._mesh_numbers
+
+    @mesh_numbers.setter
+    def mesh_numbers(self, mesh):
+        self._set_mesh_numbers(mesh)
 
     @property
     def thermal_conductivity(self):
@@ -610,55 +639,50 @@ class Phono3py(object):
     def get_phph_interaction(self):
         return self._interaction
 
-    def set_phph_interaction(self,
-                             nac_params=None,
-                             nac_q_direction=None,
-                             constant_averaged_interaction=None,
-                             frequency_scale_factor=None,
-                             unit_conversion=None,
-                             solve_dynamical_matrices=True):
-        """Create Interaction instance
+    def init_phph_interaction(self,
+                              nac_q_direction=None,
+                              constant_averaged_interaction=None,
+                              frequency_scale_factor=None,
+                              solve_dynamical_matrices=True):
+        """Initialize ph-ph interaction calculation
 
-        Interaction instance contains most of important information to run
-        the calculation of phono3py such as phonon frequencies and eigenvectors
-        on q-points of mesh, grid addresses by integers, triplets q-points, and
-        third-order force constants in real and phonon spaces.
+        This method creates an instance of Interaction class, which
+        is necessary to run ph-ph interaction calculation.
+        The input data such as grids, force constants, etc, are
+        stored to be ready for the calculation.
+        ``solve_dynamical_matrices=True`` runs harmonic phonon solver
+        immediately to store phonons on all regular mesh grids.
 
         Note
         ----
-        fc3 and fc2 have to be set before calling this method. fc3 and fc2
-        can be made either from sets of forces and displacements of supercells
-        or be set simply via attributes.
+        fc3 and fc2, and optionally nac_params have to be set before calling
+        this method. fc3 and fc2 can be made either from sets of forces
+        and displacements of supercells or be set simply via attributes.
 
         Parameters
         ----------
-        nac_params : dict
-            Parameters used for non-analytical term correction
-            'born': ndarray
-                Born effective charges
-                shape=(primitive cell atoms, 3, 3), dtype='double', order='C'
-            'factor': float
-                Unit conversion factor
-            'dielectric': ndarray
-                Dielectric constant tensor
-                shape=(3, 3), dtype='double', order='C'
-        nac_q_direction : array_like
+        nac_q_direction : array_like, optional
             Direction of q-vector watching from Gamma point used for
             non-analytical term correction. This is effective only at q=0
             (physically q->0). The direction is given in crystallographic
             (fractional) coordinates.
             shape=(3,), dtype='double'.
-        constant_averaged_interaction : float
+            Default value is None, which means this feature is not used.
+        constant_averaged_interaction : float, optional
             Ph-ph interaction strength array is replaced by a scalar value.
+            Default is None, which means this feature is not used.
+        frequency_scale_factor : float, optional
+            All phonon frequences are scaled by this value. Default is None,
+            which means phonon frequencies are not scaled.
+        solve_dynamical_matrices : Bool, optional
+            When True, harmonic phonon solver is immediately executed and
+            the phonon data on all regular mesh grids are store phonons.
+            Default is True.
 
         """
 
         if self._mesh_numbers is None:
             print("'mesh' has to be set in Phono3py instantiation.")
-            raise RuntimeError
-
-        if self._fc3 is None:
-            print("'fc3' has to be set before calling this method.")
             raise RuntimeError
 
         if self._fc2 is None:
@@ -675,19 +699,58 @@ class Phono3py(object):
             constant_averaged_interaction=constant_averaged_interaction,
             frequency_factor_to_THz=self._frequency_factor_to_THz,
             frequency_scale_factor=frequency_scale_factor,
-            unit_conversion=unit_conversion,
             cutoff_frequency=self._cutoff_frequency,
             is_mesh_symmetry=self._is_mesh_symmetry,
             symmetrize_fc3q=self._symmetrize_fc3q,
             lapack_zheev_uplo=self._lapack_zheev_uplo)
         self._interaction.set_nac_q_direction(nac_q_direction=nac_q_direction)
-        self._interaction.set_dynamical_matrix(
-            self._fc2,
-            self._phonon_supercell,
-            self._phonon_primitive,
-            nac_params=nac_params,
-            solve_dynamical_matrices=solve_dynamical_matrices,
-            verbose=self._log_level)
+        self._init_dynamical_matrix()
+        if solve_dynamical_matrices:
+            self.run_phonon_solver(verbose=self._log_level)
+
+    def set_phph_interaction(self,
+                             nac_params=None,
+                             nac_q_direction=None,
+                             constant_averaged_interaction=None,
+                             frequency_scale_factor=None,
+                             solve_dynamical_matrices=True):
+        """Initialize ph-ph interaction calculation
+
+        This method is deprecated at v2.0. Phono3py.init_phph_interaction
+        should be used instead of this method.
+
+        Parameters
+        ----------
+        Most of parameters are given at docstring of
+        Phono3py.init_phph_interaction.
+
+        nac_params : dict, Deprecated at v2.0
+            Parameters used for non-analytical term correction
+            'born': ndarray
+                Born effective charges
+                shape=(primitive cell atoms, 3, 3), dtype='double', order='C'
+            'factor': float
+                Unit conversion factor
+            'dielectric': ndarray
+                Dielectric constant tensor
+                shape=(3, 3), dtype='double', order='C'
+
+        """
+
+        msg = ("Phono3py.init_phph_interaction is deprecated at v2.0. "
+               "Use Phono3py.prepare_interaction instead.")
+        warnings.warn(msg, DeprecationWarning)
+
+        if nac_params is not None:
+            self._nac_params = nac_params
+            msg = ("nac_params will be set by Phono3py.nac_params attributes.")
+            warnings.warn(msg, DeprecationWarning)
+
+        self.init_phph_interaction(
+            nac_q_direction=nac_q_direction,
+            constant_averaged_interaction=constant_averaged_interaction,
+            frequency_scale_factor=frequency_scale_factor,
+            solve_dynamical_matrices=solve_dynamical_matrices)
 
     def set_phonon_data(self, frequencies, eigenvectors, grid_address):
         """Set phonon frequencies and eigenvectors in Interaction instance
@@ -743,7 +806,16 @@ class Phono3py(object):
             freqs, eigvecs, _ = self._interaction.get_phonons()
             return freqs, eigvecs, grid_address
         else:
-            msg = "set_phph_interaction has to be done."
+            msg = ("Phono3py.init_phph_interaction has to be called "
+                   "before running this method.")
+            raise RuntimeError(msg)
+
+    def run_phonon_solver(self, verbose=False):
+        if self._interaction is not None:
+            self._interaction.run_phonon_solver(verbose=verbose)
+        else:
+            msg = ("Phono3py.init_phph_interaction has to be called "
+                   "before running this method.")
             raise RuntimeError(msg)
 
     def generate_displacements(self,
@@ -1037,7 +1109,10 @@ class Phono3py(object):
                              write_gamma_detail=False,
                              output_filename=None):
         if self._interaction is None:
-            self.set_phph_interaction()
+            msg = ("Phono3py.init_phph_interaction has to be called "
+                   "before running this method.")
+            raise RuntimeError(msg)
+
         if temperatures is None:
             temperatures = [0.0, 300.0]
         self._grid_points = grid_points
@@ -1071,7 +1146,7 @@ class Phono3py(object):
     def run_thermal_conductivity(
             self,
             is_LBTE=False,
-            temperatures=np.arange(0, 1001, 10, dtype='double'),
+            temperatures=None,
             is_isotope=False,
             mass_variances=None,
             grid_points=None,
@@ -1097,16 +1172,23 @@ class Phono3py(object):
             write_pp=False,
             read_pp=False,
             write_LBTE_solution=False,
-            compression=None,
+            compression="gzip",
             input_filename=None,
             output_filename=None):
         if self._interaction is None:
-            self.set_phph_interaction()
+            msg = ("Phono3py.init_phph_interaction has to be called "
+                   "before running this method.")
+            raise RuntimeError(msg)
+
         if is_LBTE:
+            if temperatures is None:
+                _temperatures = [300, ]
+            else:
+                _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_LBTE(
                 self._interaction,
                 self._primitive_symmetry,
-                temperatures=temperatures,
+                temperatures=_temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,
                 is_isotope=is_isotope,
@@ -1131,10 +1213,14 @@ class Phono3py(object):
                 output_filename=output_filename,
                 log_level=self._log_level)
         else:
+            if temperatures is None:
+                _temperatures = np.arange(0, 1001, 10, dtype='double')
+            else:
+                _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_RTA(
                 self._interaction,
                 self._primitive_symmetry,
-                temperatures=temperatures,
+                temperatures=_temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,
                 is_isotope=is_isotope,
@@ -1176,7 +1262,10 @@ class Phono3py(object):
         """
 
         if self._interaction is None:
-            self.set_phph_interaction()
+            msg = ("Phono3py.init_phph_interaction has to be called "
+                   "before running this method.")
+            raise RuntimeError(msg)
+
         if epsilons is None:
             _epsilons = [0.1]
         else:
@@ -1377,6 +1466,9 @@ class Phono3py(object):
         self._phonon_supercell.set_masses(s_masses)
 
     def _set_mesh_numbers(self, mesh):
+        # initialization related to mesh
+        self._interaction = None
+
         _mesh = np.array(mesh)
         mesh_nums = None
         if _mesh.shape:
@@ -1392,3 +1484,13 @@ class Phono3py(object):
             msg = "mesh has inappropriate type."
             raise TypeError(msg)
         self._mesh_numbers = mesh_nums
+
+    def _init_dynamical_matrix(self):
+        if self._interaction is not None:
+            self._interaction.init_dynamical_matrix(
+                self._fc2,
+                self._phonon_supercell,
+                self._phonon_primitive,
+                nac_params=self._nac_params,
+                solve_dynamical_matrices=False,
+                verbose=self._log_level)

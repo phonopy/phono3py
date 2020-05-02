@@ -20,7 +20,7 @@ Some papers that may introduce phono3py well:
 - Introduction to phono3py application:
   https://doi.org/10.1103/PhysRevB.97.224306 (open access).
 
-The source code is found at https://github.com/atztogo/phono3py
+The source code is found at https://github.com/phonopy/phono3py
 (BSD-3-Clause). The code is written in Python extended with C and
 written as:
 
@@ -31,11 +31,11 @@ written as:
 - Thermal conductivity calculations are highly efficiently
   distributed over nodes (see :ref:`workload_distribution`).
 - User interfaces for :ref:`VASP <vasp_interface>`,
-  :ref:`QE <pwscf_interface>`, :ref:`CRYSTAL <crystal_interface>`, 
+  :ref:`QE (pw) <qe_interface>`, :ref:`CRYSTAL <crystal_interface>`,
   :ref:`TURBOMOLE <turbomole_interface>`, and Abinit
   are built in (see :ref:`calculator_interfaces`).
 - API is prepared to operate from Python script (`example
-  <https://github.com/atztogo/phono3py/blob/master/example/Si-PBEsol/Si.py>`_)
+  <https://github.com/phonopy/phono3py/blob/master/example/Si-PBEsol/Si.py>`_)
 
 Some tools to analyze the calculated results are prepared (see
 :ref:`auxiliary_tools`).
@@ -59,7 +59,7 @@ Documentation
 
    install
    examples
-   Interfaces to calculators (VASP, pwscf, CRYSTAL, Abinit, TURBOMOLE) <interfaces>
+   Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE) <interfaces>
    command-options
    output-files
    hdf5_howto

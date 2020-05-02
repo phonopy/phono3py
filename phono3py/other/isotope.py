@@ -38,7 +38,7 @@ from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
 from phonopy.units import VaspToTHz
 from phonopy.structure.atoms import isotope_data
-from phono3py.phonon.solver import set_phonon_c, set_phonon_py
+from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
 from phono3py.phonon3.triplets import get_bz_grid_address, gaussian
 
 
@@ -173,7 +173,7 @@ class Isotope(object):
             self._nac_q_direction = np.array(nac_q_direction, dtype='double')
 
     def _run_c(self):
-        self._set_phonon_c(self._grid_points)
+        self._run_phonon_solver_c(self._grid_points)
         import phono3py._phono3py as phono3c
         gamma = np.zeros(len(self._band_indices), dtype='double')
         if self._sigma is None:
@@ -226,7 +226,7 @@ class Isotope(object):
             self._bz_map)
         unique_grid_points = np.array(np.unique(neighboring_grid_points),
                                       dtype='uintp')
-        self._set_phonon_c(unique_grid_points)
+        self._run_phonon_solver_c(unique_grid_points)
         freq_points = np.array(
             self._frequencies[self._grid_point, self._band_indices],
             dtype='double', order='C')
@@ -260,7 +260,7 @@ class Isotope(object):
 
     def _run_py(self):
         for gp in self._grid_points:
-            self._set_phonon_py(gp)
+            self._run_phonon_solver_py(gp)
 
         if self._sigma is None:
             self._set_integration_weights()
@@ -287,28 +287,28 @@ class Isotope(object):
 
         self._gamma = np.array(t_inv, dtype='double') / 2
 
-    def _set_phonon_c(self, grid_points):
-        set_phonon_c(self._dm,
-                     self._frequencies,
-                     self._eigenvectors,
-                     self._phonon_done,
-                     grid_points,
-                     self._grid_address,
-                     self._mesh,
-                     self._frequency_factor_to_THz,
-                     self._nac_q_direction,
-                     self._lapack_zheev_uplo)
+    def _run_phonon_solver_c(self, grid_points):
+        run_phonon_solver_c(self._dm,
+                            self._frequencies,
+                            self._eigenvectors,
+                            self._phonon_done,
+                            grid_points,
+                            self._grid_address,
+                            self._mesh,
+                            self._frequency_factor_to_THz,
+                            self._nac_q_direction,
+                            self._lapack_zheev_uplo)
 
-    def _set_phonon_py(self, grid_point):
-        set_phonon_py(grid_point,
-                      self._phonon_done,
-                      self._frequencies,
-                      self._eigenvectors,
-                      self._grid_address,
-                      self._mesh,
-                      self._dm,
-                      self._frequency_factor_to_THz,
-                      self._lapack_zheev_uplo)
+    def _run_phonon_solver_py(self, grid_point):
+        run_phonon_solver_py(grid_point,
+                             self._phonon_done,
+                             self._frequencies,
+                             self._eigenvectors,
+                             self._grid_address,
+                             self._mesh,
+                             self._dm,
+                             self._frequency_factor_to_THz,
+                             self._lapack_zheev_uplo)
 
     def _allocate_phonon(self):
         num_band = self._primitive.get_number_of_atoms() * 3

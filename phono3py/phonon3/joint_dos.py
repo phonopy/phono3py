@@ -7,7 +7,7 @@ from phono3py.phonon3.triplets import (get_triplets_at_q,
                                        get_tetrahedra_vertices,
                                        get_triplets_integration_weights,
                                        occupation)
-from phono3py.phonon3.interaction import set_phonon_c
+from phono3py.phonon.solver import run_phonon_solver_c
 from phono3py.phonon3.imag_self_energy import get_frequency_points
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
@@ -120,7 +120,7 @@ class JointDos(object):
 
         self._joint_dos = None
         self._frequency_points = None
-        self.set_phonons(np.array([grid_point], dtype='uintp'))
+        self.run_phonon_solver(np.array([grid_point], dtype='uintp'))
 
     def get_triplets_at_q(self):
         return self._triplets_at_q, self._weights_at_q
@@ -144,7 +144,7 @@ class JointDos(object):
             self._run_c_with_g()
 
     def _run_c_with_g(self):
-        self.set_phonons(self._triplets_at_q.ravel())
+        self.run_phonon_solver(self._triplets_at_q.ravel())
         if self._sigma is None:
             f_max = np.max(self._frequencies) * 2
         else:
@@ -201,7 +201,7 @@ class JointDos(object):
             self._triplets_at_q,
             self._grid_address,
             self._bz_map)
-        self.set_phonons(self._vertices.ravel())
+        self.run_phonon_solver(self._vertices.ravel())
         f_max = np.max(self._frequencies) * 2
         f_max *= 1.005
         f_min = 0
@@ -267,17 +267,17 @@ class JointDos(object):
                  self._symmetry.get_pointgroup_operations(),
                  self._reciprocal_lattice)
 
-    def set_phonons(self, grid_points):
-        set_phonon_c(self._dm,
-                     self._frequencies,
-                     self._eigenvectors,
-                     self._phonon_done,
-                     grid_points,
-                     self._grid_address,
-                     self._mesh,
-                     self._frequency_factor_to_THz,
-                     self._nac_q_direction,
-                     self._lapack_zheev_uplo)
+    def run_phonon_solver(self, grid_points):
+        run_phonon_solver_c(self._dm,
+                            self._frequencies,
+                            self._eigenvectors,
+                            self._phonon_done,
+                            grid_points,
+                            self._grid_address,
+                            self._mesh,
+                            self._frequency_factor_to_THz,
+                            self._nac_q_direction,
+                            self._lapack_zheev_uplo)
 
     def set_frequency_points(self, frequency_points):
         self._frequency_points = np.array(frequency_points, dtype='double')

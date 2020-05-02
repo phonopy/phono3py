@@ -3,7 +3,7 @@ package:
   version: version_from_shell
 
 source:
-  git_url: https://github.com/atztogo/phono3py.git
+  git_url: https://github.com/phonopy/phono3py.git
   git_branch: {{ environ.get('GIT_BRANCH','master') }}
 
 build:
@@ -70,7 +70,7 @@ test:
     # - nose
 
 about:
-  home: https://atztogo.github.io/phono3py/
+  home: https://phonopy.github.io/phono3py/
   license: BSD
   summary: 'A simulation package of phonon-phonon interaction related properties'
 

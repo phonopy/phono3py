@@ -67,16 +67,16 @@ use_mkl = False
 #   Phono3py complex values are handled based on those provided by Netlib
 #   lapacke. However MKL lapacke doesn't provide some macros and functions
 #   that provided Netlib. This macro defines those used in phono3py among them.
-if os.path.isfile("mkl.py"):
+if os.path.isfile("setup_mkl.py"):
     # This supposes that MKL multithread BLAS is used.
-    # This is invoked when mkl.py exists on the current directory.
+    # This is invoked when setup_mkl.py exists on the current directory.
 
     print("MKL LAPACKE is to be used.")
     print("Use of icc is assumed (CC='icc').")
 
-    from mkl import mkl_extra_link_args_lapacke, mkl_include_dirs_lapacke
+    from setup_mkl import mkl_extra_link_args_lapacke, mkl_include_dirs_lapacke
 
-    #### Examples of mkl.py ####
+    #### Examples of setup_mkl.py ####
     # For 2015
     # intel_root = "/opt/intel/composer_xe_2015.7.235"
     # mkl_root = "%s/mkl" % intel_root
@@ -229,6 +229,7 @@ extension_phono3py = Extension(
 
 packages_phono3py = ['phono3py',
                      'phono3py.cui',
+                     'phono3py.interface',
                      'phono3py.other',
                      'phono3py.phonon',
                      'phono3py.phonon3']
@@ -301,10 +302,10 @@ if __name__ == '__main__':
               description='This is the phono3py module.',
               author='Atsushi Togo',
               author_email='atz.togo@gmail.com',
-              url='http://atztogo.github.io/phono3py/',
+              url='http://phonopy.github.io/phono3py/',
               packages=packages_phono3py,
               install_requires=['numpy', 'scipy', 'PyYAML', 'matplotlib',
-                                'h5py', 'phonopy>=2.4.2'],
+                                'h5py', 'phonopy==2.6.0'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
               ext_modules=[extension_lapackepy, extension_phono3py],
@@ -316,7 +317,7 @@ if __name__ == '__main__':
               description='This is the phono3py module.',
               author='Atsushi Togo',
               author_email='atz.togo@gmail.com',
-              url='http://atztogo.github.io/phono3py/',
+              url='http://phonopy.github.io/phono3py/',
               packages=packages_phono3py,
               requires=['numpy', 'scipy', 'PyYAML', 'matplotlib', 'h5py',
                         'phonopy'],

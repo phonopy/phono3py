@@ -15,7 +15,7 @@ from phono3py.phonon3.triplets import (get_grid_points_by_rotations,
 def get_thermal_conductivity_RTA(
         interaction,
         symmetry,
-        temperatures=np.arange(0, 1001, 10, dtype='double'),
+        temperatures=None,
         sigmas=None,
         sigma_cutoff=None,
         mass_variances=None,
@@ -36,10 +36,15 @@ def get_thermal_conductivity_RTA(
         write_pp=False,
         read_pp=False,
         write_gamma_detail=False,
-        compression=None,
+        compression="gzip",
         input_filename=None,
         output_filename=None,
         log_level=0):
+
+    if temperatures is None:
+        _temperatures = np.arange(0, 1001, 10, dtype='double')
+    else:
+        _temperatures = temperatures
 
     if log_level:
         print("-------------------- Lattice thermal conducitivity (RTA) "
@@ -48,7 +53,7 @@ def get_thermal_conductivity_RTA(
         interaction,
         symmetry,
         grid_points=grid_points,
-        temperatures=temperatures,
+        temperatures=_temperatures,
         sigmas=sigmas,
         sigma_cutoff=sigma_cutoff,
         is_isotope=is_isotope,
@@ -95,9 +100,11 @@ def get_thermal_conductivity_RTA(
                                 filename=output_filename,
                                 verbose=log_level)
 
-    if write_kappa:
-        if grid_points is None and all_bands_exist(interaction):
-            br.set_kappa_at_sigmas()
+    if grid_points is None and all_bands_exist(interaction):
+        br.set_kappa_at_sigmas()
+        if log_level:
+            _show_kappa(br, log_level)
+        if write_kappa:
             _write_kappa(br,
                          interaction.get_primitive().get_volume(),
                          compression=compression,
@@ -107,7 +114,7 @@ def get_thermal_conductivity_RTA(
     return br
 
 
-def _write_gamma_detail(br, interaction, i, compression=None, filename=None,
+def _write_gamma_detail(br, interaction, i, compression="gzip", filename=None,
                         verbose=True):
     gamma_detail = br.get_gamma_detail_at_q()
     temperatures = br.get_temperatures()
@@ -161,7 +168,7 @@ def _write_gamma_detail(br, interaction, i, compression=None, filename=None,
                     verbose=verbose)
 
 
-def _write_gamma(br, interaction, i, compression=None, filename=None,
+def _write_gamma(br, interaction, i, compression="gzip", filename=None,
                  verbose=True):
     grid_points = br.get_grid_points()
     group_velocities = br.get_group_velocities()
@@ -260,7 +267,36 @@ def _write_gamma(br, interaction, i, compression=None, filename=None,
                     verbose=verbose)
 
 
-def _write_kappa(br, volume, compression=None, filename=None, log_level=0):
+def _show_kappa(br, log_level):
+    temperatures = br.get_temperatures()
+    sigmas = br.get_sigmas()
+    kappa = br.get_kappa()
+    num_ignored_phonon_modes = br.get_number_of_ignored_phonon_modes()
+    num_band = br.get_frequencies().shape[1]
+    num_phonon_modes = br.get_number_of_sampling_grid_points() * num_band
+    for i, sigma in enumerate(sigmas):
+        text = "----------- Thermal conductivity (W/m-k) "
+        if sigma:
+            text += "for sigma=%s -----------" % sigma
+        else:
+            text += "with tetrahedron method -----------"
+        print(text)
+        if log_level > 1:
+            print(("#%6s       " + " %-10s" * 6 + "#ipm") %
+                  ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy"))
+            for j, (t, k) in enumerate(zip(temperatures, kappa[i])):
+                print(("%7.1f" + " %10.3f" * 6 + " %d/%d") %
+                      ((t,) + tuple(k) +
+                       (num_ignored_phonon_modes[i, j], num_phonon_modes)))
+        else:
+            print(("#%6s       " + " %-10s" * 6) %
+                  ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy"))
+            for j, (t, k) in enumerate(zip(temperatures, kappa[i])):
+                print(("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
+        print('')
+
+
+def _write_kappa(br, volume, compression="gzip", filename=None, log_level=0):
     temperatures = br.get_temperatures()
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()
@@ -278,9 +314,6 @@ def _write_kappa(br, volume, compression=None, filename=None, log_level=0):
     weights = br.get_grid_weights()
     kappa = br.get_kappa()
     mode_kappa = br.get_mode_kappa()
-    num_ignored_phonon_modes = br.get_number_of_ignored_phonon_modes()
-    num_band = br.get_frequencies().shape[1]
-    num_phonon_modes = br.get_number_of_sampling_grid_points() * num_band
 
     for i, sigma in enumerate(sigmas):
         kappa_at_sigma = kappa[i]
@@ -296,26 +329,6 @@ def _write_kappa(br, volume, compression=None, filename=None, log_level=0):
             gamma_U_at_sigma = None
         else:
             gamma_U_at_sigma = gamma_U[i]
-        if log_level:
-            text = "----------- Thermal conductivity (W/m-k) "
-            if sigma:
-                text += "for sigma=%s -----------" % sigma
-            else:
-                text += "with tetrahedron method -----------"
-            print(text)
-            if log_level > 1:
-                print(("#%6s       " + " %-10s" * 6 + "#ipm") %
-                      ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy"))
-                for j, (t, k) in enumerate(zip(temperatures, kappa_at_sigma)):
-                    print(("%7.1f" + " %10.3f" * 6 + " %d/%d") %
-                          ((t,) + tuple(k) +
-                           (num_ignored_phonon_modes[i, j], num_phonon_modes)))
-            else:
-                print(("#%6s       " + " %-10s" * 6) %
-                      ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy"))
-                for j, (t, k) in enumerate(zip(temperatures, kappa_at_sigma)):
-                    print(("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
-            print('')
 
         write_kappa_to_hdf5(temperatures,
                             mesh,
