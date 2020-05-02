@@ -8,9 +8,9 @@ cd conda
 sed s/version_from_shell/`git describe --tags --dirty | sed -e 's/-\(.*\)-g.*/+\1/' -e 's/^[vr]//g' -e 's/rc-/rc./' -e 's/dirty/0/'`/ meta.yaml
 sed s/version_from_shell/`git describe --tags --dirty | sed -e 's/-\(.*\)-g.*/+\1/' -e 's/^[vr]//g' -e 's/rc-/rc./' -e 's/dirty/0/'`/ meta.yaml > meta.tmp.yaml
 mv meta.tmp.yaml meta.yaml
-echo "--------------"
+echo "-----------------------"
 echo "GIT_BRANCH: $GIT_BRANCH"
-echo "--------------"
+echo "-----------------------"
 cd ..
 conda install conda-build anaconda-client --yes
 conda config --add channels atztogo
