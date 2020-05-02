@@ -9,8 +9,7 @@ sed s/version_from_shell/`git describe --tags --dirty | sed -e 's/-\(.*\)-g.*/+\
 sed s/version_from_shell/`git describe --tags --dirty | sed -e 's/-\(.*\)-g.*/+\1/' -e 's/^[vr]//g' -e 's/rc-/rc./' -e 's/dirty/0/'`/ meta.yaml > meta.tmp.yaml
 mv meta.tmp.yaml meta.yaml
 echo "--------------"
-git branch
-echo $GIT_BRANCH
+echo "GIT_BRANCH: $GIT_BRANCH"
 echo "--------------"
 cd ..
 conda install conda-build anaconda-client --yes
