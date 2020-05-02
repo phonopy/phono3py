@@ -285,8 +285,8 @@ if __name__ == '__main__':
                     break
             except ValueError:
                 nanoversion = 0
-            if nanoversion:
-                version_nums.append(nanoversion)
+        if nanoversion != 0:
+            version_nums.append(nanoversion)
 
     if None in version_nums:
         print("Failed to get version number in setup.py.")
