@@ -10,8 +10,8 @@ TD=`mktemp -d`
 WD=`pwd`
 git branch
 git clone $u $TD
-git checkout $br
 cd $TD
+git checkout $br
 echo $u $br
 git describe --tags --dirty | sed -e 's/\([.0-9]*\)-\(.*\)-g.*/\2/' -e 's/^[vr]//g' -e 's/rc-//g' > $WD/__nanoversion__.txt
 cd $WD
