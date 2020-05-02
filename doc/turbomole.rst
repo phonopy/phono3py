@@ -16,7 +16,7 @@ When the file name of the unit cell is different from the default one
 is used to specify the file name. TURBOMOLE unit cell file parser used in
 phono3py is the same as that in phonopy. It reads a limited number of
 keywords that are documented in the phonopy web site
-(http://atztogo.github.io/phonopy/turbomole.html#turbomole-interface).
+(http://phonopy.github.io/phonopy/turbomole.html#turbomole-interface).
 
 .. _turbomole_workflow:
 

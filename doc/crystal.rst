@@ -17,9 +17,9 @@ specified::
 When the file name of the unit cell is different from the default one
 (see :ref:`default_unit_cell_file_name_for_calculator`), ``-c`` option
 is used to specify the file name. CRYSTAL unit cell file parser used in
-phono3py is the same as that in phonopy. It reads a limited number of 
+phono3py is the same as that in phonopy. It reads a limited number of
 keywords that are documented in the phonopy web site
-(http://atztogo.github.io/phonopy/crystal.html#crystal-interface).
+(http://phonopy.github.io/phonopy/crystal.html#crystal-interface).
 
 .. _crystal_workflow:
 

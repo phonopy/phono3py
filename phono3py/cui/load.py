@@ -107,7 +107,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         shape=(3, 3), dtype=float.
         When 'F', 'I', 'A', 'C', or 'R' is given instead of a 3x3 matrix,
         the primitive matrix defined at
-        https://atztogo.github.io/spglib/definition.html
+        https://spglib.github.io/spglib/definition.html
         is used.
     phonon_supercell_matrix : array_like, optional
         Supercell matrix used for fc2. In phono3py, supercell matrix for fc3

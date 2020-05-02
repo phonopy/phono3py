@@ -14,7 +14,7 @@ performance is achieved by using the phono3py conda package (see
 
 Installation of phonopy before the installation of phono3py is
 required. See how to install phonopy at
-https://atztogo.github.io/phonopy/install.html. Phono3py relies on
+https://phonopy.github.io/phonopy/install.html. Phono3py relies on
 phonopy, so please use the latest release of phonopy when installing
 phono3py.
 
@@ -186,7 +186,7 @@ needed.
 
    The other option is using git to clone the phonopy repository from github::
 
-     % git clone https://github.com/atztogo/phono3py.git
+     % git clone https://github.com/phonopy/phono3py.git
      % cd phono3py
 
 2. Set up C-libraries for python C-API and python codes. This can be
@@ -199,7 +199,7 @@ needed.
 3. Set :envvar:`$PATH` and :envvar:`$PYTHONPATH`
 
    ``PATH`` and ``PYTHONPATH`` are set in the same way as phonopy, see
-   https://atztogo.github.io/phonopy/install.html#building-using-setup-py.
+   https://phonopy.github.io/phonopy/install.html#building-using-setup-py.
 
 .. _install_an_example:
 
@@ -281,8 +281,8 @@ This installation instruction supposes linux x86-64 environment.
 
       % mkdir dev
       % cd dev
-      % git clone https://github.com/atztogo/phonopy.git
-      % git clone https://github.com/atztogo/phono3py.git
+      % git clone https://github.com/phonopy/phonopy.git
+      % git clone https://github.com/phonopy/phono3py.git
       % cd phonopy
       % git checkout develop
       % python setup.py build
@@ -324,4 +324,4 @@ Trouble shooting
 
 1. Phonopy version should be the latest to use the latest phono3py.
 2. There are other pitfalls, see
-   https://atztogo.github.io/phonopy/install.html#trouble-shooting.
+   https://phonopy.github.io/phonopy/install.html#trouble-shooting.
