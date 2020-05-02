@@ -20,7 +20,7 @@ When the file name of the unit cell is different from the default one
 is used to specify the file name. QE (pw) unit cell file parser used in
 phono3py is the same as that in phonopy. It can read
 only limited number of keywords that are shown in the phonopy web site
-(http://atztogo.github.io/phonopy/qe.html#qe-interface).
+(http://phonopy.github.io/phonopy/qe.html#qe-interface).
 
 .. _qe_workflow:
 

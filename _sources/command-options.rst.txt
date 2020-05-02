@@ -84,7 +84,7 @@ Supercell and primitive cell
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Supercell size is specified. See the
-detail at http://atztogo.github.io/phonopy/setting-tags.html#dim .
+detail at http://phonopy.github.io/phonopy/setting-tags.html#dim .
 
 .. _dim_fc2_option:
 
@@ -135,7 +135,7 @@ usual phono3py run without ``--dim-fc2`` option.
 
 Transformation matrix from a non-primitive cell to the primitive
 cell. See phonopy ``PRIMITIVE_AXES`` tag (``--pa`` option) at
-http://atztogo.github.io/phonopy/setting-tags.html#primitive-axis
+http://phonopy.github.io/phonopy/setting-tags.html#primitive-axis
 
 Displacement creation
 ---------------------
@@ -390,7 +390,8 @@ Phonon triples are chosen on the grid points on the sampling mesh
 specified by this option. This mesh is made along reciprocal
 axes and is always Gamma-centered.
 Except for that this mesh is always Gamma-centered, the setting is in
-the same way as written here, https://atztogo.github.io/phonopy/setting-tags.html#mesh-mp-or-mesh-numbers.
+the same way as written here,
+https://phonopy.github.io/phonopy/setting-tags.html#mesh-mp-or-mesh-numbers.
 
 ..
    ``--md``
@@ -604,7 +605,7 @@ contribution to the thermal conducitivity is considered negligible.
 
 Temperatures at equal interval are specified by ``--tmax``,
 ``--tmin``, ``--tstep``. See phonopy's document for the same tags at
-http://atztogo.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep
+http://phonopy.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep
 .
 
 ::
@@ -638,7 +639,7 @@ first line of ``BORN`` file.
 
 This is used with ``--nac`` to specify the direction to polarize in
 reciprocal space. See the detail at
-http://atztogo.github.io/phonopy/setting-tags.html#q-direction .
+http://phonopy.github.io/phonopy/setting-tags.html#q-direction .
 
 
 .. _normal_umklapp_option:
