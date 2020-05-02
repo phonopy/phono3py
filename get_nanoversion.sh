@@ -1,6 +1,7 @@
 #!/bin/bash
 
-br=`git branch |tail -n1`
+#br=`git branch |tail -n1`
+br=`git branch`
 read o u f <<< `git remote -v |grep origin |grep fetch`
 echo "Repo: $o $u $br"
 git describe --tags --dirty
