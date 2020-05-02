@@ -1,7 +1,8 @@
+import os
+import sys
 import numpy
 import platform
 import sysconfig
-import os
 
 try:
     from setuptools import setup, Extension
@@ -11,6 +12,18 @@ except ImportError:
     from distutils.core import setup, Extension
     use_setuptools = False
     print("distutils is used.")
+
+try:
+    from setuptools_scm import get_version
+except ImportError:
+    git_num = None
+
+if 'setuptools_scm' in sys.modules.keys():
+    try:
+        git_ver = get_version()
+        git_num = int(git_ver.split('.')[3].split('+')[0].replace("dev", ""))
+    except:
+        git_num = None
 
 include_dirs_numpy = [numpy.get_include()]
 extra_link_args = []
@@ -287,6 +300,8 @@ if __name__ == '__main__':
                 nanoversion = 0
         if nanoversion != 0:
             version_nums.append(nanoversion)
+    elif git_num:
+        version_nums.append(git_num)
 
     if None in version_nums:
         print("Failed to get version number in setup.py.")
