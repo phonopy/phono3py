@@ -1,17 +1,17 @@
 import numpy as np
 
 
-def set_phonon_c(dm,
-                 frequencies,
-                 eigenvectors,
-                 phonon_done,
-                 grid_points,
-                 grid_address,
-                 mesh,
-                 frequency_conversion_factor,
-                 nac_q_direction,  # in reduced coordinates
-                 lapack_zheev_uplo,
-                 verbose=False):
+def run_phonon_solver_c(dm,
+                        frequencies,
+                        eigenvectors,
+                        phonon_done,
+                        grid_points,
+                        grid_address,
+                        mesh,
+                        frequency_conversion_factor,
+                        nac_q_direction,  # in reduced coordinates
+                        lapack_zheev_uplo,
+                        verbose=False):
     import phono3py._phono3py as phono3c
 
     (svecs,
@@ -71,15 +71,15 @@ def set_phonon_c(dm,
         lapack_zheev_uplo)
 
 
-def set_phonon_py(grid_point,
-                  phonon_done,
-                  frequencies,
-                  eigenvectors,
-                  grid_address,
-                  mesh,
-                  dynamical_matrix,
-                  frequency_conversion_factor,
-                  lapack_zheev_uplo):
+def run_phonon_solver_py(grid_point,
+                         phonon_done,
+                         frequencies,
+                         eigenvectors,
+                         grid_address,
+                         mesh,
+                         dynamical_matrix,
+                         frequency_conversion_factor,
+                         lapack_zheev_uplo):
     gp = grid_point
     if phonon_done[gp] == 0:
         phonon_done[gp] = 1

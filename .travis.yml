@@ -29,7 +29,7 @@ install:
     - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
         conda install --yes -c atztogo phonopy;
       else
-        pip install https://github.com/atztogo/phonopy/archive/develop.zip --user;
+        pip install https://github.com/phonopy/phonopy/archive/develop.zip --user;
       fi
     - pwd
     - ./get_nanoversion.sh
@@ -43,9 +43,9 @@ script:
     - tar xf vasprun_xmls.tar.lzma --lzma
     - phono3py --cf3 vasprun_xmls/disp-{00001..00111}/vasprun.xml
     - cd ../..
-    - cd example/Si-pwscf
+    - cd example/Si-QE
     - tar xf supercell_out.tar.lzma --lzma
-    - phono3py --pwscf --cf3 supercell_out/disp-{00001..00111}/Si.out
+    - phono3py --qe --cf3 supercell_out/disp-{00001..00111}/Si.out
     - cd ../..
 
 deploy:
@@ -59,7 +59,7 @@ deploy:
       password:
         secure: "NiGCFUvUZALME/raOyq5AspTc0sCBA+G7frAIAWLsNOk7JL25UIu/T4ufWHEpvssvXZ/zntEVKEnQo8kQYQfsfDtLccdVFKJ6jzKtqbL4s2+m8d61b+Ezu9mK1XM/ImiIkvhCD+j8jtzUbN24/qYhGgR8YeXxwfCJWU7SKNueTiyBT+xOoO4gswoRpA4Ztutzows0rKX1K/MBaKF9RGotIHCIay4ryWJUg9KWcp2rKGJeDiuTK81kSyZA1MV3x05PgnPH+gxTy8XbBP0Bk71FZUpkpQ7+UsmsUSLB9dlSgkhziYuDHb4Y48YO2XqHU7bi+pElUs660eez8m8IC5dUhjY3RPDQOSb3gpc1N56/RqfMugUyelEqfXaSCPBrXfhsvutwibA4ITNh4f86jylWFUQukHiK95NCVrvMDkNcFyNZVNHsWUIBWfCXPu4fmykOb4PR1eC1kZsuo0h3VTSzMn7vtFXbedt3VtaZMNEdbBMgKxoPwcE2DPBzZDZdSbVA8QuvmbwjGpxHNISssNzLhCVWbXSbjo2BntHzMIodz36rKQwqHqw58yUBNRZKLT1/0D2qGSSWQ/r4W6w2y7XoJXyJOIGRaAzTEWmGMZ7OHO1XON9cT8zOmikC9XhmC34mhzRrKmPx/5VMyzvM05wkCpNynx0SZc6w9wmIxhFl3Q="
       on:
-        repo: atztogo/phono3py
+        repo: phonopy/phono3py
         branch: rc
         tags: false
         python: 2.7
@@ -69,7 +69,7 @@ deploy:
       skip_cleanup: true
       script: conda/anaconda_deploy.sh rc $ANACONDA_TOKEN2 $TRAVIS_BRANCH
       on:
-        repo: atztogo/phono3py
+        repo: phonopy/phono3py
         branch: rc
         tags: false
         # python: 2.7
@@ -92,7 +92,7 @@ deploy:
       skip_cleanup: true
       script: conda/anaconda_deploy.sh main $ANACONDA_TOKEN2 $TRAVIS_BRANCH
       on:
-        repo: atztogo/phono3py
+        repo: phonopy/phono3py
         branch: master
         tags: false
         # python: 2.7

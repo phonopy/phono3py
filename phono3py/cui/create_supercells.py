@@ -34,7 +34,11 @@
 
 from phono3py import Phono3py
 from phono3py.file_IO import write_disp_fc3_yaml, write_disp_fc2_yaml
-from phonopy.structure.cells import determinant
+from phono3py.interface.calculator import (
+    get_additional_info_to_write_fc2_supercells,
+    get_additional_info_to_write_supercells,
+    get_default_displacement_distance)
+from phonopy.interface.calculator import write_supercells_with_displacements
 
 
 def create_phono3py_supercells(unitcell,
@@ -44,20 +48,14 @@ def create_phono3py_supercells(unitcell,
                                is_plusminus,
                                is_diagonal,
                                cutoff_pair_distance,
-                               write_supercells_with_displacements,
-                               optional_structure_file_information,
+                               optional_structure_info,
                                is_symmetry,
                                symprec,
                                interface_mode='vasp',
                                output_filename=None,
                                log_level=1):
     if displacement_distance is None:
-        if interface_mode in ('qe', 'abinit', 'turbomole'):
-            distance = 0.06
-        elif interface_mode == 'crystal':
-            distance = 0.03
-        else:
-            distance = 0.03
+        distance = get_default_displacement_distance(interface_mode)
     else:
         distance = displacement_distance
     phono3py = Phono3py(
@@ -86,35 +84,23 @@ def create_phono3py_supercells(unitcell,
     num_disps, num_disp_files = write_disp_fc3_yaml(dds,
                                                     supercell,
                                                     filename=filename)
-    cells_with_disps = phono3py.get_supercells_with_displacements()
-    if interface_mode == 'qe':
-        pp_filenames = optional_structure_file_information[1]
-        write_supercells_with_displacements(supercell,
-                                            cells_with_disps,
-                                            pp_filenames,
-                                            width=5)
-    elif interface_mode == 'crystal':
-        conv_numbers = optional_structure_file_information[1]
-        # N_FC3 = num_unitcells_in_supercell (here for FC3 supercell)
-        N_FC3 = abs(determinant(supercell_matrix))
-        write_supercells_with_displacements(supercell,
-                                            cells_with_disps,
-                                            conv_numbers,
-                                            N_FC3,
-                                            width=5,
-                                            template_file="TEMPLATE3")
-    elif interface_mode == 'abinit':
-        write_supercells_with_displacements(supercell,
-                                            cells_with_disps,
-                                            width=5)
-    elif interface_mode == 'turbomole':
-        write_supercells_with_displacements(supercell,
-                                            cells_with_disps,
-                                            width=5)
-    else: # VASP
-        write_supercells_with_displacements(supercell,
-                                            cells_with_disps,
-                                            width=5)
+    cells_with_disps = phono3py.supercells_with_displacements
+    ids = []
+    disp_cells = []
+    for i, cell in enumerate(cells_with_disps):
+        if cell is not None:
+            ids.append(i + 1)
+            disp_cells.append(cell)
+
+    additional_info = get_additional_info_to_write_supercells(
+        interface_mode, phono3py)
+    write_supercells_with_displacements(interface_mode,
+                                        supercell,
+                                        disp_cells,
+                                        optional_structure_info,
+                                        displacement_ids=ids,
+                                        zfill_width=5,
+                                        additional_info=additional_info)
 
     if log_level:
         print("Number of displacements: %d" % num_disps)
@@ -125,8 +111,9 @@ def create_phono3py_supercells(unitcell,
                   num_disp_files)
 
     if phonon_supercell_matrix is not None:
-        phonon_dds = phono3py.get_phonon_displacement_dataset()
-        phonon_supercell = phono3py.get_phonon_supercell()
+        phonon_dds = phono3py.phonon_dataset
+        phonon_supercell = phono3py.phonon_supercell
+        phonon_supercell_matrix = phono3py.phonon_supercell_matrix
         if output_filename is None:
             filename = 'disp_fc2.yaml'
         else:
@@ -135,40 +122,16 @@ def create_phono3py_supercells(unitcell,
         num_disps = write_disp_fc2_yaml(phonon_dds,
                                         phonon_supercell,
                                         filename=filename)
-        cells_with_disps = phono3py.get_phonon_supercells_with_displacements()
-        if interface_mode == 'qe':
-            pp_filenames = optional_structure_file_information[1]
-            write_supercells_with_displacements(phonon_supercell,
-                                                cells_with_disps,
-                                                pp_filenames,
-                                                pre_filename="supercell_fc2",
-                                                width=5)
-        elif interface_mode == 'crystal':
-            conv_numbers = optional_structure_file_information[1]
-            # N = num_unitcells_in_supercell (here for FC2 supercell)
-            N_FC2 = abs(determinant(phonon_supercell_matrix))
-            write_supercells_with_displacements(phonon_supercell,
-                                                cells_with_disps,
-                                                conv_numbers,
-                                                N_FC2,
-                                                pre_filename="supercell_fc2",
-                                                width=5,
-                                                template_file="TEMPLATE")
-        elif interface_mode == 'abinit':
-            write_supercells_with_displacements(phonon_supercell,
-                                                cells_with_disps,
-                                                pre_filename="supercell_fc2",
-                                                width=5)
-        elif interface_mode == 'turbomole':
-            write_supercells_with_displacements(phonon_supercell,
-                                                cells_with_disps,
-                                                pre_filename="supercell_fc2",
-                                                width=5)
-        else:
-            write_supercells_with_displacements(phonon_supercell,
-                                                cells_with_disps,
-                                                pre_filename="POSCAR_FC2",
-                                                width=5)
+        cells_with_disps = phono3py.phonon_supercells_with_displacements
+
+        additional_info = get_additional_info_to_write_fc2_supercells(
+            interface_mode, phono3py)
+        write_supercells_with_displacements(interface_mode,
+                                            supercell,
+                                            cells_with_disps,
+                                            optional_structure_info,
+                                            zfill_width=5,
+                                            additional_info=additional_info)
 
         if log_level:
             print("Number of displacements for special fc2: %d" % num_disps)

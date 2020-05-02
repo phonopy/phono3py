@@ -3,6 +3,15 @@
 Change Log
 ==========
 
+Mar-2-2020: Version 1.19.0
+--------------------------
+
+- Improvements of phono3py loader and API.
+- Improvement of interfaces to calculators. Now it is expected to be
+  much easier to implement calculator interface if it exists in
+  phonopy.
+- Fixed dependency to phonopy v2.6.0.
+
 Dec-22-2019: Version 1.18.2
 ---------------------------
 

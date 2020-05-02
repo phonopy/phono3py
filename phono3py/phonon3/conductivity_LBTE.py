@@ -19,7 +19,7 @@ from phonopy.units import THzToEv, Kb
 def get_thermal_conductivity_LBTE(
         interaction,
         symmetry,
-        temperatures=np.arange(0, 1001, 10, dtype='double'),
+        temperatures=None,
         sigmas=None,
         sigma_cutoff=None,
         is_isotope=False,
@@ -39,11 +39,14 @@ def get_thermal_conductivity_LBTE(
         write_pp=False,
         read_pp=False,
         write_LBTE_solution=False,
-        compression=None,
+        compression="gzip",
         input_filename=None,
         output_filename=None,
         log_level=0):
-
+    if temperatures is None:
+        _temperatures = [300, ]
+    else:
+        _temperatures = temperatures
     if sigmas is None:
         sigmas = []
     if log_level:
@@ -54,7 +57,7 @@ def get_thermal_conductivity_LBTE(
     if read_collision:
         temps = None
     else:
-        temps = temperatures
+        temps = _temperatures
 
     lbte = Conductivity_LBTE(
         interaction,
@@ -88,12 +91,12 @@ def get_thermal_conductivity_LBTE(
             print("Reading collision failed.")
             return False
         if log_level:
-            temperatures = lbte.get_temperatures()
-            if len(temperatures) > 5:
-                text = (" %.1f " * 5 + "...") % tuple(temperatures[:5])
-                text += " %.1f" % temperatures[-1]
+            temps_read = lbte.get_temperatures()
+            if len(temps_read) > 5:
+                text = (" %.1f " * 5 + "...") % tuple(temps_read[:5])
+                text += " %.1f" % temps_read[-1]
             else:
-                text = (" %.1f " * len(temperatures)) % tuple(temperatures)
+                text = (" %.1f " * len(temps_read)) % tuple(temps_read)
             print("Temperature: " + text)
 
     for i in lbte:
@@ -124,9 +127,9 @@ def get_thermal_conductivity_LBTE(
             (not read_collision)):
             _write_collision(lbte, interaction, filename=output_filename)
 
-    if write_kappa:
-        if grid_points is None and all_bands_exist(interaction):
-            lbte.set_kappa_at_sigmas()
+    if grid_points is None and all_bands_exist(interaction):
+        lbte.set_kappa_at_sigmas()
+        if write_kappa:
             _write_kappa(
                 lbte,
                 interaction.get_primitive().get_volume(),
@@ -219,7 +222,7 @@ def _write_kappa(lbte,
                  is_reducible_collision_matrix=False,
                  write_LBTE_solution=False,
                  pinv_solver=None,
-                 compression=None,
+                 compression="gzip",
                  filename=None,
                  log_level=0):
     temperatures = lbte.get_temperatures()

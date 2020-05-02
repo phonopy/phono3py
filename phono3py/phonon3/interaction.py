@@ -1,7 +1,8 @@
+import warnings
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
 from phonopy.units import VaspToTHz, Hbar, EV, Angstrom, THz, AMU
-from phono3py.phonon.solver import set_phonon_c, set_phonon_py
+from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
 from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
 from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
 from phono3py.phonon3.triplets import (get_triplets_at_q,
@@ -259,7 +260,7 @@ class Interaction(object):
         if self._nac_q_direction is not None:
             if (grid_address[grid_point] == 0).all():
                 self._phonon_done[grid_point] = 0
-                self.set_phonons(np.array([grid_point], dtype='uintp'))
+                self.run_phonon_solver(np.array([grid_point], dtype='uintp'))
                 rotations = []
                 for r in self._symmetry.get_pointgroup_operations():
                     dq = self._nac_q_direction
@@ -303,18 +304,14 @@ class Interaction(object):
         # self._bz_map = bz_map
         self._ir_map_at_q = ir_map_at_q
 
-        # set_phonons is unnecessary now because all phonons are calculated in
-        # set_dynamical_matrix, though Gamma-point is an exception.
-        # self.set_phonons(self._triplets_at_q.ravel())
-
-    def set_dynamical_matrix(self,
-                             fc2,
-                             supercell,
-                             primitive,
-                             nac_params=None,
-                             solve_dynamical_matrices=True,
-                             decimals=None,
-                             verbose=False):
+    def init_dynamical_matrix(self,
+                              fc2,
+                              supercell,
+                              primitive,
+                              nac_params=None,
+                              solve_dynamical_matrices=True,
+                              decimals=None,
+                              verbose=False):
         self._nac_params = nac_params
         self._dm = get_dynamical_matrix(
             fc2,
@@ -326,9 +323,10 @@ class Interaction(object):
             symprec=self._symprec)
 
         if solve_dynamical_matrices:
-            self.set_phonons(verbose=verbose)
+            self.run_phonon_solver(verbose=verbose)
         else:
-            self.set_phonons(np.array([0], dtype='uintp'), verbose=verbose)
+            self.run_phonon_solver(np.array([0], dtype='uintp'),
+                                   verbose=verbose)
 
         if (self._grid_address[0] == 0).all():
             if np.sum(self._frequencies[0] < self._cutoff_frequency) < 3:
@@ -366,11 +364,18 @@ class Interaction(object):
             return True
 
     def set_phonons(self, grid_points=None, verbose=False):
+        msg = ("Interaction.set_phonons is deprecated at v2.0. "
+               "Use Interaction.run_phonon_solver intead.")
+        warnings.warn(msg, DeprecationWarning)
+
+        self.run_phonon_solver(grid_points=grid_points, verbose=verbose)
+
+    def run_phonon_solver(self, grid_points=None, verbose=False):
         if grid_points is None:
             _grid_points = np.arange(len(self._grid_address), dtype='uintp')
         else:
             _grid_points = grid_points
-        self._set_phonon_c(_grid_points, verbose=verbose)
+        self._run_phonon_solver_c(_grid_points, verbose=verbose)
 
     def delete_interaction_strength(self):
         self._interaction_strength = None
@@ -430,18 +435,18 @@ class Interaction(object):
         self._interaction_strength *= self._unit_conversion
         self._g_zero = g_zero
 
-    def _set_phonon_c(self, grid_points, verbose=False):
-        set_phonon_c(self._dm,
-                     self._frequencies,
-                     self._eigenvectors,
-                     self._phonon_done,
-                     grid_points,
-                     self._grid_address,
-                     self._mesh,
-                     self._frequency_factor_to_THz,
-                     self._nac_q_direction,
-                     self._lapack_zheev_uplo,
-                     verbose=verbose)
+    def _run_phonon_solver_c(self, grid_points, verbose=False):
+        run_phonon_solver_c(self._dm,
+                            self._frequencies,
+                            self._eigenvectors,
+                            self._phonon_done,
+                            grid_points,
+                            self._grid_address,
+                            self._mesh,
+                            self._frequency_factor_to_THz,
+                            self._nac_q_direction,
+                            self._lapack_zheev_uplo,
+                            verbose=verbose)
 
     def _run_py(self):
         r2r = RealToReciprocal(self._fc3,
@@ -460,21 +465,21 @@ class Interaction(object):
             r2r.run(self._grid_address[grid_triplet])
             fc3_reciprocal = r2r.get_fc3_reciprocal()
             for gp in grid_triplet:
-                self._set_phonon_py(gp)
+                self._run_phonon_solver_py(gp)
             r2n.run(fc3_reciprocal, grid_triplet)
             self._interaction_strength[i] = np.abs(
                 r2n.get_reciprocal_to_normal()) ** 2 * self._unit_conversion
 
-    def _set_phonon_py(self, grid_point):
-        set_phonon_py(grid_point,
-                      self._phonon_done,
-                      self._frequencies,
-                      self._eigenvectors,
-                      self._grid_address,
-                      self._mesh,
-                      self._dm,
-                      self._frequency_factor_to_THz,
-                      self._lapack_zheev_uplo)
+    def _run_phonon_solver_py(self, grid_point):
+        run_phonon_solver_py(grid_point,
+                             self._phonon_done,
+                             self._frequencies,
+                             self._eigenvectors,
+                             self._grid_address,
+                             self._mesh,
+                             self._dm,
+                             self._frequency_factor_to_THz,
+                             self._lapack_zheev_uplo)
 
     def _allocate_phonon(self):
         primitive_lattice = np.linalg.inv(self._primitive.get_cell())

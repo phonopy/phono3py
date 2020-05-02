@@ -1,7 +1,7 @@
-# Copyright (C) 2015 Atsushi Togo
+# Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
-# This file is part of phonopy.
+# This file is part of phono3py.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -37,11 +37,12 @@ from phonopy.harmonic.force_constants import (
     show_drift_force_constants,
     symmetrize_force_constants,
     symmetrize_compact_force_constants)
+from phonopy.file_IO import get_dataset_type2
 from phono3py.phonon3.fc3 import show_drift_fc3
 from phono3py.file_IO import (
     parse_disp_fc3_yaml, parse_disp_fc2_yaml, parse_FORCES_FC2,
     parse_FORCES_FC3, read_fc3_from_hdf5, read_fc2_from_hdf5,
-    write_fc3_to_hdf5, write_fc2_to_hdf5, get_lenghth_of_first_line)
+    write_fc3_to_hdf5, write_fc2_to_hdf5, get_length_of_first_line)
 from phono3py.cui.show_log import (
     show_phono3py_force_constants_settings, print_error, file_exists)
 from phono3py.phonon3.fc3 import (
@@ -53,7 +54,7 @@ def create_phono3py_force_constants(phono3py,
                                     settings,
                                     force_to_eVperA=None,
                                     distance_to_A=None,
-                                    compression=None,
+                                    compression="gzip",
                                     input_filename=None,
                                     output_filename=None,
                                     log_level=1):
@@ -77,7 +78,7 @@ def create_phono3py_force_constants(phono3py,
          not (settings.get_is_bterta() or settings.get_is_lbte())) or
         settings.get_read_gamma() or
         settings.get_read_pp() or
-        settings.get_write_phonon() or
+        (not settings.get_is_bterta() and settings.get_write_phonon()) or
         settings.get_constant_averaged_pp_interaction() is not None):
         pass
     else:
@@ -115,13 +116,13 @@ def create_phono3py_force_constants(phono3py,
             phono3py.cutoff_fc3_by_zero(cutoff_distance)
 
         if log_level:
-            show_drift_fc3(phono3py.get_fc3(),
-                           primitive=phono3py.get_primitive())
+            show_drift_fc3(phono3py.fc3,
+                           primitive=phono3py.primitive)
 
     #######
     # fc2 #
     #######
-    phonon_primitive = phono3py.get_phonon_primitive()
+    phonon_primitive = phono3py.phonon_primitive
     p2s_map = phonon_primitive.p2s_map
     if settings.get_read_fc2():
         _read_phono3py_fc2(phono3py,
@@ -166,17 +167,72 @@ def create_phono3py_force_constants(phono3py,
         else:
             filename = 'fc2.' + output_filename + '.hdf5'
         if log_level:
-            print("Writing fc2 to %s" % filename)
-        write_fc2_to_hdf5(phono3py.get_fc2(),
+            print("Writing fc2 to \"%s\"." % filename)
+        write_fc2_to_hdf5(phono3py.fc2,
                           filename=filename,
                           p2s_map=p2s_map,
                           physical_unit='eV/Angstrom^2',
                           compression=compression)
 
     if log_level:
-        show_drift_force_constants(phono3py.get_fc2(),
+        show_drift_force_constants(phono3py.fc2,
                                    primitive=phonon_primitive,
                                    name='fc2')
+
+
+def parse_forces(natom,
+                 force_to_eVperA,
+                 distance_to_A,
+                 cutoff_pair_distance=None,
+                 force_filename="FORCES_FC3",
+                 disp_filename=None,
+                 is_fc2=False,
+                 log_level=0):
+    disp_dataset = _get_type2_dataset(natom, filename=force_filename)
+    if disp_dataset:  # type2
+        if log_level:
+            print("%d snapshots were found in %s."
+                  % (len(disp_dataset['displacements']), "FORCES_FC3"))
+        if force_to_eVperA is not None:
+            disp_dataset['forces'] *= force_to_eVperA
+        if distance_to_A is not None:
+            disp_dataset['displacements'] *= distance_to_A
+    else:  # type1
+        if log_level:
+            print("Displacement dataset for %s is read from \"%s\"."
+                  % ("fc2" if is_fc2 else "fc3", disp_filename))
+        if is_fc2:
+            disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
+        else:
+            disp_dataset = parse_disp_fc3_yaml(filename=disp_filename)
+        if cutoff_pair_distance:
+            if ('cutoff_distance' not in disp_dataset or
+                'cutoff_distance' in disp_dataset and
+                cutoff_pair_distance < disp_dataset['cutoff_distance']):
+                disp_dataset['cutoff_distance'] = cutoff_pair_distance
+                if log_level:
+                    print("Cutoff-pair-distance: %f" % cutoff_pair_distance)
+        if disp_dataset['natom'] != natom:
+            msg = ("Number of atoms in supercell is not consistent with "
+                   "\"%s\"." % disp_filename)
+            raise RuntimeError(msg)
+        _convert_displacement_unit(disp_dataset, distance_to_A, is_fc2=is_fc2)
+        if log_level:
+            print("Sets of supercell forces are read from \"%s\"."
+                  % force_filename)
+            sys.stdout.flush()
+
+        # forces are stored in disp_dataset.
+        if is_fc2:
+            parse_FORCES_FC2(disp_dataset,
+                             filename=force_filename,
+                             unit_conversion_factor=force_to_eVperA)
+        else:
+            parse_FORCES_FC3(disp_dataset,
+                             filename=force_filename,
+                             unit_conversion_factor=force_to_eVperA)
+
+    return disp_dataset
 
 
 def _read_phono3py_fc3(phono3py,
@@ -189,9 +245,9 @@ def _read_phono3py_fc3(phono3py,
         filename = 'fc3.' + input_filename + '.hdf5'
     file_exists(filename, log_level)
     if log_level:
-        print("Reading fc3 from %s" % filename)
+        print("Reading fc3 from \"%s\"." % filename)
 
-    p2s_map = phono3py.get_primitive().get_primitive_to_supercell_map()
+    p2s_map = phono3py.primitive.p2s_map
     try:
         fc3 = read_fc3_from_hdf5(filename=filename, p2s_map=p2s_map)
     except RuntimeError:
@@ -200,7 +256,7 @@ def _read_phono3py_fc3(phono3py,
         if log_level:
             print_error()
         sys.exit(1)
-    num_atom = phono3py.get_supercell().get_number_of_atoms()
+    num_atom = phono3py.supercell.get_number_of_atoms()
     if fc3.shape[1] != num_atom:
         print("Matrix shape of fc3 doesn't agree with supercell size.")
         if log_level:
@@ -211,96 +267,7 @@ def _read_phono3py_fc3(phono3py,
         set_translational_invariance_fc3(fc3)
         set_permutation_symmetry_fc3(fc3)
 
-    phono3py.set_fc3(fc3)
-
-
-def _get_type2_dataset(natom, filename="FORCES_FC3"):
-    with open(filename, 'r') as f:
-        len_first_line = get_lenghth_of_first_line(f)
-        if len_first_line == 6:
-            try:
-                from phonopy.file_IO import get_dataset_type2
-            except ImportError:
-                from phonopy.file_IO import _get_dataset_type2 as get_dataset_type2
-            dataset = get_dataset_type2(f, natom)
-        else:
-            dataset = {}
-    return dataset
-
-
-def _create_phono3py_fc3(phono3py,
-                         force_to_eVperA,
-                         distance_to_A,
-                         symmetrize_fc3r,
-                         symmetrize_fc2,
-                         input_filename,
-                         output_filename,
-                         is_compact_fc,
-                         cutoff_pair_distance,
-                         fc_calculator,
-                         fc_calculator_options,
-                         compression,
-                         log_level):
-    file_exists("FORCES_FC3", log_level)
-    natom = phono3py.supercell.get_number_of_atoms()
-    disp_dataset = _get_type2_dataset(natom, filename="FORCES_FC3")
-    if disp_dataset:  # type2
-        if log_level:
-            print("%d snapshots were found in %s."
-                  % (len(disp_dataset['displacements']), "FORCES_FC3"))
-        if force_to_eVperA is not None:
-            disp_dataset['forces'] *= force_to_eVperA
-        if distance_to_A is not None:
-            disp_dataset['displacements'] *= distance_to_A
-    else:  # type1
-        if input_filename is None:
-            filename = 'disp_fc3.yaml'
-        else:
-            filename = 'disp_fc3.' + input_filename + '.yaml'
-        file_exists(filename, log_level)
-        if log_level:
-            print("Displacement dataset for fc3 is read from %s." % filename)
-        disp_dataset = parse_disp_fc3_yaml(filename=filename)
-        if cutoff_pair_distance:
-            if ('cutoff_distance' not in disp_dataset or
-                'cutoff_distance' in disp_dataset and
-                cutoff_pair_distance < disp_dataset['cutoff_distance']):
-                disp_dataset['cutoff_distance'] = cutoff_pair_distance
-                if log_level:
-                    print("Cutoff-pair-distance: %f" % cutoff_pair_distance)
-        num_atom = phono3py.get_supercell().get_number_of_atoms()
-        if disp_dataset['natom'] != num_atom:
-            print("Number of atoms in supercell is not consistent with %s" %
-                  filename)
-            if log_level:
-                print_error()
-            sys.exit(1)
-        _convert_displacement_unit(disp_dataset, distance_to_A)
-        if log_level:
-            print("Sets of supercell forces are read from %s." % "FORCES_FC3")
-            sys.stdout.flush()
-        # forces are stored in disp_dataset.
-        parse_FORCES_FC3(disp_dataset, unit_conversion_factor=force_to_eVperA)
-
-    phono3py.produce_fc3(displacement_dataset=disp_dataset,
-                         symmetrize_fc3r=symmetrize_fc3r,
-                         is_compact_fc=is_compact_fc,
-                         fc_calculator=fc_calculator,
-                         fc_calculator_options=fc_calculator_options)
-
-    if output_filename is None:
-        filename = 'fc3.hdf5'
-    else:
-        filename = 'fc3.' + output_filename + '.hdf5'
-    if log_level:
-        print("Writing fc3 to %s" % filename)
-
-    write_fc3_to_hdf5(phono3py.get_fc3(),
-                      filename=filename,
-                      p2s_map=phono3py.primitive.p2s_map,
-                      compression=compression)
-
-    return True
+    phono3py.fc3 = fc3
 
 
 def _read_phono3py_fc2(phono3py,
@@ -313,7 +280,7 @@ def _read_phono3py_fc2(phono3py,
         filename = 'fc2.' + input_filename + '.hdf5'
     file_exists(filename, log_level)
     if log_level:
-        print("Reading fc2 from %s" % filename)
+        print("Reading fc2 from \"%s\"." % filename)
 
     num_atom = phono3py.phonon_supercell.get_number_of_atoms()
     p2s_map = phono3py.phonon_primitive.p2s_map
@@ -339,7 +306,72 @@ def _read_phono3py_fc2(phono3py,
             symmetrize_compact_force_constants(phonon_fc2,
                                                phono3py.phonon_primitive)
 
-    phono3py.set_fc2(phonon_fc2)
+    phono3py.fc2 = phonon_fc2
+
+
+def _get_type2_dataset(natom, filename="FORCES_FC3"):
+    with open(filename, 'r') as f:
+        len_first_line = get_length_of_first_line(f)
+        if len_first_line == 6:
+            dataset = get_dataset_type2(f, natom)
+        else:
+            dataset = {}
+    return dataset
+
+
+def _create_phono3py_fc3(phono3py,
+                         force_to_eVperA,
+                         distance_to_A,
+                         symmetrize_fc3r,
+                         symmetrize_fc2,
+                         input_filename,
+                         output_filename,
+                         is_compact_fc,
+                         cutoff_pair_distance,
+                         fc_calculator,
+                         fc_calculator_options,
+                         compression,
+                         log_level):
+    if input_filename is None:
+        disp_filename = 'disp_fc3.yaml'
+    else:
+        disp_filename = 'disp_fc3.' + input_filename + '.yaml'
+    natom = phono3py.supercell.get_number_of_atoms()
+    try:
+        disp_dataset = parse_forces(natom,
+                                    force_to_eVperA,
+                                    distance_to_A,
+                                    cutoff_pair_distance=cutoff_pair_distance,
+                                    force_filename="FORCES_FC3",
+                                    disp_filename=disp_filename,
+                                    log_level=log_level)
+    except RuntimeError as e:
+        if log_level:
+            print(str(e))
+            print_error()
+        sys.exit(1)
+    except FileNotFoundError as e:
+        file_exists(e.filename, log_level)
+
+    phono3py.produce_fc3(displacement_dataset=disp_dataset,
+                         symmetrize_fc3r=symmetrize_fc3r,
+                         is_compact_fc=is_compact_fc,
+                         fc_calculator=fc_calculator,
+                         fc_calculator_options=fc_calculator_options)
+
+    if output_filename is None:
+        filename = 'fc3.hdf5'
+    else:
+        filename = 'fc3.' + output_filename + '.hdf5'
+    if log_level:
+        print("Writing fc3 to \"%s\"." % filename)
+
+    write_fc3_to_hdf5(phono3py.fc3,
+                      filename=filename,
+                      p2s_map=phono3py.primitive.p2s_map,
+                      compression=compression)
+
+    return True
 
 
 def _create_phono3py_fc2(phono3py,
@@ -351,41 +383,26 @@ def _create_phono3py_fc2(phono3py,
                          fc_calculator,
                          fc_calculator_options,
                          log_level):
-    file_exists("FORCES_FC3", log_level)
-    natom = phono3py.supercell.get_number_of_atoms()
-    disp_dataset = _get_type2_dataset(natom, filename="FORCES_FC3")
-    if disp_dataset:
-        if log_level:
-            print("%d snapshots were found in %s."
-                  % (len(disp_dataset['displacements']), "FORCES_FC3"))
-        if force_to_eVperA is not None:
-            disp_dataset['forces'] *= force_to_eVperA
-        if distance_to_A is not None:
-            disp_dataset['displacements'] *= distance_to_A
+    if input_filename is None:
+        disp_filename = 'disp_fc3.yaml'
     else:
-        if input_filename is None:
-            filename = 'disp_fc3.yaml'
-        else:
-            filename = 'disp_fc3.' + input_filename + '.yaml'
+        disp_filename = 'disp_fc3.' + input_filename + '.yaml'
+    natom = phono3py.supercell.get_number_of_atoms()
+    try:
+        disp_dataset = parse_forces(natom,
+                                    force_to_eVperA,
+                                    distance_to_A,
+                                    force_filename="FORCES_FC3",
+                                    disp_filename=disp_filename,
+                                    is_fc2=True,
+                                    log_level=log_level)
+    except RuntimeError as e:
         if log_level:
-            print("Displacement dataset for fc2 is read from %s." % filename)
-        file_exists(filename, log_level)
-        disp_dataset = parse_disp_fc3_yaml(filename=filename)
-        if disp_dataset['natom'] != natom:
-            print("Number of atoms in supercell is not consistent with %s" %
-                  filename)
-            if log_level:
-                print_error()
-            sys.exit(1)
-        _convert_displacement_unit(disp_dataset, distance_to_A, is_fc2=True)
-
-        if log_level:
-            print("Sets of supercell forces are read from %s." % "FORCES_FC3")
-
-        # forces are stored in disp_dataset.
-        parse_FORCES_FC2(disp_dataset,
-                         filename="FORCES_FC3",
-                         unit_conversion_factor=force_to_eVperA)
+            print(str(e))
+            print_error()
+        sys.exit(1)
+    except FileNotFoundError as e:
+        file_exists(e.filename, log_level)
 
     phono3py.produce_fc2(
         displacement_dataset=disp_dataset,
@@ -406,40 +423,26 @@ def _create_phono3py_phonon_fc2(phono3py,
                                 fc_calculator,
                                 fc_calculator_options,
                                 log_level):
-    file_exists("FORCES_FC2", log_level)
-    natom = phono3py.phonon_supercell.get_number_of_atoms()
-    disp_dataset = _get_type2_dataset(natom, filename="FORCES_FC2")
-    if disp_dataset:
-        if log_level:
-            print("%d snapshots were found in %s."
-                  % (len(disp_dataset['displacements']), "FORCES_FC2"))
-        if force_to_eVperA is not None:
-            disp_dataset['forces'] *= force_to_eVperA
-        if distance_to_A is not None:
-            disp_dataset['displacements'] *= distance_to_A
+    if input_filename is None:
+        disp_filename = 'disp_fc2.yaml'
     else:
-        if input_filename is None:
-            filename = 'disp_fc2.yaml'
-        else:
-            filename = 'disp_fc2.' + input_filename + '.yaml'
+        disp_filename = 'disp_fc2.' + input_filename + '.yaml'
+    natom = phono3py.phonon_supercell.get_number_of_atoms()
+    try:
+        disp_dataset = parse_forces(natom,
+                                    force_to_eVperA,
+                                    distance_to_A,
+                                    force_filename="FORCES_FC2",
+                                    disp_filename=disp_filename,
+                                    is_fc2=True,
+                                    log_level=log_level)
+    except RuntimeError as e:
         if log_level:
-            print("Displacement dataset is read from %s." % filename)
-        file_exists(filename, log_level)
-        disp_dataset = parse_disp_fc2_yaml(filename=filename)
-        if disp_dataset['natom'] != natom:
-            print("Number of atoms in supercell is not consistent with %s" %
-                  filename)
-            if log_level:
-                print_error()
-            sys.exit(1)
-        _convert_displacement_unit(disp_dataset, distance_to_A, is_fc2=True)
-
-        if log_level:
-            print("Sets of supercell forces are read from %s." % "FORCES_FC2")
-
-        # forces are stored in disp_dataset.
-        parse_FORCES_FC2(disp_dataset,
-                         unit_conversion_factor=force_to_eVperA)
+            print(str(e))
+            print_error()
+        sys.exit(1)
+    except FileNotFoundError as e:
+        file_exists(e.filename, log_level)
 
     phono3py.produce_fc2(
         displacement_dataset=disp_dataset,
