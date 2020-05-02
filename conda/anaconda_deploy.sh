@@ -14,7 +14,7 @@ echo "-----------------------"
 cd ..
 conda install conda-build anaconda-client --yes
 conda config --add channels atztogo
-conda build conda --no-anaconda-upload
+conda build conda -c atztogo --no-anaconda-upload
 TRG=`conda build conda --output |sed -e 's/--/-*-/'`
 echo "Uploading: $TRG"
 anaconda --token $TKN upload --label $LBL $TRG
