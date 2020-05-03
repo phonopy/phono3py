@@ -3,6 +3,11 @@
 Change Log
 ==========
 
+Mar-3-2020: Version 1.19.1
+--------------------------
+
+- Release for pypi and conda (atztogo channel) packagings
+
 Mar-2-2020: Version 1.19.0
 --------------------------
 

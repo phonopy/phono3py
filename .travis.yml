@@ -27,7 +27,7 @@ install:
     - conda install --yes -c conda-forge matplotlib pyyaml openblas libgfortran gcc_linux-64 gxx_linux-64 h5py scipy
     - echo $TRAVIS_BRANCH
     - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
-        conda install --yes -c atztogo phonopy;
+        pip install https://github.com/phonopy/phonopy/archive/master.zip --user;
       else
         pip install https://github.com/phonopy/phonopy/archive/develop.zip --user;
       fi

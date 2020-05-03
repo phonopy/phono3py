@@ -5,6 +5,8 @@
 # export LD_LIBRARY_PATH=${HOME}/.miniconda/lib:${LD_LIBRARY_PATH}
 # conda activate travis
 
+git checkout $GIT_BRANCH
+
 ./get_nanoversion.sh
 
 $PYTHON setup.py install
