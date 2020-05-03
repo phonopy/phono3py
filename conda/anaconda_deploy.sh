@@ -13,7 +13,6 @@ echo "GIT_BRANCH: $GIT_BRANCH"
 echo "-----------------------"
 cd ..
 conda install conda-build anaconda-client --yes
-conda config --add channels atztogo
 conda build conda -c atztogo --no-anaconda-upload
 TRG=`conda build conda --output |sed -e 's/--/-*-/'`
 echo "Uploading: $TRG"
