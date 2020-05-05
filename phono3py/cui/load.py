@@ -64,6 +64,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
          fc_calculator=None,
          factor=None,
          frequency_scale_factor=None,
+         produce_fc=True,
          is_symmetry=True,
          symmetrize_fc=True,
          is_mesh_symmetry=True,
@@ -185,6 +186,9 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
     frequency_scale_factor : float, optional
         Factor multiplied to calculated phonon frequency. Default is None,
         i.e., effectively 1.
+    produce_fc : bool, optional
+        Setting False, force constants are not calculated from displacements
+        and forces. Default is True.
     is_symmetry : bool, optional
         Setting False, crystal symmetry except for lattice translation is not
         considered. Default is True.
@@ -278,6 +282,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
                          forces_fc3_filename=forces_fc3_filename,
                          forces_fc2_filename=forces_fc2_filename,
                          fc_calculator=fc_calculator,
+                         produce_fc=produce_fc,
                          symmetrize_fc=symmetrize_fc,
                          is_compact_fc=is_compact_fc,
                          log_level=log_level)
@@ -299,6 +304,7 @@ def _set_force_constants(
         forces_fc2_filename=None,
         fc_calculator=None,
         fc_calculator_options=None,
+        produce_fc=True,
         symmetrize_fc=True,
         is_compact_fc=False,
         log_level=0):
@@ -316,6 +322,7 @@ def _set_force_constants(
                  units,
                  force_filename,
                  disp_filename,
+                 produce_fc,
                  symmetrize_fc,
                  is_compact_fc,
                  fc_calculator,
@@ -330,6 +337,7 @@ def _set_force_constants(
                  units,
                  "FORCES_FC3",
                  "disp_fc3.yaml",
+                 produce_fc,
                  symmetrize_fc,
                  is_compact_fc,
                  fc_calculator,
@@ -351,6 +359,7 @@ def _set_force_constants(
                  units,
                  force_filename,
                  disp_filename,
+                 produce_fc,
                  symmetrize_fc,
                  is_compact_fc,
                  fc_calculator,
@@ -365,6 +374,7 @@ def _set_force_constants(
                  units,
                  "FORCES_FC2",
                  "disp_fc2.yaml",
+                 produce_fc,
                  symmetrize_fc,
                  is_compact_fc,
                  fc_calculator,
@@ -380,46 +390,49 @@ def _set_fc3(ph3py,
              units,
              force_filename,
              disp_filename,
+             produce_fc,
              symmetrize_fc,
              is_compact_fc,
              fc_calculator,
              fc_calculator_options,
              log_level):
-    dataset = parse_forces(ph3py.supercell.get_number_of_atoms(),
-                           units['force_to_eVperA'],
-                           units['distance_to_A'],
-                           force_filename=force_filename,
-                           disp_filename=disp_filename,
-                           log_level=log_level)
-    ph3py.produce_fc3(displacement_dataset=dataset,
-                      symmetrize_fc3r=symmetrize_fc,
-                      is_compact_fc=is_compact_fc,
-                      fc_calculator=fc_calculator,
-                      fc_calculator_options=fc_calculator_options)
-    if log_level and symmetrize_fc:
-        print("Force constants were symmetrized.")
+    ph3py.dataset = parse_forces(ph3py.supercell.get_number_of_atoms(),
+                                 units['force_to_eVperA'],
+                                 units['distance_to_A'],
+                                 force_filename=force_filename,
+                                 disp_filename=disp_filename,
+                                 log_level=log_level)
+    if produce_fc:
+        ph3py.produce_fc3(symmetrize_fc3r=symmetrize_fc,
+                          is_compact_fc=is_compact_fc,
+                          fc_calculator=fc_calculator,
+                          fc_calculator_options=fc_calculator_options)
+        if log_level and symmetrize_fc:
+            print("Force constants were symmetrized.")
 
 
 def _set_fc2(ph3py,
              units,
              force_filename,
              disp_filename,
+             produce_fc,
              symmetrize_fc,
              is_compact_fc,
              fc_calculator,
              fc_calculator_options,
              log_level):
-    dataset = parse_forces(ph3py.phonon_supercell.get_number_of_atoms(),
-                           units['force_to_eVperA'],
-                           units['distance_to_A'],
-                           force_filename=force_filename,
-                           disp_filename=disp_filename,
-                           is_fc2=True,
-                           log_level=log_level)
-    ph3py.produce_fc2(displacement_dataset=dataset,
-                      symmetrize_fc2=symmetrize_fc,
-                      is_compact_fc=is_compact_fc,
-                      fc_calculator=fc_calculator,
-                      fc_calculator_options=fc_calculator_options)
-    if log_level and symmetrize_fc:
-        print("fc2 was symmetrized.")
+    ph3py.phonon_dataset = parse_forces(
+        ph3py.phonon_supercell.get_number_of_atoms(),
+        units['force_to_eVperA'],
+        units['distance_to_A'],
+        force_filename=force_filename,
+        disp_filename=disp_filename,
+        is_fc2=True,
+        log_level=log_level)
+    if produce_fc:
+        ph3py.produce_fc2(symmetrize_fc2=symmetrize_fc,
+                          is_compact_fc=is_compact_fc,
+                          fc_calculator=fc_calculator,
+                          fc_calculator_options=fc_calculator_options)
+        if log_level and symmetrize_fc:
+            print("fc2 was symmetrized.")

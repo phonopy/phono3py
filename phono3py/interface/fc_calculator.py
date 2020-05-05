@@ -85,7 +85,7 @@ def get_fc3(supercell,
     """
 
     if fc_calculator == 'alm':
-        from phono3py.other.alm import get_fc3
+        from phono3py.interface.alm import get_fc3
         return get_fc3(supercell,
                        primitive,
                        displacements,

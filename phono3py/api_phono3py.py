@@ -165,6 +165,13 @@ class Phono3py(object):
 
     @property
     def version(self):
+        """Phono3py release version number
+
+        str
+            Phono3py release version number
+
+        """
+
         return __version__
 
     def get_version(self):
@@ -174,8 +181,6 @@ class Phono3py(object):
     def calculator(self):
         """Return calculator name
 
-        Returns
-        -------
         str
             Calculator name such as 'vasp', 'qe', etc.
 
@@ -184,6 +189,10 @@ class Phono3py(object):
 
     @property
     def fc3(self):
+        """
+
+        """
+
         return self._fc3
 
     def get_fc3(self):
@@ -191,6 +200,16 @@ class Phono3py(object):
 
     @fc3.setter
     def fc3(self, fc3):
+        """Third order force constants (fc3).
+
+        ndarray
+            fc3 shape is either (supercell, supecell, supercell, 3, 3, 3) or
+            (primitive, supercell, supecell, 3, 3, 3),
+            where 'supercell' and 'primitive' indicate number of atoms in
+            these cells.
+
+        """
+
         self._fc3 = fc3
 
     def set_fc3(self, fc3):
@@ -198,6 +217,16 @@ class Phono3py(object):
 
     @property
     def fc2(self):
+        """Second order force constants (fc2).
+
+        ndarray
+            fc2 shape is either (supercell, supecell, 3, 3) or
+            (primitive, supecell, 3, 3),
+            where 'supercell' and 'primitive' indicate number of atoms in
+            these cells.
+
+        """
+
         return self._fc2
 
     def get_fc2(self):
@@ -246,6 +275,13 @@ class Phono3py(object):
 
     @property
     def primitive(self):
+        """Primitive cell
+
+        Primitive
+            Primitive cell.
+
+        """
+
         return self._primitive
 
     def get_primitive(self):
@@ -253,6 +289,13 @@ class Phono3py(object):
 
     @property
     def unitcell(self):
+        """Unit cell
+
+        PhonopyAtoms
+            Unit cell.
+
+        """
+
         return self._unitcell
 
     def get_unitcell(self):
@@ -260,6 +303,13 @@ class Phono3py(object):
 
     @property
     def supercell(self):
+        """Supercell
+
+        Supercell
+            Supercell.
+
+        """
+
         return self._supercell
 
     def get_supercell(self):
@@ -267,6 +317,13 @@ class Phono3py(object):
 
     @property
     def phonon_supercell(self):
+        """Supercell for fc2.
+
+        Supercell
+            Supercell for fc2.
+
+        """
+
         return self._phonon_supercell
 
     def get_phonon_supercell(self):
@@ -274,6 +331,15 @@ class Phono3py(object):
 
     @property
     def phonon_primitive(self):
+        """Primitive cell for fc2.
+
+        Primitive
+            Primitive cell for fc2. This should be the same as the primitive
+            cell for fc3, but this is created from supercell for fc2 and
+            can be not numerically perfectly identical.
+
+        """
+
         return self._phonon_primitive
 
     def get_phonon_primitive(self):
@@ -281,7 +347,13 @@ class Phono3py(object):
 
     @property
     def symmetry(self):
-        """return symmetry of supercell"""
+        """Symmetry of supercell
+
+        Symmetry
+            Symmetry of supercell
+
+        """
+
         return self._symmetry
 
     def get_symmetry(self):
@@ -289,15 +361,27 @@ class Phono3py(object):
 
     @property
     def primitive_symmetry(self):
-        """return symmetry of primitive cell"""
+        """Symmetry of primitive cell
+
+        Symmetry
+            Symmetry of primitive cell.
+
+        """
+
         return self._primitive_symmetry
 
     def get_primitive_symmetry(self):
-        """return symmetry of primitive cell"""
         return self.primitive_symmetry
 
     @property
     def phonon_supercell_symmetry(self):
+        """Symmetry of supercell for fc2.
+
+        Symmetry
+            Symmetry of supercell for fc2 (phonon_supercell).
+
+        """
+
         return self._phonon_supercell_symmetry
 
     def get_phonon_supercell_symmetry(self):
@@ -305,6 +389,14 @@ class Phono3py(object):
 
     @property
     def supercell_matrix(self):
+        """Transformation matrix to supercell cell from unit cell
+
+        ndarray
+            Supercell matrix with respect to unit cell.
+            shape=(3, 3), dtype='intc', order='C'
+
+        """
+
         return self._supercell_matrix
 
     def get_supercell_matrix(self):
@@ -312,6 +404,14 @@ class Phono3py(object):
 
     @property
     def phonon_supercell_matrix(self):
+        """Transformation matrix to supercell cell from unit cell for fc2
+
+        ndarray
+            Supercell matrix with respect to unit cell.
+            shape=(3, 3), dtype='intc', order='C'
+
+        """
+
         return self._phonon_supercell_matrix
 
     def get_phonon_supercell_matrix(self):
@@ -319,6 +419,14 @@ class Phono3py(object):
 
     @property
     def primitive_matrix(self):
+        """Transformation matrix to primitive cell from unit cell
+
+        ndarray
+            Primitive matrix with respect to unit cell.
+            shape=(3, 3), dtype='double', order='C'
+
+        """
+
         return self._primitive_matrix
 
     def get_primitive_matrix(self):
@@ -326,6 +434,15 @@ class Phono3py(object):
 
     @property
     def unit_conversion_factor(self):
+        """Phonon frequency unit conversion factor.
+
+        float
+            Phonon frequency unit conversion factor. This factor
+            converts sqrt(<force>/<distance>/<AMU>)/2pi/1e12 to THz
+            (ordinary frequency).
+
+        """
+
         return self._frequency_factor_to_THz
 
     def set_displacement_dataset(self, dataset):
@@ -333,6 +450,32 @@ class Phono3py(object):
 
     @property
     def dataset(self):
+        """Displacement dataset
+
+        dict
+            Displacements in supercells. There are two types of formats.
+            Type 1. Two atomic displacement in each supercell:
+                {'natom': number of atoms in supercell,
+                 'first_atoms': [
+                   {'number': atom index of first displaced atom,
+                    'displacement': displacement in Cartesian coordinates,
+                    'forces': forces on atoms in supercell,
+                    'second_atoms': [
+                      {'number': atom index of second displaced atom,
+                       'displacement': displacement in Cartesian coordinates},
+                       'forces': forces on atoms in supercell,
+                      ... ] }, ... ] }
+            Type 2. All atomic displacements in each supercell:
+                {'displacements': ndarray, dtype='double', order='C',
+                                  shape=(supercells, atoms in supercell, 3)
+                 'forces': ndarray, dtype='double',, order='C',
+                                  shape=(supercells, atoms in supercell, 3)}
+            In type 2, displacements and forces can be given by numpy array
+            with different shape but that can be reshaped to
+            (supercells, natom, 3).
+
+        """
+
         return self._displacement_dataset
 
     @dataset.setter
@@ -341,6 +484,27 @@ class Phono3py(object):
 
     @property
     def phonon_dataset(self):
+        """Displacement dataset for fc2
+
+        dict
+            Displacements in supercells. There are two types of formats.
+            Type 1. Two atomic displacement in each supercell:
+                {'natom': number of atoms in supercell,
+                 'first_atoms': [
+                   {'number': atom index of first displaced atom,
+                    'displacement': displacement in Cartesian coordinates,
+                    'forces': forces on atoms in supercell} ... ]}
+            Type 2. All atomic displacements in each supercell:
+                {'displacements': ndarray, dtype='double', order='C',
+                                  shape=(supercells, atoms in supercell, 3)
+                 'forces': ndarray, dtype='double',, order='C',
+                                  shape=(supercells, atoms in supercell, 3)}
+            In type 2, displacements and forces can be given by numpy array
+            with different shape but that can be reshaped to
+            (supercells, natom, 3).
+
+        """
+
         return self._phonon_displacement_dataset
 
     @phonon_dataset.setter
@@ -349,6 +513,14 @@ class Phono3py(object):
 
     @property
     def band_indices(self):
+        """Band index
+
+        array_like
+            List of band indices specified to select specific bands
+            to computer ph-ph interaction related properties.
+
+        """
+
         return self._band_indices
 
     @band_indices.setter
@@ -366,6 +538,9 @@ class Phono3py(object):
 
     @property
     def displacement_dataset(self):
+        warnings.warn("Phono3py.displacement_dataset is deprecated."
+                      "Use Phono3py.dataset.",
+                      DeprecationWarning)
         return self.dataset
 
     def get_displacement_dataset(self):
@@ -373,6 +548,9 @@ class Phono3py(object):
 
     @property
     def phonon_displacement_dataset(self):
+        warnings.warn("Phono3py.phonon_displacement_dataset is deprecated."
+                      "Use Phono3py.phonon_dataset.",
+                      DeprecationWarning)
         return self._phonon_displacement_dataset
 
     def get_phonon_displacement_dataset(self):
@@ -380,6 +558,14 @@ class Phono3py(object):
 
     @property
     def supercells_with_displacements(self):
+        """Supercells with displacements
+
+        list of PhonopyAtoms
+            Supercells with displacements generated by
+            Phono3py.generate_displacements.
+
+        """
+
         if self._supercells_with_displacements is None:
             self._build_supercells_with_displacements()
         return self._supercells_with_displacements
@@ -389,6 +575,14 @@ class Phono3py(object):
 
     @property
     def phonon_supercells_with_displacements(self):
+        """Supercells with displacements for fc2
+
+        list of PhonopyAtoms
+            Supercells with displacements generated by
+            Phono3py.generate_displacements.
+
+        """
+
         if self._phonon_supercells_with_displacements is None:
             if self._phonon_displacement_dataset is not None:
                 self._phonon_supercells_with_displacements = \
@@ -402,6 +596,7 @@ class Phono3py(object):
 
     @property
     def mesh_numbers(self):
+        """Sampling mesh numbers in reciprocal space"""
         return self._mesh_numbers
 
     @mesh_numbers.setter
@@ -410,6 +605,7 @@ class Phono3py(object):
 
     @property
     def thermal_conductivity(self):
+        """Thermal conductivity class instance"""
         return self._thermal_conductivity
 
     def get_thermal_conductivity(self):
@@ -417,14 +613,21 @@ class Phono3py(object):
 
     @property
     def displacements(self):
-        """Return displacements
+        """Displacements in supercells
 
-        Returns
-        -------
-        displacements : ndarray
+        getter : ndarray
             Displacements of all atoms of all supercells in Cartesian
             coordinates.
             shape=(supercells, natom, 3), dtype='double', order='C'
+
+        setter : array_like
+            Atomic displacements of all atoms of all supercells.
+            shape=(supercells, natom, 3).
+
+            If type-1 displacement dataset for fc2 exists already, type-2
+            displacement dataset is newly created and information of
+            forces is abandoned. If type-1 displacement dataset for fc2
+            exists already information of forces is preserved.
 
         """
 
@@ -435,14 +638,14 @@ class Phono3py(object):
             for disp1 in dataset['first_atoms']:
                 num_scells += len(disp1['second_atoms'])
             displacements = np.zeros(
-                (num_scells, self._supercells.get_number_of_atoms(), 3),
+                (num_scells, self._supercell.get_number_of_atoms(), 3),
                 dtype='double', order='C')
             i = 0
             for disp1 in dataset['first_atoms']:
                 displacements[i, disp1['number']] = disp1['displacement']
                 i += 1
             for disp1 in dataset['first_atoms']:
-                for disp2 in dataset['second_atoms']:
+                for disp2 in disp1['second_atoms']:
                     displacements[i, disp2['number']] = disp2['displacement']
                     i += 1
         elif 'forces' in dataset or 'displacements' in dataset:
@@ -454,19 +657,6 @@ class Phono3py(object):
 
     @displacements.setter
     def displacements(self, displacements):
-        """Set displacemens
-
-        Parameters
-        ----------
-        displacemens : array_like
-            Atomic displacements of all atoms of all supercells.
-            Only type2 displacement dataset is supported, i.e., displacements
-            has to have the array shape of (supercells, natom, 3).
-            When displacement dataset is in type1, the type2 dataset is created
-            and force information is lost.
-
-        """
-
         dataset = self._displacement_dataset
         disps = np.array(displacements, dtype='double', order='C')
         natom = self._supercell.get_number_of_atoms()
@@ -480,6 +670,20 @@ class Phono3py(object):
 
     @property
     def forces(self):
+        """Set forces in displacement dataset
+
+        A set of atomic forces in displaced supercells. The order of
+        displaced supercells has to match with that in displacement dataset.
+        shape=(displaced supercells, atoms in supercell, 3)
+
+        getter : ndarray
+
+        setter : array_like
+            The order of supercells used for calculating forces has to
+            be the same order of supercells_with_displacements.
+
+        """
+
         dataset = self._displacement_dataset
         if 'forces' in dataset:
             return dataset['forces']
@@ -488,7 +692,7 @@ class Phono3py(object):
             for disp1 in dataset['first_atoms']:
                 num_scells += len(disp1['second_atoms'])
             forces = np.zeros(
-                (num_scells, self._supercells.get_number_of_atoms(), 3),
+                (num_scells, self._supercell.get_number_of_atoms(), 3),
                 dtype='double', order='C')
             i = 0
             for disp1 in dataset['first_atoms']:
@@ -504,18 +708,6 @@ class Phono3py(object):
 
     @forces.setter
     def forces(self, forces_fc3):
-        """Set forces in displacement dataset.
-
-        Parameters
-        ----------
-        forces_fc3 : array_like
-            A set of atomic forces in displaced supercells. The order of
-            displaced supercells has to match with that in displacement
-            dataset.
-            shape=(displaced supercells, atoms in supercell, 3)
-
-        """
-
         forces = np.array(forces_fc3, dtype='double', order='C')
         dataset = self._displacement_dataset
         if 'first_atoms' in dataset:
@@ -532,14 +724,19 @@ class Phono3py(object):
 
     @property
     def phonon_displacements(self):
-        """Return displacements for harmonic phonons
+        """Displacements in supercells for fc2
 
-        Returns
-        -------
-        displacements : ndarray
-            Displacements of all atoms of all supercells in Cartesian
-            coordinates.
-            shape=(supercells, natom, 3), dtype='double', order='C'
+        Displacements of all atoms of all supercells in Cartesian
+        coordinates.
+        shape=(supercells, natom, 3), dtype='double', order='C'
+
+        getter : ndarray
+
+        setter : array_like
+            If type-1 displacement dataset for fc2 exists already, type-2
+            displacement dataset is newly created and information of
+            forces is abandoned. If type-1 displacement dataset for fc2
+            exists already information of forces is preserved.
 
         """
 
@@ -549,7 +746,7 @@ class Phono3py(object):
         dataset = self._phonon_displacement_dataset
         if 'first_atoms' in dataset:
             num_scells = len(dataset['first_atoms'])
-            natom = self._phonon_supercells.get_number_of_atoms()
+            natom = self._phonon_supercell.get_number_of_atoms()
             displacements = np.zeros(
                 (num_scells, natom, 3), dtype='double', order='C')
             for i, disp1 in enumerate(dataset['first_atoms']):
@@ -563,19 +760,6 @@ class Phono3py(object):
 
     @phonon_displacements.setter
     def phonno_displacements(self, displacements):
-        """Set displacemens
-
-        Parameters
-        ----------
-        displacemens : array_like
-            Atomic displacements of all atoms of all supercells.
-            Only type2 displacement dataset is supported, i.e., displacements
-            has to have the array shape of (supercells, natom, 3).
-            When displacement dataset is in type1, the type2 dataset is created
-            and force information is lost.
-
-        """
-
         if self._phonon_displacement_dataset is None:
             raise RuntimeError("phonon_displacement_dataset does not exist.")
 
@@ -592,6 +776,21 @@ class Phono3py(object):
 
     @property
     def phonon_forces(self):
+        """Set forces in displacement dataset for fc2
+
+        A set of atomic forces in displaced supercells. The order of
+        displaced supercells has to match with that in phonon displacement
+        dataset.
+        shape=(displaced supercells, atoms in supercell, 3)
+
+        getter : ndarray
+
+        setter : array_like
+            The order of supercells used for calculating forces has to
+            be the same order of phonon_supercells_with_displacements.
+
+        """
+
         if self._phonon_displacement_dataset is None:
             raise RuntimeError("phonon_displacement_dataset does not exist.")
 
@@ -601,7 +800,7 @@ class Phono3py(object):
         elif 'first_atoms' in dataset:
             num_scells = len(dataset['first_atoms'])
             forces = np.zeros(
-                (num_scells, self._supercells.get_number_of_atoms(), 3),
+                (num_scells, self._phonon_supercell.get_number_of_atoms(), 3),
                 dtype='double', order='C')
             for i, disp1 in enumerate(dataset['first_atoms']):
                 forces[i] = disp1['forces']
@@ -611,18 +810,6 @@ class Phono3py(object):
 
     @phonon_forces.setter
     def phonon_forces(self, forces_fc2):
-        """Set forces in displacement dataset.
-
-        Parameters
-        ----------
-        forces_fc2 : array_like
-            A set of atomic forces in displaced supercells. The order of
-            displaced supercells has to match with that in displacement
-            dataset.
-            shape=(displaced supercells, atoms in supercell, 3)
-
-        """
-
         if self._phonon_displacement_dataset is None:
             raise RuntimeError("phonon_displacement_dataset does not exist.")
 
@@ -885,28 +1072,9 @@ class Phono3py(object):
         Parameters
         ----------
         forces_fc2 :
-            Dummy argument
+            Dummy argument. Deprecated at v2.0
         displacement_dataset : dict
-            Displacements in supercells. There are two types of formats.
-            Type 1. Two atomic displacement in each supercell:
-                {'natom': number of atoms in supercell,
-                 'first_atoms': [
-                   {'number': atom index of first displaced atom,
-                    'displacement': displacement in Cartesian coordinates,
-                    'forces': forces on atoms in supercell,
-                    'second_atoms': [
-                      {'number': atom index of second displaced atom,
-                       'displacement': displacement in Cartesian coordinates},
-                       'forces': forces on atoms in supercell,
-                      ... ] }, ... ] }
-            Type 2. All atomic displacements in each supercell:
-                {'displacements': ndarray, dtype='double', order='C',
-                                  shape=(supercells, atoms in supercell, 3)
-                 'forces': ndarray, dtype='double',, order='C',
-                                  shape=(supercells, atoms in supercell, 3)}
-            In type 2, displacements and forces can be given by numpy array
-            with different shape but that can be reshaped to
-            (supercells, natom, 3).
+            See docstring of Phono3py.phonon_dataset. Deprecated at v2.0.
         symmetrize_fc2 : bool
             Only for type 1 displacement_dataset, translational and
             permutation symmetries are applied after creating fc3. This
@@ -934,11 +1102,14 @@ class Phono3py(object):
                 disp_dataset = self._phonon_displacement_dataset
         else:
             disp_dataset = displacement_dataset
+            msg = ("Displacement dataset for fc2 has to set by "
+                   "Phono3py.phonon_dataset.")
+            warnings.warn(msg, DeprecationWarning)
 
         if forces_fc2 is not None:
             self.phonon_forces = forces_fc2
-            msg = ("Forces have to be stored in disp_dataset as written in "
-                   "this method's docstring for the type1 dataset.")
+            msg = ("Forces for fc2 have to be set by Phono3py.phonon_forces "
+                   "or via Phono3py.phonon_dataset.")
             warnings.warn(msg, DeprecationWarning)
 
         if is_compact_fc:
@@ -981,28 +1152,9 @@ class Phono3py(object):
         Parameters
         ----------
         forces_fc3 :
-            Dummy argument
+            Dummy argument. Deprecated at v2.0.
         displacement_dataset : dict
-            Displacements in supercells. There are two types of formats.
-            Type 1. Two atomic displacement in each supercell:
-                {'natom': number of atoms in supercell,
-                 'first_atoms': [
-                   {'number': atom index of first displaced atom,
-                    'displacement': displacement in Cartesian coordinates,
-                    'forces': forces on atoms in supercell,
-                    'second_atoms': [
-                      {'number': atom index of second displaced atom,
-                       'displacement': displacement in Cartesian coordinates},
-                       'forces': forces on atoms in supercell,
-                      ... ] }, ... ] }
-            Type 2. All atomic displacements in each supercell:
-                {'displacements': ndarray, dtype='double', order='C',
-                                  shape=(supercells, atoms in supercell, 3)
-                 'forces': ndarray, dtype='double',, order='C',
-                                  shape=(supercells, atoms in supercell, 3)}
-            In type 2, displacements and forces can be given by numpy array
-            with different shape but that can be reshaped to
-            (supercells, natom, 3).
+            See docstring of Phono3py.dataset. Deprecated at v2.0.
         cutoff_distance : float
             After creating force constants, fc elements where any pair
             distance in atom triplets larger than cutoff_distance are set zero.
@@ -1029,17 +1181,19 @@ class Phono3py(object):
         if displacement_dataset is None:
             disp_dataset = self._displacement_dataset
         else:
+            msg = ("Displacement dataset has to set by Phono3py.dataset.")
+            warnings.warn(msg, DeprecationWarning)
             disp_dataset = displacement_dataset
 
         if forces_fc3 is not None:
             self.forces = forces_fc3
-            msg = ("Forces have to be stored in disp_dataset as written in "
-                   "this method's docstring for the type1 dataset.")
+            msg = ("Forces have to be set by Phono3py.forces or via "
+                   "Phono3py.dataset.")
             warnings.warn(msg, DeprecationWarning)
 
         if fc_calculator is not None:
 
-            from phono3py.other.fc_calculator import (
+            from phono3py.interface.fc_calculator import (
                 get_fc3, get_displacements_and_forces_fc3)
             disps, forces = get_displacements_and_forces_fc3(disp_dataset)
             fc2, fc3 = get_fc3(self._supercell,
