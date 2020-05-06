@@ -32,8 +32,6 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import numpy as np
-
 
 def get_fc3(supercell,
             primitive,
@@ -97,65 +95,3 @@ def get_fc3(supercell,
         msg = ("Force constants calculator of %s was not found ."
                % fc_calculator)
         raise RuntimeError(msg)
-
-
-def get_displacements_and_forces_fc3(disp_dataset):
-    """Returns displacements and forces from disp_dataset
-
-    Note
-    ----
-    Dipslacements of all atoms in supercells for all displacement
-    configurations in phono3py are returned, i.e., most of
-    displacements are zero. Only the configurations with 'included' ==
-    True are included in the list of indices that is returned, too.
-
-    Parameters
-    ----------
-    disp_dataset : dict
-        Displacement dataset that may be obtained by
-        file_IO.parse_disp_fc3_yaml.
-
-    Returns
-    -------
-    disp : ndarray
-        Displacements of atoms in supercells of all displacement
-        configurations.
-        shape=(ndisp, natom, 3)
-        dtype='double'
-    indices : list of int
-        The indices of the displacement configurations with 'included' == True.
-
-    """
-
-    if 'first_atoms' in disp_dataset:
-        natom = disp_dataset['natom']
-        ndisp = len(disp_dataset['first_atoms'])
-        for disp1 in disp_dataset['first_atoms']:
-            ndisp += len(disp1['second_atoms'])
-        displacements = np.zeros((ndisp, natom, 3), dtype='double', order='C')
-        forces = np.zeros_like(displacements)
-        indices = []
-        count = 0
-        for disp1 in disp_dataset['first_atoms']:
-            indices.append(count)
-            displacements[count, disp1['number']] = disp1['displacement']
-            forces[count] = disp1['forces']
-            count += 1
-
-        for disp1 in disp_dataset['first_atoms']:
-            for disp2 in disp1['second_atoms']:
-                if 'included' in disp2:
-                    if disp2['included']:
-                        indices.append(count)
-                else:
-                    indices.append(count)
-                displacements[count, disp1['number']] = disp1['displacement']
-                displacements[count, disp2['number']] = disp2['displacement']
-                forces[count] = disp2['forces']
-                count += 1
-        return (np.array(displacements[indices], dtype='double', order='C'),
-                np.array(forces[indices], dtype='double', order='C'))
-    elif 'forces' in disp_dataset and 'displacements' in disp_dataset:
-        return disp_dataset['displacements'], disp_dataset['forces']
-    else:
-        raise RuntimeError("disp_dataset doesn't contain correct information.")

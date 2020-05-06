@@ -38,6 +38,7 @@ from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.cells import (get_supercell, get_primitive,
                                      guess_primitive_matrix)
 from phonopy.structure.atoms import PhonopyAtoms
+from phonopy.structure.dataset import get_displacements_and_forces
 from phonopy.units import VaspToTHz
 from phonopy.harmonic.force_constants import (
     symmetrize_force_constants,
@@ -47,8 +48,7 @@ from phonopy.harmonic.force_constants import (
 from phonopy.harmonic.force_constants import get_fc2 as get_phonopy_fc2
 from phonopy.interface.fc_calculator import get_fc2
 from phonopy.harmonic.displacement import (
-    get_least_displacements, directions_to_displacement_dataset,
-    get_displacements_and_forces)
+    get_least_displacements, directions_to_displacement_dataset)
 from phonopy.structure.grid_points import length2mesh
 from phono3py.version import __version__
 from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
@@ -66,7 +66,9 @@ from phono3py.phonon3.fc3 import (
     set_translational_invariance_compact_fc3,
     cutoff_fc3_by_zero)
 from phono3py.phonon3.fc3 import get_fc3 as get_phono3py_fc3
+from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
+from phono3py.interface.fc_calculator import get_fc3
 
 
 class Phono3py(object):
@@ -1193,8 +1195,6 @@ class Phono3py(object):
 
         if fc_calculator is not None:
 
-            from phono3py.interface.fc_calculator import (
-                get_fc3, get_displacements_and_forces_fc3)
             disps, forces = get_displacements_and_forces_fc3(disp_dataset)
             fc2, fc3 = get_fc3(self._supercell,
                                self._primitive,
