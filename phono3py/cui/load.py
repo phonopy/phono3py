@@ -217,7 +217,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         Setting False, reciprocal mesh symmetry is not considered.
         Default is True.
     is_compact_fc : bool
-        fc3 are stored in the array whose shape is
+        fc3 are created in the array whose shape is
             True: (primitive, supercell, supecell, 3, 3, 3)
             False: (supercell, supercell, supecell, 3, 3, 3)
         and for fc2
@@ -340,7 +340,7 @@ def _set_dataset_and_force_constants(
     if fc3_filename is not None:
         fc3 = read_fc3_from_hdf5(filename=fc3_filename, p2s_map=p2s_map)
         ph3py.fc3 = fc3
-        if log_level > 0:
+        if log_level:
             print("fc3 was read from \"%s\"." % fc3_filename)
     elif forces_fc3_filename is not None:
         if type(forces_fc3_filename) is str:
@@ -379,7 +379,7 @@ def _set_dataset_and_force_constants(
     if fc2_filename is not None:
         fc2 = read_fc2_from_hdf5(filename=fc2_filename, p2s_map=p2s_map)
         ph3py.fc2 = fc2
-        if log_level > 0:
+        if log_level:
             print("fc2 was read from \"%s\"." % fc2_filename)
     elif forces_fc2_filename is not None:
         if type(forces_fc2_filename) == str:
