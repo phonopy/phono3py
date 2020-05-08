@@ -73,11 +73,13 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
          log_level=0):
     """Create Phono3py instance from parameters and/or input files.
 
-    When unitcell and unitcell_filename are not given, file name that is
-    default for the chosen calculator is looked for in the current directory
-    as the default behaviour.
+    "phono3py_yaml"-like file is parsed unless crystal structure information
+    is given by unitcell_filename, supercell_filename, unitcell
+    (PhonopyAtoms-like), or supercell (PhonopyAtoms-like).
+    Even when "phono3py_yaml"-like file is parse, parameters except for
+    crystal structure can be overwritten.
 
-    if 'fc3.hdf5' is found, this is read.
+    'fc3.hdf5' is read if found in current directory.
     Unless 'fc3.hdf5' is found and if 'FORCES_FC3' and 'disp_fc3.yaml" are
     found, these are read and fc3 and fc2 are produced.
 
@@ -91,12 +93,43 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
     the type-1 format, 'disp_fc3.yaml' ('disp_fc2.yaml') is also necessary
     and read.
 
+    Crystal structure
+    -----------------
+    Means to provide crystal structure(s) and their priority:
+        1. unitcell_filename (with supercell_matrix)
+        2. supercell_filename
+        3. unitcell (with supercell_matrix)
+        4. supercell.
+        5. phono3py_yaml-like
+
+
+    Force sets or force constants
+    -----------------------------
+    Optional. Means to provide information to generate force constants
+    and their priority:
+        1. fc3_filename (fc2_filename)
+        2. forces_fc3_filename (forces_fc2_filename). Do not forget that
+           for type-1 format, disp_fc3.yaml (disp_fc2.yaml) has to be given,
+           too.
+        3. 'fc3.hdf5' and 'fc2.hdf5' are searched in current directory.
+        4. 'FORCES_FC3' and 'FORCES_FC2' are searched in current directory.
+           'FORCES_FC2' is optional. For type-1 format, 'disp_fc3.yaml' and
+           optionally 'disp_fc2.yaml' are also searched in current
+           directory.
+
+    Parameters for non-analytical term correctiion (NAC)
+    ----------------------------------------------------
+    Optional. Means to provide NAC parameters and their priority:
+        1. born_filename
+        2. nac_params
+        3. phono3py_yaml_like.nac_params if existed and is_nac=True.
+        4. 'BORN' is searched in current directory when is_nac=True.
+
     Parameters
     ----------
     phono3py_yaml : str, optional
         Filename of "phono3py.yaml"-like file. If this is given, the data
-        such as unit cell structure,supercell matrix, and primitive_matrix,
-        those for non-analytycal term correction are parsed. Default is None.
+        in the file are parsed. Default is None.
     supercell_matrix : array_like, optional
         Supercell matrix multiplied to input cell basis vectors.
         shape=(3, ) or (3, 3), where the former is considered a diagonal
@@ -121,63 +154,48 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         shape=(3,), dtype='intc'
     is_nac : bool, optional
         If True, look for 'BORN' file. If False, NAS is turned off.
-        The priority for NAC is nac_params > born_filename > is_nac ('BORN').
         Default is True.
     calculator : str, optional.
         Calculator used for computing forces. This is used to switch the set
         of physical units. Default is None, which is equivalent to "vasp".
     unitcell : PhonopyAtoms, optional
-        Input unit cell. Default is None. The priority for cell is
-        unitcell_filename > supercell_filename > unitcell > supercell.
+        Input unit cell. Default is None.
     supercell : PhonopyAtoms, optional
-        Input supercell. Default value of primitive_matrix is set to
-        'auto' (can be overwitten). supercell_matrix is ignored. Default is
-        None. The priority for cell is
-        unitcell_filename > supercell_filename > unitcell > supercell.
+        Input supercell. With given, default value of primitive_matrix is set
+        to 'auto' (can be overwitten). supercell_matrix is ignored. Default is
+        None.
     nac_params : dict, optional
         Parameters required for non-analytical term correction. Default is
-        None. The priority for NAC is nac_params > born_filename > is_nac.
+        None.
         {'born': Born effective charges
                  (array_like, shape=(primitive cell atoms, 3, 3), dtype=float),
          'dielectric': Dielectric constant matrix
                        (array_like, shape=(3, 3), dtype=float),
          'factor': unit conversion facotr (float)}
     unitcell_filename : str, optional
-        Input unit cell filename. Default is None. The priority for cell is
-        unitcell_filename > supercell_filename > unitcell > supercell.
+        Input unit cell filename. Default is None.
     supercell_filename : str, optional
         Input supercell filename. When this is specified, supercell_matrix is
-        ignored. Default is None. The priority for cell is
-        1. unitcell_filename (with supercell_matrix)
-        2. supercell_filename
-        3. unitcell (with supercell_matrix)
-        4. supercell.
+        ignored. Default is None.
     born_filename : str, optional
         Filename corresponding to 'BORN', a file contains non-analytical term
         correction parameters.
-        The priority for NAC is nac_params > born_filename > is_nac ('BORN').
     forces_fc3_filename : sequence or str, optional
         A two-elemental sequence of filenames corresponding to
         ('FORCES_FC3', 'disp_fc3.yaml') in the type-1 format or a filename
         (str) corresponding to 'FORCES_FC3' in the type-2 format.
-        Default is None. The priority to calculate or load force constants is
-        fc3_filename > forces_fc3_filename > 'fc3.hdf5' > 'FORCES_FC3'.
+        Default is None.
     forces_fc2_filename : str or tuple, optional
         A two-elemental sequence of filenames corresponding to
         ('FORCES_FC2', 'disp_fc2.yaml') in the type-1 format or a filename
         (str) corresponding to 'FORCES_FC2' in the type-2 format.
-        Default is None. The priority to calculate or load force constants is
-        fc2_filename > forces_fc2_filename > 'fc2.hdf5' > 'FORCES_FC2'.
+        Default is None.
     fc3_filename : str, optional
         Filename of a file corresponding to 'fc3.hdf5', a file contains
         third-order force constants. Default is None.
-        The priority to calculate or load force constants is
-        fc3_filename > forces_fc3_filename > 'fc3.hdf5' > 'FORCES_FC3'.
     fc2_filename : str, optional
         Filename of a file corresponding to 'fc2.hdf5', a file contains
         second-order force constants. Default is None.
-        The priority to calculate or load force constants is
-        fc2_filename > forces_fc2_filename > 'fc2.hdf5' > 'FORCES_FC2'.
     fc_calculator : str, optional
         Force constants calculator. Currently only 'alm'. Default is None.
     factor : float, optional
@@ -211,7 +229,10 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
 
     """
 
-    if phono3py_yaml is None:
+    if (supercell is not None or
+        supercell_filename is not None or
+        unitcell is not None or
+        unitcell_filename is not None):
         cell, smat, pmat = load_helper.get_cell_settings(
             supercell_matrix=supercell_matrix,
             primitive_matrix=primitive_matrix,
@@ -229,9 +250,8 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
             ph_smat = load_helper.get_supercell_matrix(phonon_supercell_matrix)
         else:
             ph_smat = None
-
         _nac_params = nac_params
-    else:
+    elif phono3py_yaml is not None:
         ph3py_yaml = Phono3pyYaml()
         ph3py_yaml.read(phono3py_yaml)
         cell = ph3py_yaml.unitcell
@@ -243,7 +263,9 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
             pmat = 'auto'
         else:
             pmat = ph3py_yaml.primitive_matrix
-        if is_nac:
+        if nac_params is not None:
+            _nac_params = nac_params
+        elif is_nac:
             _nac_params = ph3py_yaml.nac_params
         else:
             _nac_params = None
@@ -254,7 +276,6 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         _factor = units['factor']
     else:
         _factor = factor
-
     ph3py = Phono3py(cell,
                      smat,
                      primitive_matrix=pmat,
@@ -266,26 +287,30 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
                      is_mesh_symmetry=is_mesh_symmetry,
                      calculator=calculator,
                      log_level=log_level)
-    _nac_params = load_helper.get_nac_params(ph3py.primitive,
-                                             _nac_params,
-                                             born_filename,
-                                             is_nac,
-                                             units['nac_factor'])
-    if _nac_params is not None:
-        ph3py.nac_params = _nac_params
 
-    _set_force_constants(ph3py,
-                         units,
-                         dataset=None,
-                         fc3_filename=fc3_filename,
-                         fc2_filename=fc2_filename,
-                         forces_fc3_filename=forces_fc3_filename,
-                         forces_fc2_filename=forces_fc2_filename,
-                         fc_calculator=fc_calculator,
-                         produce_fc=produce_fc,
-                         symmetrize_fc=symmetrize_fc,
-                         is_compact_fc=is_compact_fc,
-                         log_level=log_level)
+    # NAC params
+    if (born_filename is not None or nac_params is not None or
+        is_nac and os.path.isfile("BORN")):
+        ph3py.nac_params = load_helper.get_nac_params(ph3py.primitive,
+                                                      _nac_params,
+                                                      born_filename,
+                                                      is_nac,
+                                                      units['nac_factor'],
+                                                      log_level=log_level)
+
+    _set_dataset_and_force_constants(
+        ph3py,
+        units,
+        dataset=None,
+        fc3_filename=fc3_filename,
+        fc2_filename=fc2_filename,
+        forces_fc3_filename=forces_fc3_filename,
+        forces_fc2_filename=forces_fc2_filename,
+        fc_calculator=fc_calculator,
+        produce_fc=produce_fc,
+        symmetrize_fc=symmetrize_fc,
+        is_compact_fc=is_compact_fc,
+        log_level=log_level)
 
     if mesh is not None:
         ph3py.init_phph_interaction(
@@ -294,7 +319,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
     return ph3py
 
 
-def _set_force_constants(
+def _set_dataset_and_force_constants(
         ph3py,
         units,
         dataset=None,
@@ -312,90 +337,94 @@ def _set_force_constants(
     if fc3_filename is not None:
         fc3 = read_fc3_from_hdf5(filename=fc3_filename, p2s_map=p2s_map)
         ph3py.fc3 = fc3
+        if log_level > 0:
+            print("fc3 was read from \"%s\"." % fc3_filename)
     elif forces_fc3_filename is not None:
         if type(forces_fc3_filename) is str:
             force_filename = forces_fc3_filename
             disp_filename = None
         else:
             force_filename, disp_filename = forces_fc3_filename
-        _set_fc3(ph3py,
-                 units,
-                 force_filename,
-                 disp_filename,
-                 produce_fc,
-                 symmetrize_fc,
-                 is_compact_fc,
-                 fc_calculator,
-                 fc_calculator_options,
-                 log_level)
+        _set_forces_fc3(ph3py,
+                        units,
+                        force_filename,
+                        disp_filename,
+                        produce_fc,
+                        symmetrize_fc,
+                        is_compact_fc,
+                        fc_calculator,
+                        fc_calculator_options,
+                        log_level)
     elif os.path.isfile("fc3.hdf5"):
         ph3py.fc3 = read_fc3_from_hdf5(filename="fc3.hdf5", p2s_map=p2s_map)
         if log_level:
-            print("fc3 was loaded from \"fc3.hdf5\".")
+            print("fc3 was read from \"fc3.hdf5\".")
     elif os.path.isfile("FORCES_FC3") and os.path.isfile("disp_fc3.yaml"):
-        _set_fc3(ph3py,
-                 units,
-                 "FORCES_FC3",
-                 "disp_fc3.yaml",
-                 produce_fc,
-                 symmetrize_fc,
-                 is_compact_fc,
-                 fc_calculator,
-                 fc_calculator_options,
-                 log_level)
+        _set_forces_fc3(ph3py,
+                        units,
+                        "FORCES_FC3",
+                        "disp_fc3.yaml",
+                        produce_fc,
+                        symmetrize_fc,
+                        is_compact_fc,
+                        fc_calculator,
+                        fc_calculator_options,
+                        log_level)
     if log_level and ph3py.fc3 is not None:
         show_drift_fc3(ph3py.fc3, primitive=ph3py.primitive)
 
     if fc2_filename is not None:
         fc2 = read_fc2_from_hdf5(filename=fc2_filename, p2s_map=p2s_map)
         ph3py.fc2 = fc2
+        if log_level > 0:
+            print("fc2 was read from \"%s\"." % fc2_filename)
     elif forces_fc2_filename is not None:
         if type(forces_fc2_filename) == str:
             force_filename = forces_fc2_filename
             disp_filename = None
         else:
             force_filename, disp_filename = forces_fc2_filename
-        _set_fc2(ph3py,
-                 units,
-                 force_filename,
-                 disp_filename,
-                 produce_fc,
-                 symmetrize_fc,
-                 is_compact_fc,
-                 fc_calculator,
-                 fc_calculator_options,
-                 log_level)
+        _set_forces_fc2(ph3py,
+                        units,
+                        force_filename,
+                        disp_filename,
+                        produce_fc,
+                        symmetrize_fc,
+                        is_compact_fc,
+                        fc_calculator,
+                        fc_calculator_options,
+                        log_level)
     elif os.path.isfile("fc2.hdf5"):
         ph3py.fc2 = read_fc2_from_hdf5(filename="fc2.hdf5", p2s_map=p2s_map)
         if log_level:
-            print("fc2 was loaded from \"fc2.hdf5\".")
+            print("fc2 was read from \"fc2.hdf5\".")
     elif os.path.isfile("FORCES_FC2") and os.path.isfile("disp_fc2.yaml"):
-        _set_fc2(ph3py,
-                 units,
-                 "FORCES_FC2",
-                 "disp_fc2.yaml",
-                 produce_fc,
-                 symmetrize_fc,
-                 is_compact_fc,
-                 fc_calculator,
-                 fc_calculator_options,
-                 log_level)
+        _set_forces_fc2(ph3py,
+                        units,
+                        "FORCES_FC2",
+                        "disp_fc2.yaml",
+                        produce_fc,
+                        symmetrize_fc,
+                        is_compact_fc,
+                        fc_calculator,
+                        fc_calculator_options,
+                        log_level)
     if log_level and ph3py.fc2 is not None:
         show_drift_force_constants(ph3py.fc2,
                                    primitive=ph3py.phonon_primitive,
                                    name='fc2')
 
 
-def _set_fc3(ph3py,
-             units,
-             force_filename,
-             disp_filename,
-             produce_fc,
-             symmetrize_fc,
-             is_compact_fc,
-             fc_calculator,
-             fc_calculator_options,
-             log_level):
+def _set_forces_fc3(ph3py,
+                    units,
+                    force_filename,
+                    disp_filename,
+                    produce_fc,
+                    symmetrize_fc,
+                    is_compact_fc,
+                    fc_calculator,
+                    fc_calculator_options,
+                    log_level):
     ph3py.dataset = parse_forces(ph3py.supercell.get_number_of_atoms(),
                                  units['force_to_eVperA'],
                                  units['distance_to_A'],
@@ -408,19 +437,19 @@ def _set_fc3(ph3py,
                           fc_calculator=fc_calculator,
                           fc_calculator_options=fc_calculator_options)
         if log_level and symmetrize_fc:
-            print("Force constants were symmetrized.")
+            print("fc3 was symmetrized.")
 
 
-def _set_fc2(ph3py,
-             units,
-             force_filename,
-             disp_filename,
-             produce_fc,
-             symmetrize_fc,
-             is_compact_fc,
-             fc_calculator,
-             fc_calculator_options,
-             log_level):
+def _set_forces_fc2(ph3py,
+                    units,
+                    force_filename,
+                    disp_filename,
+                    produce_fc,
+                    symmetrize_fc,
+                    is_compact_fc,
+                    fc_calculator,
+                    fc_calculator_options,
+                    log_level):
     ph3py.phonon_dataset = parse_forces(
         ph3py.phonon_supercell.get_number_of_atoms(),
         units['force_to_eVperA'],

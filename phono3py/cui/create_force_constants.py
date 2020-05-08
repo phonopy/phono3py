@@ -198,13 +198,18 @@ def parse_forces(natom,
         if distance_to_A is not None:
             disp_dataset['displacements'] *= distance_to_A
     else:  # type1
-        if log_level:
-            print("Displacement dataset for %s is read from \"%s\"."
-                  % ("fc2" if is_fc2 else "fc3", disp_filename))
+        if disp_filename is None:
+            msg = ("\"%s\" in type-1 format is given. "
+                   "So filename of displacement dataset has to be given, too."
+                   % force_filename)
+            raise RuntimeError(msg)
         if is_fc2:
             disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
         else:
             disp_dataset = parse_disp_fc3_yaml(filename=disp_filename)
+        if log_level:
+            print("Displacement dataset for %s was read from \"%s\"."
+                  % ("fc2" if is_fc2 else "fc3", disp_filename))
         if cutoff_pair_distance:
             if ('cutoff_distance' not in disp_dataset or
                 'cutoff_distance' in disp_dataset and
@@ -217,11 +222,6 @@ def parse_forces(natom,
                    "\"%s\"." % disp_filename)
             raise RuntimeError(msg)
         _convert_displacement_unit(disp_dataset, distance_to_A, is_fc2=is_fc2)
-        if log_level:
-            print("Sets of supercell forces are read from \"%s\"."
-                  % force_filename)
-            sys.stdout.flush()
-
         # forces are stored in disp_dataset.
         if is_fc2:
             parse_FORCES_FC2(disp_dataset,
@@ -231,6 +231,10 @@ def parse_forces(natom,
             parse_FORCES_FC3(disp_dataset,
                              filename=force_filename,
                              unit_conversion_factor=force_to_eVperA)
+        if log_level:
+            print("Sets of supercell forces were read from \"%s\"."
+                  % force_filename)
+            sys.stdout.flush()
 
     return disp_dataset
 

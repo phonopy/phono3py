@@ -871,12 +871,12 @@ class Phono3py(object):
         """
 
         if self._mesh_numbers is None:
-            print("'mesh' has to be set in Phono3py instantiation.")
-            raise RuntimeError
+            msg = "'mesh' has to be set in Phono3py instantiation."
+            raise RuntimeError(msg)
 
         if self._fc2 is None:
-            print("'fc2' has to be set before calling this method.")
-            raise RuntimeError
+            msg = "'fc2' has to be set before calling this method."
+            raise RuntimeError(msg)
 
         self._interaction = Interaction(
             self._supercell,
