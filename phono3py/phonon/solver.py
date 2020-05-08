@@ -60,7 +60,7 @@ def run_phonon_solver_c(dm,
     if dm.is_nac() and dm.nac_method == 'gonze':
         gonze_nac_dataset = dm.Gonze_nac_dataset
         if gonze_nac_dataset[0] is None:
-            dm.make_Gonze_nac_dataset(verbose=verbose)
+            dm.make_Gonze_nac_dataset()
             gonze_nac_dataset = dm.Gonze_nac_dataset
         (gonze_fc,  # fc where the dipole-diple contribution is removed.
          dd_q0,     # second term of dipole-dipole expression.

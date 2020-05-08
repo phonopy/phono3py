@@ -276,6 +276,17 @@ class Phono3py(object):
         self.nac_params = nac_params
 
     @property
+    def dynamical_matrix(self):
+        """DynamicalMatrix instance
+
+        This is not dynamical matrices but the instance of DynamicalMatrix
+        class.
+
+        """
+
+        return self._interaction.dynamical_matrix
+
+    @property
     def primitive(self):
         """Primitive cell
 
@@ -871,11 +882,11 @@ class Phono3py(object):
         """
 
         if self._mesh_numbers is None:
-            msg = "'mesh' has to be set in Phono3py instantiation."
+            msg = "Phono3py.mesh_numbers of instance has to be set."
             raise RuntimeError(msg)
 
         if self._fc2 is None:
-            msg = "'fc2' has to be set before calling this method."
+            msg = "Phono3py.fc2 of instance is not found."
             raise RuntimeError(msg)
 
         self._interaction = Interaction(
@@ -1130,6 +1141,10 @@ class Phono3py(object):
                                 atom_list=p2s_map,
                                 log_level=self._log_level)
         else:
+            if 'displacements' in disp_dataset:
+                msg = ("fc_calculator has to be set to produce force "
+                       "constans from this dataset for fc2.")
+                raise RuntimeError(msg)
             self._fc2 = get_phonopy_fc2(self._phonon_supercell,
                                         self._phonon_supercell_symmetry,
                                         disp_dataset,
@@ -1194,7 +1209,6 @@ class Phono3py(object):
             warnings.warn(msg, DeprecationWarning)
 
         if fc_calculator is not None:
-
             disps, forces = get_displacements_and_forces_fc3(disp_dataset)
             fc2, fc3 = get_fc3(self._supercell,
                                self._primitive,
@@ -1205,6 +1219,10 @@ class Phono3py(object):
                                is_compact_fc=is_compact_fc,
                                log_level=self._log_level)
         else:
+            if 'displacements' in disp_dataset:
+                msg = ("fc_calculator has to be set to produce force "
+                       "constans from this dataset.")
+                raise RuntimeError(msg)
             fc2, fc3 = get_phono3py_fc3(self._supercell,
                                         self._primitive,
                                         disp_dataset,

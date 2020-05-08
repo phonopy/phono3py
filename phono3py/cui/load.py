@@ -217,9 +217,12 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         Setting False, reciprocal mesh symmetry is not considered.
         Default is True.
     is_compact_fc : bool
-        fc3 shape is
-            False: (supercell, supercell, supecell, 3, 3, 3)
+        fc3 are stored in the array whose shape is
             True: (primitive, supercell, supecell, 3, 3, 3)
+            False: (supercell, supercell, supecell, 3, 3, 3)
+        and for fc2
+            True: (primitive, supecell, 3, 3)
+            False: (supercell, supecell, 3, 3)
         where 'supercell' and 'primitive' indicate number of atoms in these
         cells. Default is False.
     symprec : float, optional

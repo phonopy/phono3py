@@ -62,7 +62,7 @@ class JointDos(object):
 
         self._num_band = self._primitive.get_number_of_atoms() * 3
         self._reciprocal_lattice = np.linalg.inv(self._primitive.get_cell())
-        self._set_dynamical_matrix()
+        self._init_dynamical_matrix()
         self._symmetry = Symmetry(primitive, symprec)
 
         self._tetrahedron_method = None
@@ -80,6 +80,10 @@ class JointDos(object):
         except ImportError:
             print("Joint density of states in python is not implemented.")
             return None, None
+
+    @property
+    def dynamical_matrix(self):
+        return self._dm
 
     def get_joint_dos(self):
         return self._joint_dos
@@ -230,7 +234,7 @@ class JointDos(object):
 
         self._joint_dos = jdos / np.prod(self._mesh)
 
-    def _set_dynamical_matrix(self):
+    def _init_dynamical_matrix(self):
         self._dm = get_dynamical_matrix(
             self._fc2,
             self._supercell,

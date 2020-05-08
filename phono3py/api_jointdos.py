@@ -135,6 +135,10 @@ class Phono3pyJointDos(object):
                 if self._log_level:
                     print("sigma or tetrahedron method has to be set.")
 
+    @property
+    def dynamical_matrix(self):
+        return self._jdos.dynamical_matrix
+
     def _write(self, gp, sigma=None):
         return write_joint_dos(gp,
                                self._mesh_numbers,

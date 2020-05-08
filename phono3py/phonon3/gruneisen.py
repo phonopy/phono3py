@@ -19,7 +19,7 @@ def get_gruneisen_parameters(fc2,
                              factor=None,
                              symprec=1e-5,
                              output_filename=None,
-                             log_level=True):
+                             log_level=1):
     if log_level:
         print("-" * 23 + " Phonon Gruneisen parameter " + "-" * 23)
         if mesh is not None:
@@ -43,6 +43,11 @@ def get_gruneisen_parameters(fc2,
                           ion_clamped=ion_clamped,
                           factor=factor,
                           symprec=symprec)
+
+    if log_level > 0:
+        dm = gruneisen.dynamical_matrix
+        if (dm.is_nac() and dm.nac_method == 'gonze'):
+            dm.show_Gonze_nac_message()
 
     if mesh is not None:
         gruneisen.set_sampling_mesh(mesh,
@@ -122,6 +127,10 @@ class Gruneisen(object):
              self._frequencies) = self._calculate_at_qpoints(self._qpoints)
         else:
             sys.stderr.write('Q-points are not specified.\n')
+
+    @property
+    def dynamical_matrix(self):
+        return self._dm
 
     def get_gruneisen_parameters(self):
         return self._gruneisen_parameters

@@ -677,8 +677,8 @@ if settings.get_is_gruneisen():
 
     rotations = phono3py.primitive_symmetry.get_pointgroup_operations()
     gruneisen = get_gruneisen_parameters(
-        phono3py.get_fc2(),
-        phono3py.get_fc3(),
+        phono3py.fc2,
+        phono3py.fc3,
         supercell,
         primitive,
         bands,
@@ -760,7 +760,14 @@ if run_mode == "jdos":
         symprec=symprec,
         output_filename=output_filename,
         log_level=log_level)
+
+    if log_level > 0:
+        dm = joint_dos.dynamical_matrix
+        if (dm.is_nac() and dm.nac_method == 'gonze'):
+            dm.show_Gonze_nac_message()
+
     joint_dos.run(grid_points)
+
     if log_level:
         print_end()
     sys.exit(0)
@@ -800,11 +807,16 @@ if run_mode == "isotope":
         symprec=symprec,
         cutoff_frequency=settings.get_cutoff_frequency(),
         lapack_zheev_uplo=args.uplo)
-    iso.set_dynamical_matrix(phono3py.get_fc2(),
-                             phonon_supercell,
-                             phonon_primitive,
-                             nac_params=nac_params,
-                             frequency_scale_factor=frequency_scale_factor)
+    iso.init_dynamical_matrix(phono3py.fc2,
+                              phonon_supercell,
+                              phonon_primitive,
+                              nac_params=nac_params,
+                              frequency_scale_factor=frequency_scale_factor)
+    if log_level > 0:
+        dm = iso.dynamical_matrix
+        if (dm.is_nac() and dm.nac_method == 'gonze'):
+            dm.show_Gonze_nac_message()
+
     iso.run(grid_points)
     if log_level:
         print_end()
@@ -820,6 +832,11 @@ if run_mode is not None:
         constant_averaged_interaction=ave_pp,
         frequency_scale_factor=frequency_scale_factor,
         solve_dynamical_matrices=(not settings.get_read_phonon()))
+
+    if log_level > 0:
+        dm = phono3py.dynamical_matrix
+        if (dm.is_nac() and dm.nac_method == 'gonze'):
+            dm.show_Gonze_nac_message()
 
     if settings.get_write_phonon():
         freqs, eigvecs, grid_address = phono3py.get_phonon_data()
