@@ -102,7 +102,6 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         4. supercell.
         5. phono3py_yaml-like
 
-
     Force sets or force constants
     -----------------------------
     Optional. Means to provide information to generate force constants
