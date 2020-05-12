@@ -193,8 +193,8 @@ def get_parser():
         "--gv-delta-q", dest="gv_delta_q", type=float, default=None,
         help="Delta-q distance used for group velocity calculation")
     parser.add_argument(
-        "--hdf5-compression", dest="hdf5_compression", default="gzip",
-        help="hdf5 compression filter")
+        "--hdf5-compression", dest="hdf5_compression", default=None,
+        help="hdf5 compression filter (default: gzip)")
     parser.add_argument(
         "-i", dest="input_filename", default=None,
         help="Input filename extension")
@@ -358,8 +358,8 @@ def get_parser():
         "--tolerance", dest="symmetry_tolerance", type=float, default=None,
         help="Symmetry tolerance to search")
     parser.add_argument(
-        "--uplo", dest="uplo", default='L',
-        help="Lapack zheev UPLO")
+        "--uplo", dest="lapack_zheev_uplo", default=None,
+        help="Lapack zheev UPLO (default: L)")
     parser.add_argument(
         "-v", "--verbose", dest="verbose", action="store_true", default=False,
         help="Detailed run-time information is displayed")

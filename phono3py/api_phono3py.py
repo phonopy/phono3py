@@ -283,8 +283,10 @@ class Phono3py(object):
         class.
 
         """
-
-        return self._interaction.dynamical_matrix
+        if self._interaction is None:
+            return None
+        else:
+            return self._interaction.dynamical_matrix
 
     @property
     def primitive(self):
@@ -613,8 +615,8 @@ class Phono3py(object):
         return self._mesh_numbers
 
     @mesh_numbers.setter
-    def mesh_numbers(self, mesh):
-        self._set_mesh_numbers(mesh)
+    def mesh_numbers(self, mesh_numbers):
+        self._set_mesh_numbers(mesh_numbers)
 
     @property
     def thermal_conductivity(self):
@@ -979,10 +981,8 @@ class Phono3py(object):
         """
 
         if self._interaction is not None:
-            return self._interaction.set_phonon_data(
+            self._interaction.set_phonon_data(
                 frequencies, eigenvectors, grid_address)
-        else:
-            return False
 
     def get_phonon_data(self):
         """Get phonon frequencies and eigenvectors in Interaction instance

@@ -379,23 +379,16 @@ class Interaction(object):
 
     def set_phonon_data(self, frequencies, eigenvectors, grid_address):
         if grid_address.shape != self._grid_address.shape:
-            print("=" * 26 + " Warning " + "=" * 26)
-            print("Input grid address size is inconsistent. "
-                  "Setting phonons faild.")
-            print("=" * 26 + " Warning " + "=" * 26)
-            return False
+            raise RuntimeError("Input grid address size is inconsistent. "
+                               "Setting phonons faild.")
 
         if (self._grid_address - grid_address).all():
-            print("=" * 26 + " Warning " + "=" * 26)
-            print("Input grid addresses are inconsistent. "
-                  "Setting phonons faild.")
-            print("=" * 26 + " Warning " + "=" * 26)
-            return False
+            raise RuntimeError("Input grid addresses are inconsistent. "
+                               "Setting phonons faild.")
         else:
             self._phonon_done[:] = 1
             self._frequencies[:] = frequencies
             self._eigenvectors[:] = eigenvectors
-            return True
 
     def set_phonons(self, grid_points=None, verbose=False):
         msg = ("Interaction.set_phonons is deprecated at v2.0. "

@@ -50,19 +50,18 @@ from phono3py.phonon3.fc3 import (
 
 
 def create_phono3py_force_constants(phono3py,
-                                    phonon_supercell_matrix,
                                     settings,
                                     force_to_eVperA=None,
                                     distance_to_A=None,
-                                    compression="gzip",
                                     input_filename=None,
                                     output_filename=None,
                                     log_level=1):
-    if settings.get_fc_calculator() is None:
-        symmetrize_fc3r = (settings.get_is_symmetrize_fc3_r() or
-                           settings.get_fc_symmetry())
-        symmetrize_fc2 = (settings.get_is_symmetrize_fc2() or
-                          settings.get_fc_symmetry())
+    phonon_supercell_matrix = phono3py.phonon_supercell_matrix
+    if settings.fc_calculator is None:
+        symmetrize_fc3r = (settings.is_symmetrize_fc3_r or
+                           settings.fc_symmetry)
+        symmetrize_fc2 = (settings.is_symmetrize_fc2 or
+                          settings.fc_symmetry)
     else:  # Rely on fc calculator the symmetrization of fc.
         symmetrize_fc2 = False
         symmetrize_fc3r = False
@@ -73,16 +72,16 @@ def create_phono3py_force_constants(phono3py,
     #######
     # fc3 #
     #######
-    if (settings.get_is_joint_dos() or
-        (settings.get_is_isotope() and
-         not (settings.get_is_bterta() or settings.get_is_lbte())) or
-        settings.get_read_gamma() or
-        settings.get_read_pp() or
-        (not settings.get_is_bterta() and settings.get_write_phonon()) or
-        settings.get_constant_averaged_pp_interaction() is not None):
+    if (settings.is_joint_dos or
+        (settings.is_isotope and
+         not (settings.is_bterta or settings.is_lbte)) or
+        settings.read_gamma or
+        settings.read_pp or
+        (not settings.is_bterta and settings.write_phonon) or
+        settings.constant_averaged_pp_interaction is not None):
         pass
     else:
-        if settings.get_read_fc3():  # Read fc3.hdf5
+        if settings.read_fc3:
             _read_phono3py_fc3(phono3py,
                                symmetrize_fc3r,
                                input_filename,
@@ -96,19 +95,19 @@ def create_phono3py_force_constants(phono3py,
                     symmetrize_fc2,
                     input_filename,
                     output_filename,
-                    settings.get_is_compact_fc(),
-                    settings.get_cutoff_pair_distance(),
-                    settings.get_fc_calculator(),
-                    settings.get_fc_calculator_options(),
-                    compression,
+                    settings.is_compact_fc,
+                    settings.cutoff_pair_distance,
+                    settings.fc_calculator,
+                    settings.fc_calculator_options,
+                    settings.hdf5_compression,
                     log_level):
 
-                    print("fc3 was not created properly.")
-                    if log_level:
-                        print_error()
-                    sys.exit(1)
+                print("fc3 was not created properly.")
+                if log_level:
+                    print_error()
+                sys.exit(1)
 
-        cutoff_distance = settings.get_cutoff_fc3_distance()
+        cutoff_distance = settings.cutoff_fc3_distance
         if cutoff_distance is not None and cutoff_distance > 0:
             if log_level:
                 print("Cutting-off fc3 by zero (cut-off distance: %f)" %
@@ -124,14 +123,14 @@ def create_phono3py_force_constants(phono3py,
     #######
     phonon_primitive = phono3py.phonon_primitive
     p2s_map = phonon_primitive.p2s_map
-    if settings.get_read_fc2():
+    if settings.read_fc2:
         _read_phono3py_fc2(phono3py,
                            symmetrize_fc2,
                            input_filename,
                            log_level)
     else:
         if phonon_supercell_matrix is None:
-            if settings.get_fc_calculator() is not None:
+            if settings.fc_calculator is not None:
                 pass
             elif not _create_phono3py_fc2(
                     phono3py,
@@ -139,9 +138,9 @@ def create_phono3py_force_constants(phono3py,
                     distance_to_A,
                     symmetrize_fc2,
                     input_filename,
-                    settings.get_is_compact_fc(),
-                    settings.get_fc_calculator(),
-                    settings.get_fc_calculator_options(),
+                    settings.is_compact_fc,
+                    settings.fc_calculator,
+                    settings.fc_calculator_options,
                     log_level):
                 print("fc2 was not created properly.")
                 if log_level:
@@ -154,9 +153,9 @@ def create_phono3py_force_constants(phono3py,
                     distance_to_A,
                     symmetrize_fc2,
                     input_filename,
-                    settings.get_is_compact_fc(),
-                    settings.get_fc_calculator(),
-                    settings.get_fc_calculator_options(),
+                    settings.is_compact_fc,
+                    settings.fc_calculator,
+                    settings.fc_calculator_options,
                     log_level):
                 print("fc2 was not created properly.")
                 if log_level:
@@ -172,7 +171,7 @@ def create_phono3py_force_constants(phono3py,
                           filename=filename,
                           p2s_map=p2s_map,
                           physical_unit='eV/Angstrom^2',
-                          compression=compression)
+                          compression=settings.hdf5_compression)
 
     if log_level:
         show_drift_force_constants(phono3py.fc2,

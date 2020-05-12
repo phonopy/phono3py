@@ -63,6 +63,7 @@ class Phono3pySettings(Settings):
         'is_symmetrize_fc2': False,
         'is_symmetrize_fc3_q': False,
         'is_symmetrize_fc3_r': False,
+        'lapack_zheev_uplo': 'L',
         'mass_variances': None,
         'max_freepath': None,
         'mesh_divisors': None,
@@ -97,284 +98,146 @@ class Phono3pySettings(Settings):
     def set_boundary_mfp(self, val):
         self._v['boundary_mfp'] = val
 
-    def get_boundary_mfp(self):
-        return self._v['boundary_mfp']
-
     def set_coarse_mesh_shifts(self, val):
         self._v['coarse_mesh_shifts'] = val
-
-    def get_coarse_mesh_shifts(self):
-        return self._v['coarse_mesh_shifts']
 
     def set_constant_averaged_pp_interaction(self, val):
         self._v['constant_averaged_pp_interaction'] = val
 
-    def get_constant_averaged_pp_interaction(self):
-        return self._v['constant_averaged_pp_interaction']
-
     def set_cutoff_fc3_distance(self, val):
         self._v['cutoff_fc3_distance'] = val
-
-    def get_cutoff_fc3_distance(self):
-        return self._v['cutoff_fc3_distance']
 
     def set_cutoff_pair_distance(self, val):
         self._v['cutoff_pair_distance'] = val
 
-    def get_cutoff_pair_distance(self):
-        return self._v['cutoff_pair_distance']
-
     def set_gamma_conversion_factor(self, val):
         self._v['gamma_conversion_factor'] = val
-
-    def get_gamma_conversion_factor(self):
-        return self._v['gamma_conversion_factor']
 
     def set_grid_addresses(self, val):
         self._v['grid_addresses'] = val
 
-    def get_grid_addresses(self):
-        return self._v['grid_addresses']
-
     def set_grid_points(self, val):
         self._v['grid_points'] = val
-
-    def get_grid_points(self):
-        return self._v['grid_points']
 
     def set_ion_clamped(self, val):
         self._v['ion_clamped'] = val
 
-    def get_ion_clamped(self):
-        return self._v['ion_clamped']
-
     def set_is_bterta(self, val):
         self._v['is_bterta'] = val
-
-    def get_is_bterta(self):
-        return self._v['is_bterta']
 
     def set_is_compact_fc(self, val):
         self._v['is_compact_fc'] = val
 
-    def get_is_compact_fc(self):
-        return self._v['is_compact_fc']
-
     def set_is_frequency_shift(self, val):
         self._v['is_frequency_shift'] = val
-
-    def get_is_frequency_shift(self):
-        return self._v['is_frequency_shift']
 
     def set_is_full_pp(self, val):
         self._v['is_full_pp'] = val
 
-    def get_is_full_pp(self):
-        return self._v['is_full_pp']
-
     def set_is_gruneisen(self, val):
         self._v['is_gruneisen'] = val
-
-    def get_is_gruneisen(self):
-        return self._v['is_gruneisen']
 
     def set_is_imag_self_energy(self, val):
         self._v['is_imag_self_energy'] = val
 
-    def get_is_imag_self_energy(self):
-        return self._v['is_imag_self_energy']
-
     def set_is_isotope(self, val):
         self._v['is_isotope'] = val
-
-    def get_is_isotope(self):
-        return self._v['is_isotope']
 
     def set_is_joint_dos(self, val):
         self._v['is_joint_dos'] = val
 
-    def get_is_joint_dos(self):
-        return self._v['is_joint_dos']
-
     def set_is_kappa_star(self, val):
         self._v['is_kappa_star'] = val
-
-    def get_is_kappa_star(self):
-        return self._v['is_kappa_star']
 
     def set_is_lbte(self, val):
         self._v['is_lbte'] = val
 
-    def get_is_lbte(self):
-        return self._v['is_lbte']
-
     def set_is_N_U(self, val):
-        self._v['is_N_U'] = vla
-
-    def get_is_N_U(self):
-        return self._v['is_N_U']
+        self._v['is_N_U'] = val
 
     def set_is_reducible_collision_matrix(self, val):
         self._v['is_reducible_collision_matrix'] = val
 
-    def get_is_reducible_collision_matrix(self):
-        return self._v['is_reducible_collision_matrix']
-
     def set_is_symmetrize_fc2(self, val):
         self._v['is_symmetrize_fc2'] = val
-
-    def get_is_symmetrize_fc2(self):
-        return self._v['is_symmetrize_fc2']
 
     def set_is_symmetrize_fc3_q(self, val):
         self._v['is_symmetrize_fc3_q'] = val
 
-    def get_is_symmetrize_fc3_q(self):
-        return self._v['is_symmetrize_fc3_q']
-
     def set_is_symmetrize_fc3_r(self, val):
         self._v['is_symmetrize_fc3_r'] = val
 
-    def get_is_symmetrize_fc3_r(self):
-        return self._v['is_symmetrize_fc3_r']
+    def set_lapack_zheev_uplo(self, val):
+        self._v['lapack_zheev_uplo'] = val
 
     def set_mass_variances(self, val):
         self._v['mass_variances'] = val
 
-    def get_mass_variances(self):
-        return self._v['mass_variances']
-
     def set_max_freepath(self, val):
         self._v['max_freepath'] = val
-
-    def get_max_freepath(self):
-        return self._v['max_freepath']
 
     def set_mesh_divisors(self, val):
         self._v['mesh_divisors'] = val
 
-    def get_mesh_divisors(self):
-        return self._v['mesh_divisors']
-
     def set_phonon_supercell_matrix(self, val):
         self._v['phonon_supercell_matrix'] = val
-
-    def get_phonon_supercell_matrix(self):
-        return self._v['phonon_supercell_matrix']
 
     def set_pinv_cutoff(self, val):
         self._v['pinv_cutoff'] = val
 
-    def get_pinv_cutoff(self):
-        return self._v['pinv_cutoff']
-
     def set_pinv_solver(self, val):
         self._v['pinv_solver'] = val
-
-    def get_pinv_solver(self):
-        return self._v['pinv_solver']
 
     def set_pp_conversion_factor(self, val):
         self._v['pp_conversion_factor'] = val
 
-    def get_pp_conversion_factor(self):
-        return self._v['pp_conversion_factor']
-
     def set_read_collision(self, val):
         self._v['read_collision'] = val
-
-    def get_read_collision(self):
-        return self._v['read_collision']
 
     def set_read_fc2(self, val):
         self._v['read_fc2'] = val
 
-    def get_read_fc2(self):
-        return self._v['read_fc2']
-
     def set_read_fc3(self, val):
         self._v['read_fc3'] = val
-
-    def get_read_fc3(self):
-        return self._v['read_fc3']
 
     def set_read_gamma(self, val):
         self._v['read_gamma'] = val
 
-    def get_read_gamma(self):
-        return self._v['read_gamma']
-
     def set_read_phonon(self, val):
         self._v['read_phonon'] = val
-
-    def get_read_phonon(self):
-        return self._v['read_phonon']
 
     def set_read_pp(self, val):
         self._v['read_pp'] = val
 
-    def get_read_pp(self):
-        return self._v['read_pp']
-
     def set_scattering_event_class(self, val):
         self._v['scattering_event_class'] = val
-
-    def get_scattering_event_class(self):
-        return self._v['scattering_event_class']
 
     def set_sigma_cutoff_width(self, val):
         self._v['sigma_cutoff_width'] = val
 
-    def get_sigma_cutoff_width(self):
-        return self._v['sigma_cutoff_width']
-
     def set_solve_collective_phonon(self, val):
         self._v['solve_collective_phonon'] = val
-
-    def get_solve_collective_phonon(self):
-        return self._v['solve_collective_phonon']
 
     def set_use_ave_pp(self, val):
         self._v['use_ave_pp'] = val
 
-    def get_use_ave_pp(self):
-        return self._v['use_ave_pp']
-
     def set_write_collision(self, val):
         self._v['write_collision'] = val
-
-    def get_write_collision(self):
-        return self._v['write_collision']
 
     def set_write_gamma_detail(self, val):
         self._v['write_gamma_detail'] = val
 
-    def get_write_gamma_detail(self):
-        return self._v['write_gamma_detail']
-
     def set_write_gamma(self, val):
         self._v['write_gamma'] = val
-
-    def get_write_gamma(self):
-        return self._v['write_gamma']
 
     def set_write_phonon(self, val):
         self._v['write_phonon'] = val
 
-    def get_write_phonon(self):
-        return self._v['write_phonon']
-
     def set_write_pp(self, val):
         self._v['write_pp'] = val
 
-    def get_write_pp(self):
-        return self._v['write_pp']
-
     def set_write_LBTE_solution(self, val):
         self._v['write_LBTE_solution'] = val
-
-    def get_write_LBTE_solution(self):
-        return self._v['write_LBTE_solution']
 
 
 class Phono3pyConfParser(ConfParser):
@@ -498,6 +361,10 @@ class Phono3pyConfParser(ConfParser):
         if 'is_symmetrize_fc3_r' in self._args:
             if self._args.is_symmetrize_fc3_r:
                 self._confs['symmetrize_fc3_r'] = '.true.'
+
+        if 'lapack_zheev_uplo' in self._args:
+            if self._args.lapack_zheev_uplo is not None:
+                self._confs['lapack_zheev_uplo'] = self._args.lapack_zheev_uplo
 
         if 'mass_variances' in self._args:
             mass_variances = self._args.mass_variances
@@ -703,6 +570,10 @@ class Phono3pyConfParser(ConfParser):
                 elif confs['joint_dos'].lower() == '.false.':
                     self.set_parameter('is_joint_dos', False)
 
+            if conf_key == 'lapack_zheev_uplo':
+                self.set_parameter('lapack_zheev_uplo',
+                                   confs['lapack_zheev_uplo'].upper())
+
             if conf_key == 'lbte':
                 if confs['lbte'].lower() == '.true.':
                     self.set_parameter('is_lbte', True)
@@ -895,7 +766,8 @@ class Phono3pyConfParser(ConfParser):
         # Cutoff distance of third-order force constants. Elements where any
         # pair of atoms has larger distance than cut-off distance are set zero.
         if 'cutoff_fc3_distance' in params:
-            self._settings.set_cutoff_fc3_distance(params['cutoff_fc3_distance'])
+            self._settings.set_cutoff_fc3_distance(
+                params['cutoff_fc3_distance'])
 
         # Cutoff distance between pairs of displaced atoms used for supercell
         # creation with displacements and making third-order force constants
@@ -942,7 +814,8 @@ class Phono3pyConfParser(ConfParser):
 
         # Calculate imaginary part of self energy
         if 'is_imag_self_energy' in params:
-            self._settings.set_is_imag_self_energy(params['is_imag_self_energy'])
+            self._settings.set_is_imag_self_energy(
+                params['is_imag_self_energy'])
 
         # Calculate lifetime due to isotope scattering
         if 'is_isotope' in params:
@@ -971,11 +844,16 @@ class Phono3pyConfParser(ConfParser):
 
         # Symmetrize phonon fc3 by index exchange
         if 'is_symmetrize_fc3_q' in params:
-            self._settings.set_is_symmetrize_fc3_q(params['is_symmetrize_fc3_q'])
+            self._settings.set_is_symmetrize_fc3_q(
+                params['is_symmetrize_fc3_q'])
 
         # Symmetrize fc3 by index exchange
         if 'is_symmetrize_fc3_r' in params:
-            self._settings.set_is_symmetrize_fc3_r(params['is_symmetrize_fc3_r'])
+            self._settings.set_is_symmetrize_fc3_r(
+                params['is_symmetrize_fc3_r'])
+
+        if 'lapack_zheev_uplo' in params:
+            self._settings.set_lapack_zheev_uplo(params['lapack_zheev_uplo'])
 
         # Mass variance parameters
         if 'mass_variances' in params:
@@ -1002,7 +880,8 @@ class Phono3pyConfParser(ConfParser):
 
         # Ph-ph interaction unit conversion factor
         if 'pp_conversion_factor' in params:
-            self._settings.set_pp_conversion_factor(params['pp_conversion_factor'])
+            self._settings.set_pp_conversion_factor(
+                params['pp_conversion_factor'])
 
         # Read phonon-phonon interaction amplitudes from hdf5
         if 'read_amplitude' in params:

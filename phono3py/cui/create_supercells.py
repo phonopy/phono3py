@@ -41,36 +41,30 @@ from phono3py.interface.calculator import (
 from phonopy.interface.calculator import write_supercells_with_displacements
 
 
-def create_phono3py_supercells(unitcell,
-                               supercell_matrix,
-                               phonon_supercell_matrix,
-                               displacement_distance,
-                               is_plusminus,
-                               is_diagonal,
-                               cutoff_pair_distance,
-                               optional_structure_info,
-                               is_symmetry,
+def create_phono3py_supercells(cell_info,
+                               settings,
                                symprec,
-                               interface_mode='vasp',
                                output_filename=None,
+                               interface_mode='vasp',
                                log_level=1):
-    if displacement_distance is None:
+    optional_structure_info = cell_info['optional_structure_info']
+
+    if settings.displacement_distance is None:
         distance = get_default_displacement_distance(interface_mode)
     else:
-        distance = displacement_distance
+        distance = settings.displacement_distance
     phono3py = Phono3py(
-        unitcell,
-        supercell_matrix,
-        phonon_supercell_matrix=phonon_supercell_matrix,
-        is_symmetry=is_symmetry,
-        symprec=symprec)
-    supercell = phono3py.get_supercell()
+        cell_info['unitcell'],
+        cell_info['supercell_matrix'],
+        phonon_supercell_matrix=cell_info['phonon_supercell_matrix'],
+        is_symmetry=settings.is_symmetry,
+        symprec=symprec,
+        calculator=interface_mode)
     phono3py.generate_displacements(
         distance=distance,
-        cutoff_pair_distance=cutoff_pair_distance,
-        is_plusminus=is_plusminus,
-        is_diagonal=is_diagonal)
-    dds = phono3py.get_displacement_dataset()
+        cutoff_pair_distance=settings.cutoff_pair_distance,
+        is_plusminus=settings.is_plusminus_displacement,
+        is_diagonal=settings.is_diagonal_displacement)
 
     if log_level:
         print('')
@@ -80,22 +74,20 @@ def create_phono3py_supercells(unitcell,
         filename = 'disp_fc3.yaml'
     else:
         filename = 'disp_fc3.' + output_filename + '.yaml'
-
-    num_disps, num_disp_files = write_disp_fc3_yaml(dds,
-                                                    supercell,
+    num_disps, num_disp_files = write_disp_fc3_yaml(phono3py.dataset,
+                                                    phono3py.supercell,
                                                     filename=filename)
-    cells_with_disps = phono3py.supercells_with_displacements
     ids = []
     disp_cells = []
-    for i, cell in enumerate(cells_with_disps):
+    for i, cell in enumerate(phono3py.supercells_with_displacements):
         if cell is not None:
             ids.append(i + 1)
             disp_cells.append(cell)
 
     additional_info = get_additional_info_to_write_supercells(
-        interface_mode, phono3py)
+        interface_mode, phono3py.supercell_matrix)
     write_supercells_with_displacements(interface_mode,
-                                        supercell,
+                                        phono3py.supercell,
                                         disp_cells,
                                         optional_structure_info,
                                         displacement_ids=ids,
@@ -104,34 +96,30 @@ def create_phono3py_supercells(unitcell,
 
     if log_level:
         print("Number of displacements: %d" % num_disps)
-        if cutoff_pair_distance is not None:
+        if settings.cutoff_pair_distance is not None:
             print("Cutoff distance for displacements: %s" %
-                  cutoff_pair_distance)
+                  settings.cutoff_pair_distance)
             print("Number of displacement supercell files created: %d" %
                   num_disp_files)
 
-    if phonon_supercell_matrix is not None:
-        phonon_dds = phono3py.phonon_dataset
-        phonon_supercell = phono3py.phonon_supercell
-        phonon_supercell_matrix = phono3py.phonon_supercell_matrix
+    if phono3py.phonon_supercell_matrix is not None:
         if output_filename is None:
             filename = 'disp_fc2.yaml'
         else:
             filename = 'disp_fc2.' + output_filename + '.yaml'
 
-        num_disps = write_disp_fc2_yaml(phonon_dds,
-                                        phonon_supercell,
+        num_disps = write_disp_fc2_yaml(phono3py.phonon_dataset,
+                                        phono3py.phonon_supercell,
                                         filename=filename)
-        cells_with_disps = phono3py.phonon_supercells_with_displacements
-
         additional_info = get_additional_info_to_write_fc2_supercells(
-            interface_mode, phono3py)
-        write_supercells_with_displacements(interface_mode,
-                                            supercell,
-                                            cells_with_disps,
-                                            optional_structure_info,
-                                            zfill_width=5,
-                                            additional_info=additional_info)
+            interface_mode, phono3py.phonon_supercell_matrix)
+        write_supercells_with_displacements(
+            interface_mode,
+            phono3py.supercell,
+            phono3py.phonon_supercells_with_displacements,
+            optional_structure_info,
+            zfill_width=5,
+            additional_info=additional_info)
 
         if log_level:
             print("Number of displacements for special fc2: %d" % num_disps)

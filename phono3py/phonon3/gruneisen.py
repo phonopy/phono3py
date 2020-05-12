@@ -5,7 +5,7 @@ from phonopy.units import VaspToTHz
 from phonopy.structure.grid_points import get_qpoints
 
 
-def get_gruneisen_parameters(fc2,
+def run_gruneisen_parameters(fc2,
                              fc3,
                              supercell,
                              primitive,
