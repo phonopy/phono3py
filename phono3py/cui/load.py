@@ -342,10 +342,12 @@ def set_dataset_and_force_constants(
         symmetrize_fc=True,
         is_compact_fc=False,
         log_level=0):
+    read_fc = {'fc2': False, 'fc3': False}
     p2s_map = ph3py.primitive.p2s_map
     if fc3_filename is not None:
         fc3 = read_fc3_from_hdf5(filename=fc3_filename, p2s_map=p2s_map)
         ph3py.fc3 = fc3
+        read_fc['fc3'] = True
         if log_level:
             print("fc3 was read from \"%s\"." % fc3_filename)
     elif forces_fc3_filename is not None:
@@ -366,6 +368,7 @@ def set_dataset_and_force_constants(
                         log_level)
     elif os.path.isfile("fc3.hdf5"):
         ph3py.fc3 = read_fc3_from_hdf5(filename="fc3.hdf5", p2s_map=p2s_map)
+        read_fc['fc3'] = True
         if log_level:
             print("fc3 was read from \"fc3.hdf5\".")
     elif os.path.isfile("FORCES_FC3") and os.path.isfile("disp_fc3.yaml"):
@@ -385,6 +388,7 @@ def set_dataset_and_force_constants(
     if fc2_filename is not None:
         fc2 = read_fc2_from_hdf5(filename=fc2_filename, p2s_map=p2s_map)
         ph3py.fc2 = fc2
+        read_fc['fc2'] = True
         if log_level:
             print("fc2 was read from \"%s\"." % fc2_filename)
     elif forces_fc2_filename is not None:
@@ -405,6 +409,7 @@ def set_dataset_and_force_constants(
                         log_level)
     elif os.path.isfile("fc2.hdf5"):
         ph3py.fc2 = read_fc2_from_hdf5(filename="fc2.hdf5", p2s_map=p2s_map)
+        read_fc['fc2'] = True
         if log_level:
             print("fc2 was read from \"fc2.hdf5\".")
     elif os.path.isfile("FORCES_FC2") and os.path.isfile("disp_fc2.yaml"):
@@ -422,6 +427,8 @@ def set_dataset_and_force_constants(
         show_drift_force_constants(ph3py.fc2,
                                    primitive=ph3py.phonon_primitive,
                                    name='fc2')
+
+    return read_fc
 
 
 def _set_forces_fc3(ph3py,

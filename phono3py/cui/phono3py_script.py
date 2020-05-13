@@ -53,7 +53,7 @@ from phono3py.file_IO import (
     parse_disp_fc2_yaml, parse_disp_fc3_yaml,
     write_disp_fc2_yaml, read_phonon_from_hdf5, write_phonon_to_hdf5,
     parse_FORCES_FC2, write_FORCES_FC2, write_FORCES_FC3,
-    get_length_of_first_line)
+    get_length_of_first_line, write_fc3_to_hdf5, write_fc2_to_hdf5)
 from phono3py.cui.settings import Phono3pyConfParser
 from phono3py.cui.load import set_dataset_and_force_constants
 from phono3py import Phono3py, Phono3pyJointDos, Phono3pyIsotope
@@ -113,13 +113,16 @@ def finalize_phono3py(phono3py,
         _calculator = None
     _physical_units = get_default_physical_units(_calculator)
 
+    ph3py_yaml = Phono3pyYaml(configuration=confs,
+                              physical_units=_physical_units)
+    ph3py_yaml.set_phonon_info(phono3py)
+    ph3py_yaml.calculator = _calculator
+    with open(filename, 'w') as w:
+        w.write(str(ph3py_yaml))
+
     if log_level > 0:
-        ph3py_yaml = Phono3pyYaml(configuration=confs,
-                                  physical_units=_physical_units)
-        ph3py_yaml.set_phonon_info(phono3py)
-        ph3py_yaml.calculator = _calculator
-        with open(filename, 'w') as w:
-            w.write(str(ph3py_yaml))
+        print("")
+        print("Summary of calculation was written in \"%s\"." % filename)
         print_end()
     sys.exit(0)
 
@@ -207,10 +210,11 @@ def read_phono3py_settings(args, argparse_control, log_level):
     return settings, confs, cell_filename
 
 
-def create_phono3py_files_then_exit(args, log_level):
+def create_phono3py_files_then_exit(args,
+                                    input_filename,
+                                    output_filename,
+                                    log_level):
     interface_mode = get_interface_mode(vars(args))
-    (input_filename,
-     output_filename) = get_input_output_filenames_from_args(args)
 
     #####################
     # Create FORCES_FC3 #
@@ -569,7 +573,7 @@ def store_force_constants(phono3py,
     if load_phono3py_yaml:
         (fc_calculator,
          fc_calculator_options) = get_fc_calculator_params(settings)
-        set_dataset_and_force_constants(
+        read_fc = set_dataset_and_force_constants(
             phono3py,
             physical_units,
             fc_calculator=fc_calculator,
@@ -577,6 +581,19 @@ def store_force_constants(phono3py,
             symmetrize_fc=settings.fc_symmetry,
             is_compact_fc=settings.is_compact_fc,
             log_level=log_level)
+        if not read_fc['fc3']:
+            write_fc3_to_hdf5(phono3py.fc3,
+                              p2s_map=phono3py.primitive.p2s_map,
+                              compression=settings.hdf5_compression)
+            if log_level:
+                print("fc3 was written into \"fc3.hdf5\".")
+        if not read_fc['fc2']:
+            write_fc2_to_hdf5(phono3py.fc2,
+                              p2s_map=phono3py.primitive.p2s_map,
+                              physical_unit='eV/angstrom^2',
+                              compression=settings.hdf5_compression)
+            if log_level:
+                print("fc2 was written into \"fc2.hdf5\".")
     else:
         create_phono3py_force_constants(
             phono3py,
@@ -765,10 +782,16 @@ def main(**argparse_control):
     args, log_level = start_phono3py(**argparse_control)
     interface_mode = get_interface_mode(vars(args))
     physical_units = get_default_physical_units(interface_mode)
-    (input_filename,
-     output_filename) = get_input_output_filenames_from_args(args)
 
-    create_phono3py_files_then_exit(args, log_level)
+    if load_phono3py_yaml:
+        input_filename = None
+        output_filename = None
+    else:
+        (input_filename,
+         output_filename) = get_input_output_filenames_from_args(args)
+
+    create_phono3py_files_then_exit(
+        args, input_filename, output_filename, log_level)
 
     settings, confs, cell_filename = read_phono3py_settings(
         args, argparse_control, log_level)
@@ -1033,5 +1056,7 @@ def main(**argparse_control):
         if log_level:
             print("*" * 15 + " None of ph-ph interaction was calculated. " +
                   "*" * 16)
+            print_end()
+        sys.exit(0)
 
     finalize_phono3py(phono3py, confs, log_level)
