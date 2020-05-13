@@ -32,61 +32,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import os
 import sys
 import numpy as np
 from phonopy.structure.cells import print_cell
-
-
-def file_exists(filename, log_level, is_any=False):
-    if os.path.exists(filename):
-        return True
-    else:
-        if is_any:
-            return False
-        else:
-            error_text = "\"%s\" was not found." % filename
-            print(error_text)
-            if log_level > 0:
-                print_error()
-            sys.exit(1)
-
-
-# AA is created at http://www.network-science.de/ascii/.
-def print_phono3py():
-    print("""        _                      _____
-  _ __ | |__   ___  _ __   ___|___ / _ __  _   _
- | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
- | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
- | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
- |_|                                |_|    |___/ """)
-
-
-def print_version(version):
-    print(" " * 42 + "%s" % version)
-    print('')
-
-
-def print_end():
-    print("""                 _
-   ___ _ __   __| |
-  / _ \ '_ \ / _` |
- |  __/ | | | (_| |
-  \___|_| |_|\__,_|
-""")
-
-
-def print_error():
-    print("""  ___ _ __ _ __ ___  _ __
- / _ \ '__| '__/ _ \| '__|
-|  __/ |  | | | (_) | |
- \___|_|  |_|  \___/|_|
-""")
-
-
-def print_error_message(message):
-    print('')
-    print(message)
 
 
 def show_general_settings(settings,

@@ -241,8 +241,8 @@ class Phono3pySettings(Settings):
 
 
 class Phono3pyConfParser(ConfParser):
-    def __init__(self, filename=None, args=None):
-        self._settings = Phono3pySettings()
+    def __init__(self, filename=None, args=None, default_settings=None):
+        self._settings = Phono3pySettings(default=default_settings)
         confs = {}
         if filename is not None:
             ConfParser.__init__(self, filename=filename)

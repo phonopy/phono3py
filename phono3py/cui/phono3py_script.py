@@ -36,7 +36,8 @@
 
 import sys
 import numpy as np
-from phonopy.file_IO import write_FORCE_SETS, parse_FORCE_SETS
+from phonopy.file_IO import (
+    write_FORCE_SETS, parse_FORCE_SETS, is_file_phonopy_yaml)
 from phonopy.units import VaspToTHz, Bohr, Hartree
 from phonopy.cui.collect_cell_info import collect_cell_info
 from phonopy.cui.create_force_sets import check_number_of_force_files
@@ -44,7 +45,9 @@ from phonopy.interface.calculator import (
     get_force_sets, get_default_physical_units, get_interface_mode)
 from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phonopy.phonon.band_structure import get_band_qpoints
-from phonopy.cui.phonopy_script import store_nac_params
+from phonopy.cui.phonopy_script import (
+    store_nac_params, print_end, print_error, print_error_message,
+    print_version, file_exists, get_fc_calculator_params)
 from phono3py.version import __version__
 from phono3py.file_IO import (
     parse_disp_fc2_yaml, parse_disp_fc3_yaml,
@@ -52,15 +55,13 @@ from phono3py.file_IO import (
     parse_FORCES_FC2, write_FORCES_FC2, write_FORCES_FC3,
     get_length_of_first_line)
 from phono3py.cui.settings import Phono3pyConfParser
+from phono3py.cui.load import set_dataset_and_force_constants
 from phono3py import Phono3py, Phono3pyJointDos, Phono3pyIsotope
 from phono3py.phonon3.gruneisen import run_gruneisen_parameters
 from phono3py.phonon3.triplets import get_grid_point_from_address
 from phono3py.cui.phono3py_argparse import get_parser
-from phono3py.cui.show_log import (print_phono3py, print_version, print_end,
-                                   print_error, print_error_message,
-                                   show_general_settings,
-                                   show_phono3py_settings,
-                                   show_phono3py_cells, file_exists)
+from phono3py.cui.show_log import (
+    show_general_settings, show_phono3py_settings, show_phono3py_cells)
 from phono3py.cui.triplets_info import write_grid_points, show_num_triplets
 from phono3py.cui.create_supercells import create_phono3py_supercells
 from phono3py.cui.create_force_constants import create_phono3py_force_constants
@@ -70,6 +71,16 @@ from phono3py.interface.phono3py_yaml import Phono3pyYaml
 # import logging
 # logging.basicConfig()
 # logging.getLogger("phono3py.phonon3.fc3").setLevel(level=logging.DEBUG)
+
+
+# AA is created at http://www.network-science.de/ascii/.
+def print_phono3py():
+    print("""        _                      _____
+  _ __ | |__   ___  _ __   ___|___ / _ __  _   _
+ | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
+ | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
+ | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
+ |_|                                |_|    |___/ """)
 
 
 def finalize_phono3py(phono3py,
@@ -136,10 +147,10 @@ def get_run_mode(settings):
     return run_mode
 
 
-def start_phono3py():
+def start_phono3py(**argparse_control):
     """Parse arguments and set some basic parameters"""
 
-    parser, deprecated = get_parser()
+    parser, deprecated = get_parser(**argparse_control)
     args = parser.parse_args()
 
     # Log level
@@ -155,6 +166,8 @@ def start_phono3py():
     if log_level:
         print_phono3py()
         print_version(__version__)
+        if argparse_control.get('load_phono3py_yaml', False):
+            print("Running in phono3py.load mode.")
         print("Python version %d.%d.%d" % sys.version_info[:3])
         import phonopy.structure.spglib as spglib
         print("Spglib version %d.%d.%d" % spglib.get_version())
@@ -165,19 +178,33 @@ def start_phono3py():
     return args, log_level
 
 
-def read_phono3py_settings(args, log_level):
+def read_phono3py_settings(args, argparse_control, log_level):
     """Read phono3py settings"""
 
-    if len(args.conf_file) > 0:
-        phono3py_conf = Phono3pyConfParser(filename=args.conf_file[0],
-                                           args=args)
+    load_phono3py_yaml = argparse_control.get('load_phono3py_yaml', False)
+
+    if len(args.filename) > 0:
+        file_exists(args.filename[0], log_level)
+        if load_phono3py_yaml:
+            phono3py_conf_parser = Phono3pyConfParser(
+                args=args, default_settings=argparse_control)
+            cell_filename = args.filename[0]
+        else:
+            if is_file_phonopy_yaml(args.filename[0], keyword='phono3py'):
+                phono3py_conf_parser = Phono3pyConfParser(args=args)
+                cell_filename = args.filename[0]
+            else:
+                phono3py_conf_parser = Phono3pyConfParser(
+                    filename=args.filename[0], args=args)
+                cell_filename = phono3py_conf_parser.settings.cell_filename
     else:
-        phono3py_conf = Phono3pyConfParser(args=args)
+        phono3py_conf_parser = Phono3pyConfParser(args=args)
+        cell_filename = phono3py_conf_parser.settings.cell_filename
 
-    settings = phono3py_conf.settings
-    confs = phono3py_conf.confs.copy()
+    confs = phono3py_conf_parser.confs.copy()
+    settings = phono3py_conf_parser.settings
 
-    return settings, confs
+    return settings, confs, cell_filename
 
 
 def create_phono3py_files_then_exit(args, log_level):
@@ -387,7 +414,7 @@ def get_cell_info(settings, cell_filename, symprec, log_level):
         supercell_matrix=settings.supercell_matrix,
         primitive_matrix=settings.primitive_matrix,
         interface_mode=settings.calculator,
-        cell_filename=settings.cell_filename,
+        cell_filename=cell_filename,
         chemical_symbols=settings.chemical_symbols,
         phonopy_yaml_cls=Phono3pyYaml,
         symprec=symprec,
@@ -530,6 +557,35 @@ def init_phono3py(settings,
         lapack_zheev_uplo=settings.lapack_zheev_uplo)
 
     return phono3py, updated_settings
+
+
+def store_force_constants(phono3py,
+                          settings,
+                          physical_units,
+                          input_filename,
+                          output_filename,
+                          load_phono3py_yaml,
+                          log_level):
+    if load_phono3py_yaml:
+        (fc_calculator,
+         fc_calculator_options) = get_fc_calculator_params(settings)
+        set_dataset_and_force_constants(
+            phono3py,
+            physical_units,
+            fc_calculator=fc_calculator,
+            fc_calculator_options=fc_calculator_options,
+            symmetrize_fc=settings.fc_symmetry,
+            is_compact_fc=settings.is_compact_fc,
+            log_level=log_level)
+    else:
+        create_phono3py_force_constants(
+            phono3py,
+            settings,
+            force_to_eVperA=physical_units['force_to_eVperA'],
+            distance_to_A=physical_units['distance_to_A'],
+            input_filename=input_filename,
+            output_filename=output_filename,
+            log_level=log_level)
 
 
 def run_gruneisen_then_exit(phono3py, settings, output_filename, log_level):
@@ -703,8 +759,10 @@ def init_phph_interaction(phono3py,
             sys.exit(1)
 
 
-def main():
-    args, log_level = start_phono3py()
+def main(**argparse_control):
+    load_phono3py_yaml = argparse_control.get('load_phono3py_yaml', False)
+
+    args, log_level = start_phono3py(**argparse_control)
     interface_mode = get_interface_mode(vars(args))
     physical_units = get_default_physical_units(interface_mode)
     (input_filename,
@@ -712,8 +770,8 @@ def main():
 
     create_phono3py_files_then_exit(args, log_level)
 
-    settings, confs = read_phono3py_settings(args, log_level)
-    cell_filename = settings.cell_filename
+    settings, confs, cell_filename = read_phono3py_settings(
+        args, argparse_control, log_level)
 
     # Symmetry tolerance. Distance unit depends on interface.
     if settings.symmetry_tolerance is None:
@@ -831,19 +889,19 @@ def main():
                      cell_info['phonopy_yaml'],
                      unitcell_filename,
                      log_level,
-                     nac_factor=Hartree * Bohr)
+                     nac_factor=Hartree * Bohr,
+                     load_phonopy_yaml=load_phono3py_yaml)
 
     ###################
     # Force constants #
     ###################
-    create_phono3py_force_constants(
-        phono3py,
-        settings,
-        force_to_eVperA=physical_units['force_to_eVperA'],
-        distance_to_A=physical_units['distance_to_A'],
-        input_filename=input_filename,
-        output_filename=output_filename,
-        log_level=log_level)
+    store_force_constants(phono3py,
+                          settings,
+                          physical_units,
+                          input_filename,
+                          output_filename,
+                          load_phono3py_yaml,
+                          log_level)
 
     ############################################
     # Phonon Gruneisen parameter and then exit #

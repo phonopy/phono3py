@@ -62,6 +62,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
          fc3_filename=None,
          fc2_filename=None,
          fc_calculator=None,
+         fc_calculator_options=None,
          factor=None,
          frequency_scale_factor=None,
          produce_fc=True,
@@ -197,6 +198,11 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         second-order force constants. Default is None.
     fc_calculator : str, optional
         Force constants calculator. Currently only 'alm'. Default is None.
+    fc_calculator_options : str, optional
+        Optional parameters that are passed to the external fc-calculator.
+        This is given as one text string. How to parse this depends on the
+        fc-calculator. For alm, each parameter is splitted by comma ',',
+        and each set of key and value pair is written in 'key = value'.
     factor : float, optional
         Phonon frequency unit conversion factor. Unless specified, default
         unit conversion factor for each calculator is used.
@@ -300,7 +306,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
                                                       units['nac_factor'],
                                                       log_level=log_level)
 
-    _set_dataset_and_force_constants(
+    set_dataset_and_force_constants(
         ph3py,
         units,
         dataset=None,
@@ -309,6 +315,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         forces_fc3_filename=forces_fc3_filename,
         forces_fc2_filename=forces_fc2_filename,
         fc_calculator=fc_calculator,
+        fc_calculator_options=fc_calculator_options,
         produce_fc=produce_fc,
         symmetrize_fc=symmetrize_fc,
         is_compact_fc=is_compact_fc,
@@ -321,7 +328,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
     return ph3py
 
 
-def _set_dataset_and_force_constants(
+def set_dataset_and_force_constants(
         ph3py,
         units,
         dataset=None,
