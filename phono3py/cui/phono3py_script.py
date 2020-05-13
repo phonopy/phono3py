@@ -36,8 +36,7 @@
 
 import sys
 import numpy as np
-from phonopy.file_IO import (
-    get_born_parameters, write_FORCE_SETS, parse_FORCE_SETS)
+from phonopy.file_IO import write_FORCE_SETS, parse_FORCE_SETS
 from phonopy.units import VaspToTHz, Bohr, Hartree
 from phonopy.cui.collect_cell_info import collect_cell_info
 from phonopy.cui.create_force_sets import check_number_of_force_files
@@ -76,13 +75,38 @@ from phono3py.interface.phono3py_yaml import Phono3pyYaml
 def finalize_phono3py(phono3py,
                       confs,
                       log_level,
+                      displacements_mode=False,
                       filename="phono3py.yaml"):
+    """Write phono3py.yaml and then exit.
+
+    Parameters
+    ----------
+    phono3py : Phono3py
+        Phono3py instance.
+    confs : dict
+        This contains the settings and command options that the user set.
+    log_level : int
+        Log level. 0 means quiet.
+    displacements_mode : Bool
+        When True, crystal structure is written in the length unit of
+        calculator interface in phono3py_disp.yaml. Otherwise, the
+        default unit (angstrom) is used.
+    filename : str, optional
+        phono3py.yaml is written in this filename.
+
+    """
+
+    if displacements_mode:
+        _calculator = phono3py.calculator
+    else:
+        _calculator = None
+    _physical_units = get_default_physical_units(_calculator)
+
     if log_level > 0:
-        units = get_default_physical_units(phono3py.calculator)
         ph3py_yaml = Phono3pyYaml(configuration=confs,
-                                  calculator=phono3py.calculator,
-                                  physical_units=units)
+                                  physical_units=_physical_units)
         ph3py_yaml.set_phonon_info(phono3py)
+        ph3py_yaml.calculator = _calculator
         with open(filename, 'w') as w:
             w.write(str(ph3py_yaml))
         print_end()
@@ -468,10 +492,10 @@ def init_phono3py(settings,
                   output_filename,
                   symprec,
                   log_level):
-    physical_units = get_default_physical_units(interface_mode)
+    physical_units = get_default_physical_units(cell_info['interface_mode'])
     distance_to_A = physical_units['distance_to_A']
 
-    # Change unit of lattice parameters to Angstrom
+    # Change unit of lattice parameters to angstrom
     unitcell = cell_info['unitcell'].copy()
     if distance_to_A is not None:
         lattice = unitcell.cell
@@ -683,8 +707,6 @@ def main():
     args, log_level = start_phono3py()
     interface_mode = get_interface_mode(vars(args))
     physical_units = get_default_physical_units(interface_mode)
-    distance_to_A = physical_units['distance_to_A']
-    force_to_eVperA = physical_units['force_to_eVperA']
     (input_filename,
      output_filename) = get_input_output_filenames_from_args(args)
 
@@ -726,6 +748,7 @@ def main():
         finalize_phono3py(phono3py,
                           confs,
                           log_level,
+                          displacements_mode=True,
                           filename="phono3py_disp.yaml")
 
     #######################
@@ -752,8 +775,7 @@ def main():
                               phono3py,
                               unitcell_filename,
                               input_filename,
-                              output_filename,
-                              interface_mode)
+                              output_filename)
 
     if log_level > 1:
         show_phono3py_cells(phono3py, settings)
@@ -814,13 +836,14 @@ def main():
     ###################
     # Force constants #
     ###################
-    create_phono3py_force_constants(phono3py,
-                                    settings,
-                                    force_to_eVperA=force_to_eVperA,
-                                    distance_to_A=distance_to_A,
-                                    input_filename=input_filename,
-                                    output_filename=output_filename,
-                                    log_level=log_level)
+    create_phono3py_force_constants(
+        phono3py,
+        settings,
+        force_to_eVperA=physical_units['force_to_eVperA'],
+        distance_to_A=physical_units['distance_to_A'],
+        input_filename=input_filename,
+        output_filename=output_filename,
+        log_level=log_level)
 
     ############################################
     # Phonon Gruneisen parameter and then exit #

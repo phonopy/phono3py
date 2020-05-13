@@ -1650,7 +1650,7 @@ class Phono3py(object):
             mesh_nums = length2mesh(mesh, self._primitive.get_cell())
         else:
             rotations = self._primitive_symmetry.get_pointgroup_operations()
-            mesh_nums = length2mesh(mesh, self._primitive.get_cell(),
+            mesh_nums = length2mesh(mesh, self._primitive.cell,
                                     rotations=rotations)
         if mesh_nums is None:
             msg = "mesh has inappropriate type."

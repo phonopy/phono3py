@@ -94,9 +94,7 @@ def show_general_settings(settings,
                           phono3py,
                           cell_filename,
                           input_filename,
-                          output_filename,
-                          interface_mode):
-
+                          output_filename):
     is_primitive_axes_auto = (type(phono3py.primitive_matrix) is str and
                               phono3py.primitive_matrix == 'auto')
     primitive_matrix = phono3py.primitive_matrix
@@ -112,8 +110,8 @@ def show_general_settings(settings,
     if settings.hdf5_compression:
         print("HDF5 data compression filter: %s" % settings.hdf5_compression)
 
-    if interface_mode:
-        print("Calculator interface: %s" % interface_mode)
+    if phono3py.calculator:
+        print("Calculator interface: %s" % phono3py.calculator)
     print("Crystal structure was read from \"%s\"." % cell_filename)
 
     if (np.diag(np.diag(supercell_matrix)) - supercell_matrix).any():

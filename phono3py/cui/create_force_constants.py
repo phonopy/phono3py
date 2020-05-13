@@ -56,7 +56,6 @@ def create_phono3py_force_constants(phono3py,
                                     input_filename=None,
                                     output_filename=None,
                                     log_level=1):
-    phonon_supercell_matrix = phono3py.phonon_supercell_matrix
     if settings.fc_calculator is None:
         symmetrize_fc3r = (settings.is_symmetrize_fc3_r or
                            settings.fc_symmetry)
@@ -115,8 +114,7 @@ def create_phono3py_force_constants(phono3py,
             phono3py.cutoff_fc3_by_zero(cutoff_distance)
 
         if log_level:
-            show_drift_fc3(phono3py.fc3,
-                           primitive=phono3py.primitive)
+            show_drift_fc3(phono3py.fc3, primitive=phono3py.primitive)
 
     #######
     # fc2 #
@@ -129,7 +127,7 @@ def create_phono3py_force_constants(phono3py,
                            input_filename,
                            log_level)
     else:
-        if phonon_supercell_matrix is None:
+        if phono3py.phonon_supercell_matrix is None:
             if settings.fc_calculator is not None:
                 pass
             elif not _create_phono3py_fc2(
@@ -170,7 +168,7 @@ def create_phono3py_force_constants(phono3py,
         write_fc2_to_hdf5(phono3py.fc2,
                           filename=filename,
                           p2s_map=p2s_map,
-                          physical_unit='eV/Angstrom^2',
+                          physical_unit='eV/angstrom^2',
                           compression=settings.hdf5_compression)
 
     if log_level:
