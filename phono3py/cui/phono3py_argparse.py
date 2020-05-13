@@ -141,12 +141,13 @@ def get_parser(fc_symmetry=False,
         "--factor", dest="frequency_conversion_factor", type=float,
         default=None,
         help="Frequency unit conversion factor")
-    parser.add_argument(
-        "--fc2", dest="read_fc2", action="store_true", default=False,
-        help="Read second order force constants")
-    parser.add_argument(
-        "--fc3", dest="read_fc3", action="store_true", default=False,
-        help="Read third order force constants")
+    if not load_phono3py_yaml:
+        parser.add_argument(
+            "--fc2", dest="read_fc2", action="store_true", default=False,
+            help="Read second order force constants")
+        parser.add_argument(
+            "--fc3", dest="read_fc3", action="store_true", default=False,
+            help="Read third order force constants")
     parser.add_argument(
         "--fc-calc-opt", "--fc-calculator-options",
         dest="fc_calculator_options", default=None,
@@ -199,12 +200,13 @@ def get_parser(fc_symmetry=False,
     parser.add_argument(
         "--hdf5-compression", dest="hdf5_compression", default=None,
         help="hdf5 compression filter (default: gzip)")
-    parser.add_argument(
-        "-i", dest="input_filename", default=None,
-        help="Input filename extension")
-    parser.add_argument(
-        "--io", dest="input_output_filename", default=None,
-        help="Input and output filename extension")
+    if not load_phono3py_yaml:
+        parser.add_argument(
+            "-i", dest="input_filename", default=None,
+            help="Input filename extension")
+        parser.add_argument(
+            "--io", dest="input_output_filename", default=None,
+            help="Input and output filename extension")
     parser.add_argument(
         "--ion-clamped", dest="ion_clamped", action="store_true",
         default=False,
@@ -276,9 +278,10 @@ def get_parser(fc_symmetry=False,
         "--num-freq-points", dest="num_frequency_points", type=int,
         default=None,
         help="Number of sampling points for spectrum")
-    parser.add_argument(
-        "-o", dest="output_filename", default=None,
-        help="Output filename extension")
+    if not load_phono3py_yaml:
+        parser.add_argument(
+            "-o", dest="output_filename", default=None,
+            help="Output filename extension")
     parser.add_argument(
         "--pa", "--primitive-axis", "--primitive-axes", nargs='+',
         dest="primitive_axes", default=None,
@@ -340,22 +343,23 @@ def get_parser(fc_symmetry=False,
         action="store_true", default=False,
         help=("Show reduced number of triplets to be calculated at "
               "specified grid points"))
-    parser.add_argument(
-        "--sym-fc2", dest="is_symmetrize_fc2", action="store_true",
-        default=False,
-        help="Symmetrize fc2 by index exchange")
-    parser.add_argument(
-        "--sym-fc3r", dest="is_symmetrize_fc3_r", action="store_true",
-        default=False,
-        help="Symmetrize fc3 in real space by index exchange")
-    parser.add_argument(
-        "--sym-fc3q", dest="is_symmetrize_fc3_q", action="store_true",
-        default=False,
-        help="Symmetrize fc3 in reciprocal space by index exchange")
+    if not load_phono3py_yaml:
+        parser.add_argument(
+            "--sym-fc2", dest="is_symmetrize_fc2", action="store_true",
+            default=False,
+            help="Symmetrize fc2 by index exchange")
+        parser.add_argument(
+            "--sym-fc3r", dest="is_symmetrize_fc3_r", action="store_true",
+            default=False,
+            help="Symmetrize fc3 in real space by index exchange")
+        parser.add_argument(
+            "--sym-fc3q", dest="is_symmetrize_fc3_q", action="store_true",
+            default=False,
+            help="Symmetrize fc3 in reciprocal space by index exchange")
     parser.add_argument(
         "--thm", "--tetrahedron-method", dest="is_tetrahedron_method",
         action="store_true", default=False,
-        help="Use tetrahedron method")
+        help="Use tetrahedron method.")
     parser.add_argument(
         "--tmax", dest="tmax", default=None,
         help="Maximum calculated temperature")
