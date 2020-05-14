@@ -56,6 +56,7 @@ def create_phono3py_supercells(cell_info,
     phono3py = Phono3py(
         cell_info['unitcell'],
         cell_info['supercell_matrix'],
+        primitive_matrix=cell_info['primitive_matrix'],
         phonon_supercell_matrix=cell_info['phonon_supercell_matrix'],
         is_symmetry=settings.is_symmetry,
         symprec=symprec,

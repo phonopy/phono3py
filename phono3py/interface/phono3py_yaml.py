@@ -87,19 +87,6 @@ class Phono3pyYaml(PhonopyYaml):
             physical_units=physical_units,
             settings=settings)
 
-    def __str__(self):
-        lines = self.get_yaml_lines()
-        if self.phonon_supercell_matrix is not None:
-            i = lines.index("supercell_matrix:")
-            i += 5
-            lines.insert(i, "phonon_supercell_matrix:")
-            for v in self.phonon_supercell_matrix:
-                i += 1
-                lines.insert(i, "- [ %3d, %3d, %3d ]" % tuple(v))
-            i += 1
-            lines.insert(i, "")
-        return "\n".join(lines)
-
     def set_phonon_info(self, phono3py):
         super(Phono3pyYaml, self).set_phonon_info(phono3py)
         self.phonon_supercell_matrix = phono3py.phonon_supercell_matrix
@@ -114,15 +101,80 @@ class Phono3pyYaml(PhonopyYaml):
                 self._yaml['phonon_supercell_matrix'],
                 dtype='intc', order='C')
 
-    def _displacements_yaml_lines_type1(self, with_forces=False):
-        id_offset = len(self.dataset['first_atoms'])
+    def _cell_info_yaml_lines(self):
+        """Get YAML lines for information of cells
+
+        This method override PhonopyYaml._cell_info_yaml_lines.
+
+        """
+
+        lines = self._primitive_matrix_yaml_lines(
+            self.primitive_matrix, "primitive_matrix")
+        lines += self._supercell_matrix_yaml_lines(
+            self.supercell_matrix, "supercell_matrix")
+        lines += self._supercell_matrix_yaml_lines(
+            self.phonon_supercell_matrix, "phonon_supercell_matrix")
+        lines += self._primitive_yaml_lines(self.primitive, "primitive")
+        lines += self._unitcell_yaml_lines()
+        lines += self._supercell_yaml_lines()
+        lines += self._primitive_yaml_lines(self.phonon_primitive,
+                                            "phonon_primitive")
+        lines += self._phonon_supercell_yaml_lines()
+        return lines
+
+    def _phonon_supercell_matrix_yaml_lines(self):
         lines = []
-        if 'second_atoms' in self.dataset['first_atoms'][0]:
+        if self.phonon_supercell_matrix is not None:
+            lines.append("phonon_supercell_matrix:")
+            for v in self.supercell_matrix:
+                lines.append("- [ %3d, %3d, %3d ]" % tuple(v))
+            lines.append("")
+        return lines
+
+    def _phonon_supercell_yaml_lines(self):
+        lines = []
+        if self.phonon_supercell is not None:
+            lines += self._cell_yaml_lines(
+                self.phonon_supercell, "phonon_supercell",
+                self.phonon_primitive.s2p_map)
+            lines.append("")
+        return lines
+
+    def _nac_yaml_lines(self):
+        """Get YAML lines for parameters of non-analytical term correction
+
+        This method override PhonopyYaml._nac_yaml_lines.
+
+        """
+        return self._nac_yaml_lines_given_symbols(
+            self.phonon_primitive.symbols)
+
+    def _displacements_yaml_lines(self, with_forces=False):
+        """Get YAML lines for phonon_dataset and dataset.
+
+        This method override PhonopyYaml._displacements_yaml_lines.
+        PhonopyYaml._displacements_yaml_lines_2types is written
+        to be also used by Phono3pyYaml.
+
+        """
+
+        lines = []
+        if self.phonon_supercell_matrix is not None:
+            lines += self._displacements_yaml_lines_2types(
+                self.phonon_dataset, with_forces=with_forces)
+        lines += self._displacements_yaml_lines_2types(
+            self.dataset, with_forces=with_forces)
+        return lines
+
+    def _displacements_yaml_lines_type1(self, dataset, with_forces=False):
+        id_offset = len(dataset['first_atoms'])
+        lines = []
+        if 'second_atoms' in dataset['first_atoms'][0]:
             lines.append("displacement_pairs:")
         else:
             lines.append("displacements:")
 
-        for i, d in enumerate(self.dataset['first_atoms']):
+        for i, d in enumerate(dataset['first_atoms']):
             lines.append("- atom: %4d" % (d['number'] + 1))
             lines.append("  displacement:")
             lines.append("    [ %19.16f, %19.16f, %19.16f ]"
@@ -130,18 +182,19 @@ class Phono3pyYaml(PhonopyYaml):
             if with_forces and 'forces' in d:
                 lines.append("  forces:")
                 for f in d['forces']:
-                    lines.append("  - [ %19.16f, %19.16f, %19.16f ]" % tuple(f))
+                    lines.append("  - [ %19.16f, %19.16f, %19.16f ]"
+                                 % tuple(f))
             if 'second_atoms' in d:
                 lines += self._second_displacements_yaml_lines(
                     d['second_atoms'], id_offset, with_forces=with_forces)
         lines.append("")
 
-        if 'second_atoms' in self.dataset['first_atoms'][0]:
-            if 'duplicates' in self.dataset and self.dataset['duplicates']:
+        if 'second_atoms' in dataset['first_atoms'][0]:
+            if 'duplicates' in dataset and dataset['duplicates']:
                 lines.append("displacement_pair_duplicates:")
-                for i in self.dataset['duplicates']:
+                for i in dataset['duplicates']:
                     # id-i and id-j give the same displacement pairs.
-                    j = self.dataset['duplicates'][i]
+                    j = dataset['duplicates'][i]
                     lines.append("- %d : %d"
                                  % (i + id_offset + 1, j + id_offset + 1))
 
