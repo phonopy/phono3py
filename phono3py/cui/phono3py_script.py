@@ -806,9 +806,10 @@ def main(**argparse_control):
     unitcell_filename = cell_info['optional_structure_info'][0]
 
     run_mode = get_run_mode(settings)
-
-    run_grid_points_writer = args.write_grid_points
-    show_triplets_info = args.show_num_triplets
+    if args.write_grid_points:
+        run_mode = "write_grid_info"
+    elif args.show_num_triplets:
+        run_mode = "show_triplets_info"
 
     # -----------------------------------------------------------------------
     # ----------------- 'args' should not be used below. --------------------
@@ -866,12 +867,36 @@ def main(**argparse_control):
         print("Use -v option to watch primitive cell, unit cell, "
               "and supercell structures.")
 
+    ##################
+    # Check settings #
+    ##################
+    run_modes_with_mesh = ("conductivity-RTA", "conductivity-LBTE",
+                           "imag_self_energy", "jdos", "isotope",
+                           "write_grid_info", "show_triplets_info")
+    run_modes_with_gp = ("imag_self_energy", "jdos", "isotope")
+    if phono3py.mesh_numbers is None and run_mode in run_modes_with_mesh:
+        print("")
+        print("Mesh numbers have to be specified.")
+        print("")
+        if log_level:
+            print_error()
+        sys.exit(1)
+
+    if (run_mode in run_modes_with_gp and
+        updated_settings['grid_points'] is None):
+        print("")
+        print("Grid point(s) has to be specified.")
+        print("")
+        if log_level:
+            print_error()
+        sys.exit(1)
+
     #########################################################
     # Write ir-grid points and grid addresses and then exit #
     #########################################################
-    if run_grid_points_writer:
+    if run_mode == "write_grid_info":
         write_grid_points(phono3py.primitive,
-                          settings.mesh_numbers,
+                          phono3py.mesh_numbers,
                           mesh_divs=settings.mesh_divisors,
                           band_indices=settings.band_indices,
                           sigmas=updated_settings['sigmas'],
@@ -890,9 +915,9 @@ def main(**argparse_control):
     ################################################################
     # Show reduced number of triplets at grid points and then exit #
     ################################################################
-    if show_triplets_info:
+    if run_mode == "show_triplets_info":
         show_num_triplets(phono3py.primitive,
-                          settings.mesh_numbers,
+                          phono3py.mesh_numbers,
                           mesh_divs=settings.mesh_divisors,
                           band_indices=settings.band_indices,
                           grid_points=updated_settings['grid_points'],
@@ -931,26 +956,6 @@ def main(**argparse_control):
     ############################################
     if settings.is_gruneisen:
         run_gruneisen_then_exit(phono3py, settings, output_filename, log_level)
-
-    ##################
-    # Check settings #
-    ##################
-    if phono3py.mesh_numbers is None and run_mode is not None:
-        print("")
-        print("Q-point mesh has to be specified with --mesh option.")
-        print("")
-        if log_level:
-            print_error()
-        sys.exit(1)
-
-    if (run_mode in ("imag_self_energy", "jdos", "isotope", "frequency_shift")
-        and updated_settings['grid_points'] is None):
-        print("")
-        print("Grid point(s) has to be specified with --gp or --ga option.")
-        print("")
-        if log_level:
-            print_error()
-        sys.exit(1)
 
     #################
     # Show settings #
