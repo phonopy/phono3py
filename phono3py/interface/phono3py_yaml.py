@@ -73,9 +73,6 @@ class Phono3pyYaml(PhonopyYaml):
         # With DIM_FC2 given
         self.phonon_supercell_matrix = None
         self.phonon_dataset = None
-        #
-        # same as self.supercell unless DIM_FC2 given
-        #
         self.phonon_supercell = None
         self.phonon_primitive = None
 
@@ -96,10 +93,77 @@ class Phono3pyYaml(PhonopyYaml):
 
     def _load(self, fp):
         super(Phono3pyYaml, self)._load(fp)
+        self._parse_fc3_dataset()
+
+    def _parse_all_cells(self):
+        """Parse all cells
+
+        This method override PhonopyYaml._parse_all_cells.
+
+        """
+
+        super(Phono3pyYaml, self)._parse_all_cells()
+        if 'phonon_primitive_cell' in self._yaml:
+            self.phonon_primitive = self._parse_cell(
+                self._yaml['phonon_primitive_cell'])
+        if 'phonon_supercell' in self._yaml:
+            self.phonon_supercell = self._parse_cell(
+                self._yaml['phonon_supercell'])
         if 'phonon_supercell_matrix' in self._yaml:
             self.phonon_supercell_matrix = np.array(
-                self._yaml['phonon_supercell_matrix'],
-                dtype='intc', order='C')
+                self._yaml['phonon_supercell_matrix'], dtype='intc', order='C')
+
+    def _parse_dataset(self):
+        """Parse phonon_dataset
+
+        This method override PhonopyYaml._parse_dataset.
+
+        """
+
+        self.phonon_dataset = self._get_dataset(self.phonon_supercell)
+
+    def _parse_fc3_dataset(self):
+        dataset = None
+        if 'displacement_pairs' in self._yaml:
+            disp = self._yaml['displacement_pairs'][0]
+            if type(disp) is dict:  # type1
+                dataset = self._parse_forces_fc3_type1(len(self.supercell))
+            elif type(disp) is list:  # type2
+                if 'displacement' in disp[0]:
+                    dataset = self._parse_force_sets_type2()
+        if 'displacement_pair_info' in self._yaml:
+            info_yaml = self._yaml['displacement_pair_info']
+            if 'cutoff_pair_distance' in info_yaml:
+                dataset['cutoff_distance'] = info_yaml['cutoff_pair_distance']
+            if 'duplicated_supercell_ids' in info_yaml:
+                dataset['duplicates'] = info_yaml['duplicated_supercell_ids']
+        self.dataset = dataset
+
+    def _parse_forces_fc3_type1(self, natom):
+        dataset = {'natom': natom, 'first_atoms': []}
+        for d1 in self._yaml['displacement_pairs']:
+            data1 = {
+                'number': d1['atom'] - 1,
+                'displacement': d1['displacement'],
+                'second_atoms': []}
+            d2_list = d1.get('paired_with')
+            if d2_list is None:  # backward compatibility
+                d2_list = d1.get('second_atoms')
+            for d2 in d2_list:
+                disps = [{'number': d2['atom'] - 1, 'displacement': disp}
+                         for disp in d2['displacements']]
+                if 'pair_distance' in d2:
+                    for d2_dict in disps:
+                        d2_dict['pair_distance'] = d2['pair_distance']
+                if 'included' in d2:
+                    for d2_dict in disps:
+                        d2_dict['included'] = d2['included']
+                if 'displacement_ids' in d2:
+                    for disp_id, d2_dict in zip(d2['displacement_ids'], disps):
+                        d2_dict['id'] = disp_id
+                data1['second_atoms'].append(disps)
+            dataset['first_atoms'].append(data1)
+        return dataset
 
     def _cell_info_yaml_lines(self):
         """Get YAML lines for information of cells
@@ -108,17 +172,11 @@ class Phono3pyYaml(PhonopyYaml):
 
         """
 
-        lines = self._primitive_matrix_yaml_lines(
-            self.primitive_matrix, "primitive_matrix")
-        lines += self._supercell_matrix_yaml_lines(
-            self.supercell_matrix, "supercell_matrix")
+        lines = super(Phono3pyYaml, self)._cell_info_yaml_lines()
         lines += self._supercell_matrix_yaml_lines(
             self.phonon_supercell_matrix, "phonon_supercell_matrix")
-        lines += self._primitive_yaml_lines(self.primitive, "primitive")
-        lines += self._unitcell_yaml_lines()
-        lines += self._supercell_yaml_lines()
         lines += self._primitive_yaml_lines(self.phonon_primitive,
-                                            "phonon_primitive")
+                                            "phonon_primitive_cell")
         lines += self._phonon_supercell_yaml_lines()
         return lines
 
@@ -168,37 +226,43 @@ class Phono3pyYaml(PhonopyYaml):
 
     def _displacements_yaml_lines_type1(self, dataset, with_forces=False):
         id_offset = len(dataset['first_atoms'])
-        lines = []
-        if 'second_atoms' in dataset['first_atoms'][0]:
-            lines.append("displacement_pairs:")
-        else:
-            lines.append("displacements:")
 
+        lines = ["displacement_pairs:"]
         for i, d in enumerate(dataset['first_atoms']):
             lines.append("- atom: %4d" % (d['number'] + 1))
             lines.append("  displacement:")
             lines.append("    [ %19.16f, %19.16f, %19.16f ]"
                          % tuple(d['displacement']))
+            id_num = i + 1
+            if 'id' in d:
+                assert id_num == d['id']
+            lines.append("  displacement_id: %d" % id_num)
             if with_forces and 'forces' in d:
                 lines.append("  forces:")
                 for f in d['forces']:
                     lines.append("  - [ %19.16f, %19.16f, %19.16f ]"
                                  % tuple(f))
             if 'second_atoms' in d:
-                lines += self._second_displacements_yaml_lines(
+                ret_lines, id_offset = self._second_displacements_yaml_lines(
                     d['second_atoms'], id_offset, with_forces=with_forces)
+                lines += ret_lines
         lines.append("")
 
-        if 'second_atoms' in dataset['first_atoms'][0]:
+        if (('duplicates' in dataset and dataset['duplicates']) or
+            'cutoff_distance' in dataset):
+            lines.append(
+                "displacement_pair_info: # 0 means perfect supercell")
             if 'duplicates' in dataset and dataset['duplicates']:
-                lines.append("displacement_pair_duplicates:")
+                lines.append("  duplicated_supercell_ids:")
                 for i in dataset['duplicates']:
                     # id-i and id-j give the same displacement pairs.
                     j = dataset['duplicates'][i]
-                    lines.append("- %d : %d"
-                                 % (i + id_offset + 1, j + id_offset + 1))
+                    lines.append("  - %d : %d" % (i, j))
+            if 'cutoff_distance' in dataset:
+                lines.append("  cutoff_pair_distance: %11.8f"
+                             % dataset['cutoff_distance'])
+            lines.append("")
 
-                lines.append("")
         return lines
 
     def _second_displacements_yaml_lines(self,
@@ -206,7 +270,9 @@ class Phono3pyYaml(PhonopyYaml):
                                          id_offset,
                                          with_forces=False):
         lines = []
-        lines.append("  second_atoms:")
+        id_num = id_offset
+        # lines.append("  second_atoms:")
+        lines.append("  paired_with:")
         numbers = np.array([d['number'] for d in dataset2])
         unique_numbers = np.unique(numbers)
         for i in unique_numbers:
@@ -221,10 +287,13 @@ class Phono3pyYaml(PhonopyYaml):
             disp_ids = []
             lines.append("    displacements:")
             for j in indices_eq_i:
+                id_num += 1
                 d = tuple(dataset2[j]['displacement'])
                 lines.append("    - [ %19.16f, %19.16f, %19.16f ]" % d)
-                disp_ids.append(dataset2[j]['id'] + id_offset + 1)
+                if 'id' in dataset2[j]:
+                    assert dataset2[j]['id'] == id_num
+                    disp_ids.append(dataset2[j]['id'])
             lines.append("    displacement_ids: [ %s ]"
                          % ', '.join(["%d" % j for j in disp_ids]))
 
-        return lines
+        return lines, id_num

@@ -52,16 +52,16 @@ def write_disp_fc3_yaml(dataset, supercell, filename='disp_fc3.yaml'):
 
     w.write("first_atoms:\n")
     count1 = 0
-    count2 = 0
+    count2 = len(dataset['first_atoms'])
     for disp1 in dataset['first_atoms']:
+        count1 += 1
         disp_cart1 = disp1['displacement']
         w.write("- number: %5d\n" % (disp1['number'] + 1))
         w.write("  displacement:\n")
         w.write("    [%20.16f,%20.16f,%20.16f ] # %05d\n" %
-                (disp_cart1[0], disp_cart1[1], disp_cart1[2], count1 + 1))
-        w.write("  displacement_id: %d\n" % (count1 + 1))
+                (disp_cart1[0], disp_cart1[1], disp_cart1[2], count1))
+        w.write("  displacement_id: %d\n" % count1)
         w.write("  second_atoms:\n")
-        count1 += 1
 
         included = None
         atom2_list = np.array([disp2['number']
@@ -88,17 +88,17 @@ def write_disp_fc3_yaml(dataset, supercell, filename='disp_fc3.yaml'):
             w.write("    displacements:\n")
 
             for disp2 in disp2_list:
+                count2 += 1
+
                 # Assert all disp2s belonging to same atom2 appear straight.
                 assert disp2['id'] == count2
 
                 disp_cart2 = disp2['displacement']
                 w.write("    - [%20.16f,%20.16f,%20.16f ] # %05d\n" %
                         (disp_cart2[0], disp_cart2[1], disp_cart2[2],
-                         count2 + num_first + 1))
-                count2 += 1
+                         count2))
 
-            ids = ["%d" % (disp2['id'] + num_first + 1)
-                   for disp2 in disp2_list]
+            ids = ["%d" % disp2['id'] for disp2 in disp2_list]
             w.write("    displacement_ids: [ %s ]\n" % ', '.join(ids))
 
     write_cell_yaml(w, supercell)

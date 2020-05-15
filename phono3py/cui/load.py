@@ -441,7 +441,7 @@ def _set_forces_fc3(ph3py,
                     fc_calculator,
                     fc_calculator_options,
                     log_level):
-    ph3py.dataset = parse_forces(ph3py.supercell.get_number_of_atoms(),
+    ph3py.dataset = parse_forces(len(ph3py.supercell),
                                  units['force_to_eVperA'],
                                  units['distance_to_A'],
                                  force_filename=force_filename,

@@ -137,8 +137,8 @@ class Phono3py(object):
 
         # Displacements and supercells
         self._supercells_with_displacements = None
-        self._displacement_dataset = None
-        self._phonon_displacement_dataset = None
+        self._dataset = None
+        self._phonon_dataset = None
         self._phonon_supercells_with_displacements = None
 
         # Thermal conductivity
@@ -461,7 +461,7 @@ class Phono3py(object):
         return self._frequency_factor_to_THz
 
     def set_displacement_dataset(self, dataset):
-        self._displacement_dataset = dataset
+        self._dataset = dataset
 
     @property
     def dataset(self):
@@ -475,10 +475,17 @@ class Phono3py(object):
                    {'number': atom index of first displaced atom,
                     'displacement': displacement in Cartesian coordinates,
                     'forces': forces on atoms in supercell,
+                    'id': displacement id (1, 2,...,n_first_atoms)
                     'second_atoms': [
                       {'number': atom index of second displaced atom,
                        'displacement': displacement in Cartesian coordinates},
                        'forces': forces on atoms in supercell,
+                       'pair_distance': distance between paired atoms,
+                       'included': with cutoff pair distance in displacement
+                                   pair generation, this indicates if this
+                                   pair displacements is included to compute
+                                   fc3 or not,
+                       'id': displacement id. (n_first_atoms + 1, ...)
                       ... ] }, ... ] }
             Type 2. All atomic displacements in each supercell:
                 {'displacements': ndarray, dtype='double', order='C',
@@ -489,13 +496,17 @@ class Phono3py(object):
             with different shape but that can be reshaped to
             (supercells, natom, 3).
 
+            In addition, 'duplicates' and 'cutoff_distance' can exist in this
+            dataset in displacement pair generation. 'duplicates' gives
+            duplicated supercell ids as pairs.
+
         """
 
-        return self._displacement_dataset
+        return self._dataset
 
     @dataset.setter
     def dataset(self, dataset):
-        self._displacement_dataset = dataset
+        self._dataset = dataset
 
     @property
     def phonon_dataset(self):
@@ -520,11 +531,11 @@ class Phono3py(object):
 
         """
 
-        return self._phonon_displacement_dataset
+        return self._phonon_dataset
 
     @phonon_dataset.setter
     def phonon_dataset(self, dataset):
-        self._phonon_displacement_dataset = dataset
+        self._phonon_dataset = dataset
 
     @property
     def band_indices(self):
@@ -566,7 +577,7 @@ class Phono3py(object):
         warnings.warn("Phono3py.phonon_displacement_dataset is deprecated."
                       "Use Phono3py.phonon_dataset.",
                       DeprecationWarning)
-        return self._phonon_displacement_dataset
+        return self._phonon_dataset
 
     def get_phonon_displacement_dataset(self):
         return self.phonon_displacement_dataset
@@ -599,11 +610,11 @@ class Phono3py(object):
         """
 
         if self._phonon_supercells_with_displacements is None:
-            if self._phonon_displacement_dataset is not None:
+            if self._phonon_dataset is not None:
                 self._phonon_supercells_with_displacements = \
                   self._build_phonon_supercells_with_displacements(
                       self._phonon_supercell,
-                      self._phonon_displacement_dataset)
+                      self._phonon_dataset)
         return self._phonon_supercells_with_displacements
 
     def get_phonon_supercells_with_displacements(self):
@@ -646,7 +657,7 @@ class Phono3py(object):
 
         """
 
-        dataset = self._displacement_dataset
+        dataset = self._dataset
 
         if 'first_atoms' in dataset:
             num_scells = len(dataset['first_atoms'])
@@ -672,7 +683,7 @@ class Phono3py(object):
 
     @displacements.setter
     def displacements(self, displacements):
-        dataset = self._displacement_dataset
+        dataset = self._dataset
         disps = np.array(displacements, dtype='double', order='C')
         natom = self._supercell.get_number_of_atoms()
         if (disps.ndim != 3 or disps.shape[1:] != (natom, 3)):
@@ -699,7 +710,7 @@ class Phono3py(object):
 
         """
 
-        dataset = self._displacement_dataset
+        dataset = self._dataset
         if 'forces' in dataset:
             return dataset['forces']
         elif 'first_atoms' in dataset:
@@ -724,7 +735,7 @@ class Phono3py(object):
     @forces.setter
     def forces(self, forces_fc3):
         forces = np.array(forces_fc3, dtype='double', order='C')
-        dataset = self._displacement_dataset
+        dataset = self._dataset
         if 'first_atoms' in dataset:
             i = 0
             for disp1 in dataset['first_atoms']:
@@ -755,10 +766,10 @@ class Phono3py(object):
 
         """
 
-        if self._phonon_displacement_dataset is None:
+        if self._phonon_dataset is None:
             raise RuntimeError("phonon_displacement_dataset does not exist.")
 
-        dataset = self._phonon_displacement_dataset
+        dataset = self._phonon_dataset
         if 'first_atoms' in dataset:
             num_scells = len(dataset['first_atoms'])
             natom = self._phonon_supercell.get_number_of_atoms()
@@ -775,10 +786,10 @@ class Phono3py(object):
 
     @phonon_displacements.setter
     def phonno_displacements(self, displacements):
-        if self._phonon_displacement_dataset is None:
+        if self._phonon_dataset is None:
             raise RuntimeError("phonon_displacement_dataset does not exist.")
 
-        dataset = self._phonon_displacement_dataset
+        dataset = self._phonon_dataset
         disps = np.array(displacements, dtype='double', order='C')
         natom = self._phonon_supercell.get_number_of_atoms()
         if (disps.ndim != 3 or disps.shape[1:] != (natom, 3)):
@@ -806,10 +817,10 @@ class Phono3py(object):
 
         """
 
-        if self._phonon_displacement_dataset is None:
+        if self._phonon_dataset is None:
             raise RuntimeError("phonon_displacement_dataset does not exist.")
 
-        dataset = self._phonon_displacement_dataset
+        dataset = self._phonon_dataset
         if 'forces' in dataset:
             return dataset['forces']
         elif 'first_atoms' in dataset:
@@ -825,11 +836,11 @@ class Phono3py(object):
 
     @phonon_forces.setter
     def phonon_forces(self, forces_fc2):
-        if self._phonon_displacement_dataset is None:
+        if self._phonon_dataset is None:
             raise RuntimeError("phonon_displacement_dataset does not exist.")
 
         forces = np.array(forces_fc2, dtype='double', order='C')
-        dataset = self._phonon_displacement_dataset
+        dataset = self._phonon_dataset
         if 'first_atoms' in dataset:
             i = 0
             for i, disp1 in enumerate(dataset['first_atoms']):
@@ -1028,7 +1039,7 @@ class Phono3py(object):
             self._symmetry,
             is_plusminus=is_plusminus,
             is_diagonal=is_diagonal)
-        self._displacement_dataset = direction_to_displacement(
+        self._dataset = direction_to_displacement(
             direction_dataset,
             distance,
             self._supercell,
@@ -1068,7 +1079,7 @@ class Phono3py(object):
                 self._phonon_supercell_symmetry,
                 is_plusminus=is_plusminus,
                 is_diagonal=False)
-            self._phonon_displacement_dataset = directions_to_displacement_dataset(
+            self._phonon_dataset = directions_to_displacement_dataset(
                 phonon_displacement_directions,
                 distance,
                 self._phonon_supercell)
@@ -1109,10 +1120,10 @@ class Phono3py(object):
         """
 
         if displacement_dataset is None:
-            if self._phonon_displacement_dataset is None:
-                disp_dataset = self._displacement_dataset
+            if self._phonon_dataset is None:
+                disp_dataset = self._dataset
             else:
-                disp_dataset = self._phonon_displacement_dataset
+                disp_dataset = self._phonon_dataset
         else:
             disp_dataset = displacement_dataset
             msg = ("Displacement dataset for fc2 has to set by "
@@ -1196,7 +1207,7 @@ class Phono3py(object):
         """
 
         if displacement_dataset is None:
-            disp_dataset = self._displacement_dataset
+            disp_dataset = self._dataset
         else:
             msg = ("Displacement dataset has to set by Phono3py.dataset.")
             warnings.warn(msg, DeprecationWarning)
@@ -1580,9 +1591,9 @@ class Phono3py(object):
 
         supercells = self._build_phonon_supercells_with_displacements(
             self._supercell,
-            self._displacement_dataset)
+            self._dataset)
 
-        for disp1 in self._displacement_dataset['first_atoms']:
+        for disp1 in self._dataset['first_atoms']:
             disp_cart1 = disp1['displacement']
             for disp2 in disp1['second_atoms']:
                 if 'included' in disp2:
