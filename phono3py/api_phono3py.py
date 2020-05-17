@@ -162,6 +162,9 @@ class Phono3py(object):
         self._band_indices = None
         self._band_indices_flatten = None
         if mesh is not None:
+            warnings.warn("Phono3py(mesh) is deprecated."
+                          "Use Phono3py.mesh_number to set sampling mesh.",
+                          DeprecationWarning)
             self._set_mesh_numbers(mesh)
         self.set_band_indices(band_indices)
 
@@ -1564,10 +1567,10 @@ class Phono3py(object):
                                                     supercell,
                                                     displacement_dataset):
         supercells = []
-        magmoms = supercell.get_magnetic_moments()
-        masses = supercell.get_masses()
-        numbers = supercell.get_atomic_numbers()
-        lattice = supercell.get_cell()
+        magmoms = supercell.magnetic_moments
+        masses = supercell.masses
+        numbers = supercell.numbers
+        lattice = supercell.cell
 
         for disp1 in displacement_dataset['first_atoms']:
             disp_cart1 = disp1['displacement']
@@ -1584,10 +1587,10 @@ class Phono3py(object):
 
     def _build_supercells_with_displacements(self):
         supercells = []
-        magmoms = self._supercell.get_magnetic_moments()
-        masses = self._supercell.get_masses()
-        numbers = self._supercell.get_atomic_numbers()
-        lattice = self._supercell.get_cell()
+        magmoms = self._supercell.magnetic_moments
+        masses = self._supercell.masses
+        numbers = self._supercell.numbers
+        lattice = self._supercell.cell
 
         supercells = self._build_phonon_supercells_with_displacements(
             self._supercell,

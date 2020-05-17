@@ -32,12 +32,15 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import os
 import sys
 from phonopy.harmonic.force_constants import (
     show_drift_force_constants,
     symmetrize_force_constants,
     symmetrize_compact_force_constants)
 from phonopy.file_IO import get_dataset_type2
+from phonopy.cui.phonopy_script import print_error, file_exists
+from phonopy.interface.calculator import get_default_physical_units
 from phono3py.phonon3.fc3 import show_drift_fc3
 from phono3py.file_IO import (
     parse_disp_fc3_yaml, parse_disp_fc2_yaml, parse_FORCES_FC2,
@@ -45,17 +48,16 @@ from phono3py.file_IO import (
     write_fc3_to_hdf5, write_fc2_to_hdf5, get_length_of_first_line)
 from phono3py.cui.show_log import (
     show_phono3py_force_constants_settings)
-from phonopy.cui.phonopy_script import print_error, file_exists
 from phono3py.phonon3.fc3 import (
     set_permutation_symmetry_fc3, set_translational_invariance_fc3)
 
 
 def create_phono3py_force_constants(phono3py,
                                     settings,
-                                    force_to_eVperA=None,
-                                    distance_to_A=None,
+                                    ph3py_yaml=None,
                                     input_filename=None,
                                     output_filename=None,
+                                    phono3py_yaml_filename=None,
                                     log_level=1):
     if settings.fc_calculator is None:
         symmetrize_fc3r = (settings.is_symmetrize_fc3_r or
@@ -87,25 +89,27 @@ def create_phono3py_force_constants(phono3py,
                                input_filename,
                                log_level)
         else:  # fc3 from FORCES_FC3
-            if not _create_phono3py_fc3(
-                    phono3py,
-                    force_to_eVperA,
-                    distance_to_A,
-                    symmetrize_fc3r,
-                    symmetrize_fc2,
-                    input_filename,
-                    output_filename,
-                    settings.is_compact_fc,
-                    settings.cutoff_pair_distance,
-                    settings.fc_calculator,
-                    settings.fc_calculator_options,
-                    settings.hdf5_compression,
-                    log_level):
-
-                print("fc3 was not created properly.")
-                if log_level:
-                    print_error()
-                sys.exit(1)
+            _create_phono3py_fc3(phono3py,
+                                 ph3py_yaml,
+                                 symmetrize_fc3r,
+                                 symmetrize_fc2,
+                                 input_filename,
+                                 output_filename,
+                                 settings.is_compact_fc,
+                                 settings.cutoff_pair_distance,
+                                 settings.fc_calculator,
+                                 settings.fc_calculator_options,
+                                 log_level)
+            if output_filename is None:
+                filename = 'fc3.hdf5'
+            else:
+                filename = 'fc3.' + output_filename + '.hdf5'
+            if log_level:
+                print("Writing fc3 to \"%s\"." % filename)
+            write_fc3_to_hdf5(phono3py.fc3,
+                              filename=filename,
+                              p2s_map=phono3py.primitive.p2s_map,
+                              compression=settings.hdf5_compression)
 
         cutoff_distance = settings.cutoff_fc3_distance
         if cutoff_distance is not None and cutoff_distance > 0:
@@ -129,37 +133,23 @@ def create_phono3py_force_constants(phono3py,
                            log_level)
     else:
         if phono3py.phonon_supercell_matrix is None:
-            if settings.fc_calculator is not None:
-                pass
-            elif not _create_phono3py_fc2(
-                    phono3py,
-                    force_to_eVperA,
-                    distance_to_A,
-                    symmetrize_fc2,
-                    input_filename,
-                    settings.is_compact_fc,
-                    settings.fc_calculator,
-                    settings.fc_calculator_options,
-                    log_level):
-                print("fc2 was not created properly.")
-                if log_level:
-                    print_error()
-                sys.exit(1)
+            _create_phono3py_fc2(phono3py,
+                                 ph3py_yaml,
+                                 symmetrize_fc2,
+                                 input_filename,
+                                 settings.is_compact_fc,
+                                 settings.fc_calculator,
+                                 settings.fc_calculator_options,
+                                 log_level)
         else:
-            if not _create_phono3py_phonon_fc2(
-                    phono3py,
-                    force_to_eVperA,
-                    distance_to_A,
-                    symmetrize_fc2,
-                    input_filename,
-                    settings.is_compact_fc,
-                    settings.fc_calculator,
-                    settings.fc_calculator_options,
-                    log_level):
-                print("fc2 was not created properly.")
-                if log_level:
-                    print_error()
-                sys.exit(1)
+            _create_phono3py_phonon_fc2(phono3py,
+                                        ph3py_yaml,
+                                        symmetrize_fc2,
+                                        input_filename,
+                                        settings.is_compact_fc,
+                                        settings.fc_calculator,
+                                        settings.fc_calculator_options,
+                                        log_level)
         if output_filename is None:
             filename = 'fc2.hdf5'
         else:
@@ -178,63 +168,114 @@ def create_phono3py_force_constants(phono3py,
                                    name='fc2')
 
 
-def parse_forces(natom,
-                 force_to_eVperA,
-                 distance_to_A,
+def parse_forces(phono3py,
+                 ph3py_yaml=None,
                  cutoff_pair_distance=None,
                  force_filename="FORCES_FC3",
                  disp_filename=None,
-                 is_fc2=False,
+                 fc_type=None,
                  log_level=0):
-    disp_dataset = _get_type2_dataset(natom, filename=force_filename)
-    if disp_dataset:  # type2
+    if fc_type == 'phonon_fc2':
+        natom = len(phono3py.phonon_supercell)
+    else:
+        natom = len(phono3py.supercell)
+    dataset = _get_type2_dataset(natom, filename=force_filename)
+    if dataset:  # type2
+        physical_units = get_default_physical_units(phono3py.calculator)
+        force_to_eVperA = physical_units['force_to_eVperA']
+        distance_to_A = physical_units['distance_to_A']
         if log_level:
             print("%d snapshots were found in %s."
-                  % (len(disp_dataset['displacements']), "FORCES_FC3"))
+                  % (len(dataset['displacements']), "FORCES_FC3"))
         if force_to_eVperA is not None:
-            disp_dataset['forces'] *= force_to_eVperA
+            dataset['forces'] *= force_to_eVperA
         if distance_to_A is not None:
-            disp_dataset['displacements'] *= distance_to_A
+            dataset['displacements'] *= distance_to_A
     else:  # type1
-        if disp_filename is None:
-            msg = ("\"%s\" in type-1 format is given. "
-                   "So filename of displacement dataset has to be given, too."
-                   % force_filename)
-            raise RuntimeError(msg)
-        if is_fc2:
-            disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
-        else:
-            disp_dataset = parse_disp_fc3_yaml(filename=disp_filename)
+        dataset = _parse_forces_type1(phono3py,
+                                      ph3py_yaml,
+                                      cutoff_pair_distance,
+                                      force_filename,
+                                      disp_filename,
+                                      fc_type,
+                                      log_level)
+
+    return dataset
+
+
+def _parse_forces_type1(phono3py,
+                        ph3py_yaml,
+                        cutoff_pair_distance,
+                        force_filename,
+                        disp_filename,
+                        fc_type,
+                        log_level):
+    if fc_type == 'phonon_fc2':
+        dataset = ph3py_yaml.phonon_dataset
+        natom = len(phono3py.phonon_supercell)
+    else:
+        dataset = ph3py_yaml.dataset
+        natom = len(phono3py.supercell)
+
+    if disp_filename is None and dataset is None:
+        msg = ("\"%s\" in type-1 format is given. "
+               "But displacement dataset is not given properly."
+               % force_filename)
+        raise RuntimeError(msg)
+    elif dataset is None:
+        dataset = _read_disp_fc_yaml(disp_filename, fc_type, log_level)
+    else:
         if log_level:
             print("Displacement dataset for %s was read from \"%s\"."
-                  % ("fc2" if is_fc2 else "fc3", disp_filename))
-        if cutoff_pair_distance:
-            if ('cutoff_distance' not in disp_dataset or
-                'cutoff_distance' in disp_dataset and
-                cutoff_pair_distance < disp_dataset['cutoff_distance']):
-                disp_dataset['cutoff_distance'] = cutoff_pair_distance
-                if log_level:
-                    print("Cutoff-pair-distance: %f" % cutoff_pair_distance)
-        if disp_dataset['natom'] != natom:
-            msg = ("Number of atoms in supercell is not consistent with "
-                   "\"%s\"." % disp_filename)
-            raise RuntimeError(msg)
-        _convert_displacement_unit(disp_dataset, distance_to_A, is_fc2=is_fc2)
-        # forces are stored in disp_dataset.
-        if is_fc2:
-            parse_FORCES_FC2(disp_dataset,
-                             filename=force_filename,
-                             unit_conversion_factor=force_to_eVperA)
-        else:
-            parse_FORCES_FC3(disp_dataset,
-                             filename=force_filename,
-                             unit_conversion_factor=force_to_eVperA)
-        if log_level:
-            print("Sets of supercell forces were read from \"%s\"."
-                  % force_filename)
-            sys.stdout.flush()
+                  % (fc_type, ph3py_yaml.yaml_filename))
 
-    return disp_dataset
+    physical_units = get_default_physical_units(phono3py.calculator)
+    force_to_eVperA = physical_units['force_to_eVperA']
+    distance_to_A = physical_units['distance_to_A']
+
+    if cutoff_pair_distance:
+        if ('cutoff_distance' not in dataset or
+            'cutoff_distance' in dataset and
+            cutoff_pair_distance < dataset['cutoff_distance']):
+            dataset['cutoff_distance'] = cutoff_pair_distance
+            if log_level:
+                print("Cutoff-pair-distance: %f" % cutoff_pair_distance)
+
+    if dataset['natom'] != natom:
+        msg = ("Number of atoms in supercell is not consistent with "
+               "\"%s\"." % disp_filename)
+        raise RuntimeError(msg)
+
+    if distance_to_A is not None:
+        _convert_displacement_unit(dataset, distance_to_A)
+
+    if fc_type == 'phonon_fc2':
+        parse_FORCES_FC2(dataset,
+                         filename=force_filename,
+                         unit_conversion_factor=force_to_eVperA)
+    else:
+        parse_FORCES_FC3(dataset,
+                         filename=force_filename,
+                         unit_conversion_factor=force_to_eVperA)
+
+    if log_level:
+        print("Sets of supercell forces were read from \"%s\"."
+              % force_filename)
+        sys.stdout.flush()
+
+    return dataset
+
+
+def _read_disp_fc_yaml(disp_filename, fc_type, log_level):
+    if fc_type == 'phonon_fc2':
+        dataset = parse_disp_fc2_yaml(filename=disp_filename)
+    else:
+        dataset = parse_disp_fc3_yaml(filename=disp_filename)
+    if log_level:
+        print("Displacement dataset for %s was read from \"%s\"."
+              % (fc_type, disp_filename))
+
+    return dataset
 
 
 def _read_phono3py_fc3(phono3py,
@@ -322,8 +363,7 @@ def _get_type2_dataset(natom, filename="FORCES_FC3"):
 
 
 def _create_phono3py_fc3(phono3py,
-                         force_to_eVperA,
-                         distance_to_A,
+                         ph3py_yaml,
                          symmetrize_fc3r,
                          symmetrize_fc2,
                          input_filename,
@@ -332,21 +372,38 @@ def _create_phono3py_fc3(phono3py,
                          cutoff_pair_distance,
                          fc_calculator,
                          fc_calculator_options,
-                         compression,
                          log_level):
+    """
+
+    Note
+    ----
+    cutoff_pair_distance is the parameter to determine each displaced
+    supercell is included to the computation of fc3. It is assumed that
+    cutoff_pair_distance is stored in the step to create sets of
+    displacements and the value is stored n the displacement dataset and
+    also as the parameter 'included': True or False for each displacement.
+    The parameter cutoff_pair_distance here can be used in the step to
+    create fc3 by overwriting original cutoff_pair_distance value only
+    when the former value is smaller than the later.
+
+    """
     if input_filename is None:
         disp_filename = 'disp_fc3.yaml'
     else:
         disp_filename = 'disp_fc3.' + input_filename + '.yaml'
-    natom = phono3py.supercell.get_number_of_atoms()
+
+    # Try to use phono3py.dataset when the disp file not found
+    if not os.path.isfile(disp_filename):
+        disp_filename = None
+
     try:
-        disp_dataset = parse_forces(natom,
-                                    force_to_eVperA,
-                                    distance_to_A,
-                                    cutoff_pair_distance=cutoff_pair_distance,
-                                    force_filename="FORCES_FC3",
-                                    disp_filename=disp_filename,
-                                    log_level=log_level)
+        dataset = parse_forces(phono3py,
+                               ph3py_yaml=ph3py_yaml,
+                               cutoff_pair_distance=cutoff_pair_distance,
+                               force_filename="FORCES_FC3",
+                               disp_filename=disp_filename,
+                               fc_type='fc3',
+                               log_level=log_level)
     except RuntimeError as e:
         if log_level:
             print(str(e))
@@ -355,30 +412,15 @@ def _create_phono3py_fc3(phono3py,
     except FileNotFoundError as e:
         file_exists(e.filename, log_level)
 
-    phono3py.produce_fc3(displacement_dataset=disp_dataset,
+    phono3py.produce_fc3(displacement_dataset=dataset,
                          symmetrize_fc3r=symmetrize_fc3r,
                          is_compact_fc=is_compact_fc,
                          fc_calculator=fc_calculator,
                          fc_calculator_options=fc_calculator_options)
 
-    if output_filename is None:
-        filename = 'fc3.hdf5'
-    else:
-        filename = 'fc3.' + output_filename + '.hdf5'
-    if log_level:
-        print("Writing fc3 to \"%s\"." % filename)
-
-    write_fc3_to_hdf5(phono3py.fc3,
-                      filename=filename,
-                      p2s_map=phono3py.primitive.p2s_map,
-                      compression=compression)
-
-    return True
-
 
 def _create_phono3py_fc2(phono3py,
-                         force_to_eVperA,
-                         distance_to_A,
+                         ph3py_yaml,
                          symmetrize_fc2,
                          input_filename,
                          is_compact_fc,
@@ -389,15 +431,18 @@ def _create_phono3py_fc2(phono3py,
         disp_filename = 'disp_fc3.yaml'
     else:
         disp_filename = 'disp_fc3.' + input_filename + '.yaml'
-    natom = phono3py.supercell.get_number_of_atoms()
+
+    # Try to use phono3py.dataset when the disp file not found
+    if not os.path.isfile(disp_filename):
+        disp_filename = None
+
     try:
-        disp_dataset = parse_forces(natom,
-                                    force_to_eVperA,
-                                    distance_to_A,
-                                    force_filename="FORCES_FC3",
-                                    disp_filename=disp_filename,
-                                    is_fc2=True,
-                                    log_level=log_level)
+        dataset = parse_forces(phono3py,
+                               ph3py_yaml=ph3py_yaml,
+                               force_filename="FORCES_FC3",
+                               disp_filename=disp_filename,
+                               fc_type='fc2',
+                               log_level=log_level)
     except RuntimeError as e:
         if log_level:
             print(str(e))
@@ -407,18 +452,15 @@ def _create_phono3py_fc2(phono3py,
         file_exists(e.filename, log_level)
 
     phono3py.produce_fc2(
-        displacement_dataset=disp_dataset,
+        displacement_dataset=dataset,
         symmetrize_fc2=symmetrize_fc2,
         is_compact_fc=is_compact_fc,
         fc_calculator=fc_calculator,
         fc_calculator_options=fc_calculator_options)
 
-    return True
-
 
 def _create_phono3py_phonon_fc2(phono3py,
-                                force_to_eVperA,
-                                distance_to_A,
+                                ph3py_yaml,
                                 symmetrize_fc2,
                                 input_filename,
                                 is_compact_fc,
@@ -429,15 +471,18 @@ def _create_phono3py_phonon_fc2(phono3py,
         disp_filename = 'disp_fc2.yaml'
     else:
         disp_filename = 'disp_fc2.' + input_filename + '.yaml'
-    natom = phono3py.phonon_supercell.get_number_of_atoms()
+
+    # Try to use phono3py.phonon_dataset when the disp file not found
+    if not os.path.isfile(disp_filename):
+        disp_filename = None
+
     try:
-        disp_dataset = parse_forces(natom,
-                                    force_to_eVperA,
-                                    distance_to_A,
-                                    force_filename="FORCES_FC2",
-                                    disp_filename=disp_filename,
-                                    is_fc2=True,
-                                    log_level=log_level)
+        dataset = parse_forces(phono3py,
+                               ph3py_yaml=ph3py_yaml,
+                               force_filename="FORCES_FC2",
+                               disp_filename=disp_filename,
+                               fc_type='phonon_fc2',
+                               log_level=log_level)
     except RuntimeError as e:
         if log_level:
             print(str(e))
@@ -447,21 +492,18 @@ def _create_phono3py_phonon_fc2(phono3py,
         file_exists(e.filename, log_level)
 
     phono3py.produce_fc2(
-        displacement_dataset=disp_dataset,
+        displacement_dataset=dataset,
         symmetrize_fc2=symmetrize_fc2,
         is_compact_fc=is_compact_fc,
         fc_calculator=fc_calculator,
         fc_calculator_options=fc_calculator_options)
 
-    return True
 
-
-def _convert_displacement_unit(disp_dataset, distance_to_A, is_fc2=False):
-    if distance_to_A is not None:
-        for first_atom in disp_dataset['first_atoms']:
-            for i in range(3):
-                first_atom['displacement'][i] *= distance_to_A
-            if not is_fc2:
-                for second_atom in first_atom['second_atoms']:
-                    for i in range(3):
-                        second_atom['displacement'][i] *= distance_to_A
+def _convert_displacement_unit(dataset, distance_to_A):
+    for d1 in dataset['first_atoms']:
+        for i in range(3):
+            d1['displacement'][i] *= distance_to_A
+        if 'second_atoms' in d1:
+            for d2 in d1['second_atoms']:
+                for i in range(3):
+                    d2['displacement'][i] *= distance_to_A

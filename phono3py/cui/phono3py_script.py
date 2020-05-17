@@ -113,8 +113,14 @@ def finalize_phono3py(phono3py,
         _calculator = None
     _physical_units = get_default_physical_units(_calculator)
 
+    yaml_settings = {
+        'force_sets': False,
+        'displacements': displacements_mode
+    }
+
     ph3py_yaml = Phono3pyYaml(configuration=confs,
-                              physical_units=_physical_units)
+                              physical_units=_physical_units,
+                              settings=yaml_settings)
     ph3py_yaml.set_phonon_info(phono3py)
     ph3py_yaml.calculator = _calculator
     with open(filename, 'w') as w:
@@ -565,6 +571,7 @@ def init_phono3py(settings,
 
 def store_force_constants(phono3py,
                           settings,
+                          ph3py_yaml,
                           physical_units,
                           input_filename,
                           output_filename,
@@ -573,9 +580,13 @@ def store_force_constants(phono3py,
     if load_phono3py_yaml:
         (fc_calculator,
          fc_calculator_options) = get_fc_calculator_params(settings)
+
+        phono3py.dataset = ph3py_yaml.dataset
+        phono3py.phonon_dataset = ph3py_yaml.phonon_dataset
+
         read_fc = set_dataset_and_force_constants(
             phono3py,
-            physical_units,
+            ph3py_yaml=ph3py_yaml,
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
             symmetrize_fc=settings.fc_symmetry,
@@ -598,8 +609,7 @@ def store_force_constants(phono3py,
         create_phono3py_force_constants(
             phono3py,
             settings,
-            force_to_eVperA=physical_units['force_to_eVperA'],
-            distance_to_A=physical_units['distance_to_A'],
+            ph3py_yaml=ph3py_yaml,
             input_filename=input_filename,
             output_filename=output_filename,
             log_level=log_level)
@@ -945,6 +955,7 @@ def main(**argparse_control):
     ###################
     store_force_constants(phono3py,
                           settings,
+                          cell_info['phonopy_yaml'],
                           physical_units,
                           input_filename,
                           output_filename,

@@ -74,13 +74,13 @@ def get_fc3(supercell,
     first_disp_atoms = np.unique(
         [x['number'] for x in disp_dataset['first_atoms']])
     rotations = symmetry.get_symmetry_operations()['rotations']
-    lattice = supercell.get_cell().T
+    lattice = supercell.cell.T
     permutations = symmetry.get_atomic_permutations()
 
     if is_compact_fc:
-        s2p_map = primitive.get_supercell_to_primitive_map()
-        p2s_map = primitive.get_primitive_to_supercell_map()
-        p2p_map = primitive.get_primitive_to_primitive_map()
+        s2p_map = primitive.s2p_map
+        p2s_map = primitive.p2s_map
+        p2p_map = primitive.p2p_map
         s2compact = np.array([p2p_map[i] for i in s2p_map], dtype='intc')
         for i in first_disp_atoms:
             assert i in p2s_map
@@ -483,7 +483,7 @@ def cutoff_fc3(fc3,
 
     if verbose:
         print("Creating contracted fc3...")
-    num_atom = supercell.get_number_of_atoms()
+    num_atom = len(supercell)
     for i in range(num_atom):
         for j in range(i, num_atom):
             for k in range(j, num_atom):
@@ -703,11 +703,11 @@ def _third_rank_tensor_rotation_elem(rot, tensor, l, m, n):
 
 
 def _get_fc3_done(supercell, disp_dataset, symmetry, array_shape):
-    num_atom = supercell.get_number_of_atoms()
+    num_atom = len(supercell)
     fc3_done = np.zeros(array_shape, dtype='byte')
-    symprec = symmetry.get_symmetry_tolerance()
-    lattice = supercell.get_cell().T
-    positions = supercell.get_scaled_positions()
+    symprec = symmetry.tolerance
+    lattice = supercell.cell.T
+    positions = supercell.scaled_positions
     rotations = symmetry.get_symmetry_operations()['rotations']
     translations = symmetry.get_symmetry_operations()['translations']
 

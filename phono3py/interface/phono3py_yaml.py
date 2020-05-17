@@ -161,7 +161,7 @@ class Phono3pyYaml(PhonopyYaml):
                 if 'displacement_ids' in d2:
                     for disp_id, d2_dict in zip(d2['displacement_ids'], disps):
                         d2_dict['id'] = disp_id
-                data1['second_atoms'].append(disps)
+                data1['second_atoms'] += disps
             dataset['first_atoms'].append(data1)
         return dataset
 
@@ -192,9 +192,9 @@ class Phono3pyYaml(PhonopyYaml):
     def _phonon_supercell_yaml_lines(self):
         lines = []
         if self.phonon_supercell is not None:
+            s2p_map = getattr(self.phonon_primitive, 's2p_map', None)
             lines += self._cell_yaml_lines(
-                self.phonon_supercell, "phonon_supercell",
-                self.phonon_primitive.s2p_map)
+                self.phonon_supercell, "phonon_supercell", s2p_map)
             lines.append("")
         return lines
 
@@ -225,9 +225,20 @@ class Phono3pyYaml(PhonopyYaml):
         return lines
 
     def _displacements_yaml_lines_type1(self, dataset, with_forces=False):
+        """Get YAML lines for type1 phonon_dataset and dataset.
+
+        This method override PhonopyYaml._displacements_yaml_lines_type1.
+        PhonopyYaml._displacements_yaml_lines_2types calls
+        Phono3pyYaml._displacements_yaml_lines_type1.
+
+        """
+
         id_offset = len(dataset['first_atoms'])
 
-        lines = ["displacement_pairs:"]
+        if 'second_atoms' in dataset['first_atoms'][0]:
+            lines = ["displacement_pairs:"]
+        else:
+            lines = ["displacements:"]
         for i, d in enumerate(dataset['first_atoms']):
             lines.append("- atom: %4d" % (d['number'] + 1))
             lines.append("  displacement:")
@@ -250,14 +261,13 @@ class Phono3pyYaml(PhonopyYaml):
 
         if (('duplicates' in dataset and dataset['duplicates']) or
             'cutoff_distance' in dataset):
-            lines.append(
-                "displacement_pair_info: # 0 means perfect supercell")
+            lines.append("displacement_pair_info: # 0 means perfect supercell")
             if 'duplicates' in dataset and dataset['duplicates']:
                 lines.append("  duplicated_supercell_ids:")
                 for i in dataset['duplicates']:
                     # id-i and id-j give the same displacement pairs.
                     j = dataset['duplicates'][i]
-                    lines.append("  - %d : %d" % (i, j))
+                    lines.append("    %d : %d" % (i, j))
             if 'cutoff_distance' in dataset:
                 lines.append("  cutoff_pair_distance: %11.8f"
                              % dataset['cutoff_distance'])

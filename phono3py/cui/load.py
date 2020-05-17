@@ -115,7 +115,8 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         4. 'FORCES_FC3' and 'FORCES_FC2' are searched in current directory.
            'FORCES_FC2' is optional. For type-1 format, 'disp_fc3.yaml' and
            optionally 'disp_fc2.yaml' are also searched in current
-           directory.
+           directory. When 'FORCES_FC2' is not found, 'FORCES_FC3' is used
+           to create fc2.
 
     Parameters for non-analytical term correctiion (NAC)
     ----------------------------------------------------
@@ -259,6 +260,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         else:
             ph_smat = None
         _nac_params = nac_params
+        phono3py_yaml = None
     elif phono3py_yaml is not None:
         ph3py_yaml = Phono3pyYaml()
         ph3py_yaml.read(phono3py_yaml)
@@ -279,37 +281,37 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
             _nac_params = None
 
     # units keywords: factor, nac_factor, distance_to_A
-    units = get_default_physical_units(calculator)
+    physical_units = get_default_physical_units(calculator)
     if factor is None:
-        _factor = units['factor']
+        _factor = physical_units['factor']
     else:
         _factor = factor
     ph3py = Phono3py(cell,
                      smat,
                      primitive_matrix=pmat,
                      phonon_supercell_matrix=ph_smat,
-                     mesh=mesh,
                      frequency_factor_to_THz=_factor,
                      symprec=symprec,
                      is_symmetry=is_symmetry,
                      is_mesh_symmetry=is_mesh_symmetry,
                      calculator=calculator,
                      log_level=log_level)
+    ph3py.mesh_number = mesh
 
     # NAC params
     if (born_filename is not None or nac_params is not None or
         is_nac and os.path.isfile("BORN")):
-        ph3py.nac_params = load_helper.get_nac_params(ph3py.primitive,
-                                                      _nac_params,
-                                                      born_filename,
-                                                      is_nac,
-                                                      units['nac_factor'],
-                                                      log_level=log_level)
+        ph3py.nac_params = load_helper.get_nac_params(
+            ph3py.primitive,
+            _nac_params,
+            born_filename,
+            is_nac,
+            physical_units['nac_factor'],
+            log_level=log_level)
 
     set_dataset_and_force_constants(
         ph3py,
-        units,
-        dataset=None,
+        ph3py_yaml=ph3py_yaml,
         fc3_filename=fc3_filename,
         fc2_filename=fc2_filename,
         forces_fc3_filename=forces_fc3_filename,
@@ -330,8 +332,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
 
 def set_dataset_and_force_constants(
         ph3py,
-        units,
-        dataset=None,
+        ph3py_yaml=None,
         fc3_filename=None,
         fc2_filename=None,
         forces_fc3_filename=None,
@@ -341,6 +342,7 @@ def set_dataset_and_force_constants(
         produce_fc=True,
         symmetrize_fc=True,
         is_compact_fc=False,
+        cutoff_pair_distance=None,
         log_level=0):
     read_fc = {'fc2': False, 'fc3': False}
     p2s_map = ph3py.primitive.p2s_map
@@ -357,7 +359,7 @@ def set_dataset_and_force_constants(
         else:
             force_filename, disp_filename = forces_fc3_filename
         _set_forces_fc3(ph3py,
-                        units,
+                        ph3py_yaml,
                         force_filename,
                         disp_filename,
                         produce_fc,
@@ -365,22 +367,28 @@ def set_dataset_and_force_constants(
                         is_compact_fc,
                         fc_calculator,
                         fc_calculator_options,
+                        cutoff_pair_distance,
                         log_level)
     elif os.path.isfile("fc3.hdf5"):
         ph3py.fc3 = read_fc3_from_hdf5(filename="fc3.hdf5", p2s_map=p2s_map)
         read_fc['fc3'] = True
         if log_level:
             print("fc3 was read from \"fc3.hdf5\".")
-    elif os.path.isfile("FORCES_FC3") and os.path.isfile("disp_fc3.yaml"):
+    elif os.path.isfile("FORCES_FC3"):
+        if os.path.isfile("disp_fc3.yaml") and ph3py.dataset is None:
+            disp_filename = "disp_fc3.yaml"
+        else:
+            disp_filename = None
         _set_forces_fc3(ph3py,
-                        units,
+                        ph3py_yaml,
                         "FORCES_FC3",
-                        "disp_fc3.yaml",
+                        disp_filename,
                         produce_fc,
                         symmetrize_fc,
                         is_compact_fc,
                         fc_calculator,
                         fc_calculator_options,
+                        cutoff_pair_distance,
                         log_level)
     if log_level and ph3py.fc3 is not None:
         show_drift_fc3(ph3py.fc3, primitive=ph3py.primitive)
@@ -392,13 +400,13 @@ def set_dataset_and_force_constants(
         if log_level:
             print("fc2 was read from \"%s\"." % fc2_filename)
     elif forces_fc2_filename is not None:
-        if type(forces_fc2_filename) == str:
+        if type(forces_fc2_filename) is str:
             force_filename = forces_fc2_filename
             disp_filename = None
         else:
             force_filename, disp_filename = forces_fc2_filename
         _set_forces_fc2(ph3py,
-                        units,
+                        ph3py_yaml,
                         force_filename,
                         disp_filename,
                         produce_fc,
@@ -406,22 +414,44 @@ def set_dataset_and_force_constants(
                         is_compact_fc,
                         fc_calculator,
                         fc_calculator_options,
+                        "phonon_fc2",
                         log_level)
     elif os.path.isfile("fc2.hdf5"):
         ph3py.fc2 = read_fc2_from_hdf5(filename="fc2.hdf5", p2s_map=p2s_map)
         read_fc['fc2'] = True
         if log_level:
             print("fc2 was read from \"fc2.hdf5\".")
-    elif os.path.isfile("FORCES_FC2") and os.path.isfile("disp_fc2.yaml"):
+    elif os.path.isfile("FORCES_FC2"):
+        if os.path.isfile("disp_fc2.yaml") and ph3py.phonon_dataset is None:
+            disp_filename = "disp_fc2.yaml"
+        else:
+            disp_filename = None
         _set_forces_fc2(ph3py,
-                        units,
+                        ph3py_yaml,
                         "FORCES_FC2",
-                        "disp_fc2.yaml",
+                        disp_filename,
                         produce_fc,
                         symmetrize_fc,
                         is_compact_fc,
                         fc_calculator,
                         fc_calculator_options,
+                        "phonon_fc2",
+                        log_level)
+    elif os.path.isfile("FORCES_FC3"):
+        if os.path.isfile("disp_fc3.yaml") and ph3py.dataset is None:
+            disp_filename = "disp_fc3.yaml"
+        else:
+            disp_filename = None
+        _set_forces_fc2(ph3py,
+                        ph3py_yaml,
+                        "FORCES_FC3",
+                        disp_filename,
+                        produce_fc,
+                        symmetrize_fc,
+                        is_compact_fc,
+                        fc_calculator,
+                        fc_calculator_options,
+                        "fc2",
                         log_level)
     if log_level and ph3py.fc2 is not None:
         show_drift_force_constants(ph3py.fc2,
@@ -432,7 +462,7 @@ def set_dataset_and_force_constants(
 
 
 def _set_forces_fc3(ph3py,
-                    units,
+                    ph3py_yaml,
                     force_filename,
                     disp_filename,
                     produce_fc,
@@ -440,13 +470,16 @@ def _set_forces_fc3(ph3py,
                     is_compact_fc,
                     fc_calculator,
                     fc_calculator_options,
+                    cutoff_pair_distance,
                     log_level):
-    ph3py.dataset = parse_forces(len(ph3py.supercell),
-                                 units['force_to_eVperA'],
-                                 units['distance_to_A'],
-                                 force_filename=force_filename,
-                                 disp_filename=disp_filename,
-                                 log_level=log_level)
+    ph3py.dataset = parse_forces(
+        ph3py,
+        ph3py_yaml=ph3py_yaml,
+        cutoff_pair_distance=cutoff_pair_distance,
+        force_filename=force_filename,
+        disp_filename=disp_filename,
+        fc_type='fc3',
+        log_level=log_level)
     if produce_fc:
         ph3py.produce_fc3(symmetrize_fc3r=symmetrize_fc,
                           is_compact_fc=is_compact_fc,
@@ -457,7 +490,7 @@ def _set_forces_fc3(ph3py,
 
 
 def _set_forces_fc2(ph3py,
-                    units,
+                    ph3py_yaml,
                     force_filename,
                     disp_filename,
                     produce_fc,
@@ -465,14 +498,14 @@ def _set_forces_fc2(ph3py,
                     is_compact_fc,
                     fc_calculator,
                     fc_calculator_options,
+                    fc_type,
                     log_level):
     ph3py.phonon_dataset = parse_forces(
-        ph3py.phonon_supercell.get_number_of_atoms(),
-        units['force_to_eVperA'],
-        units['distance_to_A'],
+        ph3py,
+        ph3py_yaml=ph3py_yaml,
         force_filename=force_filename,
         disp_filename=disp_filename,
-        is_fc2=True,
+        fc_type=fc_type,
         log_level=log_level)
     if produce_fc:
         ph3py.produce_fc2(symmetrize_fc2=symmetrize_fc,
