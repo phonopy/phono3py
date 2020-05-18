@@ -47,8 +47,7 @@ def write_disp_fc3_yaml(dataset, supercell, filename='disp_fc3.yaml'):
     if 'duplicates' in dataset:
         w.write("duplicates:\n")
         for i in dataset['duplicates']:
-            w.write("- %d : %d\n" % (i + num_first + 1,
-                                     dataset['duplicates'][i] + num_first + 1))
+            w.write("- %d : %d\n" % (i, dataset['duplicates'][i]))
 
     w.write("first_atoms:\n")
     count1 = 0
