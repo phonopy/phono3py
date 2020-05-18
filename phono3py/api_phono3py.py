@@ -1037,6 +1037,50 @@ class Phono3py(object):
                                cutoff_pair_distance=None,
                                is_plusminus='auto',
                                is_diagonal=True):
+        """Generate displacement dataset in supercell for fc3
+
+        This systematically generates single and pair atomic displacements
+        in supercells to calculate fc3 considering crystal symmetry.
+
+        For fc3, two atoms are displaced for each configuration
+        considering crystal symmetry. The first displacement is chosen
+        in the perfect supercell, and the second displacement in the
+        displaced supercell. The first displacements are taken along
+        the basis vectors of the supercell. This is because the
+        symmetry is expected to be less broken by the introduced first
+        displacement, and as the result, the number of second
+        displacements may become smaller than the case that the first
+        atom is displaced not along the basis vectors.
+
+        Note
+        ----
+        When phonon_supercell_matrix is not given, fc2 is also
+        computed from the same set of the displacements for fc3 and
+        respective supercell forces. When phonon_supercell_matrix is
+        set, the displacements in phonon_supercell are generated.
+
+        Parameters
+        ----------
+        distance : float, optional
+            Constant displacement Euclidean distance. Default is 0.03.
+        cutoff_pair_distance : float, optional
+            This is used as a cutoff Euclidean distance to determine if
+            each pair of displacements is considered to calculate fc3 or not.
+            Default is None, which means cutoff is not used.
+        is_plusminus : True, False, or 'auto', optional
+            With True, atomis are displaced in both positive and negative
+            directions. With False, only one direction. With 'auto',
+            mostly equivalent to is_plusminus=True, but only one direction
+            is chosen when the displacements in both directions are
+            symmetrically equivalent. Default is 'auto'.
+        is_diagonal : Bool, optional
+            With False, the second displacements are made along the basis
+            vectors of the supercell. With True, direction not along the basis
+            vectors can be chosen when the number of the displacements
+            may be reduced.
+
+        """
+
         direction_dataset = get_third_order_displacements(
             self._supercell,
             self._symmetry,
@@ -1049,126 +1093,58 @@ class Phono3py(object):
             cutoff_distance=cutoff_pair_distance)
 
         if self._phonon_supercell_matrix is not None:
-            # 'is_diagonal=False' below is made intentionally. For
-            # third-order force constants, we need better accuracy,
-            # and I expect this choice is better for it, but not very
-            # sure.
-            # In phono3py, two atoms are displaced for each
-            # configuration and the displacements are chosen, first
-            # displacement from the perfect supercell, then second
-            # displacement, considering symmetry. If I choose
-            # is_diagonal=False for the first displacement, the
-            # symmetry is less broken and the number of second
-            # displacements can be smaller than in the case of
-            # is_diagonal=True for the first displacement.  This is
-            # done in the call get_least_displacements() in
-            # phonon3.displacement_fc3.get_third_order_displacements().
-            #
-            # The call get_least_displacements() is only for the
-            # second order force constants, but 'is_diagonal=False' to
-            # be consistent with the above function call, and also for
-            # the accuracy when calculating ph-ph interaction
-            # strength because displacement directions are better to be
-            # close to perpendicular each other to fit force constants.
-            #
-            # On the discussion of the accuracy, these are just my
-            # expectation when I designed phono3py in the early time,
-            # and in fact now I guess not very different. If these are
-            # little different, then I should not surprise users to
-            # change the default behaviour. At this moment, this is
-            # open question and we will have more advance and should
-            # have better specificy external software on this.
-            phonon_displacement_directions = get_least_displacements(
-                self._phonon_supercell_symmetry,
-                is_plusminus=is_plusminus,
-                is_diagonal=False)
-            self._phonon_dataset = directions_to_displacement_dataset(
-                phonon_displacement_directions,
-                distance,
-                self._phonon_supercell)
+            self.generate_fc2_displacements(distance=distance,
+                                            is_plusminus=is_plusminus,
+                                            is_diagonal=False)
 
-    def produce_fc2(self,
-                    forces_fc2=None,
-                    displacement_dataset=None,
-                    symmetrize_fc2=False,
-                    is_compact_fc=False,
-                    fc_calculator=None,
-                    fc_calculator_options=None):
-        """Calculate fc2 from displacements and forces
+    def generate_fc2_displacements(self,
+                                   distance=0.03,
+                                   is_plusminus='auto',
+                                   is_diagonal=False):
+        """Generate displacement dataset in phonon supercell for fc2
+
+        This systematically generates single atomic displacements
+        in supercells to calculate phonon_fc2 considering crystal symmetry.
+
+
+        Note
+        ----
+        is_diagonal=False is chosen as the default setting intentionally
+        to be consistent to the first displacements of the fc3 pair
+        displacemets in supercell.
 
         Parameters
         ----------
-        forces_fc2 :
-            Dummy argument. Deprecated at v2.0
-        displacement_dataset : dict
-            See docstring of Phono3py.phonon_dataset. Deprecated at v2.0.
-        symmetrize_fc2 : bool
-            Only for type 1 displacement_dataset, translational and
-            permutation symmetries are applied after creating fc3. This
-            symmetrization is not very sophisticated and can break space
-            group symmetry, but often useful. If better symmetrization is
-            expected, it is recommended to use external force constants
-            calculator such as ALM. Default is False.
-        is_compact_fc : bool
-            fc2 shape is
-                False: (supercell, supecell, 3, 3)
-                True: (primitive, supecell, 3, 3)
-            where 'supercell' and 'primitive' indicate number of atoms in these
-            cells. Default is False.
-        fc_calculator : str or None
-            Force constants calculator given by str.
-        fc_calculator_options : dict
-            Options for external force constants calculator.
+        distance : float, optional
+            Constant displacement Euclidean distance. Default is 0.03.
+        is_plusminus : True, False, or 'auto', optional
+            With True, atomis are displaced in both positive and negative
+            directions. With False, only one direction. With 'auto',
+            mostly equivalent to is_plusminus=True, but only one direction
+            is chosen when the displacements in both directions are
+            symmetrically equivalent. Default is 'auto'.
+        is_diagonal : Bool, optional
+            With False, the displacements are made along the basis
+            vectors of the supercell. With True, direction not along the basis
+            vectors can be chosen when the number of the displacements
+            may be reduced. Default is False.
 
         """
 
-        if displacement_dataset is None:
-            if self._phonon_dataset is None:
-                disp_dataset = self._dataset
-            else:
-                disp_dataset = self._phonon_dataset
-        else:
-            disp_dataset = displacement_dataset
-            msg = ("Displacement dataset for fc2 has to set by "
-                   "Phono3py.phonon_dataset.")
-            warnings.warn(msg, DeprecationWarning)
+        if self._phonon_supercell_matrix is None:
+            msg = ("phonon_supercell_matrix is not set. "
+                   "This method is used to generate displacements to "
+                   "calculate phonon_fc2.")
+            raise RuntimeError(msg)
 
-        if forces_fc2 is not None:
-            self.phonon_forces = forces_fc2
-            msg = ("Forces for fc2 have to be set by Phono3py.phonon_forces "
-                   "or via Phono3py.phonon_dataset.")
-            warnings.warn(msg, DeprecationWarning)
-
-        if is_compact_fc:
-            p2s_map = self._phonon_primitive.p2s_map
-        else:
-            p2s_map = None
-
-        if fc_calculator is not None:
-            disps, forces = get_displacements_and_forces(disp_dataset)
-            self._fc2 = get_fc2(self._phonon_supercell,
-                                self._phonon_primitive,
-                                disps,
-                                forces,
-                                fc_calculator=fc_calculator,
-                                fc_calculator_options=fc_calculator_options,
-                                atom_list=p2s_map,
-                                log_level=self._log_level)
-        else:
-            if 'displacements' in disp_dataset:
-                msg = ("fc_calculator has to be set to produce force "
-                       "constans from this dataset for fc2.")
-                raise RuntimeError(msg)
-            self._fc2 = get_phonopy_fc2(self._phonon_supercell,
-                                        self._phonon_supercell_symmetry,
-                                        disp_dataset,
-                                        atom_list=p2s_map)
-            if symmetrize_fc2:
-                if is_compact_fc:
-                    symmetrize_compact_force_constants(
-                        self._fc2, self._phonon_primitive)
-                else:
-                    symmetrize_force_constants(self._fc2)
+        phonon_displacement_directions = get_least_displacements(
+            self._phonon_supercell_symmetry,
+            is_plusminus=is_plusminus,
+            is_diagonal=is_diagonal)
+        self._phonon_dataset = directions_to_displacement_dataset(
+            phonon_displacement_directions,
+            distance,
+            self._phonon_supercell)
 
     def produce_fc3(self,
                     forces_fc3=None,
@@ -1263,6 +1239,89 @@ class Phono3py(object):
         # Normally self._fc2 is overwritten in produce_fc2
         if self._fc2 is None:
             self._fc2 = fc2
+
+    def produce_fc2(self,
+                    forces_fc2=None,
+                    displacement_dataset=None,
+                    symmetrize_fc2=False,
+                    is_compact_fc=False,
+                    fc_calculator=None,
+                    fc_calculator_options=None):
+        """Calculate fc2 from displacements and forces
+
+        Parameters
+        ----------
+        forces_fc2 :
+            Dummy argument. Deprecated at v2.0
+        displacement_dataset : dict
+            See docstring of Phono3py.phonon_dataset. Deprecated at v2.0.
+        symmetrize_fc2 : bool
+            Only for type 1 displacement_dataset, translational and
+            permutation symmetries are applied after creating fc3. This
+            symmetrization is not very sophisticated and can break space
+            group symmetry, but often useful. If better symmetrization is
+            expected, it is recommended to use external force constants
+            calculator such as ALM. Default is False.
+        is_compact_fc : bool
+            fc2 shape is
+                False: (supercell, supecell, 3, 3)
+                True: (primitive, supecell, 3, 3)
+            where 'supercell' and 'primitive' indicate number of atoms in these
+            cells. Default is False.
+        fc_calculator : str or None
+            Force constants calculator given by str.
+        fc_calculator_options : dict
+            Options for external force constants calculator.
+
+        """
+
+        if displacement_dataset is None:
+            if self._phonon_dataset is None:
+                disp_dataset = self._dataset
+            else:
+                disp_dataset = self._phonon_dataset
+        else:
+            disp_dataset = displacement_dataset
+            msg = ("Displacement dataset for fc2 has to set by "
+                   "Phono3py.phonon_dataset.")
+            warnings.warn(msg, DeprecationWarning)
+
+        if forces_fc2 is not None:
+            self.phonon_forces = forces_fc2
+            msg = ("Forces for fc2 have to be set by Phono3py.phonon_forces "
+                   "or via Phono3py.phonon_dataset.")
+            warnings.warn(msg, DeprecationWarning)
+
+        if is_compact_fc:
+            p2s_map = self._phonon_primitive.p2s_map
+        else:
+            p2s_map = None
+
+        if fc_calculator is not None:
+            disps, forces = get_displacements_and_forces(disp_dataset)
+            self._fc2 = get_fc2(self._phonon_supercell,
+                                self._phonon_primitive,
+                                disps,
+                                forces,
+                                fc_calculator=fc_calculator,
+                                fc_calculator_options=fc_calculator_options,
+                                atom_list=p2s_map,
+                                log_level=self._log_level)
+        else:
+            if 'displacements' in disp_dataset:
+                msg = ("fc_calculator has to be set to produce force "
+                       "constans from this dataset for fc2.")
+                raise RuntimeError(msg)
+            self._fc2 = get_phonopy_fc2(self._phonon_supercell,
+                                        self._phonon_supercell_symmetry,
+                                        disp_dataset,
+                                        atom_list=p2s_map)
+            if symmetrize_fc2:
+                if is_compact_fc:
+                    symmetrize_compact_force_constants(
+                        self._fc2, self._phonon_primitive)
+                else:
+                    symmetrize_force_constants(self._fc2)
 
     def cutoff_fc3_by_zero(self, cutoff_distance, fc3=None):
         if fc3 is None:
@@ -1479,10 +1538,8 @@ class Phono3py(object):
             the settings expected to be updated from the following
             default settings are needed to be set in the dictionary.
             The possible parameters and their default settings are:
-                {'forces_fc3': True,
-                 'displacements_fc3': True,
-                 'forces_fc2': True,
-                 'displacements_fc2': True,
+                {'force_sets': True,
+                 'displacements': True,
                  'force_constants': False,
                  'born_effective_charge': True,
                  'dielectric_constant': True}
