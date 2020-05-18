@@ -40,6 +40,11 @@ class Phono3pyYaml(PhonopyYaml):
 
     command_name = "phono3py"
     default_filenames = ("phono3py_disp.yaml", "phono3py.yaml")
+    default_settings = {'force_sets': False,
+                        'displacements': True,
+                        'force_constants': False,
+                        'born_effective_charge': True,
+                        'dielectric_constant': True}
 
     def __init__(self,
                  configuration=None,
@@ -250,27 +255,45 @@ class Phono3pyYaml(PhonopyYaml):
             lines.append("  displacement_id: %d" % id_num)
             if with_forces and 'forces' in d:
                 lines.append("  forces:")
-                for f in d['forces']:
-                    lines.append("  - [ %19.16f, %19.16f, %19.16f ]"
-                                 % tuple(f))
+                for v in d['forces']:
+                    lines.append(
+                        "  - [ %19.16f, %19.16f, %19.16f ]" % tuple(v))
             if 'second_atoms' in d:
                 ret_lines, id_offset = self._second_displacements_yaml_lines(
                     d['second_atoms'], id_offset, with_forces=with_forces)
                 lines += ret_lines
         lines.append("")
 
-        if (('duplicates' in dataset and dataset['duplicates']) or
-            'cutoff_distance' in dataset):
-            lines.append("displacement_pair_info: # 0 means perfect supercell")
+        if 'second_atoms' in dataset['first_atoms'][0]:
+            n_single = len(dataset['first_atoms'])
+            n_pair = 0
+            n_included = 0
+            for d1 in dataset['first_atoms']:
+                n_d2 = len(d1['second_atoms'])
+                n_pair += n_d2
+                for d2 in d1['second_atoms']:
+                    if 'included' not in d2:
+                        n_included += 1
+                    elif d2['included']:
+                        n_included += 1
+
+            lines.append("displacement_pair_info:")
+            if 'cutoff_distance' in dataset:
+                lines.append("  cutoff_pair_distance: %11.8f"
+                             % dataset['cutoff_distance'])
+            lines.append("  number_of_singles: %d" % n_single)
+            lines.append("  number_of_pairs: %d" % n_pair)
+            if 'cutoff_distance' in dataset:
+                lines.append("  number_of_pairs_in_cutoff: %d"
+                             % n_included)
+
             if 'duplicates' in dataset and dataset['duplicates']:
-                lines.append("  duplicated_supercell_ids:")
+                lines.append("  duplicated_supercell_ids: "
+                             "# 0 means perfect supercell")
                 for i in dataset['duplicates']:
                     # id-i and id-j give the same displacement pairs.
                     j = dataset['duplicates'][i]
                     lines.append("    %d : %d" % (i, j))
-            if 'cutoff_distance' in dataset:
-                lines.append("  cutoff_pair_distance: %11.8f"
-                             % dataset['cutoff_distance'])
             lines.append("")
 
         return lines
@@ -287,23 +310,43 @@ class Phono3pyYaml(PhonopyYaml):
         unique_numbers = np.unique(numbers)
         for i in unique_numbers:
             indices_eq_i = np.sort(np.where(numbers == i)[0])
-            lines.append("  - atom: %4d" % (i + 1))
-            lines.append("    pair_distance: %.8f"
-                         % dataset2[indices_eq_i[0]]['pair_distance'])
-            if 'included' in dataset2[indices_eq_i[0]]:
-                included = dataset2[indices_eq_i[0]]['included']
-                lines.append("    included: %s"
-                             % ("true" if included else "false"))
-            disp_ids = []
-            lines.append("    displacements:")
-            for j in indices_eq_i:
-                id_num += 1
-                d = tuple(dataset2[j]['displacement'])
-                lines.append("    - [ %19.16f, %19.16f, %19.16f ]" % d)
-                if 'id' in dataset2[j]:
-                    assert dataset2[j]['id'] == id_num
-                    disp_ids.append(dataset2[j]['id'])
-            lines.append("    displacement_ids: [ %s ]"
-                         % ', '.join(["%d" % j for j in disp_ids]))
+            if with_forces and 'forces' in dataset2[indices_eq_i[0]]:
+                for j in indices_eq_i:
+                    id_num += 1
+                    lines.append("  - atom: %4d" % (i + 1))
+                    lines.append("    pair_distance: %.8f"
+                                 % dataset2[j]['pair_distance'])
+                    lines.append("    displacement:")
+                    lines.append("      [ %19.16f, %19.16f, %19.16f ]"
+                                 % tuple(dataset2[j]['displacement']))
+
+                    if 'id' in dataset2[j]:
+                        assert dataset2[j]['id'] == id_num
+                        lines.append("    displacement_id: %d" % id_num)
+
+                    lines.append("    forces:")
+                    for v in dataset2[j]['forces']:
+                        lines.append(
+                            "    - [ %19.16f, %19.16f, %19.16f ]" % tuple(v))
+            else:
+                lines.append("  - atom: %4d" % (i + 1))
+                lines.append("    pair_distance: %.8f"
+                             % dataset2[indices_eq_i[0]]['pair_distance'])
+                if 'included' in dataset2[indices_eq_i[0]]:
+                    included = dataset2[indices_eq_i[0]]['included']
+                    lines.append("    included: %s"
+                                 % ("true" if included else "false"))
+                disp_ids = []
+                lines.append("    displacements:")
+                for j in indices_eq_i:
+                    id_num += 1
+                    d = tuple(dataset2[j]['displacement'])
+                    lines.append("    - [ %19.16f, %19.16f, %19.16f ]" % d)
+                    if 'id' in dataset2[j]:
+                        assert dataset2[j]['id'] == id_num
+                        disp_ids.append(dataset2[j]['id'])
+                if disp_ids:
+                    lines.append("    displacement_ids: [ %s ]"
+                                 % ', '.join(["%d" % j for j in disp_ids]))
 
         return lines, id_num
