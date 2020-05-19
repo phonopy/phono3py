@@ -209,8 +209,13 @@ class Phono3pyYaml(PhonopyYaml):
         This method override PhonopyYaml._nac_yaml_lines.
 
         """
-        return self._nac_yaml_lines_given_symbols(
-            self.phonon_primitive.symbols)
+
+        if self.phonon_primitive is not None:
+            return self._nac_yaml_lines_given_symbols(
+                self.phonon_primitive.symbols)
+        else:
+            return self._nac_yaml_lines_given_symbols(
+                self.primitive.symbols)
 
     def _displacements_yaml_lines(self, with_forces=False):
         """Get YAML lines for phonon_dataset and dataset.

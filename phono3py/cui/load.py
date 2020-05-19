@@ -260,7 +260,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         else:
             ph_smat = None
         _nac_params = nac_params
-        phono3py_yaml = None
+        ph3py_yaml = None
     elif phono3py_yaml is not None:
         ph3py_yaml = Phono3pyYaml()
         ph3py_yaml.read(phono3py_yaml)

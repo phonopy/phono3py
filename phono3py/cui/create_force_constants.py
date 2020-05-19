@@ -210,11 +210,14 @@ def _parse_forces_type1(phono3py,
                         disp_filename,
                         fc_type,
                         log_level):
+    dataset = None
     if fc_type == 'phonon_fc2':
-        dataset = ph3py_yaml.phonon_dataset
+        if ph3py_yaml:
+            dataset = ph3py_yaml.phonon_dataset
         natom = len(phono3py.phonon_supercell)
     else:
-        dataset = ph3py_yaml.dataset
+        if ph3py_yaml:
+            dataset = ph3py_yaml.dataset
         natom = len(phono3py.supercell)
 
     if disp_filename is None and dataset is None:
