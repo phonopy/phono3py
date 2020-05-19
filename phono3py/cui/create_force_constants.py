@@ -212,11 +212,11 @@ def _parse_forces_type1(phono3py,
                         log_level):
     dataset = None
     if fc_type == 'phonon_fc2':
-        if ph3py_yaml:
+        if ph3py_yaml and ph3py_yaml.phonon_dataset is not None:
             dataset = ph3py_yaml.phonon_dataset
         natom = len(phono3py.phonon_supercell)
     else:
-        if ph3py_yaml:
+        if ph3py_yaml and ph3py_yaml.dataset is not None:
             dataset = ph3py_yaml.dataset
         natom = len(phono3py.supercell)
 
