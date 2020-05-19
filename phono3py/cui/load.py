@@ -454,6 +454,7 @@ def set_dataset_and_force_constants(
                         "fc2",
                         log_level)
     elif os.path.isfile("FORCES_FC3"):
+        # suppose fc3.hdf5 is read but fc2.hdf5 doesn't exist.
         disp_filename = None
         if os.path.isfile("disp_fc3.yaml"):
             if ph3py_yaml is None:
