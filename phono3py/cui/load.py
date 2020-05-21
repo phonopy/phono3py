@@ -256,7 +256,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
                 msg = ("phonon_supercell_matrix can be used only when "
                        "unitcell or unitcell_filename is given.")
                 raise RuntimeError(msg)
-            ph_smat = load_helper.get_supercell_matrix(phonon_supercell_matrix)
+            ph_smat = phonon_supercell_matrix
         else:
             ph_smat = None
         _nac_params = nac_params
