@@ -128,16 +128,15 @@ def run_phonon_solver_py(grid_point,
 
 
 def _extract_params(dm):
-    svecs, multiplicity = dm.get_shortest_vectors()
-    masses = np.array(dm.get_primitive().get_masses(), dtype='double')
-    rec_lattice = np.array(np.linalg.inv(dm.get_primitive().get_cell()),
+    svecs, multiplicity = dm.primitive.get_smallest_vectors()
+    masses = np.array(dm.primitive.masses, dtype='double')
+    rec_lattice = np.array(np.linalg.inv(dm.primitive.cell),
                            dtype='double', order='C')
-    positions = np.array(dm.get_primitive().get_positions(),
-                         dtype='double', order='C')
+    positions = np.array(dm.primitive.positions, dtype='double', order='C')
     if dm.is_nac():
-        born = dm.get_born_effective_charges()
-        nac_factor = dm.get_nac_factor()
-        dielectric = dm.get_dielectric_constant()
+        born = dm.born
+        nac_factor = dm.nac_factor
+        dielectric = dm.dielectric_constant
     else:
         born = None
         nac_factor = 0
@@ -154,14 +153,14 @@ def _extract_params(dm):
 
 
 def _get_fc_elements_mapping(dm, fc):
-    p2s_map = dm.get_primitive().get_primitive_to_supercell_map()
-    s2p_map = dm.get_primitive().get_supercell_to_primitive_map()
+    p2s_map = dm.primitive.p2s_map
+    s2p_map = dm.primitive.s2p_map
     if fc.shape[0] == fc.shape[1]:  # full fc
         fc_p2s = p2s_map
         fc_s2p = s2p_map
     else:  # compact fc
-        primitive = dm.get_primitive()
-        p2p_map = primitive.get_primitive_to_primitive_map()
+        primitive = dm.primitive
+        p2p_map = primitive.p2p_map
         s2pp_map = np.array([p2p_map[s2p_map[i]] for i in range(len(s2p_map))],
                             dtype='intc')
         fc_p2s = np.arange(len(p2s_map), dtype='intc')
