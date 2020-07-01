@@ -98,12 +98,12 @@ def show_phono3py_cells(phono3py, settings):
     print("-" * 30 + " primitive cell " + "-" * 30)
     print_cell(primitive)
     print("-" * 32 + " supercell " + "-" * 33)
-    print_cell(supercell, mapping=primitive.s2p_map())
+    print_cell(supercell, mapping=primitive.s2p_map)
     if settings.phonon_supercell_matrix is not None:
         print("-" * 19 + " primitive cell for harmonic phonon " + "-" * 20)
         print_cell(phonon_primitive)
         print("-" * 21 + " supercell for harmonic phonon " + "-" * 22)
-        print_cell(phonon_supercell, mapping=phonon_primitive.s2p_map())
+        print_cell(phonon_supercell, mapping=phonon_primitive.s2p_map)
     print("-" * 76)
 
 
