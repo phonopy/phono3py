@@ -1543,7 +1543,7 @@ class Phono3py(object):
             the settings expected to be updated from the following
             default settings are needed to be set in the dictionary.
             The possible parameters and their default settings are:
-                {'force_sets': True,
+                {'force_sets': False,
                  'displacements': True,
                  'force_constants': False,
                  'born_effective_charge': True,

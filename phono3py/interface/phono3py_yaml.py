@@ -151,22 +151,35 @@ class Phono3pyYaml(PhonopyYaml):
                 'number': d1['atom'] - 1,
                 'displacement': d1['displacement'],
                 'second_atoms': []}
+            if 'forces' in d1:
+                data1['forces'] = np.array(d1['forces'],
+                                           dtype='double', order='C')
             d2_list = d1.get('paired_with')
             if d2_list is None:  # backward compatibility
                 d2_list = d1.get('second_atoms')
             for d2 in d2_list:
-                disps = [{'number': d2['atom'] - 1, 'displacement': disp}
-                         for disp in d2['displacements']]
-                if 'pair_distance' in d2:
-                    for d2_dict in disps:
-                        d2_dict['pair_distance'] = d2['pair_distance']
-                if 'included' in d2:
-                    for d2_dict in disps:
-                        d2_dict['included'] = d2['included']
-                if 'displacement_ids' in d2:
-                    for disp_id, d2_dict in zip(d2['displacement_ids'], disps):
-                        d2_dict['id'] = disp_id
-                data1['second_atoms'] += disps
+                if 'forces' in d2:
+                    data1['second_atoms'].append(
+                        {'number': d2['atom'] - 1,
+                         'displacement': d2['displacement'],
+                         'forces': np.array(d2['forces'],
+                                            dtype='double', order='C'),
+                         'id': d2['displacement_id'],
+                         'pair_distance': d2['pair_distance']})
+                else:
+                    disps = [{'number': d2['atom'] - 1, 'displacement': disp}
+                             for disp in d2['displacements']]
+                    if 'pair_distance' in d2:
+                        for d2_dict in disps:
+                            d2_dict['pair_distance'] = d2['pair_distance']
+                    if 'included' in d2:
+                        for d2_dict in disps:
+                            d2_dict['included'] = d2['included']
+                    if 'displacement_ids' in d2:
+                        for disp_id, d2_dict in zip(
+                                d2['displacement_ids'], disps):
+                            d2_dict['id'] = disp_id
+                    data1['second_atoms'] += disps
             dataset['first_atoms'].append(data1)
         return dataset
 

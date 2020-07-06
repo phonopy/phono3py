@@ -392,6 +392,19 @@ def set_dataset_and_force_constants(
                         fc_calculator_options,
                         cutoff_pair_distance,
                         log_level)
+    elif ph3py.dataset is not None:
+        _set_forces_fc3(ph3py,
+                        ph3py_yaml,
+                        None,
+                        None,
+                        produce_fc,
+                        symmetrize_fc,
+                        is_compact_fc,
+                        fc_calculator,
+                        fc_calculator_options,
+                        cutoff_pair_distance,
+                        log_level)
+
     if log_level and ph3py.fc3 is not None:
         show_drift_fc3(ph3py.fc3, primitive=ph3py.primitive)
 
@@ -491,14 +504,15 @@ def _set_forces_fc3(ph3py,
                     fc_calculator_options,
                     cutoff_pair_distance,
                     log_level):
-    ph3py.dataset = parse_forces(
-        ph3py,
-        ph3py_yaml=ph3py_yaml,
-        cutoff_pair_distance=cutoff_pair_distance,
-        force_filename=force_filename,
-        disp_filename=disp_filename,
-        fc_type='fc3',
-        log_level=log_level)
+    if force_filename is not None:
+        ph3py.dataset = parse_forces(
+            ph3py,
+            ph3py_yaml=ph3py_yaml,
+            cutoff_pair_distance=cutoff_pair_distance,
+            force_filename=force_filename,
+            disp_filename=disp_filename,
+            fc_type='fc3',
+            log_level=log_level)
     if produce_fc:
         ph3py.produce_fc3(symmetrize_fc3r=symmetrize_fc,
                           is_compact_fc=is_compact_fc,
