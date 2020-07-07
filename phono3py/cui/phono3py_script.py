@@ -529,7 +529,7 @@ def init_phono3py(settings,
                   output_filename,
                   symprec,
                   log_level):
-    physical_units = get_default_physical_units(cell_info['interface_mode'])
+    physical_units = get_default_physical_units(interface_mode)
     distance_to_A = physical_units['distance_to_A']
 
     # Change unit of lattice parameters to angstrom
@@ -790,8 +790,7 @@ def main(**argparse_control):
     load_phono3py_yaml = argparse_control.get('load_phono3py_yaml', False)
 
     args, log_level = start_phono3py(**argparse_control)
-    interface_mode = get_interface_mode(vars(args))
-    physical_units = get_default_physical_units(interface_mode)
+    physical_units = get_default_physical_units(get_interface_mode(vars(args)))
 
     if load_phono3py_yaml:
         input_filename = None
@@ -814,6 +813,7 @@ def main(**argparse_control):
 
     cell_info = get_cell_info(settings, cell_filename, symprec, log_level)
     unitcell_filename = cell_info['optional_structure_info'][0]
+    interface_mode = cell_info['interface_mode']
 
     run_mode = get_run_mode(settings)
     if args.write_grid_points:

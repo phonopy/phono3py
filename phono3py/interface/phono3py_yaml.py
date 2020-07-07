@@ -96,9 +96,12 @@ class Phono3pyYaml(PhonopyYaml):
         self.phonon_primitive = phono3py.phonon_primitive
         self.phonon_supercell = phono3py.phonon_supercell
 
+    def parse(self):
+        super(Phono3pyYaml, self).parse()
+        self._parse_fc3_dataset()
+
     def _load(self, fp):
         super(Phono3pyYaml, self)._load(fp)
-        self._parse_fc3_dataset()
 
     def _parse_all_cells(self):
         """Parse all cells
@@ -149,7 +152,7 @@ class Phono3pyYaml(PhonopyYaml):
         for d1 in self._yaml['displacement_pairs']:
             data1 = {
                 'number': d1['atom'] - 1,
-                'displacement': d1['displacement'],
+                'displacement': np.array(d1['displacement'], dtype='double'),
                 'second_atoms': []}
             if 'forces' in d1:
                 data1['forces'] = np.array(d1['forces'],
@@ -161,13 +164,15 @@ class Phono3pyYaml(PhonopyYaml):
                 if 'forces' in d2:
                     data1['second_atoms'].append(
                         {'number': d2['atom'] - 1,
-                         'displacement': d2['displacement'],
+                         'displacement': np.array(d2['displacement'],
+                                                  dtype='double'),
                          'forces': np.array(d2['forces'],
                                             dtype='double', order='C'),
                          'id': d2['displacement_id'],
                          'pair_distance': d2['pair_distance']})
                 else:
-                    disps = [{'number': d2['atom'] - 1, 'displacement': disp}
+                    disps = [{'number': d2['atom'] - 1,
+                              'displacement': np.array(disp, dtype='double')}
                              for disp in d2['displacements']]
                     if 'pair_distance' in d2:
                         for d2_dict in disps:

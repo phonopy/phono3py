@@ -36,7 +36,7 @@ import os
 import numpy as np
 from phono3py import Phono3py
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
-from phono3py.cui.create_force_constants import parse_forces
+from phono3py.cui.create_force_constants import parse_forces, forces_in_dataset
 from phono3py.file_IO import read_fc3_from_hdf5, read_fc2_from_hdf5
 from phono3py.phonon3.fc3 import show_drift_fc3
 from phonopy.harmonic.force_constants import show_drift_force_constants
@@ -260,8 +260,6 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         else:
             ph_smat = None
         _nac_params = nac_params
-        _dataset = None
-        _phonon_dataset = None
         ph3py_yaml = None
     elif phono3py_yaml is not None:
         ph3py_yaml = Phono3pyYaml()
@@ -281,14 +279,6 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
             _nac_params = ph3py_yaml.nac_params
         else:
             _nac_params = None
-        if ph3py_yaml.dataset is not None:
-            _dataset = ph3py_yaml.dataset
-        else:
-            _dataset = None
-        if ph3py_yaml.phonon_dataset is not None:
-            _phonon_dataset = ph3py_yaml.phonon_dataset
-        else:
-            _phonon_dataset = None
 
     # units keywords: factor, nac_factor, distance_to_A
     physical_units = get_default_physical_units(calculator)
@@ -318,11 +308,6 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
             is_nac,
             physical_units['nac_factor'],
             log_level=log_level)
-
-    if _dataset is not None:
-        ph3py.dataset = _dataset
-    if _phonon_dataset is not None:
-        ph3py.phonon_dataset = _phonon_dataset
 
     set_dataset_and_force_constants(
         ph3py,
@@ -407,21 +392,20 @@ def set_dataset_and_force_constants(
                         fc_calculator_options,
                         cutoff_pair_distance,
                         log_level)
-    elif ph3py.dataset is not None:
-        if ('forces' in ph3py.dataset or
-            ('first_atoms' in ph3py.dataset and
-             'forces' in ph3py.dataset['first_atoms'][0])):
-            _set_forces_fc3(ph3py,
-                            ph3py_yaml,
-                            None,
-                            None,
-                            produce_fc,
-                            symmetrize_fc,
-                            is_compact_fc,
-                            fc_calculator,
-                            fc_calculator_options,
-                            cutoff_pair_distance,
-                            log_level)
+    elif (ph3py_yaml is not None and
+          ph3py_yaml.dataset is not None and
+          forces_in_dataset(ph3py_yaml.dataset)):
+        _set_forces_fc3(ph3py,
+                        ph3py_yaml,
+                        None,
+                        None,
+                        produce_fc,
+                        symmetrize_fc,
+                        is_compact_fc,
+                        fc_calculator,
+                        fc_calculator_options,
+                        cutoff_pair_distance,
+                        log_level)
 
     if log_level and ph3py.fc3 is not None:
         show_drift_fc3(ph3py.fc3, primitive=ph3py.primitive)
@@ -472,21 +456,34 @@ def set_dataset_and_force_constants(
                         fc_calculator_options,
                         "phonon_fc2",
                         log_level)
-    elif ph3py.dataset is not None:
-        if ('forces' in ph3py.dataset or
-            ('first_atoms' in ph3py.dataset and
-             'forces' in ph3py.dataset['first_atoms'][0])):
-            _set_forces_fc2(ph3py,
-                            None,
-                            None,
-                            None,
-                            produce_fc,
-                            symmetrize_fc,
-                            is_compact_fc,
-                            fc_calculator,
-                            fc_calculator_options,
-                            "fc2",
-                            log_level)
+    elif (ph3py_yaml is not None and
+          ph3py_yaml.phonon_dataset is not None and
+          forces_in_dataset(ph3py_yaml.phonon_dataset)):
+        _set_forces_fc2(ph3py,
+                        ph3py_yaml,
+                        None,
+                        None,
+                        produce_fc,
+                        symmetrize_fc,
+                        is_compact_fc,
+                        fc_calculator,
+                        fc_calculator_options,
+                        "phonon_fc2",
+                        log_level)
+    elif (ph3py_yaml is not None and
+          ph3py_yaml.dataset is not None and
+          forces_in_dataset(ph3py_yaml.dataset)):
+        _set_forces_fc2(ph3py,
+                        ph3py_yaml,
+                        None,
+                        None,
+                        produce_fc,
+                        symmetrize_fc,
+                        is_compact_fc,
+                        fc_calculator,
+                        fc_calculator_options,
+                        "fc2",
+                        log_level)
     elif os.path.isfile("FORCES_FC3"):
         # suppose fc3.hdf5 is read but fc2.hdf5 doesn't exist.
         disp_filename = None
