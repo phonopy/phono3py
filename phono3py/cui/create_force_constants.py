@@ -34,6 +34,7 @@
 
 import os
 import sys
+import numpy as np
 from phonopy.harmonic.force_constants import (
     show_drift_force_constants,
     symmetrize_force_constants,
@@ -182,18 +183,17 @@ def parse_forces(phono3py,
         natom = len(phono3py.supercell)
 
     dataset = _get_type2_dataset(natom, filename=force_filename)
-    if dataset:  # type2
+    if dataset:  # type2 of FORCES_FC3 or FORCES_FC2
         physical_units = get_default_physical_units(phono3py.calculator)
         force_to_eVperA = physical_units['force_to_eVperA']
         distance_to_A = physical_units['distance_to_A']
         if log_level:
             print("%d snapshots were found in %s."
                   % (len(dataset['displacements']), "FORCES_FC3"))
-        if force_to_eVperA is not None:
-            dataset['forces'] *= force_to_eVperA
-        if distance_to_A is not None:
-            dataset['displacements'] *= distance_to_A
-    else:  # type1
+        _convert_unit_in_dataset(dataset,
+                                 distance_to_A,
+                                 force_to_eVperA=force_to_eVperA)
+    else:  # type1 or ph3py_yaml.dataset
         dataset = _parse_forces_type1(phono3py,
                                       ph3py_yaml,
                                       cutoff_pair_distance,
@@ -243,10 +243,17 @@ def _parse_forces_type1(phono3py,
         natom = len(phono3py.supercell)
 
     if disp_filename is None and dataset is None:
-        msg = ("\"%s\" in type-1 format is given. "
-               "But displacement dataset is not given properly."
-               % force_filename)
-        raise RuntimeError(msg)
+        if not file_exists("phono3py_disp.yaml", log_level):
+            msg = ("\"%s\" in type-1 format is given. "
+                   "But displacement dataset is not given properly."
+                   % force_filename)
+            raise RuntimeError(msg)
+        _ph3py_yaml = Phono3pyYaml()
+        _ph3py_yaml.read("phono3py_disp.yaml")
+        dataset = _ph3py_yaml.dataset
+        if log_level:
+            print("Displacement dataset for %s was read from \"%s\"."
+                  % (fc_type, "phono3py_disp.yaml"))
     elif dataset is None:
         dataset = _read_disp_fc_yaml(disp_filename, fc_type, log_level)
     else:
@@ -267,17 +274,16 @@ def _parse_forces_type1(phono3py,
                "\"%s\"." % disp_filename)
         raise RuntimeError(msg)
 
-    if distance_to_A is not None:
-        _convert_displacement_unit(dataset, distance_to_A)
+    if not forces_in_dataset(dataset):
+        if fc_type == 'phonon_fc2':
+            parse_FORCES_FC2(dataset, filename=force_filename)
+        else:
+            parse_FORCES_FC3(dataset, filename=force_filename)
 
-    if fc_type == 'phonon_fc2':
-        parse_FORCES_FC2(dataset,
-                         filename=force_filename,
-                         unit_conversion_factor=force_to_eVperA)
-    else:
-        parse_FORCES_FC3(dataset,
-                         filename=force_filename,
-                         unit_conversion_factor=force_to_eVperA)
+    if distance_to_A is not None:
+        _convert_unit_in_dataset(dataset,
+                                 distance_to_A,
+                                 force_to_eVperA=force_to_eVperA)
 
     if log_level:
         print("Sets of supercell forces were read from \"%s\"."
@@ -520,11 +526,36 @@ def _create_phono3py_phonon_fc2(phono3py,
         fc_calculator_options=fc_calculator_options)
 
 
-def _convert_displacement_unit(dataset, distance_to_A):
-    for d1 in dataset['first_atoms']:
-        for i in range(3):
-            d1['displacement'][i] *= distance_to_A
-        if 'second_atoms' in d1:
-            for d2 in d1['second_atoms']:
-                for i in range(3):
-                    d2['displacement'][i] *= distance_to_A
+def _convert_unit_in_dataset(dataset,
+                             distance_to_A,
+                             force_to_eVperA=None):
+    if 'first_atoms' in dataset:
+        for d1 in dataset['first_atoms']:
+            if distance_to_A is not None:
+                disp = _to_ndarray(d1['displacement'])
+                d1['displacement'] = disp * distance_to_A
+            if force_to_eVperA is not None and 'forces' in d1:
+                forces = _to_ndarray(d1['forces'])
+                d1['forces'] = forces * force_to_eVperA
+            if 'second_atoms' in d1:
+                for d2 in d1['second_atoms']:
+                    if distance_to_A is not None:
+                        disp = _to_ndarray(d2['displacement'])
+                        d2['displacement'] = disp * distance_to_A
+                    if force_to_eVperA is not None and 'forces' in d2:
+                        forces = _to_ndarray(d2['forces'])
+                        d2['forces'] = forces * force_to_eVperA
+    else:
+        if distance_to_A is not None and 'displacements' in dataset:
+            disp = _to_ndarray(dataset['displacements'])
+            dataset['displacements'] = disp * distance_to_A
+        if force_to_eVperA is not None and 'forces' in dataset:
+            forces = _to_ndarray(dataset['forces'])
+            dataset['forces'] = forces * force_to_eVperA
+
+
+def _to_ndarray(array, dtype='double'):
+    if type(array) is not np.ndarray:
+        return np.array(array, dtype=dtype, order='C')
+    else:
+        return array
