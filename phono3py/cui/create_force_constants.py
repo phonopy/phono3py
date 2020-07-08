@@ -177,6 +177,7 @@ def parse_forces(phono3py,
                  disp_filename=None,
                  fc_type=None,
                  log_level=0):
+    filename_read_from = None
 
     if fc_type == 'phonon_fc2':
         natom = len(phono3py.phonon_supercell)
@@ -185,26 +186,36 @@ def parse_forces(phono3py,
 
     # Get dataset from ph3py_yaml. dataset can be None.
     dataset = _extract_datast_from_ph3py_yaml(ph3py_yaml, fc_type)
+    if dataset:
+        filename_read_from = ph3py_yaml.yaml_filename
 
-    # Try to read FORCES_FC3 or FORCES_FC2 and if type-2, return dataset
-    # otherwise None.
+    # Try to read FORCES_FC* if type-2 and return dataset.
+    # None is returned unless type-2.
     # can emit FileNotFoundError.
     if dataset is not None and not forces_in_dataset(dataset):
-        dataset = _get_type2_dataset(natom,
-                                     phono3py.calculator,
-                                     filename=force_filename,
-                                     log_level=log_level)
-        if dataset and log_level:
-            print("Displacement dataset for %s was read from \"%s\"."
-                  % (fc_type, force_filename))
+        _dataset = _get_type2_dataset(natom,
+                                      phono3py.calculator,
+                                      filename=force_filename,
+                                      log_level=log_level)
+        # Do not overwrite dataset when _dataset is None.
+        if _dataset:
+            filename_read_from = force_filename
+            dataset = _dataset
 
     # Displacement dataset is obtained from disp_filename.
     # can emit FileNotFoundError.
     if dataset is None:
         dataset = _read_disp_fc_yaml(disp_filename, fc_type)
-        if log_level:
-            print("Displacement dataset for %s was read from \"%s\"."
-                  % (fc_type, disp_filename))
+        filename_read_from = disp_filename
+
+    if dataset['natom'] != natom:
+        msg = ("Number of atoms in supercell is not consistent with "
+               "\"%s\"." % filename_read_from)
+        raise RuntimeError(msg)
+
+    if log_level:
+        print("Displacement dataset for %s was read from \"%s\"."
+              % (fc_type, filename_read_from))
 
     if cutoff_pair_distance:
         if ('cutoff_distance' not in dataset or
@@ -214,11 +225,8 @@ def parse_forces(phono3py,
             if log_level:
                 print("Cutoff-pair-distance: %f" % cutoff_pair_distance)
 
-    if dataset['natom'] != natom:
-        msg = ("Number of atoms in supercell is not consistent with "
-               "\"%s\"." % disp_filename)
-        raise RuntimeError(msg)
-
+    # Type-1 FORCES_FC*.
+    # dataset comes either from disp_fc*.yaml or phono3py*.yaml.
     if not forces_in_dataset(dataset):
         if fc_type == 'phonon_fc2':
             parse_FORCES_FC2(dataset, filename=force_filename)

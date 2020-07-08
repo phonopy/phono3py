@@ -581,9 +581,6 @@ def store_force_constants(phono3py,
         (fc_calculator,
          fc_calculator_options) = get_fc_calculator_params(settings)
 
-        phono3py.dataset = ph3py_yaml.dataset
-        phono3py.phonon_dataset = ph3py_yaml.phonon_dataset
-
         read_fc = set_dataset_and_force_constants(
             phono3py,
             ph3py_yaml=ph3py_yaml,

@@ -522,15 +522,14 @@ def _set_forces_fc3(ph3py,
                     fc_calculator_options,
                     cutoff_pair_distance,
                     log_level):
-    if force_filename is not None:
-        ph3py.dataset = parse_forces(
-            ph3py,
-            ph3py_yaml=ph3py_yaml,
-            cutoff_pair_distance=cutoff_pair_distance,
-            force_filename=force_filename,
-            disp_filename=disp_filename,
-            fc_type='fc3',
-            log_level=log_level)
+    ph3py.dataset = parse_forces(
+        ph3py,
+        ph3py_yaml=ph3py_yaml,
+        cutoff_pair_distance=cutoff_pair_distance,
+        force_filename=force_filename,
+        disp_filename=disp_filename,
+        fc_type='fc3',
+        log_level=log_level)
     if produce_fc:
         ph3py.produce_fc3(symmetrize_fc3r=symmetrize_fc,
                           is_compact_fc=is_compact_fc,
@@ -551,18 +550,17 @@ def _set_forces_fc2(ph3py,
                     fc_calculator_options,
                     fc_type,
                     log_level):
-    if force_filename is not None:
-        dataset = parse_forces(ph3py,
-                               ph3py_yaml=ph3py_yaml,
-                               force_filename=force_filename,
-                               disp_filename=disp_filename,
-                               fc_type=fc_type,
-                               log_level=log_level)
+    dataset = parse_forces(ph3py,
+                           ph3py_yaml=ph3py_yaml,
+                           force_filename=force_filename,
+                           disp_filename=disp_filename,
+                           fc_type=fc_type,
+                           log_level=log_level)
 
-        if fc_type == 'phonon_fc2':
-            ph3py.phonon_dataset = dataset
-        else:
-            ph3py.dataset = dataset
+    if fc_type == 'phonon_fc2':
+        ph3py.phonon_dataset = dataset
+    else:
+        ph3py.dataset = dataset
 
     if produce_fc:
         ph3py.produce_fc2(symmetrize_fc2=symmetrize_fc,
