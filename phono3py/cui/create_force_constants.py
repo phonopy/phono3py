@@ -90,7 +90,7 @@ def create_phono3py_force_constants(phono3py,
                                symmetrize_fc3r,
                                input_filename,
                                log_level)
-        else:  # fc3 from FORCES_FC3
+        else:  # fc3 from FORCES_FC3 or ph3py_yaml
             _create_phono3py_fc3(phono3py,
                                  ph3py_yaml,
                                  symmetrize_fc3r,
@@ -177,89 +177,34 @@ def parse_forces(phono3py,
                  disp_filename=None,
                  fc_type=None,
                  log_level=0):
+
     if fc_type == 'phonon_fc2':
         natom = len(phono3py.phonon_supercell)
     else:
         natom = len(phono3py.supercell)
 
-    dataset = _get_type2_dataset(natom, filename=force_filename)
-    if dataset:  # type2 of FORCES_FC3 or FORCES_FC2
-        physical_units = get_default_physical_units(phono3py.calculator)
-        force_to_eVperA = physical_units['force_to_eVperA']
-        distance_to_A = physical_units['distance_to_A']
-        if log_level:
-            print("%d snapshots were found in %s."
-                  % (len(dataset['displacements']), "FORCES_FC3"))
-        _convert_unit_in_dataset(dataset,
-                                 distance_to_A,
-                                 force_to_eVperA=force_to_eVperA)
-    else:  # type1 or ph3py_yaml.dataset
-        dataset = _parse_forces_type1(phono3py,
-                                      ph3py_yaml,
-                                      cutoff_pair_distance,
-                                      force_filename,
-                                      disp_filename,
-                                      fc_type,
-                                      log_level)
+    # Get dataset from ph3py_yaml. dataset can be None.
+    dataset = _extract_datast_from_ph3py_yaml(ph3py_yaml, fc_type)
 
-    return dataset
+    # Try to read FORCES_FC3 or FORCES_FC2 and if type-2, return dataset
+    # otherwise None.
+    # can emit FileNotFoundError.
+    if dataset is not None and not forces_in_dataset(dataset):
+        dataset = _get_type2_dataset(natom,
+                                     phono3py.calculator,
+                                     filename=force_filename,
+                                     log_level=log_level)
+        if dataset and log_level:
+            print("Displacement dataset for %s was read from \"%s\"."
+                  % (fc_type, force_filename))
 
-
-def forces_in_dataset(dataset):
-    return ('forces' in dataset or
-            ('first_atoms' in dataset and
-             'forces' in dataset['first_atoms'][0]))
-
-
-def _parse_forces_type1(phono3py,
-                        ph3py_yaml,
-                        cutoff_pair_distance,
-                        force_filename,
-                        disp_filename,
-                        fc_type,
-                        log_level):
-    physical_units = get_default_physical_units(phono3py.calculator)
-    force_to_eVperA = physical_units['force_to_eVperA']
-    distance_to_A = physical_units['distance_to_A']
-    dataset = None
-
-    if fc_type == 'phonon_fc2':
-        if ph3py_yaml and ph3py_yaml.phonon_dataset is not None:
-            # copy dataset
-            # otherwise unit conversion can be applied multiple times.
-            _ph3py_yaml = Phono3pyYaml()
-            _ph3py_yaml.yaml_data = ph3py_yaml.yaml_data
-            _ph3py_yaml.parse()
-            dataset = _ph3py_yaml.phonon_dataset
-        natom = len(phono3py.phonon_supercell)
-    else:
-        if ph3py_yaml and ph3py_yaml.dataset is not None:
-            # copy dataset
-            # otherwise unit conversion can be applied multiple times.
-            _ph3py_yaml = Phono3pyYaml()
-            _ph3py_yaml.yaml_data = ph3py_yaml.yaml_data
-            _ph3py_yaml.parse()
-            dataset = _ph3py_yaml.dataset
-        natom = len(phono3py.supercell)
-
-    if disp_filename is None and dataset is None:
-        if not file_exists("phono3py_disp.yaml", log_level):
-            msg = ("\"%s\" in type-1 format is given. "
-                   "But displacement dataset is not given properly."
-                   % force_filename)
-            raise RuntimeError(msg)
-        _ph3py_yaml = Phono3pyYaml()
-        _ph3py_yaml.read("phono3py_disp.yaml")
-        dataset = _ph3py_yaml.dataset
+    # Displacement dataset is obtained from disp_filename.
+    # can emit FileNotFoundError.
+    if dataset is None:
+        dataset = _read_disp_fc_yaml(disp_filename, fc_type)
         if log_level:
             print("Displacement dataset for %s was read from \"%s\"."
-                  % (fc_type, "phono3py_disp.yaml"))
-    elif dataset is None:
-        dataset = _read_disp_fc_yaml(disp_filename, fc_type, log_level)
-    else:
-        if log_level:
-            print("Displacement dataset for %s was read from \"%s\"."
-                  % (fc_type, ph3py_yaml.yaml_filename))
+                  % (fc_type, disp_filename))
 
     if cutoff_pair_distance:
         if ('cutoff_distance' not in dataset or
@@ -280,27 +225,27 @@ def _parse_forces_type1(phono3py,
         else:
             parse_FORCES_FC3(dataset, filename=force_filename)
 
-    if distance_to_A is not None:
-        _convert_unit_in_dataset(dataset,
-                                 distance_to_A,
-                                 force_to_eVperA=force_to_eVperA)
+        if log_level:
+            print("Sets of supercell forces were read from \"%s\"."
+                  % force_filename)
+            sys.stdout.flush()
 
-    if log_level:
-        print("Sets of supercell forces were read from \"%s\"."
-              % force_filename)
-        sys.stdout.flush()
+    _convert_unit_in_dataset(dataset, phono3py.calculator)
 
     return dataset
 
 
-def _read_disp_fc_yaml(disp_filename, fc_type, log_level):
+def forces_in_dataset(dataset):
+    return ('forces' in dataset or
+            ('first_atoms' in dataset and
+             'forces' in dataset['first_atoms'][0]))
+
+
+def _read_disp_fc_yaml(disp_filename, fc_type):
     if fc_type == 'phonon_fc2':
         dataset = parse_disp_fc2_yaml(filename=disp_filename)
     else:
         dataset = parse_disp_fc3_yaml(filename=disp_filename)
-    if log_level:
-        print("Displacement dataset for %s was read from \"%s\"."
-              % (fc_type, disp_filename))
 
     return dataset
 
@@ -379,13 +324,16 @@ def _read_phono3py_fc2(phono3py,
     phono3py.fc2 = phonon_fc2
 
 
-def _get_type2_dataset(natom, filename="FORCES_FC3"):
+def _get_type2_dataset(natom, calculator, filename="FORCES_FC3", log_level=0):
     with open(filename, 'r') as f:
         len_first_line = get_length_of_first_line(f)
         if len_first_line == 6:
             dataset = get_dataset_type2(f, natom)
+            if log_level:
+                print("%d snapshots were found in %s."
+                      % (len(dataset['displacements']), "FORCES_FC3"))
         else:
-            dataset = {}
+            dataset = None
     return dataset
 
 
@@ -432,11 +380,13 @@ def _create_phono3py_fc3(phono3py,
                                fc_type='fc3',
                                log_level=log_level)
     except RuntimeError as e:
+        # from _parse_forces_type1
         if log_level:
             print(str(e))
             print_error()
         sys.exit(1)
     except FileNotFoundError as e:
+        # from _get_type2_dataset
         file_exists(e.filename, log_level)
 
     phono3py.dataset = dataset
@@ -526,9 +476,11 @@ def _create_phono3py_phonon_fc2(phono3py,
         fc_calculator_options=fc_calculator_options)
 
 
-def _convert_unit_in_dataset(dataset,
-                             distance_to_A,
-                             force_to_eVperA=None):
+def _convert_unit_in_dataset(dataset, calculator):
+    physical_units = get_default_physical_units(calculator)
+    force_to_eVperA = physical_units['force_to_eVperA']
+    distance_to_A = physical_units['distance_to_A']
+
     if 'first_atoms' in dataset:
         for d1 in dataset['first_atoms']:
             if distance_to_A is not None:
@@ -559,3 +511,24 @@ def _to_ndarray(array, dtype='double'):
         return np.array(array, dtype=dtype, order='C')
     else:
         return array
+
+
+def _extract_datast_from_ph3py_yaml(ph3py_yaml, fc_type):
+    dataset = None
+    if fc_type == 'phonon_fc2':
+        if ph3py_yaml and ph3py_yaml.phonon_dataset is not None:
+            # copy dataset
+            # otherwise unit conversion can be applied multiple times.
+            _ph3py_yaml = Phono3pyYaml()
+            _ph3py_yaml.yaml_data = ph3py_yaml.yaml_data
+            _ph3py_yaml.parse()
+            dataset = _ph3py_yaml.phonon_dataset
+    else:
+        if ph3py_yaml and ph3py_yaml.dataset is not None:
+            # copy dataset
+            # otherwise unit conversion can be applied multiple times.
+            _ph3py_yaml = Phono3pyYaml()
+            _ph3py_yaml.yaml_data = ph3py_yaml.yaml_data
+            _ph3py_yaml.parse()
+            dataset = _ph3py_yaml.dataset
+    return dataset
