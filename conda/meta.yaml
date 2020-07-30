@@ -35,7 +35,7 @@ requirements:
     - h5py
     - phonopy
     - openblas
-    - libgfortran-ng
+    - libgfortran
     - setuptools
     - spglib
 
@@ -49,7 +49,7 @@ requirements:
     - h5py
     - phonopy
     - openblas
-    - libgfortran-ng
+    - libgfortran
     - spglib
 
 test:
