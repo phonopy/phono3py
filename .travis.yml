@@ -21,13 +21,8 @@ before_install:
     - export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 
 install:
-    - conda install --yes -c conda-forge matplotlib-base pyyaml openblas libgfortran gcc_linux-64 gxx_linux-64 h5py scipy pytest
+    - conda install --yes -c conda-forge matplotlib-base pyyaml openblas libgfortran gcc_linux-64 gxx_linux-64 h5py scipy pytest phonopy
     - echo $TRAVIS_BRANCH
-    - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
-        pip install https://github.com/phonopy/phonopy/archive/master.zip --user;
-      else
-        pip install https://github.com/phonopy/phonopy/archive/develop.zip --user;
-      fi
     - pwd
     - ./get_nanoversion.sh
     - cat __nanoversion__.txt
