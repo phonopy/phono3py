@@ -324,9 +324,7 @@ if __name__ == '__main__':
                                 'h5py', 'spglib', 'phonopy>=2.7,<2.8'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
-              ext_modules=[extension_lapackepy, extension_phono3py],
-              test_suite='nose.collector',
-              tests_require=['nose'])
+              ext_modules=[extension_lapackepy, extension_phono3py])
     else:
         setup(name='phono3py',
               version=version,
@@ -339,6 +337,4 @@ if __name__ == '__main__':
                         'phonopy', 'spglib'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
-              ext_modules=[extension_lapackepy, extension_phono3py],
-              test_suite='nose.collector',
-              tests_require=['nose'])
+              ext_modules=[extension_lapackepy, extension_phono3py])

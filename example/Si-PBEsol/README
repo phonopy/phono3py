@@ -19,7 +19,7 @@ The plot of this result is shown in Si-kaccum.png. It is found that most of the 
 fc2.hdf5 can be read by harmonic phonopy to rename it to force_constants.hdf5. The phonon band structure and DOS are watched by
 
 % cp fc2.hdf5 force_constants.hdf5
-% phonopy --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --band="1/2 1/2 0 0 0 0 1/2 1/2 1/2" --hdf5 --readfc --thm -p
+% phonopy --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --band="1/2 1/2 0 0 0 0 1/2 1/2 1/2" --hdf5 --readfc -p
 
 Si-band-DOS.png shows this plot. The shape of phonon DOS below 6 THz is similar to the derivative of the accumulated lattice thermal conductivity, i.e., the heat is conductied by the low frequency longitudinal-acoustic-like modes.
 

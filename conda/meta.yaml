@@ -27,27 +27,30 @@ build:
 requirements:
   build:
     - python
+    - pip
     - numpy
     - scipy
-    - matplotlib
+    - matplotlib-base
     - pyyaml
     - h5py
     - phonopy
     - openblas
     - libgfortran-ng
     - setuptools
-    - nose
+    - spglib
 
   run:
     - python
+    - pip
     - numpy
     - scipy
-    - matplotlib
+    - matplotlib-base
     - pyyaml
     - h5py
     - phonopy
     - openblas
     - libgfortran-ng
+    - spglib
 
 test:
   # Python imports
