@@ -317,7 +317,7 @@ class Phono3pyYaml(PhonopyYaml):
                     # id-i and id-j give the same displacement pairs.
                     j = dataset['duplicates'][i]
                     # i can be str depending on data source.
-                    lines.append("    %s : %d" % (i, j))
+                    lines.append("  - [ %d, %d ]" % (i, j))
             lines.append("")
 
         return lines

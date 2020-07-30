@@ -1,6 +1,6 @@
 import numpy as np
 from phonopy.units import THzToEv, Kb
-import phonopy.structure.spglib as spg
+import spglib
 from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.structure.grid_points import extract_ir_grid_points
@@ -82,10 +82,11 @@ def get_triplets_at_q(grid_point,
         point_group,
         is_time_reversal=is_time_reversal,
         swappable=swappable)
-    bz_grid_address, bz_map = spg.relocate_BZ_grid_address(grid_address,
-                                                           mesh,
-                                                           reciprocal_lattice,
-                                                           is_dense=True)
+    bz_grid_address, bz_map = spglib.relocate_BZ_grid_address(
+        grid_address,
+        mesh,
+        reciprocal_lattice,
+        is_dense=True)
     triplets_at_q, weights = _get_BZ_triplets_at_q(
         grid_point,
         bz_grid_address,
@@ -124,10 +125,11 @@ def get_nosym_triplets_at_q(grid_point,
                             reciprocal_lattice,
                             stores_triplets_map=False):
     grid_address = get_grid_address(mesh)
-    bz_grid_address, bz_map = spg.relocate_BZ_grid_address(grid_address,
-                                                           mesh,
-                                                           reciprocal_lattice,
-                                                           is_dense=True)
+    bz_grid_address, bz_map = spglib.relocate_BZ_grid_address(
+        grid_address,
+        mesh,
+        reciprocal_lattice,
+        is_dense=True)
     map_triplets = np.arange(len(grid_address), dtype=bz_map.dtype)
     triplets_at_q, weights = _get_BZ_triplets_at_q(
         grid_point,
@@ -146,7 +148,7 @@ def get_nosym_triplets_at_q(grid_point,
 
 
 def get_grid_address(mesh):
-    grid_mapping_table, grid_address = spg.get_stabilized_reciprocal_mesh(
+    grid_mapping_table, grid_address = spglib.get_stabilized_reciprocal_mesh(
         mesh,
         [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]],
         is_time_reversal=False,
@@ -157,10 +159,11 @@ def get_grid_address(mesh):
 
 def get_bz_grid_address(mesh, reciprocal_lattice, with_boundary=False):
     grid_address = get_grid_address(mesh)
-    bz_grid_address, bz_map = spg.relocate_BZ_grid_address(grid_address,
-                                                           mesh,
-                                                           reciprocal_lattice,
-                                                           is_dense=True)
+    bz_grid_address, bz_map = spglib.relocate_BZ_grid_address(
+        grid_address,
+        mesh,
+        reciprocal_lattice,
+        is_dense=True)
     if with_boundary:
         return bz_grid_address, bz_map
     else:
@@ -195,7 +198,7 @@ def get_grid_point_from_address(address, mesh):
 
     """
 
-    return spg.get_grid_point_from_address(address, mesh)
+    return spglib.get_grid_point_from_address(address, mesh)
 
 
 def get_bz_grid_point_from_address(address, mesh, bz_map):
@@ -215,7 +218,7 @@ def invert_grid_point(grid_point, mesh, grid_address, bz_map):
 def get_ir_grid_points(mesh, rotations, mesh_shifts=None):
     if mesh_shifts is None:
         mesh_shifts = [False, False, False]
-    grid_mapping_table, grid_address = spg.get_stabilized_reciprocal_mesh(
+    grid_mapping_table, grid_address = spglib.get_stabilized_reciprocal_mesh(
         mesh,
         rotations,
         is_shift=np.where(mesh_shifts, 1, 0),
@@ -232,7 +235,7 @@ def get_grid_points_by_rotations(grid_point,
                                  mesh_shifts=None):
     if mesh_shifts is None:
         mesh_shifts = [False, False, False]
-    return spg.get_grid_points_by_rotations(
+    return spglib.get_grid_points_by_rotations(
         grid_point,
         reciprocal_rotations,
         mesh,
@@ -247,7 +250,7 @@ def get_BZ_grid_points_by_rotations(grid_point,
                                     mesh_shifts=None):
     if mesh_shifts is None:
         mesh_shifts = [False, False, False]
-    return spg.get_BZ_grid_points_by_rotations(
+    return spglib.get_BZ_grid_points_by_rotations(
         grid_point,
         reciprocal_rotations,
         mesh,
@@ -342,10 +345,11 @@ def get_coarse_ir_grid_points(primitive,
         ir_grid_weights = ir_grid_weights
 
     reciprocal_lattice = np.linalg.inv(primitive.get_cell())
-    bz_grid_address, bz_map = spg.relocate_BZ_grid_address(grid_address,
-                                                           mesh,
-                                                           reciprocal_lattice,
-                                                           is_dense=True)
+    bz_grid_address, bz_map = spglib.relocate_BZ_grid_address(
+        grid_address,
+        mesh,
+        reciprocal_lattice,
+        is_dense=True)
 
     return (ir_grid_points,
             ir_grid_weights,
