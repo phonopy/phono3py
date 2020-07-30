@@ -61,6 +61,10 @@ class Phono3pyIsotope(object):
                             cutoff_frequency=cutoff_frequency,
                             lapack_zheev_uplo=lapack_zheev_uplo)
 
+    @property
+    def dynamical_matrix(self):
+        return self._iso.dynamical_matrix
+
     def run(self, grid_points):
         for gp in grid_points:
             self._iso.set_grid_point(gp)
@@ -89,15 +93,15 @@ class Phono3pyIsotope(object):
             else:
                 print("sigma or tetrahedron method has to be set.")
 
-    def set_dynamical_matrix(self,
-                             fc2,
-                             supercell,
-                             primitive,
-                             nac_params=None,
-                             frequency_scale_factor=None,
-                             decimals=None):
+    def init_dynamical_matrix(self,
+                              fc2,
+                              supercell,
+                              primitive,
+                              nac_params=None,
+                              frequency_scale_factor=None,
+                              decimals=None):
         self._primitive = primitive
-        self._iso.set_dynamical_matrix(
+        self._iso.init_dynamical_matrix(
             fc2,
             supercell,
             primitive,

@@ -11,7 +11,7 @@ with the similar shift was used.
 
 Perfect and displaced supercells were created by
 
-% phono3py --dim="3 3 2" --dim_fc2="5 5 3" -c POSCAR-unitcell -d
+% phono3py --dim="3 3 2" --dim-fc2="5 5 3" -c POSCAR-unitcell -d
 
 Then the forces were calculated with the above settings. FORCES_FC3
 and FORCES_FC2 were created with subtracting residual forces of

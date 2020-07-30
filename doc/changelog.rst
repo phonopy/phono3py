@@ -3,6 +3,15 @@
 Change Log
 ==========
 
+Mar-3-2020: Version 1.20.0
+--------------------------
+
+- ``phono3py_disp.yaml`` is made when creating displacements in
+  addition to ``disp_fc3.yaml`` and
+  ``disp_fc2.yaml``. ``phono3py_disp.yaml`` will be used instead of
+  ``disp_fc3.yaml`` and ``disp_fc2.yaml`` in the future major release
+  (v2.0).
+
 Mar-3-2020: Version 1.19.1
 --------------------------
 
