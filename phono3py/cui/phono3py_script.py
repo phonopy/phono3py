@@ -178,7 +178,7 @@ def start_phono3py(**argparse_control):
         if argparse_control.get('load_phono3py_yaml', False):
             print("Running in phono3py.load mode.")
         print("Python version %d.%d.%d" % sys.version_info[:3])
-        import phonopy.structure.spglib as spglib
+        import spglib
         print("Spglib version %d.%d.%d" % spglib.get_version())
 
         if deprecated:

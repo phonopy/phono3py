@@ -375,13 +375,11 @@ def _create_phono3py_fc3(phono3py,
     else:
         disp_filename = 'disp_fc3.' + input_filename + '.yaml'
 
-    # Try to use phono3py.dataset when the disp file not found
-    if not os.path.isfile(disp_filename):
-        disp_filename = None
+    _ph3py_yaml = _get_ph3py_yaml(disp_filename, ph3py_yaml)
 
     try:
         dataset = parse_forces(phono3py,
-                               ph3py_yaml=ph3py_yaml,
+                               ph3py_yaml=_ph3py_yaml,
                                cutoff_pair_distance=cutoff_pair_distance,
                                force_filename="FORCES_FC3",
                                disp_filename=disp_filename,
@@ -417,13 +415,11 @@ def _create_phono3py_fc2(phono3py,
     else:
         disp_filename = 'disp_fc3.' + input_filename + '.yaml'
 
-    # Try to use phono3py.dataset when the disp file not found
-    if not os.path.isfile(disp_filename):
-        disp_filename = None
+    _ph3py_yaml = _get_ph3py_yaml(disp_filename, ph3py_yaml)
 
     try:
         dataset = parse_forces(phono3py,
-                               ph3py_yaml=ph3py_yaml,
+                               ph3py_yaml=_ph3py_yaml,
                                force_filename="FORCES_FC3",
                                disp_filename=disp_filename,
                                fc_type='fc2',
@@ -444,6 +440,17 @@ def _create_phono3py_fc2(phono3py,
         fc_calculator_options=fc_calculator_options)
 
 
+def _get_ph3py_yaml(disp_filename, ph3py_yaml):
+    _ph3py_yaml = ph3py_yaml
+    # Try to use phono3py.phonon_dataset when the disp file not found
+    if not os.path.isfile(disp_filename):
+        disp_filename = None
+        if _ph3py_yaml is None and os.path.isfile('phono3py_disp.yaml'):
+            _ph3py_yaml = Phono3pyYaml()
+            _ph3py_yaml.read('phono3py_disp.yaml')
+    return _ph3py_yaml
+
+
 def _create_phono3py_phonon_fc2(phono3py,
                                 ph3py_yaml,
                                 symmetrize_fc2,
@@ -457,13 +464,11 @@ def _create_phono3py_phonon_fc2(phono3py,
     else:
         disp_filename = 'disp_fc2.' + input_filename + '.yaml'
 
-    # Try to use phono3py.phonon_dataset when the disp file not found
-    if not os.path.isfile(disp_filename):
-        disp_filename = None
+    _ph3py_yaml = _get_ph3py_yaml(disp_filename, ph3py_yaml)
 
     try:
         dataset = parse_forces(phono3py,
-                               ph3py_yaml=ph3py_yaml,
+                               ph3py_yaml=_ph3py_yaml,
                                force_filename="FORCES_FC2",
                                disp_filename=disp_filename,
                                fc_type='phonon_fc2',
