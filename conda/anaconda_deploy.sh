@@ -12,7 +12,7 @@ echo "GIT_BRANCH: $GIT_BRANCH"
 echo "-----------------------"
 cd ..
 conda install -c https://conda.anaconda.org/conda-forge conda-build anaconda-client --yes
-conda build conda -c https://conda.anaconda.org/atztogo -c https://conda.anaconda.org/conda-forge --no-anaconda-upload
-TRG=`conda build conda -c https://conda.anaconda.org/atztogo -c https://conda.anaconda.org/conda-forge --output |sed -e 's/--/-*-/'`
+conda build conda -c https://conda.anaconda.org/conda-forge -c https://conda.anaconda.org/atztogo --no-anaconda-upload
+TRG=`conda build conda -c https://conda.anaconda.org/conda-forge -c https://conda.anaconda.org/atztogo --output |sed -e 's/--/-*-/'`
 echo "Uploading: $TRG"
 anaconda --token $TKN upload  --skip-existing --label $LBL $TRG

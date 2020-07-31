@@ -36,7 +36,7 @@ requirements:
     - phonopy>=2.7.1,<2.8
     - openblas
     - libgfortran
-    - spglib
+    - spglib>=1.16.0
 
   run:
     - python
@@ -49,7 +49,7 @@ requirements:
     - phonopy>=2.7.1,<2.8
     - openblas
     - libgfortran
-    - spglib
+    - spglib>=1.16.0
 
 test:
   # Python imports
