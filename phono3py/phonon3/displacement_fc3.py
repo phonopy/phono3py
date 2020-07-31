@@ -54,32 +54,34 @@ def direction_to_displacement(direction_dataset,
     Returns
     -------
     dict
-        Data structure is like:
+        Data structure is like (see docstring of Phonopy.dataset):
         {'natom': 64,
          'cutoff_distance': 4.000000,
          'first_atoms':
           [{'number': atom1,
             'displacement': [0.03, 0., 0.],
+            'id': 1,
             'second_atoms': [ {'number': atom2,
                                'displacement': [0., -0.03, 0.],
-                               'distance': 2.353},
+                               'distance': 2.353,
+                               'id': 7},
                               {'number': ... }, ... ] },
-           {'number': atom1, ... } ]}
+           {'number': atom1, ... }, ... ]}
 
     """
 
     duplicates = _find_duplicates(direction_dataset)
-    d3_count = 0
+    d3_count = len(direction_dataset) + 1
 
-    lattice = supercell.get_cell().T
+    lattice = supercell.cell.T
     new_dataset = {}
-    new_dataset['natom'] = supercell.get_number_of_atoms()
+    new_dataset['natom'] = len(supercell)
     new_dataset['duplicates'] = duplicates
 
     if cutoff_distance is not None:
         new_dataset['cutoff_distance'] = cutoff_distance
     new_first_atoms = []
-    for first_atoms in direction_dataset:
+    for i, first_atoms in enumerate(direction_dataset):
         atom1 = first_atoms['number']
         direction1 = first_atoms['direction']
         disp_cart1 = np.dot(direction1, lattice.T)
@@ -106,6 +108,7 @@ def direction_to_displacement(direction_dataset,
         new_first_atoms.append({'number': atom1,
                                 'direction': direction1,
                                 'displacement': disp_cart1,
+                                'id': (i + 1),
                                 'second_atoms': new_second_atoms})
     new_dataset['first_atoms'] = new_first_atoms
 
@@ -330,34 +333,28 @@ def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
 
 
 def _find_duplicates(direction_dataset):
-    """Returns index mapping for direction sets.
-
-    Returns
-    -------
-    ndarray:
-        [0, 1, 2, ..., 99, 0, 101, ...]
-        For this array v with index i, those elements v[i] != i give the
-        duplucates.
-
-    """
-
     direction_sets = []
+    id_offset = len(direction_dataset) + 1
+
+    # (List index of direction_sets + id_offset + 1) gives the displacement id.
+    # This id is stamped in direction_to_displacement by the sequence of
+    # the loops. Therefore the same system of the loops should be used here.
     for direction1 in direction_dataset:
         number1 = direction1['number']
         d1 = direction1['direction']
         for directions2 in direction1['second_atoms']:
             number2 = directions2['number']
             for d2 in directions2['directions']:
-                direction_sets.append([number1, ] + d1 + [number2, ] + d2)
+                direction_sets.append([number1, number2] + d1 + d2)
 
-    index_mapping = np.arange(len(direction_sets))
+    direction_sets = np.array(direction_sets)
+    flip_sets = direction_sets[:, [1, 0, 5, 6, 7, 2, 3, 4]]
+    _duplucates = []
     for i, dset in enumerate(direction_sets):
-        dset_flip = dset[4:] + dset[:4]
-        for j, dset_comp in enumerate(direction_sets[i + 1:]):
-            if (dset == dset_comp or dset_flip == dset_comp):
-                index_mapping[i] = i + j + 1
-                break
+        eq_indices = np.where(np.abs(flip_sets - dset).sum(axis=1) == 0)[0]
+        if len(eq_indices) > 0:
+            _duplucates += [[i + id_offset, j] for j in eq_indices + id_offset]
+        if dset[0] == dset[1] and (dset[2:5] + dset[5:8] == 0).all():
+            _duplucates.append([i + id_offset, 0])
 
-    duplicates = {j: i for i, j in enumerate(index_mapping) if i != j}
-
-    return duplicates
+    return {i: j for (i, j) in _duplucates if i > j}

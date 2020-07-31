@@ -38,16 +38,17 @@ following article:
 
 ::
 
-   @article{Laurent-phph-2011,
-     title = {Phonon-phonon interactions in transition metals},
-     author = {Chaput, Laurent and Togo, Atsushi and Tanaka, Isao and Hug, Gilles},
-     journal = {Phys. Rev. B},
-     volume = {84},
-     issue = {9},
-     pages = {094302},
-     numpages = {6},
-     year = {2011},
-     month = {Sep},
-     doi = {10.1103/PhysRevB.84.094302},
-     publisher = {American Physical Society}
+   @article{PhysRevLett.110.265506,
+     title = {Direct Solution to the Linearized Phonon Boltzmann Equation},
+     author = {Chaput, Laurent},
+     journal = {Phys. Rev. Lett.},
+     volume = {110},
+     issue = {26},
+     pages = {265506},
+     numpages = {5},
+     year = {2013},
+     month = {Jun},
+     publisher = {American Physical Society},
+     doi = {10.1103/PhysRevLett.110.265506},
+     url = {https://link.aps.org/doi/10.1103/PhysRevLett.110.265506}
    }

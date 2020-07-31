@@ -37,352 +37,212 @@ from phonopy.cui.settings import Settings, ConfParser, fracval
 
 
 class Phono3pySettings(Settings):
-    def __init__(self):
-        Settings.__init__(self)
-
+    _default = {
         # In micrometre. The default value is just set to avoid divergence.
-        self._boundary_mfp = 1.0e6
-
-        self._coarse_mesh_shifts = None
-        self._const_ave_pp = None
-        self._create_displacements = False
-        self._cutoff_fc3_distance = None
-        self._cutoff_pair_distance = None
-        self._gamma_conversion_factor = None
-        self._grid_addresses = None
-        self._grid_points = None
-        self._ion_clamped = False
-        self._is_bterta = False
-        self._is_compact_fc = False
-        self._is_frequency_shift = False
-        self._is_full_pp = False
-        self._is_gruneisen = False
-        self._is_imag_self_energy = False
-        self._is_isotope = False
-        self._is_joint_dos = False
-        self._is_kappa_star = True
-        self._is_lbte = False
-        self._is_N_U = False
-        self._is_reducible_collision_matrix = False
-        self._is_symmetrize_fc2 = False
-        self._is_symmetrize_fc3_q = False
-        self._is_symmetrize_fc3_r = False
-        self._mass_variances = None
-        self._max_freepath = None
-        self._mesh_divisors = None
-        self._read_collision = None
-        self._read_fc2 = False
-        self._read_fc3 = False
-        self._read_gamma = False
-        self._read_phonon = False
-        self._read_pp = False
-        self._phonon_supercell_matrix = None
-        self._pinv_cutoff = 1.0e-8
-        self._pinv_solver = 0
-        self._pp_conversion_factor = None
-        self._scattering_event_class = None  # scattering event class 1 or 2
-        self._sigma_cutoff_width = None
-        self._solve_collective_phonon = False
-        self._use_ave_pp = False
-        self._write_collision = False
-        self._write_gamma_detail = False
-        self._write_gamma = False
-        self._write_phonon = False
-        self._write_pp = False
-        self._write_LBTE_solution = False
-
-    def set_boundary_mfp(self, boundary_mfp):
-        self._boundary_mfp = boundary_mfp
-
-    def get_boundary_mfp(self):
-        return self._boundary_mfp
-
-    def set_coarse_mesh_shifts(self, coarse_mesh_shifts):
-        self._coarse_mesh_shifts = coarse_mesh_shifts
-
-    def get_coarse_mesh_shifts(self):
-        return self._coarse_mesh_shifts
-
-    def set_create_displacements(self, create_displacements):
-        self._create_displacements = create_displacements
-
-    def get_create_displacements(self):
-        return self._create_displacements
-
-    def set_constant_averaged_pp_interaction(self, ave_pp):
-        self._const_ave_pp = ave_pp
-
-    def get_constant_averaged_pp_interaction(self):
-        return self._const_ave_pp
-
-    def set_cutoff_fc3_distance(self, cutoff_fc3_distance):
-        self._cutoff_fc3_distance = cutoff_fc3_distance
+        'boundary_mfp': 1.0e6,
+        'coarse_mesh_shifts': None,
+        'constant_averaged_pp_interaction': None,
+        'cutoff_fc3_distance': None,
+        'cutoff_pair_distance': None,
+        'gamma_conversion_factor': None,
+        'grid_addresses': None,
+        'grid_points': None,
+        'ion_clamped': False,
+        'is_bterta': False,
+        'is_compact_fc': False,
+        'is_frequency_shift': False,
+        'is_full_pp': False,
+        'is_gruneisen': False,
+        'is_imag_self_energy': False,
+        'is_isotope': False,
+        'is_joint_dos': False,
+        'is_kappa_star': True,
+        'is_lbte': False,
+        'is_N_U': False,
+        'is_reducible_collision_matrix': False,
+        'is_symmetrize_fc2': False,
+        'is_symmetrize_fc3_q': False,
+        'is_symmetrize_fc3_r': False,
+        'lapack_zheev_uplo': 'L',
+        'mass_variances': None,
+        'max_freepath': None,
+        'mesh_divisors': None,
+        'read_collision': None,
+        'read_fc2': False,
+        'read_fc3': False,
+        'read_gamma': False,
+        'read_phonon': False,
+        'read_pp': False,
+        'phonon_supercell_matrix': None,
+        'pinv_cutoff': 1.0e-8,
+        'pinv_solver': 0,
+        'pp_conversion_factor': None,
+        'scattering_event_class': None,  # scattering event class 1 or 2
+        'sigma_cutoff_width': None,
+        'solve_collective_phonon': False,
+        'use_ave_pp': False,
+        'write_collision': False,
+        'write_gamma_detail': False,
+        'write_gamma': False,
+        'write_phonon': False,
+        'write_pp': False,
+        'write_LBTE_solution': False
+    }
+
+    def __init__(self, default=None):
+        Settings.__init__(self)
+        self._v.update(Phono3pySettings._default.copy())
+        if default is not None:
+            self._v.update(default)
+
+    def set_boundary_mfp(self, val):
+        self._v['boundary_mfp'] = val
+
+    def set_coarse_mesh_shifts(self, val):
+        self._v['coarse_mesh_shifts'] = val
+
+    def set_constant_averaged_pp_interaction(self, val):
+        self._v['constant_averaged_pp_interaction'] = val
+
+    def set_cutoff_fc3_distance(self, val):
+        self._v['cutoff_fc3_distance'] = val
+
+    def set_cutoff_pair_distance(self, val):
+        self._v['cutoff_pair_distance'] = val
+
+    def set_gamma_conversion_factor(self, val):
+        self._v['gamma_conversion_factor'] = val
+
+    def set_grid_addresses(self, val):
+        self._v['grid_addresses'] = val
+
+    def set_grid_points(self, val):
+        self._v['grid_points'] = val
+
+    def set_ion_clamped(self, val):
+        self._v['ion_clamped'] = val
+
+    def set_is_bterta(self, val):
+        self._v['is_bterta'] = val
+
+    def set_is_compact_fc(self, val):
+        self._v['is_compact_fc'] = val
+
+    def set_is_frequency_shift(self, val):
+        self._v['is_frequency_shift'] = val
+
+    def set_is_full_pp(self, val):
+        self._v['is_full_pp'] = val
+
+    def set_is_gruneisen(self, val):
+        self._v['is_gruneisen'] = val
+
+    def set_is_imag_self_energy(self, val):
+        self._v['is_imag_self_energy'] = val
+
+    def set_is_isotope(self, val):
+        self._v['is_isotope'] = val
 
-    def get_cutoff_fc3_distance(self):
-        return self._cutoff_fc3_distance
+    def set_is_joint_dos(self, val):
+        self._v['is_joint_dos'] = val
 
-    def set_cutoff_pair_distance(self, cutoff_pair_distance):
-        self._cutoff_pair_distance = cutoff_pair_distance
+    def set_is_kappa_star(self, val):
+        self._v['is_kappa_star'] = val
 
-    def get_cutoff_pair_distance(self):
-        return self._cutoff_pair_distance
+    def set_is_lbte(self, val):
+        self._v['is_lbte'] = val
 
-    def set_gamma_conversion_factor(self, gamma_conversion_factor):
-        self._gamma_conversion_factor = gamma_conversion_factor
+    def set_is_N_U(self, val):
+        self._v['is_N_U'] = val
 
-    def get_gamma_conversion_factor(self):
-        return self._gamma_conversion_factor
+    def set_is_reducible_collision_matrix(self, val):
+        self._v['is_reducible_collision_matrix'] = val
 
-    def set_grid_addresses(self, grid_addresses):
-        self._grid_addresses = grid_addresses
+    def set_is_symmetrize_fc2(self, val):
+        self._v['is_symmetrize_fc2'] = val
 
-    def get_grid_addresses(self):
-        return self._grid_addresses
+    def set_is_symmetrize_fc3_q(self, val):
+        self._v['is_symmetrize_fc3_q'] = val
 
-    def set_grid_points(self, grid_points):
-        self._grid_points = grid_points
+    def set_is_symmetrize_fc3_r(self, val):
+        self._v['is_symmetrize_fc3_r'] = val
 
-    def get_grid_points(self):
-        return self._grid_points
+    def set_lapack_zheev_uplo(self, val):
+        self._v['lapack_zheev_uplo'] = val
 
-    def set_ion_clamped(self, ion_clamped):
-        self._ion_clamped = ion_clamped
+    def set_mass_variances(self, val):
+        self._v['mass_variances'] = val
 
-    def get_ion_clamped(self):
-        return self._ion_clamped
+    def set_max_freepath(self, val):
+        self._v['max_freepath'] = val
 
-    def set_is_bterta(self, is_bterta):
-        self._is_bterta = is_bterta
+    def set_mesh_divisors(self, val):
+        self._v['mesh_divisors'] = val
 
-    def get_is_bterta(self):
-        return self._is_bterta
+    def set_phonon_supercell_matrix(self, val):
+        self._v['phonon_supercell_matrix'] = val
 
-    def set_is_compact_fc(self, is_compact_fc):
-        self._is_compact_fc = is_compact_fc
+    def set_pinv_cutoff(self, val):
+        self._v['pinv_cutoff'] = val
 
-    def get_is_compact_fc(self):
-        return self._is_compact_fc
+    def set_pinv_solver(self, val):
+        self._v['pinv_solver'] = val
 
-    def set_is_frequency_shift(self, is_frequency_shift):
-        self._is_frequency_shift = is_frequency_shift
+    def set_pp_conversion_factor(self, val):
+        self._v['pp_conversion_factor'] = val
 
-    def get_is_frequency_shift(self):
-        return self._is_frequency_shift
+    def set_read_collision(self, val):
+        self._v['read_collision'] = val
 
-    def set_is_full_pp(self, is_full_pp):
-        self._is_full_pp = is_full_pp
+    def set_read_fc2(self, val):
+        self._v['read_fc2'] = val
 
-    def get_is_full_pp(self):
-        return self._is_full_pp
+    def set_read_fc3(self, val):
+        self._v['read_fc3'] = val
 
-    def set_is_gruneisen(self, is_gruneisen):
-        self._is_gruneisen = is_gruneisen
+    def set_read_gamma(self, val):
+        self._v['read_gamma'] = val
 
-    def get_is_gruneisen(self):
-        return self._is_gruneisen
+    def set_read_phonon(self, val):
+        self._v['read_phonon'] = val
 
-    def set_is_imag_self_energy(self, is_imag_self_energy):
-        self._is_imag_self_energy = is_imag_self_energy
+    def set_read_pp(self, val):
+        self._v['read_pp'] = val
 
-    def get_is_imag_self_energy(self):
-        return self._is_imag_self_energy
+    def set_scattering_event_class(self, val):
+        self._v['scattering_event_class'] = val
 
-    def set_is_isotope(self, is_isotope):
-        self._is_isotope = is_isotope
+    def set_sigma_cutoff_width(self, val):
+        self._v['sigma_cutoff_width'] = val
 
-    def get_is_isotope(self):
-        return self._is_isotope
+    def set_solve_collective_phonon(self, val):
+        self._v['solve_collective_phonon'] = val
 
-    def set_is_joint_dos(self, is_joint_dos):
-        self._is_joint_dos = is_joint_dos
+    def set_use_ave_pp(self, val):
+        self._v['use_ave_pp'] = val
 
-    def get_is_joint_dos(self):
-        return self._is_joint_dos
+    def set_write_collision(self, val):
+        self._v['write_collision'] = val
 
-    def set_is_kappa_star(self, is_kappa_star):
-        self._is_kappa_star = is_kappa_star
+    def set_write_gamma_detail(self, val):
+        self._v['write_gamma_detail'] = val
 
-    def get_is_kappa_star(self):
-        return self._is_kappa_star
+    def set_write_gamma(self, val):
+        self._v['write_gamma'] = val
 
-    def set_is_lbte(self, is_lbte):
-        self._is_lbte = is_lbte
+    def set_write_phonon(self, val):
+        self._v['write_phonon'] = val
 
-    def get_is_lbte(self):
-        return self._is_lbte
+    def set_write_pp(self, val):
+        self._v['write_pp'] = val
 
-    def set_is_N_U(self, is_N_U):
-        self._is_N_U = is_N_U
-
-    def get_is_N_U(self):
-        return self._is_N_U
-
-    def set_is_reducible_collision_matrix(self, is_reducible_collision_matrix):
-        self._is_reducible_collision_matrix = is_reducible_collision_matrix
-
-    def get_is_reducible_collision_matrix(self):
-        return self._is_reducible_collision_matrix
-
-    def set_is_symmetrize_fc2(self, is_symmetrize_fc2):
-        self._is_symmetrize_fc2 = is_symmetrize_fc2
-
-    def get_is_symmetrize_fc2(self):
-        return self._is_symmetrize_fc2
-
-    def set_is_symmetrize_fc3_q(self, is_symmetrize_fc3_q):
-        self._is_symmetrize_fc3_q = is_symmetrize_fc3_q
-
-    def get_is_symmetrize_fc3_q(self):
-        return self._is_symmetrize_fc3_q
-
-    def set_is_symmetrize_fc3_r(self, is_symmetrize_fc3_r):
-        self._is_symmetrize_fc3_r = is_symmetrize_fc3_r
-
-    def get_is_symmetrize_fc3_r(self):
-        return self._is_symmetrize_fc3_r
-
-    def set_mass_variances(self, mass_variances):
-        self._mass_variances = mass_variances
-
-    def get_mass_variances(self):
-        return self._mass_variances
-
-    def set_max_freepath(self, max_freepath):
-        self._max_freepath = max_freepath
-
-    def get_max_freepath(self):
-        return self._max_freepath
-
-    def set_mesh_divisors(self, mesh_divisors):
-        self._mesh_divisors = mesh_divisors
-
-    def get_mesh_divisors(self):
-        return self._mesh_divisors
-
-    def set_phonon_supercell_matrix(self, matrix):
-        self._phonon_supercell_matrix = matrix
-
-    def get_phonon_supercell_matrix(self):
-        return self._phonon_supercell_matrix
-
-    def set_pinv_cutoff(self, pinv_cutoff):
-        self._pinv_cutoff = pinv_cutoff
-
-    def get_pinv_cutoff(self):
-        return self._pinv_cutoff
-
-    def set_pinv_solver(self, pinv_solver):
-        self._pinv_solver = pinv_solver
-
-    def get_pinv_solver(self):
-        return self._pinv_solver
-
-    def set_pp_conversion_factor(self, pp_conversion_factor):
-        self._pp_conversion_factor = pp_conversion_factor
-
-    def get_pp_conversion_factor(self):
-        return self._pp_conversion_factor
-
-    def set_read_collision(self, read_collision):
-        self._read_collision = read_collision
-
-    def get_read_collision(self):
-        return self._read_collision
-
-    def set_read_fc2(self, read_fc2):
-        self._read_fc2 = read_fc2
-
-    def get_read_fc2(self):
-        return self._read_fc2
-
-    def set_read_fc3(self, read_fc3):
-        self._read_fc3 = read_fc3
-
-    def get_read_fc3(self):
-        return self._read_fc3
-
-    def set_read_gamma(self, read_gamma):
-        self._read_gamma = read_gamma
-
-    def get_read_gamma(self):
-        return self._read_gamma
-
-    def set_read_phonon(self, read_phonon):
-        self._read_phonon = read_phonon
-
-    def get_read_phonon(self):
-        return self._read_phonon
-
-    def set_read_pp(self, read_pp):
-        self._read_pp = read_pp
-
-    def get_read_pp(self):
-        return self._read_pp
-
-    def set_scattering_event_class(self, scattering_event_class):
-        self._scattering_event_class = scattering_event_class
-
-    def get_scattering_event_class(self):
-        return self._scattering_event_class
-
-    def set_sigma_cutoff_width(self, sigma_cutoff_width):
-        self._sigma_cutoff_width = sigma_cutoff_width
-
-    def get_sigma_cutoff_width(self):
-        return self._sigma_cutoff_width
-
-    def set_solve_collective_phonon(self, solve_collective_phonon):
-        self._solve_collective_phonon = solve_collective_phonon
-
-    def get_solve_collective_phonon(self):
-        return self._solve_collective_phonon
-
-    def set_use_ave_pp(self, use_ave_pp):
-        self._use_ave_pp = use_ave_pp
-
-    def get_use_ave_pp(self):
-        return self._use_ave_pp
-
-    def set_write_collision(self, write_collision):
-        self._write_collision = write_collision
-
-    def get_write_collision(self):
-        return self._write_collision
-
-    def set_write_gamma_detail(self, write_gamma_detail):
-        self._write_gamma_detail = write_gamma_detail
-
-    def get_write_gamma_detail(self):
-        return self._write_gamma_detail
-
-    def set_write_gamma(self, write_gamma):
-        self._write_gamma = write_gamma
-
-    def get_write_gamma(self):
-        return self._write_gamma
-
-    def set_write_phonon(self, write_phonon):
-        self._write_phonon = write_phonon
-
-    def get_write_phonon(self):
-        return self._write_phonon
-
-    def set_write_pp(self, write_pp):
-        self._write_pp = write_pp
-
-    def get_write_pp(self):
-        return self._write_pp
-
-    def set_write_LBTE_solution(self, write_LBTE_solution):
-        self._write_LBTE_solution = write_LBTE_solution
-
-    def get_write_LBTE_solution(self):
-        return self._write_LBTE_solution
+    def set_write_LBTE_solution(self, val):
+        self._v['write_LBTE_solution'] = val
 
 
 class Phono3pyConfParser(ConfParser):
-    def __init__(self, filename=None, args=None):
-        self._settings = Phono3pySettings()
+    def __init__(self, filename=None, args=None, default_settings=None):
+        self._settings = Phono3pySettings(default=default_settings)
         confs = {}
         if filename is not None:
             ConfParser.__init__(self, filename=filename)
@@ -399,7 +259,7 @@ class Phono3pyConfParser(ConfParser):
         self._confs = confs
 
     def _read_options(self):
-        self.read_options()  # store data in self._confs
+        ConfParser.read_options(self)  # store data in self._confs
         if 'phonon_supercell_dimension' in self._args:
             dim_fc2 = self._args.phonon_supercell_dimension
             if dim_fc2 is not None:
@@ -454,10 +314,6 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_gruneisen:
                 self._confs['gruneisen'] = '.true.'
 
-        if 'is_displacement' in self._args:
-            if self._args.is_displacement:
-                self._confs['create_displacements'] = '.true.'
-
         if 'is_frequency_shift' in self._args:
             if self._args.is_frequency_shift:
                 self._confs['frequency_shift'] = '.true.'
@@ -505,6 +361,10 @@ class Phono3pyConfParser(ConfParser):
         if 'is_symmetrize_fc3_r' in self._args:
             if self._args.is_symmetrize_fc3_r:
                 self._confs['symmetrize_fc3_r'] = '.true.'
+
+        if 'lapack_zheev_uplo' in self._args:
+            if self._args.lapack_zheev_uplo is not None:
+                self._confs['lapack_zheev_uplo'] = self._args.lapack_zheev_uplo
 
         if 'mass_variances' in self._args:
             mass_variances = self._args.mass_variances
@@ -600,16 +460,10 @@ class Phono3pyConfParser(ConfParser):
                 self._confs['write_LBTE_solution'] = '.true.'
 
     def _parse_conf(self):
-        self.parse_conf()
+        ConfParser.parse_conf(self)
         confs = self._confs
 
         for conf_key in confs.keys():
-            if conf_key == 'create_displacements':
-                if confs['create_displacements'].lower() == '.false.':
-                    self.set_parameter('create_displacements', False)
-                elif confs['create_displacements'].lower() == '.true.':
-                    self.set_parameter('create_displacements', True)
-
             if conf_key == 'dim_fc2':
                 matrix = [ int(x) for x in confs['dim_fc2'].split() ]
                 if len(matrix) == 9:
@@ -645,10 +499,10 @@ class Phono3pyConfParser(ConfParser):
                                    float(confs['cutoff_pair_distance']))
 
             if conf_key == 'full_pp':
-                if confs['full_pp'].lower() == '.false.':
-                    self.set_parameter('is_full_pp', False)
-                elif confs['full_pp'].lower() == '.true.':
+                if confs['full_pp'].lower() == '.true.':
                     self.set_parameter('is_full_pp', True)
+                elif confs['full_pp'].lower() == '.false.':
+                    self.set_parameter('is_full_pp', False)
 
             if conf_key == 'gamma_conversion_factor':
                 self.set_parameter('gamma_conversion_factor',
@@ -669,88 +523,92 @@ class Phono3pyConfParser(ConfParser):
                 self.set_parameter('grid_points', vals)
 
             if conf_key == 'ion_clamped':
-                if confs['ion_clamped'].lower() == '.false.':
-                    self.set_parameter('ion_clamped', False)
-                elif confs['ion_clamped'].lower() == '.true.':
+                if confs['ion_clamped'].lower() == '.true.':
                     self.set_parameter('ion_clamped', True)
+                elif confs['ion_clamped'].lower() == '.false.':
+                    self.set_parameter('ion_clamped', False)
 
             if conf_key == 'bterta':
-                if confs['bterta'].lower() == '.false.':
-                    self.set_parameter('is_bterta', False)
-                elif confs['bterta'].lower() == '.true.':
+                if confs['bterta'].lower() == '.true.':
                     self.set_parameter('is_bterta', True)
+                elif confs['bterta'].lower() == '.false.':
+                    self.set_parameter('is_bterta', False)
 
             if conf_key == 'compact_fc':
-                if confs['compact_fc'].lower() == '.false.':
-                    self.set_parameter('is_compact_fc', False)
-                elif confs['compact_fc'].lower() == '.true.':
+                if confs['compact_fc'].lower() == '.true.':
                     self.set_parameter('is_compact_fc', True)
+                elif confs['compact_fc'].lower() == '.false.':
+                    self.set_parameter('is_compact_fc', False)
 
             if conf_key == 'frequency_shift':
-                if confs['frequency_shift'].lower() == '.false.':
-                    self.set_parameter('is_frequency_shift', False)
-                elif confs['frequency_shift'].lower() == '.true.':
+                if confs['frequency_shift'].lower() == '.true.':
                     self.set_parameter('is_frequency_shift', True)
+                elif confs['frequency_shift'].lower() == '.false.':
+                    self.set_parameter('is_frequency_shift', False)
 
             if conf_key == 'gruneisen':
-                if confs['gruneisen'].lower() == '.false.':
-                    self.set_parameter('is_gruneisen', False)
-                elif confs['gruneisen'].lower() == '.true.':
+                if confs['gruneisen'].lower() == '.true.':
                     self.set_parameter('is_gruneisen', True)
+                elif confs['gruneisen'].lower() == '.false.':
+                    self.set_parameter('is_gruneisen', False)
 
             if conf_key == 'imag_self_energy':
-                if confs['imag_self_energy'].lower() == '.false.':
-                    self.set_parameter('is_imag_self_energy', False)
-                elif confs['imag_self_energy'].lower() == '.true.':
+                if confs['imag_self_energy'].lower() == '.true.':
                     self.set_parameter('is_imag_self_energy', True)
+                elif confs['imag_self_energy'].lower() == '.false.':
+                    self.set_parameter('is_imag_self_energy', False)
 
             if conf_key == 'isotope':
-                if confs['isotope'].lower() == '.false.':
-                    self.set_parameter('is_isotope', False)
-                elif confs['isotope'].lower() == '.true.':
+                if confs['isotope'].lower() == '.true.':
                     self.set_parameter('is_isotope', True)
+                elif confs['isotope'].lower() == '.false.':
+                    self.set_parameter('is_isotope', False)
 
             if conf_key == 'joint_dos':
-                if confs['joint_dos'].lower() == '.false.':
-                    self.set_parameter('is_joint_dos', False)
-                elif confs['joint_dos'].lower() == '.true.':
+                if confs['joint_dos'].lower() == '.true.':
                     self.set_parameter('is_joint_dos', True)
+                elif confs['joint_dos'].lower() == '.false.':
+                    self.set_parameter('is_joint_dos', False)
+
+            if conf_key == 'lapack_zheev_uplo':
+                self.set_parameter('lapack_zheev_uplo',
+                                   confs['lapack_zheev_uplo'].upper())
 
             if conf_key == 'lbte':
-                if confs['lbte'].lower() == '.false.':
-                    self.set_parameter('is_lbte', False)
-                elif confs['lbte'].lower() == '.true.':
+                if confs['lbte'].lower() == '.true.':
                     self.set_parameter('is_lbte', True)
+                elif confs['lbte'].lower() == '.false.':
+                    self.set_parameter('is_lbte', False)
 
             if conf_key == 'N_U':
-                if confs['N_U'].lower() == '.false.':
-                    self.set_parameter('is_N_U', False)
-                elif confs['N_U'].lower() == '.true.':
+                if confs['N_U'].lower() == '.true.':
                     self.set_parameter('is_N_U', True)
+                elif confs['N_U'].lower() == '.false.':
+                    self.set_parameter('is_N_U', False)
 
             if conf_key == 'reducible_collision_matrix':
-                if confs['reducible_collision_matrix'].lower() == '.false.':
-                    self.set_parameter('is_reducible_collision_matrix', False)
-                elif confs['reducible_collision_matrix'].lower() == '.true.':
+                if confs['reducible_collision_matrix'].lower() == '.true.':
                     self.set_parameter('is_reducible_collision_matrix', True)
+                elif confs['reducible_collision_matrix'].lower() == '.false.':
+                    self.set_parameter('is_reducible_collision_matrix', False)
 
             if conf_key == 'symmetrize_fc2':
-                if confs['symmetrize_fc2'].lower() == '.false.':
-                    self.set_parameter('is_symmetrize_fc2', False)
-                elif confs['symmetrize_fc2'].lower() == '.true.':
+                if confs['symmetrize_fc2'].lower() == '.true.':
                     self.set_parameter('is_symmetrize_fc2', True)
+                elif confs['symmetrize_fc2'].lower() == '.false.':
+                    self.set_parameter('is_symmetrize_fc2', False)
 
             if conf_key == 'symmetrize_fc3_q':
-                if confs['symmetrize_fc3_q'].lower() == '.false.':
-                    self.set_parameter('is_symmetrize_fc3_q', False)
-                elif confs['symmetrize_fc3_q'].lower() == '.true.':
+                if confs['symmetrize_fc3_q'].lower() == '.true.':
                     self.set_parameter('is_symmetrize_fc3_q', True)
+                elif confs['symmetrize_fc3_q'].lower() == '.false.':
+                    self.set_parameter('is_symmetrize_fc3_q', False)
 
             if conf_key == 'symmetrize_fc3_r':
-                if confs['symmetrize_fc3_r'].lower() == '.false.':
-                    self.set_parameter('is_symmetrize_fc3_r', False)
-                elif confs['symmetrize_fc3_r'].lower() == '.true.':
+                if confs['symmetrize_fc3_r'].lower() == '.true.':
                     self.set_parameter('is_symmetrize_fc3_r', True)
+                elif confs['symmetrize_fc3_r'].lower() == '.false.':
+                    self.set_parameter('is_symmetrize_fc3_r', False)
 
             if conf_key == 'mass_variances':
                 vals = [fracval(x) for x in confs['mass_variances'].split()]
@@ -780,10 +638,10 @@ class Phono3pyConfParser(ConfParser):
                     self.setting_error("Mesh divisors are incorrectly set.")
 
             if conf_key == 'kappa_star':
-                if confs['kappa_star'].lower() == '.false.':
-                    self.set_parameter('is_kappa_star', False)
-                elif confs['kappa_star'].lower() == '.true.':
+                if confs['kappa_star'].lower() == '.true.':
                     self.set_parameter('is_kappa_star', True)
+                elif confs['kappa_star'].lower() == '.false.':
+                    self.set_parameter('is_kappa_star', False)
 
             if conf_key == 'pinv_cutoff':
                 self.set_parameter('pinv_cutoff', float(confs['pinv_cutoff']))
@@ -803,34 +661,34 @@ class Phono3pyConfParser(ConfParser):
                     self.set_parameter('read_collision', vals)
 
             if conf_key == 'read_fc2':
-                if confs['read_fc2'].lower() == '.false.':
-                    self.set_parameter('read_fc2', False)
-                elif confs['read_fc2'].lower() == '.true.':
+                if confs['read_fc2'].lower() == '.true.':
                     self.set_parameter('read_fc2', True)
+                elif confs['read_fc2'].lower() == '.false.':
+                    self.set_parameter('read_fc2', False)
 
             if conf_key == 'read_fc3':
-                if confs['read_fc3'].lower() == '.false.':
-                    self.set_parameter('read_fc3', False)
-                elif confs['read_fc3'].lower() == '.true.':
+                if confs['read_fc3'].lower() == '.true.':
                     self.set_parameter('read_fc3', True)
+                elif confs['read_fc3'].lower() == '.false.':
+                    self.set_parameter('read_fc3', False)
 
             if conf_key == 'read_gamma':
-                if confs['read_gamma'].lower() == '.false.':
-                    self.set_parameter('read_gamma', False)
-                elif confs['read_gamma'].lower() == '.true.':
+                if confs['read_gamma'].lower() == '.true.':
                     self.set_parameter('read_gamma', True)
+                elif confs['read_gamma'].lower() == '.false.':
+                    self.set_parameter('read_gamma', False)
 
             if conf_key == 'read_phonon':
-                if confs['read_phonon'].lower() == '.false.':
-                    self.set_parameter('read_phonon', False)
-                elif confs['read_phonon'].lower() == '.true.':
+                if confs['read_phonon'].lower() == '.true.':
                     self.set_parameter('read_phonon', True)
+                elif confs['read_phonon'].lower() == '.false.':
+                    self.set_parameter('read_phonon', False)
 
             if conf_key == 'read_pp':
-                if confs['read_pp'].lower() == '.false.':
-                    self.set_parameter('read_pp', False)
-                elif confs['read_pp'].lower() == '.true.':
+                if confs['read_pp'].lower() == '.true.':
                     self.set_parameter('read_pp', True)
+                elif confs['read_pp'].lower() == '.false.':
+                    self.set_parameter('read_pp', False)
 
             if conf_key == 'scattering_event_class':
                 self.set_parameter('scattering_event_class',
@@ -841,61 +699,56 @@ class Phono3pyConfParser(ConfParser):
                                    float(confs['sigma_cutoff_width']))
 
             if conf_key == 'collective_phonon':
-                if confs['collective_phonon'].lower() == '.false.':
-                    self.set_parameter('collective_phonon', False)
-                elif confs['collective_phonon'].lower() == '.true.':
+                if confs['collective_phonon'].lower() == '.true.':
                     self.set_parameter('collective_phonon', True)
+                elif confs['collective_phonon'].lower() == '.false.':
+                    self.set_parameter('collective_phonon', False)
 
             if conf_key == 'use_ave_pp':
-                if confs['use_ave_pp'].lower() == '.false.':
-                    self.set_parameter('use_ave_pp', False)
-                elif confs['use_ave_pp'].lower() == '.true.':
+                if confs['use_ave_pp'].lower() == '.true.':
                     self.set_parameter('use_ave_pp', True)
+                elif confs['use_ave_pp'].lower() == '.false.':
+                    self.set_parameter('use_ave_pp', False)
 
             if conf_key == 'write_gamma_detail':
-                if confs['write_gamma_detail'].lower() == '.false.':
-                    self.set_parameter('write_gamma_detail', False)
-                elif confs['write_gamma_detail'].lower() == '.true.':
+                if confs['write_gamma_detail'].lower() == '.true.':
                     self.set_parameter('write_gamma_detail', True)
+                elif confs['write_gamma_detail'].lower() == '.false.':
+                    self.set_parameter('write_gamma_detail', False)
 
             if conf_key == 'write_gamma':
-                if confs['write_gamma'].lower() == '.false.':
-                    self.set_parameter('write_gamma', False)
-                elif confs['write_gamma'].lower() == '.true.':
+                if confs['write_gamma'].lower() == '.true.':
                     self.set_parameter('write_gamma', True)
+                elif confs['write_gamma'].lower() == '.false.':
+                    self.set_parameter('write_gamma', False)
 
             if conf_key == 'write_collision':
-                if confs['write_collision'].lower() == '.false.':
-                    self.set_parameter('write_collision', False)
-                elif confs['write_collision'].lower() == '.true.':
+                if confs['write_collision'].lower() == '.true.':
                     self.set_parameter('write_collision', True)
+                elif confs['write_collision'].lower() == '.false.':
+                    self.set_parameter('write_collision', False)
 
             if conf_key == 'write_phonon':
-                if confs['write_phonon'].lower() == '.false.':
-                    self.set_parameter('write_phonon', False)
-                elif confs['write_phonon'].lower() == '.true.':
+                if confs['write_phonon'].lower() == '.true.':
                     self.set_parameter('write_phonon', True)
+                elif confs['write_phonon'].lower() == '.false.':
+                    self.set_parameter('write_phonon', False)
 
             if conf_key == 'write_pp':
-                if confs['write_pp'].lower() == '.false.':
-                    self.set_parameter('write_pp', False)
-                elif confs['write_pp'].lower() == '.true.':
+                if confs['write_pp'].lower() == '.true.':
                     self.set_parameter('write_pp', True)
+                elif confs['write_pp'].lower() == '.false.':
+                    self.set_parameter('write_pp', False)
 
             if conf_key == 'write_LBTE_solution':
-                if confs['write_LBTE_solution'].lower() == '.false.':
-                    self.set_parameter('write_LBTE_solution', False)
-                elif confs['write_LBTE_solution'].lower() == '.true.':
+                if confs['write_LBTE_solution'].lower() == '.true.':
                     self.set_parameter('write_LBTE_solution', True)
+                elif confs['write_LBTE_solution'].lower() == '.false.':
+                    self.set_parameter('write_LBTE_solution', False)
 
     def _set_settings(self):
         self.set_settings()
         params = self._parameters
-
-        # Is getting least displacements?
-        if 'create_displacements' in params:
-            if params['create_displacements']:
-                self._settings.set_create_displacements('displacements')
 
         # Supercell dimension for fc2
         if 'dim_fc2' in params:
@@ -913,7 +766,8 @@ class Phono3pyConfParser(ConfParser):
         # Cutoff distance of third-order force constants. Elements where any
         # pair of atoms has larger distance than cut-off distance are set zero.
         if 'cutoff_fc3_distance' in params:
-            self._settings.set_cutoff_fc3_distance(params['cutoff_fc3_distance'])
+            self._settings.set_cutoff_fc3_distance(
+                params['cutoff_fc3_distance'])
 
         # Cutoff distance between pairs of displaced atoms used for supercell
         # creation with displacements and making third-order force constants
@@ -960,7 +814,8 @@ class Phono3pyConfParser(ConfParser):
 
         # Calculate imaginary part of self energy
         if 'is_imag_self_energy' in params:
-            self._settings.set_is_imag_self_energy(params['is_imag_self_energy'])
+            self._settings.set_is_imag_self_energy(
+                params['is_imag_self_energy'])
 
         # Calculate lifetime due to isotope scattering
         if 'is_isotope' in params:
@@ -989,11 +844,16 @@ class Phono3pyConfParser(ConfParser):
 
         # Symmetrize phonon fc3 by index exchange
         if 'is_symmetrize_fc3_q' in params:
-            self._settings.set_is_symmetrize_fc3_q(params['is_symmetrize_fc3_q'])
+            self._settings.set_is_symmetrize_fc3_q(
+                params['is_symmetrize_fc3_q'])
 
         # Symmetrize fc3 by index exchange
         if 'is_symmetrize_fc3_r' in params:
-            self._settings.set_is_symmetrize_fc3_r(params['is_symmetrize_fc3_r'])
+            self._settings.set_is_symmetrize_fc3_r(
+                params['is_symmetrize_fc3_r'])
+
+        if 'lapack_zheev_uplo' in params:
+            self._settings.set_lapack_zheev_uplo(params['lapack_zheev_uplo'])
 
         # Mass variance parameters
         if 'mass_variances' in params:
@@ -1020,7 +880,8 @@ class Phono3pyConfParser(ConfParser):
 
         # Ph-ph interaction unit conversion factor
         if 'pp_conversion_factor' in params:
-            self._settings.set_pp_conversion_factor(params['pp_conversion_factor'])
+            self._settings.set_pp_conversion_factor(
+                params['pp_conversion_factor'])
 
         # Read phonon-phonon interaction amplitudes from hdf5
         if 'read_amplitude' in params:

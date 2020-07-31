@@ -124,6 +124,10 @@ class Isotope(object):
     def run(self):
         self._run_c()
 
+    @property
+    def dynamical_matrix(self):
+        return self._dm
+
     def get_gamma(self):
         return self._gamma
 
@@ -151,13 +155,13 @@ class Isotope(object):
         if dm is not None:
             self._dm = dm
 
-    def set_dynamical_matrix(self,
-                             fc2,
-                             supercell,
-                             primitive,
-                             nac_params=None,
-                             frequency_scale_factor=None,
-                             decimals=None):
+    def init_dynamical_matrix(self,
+                              fc2,
+                              supercell,
+                              primitive,
+                              nac_params=None,
+                              frequency_scale_factor=None,
+                              decimals=None):
         self._primitive = primitive
         self._dm = get_dynamical_matrix(
             fc2,

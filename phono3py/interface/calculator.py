@@ -69,22 +69,23 @@ def get_default_displacement_distance(interface_mode):
     return displacement_distance
 
 
-def get_additional_info_to_write_supercells(interface_mode, phono3py):
+def get_additional_info_to_write_supercells(interface_mode, supercell_matrix):
     additional_info = {}
     if interface_mode == 'crystal':
         additional_info['template_file'] = "TEMPLATE3"
-        additional_info['supercell_matrix'] = phono3py.supercell_matrix
+        additional_info['supercell_matrix'] = supercell_matrix
     return additional_info
 
 
-def get_additional_info_to_write_fc2_supercells(interface_mode, phono3py):
+def get_additional_info_to_write_fc2_supercells(interface_mode,
+                                                phonon_supercell_matrix):
     additional_info = {}
     if interface_mode == 'qe':
         additional_info['pre_filename'] = "supercell_fc2"
     elif interface_mode == 'crystal':
         additional_info['template_file'] = "TEMPLATE"
         additional_info['pre_filename'] = "supercell_fc2"
-        additional_info['supercell_matrix'] = phono3py.phonon_supercell_matrix
+        additional_info['supercell_matrix'] = phonon_supercell_matrix
     elif interface_mode == 'abinit':
         additional_info['pre_filename'] = "supercell_fc2"
     elif interface_mode == 'turbomole':

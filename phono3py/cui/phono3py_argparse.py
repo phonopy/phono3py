@@ -36,7 +36,9 @@ import sys
 from phonopy.cui.phonopy_argparse import fix_deprecated_option_names
 
 
-def get_parser():
+def get_parser(fc_symmetry=False,
+               is_nac=False,
+               load_phono3py_yaml=False):
     deprecated = fix_deprecated_option_names(sys.argv)
     import argparse
     from phonopy.interface.calculator import add_arguments_of_calculators
@@ -76,9 +78,10 @@ def get_parser():
         "--br", "--bterta", dest="is_bterta", action="store_true",
         default=False,
         help="Calculate thermal conductivity in BTE-RTA")
-    parser.add_argument(
-        "-c", "--cell", dest="cell_filename", metavar="FILE", default=None,
-        help="Read unit cell")
+    if not load_phono3py_yaml:
+        parser.add_argument(
+            "-c", "--cell", dest="cell_filename", metavar="FILE", default=None,
+            help="Read unit cell")
     parser.add_argument(
         "--cf2", "--create-f2", dest="forces_fc2", nargs='+', default=None,
         help="Create FORCES_FC2")
@@ -138,21 +141,23 @@ def get_parser():
         "--factor", dest="frequency_conversion_factor", type=float,
         default=None,
         help="Frequency unit conversion factor")
-    parser.add_argument(
-        "--fc2", dest="read_fc2", action="store_true", default=False,
-        help="Read second order force constants")
-    parser.add_argument(
-        "--fc3", dest="read_fc3", action="store_true", default=False,
-        help="Read third order force constants")
+    if not load_phono3py_yaml:
+        parser.add_argument(
+            "--fc2", dest="read_fc2", action="store_true", default=False,
+            help="Read second order force constants")
+        parser.add_argument(
+            "--fc3", dest="read_fc3", action="store_true", default=False,
+            help="Read third order force constants")
     parser.add_argument(
         "--fc-calc-opt", "--fc-calculator-options",
         dest="fc_calculator_options", default=None,
         help=("Options for force constants calculator as comma separated "
               "string with the style of key = values"))
-    parser.add_argument(
-        "--fc-symmetry", "--sym-fc", dest="fc_symmetry", action="store_true",
-        default=False,
-        help="Symmetrize force constants")
+    if not fc_symmetry:
+        parser.add_argument(
+            "--fc-symmetry", "--sym-fc", dest="fc_symmetry",
+            action="store_true", default=False,
+            help="Symmetrize force constants")
     parser.add_argument(
         "--freq-scale", dest="frequency_scale_factor", type=float,
         default=None,
@@ -193,14 +198,15 @@ def get_parser():
         "--gv-delta-q", dest="gv_delta_q", type=float, default=None,
         help="Delta-q distance used for group velocity calculation")
     parser.add_argument(
-        "--hdf5-compression", dest="hdf5_compression", default="gzip",
-        help="hdf5 compression filter")
-    parser.add_argument(
-        "-i", dest="input_filename", default=None,
-        help="Input filename extension")
-    parser.add_argument(
-        "--io", dest="input_output_filename", default=None,
-        help="Input and output filename extension")
+        "--hdf5-compression", dest="hdf5_compression", default=None,
+        help="hdf5 compression filter (default: gzip)")
+    if not load_phono3py_yaml:
+        parser.add_argument(
+            "-i", dest="input_filename", default=None,
+            help="Input filename extension")
+        parser.add_argument(
+            "--io", dest="input_output_filename", default=None,
+            help="Input and output filename extension")
     parser.add_argument(
         "--ion-clamped", dest="ion_clamped", action="store_true",
         default=False,
@@ -236,12 +242,18 @@ def get_parser():
         "--mv", "--mass-variances", nargs='+', dest="mass_variances",
         default=None,
         help="Mass variance parameters for isotope scattering")
-    parser.add_argument(
-        "--nac", dest="is_nac", action="store_true", default=False,
-        help="Non-analytical term correction")
+    if not is_nac:
+        parser.add_argument(
+            "--nac", dest="is_nac", action="store_true", default=False,
+            help="Non-analytical term correction")
     parser.add_argument(
         "--nac-method", dest="nac_method", default=None,
         help="Non-analytical term correction method: Wang (default) or Gonze")
+    if fc_symmetry:
+        parser.add_argument(
+            "--no-fc-symmetry", "--no-sym-fc",
+            dest="fc_symmetry", action="store_false",
+            default=True, help="Do not symmetrize force constants")
     parser.add_argument(
         "--nodiag", dest="is_nodiag", action="store_true", default=False,
         help="Set displacements parallel to axes")
@@ -252,6 +264,10 @@ def get_parser():
     parser.add_argument(
         "--nomeshsym", dest="is_nomeshsym", action="store_true", default=False,
         help="No symmetrization of triplets is made.")
+    if is_nac:
+        parser.add_argument(
+            "--nonac", dest="is_nac", action="store_false", default=True,
+            help="Non-analytical term correction")
     parser.add_argument(
         "--nosym", dest="is_nosym", action="store_true", default=False,
         help="Symmetry is not imposed.")
@@ -262,9 +278,10 @@ def get_parser():
         "--num-freq-points", dest="num_frequency_points", type=int,
         default=None,
         help="Number of sampling points for spectrum")
-    parser.add_argument(
-        "-o", dest="output_filename", default=None,
-        help="Output filename extension")
+    if not load_phono3py_yaml:
+        parser.add_argument(
+            "-o", dest="output_filename", default=None,
+            help="Output filename extension")
     parser.add_argument(
         "--pa", "--primitive-axis", "--primitive-axes", nargs='+',
         dest="primitive_axes", default=None,
@@ -326,22 +343,23 @@ def get_parser():
         action="store_true", default=False,
         help=("Show reduced number of triplets to be calculated at "
               "specified grid points"))
-    parser.add_argument(
-        "--sym-fc2", dest="is_symmetrize_fc2", action="store_true",
-        default=False,
-        help="Symmetrize fc2 by index exchange")
-    parser.add_argument(
-        "--sym-fc3r", dest="is_symmetrize_fc3_r", action="store_true",
-        default=False,
-        help="Symmetrize fc3 in real space by index exchange")
-    parser.add_argument(
-        "--sym-fc3q", dest="is_symmetrize_fc3_q", action="store_true",
-        default=False,
-        help="Symmetrize fc3 in reciprocal space by index exchange")
+    if not load_phono3py_yaml:
+        parser.add_argument(
+            "--sym-fc2", dest="is_symmetrize_fc2", action="store_true",
+            default=False,
+            help="Symmetrize fc2 by index exchange")
+        parser.add_argument(
+            "--sym-fc3r", dest="is_symmetrize_fc3_r", action="store_true",
+            default=False,
+            help="Symmetrize fc3 in real space by index exchange")
+        parser.add_argument(
+            "--sym-fc3q", dest="is_symmetrize_fc3_q", action="store_true",
+            default=False,
+            help="Symmetrize fc3 in reciprocal space by index exchange")
     parser.add_argument(
         "--thm", "--tetrahedron-method", dest="is_tetrahedron_method",
         action="store_true", default=False,
-        help="Use tetrahedron method")
+        help="Use tetrahedron method.")
     parser.add_argument(
         "--tmax", dest="tmax", default=None,
         help="Maximum calculated temperature")
@@ -358,8 +376,8 @@ def get_parser():
         "--tolerance", dest="symmetry_tolerance", type=float, default=None,
         help="Symmetry tolerance to search")
     parser.add_argument(
-        "--uplo", dest="uplo", default='L',
-        help="Lapack zheev UPLO")
+        "--uplo", dest="lapack_zheev_uplo", default=None,
+        help="Lapack zheev UPLO (default: L)")
     parser.add_argument(
         "-v", "--verbose", dest="verbose", action="store_true", default=False,
         help="Detailed run-time information is displayed")
@@ -391,8 +409,11 @@ def get_parser():
         "--write-lbte-solution", dest="write_LBTE_solution",
         action="store_true", default=False,
         help="Write direct solution of LBTE to hdf5 files")
-    parser.add_argument(
-        "conf_file", nargs='*',
-        help="Phono3py configure file")
+    if load_phono3py_yaml:
+        parser.add_argument(
+            "filename", nargs='*', help="phono3py.yaml like file")
+    else:
+        parser.add_argument(
+            "filename", nargs='*', help="Phono3py configure file")
 
     return parser, deprecated

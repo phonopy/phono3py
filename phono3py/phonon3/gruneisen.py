@@ -5,7 +5,7 @@ from phonopy.units import VaspToTHz
 from phonopy.structure.grid_points import get_qpoints
 
 
-def get_gruneisen_parameters(fc2,
+def run_gruneisen_parameters(fc2,
                              fc3,
                              supercell,
                              primitive,
@@ -19,7 +19,7 @@ def get_gruneisen_parameters(fc2,
                              factor=None,
                              symprec=1e-5,
                              output_filename=None,
-                             log_level=True):
+                             log_level=1):
     if log_level:
         print("-" * 23 + " Phonon Gruneisen parameter " + "-" * 23)
         if mesh is not None:
@@ -43,6 +43,11 @@ def get_gruneisen_parameters(fc2,
                           ion_clamped=ion_clamped,
                           factor=factor,
                           symprec=symprec)
+
+    if log_level > 0:
+        dm = gruneisen.dynamical_matrix
+        if (dm.is_nac() and dm.nac_method == 'gonze'):
+            dm.show_Gonze_nac_message()
 
     if mesh is not None:
         gruneisen.set_sampling_mesh(mesh,
@@ -122,6 +127,10 @@ class Gruneisen(object):
              self._frequencies) = self._calculate_at_qpoints(self._qpoints)
         else:
             sys.stderr.write('Q-points are not specified.\n')
+
+    @property
+    def dynamical_matrix(self):
+        return self._dm
 
     def get_gruneisen_parameters(self):
         return self._gruneisen_parameters
@@ -275,10 +284,10 @@ class Gruneisen(object):
 
     def _get_gruneisen_tensor(self, q, nac_q_direction=None):
         if nac_q_direction is None:
-            self._dm.set_dynamical_matrix(q)
+            self._dm.run(q)
         else:
-            self._dm.set_dynamical_matrix(q, nac_q_direction)
-        omega2, w = np.linalg.eigh(self._dm.get_dynamical_matrix())
+            self._dm.run(q, nac_q_direction)
+        omega2, w = np.linalg.eigh(self._dm.dynamical_matrix)
         g = np.zeros((len(omega2), 3, 3), dtype=float)
         num_atom_prim = self._pcell.get_number_of_atoms()
         dDdu = self._get_dDdu(q)
@@ -397,8 +406,8 @@ class Gruneisen(object):
     def _get_Gamma(self):
         num_atom_prim = self._pcell.get_number_of_atoms()
         m = self._pcell.get_masses()
-        self._dm.set_dynamical_matrix([0, 0, 0])
-        vals, vecs = np.linalg.eigh(self._dm.get_dynamical_matrix().real)
+        self._dm.run([0, 0, 0])
+        vals, vecs = np.linalg.eigh(self._dm.dynamical_matrix.real)
         G = np.zeros((num_atom_prim, num_atom_prim, 3, 3), dtype=float)
 
         for pi in range(num_atom_prim):

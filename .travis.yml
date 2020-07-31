@@ -1,13 +1,10 @@
 matrix:
   include:
   - python: '2.7'
-    sudo: false
     env: TRAVIS_PYTHON_VERSION='2.7'
   - python: '3.6'
-    sudo: false
     env: TRAVIS_PYTHON_VERSION='3.6'
   - python: '3.7'
-    sudo: false
     env: TRAVIS_PYTHON_VERSION='3.7'
 
 before_install:
@@ -24,13 +21,8 @@ before_install:
     - export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 
 install:
-    - conda install --yes -c conda-forge matplotlib pyyaml openblas libgfortran gcc_linux-64 gxx_linux-64 h5py scipy
+    - conda install --yes -c conda-forge matplotlib-base pyyaml openblas libgfortran gcc_linux-64 gxx_linux-64 h5py scipy pytest phonopy
     - echo $TRAVIS_BRANCH
-    - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
-        pip install https://github.com/phonopy/phonopy/archive/master.zip --user;
-      else
-        pip install https://github.com/phonopy/phonopy/archive/develop.zip --user;
-      fi
     - pwd
     - ./get_nanoversion.sh
     - cat __nanoversion__.txt
@@ -38,7 +30,7 @@ install:
     - pip install -e .
 
 script:
-    - python setup.py test
+    - pytest -v
     - cd example/Si-PBE
     - tar xf vasprun_xmls.tar.lzma --lzma
     - phono3py --cf3 vasprun_xmls/disp-{00001..00111}/vasprun.xml
@@ -52,8 +44,9 @@ deploy:
     # testing pypi
     - provider: pypi
       server: https://test.pypi.org/legacy/
-      skip_cleanup: true
       skip_existing: true
+      skip_cleanup: true
+      cleanup: false
       distributions: sdist
       user: atztogo
       password:
@@ -66,7 +59,6 @@ deploy:
 
     # testing anaconda
     - provider: script
-      skip_cleanup: true
       script: conda/anaconda_deploy.sh rc $ANACONDA_TOKEN2 $TRAVIS_BRANCH
       on:
         repo: phonopy/phono3py
@@ -76,8 +68,9 @@ deploy:
 
     # production pypi
     - provider: pypi
-      skip_cleanup: true
       skip_existing: true
+      skip_cleanup: true
+      cleanup: false
       distributions: sdist
       user: atztogo
       password:
@@ -89,7 +82,6 @@ deploy:
 
     # production anaconda
     - provider: script
-      skip_cleanup: true
       script: conda/anaconda_deploy.sh main $ANACONDA_TOKEN2 $TRAVIS_BRANCH
       on:
         repo: phonopy/phono3py
