@@ -33,7 +33,7 @@ requirements:
     - matplotlib-base
     - pyyaml
     - h5py
-    - phonopy>=2.7,<2.8
+    - phonopy>=2.8,<2.9
     - openblas
     - libgfortran
     - spglib
@@ -46,7 +46,7 @@ requirements:
     - matplotlib-base
     - pyyaml
     - h5py
-    - phonopy>=2.7,<2.8
+    - phonopy>=2.8,<2.9
     - openblas
     - libgfortran
     - spglib
