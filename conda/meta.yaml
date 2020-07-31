@@ -28,7 +28,7 @@ requirements:
   build:
     - python
     - pip
-    - numpy
+    - numpy>=1.11
     - scipy
     - matplotlib-base
     - pyyaml
@@ -41,7 +41,7 @@ requirements:
   run:
     - python
     - pip
-    - numpy
+    - numpy>=1.11
     - scipy
     - matplotlib-base
     - pyyaml
