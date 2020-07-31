@@ -45,6 +45,8 @@ deploy:
     - provider: pypi
       server: https://test.pypi.org/legacy/
       skip_existing: true
+      skip_cleanup: true
+      cleanup: false
       distributions: sdist
       user: atztogo
       password:
@@ -67,6 +69,8 @@ deploy:
     # production pypi
     - provider: pypi
       skip_existing: true
+      skip_cleanup: true
+      cleanup: false
       distributions: sdist
       user: atztogo
       password:
