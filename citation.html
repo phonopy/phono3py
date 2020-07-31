@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>How to cite phono3py &#8212; Phono3py v.1.19.1</title>
+    <title>How to cite phono3py &#8212; Phono3py v.1.20.0</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Change Log" href="changelog.html" />
@@ -38,7 +38,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Phono3py</a>
-        <span class="navbar-text navbar-version pull-left"><b>1.19</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>1.20</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -73,15 +73,22 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="command-options.html#note-on-configuration-file-and-setting-tags">Note on configuration file and setting tags</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#input-cell-file-name">Input cell file name</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#calculator-interface">Calculator interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#utilities-to-create-default-input-files">Utilities to create default input files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#supercell-and-primitive-cell">Supercell and primitive cell</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#displacement-creation">Displacement creation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="command-options.html#utilities">Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#force-constants">Force constants</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#reciprocal-space-sampling-mesh-and-grid-points-and-band-indices">Reciprocal space sampling mesh and grid points, and band indices</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#brillouin-zone-integration">Brillouin zone integration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="command-options.html#physical-properties">Physical properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#method-to-solve-bte">Method to solve BTE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#scattering">Scattering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#temperature">Temperature</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#non-analytical-term-correction">Non-analytical term correction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#imaginary-part-of-self-energy">Imaginary part of self energy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#joint-density-of-states">Joint density of states</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#sampling-frequency-for-distribution-functions">Sampling frequency for distribution functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="command-options.html#mode-gruneisen-parameter-from-3rd-order-force-constants">Mode-Gruneisen parameter from 3rd order force constants</a></li>
 <li class="toctree-l2"><a class="reference internal" href="command-options.html#file-i-o">File I/O</a></li>
 </ul>
 </li>
@@ -139,6 +146,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#mar-3-2020-version-1-20-0">Mar-3-2020: Version 1.20.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#mar-3-2020-version-1-19-1">Mar-3-2020: Version 1.19.1</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#mar-2-2020-version-1-19-0">Mar-2-2020: Version 1.19.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#dec-22-2019-version-1-18-2">Dec-22-2019: Version 1.18.2</a></li>
@@ -272,18 +280,19 @@ following article:</p>
 <li><p>“Direct Solution to the Linearized Phonon Boltzmann Equation”
 Laurent Chaput, Phys. Rev. Lett., <strong>110</strong>, 265506 (2013)</p></li>
 </ul>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@article</span><span class="p">{</span><span class="n">Laurent</span><span class="o">-</span><span class="n">phph</span><span class="o">-</span><span class="mi">2011</span><span class="p">,</span>
-  <span class="n">title</span> <span class="o">=</span> <span class="p">{</span><span class="n">Phonon</span><span class="o">-</span><span class="n">phonon</span> <span class="n">interactions</span> <span class="ow">in</span> <span class="n">transition</span> <span class="n">metals</span><span class="p">},</span>
-  <span class="n">author</span> <span class="o">=</span> <span class="p">{</span><span class="n">Chaput</span><span class="p">,</span> <span class="n">Laurent</span> <span class="ow">and</span> <span class="n">Togo</span><span class="p">,</span> <span class="n">Atsushi</span> <span class="ow">and</span> <span class="n">Tanaka</span><span class="p">,</span> <span class="n">Isao</span> <span class="ow">and</span> <span class="n">Hug</span><span class="p">,</span> <span class="n">Gilles</span><span class="p">},</span>
-  <span class="n">journal</span> <span class="o">=</span> <span class="p">{</span><span class="n">Phys</span><span class="o">.</span> <span class="n">Rev</span><span class="o">.</span> <span class="n">B</span><span class="p">},</span>
-  <span class="n">volume</span> <span class="o">=</span> <span class="p">{</span><span class="mi">84</span><span class="p">},</span>
-  <span class="n">issue</span> <span class="o">=</span> <span class="p">{</span><span class="mi">9</span><span class="p">},</span>
-  <span class="n">pages</span> <span class="o">=</span> <span class="p">{</span><span class="mi">094302</span><span class="p">},</span>
-  <span class="n">numpages</span> <span class="o">=</span> <span class="p">{</span><span class="mi">6</span><span class="p">},</span>
-  <span class="n">year</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2011</span><span class="p">},</span>
-  <span class="n">month</span> <span class="o">=</span> <span class="p">{</span><span class="n">Sep</span><span class="p">},</span>
-  <span class="n">doi</span> <span class="o">=</span> <span class="p">{</span><span class="mf">10.1103</span><span class="o">/</span><span class="n">PhysRevB</span><span class="o">.</span><span class="mf">84.094302</span><span class="p">},</span>
-  <span class="n">publisher</span> <span class="o">=</span> <span class="p">{</span><span class="n">American</span> <span class="n">Physical</span> <span class="n">Society</span><span class="p">}</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@article</span><span class="p">{</span><span class="n">PhysRevLett</span><span class="o">.</span><span class="mf">110.265506</span><span class="p">,</span>
+  <span class="n">title</span> <span class="o">=</span> <span class="p">{</span><span class="n">Direct</span> <span class="n">Solution</span> <span class="n">to</span> <span class="n">the</span> <span class="n">Linearized</span> <span class="n">Phonon</span> <span class="n">Boltzmann</span> <span class="n">Equation</span><span class="p">},</span>
+  <span class="n">author</span> <span class="o">=</span> <span class="p">{</span><span class="n">Chaput</span><span class="p">,</span> <span class="n">Laurent</span><span class="p">},</span>
+  <span class="n">journal</span> <span class="o">=</span> <span class="p">{</span><span class="n">Phys</span><span class="o">.</span> <span class="n">Rev</span><span class="o">.</span> <span class="n">Lett</span><span class="o">.</span><span class="p">},</span>
+  <span class="n">volume</span> <span class="o">=</span> <span class="p">{</span><span class="mi">110</span><span class="p">},</span>
+  <span class="n">issue</span> <span class="o">=</span> <span class="p">{</span><span class="mi">26</span><span class="p">},</span>
+  <span class="n">pages</span> <span class="o">=</span> <span class="p">{</span><span class="mi">265506</span><span class="p">},</span>
+  <span class="n">numpages</span> <span class="o">=</span> <span class="p">{</span><span class="mi">5</span><span class="p">},</span>
+  <span class="n">year</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2013</span><span class="p">},</span>
+  <span class="n">month</span> <span class="o">=</span> <span class="p">{</span><span class="n">Jun</span><span class="p">},</span>
+  <span class="n">publisher</span> <span class="o">=</span> <span class="p">{</span><span class="n">American</span> <span class="n">Physical</span> <span class="n">Society</span><span class="p">},</span>
+  <span class="n">doi</span> <span class="o">=</span> <span class="p">{</span><span class="mf">10.1103</span><span class="o">/</span><span class="n">PhysRevLett</span><span class="o">.</span><span class="mf">110.265506</span><span class="p">},</span>
+  <span class="n">url</span> <span class="o">=</span> <span class="p">{</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">link</span><span class="o">.</span><span class="n">aps</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">doi</span><span class="o">/</span><span class="mf">10.1103</span><span class="o">/</span><span class="n">PhysRevLett</span><span class="o">.</span><span class="mf">110.265506</span><span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
 </div>
@@ -310,7 +319,7 @@ Laurent Chaput, Phys. Rev. Lett., <strong>110</strong>, 265506 (2013)</p></li>
     </p>
     <p>
         &copy; Copyright 2015, Atsushi Togo.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.1.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.<br/>
     </p>
   </div>
 </footer>
