@@ -1,5 +1,5 @@
-numpy>=1.11.1
-PyYAML>=3.11
-matplotlib>=1.5.3
-h5py>=2.6.0
-phonopy>=2.7,<2.8
+numpy
+PyYAML
+matplotlib
+h5py
+phonopy >=2.7,<2.8
