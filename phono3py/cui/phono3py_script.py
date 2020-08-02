@@ -47,7 +47,9 @@ from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phonopy.phonon.band_structure import get_band_qpoints
 from phonopy.cui.phonopy_script import (
     store_nac_params, print_end, print_error, print_error_message,
-    print_version, file_exists, get_fc_calculator_params)
+    print_version, file_exists, get_fc_calculator_params,
+    check_supercell_in_yaml)
+from phonopy.structure.cells import isclose as cells_isclose
 from phono3py.version import __version__
 from phono3py.file_IO import (
     parse_disp_fc2_yaml, parse_disp_fc3_yaml,
@@ -565,6 +567,20 @@ def init_phono3py(settings,
         calculator=interface_mode,
         log_level=log_level,
         lapack_zheev_uplo=settings.lapack_zheev_uplo)
+
+    check_supercell_in_yaml(cell_info, phono3py, log_level)
+
+    if cell_info['phonopy_yaml'] is not None:
+        if (cell_info['phonopy_yaml'].phonon_supercell is not None and
+            phono3py.phonon_supercell is not None):
+            if not cells_isclose(cell_info['phonopy_yaml'].phonon_supercell,
+                                 phono3py.phonon_supercell):
+                if log_level:
+                    print("Generated phonon supercell is inconsistent with "
+                          "that in \"%s\"." %
+                          cell_info['optional_structure_info'][0])
+                    print_error()
+                sys.exit(1)
 
     return phono3py, updated_settings
 
