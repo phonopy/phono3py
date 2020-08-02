@@ -47,8 +47,7 @@ from phono3py.file_IO import (
     parse_disp_fc3_yaml, parse_disp_fc2_yaml, parse_FORCES_FC2,
     parse_FORCES_FC3, read_fc3_from_hdf5, read_fc2_from_hdf5,
     write_fc3_to_hdf5, write_fc2_to_hdf5, get_length_of_first_line)
-from phono3py.cui.show_log import (
-    show_phono3py_force_constants_settings)
+from phono3py.cui.show_log import show_phono3py_force_constants_settings
 from phono3py.phonon3.fc3 import (
     set_permutation_symmetry_fc3, set_translational_invariance_fc3)
 from phono3py.interface.phono3py_yaml import Phono3pyYaml

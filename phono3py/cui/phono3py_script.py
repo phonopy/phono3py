@@ -578,6 +578,9 @@ def store_force_constants(phono3py,
                           load_phono3py_yaml,
                           log_level):
     if load_phono3py_yaml:
+        if log_level:
+            print("-" * 29 + " Force constants " + "-" * 30)
+
         (fc_calculator,
          fc_calculator_options) = get_fc_calculator_params(settings)
 
@@ -589,6 +592,7 @@ def store_force_constants(phono3py,
             symmetrize_fc=settings.fc_symmetry,
             is_compact_fc=settings.is_compact_fc,
             log_level=log_level)
+
         if not read_fc['fc3']:
             write_fc3_to_hdf5(phono3py.fc3,
                               p2s_map=phono3py.primitive.p2s_map,
@@ -1067,9 +1071,8 @@ def main(**argparse_control):
             output_filename=output_filename)
     else:
         if log_level:
-            print("*" * 15 + " None of ph-ph interaction was calculated. " +
-                  "*" * 16)
-            print_end()
-        sys.exit(0)
+            print("-" * 11 +
+                  " None of ph-ph interaction calculation was performed. " +
+                  "-" * 11)
 
     finalize_phono3py(phono3py, confs, log_level)
