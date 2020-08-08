@@ -570,19 +570,19 @@ static int get_gonze_phonons(lapack_complex_double *eigvecs,
     }
   }
 
-  dym_get_dipole_dipole((double*)dd,
-                        dd_q0,
-                        G_list,
-                        num_G_points,
-                        num_patom,
-                        q_cart,
-                        q_dir_cart,
-                        born,
-                        dielectric,
-                        positions,
-                        nac_factor,
-                        lambda,
-                        1e-5);
+  dym_get_recip_dipole_dipole((double*)dd,
+                              dd_q0,
+                              G_list,
+                              num_G_points,
+                              num_patom,
+                              q_cart,
+                              q_dir_cart,
+                              born,
+                              dielectric,
+                              positions,
+                              nac_factor,
+                              lambda,
+                              1e-5);
 
   if (q_direction) {
     free(q_dir_cart);

@@ -138,19 +138,19 @@ int dym_get_dynamical_matrix_at_q(double *dynamical_matrix,
   return 0;
 }
 
-void dym_get_dipole_dipole(double *dd, /* [natom, 3, natom, 3, (real,imag)] */
-                           const double *dd_q0, /* [natom, 3, 3, (real,imag)] */
-                           PHPYCONST double (*G_list)[3], /* [num_G, 3] */
-                           const int num_G,
-                           const int num_patom,
-                           const double q_cart[3],
-                           const double *q_direction_cart, /* must be pointer */
-                           PHPYCONST double (*born)[3][3],
-                           PHPYCONST double dielectric[3][3],
-                           PHPYCONST double (*pos)[3], /* [num_patom, 3] */
-                           const double factor, /* 4pi/V*unit-conv */
-                           const double lambda,
-                           const double tolerance)
+void dym_get_recip_dipole_dipole(double *dd, /* [natom, 3, natom, 3, (real,imag)] */
+                                 const double *dd_q0, /* [natom, 3, 3, (real,imag)] */
+                                 PHPYCONST double (*G_list)[3], /* [num_G, 3] */
+                                 const int num_G,
+                                 const int num_patom,
+                                 const double q_cart[3],
+                                 const double *q_direction_cart, /* must be pointer */
+                                 PHPYCONST double (*born)[3][3],
+                                 PHPYCONST double dielectric[3][3],
+                                 PHPYCONST double (*pos)[3], /* [num_patom, 3] */
+                                 const double factor, /* 4pi/V*unit-conv */
+                                 const double lambda,
+                                 const double tolerance)
 {
   int i, k, l, adrs, adrs_sum;
   double *dd_tmp;
@@ -192,21 +192,21 @@ void dym_get_dipole_dipole(double *dd, /* [natom, 3, natom, 3, (real,imag)] */
   }
 
   /* This may not be necessary. */
-  make_Hermitian(dd, num_patom * 3);
+  /* make_Hermitian(dd, num_patom * 3); */
 
   free(dd_tmp);
   dd_tmp = NULL;
 }
 
-void dym_get_dipole_dipole_q0(double *dd_q0, /* [natom, 3, 3, (real,imag)] */
-                              PHPYCONST double (*G_list)[3], /* [num_G, 3] */
-                              const int num_G,
-                              const int num_patom,
-                              PHPYCONST double (*born)[3][3],
-                              PHPYCONST double dielectric[3][3],
-                              PHPYCONST double (*pos)[3], /* [num_patom, 3] */
-                              const double lambda,
-                              const double tolerance)
+void dym_get_recip_dipole_dipole_q0(double *dd_q0, /* [natom, 3, 3, (real,imag)] */
+                                    PHPYCONST double (*G_list)[3], /* [num_G, 3] */
+                                    const int num_G,
+                                    const int num_patom,
+                                    PHPYCONST double (*born)[3][3],
+                                    PHPYCONST double dielectric[3][3],
+                                    PHPYCONST double (*pos)[3], /* [num_patom, 3] */
+                                    const double lambda,
+                                    const double tolerance)
 {
   int i, j, k, l, adrs_tmp, adrs, adrsT;
   double zero_vec[3];
@@ -255,6 +255,20 @@ void dym_get_dipole_dipole_q0(double *dd_q0, /* [natom, 3, 3, (real,imag)] */
       }
     }
   }
+
+  /* Summation over another atomic index */
+  /* for (j = 0; j < num_patom; j++) { */
+  /*   for (k = 0; k < 3; k++) {   /\* alpha *\/ */
+  /*     for (l = 0; l < 3; l++) { /\* beta *\/ */
+  /*       adrs = j * 9 + k * 3 + l; */
+  /*       for (i = 0; i < num_patom; i++) { */
+  /*         adrs_tmp = i * num_patom * 9 + k * num_patom * 3 + j * 3 + l ; */
+  /*         dd_q0[adrs * 2] += dd_tmp2[adrs_tmp * 2]; */
+  /*         dd_q0[adrs * 2 + 1] += dd_tmp2[adrs_tmp * 2 + 1]; */
+  /*       } */
+  /*     } */
+  /*   } */
+  /* } */
 
   for (i = 0; i < num_patom; i++) {
     for (k = 0; k < 3; k++) {   /* alpha */
@@ -328,6 +342,7 @@ void dym_transform_dynmat_to_fc(double *fc,
                                 const int *multiplicities,
                                 const double *masses,
                                 const int *s2pp_map,
+                                const int *fc_index_map,
                                 const int num_patom,
                                 const int num_satom)
 {
@@ -361,7 +376,7 @@ void dym_transform_dynmat_to_fc(double *fc,
           for (m = 0; m < 3; m++) {
             adrs = k * num_patom * num_patom * 18 + i * num_patom * 18 +
               l * num_patom * 6 + s2pp_map[j] * 6 + m * 2;
-            fc[i * num_satom * 9 + j * 9 + l * 3 + m] +=
+            fc[fc_index_map[i] * num_satom * 9 + j * 9 + l * 3 + m] +=
               (dm[adrs] * cos_phase - dm[adrs + 1] * sin_phase) * coef;
           }
         }

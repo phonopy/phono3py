@@ -1931,7 +1931,7 @@ py_set_triplets_integration_weights(PyObject *self, PyObject *args)
   int (*bz_grid_address)[3];
   size_t *bz_map;
   double *frequencies1, *frequencies2;
-  npy_intp num_band0, num_band1, num_band2, num_iw, num_triplets;
+  npy_intp num_band0, num_band1, num_band2, num_triplets;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOOi",
                         &py_iw,
