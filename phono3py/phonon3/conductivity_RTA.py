@@ -263,6 +263,7 @@ def _write_gamma(br, interaction, i, compression="gzip", filename=None,
                     sigma=sigma,
                     sigma_cutoff=sigma_cutoff,
                     kappa_unit_conversion=unit_to_WmK / volume,
+                    compression=compression,
                     filename=filename,
                     verbose=verbose)
 
