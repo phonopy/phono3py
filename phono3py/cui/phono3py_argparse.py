@@ -83,18 +83,19 @@ def get_parser(fc_symmetry=False,
             "-c", "--cell", dest="cell_filename", metavar="FILE", default=None,
             help="Read unit cell")
     parser.add_argument(
-        "--cf2", "--create-f2", dest="forces_fc2", nargs='+', default=None,
-        help="Create FORCES_FC2")
+        "--cf2", "--create-f2", dest="create_forces_fc2", nargs='+',
+        default=None, help="Create FORCES_FC2")
     parser.add_argument(
-        "--cf3", "--create-f3", dest="forces_fc3", nargs='+', default=None,
-        help="Create FORCES_FC3")
+        "--cf3", "--create-f3", dest="create_forces_fc3", nargs='+',
+        default=None, help="Create FORCES_FC3")
     parser.add_argument(
-        "--cfz", "--subtract-forces", dest="forces_fcz", default=None,
-        help="Subtract recidual forces from supercell forces")
-    parser.add_argument(
-        "--cf3-file", "--create-f3-from-file", dest="forces_fc3_file",
-        default=None,
+        "--cf3-file", "--create-f3-from-file",
+        metavar="FILE", dest="create_forces_fc3_file", default=None,
         help="Create FORCES_FC3 from file name list")
+    parser.add_argument(
+        "--cfz", "--subtract-forces",
+        metavar="FILE", dest="subtract_forces", default=None,
+        help="Subtract recidual forces from supercell forces")
     parser.add_argument(
         "--cfc", "--compact-fc", dest="is_compact_fc", action="store_true",
         default=False,

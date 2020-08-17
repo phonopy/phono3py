@@ -219,6 +219,7 @@ def read_phono3py_settings(args, argparse_control, log_level):
 
 
 def create_phono3py_files_then_exit(args,
+                                    settings,
                                     input_filename,
                                     output_filename,
                                     log_level):
@@ -227,7 +228,7 @@ def create_phono3py_files_then_exit(args,
     #####################
     # Create FORCES_FC3 #
     #####################
-    if args.forces_fc3 or args.forces_fc3_file:
+    if settings.create_forces_fc3 or settings.create_forces_fc3_file:
         if input_filename is None:
             disp_filename = 'disp_fc3.yaml'
         else:
@@ -242,11 +243,12 @@ def create_phono3py_files_then_exit(args,
             for d2 in d1['second_atoms']:
                 if 'included' not in d2 or d2['included']:
                     num_disps += 1
-        if args.forces_fc3_file:
-            file_exists(args.forces_fc3_file, log_level)
-            force_filenames = [x.strip() for x in open(args.forces_fc3_file)]
+        if settings.create_forces_fc3_file:
+            file_exists(settings.create_forces_fc3_file, log_level)
+            force_filenames = [
+                x.strip() for x in open(settings.create_forces_fc3_file)]
         else:
-            force_filenames = args.forces_fc3
+            force_filenames = settings.create_forces_fc3
 
         for filename in force_filenames:
             file_exists(filename, log_level)
@@ -267,8 +269,8 @@ def create_phono3py_files_then_exit(args,
                                         disp_filename=disp_filename,
                                         verbose=(log_level > 0))
 
-        if args.forces_fcz:
-            force_filename = args.forces_fcz
+        if settings.subtract_forces:
+            force_filename = settings.subtract_forces
             file_exists(force_filename, log_level)
             force_set_zero = get_force_sets(interface_mode,
                                             num_atoms,
@@ -299,7 +301,7 @@ def create_phono3py_files_then_exit(args,
     #####################
     # Create FORCES_FC2 #
     #####################
-    if args.forces_fc2:
+    if settings.create_forces_fc2:
         if input_filename is None:
             disp_filename = 'disp_fc2.yaml'
         else:
@@ -310,7 +312,7 @@ def create_phono3py_files_then_exit(args,
             print("Displacement dataset was read from \"%s\"." % disp_filename)
         num_atoms = disp_dataset['natom']
         num_disps = len(disp_dataset['first_atoms'])
-        force_filenames = args.forces_fc2
+        force_filenames = settings.create_forces_fc2
         for filename in force_filenames:
             file_exists(filename, log_level)
 
@@ -324,8 +326,8 @@ def create_phono3py_files_then_exit(args,
                                     disp_filename,
                                     verbose=(log_level > 0))
 
-        if args.forces_fcz:
-            force_filename = args.forces_fcz
+        if settings.subtract_forces:
+            force_filename = settings.subtract_forces
             file_exists(force_filename, log_level)
             force_set_zero = get_force_sets(interface_mode,
                                             num_atoms,
@@ -816,13 +818,26 @@ def main(**argparse_control):
         (input_filename,
          output_filename) = get_input_output_filenames_from_args(args)
 
-    create_phono3py_files_then_exit(
-        args, input_filename, output_filename, log_level)
-
     settings, confs, cell_filename = read_phono3py_settings(
         args, argparse_control, log_level)
 
-    # Symmetry tolerance. Distance unit depends on interface.
+    create_phono3py_files_then_exit(
+        args, settings, input_filename, output_filename, log_level)
+
+    if args.write_grid_points:
+        run_mode = "write_grid_info"
+    elif args.show_num_triplets:
+        run_mode = "show_triplets_info"
+    else:
+        run_mode = None
+
+    # -----------------------------------------------------------------------
+    # ----------------- 'args' should not be used below. --------------------
+    # -----------------------------------------------------------------------
+
+    ###########################################################
+    # Symmetry tolerance. Distance unit depends on interface. #
+    ###########################################################
     if settings.symmetry_tolerance is None:
         symprec = 1e-5
     else:
@@ -832,15 +847,8 @@ def main(**argparse_control):
     unitcell_filename = cell_info['optional_structure_info'][0]
     interface_mode = cell_info['interface_mode']
 
-    run_mode = get_run_mode(settings)
-    if args.write_grid_points:
-        run_mode = "write_grid_info"
-    elif args.show_num_triplets:
-        run_mode = "show_triplets_info"
-
-    # -----------------------------------------------------------------------
-    # ----------------- 'args' should not be used below. --------------------
-    # -----------------------------------------------------------------------
+    if run_mode is None:
+        run_mode = get_run_mode(settings)
 
     ######################################################
     # Create supercells with displacements and then exit #
