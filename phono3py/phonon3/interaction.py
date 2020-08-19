@@ -115,14 +115,14 @@ class Interaction(object):
         svecs, multiplicity = self._primitive.get_smallest_vectors()
         self._smallest_vectors = svecs
         self._multiplicity = multiplicity
-        self._masses = np.array(self._primitive.get_masses(), dtype='double')
-        self._p2s = self._primitive.get_primitive_to_supercell_map()
-        self._s2p = self._primitive.get_supercell_to_primitive_map()
+        self._masses = np.array(self._primitive.masses, dtype='double')
+        self._p2s = self._primitive.p2s_map
+        self._s2p = self._primitive.s2p_map
 
         self._allocate_phonon()
 
     def run(self, lang='C', g_zero=None):
-        num_band = self._primitive.get_number_of_atoms() * 3
+        num_band = len(self._primitive) * 3
         num_triplets = len(self._triplets_at_q)
 
         self._interaction_strength = np.empty(
@@ -265,7 +265,7 @@ class Interaction(object):
         self._g_zero = g_zero
 
     def set_grid_point(self, grid_point, stores_triplets_map=False):
-        reciprocal_lattice = np.linalg.inv(self._primitive.get_cell())
+        reciprocal_lattice = np.linalg.inv(self._primitive.cell)
         if not self._is_mesh_symmetry:
             (triplets_at_q,
              weights_at_q,
@@ -428,7 +428,7 @@ class Interaction(object):
                                  dtype='double', order='C')
 
     def _set_band_indices(self, band_indices):
-        num_band = self._primitive.get_number_of_atoms() * 3
+        num_band = len(self._primitive) * 3
         if band_indices is None:
             self._band_indices = np.arange(num_band, dtype='intc')
         else:
@@ -509,10 +509,10 @@ class Interaction(object):
                              self._lapack_zheev_uplo)
 
     def _allocate_phonon(self):
-        primitive_lattice = np.linalg.inv(self._primitive.get_cell())
+        primitive_lattice = np.linalg.inv(self._primitive.cell)
         self._grid_address, self._bz_map = get_bz_grid_address(
             self._mesh, primitive_lattice, with_boundary=True)
-        num_band = self._primitive.get_number_of_atoms() * 3
+        num_band = len(self._primitive) * 3
         num_grid = len(self._grid_address)
         self._phonon_done = np.zeros(num_grid, dtype='byte')
         self._frequencies = np.zeros((num_grid, num_band), dtype='double')

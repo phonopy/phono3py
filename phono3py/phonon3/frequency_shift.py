@@ -1,5 +1,5 @@
 import numpy as np
-from phonopy.units import Hbar, EV, Angstrom, THz, AMU
+from phonopy.units import Hbar, EV, THz
 from phonopy.phonon.degeneracy import degenerate_sets
 from phono3py.phonon3.triplets import occupation
 from phono3py.file_IO import write_frequency_shift
@@ -15,8 +15,8 @@ def get_frequency_shift(interaction,
     if temperatures is None:
         temperatures = [0.0, 300.0]
     fst = FrequencyShift(interaction)
-    band_indices_flatten = interaction.get_band_indices()
-    mesh = interaction.get_mesh_numbers()
+    band_indices_flatten = interaction.band_indices
+    mesh = interaction.mesh_numbers
     for gp in grid_points:
         fst.set_grid_point(gp)
         if log_level:
