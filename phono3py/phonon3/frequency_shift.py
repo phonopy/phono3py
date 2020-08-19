@@ -1,8 +1,9 @@
 import numpy as np
-from phonopy.units import THzToEv, Kb, VaspToTHz, Hbar, EV, Angstrom, THz, AMU
+from phonopy.units import Hbar, EV, Angstrom, THz, AMU
 from phonopy.phonon.degeneracy import degenerate_sets
 from phono3py.phonon3.triplets import occupation
 from phono3py.file_IO import write_frequency_shift
+
 
 def get_frequency_shift(interaction,
                         grid_points,
@@ -48,6 +49,7 @@ def get_frequency_shift(interaction,
                                       epsilon=epsilon,
                                       filename=output_filename)
 
+
 class FrequencyShift(object):
     def __init__(self,
                  interaction,
@@ -83,32 +85,25 @@ class FrequencyShift(object):
 
     def run_interaction(self):
         self._pp.run(lang=self._lang)
-        self._pp_strength = self._pp.get_interaction_strength()
+        self._pp_strength = self._pp.interaction_strength
         (self._frequencies,
          self._eigenvectors) = self._pp.get_phonons()[:2]
         (self._triplets_at_q,
          self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
-        self._band_indices = self._pp.get_band_indices()
-
-        mesh = self._pp.get_mesh_numbers()
-        num_grid = np.prod(mesh)
+        self._band_indices = self._pp.band_indices
 
         # Unit to THz of Delta
-        self._unit_conversion = ((Hbar * EV) ** 3 / 36 / 8
-                                 * EV ** 2 / Angstrom ** 6
-                                 / (2 * np.pi * THz) ** 3
-                                 / AMU ** 3
-                                 * 18 / (Hbar * EV) ** 2
+        self._unit_conversion = (18 * np.pi / (Hbar * EV) ** 2
                                  / (2 * np.pi * THz) ** 2
-                                 / num_grid)
+                                 * EV ** 2)
 
     def get_frequency_shift(self):
         if self._cutoff_frequency is None:
             return self._frequency_shifts
-        else: # Averaging frequency shifts by degenerate bands
+        else:  # Averaging frequency shifts by degenerate bands
             shifts = np.zeros_like(self._frequency_shifts)
             freqs = self._frequencies[self._grid_point]
-            deg_sets = degenerate_sets(freqs) # such like [[0,1], [2], [3,4,5]]
+            deg_sets = degenerate_sets(freqs)  # like [[0,1], [2], [3,4,5]]
             for dset in deg_sets:
                 bi_set = []
                 for i, bi in enumerate(self._band_indices):
