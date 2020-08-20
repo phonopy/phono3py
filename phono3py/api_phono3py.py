@@ -1517,11 +1517,21 @@ class Phono3py(object):
                    "before running this method.")
             raise RuntimeError(msg)
 
+        if epsilons is not None:
+            _epsilons = epsilons
+        else:
+            if len(self._sigmas) == 1 and self._sigmas[0] is None:
+                _epsilons = None
+            elif self._sigmas[0] is None:
+                _epsilons = self._sigmas[1:]
+            else:
+                _epsilons = self._sigmas
+
         self._grid_points = grid_points
         get_frequency_shift(self._interaction,
                             self._grid_points,
                             band_indices=band_indices,
-                            epsilons=epsilons,
+                            epsilons=_epsilons,
                             temperatures=temperatures,
                             output_filename=output_filename,
                             log_level=self._log_level)

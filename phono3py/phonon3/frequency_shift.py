@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from phonopy.units import Hbar, EV, THz
 from phonopy.phonon.degeneracy import degenerate_sets
@@ -60,6 +61,7 @@ def get_frequency_shift(interaction,
                                                  filename=output_filename)
                 pos += len(bi)
                 print(filename)
+                sys.stdout.flush()
 
 
 class FrequencyShift(object):
