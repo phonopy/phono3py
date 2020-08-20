@@ -43,7 +43,7 @@ static double get_frequency_shift_at_band(const int band_index,
                                           const Darray *fc3_normal_squared,
                                           const double fpoint,
                                           const double *frequencies,
-                                          const int *grid_point_triplets,
+                                          const size_t (*triplets)[3],
                                           const int *triplet_weights,
                                           const double epsilon,
                                           const double temperature,
@@ -52,16 +52,16 @@ static double get_frequency_shift_at_band(const int band_index,
 static double sum_frequency_shift_at_band(const int num_band,
                                           const double *fc3_normal_squared,
                                           const double fpoint,
-                                          const double *freqs0,
                                           const double *freqs1,
+                                          const double *freqs2,
                                           const double epsilon,
                                           const double temperature,
                                           const double cutoff_frequency);
 static double sum_frequency_shift_at_band_0K(const int num_band,
                                              const double *fc3_normal_squared,
                                              const double fpoint,
-                                             const double *freqs0,
                                              const double *freqs1,
+                                             const double *freqs2,
                                              const double epsilon,
                                              const double cutoff_frequency);
 
@@ -69,7 +69,7 @@ void get_frequency_shift_at_bands(double *frequency_shift,
                                   const Darray *fc3_normal_squared,
                                   const int *band_indices,
                                   const double *frequencies,
-                                  const int *grid_point_triplets,
+                                  const size_t (*triplets)[3],
                                   const int *triplet_weights,
                                   const double epsilon,
                                   const double temperature,
@@ -81,22 +81,26 @@ void get_frequency_shift_at_bands(double *frequency_shift,
 
   num_band0 = fc3_normal_squared->dims[1];
   num_band = fc3_normal_squared->dims[2];
-  gp0 = grid_point_triplets[0];
+  gp0 = triplets[0][0];
 
   /* num_band0 and num_band_indices have to be same. */
   for (i = 0; i < num_band0; i++) {
     fpoint = frequencies[gp0 * num_band + band_indices[i]];
-    frequency_shift[i] =
-      get_frequency_shift_at_band(i,
-                                  fc3_normal_squared,
-                                  fpoint,
-                                  frequencies,
-                                  grid_point_triplets,
-                                  triplet_weights,
-                                  epsilon,
-                                  temperature,
-                                  unit_conversion_factor,
-                                  cutoff_frequency);
+    if (fpoint < cutoff_frequency) {
+      frequency_shift[i] = 0;
+    } else {
+      frequency_shift[i] =
+        get_frequency_shift_at_band(i,
+                                    fc3_normal_squared,
+                                    fpoint,
+                                    frequencies,
+                                    triplets,
+                                    triplet_weights,
+                                    epsilon,
+                                    temperature,
+                                    unit_conversion_factor,
+                                    cutoff_frequency);
+    }
   }
 }
 
@@ -104,7 +108,7 @@ static double get_frequency_shift_at_band(const int band_index,
                                           const Darray *fc3_normal_squared,
                                           const double fpoint,
                                           const double *frequencies,
-                                          const int *grid_point_triplets,
+                                          const size_t (*triplets)[3],
                                           const int *triplet_weights,
                                           const double epsilon,
                                           const double temperature,
@@ -121,8 +125,8 @@ static double get_frequency_shift_at_band(const int band_index,
   shift = 0;
 #pragma omp parallel for private(gp1, gp2) reduction(+:shift)
   for (i = 0; i < num_triplets; i++) {
-    gp1 = grid_point_triplets[i * 3 + 1];
-    gp2 = grid_point_triplets[i * 3 + 2];
+    gp1 = triplets[i][1];
+    gp2 = triplets[i][2];
     if (temperature > 0) {
       shift +=
         sum_frequency_shift_at_band(num_band,
@@ -156,46 +160,47 @@ static double get_frequency_shift_at_band(const int band_index,
 static double sum_frequency_shift_at_band(const int num_band,
                                           const double *fc3_normal_squared,
                                           const double fpoint,
-                                          const double *freqs0,
                                           const double *freqs1,
+                                          const double *freqs2,
                                           const double epsilon,
                                           const double temperature,
                                           const double cutoff_frequency)
 {
   int i, j;
-  double n2, n3, f1, f2, f3, f4, shift;
+  double n1, n2, f1, f2, f3, f4, shift;
   /* double sum; */
 
   shift = 0;
   for (i = 0; i < num_band; i++) {
-    if (freqs0[i] > cutoff_frequency) {
-      n2 = bose_einstein(freqs0[i], temperature);
+    if (freqs1[i] > cutoff_frequency) {
+      n1 = bose_einstein(freqs1[i], temperature);
       for (j = 0; j < num_band; j++) {
-        if (freqs1[j] > cutoff_frequency) {
-          n3 = bose_einstein(freqs1[j], temperature);
-          f1 = fpoint + freqs0[i] + freqs1[j];
-          f2 = fpoint - freqs0[i] - freqs1[j];
-          f3 = fpoint - freqs0[i] + freqs1[j];
-          f4 = fpoint + freqs0[i] - freqs1[j];
+        if (freqs2[j] > cutoff_frequency) {
+          n2 = bose_einstein(freqs2[j], temperature);
+          f1 = fpoint + freqs1[i] + freqs2[j];
+          f2 = fpoint - freqs1[i] - freqs2[j];
+          f3 = fpoint - freqs1[i] + freqs2[j];
+          f4 = fpoint + freqs1[i] - freqs2[j];
 
-          /* sum = 0; */
-          /* if (fabs(f1) > epsilon) { */
-          /*   sum -= (n2 + n3 + 1) / f1; */
-          /* } */
-          /* if (fabs(f2) > epsilon) { */
-          /*   sum += (n2 + n3 + 1) / f2; */
-          /* } */
-          /* if (fabs(f3) > epsilon) { */
-          /*   sum -= (n2 - n3) / f3; */
-          /* } */
-          /* if (fabs(f4) > epsilon) { */
-          /*   sum += (n2 - n3) / f4; */
-          /* } */
-          /* shift += sum * fc3_normal_squared[i * num_band + j]; */
-          shift += (- (n2 + n3 + 1) * f1 / (f1 * f1 + epsilon * epsilon)
-                    + (n2 + n3 + 1) * f2 / (f2 * f2 + epsilon * epsilon)
-                    - (n2 - n3) * f3 / (f3 * f3 + epsilon * epsilon)
-                    + (n2 - n3) * f4 / (f4 * f4 + epsilon * epsilon)) *
+          /* sum = 0;
+           * if (fabs(f1) > epsilon) {
+           *   sum -= (n1 + n2 + 1) / f1;
+           * }
+           * if (fabs(f2) > epsilon) {
+           *   sum += (n1 + n2 + 1) / f2;
+           * }
+           * if (fabs(f3) > epsilon) {
+           *   sum -= (n1 - n2) / f3;
+           * }
+           * if (fabs(f4) > epsilon) {
+           *   sum += (n1 - n2) / f4;
+           * }
+           * shift += sum * fc3_normal_squared[i * num_band + j]; */
+
+          shift += (- (n1 + n2 + 1) * f1 / (f1 * f1 + epsilon * epsilon)
+                    + (n1 + n2 + 1) * f2 / (f2 * f2 + epsilon * epsilon)
+                    - (n1 - n2) * f3 / (f3 * f3 + epsilon * epsilon)
+                    + (n1 - n2) * f4 / (f4 * f4 + epsilon * epsilon)) *
             fc3_normal_squared[i * num_band + j];
         }
       }
@@ -207,8 +212,8 @@ static double sum_frequency_shift_at_band(const int num_band,
 static double sum_frequency_shift_at_band_0K(const int num_band,
                                              const double *fc3_normal_squared,
                                              const double fpoint,
-                                             const double *freqs0,
                                              const double *freqs1,
+                                             const double *freqs2,
                                              const double epsilon,
                                              const double cutoff_frequency)
 {
@@ -217,11 +222,11 @@ static double sum_frequency_shift_at_band_0K(const int num_band,
 
   shift = 0;
   for (i = 0; i < num_band; i++) {
-    if (freqs0[i] > cutoff_frequency) {
+    if (freqs1[i] > cutoff_frequency) {
       for (j = 0; j < num_band; j++) {
-        if (freqs1[j] > cutoff_frequency) {
-          f1 = fpoint + freqs0[i] + freqs1[j];
-          f2 = fpoint - freqs0[i] - freqs1[j];
+        if (freqs2[j] > cutoff_frequency) {
+          f1 = fpoint + freqs1[i] + freqs2[j];
+          f2 = fpoint - freqs1[i] - freqs2[j];
           shift += (- 1 * f1 / (f1 * f1 + epsilon * epsilon)
                     + 1 * f2 / (f2 * f2 + epsilon * epsilon)) *
             fc3_normal_squared[i * num_band + j];

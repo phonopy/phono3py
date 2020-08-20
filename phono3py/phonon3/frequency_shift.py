@@ -14,7 +14,7 @@ def get_frequency_shift(interaction,
                         output_filename=None,
                         log_level=0):
     if epsilons is None:
-        _epsilons = [0.1]
+        _epsilons = [0.01]
     else:
         _epsilons = epsilons
 
@@ -60,19 +60,58 @@ def get_frequency_shift(interaction,
                                                  epsilon=epsilon,
                                                  filename=output_filename)
                 pos += len(bi)
-                print(filename)
+                print(filename, interaction.get_phonons()[0][gp][bi])
                 sys.stdout.flush()
 
 
 class FrequencyShift(object):
+    """
+
+    About the parameter epsilon
+    ---------------------------
+    epsilon is the value to approximate 1/x by
+
+        x / (x^2 + epsilon^2)
+
+    where 1/x appears in Cauchy principal value, so it is expected to be
+    around 1/x except near x=0, and zero near x=0.
+
+    How to test epsilon
+    -------------------
+    At a sampling mesh, choose one band and calcualte frequency shifts at
+    various epsilon values and plot over the epsilons. Decreasing epsinon,
+    at some point, discontinous change may be found.
+
+    """
+
     def __init__(self,
                  interaction,
                  grid_point=None,
                  temperature=None,
-                 epsilon=0.1,
+                 epsilon=None,
                  lang='C'):
+        """
+
+        Parameters
+        ----------
+        interaction : Interaction
+            Instance of Interaction class that is ready to use, i.e., phonons
+            are set properly, etc.
+        grid_point : int
+            A grid point on a sampling mesh
+        temperature : float
+            Temperature in K.
+        epsilon : float
+            Parameter explained above. The unit is consisered as THz.
+
+        """
+
         self._pp = interaction
-        self.set_epsilon(epsilon)
+
+        if epsilon is None:
+            self.set_epsilon(0.01)
+        else:
+            self.set_epsilon(epsilon)
         self.set_temperature(temperature)
         self.set_grid_point(grid_point=grid_point)
 

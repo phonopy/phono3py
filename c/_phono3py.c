@@ -1004,7 +1004,7 @@ static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
   double *shift;
   double *frequencies;
   int *band_indices;
-  int *grid_point_triplets;
+  size_t (*triplets)[3];
   int *triplet_weights;
 
   if (!PyArg_ParseTuple(args, "OOOOOOdddd",
@@ -1026,14 +1026,14 @@ static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
   shift = (double*)PyArray_DATA(py_shift);
   frequencies = (double*)PyArray_DATA(py_frequencies);
   band_indices = (int*)PyArray_DATA(py_band_indices);
-  grid_point_triplets = (int*)PyArray_DATA(py_triplets);
+  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
   triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
 
   get_frequency_shift_at_bands(shift,
                                fc3_normal_squared,
                                band_indices,
                                frequencies,
-                               grid_point_triplets,
+                               triplets,
                                triplet_weights,
                                epsilon,
                                temperature,
