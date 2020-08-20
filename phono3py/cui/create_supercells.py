@@ -77,7 +77,7 @@ def create_phono3py_supercells(cell_info,
     if log_level:
         print('')
         print("Unit cell was read from \"%s\"." %
-              optional_structure_info)
+              optional_structure_info[0])
         print("Displacement distance: %s" % distance)
 
     if output_filename is None:
