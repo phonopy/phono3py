@@ -1496,9 +1496,10 @@ class Phono3py(object):
                 output_filename=output_filename,
                 log_level=self._log_level)
 
-    def get_frequency_shift(
+    def run_frequency_shift(
             self,
             grid_points,
+            band_indices=None,
             temperatures=np.arange(0, 1001, 10, dtype='double'),
             epsilons=None,
             output_filename=None):
@@ -1516,16 +1517,12 @@ class Phono3py(object):
                    "before running this method.")
             raise RuntimeError(msg)
 
-        if epsilons is None:
-            _epsilons = [0.1]
-        else:
-            _epsilons = epsilons
         self._grid_points = grid_points
         get_frequency_shift(self._interaction,
                             self._grid_points,
-                            self._band_indices,
-                            _epsilons,
-                            temperatures,
+                            band_indices=band_indices,
+                            epsilons=epsilons,
+                            temperatures=temperatures,
                             output_filename=output_filename,
                             log_level=self._log_level)
 

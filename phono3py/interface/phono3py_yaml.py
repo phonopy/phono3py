@@ -100,9 +100,6 @@ class Phono3pyYaml(PhonopyYaml):
         super(Phono3pyYaml, self).parse()
         self._parse_fc3_dataset()
 
-    def _load(self, fp):
-        super(Phono3pyYaml, self)._load(fp)
-
     def _parse_all_cells(self):
         """Parse all cells
 

@@ -7,15 +7,28 @@ from phono3py.file_IO import write_frequency_shift
 
 def get_frequency_shift(interaction,
                         grid_points,
-                        band_indices,
-                        epsilons,
+                        band_indices=None,
+                        epsilons=None,
                         temperatures=None,
                         output_filename=None,
                         log_level=0):
+    if epsilons is None:
+        _epsilons = [0.1]
+    else:
+        _epsilons = epsilons
+
     if temperatures is None:
-        temperatures = [0.0, 300.0]
-    fst = FrequencyShift(interaction)
+        _temperatures = [0.0, 300.0]
+    else:
+        _temperatures = temperatures
+
     band_indices_flatten = interaction.band_indices
+    if band_indices is None:
+        _band_indices = [[i, ] for i in band_indices_flatten]
+    else:
+        _band_indices = band_indices
+
+    fst = FrequencyShift(interaction)
     mesh = interaction.mesh_numbers
     for gp in grid_points:
         fst.set_grid_point(gp)
@@ -26,28 +39,27 @@ def get_frequency_shift(interaction,
                   "%d / %d" % (len(weights), weights.sum()))
         fst.run_interaction()
 
-        for epsilon in epsilons:
+        for epsilon in _epsilons:
             fst.set_epsilon(epsilon)
-            delta = np.zeros((len(temperatures),
+            delta = np.zeros((len(_temperatures),
                               len(band_indices_flatten)),
                              dtype='double')
-            for i, t in enumerate(temperatures):
+            for i, t in enumerate(_temperatures):
                 fst.set_temperature(t)
                 fst.run()
                 delta[i] = fst.get_frequency_shift()
 
-            for i, bi in enumerate(band_indices):
-                pos = 0
-                for j in range(i):
-                    pos += len(band_indices[j])
-
-                write_frequency_shift(gp,
-                                      bi,
-                                      temperatures,
-                                      delta[:, pos:(pos+len(bi))],
-                                      mesh,
-                                      epsilon=epsilon,
-                                      filename=output_filename)
+            pos = 0
+            for bi in _band_indices:
+                filename = write_frequency_shift(gp,
+                                                 bi,
+                                                 _temperatures,
+                                                 delta[:, pos:(pos + len(bi))],
+                                                 mesh,
+                                                 epsilon=epsilon,
+                                                 filename=output_filename)
+                pos += len(bi)
+                print(filename)
 
 
 class FrequencyShift(object):
