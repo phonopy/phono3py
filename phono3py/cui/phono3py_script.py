@@ -1082,9 +1082,9 @@ def main(**argparse_control):
                               output_filename,
                               log_level)
 
-    #####################################
-    # Run imaginary part of self energy #
-    #####################################
+    #######################################################
+    # Run imaginary part of self energy of bubble diagram #
+    #######################################################
     if run_mode == "imag_self_energy":
         phono3py.run_imag_self_energy(
             updated_settings['grid_points'],
@@ -1095,6 +1095,15 @@ def main(**argparse_control):
             write_gamma_detail=settings.write_gamma_detail,
             output_filename=output_filename)
         phono3py.write_imag_self_energy(filename=output_filename)
+
+    #####################################################
+    # Run frequency shift calculation of bubble diagram #
+    #####################################################
+    if run_mode == "frequency_shift":
+        phono3py.run_frequency_shift(
+            updated_settings['grid_points'],
+            temperatures=updated_settings['temperature_points'],
+            output_filename=output_filename)
 
     ####################################
     # Run lattice thermal conductivity #

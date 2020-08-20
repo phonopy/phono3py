@@ -478,6 +478,7 @@ class Conductivity_RTA(Conductivity):
                  pp_filename=None,
                  is_N_U=False,
                  is_gamma_detail=False,
+                 is_frequency_shift_by_bubble=False,
                  log_level=0):
         self._pp = None
         self._temperatures = None
@@ -488,6 +489,7 @@ class Conductivity_RTA(Conductivity):
         self._is_full_pp = None
         self._is_N_U = is_N_U
         self._is_gamma_detail = is_gamma_detail
+        self._is_frequency_shift_by_bubble = is_frequency_shift_by_bubble
         self._log_level = None
         self._primitive = None
         self._dm = None

@@ -144,6 +144,8 @@ class Interaction(object):
         return self._interaction_strength
 
     def get_interaction_strength(self):
+        warnings.warn("Use attribute, interaction_strength.",
+                      DeprecationWarning)
         return self.interaction_strength
 
     @property
@@ -151,6 +153,7 @@ class Interaction(object):
         return self._mesh
 
     def get_mesh_numbers(self):
+        warnings.warn("Use attribute, mesh_numbers.", DeprecationWarning)
         return self.mesh_numbers
 
     @property
@@ -158,6 +161,7 @@ class Interaction(object):
         return self._fc3
 
     def get_fc3(self):
+        warnings.warn("Use attribute, fc3.", DeprecationWarning)
         return self.fc3
 
     @property
@@ -165,6 +169,7 @@ class Interaction(object):
         return self._dm
 
     def get_dynamical_matrix(self):
+        warnings.warn("Use attribute, dynamical_matrix.", DeprecationWarning)
         return self.dynamical_matrix
 
     @property
@@ -172,6 +177,7 @@ class Interaction(object):
         return self._primitive
 
     def get_primitive(self):
+        warnings.warn("Use attribute, primitive.", DeprecationWarning)
         return self.primitive
 
     @property
@@ -179,6 +185,7 @@ class Interaction(object):
         return self._supercell
 
     def get_supercell(self):
+        warnings.warn("Use attribute, supercell.", DeprecationWarning)
         return self.supercell
 
     def get_triplets_at_q(self):
@@ -192,6 +199,7 @@ class Interaction(object):
         return self._grid_address
 
     def get_grid_address(self):
+        warnings.warn("Use attribute, grid_address.", DeprecationWarning)
         return self.grid_address
 
     @property
@@ -199,6 +207,7 @@ class Interaction(object):
         return self._bz_map
 
     def get_bz_map(self):
+        warnings.warn("Use attribute, bz_map.", DeprecationWarning)
         return self.bz_map
 
     @property
@@ -206,6 +215,7 @@ class Interaction(object):
         return self._band_indices
 
     def get_band_indices(self):
+        warnings.warn("Use attribute, band_indices.", DeprecationWarning)
         return self.band_indices
 
     @property
@@ -217,6 +227,7 @@ class Interaction(object):
         return self._nac_q_direction
 
     def get_nac_q_direction(self):
+        warnings.warn("Use attribute, nac_q_direction.", DeprecationWarning)
         return self.nac_q_direction
 
     def get_zero_value_positions(self):
