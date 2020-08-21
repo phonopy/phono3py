@@ -155,7 +155,7 @@ class FrequencyShift(object):
         self.set_epsilon(epsilon)
 
         # Unit to THz of Delta
-        self._unit_conversion = (18 * np.pi / (Hbar * EV) ** 2
+        self._unit_conversion = (18 / (Hbar * EV) ** 2
                                  / (2 * np.pi * THz) ** 2
                                  * EV ** 2)
 
