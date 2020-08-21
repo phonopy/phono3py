@@ -350,11 +350,6 @@ def write_grid_address_to_hdf5(grid_address,
     return None
 
 
-def write_freq_shifts_to_hdf5(freq_shifts, filename='freq_shifts.hdf5'):
-    with h5py.File(filename, 'w') as w:
-        w.create_dataset('shift', data=freq_shifts)
-
-
 def write_imag_self_energy_at_grid_point(gp,
                                          band_indices,
                                          mesh,
@@ -365,17 +360,13 @@ def write_imag_self_energy_at_grid_point(gp,
                                          scattering_event_class=None,
                                          filename=None,
                                          is_mesh_symmetry=True):
-
     gammas_filename = "gammas"
-    gammas_filename += "-m%d%d%d-g%d-" % (mesh[0],
-                                          mesh[1],
-                                          mesh[2],
-                                          gp)
+    gammas_filename += "-m%d%d%d-g%d-" % (mesh[0], mesh[1], mesh[2], gp)
     if sigma is not None:
-        gammas_filename += ("s%f" % sigma).rstrip('0').rstrip('\.') + "-"
+        gammas_filename += ("s%f" % sigma).rstrip('0').rstrip(r'\.') + "-"
 
     if temperature is not None:
-        gammas_filename += ("t%f" % temperature).rstrip('0').rstrip('\.') + "-"
+        gammas_filename += ("t%f" % temperature).rstrip('0').rstrip(r'\.') + "-"
 
     for i in band_indices:
         gammas_filename += "b%d" % (i + 1)
@@ -438,7 +429,7 @@ def _write_joint_dos_at_t(grid_point,
                                   filename=filename)
     jdos_filename = "jdos%s" % suffix
     if temperature is not None:
-        jdos_filename += ("-t%f" % temperature).rstrip('0').rstrip('\.')
+        jdos_filename += ("-t%f" % temperature).rstrip('0').rstrip(r'\.')
     if not is_mesh_symmetry:
         jdos_filename += ".nosym"
     if filename is not None:
@@ -451,6 +442,7 @@ def _write_joint_dos_at_t(grid_point,
             w.write((" %20.15e" * len(vals)) % tuple(vals))
             w.write("\n")
         return jdos_filename
+
 
 def write_linewidth_at_grid_point(gp,
                                   band_indices,
@@ -475,10 +467,9 @@ def write_linewidth_at_grid_point(gp,
         lw_filename += ".nosym"
     lw_filename += ".dat"
 
-    w = open(lw_filename, 'w')
-    for v, t in zip(gamma.sum(axis=1) * 2 / gamma.shape[1], temperatures):
-        w.write("%15.7f %20.15e\n" % (t, v))
-    w.close()
+    with open(lw_filename, 'w') as w:
+        for v, t in zip(gamma.sum(axis=1) * 2 / gamma.shape[1], temperatures):
+            w.write("%15.7f %20.15e\n" % (t, v))
 
 
 def write_frequency_shift(gp,
@@ -486,19 +477,19 @@ def write_frequency_shift(gp,
                           temperatures,
                           delta,
                           mesh,
-                          epsilon=None,
+                          epsilon,
                           filename=None,
                           is_mesh_symmetry=True):
 
     fst_filename = "frequency_shift"
-    fst_filename += "-m%d%d%d-g%d-" % (mesh[0], mesh[1], mesh[2], gp)
-    if epsilon is not None:
-        if epsilon > 1e-5:
-            fst_filename += ("s%f" % epsilon).rstrip('0') + "-"
-        else:
-            fst_filename += ("s%.3e" % epsilon) + "-"
-    for i in band_indices:
-        fst_filename += "b%d" % (i + 1)
+    suffix = _get_filename_suffix(mesh,
+                                  grid_point=gp,
+                                  band_indices=band_indices)
+    fst_filename += suffix
+    if epsilon > 1e-5:
+        fst_filename += "-s" + _del_zeros(epsilon)
+    else:
+        fst_filename += "-s%.3e" % epsilon
     if filename is not None:
         fst_filename += ".%s" % filename
     elif not is_mesh_symmetry:
@@ -510,6 +501,48 @@ def write_frequency_shift(gp,
             w.write("%15.7f %20.15e\n" % (t, v))
 
     return fst_filename
+
+
+def write_Delta_to_hdf5(grid_point,
+                        band_indices,
+                        temperatures,
+                        deltas,
+                        mesh,
+                        epsilon,
+                        frequencies=None,
+                        filename=None):
+    """Wirte frequency shifts (currently only bubble) in hdf5
+
+    deltas : ndarray
+        Frequency shift.
+        shape=(temperature, band_index), dtype='double', order='C'
+
+    """
+    full_filename = "Delta"
+    suffix = _get_filename_suffix(mesh, grid_point=grid_point)
+    band_indices_flatten = []
+    for bi_set in band_indices:
+        band_indices_flatten += bi_set
+    band_indices_flatten = np.array(band_indices_flatten, dtype='intc')
+
+    full_filename += suffix
+    if epsilon > 1e-5:
+        full_filename += "-e" + _del_zeros(epsilon)
+    else:
+        full_filename += "-e%.3e" % epsilon
+    full_filename += ".hdf5"
+
+    with h5py.File(full_filename, 'w') as w:
+        w.create_dataset('grid_point', data=grid_point)
+        w.create_dataset('mesh', data=mesh)
+        w.create_dataset('band_index', data=band_indices_flatten)
+        w.create_dataset('bubble', data=deltas)
+        w.create_dataset('temperature', data=temperatures)
+        w.create_dataset('epsilon', data=epsilon)
+        if frequencies is not None:
+            w.create_dataset('frequency', data=frequencies)
+
+    return full_filename
 
 
 def write_collision_to_hdf5(temperature,
@@ -1405,6 +1438,7 @@ def get_filename_suffix(mesh,
                         band_indices=None,
                         sigma=None,
                         sigma_cutoff=None,
+                        temperature=None,
                         filename=None):
     return _get_filename_suffix(mesh,
                                 mesh_divisors=mesh_divisors,
@@ -1412,6 +1446,7 @@ def get_filename_suffix(mesh,
                                 band_indices=band_indices,
                                 sigma=sigma,
                                 sigma_cutoff=sigma_cutoff,
+                                temperature=temperature,
                                 filename=filename)
 
 
@@ -1421,6 +1456,7 @@ def _get_filename_suffix(mesh,
                          band_indices=None,
                          sigma=None,
                          sigma_cutoff=None,
+                         temperature=None,
                          filename=None):
     suffix = "-m%d%d%d" % tuple(mesh)
     if mesh_divisors is not None:
@@ -1437,6 +1473,8 @@ def _get_filename_suffix(mesh,
         if sigma_cutoff is not None:
             sigma_cutoff_str = _del_zeros(sigma_cutoff)
             suffix += "-sd" + sigma_cutoff_str
+    if temperature is not None:
+        suffix += "-t" + _del_zeros(temperature)
     if filename is not None:
         suffix += "." + filename
 
@@ -1444,7 +1482,7 @@ def _get_filename_suffix(mesh,
 
 
 def _del_zeros(val):
-    return ("%f" % val).rstrip('0').rstrip('\.')
+    return ("%f" % val).rstrip('0').rstrip(r'\.')
 
 
 def _parse_yaml(file_yaml):

@@ -3,7 +3,7 @@ import numpy as np
 from phonopy.units import Hbar, EV, THz
 from phonopy.phonon.degeneracy import degenerate_sets
 from phono3py.phonon3.triplets import occupation
-from phono3py.file_IO import write_frequency_shift
+from phono3py.file_IO import write_frequency_shift, write_Delta_to_hdf5
 
 
 def get_frequency_shift(interaction,
@@ -22,6 +22,7 @@ def get_frequency_shift(interaction,
         _temperatures = [0.0, 300.0]
     else:
         _temperatures = temperatures
+    _temperatures = np.array(_temperatures, dtype='double')
 
     band_indices_flatten = interaction.band_indices
     if band_indices is None:
@@ -35,10 +36,19 @@ def get_frequency_shift(interaction,
         fst.set_grid_point(gp)
         if log_level:
             weights = interaction.get_triplets_at_q()[1]
-            print("------ Frequency shift -o- ------")
-            print("Number of ir-triplets: "
-                  "%d / %d" % (len(weights), weights.sum()))
+            print("------ Frequency shift -o- at grid point %d ------" % gp)
+            print("Number of ir-triplets: %d / %d"
+                  % (len(weights), weights.sum()))
+
         fst.run_interaction()
+        frequencies = interaction.get_phonons()[0][gp]
+
+        if log_level:
+            qpoint = interaction.grid_address[gp] / mesh.astype(float)
+            print("Phonon frequencies at (%4.2f, %4.2f, %4.2f):"
+                  % tuple(qpoint))
+            for bi in band_indices_flatten:
+                print("%3d  %f" % (bi + 1, frequencies[bi]))
 
         for epsilon in _epsilons:
             fst.set_epsilon(epsilon)
@@ -50,17 +60,33 @@ def get_frequency_shift(interaction,
                 fst.run()
                 delta[i] = fst.get_frequency_shift()
 
-            pos = 0
-            for bi in _band_indices:
-                filename = write_frequency_shift(gp,
-                                                 bi,
-                                                 _temperatures,
-                                                 delta[:, pos:(pos + len(bi))],
-                                                 mesh,
-                                                 epsilon=epsilon,
-                                                 filename=output_filename)
-                pos += len(bi)
-                print(filename, interaction.get_phonons()[0][gp][bi])
+            # pos = 0
+            # for bi in _band_indices:
+            #     filename = write_frequency_shift(gp,
+            #                                      bi,
+            #                                      _temperatures,
+            #                                      delta[:, pos:(pos + len(bi))],
+            #                                      mesh,
+            #                                      epsilon,
+            #                                      filename=output_filename)
+            #     pos += len(bi)
+            #     print(filename, interaction.get_phonons()[0][gp][bi])
+            #     sys.stdout.flush()
+
+            filename = write_Delta_to_hdf5(
+                gp,
+                _band_indices,
+                _temperatures,
+                delta,
+                mesh,
+                epsilon,
+                frequencies=frequencies,
+                filename=output_filename)
+
+            if log_level:
+                print("Frequency shfits with epsilon=%f were stored in"
+                      % epsilon)
+                print("\"%s\"." % filename)
                 sys.stdout.flush()
 
 
@@ -128,6 +154,11 @@ class FrequencyShift(object):
         self._frequency_shifts = None
         self.set_epsilon(epsilon)
 
+        # Unit to THz of Delta
+        self._unit_conversion = (18 * np.pi / (Hbar * EV) ** 2
+                                 / (2 * np.pi * THz) ** 2
+                                 * EV ** 2)
+
     def run(self):
         if self._pp_strength is None:
             self.run_interaction()
@@ -144,11 +175,6 @@ class FrequencyShift(object):
         (self._triplets_at_q,
          self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
         self._band_indices = self._pp.band_indices
-
-        # Unit to THz of Delta
-        self._unit_conversion = (18 * np.pi / (Hbar * EV) ** 2
-                                 / (2 * np.pi * THz) ** 2
-                                 * EV ** 2)
 
     def get_frequency_shift(self):
         if self._cutoff_frequency is None:
