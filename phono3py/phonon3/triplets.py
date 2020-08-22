@@ -1,17 +1,9 @@
 import numpy as np
-from phonopy.units import THzToEv, Kb
 import spglib
 from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.structure.grid_points import extract_ir_grid_points
-
-
-def gaussian(x, sigma):
-    return 1.0 / np.sqrt(2 * np.pi) / sigma * np.exp(-x**2 / 2 / sigma**2)
-
-
-def occupation(x, t):
-    return 1.0 / (np.exp(THzToEv * x / (Kb * t)) - 1)
+from phono3py.phonon.func import gaussian
 
 
 def get_triplets_at_q(grid_point,

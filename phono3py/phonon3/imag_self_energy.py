@@ -2,8 +2,8 @@ import sys
 import numpy as np
 from phonopy.units import Hbar, EV, THz
 from phonopy.phonon.degeneracy import degenerate_sets
-from phono3py.phonon3.triplets import (get_triplets_integration_weights,
-                                       occupation)
+from phono3py.phonon3.triplets import get_triplets_integration_weights
+from phono3py.phonon.func import bose_einstein
 from phono3py.file_IO import (write_gamma_detail_to_hdf5,
                               write_imag_self_energy_at_grid_point)
 
@@ -552,7 +552,7 @@ class ImagSelfEnergy(object):
     def _ise_thm_with_band_indices(self):
         freqs = self._frequencies[self._triplets_at_q[:, [1, 2]]]
         freqs = np.where(freqs > self._cutoff_frequency, freqs, 1)
-        n = occupation(freqs, self._temperature)
+        n = bose_einstein(freqs, self._temperature)
         for i, (tp, w, interaction) in enumerate(zip(self._triplets_at_q,
                                                      self._weights_at_q,
                                                      self._pp_strength)):
@@ -595,8 +595,8 @@ class ImagSelfEnergy(object):
                 f2 = self._frequencies[tp[2]][k]
                 if (f1 > self._cutoff_frequency and
                     f2 > self._cutoff_frequency):
-                    n2 = occupation(f1, self._temperature)
-                    n3 = occupation(f2, self._temperature)
+                    n2 = bose_einstein(f1, self._temperature)
+                    n3 = bose_einstein(f2, self._temperature)
                     g1 = self._g[0, i, :, j, k]
                     g2_g3 = self._g[1, i, :, j, k]  # g2 - g3
                     for l in range(len(interaction)):

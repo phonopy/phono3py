@@ -2,7 +2,7 @@ import sys
 import numpy as np
 from phonopy.units import Hbar, EV, THz
 from phonopy.phonon.degeneracy import degenerate_sets
-from phono3py.phonon3.triplets import occupation
+from phono3py.phonon.func import bose_einstein
 from phono3py.file_IO import write_frequency_shift, write_Delta_to_hdf5
 
 
@@ -260,8 +260,8 @@ class FrequencyShift(object):
             if (freqs[1, j] > self._cutoff_frequency and
                 freqs[2, k] > self._cutoff_frequency):
                 d = 0.0
-                n2 = occupation(freqs[1, j], self._temperature)
-                n3 = occupation(freqs[2, k], self._temperature)
+                n2 = bose_einstein(freqs[1, j], self._temperature)
+                n3 = bose_einstein(freqs[2, k], self._temperature)
                 f1 = freqs[0, bi] + freqs[1, j] + freqs[2, k]
                 f2 = freqs[0, bi] - freqs[1, j] - freqs[2, k]
                 f3 = freqs[0, bi] - freqs[1, j] + freqs[2, k]

@@ -5,9 +5,9 @@ from phonopy.units import VaspToTHz
 from phono3py.phonon3.triplets import (get_triplets_at_q,
                                        get_nosym_triplets_at_q,
                                        get_tetrahedra_vertices,
-                                       get_triplets_integration_weights,
-                                       occupation)
+                                       get_triplets_integration_weights)
 from phono3py.phonon.solver import run_phonon_solver_c
+from phono3py.phonon.func import bose_einstein
 from phono3py.phonon3.imag_self_energy import get_frequency_points
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
@@ -169,7 +169,7 @@ class JointDos(object):
             for t in self._temperatures:
                 freqs = self._frequencies[self._triplets_at_q[:, 1:]]
                 occ_phonons.append(np.where(freqs > self._cutoff_frequency,
-                                            occupation(freqs, t), 0))
+                                            bose_einstein(freqs, t), 0))
 
         for i, freq_point in enumerate(self._frequency_points):
             g, _ = get_triplets_integration_weights(
