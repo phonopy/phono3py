@@ -17,8 +17,8 @@ unit_to_WmK = ((THz * Angstrom) ** 2 / (Angstrom ** 3) * EV / THz /
 
 
 def all_bands_exist(interaction):
-    band_indices = interaction.get_band_indices()
-    num_band = interaction.get_primitive().get_number_of_atoms() * 3
+    band_indices = interaction.band_indices
+    num_band = len(interaction.primitive) * 3
     if len(band_indices) == num_band:
         if (band_indices - np.arange(num_band) == 0).all():
             return True
@@ -95,8 +95,8 @@ class Conductivity(object):
         self._is_kappa_star = is_kappa_star
         self._gv_delta_q = gv_delta_q
         self._log_level = log_level
-        self._primitive = self._pp.get_primitive()
-        self._dm = self._pp.get_dynamical_matrix()
+        self._primitive = self._pp.primitive
+        self._dm = self._pp.dynamical_matrix
         self._frequency_factor_to_THz = self._pp.get_frequency_factor_to_THz()
         self._cutoff_frequency = self._pp.get_cutoff_frequency()
         self._boundary_mfp = boundary_mfp
@@ -292,7 +292,7 @@ class Conductivity(object):
         pass
 
     def _set_grid_properties(self, grid_points):
-        self._grid_address = self._pp.get_grid_address()
+        self._grid_address = self._pp.grid_address
         self._pp.set_nac_q_direction(nac_q_direction=None)
 
         if grid_points is not None:  # Specify grid points
@@ -357,7 +357,7 @@ class Conductivity(object):
         return np.array(gamma_iso, dtype='double', order='C')
 
     def _set_mesh_numbers(self, mesh_divisors=None, coarse_mesh_shifts=None):
-        self._mesh = self._pp.get_mesh_numbers()
+        self._mesh = self._pp.mesh_numbers
 
         if mesh_divisors is None:
             self._mesh_divisors = np.array([1, 1, 1], dtype='intc')
@@ -430,10 +430,10 @@ class Conductivity(object):
 
     def _set_harmonic_properties(self, i_irgp, i_data):
         grid_point = self._grid_points[i_irgp]
-        freqs = self._frequencies[grid_point][self._pp.get_band_indices()]
+        freqs = self._frequencies[grid_point][self._pp.band_indices]
         self._cv[:, i_data, :] = self._get_cv(freqs)
         gv = self._get_gv(self._qpoints[i_irgp])
-        self._gv[i_data] = gv[self._pp.get_band_indices(), :]
+        self._gv[i_data] = gv[self._pp.band_indices, :]
 
         # Outer product of group velocities (v x v) [num_k*, num_freqs, 3, 3]
         gv_by_gv_tensor, order_kstar = self._get_gv_by_gv(i_irgp, i_data)

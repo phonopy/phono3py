@@ -649,7 +649,7 @@ class Conductivity_RTA(Conductivity):
             self._show_log(self._qpoints[i], i)
 
     def _allocate_values(self):
-        num_band0 = len(self._pp.get_band_indices())
+        num_band0 = len(self._pp.band_indices)
         num_grid_points = len(self._grid_points)
         num_temp = len(self._temperatures)
         self._kappa = np.zeros((len(self._sigmas), num_temp, 6),
@@ -768,19 +768,19 @@ class Conductivity_RTA(Conductivity):
                         self._collision.get_detailed_imag_self_energy())
 
     def _set_gamma_at_sigmas_lowmem(self, i):
-        band_indices = self._pp.get_band_indices()
+        band_indices = self._pp.band_indices
         (svecs,
          multiplicity,
          p2s,
          s2p,
          masses) = self._pp.get_primitive_and_supercell_correspondence()
-        fc3 = self._pp.get_fc3()
+        fc3 = self._pp.fc3
         triplets_at_q, weights_at_q, _, _ = self._pp.get_triplets_at_q()
-        bz_map = self._pp.get_bz_map()
+        bz_map = self._pp.bz_map
         symmetrize_fc3_q = 0
 
         if None in self._sigmas:
-            reclat = np.linalg.inv(self._pp.get_primitive().get_cell())
+            reclat = np.linalg.inv(self._pp.primitive.cell)
             thm = TetrahedronMethod(reclat, mesh=self._mesh)
 
         # It is assumed that self._sigmas = [None].
@@ -866,7 +866,7 @@ class Conductivity_RTA(Conductivity):
 
     def _show_log(self, q, i):
         gp = self._grid_points[i]
-        frequencies = self._frequencies[gp][self._pp.get_band_indices()]
+        frequencies = self._frequencies[gp][self._pp.band_indices]
         gv = self._gv[i]
         if self._averaged_pp_interaction is not None:
             ave_pp = self._averaged_pp_interaction[i]

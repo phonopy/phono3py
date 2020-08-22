@@ -256,7 +256,7 @@ class ImagSelfEnergy(object):
 
         self._g = None  # integration weights
         self._g_zero = None
-        self._mesh = self._pp.get_mesh_numbers()
+        self._mesh = self._pp.mesh_numbers
         self._is_collision_matrix = False
 
         # Unit to THz of Gamma
