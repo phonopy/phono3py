@@ -6,6 +6,8 @@ matrix:
     env: TRAVIS_PYTHON_VERSION='3.6'
   - python: '3.7'
     env: TRAVIS_PYTHON_VERSION='3.7'
+  - python: '3.8'
+    env: TRAVIS_PYTHON_VERSION='3.8'
 
 before_install:
     - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
