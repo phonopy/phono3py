@@ -32,6 +32,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import numpy as np
 from phonopy.units import VaspToTHz
 from phono3py.other.isotope import Isotope
 
@@ -48,7 +49,7 @@ class Phono3pyIsotope(object):
                  cutoff_frequency=None,
                  lapack_zheev_uplo='L'):
         if sigmas is None:
-            self._sigmas = [None]
+            self._sigmas = [None, ]
         else:
             self._sigmas = sigmas
         self._mesh_numbers = mesh
@@ -66,32 +67,37 @@ class Phono3pyIsotope(object):
         return self._iso.dynamical_matrix
 
     def run(self, grid_points):
-        for gp in grid_points:
+        gamma = np.zeros(
+            (len(self._sigmas), len(grid_points), len(self._iso.band_indices)),
+            dtype='double')
+
+        for j, gp in enumerate(grid_points):
             self._iso.set_grid_point(gp)
 
             print("--------------- Isotope scattering ---------------")
             print("Grid point: %d" % gp)
-            adrs = self._iso.get_grid_address()[gp]
+            adrs = self._iso.grid_address[gp]
             q = adrs.astype('double') / self._mesh_numbers
             print("q-point: %s" % q)
 
             if self._sigmas:
-                for sigma in self._sigmas:
+                for i, sigma in enumerate(self._sigmas):
                     if sigma is None:
                         print("Tetrahedron method")
                     else:
                         print("Sigma: %s" % sigma)
-                    self._iso.set_sigma(sigma)
+                    self._iso.sigma = sigma
                     self._iso.run()
-
+                    gamma[i, j] = self._iso.gamma
                     frequencies = self._iso.get_phonons()[0]
                     print('')
                     print("Phonon-isotope scattering rate in THz (1/4pi-tau)")
                     print(" Frequency     Rate")
-                    for g, f in zip(self._iso.get_gamma(), frequencies[gp]):
+                    for g, f in zip(self._iso.gamma, frequencies[gp]):
                         print("%8.3f     %5.3e" % (f, g))
             else:
                 print("sigma or tetrahedron method has to be set.")
+        self._gamma = gamma
 
     def init_dynamical_matrix(self,
                               fc2,
@@ -111,3 +117,7 @@ class Phono3pyIsotope(object):
 
     def set_sigma(self, sigma):
         self._iso.set_sigma(sigma)
+
+    @property
+    def gamma(self):
+        return self._gamma
