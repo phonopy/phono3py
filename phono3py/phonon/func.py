@@ -33,12 +33,69 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.units import THzToEv, Kb
+from phonopy.units import THzToEv, Kb, Hbar, EV, Angstrom, THz, AMU
 
 
 def gaussian(x, sigma):
     return 1.0 / np.sqrt(2 * np.pi) / sigma * np.exp(-x**2 / 2 / sigma**2)
 
 
-def bose_einstein(x, t):
-    return 1.0 / (np.exp(THzToEv * x / (Kb * t)) - 1)
+def bose_einstein(x, T):
+    """Returns Bose-Einstein distribution
+
+    Note
+    ----
+    RuntimeWarning (divide by zero encountered in true_divide) will be emitted
+    when t=0 for x as ndarray and x=0 for x as ndarray.
+
+    This RuntimeWarning can be changed to error by np.seterr(all='raise') and
+    Then FloatingPointError is emitted.
+
+    Parameters
+    ----------
+    x : ndarray
+        Phonon frequency in THz (without 2pi).
+    T : float
+        Temperature in K
+
+    """
+    return 1.0 / (np.exp(THzToEv * x / (Kb * T)) - 1)
+
+
+def mode_length(x, T):
+    """Returns mode length
+
+    Note
+    ----
+    RuntimeWarning (invalid value encountered in sqrt) will be emitted
+    when x < 0 for x as ndarray.
+
+    This RuntimeWarning can be changed to error by np.seterr(all='raise') and
+    Then FloatingPointError is emitted.
+
+    Parameters
+    ----------
+    x : ndarray
+        Phonon frequency in THz (without 2pi).
+    T : float
+        Temperature in K
+
+    Returns
+    -------
+    Values in [sqrt(AMU) * Angstrom]
+
+    """
+
+    #####################################
+    old_settings = np.seterr(all='raise')
+    #####################################
+
+    n = bose_einstein(x, T)
+    # factor=1.0053644502352863
+    factor = np.sqrt(Hbar * EV / (2 * np.pi * THz) / AMU) / Angstrom
+
+    #########################
+    np.seterr(**old_settings)
+    #########################
+
+    return np.sqrt((0.5 + n) / x) * factor

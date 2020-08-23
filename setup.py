@@ -245,7 +245,8 @@ packages_phono3py = ['phono3py',
                      'phono3py.interface',
                      'phono3py.other',
                      'phono3py.phonon',
-                     'phono3py.phonon3']
+                     'phono3py.phonon3',
+                     'phono3py.sscha']
 scripts_phono3py = ['scripts/phono3py',
                     'scripts/phono3py-load',
                     'scripts/phono3py-kaccum',
