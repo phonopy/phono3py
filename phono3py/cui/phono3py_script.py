@@ -1,9 +1,7 @@
-#!/usr/bin/env python
-
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
-# This file is part of phonopy.
+# This file is part of phono3py.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
