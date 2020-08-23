@@ -904,8 +904,8 @@ class Conductivity_LBTE(Conductivity):
             self._show_log(i)
 
     def _allocate_values(self):
-        num_band0 = len(self._pp.get_band_indices())
-        num_band = self._primitive.get_number_of_atoms() * 3
+        num_band0 = len(self._pp.band_indices)
+        num_band = len(self._primitive) * 3
         num_ir_grid_points = len(self._ir_grid_points)
         num_temp = len(self._temperatures)
         num_mesh_points = np.prod(self._mesh)

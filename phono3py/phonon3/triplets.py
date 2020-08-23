@@ -537,11 +537,11 @@ def _set_triplets_integration_weights_c(g,
                                         neighboring_phonons=False):
     import phono3py._phono3py as phono3c
 
-    reciprocal_lattice = np.linalg.inv(interaction.get_primitive().get_cell())
-    mesh = interaction.get_mesh_numbers()
+    reciprocal_lattice = np.linalg.inv(interaction.primitive.cell)
+    mesh = interaction.mesh_numbers
     thm = TetrahedronMethod(reciprocal_lattice, mesh=mesh)
-    grid_address = interaction.get_grid_address()
-    bz_map = interaction.get_bz_map()
+    grid_address = interaction.grid_address
+    bz_map = interaction.bz_map
     triplets_at_q = interaction.get_triplets_at_q()[0]
 
     if neighboring_phonons:

@@ -54,8 +54,8 @@ class CollisionMatrix(ImagSelfEnergy):
             self._ir_grid_points = ir_grid_points
             self._rot_grid_points = rot_grid_points
             self._point_operations = point_operations
-            self._primitive = self._pp.get_primitive()
-            rec_lat = np.linalg.inv(self._primitive.get_cell())
+            self._primitive = self._pp.primitive
+            rec_lat = np.linalg.inv(self._primitive.cell)
             self._rotations_cartesian = np.array(
                 [similarity_transformation(rec_lat, r)
                  for r in self._point_operations], dtype='double', order='C')
@@ -92,9 +92,9 @@ class CollisionMatrix(ImagSelfEnergy):
              self._weights_at_q,
              self._triplets_map_at_q,
              self._ir_map_at_q) = self._pp.get_triplets_at_q()
-            self._grid_address = self._pp.get_grid_address()
+            self._grid_address = self._pp.grid_address
             self._grid_point = grid_point
-            self._bz_map = self._pp.get_bz_map()
+            self._bz_map = self._pp.bz_map
             self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
 
     def _run_collision_matrix(self):

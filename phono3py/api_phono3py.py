@@ -857,8 +857,12 @@ class Phono3py(object):
         elif 'displacements' in dataset or 'forces' in dataset:
             dataset['forces'] = forces
 
-    def get_phph_interaction(self):
+    @property
+    def phph_interaction(self):
         return self._interaction
+
+    def get_phph_interaction(self):
+        return self.phph_interaction
 
     def init_phph_interaction(self,
                               nac_q_direction=None,

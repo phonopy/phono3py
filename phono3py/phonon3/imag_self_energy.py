@@ -298,11 +298,11 @@ class ImagSelfEnergy(object):
             self._pp.run(lang=self._lang)
         else:
             self._pp.run(lang=self._lang, g_zero=self._g_zero)
-        self._pp_strength = self._pp.get_interaction_strength()
+        self._pp_strength = self._pp.interaction_strength
 
     def set_integration_weights(self, scattering_event_class=None):
         if self._frequency_points is None:
-            bi = self._pp.get_band_indices()
+            bi = self._pp.band_indices
             f_points = self._frequencies[self._grid_point][bi]
         else:
             f_points = self._frequency_points
@@ -618,5 +618,5 @@ class ImagSelfEnergy(object):
 
     def _average_by_degeneracy(self, imag_self_energy):
         return average_by_degeneracy(imag_self_energy,
-                                     self._pp.get_band_indices(),
+                                     self._pp.band_indices,
                                      self._frequencies[self._grid_point])
