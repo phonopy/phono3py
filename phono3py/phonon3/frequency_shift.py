@@ -95,7 +95,7 @@ def get_frequency_shift(interaction,
 
             all_deltas[i, j] = delta
 
-            if write_frequency_shift:
+            if write_Delta_hdf5:
                 # pos = 0
                 # for bi in band_indices:
                 #     filename = write_frequency_shift(
@@ -120,11 +120,11 @@ def get_frequency_shift(interaction,
                     frequencies=frequencies,
                     filename=output_filename)
 
-            if log_level:
-                print("Frequency shfits with epsilon=%f were stored in"
-                      % fst.epsilon)
-                print("\"%s\"." % filename)
-                sys.stdout.flush()
+                if log_level:
+                    print("Frequency shfits with epsilon=%f were stored in"
+                          % fst.epsilon)
+                    print("\"%s\"." % filename)
+                    sys.stdout.flush()
 
     return all_deltas
 
