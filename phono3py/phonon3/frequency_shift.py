@@ -8,13 +8,13 @@ from phono3py.file_IO import write_frequency_shift, write_Delta_to_hdf5
 
 def get_frequency_shift(interaction,
                         grid_points,
-                        band_indices=None,
                         epsilons=None,
                         temperatures=None,
                         output_filename=None,
+                        write_Delta_hdf5=True,
                         log_level=0):
     if epsilons is None:
-        _epsilons = [0.01]
+        _epsilons = [None, ]
     else:
         _epsilons = epsilons
 
@@ -24,16 +24,16 @@ def get_frequency_shift(interaction,
         _temperatures = temperatures
     _temperatures = np.array(_temperatures, dtype='double')
 
-    band_indices_flatten = interaction.band_indices
-    if band_indices is None:
-        _band_indices = [[i, ] for i in band_indices_flatten]
-    else:
-        _band_indices = band_indices
-
+    band_indices = interaction.band_indices
     fst = FrequencyShift(interaction)
     mesh = interaction.mesh_numbers
-    for gp in grid_points:
-        fst.set_grid_point(gp)
+
+    all_deltas = np.zeros((len(_epsilons), len(grid_points),
+                           len(_temperatures), len(band_indices)),
+                          dtype='double', order='C')
+
+    for j, gp in enumerate(grid_points):
+        fst.grid_point = gp
         if log_level:
             weights = interaction.get_triplets_at_q()[1]
             print("------ Frequency shift -o- at grid point %d ------" % gp)
@@ -47,50 +47,58 @@ def get_frequency_shift(interaction,
             qpoint = interaction.grid_address[gp] / mesh.astype(float)
             print("Phonon frequencies at (%4.2f, %4.2f, %4.2f):"
                   % tuple(qpoint))
-            for bi in band_indices_flatten:
+            for bi in band_indices:
                 print("%3d  %f" % (bi + 1, frequencies[bi]))
 
-        for epsilon in _epsilons:
-            fst.set_epsilon(epsilon)
-            delta = np.zeros((len(_temperatures),
-                              len(band_indices_flatten)),
+        for i, epsilon in enumerate(_epsilons):
+            fst.epsilon = epsilon
+            delta = np.zeros((len(_temperatures), len(band_indices)),
                              dtype='double')
-            for i, t in enumerate(_temperatures):
-                fst.set_temperature(t)
+            for k, t in enumerate(_temperatures):
+                fst.temperature = t
                 fst.run()
-                delta[i] = fst.get_frequency_shift()
+                delta[k] = fst.frequency_shift
 
-            # pos = 0
-            # for bi in _band_indices:
-            #     filename = write_frequency_shift(gp,
-            #                                      bi,
-            #                                      _temperatures,
-            #                                      delta[:, pos:(pos + len(bi))],
-            #                                      mesh,
-            #                                      epsilon,
-            #                                      filename=output_filename)
-            #     pos += len(bi)
-            #     print(filename, interaction.get_phonons()[0][gp][bi])
-            #     sys.stdout.flush()
+            all_deltas[i, j] = delta
 
-            filename = write_Delta_to_hdf5(
-                gp,
-                _band_indices,
-                _temperatures,
-                delta,
-                mesh,
-                epsilon,
-                frequencies=frequencies,
-                filename=output_filename)
+            if write_frequency_shift:
+                # pos = 0
+                # for bi in band_indices:
+                #     filename = write_frequency_shift(
+                #         gp,
+                #         bi,
+                #         _temperatures,
+                #         delta[:, pos:(pos + len(bi))],
+                #         mesh,
+                #         epsilon,
+                #         filename=output_filename)
+                #     pos += len(bi)
+                #     print(filename, interaction.get_phonons()[0][gp][bi])
+                #     sys.stdout.flush()
+
+                filename = write_Delta_to_hdf5(
+                    gp,
+                    band_indices,
+                    _temperatures,
+                    delta,
+                    mesh,
+                    fst.epsilon,
+                    frequencies=frequencies,
+                    filename=output_filename)
 
             if log_level:
                 print("Frequency shfits with epsilon=%f were stored in"
-                      % epsilon)
+                      % fst.epsilon)
                 print("\"%s\"." % filename)
                 sys.stdout.flush()
 
+    return all_deltas
+
 
 class FrequencyShift(object):
+
+    default_epsilon = 0.05
+
     """
 
     About the parameter epsilon
@@ -123,23 +131,22 @@ class FrequencyShift(object):
         interaction : Interaction
             Instance of Interaction class that is ready to use, i.e., phonons
             are set properly, etc.
-        grid_point : int
-            A grid point on a sampling mesh
-        temperature : float
+        grid_point : int, optional
+            A grid point on a sampling mesh.
+        temperature : float, optional
             Temperature in K.
-        epsilon : float
+        epsilon : float, optional
             Parameter explained above. The unit is consisered as THz.
 
         """
 
         self._pp = interaction
-
-        if epsilon is None:
-            self.set_epsilon(0.01)
+        self.epsilon = epsilon
+        if temperature is None:
+            self.temperature = 300.0
         else:
-            self.set_epsilon(epsilon)
-        self.set_temperature(temperature)
-        self.set_grid_point(grid_point=grid_point)
+            self.temperature = temperature
+        self.grid_point = grid_point
 
         self._lang = lang
         self._frequency_ = None
@@ -149,10 +156,8 @@ class FrequencyShift(object):
         self._weights_at_q = None
         self._band_indices = None
         self._unit_conversion = None
-        self._cutoff_frequency = interaction.get_cutoff_frequency()
-
+        self._cutoff_frequency = interaction.cutoff_frequency
         self._frequency_shifts = None
-        self.set_epsilon(epsilon)
 
         # Unit to THz of Delta
         self._unit_conversion = (18 / (Hbar * EV) ** 2
@@ -176,7 +181,8 @@ class FrequencyShift(object):
          self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
         self._band_indices = self._pp.band_indices
 
-    def get_frequency_shift(self):
+    @property
+    def frequency_shift(self):
         if self._cutoff_frequency is None:
             return self._frequency_shifts
         else:  # Averaging frequency shifts by degenerate bands
@@ -194,7 +200,12 @@ class FrequencyShift(object):
                                      len(bi_set))
             return shifts
 
-    def set_grid_point(self, grid_point=None):
+    @property
+    def grid_point(self):
+        return self._grid_point
+
+    @grid_point.setter
+    def grid_point(self, grid_point=None):
         if grid_point is None:
             self._grid_point = None
         else:
@@ -204,13 +215,23 @@ class FrequencyShift(object):
              self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
             self._grid_point = self._triplets_at_q[0, 0]
 
-    def set_epsilon(self, epsilon):
+    @property
+    def epsilon(self):
+        return self._epsilon
+
+    @epsilon.setter
+    def epsilon(self, epsilon):
         if epsilon is None:
-            self._epsilon = None
+            self._epsilon = self.default_epsilon
         else:
             self._epsilon = float(epsilon)
 
-    def set_temperature(self, temperature):
+    @property
+    def temperature(self):
+        return self._temperature
+
+    @temperature.setter
+    def temperature(self, temperature):
         if temperature is None:
             self._temperature = None
         else:

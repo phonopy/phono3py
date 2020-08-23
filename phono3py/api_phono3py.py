@@ -147,11 +147,15 @@ class Phono3py(object):
         self._phonon_supercells_with_displacements = None
 
         # Thermal conductivity
-        self._thermal_conductivity = None  # conductivity_RTA object
+        # conductivity_RTA or conductivity_LBTE class instance
+        self._thermal_conductivity = None
 
         # Imaginary part of self energy at frequency points
         self._imag_self_energy = None
         self._scattering_event_class = None
+
+        # Frequency shift (real part of bubble diagram)
+        self._frequency_shift = None
 
         self._grid_points = None
         self._frequency_points = None
@@ -171,7 +175,7 @@ class Phono3py(object):
                           "Use Phono3py.mesh_number to set sampling mesh.",
                           DeprecationWarning)
             self._set_mesh_numbers(mesh)
-        self.set_band_indices(band_indices)
+        self.band_indices = band_indices
 
     @property
     def version(self):
@@ -1503,9 +1507,9 @@ class Phono3py(object):
     def run_frequency_shift(
             self,
             grid_points,
-            band_indices=None,
-            temperatures=np.arange(0, 1001, 10, dtype='double'),
+            temperatures=None,
             epsilons=None,
+            write_Delta_hdf5=True,
             output_filename=None):
         """Frequency shift from lowest order diagram is calculated.
 
@@ -1532,13 +1536,17 @@ class Phono3py(object):
                 _epsilons = self._sigmas
 
         self._grid_points = grid_points
-        get_frequency_shift(self._interaction,
-                            self._grid_points,
-                            band_indices=band_indices,
-                            epsilons=_epsilons,
-                            temperatures=temperatures,
-                            output_filename=output_filename,
-                            log_level=self._log_level)
+        # (epsilon, grid_point, temperature, band)
+        self._frequency_shift = get_frequency_shift(
+            self._interaction,
+            self._grid_points,
+            epsilons=_epsilons,
+            temperatures=temperatures,
+            write_Delta_hdf5=write_Delta_hdf5,
+            output_filename=output_filename,
+            log_level=self._log_level)
+
+        return self._frequency_shift
 
     def save(self,
              filename="phono3py_params.yaml",

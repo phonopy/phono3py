@@ -97,8 +97,8 @@ class Conductivity(object):
         self._log_level = log_level
         self._primitive = self._pp.primitive
         self._dm = self._pp.dynamical_matrix
-        self._frequency_factor_to_THz = self._pp.get_frequency_factor_to_THz()
-        self._cutoff_frequency = self._pp.get_cutoff_frequency()
+        self._frequency_factor_to_THz = self._pp.frequency_factor_to_THz
+        self._cutoff_frequency = self._pp.cutoff_frequency
         self._boundary_mfp = boundary_mfp
 
         self._symmetry = symmetry

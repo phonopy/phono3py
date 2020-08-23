@@ -230,20 +230,42 @@ class Interaction(object):
         warnings.warn("Use attribute, nac_q_direction.", DeprecationWarning)
         return self.nac_q_direction
 
-    def get_zero_value_positions(self):
+    @property
+    def zero_value_positions(self):
         return self._g_zero
+
+    def get_zero_value_positions(self):
+        warnings.warn("Use attribute, zero_value_positions.",
+                      DeprecationWarning)
+        return self.zero_value_positions
 
     def get_phonons(self):
         return self._frequencies, self._eigenvectors, self._phonon_done
 
-    def get_frequency_factor_to_THz(self):
+    @property
+    def frequency_factor_to_THz(self):
         return self._frequency_factor_to_THz
 
-    def get_lapack_zheev_uplo(self):
+    def get_frequency_factor_to_THz(self):
+        warnings.warn("Use attribute, frequency_factor_to_THz.",
+                      DeprecationWarning)
+        return self.frequency_factor_to_THz
+
+    @property
+    def lapack_zheev_uplo(self):
         return self._lapack_zheev_uplo
 
-    def get_cutoff_frequency(self):
+    def get_lapack_zheev_uplo(self):
+        warnings.warn("Use attribute, lapack_zheev_uplo.", DeprecationWarning)
+        return self.lapack_zheev_uplo
+
+    @property
+    def cutoff_frequency(self):
         return self._cutoff_frequency
+
+    def get_cutoff_frequency(self):
+        warnings.warn("Use attribute, cutoff_frequency.", DeprecationWarning)
+        return self.cutoff_frequency
 
     def get_averaged_interaction(self):
         """Return sum over phonon triplets of interaction strength

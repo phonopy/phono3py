@@ -520,10 +520,7 @@ def write_Delta_to_hdf5(grid_point,
     """
     full_filename = "Delta"
     suffix = _get_filename_suffix(mesh, grid_point=grid_point)
-    band_indices_flatten = []
-    for bi_set in band_indices:
-        band_indices_flatten += bi_set
-    band_indices_flatten = np.array(band_indices_flatten, dtype='intc')
+    _band_indices = np.array(band_indices, dtype='intc')
 
     full_filename += suffix
     if epsilon > 1e-5:
@@ -535,7 +532,7 @@ def write_Delta_to_hdf5(grid_point,
     with h5py.File(full_filename, 'w') as w:
         w.create_dataset('grid_point', data=grid_point)
         w.create_dataset('mesh', data=mesh)
-        w.create_dataset('band_index', data=band_indices_flatten)
+        w.create_dataset('band_index', data=_band_indices)
         w.create_dataset('bubble', data=deltas)
         w.create_dataset('temperature', data=temperatures)
         w.create_dataset('epsilon', data=epsilon)

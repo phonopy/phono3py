@@ -233,10 +233,10 @@ class Isotope(object):
         self._gamma = gamma / np.prod(self._mesh)
 
     def _set_integration_weights(self):
-        primitive_lattice = np.linalg.inv(self._primitive.get_cell())
+        primitive_lattice = np.linalg.inv(self._primitive.cell)
         thm = TetrahedronMethod(primitive_lattice, mesh=self._mesh)
         num_grid_points = len(self._grid_points)
-        num_band = self._primitive.get_number_of_atoms() * 3
+        num_band = len(self._primitive) * 3
         self._integration_weights = np.zeros(
             (num_grid_points, len(self._band_indices), num_band),
             dtype='double')

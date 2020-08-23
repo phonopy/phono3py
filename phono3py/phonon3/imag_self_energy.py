@@ -183,9 +183,8 @@ def write_imag_self_energy(imag_self_energy,
                            scattering_event_class=None,
                            filename=None,
                            is_mesh_symmetry=True):
-    for gp, ise_sigmas, fp_sigmas in zip(grid_points,
-                                         imag_self_energy,
-                                         frequency_points):
+    for gp, ise_sigmas, fp_sigmas in zip(
+            grid_points, imag_self_energy, frequency_points):
         for sigma, ise_temps, fp in zip(sigmas, ise_sigmas, fp_sigmas):
             for t, ise in zip(temperatures, ise_temps):
                 for i, bi in enumerate(band_indices):
@@ -252,7 +251,7 @@ class ImagSelfEnergy(object):
         self._weights_at_q = None
         self._with_detail = with_detail
         self._unit_conversion = None
-        self._cutoff_frequency = interaction.get_cutoff_frequency()
+        self._cutoff_frequency = interaction.cutoff_frequency
 
         self._g = None  # integration weights
         self._g_zero = None
