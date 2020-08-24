@@ -42,6 +42,7 @@ Formulae implemented are based on these papers:
 """
 
 import numpy as np
+from phonopy.units import VaspToTHz
 from phonopy.harmonic.dynmat_to_fc import DynmatToForceConstants
 from phono3py.phonon.func import mode_length, bose_einstein
 
@@ -148,6 +149,67 @@ class LambdaTensor(object):
 
 
 class DispCorrMatrix(object):
+    """Calculate gamma matrix"""
+
+    def __init__(self, supercell_phonon):
+        self._supercell_phonon = supercell_phonon
+        self._gamma_matrix = None
+
+    def run(self, T):
+        freqs = self._supercell_phonon.frequencies
+        eigvecs = self._supercell_phonon.eigenvectors
+        a = mode_length(freqs, T)
+        masses = np.repeat(self._supercell_phonon.supercell.masses, 3)
+        gamma = np.dot(eigvecs, np.dot(np.diag(1.0 / a ** 2), eigvecs.T))
+        self._gamma_matrix = gamma * np.sqrt(np.outer(masses, masses))
+
+    @property
+    def gamma_matrix(self):
+        return self._gamma_matrix
+
+
+class SupercellPhonon(object):
+    def __init__(self, supercell, force_constants, factor=VaspToTHz):
+        self._supercell = supercell
+        _fc2 = np.swapaxes(force_constants, 1, 2)
+        self._force_constants = np.array(
+            _fc2.reshape(-1, np.prod(_fc2.shape[-2:])),
+            dtype='double', order='C')
+        masses = np.repeat(supercell.masses, 3)
+        dynmat = self._force_constants / np.sqrt(np.outer(masses, masses))
+        eigvals, eigvecs = np.linalg.eigh(dynmat)
+        freqs = np.sqrt(np.abs(eigvals)) * np.sign(eigvals) * factor
+        self._eigenvalues = np.array(eigvals, dtype='double', order='C')
+        self._eigenvectors = np.array(eigvecs, dtype='double', order='C')
+        self._frequencies = np.array(freqs, dtype='double', order='C')
+        self._dynamical_matrix = dynmat
+
+    @property
+    def eigenvalues(self):
+        return self._eigenvalues
+
+    @property
+    def eigenvectors(self):
+        return self._eigenvectors
+
+    @property
+    def frequencies(self):
+        return self._frequencies
+
+    @property
+    def dynamical_matrix(self):
+        return self._dynamical_matrix
+
+    @property
+    def supercell(self):
+        return self._supercell
+
+    @property
+    def force_constants(self):
+        return self._force_constants
+
+
+class DispCorrMatrixMesh(object):
     """Calculate gamma matrix
 
     This calculation is similar to the transformation from
@@ -167,6 +229,19 @@ class DispCorrMatrix(object):
         return self._d2f.commensurate_points
 
     def create_gamma_matrix(self, frequencies, eigenvectors, T):
+        """
+
+        Parameters
+        ----------
+        frequencies : ndarray
+            Supercell phonon frequencies in THz (without 2pi).
+            shape=(grid_point, band), dtype='double', order='C'
+        eigenvectors : ndarray
+            Supercell phonon eigenvectors.
+            shape=(grid_point, band, band), dtype='double', order='C'
+
+        """
+
         a = mode_length(frequencies, T)
         self._d2f.create_dynamical_matrices(1.0 / a ** 2, eigenvectors)
 
