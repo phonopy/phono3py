@@ -172,11 +172,10 @@ class SupercellPhonon(object):
     def __init__(self, supercell, force_constants, factor=VaspToTHz):
         self._supercell = supercell
         _fc2 = np.swapaxes(force_constants, 1, 2)
-        self._force_constants = np.array(
-            _fc2.reshape(-1, np.prod(_fc2.shape[-2:])),
-            dtype='double', order='C')
+        _fc2 = _fc2.reshape(-1, np.prod(_fc2.shape[-2:]))
         masses = np.repeat(supercell.masses, 3)
-        dynmat = self._force_constants / np.sqrt(np.outer(masses, masses))
+        dynmat = np.array(_fc2 / np.sqrt(np.outer(masses, masses)),
+                          dtype='double', order='C')
         eigvals, eigvecs = np.linalg.eigh(dynmat)
         freqs = np.sqrt(np.abs(eigvals)) * np.sign(eigvals) * factor
         self._eigenvalues = np.array(eigvals, dtype='double', order='C')
@@ -203,10 +202,6 @@ class SupercellPhonon(object):
     @property
     def supercell(self):
         return self._supercell
-
-    @property
-    def force_constants(self):
-        return self._force_constants
 
 
 class DispCorrMatrixMesh(object):
