@@ -15,9 +15,9 @@ their tools, please contact via the phonopy mailing list.
 Phono3py-Power-Tools
 ---------------------
 
-https://github.com/skelton-group/Phono3py-Power-Tools
+Phono3py-Power-Tools is a collection of codes and scripts from the Skelton group for Phono(3)py "power users", and includes additional tools for data analysis and plotting.
 
-For example, nice plots can be easily made using phono3py-mode-plot.
+https://github.com/skelton-group/Phono3py-Power-Tools
 
 
 Kinetic Collective Model
