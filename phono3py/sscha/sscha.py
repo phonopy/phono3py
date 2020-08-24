@@ -220,9 +220,8 @@ class DispCorrMatrixMesh(object):
     """
 
     def __init__(self, primitive, supercell):
-        self._d2f = DynmatToForceConstants(primitive,
-                                           supercell,
-                                           is_full_fc=True)
+        self._d2f = DynmatToForceConstants(
+            primitive, supercell, is_full_fc=True)
 
     @property
     def commensurate_points(self):
