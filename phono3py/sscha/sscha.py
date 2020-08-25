@@ -69,8 +69,8 @@ class LambdaTensor(object):
         self._masses = masses
         self._occ = None
 
-    def run_Lambda(self, f, T):
-        r"""Tensor with four legs of atomic indices
+    def run(self, f, T):
+        r"""Calculate Lambda tensor with four legs of atomic indices
 
         Sum over phonon modes mu and nu
 
@@ -95,7 +95,8 @@ class LambdaTensor(object):
         sqrt_masses = np.sqrt(self._masses)
         dtype = "c%d" % (np.dtype('double').itemsize * 2)
         N = len(self._masses)
-        lambda_tensor = np.zeros((N, N, N, N), dtype=dtype, order='C')
+        lambda_tensor = np.zeros((N, N, N, N, 9, 9), dtype=dtype, order='C')
+        fz = np.zeros((len(freqs), len(freqs)), dtype='double', order='C')
 
         for a, m_a in enumerate(sqrt_masses):
             for b, m_b in enumerate(sqrt_masses):
@@ -106,16 +107,17 @@ class LambdaTensor(object):
                         lambda_tensor[a, b, c, d] = ph_sum
 
     def _sum_over_phonons(self, f, freqs, a, b, c, d):
-        N = len(self._masses)
-        lambda_abcd = 0
-        for i, f_i in freqs:
-            e_i = self._eigenvectors[i // N, :, i % N]
-            for j, f_j in freqs:
-                e_j = self._eigenvectors[j // N, :, j % N]
+        lambda_abcd = np.zeros((9, 9), dtype='double', order='C')
+        eigvecs = self._eigenvectors
+        for i, f_i in enumerate(freqs):
+            e_i = eigvecs[:, i].reshape(-1, 3)
+            for j, f_j in enumerate(freqs):
+                e_j = eigvecs[:, j].reshape(-1, 3)
                 fz = self._get_Fz(f, f_i, f_j, self._occ[i], self._occ[j])
                 fz /= f_i * f_j
-                fz *= e_i[a] * e_j[b] * e_i[c] * e_j[d]
-                lambda_abcd += fz
+                tensor = np.outer(np.outer(e_i[a], e_j[b]).ravel(),
+                                  np.outer(e_i[c], e_j[d]).ravel())
+                lambda_abcd = fz * tensor
         return lambda_abcd
 
     def _get_Fz(self, f, f_1, f_2, n_1, n_2):

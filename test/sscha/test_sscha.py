@@ -26,8 +26,11 @@ def get_supercell_phonon(ph3):
     return SupercellPhonon(supercell, fc2, factor=factor)
 
 
-# def test_run_Lambda(si_pbesol_111):
-#     lt = LambdaTensor()
+def test_run_Lambda(si_pbesol_111):
+    sph = get_supercell_phonon(si_pbesol_111)
+    lt = LambdaTensor(sph.frequencies, sph.eigenvectors, sph.supercell.masses)
+    lt.run(10, 300)
+
 
 def test_SupercellPhonon(si_pbesol_111):
     sph = get_supercell_phonon(si_pbesol_111)
