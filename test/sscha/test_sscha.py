@@ -1,6 +1,6 @@
 import numpy as np
 from phono3py.sscha.sscha import (
-    DispCorrMatrix, DispCorrMatrixMesh, SupercellPhonon, LambdaTensor)
+    DispCorrMatrix, DispCorrMatrixMesh, SupercellPhonon)
 from phonopy.phonon.qpoints import QpointsPhonon
 
 
