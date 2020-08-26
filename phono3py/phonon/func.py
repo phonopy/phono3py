@@ -65,6 +65,8 @@ def bose_einstein(x, T):
 def mode_length(x, T):
     """Returns mode length
 
+    sqrt((0.5 + n) hbar / omega)
+
     Note
     ----
     RuntimeWarning (invalid value encountered in sqrt) will be emitted

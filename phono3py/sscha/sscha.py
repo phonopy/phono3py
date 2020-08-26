@@ -45,6 +45,7 @@ import numpy as np
 from phonopy.units import VaspToTHz
 from phonopy.harmonic.dynmat_to_fc import DynmatToForceConstants
 from phono3py.phonon.func import mode_length
+from phono3py.file_IO import write_fc3_to_hdf5
 
 
 class SupercellPhonon(object):
@@ -94,11 +95,13 @@ class SupercellPhonon(object):
         """
 
         self._supercell = supercell
-        _fc2 = np.swapaxes(force_constants, 1, 2)
-        _fc2 = np.array(_fc2.reshape(-1, np.prod(_fc2.shape[-2:])),
+        N = len(supercell)
+        _fc2 = np.array(np.transpose(force_constants, axes=[0, 2, 1, 3]),
                         dtype='double', order='C')
-        masses = np.repeat(supercell.masses, 3)
-        dynmat = np.array(_fc2 / np.sqrt(np.outer(masses, masses)),
+        _fc2 = _fc2.reshape((3 * N, 3 * N))
+        _fc2 = np.array(_fc2, dtype='double', order='C')
+        sqrt_masses = np.sqrt(np.repeat(supercell.masses, 3))
+        dynmat = np.array(_fc2 / np.outer(sqrt_masses, sqrt_masses),
                           dtype='double', order='C')
         eigvals, eigvecs = np.linalg.eigh(dynmat)
         freqs = np.sqrt(np.abs(eigvals)) * np.sign(eigvals)
@@ -158,14 +161,21 @@ class DispCorrMatrix(object):
         self._supercell_phonon = supercell_phonon
         self._upsilon_matrix = None
 
-    def run(self, T):
+    def run(self, T, cutoff_frequency=1e-5):
         freqs = self._supercell_phonon.frequencies
         eigvecs = self._supercell_phonon.eigenvectors
-        a = mode_length(freqs, T)
-        masses = np.repeat(self._supercell_phonon.supercell.masses, 3)
-        gamma = np.dot(eigvecs, np.dot(np.diag(1.0 / a ** 2), eigvecs.T))
+        sqrt_masses = np.sqrt(
+            np.repeat(self._supercell_phonon.supercell.masses, 3))
+
+        # ignore zero and imaginary frequency modes
+        condition = freqs > cutoff_frequency
+        _freqs = np.where(condition, freqs, 1)
+        _a = mode_length(_freqs, T)
+        a2_inv = np.where(condition, 1 / _a ** 2, 0)
+
+        upsilon = np.dot(eigvecs, np.dot(np.diag(a2_inv), eigvecs.T))
         self._upsilon_matrix = np.array(
-            gamma * np.sqrt(np.outer(masses, masses)),
+            upsilon * np.outer(sqrt_masses, sqrt_masses),
             dtype='double', order='C')
 
     @property
@@ -235,9 +245,9 @@ class ThirdOrderFC(object):
     Attributes
     ----------
     displacements : ndarray
-        shape=(3 * num_satoms, snap_shots), dtype='double', order='C'
+        shape=(snap_shots, 3 * num_satoms), dtype='double', order='C'
     forces : ndarray
-        shape=(3 * num_satoms, snap_shots), dtype='double', order='C'
+        shape=(snap_shots, 3 * num_satoms), dtype='double', order='C'
     fc3 : ndarray
         shape=(num_satom, num_satom, num_satom, 3, 3, 3)
 
@@ -260,27 +270,51 @@ class ThirdOrderFC(object):
         self._upsilon_matrix = upsilon_matrix
         assert (displacements.shape == forces.shape)
         shape = displacements.shape
-        self._displacements = np.array(displacements.reshape(-1, shape[0]),
+        self._displacements = np.array(displacements.reshape(shape[0], -1),
                                        dtype='double', order='C')
-        self._forces = np.array(forces.reshape(-1, shape[0]),
+        self._forces = np.array(forces.reshape(shape[0], -1),
                                 dtype='double', order='C')
         fc2 = self._upsilon_matrix.supercell_phonon.force_constants
         self._force_constants = fc2
 
-    def run(self, T):
+        self._ave_uuf = None
+        self._run_ave_uuf()
+
+    def run(self, T=300.0):
+        print("run upsilon")
         self._upsilon_matrix.run(T)
+        Y = self._upsilon_matrix.upsilon_matrix
+        uuf = self._ave_uuf
+        print("run fc3")
+        fc3 = - np.einsum('il,jm,lmk->ijk', Y, Y, uuf)
+        N = fc3.shape[0] // 3
+        fc3 = fc3.reshape((N, 3, N, 3, N, 3))
+        self._fc3 = np.array(
+            np.transpose(fc3, axes=[0, 2, 4, 1, 3, 5]),
+            dtype='double', order='C')
+        write_fc3_to_hdf5(fc3, filename='fc3.hdf5')
 
     @property
     def displacements(self):
         return self._displacements
 
     @property
-    def displacements(self):
+    def forces(self):
         return self._forces
 
     @property
     def fc3(self):
         return self._fc3
 
-    def run(self):
-        pass
+    def _run_fmat(self):
+        f = self._forces
+        u = self._displacements
+        fc2 = self._force_constants
+        return f + np.dot(u, fc2) - f.sum(axis=0) / f.shape[0]
+
+    def _run_ave_uuf(self):
+        print("run fmat")
+        f = self._run_fmat()
+        u = self._displacements
+        print("run uuf")
+        self._ave_uuf = np.einsum('li,lj,lk->ijk', u, u, f) / u.shape[0]
