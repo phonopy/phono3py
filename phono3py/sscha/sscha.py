@@ -36,8 +36,8 @@
 
 Formulae implemented are based on these papers:
 
-    Bianco et al. https://doi.org/10.1103/PhysRevB.96.014111
-    Aseginolaza et al. https://doi.org/10.1103/PhysRevB.100.214307
+    Ref. 1: Bianco et al. https://doi.org/10.1103/PhysRevB.96.014111
+    Ref. 2: Aseginolaza et al. https://doi.org/10.1103/PhysRevB.100.214307
 
 """
 
@@ -48,7 +48,52 @@ from phono3py.phonon.func import mode_length
 
 
 class SupercellPhonon(object):
-    def __init__(self, supercell, force_constants, factor=VaspToTHz):
+    """Supercell phonon class
+
+    Dynamical matrix is created for supercell atoms and solved in real.
+    All phonons at commensurate points are folded to those at Gamma point.
+    Phonon eigenvectors are represented in real type.
+
+    Attributes
+    ----------
+    eigenvalues : ndarray
+        Phonon eigenvalues of supercell dynamical matrix.
+        shape=(3 * num_satom, ), dtype='double', order='C'
+    eigenvectors : ndarray
+        Phonon eigenvectors of supercell dynamical matrix.
+        shape=(3 * num_satom, 3 * num_satom), dtype='double', order='C'
+    frequencies : ndarray
+        Phonon frequencies of supercell dynamical matrix. Frequency conversion
+        factor to THz is multiplied.
+        shape=(3 * num_satom, ), dtype='double', order='C'
+    dynamical_matrix : ndarray
+        Numerical matrix corresponding to supercell dynamical matrix given
+        at Gamma point. Therefore no phase factor is multiplied, i.e.,
+        force constants weighted by atomic masses, 1/sqrt(M_a, M_b).
+        shape=(3 * num_satom, 3 * num_satom), dtype='double', order='C'
+    supercell : PhonopyAtoms or its derived class
+        Supercell.
+
+    """
+
+    def __init__(self,
+                 supercell,
+                 force_constants,
+                 frequency_factor_to_THz=VaspToTHz):
+        """
+
+        Parameters
+        ----------
+        supercell : PhonopyAtoms
+            Supercell.
+        force_constants : array_like
+            Second order force constants.
+            shape=(num_satom, num_satom, 3, 3), dtype='double', order='C'
+        frequency_factor_to_THz : float
+            Frequency conversion factor to THz.
+
+        """
+
         self._supercell = supercell
         _fc2 = np.swapaxes(force_constants, 1, 2)
         _fc2 = _fc2.reshape(-1, np.prod(_fc2.shape[-2:]))
@@ -56,7 +101,8 @@ class SupercellPhonon(object):
         dynmat = np.array(_fc2 / np.sqrt(np.outer(masses, masses)),
                           dtype='double', order='C')
         eigvals, eigvecs = np.linalg.eigh(dynmat)
-        freqs = np.sqrt(np.abs(eigvals)) * np.sign(eigvals) * factor
+        freqs = np.sqrt(np.abs(eigvals)) * np.sign(eigvals)
+        freqs *= frequency_factor_to_THz
         self._eigenvalues = np.array(eigvals, dtype='double', order='C')
         self._eigenvectors = np.array(eigvecs, dtype='double', order='C')
         self._frequencies = np.array(freqs, dtype='double', order='C')
@@ -84,11 +130,30 @@ class SupercellPhonon(object):
 
 
 class DispCorrMatrix(object):
-    """Calculate gamma matrix"""
+    """Calculate Upsilon matrix
+
+    Attributes
+    ----------
+    upsilon_matrix : ndarray
+        Displacement-displacement correlation matrix at temperature.
+        Physical unit is [1/Angstrom^2].
+        shape=(3 * num_satom, 3 * num_satom), dtype='double', order='C'
+
+    """
 
     def __init__(self, supercell_phonon):
+        """
+
+        Parameters
+        ----------
+        supercell_phonon : SupercellPhonon
+            Supercell phonon object. Phonons at Gamma point, where
+            eigenvectors are not complex type but real type.
+
+        """
+
         self._supercell_phonon = supercell_phonon
-        self._gamma_matrix = None
+        self._upsilon_matrix = None
 
     def run(self, T):
         freqs = self._supercell_phonon.frequencies
@@ -96,11 +161,13 @@ class DispCorrMatrix(object):
         a = mode_length(freqs, T)
         masses = np.repeat(self._supercell_phonon.supercell.masses, 3)
         gamma = np.dot(eigvecs, np.dot(np.diag(1.0 / a ** 2), eigvecs.T))
-        self._gamma_matrix = gamma * np.sqrt(np.outer(masses, masses))
+        self._upsilon_matrix = np.array(
+            gamma * np.sqrt(np.outer(masses, masses)),
+            dtype='double', order='C')
 
     @property
-    def gamma_matrix(self):
-        return self._gamma_matrix
+    def upsilon_matrix(self):
+        return self._upsilon_matrix
 
 
 class DispCorrMatrixMesh(object):
@@ -121,7 +188,7 @@ class DispCorrMatrixMesh(object):
     def commensurate_points(self):
         return self._d2f.commensurate_points
 
-    def create_gamma_matrix(self, frequencies, eigenvectors, T):
+    def create_upsilon_matrix(self, frequencies, eigenvectors, T):
         """
 
         Parameters
@@ -142,5 +209,68 @@ class DispCorrMatrixMesh(object):
         self._d2f.run()
 
     @property
-    def gamma_matrix(self):
+    def upsilon_matrix(self):
         return self._d2f.force_constants
+
+
+class ThirdOrderFC(object):
+    r"""SSCHA third order force constants
+
+    Eq. 45a in Ref.1 (See top docstring of this file)
+
+    \Phi_{abc} = - \sum_{pq} \Upsilon_{ap} \Upsilon_{bq}
+    \left< u^p u^q \mathfrak{f}_c \right>_{tilde{\rho}_{\mathfrak{R},\Phi}}
+
+    \mathfrak{f}_i = f_i - \left[
+    \left< f_i \right>_{\tilde{\rho}_{\mathfrak{R},\Phi}}
+    - \sum_j \Phi_{ij}u^j \right]
+
+    Attributes
+    ----------
+    displacements : ndarray
+        shape=(3 * num_satoms, snap_shots), dtype='double', order='C'
+    forces : ndarray
+        shape=(3 * num_satoms, snap_shots), dtype='double', order='C'
+    fc3 : ndarray
+        shape=(num_satom, num_satom, num_satom, 3, 3, 3)
+
+    """
+
+    def __init__(self, displacements, forces, upsilon_matrix):
+        """
+
+        Parameters
+        ----------
+        upsilon_matrix : ndarray
+            Displacement-displacement correlation matrix at a temperature
+            point.
+            shape=(3 * num_satom, 3 * num_satom), dtype='double', order='C'
+        displacements : ndarray
+            shape=(snap_shots, num_satom, 3), dtype='double', order='C'
+        forces : ndarray
+            shape=(snap_shots, num_satom, 3), dtype='double', order='C'
+
+        """
+
+        self._upsilon_matrix = upsilon_matrix
+        assert (displacements.shape == forces.shape)
+        shape = displacements.shape
+        self._displacements = np.array(displacements.reshape(-1, shape[0]),
+                                       dtype='double', order='C')
+        self._forces = np.array(forces.reshape(-1, shape[0]),
+                                dtype='double', order='C')
+
+    @property
+    def displacements(self):
+        return self._displacements
+
+    @property
+    def displacements(self):
+        return self._forces
+
+    @property
+    def fc3(self):
+        return self._fc3
+
+    def run(self):
+        pass

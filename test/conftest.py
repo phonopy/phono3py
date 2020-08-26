@@ -1,5 +1,6 @@
 import os
 import pytest
+import phonopy
 import phono3py
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -18,3 +19,10 @@ def si_pbesol():
 def si_pbesol_111():
     yaml_filename = os.path.join(current_dir, "phono3py_params_Si111.yaml")
     return phono3py.load(yaml_filename, log_level=1)
+
+
+@pytest.fixture(scope='session')
+def si_pbesol_iterha_111():
+    yaml_filename = os.path.join(current_dir,
+                                 "phonopy_params-Si111-iterha.yaml.xz")
+    return phonopy.load(yaml_filename, log_level=1, produce_fc=False)
