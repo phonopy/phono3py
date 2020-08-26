@@ -45,7 +45,6 @@ import numpy as np
 from phonopy.units import VaspToTHz
 from phonopy.harmonic.dynmat_to_fc import DynmatToForceConstants
 from phono3py.phonon.func import mode_length
-from phono3py.file_IO import write_fc3_to_hdf5
 
 
 class SupercellPhonon(object):
@@ -100,8 +99,8 @@ class SupercellPhonon(object):
                         dtype='double', order='C')
         _fc2 = _fc2.reshape((3 * N, 3 * N))
         _fc2 = np.array(_fc2, dtype='double', order='C')
-        sqrt_masses = np.sqrt(np.repeat(supercell.masses, 3))
-        dynmat = np.array(_fc2 / np.outer(sqrt_masses, sqrt_masses),
+        inv_sqrt_masses = 1.0 / np.repeat(np.sqrt(supercell.masses), 3)
+        dynmat = np.array(inv_sqrt_masses * (inv_sqrt_masses * _fc2).T,
                           dtype='double', order='C')
         eigvals, eigvecs = np.linalg.eigh(dynmat)
         freqs = np.sqrt(np.abs(eigvals)) * np.sign(eigvals)
@@ -164,8 +163,8 @@ class DispCorrMatrix(object):
     def run(self, T, cutoff_frequency=1e-5):
         freqs = self._supercell_phonon.frequencies
         eigvecs = self._supercell_phonon.eigenvectors
-        sqrt_masses = np.sqrt(
-            np.repeat(self._supercell_phonon.supercell.masses, 3))
+        sqrt_masses = np.repeat(
+            np.sqrt(self._supercell_phonon.supercell.masses), 3)
 
         # ignore zero and imaginary frequency modes
         condition = freqs > cutoff_frequency
@@ -173,9 +172,9 @@ class DispCorrMatrix(object):
         _a = mode_length(_freqs, T)
         a2_inv = np.where(condition, 1 / _a ** 2, 0)
 
-        upsilon = np.dot(eigvecs, np.dot(np.diag(a2_inv), eigvecs.T))
+        upsilon = np.dot(a2_inv * eigvecs, eigvecs.T)
         self._upsilon_matrix = np.array(
-            upsilon * np.outer(sqrt_masses, sqrt_masses),
+            sqrt_masses * (sqrt_masses * upsilon).T,
             dtype='double', order='C')
 
     @property
@@ -278,21 +277,16 @@ class ThirdOrderFC(object):
         self._force_constants = fc2
 
         self._ave_uuf = None
-        self._run_ave_uuf()
 
     def run(self, T=300.0):
         print("run upsilon")
         self._upsilon_matrix.run(T)
-        Y = self._upsilon_matrix.upsilon_matrix
-        uuf = self._ave_uuf
-        print("run fc3")
-        fc3 = - np.einsum('il,jm,lmk->ijk', Y, Y, uuf)
+        fc3 = self._run_fc3_ave()
         N = fc3.shape[0] // 3
         fc3 = fc3.reshape((N, 3, N, 3, N, 3))
         self._fc3 = np.array(
             np.transpose(fc3, axes=[0, 2, 4, 1, 3, 5]),
             dtype='double', order='C')
-        write_fc3_to_hdf5(fc3, filename='fc3.hdf5')
 
     @property
     def displacements(self):
@@ -312,9 +306,15 @@ class ThirdOrderFC(object):
         fc2 = self._force_constants
         return f + np.dot(u, fc2) - f.sum(axis=0) / f.shape[0]
 
-    def _run_ave_uuf(self):
+    def _run_fc3_ave(self):
         print("run fmat")
         f = self._run_fmat()
-        u = self._displacements
-        print("run uuf")
-        self._ave_uuf = np.einsum('li,lj,lk->ijk', u, u, f) / u.shape[0]
+        Y = self._upsilon_matrix.upsilon_matrix
+        print("run u_inv")
+        u_inv = np.dot(self._displacements, Y)
+        # for x in u_inv:
+        #     print(x)
+        print("run ave fc3")
+        # uu = np.einsum('li,lj->ijl', u_inv, u_inv)
+        # return - np.dot(uu, f) / u_inv.shape[0]
+        return - np.einsum('li,lj,lk->ijk', u_inv, u_inv, f) / u_inv.shape[0]
