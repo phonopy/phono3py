@@ -37,6 +37,7 @@ requirements:
     - openblas
     - libgfortran
     - spglib
+    - alm
 
   run:
     - python
@@ -50,6 +51,7 @@ requirements:
     - openblas
     - libgfortran
     - spglib
+    - alm
 
 test:
   # Python imports

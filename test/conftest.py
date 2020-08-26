@@ -24,5 +24,5 @@ def si_pbesol_111():
 @pytest.fixture(scope='session')
 def si_pbesol_iterha_111():
     yaml_filename = os.path.join(current_dir,
-                                 "phonopy_params-Si111-iterha.yaml.xz")
+                                 "phonopy_params-Si111-iterha.yaml.gz")
     return phonopy.load(yaml_filename, log_level=1, produce_fc=False)
