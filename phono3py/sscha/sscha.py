@@ -66,10 +66,9 @@ class SupercellPhonon(object):
         Phonon frequencies of supercell dynamical matrix. Frequency conversion
         factor to THz is multiplied.
         shape=(3 * num_satom, ), dtype='double', order='C'
-    dynamical_matrix : ndarray
-        Numerical matrix corresponding to supercell dynamical matrix given
-        at Gamma point. Therefore no phase factor is multiplied, i.e.,
-        force constants weighted by atomic masses, 1/sqrt(M_a, M_b).
+    force_constants : ndarray
+        Supercell force constants. The array shape is different from
+        the input force constants.
         shape=(3 * num_satom, 3 * num_satom), dtype='double', order='C'
     supercell : PhonopyAtoms or its derived class
         Supercell.
@@ -96,7 +95,8 @@ class SupercellPhonon(object):
 
         self._supercell = supercell
         _fc2 = np.swapaxes(force_constants, 1, 2)
-        _fc2 = _fc2.reshape(-1, np.prod(_fc2.shape[-2:]))
+        _fc2 = np.array(_fc2.reshape(-1, np.prod(_fc2.shape[-2:])),
+                        dtype='double', order='C')
         masses = np.repeat(supercell.masses, 3)
         dynmat = np.array(_fc2 / np.sqrt(np.outer(masses, masses)),
                           dtype='double', order='C')
@@ -106,7 +106,7 @@ class SupercellPhonon(object):
         self._eigenvalues = np.array(eigvals, dtype='double', order='C')
         self._eigenvectors = np.array(eigvecs, dtype='double', order='C')
         self._frequencies = np.array(freqs, dtype='double', order='C')
-        self._dynamical_matrix = dynmat
+        self._force_constants = _fc2
 
     @property
     def eigenvalues(self):
@@ -121,8 +121,8 @@ class SupercellPhonon(object):
         return self._frequencies
 
     @property
-    def dynamical_matrix(self):
-        return self._dynamical_matrix
+    def force_constants(self):
+        return self._force_constants
 
     @property
     def supercell(self):
@@ -138,6 +138,9 @@ class DispCorrMatrix(object):
         Displacement-displacement correlation matrix at temperature.
         Physical unit is [1/Angstrom^2].
         shape=(3 * num_satom, 3 * num_satom), dtype='double', order='C'
+    supercell_phonon : SupercellPhonon
+        Supercell phonon object. Phonons at Gamma point, where
+        eigenvectors are not complex type but real type.
 
     """
 
@@ -168,6 +171,10 @@ class DispCorrMatrix(object):
     @property
     def upsilon_matrix(self):
         return self._upsilon_matrix
+
+    @property
+    def supercell_phonon(self):
+        return self._supercell_phonon
 
 
 class DispCorrMatrixMesh(object):
@@ -241,14 +248,12 @@ class ThirdOrderFC(object):
 
         Parameters
         ----------
-        upsilon_matrix : ndarray
-            Displacement-displacement correlation matrix at a temperature
-            point.
-            shape=(3 * num_satom, 3 * num_satom), dtype='double', order='C'
         displacements : ndarray
             shape=(snap_shots, num_satom, 3), dtype='double', order='C'
         forces : ndarray
             shape=(snap_shots, num_satom, 3), dtype='double', order='C'
+        upsilon_matrix : DispCorrMatrix
+            Displacement-displacement correlation matrix class instance.
 
         """
 
@@ -259,6 +264,11 @@ class ThirdOrderFC(object):
                                        dtype='double', order='C')
         self._forces = np.array(forces.reshape(-1, shape[0]),
                                 dtype='double', order='C')
+        fc2 = self._upsilon_matrix.supercell_phonon.force_constants
+        self._force_constants = fc2
+
+    def run(self, T):
+        self._upsilon_matrix.run(T)
 
     @property
     def displacements(self):

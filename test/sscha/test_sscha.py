@@ -75,6 +75,5 @@ def test_fc3(si_pbesol_iterha_111):
         ph.supercell, ph.force_constants,
         frequency_factor_to_THz=ph.unit_conversion_factor)
     upmat = DispCorrMatrix(supercell_phonon)
-    upmat.run(300.0)
 
-    ThirdOrderFC(ph.displacements, ph.forces, upmat.upsilon_matrix)
+    ThirdOrderFC(ph.displacements, ph.forces, upmat)
