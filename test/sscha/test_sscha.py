@@ -1,9 +1,14 @@
+import sys
 import pytest
 import numpy as np
 from phono3py.sscha.sscha import (
     DispCorrMatrix, DispCorrMatrixMesh, SupercellPhonon, ThirdOrderFC)
 from phonopy.phonon.qpoints import QpointsPhonon
 
+try:
+    ModuleNotFoundError
+except NameError:
+    ModuleNotFoundError = ImportError
 
 si_pbesol_upsilon0_0 = [[3.849187e+02, 0, 0],
                         [0, 3.849187e+02, 0],
@@ -58,7 +63,8 @@ def test_upsilon_matrix(si_pbesol):
     np.testing.assert_allclose(
         si_pbesol_upsilon0_0, upmat.upsilon_matrix[0:3, 0:3], atol=1e-4)
     np.testing.assert_allclose(
-        si_pbesol_upsilon1_34, upmat.upsilon_matrix[1 * 3: 2 * 3, 34 * 3: 35 * 3],
+        si_pbesol_upsilon1_34,
+        upmat.upsilon_matrix[1 * 3: 2 * 3, 34 * 3: 35 * 3],
         atol=1e-4)
 
 
