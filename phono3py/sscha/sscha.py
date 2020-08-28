@@ -168,11 +168,13 @@ class DispCorrMatrix(object):
     def run(self, T):
         freqs = self._supercell_phonon.frequencies
         eigvecs = self._supercell_phonon.eigenvectors
+
         sqrt_masses = np.repeat(
             np.sqrt(self._supercell_phonon.supercell.masses), 3)
 
         # ignore zero and imaginary frequency modes
         condition = freqs > self._cutoff_frequency
+
         _freqs = np.where(condition, freqs, 1)
         _a = mode_length(_freqs, T)
         a2_inv = np.where(condition, 1 / _a ** 2, 0)
@@ -351,19 +353,19 @@ class ThirdOrderFC(object):
 
         assert (displacements.shape == forces.shape)
         shape = displacements.shape
-        d = np.array(displacements.reshape(shape[0], -1),
+        u = np.array(displacements.reshape(shape[0], -1),
                      dtype='double', order='C')
         f = np.array(forces.reshape(shape[0], -1),
                      dtype='double', order='C')
-        self._displacements = d
+        self._displacements = u
         self._forces = f
         self._upsilon_matrix = DispCorrMatrix(
             supercell_phonon, cutoff_frequency=cutoff_frequency)
-        fc2 = supercell_phonon.force_constants
-        self._force_constants = fc2
+        self._force_constants = supercell_phonon.force_constants
         self._cutoff_frequency = cutoff_frequency
         self._log_level = log_level
 
+        self._drift = u.sum(axis=0) / u.shape[0]
         self._fmat = self._run_fmat()
 
     def run(self, T=300.0):
@@ -393,24 +395,20 @@ class ThirdOrderFC(object):
         return f - f.sum(axis=0) / f.shape[0] + np.dot(u, fc2)
 
     def _run_fc3_ave(self, T):
-        f = self._fmat
         self._upsilon_matrix.run(T)
         Y = self._upsilon_matrix.upsilon_matrix
-
-        print(self._upsilon_matrix.determinant)
+        f = self._fmat
+        u = self._displacements
 
         # This is faster than multiplying Y after ansemble average at least
         # in python implementation.
-        u_inv = np.dot(self._displacements, Y)
+        u_inv = np.dot(u, Y)
+
+        if self._log_level:
+            N = np.prod(u.shape)
+            print("rms u_inv:", np.sqrt((u_inv ** 2).sum() / N))
+            print("rms u:", np.sqrt((u ** 2).sum() / N))
+            print("rms forces:", np.sqrt((self._forces ** 2).sum() / N))
+            print("rms f:", np.sqrt((f ** 2).sum() / N))
 
         return - np.einsum('li,lj,lk->ijk', u_inv, u_inv, f) / f.shape[0]
-
-        # Check of np.einsum
-        # N = u_inv.shape[1]
-        # fc3 = np.zeros((N, N, N), dtype='double')
-        # for l, (u_inv_l, f_l) in enumerate(zip(u_inv, f)):
-        #     print("%d" % (l + 1))
-        #     # for i, j, k in np.ndindex((N, N, N)):
-        #     #     fc3 -= u_inv_l[i] * u_inv_l[j] * f_l[k]
-        #     fc3 -= np.einsum('i,j,k->ijk', u_inv_l, u_inv_l, f_l)
-        # return fc3 / u_inv.shape[0]
