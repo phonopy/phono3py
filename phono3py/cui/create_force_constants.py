@@ -196,7 +196,8 @@ def parse_forces(phono3py,
     # Try to read FORCES_FC* if type-2 and return dataset.
     # None is returned unless type-2.
     # can emit FileNotFoundError.
-    if dataset is not None and not forces_in_dataset(dataset):
+    if (dataset is None or
+        dataset is not None and not forces_in_dataset(dataset)):
         _dataset = _get_type2_dataset(natom,
                                       phono3py.calculator,
                                       filename=force_filename,
@@ -207,24 +208,17 @@ def parse_forces(phono3py,
             dataset = _dataset
 
     if dataset is None:
-        if disp_filename is None:
-            # Type-2 FORCES_FC*
-            dataset = parse_FORCE_SETS(natom, filename=force_filename)
-            if log_level:
-                print("Sets of supercell forces were read from \"%s\"."
-                      % force_filename)
-        else:
-            # Displacement dataset is obtained from disp_filename.
-            # can emit FileNotFoundError.
-            dataset = _read_disp_fc_yaml(disp_filename, fc_type)
-            filename_read_from = disp_filename
+        # Displacement dataset is obtained from disp_filename.
+        # can emit FileNotFoundError.
+        dataset = _read_disp_fc_yaml(disp_filename, fc_type)
+        filename_read_from = disp_filename
 
     if 'natom' in dataset and dataset['natom'] != natom:
         msg = ("Number of atoms in supercell is not consistent with "
                "\"%s\"." % filename_read_from)
         raise RuntimeError(msg)
 
-    if log_level:
+    if log_level and filename_read_from is not None:
         print("Displacement dataset for %s was read from \"%s\"."
               % (fc_type, filename_read_from))
 
@@ -344,6 +338,9 @@ def _read_phono3py_fc2(phono3py,
 
 
 def _get_type2_dataset(natom, calculator, filename="FORCES_FC3", log_level=0):
+    if not os.path.isfile(filename):
+        return None
+
     with open(filename, 'r') as f:
         len_first_line = get_length_of_first_line(f)
         if len_first_line == 6:

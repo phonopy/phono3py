@@ -638,6 +638,15 @@ def store_force_constants(phono3py,
             is_compact_fc=settings.is_compact_fc,
             log_level=log_level)
 
+        if log_level:
+            if phono3py.fc3 is None:
+                print("fc3 could not be obtained.")
+            if phono3py.fc2 is None:
+                print("fc2 could not be obtained.")
+        if phono3py.fc3 is None or phono3py.fc2 is None:
+            print_error()
+            sys.exit(1)
+
         if not read_fc['fc3']:
             write_fc3_to_hdf5(phono3py.fc3,
                               p2s_map=phono3py.primitive.p2s_map,
