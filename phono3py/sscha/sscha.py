@@ -388,6 +388,10 @@ class ThirdOrderFC(object):
     def fc3(self):
         return self._fc3
 
+    @property
+    def ff(self):
+        return self._fmat
+
     def _run_fmat(self):
         f = self._forces
         u = self._displacements

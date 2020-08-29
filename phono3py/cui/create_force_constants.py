@@ -39,7 +39,7 @@ from phonopy.harmonic.force_constants import (
     show_drift_force_constants,
     symmetrize_force_constants,
     symmetrize_compact_force_constants)
-from phonopy.file_IO import get_dataset_type2
+from phonopy.file_IO import get_dataset_type2, parse_FORCE_SETS
 from phonopy.cui.phonopy_script import print_error, file_exists
 from phonopy.interface.calculator import get_default_physical_units
 from phono3py.phonon3.fc3 import show_drift_fc3
@@ -201,13 +201,20 @@ def parse_forces(phono3py,
             filename_read_from = force_filename
             dataset = _dataset
 
-    # Displacement dataset is obtained from disp_filename.
-    # can emit FileNotFoundError.
     if dataset is None:
-        dataset = _read_disp_fc_yaml(disp_filename, fc_type)
-        filename_read_from = disp_filename
+        if disp_filename is None:
+            # Type-2 FORCES_FC*
+            dataset = parse_FORCE_SETS(natom, filename=force_filename)
+            if log_level:
+                print("Sets of supercell forces were read from \"%s\"."
+                      % force_filename)
+        else:
+            # Displacement dataset is obtained from disp_filename.
+            # can emit FileNotFoundError.
+            dataset = _read_disp_fc_yaml(disp_filename, fc_type)
+            filename_read_from = disp_filename
 
-    if dataset['natom'] != natom:
+    if 'natom' in dataset and dataset['natom'] != natom:
         msg = ("Number of atoms in supercell is not consistent with "
                "\"%s\"." % filename_read_from)
         raise RuntimeError(msg)
