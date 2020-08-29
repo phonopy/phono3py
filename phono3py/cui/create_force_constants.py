@@ -134,14 +134,19 @@ def create_phono3py_force_constants(phono3py,
                            log_level)
     else:
         if phono3py.phonon_supercell_matrix is None:
-            _create_phono3py_fc2(phono3py,
-                                 ph3py_yaml,
-                                 symmetrize_fc2,
-                                 input_filename,
-                                 settings.is_compact_fc,
-                                 settings.fc_calculator,
-                                 settings.fc_calculator_options,
-                                 log_level)
+            if (settings.fc_calculator == 'alm' and phono3py.fc2 is not None):
+                if log_level:
+                    print("fc2 that was fit simultaneously with fc3 "
+                          "by ALM is used.")
+            else:
+                _create_phono3py_fc2(phono3py,
+                                     ph3py_yaml,
+                                     symmetrize_fc2,
+                                     input_filename,
+                                     settings.is_compact_fc,
+                                     settings.fc_calculator,
+                                     settings.fc_calculator_options,
+                                     log_level)
         else:
             _create_phono3py_phonon_fc2(phono3py,
                                         ph3py_yaml,

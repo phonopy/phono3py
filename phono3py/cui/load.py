@@ -456,6 +456,11 @@ def set_dataset_and_force_constants(
                         fc_calculator_options,
                         "phonon_fc2",
                         log_level)
+    elif (ph3py.phonon_supercell_matrix is None and
+          fc_calculator == 'alm' and
+          ph3py.fc2 is not None):
+        if log_level:
+            print("fc2 that was fit simultaneously with fc3 by ALM is used.")
     elif (ph3py_yaml is not None and
           ph3py_yaml.phonon_dataset is not None and
           forces_in_dataset(ph3py_yaml.phonon_dataset)):
