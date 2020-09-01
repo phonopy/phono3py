@@ -56,22 +56,34 @@ def get_imag_self_energy(interaction,
 
     Band indices to be calculated at are kept in Interaction instance.
 
-    Args:
-        interaction: Ph-ph interaction
-        grid_points: Grid-point indices to be caclculated on
-        sigmas:
-            A set of sigmas. simga=None means to use tetrahedron method,
-            otherwise smearing method with real positive value of sigma.
-        frequency_step: Pitch of frequency to be sampled.
-        num_frequency_points: Number of sampling sampling points to be used
-            instead of frequency_step.
-        temperatures: Temperatures to be calculated at.
-        scattering_event_class:
-            Extract scattering event class 1 or 2.
-        log_level: Log level. 0 or non 0 in this method.
+    Parameters
+    ----------
+    interaction : Interaction
+        Ph-ph interaction.
+    grid_points : array_like
+        Grid-point indices where imag-self-energeis are caclculated.
+        dtype=int, shape=(grid_points,)
+    sigmas : array_like
+        A set of sigmas. simga=None means to use tetrahedron method,
+        otherwise smearing method with real positive value of sigma.
+        dtype=float, shape=(sigmas,)
+    frequency_step : float
+        Uniform pitch of frequency sampling points.
+    num_frequency_points: Int
+        Number of sampling sampling points to be used instead of
+        frequency_step. This number includes end points.
+    temperatures : array_like
+        Temperatures where imag-self-energeis are caclculated.
+        dtype=float, shape=(temperatures,)
+    scattering_event_class : int
+        Specific choice of scattering event class, 1 or 2.
+    log_level: int
+        Log level.
 
-    Returns:
-        Tuple: (Imaginary part of self energy, sampling frequency points)
+    Returns
+    -------
+    tuple :
+        Imaginary part of self energy, sampling frequency points.
 
     """
     if temperatures is None:
