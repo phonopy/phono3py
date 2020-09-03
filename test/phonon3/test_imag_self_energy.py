@@ -33,7 +33,8 @@ def test_frequency_shift(si_pbesol):
         temperatures=[300, ],
         num_frequency_points=10)
     np.testing.assert_allclose(
-        gammas, np.array(si_pbesol.gammas).ravel(), atol=1e-5)
+        gammas, np.array(si_pbesol.gammas).ravel(), atol=1e-2)
     np.testing.assert_allclose(
         freq_points * 2, np.array(si_pbesol.frequency_points).ravel(),
         atol=1e-5)
+    raise
