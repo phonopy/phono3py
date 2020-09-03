@@ -37,4 +37,3 @@ def test_frequency_shift(si_pbesol):
     np.testing.assert_allclose(
         freq_points * 2, np.array(si_pbesol.frequency_points).ravel(),
         atol=1e-5)
-    raise
