@@ -1,10 +1,5 @@
 import numpy as np
 
-si_pbesol_Delta = [
-    [-0.0057666, -0.0057666, -0.01639729, -0.14809965,
-     -0.15091765, -0.15091765],
-    [-0.02078728, -0.02102094, -0.06573269, -0.11432603,
-     -0.1366966, -0.14371315]]
 gammas = [
     0.0000000, 0.0000000, 0.0000000, 0.0000000, 0.0000000, 0.0000000,
     0.0005412, 0.0005412, 0.0008843, 0.0191694, 0.0206316, 0.0206316,
@@ -37,6 +32,8 @@ def test_frequency_shift(si_pbesol):
         [1, 103],
         temperatures=[300, ],
         num_frequency_points=10)
-    # for line in np.array(si_pbesol.gammas).ravel().reshape(-1, 6):
-    #     print(("%9.7f, " * len(line)) % tuple(line))
-    # np.testing.assert_allclose(si_pbesol_Delta, delta[0, :, 0], atol=1e-5)
+    np.testing.assert_allclose(
+        gammas, np.array(si_pbesol.gammas).ravel(), atol=1e-5)
+    np.testing.assert_allclose(
+        freq_points * 2, np.array(si_pbesol.frequency_points).ravel(),
+        atol=1e-5)
