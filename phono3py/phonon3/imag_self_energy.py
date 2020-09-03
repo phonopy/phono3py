@@ -243,9 +243,8 @@ def write_imag_self_energy(imag_self_energy,
                            scattering_event_class=None,
                            filename=None,
                            is_mesh_symmetry=True):
-    for gp, ise_sigmas, fp_sigmas in zip(
-            grid_points, imag_self_energy, frequency_points):
-        for sigma, ise_temps, fp in zip(sigmas, ise_sigmas, fp_sigmas):
+    for gp, ise_sigmas in zip(grid_points, imag_self_energy):
+        for sigma, ise_temps in zip(sigmas, ise_sigmas):
             for t, ise in zip(temperatures, ise_temps):
                 for i, bi in enumerate(band_indices):
                     pos = 0
@@ -255,7 +254,7 @@ def write_imag_self_energy(imag_self_energy,
                         gp,
                         bi,
                         mesh,
-                        fp,
+                        frequency_points,
                         ise[:, pos:(pos + len(bi))].sum(axis=1) / len(bi),
                         sigma=sigma,
                         temperature=t,
