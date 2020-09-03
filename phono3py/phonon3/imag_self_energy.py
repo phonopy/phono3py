@@ -45,6 +45,7 @@ from phono3py.file_IO import (write_gamma_detail_to_hdf5,
 def get_imag_self_energy(interaction,
                          grid_points,
                          sigmas,
+                         frequency_points=None,
                          frequency_step=None,
                          num_frequency_points=None,
                          temperatures=None,
@@ -67,6 +68,9 @@ def get_imag_self_energy(interaction,
         A set of sigmas. simga=None means to use tetrahedron method,
         otherwise smearing method with real positive value of sigma.
         dtype=float, shape=(sigmas,)
+    frequency_points : array_like
+        Frequency sampling points.
+        dtype=float, shape=(frequency_points,)
     frequency_step : float
         Uniform pitch of frequency sampling points.
     num_frequency_points: Int
@@ -90,13 +94,22 @@ def get_imag_self_energy(interaction,
         temperatures = [0.0, 300.0]
 
     if temperatures is None:
-        print("Temperatures have to be set.")
+        if log_level:
+            print("Temperatures have to be set.")
         return False
 
-    mesh = interaction.get_mesh_numbers()
+    if (interaction.get_phonons()[2] == 0).any():
+        if log_level:
+            print("Running harmonic phonon calculations...")
+        interaction.run_phonon_solver()
+
+    mesh = interaction.mesh_numbers
+    frequencies = interaction.get_phonons()[0]
+    max_phonon_freq = np.amax(frequencies)
+
     ise = ImagSelfEnergy(interaction, with_detail=write_detail)
     imag_self_energy = []
-    frequency_points = []
+    all_frequency_points = []
     for i, gp in enumerate(grid_points):
         ise.set_grid_point(gp)
         if log_level:
@@ -107,11 +120,9 @@ def get_imag_self_energy(interaction,
             print("Number of ir-triplets: "
                   "%d / %d" % (len(weights), weights.sum()))
         ise.run_interaction()
-        frequencies = interaction.get_phonons()[0]
-        max_phonon_freq = np.amax(frequencies)
 
         if log_level:
-            adrs = interaction.get_grid_address()[gp]
+            adrs = interaction.grid_address[gp]
             q = adrs.astype('double') / mesh
             print("q-point: %s" % q)
             print("Phonon frequency:")
@@ -126,9 +137,9 @@ def get_imag_self_energy(interaction,
 
         gamma_sigmas = []
         fp_sigmas = []
+
         if write_detail:
-            (triplets,
-             weights,
+            (triplets, weights,
              map_triplets, _) = interaction.get_triplets_at_q()
 
         for j, sigma in enumerate(sigmas):
@@ -139,21 +150,27 @@ def get_imag_self_energy(interaction,
                     print("Tetrahedron method")
 
             ise.set_sigma(sigma)
-            if sigma:
-                fmax = max_phonon_freq * 2 + sigma * 4
+
+            if frequency_points is None:
+                if sigma:
+                    fmax = max_phonon_freq * 2 + sigma * 4
+                else:
+                    fmax = max_phonon_freq * 2
+                fmax *= 1.005
+                fmin = 0
+                frequency_points_at_sigma = get_frequency_points(
+                    fmin,
+                    fmax,
+                    frequency_step=frequency_step,
+                    num_frequency_points=num_frequency_points)
             else:
-                fmax = max_phonon_freq * 2
-            fmax *= 1.005
-            fmin = 0
-            frequency_points_at_sigma = get_frequency_points(
-                fmin,
-                fmax,
-                frequency_step=frequency_step,
-                num_frequency_points=num_frequency_points)
+                frequency_points_at_sigma = np.array(
+                    frequency_points, dtype='double')
+
             fp_sigmas.append(frequency_points_at_sigma)
             gamma = np.zeros(
                 (len(temperatures), len(frequency_points_at_sigma),
-                 len(interaction.get_band_indices())), dtype='double')
+                 len(interaction.band_indices)), dtype='double')
 
             if write_detail:
                 num_band0 = len(interaction.get_band_indices())
@@ -196,9 +213,9 @@ def get_imag_self_energy(interaction,
                           "self energy is written in\n\"%s\"." % full_filename)
 
         imag_self_energy.append(gamma_sigmas)
-        frequency_points.append(fp_sigmas)
+        all_frequency_points.append(fp_sigmas)
 
-    return imag_self_energy, frequency_points
+    return imag_self_energy, all_frequency_points
 
 
 def get_frequency_points(f_min,

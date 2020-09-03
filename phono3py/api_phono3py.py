@@ -868,6 +868,14 @@ class Phono3py(object):
     def get_phph_interaction(self):
         return self.phph_interaction
 
+    @property
+    def gammas(self):
+        return self._imag_self_energy
+
+    @property
+    def frequency_points(self):
+        return self._frequency_points
+
     def init_phph_interaction(self,
                               nac_q_direction=None,
                               constant_averaged_interaction=None,
@@ -1360,6 +1368,7 @@ class Phono3py(object):
 
     def run_imag_self_energy(self,
                              grid_points,
+                             frequency_points=None,
                              frequency_step=None,
                              num_frequency_points=None,
                              temperatures=None,
@@ -1380,6 +1389,7 @@ class Phono3py(object):
             self._interaction,
             grid_points,
             self._sigmas,
+            frequency_points=frequency_points,
             frequency_step=frequency_step,
             num_frequency_points=num_frequency_points,
             temperatures=temperatures,
