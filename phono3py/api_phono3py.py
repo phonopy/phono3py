@@ -151,7 +151,7 @@ class Phono3py(object):
         self._thermal_conductivity = None
 
         # Imaginary part of self energy at frequency points
-        self._imag_self_energy = None
+        self._gammas = None
         self._scattering_event_class = None
 
         # Frequency shift (real part of bubble diagram)
@@ -870,7 +870,11 @@ class Phono3py(object):
 
     @property
     def gammas(self):
-        return self._imag_self_energy
+        return self._gammas
+
+    @property
+    def detailed_gammas(self):
+        return self._detailed_gammas
 
     @property
     def frequency_points(self):
@@ -1374,6 +1378,7 @@ class Phono3py(object):
                              temperatures=None,
                              scattering_event_class=None,
                              write_gamma_detail=False,
+                             keep_gamma_detail=False,
                              output_filename=None):
         if self._interaction is None:
             msg = ("Phono3py.init_phph_interaction has to be called "
@@ -1385,7 +1390,7 @@ class Phono3py(object):
         self._grid_points = grid_points
         self._temperatures = temperatures
         self._scattering_event_class = scattering_event_class
-        self._imag_self_energy, self._frequency_points = get_imag_self_energy(
+        vals = get_imag_self_energy(
             self._interaction,
             grid_points,
             self._sigmas,
@@ -1394,13 +1399,20 @@ class Phono3py(object):
             num_frequency_points=num_frequency_points,
             temperatures=temperatures,
             scattering_event_class=scattering_event_class,
-            write_detail=write_gamma_detail,
+            write_gamma_detail=write_gamma_detail,
+            return_gamma_detail=keep_gamma_detail,
             output_filename=output_filename,
             log_level=self._log_level)
+        if keep_gamma_detail:
+            (self._gammas,
+             self._detailed_gammas,
+             self._frequency_points) = vals
+        else:
+            self._gammas, self._frequency_points = vals
 
     def write_imag_self_energy(self, filename=None):
         write_imag_self_energy(
-            self._imag_self_energy,
+            self._gammas,
             self._mesh_numbers,
             self._grid_points,
             self._band_indices,
