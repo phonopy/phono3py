@@ -66,29 +66,43 @@ def get_imag_self_energy(interaction,
         Grid-point indices where imag-self-energeis are caclculated.
         dtype=int, shape=(grid_points,)
     sigmas : array_like
-        A set of sigmas. simga=None means to use tetrahedron method,
+        A set of sigmas. simgas=[None, ] means to use tetrahedron method,
         otherwise smearing method with real positive value of sigma.
+        For example, sigmas=[None, 0.01, 0.03] is possible.
         dtype=float, shape=(sigmas,)
-    frequency_points : array_like
-        Frequency sampling points.
+    frequency_points : array_like, optional
+        Frequency sampling points. Default is None. In this case,
+        num_frequency_points or frequency_step is used to generate uniform
+        frequency sampling points.
         dtype=float, shape=(frequency_points,)
-    frequency_step : float
-        Uniform pitch of frequency sampling points.
-    num_frequency_points: Int
+    frequency_step : float, optional
+        Uniform pitch of frequency sampling points. Default is None. This
+        results in using num_frequency_points.
+    num_frequency_points: Int, optional
         Number of sampling sampling points to be used instead of
-        frequency_step. This number includes end points.
-    temperatures : array_like
-        Temperatures where imag-self-energeis are caclculated.
+        frequency_step. This number includes end points. Default is None,
+        which gives 201.
+    temperatures : array_like, optional
+        Temperatures where imag-self-energies are calculated. Default is None,
+        which gives [0, 300].
         dtype=float, shape=(temperatures,)
-    scattering_event_class : int
-        Specific choice of scattering event class, 1 or 2.
+    scattering_event_class : int, optional
+        Specific choice of scattering event class, 1 or 2 that is specified
+        1 or 2, respectively. The result is stored in gammas. Therefore
+        usual gammas are not stored in the variable. Default is None, which
+        doesn't specify scattering_event_class.
+    write_gamma_detail : bool, optional
+        Detailed gammas are written into a file in hdf5. Default is False.
+    return_gamma_detail : bool, optional
+        With True, detailed gammas are returned. Default is False.
     log_level: int
-        Log level.
+        Log level. Default is 0.
 
     Returns
     -------
     tuple :
-        Imaginary part of self energy, sampling frequency points.
+        (gammas, frequency_points) are returned. With return_gamma_detail=True,
+        (gammas, detailed_gammas, frequency_points) are returned.
 
     """
     if temperatures is None:
