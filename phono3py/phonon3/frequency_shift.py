@@ -38,10 +38,15 @@ from phonopy.units import Hbar, EV, THz
 from phonopy.phonon.degeneracy import degenerate_sets
 from phono3py.phonon.func import bose_einstein
 from phono3py.file_IO import write_frequency_shift, write_Delta_to_hdf5
+from phono3py.phonon3.imag_self_energy import get_frequency_points
 
 
 def get_frequency_shift(interaction,
                         grid_points,
+                        run_on_bands=False,
+                        frequency_points=None,
+                        frequency_step=None,
+                        num_frequency_points=None,
                         epsilons=None,
                         temperatures=None,
                         output_filename=None,
@@ -58,13 +63,34 @@ def get_frequency_shift(interaction,
         _temperatures = temperatures
     _temperatures = np.array(_temperatures, dtype='double')
 
-    band_indices = interaction.band_indices
+    if (interaction.get_phonons()[2] == 0).any():
+        if log_level:
+            print("Running harmonic phonon calculations...")
+        interaction.run_phonon_solver()
+
     fst = FrequencyShift(interaction)
     mesh = interaction.mesh_numbers
+    frequencies = interaction.get_phonons()[0]
+    max_phonon_freq = np.amax(frequencies)
+    band_indices = interaction.band_indices
 
-    all_deltas = np.zeros((len(_epsilons), len(grid_points),
-                           len(_temperatures), len(band_indices)),
-                          dtype='double', order='C')
+    if run_on_bands:
+        _frequency_points = None
+        all_deltas = np.zeros((len(_epsilons), len(grid_points),
+                               len(_temperatures), len(band_indices)),
+                              dtype='double', order='C')
+    else:
+        _frequency_points = get_frequency_points(
+            max_phonon_freq=max_phonon_freq,
+            sigmas=epsilons,
+            frequency_points=frequency_points,
+            frequency_step=frequency_step,
+            num_frequency_points=num_frequency_points)
+        all_deltas = np.zeros((len(_epsilons), len(grid_points),
+                               len(_temperatures), len(_frequency_points),
+                               len(band_indices)),
+                              dtype='double', order='C')
+        fst.frequency_points = _frequency_points
 
     for j, gp in enumerate(grid_points):
         fst.grid_point = gp
@@ -81,42 +107,42 @@ def get_frequency_shift(interaction,
             qpoint = interaction.grid_address[gp] / mesh.astype(float)
             print("Phonon frequencies at (%4.2f, %4.2f, %4.2f):"
                   % tuple(qpoint))
-            for bi in band_indices:
-                print("%3d  %f" % (bi + 1, frequencies[bi]))
+            for bi, freq in enumerate(frequencies):
+                print("%3d  %f" % (bi + 1, freq))
 
         for i, epsilon in enumerate(_epsilons):
             fst.epsilon = epsilon
-            delta = np.zeros((len(_temperatures), len(band_indices)),
-                             dtype='double')
             for k, t in enumerate(_temperatures):
                 fst.temperature = t
                 fst.run()
-                delta[k] = fst.frequency_shift
+                all_deltas[i, j, k] = fst.frequency_shift
 
-            all_deltas[i, j] = delta
+                if not run_on_bands:
+                    pos = 0
+                    for bi_set in [[bi, ] for bi in band_indices]:
+                        filename = write_frequency_shift(
+                            gp,
+                            bi_set,
+                            _frequency_points,
+                            all_deltas[i, j, k, :, pos:(pos + len(bi_set))],
+                            mesh,
+                            fst.epsilon,
+                            t,
+                            filename=output_filename)
+                        pos += len(bi_set)
+                        print(filename,
+                              interaction.get_phonons()[0][gp][bi_set])
+                        sys.stdout.flush()
 
             if write_Delta_hdf5:
-                # pos = 0
-                # for bi in band_indices:
-                #     filename = write_frequency_shift(
-                #         gp,
-                #         bi,
-                #         _temperatures,
-                #         delta[:, pos:(pos + len(bi))],
-                #         mesh,
-                #         epsilon,
-                #         filename=output_filename)
-                #     pos += len(bi)
-                #     print(filename, interaction.get_phonons()[0][gp][bi])
-                #     sys.stdout.flush()
-
                 filename = write_Delta_to_hdf5(
                     gp,
                     band_indices,
                     _temperatures,
-                    delta,
+                    all_deltas[i, j],
                     mesh,
                     fst.epsilon,
+                    frequency_points=_frequency_points,
                     frequencies=frequencies,
                     filename=output_filename)
 
@@ -191,6 +217,7 @@ class FrequencyShift(object):
         self._band_indices = None
         self._unit_conversion = None
         self._cutoff_frequency = interaction.cutoff_frequency
+        self._frequency_points = None
         self._frequency_shifts = None
 
         # Unit to THz of Delta
@@ -202,9 +229,14 @@ class FrequencyShift(object):
         if self._pp_strength is None:
             self.run_interaction()
 
-        num_band0 = self._pp_strength.shape[1]
-        self._frequency_shifts = np.zeros(num_band0, dtype='double')
-        self._run_with_band_indices()
+        num_band0 = len(self._pp.band_indices)
+        if self._frequency_points is None:
+            self._frequency_shifts = np.zeros(num_band0, dtype='double')
+            self._run_with_band_indices()
+        else:
+            self._frequency_shifts = np.zeros(
+                (len(self._frequency_points), num_band0), dtype='double')
+            self._run_with_frequency_points()
 
     def run_interaction(self):
         self._pp.run(lang=self._lang)
@@ -230,8 +262,13 @@ class FrequencyShift(object):
                         bi_set.append(i)
                 if len(bi_set) > 0:
                     for i in bi_set:
-                        shifts[i] = (self._frequency_shifts[bi_set].sum() /
-                                     len(bi_set))
+                        if self._frequency_points is None:
+                            shifts[i] = (self._frequency_shifts[bi_set].sum() /
+                                         len(bi_set))
+                        else:
+                            shifts[:, i] = (
+                                self._frequency_shifts[:, bi_set].sum(axis=1) /
+                                len(bi_set))
             return shifts
 
     @property
@@ -271,11 +308,25 @@ class FrequencyShift(object):
         else:
             self._temperature = float(temperature)
 
+    @property
+    def frequency_points(self):
+        return self._frequency_points
+
+    @frequency_points.setter
+    def frequency_points(self, frequency_points):
+        self._frequency_points = np.array(frequency_points, dtype='double')
+
     def _run_with_band_indices(self):
         if self._lang == 'C':
             self._run_c_with_band_indices()
         else:
             self._run_py_with_band_indices()
+
+    def _run_with_frequency_points(self):
+        if self._lang == 'C':
+            self._run_c_with_frequency_points()
+        else:
+            self._run_py_with_frequency_points()
 
     def _run_c_with_band_indices(self):
         import phono3py._phono3py as phono3c
@@ -298,29 +349,75 @@ class FrequencyShift(object):
 
             freqs = self._frequencies[triplet]
             for j, bi in enumerate(self._band_indices):
+                fpoint = freqs[0, bi]
                 if self._temperature > 0:
                     self._frequency_shifts[j] += (
                         self._frequency_shifts_at_bands(
-                            j, bi, freqs, interaction, w))
+                            j, fpoint, freqs, interaction, w))
                 else:
                     self._frequency_shifts[j] += (
                         self._frequency_shifts_at_bands_0K(
-                            j, bi, freqs, interaction, w))
+                            j, fpoint, freqs, interaction, w))
 
         self._frequency_shifts *= self._unit_conversion
 
-    def _frequency_shifts_at_bands(self, i, bi, freqs, interaction, weight):
+    def _run_c_with_frequency_points(self):
+        import phono3py._phono3py as phono3c
+        for i, fpoint in enumerate(self._frequency_points):
+            shifts = np.zeros(self._frequency_shifts.shape[1], dtype='double')
+            phono3c.frequency_shift_at_frequency_point(
+                shifts,
+                fpoint,
+                self._pp_strength,
+                self._triplets_at_q,
+                self._weights_at_q,
+                self._frequencies,
+                self._band_indices,
+                self._temperature,
+                self._epsilon,
+                self._unit_conversion,
+                self._cutoff_frequency)
+            self._frequency_shifts[i][:] = shifts
+
+    def _run_py_with_frequency_points(self):
+        for k, fpoint in enumerate(self._frequency_points):
+            for i, (triplet, w, interaction) in enumerate(
+                zip(self._triplets_at_q,
+                    self._weights_at_q,
+                    self._pp_strength)):
+
+                freqs = self._frequencies[triplet]
+                for j, bi in enumerate(self._band_indices):
+                    if self._temperature > 0:
+                        self._frequency_shifts[k, j] += (
+                            self._frequency_shifts_at_bands(
+                                j, fpoint, freqs, interaction, w))
+                    else:
+                        self._frequency_shifts[k, j] += (
+                            self._frequency_shifts_at_bands_0K(
+                                j, fpoint, freqs, interaction, w))
+
+        self._frequency_shifts *= self._unit_conversion
+
+    def _frequency_shifts_at_bands(self, i, fpoint, freqs,
+                                   interaction, weight):
+        if fpoint < self._cutoff_frequency:
+            return 0
+
         sum_d = 0
         for (j, k) in list(np.ndindex(interaction.shape[1:])):
+            if fpoint < self._cutoff_frequency:
+                continue
+
             if (freqs[1, j] > self._cutoff_frequency and
                 freqs[2, k] > self._cutoff_frequency):
                 d = 0.0
                 n2 = bose_einstein(freqs[1, j], self._temperature)
                 n3 = bose_einstein(freqs[2, k], self._temperature)
-                f1 = freqs[0, bi] + freqs[1, j] + freqs[2, k]
-                f2 = freqs[0, bi] - freqs[1, j] - freqs[2, k]
-                f3 = freqs[0, bi] - freqs[1, j] + freqs[2, k]
-                f4 = freqs[0, bi] + freqs[1, j] - freqs[2, k]
+                f1 = fpoint + freqs[1, j] + freqs[2, k]
+                f2 = fpoint - freqs[1, j] - freqs[2, k]
+                f3 = fpoint - freqs[1, j] + freqs[2, k]
+                f4 = fpoint + freqs[1, j] - freqs[2, k]
 
                 # if abs(f1) > self._epsilon:
                 #     d -= (n2 + n3 + 1) / f1
@@ -338,14 +435,18 @@ class FrequencyShift(object):
                 sum_d += d * interaction[i, j, k] * weight
         return sum_d
 
-    def _frequency_shifts_at_bands_0K(self, i, bi, freqs, interaction, weight):
+    def _frequency_shifts_at_bands_0K(self, i, fpoint, freqs,
+                                      interaction, weight):
+        if fpoint < self._cutoff_frequency:
+            return 0
+
         sum_d = 0
         for (j, k) in list(np.ndindex(interaction.shape[1:])):
             if (freqs[1, j] > self._cutoff_frequency and
                 freqs[2, k] > self._cutoff_frequency):
                 d = 0.0
-                f1 = freqs[0, bi] + freqs[1, j] + freqs[2, k]
-                f2 = freqs[0, bi] - freqs[1, j] - freqs[2, k]
+                f1 = fpoint + freqs[1, j] + freqs[2, k]
+                f2 = fpoint - freqs[1, j] - freqs[2, k]
 
                 # if abs(f1) > self._epsilon:
                 #     d -= 1.0 / f1

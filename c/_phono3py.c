@@ -69,6 +69,8 @@ static PyObject *
 py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args);
 static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
                                                   PyObject *args);
+static PyObject * py_get_frequency_shift_at_frequency_point(PyObject *self,
+                                                            PyObject *args);
 static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args);
 static PyObject * py_get_reducible_collision_matrix(PyObject *self,
                                                     PyObject *args);
@@ -162,6 +164,10 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_get_frequency_shift_at_bands,
    METH_VARARGS,
    "Phonon frequency shift from third order force constants"},
+  {"frequency_shift_at_frequency_point",
+   (PyCFunction)py_get_frequency_shift_at_frequency_point,
+   METH_VARARGS,
+   "Phonon frequency shift from third order force constants at a frequency point"},
   {"collision_matrix",
    (PyCFunction)py_get_collision_matrix,
    METH_VARARGS,
@@ -1039,6 +1045,66 @@ static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
                                temperature,
                                unit_conversion_factor,
                                cutoff_frequency);
+
+  free(fc3_normal_squared);
+  fc3_normal_squared = NULL;
+
+  Py_RETURN_NONE;
+}
+
+static PyObject * py_get_frequency_shift_at_frequency_point(PyObject *self,
+                                                            PyObject *args)
+{
+  PyArrayObject *py_shift;
+  PyArrayObject *py_fc3_normal_squared;
+  PyArrayObject *py_frequencies;
+  PyArrayObject *py_triplets;
+  PyArrayObject *py_triplet_weights;
+  PyArrayObject *py_band_indices;
+  double frequency_point, epsilon, unit_conversion_factor, cutoff_frequency;
+  double temperature;
+
+  Darray *fc3_normal_squared;
+  double *shift;
+  double *frequencies;
+  int *band_indices;
+  size_t (*triplets)[3];
+  int *triplet_weights;
+
+  if (!PyArg_ParseTuple(args, "OdOOOOOdddd",
+                        &py_shift,
+                        &frequency_point,
+                        &py_fc3_normal_squared,
+                        &py_triplets,
+                        &py_triplet_weights,
+                        &py_frequencies,
+                        &py_band_indices,
+                        &temperature,
+                        &epsilon,
+                        &unit_conversion_factor,
+                        &cutoff_frequency)) {
+    return NULL;
+  }
+
+
+  fc3_normal_squared = convert_to_darray(py_fc3_normal_squared);
+  shift = (double*)PyArray_DATA(py_shift);
+  frequencies = (double*)PyArray_DATA(py_frequencies);
+  band_indices = (int*)PyArray_DATA(py_band_indices);
+  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
+  triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
+
+  get_frequency_shift_at_frequency_point(shift,
+                                         frequency_point,
+                                         fc3_normal_squared,
+                                         band_indices,
+                                         frequencies,
+                                         triplets,
+                                         triplet_weights,
+                                         epsilon,
+                                         temperature,
+                                         unit_conversion_factor,
+                                         cutoff_frequency);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;
