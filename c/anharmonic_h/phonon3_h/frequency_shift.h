@@ -49,3 +49,15 @@ void get_frequency_shift_at_bands(double *frequency_shift,
                                   const double temperature,
                                   const double unit_conversion_factor,
                                   const double cutoff_frequency);
+void
+get_frequency_shift_at_frequency_point(double *frequency_shift,
+                                       const double frequency_point,
+                                       const Darray *fc3_normal_squared,
+                                       const int *band_indices,
+                                       const double *frequencies,
+                                       const size_t (*triplets)[3],
+                                       const int *triplet_weights,
+                                       const double epsilon,
+                                       const double temperature,
+                                       const double unit_conversion_factor,
+                                       const double cutoff_frequency);

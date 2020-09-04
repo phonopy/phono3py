@@ -564,7 +564,7 @@ class Phono3py(object):
     @band_indices.setter
     def band_indices(self, band_indices):
         if band_indices is None:
-            num_band = self._primitive.get_number_of_atoms() * 3
+            num_band = len(self._primitive) * 3
             self._band_indices = [np.arange(num_band, dtype='intc')]
         else:
             self._band_indices = band_indices
@@ -1564,16 +1564,22 @@ class Phono3py(object):
     def run_frequency_shift(
             self,
             grid_points,
+            run_on_bands=False,
+            frequency_points=None,
+            frequency_step=None,
+            num_frequency_points=None,
             temperatures=None,
             epsilons=None,
             write_Delta_hdf5=True,
             output_filename=None):
         """Frequency shift from lowest order diagram is calculated.
 
-        Args:
-            epslins(list of float):
-               The value to avoid divergence. When multiple values are given
-               frequency shifts for those values are returned.
+        Parameters
+        ----------
+        epsilons : array_like
+            The value to avoid divergence. When multiple values are given
+            frequency shifts for those values are returned.
+            dtype=float, shape=(epsilons,)
 
         """
 
@@ -1597,6 +1603,10 @@ class Phono3py(object):
         self._frequency_shift = get_frequency_shift(
             self._interaction,
             self._grid_points,
+            run_on_bands=run_on_bands,
+            frequency_points=frequency_points,
+            frequency_step=frequency_step,
+            num_frequency_points=num_frequency_points,
             epsilons=_epsilons,
             temperatures=temperatures,
             write_Delta_hdf5=write_Delta_hdf5,

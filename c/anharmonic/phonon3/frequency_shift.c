@@ -104,6 +104,43 @@ void get_frequency_shift_at_bands(double *frequency_shift,
   }
 }
 
+void
+get_frequency_shift_at_frequency_point(double *frequency_shift,
+                                       const double frequency_point,
+                                       const Darray *fc3_normal_squared,
+                                       const int *band_indices,
+                                       const double *frequencies,
+                                       const size_t (*triplets)[3],
+                                       const int *triplet_weights,
+                                       const double epsilon,
+                                       const double temperature,
+                                       const double unit_conversion_factor,
+                                       const double cutoff_frequency)
+{
+  int i, num_band0;
+
+  num_band0 = fc3_normal_squared->dims[1];
+
+  /* num_band0 and num_band_indices have to be same. */
+  for (i = 0; i < num_band0; i++) {
+    if (frequency_point < cutoff_frequency) {
+      frequency_shift[i] = 0;
+    } else {
+      frequency_shift[i] =
+        get_frequency_shift_at_band(i,
+                                    fc3_normal_squared,
+                                    frequency_point,
+                                    frequencies,
+                                    triplets,
+                                    triplet_weights,
+                                    epsilon,
+                                    temperature,
+                                    unit_conversion_factor,
+                                    cutoff_frequency);
+    }
+  }
+}
+
 static double get_frequency_shift_at_band(const int band_index,
                                           const Darray *fc3_normal_squared,
                                           const double fpoint,

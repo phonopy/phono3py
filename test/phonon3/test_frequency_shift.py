@@ -13,5 +13,6 @@ def test_frequency_shift(si_pbesol):
     delta = si_pbesol.run_frequency_shift(
         [1, 103],
         temperatures=[300, ],
-        write_Delta_hdf5=False)
+        write_Delta_hdf5=False,
+        run_on_bands=True)
     np.testing.assert_allclose(si_pbesol_Delta, delta[0, :, 0], atol=1e-5)

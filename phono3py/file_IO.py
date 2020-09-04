@@ -508,17 +508,19 @@ def write_linewidth_at_grid_point(gp,
 
 def write_frequency_shift(gp,
                           band_indices,
-                          temperatures,
-                          delta,
+                          frequency_points,
+                          deltas,
                           mesh,
                           epsilon,
+                          temperature,
                           filename=None,
                           is_mesh_symmetry=True):
 
     fst_filename = "frequency_shift"
     suffix = _get_filename_suffix(mesh,
                                   grid_point=gp,
-                                  band_indices=band_indices)
+                                  band_indices=band_indices,
+                                  temperature=temperature)
     fst_filename += suffix
     if epsilon > 1e-5:
         fst_filename += "-s" + _del_zeros(epsilon)
@@ -531,8 +533,8 @@ def write_frequency_shift(gp,
     fst_filename += ".dat"
 
     with open(fst_filename, 'w') as w:
-        for v, t in zip(delta.sum(axis=1) / delta.shape[1], temperatures):
-            w.write("%15.7f %20.15e\n" % (t, v))
+        for freq, v in zip(frequency_points, deltas.sum(axis=-1)):
+            w.write("%15.7f %20.15e\n" % (freq, v))
 
     return fst_filename
 
@@ -543,13 +545,18 @@ def write_Delta_to_hdf5(grid_point,
                         deltas,
                         mesh,
                         epsilon,
+                        frequency_points=None,
                         frequencies=None,
                         filename=None):
     """Wirte frequency shifts (currently only bubble) in hdf5
 
     deltas : ndarray
-        Frequency shift.
-        shape=(temperature, band_index), dtype='double', order='C'
+        Frequency shifts.
+        With frequency_points:
+            shape=(temperature, frequency_points, band_index),
+            dtype='double', order='C'
+        otherwise:
+            shape=(temperature, band_index), dtype='double', order='C'
 
     """
     full_filename = "Delta"
@@ -570,6 +577,8 @@ def write_Delta_to_hdf5(grid_point,
         w.create_dataset('bubble', data=deltas)
         w.create_dataset('temperature', data=temperatures)
         w.create_dataset('epsilon', data=epsilon)
+        if frequency_points is not None:
+            w.create_dataset('frequency_points', data=frequency_points)
         if frequencies is not None:
             w.create_dataset('frequency', data=frequencies)
 
