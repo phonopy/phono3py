@@ -128,6 +128,8 @@ is in the ordinal frequency not the angular frequency.
 
 The array shape is (irreducible q-point, phonon band).
 
+.. _kappa_hdf5_file_gamma:
+
 gamma
 ^^^^^^
 
