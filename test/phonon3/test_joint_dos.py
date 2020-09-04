@@ -27,7 +27,5 @@ def test_jdos(si_pbesol):
     # print(", ".join(["%.7f" % fp for fp in jdos.frequency_points]))
     np.testing.assert_allclose(freq_points, jdos.frequency_points,
                                atol=1e-5)
-    np.testing.assert_allclose(freq_points, jdos.frequency_points,
-                               atol=1e-5)
     # print(", ".join(["%.7f" % jd for jd in jdos.joint_dos.ravel()]))
-    np.testing.assert_allclose(jdos_12, jdos.joint_dos.ravel(), atol=1e-5)
+    np.testing.assert_allclose(jdos_12, jdos.joint_dos.ravel(), atol=1e-2)

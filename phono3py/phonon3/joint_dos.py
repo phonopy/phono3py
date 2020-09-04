@@ -214,14 +214,13 @@ class JointDos(object):
 
     def _run_c_with_g(self):
         self.run_phonon_solver(self._triplets_at_q.ravel())
-        if self._sigma is None:
-            f_max = np.max(self._frequencies) * 2
-        else:
-            f_max = np.max(self._frequencies) * 2 + self._sigma * 4
-        f_max *= 1.005
-        f_min = 0
-        self._set_uniform_frequency_points(f_min, f_max)
-
+        max_phonon_freq = np.max(self._frequencies)
+        self._frequency_points = get_frequency_points(
+            max_phonon_freq=max_phonon_freq,
+            sigmas=[self._sigma, ],
+            frequency_points=None,
+            frequency_step=self._frequency_step,
+            num_frequency_points=self._num_frequency_points)
         num_freq_points = len(self._frequency_points)
         num_mesh = np.prod(self._mesh)
 
@@ -350,11 +349,3 @@ class JointDos(object):
 
     def set_frequency_points(self, frequency_points):
         self._frequency_points = np.array(frequency_points, dtype='double')
-
-    def _set_uniform_frequency_points(self, f_min, f_max):
-        if self._frequency_points is None:
-            self._frequency_points = get_frequency_points(
-                f_min,
-                f_max,
-                frequency_step=self._frequency_step,
-                num_frequency_points=self._num_frequency_points)

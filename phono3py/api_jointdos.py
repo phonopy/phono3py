@@ -118,24 +118,22 @@ class Phono3pyJointDos(object):
                 for f in self._jdos.get_phonons()[0][gp]:
                     print("%8.3f" % f)
 
-            if self._sigmas:
-                for sigma in self._sigmas:
-                    if self._log_level:
-                        if sigma is None:
-                            print("Tetrahedron method is used.")
-                        else:
-                            print("Smearing method with sigma=%s is used."
-                                  % sigma)
-                    self._jdos.set_sigma(sigma)
-                    self._jdos.run()
+            if not self._sigmas:
+                raise RuntimeError("sigma or tetrahedron method has to be set.")
 
-                    if write_jdos:
-                        filename = self._write(gp, sigma=sigma)
-                        if self._log_level:
-                            print("JDOS is written into \"%s\"." % filename)
-            else:
+            for sigma in self._sigmas:
                 if self._log_level:
-                    print("sigma or tetrahedron method has to be set.")
+                    if sigma is None:
+                        print("Tetrahedron method is used.")
+                    else:
+                        print("Smearing method with sigma=%s is used." % sigma)
+                self._jdos.set_sigma(sigma)
+                self._jdos.run()
+
+                if write_jdos:
+                    filename = self._write(gp, sigma=sigma)
+                    if self._log_level:
+                        print("JDOS is written into \"%s\"." % filename)
 
     @property
     def dynamical_matrix(self):
