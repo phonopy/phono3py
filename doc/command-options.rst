@@ -697,7 +697,7 @@ them is usual :math:`\Gamma_\lambda(\omega_\lambda) =
 thermal conductivity in single-mode RTA. The separation, i.e., the
 choice of G-vector, is made based on the first Brillouin zone.
 
-The data are stored in ``kappa-mxxx-gx(-sx-sdx).hdf5`` file and
+The data are stored in ``kappa-mxxx(-gx-sx-sdx).hdf5`` file and
 accessed by ``gamma_N`` and ``gamma_U`` keys. The shape of the arrays
 is the same as that of ``gamma`` (see
 :ref:`kappa_hdf5_file_gamma`). An example (Si-PBEsol) is shown below:
