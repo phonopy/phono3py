@@ -122,21 +122,12 @@ def get_imag_self_energy(interaction,
     frequencies = interaction.get_phonons()[0]
     max_phonon_freq = np.amax(frequencies)
 
-    if frequency_points is None:
-        sigma_vals = [sigma for sigma in sigmas if sigma is not None]
-        if sigma_vals:
-            fmax = max_phonon_freq * 2 + np.max(sigma_vals) * 4
-        else:
-            fmax = max_phonon_freq * 2
-        fmax *= 1.005
-        fmin = 0
-        _frequency_points = get_frequency_points(
-            fmin,
-            fmax,
-            frequency_step=frequency_step,
-            num_frequency_points=num_frequency_points)
-    else:
-        _frequency_points = np.array(frequency_points, dtype='double')
+    _frequency_points = _get_frequency_points(
+        max_phonon_freq=max_phonon_freq,
+        sigmas=sigmas,
+        frequency_points=frequency_points,
+        frequency_step=frequency_step,
+        num_frequency_points=num_frequency_points)
 
     ise = ImagSelfEnergy(
         interaction, with_detail=(write_gamma_detail or return_gamma_detail))
@@ -227,6 +218,33 @@ def get_imag_self_energy(interaction,
         return gamma, detailed_gamma, _frequency_points
     else:
         return gamma, _frequency_points
+
+
+def _get_frequency_points(max_phonon_freq=None,
+                          sigmas=None,
+                          frequency_points=None,
+                          frequency_step=None,
+                          num_frequency_points=None):
+    if frequency_points is None:
+        if sigmas is not None:
+            sigma_vals = [sigma for sigma in sigmas if sigma is not None]
+        else:
+            sigma_vals = []
+        if sigma_vals:
+            fmax = max_phonon_freq * 2 + np.max(sigma_vals) * 4
+        else:
+            fmax = max_phonon_freq * 2
+        fmax *= 1.005
+        fmin = 0
+        _frequency_points = get_frequency_points(
+            fmin,
+            fmax,
+            frequency_step=frequency_step,
+            num_frequency_points=num_frequency_points)
+    else:
+        _frequency_points = np.array(frequency_points, dtype='double')
+
+    return _frequency_points
 
 
 def get_frequency_points(f_min,

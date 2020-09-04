@@ -95,7 +95,7 @@ class Phono3pyJointDos(object):
             filename=output_filename,
             log_level=self._log_level)
 
-    def run(self, grid_points):
+    def run(self, grid_points, write_jdos=False):
         if self._log_level:
             print("--------------------------------- Joint DOS "
                   "---------------------------------")
@@ -128,9 +128,11 @@ class Phono3pyJointDos(object):
                                   % sigma)
                     self._jdos.set_sigma(sigma)
                     self._jdos.run()
-                    filename = self._write(gp, sigma=sigma)
-                    if self._log_level:
-                        print("JDOS is written into \"%s\"." % filename)
+
+                    if write_jdos:
+                        filename = self._write(gp, sigma=sigma)
+                        if self._log_level:
+                            print("JDOS is written into \"%s\"." % filename)
             else:
                 if self._log_level:
                     print("sigma or tetrahedron method has to be set.")
@@ -138,6 +140,14 @@ class Phono3pyJointDos(object):
     @property
     def dynamical_matrix(self):
         return self._jdos.dynamical_matrix
+
+    @property
+    def frequency_points(self):
+        return self._jdos.frequency_points
+
+    @property
+    def joint_dos(self):
+        return self._jdos.joint_dos
 
     def _write(self, gp, sigma=None):
         return write_joint_dos(gp,

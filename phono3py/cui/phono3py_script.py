@@ -747,7 +747,7 @@ def run_jdos_then_exit(phono3py,
         if (dm.is_nac() and dm.nac_method == 'gonze'):
             dm.show_Gonze_nac_message()
 
-    joint_dos.run(updated_settings['grid_points'])
+    joint_dos.run(updated_settings['grid_points'], write_jdos=True)
 
     if log_level:
         print_end()

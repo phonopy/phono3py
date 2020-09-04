@@ -32,6 +32,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import warnings
 import sys
 import numpy as np
 from phonopy.structure.symmetry import Symmetry
@@ -119,20 +120,40 @@ class JointDos(object):
     def dynamical_matrix(self):
         return self._dm
 
-    def get_joint_dos(self):
+    @property
+    def joint_dos(self):
         return self._joint_dos
 
-    def get_frequency_points(self):
+    def get_joint_dos(self):
+        warnings.warn("Use attribute, joint_dos", DeprecationWarning)
+        return self.joint_dos
+
+    @property
+    def frequency_points(self):
         return self._frequency_points
+
+    def get_frequency_points(self):
+        warnings.warn("Use attribute, frequency_points", DeprecationWarning)
+        return self.frequency_points
 
     def get_phonons(self):
         return self._frequencies, self._eigenvectors, self._phonon_done
 
-    def get_primitive(self):
+    @property
+    def primitive(self):
         return self._primitive
 
-    def get_mesh_numbers(self):
+    def get_primitive(self):
+        warnings.warn("Use attribute, primitive", DeprecationWarning)
+        return self.primitive
+
+    @property
+    def mesh_numbers(self):
         return self._mesh
+
+    def get_mesh_numbers(self):
+        warnings.warn("Use attribute, mesh_numbers", DeprecationWarning)
+        return self.mesh
 
     def set_nac_q_direction(self, nac_q_direction=None):
         if nac_q_direction is not None:
@@ -163,10 +184,20 @@ class JointDos(object):
     def get_triplets_at_q(self):
         return self._triplets_at_q, self._weights_at_q
 
-    def get_grid_address(self):
+    @property
+    def grid_address(self):
         return self._grid_address
 
+    def get_grid_address(self):
+        warnings.warn("Use attribute, grid_address", DeprecationWarning)
+        return self.grid_address
+
+    @property
+    def bz_map(self):
+        return self._bz_map
+
     def get_bz_map(self):
+        warnings.warn("Use attribute, bz_map", DeprecationWarning)
         return self._bz_map
 
     def _run_c(self, lang='C'):
