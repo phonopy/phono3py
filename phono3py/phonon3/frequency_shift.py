@@ -457,3 +457,115 @@ class FrequencyShift(object):
 
                 sum_d += d * interaction[i, j, k] * weight
         return sum_d
+
+
+class ImagToReal(object):
+    """Calculate real part of self-energy using Kramers-Kronig relation"""
+
+    def __init__(self,
+                 im_part,
+                 frequency_points,
+                 diagram='bubble'):
+        """
+
+        Parameters
+        ----------
+        im_part : array_like
+            Imaginary part of self-energy at frequency points.
+            shape=(frequency_points,), dtype='double'
+        frequency_points : array_like
+            Frequency points sampled at constant intervale increasing
+            order starting at 0 and ending around maximum phonon frequency
+            in Brillouin zone.
+            shape=(frequency_points,), dtype='double'
+        diagram : str
+            Only bubble diagram is implemented currently.
+
+        """
+
+        if diagram == 'bubble':
+            (self._im_part,
+             self._all_frequency_points,
+             self._df) = self._expand_bubble_im_part(im_part, frequency_points)
+        else:
+            raise RuntimeError("Only daigram='bubble' is implemented.")
+
+        self._re_part = None
+        self._frequency_points = None
+
+    @property
+    def re_part(self):
+        return self._re_part
+
+    @property
+    def frequency_points(self):
+        return self._frequency_points
+
+    def run(self, method='pick_one'):
+        if method == 'pick_one':
+            self._re_part, self._frequency_points = self._pick_one()
+        elif method == 'half_shift':
+            self._re_part, self._frequency_points = self._half_shift()
+        else:
+            raise RuntimeError("No method is found.")
+
+    def _pick_one(self):
+        re_part = []
+        fpoints = []
+        coef = - self._df / np.pi
+        i_zero = (len(self._im_part) - 1) // 2
+        for i, im_part_at_i in enumerate(self._im_part):
+            if i < i_zero:
+                continue
+            fpoint = self._all_frequency_points[i]
+            freqs = self._all_frequency_points - fpoint
+            freqs[i] = 1
+            val = ((self._im_part / freqs).sum() - im_part_at_i) * coef
+            re_part.append(val)
+            fpoints.append(fpoint)
+        return (np.array(re_part, dtype='double'),
+                np.array(fpoints, dtype='double'))
+
+    def _half_shift(self):
+        re_part = []
+        fpoints = []
+        coef = - self._df / np.pi
+        i_zero = (len(self._im_part) - 1) // 2
+        for i, im_part_at_i in enumerate(self._im_part):
+            if i < i_zero:
+                continue
+            fpoint = self._all_frequency_points[i] + self._df / 2
+            freqs = self._all_frequency_points - fpoint
+            val = (self._im_part / freqs).sum() * coef
+            re_part.append(val)
+            fpoints.append(fpoint)
+        return (np.array(re_part, dtype='double'),
+                np.array(fpoints, dtype='double'))
+
+    # def half_shift(self):
+    #     df = gammas[1, 0] - gammas[0, 0]
+    #     shift_kk = []
+    #     freqs = gammas[:, 0] + df / 2
+    #     for f in freqs:
+    #         vals = gammas[:, 1] / (gammas[:, 0] - f)
+    #         shift_kk.append(- vals.sum() / np.pi * df)
+    #     return np.array([freqs, shift_kk]).T
+
+    def _expand_bubble_im_part(self, im_part, frequency_points):
+        if (np.abs(frequency_points[0]) > 1e-8).any():
+            raise RuntimeError(
+                "The first element of frequency_points is not zero.")
+
+        all_df = np.subtract(frequency_points[1:], frequency_points[:-1])
+        df = np.mean(all_df)
+        if (np.abs(all_df - df) > 1e-6).any():
+            print(all_df)
+            raise RuntimeError(
+                "Frequency interval of frequency_points is not uniform.")
+
+        # im_part is inverted at omega < 0.
+        _im_part = np.hstack([-im_part[::-1], im_part[1:]])
+        _frequency_points = np.hstack([-frequency_points[::-1],
+                                       frequency_points[1:]])
+
+        return _im_part, _frequency_points, df
