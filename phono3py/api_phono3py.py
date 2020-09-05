@@ -1421,18 +1421,19 @@ class Phono3py(object):
             raise RuntimeError(msg)
 
         if temperatures is None:
-            temperatures = [0.0, 300.0]
+            self._temperatures = [0.0, 300.0]
+        else:
+            self._temperatures = temperatures
         self._grid_points = grid_points
-        self._temperatures = temperatures
         self._scattering_event_class = scattering_event_class
         vals = get_imag_self_energy(
             self._interaction,
             grid_points,
-            self._sigmas,
+            temperatures,
+            sigmas=self._sigmas,
             frequency_points=frequency_points,
             frequency_step=frequency_step,
             num_frequency_points=num_frequency_points,
-            temperatures=temperatures,
             scattering_event_class=scattering_event_class,
             write_gamma_detail=write_gamma_detail,
             return_gamma_detail=keep_gamma_detail,

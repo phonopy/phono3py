@@ -459,6 +459,12 @@ class FrequencyShift(object):
         return sum_d
 
 
+def imag_to_real(im_part, frequency_points):
+    i2r = ImagToReal(im_part, frequency_points)
+    i2r.run()
+    return i2r.re_part, i2r.frequency_points
+
+
 class ImagToReal(object):
     """Calculate real part of self-energy using Kramers-Kronig relation"""
 
@@ -512,7 +518,7 @@ class ImagToReal(object):
     def _pick_one(self):
         re_part = []
         fpoints = []
-        coef = - self._df / np.pi
+        coef = self._df / np.pi
         i_zero = (len(self._im_part) - 1) // 2
         for i, im_part_at_i in enumerate(self._im_part):
             if i < i_zero:
@@ -529,7 +535,7 @@ class ImagToReal(object):
     def _half_shift(self):
         re_part = []
         fpoints = []
-        coef = - self._df / np.pi
+        coef = self._df / np.pi
         i_zero = (len(self._im_part) - 1) // 2
         for i, im_part_at_i in enumerate(self._im_part):
             if i < i_zero:
@@ -541,15 +547,6 @@ class ImagToReal(object):
             fpoints.append(fpoint)
         return (np.array(re_part, dtype='double'),
                 np.array(fpoints, dtype='double'))
-
-    # def half_shift(self):
-    #     df = gammas[1, 0] - gammas[0, 0]
-    #     shift_kk = []
-    #     freqs = gammas[:, 0] + df / 2
-    #     for f in freqs:
-    #         vals = gammas[:, 1] / (gammas[:, 0] - f)
-    #         shift_kk.append(- vals.sum() / np.pi * df)
-    #     return np.array([freqs, shift_kk]).T
 
     def _expand_bubble_im_part(self, im_part, frequency_points):
         if (np.abs(frequency_points[0]) > 1e-8).any():

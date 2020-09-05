@@ -44,11 +44,11 @@ from phono3py.file_IO import (write_gamma_detail_to_hdf5,
 
 def get_imag_self_energy(interaction,
                          grid_points,
-                         sigmas,
+                         temperatures,
+                         sigmas=None,
                          frequency_points=None,
                          frequency_step=None,
                          num_frequency_points=None,
-                         temperatures=None,
                          scattering_event_class=None,  # class 1 or 2
                          write_gamma_detail=False,
                          return_gamma_detail=False,
@@ -65,10 +65,14 @@ def get_imag_self_energy(interaction,
     grid_points : array_like
         Grid-point indices where imag-self-energeis are caclculated.
         dtype=int, shape=(grid_points,)
-    sigmas : array_like
+    temperatures : array_like
+        Temperatures where imag-self-energies are calculated.
+        dtype=float, shape=(temperatures,)
+    sigmas : array_like, optional
         A set of sigmas. simgas=[None, ] means to use tetrahedron method,
         otherwise smearing method with real positive value of sigma.
-        For example, sigmas=[None, 0.01, 0.03] is possible.
+        For example, sigmas=[None, 0.01, 0.03] is possible. Default is None,
+        which results in [None, ].
         dtype=float, shape=(sigmas,)
     frequency_points : array_like, optional
         Frequency sampling points. Default is None. In this case,
@@ -82,10 +86,6 @@ def get_imag_self_energy(interaction,
         Number of sampling sampling points to be used instead of
         frequency_step. This number includes end points. Default is None,
         which gives 201.
-    temperatures : array_like, optional
-        Temperatures where imag-self-energies are calculated. Default is None,
-        which gives [0, 300].
-        dtype=float, shape=(temperatures,)
     scattering_event_class : int, optional
         Specific choice of scattering event class, 1 or 2 that is specified
         1 or 2, respectively. The result is stored in gammas. Therefore
@@ -105,13 +105,11 @@ def get_imag_self_energy(interaction,
         (gammas, detailed_gammas, frequency_points) are returned.
 
     """
-    if temperatures is None:
-        temperatures = [0.0, 300.0]
 
-    if temperatures is None:
-        if log_level:
-            print("Temperatures have to be set.")
-        return False
+    if sigmas is None:
+        _sigmas = [None, ]
+    else:
+        _sigmas = sigmas
 
     if (interaction.get_phonons()[2] == 0).any():
         if log_level:
@@ -124,7 +122,7 @@ def get_imag_self_energy(interaction,
 
     _frequency_points = get_frequency_points(
         max_phonon_freq=max_phonon_freq,
-        sigmas=sigmas,
+        sigmas=_sigmas,
         frequency_points=frequency_points,
         frequency_step=frequency_step,
         num_frequency_points=num_frequency_points)
@@ -132,7 +130,7 @@ def get_imag_self_energy(interaction,
     ise = ImagSelfEnergy(
         interaction, with_detail=(write_gamma_detail or return_gamma_detail))
     gamma = np.zeros(
-        (len(grid_points), len(sigmas), len(temperatures),
+        (len(grid_points), len(_sigmas), len(temperatures),
          len(_frequency_points), len(interaction.band_indices)),
         dtype='double', order='C')
     detailed_gamma = []
@@ -168,11 +166,11 @@ def get_imag_self_energy(interaction,
             num_band0 = len(interaction.band_indices)
             num_band = frequencies.shape[1]
             detailed_gamma_at_gp = np.zeros(
-                (len(sigmas), len(temperatures), len(_frequency_points),
+                (len(_sigmas), len(temperatures), len(_frequency_points),
                  len(weights), num_band0, num_band, num_band),
                 dtype='double')
 
-        for j, sigma in enumerate(sigmas):
+        for j, sigma in enumerate(_sigmas):
             if log_level:
                 if sigma:
                     print("Sigma: %s" % sigma)

@@ -7,7 +7,7 @@ si_pbesol_Delta = [
     [-0.02078728, -0.02102094, -0.06573269, -0.11432603,
      -0.1366966, -0.14371315]]
 
-# imag-self-energy Si-PBEsol 50x50x50 gp=5, bi=4, 101 points
+# imag-self-energy Si-PBEsol 50x50x50 gp=5, bi=4, 101 points, 300K
 im_part = [
     [0.00000000, 0.00000000, -0.00000000, -0.17502231, 0.15346111, -0.17945834],
     [0.30692220, 0.01806856, 0.30692220, -0.16920492, 0.46038331, -0.16365925],
@@ -127,10 +127,10 @@ def test_RealToImag():
     vals = np.array(im_part)
     i2r = ImagToReal(vals[:, 1], vals[:, 0])
     i2r.run()
-    pick_one_vals = i2r.re_part
+    pick_one_vals = -1 * i2r.re_part  # -1 to make it freq-shift
     pick_one_freqs = i2r.frequency_points
     i2r.run(method='half_shift')
-    half_shift_vals = i2r.re_part
+    half_shift_vals = -1 * i2r.re_part  # -1 to make it freq-shift
     half_shift_freqs = i2r.frequency_points
     # for f, im, f1, re1, f2, re2, in zip(
     #         vals[:, 0], vals[:, 1],
