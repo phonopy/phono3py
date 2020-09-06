@@ -57,6 +57,7 @@ def test_SpectralFunction(si_pbesol):
     # for line in sf.spectral_functions.reshape(-1, 6):
     #     print(("%.7f, " * 6) % tuple(line))
     # raise
+    print(np.where(np.abs(spec_funcs - sf.spectral_functions.ravel()) > 1e-2))
     np.testing.assert_allclose(shifts, sf.shifts.ravel(), atol=1e-2)
     np.testing.assert_allclose(spec_funcs, sf.spectral_functions.ravel(),
                                atol=1e-2)

@@ -1421,7 +1421,7 @@ class Phono3py(object):
             raise RuntimeError(msg)
 
         if temperatures is None:
-            self._temperatures = [0.0, 300.0]
+            self._temperatures = [300.0, ]
         else:
             self._temperatures = temperatures
         self._grid_points = grid_points
@@ -1440,11 +1440,11 @@ class Phono3py(object):
             output_filename=output_filename,
             log_level=self._log_level)
         if keep_gamma_detail:
-            (self._gammas,
-             self._detailed_gammas,
-             self._frequency_points) = vals
+            (self._frequency_points,
+             self._gammas,
+             self._detailed_gammas) = vals
         else:
-            self._gammas, self._frequency_points = vals
+            self._frequency_points, self._gammas = vals
 
     def write_imag_self_energy(self, filename=None):
         write_imag_self_energy(
@@ -1458,6 +1458,60 @@ class Phono3py(object):
             scattering_event_class=self._scattering_event_class,
             filename=filename,
             is_mesh_symmetry=self._is_mesh_symmetry)
+
+    def run_frequency_shift(
+            self,
+            grid_points,
+            run_on_bands=False,
+            frequency_points=None,
+            frequency_step=None,
+            num_frequency_points=None,
+            temperatures=None,
+            epsilons=None,
+            write_hdf5=True,
+            output_filename=None):
+        """Frequency shift from lowest order diagram is calculated.
+
+        Parameters
+        ----------
+        epsilons : array_like
+            The value to avoid divergence. When multiple values are given
+            frequency shifts for those values are returned.
+            dtype=float, shape=(epsilons,)
+
+        """
+
+        if self._interaction is None:
+            msg = ("Phono3py.init_phph_interaction has to be called "
+                   "before running this method.")
+            raise RuntimeError(msg)
+
+        if epsilons is not None:
+            _epsilons = epsilons
+        else:
+            if len(self._sigmas) == 1 and self._sigmas[0] is None:
+                _epsilons = None
+            elif self._sigmas[0] is None:
+                _epsilons = self._sigmas[1:]
+            else:
+                _epsilons = self._sigmas
+
+        self._grid_points = grid_points
+        # (epsilon, grid_point, temperature, band)
+        self._frequency_points, self._frequency_shifts = get_frequency_shift(
+            self._interaction,
+            self._grid_points,
+            temperatures,
+            run_on_bands=run_on_bands,
+            frequency_points=frequency_points,
+            frequency_step=frequency_step,
+            num_frequency_points=num_frequency_points,
+            epsilons=_epsilons,
+            write_hdf5=write_hdf5,
+            output_filename=output_filename,
+            log_level=self._log_level)
+
+        return self._frequency_points, self._frequency_shifts
 
     def run_thermal_conductivity(
             self,
@@ -1561,60 +1615,6 @@ class Phono3py(object):
                 input_filename=input_filename,
                 output_filename=output_filename,
                 log_level=self._log_level)
-
-    def run_frequency_shift(
-            self,
-            grid_points,
-            run_on_bands=False,
-            frequency_points=None,
-            frequency_step=None,
-            num_frequency_points=None,
-            temperatures=None,
-            epsilons=None,
-            write_Delta_hdf5=True,
-            output_filename=None):
-        """Frequency shift from lowest order diagram is calculated.
-
-        Parameters
-        ----------
-        epsilons : array_like
-            The value to avoid divergence. When multiple values are given
-            frequency shifts for those values are returned.
-            dtype=float, shape=(epsilons,)
-
-        """
-
-        if self._interaction is None:
-            msg = ("Phono3py.init_phph_interaction has to be called "
-                   "before running this method.")
-            raise RuntimeError(msg)
-
-        if epsilons is not None:
-            _epsilons = epsilons
-        else:
-            if len(self._sigmas) == 1 and self._sigmas[0] is None:
-                _epsilons = None
-            elif self._sigmas[0] is None:
-                _epsilons = self._sigmas[1:]
-            else:
-                _epsilons = self._sigmas
-
-        self._grid_points = grid_points
-        # (epsilon, grid_point, temperature, band)
-        self._frequency_shift = get_frequency_shift(
-            self._interaction,
-            self._grid_points,
-            run_on_bands=run_on_bands,
-            frequency_points=frequency_points,
-            frequency_step=frequency_step,
-            num_frequency_points=num_frequency_points,
-            epsilons=_epsilons,
-            temperatures=temperatures,
-            write_Delta_hdf5=write_Delta_hdf5,
-            output_filename=output_filename,
-            log_level=self._log_level)
-
-        return self._frequency_shift
 
     def save(self,
              filename="phono3py_params.yaml",

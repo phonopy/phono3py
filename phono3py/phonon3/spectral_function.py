@@ -32,9 +32,29 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import sys
 import numpy as np
 from phono3py.phonon3.imag_self_energy import get_imag_self_energy
 from phono3py.phonon3.frequency_shift import imag_to_real
+
+
+def get_spectral_function(interaction,
+                          grid_points,
+                          temperatures,
+                          frequency_points=None,
+                          frequency_step=None,
+                          num_frequency_points=None,
+                          output_filename=None,
+                          write_hdf5=True,
+                          log_level=0):
+    sf = SpectralFunction(interaction,
+                          grid_points,
+                          frequency_points=frequency_points,
+                          frequency_step=frequency_step,
+                          num_frequency_points=num_frequency_points,
+                          temperatures=temperatures)
+    sf.run()
+    return sf
 
 
 class SpectralFunction(object):
@@ -81,7 +101,7 @@ class SpectralFunction(object):
 
     def _run_gamma(self):
         # gammas[grid_points, sigmas, temps, freq_points, band_indices]
-        gammas, self._frequency_points = get_imag_self_energy(
+        fpoints, gammas = get_imag_self_energy(
             self._interaction,
             self._grid_points,
             frequency_points=self._frequency_points_in,
@@ -89,6 +109,7 @@ class SpectralFunction(object):
             num_frequency_points=self._num_frequency_points,
             temperatures=self._temperatures)
         self._gammas = np.array(gammas[:, 0], dtype='double', order='C')
+        self._frequency_points = fpoints
 
     def _run_delta(self):
         self._deltas = np.zeros_like(self._gammas)
@@ -114,7 +135,8 @@ class SpectralFunction(object):
 
     def _get_spectral_function(self, gammas, deltas, freq):
         fpoints = self._frequency_points
-        vals = (4 * freq ** 2 * gammas) / (
-            (fpoints - freq ** 2 - 2 * freq * deltas) ** 2
-            + (2 * freq * gammas) ** 2)
+        nums = 4 * freq ** 2 * gammas
+        denoms = ((fpoints - freq ** 2 - 2 * freq * deltas) ** 2
+                  + (2 * freq * gammas) ** 2)
+        vals = np.where(denoms > 0, nums / denoms, 0)
         return vals

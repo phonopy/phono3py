@@ -101,8 +101,8 @@ def get_imag_self_energy(interaction,
     Returns
     -------
     tuple :
-        (gammas, frequency_points) are returned. With return_gamma_detail=True,
-        (gammas, detailed_gammas, frequency_points) are returned.
+        (frequency_points, gammas) are returned. With return_gamma_detail=True,
+        (frequency_points, gammas, detailed_gammas) are returned.
 
     """
 
@@ -213,9 +213,9 @@ def get_imag_self_energy(interaction,
                 detailed_gamma.append(detailed_gamma_at_gp)
 
     if return_gamma_detail:
-        return gamma, detailed_gamma, _frequency_points
+        return _frequency_points, gamma, detailed_gamma
     else:
-        return gamma, _frequency_points
+        return _frequency_points, gamma
 
 
 def get_frequency_points(max_phonon_freq=None,

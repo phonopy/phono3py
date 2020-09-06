@@ -43,14 +43,14 @@ from phono3py.phonon3.imag_self_energy import get_frequency_points
 
 def get_frequency_shift(interaction,
                         grid_points,
+                        temperatures,
                         run_on_bands=False,
                         frequency_points=None,
                         frequency_step=None,
                         num_frequency_points=None,
                         epsilons=None,
-                        temperatures=None,
                         output_filename=None,
-                        write_Delta_hdf5=True,
+                        write_hdf5=True,
                         log_level=0):
     if epsilons is None:
         _epsilons = [None, ]
@@ -134,7 +134,7 @@ def get_frequency_shift(interaction,
                               interaction.get_phonons()[0][gp][bi_set])
                         sys.stdout.flush()
 
-            if write_Delta_hdf5:
+            if write_hdf5:
                 filename = write_Delta_to_hdf5(
                     gp,
                     band_indices,
@@ -152,7 +152,7 @@ def get_frequency_shift(interaction,
                     print("\"%s\"." % filename)
                     sys.stdout.flush()
 
-    return all_deltas
+    return _frequency_points, all_deltas
 
 
 class FrequencyShift(object):
