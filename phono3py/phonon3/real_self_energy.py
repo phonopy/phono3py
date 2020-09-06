@@ -38,7 +38,7 @@ from phonopy.units import Hbar, EV, THz
 from phonopy.phonon.degeneracy import degenerate_sets
 from phono3py.phonon.func import bose_einstein
 from phono3py.file_IO import (
-    write_real_self_energy, write_real_self_energy_to_hdf5)
+    write_real_self_energy_at_grid_point, write_real_self_energy_to_hdf5)
 from phono3py.phonon3.imag_self_energy import get_frequency_points
 
 
@@ -50,19 +50,15 @@ def get_real_self_energy(interaction,
                          frequency_step=None,
                          num_frequency_points=None,
                          epsilons=None,
-                         output_filename=None,
                          write_hdf5=True,
+                         output_filename=None,
                          log_level=0):
     if epsilons is None:
         _epsilons = [None, ]
     else:
         _epsilons = epsilons
 
-    if temperatures is None:
-        _temperatures = [0.0, 300.0]
-    else:
-        _temperatures = temperatures
-    _temperatures = np.array(_temperatures, dtype='double')
+    _temperatures = np.array(temperatures, dtype='double')
 
     if (interaction.get_phonons()[2] == 0).any():
         if log_level:
@@ -118,22 +114,24 @@ def get_real_self_energy(interaction,
                 fst.run()
                 all_deltas[i, j, k] = fst.real_self_energy.T
 
-                if not run_on_bands:
-                    pos = 0
-                    for bi_set in [[bi, ] for bi in band_indices]:
-                        filename = write_real_self_energy(
-                            gp,
-                            bi_set,
-                            _frequency_points,
-                            all_deltas[i, j, k, pos:(pos + len(bi_set))],
-                            mesh,
-                            fst.epsilon,
-                            t,
-                            filename=output_filename)
-                        pos += len(bi_set)
-                        print(filename,
-                              interaction.get_phonons()[0][gp][bi_set])
-                        sys.stdout.flush()
+                # if not run_on_bands:
+                #     pos = 0
+                #     for bi_set in [[bi, ] for bi in band_indices]:
+                #         filename = write_real_self_energy(
+                #             gp,
+                #             bi_set,
+                #             _frequency_points,
+                #             all_deltas[i, j, k, pos:(pos + len(bi_set))],
+                #             mesh,
+                #             fst.epsilon,
+                #             t,
+                #             filename=output_filename)
+                #         pos += len(bi_set)
+
+                #         if log_level:
+                #             print("Real part of self energies were stored in "
+                #                   "\"%s\"." % filename)
+                #         sys.stdout.flush()
 
             if write_hdf5:
                 filename = write_real_self_energy_to_hdf5(
@@ -148,12 +146,48 @@ def get_real_self_energy(interaction,
                     filename=output_filename)
 
                 if log_level:
-                    print("Frequency shfits with epsilon=%f were stored in"
-                          % fst.epsilon)
-                    print("\"%s\"." % filename)
+                    print("Real part of self energies were stored in \"%s\"."
+                          % filename)
                     sys.stdout.flush()
 
     return _frequency_points, all_deltas
+
+
+def write_real_self_energy(real_self_energy,
+                           mesh,
+                           grid_points,
+                           band_indices,
+                           frequency_points,
+                           temperatures,
+                           epsilons,
+                           output_filename=None,
+                           is_mesh_symmetry=True,
+                           log_level=0):
+    if epsilons is None:
+        _epsilons = [RealSelfEnergy.default_epsilon, ]
+    else:
+        _epsilons = epsilons
+
+    for gp, rse_epsilons in zip(grid_points, real_self_energy):
+        for epsilon, rse_temps in zip(_epsilons, rse_epsilons):
+            for t, rse in zip(temperatures, rse_temps):
+                for i, bi in enumerate(band_indices):
+                    pos = 0
+                    for j in range(i):
+                        pos += len(band_indices[j])
+                    filename = write_real_self_energy_at_grid_point(
+                        gp,
+                        bi,
+                        frequency_points,
+                        rse[pos:(pos + len(bi))].sum(axis=0) / len(bi),
+                        mesh,
+                        epsilon,
+                        t,
+                        filename=output_filename,
+                        is_mesh_symmetry=is_mesh_symmetry)
+                    if log_level:
+                        print("Real parts of self-energies were "
+                              "written to \"%s\"." % filename)
 
 
 class RealSelfEnergy(object):

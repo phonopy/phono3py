@@ -54,8 +54,10 @@ from phonopy.structure.grid_points import length2mesh
 from phono3py.version import __version__
 from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
                                                write_imag_self_energy)
-from phono3py.phonon3.real_self_energy import get_real_self_energy
-from phono3py.phonon3.spectral_function import SpectralFunction
+from phono3py.phonon3.real_self_energy import (
+    get_real_self_energy, write_real_self_energy)
+from phono3py.phonon3.spectral_function import (
+    SpectralFunction, write_spectral_function)
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.conductivity_RTA import get_thermal_conductivity_RTA
 from phono3py.phonon3.conductivity_LBTE import get_thermal_conductivity_LBTE
@@ -1370,6 +1372,7 @@ class Phono3py(object):
                              frequency_step=None,
                              num_frequency_points=None,
                              scattering_event_class=None,
+                             write_txt=False,
                              write_gamma_detail=False,
                              keep_gamma_detail=False,
                              output_filename=None):
@@ -1403,6 +1406,9 @@ class Phono3py(object):
             1 or 2, respectively. The result is stored in gammas. Therefore
             usual gammas are not stored in the variable. Default is None, which
             doesn't specify scattering_event_class.
+        write_txt : bool, optional
+            Frequency points and imaginary part of self-energies are written
+            into text files.
         write_gamma_detail : bool, optional
             Detailed gammas are written into a file in hdf5. Default is False.
         keep_gamma_detail : bool, optional
@@ -1443,9 +1449,18 @@ class Phono3py(object):
         else:
             self._frequency_points, self._gammas = vals
 
+        if write_txt:
+            self._write_imag_self_energy(output_filename=output_filename)
+
         return vals
 
     def write_imag_self_energy(self, filename=None):
+        warnings.warn("Phono3py.write_imag_self_energy is deprecated."
+                      "Use Phono3py.run_imag_self_energy with write_txt=True.",
+                      DeprecationWarning)
+        self._write_imag_self_energy(output_filename=filename)
+
+    def _write_imag_self_energy(self, output_filename=None):
         write_imag_self_energy(
             self._gammas,
             self._mesh_numbers,
@@ -1455,7 +1470,7 @@ class Phono3py(object):
             self._temperatures,
             self._sigmas,
             scattering_event_class=self._scattering_event_class,
-            output_filename=filename,
+            output_filename=output_filename,
             is_mesh_symmetry=self._is_mesh_symmetry,
             log_level=self._log_level)
 
@@ -1468,7 +1483,8 @@ class Phono3py(object):
             frequency_step=None,
             num_frequency_points=None,
             epsilons=None,
-            write_hdf5=True,
+            write_txt=False,
+            write_hdf5=False,
             output_filename=None):
         """Calculate real-part of self-energy of bubble diagram (Delta)
 
@@ -1503,6 +1519,9 @@ class Phono3py(object):
             Smearing widths to computer principal part. When multiple values
             are given frequency shifts for those values are returned.
             dtype=float, shape=(epsilons,)
+        write_txt : bool, optional
+            Frequency points and real part of self-energies are written
+            into text files.
         write_hdf5 : bool
             Results are stored in hdf5 files independently at grid points,
             epsilons, and temperatures.
@@ -1526,11 +1545,10 @@ class Phono3py(object):
             else:
                 _epsilons = self._sigmas
 
-        self._grid_points = grid_points
         # (epsilon, grid_point, temperature, band)
-        self._frequency_points, self._real_self_energys = get_real_self_energy(
+        frequency_points, deltas = get_real_self_energy(
             self._interaction,
-            self._grid_points,
+            grid_points,
             temperatures,
             run_on_bands=run_on_bands,
             frequency_points=frequency_points,
@@ -1541,7 +1559,20 @@ class Phono3py(object):
             output_filename=output_filename,
             log_level=self._log_level)
 
-        return self._frequency_points, self._real_self_energys
+        if write_txt:
+            write_real_self_energy(
+                deltas,
+                self._mesh_numbers,
+                grid_points,
+                self._band_indices,
+                frequency_points,
+                temperatures,
+                _epsilons,
+                output_filename=output_filename,
+                is_mesh_symmetry=self._is_mesh_symmetry,
+                log_level=self._log_level)
+
+        return frequency_points, deltas
 
     def run_spectral_function(
             self,
@@ -1550,6 +1581,7 @@ class Phono3py(object):
             frequency_points=None,
             frequency_step=None,
             num_frequency_points=None,
+            write_txt=False,
             write_hdf5=True,
             output_filename=None):
         """Frequency shift from lowest order diagram is calculated.
@@ -1578,6 +1610,9 @@ class Phono3py(object):
             The value to avoid divergence. When multiple values are given
             frequency shifts for those values are returned.
             dtype=float, shape=(epsilons,)
+        write_txt : bool, optional
+            Frequency points and spectral functions are written
+            into text files.
         write_hdf5 : bool
             Results are stored in hdf5 files independently at grid points,
             epsilons, and temperatures.
@@ -1600,6 +1635,18 @@ class Phono3py(object):
             temperatures=temperatures,
             log_level=self._log_level)
         self._spectral_function.run()
+
+        if write_txt:
+            write_spectral_function(
+                self._spectral_function.spectral_functions,
+                self._mesh_numbers,
+                grid_points,
+                self._band_indices,
+                self._spectral_function.frequency_points,
+                temperatures,
+                output_filename=output_filename,
+                is_mesh_symmetry=self._is_mesh_symmetry,
+                log_level=self._log_level)
 
         # if write_hdf5:
         #     filename = write_spectral_function_to_hdf5(

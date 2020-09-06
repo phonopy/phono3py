@@ -480,37 +480,36 @@ def _write_joint_dos_at_t(grid_point,
         return jdos_filename
 
 
-def write_real_self_energy(gp,
-                           band_indices,
-                           frequency_points,
-                           deltas,
-                           mesh,
-                           epsilon,
-                           temperature,
-                           filename=None,
-                           is_mesh_symmetry=True):
-
-    fst_filename = "deltas"
-    suffix = _get_filename_suffix(mesh,
-                                  grid_point=gp,
-                                  band_indices=band_indices,
-                                  temperature=temperature)
-    fst_filename += suffix
+def write_real_self_energy_at_grid_point(gp,
+                                         band_indices,
+                                         frequency_points,
+                                         deltas,
+                                         mesh,
+                                         epsilon,
+                                         temperature,
+                                         filename=None,
+                                         is_mesh_symmetry=True):
+    deltas_filename = "deltas"
+    deltas_filename += _get_filename_suffix(mesh, grid_point=gp)
     if epsilon > 1e-5:
-        fst_filename += "-s" + _del_zeros(epsilon)
+        deltas_filename += "-e" + _del_zeros(epsilon)
     else:
-        fst_filename += "-s%.3e" % epsilon
+        deltas_filename += "-e%.3e" % epsilon
+    if temperature is not None:
+        deltas_filename += "-t" + _del_zeros(temperature) + "-"
+    for i in band_indices:
+        deltas_filename += "b%d" % (i + 1)
     if filename is not None:
-        fst_filename += ".%s" % filename
+        deltas_filename += ".%s" % filename
     elif not is_mesh_symmetry:
-        fst_filename += ".nosym"
-    fst_filename += ".dat"
+        deltas_filename += ".nosym"
+    deltas_filename += ".dat"
 
-    with open(fst_filename, 'w') as w:
-        for freq, v in zip(frequency_points, deltas.sum(axis=-2)):
+    with open(deltas_filename, 'w') as w:
+        for freq, v in zip(frequency_points, deltas):
             w.write("%15.7f %20.15e\n" % (freq, v))
 
-    return fst_filename
+    return deltas_filename
 
 
 def write_real_self_energy_to_hdf5(grid_point,
@@ -528,10 +527,10 @@ def write_real_self_energy_to_hdf5(grid_point,
         Real part of self energy.
 
         With frequency_points:
-            shape=(temperature, band_index, frequency_points),
+            shape=(temperatures, band_indices, frequency_points),
             dtype='double', order='C'
         otherwise:
-            shape=(temperature, band_index), dtype='double', order='C'
+            shape=(temperatures, band_indices), dtype='double', order='C'
 
     """
     full_filename = "deltas"
@@ -558,6 +557,33 @@ def write_real_self_energy_to_hdf5(grid_point,
             w.create_dataset('frequency', data=frequencies)
 
     return full_filename
+
+
+def write_spectral_function_at_grid_point(gp,
+                                          band_indices,
+                                          frequency_points,
+                                          spectral_functions,
+                                          mesh,
+                                          temperature,
+                                          filename=None,
+                                          is_mesh_symmetry=True):
+    spectral_filename = "spectral"
+    spectral_filename += _get_filename_suffix(mesh, grid_point=gp)
+    if temperature is not None:
+        spectral_filename += "-t" + _del_zeros(temperature) + "-"
+    for i in band_indices:
+        spectral_filename += "b%d" % (i + 1)
+    if filename is not None:
+        spectral_filename += ".%s" % filename
+    elif not is_mesh_symmetry:
+        spectral_filename += ".nosym"
+    spectral_filename += ".dat"
+
+    with open(spectral_filename, 'w') as w:
+        for freq, v in zip(frequency_points, spectral_functions):
+            w.write("%15.7f %20.15e\n" % (freq, v))
+
+    return spectral_filename
 
 
 def write_spectral_function_to_hdf5(grid_point,

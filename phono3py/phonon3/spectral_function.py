@@ -35,6 +35,48 @@
 import numpy as np
 from phono3py.phonon3.imag_self_energy import get_imag_self_energy
 from phono3py.phonon3.real_self_energy import imag_to_real
+from phono3py.file_IO import write_spectral_function_at_grid_point
+
+
+def write_spectral_function(spectral_functions,
+                            mesh,
+                            grid_points,
+                            band_indices,
+                            frequency_points,
+                            temperatures,
+                            sigmas=None,
+                            output_filename=None,
+                            is_mesh_symmetry=True,
+                            log_level=0):
+    if sigmas is None:
+        _sigmas = [None, ]
+    else:
+        _sigmas = sigmas
+
+    if spectral_functions.ndim == 4:
+        _spf = spectral_functions[:, None, :, :, :]
+    else:
+        _spf = spectral_functions
+
+    for gp, spf_sigmas in zip(grid_points, _spf):
+        for sigma, spf_temps in zip(_sigmas, spf_sigmas):
+            for t, spf in zip(temperatures, spf_temps):
+                for i, bi in enumerate(band_indices):
+                    pos = 0
+                    for j in range(i):
+                        pos += len(band_indices[j])
+                    filename = write_spectral_function_at_grid_point(
+                        gp,
+                        bi,
+                        frequency_points,
+                        spf[pos:(pos + len(bi))].sum(axis=0) / len(bi),
+                        mesh,
+                        t,
+                        filename=output_filename,
+                        is_mesh_symmetry=is_mesh_symmetry)
+                    if log_level:
+                        print("Spectral functions were "
+                              "written to \"%s\"." % filename)
 
 
 class SpectralFunction(object):

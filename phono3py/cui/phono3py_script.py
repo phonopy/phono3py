@@ -1101,9 +1101,9 @@ def main(**argparse_control):
             frequency_step=updated_settings['frequency_step'],
             num_frequency_points=updated_settings['num_frequency_points'],
             scattering_event_class=settings.scattering_event_class,
+            write_txt=True,
             write_gamma_detail=settings.write_gamma_detail,
             output_filename=output_filename)
-        phono3py.write_imag_self_energy(filename=output_filename)
 
     #####################################################
     # Run frequency shift calculation of bubble diagram #
@@ -1114,6 +1114,7 @@ def main(**argparse_control):
             updated_settings['temperature_points'],
             frequency_step=updated_settings['frequency_step'],
             num_frequency_points=updated_settings['num_frequency_points'],
+            write_txt=True,
             output_filename=output_filename)
 
     #######################################################
@@ -1125,6 +1126,7 @@ def main(**argparse_control):
             updated_settings['temperature_points'],
             frequency_step=updated_settings['frequency_step'],
             num_frequency_points=updated_settings['num_frequency_points'],
+            write_txt=True,
             output_filename=output_filename)
 
     ####################################
