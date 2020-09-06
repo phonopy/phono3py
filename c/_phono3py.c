@@ -44,7 +44,7 @@
 #include <phonoc_array.h>
 #include <phonoc_const.h>
 #include <phonon3_h/fc3.h>
-#include <phonon3_h/frequency_shift.h>
+#include <phonon3_h/real_self_energy.h>
 #include <phonon3_h/interaction.h>
 #include <phonon3_h/imag_self_energy_with_g.h>
 #include <phonon3_h/pp_collision.h>
@@ -67,10 +67,10 @@ static PyObject *
 py_get_imag_self_energy_with_g(PyObject *self, PyObject *args);
 static PyObject *
 py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args);
-static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
-                                                  PyObject *args);
-static PyObject * py_get_frequency_shift_at_frequency_point(PyObject *self,
-                                                            PyObject *args);
+static PyObject * py_get_real_self_energy_at_bands(PyObject *self,
+                                                   PyObject *args);
+static PyObject * py_get_real_self_energy_at_frequency_point(PyObject *self,
+                                                             PyObject *args);
 static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args);
 static PyObject * py_get_reducible_collision_matrix(PyObject *self,
                                                     PyObject *args);
@@ -160,14 +160,14 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_get_detailed_imag_self_energy_with_g,
    METH_VARARGS,
    "Detailed contribution to imaginary part of self energy at frequency points with g"},
-  {"frequency_shift_at_bands",
-   (PyCFunction)py_get_frequency_shift_at_bands,
+  {"real_self_energy_at_bands",
+   (PyCFunction)py_get_real_self_energy_at_bands,
    METH_VARARGS,
-   "Phonon frequency shift from third order force constants"},
-  {"frequency_shift_at_frequency_point",
-   (PyCFunction)py_get_frequency_shift_at_frequency_point,
+   "Real part of self energy from third order force constants"},
+  {"real_self_energy_at_frequency_point",
+   (PyCFunction)py_get_real_self_energy_at_frequency_point,
    METH_VARARGS,
-   "Phonon frequency shift from third order force constants at a frequency point"},
+   "Real part of self energy from third order force constants at a frequency point"},
   {"collision_matrix",
    (PyCFunction)py_get_collision_matrix,
    METH_VARARGS,
@@ -995,8 +995,8 @@ py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
-                                                  PyObject *args)
+static PyObject * py_get_real_self_energy_at_bands(PyObject *self,
+                                                   PyObject *args)
 {
   PyArrayObject *py_shift;
   PyArrayObject *py_fc3_normal_squared;
@@ -1035,16 +1035,16 @@ static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
   triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
   triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
 
-  get_frequency_shift_at_bands(shift,
-                               fc3_normal_squared,
-                               band_indices,
-                               frequencies,
-                               triplets,
-                               triplet_weights,
-                               epsilon,
-                               temperature,
-                               unit_conversion_factor,
-                               cutoff_frequency);
+  get_real_self_energy_at_bands(shift,
+                                fc3_normal_squared,
+                                band_indices,
+                                frequencies,
+                                triplets,
+                                triplet_weights,
+                                epsilon,
+                                temperature,
+                                unit_conversion_factor,
+                                cutoff_frequency);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;
@@ -1052,8 +1052,8 @@ static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
   Py_RETURN_NONE;
 }
 
-static PyObject * py_get_frequency_shift_at_frequency_point(PyObject *self,
-                                                            PyObject *args)
+static PyObject * py_get_real_self_energy_at_frequency_point(PyObject *self,
+                                                             PyObject *args)
 {
   PyArrayObject *py_shift;
   PyArrayObject *py_fc3_normal_squared;
@@ -1094,17 +1094,17 @@ static PyObject * py_get_frequency_shift_at_frequency_point(PyObject *self,
   triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
   triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
 
-  get_frequency_shift_at_frequency_point(shift,
-                                         frequency_point,
-                                         fc3_normal_squared,
-                                         band_indices,
-                                         frequencies,
-                                         triplets,
-                                         triplet_weights,
-                                         epsilon,
-                                         temperature,
-                                         unit_conversion_factor,
-                                         cutoff_frequency);
+  get_real_self_energy_at_frequency_point(shift,
+                                          frequency_point,
+                                          fc3_normal_squared,
+                                          band_indices,
+                                          frequencies,
+                                          triplets,
+                                          triplet_weights,
+                                          epsilon,
+                                          temperature,
+                                          unit_conversion_factor,
+                                          cutoff_frequency);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;

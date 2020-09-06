@@ -506,17 +506,17 @@ def write_linewidth_at_grid_point(gp,
             w.write("%15.7f %20.15e\n" % (t, v))
 
 
-def write_frequency_shift(gp,
-                          band_indices,
-                          frequency_points,
-                          deltas,
-                          mesh,
-                          epsilon,
-                          temperature,
-                          filename=None,
-                          is_mesh_symmetry=True):
+def write_real_self_energy(gp,
+                           band_indices,
+                           frequency_points,
+                           deltas,
+                           mesh,
+                           epsilon,
+                           temperature,
+                           filename=None,
+                           is_mesh_symmetry=True):
 
-    fst_filename = "frequency_shift"
+    fst_filename = "real_self_energy"
     suffix = _get_filename_suffix(mesh,
                                   grid_point=gp,
                                   band_indices=band_indices,
@@ -574,7 +574,7 @@ def write_Delta_to_hdf5(grid_point,
         w.create_dataset('grid_point', data=grid_point)
         w.create_dataset('mesh', data=mesh)
         w.create_dataset('band_index', data=_band_indices)
-        w.create_dataset('bubble', data=deltas)
+        w.create_dataset('delta', data=deltas)
         w.create_dataset('temperature', data=temperatures)
         w.create_dataset('epsilon', data=epsilon)
         if frequency_points is not None:

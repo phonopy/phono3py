@@ -37,21 +37,21 @@ import numpy as np
 from phonopy.units import Hbar, EV, THz
 from phonopy.phonon.degeneracy import degenerate_sets
 from phono3py.phonon.func import bose_einstein
-from phono3py.file_IO import write_frequency_shift, write_Delta_to_hdf5
+from phono3py.file_IO import write_real_self_energy, write_Delta_to_hdf5
 from phono3py.phonon3.imag_self_energy import get_frequency_points
 
 
-def get_frequency_shift(interaction,
-                        grid_points,
-                        temperatures,
-                        run_on_bands=False,
-                        frequency_points=None,
-                        frequency_step=None,
-                        num_frequency_points=None,
-                        epsilons=None,
-                        output_filename=None,
-                        write_hdf5=True,
-                        log_level=0):
+def get_real_self_energy(interaction,
+                         grid_points,
+                         temperatures,
+                         run_on_bands=False,
+                         frequency_points=None,
+                         frequency_step=None,
+                         num_frequency_points=None,
+                         epsilons=None,
+                         output_filename=None,
+                         write_hdf5=True,
+                         log_level=0):
     if epsilons is None:
         _epsilons = [None, ]
     else:
@@ -68,7 +68,7 @@ def get_frequency_shift(interaction,
             print("Running harmonic phonon calculations...")
         interaction.run_phonon_solver()
 
-    fst = FrequencyShift(interaction)
+    fst = RealSelfEnergy(interaction)
     mesh = interaction.mesh_numbers
     frequencies = interaction.get_phonons()[0]
     max_phonon_freq = np.amax(frequencies)
@@ -96,7 +96,7 @@ def get_frequency_shift(interaction,
         fst.grid_point = gp
         if log_level:
             weights = interaction.get_triplets_at_q()[1]
-            print("------ Frequency shift -o- at grid point %d ------" % gp)
+            print("------ Re self-energy -o- at grid point %d ------" % gp)
             print("Number of ir-triplets: %d / %d"
                   % (len(weights), weights.sum()))
 
@@ -115,12 +115,12 @@ def get_frequency_shift(interaction,
             for k, t in enumerate(_temperatures):
                 fst.temperature = t
                 fst.run()
-                all_deltas[i, j, k] = fst.frequency_shift
+                all_deltas[i, j, k] = fst.real_self_energy
 
                 if not run_on_bands:
                     pos = 0
                     for bi_set in [[bi, ] for bi in band_indices]:
-                        filename = write_frequency_shift(
+                        filename = write_real_self_energy(
                             gp,
                             bi_set,
                             _frequency_points,
@@ -155,7 +155,7 @@ def get_frequency_shift(interaction,
     return _frequency_points, all_deltas
 
 
-class FrequencyShift(object):
+class RealSelfEnergy(object):
 
     default_epsilon = 0.05
 
@@ -218,7 +218,7 @@ class FrequencyShift(object):
         self._unit_conversion = None
         self._cutoff_frequency = interaction.cutoff_frequency
         self._frequency_points = None
-        self._frequency_shifts = None
+        self._real_self_energies = None
 
         # Unit to THz of Delta
         self._unit_conversion = (18 / (Hbar * EV) ** 2
@@ -231,10 +231,10 @@ class FrequencyShift(object):
 
         num_band0 = len(self._pp.band_indices)
         if self._frequency_points is None:
-            self._frequency_shifts = np.zeros(num_band0, dtype='double')
+            self._real_self_energies = np.zeros(num_band0, dtype='double')
             self._run_with_band_indices()
         else:
-            self._frequency_shifts = np.zeros(
+            self._real_self_energies = np.zeros(
                 (len(self._frequency_points), num_band0), dtype='double')
             self._run_with_frequency_points()
 
@@ -248,11 +248,11 @@ class FrequencyShift(object):
         self._band_indices = self._pp.band_indices
 
     @property
-    def frequency_shift(self):
+    def real_self_energy(self):
         if self._cutoff_frequency is None:
-            return self._frequency_shifts
+            return self._real_self_energies
         else:  # Averaging frequency shifts by degenerate bands
-            shifts = np.zeros_like(self._frequency_shifts)
+            shifts = np.zeros_like(self._real_self_energies)
             freqs = self._frequencies[self._grid_point]
             deg_sets = degenerate_sets(freqs)  # like [[0,1], [2], [3,4,5]]
             for dset in deg_sets:
@@ -263,12 +263,13 @@ class FrequencyShift(object):
                 if len(bi_set) > 0:
                     for i in bi_set:
                         if self._frequency_points is None:
-                            shifts[i] = (self._frequency_shifts[bi_set].sum() /
-                                         len(bi_set))
+                            shifts[i] = (
+                                self._real_self_energies[bi_set].sum()
+                                / len(bi_set))
                         else:
                             shifts[:, i] = (
-                                self._frequency_shifts[:, bi_set].sum(axis=1) /
-                                len(bi_set))
+                                self._real_self_energies[:, bi_set].sum(axis=1)
+                                / len(bi_set))
             return shifts
 
     @property
@@ -330,16 +331,16 @@ class FrequencyShift(object):
 
     def _run_c_with_band_indices(self):
         import phono3py._phono3py as phono3c
-        phono3c.frequency_shift_at_bands(self._frequency_shifts,
-                                         self._pp_strength,
-                                         self._triplets_at_q,
-                                         self._weights_at_q,
-                                         self._frequencies,
-                                         self._band_indices,
-                                         self._temperature,
-                                         self._epsilon,
-                                         self._unit_conversion,
-                                         self._cutoff_frequency)
+        phono3c.real_self_energy_at_bands(self._real_self_energies,
+                                          self._pp_strength,
+                                          self._triplets_at_q,
+                                          self._weights_at_q,
+                                          self._frequencies,
+                                          self._band_indices,
+                                          self._temperature,
+                                          self._epsilon,
+                                          self._unit_conversion,
+                                          self._cutoff_frequency)
 
     def _run_py_with_band_indices(self):
         for i, (triplet, w, interaction) in enumerate(
@@ -351,21 +352,22 @@ class FrequencyShift(object):
             for j, bi in enumerate(self._band_indices):
                 fpoint = freqs[0, bi]
                 if self._temperature > 0:
-                    self._frequency_shifts[j] += (
-                        self._frequency_shifts_at_bands(
+                    self._real_self_energies[j] += (
+                        self._real_self_energies_at_bands(
                             j, fpoint, freqs, interaction, w))
                 else:
-                    self._frequency_shifts[j] += (
-                        self._frequency_shifts_at_bands_0K(
+                    self._real_self_energies[j] += (
+                        self._real_self_energies_at_bands_0K(
                             j, fpoint, freqs, interaction, w))
 
-        self._frequency_shifts *= self._unit_conversion
+        self._real_self_energies *= self._unit_conversion
 
     def _run_c_with_frequency_points(self):
         import phono3py._phono3py as phono3c
         for i, fpoint in enumerate(self._frequency_points):
-            shifts = np.zeros(self._frequency_shifts.shape[1], dtype='double')
-            phono3c.frequency_shift_at_frequency_point(
+            shifts = np.zeros(self._real_self_energies.shape[1],
+                              dtype='double')
+            phono3c.real_self_energy_at_frequency_point(
                 shifts,
                 fpoint,
                 self._pp_strength,
@@ -377,7 +379,7 @@ class FrequencyShift(object):
                 self._epsilon,
                 self._unit_conversion,
                 self._cutoff_frequency)
-            self._frequency_shifts[i][:] = shifts
+            self._real_self_energies[i][:] = shifts
 
     def _run_py_with_frequency_points(self):
         for k, fpoint in enumerate(self._frequency_points):
@@ -389,18 +391,18 @@ class FrequencyShift(object):
                 freqs = self._frequencies[triplet]
                 for j, bi in enumerate(self._band_indices):
                     if self._temperature > 0:
-                        self._frequency_shifts[k, j] += (
-                            self._frequency_shifts_at_bands(
+                        self._real_self_energies[k, j] += (
+                            self._real_self_energies_at_bands(
                                 j, fpoint, freqs, interaction, w))
                     else:
-                        self._frequency_shifts[k, j] += (
-                            self._frequency_shifts_at_bands_0K(
+                        self._real_self_energies[k, j] += (
+                            self._real_self_energies_at_bands_0K(
                                 j, fpoint, freqs, interaction, w))
 
-        self._frequency_shifts *= self._unit_conversion
+        self._real_self_energies *= self._unit_conversion
 
-    def _frequency_shifts_at_bands(self, i, fpoint, freqs,
-                                   interaction, weight):
+    def _real_self_energies_at_bands(self, i, fpoint, freqs,
+                                     interaction, weight):
         if fpoint < self._cutoff_frequency:
             return 0
 
@@ -435,8 +437,8 @@ class FrequencyShift(object):
                 sum_d += d * interaction[i, j, k] * weight
         return sum_d
 
-    def _frequency_shifts_at_bands_0K(self, i, fpoint, freqs,
-                                      interaction, weight):
+    def _real_self_energies_at_bands_0K(self, i, fpoint, freqs,
+                                        interaction, weight):
         if fpoint < self._cutoff_frequency:
             return 0
 

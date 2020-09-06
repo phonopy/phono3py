@@ -146,8 +146,10 @@ def get_run_mode(settings):
         run_mode = "isotope"
     elif settings.is_imag_self_energy:
         run_mode = "imag_self_energy"
-    elif settings.is_frequency_shift:
-        run_mode = "frequency_shift"
+    elif settings.is_real_self_energy:
+        run_mode = "real_self_energy"
+    elif settings.is_spectral_function:
+        run_mode = "spectral_function"
     elif settings.is_bterta:
         run_mode = "conductivity-RTA"
     elif settings.is_lbte:
@@ -1095,9 +1097,9 @@ def main(**argparse_control):
     if run_mode == "imag_self_energy":
         phono3py.run_imag_self_energy(
             updated_settings['grid_points'],
+            updated_settings['temperature_points'],
             frequency_step=updated_settings['frequency_step'],
             num_frequency_points=updated_settings['num_frequency_points'],
-            temperatures=updated_settings['temperature_points'],
             scattering_event_class=settings.scattering_event_class,
             write_gamma_detail=settings.write_gamma_detail,
             output_filename=output_filename)
@@ -1106,10 +1108,23 @@ def main(**argparse_control):
     #####################################################
     # Run frequency shift calculation of bubble diagram #
     #####################################################
-    if run_mode == "frequency_shift":
-        phono3py.run_frequency_shift(
+    if run_mode == "real_self_energy":
+        phono3py.run_real_self_energy(
             updated_settings['grid_points'],
-            temperatures=updated_settings['temperature_points'],
+            updated_settings['temperature_points'],
+            frequency_step=updated_settings['frequency_step'],
+            num_frequency_points=updated_settings['num_frequency_points'],
+            output_filename=output_filename)
+
+    #######################################################
+    # Run spectral function calculation of bubble diagram #
+    #######################################################
+    if run_mode == "spectral_function":
+        phono3py.run_spectral_function(
+            updated_settings['grid_points'],
+            updated_settings['temperature_points'],
+            frequency_step=updated_settings['frequency_step'],
+            num_frequency_points=updated_settings['num_frequency_points'],
             output_filename=output_filename)
 
     ####################################

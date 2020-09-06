@@ -32,29 +32,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import numpy as np
 from phono3py.phonon3.imag_self_energy import get_imag_self_energy
-from phono3py.phonon3.frequency_shift import imag_to_real
-
-
-def get_spectral_function(interaction,
-                          grid_points,
-                          temperatures,
-                          frequency_points=None,
-                          frequency_step=None,
-                          num_frequency_points=None,
-                          output_filename=None,
-                          write_hdf5=True,
-                          log_level=0):
-    sf = SpectralFunction(interaction,
-                          grid_points,
-                          frequency_points=frequency_points,
-                          frequency_step=frequency_step,
-                          num_frequency_points=num_frequency_points,
-                          temperatures=temperatures)
-    sf.run()
-    return sf
+from phono3py.phonon3.real_self_energy import imag_to_real
 
 
 class SpectralFunction(object):
@@ -66,13 +46,16 @@ class SpectralFunction(object):
                  frequency_points=None,
                  frequency_step=None,
                  num_frequency_points=None,
-                 temperatures=None):
+                 temperatures=None,
+                 log_level=0):
         self._interaction = interaction
         self._grid_points = grid_points
         self._frequency_points_in = frequency_points
         self._frequency_step = frequency_step
         self._num_frequency_points = num_frequency_points
         self._temperatures = temperatures
+        self._log_level = log_level
+
         self._spectral_functions = None
         self._gammas = None
         self._deltas = None
@@ -99,7 +82,14 @@ class SpectralFunction(object):
     def frequency_points(self):
         return self._frequency_points
 
+    @property
+    def grid_points(self):
+        return self._grid_points
+
     def _run_gamma(self):
+        if self._log_level > 0:
+            print("Start calculation of imaginary part of self energies")
+
         # gammas[grid_points, sigmas, temps, freq_points, band_indices]
         fpoints, gammas = get_imag_self_energy(
             self._interaction,
@@ -107,7 +97,8 @@ class SpectralFunction(object):
             frequency_points=self._frequency_points_in,
             frequency_step=self._frequency_step,
             num_frequency_points=self._num_frequency_points,
-            temperatures=self._temperatures)
+            temperatures=self._temperatures,
+            log_level=self._log_level)
         self._gammas = np.array(gammas[:, 0], dtype='double', order='C')
         self._frequency_points = fpoints
 

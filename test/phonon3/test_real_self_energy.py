@@ -1,5 +1,5 @@
 import numpy as np
-from phono3py.phonon3.frequency_shift import ImagToReal
+from phono3py.phonon3.real_self_energy import ImagToReal
 
 si_pbesol_Delta = [
     [-0.0057666, -0.0057666, -0.01639729, -0.14809965,
@@ -112,12 +112,12 @@ im_part = [
     [30.69222190, 0.00000000, 30.69222190, 0.41736574, 30.84568301, 0.38214163]]
 
 
-def test_frequency_shift(si_pbesol):
+def test_real_self_energy(si_pbesol):
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
-    _, delta = si_pbesol.run_frequency_shift(
+    _, delta = si_pbesol.run_real_self_energy(
         [1, 103],
-        temperatures=[300, ],
+        [300, ],
         write_hdf5=False,
         run_on_bands=True)
     np.testing.assert_allclose(si_pbesol_Delta, delta[0, :, 0], atol=1e-5)

@@ -54,7 +54,8 @@ from phonopy.structure.grid_points import length2mesh
 from phono3py.version import __version__
 from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
                                                write_imag_self_energy)
-from phono3py.phonon3.frequency_shift import get_frequency_shift
+from phono3py.phonon3.real_self_energy import get_real_self_energy
+from phono3py.phonon3.spectral_function import SpectralFunction
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.conductivity_RTA import get_thermal_conductivity_RTA
 from phono3py.phonon3.conductivity_LBTE import get_thermal_conductivity_LBTE
@@ -155,7 +156,7 @@ class Phono3py(object):
         self._scattering_event_class = None
 
         # Frequency shift (real part of bubble diagram)
-        self._frequency_shift = None
+        self._real_self_energy = None
 
         self._grid_points = None
         self._frequency_points = None
@@ -1372,21 +1373,27 @@ class Phono3py(object):
 
     def run_imag_self_energy(self,
                              grid_points,
+                             temperatures,
                              frequency_points=None,
                              frequency_step=None,
                              num_frequency_points=None,
-                             temperatures=None,
                              scattering_event_class=None,
                              write_gamma_detail=False,
                              keep_gamma_detail=False,
                              output_filename=None):
-        """
+        """Calculate imaginary part of self-energy of bubble diagram (Gamma)
+
+        Pi = Delta - i Gamma.
 
         Parameters
         ----------
         grid_points : array_like
-            Grid-point indices where imag-self-energeis are caclculated.
+            Grid-point indices where imaginary part of self-energies are
+            caclculated.
             dtype=int, shape=(grid_points,)
+        temperatures : array_like
+            Temperatures where imaginary part of self-energies are calculated.
+            dtype=float, shape=(temperatures,)
         frequency_points : array_like, optional
             Frequency sampling points. Default is None. In this case,
             num_frequency_points or frequency_step is used to generate uniform
@@ -1399,10 +1406,6 @@ class Phono3py(object):
             Number of sampling sampling points to be used instead of
             frequency_step. This number includes end points. Default is None,
             which gives 201.
-        temperatures : array_like, optional
-            Temperatures where imag-self-energies are calculated. Default is
-            None, which gives [0, 300].
-            dtype=float, shape=(temperatures,)
         scattering_event_class : int, optional
             Specific choice of scattering event class, 1 or 2 that is specified
             1 or 2, respectively. The result is stored in gammas. Therefore
@@ -1412,6 +1415,8 @@ class Phono3py(object):
             Detailed gammas are written into a file in hdf5. Default is False.
         keep_gamma_detail : bool, optional
             With True, detailed gammas are stored. Default is False.
+        output_filename : str
+            This string is inserted in the output file names.
 
         """
 
@@ -1459,25 +1464,55 @@ class Phono3py(object):
             filename=filename,
             is_mesh_symmetry=self._is_mesh_symmetry)
 
-    def run_frequency_shift(
+    def run_real_self_energy(
             self,
             grid_points,
+            temperatures,
             run_on_bands=False,
             frequency_points=None,
             frequency_step=None,
             num_frequency_points=None,
-            temperatures=None,
             epsilons=None,
             write_hdf5=True,
             output_filename=None):
-        """Frequency shift from lowest order diagram is calculated.
+        """Calculate real-part of self-energy of bubble diagram (Delta)
+
+        Pi = Delta - i Gamma.
 
         Parameters
         ----------
+        grid_points : array_like
+            Grid-point indices where real part of self-energies are
+            caclculated.
+            dtype=int, shape=(grid_points,)
+        temperatures : array_like
+            Temperatures where real part of self-energies  are calculated.
+            dtype=float, shape=(temperatures,)
+        run_on_bands : bool, optional
+            With False, frequency shifts are calculated at frquency sampling
+            points. When True, they are done at the phonon frequencies.
+            Default is False.
+        frequency_points : array_like, optional
+            Frequency sampling points. Default is None. In this case,
+            num_frequency_points or frequency_step is used to generate uniform
+            frequency sampling points.
+            dtype=float, shape=(frequency_points,)
+        frequency_step : float, optional
+            Uniform pitch of frequency sampling points. Default is None. This
+            results in using num_frequency_points.
+        num_frequency_points: Int, optional
+            Number of sampling sampling points to be used instead of
+            frequency_step. This number includes end points. Default is None,
+            which gives 201.
         epsilons : array_like
-            The value to avoid divergence. When multiple values are given
-            frequency shifts for those values are returned.
+            Smearing widths to computer principal part. When multiple values
+            are given frequency shifts for those values are returned.
             dtype=float, shape=(epsilons,)
+        write_hdf5 : bool
+            Results are stored in hdf5 files independently at grid points,
+            epsilons, and temperatures.
+        output_filename : str
+            This string is inserted in the output file names.
 
         """
 
@@ -1498,7 +1533,7 @@ class Phono3py(object):
 
         self._grid_points = grid_points
         # (epsilon, grid_point, temperature, band)
-        self._frequency_points, self._frequency_shifts = get_frequency_shift(
+        self._frequency_points, self._real_self_energys = get_real_self_energy(
             self._interaction,
             self._grid_points,
             temperatures,
@@ -1511,7 +1546,64 @@ class Phono3py(object):
             output_filename=output_filename,
             log_level=self._log_level)
 
-        return self._frequency_points, self._frequency_shifts
+        return self._frequency_points, self._real_self_energys
+
+    def run_spectral_function(
+            self,
+            grid_points,
+            temperatures,
+            frequency_points=None,
+            frequency_step=None,
+            num_frequency_points=None,
+            write_hdf5=True,
+            output_filename=None):
+        """Frequency shift from lowest order diagram is calculated.
+
+        Parameters
+        ----------
+        grid_points : array_like
+            Grid-point indices where imag-self-energeis are caclculated.
+            dtype=int, shape=(grid_points,)
+        temperatures : array_like
+            Temperatures where imag-self-energies are calculated.
+            dtype=float, shape=(temperatures,)
+        frequency_points : array_like, optional
+            Frequency sampling points. Default is None. In this case,
+            num_frequency_points or frequency_step is used to generate uniform
+            frequency sampling points.
+            dtype=float, shape=(frequency_points,)
+        frequency_step : float, optional
+            Uniform pitch of frequency sampling points. Default is None. This
+            results in using num_frequency_points.
+        num_frequency_points: Int, optional
+            Number of sampling sampling points to be used instead of
+            frequency_step. This number includes end points. Default is None,
+            which gives 201.
+        epsilons : array_like
+            The value to avoid divergence. When multiple values are given
+            frequency shifts for those values are returned.
+            dtype=float, shape=(epsilons,)
+        write_hdf5 : bool
+            Results are stored in hdf5 files independently at grid points,
+            epsilons, and temperatures.
+        output_filename : str
+            This string is inserted in the output file names.
+
+        """
+
+        if self._interaction is None:
+            msg = ("Phono3py.init_phph_interaction has to be called "
+                   "before running this method.")
+            raise RuntimeError(msg)
+
+        self._spectral_function = SpectralFunction(
+            self._interaction,
+            grid_points,
+            frequency_points=frequency_points,
+            frequency_step=frequency_step,
+            num_frequency_points=num_frequency_points,
+            temperatures=temperatures,
+            log_level=self._log_level)
 
     def run_thermal_conductivity(
             self,
