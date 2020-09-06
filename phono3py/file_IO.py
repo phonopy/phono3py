@@ -507,7 +507,7 @@ def write_real_self_energy(gp,
     fst_filename += ".dat"
 
     with open(fst_filename, 'w') as w:
-        for freq, v in zip(frequency_points, deltas.sum(axis=-1)):
+        for freq, v in zip(frequency_points, deltas.sum(axis=-2)):
             w.write("%15.7f %20.15e\n" % (freq, v))
 
     return fst_filename
@@ -528,7 +528,7 @@ def write_real_self_energy_to_hdf5(grid_point,
         Real part of self energy.
 
         With frequency_points:
-            shape=(temperature, frequency_points, band_index),
+            shape=(temperature, band_index, frequency_points),
             dtype='double', order='C'
         otherwise:
             shape=(temperature, band_index), dtype='double', order='C'

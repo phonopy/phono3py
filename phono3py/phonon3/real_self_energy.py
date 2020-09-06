@@ -88,8 +88,8 @@ def get_real_self_energy(interaction,
             frequency_step=frequency_step,
             num_frequency_points=num_frequency_points)
         all_deltas = np.zeros((len(_epsilons), len(grid_points),
-                               len(_temperatures), len(_frequency_points),
-                               len(band_indices)),
+                               len(_temperatures), len(band_indices),
+                               len(_frequency_points)),
                               dtype='double', order='C')
         fst.frequency_points = _frequency_points
 
@@ -116,7 +116,7 @@ def get_real_self_energy(interaction,
             for k, t in enumerate(_temperatures):
                 fst.temperature = t
                 fst.run()
-                all_deltas[i, j, k] = fst.real_self_energy
+                all_deltas[i, j, k] = fst.real_self_energy.T
 
                 if not run_on_bands:
                     pos = 0
@@ -125,7 +125,7 @@ def get_real_self_energy(interaction,
                             gp,
                             bi_set,
                             _frequency_points,
-                            all_deltas[i, j, k, :, pos:(pos + len(bi_set))],
+                            all_deltas[i, j, k, pos:(pos + len(bi_set))],
                             mesh,
                             fst.epsilon,
                             t,
