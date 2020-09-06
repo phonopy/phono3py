@@ -174,7 +174,7 @@ class SpectralFunction(object):
     def _get_spectral_function(self, gammas, deltas, freq):
         fpoints = self._frequency_points
         nums = 4 * freq ** 2 * gammas
-        denoms = ((fpoints - freq ** 2 - 2 * freq * deltas) ** 2
+        denoms = ((fpoints ** 2 - freq ** 2 - 2 * freq * deltas) ** 2
                   + (2 * freq * gammas) ** 2)
         vals = np.where(denoms > 0, nums / denoms, 0)
         return vals
