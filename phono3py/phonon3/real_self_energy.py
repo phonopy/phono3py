@@ -37,7 +37,8 @@ import numpy as np
 from phonopy.units import Hbar, EV, THz
 from phonopy.phonon.degeneracy import degenerate_sets
 from phono3py.phonon.func import bose_einstein
-from phono3py.file_IO import write_real_self_energy, write_Delta_to_hdf5
+from phono3py.file_IO import (
+    write_real_self_energy, write_real_self_energy_to_hdf5)
 from phono3py.phonon3.imag_self_energy import get_frequency_points
 
 
@@ -135,7 +136,7 @@ def get_real_self_energy(interaction,
                         sys.stdout.flush()
 
             if write_hdf5:
-                filename = write_Delta_to_hdf5(
+                filename = write_real_self_energy_to_hdf5(
                     gp,
                     band_indices,
                     _temperatures,

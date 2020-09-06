@@ -72,48 +72,48 @@ detailed_gamma = [0.00000000, 0.00653193, 0.02492913, 0.01682092, 0.01001680,
 def test_imag_self_energy_npoints(si_pbesol):
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
-    si_pbesol.run_imag_self_energy(
+    _fpoints, _gammas = si_pbesol.run_imag_self_energy(
         [1, 103],
         [300, ],
         num_frequency_points=10)
     np.testing.assert_allclose(
-        gammas, si_pbesol.gammas.ravel(), atol=1e-2)
+        gammas, np.swapaxes(_gammas, -1, -2).ravel(), atol=1e-2)
     np.testing.assert_allclose(
-        freq_points, si_pbesol.frequency_points.ravel(),
+        freq_points, _fpoints.ravel(),
         atol=1e-5)
 
 
 def test_imag_self_energy_freq_points(si_pbesol):
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
-    si_pbesol.run_imag_self_energy(
+    _fpoints, _gammas = si_pbesol.run_imag_self_energy(
         [1, 103],
         [300, ],
         frequency_points=freq_points)
     np.testing.assert_allclose(
-        gammas, si_pbesol.gammas.ravel(), atol=1e-2)
+        gammas, np.swapaxes(_gammas, -1, -2).ravel(), atol=1e-2)
     np.testing.assert_allclose(
-        freq_points, si_pbesol.frequency_points.ravel(), atol=1e-5)
+        freq_points, _fpoints.ravel(), atol=1e-5)
 
 
 def test_imag_self_energy_detailed(si_pbesol):
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
-    si_pbesol.run_imag_self_energy(
+    _fpoints, _gammas, _detailed_gammas = si_pbesol.run_imag_self_energy(
         [1, ],
         [300, ],
         frequency_points=freq_points,
         keep_gamma_detail=True)
     np.testing.assert_allclose(
         detailed_gamma,
-        si_pbesol.detailed_gammas[0][0, 0].sum(axis=(1, 2, 3, 4)),
+        _detailed_gammas[0][0, 0].sum(axis=(1, 2, 3, 4)),
         atol=1e-2)
 
 
 def test_imag_self_energy_scat_class1(si_pbesol):
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
-    si_pbesol.run_imag_self_energy(
+    _fpoints, _gammas = si_pbesol.run_imag_self_energy(
         [1, 103],
         [300, ],
         frequency_points=freq_points,
@@ -121,13 +121,13 @@ def test_imag_self_energy_scat_class1(si_pbesol):
     # for line in si_pbesol.gammas.reshape(-1, 6):
     #     print(("%10.8f, " * 6) % tuple(line))
     np.testing.assert_allclose(
-        gammas_class1, np.array(si_pbesol.gammas).ravel(), atol=1e-2)
+        gammas_class1, np.swapaxes(_gammas, -1, -2).ravel(), atol=1e-2)
 
 
 def test_imag_self_energy_scat_class2(si_pbesol):
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
-    si_pbesol.run_imag_self_energy(
+    _fpoints, _gammas = si_pbesol.run_imag_self_energy(
         [1, 103],
         [300, ],
         frequency_points=freq_points,
@@ -135,4 +135,4 @@ def test_imag_self_energy_scat_class2(si_pbesol):
     # for line in si_pbesol.gammas.reshape(-1, 6):
     #     print(("%10.8f, " * 6) % tuple(line))
     np.testing.assert_allclose(
-        gammas_class2, np.array(si_pbesol.gammas).ravel(), atol=1e-2)
+        gammas_class2, np.swapaxes(_gammas, -1, -2).ravel(), atol=1e-2)

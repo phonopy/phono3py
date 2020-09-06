@@ -62,9 +62,17 @@ class SpectralFunction(object):
         self._frequency_points = None
 
     def run(self):
+        if self._log_level:
+            print("-" * 28 + " Spectral function " + "-" * 28)
         self._run_gamma()
+        if self._log_level:
+            print("-" * 11 +
+                  " Real part of self energy by Kramers-Kronig relation "
+                  + "-" * 11)
         self._run_delta()
         self._run_spectral_function()
+        if self._log_level:
+            print("-" * 75)
 
     @property
     def spectral_functions(self):
@@ -87,10 +95,7 @@ class SpectralFunction(object):
         return self._grid_points
 
     def _run_gamma(self):
-        if self._log_level > 0:
-            print("Start calculation of imaginary part of self energies")
-
-        # gammas[grid_points, sigmas, temps, freq_points, band_indices]
+        # gammas[grid_points, sigmas, temps, band_indices, freq_points]
         fpoints, gammas = get_imag_self_energy(
             self._interaction,
             self._grid_points,
@@ -108,8 +113,8 @@ class SpectralFunction(object):
             for j, temp in enumerate(self._temperatures):
                 for k, bi in enumerate(self._interaction.band_indices):
                     re_part, fpoints = imag_to_real(
-                        self._gammas[i, j, :, k], self._frequency_points)
-                    self._deltas[i, j, :, k] = -re_part
+                        self._gammas[i, j, k], self._frequency_points)
+                    self._deltas[i, j, k] = -re_part
         assert (np.abs(self._frequency_points - fpoints) < 1e-8).all()
 
     def _run_spectral_function(self):
@@ -119,10 +124,10 @@ class SpectralFunction(object):
             for j, temp in enumerate(self._temperatures):
                 for k, bi in enumerate(self._interaction.band_indices):
                     freq = frequencies[gp, bi]
-                    gammas = self._gammas[i, j, :, k]
-                    deltas = self._deltas[i, j, :, k]
+                    gammas = self._gammas[i, j, k]
+                    deltas = self._deltas[i, j, k]
                     vals = self._get_spectral_function(gammas, deltas, freq)
-                    self._spectral_functions[i, j, :, k] = vals
+                    self._spectral_functions[i, j, k] = vals
 
     def _get_spectral_function(self, gammas, deltas, freq):
         fpoints = self._frequency_points

@@ -1108,7 +1108,7 @@ def main(**argparse_control):
     #####################################################
     # Run frequency shift calculation of bubble diagram #
     #####################################################
-    if run_mode == "real_self_energy":
+    elif run_mode == "real_self_energy":
         phono3py.run_real_self_energy(
             updated_settings['grid_points'],
             updated_settings['temperature_points'],
@@ -1119,7 +1119,7 @@ def main(**argparse_control):
     #######################################################
     # Run spectral function calculation of bubble diagram #
     #######################################################
-    if run_mode == "spectral_function":
+    elif run_mode == "spectral_function":
         phono3py.run_spectral_function(
             updated_settings['grid_points'],
             updated_settings['temperature_points'],
@@ -1130,7 +1130,7 @@ def main(**argparse_control):
     ####################################
     # Run lattice thermal conductivity #
     ####################################
-    if run_mode == "conductivity-RTA" or run_mode == "conductivity-LBTE":
+    elif run_mode == "conductivity-RTA" or run_mode == "conductivity-LBTE":
         phono3py.run_thermal_conductivity(
             is_LBTE=settings.is_lbte,
             temperatures=updated_settings['temperatures'],

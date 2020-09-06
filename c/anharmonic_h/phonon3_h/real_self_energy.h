@@ -32,8 +32,8 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef __frequency_shift3_H__
-#define __frequency_shift3_H__
+#ifndef __real_self_energy_H__
+#define __real_self_energy_H__
 
 #include <phonoc_array.h>
 

@@ -178,7 +178,10 @@ def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
 
     if settings.is_lbte and settings.read_collision is not None:
         pass
-    elif settings.is_frequency_shift or settings.is_bterta:
+    elif (settings.is_real_self_energy or
+          settings.is_imag_self_energy or
+          settings.is_spectral_function or
+          settings.is_bterta):
         if len(temperatures) > 5:
             text = (" %.1f " * 5 + "...") % tuple(temperatures[:5])
             text += " %.1f" % temperatures[-1]
@@ -222,7 +225,10 @@ def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
     if frequency_scale_factor is not None:
         print("Frequency scale factor: %8.5f" % frequency_scale_factor)
 
-    if settings.is_joint_dos or settings.is_imag_self_energy:
+    if (settings.is_joint_dos or
+        settings.is_imag_self_energy or
+        settings.is_real_self_energy or
+        settings.is_spectral_function):
         if frequency_step is not None:
             print("Frequency step for spectrum: %s" % frequency_step)
         if num_frequency_points is not None:

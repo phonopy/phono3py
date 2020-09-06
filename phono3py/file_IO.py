@@ -419,6 +419,8 @@ def write_imag_self_energy_at_grid_point(gp,
         w.write("%15.7f %20.15e\n" % (freq, g))
     w.close()
 
+    return gammas_filename
+
 
 def write_joint_dos(gp,
                     mesh,
@@ -478,34 +480,6 @@ def _write_joint_dos_at_t(grid_point,
         return jdos_filename
 
 
-def write_linewidth_at_grid_point(gp,
-                                  band_indices,
-                                  temperatures,
-                                  gamma,
-                                  mesh,
-                                  sigma=None,
-                                  filename=None,
-                                  is_mesh_symmetry=True):
-
-    lw_filename = "linewidth"
-    lw_filename += "-m%d%d%d-g%d-" % (mesh[0], mesh[1], mesh[2], gp)
-    if sigma is not None:
-        lw_filename += ("s%f" % sigma).rstrip('0') + "-"
-
-    for i in band_indices:
-        lw_filename += "b%d" % (i + 1)
-
-    if filename is not None:
-        lw_filename += ".%s" % filename
-    elif not is_mesh_symmetry:
-        lw_filename += ".nosym"
-    lw_filename += ".dat"
-
-    with open(lw_filename, 'w') as w:
-        for v, t in zip(gamma.sum(axis=1) * 2 / gamma.shape[1], temperatures):
-            w.write("%15.7f %20.15e\n" % (t, v))
-
-
 def write_real_self_energy(gp,
                            band_indices,
                            frequency_points,
@@ -516,7 +490,7 @@ def write_real_self_energy(gp,
                            filename=None,
                            is_mesh_symmetry=True):
 
-    fst_filename = "real_self_energy"
+    fst_filename = "deltas"
     suffix = _get_filename_suffix(mesh,
                                   grid_point=gp,
                                   band_indices=band_indices,
@@ -539,19 +513,20 @@ def write_real_self_energy(gp,
     return fst_filename
 
 
-def write_Delta_to_hdf5(grid_point,
-                        band_indices,
-                        temperatures,
-                        deltas,
-                        mesh,
-                        epsilon,
-                        frequency_points=None,
-                        frequencies=None,
-                        filename=None):
-    """Wirte frequency shifts (currently only bubble) in hdf5
+def write_real_self_energy_to_hdf5(grid_point,
+                                   band_indices,
+                                   temperatures,
+                                   deltas,
+                                   mesh,
+                                   epsilon,
+                                   frequency_points=None,
+                                   frequencies=None,
+                                   filename=None):
+    """Wirte real part of self energy (currently only bubble) in hdf5
 
     deltas : ndarray
-        Frequency shifts.
+        Real part of self energy.
+
         With frequency_points:
             shape=(temperature, frequency_points, band_index),
             dtype='double', order='C'
@@ -559,7 +534,7 @@ def write_Delta_to_hdf5(grid_point,
             shape=(temperature, band_index), dtype='double', order='C'
 
     """
-    full_filename = "Delta"
+    full_filename = "deltas"
     suffix = _get_filename_suffix(mesh, grid_point=grid_point)
     _band_indices = np.array(band_indices, dtype='intc')
 
@@ -577,6 +552,43 @@ def write_Delta_to_hdf5(grid_point,
         w.create_dataset('delta', data=deltas)
         w.create_dataset('temperature', data=temperatures)
         w.create_dataset('epsilon', data=epsilon)
+        if frequency_points is not None:
+            w.create_dataset('frequency_points', data=frequency_points)
+        if frequencies is not None:
+            w.create_dataset('frequency', data=frequencies)
+
+    return full_filename
+
+
+def write_spectral_function_to_hdf5(grid_point,
+                                    band_indices,
+                                    temperatures,
+                                    spectral_functions,
+                                    mesh,
+                                    frequency_points=None,
+                                    frequencies=None,
+                                    filename=None):
+    """Wirte spectral functions (currently only bubble) in hdf5
+
+    spectral_functions : ndarray
+        Spectral functions.
+        shape=(temperature, band_index, frequency_points),
+        dtype='double', order='C'
+
+    """
+    full_filename = "spectral"
+    suffix = _get_filename_suffix(mesh, grid_point=grid_point)
+    _band_indices = np.array(band_indices, dtype='intc')
+
+    full_filename += suffix
+    full_filename += ".hdf5"
+
+    with h5py.File(full_filename, 'w') as w:
+        w.create_dataset('grid_point', data=grid_point)
+        w.create_dataset('mesh', data=mesh)
+        w.create_dataset('band_index', data=_band_indices)
+        w.create_dataset('delta', data=spectral_functions)
+        w.create_dataset('temperature', data=temperatures)
         if frequency_points is not None:
             w.create_dataset('frequency_points', data=frequency_points)
         if frequencies is not None:

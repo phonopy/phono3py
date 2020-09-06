@@ -53,7 +53,6 @@ class Phono3pySettings(Settings):
         'ion_clamped': False,
         'is_bterta': False,
         'is_compact_fc': False,
-        'is_frequency_shift': False,
         'is_full_pp': False,
         'is_gruneisen': False,
         'is_imag_self_energy': False,
@@ -62,7 +61,9 @@ class Phono3pySettings(Settings):
         'is_kappa_star': True,
         'is_lbte': False,
         'is_N_U': False,
+        'is_real_self_energy': False,
         'is_reducible_collision_matrix': False,
+        'is_spectral_function': False,
         'is_symmetrize_fc2': False,
         'is_symmetrize_fc3_q': False,
         'is_symmetrize_fc3_r': False,
@@ -141,9 +142,6 @@ class Phono3pySettings(Settings):
     def set_is_compact_fc(self, val):
         self._v['is_compact_fc'] = val
 
-    def set_is_frequency_shift(self, val):
-        self._v['is_frequency_shift'] = val
-
     def set_is_full_pp(self, val):
         self._v['is_full_pp'] = val
 
@@ -168,8 +166,14 @@ class Phono3pySettings(Settings):
     def set_is_N_U(self, val):
         self._v['is_N_U'] = val
 
+    def set_is_real_self_energy(self, val):
+        self._v['is_real_self_energy'] = val
+
     def set_is_reducible_collision_matrix(self, val):
         self._v['is_reducible_collision_matrix'] = val
+
+    def set_is_spectral_function(self, val):
+        self._v['is_spectral_function'] = val
 
     def set_is_symmetrize_fc2(self, val):
         self._v['is_symmetrize_fc2'] = val
@@ -343,10 +347,6 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_gruneisen:
                 self._confs['gruneisen'] = '.true.'
 
-        if 'is_frequency_shift' in self._args:
-            if self._args.is_frequency_shift:
-                self._confs['frequency_shift'] = '.true.'
-
         if 'is_full_pp' in self._args:
             if self._args.is_full_pp:
                 self._confs['full_pp'] = '.true.'
@@ -375,9 +375,17 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_N_U:
                 self._confs['N_U'] = '.true.'
 
+        if 'is_real_self_energy' in self._args:
+            if self._args.is_real_self_energy:
+                self._confs['real_self_energy'] = '.true.'
+
         if 'is_reducible_collision_matrix' in self._args:
             if self._args.is_reducible_collision_matrix:
                 self._confs['reducible_collision_matrix'] = '.true.'
+
+        if 'is_spectral_function' in self._args:
+            if self._args.is_spectral_function:
+                self._confs['spectral_function'] = '.true.'
 
         if 'is_symmetrize_fc2' in self._args:
             if self._args.is_symmetrize_fc2:
@@ -504,9 +512,9 @@ class Phono3pyConfParser(ConfParser):
                     'write_gamma_detail', 'write_gamma',
                     'write_collision', 'write_phonon', 'write_pp',
                     'write_LBTE_solution', 'full_pp', 'ion_clamped',
-                    'bterta', 'compact_fc', 'frequency_shift',
+                    'bterta', 'compact_fc', 'real_self_energy',
                     'gruneisen', 'imag_self_energy', 'isotope',
-                    'joint_dos', 'lbte', 'N_U',
+                    'joint_dos', 'lbte', 'N_U', 'spectral_function',
                     'reducible_collision_matrix', 'symmetrize_fc2',
                     'symmetrize_fc3_q', 'symmetrize_fc3_r', 'kappa_star'):
                 if confs[conf_key].lower() == '.true.':
@@ -679,10 +687,6 @@ class Phono3pyConfParser(ConfParser):
         if 'compact_fc' in params:
             self._settings.set_is_compact_fc(params['compact_fc'])
 
-        # Calculate frequency_shifts
-        if 'frequency_shift' in params:
-            self._settings.set_is_frequency_shift(params['frequency_shift'])
-
         # Calculate full ph-ph interaction strength for RTA conductivity
         if 'full_pp' in params:
             self._settings.set_is_full_pp(params['full_pp'])
@@ -763,6 +767,10 @@ class Phono3pyConfParser(ConfParser):
             self._settings.set_pp_conversion_factor(
                 params['pp_conversion_factor'])
 
+        # Calculate real_self_energys
+        if 'real_self_energy' in params:
+            self._settings.set_is_real_self_energy(params['real_self_energy'])
+
         # Read phonon-phonon interaction amplitudes from hdf5
         if 'read_amplitude' in params:
             self._settings.set_read_amplitude(params['read_amplitude'])
@@ -799,6 +807,10 @@ class Phono3pyConfParser(ConfParser):
         # Cutoff width of smearing function (ratio to sigma value)
         if 'sigma_cutoff_width' in params:
             self._settings.set_sigma_cutoff_width(params['sigma_cutoff_width'])
+
+        # Calculate spectral_functions
+        if 'spectral_function' in params:
+            self._settings.set_is_spectral_function(params['spectral_function'])
 
         # Subtract residual forces to create FORCES_FC2 and FORCES_FC3
         if 'subtract_forces' in params:

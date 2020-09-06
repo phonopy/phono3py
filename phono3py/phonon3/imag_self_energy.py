@@ -131,7 +131,7 @@ def get_imag_self_energy(interaction,
         interaction, with_detail=(write_gamma_detail or return_gamma_detail))
     gamma = np.zeros(
         (len(grid_points), len(_sigmas), len(temperatures),
-         len(_frequency_points), len(interaction.band_indices)),
+         len(interaction.band_indices), len(_frequency_points)),
         dtype='double', order='C')
     detailed_gamma = []
 
@@ -179,6 +179,7 @@ def get_imag_self_energy(interaction,
 
             ise.set_sigma(sigma)
 
+            # Run one by one at frequency points
             for k, freq_point in enumerate(_frequency_points):
                 ise.set_frequency_points([freq_point])
                 ise.set_integration_weights(
@@ -187,7 +188,7 @@ def get_imag_self_energy(interaction,
                 for l, t in enumerate(temperatures):
                     ise.set_temperature(t)
                     ise.run()
-                    gamma[i, j, l, k] = ise.get_imag_self_energy()[0]
+                    gamma[i, j, l, :, k] = ise.get_imag_self_energy()[0]
                     if write_gamma_detail or return_gamma_detail:
                         detailed_gamma_at_gp[j, l, k] = (
                             ise.get_detailed_imag_self_energy()[0])
@@ -271,8 +272,9 @@ def write_imag_self_energy(imag_self_energy,
                            temperatures,
                            sigmas,
                            scattering_event_class=None,
-                           filename=None,
-                           is_mesh_symmetry=True):
+                           output_filename=None,
+                           is_mesh_symmetry=True,
+                           log_level=0):
     for gp, ise_sigmas in zip(grid_points, imag_self_energy):
         for sigma, ise_temps in zip(sigmas, ise_sigmas):
             for t, ise in zip(temperatures, ise_temps):
@@ -280,17 +282,20 @@ def write_imag_self_energy(imag_self_energy,
                     pos = 0
                     for j in range(i):
                         pos += len(band_indices[j])
-                    write_imag_self_energy_at_grid_point(
+                    filename = write_imag_self_energy_at_grid_point(
                         gp,
                         bi,
                         mesh,
                         frequency_points,
-                        ise[:, pos:(pos + len(bi))].sum(axis=1) / len(bi),
+                        ise[pos:(pos + len(bi))].sum(axis=0) / len(bi),
                         sigma=sigma,
                         temperature=t,
                         scattering_event_class=scattering_event_class,
-                        filename=filename,
+                        filename=output_filename,
                         is_mesh_symmetry=is_mesh_symmetry)
+                    if log_level:
+                        print("Imaginary parts of self-energies were "
+                              "written to \"%s\"." % filename)
 
 
 def average_by_degeneracy(imag_self_energy, band_indices, freqs_at_gp):

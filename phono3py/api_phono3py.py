@@ -870,16 +870,8 @@ class Phono3py(object):
         return self.phph_interaction
 
     @property
-    def gammas(self):
-        return self._gammas
-
-    @property
     def detailed_gammas(self):
         return self._detailed_gammas
-
-    @property
-    def frequency_points(self):
-        return self._frequency_points
 
     def init_phph_interaction(self,
                               nac_q_direction=None,
@@ -1451,6 +1443,8 @@ class Phono3py(object):
         else:
             self._frequency_points, self._gammas = vals
 
+        return vals
+
     def write_imag_self_energy(self, filename=None):
         write_imag_self_energy(
             self._gammas,
@@ -1461,8 +1455,9 @@ class Phono3py(object):
             self._temperatures,
             self._sigmas,
             scattering_event_class=self._scattering_event_class,
-            filename=filename,
-            is_mesh_symmetry=self._is_mesh_symmetry)
+            output_filename=filename,
+            is_mesh_symmetry=self._is_mesh_symmetry,
+            log_level=self._log_level)
 
     def run_real_self_energy(
             self,
@@ -1604,6 +1599,23 @@ class Phono3py(object):
             num_frequency_points=num_frequency_points,
             temperatures=temperatures,
             log_level=self._log_level)
+        self._spectral_function.run()
+
+        # if write_hdf5:
+        #     filename = write_spectral_function_to_hdf5(
+        #         gp,
+        #         band_indices,
+        #         _temperatures,
+        #         all_deltas[i, j],
+        #         mesh,
+        #         frequency_points=_frequency_points,
+        #         frequencies=frequencies,
+        #         filename=output_filename)
+
+        #     if self._log_level:
+        #         print("Spectral functions were stored in \"%s\"." % filename)
+        #         sys.stdout.flush()
+
 
     def run_thermal_conductivity(
             self,

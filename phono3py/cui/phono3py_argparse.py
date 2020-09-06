@@ -173,9 +173,6 @@ def get_parser(fc_symmetry=False,
         dest="force_sets_to_forces_fc2_mode", default=False,
         action="store_true", help="Create FORCES_FC2 from FORCE_SETS")
     parser.add_argument(
-        "--fst", "--frequency-shift", dest="is_frequency_shift", default=False,
-        action="store_true", help="Calculate frequency shifts")
-    parser.add_argument(
         "--full-pp", dest="is_full_pp", action="store_true", default=False,
         help=("Calculate full ph-ph interaction for RTA conductivity."
               "This may be activated when full elements of ph-ph interaction "
@@ -328,6 +325,10 @@ def get_parser(fc_symmetry=False,
         action="store_true", default=False,
         help="Solve reducible collision matrix")
     parser.add_argument(
+        "--rse", dest="is_real_self_energy", action="store_true",
+        default=False,
+        help="Calculate real part of self energy")
+    parser.add_argument(
         "--scattering-event-class", dest="scattering_event_class", type=int,
         default=None,
         help=("Scattering event class 1 or 2 to draw imaginary part of self "
@@ -339,6 +340,10 @@ def get_parser(fc_symmetry=False,
     parser.add_argument(
         "--sigma-cutoff", dest="sigma_cutoff_width", type=float, default=None,
         help="Cutoff width of smearing function (ratio to sigma value)")
+    parser.add_argument(
+        "--spf", dest="is_spectral_function", action="store_true",
+        default=False,
+        help="Calculate spectral function")
     parser.add_argument(
         "--stp", "--show-num-triplets", dest="show_num_triplets",
         action="store_true", default=False,
