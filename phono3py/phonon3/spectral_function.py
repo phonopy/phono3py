@@ -33,7 +33,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phono3py.phonon3.imag_self_energy import get_imag_self_energy
+from phono3py.phonon3.imag_self_energy import (
+    get_imag_self_energy, get_frequency_points)
 from phono3py.phonon3.real_self_energy import imag_to_real
 from phono3py.file_IO import write_spectral_function_at_grid_point
 
@@ -104,15 +105,26 @@ class SpectralFunction(object):
         self._frequency_points = None
 
     def run(self):
+        self._set_frequency_points()
+
+        self._gammas = np.zeros(
+            (len(self._grid_points), len(self._temperatures),
+             len(self._interaction.band_indices), len(self._frequency_points)),
+            dtype='double', order='C')
+        self._deltas = np.zeros_like(self._gammas)
+        self._spectral_functions = np.zeros_like(self._gammas)
+
         if self._log_level:
             print("-" * 28 + " Spectral function " + "-" * 28)
-        self._run_gamma()
-        if self._log_level:
-            print("-" * 11 +
-                  " Real part of self energy by Kramers-Kronig relation "
-                  + "-" * 11)
-        self._run_delta()
-        self._run_spectral_function()
+
+        for i, gp in enumerate(self._grid_points):
+            self._run_gamma(i, gp)
+            if self._log_level:
+                print("-" * 11 +
+                      " Real part of self energy by Kramers-Kronig relation "
+                      + "-" * 11)
+            self._run_delta(i)
+            self._run_spectral_function(i, gp)
         if self._log_level:
             print("-" * 75)
 
@@ -136,40 +148,36 @@ class SpectralFunction(object):
     def grid_points(self):
         return self._grid_points
 
-    def _run_gamma(self):
+    def _run_gamma(self, i, grid_point):
         # gammas[grid_points, sigmas, temps, band_indices, freq_points]
         fpoints, gammas = get_imag_self_energy(
             self._interaction,
-            self._grid_points,
+            [grid_point, ],
             frequency_points=self._frequency_points_in,
             frequency_step=self._frequency_step,
             num_frequency_points=self._num_frequency_points,
             temperatures=self._temperatures,
             log_level=self._log_level)
-        self._gammas = np.array(gammas[:, 0], dtype='double', order='C')
-        self._frequency_points = fpoints
-
-    def _run_delta(self):
-        self._deltas = np.zeros_like(self._gammas)
-        for i, gp in enumerate(self._grid_points):
-            for j, temp in enumerate(self._temperatures):
-                for k, bi in enumerate(self._interaction.band_indices):
-                    re_part, fpoints = imag_to_real(
-                        self._gammas[i, j, k], self._frequency_points)
-                    self._deltas[i, j, k] = -re_part
+        self._gammas[i] = np.array(gammas[0, 0], dtype='double', order='C')
         assert (np.abs(self._frequency_points - fpoints) < 1e-8).all()
 
-    def _run_spectral_function(self):
+    def _run_delta(self, i):
+        for j, temp in enumerate(self._temperatures):
+            for k, bi in enumerate(self._interaction.band_indices):
+                re_part, fpoints = imag_to_real(
+                    self._gammas[i, j, k], self._frequency_points)
+                self._deltas[i, j, k] = -re_part
+        assert (np.abs(self._frequency_points - fpoints) < 1e-8).all()
+
+    def _run_spectral_function(self, i, grid_point):
         frequencies = self._interaction.get_phonons()[0]
-        self._spectral_functions = np.zeros_like(self._gammas)
-        for i, gp in enumerate(self._grid_points):
-            for j, temp in enumerate(self._temperatures):
-                for k, bi in enumerate(self._interaction.band_indices):
-                    freq = frequencies[gp, bi]
-                    gammas = self._gammas[i, j, k]
-                    deltas = self._deltas[i, j, k]
-                    vals = self._get_spectral_function(gammas, deltas, freq)
-                    self._spectral_functions[i, j, k] = vals
+        for j, temp in enumerate(self._temperatures):
+            for k, bi in enumerate(self._interaction.band_indices):
+                freq = frequencies[grid_point, bi]
+                gammas = self._gammas[i, j, k]
+                deltas = self._deltas[i, j, k]
+                vals = self._get_spectral_function(gammas, deltas, freq)
+                self._spectral_functions[i, j, k] = vals
 
     def _get_spectral_function(self, gammas, deltas, freq):
         fpoints = self._frequency_points
@@ -178,3 +186,15 @@ class SpectralFunction(object):
                   + (2 * freq * gammas) ** 2)
         vals = np.where(denoms > 0, nums / denoms, 0)
         return vals
+
+    def _set_frequency_points(self):
+        if (self._interaction.get_phonons()[2] == 0).any():
+            if self._log_level:
+                print("Running harmonic phonon calculations...")
+            self._interaction.run_phonon_solver()
+        max_phonon_freq = np.amax(self._interaction.get_phonons()[0])
+        self._frequency_points = get_frequency_points(
+            max_phonon_freq=max_phonon_freq,
+            frequency_points=self._frequency_points_in,
+            frequency_step=self._frequency_step,
+            num_frequency_points=self._num_frequency_points)

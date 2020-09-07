@@ -52,11 +52,13 @@ def test_SpectralFunction(si_pbesol):
     sf = SpectralFunction(si_pbesol.phph_interaction,
                           [1, 103],
                           temperatures=[300, ],
-                          num_frequency_points=10)
+                          num_frequency_points=10,
+                          log_level=1)
     sf.run()
 
     # for line in np.swapaxes(sf.spectral_functions, -2, -1).reshape(-1, 6):
     #     print(("%.7f, " * 6) % tuple(line))
+    # raise
 
     np.testing.assert_allclose(
         shifts, np.swapaxes(sf.shifts, -2, -1).ravel(), atol=1e-2)

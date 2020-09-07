@@ -724,14 +724,6 @@ class ImagSelfEnergy(object):
                                      self._frequencies[self._grid_point])
 
 
-def _get_batches(tot_nelems, nelems=10):
-    nbatch = tot_nelems // nelems
-    batches = [np.arange(i * nelems, (i + 1) * nelems)
-               for i in range(nbatch)]
-    batches.append(np.arange(nelems * nbatch, tot_nelems))
-    return batches
-
-
 def _run_ise_at_frequency_points_batch(
         i, j,
         _frequency_points,
@@ -746,9 +738,13 @@ def _run_ise_at_frequency_points_batch(
         log_level=0):
     batches = _get_batches(len(_frequency_points), nelems_in_batch)
 
-    for fpts_batch in batches:
+    if log_level:
+        print("Calculations at %d frequency points are devided into "
+              "%d batches." % (len(_frequency_points), len(batches)))
+
+    for bi, fpts_batch in enumerate(batches):
         if log_level:
-            print(fpts_batch)
+            print("%d/%d: %s" % (bi + 1, len(batches), fpts_batch + 1))
 
         ise.set_frequency_points(_frequency_points[fpts_batch])
         ise.set_integration_weights(
@@ -760,3 +756,12 @@ def _run_ise_at_frequency_points_batch(
             if write_gamma_detail or return_gamma_detail:
                 detailed_gamma_at_gp[j, l, fpts_batch] = (
                     ise.get_detailed_imag_self_energy())
+
+
+def _get_batches(tot_nelems, nelems=10):
+    nbatch = tot_nelems // nelems
+    batches = [np.arange(i * nelems, (i + 1) * nelems)
+               for i in range(nbatch)]
+    if tot_nelems % nelems > 0:
+        batches.append(np.arange(nelems * nbatch, tot_nelems))
+    return batches
