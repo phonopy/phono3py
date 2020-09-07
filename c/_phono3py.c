@@ -877,6 +877,7 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
   PyArrayObject *py_g;
   PyArrayObject *py_g_zero;
   double cutoff_frequency, temperature;
+  int frequency_point_index;
 
   Darray *fc3_normal_squared;
   double *gamma;
@@ -885,8 +886,9 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
   double *frequencies;
   size_t (*triplets)[3];
   int *triplet_weights;
+  int num_frequency_points;
 
-  if (!PyArg_ParseTuple(args, "OOOOOdOOd",
+  if (!PyArg_ParseTuple(args, "OOOOOdOOdi",
                         &py_gamma,
                         &py_fc3_normal_squared,
                         &py_triplets,
@@ -895,7 +897,8 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
                         &temperature,
                         &py_g,
                         &py_g_zero,
-                        &cutoff_frequency)) {
+                        &cutoff_frequency,
+                        &frequency_point_index)) {
     return NULL;
   }
 
@@ -906,6 +909,7 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
   frequencies = (double*)PyArray_DATA(py_frequencies);
   triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
   triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
+  num_frequency_points = PyArray_DIMS(py_g)[2];
 
   ise_get_imag_self_energy_at_bands_with_g(gamma,
                                            fc3_normal_squared,
@@ -915,7 +919,9 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
                                            g,
                                            g_zero,
                                            temperature,
-                                           cutoff_frequency);
+                                           cutoff_frequency,
+                                           num_frequency_points,
+                                           frequency_point_index);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;

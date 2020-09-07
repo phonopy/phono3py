@@ -144,6 +144,7 @@ def get_imag_self_energy(interaction,
             print("Grid point: %d" % gp)
             print("Number of ir-triplets: "
                   "%d / %d" % (len(weights), weights.sum()))
+
         ise.run_interaction()
 
         if log_level:
@@ -169,29 +170,31 @@ def get_imag_self_energy(interaction,
                 (len(_sigmas), len(temperatures), len(_frequency_points),
                  len(weights), num_band0, num_band, num_band),
                 dtype='double')
+        else:
+            detailed_gamma_at_gp = None
 
         for j, sigma in enumerate(_sigmas):
             if log_level:
                 if sigma:
                     print("Sigma: %s" % sigma)
                 else:
-                    print("Tetrahedron method")
+                    print("Tetrahedron method is used for BZ integration.")
 
             ise.set_sigma(sigma)
 
             # Run one by one at frequency points
-            for k, freq_point in enumerate(_frequency_points):
-                ise.set_frequency_points([freq_point])
-                ise.set_integration_weights(
-                    scattering_event_class=scattering_event_class)
-
-                for l, t in enumerate(temperatures):
-                    ise.set_temperature(t)
-                    ise.run()
-                    gamma[i, j, l, :, k] = ise.get_imag_self_energy()[0]
-                    if write_gamma_detail or return_gamma_detail:
-                        detailed_gamma_at_gp[j, l, k] = (
-                            ise.get_detailed_imag_self_energy()[0])
+            _run_ise_at_frequency_points_batch(
+                i, j,
+                _frequency_points,
+                ise,
+                temperatures,
+                gamma,
+                write_gamma_detail,
+                return_gamma_detail,
+                detailed_gamma_at_gp,
+                scattering_event_class,
+                nelems_in_batch=10,
+                log_level=log_level)
 
             if write_gamma_detail:
                 full_filename = write_gamma_detail_to_hdf5(
@@ -348,7 +351,9 @@ class ImagSelfEnergy(object):
         self._cutoff_frequency = interaction.cutoff_frequency
 
         self._g = None  # integration weights
-        self._g_zero = None
+        self._g_zero = None  # Necessary elements of interaction strength
+        self._g_zero_frequency_points = None
+        self._g_zero_zeros = None   # always zeros for frequency sampling mode
         self._mesh = self._pp.mesh_numbers
         self._is_collision_matrix = False
 
@@ -408,6 +413,14 @@ class ImagSelfEnergy(object):
             is_collision_matrix=self._is_collision_matrix)
         if self._frequency_points is None:
             self._g_zero = _g_zero
+        else:
+            # g_zero feature can not be used in frequency sampling mode.
+            # zero values of the following array shape is used in C-routine.
+            # shape = [num_triplets, num_band0, num_band, num_band]
+            shape = list(self._g.shape[1:])
+            shape[1] = len(self._pp.band_indices)
+            self._g_zero_zeros = np.zeros(shape=shape, dtype='byte', order='C')
+            self._g_zero_frequency_points = _g_zero
 
         if scattering_event_class == 1 or scattering_event_class == 2:
             self._g[scattering_event_class - 1] = 0
@@ -546,7 +559,8 @@ class ImagSelfEnergy(object):
                                         self._temperature,
                                         self._g,
                                         _g_zero,
-                                        self._cutoff_frequency)
+                                        self._cutoff_frequency,
+                                        -1)
         self._imag_self_energy *= self._unit_conversion
 
     def _run_c_detailed_with_band_indices_with_g(self):
@@ -580,24 +594,19 @@ class ImagSelfEnergy(object):
     def _run_c_with_frequency_points_with_g(self):
         import phono3py._phono3py as phono3c
         num_band0 = self._pp_strength.shape[1]
-        g_shape = list(self._g.shape)
-        g_shape[2] = num_band0
-        g = np.zeros(tuple(g_shape), dtype='double', order='C')
         ise_at_f = np.zeros(num_band0, dtype='double')
-        _g_zero = np.zeros(g_shape, dtype='byte', order='C')
 
         for i in range(len(self._frequency_points)):
-            for j in range(num_band0):
-                g[:, :, j, :, :] = self._g[:, :, i, :, :]
             phono3c.imag_self_energy_with_g(ise_at_f,
                                             self._pp_strength,
                                             self._triplets_at_q,
                                             self._weights_at_q,
                                             self._frequencies,
                                             self._temperature,
-                                            g,
-                                            _g_zero,  # don't use g_zero
-                                            self._cutoff_frequency)
+                                            self._g,
+                                            self._g_zero_frequency_points,
+                                            self._cutoff_frequency,
+                                            i)
             self._imag_self_energy[i] = ise_at_f
         self._imag_self_energy *= self._unit_conversion
 
@@ -713,3 +722,41 @@ class ImagSelfEnergy(object):
         return average_by_degeneracy(imag_self_energy,
                                      self._pp.band_indices,
                                      self._frequencies[self._grid_point])
+
+
+def _get_batches(tot_nelems, nelems=10):
+    nbatch = tot_nelems // nelems
+    batches = [np.arange(i * nelems, (i + 1) * nelems)
+               for i in range(nbatch)]
+    batches.append(np.arange(nelems * nbatch, tot_nelems))
+    return batches
+
+
+def _run_ise_at_frequency_points_batch(
+        i, j,
+        _frequency_points,
+        ise,
+        temperatures,
+        gamma,
+        write_gamma_detail,
+        return_gamma_detail,
+        detailed_gamma_at_gp,
+        scattering_event_class,
+        nelems_in_batch=50,
+        log_level=0):
+    batches = _get_batches(len(_frequency_points), nelems_in_batch)
+
+    for fpts_batch in batches:
+        if log_level:
+            print(fpts_batch)
+
+        ise.set_frequency_points(_frequency_points[fpts_batch])
+        ise.set_integration_weights(
+            scattering_event_class=scattering_event_class)
+        for l, t in enumerate(temperatures):
+            ise.set_temperature(t)
+            ise.run()
+            gamma[i, j, l, :, fpts_batch] = ise.get_imag_self_energy()
+            if write_gamma_detail or return_gamma_detail:
+                detailed_gamma_at_gp[j, l, fpts_batch] = (
+                    ise.get_detailed_imag_self_energy())

@@ -37,6 +37,7 @@
 #include <phonoc_array.h>
 #include <phonoc_const.h>
 #include <phonon3_h/interaction.h>
+#include <phonon3_h/imag_self_energy_with_g.h>
 #include <phonon3_h/real_to_reciprocal.h>
 #include <phonon3_h/reciprocal_to_normal.h>
 #include <lapack_wrapper.h>
@@ -132,26 +133,13 @@ void itr_get_interaction(Darray *fc3_normal_squared,
     openmp_per_triplets = 0;
   }
 
-#pragma omp parallel for schedule(guided) private(j, k, l, jkl, num_g_pos, g_pos) if (openmp_per_triplets)
+#pragma omp parallel for schedule(guided) private(num_g_pos, g_pos) if (openmp_per_triplets)
   for (i = 0; i < num_triplets; i++) {
-    num_g_pos = 0;
-    jkl = 0;
     g_pos = (int(*)[4])malloc(sizeof(int[4]) * num_band_prod);
-    for (j = 0; j < num_band0; j++) {
-      for (k = 0; k < num_band; k++) {
-        for (l = 0; l < num_band; l++) {
-          if (!g_zero[jkl + i * num_band_prod]) {
-            g_pos[num_g_pos][0] = j;
-            g_pos[num_g_pos][1] = k;
-            g_pos[num_g_pos][2] = l;
-            g_pos[num_g_pos][3] = jkl;
-            num_g_pos++;
-          }
-          fc3_normal_squared->data[jkl + i * num_band_prod] = 0;
-          jkl++;
-        }
-      }
-    }
+    num_g_pos = ise_set_g_pos(g_pos,
+                              num_band0,
+                              num_band,
+                              g_zero + i * num_band_prod);
 
     itr_get_interaction_at_triplet(
       fc3_normal_squared->data + i * num_band_prod,
