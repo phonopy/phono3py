@@ -756,6 +756,7 @@ def _run_ise_at_frequency_points_batch(
     for bi, fpts_batch in enumerate(batches):
         if log_level:
             print("%d/%d: %s" % (bi + 1, len(batches), fpts_batch + 1))
+            sys.stdout.flush()
 
         ise.set_frequency_points(_frequency_points[fpts_batch])
         ise.set_integration_weights(
