@@ -210,9 +210,7 @@ class SpectralFunction(object):
 
     def _run_gamma(self, i, grid_point):
         if self._log_level:
-            print("-------------------------------")
-            print(" Imaginary part of self energy")
-            print("-------------------------------")
+            print("* Imaginary part of self energy")
 
         ise = ImagSelfEnergy(self._interaction)
         ise.set_grid_point(grid_point)
@@ -233,9 +231,7 @@ class SpectralFunction(object):
 
     def _run_delta(self, i):
         if self._log_level:
-            print("--------------------------")
-            print(" Real part of self energy")
-            print("--------------------------")
+            print("* Real part of self energy")
             print("Running Kramers-Kronig relation integration...")
 
         for j, temp in enumerate(self._temperatures):
@@ -247,9 +243,7 @@ class SpectralFunction(object):
 
     def _run_spectral_function(self, i, grid_point):
         if self._log_level:
-            print("-------------------")
-            print(" Spectral function")
-            print("-------------------")
+            print("* Spectral function")
         frequencies = self._interaction.get_phonons()[0]
         for j, temp in enumerate(self._temperatures):
             for k, bi in enumerate(self._interaction.band_indices):
