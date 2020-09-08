@@ -71,6 +71,7 @@ class Phono3pySettings(Settings):
         'mass_variances': None,
         'max_freepath': None,
         'mesh_divisors': None,
+        'num_points_in_batch': None,
         'read_collision': None,
         'read_fc2': False,
         'read_fc3': False,
@@ -195,6 +196,9 @@ class Phono3pySettings(Settings):
 
     def set_mesh_divisors(self, val):
         self._v['mesh_divisors'] = val
+
+    def set_num_points_in_batch(self, val):
+        self._v['num_points_in_batch'] = val
 
     def set_phonon_supercell_matrix(self, val):
         self._v['phonon_supercell_matrix'] = val
@@ -417,6 +421,11 @@ class Phono3pyConfParser(ConfParser):
             if mesh_divisors is not None:
                 self._confs['mesh_divisors'] = " ".join(mesh_divisors)
 
+        if 'num_points_in_batch' in self._args:
+            num_points_in_batch = self._args.num_points_in_batch
+            if num_points_in_batch is not None:
+                self._confs['num_points_in_batch'] = num_points_in_batch
+
         if 'pinv_cutoff' in self._args:
             if self._args.pinv_cutoff is not None:
                 self._confs['pinv_cutoff'] = self._args.pinv_cutoff
@@ -530,9 +539,12 @@ class Phono3pyConfParser(ConfParser):
                     'sigma_cutoff_width'):
                 self.set_parameter(conf_key, float(confs[conf_key]))
 
+            # int
+            if conf_key in ('pinv_solver', 'num_points_in_batch'):
+                self.set_parameter(conf_key, int(confs[conf_key]))
+
             # specials
-            if (conf_key == 'create_forces_fc2' or
-                conf_key == 'create_forces_fc3'):
+            if conf_key in ('create_forces_fc2', 'create_forces_fc3'):
                 if type(confs[conf_key]) is str:
                     fnames = confs[conf_key].split()
                 else:
@@ -603,9 +615,6 @@ class Phono3pyConfParser(ConfParser):
                 else:
                     self.setting_error("Mesh divisors are incorrectly set.")
 
-            if conf_key == 'pinv_solver':
-                self.set_parameter('pinv_solver', int(confs['pinv_solver']))
-
             if conf_key == 'read_collision':
                 if confs['read_collision'] == 'all':
                     self.set_parameter('read_collision', 'all')
@@ -629,10 +638,18 @@ class Phono3pyConfParser(ConfParser):
         if 'boundary_mfp' in params:
             self._settings.set_boundary_mfp(params['boundary_mfp'])
 
+        # Calculate thermal conductivity in BTE-RTA
+        if 'bterta' in params:
+            self._settings.set_is_bterta(params['bterta'])
+
         # Solve collective phonons
         if 'collective_phonon' in params:
             self._settings.set_solve_collective_phonon(
                 params['collective_phonon'])
+
+        # Compact force constants or full force constants
+        if 'compact_fc' in params:
+            self._settings.set_is_compact_fc(params['compact_fc'])
 
         # Peierls type approximation for squared ph-ph interaction strength
         if 'const_ave_pp' in params:
@@ -679,14 +696,6 @@ class Phono3pyConfParser(ConfParser):
         if 'ion_clamped' in params:
             self._settings.set_ion_clamped(params['ion_clamped'])
 
-        # Calculate thermal conductivity in BTE-RTA
-        if 'bterta' in params:
-            self._settings.set_is_bterta(params['bterta'])
-
-        # Compact force constants or full force constants
-        if 'compact_fc' in params:
-            self._settings.set_is_compact_fc(params['compact_fc'])
-
         # Calculate full ph-ph interaction strength for RTA conductivity
         if 'full_pp' in params:
             self._settings.set_is_full_pp(params['full_pp'])
@@ -717,6 +726,11 @@ class Phono3pyConfParser(ConfParser):
         # Calculate thermal conductivity in LBTE with Chaput's method
         if 'lbte' in params:
             self._settings.set_is_lbte(params['lbte'])
+
+        # Number of frequency points in a batch.
+        if 'num_points_in_batch' in params:
+            self._settings.set_num_points_in_batch(
+                params['num_points_in_batch'])
 
         # Calculate Normal and Umklapp processes
         if 'N_U' in params:

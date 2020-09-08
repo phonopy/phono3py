@@ -1581,6 +1581,7 @@ class Phono3py(object):
             frequency_points=None,
             frequency_step=None,
             num_frequency_points=None,
+            num_points_in_batch=None,
             write_txt=False,
             write_hdf5=True,
             output_filename=None):
@@ -1606,10 +1607,11 @@ class Phono3py(object):
             Number of sampling sampling points to be used instead of
             frequency_step. This number includes end points. Default is None,
             which gives 201.
-        epsilons : array_like
-            The value to avoid divergence. When multiple values are given
-            frequency shifts for those values are returned.
-            dtype=float, shape=(epsilons,)
+        num_points_in_batch: int, optional
+            Number of sampling points in one batch. This is for the frequency
+            sampling mode and the sampling points are divided into batches.
+            Lager number provides efficient use of multi-cores but more
+            memory demanding. Default is None, which give the number of 10.
         write_txt : bool, optional
             Frequency points and spectral functions are written
             into text files.
@@ -1632,6 +1634,7 @@ class Phono3py(object):
             frequency_points=frequency_points,
             frequency_step=frequency_step,
             num_frequency_points=num_frequency_points,
+            num_points_in_batch=num_points_in_batch,
             temperatures=temperatures,
             log_level=self._log_level)
         self._spectral_function.run()

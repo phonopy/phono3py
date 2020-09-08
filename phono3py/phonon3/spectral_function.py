@@ -89,11 +89,13 @@ class SpectralFunction(object):
                  frequency_points=None,
                  frequency_step=None,
                  num_frequency_points=None,
+                 num_points_in_batch=None,
                  temperatures=None,
                  log_level=0):
         self._interaction = interaction
         self._grid_points = grid_points
         self._frequency_points_in = frequency_points
+        self._num_points_in_batch = num_points_in_batch
         self._frequency_step = frequency_step
         self._num_frequency_points = num_frequency_points
         self._temperatures = temperatures
@@ -156,6 +158,7 @@ class SpectralFunction(object):
             frequency_points=self._frequency_points_in,
             frequency_step=self._frequency_step,
             num_frequency_points=self._num_frequency_points,
+            num_points_in_batch=self._num_points_in_batch,
             temperatures=self._temperatures,
             log_level=self._log_level)
         self._gammas[i] = np.array(gammas[0, 0], dtype='double', order='C')

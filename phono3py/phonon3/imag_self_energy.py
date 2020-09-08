@@ -49,6 +49,7 @@ def get_imag_self_energy(interaction,
                          frequency_points=None,
                          frequency_step=None,
                          num_frequency_points=None,
+                         num_points_in_batch=None,
                          scattering_event_class=None,  # class 1 or 2
                          write_gamma_detail=False,
                          return_gamma_detail=False,
@@ -82,10 +83,15 @@ def get_imag_self_energy(interaction,
     frequency_step : float, optional
         Uniform pitch of frequency sampling points. Default is None. This
         results in using num_frequency_points.
-    num_frequency_points: Int, optional
+    num_frequency_points: int, optional
         Number of sampling sampling points to be used instead of
         frequency_step. This number includes end points. Default is None,
         which gives 201.
+    num_points_in_batch: int, optional
+        Number of sampling points in one batch. This is for the frequency
+        sampling mode and the sampling points are divided into batches.
+        Lager number provides efficient use of multi-cores but more
+        memory demanding. Default is None, which give the number of 10.
     scattering_event_class : int, optional
         Specific choice of scattering event class, 1 or 2 that is specified
         1 or 2, respectively. The result is stored in gammas. Therefore
@@ -110,6 +116,11 @@ def get_imag_self_energy(interaction,
         _sigmas = [None, ]
     else:
         _sigmas = sigmas
+
+    if num_points_in_batch is None:
+        _num_points_in_batch = 10
+    else:
+        _num_points_in_batch = num_points_in_batch
 
     if (interaction.get_phonons()[2] == 0).any():
         if log_level:
@@ -193,7 +204,7 @@ def get_imag_self_energy(interaction,
                 return_gamma_detail,
                 detailed_gamma_at_gp,
                 scattering_event_class,
-                nelems_in_batch=10,
+                nelems_in_batch=_num_points_in_batch,
                 log_level=log_level)
 
             if write_gamma_detail:

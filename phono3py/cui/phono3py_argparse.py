@@ -276,6 +276,11 @@ def get_parser(fc_symmetry=False,
         "--num-freq-points", dest="num_frequency_points", type=int,
         default=None,
         help="Number of sampling points for spectrum")
+    parser.add_argument(
+        "--num-points-in-batch", dest="num_points_in_batch", type=int,
+        default=None,
+        help=("Number of frequency points in a batch for the frequency "
+              "sampling modes of imag-self-energy calculation"))
     if not load_phono3py_yaml:
         parser.add_argument(
             "-o", dest="output_filename", default=None,

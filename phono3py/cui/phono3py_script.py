@@ -532,6 +532,11 @@ def get_default_values(settings):
         num_frequency_points = settings.num_frequency_points
         frequency_step = None
 
+    if settings.num_points_in_batch is None:
+        num_points_in_batch = 10
+    else:
+        num_points_in_batch = settings.num_points_in_batch
+
     if settings.frequency_scale_factor is None:
         frequency_scale_factor = None
     else:
@@ -549,6 +554,7 @@ def get_default_values(settings):
     params['temperatures'] = temperatures
     params['frequency_factor_to_THz'] = frequency_factor_to_THz
     params['num_frequency_points'] = num_frequency_points
+    params['num_points_in_batch'] = num_points_in_batch
     params['frequency_step'] = frequency_step
     params['frequency_scale_factor'] = frequency_scale_factor
     params['cutoff_frequency'] = cutoff_frequency
@@ -1126,6 +1132,7 @@ def main(**argparse_control):
             updated_settings['temperature_points'],
             frequency_step=updated_settings['frequency_step'],
             num_frequency_points=updated_settings['num_frequency_points'],
+            num_points_in_batch=updated_settings['num_points_in_batch'],
             write_txt=True,
             output_filename=output_filename)
 
