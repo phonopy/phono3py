@@ -32,11 +32,53 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import sys
 import numpy as np
 from phono3py.phonon3.imag_self_energy import (
-    get_imag_self_energy, get_frequency_points)
+    run_ise_at_frequency_points_batch, get_frequency_points, ImagSelfEnergy)
 from phono3py.phonon3.real_self_energy import imag_to_real
 from phono3py.file_IO import write_spectral_function_at_grid_point
+
+
+def run_spectral_function(interaction,
+                          grid_points,
+                          frequency_points=None,
+                          frequency_step=None,
+                          num_frequency_points=None,
+                          num_points_in_batch=None,
+                          temperatures=None,
+                          band_indices=None,
+                          output_filename=None,
+                          log_level=0):
+    spf = SpectralFunction(interaction,
+                           grid_points,
+                           frequency_points=frequency_points,
+                           frequency_step=frequency_step,
+                           num_frequency_points=num_frequency_points,
+                           num_points_in_batch=num_points_in_batch,
+                           temperatures=temperatures,
+                           log_level=log_level)
+
+    for i, gp in enumerate(spf):
+        for t, sp_funcs in zip(temperatures, spf.spectral_functions[i]):
+            for j, bi in enumerate(band_indices):
+                pos = 0
+                for k in range(j):
+                    pos += len(band_indices[k])
+                filename = write_spectral_function_at_grid_point(
+                    gp,
+                    bi,
+                    spf.frequency_points,
+                    sp_funcs[pos:(pos + len(bi))].sum(axis=0) / len(bi),
+                    interaction.mesh_numbers,
+                    t,
+                    filename=output_filename,
+                    is_mesh_symmetry=interaction.is_mesh_symmetry)
+                if log_level:
+                    print("Spectral functions were written to")
+                    print("\"%s\"." % filename)
+
+    return spf
 
 
 def write_spectral_function(spectral_functions,
@@ -76,8 +118,8 @@ def write_spectral_function(spectral_functions,
                         filename=output_filename,
                         is_mesh_symmetry=is_mesh_symmetry)
                     if log_level:
-                        print("Spectral functions were "
-                              "written to \"%s\"." % filename)
+                        print("Spectral functions were written to")
+                        print("\"%s\"." % filename)
 
 
 class SpectralFunction(object):
@@ -101,34 +143,40 @@ class SpectralFunction(object):
         self._temperatures = temperatures
         self._log_level = log_level
 
-        self._spectral_functions = None
+        self._frequency_points = None
         self._gammas = None
         self._deltas = None
-        self._frequency_points = None
+        self._spectral_functions = None
+        self._gp_index = None
 
     def run(self):
-        self._set_frequency_points()
+        for gp_index in self:
+            pass
 
-        self._gammas = np.zeros(
-            (len(self._grid_points), len(self._temperatures),
-             len(self._interaction.band_indices), len(self._frequency_points)),
-            dtype='double', order='C')
-        self._deltas = np.zeros_like(self._gammas)
-        self._spectral_functions = np.zeros_like(self._gammas)
+    def __iter__(self):
+        self._prepare()
 
-        if self._log_level:
-            print("-" * 28 + " Spectral function " + "-" * 28)
+        return self
 
-        for i, gp in enumerate(self._grid_points):
-            self._run_gamma(i, gp)
+    def next(self):
+        return self.__next__()
+
+    def __next__(self):
+        if self._gp_index >= len(self._grid_points):
             if self._log_level:
-                print("-" * 11 +
-                      " Real part of self energy by Kramers-Kronig relation "
-                      + "-" * 11)
-            self._run_delta(i)
-            self._run_spectral_function(i, gp)
+                print("-" * 74)
+            raise StopIteration
+
         if self._log_level:
-            print("-" * 75)
+            print(("-" * 24 + " Spectral function (%d/%d) " + "-" * 24)
+                  % (self._gp_index + 1, len(self._grid_points)))
+
+        gp = self._grid_points[self._gp_index]
+        self._run_gamma(self._gp_index, gp)
+        self._run_delta(self._gp_index)
+        self._run_spectral_function(self._gp_index, gp)
+        self._gp_index += 1
+        return gp
 
     @property
     def spectral_functions(self):
@@ -150,21 +198,46 @@ class SpectralFunction(object):
     def grid_points(self):
         return self._grid_points
 
+    def _prepare(self):
+        self._set_frequency_points()
+        self._gammas = np.zeros(
+            (len(self._grid_points), len(self._temperatures),
+             len(self._interaction.band_indices), len(self._frequency_points)),
+            dtype='double', order='C')
+        self._deltas = np.zeros_like(self._gammas)
+        self._spectral_functions = np.zeros_like(self._gammas)
+        self._gp_index = 0
+
     def _run_gamma(self, i, grid_point):
-        # gammas[grid_points, sigmas, temps, band_indices, freq_points]
-        fpoints, gammas = get_imag_self_energy(
-            self._interaction,
-            [grid_point, ],
-            frequency_points=self._frequency_points_in,
-            frequency_step=self._frequency_step,
-            num_frequency_points=self._num_frequency_points,
-            num_points_in_batch=self._num_points_in_batch,
-            temperatures=self._temperatures,
+        if self._log_level:
+            print("-------------------------------")
+            print(" Imaginary part of self energy")
+            print("-------------------------------")
+
+        ise = ImagSelfEnergy(self._interaction)
+        ise.set_grid_point(grid_point)
+
+        if self._log_level:
+            print("Running ph-ph interaction calculation...")
+            sys.stdout.flush()
+
+        ise.run_interaction()
+        ise.set_sigma(None)
+        run_ise_at_frequency_points_batch(
+            self._frequency_points,
+            ise,
+            self._temperatures,
+            self._gammas[i],
+            nelems_in_batch=self._num_points_in_batch,
             log_level=self._log_level)
-        self._gammas[i] = np.array(gammas[0, 0], dtype='double', order='C')
-        assert (np.abs(self._frequency_points - fpoints) < 1e-8).all()
 
     def _run_delta(self, i):
+        if self._log_level:
+            print("--------------------------")
+            print(" Real part of self energy")
+            print("--------------------------")
+            print("Running Kramers-Kronig relation integration...")
+
         for j, temp in enumerate(self._temperatures):
             for k, bi in enumerate(self._interaction.band_indices):
                 re_part, fpoints = imag_to_real(
@@ -173,6 +246,10 @@ class SpectralFunction(object):
         assert (np.abs(self._frequency_points - fpoints) < 1e-8).all()
 
     def _run_spectral_function(self, i, grid_point):
+        if self._log_level:
+            print("-------------------")
+            print(" Spectral function")
+            print("-------------------")
         frequencies = self._interaction.get_phonons()[0]
         for j, temp in enumerate(self._temperatures):
             for k, bi in enumerate(self._interaction.band_indices):

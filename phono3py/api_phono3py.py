@@ -57,7 +57,7 @@ from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
 from phono3py.phonon3.real_self_energy import (
     get_real_self_energy, write_real_self_energy)
 from phono3py.phonon3.spectral_function import (
-    SpectralFunction, write_spectral_function)
+    run_spectral_function, write_spectral_function)
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.conductivity_RTA import get_thermal_conductivity_RTA
 from phono3py.phonon3.conductivity_LBTE import get_thermal_conductivity_LBTE
@@ -1628,7 +1628,7 @@ class Phono3py(object):
                    "before running this method.")
             raise RuntimeError(msg)
 
-        self._spectral_function = SpectralFunction(
+        self._spectral_function = run_spectral_function(
             self._interaction,
             grid_points,
             frequency_points=frequency_points,
@@ -1636,20 +1636,8 @@ class Phono3py(object):
             num_frequency_points=num_frequency_points,
             num_points_in_batch=num_points_in_batch,
             temperatures=temperatures,
+            band_indices=self._band_indices,
             log_level=self._log_level)
-        self._spectral_function.run()
-
-        if write_txt:
-            write_spectral_function(
-                self._spectral_function.spectral_functions,
-                self._mesh_numbers,
-                grid_points,
-                self._band_indices,
-                self._spectral_function.frequency_points,
-                temperatures,
-                output_filename=output_filename,
-                is_mesh_symmetry=self._is_mesh_symmetry,
-                log_level=self._log_level)
 
         # if write_hdf5:
         #     filename = write_spectral_function_to_hdf5(

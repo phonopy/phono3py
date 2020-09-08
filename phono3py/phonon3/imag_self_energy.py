@@ -117,11 +117,6 @@ def get_imag_self_energy(interaction,
     else:
         _sigmas = sigmas
 
-    if num_points_in_batch is None:
-        _num_points_in_batch = 10
-    else:
-        _num_points_in_batch = num_points_in_batch
-
     if (interaction.get_phonons()[2] == 0).any():
         if log_level:
             print("Running harmonic phonon calculations...")
@@ -194,17 +189,20 @@ def get_imag_self_energy(interaction,
             ise.set_sigma(sigma)
 
             # Run one by one at frequency points
-            _run_ise_at_frequency_points_batch(
-                i, j,
+            if detailed_gamma_at_gp is None:
+                detailed_gamma_at_gp_at_j = None
+            else:
+                detailed_gamma_at_gp_at_j = detailed_gamma_at_gp[j]
+            run_ise_at_frequency_points_batch(
                 _frequency_points,
                 ise,
                 temperatures,
-                gamma,
-                write_gamma_detail,
-                return_gamma_detail,
-                detailed_gamma_at_gp,
-                scattering_event_class,
-                nelems_in_batch=_num_points_in_batch,
+                gamma[i, j],
+                write_gamma_detail=write_gamma_detail,
+                return_gamma_detail=return_gamma_detail,
+                detailed_gamma_at_gp=detailed_gamma_at_gp_at_j,
+                scattering_event_class=scattering_event_class,
+                nelems_in_batch=num_points_in_batch,
                 log_level=log_level)
 
             if write_gamma_detail:
@@ -735,19 +733,23 @@ class ImagSelfEnergy(object):
                                      self._frequencies[self._grid_point])
 
 
-def _run_ise_at_frequency_points_batch(
-        i, j,
+def run_ise_at_frequency_points_batch(
         _frequency_points,
         ise,
         temperatures,
         gamma,
-        write_gamma_detail,
-        return_gamma_detail,
-        detailed_gamma_at_gp,
-        scattering_event_class,
+        write_gamma_detail=False,
+        return_gamma_detail=False,
+        detailed_gamma_at_gp=None,
+        scattering_event_class=None,
         nelems_in_batch=50,
         log_level=0):
-    batches = _get_batches(len(_frequency_points), nelems_in_batch)
+    if nelems_in_batch is None:
+        _nelems_in_batch = 10
+    else:
+        _nelems_in_batch = nelems_in_batch
+
+    batches = _get_batches(len(_frequency_points), _nelems_in_batch)
 
     if log_level:
         print("Calculations at %d frequency points are devided into "
@@ -764,9 +766,9 @@ def _run_ise_at_frequency_points_batch(
         for l, t in enumerate(temperatures):
             ise.set_temperature(t)
             ise.run()
-            gamma[i, j, l, :, fpts_batch] = ise.get_imag_self_energy()
+            gamma[l, :, fpts_batch] = ise.get_imag_self_energy()
             if write_gamma_detail or return_gamma_detail:
-                detailed_gamma_at_gp[j, l, fpts_batch] = (
+                detailed_gamma_at_gp[l, fpts_batch] = (
                     ise.get_detailed_imag_self_energy())
 
 

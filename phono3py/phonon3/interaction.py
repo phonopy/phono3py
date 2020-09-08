@@ -157,6 +157,10 @@ class Interaction(object):
         return self.mesh_numbers
 
     @property
+    def is_mesh_symmetry(self):
+        return self._is_mesh_symmetry
+
+    @property
     def fc3(self):
         return self._fc3
 
