@@ -252,9 +252,9 @@ class SpectralFunction(object):
             A = -- Im -----------
                 pi    1 - G_0 Pi
 
-        where pi = 3.14..., and Pi is the self energy. It is expected that
-        the integral of A over frequency is approximately 1 for each phonon
-        mode.
+        where pi = 3.14..., and Pi is the self energy, Pi = Delta - iGamma.
+        It is expected that the integral of A over frequency is
+        approximately 1 for each phonon mode.
 
         """
 
