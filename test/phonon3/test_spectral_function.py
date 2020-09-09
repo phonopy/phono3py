@@ -63,5 +63,5 @@ def test_SpectralFunction(si_pbesol):
     np.testing.assert_allclose(
         shifts, np.swapaxes(sf.shifts, -2, -1).ravel(), atol=1e-2)
     np.testing.assert_allclose(
-        spec_funcs, np.swapaxes(sf.spectral_functions, -2, -1).ravel(),
+        spec_funcs, np.swapaxes(sf.spectral_functions * np.pi, -2, -1).ravel(),
         atol=1e-2, rtol=1e-2)

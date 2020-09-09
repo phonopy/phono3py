@@ -242,6 +242,22 @@ class SpectralFunction(object):
         assert (np.abs(self._frequency_points - fpoints) < 1e-8).all()
 
     def _run_spectral_function(self, i, grid_point):
+        """Compute spectral functions from self-energies
+
+        Note
+        ----
+        Spectral function A is defined by
+
+                -1        G_0
+            A = -- Im -----------
+                pi    1 - G_0 Pi
+
+        where pi = 3.14..., and Pi is the self energy. It is expected that
+        the integral of A over frequency is approximately 1 for each phonon
+        mode.
+
+        """
+
         if self._log_level:
             print("* Spectral function")
         frequencies = self._interaction.get_phonons()[0]
@@ -255,7 +271,7 @@ class SpectralFunction(object):
 
     def _get_spectral_function(self, gammas, deltas, freq):
         fpoints = self._frequency_points
-        nums = 4 * freq ** 2 * gammas
+        nums = 4 * freq ** 2 * gammas / np.pi
         denoms = ((fpoints ** 2 - freq ** 2 - 2 * freq * deltas) ** 2
                   + (2 * freq * gammas) ** 2)
         vals = np.where(denoms > 0, nums / denoms, 0)
