@@ -565,10 +565,11 @@ def write_spectral_function_at_grid_point(gp,
                                           spectral_functions,
                                           mesh,
                                           temperature,
+                                          sigma=None,
                                           filename=None,
                                           is_mesh_symmetry=True):
     spectral_filename = "spectral"
-    spectral_filename += _get_filename_suffix(mesh, grid_point=gp)
+    spectral_filename += _get_filename_suffix(mesh, grid_point=gp, sigma=sigma)
     if temperature is not None:
         spectral_filename += "-t" + _del_zeros(temperature) + "-"
     for i in band_indices:
@@ -590,7 +591,10 @@ def write_spectral_function_to_hdf5(grid_point,
                                     band_indices,
                                     temperatures,
                                     spectral_functions,
+                                    shifts,
+                                    half_linewidths,
                                     mesh,
+                                    sigma=None,
                                     frequency_points=None,
                                     frequencies=None,
                                     filename=None):
@@ -603,7 +607,7 @@ def write_spectral_function_to_hdf5(grid_point,
 
     """
     full_filename = "spectral"
-    suffix = _get_filename_suffix(mesh, grid_point=grid_point)
+    suffix = _get_filename_suffix(mesh, grid_point=grid_point, sigma=sigma)
     _band_indices = np.array(band_indices, dtype='intc')
 
     full_filename += suffix
@@ -613,7 +617,9 @@ def write_spectral_function_to_hdf5(grid_point,
         w.create_dataset('grid_point', data=grid_point)
         w.create_dataset('mesh', data=mesh)
         w.create_dataset('band_index', data=_band_indices)
-        w.create_dataset('delta', data=spectral_functions)
+        w.create_dataset('spectral_function', data=spectral_functions)
+        w.create_dataset('shift', data=shifts)
+        w.create_dataset('half_linewidth', data=half_linewidths)
         w.create_dataset('temperature', data=temperatures)
         if frequency_points is not None:
             w.create_dataset('frequency_points', data=frequency_points)

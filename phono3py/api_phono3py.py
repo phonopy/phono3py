@@ -56,8 +56,7 @@ from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
                                                write_imag_self_energy)
 from phono3py.phonon3.real_self_energy import (
     get_real_self_energy, write_real_self_energy)
-from phono3py.phonon3.spectral_function import (
-    run_spectral_function, write_spectral_function)
+from phono3py.phonon3.spectral_function import run_spectral_function
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.conductivity_RTA import get_thermal_conductivity_RTA
 from phono3py.phonon3.conductivity_LBTE import get_thermal_conductivity_LBTE
@@ -96,7 +95,7 @@ class Phono3py(object):
                  log_level=0,
                  lapack_zheev_uplo='L'):
         if sigmas is None:
-            self._sigmas = [None]
+            self._sigmas = [None, ]
         else:
             self._sigmas = sigmas
         self._sigma_cutoff = sigma_cutoff
@@ -1583,7 +1582,7 @@ class Phono3py(object):
             num_frequency_points=None,
             num_points_in_batch=None,
             write_txt=False,
-            write_hdf5=True,
+            write_hdf5=False,
             output_filename=None):
         """Frequency shift from lowest order diagram is calculated.
 
@@ -1614,10 +1613,10 @@ class Phono3py(object):
             memory demanding. Default is None, which give the number of 10.
         write_txt : bool, optional
             Frequency points and spectral functions are written
-            into text files.
+            into text files. Default is False.
         write_hdf5 : bool
             Results are stored in hdf5 files independently at grid points,
-            epsilons, and temperatures.
+            epsilons. Default is False.
         output_filename : str
             This string is inserted in the output file names.
 
@@ -1637,23 +1636,10 @@ class Phono3py(object):
             num_points_in_batch=num_points_in_batch,
             temperatures=temperatures,
             band_indices=self._band_indices,
+            sigmas=self._sigmas,
+            write_txt=write_txt,
+            write_hdf5=write_hdf5,
             log_level=self._log_level)
-
-        # if write_hdf5:
-        #     filename = write_spectral_function_to_hdf5(
-        #         gp,
-        #         band_indices,
-        #         _temperatures,
-        #         all_deltas[i, j],
-        #         mesh,
-        #         frequency_points=_frequency_points,
-        #         frequencies=frequencies,
-        #         filename=output_filename)
-
-        #     if self._log_level:
-        #         print("Spectral functions were stored in \"%s\"." % filename)
-        #         sys.stdout.flush()
-
 
     def run_thermal_conductivity(
             self,

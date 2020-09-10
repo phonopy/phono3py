@@ -1134,6 +1134,7 @@ def main(**argparse_control):
             num_frequency_points=updated_settings['num_frequency_points'],
             num_points_in_batch=updated_settings['num_points_in_batch'],
             write_txt=True,
+            write_hdf5=True,
             output_filename=output_filename)
 
     ####################################
