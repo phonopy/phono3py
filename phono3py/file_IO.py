@@ -622,7 +622,7 @@ def write_spectral_function_to_hdf5(grid_point,
         w.create_dataset('half_linewidth', data=half_linewidths)
         w.create_dataset('temperature', data=temperatures)
         if frequency_points is not None:
-            w.create_dataset('frequency_points', data=frequency_points)
+            w.create_dataset('frequency_point', data=frequency_points)
         if frequencies is not None:
             w.create_dataset('frequency', data=frequencies)
 
