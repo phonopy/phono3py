@@ -307,6 +307,98 @@ class DispCorrMatrixMesh(object):
         return self._d2f.force_constants
 
 
+class SecondOrderFC(object):
+    r"""SSCHA second order force constants by ensemble average
+
+    This class is made just for the test of the ensemble average in
+    Ref. 1, and will not be used for usual fc2 calculation.
+
+    \Phi_{ab} = - \sum_{p} \Upsilon_{ap} \left< u^p f_b
+                \right>_{tilde{\rho}_{\mathfrak{R},\Phi}}
+
+    Attributes
+    ----------
+    displacements : ndarray
+        shape=(snap_shots, 3 * num_satoms), dtype='double', order='C'
+    forces : ndarray
+        shape=(snap_shots, 3 * num_satoms), dtype='double', order='C'
+    fc2 : ndarray
+        shape=(num_satom, num_satom, 3, 3)
+
+    """
+
+    def __init__(self,
+                 displacements,
+                 forces,
+                 supercell_phonon,
+                 cutoff_frequency=1e-5,
+                 log_level=0):
+        """
+
+        Parameters
+        ----------
+        displacements : ndarray
+            shape=(snap_shots, num_satom, 3), dtype='double', order='C'
+        forces : ndarray
+            shape=(snap_shots, num_satom, 3), dtype='double', order='C'
+        upsilon_matrix : DispCorrMatrix
+            Displacement-displacement correlation matrix class instance.
+        cutoff_frequency : float
+            Phonons are ignored if they have frequencies less than this value.
+
+        """
+
+        assert (displacements.shape == forces.shape)
+        shape = displacements.shape
+        u = np.array(displacements.reshape(shape[0], -1),
+                     dtype='double', order='C')
+        f = np.array(forces.reshape(shape[0], -1),
+                     dtype='double', order='C')
+        self._displacements = u
+        self._forces = f
+        self._upsilon_matrix = DispCorrMatrix(
+            supercell_phonon, cutoff_frequency=cutoff_frequency)
+        self._force_constants = supercell_phonon.force_constants
+        self._cutoff_frequency = cutoff_frequency
+        self._log_level = log_level
+
+    @property
+    def displacements(self):
+        return self._displacements
+
+    @property
+    def forces(self):
+        return self._forces
+
+    @property
+    def fc2(self):
+        return self._fc2
+
+    def run(self, T=300.0):
+        self._upsilon_matrix.run(T)
+        Y = self._upsilon_matrix.upsilon_matrix
+        u = self._displacements
+        f = self._forces
+        u_inv = np.dot(u, Y)
+
+        if self._log_level:
+            nelems = np.prod(u.shape)
+            # print("sum u_inv:", u_inv.sum(axis=0) / u.shape[0])
+            print("sum all u_inv:", u_inv.sum() / nelems)
+            print("rms u_inv:", np.sqrt((u_inv ** 2).sum() / nelems))
+            print("rms u:", np.sqrt((u ** 2).sum() / nelems))
+            print("rms forces:", np.sqrt((self._forces ** 2).sum() / nelems))
+            # print("drift forces:",
+            #       self._forces.sum(axis=0) / self._forces.shape[0])
+
+        fc2 = - np.dot(u_inv.T, f) / f.shape[0]
+        # fc2 = - np.einsum('ki,kj->ij', u_inv, f) / f.shape[0]
+        N = Y.shape[0] // 3
+        self._fc2 = np.array(
+            np.transpose(fc2.reshape(N, 3, N, 3), axes=[0, 2, 1, 3]),
+            dtype='double', order='C')
+
+
 class ThirdOrderFC(object):
     r"""SSCHA third order force constants
 
@@ -366,15 +458,8 @@ class ThirdOrderFC(object):
         self._log_level = log_level
 
         self._drift = u.sum(axis=0) / u.shape[0]
-        self._fmat = self._run_fmat()
-
-    def run(self, T=300.0):
-        fc3 = self._run_fc3_ave(T)
-        N = fc3.shape[0] // 3
-        fc3 = fc3.reshape((N, 3, N, 3, N, 3))
-        self._fc3 = np.array(
-            np.transpose(fc3, axes=[0, 2, 4, 1, 3, 5]),
-            dtype='double', order='C')
+        self._fmat = None
+        self._fc3 = None
 
     @property
     def displacements(self):
@@ -391,6 +476,17 @@ class ThirdOrderFC(object):
     @property
     def ff(self):
         return self._fmat
+
+    def run(self, T=300.0):
+        if self._fmat is None:
+            self._fmat = self._run_fmat()
+
+        fc3 = self._run_fc3_ave(T)
+        N = fc3.shape[0] // 3
+        fc3 = fc3.reshape((N, 3, N, 3, N, 3))
+        self._fc3 = np.array(
+            np.transpose(fc3, axes=[0, 2, 4, 1, 3, 5]),
+            dtype='double', order='C')
 
     def _run_fmat(self):
         f = self._forces
