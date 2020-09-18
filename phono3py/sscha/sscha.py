@@ -131,13 +131,13 @@ class SupercellPhonon(object):
         return self._supercell
 
 
-class DispCorrMatrix(object):
-    """Calculate Upsilon matrix
+class InvDispCorrMatrix(object):
+    """Calculate inverse displacement correlation matrix <u_a u_b>^-1
 
     Attributes
     ----------
     upsilon_matrix : ndarray
-        Displacement-displacement correlation matrix at temperature.
+        Inverse displacement-displacement correlation matrix at temperature.
         Physical unit is [1/Angstrom^2].
         shape=(3 * num_satom, 3 * num_satom), dtype='double', order='C'
     supercell_phonon : SupercellPhonon
@@ -198,13 +198,13 @@ class DispCorrMatrix(object):
         return self._determinant
 
 
-class InvDispCorrMatrix(object):
-    """Calculate Inverse Upsilon matrix
+class DispCorrMatrix(object):
+    """Calculate displacement correlation matrix <u_a u_b>
 
     Attributes
     ----------
-    inv_upsilon_matrix : ndarray
-        Inverse displacement-displacement correlation matrix at temperature.
+    psi_matrix : ndarray
+        Displacement-displacement correlation matrix at temperature.
         Physical unit is [Angstrom^2].
         shape=(3 * num_satom, 3 * num_satom), dtype='double', order='C'
     supercell_phonon : SupercellPhonon
@@ -230,7 +230,7 @@ class InvDispCorrMatrix(object):
 
         self._supercell_phonon = supercell_phonon
         self._cutoff_frequency = cutoff_frequency
-        self._upsilon_matrix = None
+        self._psi_matrix = None
         self._determinant = None
 
     def run(self, T):
@@ -246,14 +246,14 @@ class InvDispCorrMatrix(object):
         a2 = np.where(condition, _a ** 2, 0)
 
         upsilon = np.dot(a2 * eigvecs, eigvecs.T)
-        self._inv_upsilon_matrix = np.array(
+        self._psi_matrix = np.array(
             inv_sqrt_masses * (inv_sqrt_masses * upsilon).T,
             dtype='double', order='C')
         self._determinant = np.prod(2 * np.pi * np.extract(condition, a2))
 
     @property
-    def inv_upsilon_matrix(self):
-        return self._inv_upsilon_matrix
+    def psi_matrix(self):
+        return self._psi_matrix
 
     @property
     def supercell_phonon(self):
@@ -356,7 +356,7 @@ class SecondOrderFC(object):
                      dtype='double', order='C')
         self._displacements = u
         self._forces = f
-        self._upsilon_matrix = DispCorrMatrix(
+        self._upsilon_matrix = InvDispCorrMatrix(
             supercell_phonon, cutoff_frequency=cutoff_frequency)
         self._force_constants = supercell_phonon.force_constants
         self._cutoff_frequency = cutoff_frequency
@@ -375,10 +375,26 @@ class SecondOrderFC(object):
         return self._fc2
 
     def run(self, T=300.0):
-        self._upsilon_matrix.run(T)
-        Y = self._upsilon_matrix.upsilon_matrix
+        """Calculate fc2 stochastically
+
+        As displacement correlation matrix <u_a u_b>^-1, two choices exist.
+
+        1. Upsilon matrix
+            self._upsilon_matrix.run(T)
+            Y = self._upsilon_matrix.upsilon_matrix
+        2. From displacements used for the force calculations
+            Y = np.linalg.pinv(np.dot(u.T, u) / u.shape[0])
+
+        They should give close results, otherwise self-consistency
+        is not reached well. The later seems better agreement with
+        least square fit to fc2 under not very good self-consistency
+        condition.
+
+        """
+
         u = self._displacements
         f = self._forces
+        Y = np.linalg.pinv(np.dot(u.T, u) / u.shape[0])
         u_inv = np.dot(u, Y)
 
         if self._log_level:
@@ -392,7 +408,6 @@ class SecondOrderFC(object):
             #       self._forces.sum(axis=0) / self._forces.shape[0])
 
         fc2 = - np.dot(u_inv.T, f) / f.shape[0]
-        # fc2 = - np.einsum('ki,kj->ij', u_inv, f) / f.shape[0]
         N = Y.shape[0] // 3
         self._fc2 = np.array(
             np.transpose(fc2.reshape(N, 3, N, 3), axes=[0, 2, 1, 3]),
@@ -451,7 +466,7 @@ class ThirdOrderFC(object):
                      dtype='double', order='C')
         self._displacements = u
         self._forces = f
-        self._upsilon_matrix = DispCorrMatrix(
+        self._upsilon_matrix = InvDispCorrMatrix(
             supercell_phonon, cutoff_frequency=cutoff_frequency)
         self._force_constants = supercell_phonon.force_constants
         self._cutoff_frequency = cutoff_frequency
@@ -495,10 +510,11 @@ class ThirdOrderFC(object):
         return f - f.sum(axis=0) / f.shape[0] + np.dot(u, fc2)
 
     def _run_fc3_ave(self, T):
-        self._upsilon_matrix.run(T)
-        Y = self._upsilon_matrix.upsilon_matrix
+        # self._upsilon_matrix.run(T)
+        # Y = self._upsilon_matrix.upsilon_matrix
         f = self._fmat
         u = self._displacements
+        Y = np.linalg.pinv(np.dot(u.T, u) / u.shape[0])
 
         # This is faster than multiplying Y after ansemble average at least
         # in python implementation.
