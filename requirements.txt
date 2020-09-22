@@ -2,4 +2,4 @@ numpy
 PyYAML
 matplotlib
 h5py
-phonopy >=2.8,<2.9
+phonopy >=2.9,<2.10
