@@ -2,7 +2,8 @@ import sys
 import pytest
 import numpy as np
 from phono3py.sscha.sscha import (
-    DispCorrMatrix, DispCorrMatrixMesh, SupercellPhonon, ThirdOrderFC)
+    DispCorrMatrix, DispCorrMatrixMesh,
+    SupercellPhonon, ThirdOrderFC)
 from phonopy.phonon.qpoints import QpointsPhonon
 
 try:
@@ -42,30 +43,40 @@ def test_upsilon_matrix_mesh(si_pbesol):
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     dynmat = si_pbesol.dynamical_matrix
-    upmat = DispCorrMatrixMesh(dynmat.primitive, dynmat.supercell)
-    qpoints_phonon = QpointsPhonon(upmat.commensurate_points,
+    uu = DispCorrMatrixMesh(dynmat.primitive, dynmat.supercell)
+    qpoints_phonon = QpointsPhonon(uu.commensurate_points,
                                    dynmat,
                                    with_eigenvectors=True)
     freqs = qpoints_phonon.frequencies
     eigvecs = qpoints_phonon.eigenvectors
-    upmat.create_upsilon_matrix(freqs, eigvecs, 300.0)
-    upmat.run()
+    uu.run(freqs, eigvecs, 300.0)
     np.testing.assert_allclose(
-        si_pbesol_upsilon0_0, upmat.upsilon_matrix[0, 0], atol=1e-4)
+        si_pbesol_upsilon0_0, uu.upsilon_matrix[0, 0], atol=1e-4)
     np.testing.assert_allclose(
-        si_pbesol_upsilon1_34, upmat.upsilon_matrix[1, 34], atol=1e-4)
+        si_pbesol_upsilon1_34, uu.upsilon_matrix[1, 34], atol=1e-4)
+
+    N = uu.upsilon_matrix.shape[0]
+    shape = (N * 3, N * 3)
+    umat = np.transpose(uu.upsilon_matrix, axes=[0, 2, 1, 3]).reshape(shape)
+    inv_umat = np.linalg.pinv(umat)
+    pmat = np.transpose(uu.psi_matrix, axes=[0, 2, 1, 3]).reshape(shape)
+    np.testing.assert_allclose(pmat, inv_umat, atol=1e-5, rtol=1e-5)
 
 
 def test_upsilon_matrix(si_pbesol):
     supercell_phonon = get_supercell_phonon(si_pbesol)
-    upmat = DispCorrMatrix(supercell_phonon)
-    upmat.run(300.0)
+    uu = DispCorrMatrix(supercell_phonon)
+    uu.run(300.0)
     np.testing.assert_allclose(
-        si_pbesol_upsilon0_0, upmat.upsilon_matrix[0:3, 0:3], atol=1e-4)
+        si_pbesol_upsilon0_0, uu.upsilon_matrix[0:3, 0:3], atol=1e-4)
     np.testing.assert_allclose(
         si_pbesol_upsilon1_34,
-        upmat.upsilon_matrix[1 * 3: 2 * 3, 34 * 3: 35 * 3],
+        uu.upsilon_matrix[1 * 3: 2 * 3, 34 * 3: 35 * 3],
         atol=1e-4)
+
+    inv_umat = np.linalg.pinv(uu.upsilon_matrix)
+    np.testing.assert_allclose(
+        uu.psi_matrix, inv_umat, atol=1e-8, rtol=0)
 
 
 def test_fc3(si_pbesol_iterha_111):

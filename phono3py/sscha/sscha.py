@@ -131,11 +131,15 @@ class SupercellPhonon(object):
         return self._supercell
 
 
-class InvDispCorrMatrix(object):
-    """Calculate inverse displacement correlation matrix <u_a u_b>^-1
+class DispCorrMatrix(object):
+    """Calculate displacement correlation matrix <u_a u_b>
 
     Attributes
     ----------
+    psi_matrix : ndarray
+        Displacement-displacement correlation matrix at temperature.
+        Physical unit is [Angstrom^2].
+        shape=(3 * num_satom, 3 * num_satom), dtype='double', order='C'
     upsilon_matrix : ndarray
         Inverse displacement-displacement correlation matrix at temperature.
         Physical unit is [1/Angstrom^2].
@@ -163,79 +167,15 @@ class InvDispCorrMatrix(object):
 
         self._supercell_phonon = supercell_phonon
         self._cutoff_frequency = cutoff_frequency
-        self._upsilon_matrix = None
-
-    def run(self, T):
-        freqs = self._supercell_phonon.frequencies
-        eigvecs = self._supercell_phonon.eigenvectors
-
-        sqrt_masses = np.repeat(
-            np.sqrt(self._supercell_phonon.supercell.masses), 3)
-
-        # ignore zero and imaginary frequency modes
-        condition = freqs > self._cutoff_frequency
-
-        _freqs = np.where(condition, freqs, 1)
-        _a = mode_length(_freqs, T)
-        a2_inv = np.where(condition, 1 / _a ** 2, 0)
-
-        upsilon = np.dot(a2_inv * eigvecs, eigvecs.T)
-        self._upsilon_matrix = np.array(
-            sqrt_masses * (sqrt_masses * upsilon).T,
-            dtype='double', order='C')
-        self._determinant = np.prod(np.extract(condition, a2_inv) / 2 / np.pi)
-
-    @property
-    def upsilon_matrix(self):
-        return self._upsilon_matrix
-
-    @property
-    def supercell_phonon(self):
-        return self._supercell_phonon
-
-    @property
-    def determinant(self):
-        return self._determinant
-
-
-class DispCorrMatrix(object):
-    """Calculate displacement correlation matrix <u_a u_b>
-
-    Attributes
-    ----------
-    psi_matrix : ndarray
-        Displacement-displacement correlation matrix at temperature.
-        Physical unit is [Angstrom^2].
-        shape=(3 * num_satom, 3 * num_satom), dtype='double', order='C'
-    supercell_phonon : SupercellPhonon
-        Supercell phonon object. Phonons at Gamma point, where
-        eigenvectors are not complex type but real type.
-
-    """
-
-    def __init__(self,
-                 supercell_phonon,
-                 cutoff_frequency=1e-5):
-        """
-
-        Parameters
-        ----------
-        supercell_phonon : SupercellPhonon
-            Supercell phonon object. Phonons at Gamma point, where
-            eigenvectors are not complex type but real type.
-        cutoff_frequency : float
-            Phonons are ignored if they have frequencies less than this value.
-
-        """
-
-        self._supercell_phonon = supercell_phonon
-        self._cutoff_frequency = cutoff_frequency
         self._psi_matrix = None
+        self._upsilon_matrix = None
         self._determinant = None
 
     def run(self, T):
         freqs = self._supercell_phonon.frequencies
         eigvecs = self._supercell_phonon.eigenvectors
+        sqrt_masses = np.repeat(
+            np.sqrt(self._supercell_phonon.supercell.masses), 3)
         inv_sqrt_masses = np.repeat(
             1.0 / np.sqrt(self._supercell_phonon.supercell.masses), 3)
 
@@ -244,12 +184,23 @@ class DispCorrMatrix(object):
         _freqs = np.where(condition, freqs, 1)
         _a = mode_length(_freqs, T)
         a2 = np.where(condition, _a ** 2, 0)
+        a2_inv = np.where(condition, 1 / _a ** 2, 0)
 
-        upsilon = np.dot(a2 * eigvecs, eigvecs.T)
+        matrix = np.dot(a2 * eigvecs, eigvecs.T)
         self._psi_matrix = np.array(
-            inv_sqrt_masses * (inv_sqrt_masses * upsilon).T,
+            inv_sqrt_masses * (inv_sqrt_masses * matrix).T,
             dtype='double', order='C')
+
+        matrix = np.dot(a2_inv * eigvecs, eigvecs.T)
+        self._upsilon_matrix = np.array(
+            sqrt_masses * (sqrt_masses * matrix).T,
+            dtype='double', order='C')
+
         self._determinant = np.prod(2 * np.pi * np.extract(condition, a2))
+
+    @property
+    def upsilon_matrix(self):
+        return self._upsilon_matrix
 
     @property
     def psi_matrix(self):
@@ -274,15 +225,20 @@ class DispCorrMatrixMesh(object):
 
     """
 
-    def __init__(self, primitive, supercell):
+    def __init__(self,
+                 primitive,
+                 supercell,
+                 cutoff_frequency=1e-5):
         self._d2f = DynmatToForceConstants(
             primitive, supercell, is_full_fc=True)
+        self._masses = supercell.masses
+        self._cutoff_frequency = cutoff_frequency
 
     @property
     def commensurate_points(self):
         return self._d2f.commensurate_points
 
-    def create_upsilon_matrix(self, frequencies, eigenvectors, T):
+    def run(self, frequencies, eigenvectors, T):
         """
 
         Parameters
@@ -296,15 +252,32 @@ class DispCorrMatrixMesh(object):
 
         """
 
-        a = mode_length(frequencies, T)
-        self._d2f.create_dynamical_matrices(1.0 / a ** 2, eigenvectors)
+        condition = frequencies > self._cutoff_frequency
+        _freqs = np.where(condition, frequencies, 1)
+        _a = mode_length(_freqs, T)
+        a2 = np.where(condition, _a ** 2, 0)
+        a2_inv = np.where(condition, 1 / _a ** 2, 0)
 
-    def run(self):
+        self._d2f.create_dynamical_matrices(a2_inv, eigenvectors)
         self._d2f.run()
+        self._upsilon_matrix = np.array(self._d2f.force_constants,
+                                        dtype='double', order='C')
+
+        self._d2f.create_dynamical_matrices(a2, eigenvectors)
+        self._d2f.run()
+        matrix = self._d2f.force_constants
+        for i, m_i in enumerate(self._masses):
+            for j, m_j in enumerate(self._masses):
+                matrix[i, j] /= m_i * m_j
+        self._psi_matrix = np.array(matrix, dtype='double', order='C')
 
     @property
     def upsilon_matrix(self):
-        return self._d2f.force_constants
+        return self._upsilon_matrix
+
+    @property
+    def psi_matrix(self):
+        return self._psi_matrix
 
 
 class SecondOrderFC(object):
@@ -341,8 +314,9 @@ class SecondOrderFC(object):
             shape=(snap_shots, num_satom, 3), dtype='double', order='C'
         forces : ndarray
             shape=(snap_shots, num_satom, 3), dtype='double', order='C'
-        upsilon_matrix : DispCorrMatrix
-            Displacement-displacement correlation matrix class instance.
+        supercell_phonon : SupercellPhonon
+            Supercell phonon object. Phonons at Gamma point, where
+            eigenvectors are not complex type but real type.
         cutoff_frequency : float
             Phonons are ignored if they have frequencies less than this value.
 
@@ -356,7 +330,7 @@ class SecondOrderFC(object):
                      dtype='double', order='C')
         self._displacements = u
         self._forces = f
-        self._upsilon_matrix = InvDispCorrMatrix(
+        self._uu = DispCorrMatrix(
             supercell_phonon, cutoff_frequency=cutoff_frequency)
         self._force_constants = supercell_phonon.force_constants
         self._cutoff_frequency = cutoff_frequency
@@ -380,8 +354,8 @@ class SecondOrderFC(object):
         As displacement correlation matrix <u_a u_b>^-1, two choices exist.
 
         1. Upsilon matrix
-            self._upsilon_matrix.run(T)
-            Y = self._upsilon_matrix.upsilon_matrix
+            self._uu.run(T)
+            Y = self._uu.upsilon_matrix
         2. From displacements used for the force calculations
             Y = np.linalg.pinv(np.dot(u.T, u) / u.shape[0])
 
@@ -466,7 +440,7 @@ class ThirdOrderFC(object):
                      dtype='double', order='C')
         self._displacements = u
         self._forces = f
-        self._upsilon_matrix = InvDispCorrMatrix(
+        self._uu = DispCorrMatrix(
             supercell_phonon, cutoff_frequency=cutoff_frequency)
         self._force_constants = supercell_phonon.force_constants
         self._cutoff_frequency = cutoff_frequency
@@ -510,8 +484,8 @@ class ThirdOrderFC(object):
         return f - f.sum(axis=0) / f.shape[0] + np.dot(u, fc2)
 
     def _run_fc3_ave(self, T):
-        # self._upsilon_matrix.run(T)
-        # Y = self._upsilon_matrix.upsilon_matrix
+        # self._uu.run(T)
+        # Y = self._uu.upsilon_matrix
         f = self._fmat
         u = self._displacements
         Y = np.linalg.pinv(np.dot(u.T, u) / u.shape[0])
