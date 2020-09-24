@@ -216,12 +216,25 @@ class DispCorrMatrix(object):
 
 
 class DispCorrMatrixMesh(object):
-    """Calculate gamma matrix
+    """Calculate upsilon and psi matrix
 
     This calculation is similar to the transformation from
     dynamical matrices to force constants. Instead of creating
     dynamcial matrices from eigenvalues and eigenvectors,
-    1/a and eigenvectors are used, where a is mode length.
+    1/a**2 or a**2 and eigenvectors are used, where a is mode length.
+
+    psi_matrix : ndarray
+        Displacement-displacement correlation matrix at temperature.
+        Physical unit is [Angstrom^2].
+        shape=(3 * num_satom, 3 * num_satom), dtype='double', order='C'
+    upsilon_matrix : ndarray
+        Inverse displacement-displacement correlation matrix at temperature.
+        Physical unit is [1/Angstrom^2].
+        shape=(3 * num_satom, 3 * num_satom), dtype='double', order='C'
+    commensurate_points : ndarray
+        Commensurate q-points of transformation matrix from primitive cell
+        to supercell.
+        shape=(det(transformation_matrix), 3), dtype='double', order='C'.
 
     """
 
@@ -233,6 +246,9 @@ class DispCorrMatrixMesh(object):
             primitive, supercell, is_full_fc=True)
         self._masses = supercell.masses
         self._cutoff_frequency = cutoff_frequency
+
+        self._psi_matrix = None
+        self._upsilon_matrix = None
 
     @property
     def commensurate_points(self):
@@ -257,11 +273,14 @@ class DispCorrMatrixMesh(object):
         _a = mode_length(_freqs, T)
         a2 = np.where(condition, _a ** 2, 0)
         a2_inv = np.where(condition, 1 / _a ** 2, 0)
+        N = len(self._masses)
+        shape = (N * 3, N * 3)
 
         self._d2f.create_dynamical_matrices(a2_inv, eigenvectors)
         self._d2f.run()
-        self._upsilon_matrix = np.array(self._d2f.force_constants,
-                                        dtype='double', order='C')
+        matrix = self._d2f.force_constants
+        matrix = np.transpose(matrix, axes=[0, 2, 1, 3]).reshape(shape)
+        self._upsilon_matrix = np.array(matrix, dtype='double', order='C')
 
         self._d2f.create_dynamical_matrices(a2, eigenvectors)
         self._d2f.run()
@@ -269,6 +288,7 @@ class DispCorrMatrixMesh(object):
         for i, m_i in enumerate(self._masses):
             for j, m_j in enumerate(self._masses):
                 matrix[i, j] /= m_i * m_j
+        matrix = np.transpose(matrix, axes=[0, 2, 1, 3]).reshape(shape)
         self._psi_matrix = np.array(matrix, dtype='double', order='C')
 
     @property

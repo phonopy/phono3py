@@ -51,16 +51,13 @@ def test_upsilon_matrix_mesh(si_pbesol):
     eigvecs = qpoints_phonon.eigenvectors
     uu.run(freqs, eigvecs, 300.0)
     np.testing.assert_allclose(
-        si_pbesol_upsilon0_0, uu.upsilon_matrix[0, 0], atol=1e-4)
+        si_pbesol_upsilon0_0, uu.upsilon_matrix[0:3, 0:3], atol=1e-4)
     np.testing.assert_allclose(
-        si_pbesol_upsilon1_34, uu.upsilon_matrix[1, 34], atol=1e-4)
+        si_pbesol_upsilon1_34, uu.upsilon_matrix[1 * 3: 2 * 3, 34 * 3: 35 * 3],
+        atol=1e-4)
 
-    N = uu.upsilon_matrix.shape[0]
-    shape = (N * 3, N * 3)
-    umat = np.transpose(uu.upsilon_matrix, axes=[0, 2, 1, 3]).reshape(shape)
-    inv_umat = np.linalg.pinv(umat)
-    pmat = np.transpose(uu.psi_matrix, axes=[0, 2, 1, 3]).reshape(shape)
-    np.testing.assert_allclose(pmat, inv_umat, atol=1e-5, rtol=1e-5)
+    inv_umat = np.linalg.pinv(uu.upsilon_matrix)
+    np.testing.assert_allclose(uu.psi_matrix, inv_umat, atol=1e-8, rtol=0)
 
 
 def test_upsilon_matrix(si_pbesol):
