@@ -148,8 +148,7 @@ class Phono3pyYaml(PhonopyYaml):
             if 'cutoff_pair_distance' in info_yaml:
                 dataset['cutoff_distance'] = info_yaml['cutoff_pair_distance']
             if 'duplicated_supercell_ids' in info_yaml:
-                duplicates = info_yaml['duplicated_supercell_ids']
-                dataset['duplicates'] = dict(duplicates)
+                dataset['duplicates'] = info_yaml['duplicated_supercell_ids']
         self.dataset = dataset
 
     def _parse_forces_fc3_type1(self, natom):
