@@ -5,6 +5,7 @@ from phono3py.sscha.sscha import (
     DispCorrMatrix, DispCorrMatrixMesh,
     SupercellPhonon, ThirdOrderFC)
 from phonopy.phonon.qpoints import QpointsPhonon
+from phonopy.phonon.random_displacements import RandomDisplacements
 
 try:
     ModuleNotFoundError
@@ -33,6 +34,16 @@ def get_supercell_phonon(ph3):
     return SupercellPhonon(supercell, fc2, frequency_factor_to_THz=factor)
 
 
+def mass_sand(matrix, mass):
+    return ((matrix * mass).T * mass).T
+
+
+def mass_inv(matrix, mass):
+    bare = mass_sand(matrix, mass)
+    inv_bare = np.linalg.pinv(bare)
+    return mass_sand(inv_bare, mass)
+
+
 def test_SupercellPhonon(si_pbesol_111):
     sph = get_supercell_phonon(si_pbesol_111)
     np.testing.assert_allclose(
@@ -56,8 +67,9 @@ def test_upsilon_matrix_mesh(si_pbesol):
         si_pbesol_upsilon1_34, uu.upsilon_matrix[1 * 3: 2 * 3, 34 * 3: 35 * 3],
         atol=1e-4)
 
-    inv_umat = np.linalg.pinv(uu.upsilon_matrix)
-    np.testing.assert_allclose(uu.psi_matrix, inv_umat, atol=1e-8, rtol=0)
+    sqrt_masses = np.repeat(np.sqrt(si_pbesol.supercell.masses), 3)
+    uu_inv = mass_inv(uu.psi_matrix, sqrt_masses)
+    np.testing.assert_allclose(uu.upsilon_matrix, uu_inv, atol=1e-8, rtol=0)
 
 
 def test_upsilon_matrix(si_pbesol):
@@ -71,9 +83,19 @@ def test_upsilon_matrix(si_pbesol):
         uu.upsilon_matrix[1 * 3: 2 * 3, 34 * 3: 35 * 3],
         atol=1e-4)
 
-    inv_umat = np.linalg.pinv(uu.upsilon_matrix)
+    sqrt_masses = np.repeat(np.sqrt(si_pbesol.supercell.masses), 3)
+    uu_inv = mass_inv(uu.psi_matrix, sqrt_masses)
     np.testing.assert_allclose(
-        uu.psi_matrix, inv_umat, atol=1e-8, rtol=0)
+        uu.upsilon_matrix, uu_inv, atol=1e-8, rtol=0)
+
+    rd = RandomDisplacements(si_pbesol.supercell,
+                             si_pbesol.primitive,
+                             si_pbesol.fc2)
+    rd.run_correlation_matrix(300)
+    rd_uu_inv = np.transpose(rd.uu_inv,
+                             axes=[0, 2, 1, 3]).reshape(uu_inv.shape)
+    np.testing.assert_allclose(
+        uu.upsilon_matrix, rd_uu_inv, atol=1e-8, rtol=0)
 
 
 def test_fc3(si_pbesol_iterha_111):
