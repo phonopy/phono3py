@@ -513,6 +513,12 @@ def set_dataset_and_force_constants(
                                    primitive=ph3py.phonon_primitive,
                                    name='fc2')
 
+    # Cases that dataset is in phono3py.yaml but not forces.
+    if (ph3py_yaml is not None and ph3py_yaml.dataset is not None):
+        ph3py.dataset = ph3py_yaml.dataset
+    if (ph3py_yaml is not None and ph3py_yaml.phonon_dataset is not None):
+        ph3py.phonon_dataset = ph3py_yaml.phonon_dataset
+
     return read_fc
 
 
