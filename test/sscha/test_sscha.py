@@ -50,7 +50,7 @@ def test_SupercellPhonon(si_pbesol_111):
         si_pbesol_111_freqs, sph.frequencies, atol=1e-4)
 
 
-def test_upsilon_matrix_mesh(si_pbesol):
+def test_disp_corr_matrix_mesh(si_pbesol):
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     dynmat = si_pbesol.dynamical_matrix
@@ -72,7 +72,7 @@ def test_upsilon_matrix_mesh(si_pbesol):
     np.testing.assert_allclose(uu.upsilon_matrix, uu_inv, atol=1e-8, rtol=0)
 
 
-def test_upsilon_matrix(si_pbesol):
+def test_disp_corr_matrix(si_pbesol):
     supercell_phonon = get_supercell_phonon(si_pbesol)
     uu = DispCorrMatrix(supercell_phonon)
     uu.run(300.0)
@@ -83,14 +83,28 @@ def test_upsilon_matrix(si_pbesol):
         uu.upsilon_matrix[1 * 3: 2 * 3, 34 * 3: 35 * 3],
         atol=1e-4)
 
-    sqrt_masses = np.repeat(np.sqrt(si_pbesol.supercell.masses), 3)
+
+def test_disp_corr_matrix_si(si_pbesol):
+    _test_disp_corr_matrix(si_pbesol)
+
+
+def test_disp_corr_matrix_nacl(nacl_pbe):
+    _test_disp_corr_matrix(nacl_pbe)
+
+
+def _test_disp_corr_matrix(ph3):
+    supercell_phonon = get_supercell_phonon(ph3)
+    uu = DispCorrMatrix(supercell_phonon)
+    uu.run(300.0)
+
+    sqrt_masses = np.repeat(np.sqrt(ph3.supercell.masses), 3)
     uu_inv = mass_inv(uu.psi_matrix, sqrt_masses)
     np.testing.assert_allclose(
         uu.upsilon_matrix, uu_inv, atol=1e-8, rtol=0)
 
-    rd = RandomDisplacements(si_pbesol.supercell,
-                             si_pbesol.primitive,
-                             si_pbesol.fc2)
+    rd = RandomDisplacements(ph3.supercell,
+                             ph3.primitive,
+                             ph3.fc2)
     rd.run_correlation_matrix(300)
     rd_uu_inv = np.transpose(rd.uu_inv,
                              axes=[0, 2, 1, 3]).reshape(uu_inv.shape)
