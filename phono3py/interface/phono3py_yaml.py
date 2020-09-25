@@ -320,11 +320,14 @@ class Phono3pyYaml(PhonopyYaml):
             if 'duplicates' in dataset and dataset['duplicates']:
                 lines.append("  duplicated_supercell_ids: "
                              "# 0 means perfect supercell")
-                for i in dataset['duplicates']:
-                    # id-i and id-j give the same displacement pairs.
-                    j = dataset['duplicates'][i]
-                    lines.append("  - [ %d, %d ]" % (i, j))
-            lines.append("")
+                # Backward compatibility for dict type
+                if type(dataset['duplicates']) is dict:
+                    for i, j in dataset['duplicates'].items():
+                        lines.append("  - [ %d, %d ]" % (int(i), j))
+                else:
+                    for (i, j) in dataset['duplicates']:
+                        lines.append("  - [ %d, %d ]" % (i, j))
+                lines.append("")
 
         return lines
 

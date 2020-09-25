@@ -357,4 +357,4 @@ def _find_duplicates(direction_dataset):
         if dset[0] == dset[1] and (dset[2:5] + dset[5:8] == 0).all():
             _duplucates.append([i + id_offset, 0])
 
-    return {i: j for (i, j) in _duplucates if i > j}
+    return [[i, j] for (i, j) in _duplucates if i > j]
