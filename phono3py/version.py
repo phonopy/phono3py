@@ -1,7 +1,7 @@
-# Copyright (C) 2013 Atsushi Togo
+# Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
-# This file is part of phonopy.
+# This file is part of phono3py.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -32,4 +32,4 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-__version__ = "1.20.0"
+__version__ = "1.21.0"

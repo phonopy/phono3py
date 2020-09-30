@@ -1,56 +1,146 @@
+# Copyright (C) 2020 Atsushi Togo
+# All rights reserved.
+#
+# This file is part of phono3py.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+#
+# * Neither the name of the phonopy project nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
 import sys
 import numpy as np
 from phonopy.units import Hbar, EV, THz
 from phonopy.phonon.degeneracy import degenerate_sets
-from phono3py.phonon3.triplets import (get_triplets_integration_weights,
-                                       occupation)
+from phono3py.phonon3.triplets import get_triplets_integration_weights
+from phono3py.phonon.func import bose_einstein
 from phono3py.file_IO import (write_gamma_detail_to_hdf5,
                               write_imag_self_energy_at_grid_point)
 
 
 def get_imag_self_energy(interaction,
                          grid_points,
-                         sigmas,
+                         temperatures,
+                         sigmas=None,
+                         frequency_points=None,
                          frequency_step=None,
                          num_frequency_points=None,
-                         temperatures=None,
+                         num_points_in_batch=None,
                          scattering_event_class=None,  # class 1 or 2
-                         write_detail=False,
+                         write_gamma_detail=False,
+                         return_gamma_detail=False,
                          output_filename=None,
                          log_level=0):
     """Imaginary part of self energy at frequency points
 
     Band indices to be calculated at are kept in Interaction instance.
 
-    Args:
-        interaction: Ph-ph interaction
-        grid_points: Grid-point indices to be caclculated on
-        sigmas:
-            A set of sigmas. simga=None means to use tetrahedron method,
-            otherwise smearing method with real positive value of sigma.
-        frequency_step: Pitch of frequency to be sampled.
-        num_frequency_points: Number of sampling sampling points to be used
-            instead of frequency_step.
-        temperatures: Temperatures to be calculated at.
-        scattering_event_class:
-            Extract scattering event class 1 or 2.
-        log_level: Log level. 0 or non 0 in this method.
+    Parameters
+    ----------
+    interaction : Interaction
+        Ph-ph interaction.
+    grid_points : array_like
+        Grid-point indices where imag-self-energeis are caclculated.
+        dtype=int, shape=(grid_points,)
+    temperatures : array_like
+        Temperatures where imag-self-energies are calculated.
+        dtype=float, shape=(temperatures,)
+    sigmas : array_like, optional
+        A set of sigmas. simgas=[None, ] means to use tetrahedron method,
+        otherwise smearing method with real positive value of sigma.
+        For example, sigmas=[None, 0.01, 0.03] is possible. Default is None,
+        which results in [None, ].
+        dtype=float, shape=(sigmas,)
+    frequency_points : array_like, optional
+        Frequency sampling points. Default is None. In this case,
+        num_frequency_points or frequency_step is used to generate uniform
+        frequency sampling points.
+        dtype=float, shape=(frequency_points,)
+    frequency_step : float, optional
+        Uniform pitch of frequency sampling points. Default is None. This
+        results in using num_frequency_points.
+    num_frequency_points: int, optional
+        Number of sampling sampling points to be used instead of
+        frequency_step. This number includes end points. Default is None,
+        which gives 201.
+    num_points_in_batch: int, optional
+        Number of sampling points in one batch. This is for the frequency
+        sampling mode and the sampling points are divided into batches.
+        Lager number provides efficient use of multi-cores but more
+        memory demanding. Default is None, which give the number of 10.
+    scattering_event_class : int, optional
+        Specific choice of scattering event class, 1 or 2 that is specified
+        1 or 2, respectively. The result is stored in gammas. Therefore
+        usual gammas are not stored in the variable. Default is None, which
+        doesn't specify scattering_event_class.
+    write_gamma_detail : bool, optional
+        Detailed gammas are written into a file in hdf5. Default is False.
+    return_gamma_detail : bool, optional
+        With True, detailed gammas are returned. Default is False.
+    log_level: int
+        Log level. Default is 0.
 
-    Returns:
-        Tuple: (Imaginary part of self energy, sampling frequency points)
+    Returns
+    -------
+    tuple :
+        (frequency_points, gammas) are returned. With return_gamma_detail=True,
+        (frequency_points, gammas, detailed_gammas) are returned.
 
     """
-    if temperatures is None:
-        temperatures = [0.0, 300.0]
 
-    if temperatures is None:
-        print("Temperatures have to be set.")
-        return False
+    if sigmas is None:
+        _sigmas = [None, ]
+    else:
+        _sigmas = sigmas
 
-    mesh = interaction.get_mesh_numbers()
-    ise = ImagSelfEnergy(interaction, with_detail=write_detail)
-    imag_self_energy = []
-    frequency_points = []
+    if (interaction.get_phonons()[2] == 0).any():
+        if log_level:
+            print("Running harmonic phonon calculations...")
+        interaction.run_phonon_solver()
+
+    mesh = interaction.mesh_numbers
+    frequencies = interaction.get_phonons()[0]
+    max_phonon_freq = np.amax(frequencies)
+
+    _frequency_points = get_frequency_points(
+        max_phonon_freq=max_phonon_freq,
+        sigmas=_sigmas,
+        frequency_points=frequency_points,
+        frequency_step=frequency_step,
+        num_frequency_points=num_frequency_points)
+
+    ise = ImagSelfEnergy(
+        interaction, with_detail=(write_gamma_detail or return_gamma_detail))
+    gamma = np.zeros(
+        (len(grid_points), len(_sigmas), len(temperatures),
+         len(interaction.band_indices), len(_frequency_points)),
+        dtype='double', order='C')
+    detailed_gamma = []
+
     for i, gp in enumerate(grid_points):
         ise.set_grid_point(gp)
         if log_level:
@@ -60,105 +150,118 @@ def get_imag_self_energy(interaction,
             print("Grid point: %d" % gp)
             print("Number of ir-triplets: "
                   "%d / %d" % (len(weights), weights.sum()))
+
         ise.run_interaction()
-        frequencies = interaction.get_phonons()[0]
-        max_phonon_freq = np.amax(frequencies)
 
         if log_level:
-            adrs = interaction.get_grid_address()[gp]
+            adrs = interaction.grid_address[gp]
             q = adrs.astype('double') / mesh
             print("q-point: %s" % q)
             print("Phonon frequency:")
             text = "[ "
-            for i, freq in enumerate(frequencies[gp]):
-                if i % 6 == 0 and i != 0:
+            for bi, freq in enumerate(frequencies[gp]):
+                if bi % 6 == 0 and bi != 0:
                     text += "\n"
                 text += "%8.4f " % freq
             text += "]"
             print(text)
             sys.stdout.flush()
 
-        gamma_sigmas = []
-        fp_sigmas = []
-        if write_detail:
-            (triplets,
-             weights,
+        if write_gamma_detail or return_gamma_detail:
+            (triplets, weights,
              map_triplets, _) = interaction.get_triplets_at_q()
+            num_band0 = len(interaction.band_indices)
+            num_band = frequencies.shape[1]
+            detailed_gamma_at_gp = np.zeros(
+                (len(_sigmas), len(temperatures), len(_frequency_points),
+                 len(weights), num_band0, num_band, num_band),
+                dtype='double')
+        else:
+            detailed_gamma_at_gp = None
 
-        for j, sigma in enumerate(sigmas):
+        for j, sigma in enumerate(_sigmas):
             if log_level:
                 if sigma:
                     print("Sigma: %s" % sigma)
                 else:
-                    print("Tetrahedron method")
+                    print("Tetrahedron method is used for BZ integration.")
 
             ise.set_sigma(sigma)
-            if sigma:
-                fmax = max_phonon_freq * 2 + sigma * 4
+
+            # Run one by one at frequency points
+            if detailed_gamma_at_gp is None:
+                detailed_gamma_at_gp_at_j = None
             else:
-                fmax = max_phonon_freq * 2
-            fmax *= 1.005
-            fmin = 0
-            frequency_points_at_sigma = get_frequency_points(
-                fmin,
-                fmax,
-                frequency_step=frequency_step,
-                num_frequency_points=num_frequency_points)
-            fp_sigmas.append(frequency_points_at_sigma)
-            gamma = np.zeros(
-                (len(temperatures), len(frequency_points_at_sigma),
-                 len(interaction.get_band_indices())), dtype='double')
+                detailed_gamma_at_gp_at_j = detailed_gamma_at_gp[j]
+            run_ise_at_frequency_points_batch(
+                _frequency_points,
+                ise,
+                temperatures,
+                gamma[i, j],
+                write_gamma_detail=write_gamma_detail,
+                return_gamma_detail=return_gamma_detail,
+                detailed_gamma_at_gp=detailed_gamma_at_gp_at_j,
+                scattering_event_class=scattering_event_class,
+                nelems_in_batch=num_points_in_batch,
+                log_level=log_level)
 
-            if write_detail:
-                num_band0 = len(interaction.get_band_indices())
-                num_band = frequencies.shape[1]
-                detailed_gamma = np.zeros(
-                    (len(temperatures), len(frequency_points_at_sigma),
-                     len(weights), num_band0, num_band, num_band),
-                    dtype='double')
-
-            for k, freq_point in enumerate(frequency_points_at_sigma):
-                ise.set_frequency_points([freq_point])
-                ise.set_integration_weights(
-                    scattering_event_class=scattering_event_class)
-
-                for l, t in enumerate(temperatures):
-                    ise.set_temperature(t)
-                    ise.run()
-                    gamma[l, k] = ise.get_imag_self_energy()[0]
-                    if write_detail:
-                        detailed_gamma[l, k] = (
-                            ise.get_detailed_imag_self_energy()[0])
-
-            gamma_sigmas.append(gamma)
-
-            if write_detail:
+            if write_gamma_detail:
                 full_filename = write_gamma_detail_to_hdf5(
                     temperatures,
                     mesh,
-                    gamma_detail=detailed_gamma,
+                    gamma_detail=detailed_gamma_at_gp[j],
                     grid_point=gp,
                     triplet=triplets,
                     weight=weights,
                     triplet_map=map_triplets,
                     sigma=sigma,
-                    frequency_points=frequency_points_at_sigma,
+                    frequency_points=_frequency_points,
                     filename=output_filename)
 
                 if log_level:
                     print("Contribution of each triplet to imaginary part of "
                           "self energy is written in\n\"%s\"." % full_filename)
 
-        imag_self_energy.append(gamma_sigmas)
-        frequency_points.append(fp_sigmas)
+            if return_gamma_detail:
+                detailed_gamma.append(detailed_gamma_at_gp)
 
-    return imag_self_energy, frequency_points
+    if return_gamma_detail:
+        return _frequency_points, gamma, detailed_gamma
+    else:
+        return _frequency_points, gamma
 
 
-def get_frequency_points(f_min,
-                         f_max,
+def get_frequency_points(max_phonon_freq=None,
+                         sigmas=None,
+                         frequency_points=None,
                          frequency_step=None,
                          num_frequency_points=None):
+    if frequency_points is None:
+        if sigmas is not None:
+            sigma_vals = [sigma for sigma in sigmas if sigma is not None]
+        else:
+            sigma_vals = []
+        if sigma_vals:
+            fmax = max_phonon_freq * 2 + np.max(sigma_vals) * 4
+        else:
+            fmax = max_phonon_freq * 2
+        fmax *= 1.005
+        fmin = 0
+        _frequency_points = _sample_frequency_points(
+            fmin,
+            fmax,
+            frequency_step=frequency_step,
+            num_frequency_points=num_frequency_points)
+    else:
+        _frequency_points = np.array(frequency_points, dtype='double')
+
+    return _frequency_points
+
+
+def _sample_frequency_points(f_min,
+                             f_max,
+                             frequency_step=None,
+                             num_frequency_points=None):
     if num_frequency_points is None:
         if frequency_step is not None:
             frequency_points = np.arange(
@@ -181,28 +284,30 @@ def write_imag_self_energy(imag_self_energy,
                            temperatures,
                            sigmas,
                            scattering_event_class=None,
-                           filename=None,
-                           is_mesh_symmetry=True):
-    for gp, ise_sigmas, fp_sigmas in zip(grid_points,
-                                         imag_self_energy,
-                                         frequency_points):
-        for sigma, ise_temps, fp in zip(sigmas, ise_sigmas, fp_sigmas):
+                           output_filename=None,
+                           is_mesh_symmetry=True,
+                           log_level=0):
+    for gp, ise_sigmas in zip(grid_points, imag_self_energy):
+        for sigma, ise_temps in zip(sigmas, ise_sigmas):
             for t, ise in zip(temperatures, ise_temps):
                 for i, bi in enumerate(band_indices):
                     pos = 0
                     for j in range(i):
                         pos += len(band_indices[j])
-                    write_imag_self_energy_at_grid_point(
+                    filename = write_imag_self_energy_at_grid_point(
                         gp,
                         bi,
                         mesh,
-                        fp,
-                        ise[:, pos:(pos + len(bi))].sum(axis=1) / len(bi),
+                        frequency_points,
+                        ise[pos:(pos + len(bi))].sum(axis=0) / len(bi),
                         sigma=sigma,
                         temperature=t,
                         scattering_event_class=scattering_event_class,
-                        filename=filename,
+                        filename=output_filename,
                         is_mesh_symmetry=is_mesh_symmetry)
+                    if log_level:
+                        print("Imaginary parts of self-energies were "
+                              "written to \"%s\"." % filename)
 
 
 def average_by_degeneracy(imag_self_energy, band_indices, freqs_at_gp):
@@ -252,11 +357,13 @@ class ImagSelfEnergy(object):
         self._weights_at_q = None
         self._with_detail = with_detail
         self._unit_conversion = None
-        self._cutoff_frequency = interaction.get_cutoff_frequency()
+        self._cutoff_frequency = interaction.cutoff_frequency
 
         self._g = None  # integration weights
-        self._g_zero = None
-        self._mesh = self._pp.get_mesh_numbers()
+        self._g_zero = None  # Necessary elements of interaction strength
+        self._g_zero_frequency_points = None
+        self._g_zero_zeros = None   # always zeros for frequency sampling mode
+        self._mesh = self._pp.mesh_numbers
         self._is_collision_matrix = False
 
         # Unit to THz of Gamma
@@ -298,11 +405,11 @@ class ImagSelfEnergy(object):
             self._pp.run(lang=self._lang)
         else:
             self._pp.run(lang=self._lang, g_zero=self._g_zero)
-        self._pp_strength = self._pp.get_interaction_strength()
+        self._pp_strength = self._pp.interaction_strength
 
     def set_integration_weights(self, scattering_event_class=None):
         if self._frequency_points is None:
-            bi = self._pp.get_band_indices()
+            bi = self._pp.band_indices
             f_points = self._frequencies[self._grid_point][bi]
         else:
             f_points = self._frequency_points
@@ -315,6 +422,14 @@ class ImagSelfEnergy(object):
             is_collision_matrix=self._is_collision_matrix)
         if self._frequency_points is None:
             self._g_zero = _g_zero
+        else:
+            # g_zero feature can not be used in frequency sampling mode.
+            # zero values of the following array shape is used in C-routine.
+            # shape = [num_triplets, num_band0, num_band, num_band]
+            shape = list(self._g.shape[1:])
+            shape[1] = len(self._pp.band_indices)
+            self._g_zero_zeros = np.zeros(shape=shape, dtype='byte', order='C')
+            self._g_zero_frequency_points = _g_zero
 
         if scattering_event_class == 1 or scattering_event_class == 2:
             self._g[scattering_event_class - 1] = 0
@@ -453,7 +568,8 @@ class ImagSelfEnergy(object):
                                         self._temperature,
                                         self._g,
                                         _g_zero,
-                                        self._cutoff_frequency)
+                                        self._cutoff_frequency,
+                                        -1)
         self._imag_self_energy *= self._unit_conversion
 
     def _run_c_detailed_with_band_indices_with_g(self):
@@ -487,24 +603,19 @@ class ImagSelfEnergy(object):
     def _run_c_with_frequency_points_with_g(self):
         import phono3py._phono3py as phono3c
         num_band0 = self._pp_strength.shape[1]
-        g_shape = list(self._g.shape)
-        g_shape[2] = num_band0
-        g = np.zeros(tuple(g_shape), dtype='double', order='C')
         ise_at_f = np.zeros(num_band0, dtype='double')
-        _g_zero = np.zeros(g_shape, dtype='byte', order='C')
 
         for i in range(len(self._frequency_points)):
-            for j in range(num_band0):
-                g[:, :, j, :, :] = self._g[:, :, i, :, :]
             phono3c.imag_self_energy_with_g(ise_at_f,
                                             self._pp_strength,
                                             self._triplets_at_q,
                                             self._weights_at_q,
                                             self._frequencies,
                                             self._temperature,
-                                            g,
-                                            _g_zero,  # don't use g_zero
-                                            self._cutoff_frequency)
+                                            self._g,
+                                            self._g_zero_frequency_points,
+                                            self._cutoff_frequency,
+                                            i)
             self._imag_self_energy[i] = ise_at_f
         self._imag_self_energy *= self._unit_conversion
 
@@ -531,7 +642,7 @@ class ImagSelfEnergy(object):
                     self._pp_strength,
                     self._triplets_at_q,
                     self._weights_at_q,
-                    self._pp.get_grid_address(),
+                    self._pp.grid_address,
                     self._frequencies,
                     self._temperature,
                     g,
@@ -552,7 +663,7 @@ class ImagSelfEnergy(object):
     def _ise_thm_with_band_indices(self):
         freqs = self._frequencies[self._triplets_at_q[:, [1, 2]]]
         freqs = np.where(freqs > self._cutoff_frequency, freqs, 1)
-        n = occupation(freqs, self._temperature)
+        n = bose_einstein(freqs, self._temperature)
         for i, (tp, w, interaction) in enumerate(zip(self._triplets_at_q,
                                                      self._weights_at_q,
                                                      self._pp_strength)):
@@ -595,8 +706,8 @@ class ImagSelfEnergy(object):
                 f2 = self._frequencies[tp[2]][k]
                 if (f1 > self._cutoff_frequency and
                     f2 > self._cutoff_frequency):
-                    n2 = occupation(f1, self._temperature)
-                    n3 = occupation(f2, self._temperature)
+                    n2 = bose_einstein(f1, self._temperature)
+                    n3 = bose_einstein(f2, self._temperature)
                     g1 = self._g[0, i, :, j, k]
                     g2_g3 = self._g[1, i, :, j, k]  # g2 - g3
                     for l in range(len(interaction)):
@@ -618,5 +729,53 @@ class ImagSelfEnergy(object):
 
     def _average_by_degeneracy(self, imag_self_energy):
         return average_by_degeneracy(imag_self_energy,
-                                     self._pp.get_band_indices(),
+                                     self._pp.band_indices,
                                      self._frequencies[self._grid_point])
+
+
+def run_ise_at_frequency_points_batch(
+        _frequency_points,
+        ise,
+        temperatures,
+        gamma,
+        write_gamma_detail=False,
+        return_gamma_detail=False,
+        detailed_gamma_at_gp=None,
+        scattering_event_class=None,
+        nelems_in_batch=50,
+        log_level=0):
+    if nelems_in_batch is None:
+        _nelems_in_batch = 10
+    else:
+        _nelems_in_batch = nelems_in_batch
+
+    batches = _get_batches(len(_frequency_points), _nelems_in_batch)
+
+    if log_level:
+        print("Calculations at %d frequency points are devided into "
+              "%d batches." % (len(_frequency_points), len(batches)))
+
+    for bi, fpts_batch in enumerate(batches):
+        if log_level:
+            print("%d/%d: %s" % (bi + 1, len(batches), fpts_batch + 1))
+            sys.stdout.flush()
+
+        ise.set_frequency_points(_frequency_points[fpts_batch])
+        ise.set_integration_weights(
+            scattering_event_class=scattering_event_class)
+        for l, t in enumerate(temperatures):
+            ise.set_temperature(t)
+            ise.run()
+            gamma[l, :, fpts_batch] = ise.get_imag_self_energy()
+            if write_gamma_detail or return_gamma_detail:
+                detailed_gamma_at_gp[l, fpts_batch] = (
+                    ise.get_detailed_imag_self_energy())
+
+
+def _get_batches(tot_nelems, nelems=10):
+    nbatch = tot_nelems // nelems
+    batches = [np.arange(i * nelems, (i + 1) * nelems)
+               for i in range(nbatch)]
+    if tot_nelems % nelems > 0:
+        batches.append(np.arange(nelems * nbatch, tot_nelems))
+    return batches

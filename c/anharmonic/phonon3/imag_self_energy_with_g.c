@@ -41,6 +41,10 @@
 #include <phonon3_h/imag_self_energy_with_g.h>
 #include <triplet_h/triplet.h>
 
+static int ise_set_g_pos_frequency_point(int (*g_pos)[4],
+                                         const size_t num_band0,
+                                         const size_t num_band,
+                                         const char *g_zero);
 static void
 detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
                                      double *imag_self_energy,
@@ -88,11 +92,15 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
                                               const double *g,
                                               const char *g_zero,
                                               const double temperature,
-                                              const double cutoff_frequency)
+                                              const double cutoff_frequency,
+                                              const int num_frequency_points,
+                                              const int frequency_point_index)
 {
-  size_t i, j, num_triplets, num_band0, num_band, num_band_prod, num_g_pos;
+  size_t i, j, num_triplets, num_band0, num_band, num_band_prod;
+  size_t num_g_pos, g_index_dims, g_index_shift;
   int (*g_pos)[4];
   double *ise;
+  int at_a_frequency_point;
 
   g_pos = NULL;
   ise = NULL;
@@ -103,13 +111,37 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
   num_band_prod = num_band0 * num_band * num_band;
   ise = (double*)malloc(sizeof(double) * num_triplets * num_band0);
 
+  if (frequency_point_index < 0) {
+    /* frequency_points == frequencies at bands */
+    at_a_frequency_point = 0;
+    g_index_dims = num_band_prod;
+    g_index_shift = 0;
+  } else {
+    /* At an arbitrary frequency point. */
+    at_a_frequency_point = 1;
+    g_index_dims = num_frequency_points * num_band * num_band;
+    g_index_shift = frequency_point_index * num_band * num_band;
+  }
+
 #pragma omp parallel for private(num_g_pos, j, g_pos)
   for (i = 0; i < num_triplets; i++) {
     g_pos = (int(*)[4])malloc(sizeof(int[4]) * num_band_prod);
-    num_g_pos = ise_set_g_pos(g_pos,
-                              num_band0,
-                              num_band,
-                              g_zero + i * num_band_prod);
+    /* ise_set_g_pos only works for the case of frquency points at */
+    /* bands. For frequency sampling mode, g_zero is assumed all */
+    /* with the array shape of (num_triplets, num_band0, num_band, */
+    /* num_band). */
+    if (at_a_frequency_point) {
+      num_g_pos = ise_set_g_pos_frequency_point(
+        g_pos,
+        num_band0,
+        num_band,
+        g_zero + i * g_index_dims + g_index_shift);
+    } else {
+      num_g_pos = ise_set_g_pos(g_pos,
+                                num_band0,
+                                num_band,
+                                g_zero + i * num_band_prod);
+    }
 
     ise_imag_self_energy_at_triplet(
       ise + i * num_band0,
@@ -119,14 +151,15 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
       frequencies,
       triplets[i],
       weights[i],
-      g + i * num_band_prod,
-      g + (i + num_triplets) * num_band_prod,
+      g + i * g_index_dims + g_index_shift,
+      g + (i + num_triplets) * g_index_dims + g_index_shift,
       g_pos,
       num_g_pos,
       &temperature,
       1,
       cutoff_frequency,
-      0);
+      0,
+      at_a_frequency_point);
 
     free(g_pos);
     g_pos = NULL;
@@ -235,10 +268,12 @@ void ise_imag_self_energy_at_triplet(double *imag_self_energy,
                                      const double *temperatures,
                                      const size_t num_temps,
                                      const double cutoff_frequency,
-                                     const int openmp_at_bands)
+                                     const int openmp_at_bands,
+                                     const int at_a_frequency_point)
 {
   size_t i, j;
   double *n1, *n2;
+  int g_pos_3;
 
   n1 = (double*)malloc(sizeof(double) * num_temps * num_band);
   n2 = (double*)malloc(sizeof(double) * num_temps * num_band);
@@ -260,6 +295,13 @@ void ise_imag_self_energy_at_triplet(double *imag_self_energy,
 /* g_pos[i][0] takes value 0 <= x < num_band0 only, */
 /* which causes race condition. */
   for (i = 0; i < num_g_pos; i++) {
+    if (at_a_frequency_point) {
+      /* At an arbitrary frequency point */
+      g_pos_3 = g_pos[i][3] % (num_band * num_band);
+    } else {
+      /* frequency_points == frequencies at bands */
+      g_pos_3 = g_pos[i][3];
+    }
     for (j = 0; j < num_temps; j++) {
       if (n1[j * num_band + g_pos[i][1]] < 0 ||
           n2[j * num_band + g_pos[i][2]] < 0) {
@@ -268,13 +310,13 @@ void ise_imag_self_energy_at_triplet(double *imag_self_energy,
         if (temperatures[j] > 0) {
           imag_self_energy[j * num_band0 + g_pos[i][0]] +=
             ((n1[j * num_band + g_pos[i][1]] +
-              n2[j * num_band + g_pos[i][2]] + 1) * g1[g_pos[i][3]] +
+              n2[j * num_band + g_pos[i][2]] + 1) * g1[g_pos_3] +
              (n1[j * num_band + g_pos[i][1]] -
-              n2[j * num_band + g_pos[i][2]]) * g2_3[g_pos[i][3]]) *
+              n2[j * num_band + g_pos[i][2]]) * g2_3[g_pos_3]) *
             fc3_normal_squared[g_pos[i][3]] * triplet_weight;
         } else {
           imag_self_energy[j * num_band0 + g_pos[i][0]] +=
-            g1[g_pos[i][3]] * fc3_normal_squared[g_pos[i][3]] * triplet_weight;
+            g1[g_pos_3] * fc3_normal_squared[g_pos[i][3]] * triplet_weight;
         }
       }
     }
@@ -306,6 +348,34 @@ int ise_set_g_pos(int (*g_pos)[4],
           num_g_pos++;
         }
         jkl++;
+      }
+    }
+  }
+  return num_g_pos;
+}
+
+static int ise_set_g_pos_frequency_point(int (*g_pos)[4],
+                                         const size_t num_band0,
+                                         const size_t num_band,
+                                         const char *g_zero)
+{
+  size_t num_g_pos, j, k, l, kl, jkl;
+
+  num_g_pos = 0;
+  jkl = 0;
+  for (j = 0; j < num_band0; j++) {
+    kl = 0;
+    for (k = 0; k < num_band; k++) {
+      for (l = 0; l < num_band; l++) {
+        if (!g_zero[kl]) {
+          g_pos[num_g_pos][0] = j;
+          g_pos[num_g_pos][1] = k;
+          g_pos[num_g_pos][2] = l;
+          g_pos[num_g_pos][3] = jkl;
+          num_g_pos++;
+        }
+        jkl++;
+        kl++;
       }
     }
   }

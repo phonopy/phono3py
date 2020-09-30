@@ -12,6 +12,14 @@ of phono3py under current style of phono3py development. However
 useful tools should be known. If developers want to use here to notify
 their tools, please contact via the phonopy mailing list.
 
+Phono3py-Power-Tools
+---------------------
+
+Phono3py-Power-Tools is a collection of codes and scripts from the Skelton group for Phono(3)py "power users", and includes additional tools for data analysis and plotting.
+
+https://github.com/skelton-group/Phono3py-Power-Tools
+
+
 Kinetic Collective Model
 -------------------------
 
@@ -23,4 +31,3 @@ semiconductors in a fast and low memory way from first principles
 calculations.
 
 https://physta.github.io/
-

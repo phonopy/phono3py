@@ -1,7 +1,7 @@
 # Copyright (C) 2015 Atsushi Togo
 # All rights reserved.
 #
-# This file is part of phonopy.
+# This file is part of phono3py.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -47,6 +47,13 @@ def create_phono3py_supercells(cell_info,
                                output_filename=None,
                                interface_mode='vasp',
                                log_level=1):
+    """create displacements and supercells
+
+    Distance unit used is that for the calculator interface.
+    The default unit is Angstron.
+
+    """
+
     optional_structure_info = cell_info['optional_structure_info']
 
     if settings.displacement_distance is None:
@@ -69,6 +76,8 @@ def create_phono3py_supercells(cell_info,
 
     if log_level:
         print('')
+        print("Unit cell was read from \"%s\"." %
+              optional_structure_info[0])
         print("Displacement distance: %s" % distance)
 
     if output_filename is None:

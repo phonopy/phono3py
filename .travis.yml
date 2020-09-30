@@ -1,11 +1,11 @@
 matrix:
   include:
-  - python: '2.7'
-    env: TRAVIS_PYTHON_VERSION='2.7'
   - python: '3.6'
     env: TRAVIS_PYTHON_VERSION='3.6'
   - python: '3.7'
     env: TRAVIS_PYTHON_VERSION='3.7'
+  - python: '3.8'
+    env: TRAVIS_PYTHON_VERSION='3.8'
 
 before_install:
     - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
@@ -21,16 +21,24 @@ before_install:
     - export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 
 install:
-    - conda install --yes -c conda-forge matplotlib-base pyyaml openblas libgfortran gcc_linux-64 gxx_linux-64 h5py scipy pytest phonopy
+    - conda install --yes -c conda-forge matplotlib-base pyyaml openblas libgfortran gcc_linux-64 gxx_linux-64 h5py scipy pytest codecov pytest-cov spglib
     - echo $TRAVIS_BRANCH
+    - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
+        pip install https://github.com/phonopy/phonopy/archive/master.zip --user;
+      else
+        pip install https://github.com/phonopy/phonopy/archive/develop.zip --user;
+      fi
     - pwd
     - ./get_nanoversion.sh
     - cat __nanoversion__.txt
     - python setup.py build
     - pip install -e .
 
+after_success:
+    - codecov
+
 script:
-    - pytest -v
+    - pytest --cov-report term --cov=phono3py test
     - cd example/Si-PBE
     - tar xf vasprun_xmls.tar.lzma --lzma
     - phono3py --cf3 vasprun_xmls/disp-{00001..00111}/vasprun.xml
@@ -55,7 +63,6 @@ deploy:
         repo: phonopy/phono3py
         branch: rc
         tags: false
-        python: 2.7
 
     # testing anaconda
     - provider: script
@@ -64,7 +71,6 @@ deploy:
         repo: phonopy/phono3py
         branch: rc
         tags: false
-        # python: 2.7
 
     # production pypi
     - provider: pypi
@@ -78,7 +84,6 @@ deploy:
       on:
         branch: master
         tags: false
-        python: 2.7
 
     # production anaconda
     - provider: script
@@ -87,4 +92,3 @@ deploy:
         repo: phonopy/phono3py
         branch: master
         tags: false
-        # python: 2.7

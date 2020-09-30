@@ -1,17 +1,43 @@
+# Copyright (C) 2020 Atsushi Togo
+# All rights reserved.
+#
+# This file is part of phono3py.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+#
+# * Neither the name of the phonopy project nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
 import numpy as np
-from phonopy.units import THzToEv, Kb
 import spglib
 from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.structure.grid_points import extract_ir_grid_points
-
-
-def gaussian(x, sigma):
-    return 1.0 / np.sqrt(2 * np.pi) / sigma * np.exp(-x**2 / 2 / sigma**2)
-
-
-def occupation(x, t):
-    return 1.0 / (np.exp(THzToEv * x / (Kb * t)) - 1)
+from phono3py.phonon.func import gaussian
 
 
 def get_triplets_at_q(grid_point,
@@ -545,11 +571,11 @@ def _set_triplets_integration_weights_c(g,
                                         neighboring_phonons=False):
     import phono3py._phono3py as phono3c
 
-    reciprocal_lattice = np.linalg.inv(interaction.get_primitive().get_cell())
-    mesh = interaction.get_mesh_numbers()
+    reciprocal_lattice = np.linalg.inv(interaction.primitive.cell)
+    mesh = interaction.mesh_numbers
     thm = TetrahedronMethod(reciprocal_lattice, mesh=mesh)
-    grid_address = interaction.get_grid_address()
-    bz_map = interaction.get_bz_map()
+    grid_address = interaction.grid_address
+    bz_map = interaction.bz_map
     triplets_at_q = interaction.get_triplets_at_q()[0]
 
     if neighboring_phonons:

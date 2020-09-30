@@ -1,7 +1,7 @@
 # Copyright (C) 2015 Atsushi Togo
 # All rights reserved.
 #
-# This file is part of phonopy.
+# This file is part of phono3py.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -42,6 +42,9 @@ class Phono3pySettings(Settings):
         'boundary_mfp': 1.0e6,
         'coarse_mesh_shifts': None,
         'constant_averaged_pp_interaction': None,
+        'create_forces_fc2': None,
+        'create_forces_fc3': None,
+        'create_forces_fc3_file': None,
         'cutoff_fc3_distance': None,
         'cutoff_pair_distance': None,
         'gamma_conversion_factor': None,
@@ -50,7 +53,6 @@ class Phono3pySettings(Settings):
         'ion_clamped': False,
         'is_bterta': False,
         'is_compact_fc': False,
-        'is_frequency_shift': False,
         'is_full_pp': False,
         'is_gruneisen': False,
         'is_imag_self_energy': False,
@@ -59,7 +61,9 @@ class Phono3pySettings(Settings):
         'is_kappa_star': True,
         'is_lbte': False,
         'is_N_U': False,
+        'is_real_self_energy': False,
         'is_reducible_collision_matrix': False,
+        'is_spectral_function': False,
         'is_symmetrize_fc2': False,
         'is_symmetrize_fc3_q': False,
         'is_symmetrize_fc3_r': False,
@@ -67,6 +71,7 @@ class Phono3pySettings(Settings):
         'mass_variances': None,
         'max_freepath': None,
         'mesh_divisors': None,
+        'num_points_in_batch': None,
         'read_collision': None,
         'read_fc2': False,
         'read_fc3': False,
@@ -80,6 +85,7 @@ class Phono3pySettings(Settings):
         'scattering_event_class': None,  # scattering event class 1 or 2
         'sigma_cutoff_width': None,
         'solve_collective_phonon': False,
+        'subtract_forces': None,
         'use_ave_pp': False,
         'write_collision': False,
         'write_gamma_detail': False,
@@ -103,6 +109,15 @@ class Phono3pySettings(Settings):
 
     def set_constant_averaged_pp_interaction(self, val):
         self._v['constant_averaged_pp_interaction'] = val
+
+    def set_create_forces_fc2(self, val):
+        self._v['create_forces_fc2'] = val
+
+    def set_create_forces_fc3(self, val):
+        self._v['create_forces_fc3'] = val
+
+    def set_create_forces_fc3_file(self, val):
+        self._v['create_forces_fc3_file'] = val
 
     def set_cutoff_fc3_distance(self, val):
         self._v['cutoff_fc3_distance'] = val
@@ -128,9 +143,6 @@ class Phono3pySettings(Settings):
     def set_is_compact_fc(self, val):
         self._v['is_compact_fc'] = val
 
-    def set_is_frequency_shift(self, val):
-        self._v['is_frequency_shift'] = val
-
     def set_is_full_pp(self, val):
         self._v['is_full_pp'] = val
 
@@ -155,8 +167,14 @@ class Phono3pySettings(Settings):
     def set_is_N_U(self, val):
         self._v['is_N_U'] = val
 
+    def set_is_real_self_energy(self, val):
+        self._v['is_real_self_energy'] = val
+
     def set_is_reducible_collision_matrix(self, val):
         self._v['is_reducible_collision_matrix'] = val
+
+    def set_is_spectral_function(self, val):
+        self._v['is_spectral_function'] = val
 
     def set_is_symmetrize_fc2(self, val):
         self._v['is_symmetrize_fc2'] = val
@@ -178,6 +196,9 @@ class Phono3pySettings(Settings):
 
     def set_mesh_divisors(self, val):
         self._v['mesh_divisors'] = val
+
+    def set_num_points_in_batch(self, val):
+        self._v['num_points_in_batch'] = val
 
     def set_phonon_supercell_matrix(self, val):
         self._v['phonon_supercell_matrix'] = val
@@ -217,6 +238,9 @@ class Phono3pySettings(Settings):
 
     def set_solve_collective_phonon(self, val):
         self._v['solve_collective_phonon'] = val
+
+    def set_subtract_forces(self, val):
+        self._v['subtract_forces'] = val
 
     def set_use_ave_pp(self, val):
         self._v['use_ave_pp'] = val
@@ -274,6 +298,19 @@ class Phono3pyConfParser(ConfParser):
             if const_ave_pp is not None:
                 self._confs['const_ave_pp'] = const_ave_pp
 
+        if 'create_forces_fc2' in self._args:
+            if self._args.create_forces_fc2:
+                self._confs['create_forces_fc2'] = self._args.create_forces_fc2
+
+        if 'create_forces_fc3' in self._args:
+            if self._args.create_forces_fc3:
+                self._confs['create_forces_fc3'] = self._args.create_forces_fc3
+
+        if 'create_forces_fc3_file' in self._args:
+            if self._args.create_forces_fc3_file:
+                cfc3_file = self._args.create_forces_fc3_file
+                self._confs['create_forces_fc3_file'] = cfc3_file
+
         if 'cutoff_fc3_distance' in self._args:
             cutoff_fc3 = self._args.cutoff_fc3_distance
             if cutoff_fc3 is not None:
@@ -314,10 +351,6 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_gruneisen:
                 self._confs['gruneisen'] = '.true.'
 
-        if 'is_frequency_shift' in self._args:
-            if self._args.is_frequency_shift:
-                self._confs['frequency_shift'] = '.true.'
-
         if 'is_full_pp' in self._args:
             if self._args.is_full_pp:
                 self._confs['full_pp'] = '.true.'
@@ -346,9 +379,17 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_N_U:
                 self._confs['N_U'] = '.true.'
 
+        if 'is_real_self_energy' in self._args:
+            if self._args.is_real_self_energy:
+                self._confs['real_self_energy'] = '.true.'
+
         if 'is_reducible_collision_matrix' in self._args:
             if self._args.is_reducible_collision_matrix:
                 self._confs['reducible_collision_matrix'] = '.true.'
+
+        if 'is_spectral_function' in self._args:
+            if self._args.is_spectral_function:
+                self._confs['spectral_function'] = '.true.'
 
         if 'is_symmetrize_fc2' in self._args:
             if self._args.is_symmetrize_fc2:
@@ -379,6 +420,11 @@ class Phono3pyConfParser(ConfParser):
             mesh_divisors = self._args.mesh_divisors
             if mesh_divisors is not None:
                 self._confs['mesh_divisors'] = " ".join(mesh_divisors)
+
+        if 'num_points_in_batch' in self._args:
+            num_points_in_batch = self._args.num_points_in_batch
+            if num_points_in_batch is not None:
+                self._confs['num_points_in_batch'] = num_points_in_batch
 
         if 'pinv_cutoff' in self._args:
             if self._args.pinv_cutoff is not None:
@@ -431,6 +477,10 @@ class Phono3pyConfParser(ConfParser):
             if self._args.solve_collective_phonon:
                 self._confs['collective_phonon'] = '.true.'
 
+        if 'subtract_forces' in self._args:
+            if self._args.subtract_forces:
+                self._confs['subtract_forces'] = self._args.subtract_forces
+
         if 'use_ave_pp' in self._args:
             if self._args.use_ave_pp:
                 self._confs['use_ave_pp'] = '.true.'
@@ -464,6 +514,43 @@ class Phono3pyConfParser(ConfParser):
         confs = self._confs
 
         for conf_key in confs.keys():
+            # Boolean
+            if conf_key in (
+                    'read_fc2', 'read_fc3', 'read_gamma', 'read_phonon',
+                    'read_pp', 'use_ave_pp', 'collective_phonon',
+                    'write_gamma_detail', 'write_gamma',
+                    'write_collision', 'write_phonon', 'write_pp',
+                    'write_LBTE_solution', 'full_pp', 'ion_clamped',
+                    'bterta', 'compact_fc', 'real_self_energy',
+                    'gruneisen', 'imag_self_energy', 'isotope',
+                    'joint_dos', 'lbte', 'N_U', 'spectral_function',
+                    'reducible_collision_matrix', 'symmetrize_fc2',
+                    'symmetrize_fc3_q', 'symmetrize_fc3_r', 'kappa_star'):
+                if confs[conf_key].lower() == '.true.':
+                    self.set_parameter(conf_key, True)
+                elif confs[conf_key].lower() == '.false.':
+                    self.set_parameter(conf_key, False)
+
+            # float
+            if conf_key in (
+                    'boundary_mfp', 'cutoff_fc3_distance',
+                    'cutoff_pair_distance', 'gamma_conversion_factor',
+                    'max_freepath', 'pinv_cutoff', 'pp_conversion_factor',
+                    'sigma_cutoff_width'):
+                self.set_parameter(conf_key, float(confs[conf_key]))
+
+            # int
+            if conf_key in ('pinv_solver', 'num_points_in_batch'):
+                self.set_parameter(conf_key, int(confs[conf_key]))
+
+            # specials
+            if conf_key in ('create_forces_fc2', 'create_forces_fc3'):
+                if type(confs[conf_key]) is str:
+                    fnames = confs[conf_key].split()
+                else:
+                    fnames = confs[conf_key]
+                self.set_parameter(conf_key, fnames)
+
             if conf_key == 'dim_fc2':
                 matrix = [ int(x) for x in confs['dim_fc2'].split() ]
                 if len(matrix) == 9:
@@ -482,31 +569,9 @@ class Phono3pyConfParser(ConfParser):
                     else:
                         self.set_parameter('dim_fc2', matrix)
 
-            if conf_key == 'boundary_mfp':
-                self.set_parameter('boundary_mfp',
-                                   float(confs['boundary_mfp']))
-
             if conf_key in ('constant_averaged_pp_interaction'
                             'const_ave_pp'):
                 self.set_parameter('const_ave_pp', float(confs['const_ave_pp']))
-
-            if conf_key == 'cutoff_fc3_distance':
-                self.set_parameter('cutoff_fc3_distance',
-                                   float(confs['cutoff_fc3_distance']))
-
-            if conf_key == 'cutoff_pair_distance':
-                self.set_parameter('cutoff_pair_distance',
-                                   float(confs['cutoff_pair_distance']))
-
-            if conf_key == 'full_pp':
-                if confs['full_pp'].lower() == '.true.':
-                    self.set_parameter('is_full_pp', True)
-                elif confs['full_pp'].lower() == '.false.':
-                    self.set_parameter('is_full_pp', False)
-
-            if conf_key == 'gamma_conversion_factor':
-                self.set_parameter('gamma_conversion_factor',
-                                   float(confs['gamma_conversion_factor']))
 
             if conf_key == 'grid_addresses':
                 vals = [int(x) for x in
@@ -522,93 +587,9 @@ class Phono3pyConfParser(ConfParser):
                         confs['grid_points'].replace(',', ' ').split()]
                 self.set_parameter('grid_points', vals)
 
-            if conf_key == 'ion_clamped':
-                if confs['ion_clamped'].lower() == '.true.':
-                    self.set_parameter('ion_clamped', True)
-                elif confs['ion_clamped'].lower() == '.false.':
-                    self.set_parameter('ion_clamped', False)
-
-            if conf_key == 'bterta':
-                if confs['bterta'].lower() == '.true.':
-                    self.set_parameter('is_bterta', True)
-                elif confs['bterta'].lower() == '.false.':
-                    self.set_parameter('is_bterta', False)
-
-            if conf_key == 'compact_fc':
-                if confs['compact_fc'].lower() == '.true.':
-                    self.set_parameter('is_compact_fc', True)
-                elif confs['compact_fc'].lower() == '.false.':
-                    self.set_parameter('is_compact_fc', False)
-
-            if conf_key == 'frequency_shift':
-                if confs['frequency_shift'].lower() == '.true.':
-                    self.set_parameter('is_frequency_shift', True)
-                elif confs['frequency_shift'].lower() == '.false.':
-                    self.set_parameter('is_frequency_shift', False)
-
-            if conf_key == 'gruneisen':
-                if confs['gruneisen'].lower() == '.true.':
-                    self.set_parameter('is_gruneisen', True)
-                elif confs['gruneisen'].lower() == '.false.':
-                    self.set_parameter('is_gruneisen', False)
-
-            if conf_key == 'imag_self_energy':
-                if confs['imag_self_energy'].lower() == '.true.':
-                    self.set_parameter('is_imag_self_energy', True)
-                elif confs['imag_self_energy'].lower() == '.false.':
-                    self.set_parameter('is_imag_self_energy', False)
-
-            if conf_key == 'isotope':
-                if confs['isotope'].lower() == '.true.':
-                    self.set_parameter('is_isotope', True)
-                elif confs['isotope'].lower() == '.false.':
-                    self.set_parameter('is_isotope', False)
-
-            if conf_key == 'joint_dos':
-                if confs['joint_dos'].lower() == '.true.':
-                    self.set_parameter('is_joint_dos', True)
-                elif confs['joint_dos'].lower() == '.false.':
-                    self.set_parameter('is_joint_dos', False)
-
             if conf_key == 'lapack_zheev_uplo':
                 self.set_parameter('lapack_zheev_uplo',
                                    confs['lapack_zheev_uplo'].upper())
-
-            if conf_key == 'lbte':
-                if confs['lbte'].lower() == '.true.':
-                    self.set_parameter('is_lbte', True)
-                elif confs['lbte'].lower() == '.false.':
-                    self.set_parameter('is_lbte', False)
-
-            if conf_key == 'N_U':
-                if confs['N_U'].lower() == '.true.':
-                    self.set_parameter('is_N_U', True)
-                elif confs['N_U'].lower() == '.false.':
-                    self.set_parameter('is_N_U', False)
-
-            if conf_key == 'reducible_collision_matrix':
-                if confs['reducible_collision_matrix'].lower() == '.true.':
-                    self.set_parameter('is_reducible_collision_matrix', True)
-                elif confs['reducible_collision_matrix'].lower() == '.false.':
-                    self.set_parameter('is_reducible_collision_matrix', False)
-
-            if conf_key == 'symmetrize_fc2':
-                if confs['symmetrize_fc2'].lower() == '.true.':
-                    self.set_parameter('is_symmetrize_fc2', True)
-                elif confs['symmetrize_fc2'].lower() == '.false.':
-                    self.set_parameter('is_symmetrize_fc2', False)
-
-            if conf_key == 'symmetrize_fc3_q':
-                if confs['symmetrize_fc3_q'].lower() == '.true.':
-                    self.set_parameter('is_symmetrize_fc3_q', True)
-                elif confs['symmetrize_fc3_q'].lower() == '.false.':
-                    self.set_parameter('is_symmetrize_fc3_q', False)
-
-            if conf_key == 'symmetrize_fc3_r':
-                if confs['symmetrize_fc3_r'].lower() == '.true.':
-                    self.set_parameter('is_symmetrize_fc3_r', True)
-                elif confs['symmetrize_fc3_r'].lower() == '.false.':
-                    self.set_parameter('is_symmetrize_fc3_r', False)
 
             if conf_key == 'mass_variances':
                 vals = [fracval(x) for x in confs['mass_variances'].split()]
@@ -616,9 +597,6 @@ class Phono3pyConfParser(ConfParser):
                     self.setting_error("Mass variance parameters are incorrectly set.")
                 else:
                     self.set_parameter('mass_variances', vals)
-
-            if conf_key == 'max_freepath':
-                self.set_parameter('max_freepath', float(confs['max_freepath']))
 
             if conf_key == 'mesh_divisors':
                 vals = [x for x in confs['mesh_divisors'].split()]
@@ -637,22 +615,6 @@ class Phono3pyConfParser(ConfParser):
                 else:
                     self.setting_error("Mesh divisors are incorrectly set.")
 
-            if conf_key == 'kappa_star':
-                if confs['kappa_star'].lower() == '.true.':
-                    self.set_parameter('is_kappa_star', True)
-                elif confs['kappa_star'].lower() == '.false.':
-                    self.set_parameter('is_kappa_star', False)
-
-            if conf_key == 'pinv_cutoff':
-                self.set_parameter('pinv_cutoff', float(confs['pinv_cutoff']))
-
-            if conf_key == 'pinv_solver':
-                self.set_parameter('pinv_solver', int(confs['pinv_solver']))
-
-            if conf_key == 'pp_conversion_factor':
-                self.set_parameter('pp_conversion_factor',
-                                   float(confs['pp_conversion_factor']))
-
             if conf_key == 'read_collision':
                 if confs['read_collision'] == 'all':
                     self.set_parameter('read_collision', 'all')
@@ -660,91 +622,9 @@ class Phono3pyConfParser(ConfParser):
                     vals = [int(x) for x in confs['read_collision'].split()]
                     self.set_parameter('read_collision', vals)
 
-            if conf_key == 'read_fc2':
-                if confs['read_fc2'].lower() == '.true.':
-                    self.set_parameter('read_fc2', True)
-                elif confs['read_fc2'].lower() == '.false.':
-                    self.set_parameter('read_fc2', False)
-
-            if conf_key == 'read_fc3':
-                if confs['read_fc3'].lower() == '.true.':
-                    self.set_parameter('read_fc3', True)
-                elif confs['read_fc3'].lower() == '.false.':
-                    self.set_parameter('read_fc3', False)
-
-            if conf_key == 'read_gamma':
-                if confs['read_gamma'].lower() == '.true.':
-                    self.set_parameter('read_gamma', True)
-                elif confs['read_gamma'].lower() == '.false.':
-                    self.set_parameter('read_gamma', False)
-
-            if conf_key == 'read_phonon':
-                if confs['read_phonon'].lower() == '.true.':
-                    self.set_parameter('read_phonon', True)
-                elif confs['read_phonon'].lower() == '.false.':
-                    self.set_parameter('read_phonon', False)
-
-            if conf_key == 'read_pp':
-                if confs['read_pp'].lower() == '.true.':
-                    self.set_parameter('read_pp', True)
-                elif confs['read_pp'].lower() == '.false.':
-                    self.set_parameter('read_pp', False)
-
             if conf_key == 'scattering_event_class':
                 self.set_parameter('scattering_event_class',
-                                   confs['scattering_event_class'])
-
-            if conf_key == 'sigma_cutoff_width':
-                self.set_parameter('sigma_cutoff_width',
-                                   float(confs['sigma_cutoff_width']))
-
-            if conf_key == 'collective_phonon':
-                if confs['collective_phonon'].lower() == '.true.':
-                    self.set_parameter('collective_phonon', True)
-                elif confs['collective_phonon'].lower() == '.false.':
-                    self.set_parameter('collective_phonon', False)
-
-            if conf_key == 'use_ave_pp':
-                if confs['use_ave_pp'].lower() == '.true.':
-                    self.set_parameter('use_ave_pp', True)
-                elif confs['use_ave_pp'].lower() == '.false.':
-                    self.set_parameter('use_ave_pp', False)
-
-            if conf_key == 'write_gamma_detail':
-                if confs['write_gamma_detail'].lower() == '.true.':
-                    self.set_parameter('write_gamma_detail', True)
-                elif confs['write_gamma_detail'].lower() == '.false.':
-                    self.set_parameter('write_gamma_detail', False)
-
-            if conf_key == 'write_gamma':
-                if confs['write_gamma'].lower() == '.true.':
-                    self.set_parameter('write_gamma', True)
-                elif confs['write_gamma'].lower() == '.false.':
-                    self.set_parameter('write_gamma', False)
-
-            if conf_key == 'write_collision':
-                if confs['write_collision'].lower() == '.true.':
-                    self.set_parameter('write_collision', True)
-                elif confs['write_collision'].lower() == '.false.':
-                    self.set_parameter('write_collision', False)
-
-            if conf_key == 'write_phonon':
-                if confs['write_phonon'].lower() == '.true.':
-                    self.set_parameter('write_phonon', True)
-                elif confs['write_phonon'].lower() == '.false.':
-                    self.set_parameter('write_phonon', False)
-
-            if conf_key == 'write_pp':
-                if confs['write_pp'].lower() == '.true.':
-                    self.set_parameter('write_pp', True)
-                elif confs['write_pp'].lower() == '.false.':
-                    self.set_parameter('write_pp', False)
-
-            if conf_key == 'write_LBTE_solution':
-                if confs['write_LBTE_solution'].lower() == '.true.':
-                    self.set_parameter('write_LBTE_solution', True)
-                elif confs['write_LBTE_solution'].lower() == '.false.':
-                    self.set_parameter('write_LBTE_solution', False)
+                                   int(confs['scattering_event_class']))
 
     def _set_settings(self):
         self.set_settings()
@@ -758,10 +638,34 @@ class Phono3pyConfParser(ConfParser):
         if 'boundary_mfp' in params:
             self._settings.set_boundary_mfp(params['boundary_mfp'])
 
+        # Calculate thermal conductivity in BTE-RTA
+        if 'bterta' in params:
+            self._settings.set_is_bterta(params['bterta'])
+
+        # Solve collective phonons
+        if 'collective_phonon' in params:
+            self._settings.set_solve_collective_phonon(
+                params['collective_phonon'])
+
+        # Compact force constants or full force constants
+        if 'compact_fc' in params:
+            self._settings.set_is_compact_fc(params['compact_fc'])
+
         # Peierls type approximation for squared ph-ph interaction strength
         if 'const_ave_pp' in params:
             self._settings.set_constant_averaged_pp_interaction(
                 params['const_ave_pp'])
+
+        # Trigger to create FORCES_FC2 and FORCES_FC3
+        if 'create_forces_fc2' in params:
+            self._settings.set_create_forces_fc3(params['create_forces_fc2'])
+
+        if 'create_forces_fc3' in params:
+            self._settings.set_create_forces_fc3(params['create_forces_fc3'])
+
+        if 'create_forces_fc3_file' in params:
+            self._settings.set_create_forces_fc3_file(
+                params['create_forces_fc3_file'])
 
         # Cutoff distance of third-order force constants. Elements where any
         # pair of atoms has larger distance than cut-off distance are set zero.
@@ -792,68 +696,62 @@ class Phono3pyConfParser(ConfParser):
         if 'ion_clamped' in params:
             self._settings.set_ion_clamped(params['ion_clamped'])
 
-        # Calculate thermal conductivity in BTE-RTA
-        if 'is_bterta' in params:
-            self._settings.set_is_bterta(params['is_bterta'])
-
-        # Compact force constants or full force constants
-        if 'is_compact_fc' in params:
-            self._settings.set_is_compact_fc(params['is_compact_fc'])
-
-        # Calculate frequency_shifts
-        if 'is_frequency_shift' in params:
-            self._settings.set_is_frequency_shift(params['is_frequency_shift'])
-
         # Calculate full ph-ph interaction strength for RTA conductivity
-        if 'is_full_pp' in params:
-            self._settings.set_is_full_pp(params['is_full_pp'])
+        if 'full_pp' in params:
+            self._settings.set_is_full_pp(params['full_pp'])
 
         # Calculate phonon-Gruneisen parameters
-        if 'is_gruneisen' in params:
-            self._settings.set_is_gruneisen(params['is_gruneisen'])
+        if 'gruneisen' in params:
+            self._settings.set_is_gruneisen(params['gruneisen'])
 
         # Calculate imaginary part of self energy
-        if 'is_imag_self_energy' in params:
-            self._settings.set_is_imag_self_energy(
-                params['is_imag_self_energy'])
+        if 'imag_self_energy' in params:
+            self._settings.set_is_imag_self_energy(params['imag_self_energy'])
 
         # Calculate lifetime due to isotope scattering
-        if 'is_isotope' in params:
-            self._settings.set_is_isotope(params['is_isotope'])
+        if 'isotope' in params:
+            self._settings.set_is_isotope(params['isotope'])
 
         # Calculate joint-DOS
-        if 'is_joint_dos' in params:
-            self._settings.set_is_joint_dos(params['is_joint_dos'])
+        if 'joint_dos' in params:
+            self._settings.set_is_joint_dos(params['joint_dos'])
 
-        # Calculate thermal conductivity in LBTE with Chaput's method
-        if 'is_lbte' in params:
-            self._settings.set_is_lbte(params['is_lbte'])
-
-        # Calculate Normal and Umklapp processes
-        if 'is_N_U' in params:
-            self._settings.set_is_N_U(params['is_N_U'])
-
-        # Solve reducible collision matrix but not reduced matrix
-        if 'is_reducible_collision_matrix' in params:
-            self._settings.set_is_reducible_collision_matrix(
-                params['is_reducible_collision_matrix'])
-
-        # Symmetrize fc2 by index exchange
-        if 'is_symmetrize_fc2' in params:
-            self._settings.set_is_symmetrize_fc2(params['is_symmetrize_fc2'])
-
-        # Symmetrize phonon fc3 by index exchange
-        if 'is_symmetrize_fc3_q' in params:
-            self._settings.set_is_symmetrize_fc3_q(
-                params['is_symmetrize_fc3_q'])
-
-        # Symmetrize fc3 by index exchange
-        if 'is_symmetrize_fc3_r' in params:
-            self._settings.set_is_symmetrize_fc3_r(
-                params['is_symmetrize_fc3_r'])
+        # Sum partial kappa at q-stars
+        if 'kappa_star' in params:
+            self._settings.set_is_kappa_star(params['kappa_star'])
 
         if 'lapack_zheev_uplo' in params:
             self._settings.set_lapack_zheev_uplo(params['lapack_zheev_uplo'])
+
+        # Calculate thermal conductivity in LBTE with Chaput's method
+        if 'lbte' in params:
+            self._settings.set_is_lbte(params['lbte'])
+
+        # Number of frequency points in a batch.
+        if 'num_points_in_batch' in params:
+            self._settings.set_num_points_in_batch(
+                params['num_points_in_batch'])
+
+        # Calculate Normal and Umklapp processes
+        if 'N_U' in params:
+            self._settings.set_is_N_U(params['N_U'])
+
+        # Solve reducible collision matrix but not reduced matrix
+        if 'reducible_collision_matrix' in params:
+            self._settings.set_is_reducible_collision_matrix(
+                params['reducible_collision_matrix'])
+
+        # Symmetrize fc2 by index exchange
+        if 'symmetrize_fc2' in params:
+            self._settings.set_is_symmetrize_fc2(params['symmetrize_fc2'])
+
+        # Symmetrize phonon fc3 by index exchange
+        if 'symmetrize_fc3_q' in params:
+            self._settings.set_is_symmetrize_fc3_q(params['symmetrize_fc3_q'])
+
+        # Symmetrize fc3 by index exchange
+        if 'symmetrize_fc3_r' in params:
+            self._settings.set_is_symmetrize_fc3_r(params['symmetrize_fc3_r'])
 
         # Mass variance parameters
         if 'mass_variances' in params:
@@ -883,6 +781,10 @@ class Phono3pyConfParser(ConfParser):
             self._settings.set_pp_conversion_factor(
                 params['pp_conversion_factor'])
 
+        # Calculate real_self_energys
+        if 'real_self_energy' in params:
+            self._settings.set_is_real_self_energy(params['real_self_energy'])
+
         # Read phonon-phonon interaction amplitudes from hdf5
         if 'read_amplitude' in params:
             self._settings.set_read_amplitude(params['read_amplitude'])
@@ -911,10 +813,6 @@ class Phono3pyConfParser(ConfParser):
         if 'read_pp' in params:
             self._settings.set_read_pp(params['read_pp'])
 
-        # Sum partial kappa at q-stars
-        if 'is_kappa_star' in params:
-            self._settings.set_is_kappa_star(params['is_kappa_star'])
-
         # Scattering event class 1 or 2
         if 'scattering_event_class' in params:
             self._settings.set_scattering_event_class(
@@ -924,10 +822,13 @@ class Phono3pyConfParser(ConfParser):
         if 'sigma_cutoff_width' in params:
             self._settings.set_sigma_cutoff_width(params['sigma_cutoff_width'])
 
-        # Solve collective phonons
-        if 'collective_phonon' in params:
-            self._settings.set_solve_collective_phonon(
-                params['collective_phonon'])
+        # Calculate spectral_functions
+        if 'spectral_function' in params:
+            self._settings.set_is_spectral_function(params['spectral_function'])
+
+        # Subtract residual forces to create FORCES_FC2 and FORCES_FC3
+        if 'subtract_forces' in params:
+            self._settings.set_subtract_forces(params['subtract_forces'])
 
         # Use averaged ph-ph interaction
         if 'use_ave_pp' in params:

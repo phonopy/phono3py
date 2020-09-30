@@ -1,3 +1,37 @@
+# Copyright (C) 2020 Atsushi Togo
+# All rights reserved.
+#
+# This file is part of phono3py.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+#
+# * Neither the name of the phonopy project nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
 import sys
 import numpy as np
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
@@ -263,6 +297,7 @@ def _write_gamma(br, interaction, i, compression="gzip", filename=None,
                     sigma=sigma,
                     sigma_cutoff=sigma_cutoff,
                     kappa_unit_conversion=unit_to_WmK / volume,
+                    compression=compression,
                     filename=filename,
                     verbose=verbose)
 
@@ -477,6 +512,7 @@ class Conductivity_RTA(Conductivity):
                  pp_filename=None,
                  is_N_U=False,
                  is_gamma_detail=False,
+                 is_frequency_shift_by_bubble=False,
                  log_level=0):
         self._pp = None
         self._temperatures = None
@@ -487,6 +523,7 @@ class Conductivity_RTA(Conductivity):
         self._is_full_pp = None
         self._is_N_U = is_N_U
         self._is_gamma_detail = is_gamma_detail
+        self._is_frequency_shift_by_bubble = is_frequency_shift_by_bubble
         self._log_level = None
         self._primitive = None
         self._dm = None
@@ -646,7 +683,7 @@ class Conductivity_RTA(Conductivity):
             self._show_log(self._qpoints[i], i)
 
     def _allocate_values(self):
-        num_band0 = len(self._pp.get_band_indices())
+        num_band0 = len(self._pp.band_indices)
         num_grid_points = len(self._grid_points)
         num_temp = len(self._temperatures)
         self._kappa = np.zeros((len(self._sigmas), num_temp, 6),
@@ -765,19 +802,19 @@ class Conductivity_RTA(Conductivity):
                         self._collision.get_detailed_imag_self_energy())
 
     def _set_gamma_at_sigmas_lowmem(self, i):
-        band_indices = self._pp.get_band_indices()
+        band_indices = self._pp.band_indices
         (svecs,
          multiplicity,
          p2s,
          s2p,
          masses) = self._pp.get_primitive_and_supercell_correspondence()
-        fc3 = self._pp.get_fc3()
+        fc3 = self._pp.fc3
         triplets_at_q, weights_at_q, _, _ = self._pp.get_triplets_at_q()
-        bz_map = self._pp.get_bz_map()
+        bz_map = self._pp.bz_map
         symmetrize_fc3_q = 0
 
         if None in self._sigmas:
-            reclat = np.linalg.inv(self._pp.get_primitive().get_cell())
+            reclat = np.linalg.inv(self._pp.primitive.cell)
             thm = TetrahedronMethod(reclat, mesh=self._mesh)
 
         # It is assumed that self._sigmas = [None].
@@ -863,7 +900,7 @@ class Conductivity_RTA(Conductivity):
 
     def _show_log(self, q, i):
         gp = self._grid_points[i]
-        frequencies = self._frequencies[gp][self._pp.get_band_indices()]
+        frequencies = self._frequencies[gp][self._pp.band_indices]
         gv = self._gv[i]
         if self._averaged_pp_interaction is not None:
             ave_pp = self._averaged_pp_interaction[i]

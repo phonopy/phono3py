@@ -32,20 +32,32 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef __frequency_shift3_H__
-#define __frequency_shift3_H__
+#ifndef __real_self_energy_H__
+#define __real_self_energy_H__
 
 #include <phonoc_array.h>
 
 #endif
 
-void get_frequency_shift_at_bands(double *frequency_shift,
-                                  const Darray *fc3_normal_squared,
-                                  const int *band_indices,
-                                  const double *frequencies,
-                                  const int *grid_point_triplets,
-                                  const int *triplet_weights,
-                                  const double epsilon,
-                                  const double temperature,
-                                  const double unit_conversion_factor,
-                                  const double cutoff_frequency);
+void get_real_self_energy_at_bands(double *real_self_energy,
+                                   const Darray *fc3_normal_squared,
+                                   const int *band_indices,
+                                   const double *frequencies,
+                                   const size_t (*triplets)[3],
+                                   const int *triplet_weights,
+                                   const double epsilon,
+                                   const double temperature,
+                                   const double unit_conversion_factor,
+                                   const double cutoff_frequency);
+void
+get_real_self_energy_at_frequency_point(double *real_self_energy,
+                                        const double frequency_point,
+                                        const Darray *fc3_normal_squared,
+                                        const int *band_indices,
+                                        const double *frequencies,
+                                        const size_t (*triplets)[3],
+                                        const int *triplet_weights,
+                                        const double epsilon,
+                                        const double temperature,
+                                        const double unit_conversion_factor,
+                                        const double cutoff_frequency);

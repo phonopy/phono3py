@@ -1,7 +1,7 @@
 # Copyright (C) 2016 Atsushi Togo
 # All rights reserved.
 #
-# This file is part of phonopy.
+# This file is part of phono3py.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -100,9 +100,6 @@ class Phono3pyYaml(PhonopyYaml):
         super(Phono3pyYaml, self).parse()
         self._parse_fc3_dataset()
 
-    def _load(self, fp):
-        super(Phono3pyYaml, self)._load(fp)
-
     def _parse_all_cells(self):
         """Parse all cells
 
@@ -131,6 +128,13 @@ class Phono3pyYaml(PhonopyYaml):
         self.phonon_dataset = self._get_dataset(self.phonon_supercell)
 
     def _parse_fc3_dataset(self):
+        """
+
+        'duplicates' can be either dict (<v1.21) or list in phono3py.yaml.
+        From v1.21, it was changed to list of list because
+        dict with a key of int type is not allowed in JSON.
+
+        """
         dataset = None
         if 'displacement_pairs' in self._yaml:
             disp = self._yaml['displacement_pairs'][0]
@@ -310,15 +314,19 @@ class Phono3pyYaml(PhonopyYaml):
                 lines.append("  number_of_pairs_in_cutoff: %d"
                              % n_included)
 
+            # 'duplicates' is dict, but written as a list of list in yaml.
+            # See the docstring of _parse_fc3_dataset for the reason.
             if 'duplicates' in dataset and dataset['duplicates']:
                 lines.append("  duplicated_supercell_ids: "
                              "# 0 means perfect supercell")
-                for i in dataset['duplicates']:
-                    # id-i and id-j give the same displacement pairs.
-                    j = dataset['duplicates'][i]
-                    # i can be str depending on data source.
-                    lines.append("  - [ %d, %d ]" % (i, j))
-            lines.append("")
+                # Backward compatibility for dict type
+                if type(dataset['duplicates']) is dict:
+                    for i, j in dataset['duplicates'].items():
+                        lines.append("  - [ %d, %d ]" % (int(i), j))
+                else:
+                    for (i, j) in dataset['duplicates']:
+                        lines.append("  - [ %d, %d ]" % (i, j))
+                lines.append("")
 
         return lines
 
