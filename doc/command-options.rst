@@ -697,6 +697,46 @@ them is usual :math:`\Gamma_\lambda(\omega_\lambda) =
 thermal conductivity in single-mode RTA. The separation, i.e., the
 choice of G-vector, is made based on the first Brillouin zone.
 
+The data are stored in ``kappa-mxxx(-gx-sx-sdx).hdf5`` file and
+accessed by ``gamma_N`` and ``gamma_U`` keys. The shape of the arrays
+is the same as that of ``gamma`` (see
+:ref:`kappa_hdf5_file_gamma`). An example (Si-PBEsol) is shown below:
+
+::
+
+   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="11 11 11" --fc3 --fc2 --br --nu
+   ...
+   % ipython
+
+   In [1]: import h5py
+
+   In [2]: f = h5py.File("kappa-m111111.hdf5", 'r')
+
+   In [3]: list(f)
+   Out[3]:
+   ['frequency',
+    'gamma',
+    'gamma_N',
+    'gamma_U',
+    'group_velocity',
+    'gv_by_gv',
+    'heat_capacity',
+    'kappa',
+    'kappa_unit_conversion',
+    'mesh',
+    'mode_kappa',
+    'qpoint',
+    'temperature',
+    'weight']
+
+   In [4]: f['gamma'].shape
+   Out[4]: (101, 56, 6)
+
+   In [5]: f['gamma_N'].shape
+   Out[5]: (101, 56, 6)
+
+   In [6]: f['gamma_U'].shape
+   Out[6]: (101, 56, 6)
 
 Temperature
 -----------

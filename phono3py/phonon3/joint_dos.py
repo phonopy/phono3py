@@ -1,3 +1,38 @@
+# Copyright (C) 2020 Atsushi Togo
+# All rights reserved.
+#
+# This file is part of phono3py.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# * Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+#
+# * Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in
+#   the documentation and/or other materials provided with the
+#   distribution.
+#
+# * Neither the name of the phonopy project nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+import warnings
 import sys
 import numpy as np
 from phonopy.structure.symmetry import Symmetry
@@ -5,9 +40,9 @@ from phonopy.units import VaspToTHz
 from phono3py.phonon3.triplets import (get_triplets_at_q,
                                        get_nosym_triplets_at_q,
                                        get_tetrahedra_vertices,
-                                       get_triplets_integration_weights,
-                                       occupation)
+                                       get_triplets_integration_weights)
 from phono3py.phonon.solver import run_phonon_solver_c
+from phono3py.phonon.func import bose_einstein
 from phono3py.phonon3.imag_self_energy import get_frequency_points
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
@@ -85,20 +120,40 @@ class JointDos(object):
     def dynamical_matrix(self):
         return self._dm
 
-    def get_joint_dos(self):
+    @property
+    def joint_dos(self):
         return self._joint_dos
 
-    def get_frequency_points(self):
+    def get_joint_dos(self):
+        warnings.warn("Use attribute, joint_dos", DeprecationWarning)
+        return self.joint_dos
+
+    @property
+    def frequency_points(self):
         return self._frequency_points
+
+    def get_frequency_points(self):
+        warnings.warn("Use attribute, frequency_points", DeprecationWarning)
+        return self.frequency_points
 
     def get_phonons(self):
         return self._frequencies, self._eigenvectors, self._phonon_done
 
-    def get_primitive(self):
+    @property
+    def primitive(self):
         return self._primitive
 
-    def get_mesh_numbers(self):
+    def get_primitive(self):
+        warnings.warn("Use attribute, primitive", DeprecationWarning)
+        return self.primitive
+
+    @property
+    def mesh_numbers(self):
         return self._mesh
+
+    def get_mesh_numbers(self):
+        warnings.warn("Use attribute, mesh_numbers", DeprecationWarning)
+        return self.mesh
 
     def set_nac_q_direction(self, nac_q_direction=None):
         if nac_q_direction is not None:
@@ -129,10 +184,20 @@ class JointDos(object):
     def get_triplets_at_q(self):
         return self._triplets_at_q, self._weights_at_q
 
-    def get_grid_address(self):
+    @property
+    def grid_address(self):
         return self._grid_address
 
+    def get_grid_address(self):
+        warnings.warn("Use attribute, grid_address", DeprecationWarning)
+        return self.grid_address
+
+    @property
+    def bz_map(self):
+        return self._bz_map
+
     def get_bz_map(self):
+        warnings.warn("Use attribute, bz_map", DeprecationWarning)
         return self._bz_map
 
     def _run_c(self, lang='C'):
@@ -149,14 +214,13 @@ class JointDos(object):
 
     def _run_c_with_g(self):
         self.run_phonon_solver(self._triplets_at_q.ravel())
-        if self._sigma is None:
-            f_max = np.max(self._frequencies) * 2
-        else:
-            f_max = np.max(self._frequencies) * 2 + self._sigma * 4
-        f_max *= 1.005
-        f_min = 0
-        self._set_uniform_frequency_points(f_min, f_max)
-
+        max_phonon_freq = np.max(self._frequencies)
+        self._frequency_points = get_frequency_points(
+            max_phonon_freq=max_phonon_freq,
+            sigmas=[self._sigma, ],
+            frequency_points=None,
+            frequency_step=self._frequency_step,
+            num_frequency_points=self._num_frequency_points)
         num_freq_points = len(self._frequency_points)
         num_mesh = np.prod(self._mesh)
 
@@ -169,7 +233,7 @@ class JointDos(object):
             for t in self._temperatures:
                 freqs = self._frequencies[self._triplets_at_q[:, 1:]]
                 occ_phonons.append(np.where(freqs > self._cutoff_frequency,
-                                            occupation(freqs, t), 0))
+                                            bose_einstein(freqs, t), 0))
 
         for i, freq_point in enumerate(self._frequency_points):
             g, _ = get_triplets_integration_weights(
@@ -285,11 +349,3 @@ class JointDos(object):
 
     def set_frequency_points(self, frequency_points):
         self._frequency_points = np.array(frequency_points, dtype='double')
-
-    def _set_uniform_frequency_points(self, f_min, f_max):
-        if self._frequency_points is None:
-            self._frequency_points = get_frequency_points(
-                f_min,
-                f_max,
-                frequency_step=self._frequency_step,
-                num_frequency_points=self._num_frequency_points)

@@ -46,7 +46,9 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
                                               const double *g,
                                               const char *g_zero,
                                               const double temperature,
-                                              const double cutoff_frequency);
+                                              const double cutoff_frequency,
+                                              const int num_frequency_points,
+                                              const int frequency_point_index);
 void ise_get_detailed_imag_self_energy_at_bands_with_g
 (double *detailed_imag_self_energy,
  double *imag_self_energy_N,
@@ -74,7 +76,8 @@ void ise_imag_self_energy_at_triplet(double *imag_self_energy,
                                      const double *temperatures,
                                      const size_t num_temps,
                                      const double cutoff_frequency,
-                                     const int openmp_at_bands);
+                                     const int openmp_at_bands,
+                                     const int at_a_frequency_point);
 int ise_set_g_pos(int (*g_pos)[4],
                   const size_t num_band0,
                   const size_t num_band,

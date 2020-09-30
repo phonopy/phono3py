@@ -22,10 +22,10 @@ Installation using conda
 -----------------------------
 
 Using conda is the easiest way for installation of phono3py if you are
-using usual 64 bit linux system. The conda packages for 64bit linux
-are also found at ``atztogo`` channel::
+using x86-64 linux system or macOS. These packages are made and
+maintained by Jan Janssen. The installation is simply done by::
 
-   % conda install -c atztogo phono3py
+   % conda install -c conda-forge phono3py
 
 All dependent packages should be installed.
 

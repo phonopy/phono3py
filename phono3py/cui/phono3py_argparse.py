@@ -1,7 +1,7 @@
 # Copyright (C) 2015 Atsushi Togo
 # All rights reserved.
 #
-# This file is part of phonopy.
+# This file is part of phono3py.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -83,18 +83,19 @@ def get_parser(fc_symmetry=False,
             "-c", "--cell", dest="cell_filename", metavar="FILE", default=None,
             help="Read unit cell")
     parser.add_argument(
-        "--cf2", "--create-f2", dest="forces_fc2", nargs='+', default=None,
-        help="Create FORCES_FC2")
+        "--cf2", "--create-f2", dest="create_forces_fc2", nargs='+',
+        default=None, help="Create FORCES_FC2")
     parser.add_argument(
-        "--cf3", "--create-f3", dest="forces_fc3", nargs='+', default=None,
-        help="Create FORCES_FC3")
+        "--cf3", "--create-f3", dest="create_forces_fc3", nargs='+',
+        default=None, help="Create FORCES_FC3")
     parser.add_argument(
-        "--cfz", "--subtract-forces", dest="forces_fcz", default=None,
-        help="Subtract recidual forces from supercell forces")
-    parser.add_argument(
-        "--cf3-file", "--create-f3-from-file", dest="forces_fc3_file",
-        default=None,
+        "--cf3-file", "--create-f3-from-file",
+        metavar="FILE", dest="create_forces_fc3_file", default=None,
         help="Create FORCES_FC3 from file name list")
+    parser.add_argument(
+        "--cfz", "--subtract-forces",
+        metavar="FILE", dest="subtract_forces", default=None,
+        help="Subtract recidual forces from supercell forces")
     parser.add_argument(
         "--cfc", "--compact-fc", dest="is_compact_fc", action="store_true",
         default=False,
@@ -171,9 +172,6 @@ def get_parser(fc_symmetry=False,
         "--fs2f2", "--force-sets-to-forces-fc2",
         dest="force_sets_to_forces_fc2_mode", default=False,
         action="store_true", help="Create FORCES_FC2 from FORCE_SETS")
-    parser.add_argument(
-        "--fst", "--frequency-shift", dest="is_frequency_shift", default=False,
-        action="store_true", help="Calculate frequency shifts")
     parser.add_argument(
         "--full-pp", dest="is_full_pp", action="store_true", default=False,
         help=("Calculate full ph-ph interaction for RTA conductivity."
@@ -278,6 +276,11 @@ def get_parser(fc_symmetry=False,
         "--num-freq-points", dest="num_frequency_points", type=int,
         default=None,
         help="Number of sampling points for spectrum")
+    parser.add_argument(
+        "--num-points-in-batch", dest="num_points_in_batch", type=int,
+        default=None,
+        help=("Number of frequency points in a batch for the frequency "
+              "sampling modes of imag-self-energy calculation"))
     if not load_phono3py_yaml:
         parser.add_argument(
             "-o", dest="output_filename", default=None,
@@ -327,6 +330,10 @@ def get_parser(fc_symmetry=False,
         action="store_true", default=False,
         help="Solve reducible collision matrix")
     parser.add_argument(
+        "--rse", dest="is_real_self_energy", action="store_true",
+        default=False,
+        help="Calculate real part of self energy")
+    parser.add_argument(
         "--scattering-event-class", dest="scattering_event_class", type=int,
         default=None,
         help=("Scattering event class 1 or 2 to draw imaginary part of self "
@@ -338,6 +345,10 @@ def get_parser(fc_symmetry=False,
     parser.add_argument(
         "--sigma-cutoff", dest="sigma_cutoff_width", type=float, default=None,
         help="Cutoff width of smearing function (ratio to sigma value)")
+    parser.add_argument(
+        "--spf", dest="is_spectral_function", action="store_true",
+        default=False,
+        help="Calculate spectral function")
     parser.add_argument(
         "--stp", "--show-num-triplets", dest="show_num_triplets",
         action="store_true", default=False,

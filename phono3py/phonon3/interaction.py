@@ -115,14 +115,14 @@ class Interaction(object):
         svecs, multiplicity = self._primitive.get_smallest_vectors()
         self._smallest_vectors = svecs
         self._multiplicity = multiplicity
-        self._masses = np.array(self._primitive.get_masses(), dtype='double')
-        self._p2s = self._primitive.get_primitive_to_supercell_map()
-        self._s2p = self._primitive.get_supercell_to_primitive_map()
+        self._masses = np.array(self._primitive.masses, dtype='double')
+        self._p2s = self._primitive.p2s_map
+        self._s2p = self._primitive.s2p_map
 
         self._allocate_phonon()
 
     def run(self, lang='C', g_zero=None):
-        num_band = self._primitive.get_number_of_atoms() * 3
+        num_band = len(self._primitive) * 3
         num_triplets = len(self._triplets_at_q)
 
         self._interaction_strength = np.empty(
@@ -144,6 +144,8 @@ class Interaction(object):
         return self._interaction_strength
 
     def get_interaction_strength(self):
+        warnings.warn("Use attribute, interaction_strength.",
+                      DeprecationWarning)
         return self.interaction_strength
 
     @property
@@ -151,13 +153,19 @@ class Interaction(object):
         return self._mesh
 
     def get_mesh_numbers(self):
+        warnings.warn("Use attribute, mesh_numbers.", DeprecationWarning)
         return self.mesh_numbers
+
+    @property
+    def is_mesh_symmetry(self):
+        return self._is_mesh_symmetry
 
     @property
     def fc3(self):
         return self._fc3
 
     def get_fc3(self):
+        warnings.warn("Use attribute, fc3.", DeprecationWarning)
         return self.fc3
 
     @property
@@ -165,6 +173,7 @@ class Interaction(object):
         return self._dm
 
     def get_dynamical_matrix(self):
+        warnings.warn("Use attribute, dynamical_matrix.", DeprecationWarning)
         return self.dynamical_matrix
 
     @property
@@ -172,6 +181,7 @@ class Interaction(object):
         return self._primitive
 
     def get_primitive(self):
+        warnings.warn("Use attribute, primitive.", DeprecationWarning)
         return self.primitive
 
     @property
@@ -179,6 +189,7 @@ class Interaction(object):
         return self._supercell
 
     def get_supercell(self):
+        warnings.warn("Use attribute, supercell.", DeprecationWarning)
         return self.supercell
 
     def get_triplets_at_q(self):
@@ -192,6 +203,7 @@ class Interaction(object):
         return self._grid_address
 
     def get_grid_address(self):
+        warnings.warn("Use attribute, grid_address.", DeprecationWarning)
         return self.grid_address
 
     @property
@@ -199,6 +211,7 @@ class Interaction(object):
         return self._bz_map
 
     def get_bz_map(self):
+        warnings.warn("Use attribute, bz_map.", DeprecationWarning)
         return self.bz_map
 
     @property
@@ -206,6 +219,7 @@ class Interaction(object):
         return self._band_indices
 
     def get_band_indices(self):
+        warnings.warn("Use attribute, band_indices.", DeprecationWarning)
         return self.band_indices
 
     @property
@@ -217,22 +231,45 @@ class Interaction(object):
         return self._nac_q_direction
 
     def get_nac_q_direction(self):
+        warnings.warn("Use attribute, nac_q_direction.", DeprecationWarning)
         return self.nac_q_direction
 
-    def get_zero_value_positions(self):
+    @property
+    def zero_value_positions(self):
         return self._g_zero
+
+    def get_zero_value_positions(self):
+        warnings.warn("Use attribute, zero_value_positions.",
+                      DeprecationWarning)
+        return self.zero_value_positions
 
     def get_phonons(self):
         return self._frequencies, self._eigenvectors, self._phonon_done
 
-    def get_frequency_factor_to_THz(self):
+    @property
+    def frequency_factor_to_THz(self):
         return self._frequency_factor_to_THz
 
-    def get_lapack_zheev_uplo(self):
+    def get_frequency_factor_to_THz(self):
+        warnings.warn("Use attribute, frequency_factor_to_THz.",
+                      DeprecationWarning)
+        return self.frequency_factor_to_THz
+
+    @property
+    def lapack_zheev_uplo(self):
         return self._lapack_zheev_uplo
 
-    def get_cutoff_frequency(self):
+    def get_lapack_zheev_uplo(self):
+        warnings.warn("Use attribute, lapack_zheev_uplo.", DeprecationWarning)
+        return self.lapack_zheev_uplo
+
+    @property
+    def cutoff_frequency(self):
         return self._cutoff_frequency
+
+    def get_cutoff_frequency(self):
+        warnings.warn("Use attribute, cutoff_frequency.", DeprecationWarning)
+        return self.cutoff_frequency
 
     def get_averaged_interaction(self):
         """Return sum over phonon triplets of interaction strength
@@ -265,7 +302,7 @@ class Interaction(object):
         self._g_zero = g_zero
 
     def set_grid_point(self, grid_point, stores_triplets_map=False):
-        reciprocal_lattice = np.linalg.inv(self._primitive.get_cell())
+        reciprocal_lattice = np.linalg.inv(self._primitive.cell)
         if not self._is_mesh_symmetry:
             (triplets_at_q,
              weights_at_q,
@@ -428,7 +465,7 @@ class Interaction(object):
                                  dtype='double', order='C')
 
     def _set_band_indices(self, band_indices):
-        num_band = self._primitive.get_number_of_atoms() * 3
+        num_band = len(self._primitive) * 3
         if band_indices is None:
             self._band_indices = np.arange(num_band, dtype='intc')
         else:
@@ -509,10 +546,10 @@ class Interaction(object):
                              self._lapack_zheev_uplo)
 
     def _allocate_phonon(self):
-        primitive_lattice = np.linalg.inv(self._primitive.get_cell())
+        primitive_lattice = np.linalg.inv(self._primitive.cell)
         self._grid_address, self._bz_map = get_bz_grid_address(
             self._mesh, primitive_lattice, with_boundary=True)
-        num_band = self._primitive.get_number_of_atoms() * 3
+        num_band = len(self._primitive) * 3
         num_grid = len(self._grid_address)
         self._phonon_done = np.zeros(num_grid, dtype='byte')
         self._frequencies = np.zeros((num_grid, num_band), dtype='double')

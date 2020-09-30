@@ -44,7 +44,7 @@
 #include <phonoc_array.h>
 #include <phonoc_const.h>
 #include <phonon3_h/fc3.h>
-#include <phonon3_h/frequency_shift.h>
+#include <phonon3_h/real_self_energy.h>
 #include <phonon3_h/interaction.h>
 #include <phonon3_h/imag_self_energy_with_g.h>
 #include <phonon3_h/pp_collision.h>
@@ -67,8 +67,10 @@ static PyObject *
 py_get_imag_self_energy_with_g(PyObject *self, PyObject *args);
 static PyObject *
 py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args);
-static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
-                                                  PyObject *args);
+static PyObject * py_get_real_self_energy_at_bands(PyObject *self,
+                                                   PyObject *args);
+static PyObject * py_get_real_self_energy_at_frequency_point(PyObject *self,
+                                                             PyObject *args);
 static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args);
 static PyObject * py_get_reducible_collision_matrix(PyObject *self,
                                                     PyObject *args);
@@ -158,10 +160,14 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_get_detailed_imag_self_energy_with_g,
    METH_VARARGS,
    "Detailed contribution to imaginary part of self energy at frequency points with g"},
-  {"frequency_shift_at_bands",
-   (PyCFunction)py_get_frequency_shift_at_bands,
+  {"real_self_energy_at_bands",
+   (PyCFunction)py_get_real_self_energy_at_bands,
    METH_VARARGS,
-   "Phonon frequency shift from third order force constants"},
+   "Real part of self energy from third order force constants"},
+  {"real_self_energy_at_frequency_point",
+   (PyCFunction)py_get_real_self_energy_at_frequency_point,
+   METH_VARARGS,
+   "Real part of self energy from third order force constants at a frequency point"},
   {"collision_matrix",
    (PyCFunction)py_get_collision_matrix,
    METH_VARARGS,
@@ -871,6 +877,7 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
   PyArrayObject *py_g;
   PyArrayObject *py_g_zero;
   double cutoff_frequency, temperature;
+  int frequency_point_index;
 
   Darray *fc3_normal_squared;
   double *gamma;
@@ -879,8 +886,9 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
   double *frequencies;
   size_t (*triplets)[3];
   int *triplet_weights;
+  int num_frequency_points;
 
-  if (!PyArg_ParseTuple(args, "OOOOOdOOd",
+  if (!PyArg_ParseTuple(args, "OOOOOdOOdi",
                         &py_gamma,
                         &py_fc3_normal_squared,
                         &py_triplets,
@@ -889,7 +897,8 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
                         &temperature,
                         &py_g,
                         &py_g_zero,
-                        &cutoff_frequency)) {
+                        &cutoff_frequency,
+                        &frequency_point_index)) {
     return NULL;
   }
 
@@ -900,6 +909,7 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
   frequencies = (double*)PyArray_DATA(py_frequencies);
   triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
   triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
+  num_frequency_points = PyArray_DIMS(py_g)[2];
 
   ise_get_imag_self_energy_at_bands_with_g(gamma,
                                            fc3_normal_squared,
@@ -909,7 +919,9 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
                                            g,
                                            g_zero,
                                            temperature,
-                                           cutoff_frequency);
+                                           cutoff_frequency,
+                                           num_frequency_points,
+                                           frequency_point_index);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;
@@ -989,8 +1001,8 @@ py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
-                                                  PyObject *args)
+static PyObject * py_get_real_self_energy_at_bands(PyObject *self,
+                                                   PyObject *args)
 {
   PyArrayObject *py_shift;
   PyArrayObject *py_fc3_normal_squared;
@@ -1004,7 +1016,7 @@ static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
   double *shift;
   double *frequencies;
   int *band_indices;
-  int *grid_point_triplets;
+  size_t (*triplets)[3];
   int *triplet_weights;
 
   if (!PyArg_ParseTuple(args, "OOOOOOdddd",
@@ -1026,19 +1038,79 @@ static PyObject * py_get_frequency_shift_at_bands(PyObject *self,
   shift = (double*)PyArray_DATA(py_shift);
   frequencies = (double*)PyArray_DATA(py_frequencies);
   band_indices = (int*)PyArray_DATA(py_band_indices);
-  grid_point_triplets = (int*)PyArray_DATA(py_triplets);
+  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
   triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
 
-  get_frequency_shift_at_bands(shift,
-                               fc3_normal_squared,
-                               band_indices,
-                               frequencies,
-                               grid_point_triplets,
-                               triplet_weights,
-                               epsilon,
-                               temperature,
-                               unit_conversion_factor,
-                               cutoff_frequency);
+  get_real_self_energy_at_bands(shift,
+                                fc3_normal_squared,
+                                band_indices,
+                                frequencies,
+                                triplets,
+                                triplet_weights,
+                                epsilon,
+                                temperature,
+                                unit_conversion_factor,
+                                cutoff_frequency);
+
+  free(fc3_normal_squared);
+  fc3_normal_squared = NULL;
+
+  Py_RETURN_NONE;
+}
+
+static PyObject * py_get_real_self_energy_at_frequency_point(PyObject *self,
+                                                             PyObject *args)
+{
+  PyArrayObject *py_shift;
+  PyArrayObject *py_fc3_normal_squared;
+  PyArrayObject *py_frequencies;
+  PyArrayObject *py_triplets;
+  PyArrayObject *py_triplet_weights;
+  PyArrayObject *py_band_indices;
+  double frequency_point, epsilon, unit_conversion_factor, cutoff_frequency;
+  double temperature;
+
+  Darray *fc3_normal_squared;
+  double *shift;
+  double *frequencies;
+  int *band_indices;
+  size_t (*triplets)[3];
+  int *triplet_weights;
+
+  if (!PyArg_ParseTuple(args, "OdOOOOOdddd",
+                        &py_shift,
+                        &frequency_point,
+                        &py_fc3_normal_squared,
+                        &py_triplets,
+                        &py_triplet_weights,
+                        &py_frequencies,
+                        &py_band_indices,
+                        &temperature,
+                        &epsilon,
+                        &unit_conversion_factor,
+                        &cutoff_frequency)) {
+    return NULL;
+  }
+
+
+  fc3_normal_squared = convert_to_darray(py_fc3_normal_squared);
+  shift = (double*)PyArray_DATA(py_shift);
+  frequencies = (double*)PyArray_DATA(py_frequencies);
+  band_indices = (int*)PyArray_DATA(py_band_indices);
+  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
+  triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
+
+  get_real_self_energy_at_frequency_point(shift,
+                                          frequency_point,
+                                          fc3_normal_squared,
+                                          band_indices,
+                                          frequencies,
+                                          triplets,
+                                          triplet_weights,
+                                          epsilon,
+                                          temperature,
+                                          unit_conversion_factor,
+                                          cutoff_frequency);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;
@@ -1931,7 +2003,7 @@ py_set_triplets_integration_weights(PyObject *self, PyObject *args)
   int (*bz_grid_address)[3];
   size_t *bz_map;
   double *frequencies1, *frequencies2;
-  npy_intp num_band0, num_band1, num_band2, num_iw, num_triplets;
+  npy_intp num_band0, num_band1, num_band2, num_triplets;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOOi",
                         &py_iw,

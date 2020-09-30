@@ -3,6 +3,18 @@
 Change Log
 ==========
 
+Sep-30-2020: Version 1.21.0
+---------------------------
+
+- Maintenance release to follow the change of phonopy at v2.8.1
+- Improvements of phono3py loader (``phono3py.load``), ``phono3py-load``
+  command, API, and ``phono3py_disp.yaml``.
+- Harmonic phonon calculation on mesh was multithreaded. This is
+  effective when using very dense mesh with non-analytical term
+  correction (probably rare case).
+- Real and imaginary parts of self energy and spectral function of
+  bubble diagram at API level
+
 Mar-3-2020: Version 1.20.0
 --------------------------
 

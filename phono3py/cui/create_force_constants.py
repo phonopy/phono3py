@@ -39,7 +39,7 @@ from phonopy.harmonic.force_constants import (
     show_drift_force_constants,
     symmetrize_force_constants,
     symmetrize_compact_force_constants)
-from phonopy.file_IO import get_dataset_type2
+from phonopy.file_IO import get_dataset_type2, parse_FORCE_SETS
 from phonopy.cui.phonopy_script import print_error, file_exists
 from phonopy.interface.calculator import get_default_physical_units
 from phono3py.phonon3.fc3 import show_drift_fc3
@@ -47,8 +47,7 @@ from phono3py.file_IO import (
     parse_disp_fc3_yaml, parse_disp_fc2_yaml, parse_FORCES_FC2,
     parse_FORCES_FC3, read_fc3_from_hdf5, read_fc2_from_hdf5,
     write_fc3_to_hdf5, write_fc2_to_hdf5, get_length_of_first_line)
-from phono3py.cui.show_log import (
-    show_phono3py_force_constants_settings)
+from phono3py.cui.show_log import show_phono3py_force_constants_settings
 from phono3py.phonon3.fc3 import (
     set_permutation_symmetry_fc3, set_translational_invariance_fc3)
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
@@ -135,14 +134,19 @@ def create_phono3py_force_constants(phono3py,
                            log_level)
     else:
         if phono3py.phonon_supercell_matrix is None:
-            _create_phono3py_fc2(phono3py,
-                                 ph3py_yaml,
-                                 symmetrize_fc2,
-                                 input_filename,
-                                 settings.is_compact_fc,
-                                 settings.fc_calculator,
-                                 settings.fc_calculator_options,
-                                 log_level)
+            if (settings.fc_calculator == 'alm' and phono3py.fc2 is not None):
+                if log_level:
+                    print("fc2 that was fit simultaneously with fc3 "
+                          "by ALM is used.")
+            else:
+                _create_phono3py_fc2(phono3py,
+                                     ph3py_yaml,
+                                     symmetrize_fc2,
+                                     input_filename,
+                                     settings.is_compact_fc,
+                                     settings.fc_calculator,
+                                     settings.fc_calculator_options,
+                                     log_level)
         else:
             _create_phono3py_phonon_fc2(phono3py,
                                         ph3py_yaml,
@@ -192,7 +196,8 @@ def parse_forces(phono3py,
     # Try to read FORCES_FC* if type-2 and return dataset.
     # None is returned unless type-2.
     # can emit FileNotFoundError.
-    if dataset is not None and not forces_in_dataset(dataset):
+    if (dataset is None or
+        dataset is not None and not forces_in_dataset(dataset)):
         _dataset = _get_type2_dataset(natom,
                                       phono3py.calculator,
                                       filename=force_filename,
@@ -202,18 +207,18 @@ def parse_forces(phono3py,
             filename_read_from = force_filename
             dataset = _dataset
 
-    # Displacement dataset is obtained from disp_filename.
-    # can emit FileNotFoundError.
     if dataset is None:
+        # Displacement dataset is obtained from disp_filename.
+        # can emit FileNotFoundError.
         dataset = _read_disp_fc_yaml(disp_filename, fc_type)
         filename_read_from = disp_filename
 
-    if dataset['natom'] != natom:
+    if 'natom' in dataset and dataset['natom'] != natom:
         msg = ("Number of atoms in supercell is not consistent with "
                "\"%s\"." % filename_read_from)
         raise RuntimeError(msg)
 
-    if log_level:
+    if log_level and filename_read_from is not None:
         print("Displacement dataset for %s was read from \"%s\"."
               % (fc_type, filename_read_from))
 
@@ -333,6 +338,9 @@ def _read_phono3py_fc2(phono3py,
 
 
 def _get_type2_dataset(natom, calculator, filename="FORCES_FC3", log_level=0):
+    if not os.path.isfile(filename):
+        return None
+
     with open(filename, 'r') as f:
         len_first_line = get_length_of_first_line(f)
         if len_first_line == 6:

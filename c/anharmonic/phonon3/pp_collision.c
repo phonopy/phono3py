@@ -413,7 +413,8 @@ static void get_collision(double *ise,
     temperatures,
     num_temps,
     cutoff_frequency,
-    1 - openmp_per_triplets);
+    1 - openmp_per_triplets,
+    0);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;
