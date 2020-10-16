@@ -446,7 +446,7 @@ class Interaction(object):
         self._g_zero = None
 
     def _set_fc3(self, fc3):
-        if fc3 is None and self._constant_averaged_interaction is not None:
+        if fc3 is None and self._constant_averaged_interaction is None:
             msg = ("fc3 can not be None unless constant_averaged_interaction "
                    "is given.")
             raise AttributeError(msg)
