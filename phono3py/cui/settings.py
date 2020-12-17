@@ -658,7 +658,7 @@ class Phono3pyConfParser(ConfParser):
 
         # Trigger to create FORCES_FC2 and FORCES_FC3
         if 'create_forces_fc2' in params:
-            self._settings.set_create_forces_fc3(params['create_forces_fc2'])
+            self._settings.set_create_forces_fc2(params['create_forces_fc2'])
 
         if 'create_forces_fc3' in params:
             self._settings.set_create_forces_fc3(params['create_forces_fc3'])
