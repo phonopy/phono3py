@@ -36,9 +36,9 @@
 
 #include <stddef.h>
 #include <mathfunc.h>
-#include <triplet_h/triplet.h>
-#include <triplet_h/triplet_iw.h>
-#include <triplet_h/triplet_kpoint.h>
+#include <triplet/triplet.h>
+#include <triplet/triplet_iw.h>
+#include <triplet/triplet_kpoint.h>
 
 static size_t get_triplets_reciprocal_mesh_at_q(size_t *map_triplets,
                                                 size_t *map_q,

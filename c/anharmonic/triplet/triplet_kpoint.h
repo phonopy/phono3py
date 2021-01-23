@@ -1,7 +1,9 @@
 /* Copyright (C) 2015 Atsushi Togo */
 /* All rights reserved. */
 
-/* This file is part of phonopy. */
+/* These codes were originally parts of spglib, but only develped */
+/* and used for phono3py. Therefore these were moved from spglib to */
+/* phono3py. This file is part of phonopy. */
 
 /* Redistribution and use in source and binary forms, with or without */
 /* modification, are permitted provided that the following conditions */
@@ -32,12 +34,27 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef __flame_wrapper_H__
-#define __flame_wrapper_H__
+#ifndef __triplet_kpoint_H__
+#define __triplet_kpoint_H__
 
-int phonopy_pinv_libflame(double *matrix,
-			  double *eigvals,
-			  const int size,
-			  const double cutoff);
+#include <stddef.h>
+#include <mathfunc.h>
+#include <triplet/triplet.h>
+
+size_t tpk_get_ir_triplets_at_q(size_t *map_triplets,
+                                size_t *map_q,
+                                int (*grid_address)[3],
+                                const int grid_point,
+                                const int mesh[3],
+                                const int is_time_reversal,
+                                const MatINT * rotations,
+                                const int swappable);
+size_t tpk_get_BZ_triplets_at_q(size_t (*triplets)[3],
+                                const size_t grid_point,
+                                TPLCONST int (*bz_grid_address)[3],
+                                const size_t *bz_map,
+                                const size_t *map_triplets,
+                                const size_t num_map_triplets,
+                                const int mesh[3]);
 
 #endif

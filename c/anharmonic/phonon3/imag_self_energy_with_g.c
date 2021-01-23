@@ -38,8 +38,8 @@
 #include <phonoc_array.h>
 #include <phonoc_utils.h>
 #include <phonoc_const.h>
-#include <phonon3_h/imag_self_energy_with_g.h>
-#include <triplet_h/triplet.h>
+#include <phonon3/imag_self_energy_with_g.h>
+#include <triplet/triplet.h>
 
 static int ise_set_g_pos_frequency_point(int (*g_pos)[4],
                                          const size_t num_band0,

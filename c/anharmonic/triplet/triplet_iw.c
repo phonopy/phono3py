@@ -35,8 +35,8 @@
 #include <stddef.h>
 #include <math.h>
 #include <phonoc_utils.h>
-#include <triplet_h/triplet.h>
-#include <triplet_h/triplet_iw.h>
+#include <triplet/triplet.h>
+#include <triplet/triplet_iw.h>
 #include <tetrahedron_method.h>
 
 static void set_freq_vertices(double freq_vertices[3][24][4],

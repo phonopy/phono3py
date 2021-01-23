@@ -37,11 +37,11 @@
 #include <phonoc_array.h>
 #include <phonoc_const.h>
 #include <phonoc_utils.h>
-#include <phonon3_h/imag_self_energy_with_g.h>
-#include <phonon3_h/pp_collision.h>
-#include <phonon3_h/interaction.h>
-#include <triplet_h/triplet.h>
-#include <triplet_h/triplet_iw.h>
+#include <phonon3/imag_self_energy_with_g.h>
+#include <phonon3/pp_collision.h>
+#include <phonon3/interaction.h>
+#include <triplet/triplet.h>
+#include <triplet/triplet_iw.h>
 #include <lapack_wrapper.h>
 
 static void get_collision(double *ise,

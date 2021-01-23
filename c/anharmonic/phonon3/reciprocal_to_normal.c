@@ -37,7 +37,7 @@
 #include <phonoc_utils.h>
 #include <phonoc_const.h>
 #include <phonoc_array.h>
-#include <phonon3_h/reciprocal_to_normal.h>
+#include <phonon3/reciprocal_to_normal.h>
 #include <lapack_wrapper.h>
 
 #ifdef MEASURE_R2N

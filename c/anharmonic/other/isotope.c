@@ -35,7 +35,7 @@
 #include <stdlib.h>
 #include <phonoc_const.h>
 #include <phonoc_utils.h>
-#include <other_h/isotope.h>
+#include <other/isotope.h>
 #include <lapack_wrapper.h>
 
 void

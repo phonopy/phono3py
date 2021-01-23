@@ -36,8 +36,8 @@
 #include <math.h>
 #include <phonoc_array.h>
 #include <phonoc_utils.h>
-#include <phonon3_h/real_self_energy.h>
-#include <phonon3_h/real_to_reciprocal.h>
+#include <phonon3/real_self_energy.h>
+#include <phonon3/real_to_reciprocal.h>
 
 static double get_real_self_energy_at_band(const int band_index,
                                            const Darray *fc3_normal_squared,

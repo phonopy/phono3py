@@ -34,7 +34,7 @@
 
 #include <stdlib.h>
 #include <phonoc_const.h>
-#include <phonon3_h/fc3.h>
+#include <phonon3/fc3.h>
 
 static void rotate_delta_fc2s(double (*rot_delta_fc2s)[3][3],
                               const size_t i_atom,

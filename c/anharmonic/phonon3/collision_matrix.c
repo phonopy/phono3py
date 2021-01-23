@@ -37,7 +37,7 @@
 #include <math.h>
 #include <phonoc_array.h>
 #include <phonoc_utils.h>
-#include <phonon3_h/collision_matrix.h>
+#include <phonon3/collision_matrix.h>
 
 static void get_collision_matrix(double *collision_matrix,
                                  const double *fc3_normal_squared,

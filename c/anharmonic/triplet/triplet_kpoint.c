@@ -39,8 +39,8 @@
 #include <mathfunc.h>
 #include <kpoint.h>
 #include <kgrid.h>
-#include <triplet_h/triplet.h>
-#include <triplet_h/triplet_kpoint.h>
+#include <triplet/triplet.h>
+#include <triplet/triplet_kpoint.h>
 
 #define KPT_NUM_BZ_SEARCH_SPACE 125
 static int bz_search_space[KPT_NUM_BZ_SEARCH_SPACE][3] = {

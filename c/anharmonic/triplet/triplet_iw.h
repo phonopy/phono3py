@@ -36,7 +36,7 @@
 #define __triplet_iw_H__
 
 #include <stddef.h>
-#include <triplet_h/triplet.h>
+#include <triplet/triplet.h>
 
 void
 tpi_get_integration_weight(double *iw,

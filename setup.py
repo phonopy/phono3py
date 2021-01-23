@@ -58,10 +58,10 @@ sources = ['c/_phono3py.c',
            'c/kspclib/tetrahedron_method.c']
 
 extra_compile_args = ['-fopenmp', ]
-include_dirs = ['c/harmonic_h',
-                'c/anharmonic_h',
-                'c/spglib_h',
-                'c/kspclib_h'] + include_dirs_numpy
+include_dirs = ['c/harmonic',
+                'c/anharmonic',
+                'c/spglib',
+                'c/kspclib'] + include_dirs_numpy
 define_macros = []
 
 extra_link_args_lapacke = []
@@ -253,19 +253,10 @@ scripts_phono3py = ['scripts/phono3py',
                     'scripts/phono3py-kdeplot',
                     'scripts/phono3py-coleigplot']
 
-## This is for the test of libflame
-##
-# use_libflame = False
-# if use_libflame:
-#     sources.append('c/anharmonic/flame_wrapper.c')
-#     extra_link_args.append('../libflame-bin/lib/libflame.a')
-#     include_dirs_libflame = ['../libflame-bin/include']
-#     include_dirs += include_dirs_libflame
-
 ########################
 # _lapackepy extension #
 ########################
-include_dirs_lapackepy = (['c/harmonic_h',] + include_dirs_numpy
+include_dirs_lapackepy = (['c/harmonic',] + include_dirs_numpy
                           + include_dirs_lapacke)
 sources_lapackepy = ['c/_lapackepy.c',
                      'c/harmonic/dynmat.c',

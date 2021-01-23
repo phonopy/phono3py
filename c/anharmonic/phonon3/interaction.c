@@ -36,10 +36,10 @@
 #include <stdlib.h>
 #include <phonoc_array.h>
 #include <phonoc_const.h>
-#include <phonon3_h/interaction.h>
-#include <phonon3_h/imag_self_energy_with_g.h>
-#include <phonon3_h/real_to_reciprocal.h>
-#include <phonon3_h/reciprocal_to_normal.h>
+#include <phonon3/interaction.h>
+#include <phonon3/imag_self_energy_with_g.h>
+#include <phonon3/real_to_reciprocal.h>
+#include <phonon3/reciprocal_to_normal.h>
 #include <lapack_wrapper.h>
 
 static const int index_exchange[6][3] = {{0, 1, 2},
