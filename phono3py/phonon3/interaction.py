@@ -393,6 +393,7 @@ class Interaction(object):
             decimals=decimals,
             symprec=self._symprec)
 
+        self._phonon_done[0] = 0
         if solve_dynamical_matrices:
             self.run_phonon_solver(verbose=verbose)
         else:
