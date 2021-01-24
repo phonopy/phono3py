@@ -273,6 +273,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
             pmat = 'auto'
         else:
             pmat = ph3py_yaml.primitive_matrix
+
         if nac_params is not None:
             _nac_params = nac_params
         elif is_nac:
@@ -299,8 +300,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
     ph3py.mesh_number = mesh
 
     # NAC params
-    if (born_filename is not None or nac_params is not None or
-        is_nac and os.path.isfile("BORN")):
+    if born_filename is not None or _nac_params is not None or is_nac:
         ph3py.nac_params = load_helper.get_nac_params(
             ph3py.primitive,
             _nac_params,
