@@ -1,0 +1,3 @@
+Zincblende ZnTe
+Forces and NAC params were calculated using VASP code.
+PBEsol, 500eV PW-cutoff, 2x2x2 supercell and 2x2x2 off-Gamma k-point mesh for supercells.
