@@ -22,7 +22,8 @@ def test_jdos(si_pbesol):
         si_pbesol.phonon_primitive,
         si_pbesol.mesh_numbers,
         si_pbesol.fc2,
-        num_frequency_points=10)
+        num_frequency_points=10,
+        log_level=1)
     jdos.run([1, 103])
     # print(", ".join(["%.7f" % fp for fp in jdos.frequency_points]))
     np.testing.assert_allclose(freq_points, jdos.frequency_points,
