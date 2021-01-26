@@ -39,24 +39,19 @@
 #include <stdlib.h>
 #include <math.h>
 #include <numpy/arrayobject.h>
-#include <lapack_wrapper.h>
-#include <phonon.h>
-#include <phonoc_array.h>
-#include <phonoc_const.h>
-#include <phonon3_h/fc3.h>
-#include <phonon3_h/real_self_energy.h>
-#include <phonon3_h/interaction.h>
-#include <phonon3_h/imag_self_energy_with_g.h>
-#include <phonon3_h/pp_collision.h>
-#include <phonon3_h/collision_matrix.h>
-#include <other_h/isotope.h>
-#include <triplet_h/triplet.h>
-#include <tetrahedron_method.h>
-
-/* #define LIBFLAME */
-#ifdef LIBFLAME
-#include <flame_wrapper.h>
-#endif
+#include "lapack_wrapper.h"
+#include "phonon.h"
+#include "phonoc_array.h"
+#include "phonoc_const.h"
+#include "fc3.h"
+#include "real_self_energy.h"
+#include "interaction.h"
+#include "imag_self_energy_with_g.h"
+#include "pp_collision.h"
+#include "collision_matrix.h"
+#include "isotope.h"
+#include "triplet.h"
+#include "tetrahedron_method.h"
 
 static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args);
 static PyObject * py_get_interaction(PyObject *self, PyObject *args);
@@ -101,10 +96,6 @@ static PyObject *
 py_diagonalize_collision_matrix(PyObject *self, PyObject *args);
 static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args);
 static PyObject * py_get_default_colmat_solver(PyObject *self, PyObject *args);
-
-#ifdef LIBFLAME
-static PyObject * py_inverse_collision_matrix_libflame(PyObject *self, PyObject *args);
-#endif
 
 static void pinv_from_eigensolution(double *data,
                                     const double *eigvals,
@@ -248,12 +239,6 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_get_default_colmat_solver,
    METH_VARARGS,
    "Return default collison matrix solver by integer value"},
-#ifdef LIBFLAME
-  {"inverse_collision_matrix_libflame",
-   (PyCFunction)py_inverse_collision_matrix_libflame,
-   METH_VARARGS,
-   "Pseudo-inverse using libflame hevd"},
-#endif
   {NULL, NULL, 0, NULL}
 };
 
@@ -2108,45 +2093,6 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
 
   Py_RETURN_NONE;
 }
-
-#ifdef LIBFLAME
-static PyObject * py_inverse_collision_matrix_libflame(PyObject *self, PyObject *args)
-{
-  PyArrayObject *py_collision_matrix;
-  PyArrayObject *py_eigenvalues;
-  int i_sigma, i_temp;
-  double cutoff;
-  double *collision_matrix;
-  double *eigvals;
-  npy_intp num_temp, num_ir_grid_points, num_band;
-  size_t num_column, adrs_shift;
-
-  if (!PyArg_ParseTuple(args, "OOiid",
-                        &py_collision_matrix,
-                        &py_eigenvalues,
-                        &i_sigma,
-                        &i_temp,
-                        &cutoff)) {
-    return NULL;
-  }
-
-
-  collision_matrix = (double*)PyArray_DATA(py_collision_matrix);
-  eigvals = (double*)PyArray_DATA(py_eigenvalues);
-  num_temp = PyArray_DIMS(py_collision_matrix)[1];
-  num_ir_grid_points = PyArray_DIMS(py_collision_matrix)[2];
-  num_band = PyArray_DIMS(py_collision_matrix)[3];
-
-  num_column = num_ir_grid_points * num_band * 3;
-  adrs_shift = (i_sigma * num_column * num_column * num_temp +
-                i_temp * num_column * num_column);
-
-  phonopy_pinv_libflame(collision_matrix + adrs_shift,
-                        eigvals, num_column, cutoff);
-
-  Py_RETURN_NONE;
-}
-#endif
 
 static PyObject *
 py_diagonalize_collision_matrix(PyObject *self, PyObject *args)

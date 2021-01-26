@@ -2,8 +2,16 @@ import os
 import pytest
 import phonopy
 import phono3py
+from phonopy.interface.phonopy_yaml import read_cell_yaml
+
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
+
+
+@pytest.fixture(scope='session')
+def agno2_cell():
+    cell = read_cell_yaml(os.path.join(current_dir, "AgNO2_cell.yaml"))
+    return cell
 
 
 @pytest.fixture(scope='session')
