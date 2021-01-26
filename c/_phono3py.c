@@ -39,19 +39,19 @@
 #include <stdlib.h>
 #include <math.h>
 #include <numpy/arrayobject.h>
-#include <lapack_wrapper.h>
-#include <phonon.h>
-#include <phonoc_array.h>
-#include <phonoc_const.h>
-#include <phonon3/fc3.h>
-#include <phonon3/real_self_energy.h>
-#include <phonon3/interaction.h>
-#include <phonon3/imag_self_energy_with_g.h>
-#include <phonon3/pp_collision.h>
-#include <phonon3/collision_matrix.h>
-#include <other/isotope.h>
-#include <triplet/triplet.h>
-#include <tetrahedron_method.h>
+#include "lapack_wrapper.h"
+#include "phonon.h"
+#include "phonoc_array.h"
+#include "phonoc_const.h"
+#include "fc3.h"
+#include "real_self_energy.h"
+#include "interaction.h"
+#include "imag_self_energy_with_g.h"
+#include "pp_collision.h"
+#include "collision_matrix.h"
+#include "isotope.h"
+#include "triplet.h"
+#include "tetrahedron_method.h"
 
 static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args);
 static PyObject * py_get_interaction(PyObject *self, PyObject *args);

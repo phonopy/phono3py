@@ -35,33 +35,30 @@ if (config_var is not None and
         "-Werror=declaration-after-statement", "")
 
 sources = ['c/_phono3py.c',
-           'c/harmonic/dynmat.c',
-           'c/harmonic/phonon.c',
-           'c/harmonic/lapack_wrapper.c',
-           'c/harmonic/phonoc_array.c',
-           'c/harmonic/phonoc_utils.c',
-           'c/anharmonic/phonon3/fc3.c',
-           'c/anharmonic/phonon3/real_self_energy.c',
-           'c/anharmonic/phonon3/interaction.c',
-           'c/anharmonic/phonon3/real_to_reciprocal.c',
-           'c/anharmonic/phonon3/reciprocal_to_normal.c',
-           'c/anharmonic/phonon3/imag_self_energy_with_g.c',
-           'c/anharmonic/phonon3/pp_collision.c',
-           'c/anharmonic/phonon3/collision_matrix.c',
-           'c/anharmonic/other/isotope.c',
-           'c/anharmonic/triplet/triplet.c',
-           'c/anharmonic/triplet/triplet_kpoint.c',
-           'c/anharmonic/triplet/triplet_iw.c',
-           'c/spglib/mathfunc.c',
-           'c/spglib/kpoint.c',
-           'c/kspclib/kgrid.c',
-           'c/kspclib/tetrahedron_method.c']
+           'c/dynmat.c',
+           'c/phonon.c',
+           'c/lapack_wrapper.c',
+           'c/phonoc_array.c',
+           'c/phonoc_utils.c',
+           'c/fc3.c',
+           'c/real_self_energy.c',
+           'c/interaction.c',
+           'c/real_to_reciprocal.c',
+           'c/reciprocal_to_normal.c',
+           'c/imag_self_energy_with_g.c',
+           'c/pp_collision.c',
+           'c/collision_matrix.c',
+           'c/isotope.c',
+           'c/triplet.c',
+           'c/triplet_kpoint.c',
+           'c/triplet_iw.c',
+           'c/mathfunc.c',
+           'c/kpoint.c',
+           'c/kgrid.c',
+           'c/tetrahedron_method.c']
 
 extra_compile_args = ['-fopenmp', ]
-include_dirs = ['c/harmonic',
-                'c/anharmonic',
-                'c/spglib',
-                'c/kspclib'] + include_dirs_numpy
+include_dirs = ['c', ] + include_dirs_numpy
 define_macros = []
 
 extra_link_args_lapacke = []
@@ -259,11 +256,11 @@ scripts_phono3py = ['scripts/phono3py',
 include_dirs_lapackepy = (['c/harmonic',] + include_dirs_numpy
                           + include_dirs_lapacke)
 sources_lapackepy = ['c/_lapackepy.c',
-                     'c/harmonic/dynmat.c',
-                     'c/harmonic/phonon.c',
-                     'c/harmonic/phonoc_array.c',
-                     'c/harmonic/phonoc_utils.c',
-                     'c/harmonic/lapack_wrapper.c']
+                     'c/dynmat.c',
+                     'c/phonon.c',
+                     'c/phonoc_array.c',
+                     'c/phonoc_utils.c',
+                     'c/lapack_wrapper.c']
 extension_lapackepy = Extension(
     'phono3py._lapackepy',
     extra_compile_args=extra_compile_args,
