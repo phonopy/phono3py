@@ -40,8 +40,10 @@
 #include <math.h>
 #include <numpy/arrayobject.h>
 #include "lapack_wrapper.h"
-#include "phonon.h"
+#include "phono3py.h"
 #include "phonoc_array.h"
+
+#include "phonon.h"
 #include "phonoc_const.h"
 #include "fc3.h"
 #include "real_self_energy.h"
@@ -429,8 +431,7 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
     positions_fc2 = (double(*)[3])PyArray_DATA(py_positions_fc2);
   }
 
-  if (!dd_q0) {
-    phn_get_phonons_at_gridpoints(freqs,
+  ph3py_get_phonons_at_gridpoints(freqs,
                                   eigvecs,
                                   phonon_done,
                                   num_phonons,
@@ -441,6 +442,7 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
                                   fc2,
                                   svecs_fc2,
                                   multi_fc2,
+                                  positions_fc2,
                                   num_patom,
                                   num_satom,
                                   masses_fc2,
@@ -452,37 +454,11 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
                                   rec_lat,
                                   q_dir,
                                   nac_factor,
+                                  dd_q0,
+                                  G_list,
+                                  num_G_points,
+                                  lambda,
                                   uplo[0]);
-  } else {
-    phn_get_gonze_phonons_at_gridpoints(freqs,
-                                        eigvecs,
-                                        phonon_done,
-                                        num_phonons,
-                                        grid_points,
-                                        num_grid_points,
-                                        grid_address,
-                                        mesh,
-                                        fc2,
-                                        svecs_fc2,
-                                        multi_fc2,
-                                        positions_fc2,
-                                        num_patom,
-                                        num_satom,
-                                        masses_fc2,
-                                        p2s_fc2,
-                                        s2p_fc2,
-                                        unit_conversion_factor,
-                                        born,
-                                        dielectric,
-                                        rec_lat,
-                                        q_dir,
-                                        nac_factor,
-                                        dd_q0,
-                                        G_list,
-                                        num_G_points,
-                                        lambda,
-                                        uplo[0]);
-  }
 
   Py_RETURN_NONE;
 }
@@ -572,25 +548,25 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   s2p = (int*)PyArray_DATA(py_s2p_map);
   band_indices = (int*)PyArray_DATA(py_band_indices);
 
-  itr_get_interaction(fc3_normal_squared,
-                      g_zero,
-                      freqs,
-                      eigvecs,
-                      triplets,
-                      num_triplets,
-                      grid_address,
-                      mesh,
-                      fc3,
-                      is_compact_fc3,
-                      svecs,
-                      svecs_dims,
-                      multi,
-                      masses,
-                      p2s,
-                      s2p,
-                      band_indices,
-                      symmetrize_fc3_q,
-                      cutoff_frequency);
+  ph3py_get_interaction(fc3_normal_squared,
+                        g_zero,
+                        freqs,
+                        eigvecs,
+                        triplets,
+                        num_triplets,
+                        grid_address,
+                        mesh,
+                        fc3,
+                        is_compact_fc3,
+                        svecs,
+                        svecs_dims,
+                        multi,
+                        masses,
+                        p2s,
+                        s2p,
+                        band_indices,
+                        symmetrize_fc3_q,
+                        cutoff_frequency);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;
@@ -696,29 +672,29 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   band_indices = convert_to_iarray(py_band_indices);
   temperatures = convert_to_darray(py_temperatures);
 
-  ppc_get_pp_collision(gamma,
-                       relative_grid_address,
-                       frequencies,
-                       eigenvectors,
-                       triplets,
-                       num_triplets,
-                       triplet_weights,
-                       grid_address,
-                       bz_map,
-                       mesh,
-                       fc3,
-                       is_compact_fc3,
-                       svecs,
-                       svecs_dims,
-                       multi,
-                       masses,
-                       p2s,
-                       s2p,
-                       band_indices,
-                       temperatures,
-                       is_NU,
-                       symmetrize_fc3_q,
-                       cutoff_frequency);
+  ph3py_get_pp_collision(gamma,
+                         relative_grid_address,
+                         frequencies,
+                         eigenvectors,
+                         triplets,
+                         num_triplets,
+                         triplet_weights,
+                         grid_address,
+                         bz_map,
+                         mesh,
+                         fc3,
+                         is_compact_fc3,
+                         svecs,
+                         svecs_dims,
+                         multi,
+                         masses,
+                         p2s,
+                         s2p,
+                         band_indices,
+                         temperatures,
+                         is_NU,
+                         symmetrize_fc3_q,
+                         cutoff_frequency);
 
   free(band_indices);
   band_indices = NULL;
@@ -896,17 +872,17 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
   triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
   num_frequency_points = PyArray_DIMS(py_g)[2];
 
-  ise_get_imag_self_energy_at_bands_with_g(gamma,
-                                           fc3_normal_squared,
-                                           frequencies,
-                                           triplets,
-                                           triplet_weights,
-                                           g,
-                                           g_zero,
-                                           temperature,
-                                           cutoff_frequency,
-                                           num_frequency_points,
-                                           frequency_point_index);
+  ph3py_get_imag_self_energy_at_bands_with_g(gamma,
+                                             fc3_normal_squared,
+                                             frequencies,
+                                             triplets,
+                                             triplet_weights,
+                                             g,
+                                             g_zero,
+                                             temperature,
+                                             cutoff_frequency,
+                                             num_frequency_points,
+                                             frequency_point_index);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;

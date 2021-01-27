@@ -35,6 +35,7 @@ if (config_var is not None and
         "-Werror=declaration-after-statement", "")
 
 sources = ['c/_phono3py.c',
+           'c/phono3py.c',
            'c/dynmat.c',
            'c/phonon.c',
            'c/lapack_wrapper.c',
@@ -253,8 +254,7 @@ scripts_phono3py = ['scripts/phono3py',
 ########################
 # _lapackepy extension #
 ########################
-include_dirs_lapackepy = (['c/harmonic',] + include_dirs_numpy
-                          + include_dirs_lapacke)
+include_dirs_lapackepy = (['c', ] + include_dirs_numpy + include_dirs_lapacke)
 sources_lapackepy = ['c/_lapackepy.c',
                      'c/dynmat.c',
                      'c/phonon.c',
