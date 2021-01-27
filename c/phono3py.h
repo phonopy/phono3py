@@ -148,6 +148,57 @@ void ph3py_get_imag_self_energy_at_bands_with_g(
   const double cutoff_frequency,
   const int num_frequency_points,
   const int frequency_point_index);
-
+void ph3py_get_detailed_imag_self_energy_at_bands_with_g(
+  double *detailed_imag_self_energy,
+  double *imag_self_energy_N,
+  double *imag_self_energy_U,
+  const Darray *fc3_normal_squared,
+  const double *frequencies,
+  const size_t (*triplets)[3],
+  const int *triplet_weights,
+  const int *grid_address,
+  const double *g,
+  const char *g_zero,
+  const double temperature,
+  const double cutoff_frequency);
+void ph3py_get_collision_matrix(double *collision_matrix,
+                                const Darray *fc3_normal_squared,
+                                const double *frequencies,
+                                const size_t (*triplets)[3],
+                                const size_t *triplets_map,
+                                const size_t *map_q,
+                                const size_t *rotated_grid_points,
+                                const double *rotations_cartesian,
+                                const double *g,
+                                const size_t num_ir_gp,
+                                const size_t num_gp,
+                                const size_t num_rot,
+                                const double temperature,
+                                const double unit_conversion_factor,
+                                const double cutoff_frequency);
+void ph3py_get_reducible_collision_matrix(double *collision_matrix,
+                                          const Darray *fc3_normal_squared,
+                                          const double *frequencies,
+                                          const size_t (*triplets)[3],
+                                          const size_t *triplets_map,
+                                          const size_t *map_q,
+                                          const double *g,
+                                          const size_t num_gp,
+                                          const double temperature,
+                                          const double unit_conversion_factor,
+                                          const double cutoff_frequency);
+void ph3py_symmetrize_collision_matrix(double *collision_matrix,
+                                       const long num_column,
+                                       const long num_temp,
+                                       const long num_sigma);
+void ph3py_expand_collision_matrix(double *collision_matrix,
+                                   const size_t *rot_grid_points,
+                                   const size_t *ir_grid_points,
+                                   const long num_ir_gp,
+                                   const long num_grid_points,
+                                   const long num_rot,
+                                   const long num_sigma,
+                                   const long num_temp,
+                                   const long num_band);
 
 #endif

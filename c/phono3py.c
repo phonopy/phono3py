@@ -40,6 +40,8 @@
 #include "interaction.h"
 #include "pp_collision.h"
 #include "imag_self_energy_with_g.h"
+#include "real_self_energy.h"
+#include "collision_matrix.h"
 
 #include <stdio.h>
 
@@ -296,4 +298,241 @@ void ph3py_get_imag_self_energy_at_bands_with_g(
                                            cutoff_frequency,
                                            num_frequency_points,
                                            frequency_point_index);
+}
+
+
+void ph3py_get_detailed_imag_self_energy_at_bands_with_g(
+  double *detailed_imag_self_energy,
+  double *imag_self_energy_N,
+  double *imag_self_energy_U,
+  const Darray *fc3_normal_squared,
+  const double *frequencies,
+  const size_t (*triplets)[3],
+  const int *triplet_weights,
+  const int *grid_address,
+  const double *g,
+  const char *g_zero,
+  const double temperature,
+  const double cutoff_frequency)
+{
+  ise_get_detailed_imag_self_energy_at_bands_with_g(detailed_imag_self_energy,
+                                                    imag_self_energy_N,
+                                                    imag_self_energy_U,
+                                                    fc3_normal_squared,
+                                                    frequencies,
+                                                    triplets,
+                                                    triplet_weights,
+                                                    grid_address,
+                                                    g,
+                                                    g_zero,
+                                                    temperature,
+                                                    cutoff_frequency);
+}
+
+
+void ph3py_get_real_self_energy_at_bands(double *real_self_energy,
+                                         const Darray *fc3_normal_squared,
+                                         const int *band_indices,
+                                         const double *frequencies,
+                                         const size_t (*triplets)[3],
+                                         const int *triplet_weights,
+                                         const double epsilon,
+                                         const double temperature,
+                                         const double unit_conversion_factor,
+                                         const double cutoff_frequency)
+{
+  rse_get_real_self_energy_at_bands(real_self_energy,
+                                    fc3_normal_squared,
+                                    band_indices,
+                                    frequencies,
+                                    triplets,
+                                    triplet_weights,
+                                    epsilon,
+                                    temperature,
+                                    unit_conversion_factor,
+                                    cutoff_frequency);
+}
+
+
+void ph3py_get_real_self_energy_at_frequency_point(
+  double *real_self_energy,
+  const double frequency_point,
+  const Darray *fc3_normal_squared,
+  const int *band_indices,
+  const double *frequencies,
+  const size_t (*triplets)[3],
+  const int *triplet_weights,
+  const double epsilon,
+  const double temperature,
+  const double unit_conversion_factor,
+  const double cutoff_frequency)
+{
+  rse_get_real_self_energy_at_frequency_point(real_self_energy,
+                                              frequency_point,
+                                              fc3_normal_squared,
+                                              band_indices,
+                                              frequencies,
+                                              triplets,
+                                              triplet_weights,
+                                              epsilon,
+                                              temperature,
+                                              unit_conversion_factor,
+                                              cutoff_frequency);
+}
+
+
+void ph3py_get_collision_matrix(double *collision_matrix,
+                                const Darray *fc3_normal_squared,
+                                const double *frequencies,
+                                const size_t (*triplets)[3],
+                                const size_t *triplets_map,
+                                const size_t *map_q,
+                                const size_t *rotated_grid_points,
+                                const double *rotations_cartesian,
+                                const double *g,
+                                const size_t num_ir_gp,
+                                const size_t num_gp,
+                                const size_t num_rot,
+                                const double temperature,
+                                const double unit_conversion_factor,
+                                const double cutoff_frequency)
+{
+  col_get_collision_matrix(collision_matrix,
+                           fc3_normal_squared,
+                           frequencies,
+                           triplets,
+                           triplets_map,
+                           map_q,
+                           rotated_grid_points,
+                           rotations_cartesian,
+                           g,
+                           num_ir_gp,
+                           num_gp,
+                           num_rot,
+                           temperature,
+                           unit_conversion_factor,
+                           cutoff_frequency);
+}
+
+
+void ph3py_get_reducible_collision_matrix(double *collision_matrix,
+                                          const Darray *fc3_normal_squared,
+                                          const double *frequencies,
+                                          const size_t (*triplets)[3],
+                                          const size_t *triplets_map,
+                                          const size_t *map_q,
+                                          const double *g,
+                                          const size_t num_gp,
+                                          const double temperature,
+                                          const double unit_conversion_factor,
+                                          const double cutoff_frequency)
+{
+  col_get_reducible_collision_matrix(collision_matrix,
+                                     fc3_normal_squared,
+                                     frequencies,
+                                     triplets,
+                                     triplets_map,
+                                     map_q,
+                                     g,
+                                     num_gp,
+                                     temperature,
+                                     unit_conversion_factor,
+                                     cutoff_frequency);
+}
+
+
+void ph3py_symmetrize_collision_matrix(double *collision_matrix,
+                                       const long num_column,
+                                       const long num_temp,
+                                       const long num_sigma)
+{
+  double val;
+  long i, j, k, l, adrs_shift;
+
+  for (i = 0; i < num_sigma; i++) {
+    for (j = 0; j < num_temp; j++) {
+      adrs_shift = (i * num_column * num_column * num_temp +
+                    j * num_column * num_column);
+      /* show_colmat_info(py_collision_matrix, i, j, adrs_shift); */
+#pragma omp parallel for schedule(guided) private(l, val)
+      for (k = 0; k < num_column; k++) {
+        for (l = k + 1; l < num_column; l++) {
+          val = (collision_matrix[adrs_shift + k * num_column + l] +
+                 collision_matrix[adrs_shift + l * num_column + k]) / 2;
+          collision_matrix[adrs_shift + k * num_column + l] = val;
+          collision_matrix[adrs_shift + l * num_column + k] = val;
+        }
+      }
+    }
+  }
+}
+
+
+void ph3py_expand_collision_matrix(double *collision_matrix,
+                                   const size_t *rot_grid_points,
+                                   const size_t *ir_grid_points,
+                                   const long num_ir_gp,
+                                   const long num_grid_points,
+                                   const long num_rot,
+                                   const long num_sigma,
+                                   const long num_temp,
+                                   const long num_band)
+
+{
+  long i, j, k, l, m, n, p, adrs_shift, adrs_shift_plus, ir_gp, gp_r;
+  long num_column, num_bgb;
+  long *multi;
+  double *colmat_copy;
+
+  multi = (long*)malloc(sizeof(long) * num_ir_gp);
+  colmat_copy = NULL;
+
+  num_column = num_grid_points * num_band;
+  num_bgb = num_band * num_grid_points * num_band;
+
+#pragma omp parallel for schedule(guided) private(j, ir_gp)
+  for (i = 0; i < num_ir_gp; i++) {
+    ir_gp = ir_grid_points[i];
+    multi[i] = 0;
+    for (j = 0; j < num_rot; j++) {
+      if (rot_grid_points[j * num_grid_points + ir_gp] == ir_gp) {
+        multi[i]++;
+      }
+    }
+  }
+
+  for (i = 0; i < num_sigma; i++) {
+    for (j = 0; j < num_temp; j++) {
+      adrs_shift = (i * num_column * num_column * num_temp +
+                    j * num_column * num_column);
+#pragma omp parallel for private(ir_gp, adrs_shift_plus, colmat_copy, l, gp_r, m, n, p)
+      for (k = 0; k < num_ir_gp; k++) {
+        ir_gp = ir_grid_points[k];
+        adrs_shift_plus = adrs_shift + ir_gp * num_bgb;
+        colmat_copy = (double*)malloc(sizeof(double) * num_bgb);
+        for (l = 0; l < num_bgb; l++) {
+          colmat_copy[l] = collision_matrix[adrs_shift_plus + l] / multi[k];
+          collision_matrix[adrs_shift_plus + l] = 0;
+        }
+        for (l = 0; l < num_rot; l++) {
+          gp_r = rot_grid_points[l * num_grid_points + ir_gp];
+          for (m = 0; m < num_band; m++) {
+            for (n = 0; n < num_grid_points; n++) {
+              for (p = 0; p < num_band; p++) {
+                collision_matrix[
+                  adrs_shift + gp_r * num_bgb + m * num_grid_points * num_band
+                  + rot_grid_points[l * num_grid_points + n] * num_band + p] +=
+                  colmat_copy[m * num_grid_points * num_band + n * num_band + p];
+              }
+            }
+          }
+        }
+        free(colmat_copy);
+        colmat_copy = NULL;
+      }
+    }
+  }
+
+  free(multi);
+  multi = NULL;
 }

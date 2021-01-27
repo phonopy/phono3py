@@ -7,6 +7,19 @@ si_pbesol_Delta = [
     [-0.02078728, -0.02102094, -0.06573269, -0.11432603,
      -0.1366966, -0.14371315]]
 
+si_pbesol_Delta_fps = [[-0.00576660, -0.00594616, -0.00840087, -0.00960344,
+                        -0.00576660, -0.00594616, -0.00840087, -0.00960344,
+                        -0.01493508, -0.01639729, -0.01997820, -0.02070427,
+                        -0.15511645, -0.14747203, -0.14809966, -0.14230763,
+                        -0.15674925, -0.15684992, -0.15983868, -0.15091767,
+                        -0.15674925, -0.15684992, -0.15983868, -0.15091767],
+                       [-0.01990306, -0.02077094, -0.01798066, -0.01935581,
+                        -0.02158076, -0.02190634, -0.02195633, -0.01882258,
+                        -0.05740055, -0.05240406, -0.06252644, -0.05651015,
+                        -0.13072273, -0.11929265, -0.13472599, -0.13105120,
+                        -0.15191900, -0.14202698, -0.14371246, -0.14168892,
+                        -0.14760248, -0.13907618, -0.14275290, -0.14100562]]
+
 # imag-self-energy Si-PBEsol 50x50x50 gp=5, bi=4, 101 points, 300K
 im_part = [
     [0.00000000, 0.00000000, -0.00000000, -0.17502231, 0.15346111, -0.17945834],
@@ -112,7 +125,7 @@ im_part = [
     [30.69222190, 0.00000000, 30.69222190, 0.41736574, 30.84568301, 0.38214163]]
 
 
-def test_real_self_energy(si_pbesol):
+def test_real_self_energy_with_band_indices(si_pbesol):
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     _, delta = si_pbesol.run_real_self_energy(
@@ -121,6 +134,29 @@ def test_real_self_energy(si_pbesol):
         write_hdf5=False,
         run_on_bands=True)
     np.testing.assert_allclose(si_pbesol_Delta, delta[0, :, 0], atol=1e-5)
+
+
+def test_real_self_energy_with_frequency_points(si_pbesol):
+    si_pbesol.mesh_numbers = [9, 9, 9]
+    si_pbesol.init_phph_interaction()
+    frequency_points = [1.469947, 3.085309, 14.997187, 15.129080]
+    fps, delta = si_pbesol.run_real_self_energy(
+        [1, 103],
+        [300, ],
+        frequency_points=frequency_points,
+        write_hdf5=False,
+        run_on_bands=False)
+
+    np.testing.assert_allclose(frequency_points, fps, atol=1e-5)
+    np.testing.assert_allclose(
+        si_pbesol_Delta_fps[0], delta[0, 0, 0].ravel(), atol=1e-5)
+    np.testing.assert_allclose(
+        si_pbesol_Delta_fps[1], delta[0, 1, 0].ravel(), atol=1e-5)
+
+    # for b in delta[0, 0, 0]:
+    #     print("".join("%.8f, " % s for s in b))
+    # for b in delta[0, 1, 0]:
+    #     print("".join("%.8f, " % s for s in b))
 
 
 def test_RealToImag():

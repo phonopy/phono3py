@@ -796,29 +796,29 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
   band_indices = convert_to_iarray(py_band_indices);
   temperatures = convert_to_darray(py_temperatures);
 
-  ppc_get_pp_collision_with_sigma(gamma,
-                                  sigma,
-                                  sigma_cutoff,
-                                  frequencies,
-                                  eigenvectors,
-                                  triplets,
-                                  num_triplets,
-                                  triplet_weights,
-                                  grid_address,
-                                  mesh,
-                                  fc3,
-                                  is_compact_fc3,
-                                  svecs,
-                                  svecs_dims,
-                                  multi,
-                                  masses,
-                                  p2s,
-                                  s2p,
-                                  band_indices,
-                                  temperatures,
-                                  is_NU,
-                                  symmetrize_fc3_q,
-                                  cutoff_frequency);
+  ph3py_get_pp_collision_with_sigma(gamma,
+                                    sigma,
+                                    sigma_cutoff,
+                                    frequencies,
+                                    eigenvectors,
+                                    triplets,
+                                    num_triplets,
+                                    triplet_weights,
+                                    grid_address,
+                                    mesh,
+                                    fc3,
+                                    is_compact_fc3,
+                                    svecs,
+                                    svecs_dims,
+                                    multi,
+                                    masses,
+                                    p2s,
+                                    s2p,
+                                    band_indices,
+                                    temperatures,
+                                    is_NU,
+                                    symmetrize_fc3_q,
+                                    cutoff_frequency);
 
   free(band_indices);
   band_indices = NULL;
@@ -943,18 +943,18 @@ py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args)
   triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
   grid_address = (int*)PyArray_DATA(py_grid_address);
 
-  ise_get_detailed_imag_self_energy_at_bands_with_g(gamma_detail,
-                                                    gamma_N,
-                                                    gamma_U,
-                                                    fc3_normal_squared,
-                                                    frequencies,
-                                                    triplets,
-                                                    triplet_weights,
-                                                    grid_address,
-                                                    g,
-                                                    g_zero,
-                                                    temperature,
-                                                    cutoff_frequency);
+  ph3py_get_detailed_imag_self_energy_at_bands_with_g(gamma_detail,
+                                                      gamma_N,
+                                                      gamma_U,
+                                                      fc3_normal_squared,
+                                                      frequencies,
+                                                      triplets,
+                                                      triplet_weights,
+                                                      grid_address,
+                                                      g,
+                                                      g_zero,
+                                                      temperature,
+                                                      cutoff_frequency);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;
@@ -1002,16 +1002,16 @@ static PyObject * py_get_real_self_energy_at_bands(PyObject *self,
   triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
   triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
 
-  get_real_self_energy_at_bands(shift,
-                                fc3_normal_squared,
-                                band_indices,
-                                frequencies,
-                                triplets,
-                                triplet_weights,
-                                epsilon,
-                                temperature,
-                                unit_conversion_factor,
-                                cutoff_frequency);
+  ph3py_get_real_self_energy_at_bands(shift,
+                                      fc3_normal_squared,
+                                      band_indices,
+                                      frequencies,
+                                      triplets,
+                                      triplet_weights,
+                                      epsilon,
+                                      temperature,
+                                      unit_conversion_factor,
+                                      cutoff_frequency);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;
@@ -1061,17 +1061,17 @@ static PyObject * py_get_real_self_energy_at_frequency_point(PyObject *self,
   triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
   triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
 
-  get_real_self_energy_at_frequency_point(shift,
-                                          frequency_point,
-                                          fc3_normal_squared,
-                                          band_indices,
-                                          frequencies,
-                                          triplets,
-                                          triplet_weights,
-                                          epsilon,
-                                          temperature,
-                                          unit_conversion_factor,
-                                          cutoff_frequency);
+  ph3py_get_real_self_energy_at_frequency_point(shift,
+                                                frequency_point,
+                                                fc3_normal_squared,
+                                                band_indices,
+                                                frequencies,
+                                                triplets,
+                                                triplet_weights,
+                                                epsilon,
+                                                temperature,
+                                                unit_conversion_factor,
+                                                cutoff_frequency);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;
@@ -1135,21 +1135,21 @@ static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args)
   assert(num_rot == PyArray_DIMS(py_rotations_cartesian)[0]);
   assert(num_gp == PyArray_DIMS(py_frequencies)[0]);
 
-  col_get_collision_matrix(collision_matrix,
-                           fc3_normal_squared,
-                           frequencies,
-                           triplets,
-                           triplets_map,
-                           map_q,
-                           rotated_grid_points,
-                           rotations_cartesian,
-                           g,
-                           num_ir_gp,
-                           num_gp,
-                           num_rot,
-                           temperature,
-                           unit_conversion_factor,
-                           cutoff_frequency);
+  ph3py_get_collision_matrix(collision_matrix,
+                             fc3_normal_squared,
+                             frequencies,
+                             triplets,
+                             triplets_map,
+                             map_q,
+                             rotated_grid_points,
+                             rotations_cartesian,
+                             g,
+                             num_ir_gp,
+                             num_gp,
+                             num_rot,
+                             temperature,
+                             unit_conversion_factor,
+                             cutoff_frequency);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;
@@ -1200,17 +1200,17 @@ static PyObject * py_get_reducible_collision_matrix(PyObject *self, PyObject *ar
   num_gp = PyArray_DIMS(py_triplets_map)[0];
   map_q = (size_t*)PyArray_DATA(py_map_q);
 
-  col_get_reducible_collision_matrix(collision_matrix,
-                                     fc3_normal_squared,
-                                     frequencies,
-                                     triplets,
-                                     triplets_map,
-                                     map_q,
-                                     g,
-                                     num_gp,
-                                     temperature,
-                                     unit_conversion_factor,
-                                     cutoff_frequency);
+  ph3py_get_reducible_collision_matrix(collision_matrix,
+                                       fc3_normal_squared,
+                                       frequencies,
+                                       triplets,
+                                       triplets_map,
+                                       map_q,
+                                       g,
+                                       num_gp,
+                                       temperature,
+                                       unit_conversion_factor,
+                                       cutoff_frequency);
 
   free(fc3_normal_squared);
   fc3_normal_squared = NULL;
@@ -1223,10 +1223,8 @@ static PyObject * py_symmetrize_collision_matrix(PyObject *self, PyObject *args)
   PyArrayObject *py_collision_matrix;
 
   double *collision_matrix;
-  size_t i, j, k, l;
-  npy_intp num_band, num_grid_points, num_temp, num_sigma;
-  size_t adrs_shift, num_column;
-  double val;
+  long num_band, num_grid_points, num_temp, num_sigma;
+  long num_column;
 
   if (!PyArg_ParseTuple(args, "O",
                         &py_collision_matrix)) {
@@ -1245,22 +1243,10 @@ static PyObject * py_symmetrize_collision_matrix(PyObject *self, PyObject *args)
     num_column = num_grid_points * num_band;
   }
 
-  for (i = 0; i < num_sigma; i++) {
-    for (j = 0; j < num_temp; j++) {
-      adrs_shift = (i * num_column * num_column * num_temp +
-                    j * num_column * num_column);
-      /* show_colmat_info(py_collision_matrix, i, j, adrs_shift); */
-#pragma omp parallel for schedule(guided) private(l, val)
-      for (k = 0; k < num_column; k++) {
-        for (l = k + 1; l < num_column; l++) {
-          val = (collision_matrix[adrs_shift + k * num_column + l] +
-                 collision_matrix[adrs_shift + l * num_column + k]) / 2;
-          collision_matrix[adrs_shift + k * num_column + l] = val;
-          collision_matrix[adrs_shift + l * num_column + k] = val;
-        }
-      }
-    }
-  }
+  ph3py_symmetrize_collision_matrix(collision_matrix,
+                                    num_column,
+                                    num_temp,
+                                    num_sigma);
 
   Py_RETURN_NONE;
 }
@@ -1274,11 +1260,7 @@ static PyObject * py_expand_collision_matrix(PyObject *self, PyObject *args)
   double *collision_matrix;
   size_t *rot_grid_points;
   size_t *ir_grid_points;
-  size_t i, j, k, l, m, n, p;
-  size_t adrs_shift, adrs_shift_plus,  num_column, ir_gp, num_bgb, gp_r;
   npy_intp num_band, num_grid_points, num_temp, num_sigma, num_rot, num_ir_gp;
-  size_t *multi;
-  double *colmat_copy;
 
   if (!PyArg_ParseTuple(args, "OOO",
                         &py_collision_matrix,
@@ -1297,59 +1279,15 @@ static PyObject * py_expand_collision_matrix(PyObject *self, PyObject *args)
   num_rot = PyArray_DIMS(py_rot_grid_points)[0];
   num_ir_gp = PyArray_DIMS(py_ir_grid_points)[0];
 
-  num_column = num_grid_points * num_band;
-  num_bgb = num_band * num_grid_points * num_band;
-
-  assert(num_grid_points == PyArray_DIMS(py_rot_grid_points)[1]);
-
-  multi = (size_t*)malloc(sizeof(size_t) * num_ir_gp);
-  colmat_copy = NULL;
-
-#pragma omp parallel for schedule(guided) private(j, ir_gp)
-  for (i = 0; i < num_ir_gp; i++) {
-    ir_gp = ir_grid_points[i];
-    multi[i] = 0;
-    for (j = 0; j < num_rot; j++) {
-      if (rot_grid_points[j * num_grid_points + ir_gp] == ir_gp) {
-        multi[i]++;
-      }
-    }
-  }
-
-  for (i = 0; i < num_sigma; i++) {
-    for (j = 0; j < num_temp; j++) {
-      adrs_shift = (i * num_column * num_column * num_temp +
-                    j * num_column * num_column);
-#pragma omp parallel for private(ir_gp, adrs_shift_plus, colmat_copy, l, gp_r, m, n, p)
-      for (k = 0; k < num_ir_gp; k++) {
-        ir_gp = ir_grid_points[k];
-        adrs_shift_plus = adrs_shift + ir_gp * num_bgb;
-        colmat_copy = (double*)malloc(sizeof(double) * num_bgb);
-        for (l = 0; l < num_bgb; l++) {
-          colmat_copy[l] = collision_matrix[adrs_shift_plus + l] / multi[k];
-          collision_matrix[adrs_shift_plus + l] = 0;
-        }
-        for (l = 0; l < num_rot; l++) {
-          gp_r = rot_grid_points[l * num_grid_points + ir_gp];
-          for (m = 0; m < num_band; m++) {
-            for (n = 0; n < num_grid_points; n++) {
-              for (p = 0; p < num_band; p++) {
-                collision_matrix[
-                  adrs_shift + gp_r * num_bgb + m * num_grid_points * num_band
-                  + rot_grid_points[l * num_grid_points + n] * num_band + p] +=
-                  colmat_copy[m * num_grid_points * num_band + n * num_band + p];
-              }
-            }
-          }
-        }
-        free(colmat_copy);
-        colmat_copy = NULL;
-      }
-    }
-  }
-
-  free(multi);
-  multi = NULL;
+  ph3py_expand_collision_matrix(collision_matrix,
+                                rot_grid_points,
+                                ir_grid_points,
+                                num_ir_gp,
+                                num_grid_points,
+                                num_rot,
+                                num_sigma,
+                                num_temp,
+                                num_band);
 
   Py_RETURN_NONE;
 }
