@@ -187,6 +187,20 @@ void ph3py_get_reducible_collision_matrix(double *collision_matrix,
                                           const double temperature,
                                           const double unit_conversion_factor,
                                           const double cutoff_frequency);
+void ph3py_get_isotope_scattering_strength(
+  double *gamma,
+  const size_t grid_point,
+  const double *mass_variances,
+  const double *frequencies,
+  const lapack_complex_double *eigenvectors,
+  const size_t num_grid_points,
+  const int *band_indices,
+  const size_t num_band,
+  const size_t num_band0,
+  const double sigma,
+  const double cutoff_frequency);
+
+
 void ph3py_symmetrize_collision_matrix(double *collision_matrix,
                                        const long num_column,
                                        const long num_temp,

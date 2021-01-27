@@ -21,3 +21,19 @@ def test_Phono3pyIsotope(si_pbesol):
         nac_params=si_pbesol.nac_params)
     iso.run([1, 103])
     np.testing.assert_allclose(si_pbesol_iso, iso.gamma[0], atol=1e-3)
+
+
+def test_Phono3pyIsotope_with_sigma(si_pbesol):
+    si_pbesol.mesh_numbers = [9, 9, 9]
+    iso = Phono3pyIsotope(
+        si_pbesol.mesh_numbers,
+        si_pbesol.phonon_primitive,
+        sigma=0.1,
+        symprec=si_pbesol.symmetry.tolerance)
+    iso.init_dynamical_matrix(
+        si_pbesol.fc2,
+        si_pbesol.phonon_supercell,
+        si_pbesol.phonon_primitive,
+        nac_params=si_pbesol.nac_params)
+    iso.run([1, 103])
+    np.testing.assert_allclose(si_pbesol_iso, iso.gamma[0], atol=1e-3)

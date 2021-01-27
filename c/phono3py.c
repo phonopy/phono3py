@@ -42,6 +42,7 @@
 #include "imag_self_energy_with_g.h"
 #include "real_self_energy.h"
 #include "collision_matrix.h"
+#include "isotope.h"
 
 #include <stdio.h>
 
@@ -439,6 +440,65 @@ void ph3py_get_reducible_collision_matrix(double *collision_matrix,
                                      unit_conversion_factor,
                                      cutoff_frequency);
 }
+
+
+void ph3py_get_isotope_scattering_strength(
+  double *gamma,
+  const size_t grid_point,
+  const double *mass_variances,
+  const double *frequencies,
+  const lapack_complex_double *eigenvectors,
+  const size_t num_grid_points,
+  const int *band_indices,
+  const size_t num_band,
+  const size_t num_band0,
+  const double sigma,
+  const double cutoff_frequency)
+{
+  iso_get_isotope_scattering_strength(gamma,
+                                      grid_point,
+                                      mass_variances,
+                                      frequencies,
+                                      eigenvectors,
+                                      num_grid_points,
+                                      band_indices,
+                                      num_band,
+                                      num_band0,
+                                      sigma,
+                                      cutoff_frequency);
+}
+
+/* void fc3_distribute_fc3(double *fc3,
+ *                         const int target,
+ *                         const int source,
+ *                         const int *atom_mapping,
+ *                         const size_t num_atom,
+ *                         const double *rot_cart)
+ * void fc3_rotate_delta_fc2(double (*fc3)[3][3][3],
+ *                           PHPYCONST double (*delta_fc2s)[3][3],
+ *                           const double *inv_U,
+ *                           PHPYCONST double (*site_sym_cart)[3][3],
+ *                           const int *rot_map_syms,
+ *                           const size_t num_atom,
+ *                           const size_t num_site_sym,
+ *                           const size_t num_disp)
+ * void fc3_set_permutation_symmetry_fc3(double *fc3, const size_t num_atom)
+ * void fc3_set_permutation_symmetry_compact_fc3(double * fc3,
+ *                                               const int p2s[],
+ *                                               const int s2pp[],
+ *                                               const int nsym_list[],
+ *                                               const int perms[],
+ *                                               const size_t n_satom,
+ *                                               const size_t n_patom)
+ * void fc3_transpose_compact_fc3(double * fc3,
+ *                                const int p2s[],
+ *                                const int s2pp[],
+ *                                const int nsym_list[],
+ *                                const int perms[],
+ *                                const size_t n_satom,
+ *                                const size_t n_patom,
+ *                                const int t_type) */
+
 
 
 void ph3py_symmetrize_collision_matrix(double *collision_matrix,

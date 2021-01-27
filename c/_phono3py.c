@@ -1374,6 +1374,7 @@ static PyObject * py_get_isotope_strength(PyObject *self, PyObject *args)
   /* free(weights); */
   /* free(integration_weights); */
 
+  printf("isoiso\n");
   iso_get_isotope_scattering_strength(gamma,
                                       grid_point,
                                       mass_variances,
