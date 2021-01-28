@@ -24,6 +24,16 @@ def si_pbesol():
 
 
 @pytest.fixture(scope='session')
+def si_pbesol_compact_fc():
+    yaml_filename = os.path.join(current_dir, "phono3py_si_pbesol.yaml")
+    forces_fc3_filename = os.path.join(current_dir, "FORCES_FC3_si_pbesol")
+    return phono3py.load(yaml_filename,
+                         forces_fc3_filename=forces_fc3_filename,
+                         is_compact_fc=True,
+                         log_level=1)
+
+
+@pytest.fixture(scope='session')
 def si_pbesol_111():
     yaml_filename = os.path.join(current_dir, "phono3py_params_Si111.yaml")
     return phono3py.load(yaml_filename, log_level=1)

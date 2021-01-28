@@ -364,7 +364,7 @@ class Conductivity(object):
 
     def _get_gamma_isotope_at_sigmas(self, i):
         gamma_iso = []
-        bz_map = self._pp.get_bz_map()
+        bz_map = self._pp.bz_map
         pp_freqs, pp_eigvecs, pp_phonon_done = self._pp.get_phonons()
 
         for j, sigma in enumerate(self._sigmas):
@@ -376,7 +376,7 @@ class Conductivity(object):
                     text += "sigma=%s" % sigma
                 print(text)
 
-            self._isotope.set_sigma(sigma)
+            self._isotope.sigma = sigma
             self._isotope.set_phonons(self._grid_address,
                                       bz_map,
                                       pp_freqs,
@@ -386,7 +386,7 @@ class Conductivity(object):
             gp = self._grid_points[i]
             self._isotope.set_grid_point(gp)
             self._isotope.run()
-            gamma_iso.append(self._isotope.get_gamma())
+            gamma_iso.append(self._isotope.gamma)
 
         return np.array(gamma_iso, dtype='double', order='C')
 
@@ -459,8 +459,8 @@ class Conductivity(object):
             frequency_factor_to_THz=self._frequency_factor_to_THz,
             symprec=self._symmetry.get_symmetry_tolerance(),
             cutoff_frequency=self._cutoff_frequency,
-            lapack_zheev_uplo=self._pp.get_lapack_zheev_uplo())
-        self._mass_variances = self._isotope.get_mass_variances()
+            lapack_zheev_uplo=self._pp.lapack_zheev_uplo)
+        self._mass_variances = self._isotope.mass_variances
 
     def _set_harmonic_properties(self, i_irgp, i_data):
         grid_point = self._grid_points[i_irgp]
