@@ -43,17 +43,6 @@
 #include "phono3py.h"
 #include "phonoc_array.h"
 
-#include "phonon.h"
-#include "phonoc_const.h"
-#include "fc3.h"
-#include "real_self_energy.h"
-#include "interaction.h"
-#include "imag_self_energy_with_g.h"
-#include "pp_collision.h"
-#include "collision_matrix.h"
-#include "isotope.h"
-#include "triplet.h"
-#include "tetrahedron_method.h"
 
 static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args);
 static PyObject * py_get_interaction(PyObject *self, PyObject *args);
@@ -1442,12 +1431,12 @@ static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
   atom_mapping = (int*)PyArray_DATA(atom_mapping_py);
   num_atom = PyArray_DIMS(atom_mapping_py)[0];
 
-  fc3_distribute_fc3(fc3,
-                     target,
-                     source,
-                     atom_mapping,
-                     num_atom,
-                     rot_cart_inv);
+  ph3py_distribute_fc3(fc3,
+                       target,
+                       source,
+                       atom_mapping,
+                       num_atom,
+                       rot_cart_inv);
 
   Py_RETURN_NONE;
 }
@@ -1491,14 +1480,14 @@ static PyObject * py_rotate_delta_fc2s(PyObject *self, PyObject *args)
   num_disp = PyArray_DIMS(py_delta_fc2s)[0];
   num_site_sym = PyArray_DIMS(py_site_sym_cart)[0];
 
-  fc3_rotate_delta_fc2(fc3,
-                       delta_fc2s,
-                       inv_U,
-                       site_sym_cart,
-                       rot_map_syms,
-                       num_atom,
-                       num_site_sym,
-                       num_disp);
+  ph3py_rotate_delta_fc2(fc3,
+                         delta_fc2s,
+                         inv_U,
+                         site_sym_cart,
+                         rot_map_syms,
+                         num_atom,
+                         num_site_sym,
+                         num_disp);
 
   Py_RETURN_NONE;
 }
@@ -1518,7 +1507,7 @@ py_set_permutation_symmetry_fc3(PyObject *self, PyObject *args)
   fc3 = (double*)PyArray_DATA(py_fc3);
   num_atom = PyArray_DIMS(py_fc3)[0];
 
-  fc3_set_permutation_symmetry_fc3(fc3, num_atom);
+  ph3py_set_permutation_symmetry_fc3(fc3, num_atom);
 
   Py_RETURN_NONE;
 }
@@ -1556,13 +1545,13 @@ py_set_permutation_symmetry_compact_fc3(PyObject *self, PyObject *args)
   n_patom = PyArray_DIMS(py_fc3)[0];
   n_satom = PyArray_DIMS(py_fc3)[1];
 
-  fc3_set_permutation_symmetry_compact_fc3(fc3,
-                                           p2s,
-                                           s2pp,
-                                           nsym_list,
-                                           perms,
-                                           n_satom,
-                                           n_patom);
+  ph3py_set_permutation_symmetry_compact_fc3(fc3,
+                                             p2s,
+                                             s2pp,
+                                             nsym_list,
+                                             perms,
+                                             n_satom,
+                                             n_patom);
 
   Py_RETURN_NONE;
 }
@@ -1601,14 +1590,14 @@ static PyObject * py_transpose_compact_fc3(PyObject *self, PyObject *args)
   n_patom = PyArray_DIMS(py_fc3)[0];
   n_satom = PyArray_DIMS(py_fc3)[1];
 
-  fc3_transpose_compact_fc3(fc3,
-                            p2s,
-                            s2pp,
-                            nsym_list,
-                            perms,
-                            n_satom,
-                            n_patom,
-                            t_type);
+  ph3py_transpose_compact_fc3(fc3,
+                              p2s,
+                              s2pp,
+                              nsym_list,
+                              perms,
+                              n_satom,
+                              n_patom,
+                              t_type);
 
   Py_RETURN_NONE;
 }
@@ -1629,7 +1618,6 @@ static PyObject * py_get_neighboring_gird_points(PyObject *self, PyObject *args)
   int *mesh;
   int (*bz_grid_address)[3];
   size_t *bz_map;
-  size_t i;
 
   if (!PyArg_ParseTuple(args, "OOOOOO",
                         &py_relative_grid_points,
@@ -1650,17 +1638,14 @@ static PyObject * py_get_neighboring_gird_points(PyObject *self, PyObject *args)
   bz_grid_address = (int(*)[3])PyArray_DATA(py_bz_grid_address);
   bz_map = (size_t*)PyArray_DATA(py_bz_map);
 
-#pragma omp parallel for
-  for (i = 0; i < num_grid_points; i++) {
-    thm_get_dense_neighboring_grid_points
-      (relative_grid_points + i * num_relative_grid_address,
-       grid_points[i],
-       relative_grid_address,
-       num_relative_grid_address,
-       mesh,
-       bz_grid_address,
-       bz_map);
-  }
+  ph3py_get_neighboring_gird_points(relative_grid_points,
+                                    grid_points,
+                                    relative_grid_address,
+                                    mesh,
+                                    bz_grid_address,
+                                    bz_map,
+                                    num_grid_points,
+                                    num_relative_grid_address);
 
   Py_RETURN_NONE;
 }
@@ -1679,15 +1664,12 @@ static PyObject * py_set_integration_weights(PyObject *self, PyObject *args)
   double *iw;
   double *frequency_points;
   npy_intp num_band0, num_band, num_gp;
-  size_t i, j, k, bi;
   int (*relative_grid_address)[4][3];
   int *mesh;
   size_t *grid_points;
   int (*bz_grid_address)[3];
   size_t *bz_map;
   double *frequencies;
-  size_t vertices[24][4];
-  double freq_vertices[24][4];
 
   if (!PyArg_ParseTuple(args, "OOOOOOOO",
                         &py_iw,
@@ -1713,29 +1695,17 @@ static PyObject * py_set_integration_weights(PyObject *self, PyObject *args)
   frequencies = (double*)PyArray_DATA(py_frequencies);
   num_band = PyArray_DIMS(py_frequencies)[1];
 
-#pragma omp parallel for private(j, k, bi, vertices, freq_vertices)
-  for (i = 0; i < num_gp; i++) {
-    for (j = 0; j < 24; j++) {
-      thm_get_dense_neighboring_grid_points(vertices[j],
-                                            grid_points[i],
-                                            relative_grid_address[j],
-                                            4,
-                                            mesh,
-                                            bz_grid_address,
-                                            bz_map);
-    }
-    for (bi = 0; bi < num_band; bi++) {
-      for (j = 0; j < 24; j++) {
-        for (k = 0; k < 4; k++) {
-          freq_vertices[j][k] = frequencies[vertices[j][k] * num_band + bi];
-        }
-      }
-      for (j = 0; j < num_band0; j++) {
-        iw[i * num_band0 * num_band + j * num_band + bi] =
-          thm_get_integration_weight(frequency_points[j], freq_vertices, 'I');
-      }
-    }
-  }
+  ph3py_set_integration_weights(iw,
+                                frequency_points,
+                                num_band0,
+                                num_band,
+                                num_gp,
+                                relative_grid_address,
+                                mesh,
+                                grid_points,
+                                bz_grid_address,
+                                bz_map,
+                                frequencies);
 
   Py_RETURN_NONE;
 }
@@ -1778,19 +1748,18 @@ py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
   mesh = (int*)PyArray_DATA(py_mesh);
   rot = (int(*)[3][3])PyArray_DATA(py_rotations);
   num_rot = PyArray_DIMS(py_rotations)[0];
-  num_ir = tpl_get_triplets_reciprocal_mesh_at_q(map_triplets,
-                                                 map_q,
-                                                 grid_address,
-                                                 fixed_grid_number,
-                                                 mesh,
-                                                 is_time_reversal,
-                                                 num_rot,
-                                                 rot,
-                                                 swappable);
+  num_ir = ph3py_get_triplets_reciprocal_mesh_at_q(map_triplets,
+                                                   map_q,
+                                                   grid_address,
+                                                   fixed_grid_number,
+                                                   mesh,
+                                                   is_time_reversal,
+                                                   num_rot,
+                                                   rot,
+                                                   swappable);
 
   return PyLong_FromSize_t(num_ir);
 }
-
 
 static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args)
 {
@@ -1826,13 +1795,13 @@ static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args)
   num_map_triplets = PyArray_DIMS(py_map_triplets)[0];
   mesh = (int*)PyArray_DATA(py_mesh);
 
-  num_ir = tpl_get_BZ_triplets_at_q(triplets,
-                                    grid_point,
-                                    bz_grid_address,
-                                    bz_map,
-                                    map_triplets,
-                                    num_map_triplets,
-                                    mesh);
+  num_ir = ph3py_get_BZ_triplets_at_q(triplets,
+                                      grid_point,
+                                      bz_grid_address,
+                                      bz_map,
+                                      map_triplets,
+                                      num_map_triplets,
+                                      mesh);
 
   return PyLong_FromSize_t(num_ir);
 }
@@ -1893,23 +1862,23 @@ py_set_triplets_integration_weights(PyObject *self, PyObject *args)
   num_band1 = PyArray_DIMS(py_frequencies1)[1];
   num_band2 = PyArray_DIMS(py_frequencies2)[1];
 
-  tpl_get_integration_weight(iw,
-                             iw_zero,
-                             frequency_points,
-                             num_band0,
-                             relative_grid_address,
-                             mesh,
-                             triplets,
-                             num_triplets,
-                             bz_grid_address,
-                             bz_map,
-                             frequencies1,
-                             num_band1,
-                             frequencies2,
-                             num_band2,
-                             tp_type,
-                             1,
-                             0);
+  ph3py_get_integration_weight(iw,
+                               iw_zero,
+                               frequency_points,
+                               num_band0,
+                               relative_grid_address,
+                               mesh,
+                               triplets,
+                               num_triplets,
+                               bz_grid_address,
+                               bz_map,
+                               frequencies1,
+                               num_band1,
+                               frequencies2,
+                               num_band2,
+                               tp_type,
+                               1,
+                               0);
 
   Py_RETURN_NONE;
 }
@@ -1952,17 +1921,17 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
   num_band = PyArray_DIMS(py_frequencies)[1];
   num_iw = PyArray_DIMS(py_iw)[0];
 
-  tpl_get_integration_weight_with_sigma(iw,
-                                        iw_zero,
-                                        sigma,
-                                        sigma_cutoff,
-                                        frequency_points,
-                                        num_band0,
-                                        triplets,
-                                        num_triplets,
-                                        frequencies,
-                                        num_band,
-                                        num_iw);
+  ph3py_get_integration_weight_with_sigma(iw,
+                                          iw_zero,
+                                          sigma,
+                                          sigma_cutoff,
+                                          frequency_points,
+                                          num_band0,
+                                          triplets,
+                                          num_triplets,
+                                          frequencies,
+                                          num_band,
+                                          num_iw);
 
   Py_RETURN_NONE;
 }

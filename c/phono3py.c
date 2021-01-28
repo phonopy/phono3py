@@ -43,6 +43,8 @@
 #include "real_self_energy.h"
 #include "collision_matrix.h"
 #include "isotope.h"
+#include "fc3.h"
+#include "tetrahedron_method.h"
 
 #include <stdio.h>
 
@@ -499,38 +501,187 @@ void ph3py_get_thm_isotope_scattering_strength
                                           cutoff_frequency);
 }
 
-/* void fc3_distribute_fc3(double *fc3,
- *                         const int target,
- *                         const int source,
- *                         const int *atom_mapping,
- *                         const size_t num_atom,
- *                         const double *rot_cart)
- * void fc3_rotate_delta_fc2(double (*fc3)[3][3][3],
- *                           PHPYCONST double (*delta_fc2s)[3][3],
- *                           const double *inv_U,
- *                           PHPYCONST double (*site_sym_cart)[3][3],
- *                           const int *rot_map_syms,
- *                           const size_t num_atom,
- *                           const size_t num_site_sym,
- *                           const size_t num_disp)
- * void fc3_set_permutation_symmetry_fc3(double *fc3, const size_t num_atom)
- * void fc3_set_permutation_symmetry_compact_fc3(double * fc3,
- *                                               const int p2s[],
- *                                               const int s2pp[],
- *                                               const int nsym_list[],
- *                                               const int perms[],
- *                                               const size_t n_satom,
- *                                               const size_t n_patom)
- * void fc3_transpose_compact_fc3(double * fc3,
- *                                const int p2s[],
- *                                const int s2pp[],
- *                                const int nsym_list[],
- *                                const int perms[],
- *                                const size_t n_satom,
- *                                const size_t n_patom,
- *                                const int t_type) */
+void ph3py_distribute_fc3(double *fc3,
+                          const int target,
+                          const int source,
+                          const int *atom_mapping,
+                          const size_t num_atom,
+                          const double *rot_cart)
+{
+  fc3_distribute_fc3(fc3,
+                     target,
+                     source,
+                     atom_mapping,
+                     num_atom,
+                     rot_cart);
+}
 
 
+void ph3py_rotate_delta_fc2(double (*fc3)[3][3][3],
+                            PHPYCONST double (*delta_fc2s)[3][3],
+                            const double *inv_U,
+                            PHPYCONST double (*site_sym_cart)[3][3],
+                            const int *rot_map_syms,
+                            const size_t num_atom,
+                            const size_t num_site_sym,
+                            const size_t num_disp)
+{
+  fc3_rotate_delta_fc2(fc3,
+                       delta_fc2s,
+                       inv_U,
+                       site_sym_cart,
+                       rot_map_syms,
+                       num_atom,
+                       num_site_sym,
+                       num_disp);
+}
+
+
+void ph3py_set_permutation_symmetry_fc3(double *fc3, const size_t num_atom)
+{
+  fc3_set_permutation_symmetry_fc3(fc3, num_atom);
+}
+
+
+void ph3py_set_permutation_symmetry_compact_fc3(double * fc3,
+                                                const int p2s[],
+                                                const int s2pp[],
+                                                const int nsym_list[],
+                                                const int perms[],
+                                                const size_t n_satom,
+                                                const size_t n_patom)
+{
+  fc3_set_permutation_symmetry_compact_fc3(fc3,
+                                           p2s,
+                                           s2pp,
+                                           nsym_list,
+                                           perms,
+                                           n_satom,
+                                           n_patom);
+}
+
+void ph3py_transpose_compact_fc3(double * fc3,
+                                 const int p2s[],
+                                 const int s2pp[],
+                                 const int nsym_list[],
+                                 const int perms[],
+                                 const size_t n_satom,
+                                 const size_t n_patom,
+                                 const int t_type)
+{
+  fc3_transpose_compact_fc3(fc3,
+                            p2s,
+                            s2pp,
+                            nsym_list,
+                            perms,
+                            n_satom,
+                            n_patom,
+                            t_type);
+}
+
+
+size_t ph3py_get_triplets_reciprocal_mesh_at_q(size_t *map_triplets,
+                                               size_t *map_q,
+                                               int (*grid_address)[3],
+                                               const size_t grid_point,
+                                               const int mesh[3],
+                                               const int is_time_reversal,
+                                               const int num_rot,
+                                               PHPYCONST int (*rotations)[3][3],
+                                               const int swappable)
+{
+  return tpl_get_triplets_reciprocal_mesh_at_q(map_triplets,
+                                               map_q,
+                                               grid_address,
+                                               grid_point,
+                                               mesh,
+                                               is_time_reversal,
+                                               num_rot,
+                                               rotations,
+                                               swappable);
+}
+
+
+size_t ph3py_get_BZ_triplets_at_q(size_t (*triplets)[3],
+                                  const size_t grid_point,
+                                  PHPYCONST int (*bz_grid_address)[3],
+                                  const size_t *bz_map,
+                                  const size_t *map_triplets,
+                                  const size_t num_map_triplets,
+                                  const int mesh[3])
+{
+  return tpl_get_BZ_triplets_at_q(triplets,
+                                  grid_point,
+                                  bz_grid_address,
+                                  bz_map,
+                                  map_triplets,
+                                  num_map_triplets,
+                                  mesh);
+}
+
+
+void ph3py_get_integration_weight(double *iw,
+                                  char *iw_zero,
+                                  const double *frequency_points,
+                                  const size_t num_band0,
+                                  PHPYCONST int relative_grid_address[24][4][3],
+                                  const int mesh[3],
+                                  PHPYCONST size_t (*triplets)[3],
+                                  const size_t num_triplets,
+                                  PHPYCONST int (*bz_grid_address)[3],
+                                  const size_t *bz_map,
+                                  const double *frequencies1,
+                                  const size_t num_band1,
+                                  const double *frequencies2,
+                                  const size_t num_band2,
+                                  const size_t tp_type,
+                                  const int openmp_per_triplets,
+                                  const int openmp_per_bands)
+{
+  tpl_get_integration_weight(iw,
+                             iw_zero,
+                             frequency_points,
+                             num_band0,
+                             relative_grid_address,
+                             mesh,
+                             triplets,
+                             num_triplets,
+                             bz_grid_address,
+                             bz_map,
+                             frequencies1,
+                             num_band1,
+                             frequencies2,
+                             num_band2,
+                             tp_type,
+                             openmp_per_triplets,
+                             openmp_per_bands);
+}
+
+
+void ph3py_get_integration_weight_with_sigma(double *iw,
+                                             char *iw_zero,
+                                             const double sigma,
+                                             const double sigma_cutoff,
+                                             const double *frequency_points,
+                                             const size_t num_band0,
+                                             PHPYCONST size_t (*triplets)[3],
+                                             const size_t num_triplets,
+                                             const double *frequencies,
+                                             const size_t num_band,
+                                             const size_t tp_type)
+{
+  tpl_get_integration_weight_with_sigma(iw,
+                                        iw_zero,
+                                        sigma,
+                                        sigma_cutoff,
+                                        frequency_points,
+                                        num_band0,
+                                        triplets,
+                                        num_triplets,
+                                        frequencies,
+                                        num_band,
+                                        tp_type);
+}
 
 void ph3py_symmetrize_collision_matrix(double *collision_matrix,
                                        const long num_column,
@@ -626,4 +777,71 @@ void ph3py_expand_collision_matrix(double *collision_matrix,
 
   free(multi);
   multi = NULL;
+}
+
+
+void ph3py_get_neighboring_gird_points(size_t *relative_grid_points,
+                                       const size_t *grid_points,
+                                       PHPYCONST int (*relative_grid_address)[3],
+                                       const int mesh[3],
+                                       PHPYCONST int (*bz_grid_address)[3],
+                                       const size_t *bz_map,
+                                       const long num_grid_points,
+                                       const long num_relative_grid_address)
+{
+  long i;
+
+#pragma omp parallel for
+  for (i = 0; i < num_grid_points; i++) {
+    thm_get_dense_neighboring_grid_points
+      (relative_grid_points + i * num_relative_grid_address,
+       grid_points[i],
+       relative_grid_address,
+       num_relative_grid_address,
+       mesh,
+       bz_grid_address,
+       bz_map);
+  }
+}
+
+
+void ph3py_set_integration_weights(double *iw,
+                                   const double *frequency_points,
+                                   const long num_band0,
+                                   const long num_band,
+                                   const long num_gp,
+                                   PHPYCONST int (*relative_grid_address)[4][3],
+                                   const int mesh[3],
+                                   const size_t *grid_points,
+                                   PHPYCONST int (*bz_grid_address)[3],
+                                   const size_t *bz_map,
+                                   const double *frequencies)
+{
+  long i, j, k, bi;
+  size_t vertices[24][4];
+  double freq_vertices[24][4];
+
+#pragma omp parallel for private(j, k, bi, vertices, freq_vertices)
+  for (i = 0; i < num_gp; i++) {
+    for (j = 0; j < 24; j++) {
+      thm_get_dense_neighboring_grid_points(vertices[j],
+                                            grid_points[i],
+                                            relative_grid_address[j],
+                                            4,
+                                            mesh,
+                                            bz_grid_address,
+                                            bz_map);
+    }
+    for (bi = 0; bi < num_band; bi++) {
+      for (j = 0; j < 24; j++) {
+        for (k = 0; k < 4; k++) {
+          freq_vertices[j][k] = frequencies[vertices[j][k] * num_band + bi];
+        }
+      }
+      for (j = 0; j < num_band0; j++) {
+        iw[i * num_band0 * num_band + j * num_band + bi] =
+          thm_get_integration_weight(frequency_points[j], freq_vertices, 'I');
+      }
+    }
+  }
 }
