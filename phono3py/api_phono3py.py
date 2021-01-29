@@ -94,11 +94,8 @@ class Phono3py(object):
                  calculator=None,
                  log_level=0,
                  lapack_zheev_uplo='L'):
-        if sigmas is None:
-            self._sigmas = [None, ]
-        else:
-            self._sigmas = sigmas
-        self._sigma_cutoff = sigma_cutoff
+        self.sigmas = sigmas
+        self.sigma_cutoff = sigma_cutoff
         self._symprec = symprec
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._is_symmetry = is_symmetry
@@ -259,6 +256,27 @@ class Phono3py(object):
     def force_constants(self):
         """Alias to fc2"""
         return self.fc2
+
+    @property
+    def sigmas(self):
+        return self._sigmas
+
+    @sigmas.setter
+    def sigmas(self, sigmas):
+        if sigmas is None:
+            self._sigmas = [None, ]
+        elif isinstance(sigmas, float) or isinstance(sigmas, int):
+            self._sigmas = [float(sigmas), ]
+        else:
+            self._sigmas = [float(s) for s in sigmas]
+
+    @property
+    def sigma_cutoff(self):
+        return self._sigma_cutoff
+
+    @sigma_cutoff.setter
+    def sigma_cutoff(self, sigma_cutoff):
+        self._sigma_cutoff = sigma_cutoff
 
     @property
     def nac_params(self):

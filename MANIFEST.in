@@ -1,7 +1,7 @@
-graft c/harmonic_h
-graft c/anharmonic_h
-graft c/spglib_h
-graft c/kspclib_h
+graft c/harmonic
+graft c/anharmonic
+graft c/spglib
+graft c/kspclib
 graft example
 include setup.py
 include __nanoversion__.txt
