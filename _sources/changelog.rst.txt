@@ -3,6 +3,10 @@
 Change Log
 ==========
 
+Jan-29-2021: Version 1.22.0
+---------------------------
+- Maintenance release to follow phonopy v2.9.0.
+
 Sep-30-2020: Version 1.21.0
 ---------------------------
 
