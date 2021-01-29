@@ -812,9 +812,9 @@ def write_kappa_to_hdf5(temperature,
                              compression=compression)
         if gv_by_gv is not None:
             w.create_dataset('gv_by_gv', data=gv_by_gv)
-        if mean_free_path is not None:
-            w.create_dataset('mean_free_path', data=mean_free_path,
-                             compression=compression)
+        # if mean_free_path is not None:
+        #     w.create_dataset('mean_free_path', data=mean_free_path,
+        #                      compression=compression)
         if heat_capacity is not None:
             w.create_dataset('heat_capacity', data=heat_capacity,
                              compression=compression)

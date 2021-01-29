@@ -64,7 +64,6 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
          fc_calculator=None,
          fc_calculator_options=None,
          factor=None,
-         frequency_scale_factor=None,
          produce_fc=True,
          is_symmetry=True,
          symmetrize_fc=True,
@@ -150,9 +149,6 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         than that of fc3. Unless setting this, supercell_matrix is used.
         This is only valide when unitcell or unitcell_filename is given.
         Default is None.
-    mesh : array_like, optional
-        Grid mesh numbers in reciprocal cell.
-        shape=(3,), dtype='intc'
     is_nac : bool, optional
         If True, look for 'BORN' file. If False, NAS is turned off.
         Default is True.
@@ -207,9 +203,6 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
     factor : float, optional
         Phonon frequency unit conversion factor. Unless specified, default
         unit conversion factor for each calculator is used.
-    frequency_scale_factor : float, optional
-        Factor multiplied to calculated phonon frequency. Default is None,
-        i.e., effectively 1.
     produce_fc : bool, optional
         Setting False, force constants are not calculated from displacements
         and forces. Default is True.
@@ -273,6 +266,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
             pmat = 'auto'
         else:
             pmat = ph3py_yaml.primitive_matrix
+
         if nac_params is not None:
             _nac_params = nac_params
         elif is_nac:
@@ -296,11 +290,9 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
                      is_mesh_symmetry=is_mesh_symmetry,
                      calculator=calculator,
                      log_level=log_level)
-    ph3py.mesh_number = mesh
 
     # NAC params
-    if (born_filename is not None or nac_params is not None or
-        is_nac and os.path.isfile("BORN")):
+    if born_filename is not None or _nac_params is not None or is_nac:
         ph3py.nac_params = load_helper.get_nac_params(
             ph3py.primitive,
             _nac_params,
@@ -322,10 +314,6 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         symmetrize_fc=symmetrize_fc,
         is_compact_fc=is_compact_fc,
         log_level=log_level)
-
-    if mesh is not None:
-        ph3py.init_phph_interaction(
-            frequency_scale_factor=frequency_scale_factor)
 
     return ph3py
 

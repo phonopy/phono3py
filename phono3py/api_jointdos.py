@@ -95,6 +95,8 @@ class Phono3pyJointDos(object):
             filename=output_filename,
             log_level=self._log_level)
 
+        self._joint_dos = None
+
     def run(self, grid_points, write_jdos=False):
         if self._log_level:
             print("--------------------------------- Joint DOS "
@@ -110,7 +112,7 @@ class Phono3pyJointDos(object):
                       "Grid point %d (%d/%d) "
                       "======================="
                       % (gp, i + 1, len(grid_points)))
-                adrs = self._jdos.get_grid_address()[gp]
+                adrs = self._jdos.grid_address[gp]
                 q = adrs.astype('double') / self._mesh_numbers
                 print("q-point: (%5.2f %5.2f %5.2f)" % tuple(q))
                 print("Number of triplets: %d" % len(weights))

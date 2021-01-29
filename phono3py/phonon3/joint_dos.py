@@ -75,8 +75,7 @@ class JointDos(object):
         self._supercell = supercell
         self._fc2 = fc2
         self._nac_params = nac_params
-        self._nac_q_direction = None
-        self.set_nac_q_direction(nac_q_direction)
+        self.nac_q_direction = nac_q_direction
         self._sigma = None
         self.set_sigma(sigma)
 
@@ -95,8 +94,8 @@ class JointDos(object):
         self._log_level = log_level
         self._lapack_zheev_uplo = lapack_zheev_uplo
 
-        self._num_band = self._primitive.get_number_of_atoms() * 3
-        self._reciprocal_lattice = np.linalg.inv(self._primitive.get_cell())
+        self._num_band = len(self._primitive) * 3
+        self._reciprocal_lattice = np.linalg.inv(self._primitive.cell)
         self._init_dynamical_matrix()
         self._symmetry = Symmetry(primitive, symprec)
 
@@ -109,6 +108,8 @@ class JointDos(object):
         self._frequency_points = None
 
     def run(self):
+        self.run_phonon_solver(
+            np.arange(len(self._grid_address), dtype='uintp'))
         try:
             import phono3py._phono3py as phono3c
             self._run_c()
@@ -131,6 +132,10 @@ class JointDos(object):
     @property
     def frequency_points(self):
         return self._frequency_points
+
+    @frequency_points.setter
+    def frequency_points(self, frequency_points):
+        self._frequency_points = np.array(frequency_points, dtype='double')
 
     def get_frequency_points(self):
         warnings.warn("Use attribute, frequency_points", DeprecationWarning)
@@ -155,9 +160,20 @@ class JointDos(object):
         warnings.warn("Use attribute, mesh_numbers", DeprecationWarning)
         return self.mesh
 
-    def set_nac_q_direction(self, nac_q_direction=None):
-        if nac_q_direction is not None:
+    @property
+    def nac_q_direction(self):
+        return self._nac_q_direction
+
+    @nac_q_direction.setter
+    def nac_q_direction(self, nac_q_direction=None):
+        if nac_q_direction is None:
+            self._nac_q_direction = None
+        else:
             self._nac_q_direction = np.array(nac_q_direction, dtype='double')
+
+    def set_nac_q_direction(self, nac_q_direction=None):
+        warnings.warn("Use attribute, nac_q_direction", DeprecationWarning)
+        self.nac_q_direction = nac_q_direction
 
     def set_sigma(self, sigma):
         if sigma is None:
@@ -168,17 +184,11 @@ class JointDos(object):
     def set_grid_point(self, grid_point):
         self._grid_point = grid_point
         self._set_triplets()
-        num_grid = np.prod(len(self._grid_address))
-        num_band = self._num_band
         if self._phonon_done is None:
-            self._phonon_done = np.zeros(num_grid, dtype='byte')
-            self._frequencies = np.zeros((num_grid, num_band), dtype='double')
-            itemsize = self._frequencies.itemsize
-            self._eigenvectors = np.zeros((num_grid, num_band, num_band),
-                                          dtype=("c%d" % (itemsize * 2)))
-
+            self._allocate_phonons()
         self._joint_dos = None
         self._frequency_points = None
+        self._phonon_done[0] = 0
         self.run_phonon_solver(np.array([grid_point], dtype='uintp'))
 
     def get_triplets_at_q(self):
@@ -199,6 +209,24 @@ class JointDos(object):
     def get_bz_map(self):
         warnings.warn("Use attribute, bz_map", DeprecationWarning)
         return self._bz_map
+
+    def run_phonon_solver(self, grid_points):
+        """Calculate phonons at grid_points
+
+        This method is used in get_triplets_integration_weights by this
+        method name. So this name is not allowed to change.
+
+        """
+        run_phonon_solver_c(self._dm,
+                            self._frequencies,
+                            self._eigenvectors,
+                            self._phonon_done,
+                            grid_points,
+                            self._grid_address,
+                            self._mesh,
+                            self._frequency_factor_to_THz,
+                            self._nac_q_direction,
+                            self._lapack_zheev_uplo)
 
     def _run_c(self, lang='C'):
         if self._sigma is None:
@@ -222,7 +250,6 @@ class JointDos(object):
             frequency_step=self._frequency_step,
             num_frequency_points=self._num_frequency_points)
         num_freq_points = len(self._frequency_points)
-        num_mesh = np.prod(self._mesh)
 
         if self._temperatures is None:
             jdos = np.zeros((num_freq_points, 2), dtype='double')
@@ -259,7 +286,7 @@ class JointDos(object):
                                                 g[1, :, 0, k, l],
                                                 self._weights_at_q)
 
-        self._joint_dos = jdos / num_mesh
+        self._joint_dos = jdos / np.prod(self._mesh)
 
     def _run_py_tetrahedron_method(self):
         thm = TetrahedronMethod(self._reciprocal_lattice, mesh=self._mesh)
@@ -335,17 +362,11 @@ class JointDos(object):
                  self._symmetry.get_pointgroup_operations(),
                  self._reciprocal_lattice)
 
-    def run_phonon_solver(self, grid_points):
-        run_phonon_solver_c(self._dm,
-                            self._frequencies,
-                            self._eigenvectors,
-                            self._phonon_done,
-                            grid_points,
-                            self._grid_address,
-                            self._mesh,
-                            self._frequency_factor_to_THz,
-                            self._nac_q_direction,
-                            self._lapack_zheev_uplo)
-
-    def set_frequency_points(self, frequency_points):
-        self._frequency_points = np.array(frequency_points, dtype='double')
+    def _allocate_phonons(self):
+        num_grid = len(self._grid_address)
+        num_band = self._num_band
+        self._phonon_done = np.zeros(num_grid, dtype='byte')
+        self._frequencies = np.zeros((num_grid, num_band), dtype='double')
+        itemsize = self._frequencies.itemsize
+        self._eigenvectors = np.zeros((num_grid, num_band, num_band),
+                                      dtype=("c%d" % (itemsize * 2)))
