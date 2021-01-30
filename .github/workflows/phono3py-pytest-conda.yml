@@ -25,11 +25,9 @@ jobs:
       run: |
         conda install --yes -c conda-forge python=3.8
         conda install --yes -c conda-forge matplotlib-base pyyaml openblas libgfortran gcc_linux-64 gxx_linux-64 h5py scipy pytest codecov pytest-cov spglib
+        pip install https://github.com/phonopy/phonopy/archive/develop.zip --user
     - name: Set up phono3py
       run: |
-        pip install https://github.com/phonopy/phonopy/archive/develop.zip --user
-        ./get_nanoversion.sh
-        cat __nanoversion__.txt
         python setup.py build
         pip install -e .
     - name: Test with pytest
