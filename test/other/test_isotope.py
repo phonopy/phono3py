@@ -2,18 +2,19 @@ import numpy as np
 from phono3py import Phono3pyIsotope
 
 si_pbesol_iso = [
-    [5.91671111e-07, 5.58224287e-07, 6.43147255e-05, 1.55630249e-03,
-     3.94732090e-04, 4.71724676e-04],
-    [2.85604812e-04, 3.11142983e-04, 2.27454364e-04, 9.63215998e-04,
-     1.03882853e-02, 1.28926668e-02]]
+    [8.32325038e-07, 9.45389739e-07, 1.57942189e-05, 1.28121297e-03,
+     1.13842605e-03, 3.84915211e-04],
+    [2.89457649e-05, 1.57841863e-04, 3.97462227e-04, 1.03489892e-02,
+     4.45981554e-03, 2.67184355e-03]]
 si_pbesol_iso_sigma = [
-    [4.97062464e-06, 4.97062464e-06, 1.16928959e-04, 2.08391870e-03,
-     1.22859101e-03, 1.22859101e-03],
-    [5.54968007e-04, 3.82314550e-04, 4.79051030e-04, 2.85301149e-03,
-     9.62156392e-03, 1.33646381e-02]]
+    [1.57262391e-06, 1.64031282e-06, 2.02007165e-05, 1.41999212e-03,
+     1.26361419e-03, 7.91243161e-04],
+    [3.10266472e-05, 1.53059329e-04, 3.80963936e-04, 1.05238031e-02,
+     6.72552880e-03, 3.21592329e-03]]
+
 
 def test_Phono3pyIsotope(si_pbesol):
-    si_pbesol.mesh_numbers = [9, 9, 9]
+    si_pbesol.mesh_numbers = [21, 21, 21]
     iso = Phono3pyIsotope(
         si_pbesol.mesh_numbers,
         si_pbesol.phonon_primitive,
@@ -23,12 +24,13 @@ def test_Phono3pyIsotope(si_pbesol):
         si_pbesol.phonon_supercell,
         si_pbesol.phonon_primitive,
         nac_params=si_pbesol.nac_params)
-    iso.run([1, 103])
-    np.testing.assert_allclose(si_pbesol_iso, iso.gamma[0], atol=1e-3)
+    iso.run([23, 103])
+    # print(iso.gamma[0])
+    np.testing.assert_allclose(si_pbesol_iso, iso.gamma[0], atol=1e-4)
 
 
 def test_Phono3pyIsotope_with_sigma(si_pbesol):
-    si_pbesol.mesh_numbers = [9, 9, 9]
+    si_pbesol.mesh_numbers = [21, 21, 21]
     iso = Phono3pyIsotope(
         si_pbesol.mesh_numbers,
         si_pbesol.phonon_primitive,
@@ -39,5 +41,6 @@ def test_Phono3pyIsotope_with_sigma(si_pbesol):
         si_pbesol.phonon_supercell,
         si_pbesol.phonon_primitive,
         nac_params=si_pbesol.nac_params)
-    iso.run([1, 103])
-    np.testing.assert_allclose(si_pbesol_iso_sigma, iso.gamma[0], atol=1e-3)
+    iso.run([23, 103])
+    # print(iso.gamma[0])
+    np.testing.assert_allclose(si_pbesol_iso_sigma, iso.gamma[0], atol=1e-4)
