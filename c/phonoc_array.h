@@ -35,8 +35,6 @@
 #ifndef __phonoc_array_H__
 #define __phonoc_array_H__
 
-#include <Python.h>
-#include <numpy/arrayobject.h>
 #include "lapack_wrapper.h"
 
 #define MAX_NUM_DIM 20
@@ -56,9 +54,5 @@ typedef struct {
   int dims[MAX_NUM_DIM];
   lapack_complex_double *data;
 } Carray;
-
-Iarray* convert_to_iarray(const PyArrayObject* npyary);
-Darray* convert_to_darray(const PyArrayObject* npyary);
-Carray* convert_to_carray(const PyArrayObject* npyary);
 
 #endif

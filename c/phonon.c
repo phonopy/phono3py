@@ -39,24 +39,24 @@
 #include "phonon.h"
 #include "lapack_wrapper.h"
 
-static size_t collect_undone_grid_points(size_t *undone,
-                                         char *phonon_done,
-                                         const size_t num_grid_points,
-                                         const size_t *grid_points);
+static long collect_undone_grid_points(long *undone,
+                                       char *phonon_done,
+                                       const long num_grid_points,
+                                       const long *grid_points);
 static void get_undone_phonons(double *frequencies,
                                lapack_complex_double *eigenvectors,
-                               const size_t *undone_grid_points,
-                               const size_t num_undone_grid_points,
-                               PHPYCONST int (*grid_address)[3],
-                               const int mesh[3],
+                               const long *undone_grid_points,
+                               const long num_undone_grid_points,
+                               PHPYCONST long (*grid_address)[3],
+                               const long mesh[3],
                                const double *fc2,
                                PHPYCONST double(*svecs_fc2)[27][3],
-                               const int *multi_fc2,
-                               const size_t num_patom,
-                               const size_t num_satom,
+                               const long *multi_fc2,
+                               const long num_patom,
+                               const long num_satom,
                                const double *masses_fc2,
-                               const int *p2s_fc2,
-                               const int *s2p_fc2,
+                               const long *p2s_fc2,
+                               const long *s2p_fc2,
                                const double unit_conversion_factor,
                                PHPYCONST double (*born)[3][3],
                                PHPYCONST double dielectric[3][3],
@@ -66,19 +66,19 @@ static void get_undone_phonons(double *frequencies,
                                const char uplo);
 static void get_gonze_undone_phonons(double *frequencies,
                                      lapack_complex_double *eigenvectors,
-                                     const size_t *undone_grid_points,
-                                     const size_t num_undone_grid_points,
-                                     PHPYCONST int (*grid_address)[3],
-                                     const int mesh[3],
+                                     const long *undone_grid_points,
+                                     const long num_undone_grid_points,
+                                     PHPYCONST long (*grid_address)[3],
+                                     const long mesh[3],
                                      const double *fc2,
                                      PHPYCONST double(*svecs_fc2)[27][3],
-                                     const int *multi_fc2,
+                                     const long *multi_fc2,
                                      PHPYCONST double (*positions)[3],
-                                     const size_t num_patom,
-                                     const size_t num_satom,
+                                     const long num_patom,
+                                     const long num_satom,
                                      const double *masses_fc2,
-                                     const int *p2s_fc2,
-                                     const int *s2p_fc2,
+                                     const long *p2s_fc2,
+                                     const long *s2p_fc2,
                                      const double unit_conversion_factor,
                                      PHPYCONST double (*born)[3][3],
                                      PHPYCONST double dielectric[3][3],
@@ -87,20 +87,20 @@ static void get_gonze_undone_phonons(double *frequencies,
                                      const double nac_factor,
                                      const double *dd_q0,
                                      PHPYCONST double(*G_list)[3],
-                                     const size_t num_G_points,
+                                     const long num_G_points,
                                      const double lambda,
                                      const char uplo);
 static void get_phonons(lapack_complex_double *eigvecs,
                         const double q[3],
                         const double *fc2,
                         const double *masses,
-                        const int *p2s,
-                        const int *s2p,
-                        const int *multi,
-                        const size_t num_patom,
-                        const size_t num_satom,
+                        const long *p2s,
+                        const long *s2p,
+                        const long *multi,
+                        const long num_patom,
+                        const long num_satom,
                         PHPYCONST double(*svecs)[27][3],
-                        const int is_nac,
+                        const long is_nac,
                         PHPYCONST double (*born)[3][3],
                         PHPYCONST double dielectric[3][3],
                         PHPYCONST double reciprocal_lattice[3][3],
@@ -111,14 +111,14 @@ static void get_gonze_phonons(lapack_complex_double *eigvecs,
                               const double q[3],
                               const double *fc2,
                               const double *masses,
-                              const int *p2s,
-                              const int *s2p,
-                              const int *multi,
+                              const long *p2s,
+                              const long *s2p,
+                              const long *multi,
                               PHPYCONST double (*positions)[3],
-                              const size_t num_patom,
-                              const size_t num_satom,
+                              const long num_patom,
+                              const long num_satom,
                               PHPYCONST double(*svecs)[27][3],
-                              const int is_nac,
+                              const long is_nac,
                               PHPYCONST double (*born)[3][3],
                               PHPYCONST double dielectric[3][3],
                               PHPYCONST double reciprocal_lattice[3][3],
@@ -126,56 +126,56 @@ static void get_gonze_phonons(lapack_complex_double *eigvecs,
                               const double nac_factor,
                               const double *dd_q0,
                               PHPYCONST double(*G_list)[3],
-                              const size_t num_G_points,
+                              const long num_G_points,
                               const double lambda);
 static void
 get_dynamical_matrix(lapack_complex_double *dynmat,
                      const double q[3],
                      const double *fc2,
                      const double *masses,
-                     const int *p2s,
-                     const int *s2p,
-                     const int *multi,
-                     const size_t num_patom,
-                     const size_t num_satom,
+                     const long *p2s,
+                     const long *s2p,
+                     const long *multi,
+                     const long num_patom,
+                     const long num_satom,
                      PHPYCONST double(*svecs)[27][3],
-                     const int is_nac,
+                     const long is_nac,
                      PHPYCONST double (*born)[3][3], /* Wang NAC unless NULL */
                      PHPYCONST double dielectric[3][3],
                      PHPYCONST double reciprocal_lattice[3][3],
                      const double *q_direction,
                      const double nac_factor);
 static void get_charge_sum(double (*charge_sum)[3][3],
-                           const size_t num_patom,
-                           const size_t num_satom,
+                           const long num_patom,
+                           const long num_satom,
                            const double q[3],
                            PHPYCONST double (*born)[3][3],
                            PHPYCONST double dielectric[3][3],
                            PHPYCONST double reciprocal_lattice[3][3],
                            const double *q_direction,
                            const double nac_factor);
-static int needs_nac(PHPYCONST double (*born)[3][3],
-                     PHPYCONST int (*grid_address)[3],
-                     const size_t gp,
-                     const double *q_direction);
+static long needs_nac(PHPYCONST double (*born)[3][3],
+                      PHPYCONST long (*grid_address)[3],
+                      const long gp,
+                      const double *q_direction);
 
 void
 phn_get_phonons_at_gridpoints(double *frequencies,
                               lapack_complex_double *eigenvectors,
                               char *phonon_done,
-                              const size_t num_phonons,
-                              const size_t *grid_points,
-                              const size_t num_grid_points,
-                              PHPYCONST int (*grid_address)[3],
-                              const int mesh[3],
+                              const long num_phonons,
+                              const long *grid_points,
+                              const long num_grid_points,
+                              PHPYCONST long (*grid_address)[3],
+                              const long mesh[3],
                               const double *fc2,
                               PHPYCONST double(*svecs_fc2)[27][3],
-                              const int *multi_fc2,
-                              const size_t num_patom,
-                              const size_t num_satom,
+                              const long *multi_fc2,
+                              const long num_patom,
+                              const long num_satom,
                               const double *masses_fc2,
-                              const int *p2s_fc2,
-                              const int *s2p_fc2,
+                              const long *p2s_fc2,
+                              const long *s2p_fc2,
                               const double unit_conversion_factor,
                               PHPYCONST double (*born)[3][3],
                               PHPYCONST double dielectric[3][3],
@@ -184,10 +184,10 @@ phn_get_phonons_at_gridpoints(double *frequencies,
                               const double nac_factor,
                               const char uplo)
 {
-  size_t num_undone;
-  size_t *undone;
+  long num_undone;
+  long *undone;
 
-  undone = (size_t*)malloc(sizeof(size_t) * num_phonons);
+  undone = (long*)malloc(sizeof(long) * num_phonons);
   num_undone = collect_undone_grid_points(undone,
                                           phonon_done,
                                           num_grid_points,
@@ -223,20 +223,20 @@ void
 phn_get_gonze_phonons_at_gridpoints(double *frequencies,
                                     lapack_complex_double *eigenvectors,
                                     char *phonon_done,
-                                    const size_t num_phonons,
-                                    const size_t *grid_points,
-                                    const size_t num_grid_points,
-                                    PHPYCONST int (*grid_address)[3],
-                                    const int mesh[3],
+                                    const long num_phonons,
+                                    const long *grid_points,
+                                    const long num_grid_points,
+                                    PHPYCONST long (*grid_address)[3],
+                                    const long mesh[3],
                                     const double *fc2,
                                     PHPYCONST double(*svecs_fc2)[27][3],
-                                    const int *multi_fc2,
+                                    const long *multi_fc2,
                                     PHPYCONST double (*positions)[3],
-                                    const size_t num_patom,
-                                    const size_t num_satom,
+                                    const long num_patom,
+                                    const long num_satom,
                                     const double *masses_fc2,
-                                    const int *p2s_fc2,
-                                    const int *s2p_fc2,
+                                    const long *p2s_fc2,
+                                    const long *s2p_fc2,
                                     const double unit_conversion_factor,
                                     PHPYCONST double (*born)[3][3],
                                     PHPYCONST double dielectric[3][3],
@@ -245,14 +245,14 @@ phn_get_gonze_phonons_at_gridpoints(double *frequencies,
                                     const double nac_factor,
                                     const double *dd_q0,
                                     PHPYCONST double(*G_list)[3],
-                                    const size_t num_G_points,
+                                    const long num_G_points,
                                     const double lambda,
                                     const char uplo)
 {
-  size_t num_undone;
-  size_t *undone;
+  long num_undone;
+  long *undone;
 
-  undone = (size_t*)malloc(sizeof(size_t) * num_phonons);
+  undone = (long*)malloc(sizeof(long) * num_phonons);
   num_undone = collect_undone_grid_points(undone,
                                           phonon_done,
                                           num_grid_points,
@@ -289,12 +289,12 @@ phn_get_gonze_phonons_at_gridpoints(double *frequencies,
   undone = NULL;
 }
 
-static size_t collect_undone_grid_points(size_t *undone,
-                                         char *phonon_done,
-                                         const size_t num_grid_points,
-                                         const size_t *grid_points)
+static long collect_undone_grid_points(long *undone,
+                                       char *phonon_done,
+                                       const long num_grid_points,
+                                       const long *grid_points)
 {
-  size_t i, gp, num_undone;
+  long i, gp, num_undone;
 
   num_undone = 0;
   for (i = 0; i < num_grid_points; i++) {
@@ -311,18 +311,18 @@ static size_t collect_undone_grid_points(size_t *undone,
 
 static void get_undone_phonons(double *frequencies,
                                lapack_complex_double *eigenvectors,
-                               const size_t *undone_grid_points,
-                               const size_t num_undone_grid_points,
-                               PHPYCONST int (*grid_address)[3],
-                               const int mesh[3],
+                               const long *undone_grid_points,
+                               const long num_undone_grid_points,
+                               PHPYCONST long (*grid_address)[3],
+                               const long mesh[3],
                                const double *fc2,
                                PHPYCONST double(*svecs_fc2)[27][3],
-                               const int *multi_fc2,
-                               const size_t num_patom,
-                               const size_t num_satom,
+                               const long *multi_fc2,
+                               const long num_patom,
+                               const long num_satom,
                                const double *masses_fc2,
-                               const int *p2s_fc2,
-                               const int *s2p_fc2,
+                               const long *p2s_fc2,
+                               const long *s2p_fc2,
                                const double unit_conversion_factor,
                                PHPYCONST double (*born)[3][3],
                                PHPYCONST double dielectric[3][3],
@@ -331,8 +331,8 @@ static void get_undone_phonons(double *frequencies,
                                const double nac_factor,
                                const char uplo)
 {
-  size_t i, j, gp, num_band;
-  int is_nac, info;
+  long i, j, gp, num_band;
+  long is_nac, info;
   double q[3];
   double *freqs_tmp;
 
@@ -389,19 +389,19 @@ static void get_undone_phonons(double *frequencies,
 
 static void get_gonze_undone_phonons(double *frequencies,
                                      lapack_complex_double *eigenvectors,
-                                     const size_t *undone_grid_points,
-                                     const size_t num_undone_grid_points,
-                                     PHPYCONST int (*grid_address)[3],
-                                     const int mesh[3],
+                                     const long *undone_grid_points,
+                                     const long num_undone_grid_points,
+                                     PHPYCONST long (*grid_address)[3],
+                                     const long mesh[3],
                                      const double *fc2,
                                      PHPYCONST double(*svecs_fc2)[27][3],
-                                     const int *multi_fc2,
+                                     const long *multi_fc2,
                                      PHPYCONST double (*positions)[3],
-                                     const size_t num_patom,
-                                     const size_t num_satom,
+                                     const long num_patom,
+                                     const long num_satom,
                                      const double *masses_fc2,
-                                     const int *p2s_fc2,
-                                     const int *s2p_fc2,
+                                     const long *p2s_fc2,
+                                     const long *s2p_fc2,
                                      const double unit_conversion_factor,
                                      PHPYCONST double (*born)[3][3],
                                      PHPYCONST double dielectric[3][3],
@@ -410,12 +410,12 @@ static void get_gonze_undone_phonons(double *frequencies,
                                      const double nac_factor,
                                      const double *dd_q0,
                                      PHPYCONST double(*G_list)[3],
-                                     const size_t num_G_points,
+                                     const long num_G_points,
                                      const double lambda,
                                      const char uplo)
 {
-  size_t i, j, gp, num_band;
-  int is_nac, info;
+  long i, j, gp, num_band;
+  long is_nac, info;
   double q[3];
   double *freqs_tmp;
 
@@ -478,13 +478,13 @@ static void get_phonons(lapack_complex_double *eigvecs,
                         const double q[3],
                         const double *fc2,
                         const double *masses,
-                        const int *p2s,
-                        const int *s2p,
-                        const int *multi,
-                        const size_t num_patom,
-                        const size_t num_satom,
+                        const long *p2s,
+                        const long *s2p,
+                        const long *multi,
+                        const long num_patom,
+                        const long num_satom,
                         PHPYCONST double(*svecs)[27][3],
-                        const int is_nac,
+                        const long is_nac,
                         PHPYCONST double (*born)[3][3],
                         PHPYCONST double dielectric[3][3],
                         PHPYCONST double reciprocal_lattice[3][3],
@@ -515,14 +515,14 @@ static void get_gonze_phonons(lapack_complex_double *eigvecs,
                               const double q[3],
                               const double *fc2,
                               const double *masses,
-                              const int *p2s,
-                              const int *s2p,
-                              const int *multi,
+                              const long *p2s,
+                              const long *s2p,
+                              const long *multi,
                               PHPYCONST double (*positions)[3],
-                              const size_t num_patom,
-                              const size_t num_satom,
+                              const long num_patom,
+                              const long num_satom,
                               PHPYCONST double(*svecs)[27][3],
-                              const int is_nac,
+                              const long is_nac,
                               PHPYCONST double (*born)[3][3],
                               PHPYCONST double dielectric[3][3],
                               PHPYCONST double reciprocal_lattice[3][3],
@@ -530,10 +530,10 @@ static void get_gonze_phonons(lapack_complex_double *eigvecs,
                               const double nac_factor,
                               const double *dd_q0,
                               PHPYCONST double(*G_list)[3],
-                              const size_t num_G_points,
+                              const long num_G_points,
                               const double lambda)
 {
-  size_t i, j, k, l, adrs, num_band;
+  long i, j, k, l, adrs, num_band;
   double mm;
   double q_cart[3];
   double *q_dir_cart;
@@ -619,13 +619,13 @@ get_dynamical_matrix(lapack_complex_double *dynmat,
                      const double q[3],
                      const double *fc2,
                      const double *masses,
-                     const int *p2s,
-                     const int *s2p,
-                     const int *multi,
-                     const size_t num_patom,
-                     const size_t num_satom,
+                     const long *p2s,
+                     const long *s2p,
+                     const long *multi,
+                     const long num_patom,
+                     const long num_satom,
                      PHPYCONST double(*svecs)[27][3],
-                     const int is_nac,
+                     const long is_nac,
                      PHPYCONST double (*born)[3][3], /* Wang NAC unless NULL */
                      PHPYCONST double dielectric[3][3],
                      PHPYCONST double reciprocal_lattice[3][3],
@@ -669,8 +669,8 @@ get_dynamical_matrix(lapack_complex_double *dynmat,
 }
 
 static void get_charge_sum(double (*charge_sum)[3][3],
-                           const size_t num_patom,
-                           const size_t num_satom,
+                           const long num_patom,
+                           const long num_satom,
                            const double q[3],
                            PHPYCONST double (*born)[3][3],
                            PHPYCONST double dielectric[3][3],
@@ -678,7 +678,7 @@ static void get_charge_sum(double (*charge_sum)[3][3],
                            const double *q_direction,
                            const double nac_factor)
 {
-  size_t i, j;
+  long i, j;
   double inv_dielectric_factor, dielectric_factor, tmp_val;
   double q_cart[3];
 
@@ -717,12 +717,12 @@ static void get_charge_sum(double (*charge_sum)[3][3],
                      born);
 }
 
-static int needs_nac(PHPYCONST double (*born)[3][3],
-                     PHPYCONST int (*grid_address)[3],
-                     const size_t gp,
-                     const double *q_direction)
+static long needs_nac(PHPYCONST double (*born)[3][3],
+                      PHPYCONST long (*grid_address)[3],
+                      const long gp,
+                      const double *q_direction)
 {
-  int is_nac;
+  long is_nac;
 
   if (born) {
     if (grid_address[gp][0] == 0 &&

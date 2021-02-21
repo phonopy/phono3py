@@ -97,6 +97,9 @@ static void show_colmat_info(const PyArrayObject *collision_matrix_py,
                              const size_t i_sigma,
                              const size_t i_temp,
                              const size_t adrs_shift);
+static Iarray* convert_to_iarray(const PyArrayObject* npyary);
+static Darray* convert_to_darray(const PyArrayObject* npyary);
+
 
 struct module_state {
   PyObject *error;
@@ -323,20 +326,20 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
   double* freqs;
   lapack_complex_double* eigvecs;
   char* phonon_done;
-  size_t* grid_points;
-  int (*grid_address)[3];
-  int* mesh;
+  long* grid_points;
+  long (*grid_address)[3];
+  long* mesh;
   double* fc2;
   double(*svecs_fc2)[27][3];
-  int* multi_fc2;
+  long* multi_fc2;
   double (*positions_fc2)[3];
   double* masses_fc2;
-  int* p2s_fc2;
-  int* s2p_fc2;
+  long* p2s_fc2;
+  long* s2p_fc2;
   double (*rec_lat)[3];
   double * dd_q0;
   double (*G_list)[3];
-  npy_intp num_patom, num_satom, num_phonons, num_grid_points, num_G_points;
+  long num_patom, num_satom, num_phonons, num_grid_points, num_G_points;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOdOOOOdOOds",
                         &py_frequencies,
@@ -368,20 +371,20 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
   freqs = (double*)PyArray_DATA(py_frequencies);
   eigvecs = (lapack_complex_double*)PyArray_DATA(py_eigenvectors);
   phonon_done = (char*)PyArray_DATA(py_phonon_done);
-  grid_points = (size_t*)PyArray_DATA(py_grid_points);
-  grid_address = (int(*)[3])PyArray_DATA(py_grid_address);
-  mesh = (int*)PyArray_DATA(py_mesh);
+  grid_points = (long*)PyArray_DATA(py_grid_points);
+  grid_address = (long(*)[3])PyArray_DATA(py_grid_address);
+  mesh = (long*)PyArray_DATA(py_mesh);
   fc2 = (double*)PyArray_DATA(py_fc2);
   svecs_fc2 = (double(*)[27][3])PyArray_DATA(py_shortest_vectors_fc2);
-  multi_fc2 = (int*)PyArray_DATA(py_multiplicity_fc2);
+  multi_fc2 = (long*)PyArray_DATA(py_multiplicity_fc2);
   masses_fc2 = (double*)PyArray_DATA(py_masses_fc2);
-  p2s_fc2 = (int*)PyArray_DATA(py_p2s_map_fc2);
-  s2p_fc2 = (int*)PyArray_DATA(py_s2p_map_fc2);
+  p2s_fc2 = (long*)PyArray_DATA(py_p2s_map_fc2);
+  s2p_fc2 = (long*)PyArray_DATA(py_s2p_map_fc2);
   rec_lat = (double(*)[3])PyArray_DATA(py_reciprocal_lattice);
-  num_patom = PyArray_DIMS(py_multiplicity_fc2)[1];
-  num_satom = PyArray_DIMS(py_multiplicity_fc2)[0];
-  num_phonons = PyArray_DIMS(py_frequencies)[0];
-  num_grid_points = PyArray_DIMS(py_grid_points)[0];
+  num_patom = (long)PyArray_DIMS(py_multiplicity_fc2)[1];
+  num_satom = (long)PyArray_DIMS(py_multiplicity_fc2)[0];
+  num_phonons = (long)PyArray_DIMS(py_frequencies)[0];
+  num_grid_points = (long)PyArray_DIMS(py_grid_points)[0];
   if ((PyObject*)py_born_effective_charge == Py_None) {
     born = NULL;
   } else {
@@ -412,7 +415,7 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
     num_G_points = 0;
   } else {
     G_list = (double(*)[3])PyArray_DATA(py_G_list);
-    num_G_points = PyArray_DIMS(py_G_list)[0];
+    num_G_points = (long)PyArray_DIMS(py_G_list)[0];
   }
   if ((PyObject*)py_positions_fc2 == Py_None) {
     positions_fc2 = NULL;
@@ -1249,7 +1252,7 @@ static PyObject * py_expand_collision_matrix(PyObject *self, PyObject *args)
   double *collision_matrix;
   size_t *rot_grid_points;
   size_t *ir_grid_points;
-  npy_intp num_band, num_grid_points, num_temp, num_sigma, num_rot, num_ir_gp;
+  long num_band, num_grid_points, num_temp, num_sigma, num_rot, num_ir_gp;
 
   if (!PyArg_ParseTuple(args, "OOO",
                         &py_collision_matrix,
@@ -1261,12 +1264,12 @@ static PyObject * py_expand_collision_matrix(PyObject *self, PyObject *args)
   collision_matrix = (double*)PyArray_DATA(py_collision_matrix);
   rot_grid_points = (size_t*)PyArray_DATA(py_rot_grid_points);
   ir_grid_points = (size_t*)PyArray_DATA(py_ir_grid_points);
-  num_sigma = PyArray_DIMS(py_collision_matrix)[0];
-  num_temp = PyArray_DIMS(py_collision_matrix)[1];
-  num_grid_points = PyArray_DIMS(py_collision_matrix)[2];
-  num_band = PyArray_DIMS(py_collision_matrix)[3];
-  num_rot = PyArray_DIMS(py_rot_grid_points)[0];
-  num_ir_gp = PyArray_DIMS(py_ir_grid_points)[0];
+  num_sigma = (long)PyArray_DIMS(py_collision_matrix)[0];
+  num_temp = (long)PyArray_DIMS(py_collision_matrix)[1];
+  num_grid_points = (long)PyArray_DIMS(py_collision_matrix)[2];
+  num_band = (long)PyArray_DIMS(py_collision_matrix)[3];
+  num_rot = (long)PyArray_DIMS(py_rot_grid_points)[0];
+  num_ir_gp = (long)PyArray_DIMS(py_ir_grid_points)[0];
 
   ph3py_expand_collision_matrix(collision_matrix,
                                 rot_grid_points,
@@ -2151,4 +2154,32 @@ static void show_colmat_info(const PyArrayObject *py_collision_matrix,
     }
   }
   printf("Data shift:%lu [%lu, %lu]\n", adrs_shift, i_sigma, i_temp);
+}
+
+
+static Iarray* convert_to_iarray(const PyArrayObject* npyary)
+{
+  int i;
+  Iarray *ary;
+
+  ary = (Iarray*) malloc(sizeof(Iarray));
+  for (i = 0; i < PyArray_NDIM(npyary); i++) {
+    ary->dims[i] = PyArray_DIMS(npyary)[i];
+  }
+  ary->data = (int*)PyArray_DATA(npyary);
+  return ary;
+}
+
+
+static Darray* convert_to_darray(const PyArrayObject* npyary)
+{
+  int i;
+  Darray *ary;
+
+  ary = (Darray*) malloc(sizeof(Darray));
+  for (i = 0; i < PyArray_NDIM(npyary); i++) {
+    ary->dims[i] = PyArray_DIMS(npyary)[i];
+  }
+  ary->data = (double*)PyArray_DATA(npyary);
+  return ary;
 }
