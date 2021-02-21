@@ -227,20 +227,6 @@ def get_grid_point_from_address(address, mesh):
     return spglib.get_grid_point_from_address(address, mesh)
 
 
-def get_bz_grid_point_from_address(address, mesh, bz_map):
-    # X runs first in XYZ
-    # (*In spglib, Z first is possible with MACRO setting.)
-    # 2m is defined in kpoint.c of spglib.
-    m = 2 * np.array(mesh, dtype='intc')
-    return bz_map[get_grid_point_from_address(address, m)]
-
-
-def invert_grid_point(grid_point, mesh, grid_address, bz_map):
-    # gp --> [address] --> [-address] --> inv_gp
-    address = grid_address[grid_point]
-    return get_bz_grid_point_from_address(-address, mesh, bz_map)
-
-
 def get_ir_grid_points(mesh, rotations, mesh_shifts=None):
     if mesh_shifts is None:
         mesh_shifts = [False, False, False]
@@ -265,22 +251,6 @@ def get_grid_points_by_rotations(grid_point,
         grid_point,
         reciprocal_rotations,
         mesh,
-        is_shift=np.where(mesh_shifts, 1, 0),
-        is_dense=True)
-
-
-def get_BZ_grid_points_by_rotations(grid_point,
-                                    reciprocal_rotations,
-                                    mesh,
-                                    bz_map,
-                                    mesh_shifts=None):
-    if mesh_shifts is None:
-        mesh_shifts = [False, False, False]
-    return spglib.get_BZ_grid_points_by_rotations(
-        grid_point,
-        reciprocal_rotations,
-        mesh,
-        bz_map,
         is_shift=np.where(mesh_shifts, 1, 0),
         is_dense=True)
 
