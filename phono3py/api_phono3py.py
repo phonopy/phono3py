@@ -268,7 +268,12 @@ class Phono3py(object):
         elif isinstance(sigmas, float) or isinstance(sigmas, int):
             self._sigmas = [float(sigmas), ]
         else:
-            self._sigmas = [float(s) for s in sigmas]
+            self._sigmas = []
+            for s in sigmas:
+                if isinstance(s, float) or isinstance(s, int):
+                    self._sigmas.append(float(s))
+                elif s is None:
+                    self._sigmas.append(None)
 
     @property
     def sigma_cutoff(self):

@@ -21,10 +21,12 @@ before_install:
     - export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 
 install:
-    - conda install --yes -c conda-forge matplotlib-base pyyaml openblas libgfortran gcc_linux-64 gxx_linux-64 h5py scipy pytest codecov pytest-cov spglib
+    - conda install --yes -c conda-forge matplotlib-base pyyaml openblas libgfortran gcc_linux-64 gxx_linux-64 h5py scipy pytest spglib
     - echo $TRAVIS_BRANCH
     - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
         pip install https://github.com/phonopy/phonopy/archive/master.zip --user;
+      elif [[ "$TRAVIS_BRANCH" == "rc" ]]; then
+        pip install https://github.com/phonopy/phonopy/archive/rc.zip --user;
       else
         pip install https://github.com/phonopy/phonopy/archive/develop.zip --user;
       fi
@@ -34,11 +36,8 @@ install:
     - python setup.py build
     - pip install -e .
 
-after_success:
-    - codecov
-
 script:
-    - pytest --cov-report term --cov=phono3py test
+    - pytest
     - cd example/Si-PBE
     - tar xf vasprun_xmls.tar.lzma --lzma
     - phono3py --cf3 vasprun_xmls/disp-{00001..00111}/vasprun.xml

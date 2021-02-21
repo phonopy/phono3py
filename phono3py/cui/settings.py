@@ -67,6 +67,7 @@ class Phono3pySettings(Settings):
         'is_symmetrize_fc2': False,
         'is_symmetrize_fc3_q': False,
         'is_symmetrize_fc3_r': False,
+        'is_tetrahedron_method': False,
         'lapack_zheev_uplo': 'L',
         'mass_variances': None,
         'max_freepath': None,
@@ -402,6 +403,10 @@ class Phono3pyConfParser(ConfParser):
         if 'is_symmetrize_fc3_r' in self._args:
             if self._args.is_symmetrize_fc3_r:
                 self._confs['symmetrize_fc3_r'] = '.true.'
+
+        if 'is_tetrahedron_method' in self._args:
+            if self._args.is_tetrahedron_method:
+                self._confs['tetrahedron'] = '.true.'
 
         if 'lapack_zheev_uplo' in self._args:
             if self._args.lapack_zheev_uplo is not None:
