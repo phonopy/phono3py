@@ -35,8 +35,6 @@
 #ifndef __phonoc_array_H__
 #define __phonoc_array_H__
 
-#include "lapack_wrapper.h"
-
 #define MAX_NUM_DIM 20
 
 /* It is assumed that number of dimensions is known for each array. */
@@ -49,10 +47,5 @@ typedef struct {
   int dims[MAX_NUM_DIM];
   double *data;
 } Darray;
-
-typedef struct {
-  int dims[MAX_NUM_DIM];
-  lapack_complex_double *data;
-} Carray;
 
 #endif
