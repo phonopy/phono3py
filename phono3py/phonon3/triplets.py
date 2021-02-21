@@ -586,7 +586,7 @@ def _set_triplets_integration_weights_c(g,
             phono3c.neighboring_grid_points(
                 neighboring_grid_points,
                 np.array(triplets_at_q[:, i], dtype='uintp').ravel(),
-                j * unique_vertices,
+                np.array(j * unique_vertices, dtype='intc', order='C'),
                 mesh,
                 grid_address,
                 bz_map)
@@ -597,7 +597,7 @@ def _set_triplets_integration_weights_c(g,
         g,
         g_zero,
         frequency_points,  # f0
-        thm.get_tetrahedra(),
+        np.array(thm.get_tetrahedra(), dtype='intc', order='C'),
         mesh,
         triplets_at_q,
         frequencies,  # f1

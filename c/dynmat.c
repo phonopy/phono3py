@@ -38,63 +38,63 @@
 #define PI 3.14159265358979323846
 
 static void get_dynmat_ij(double *dynamical_matrix,
-                          const int num_patom,
-                          const int num_satom,
+                          const long num_patom,
+                          const long num_satom,
                           const double *fc,
                           const double q[3],
                           PHPYCONST double (*svecs)[27][3],
-                          const int *multi,
+                          const long *multi,
                           const double *mass,
-                          const int *s2p_map,
-                          const int *p2s_map,
+                          const long *s2p_map,
+                          const long *p2s_map,
                           PHPYCONST double (*charge_sum)[3][3],
-                          const int i,
-                          const int j);
+                          const long i,
+                          const long j);
 static void get_dm(double dm_real[3][3],
                    double dm_imag[3][3],
-                   const int num_patom,
-                   const int num_satom,
+                   const long num_patom,
+                   const long num_satom,
                    const double *fc,
                    const double q[3],
                    PHPYCONST double (*svecs)[27][3],
-                   const int *multi,
-                   const int *p2s_map,
+                   const long *multi,
+                   const long *p2s_map,
                    PHPYCONST double (*charge_sum)[3][3],
-                   const int i,
-                   const int j,
-                   const int k);
+                   const long i,
+                   const long j,
+                   const long k);
 static double get_dielectric_part(const double q_cart[3],
                                   PHPYCONST double dielectric[3][3]);
 static void get_KK(double *dd_part, /* [natom, 3, natom, 3, (real,imag)] */
                    PHPYCONST double (*G_list)[3], /* [num_G, 3] */
-                   const int num_G,
-                   const int num_patom,
+                   const long num_G,
+                   const long num_patom,
                    const double q_cart[3],
                    const double *q_direction_cart,
                    PHPYCONST double dielectric[3][3],
                    PHPYCONST double (*pos)[3], /* [num_patom, 3] */
                    const double lambda,
                    const double tolerance);
-static void make_Hermitian(double *mat, const int num_band);
+static void make_Hermitian(double *mat, const long num_band);
 static void multiply_borns(double *dd,
                            const double *dd_in,
-                           const int num_patom,
+                           const long num_patom,
                            PHPYCONST double (*born)[3][3]);
 
-int dym_get_dynamical_matrix_at_q(double *dynamical_matrix,
-                                  const int num_patom,
-                                  const int num_satom,
-                                  const double *fc,
-                                  const double q[3],
-                                  PHPYCONST double (*svecs)[27][3],
-                                  const int *multi,
-                                  const double *mass,
-                                  const int *s2p_map,
-                                  const int *p2s_map,
-                                  PHPYCONST double (*charge_sum)[3][3],
-                                  const int with_openmp)
+long dym_get_dynamical_matrix_at_q(double *dynamical_matrix,
+                                   const long num_patom,
+                                   const long num_satom,
+                                   const double *fc,
+                                   const double q[3],
+                                   PHPYCONST double (*svecs)[27][3],
+                                   const long *multi,
+                                   const double *mass,
+                                   const long *s2p_map,
+                                   const long *p2s_map,
+                                   PHPYCONST double (*charge_sum)[3][3],
+                                   const long with_openmp)
 {
-  int i, j, ij;
+  long i, j, ij;
 
   if (with_openmp) {
 #pragma omp parallel for
@@ -141,8 +141,8 @@ int dym_get_dynamical_matrix_at_q(double *dynamical_matrix,
 void dym_get_recip_dipole_dipole(double *dd, /* [natom, 3, natom, 3, (real,imag)] */
                                  const double *dd_q0, /* [natom, 3, 3, (real,imag)] */
                                  PHPYCONST double (*G_list)[3], /* [num_G, 3] */
-                                 const int num_G,
-                                 const int num_patom,
+                                 const long num_G,
+                                 const long num_patom,
                                  const double q_cart[3],
                                  const double *q_direction_cart, /* must be pointer */
                                  PHPYCONST double (*born)[3][3],
@@ -152,7 +152,7 @@ void dym_get_recip_dipole_dipole(double *dd, /* [natom, 3, natom, 3, (real,imag)
                                  const double lambda,
                                  const double tolerance)
 {
-  int i, k, l, adrs, adrs_sum;
+  long i, k, l, adrs, adrs_sum;
   double *dd_tmp;
 
   dd_tmp = NULL;
@@ -200,15 +200,15 @@ void dym_get_recip_dipole_dipole(double *dd, /* [natom, 3, natom, 3, (real,imag)
 
 void dym_get_recip_dipole_dipole_q0(double *dd_q0, /* [natom, 3, 3, (real,imag)] */
                                     PHPYCONST double (*G_list)[3], /* [num_G, 3] */
-                                    const int num_G,
-                                    const int num_patom,
+                                    const long num_G,
+                                    const long num_patom,
                                     PHPYCONST double (*born)[3][3],
                                     PHPYCONST double dielectric[3][3],
                                     PHPYCONST double (*pos)[3], /* [num_patom, 3] */
                                     const double lambda,
                                     const double tolerance)
 {
-  int i, j, k, l, adrs_tmp, adrs, adrsT;
+  long i, j, k, l, adrs_tmp, adrs, adrsT;
   double zero_vec[3];
   double *dd_tmp1, *dd_tmp2;
 
@@ -292,12 +292,12 @@ void dym_get_recip_dipole_dipole_q0(double *dd_q0, /* [natom, 3, 3, (real,imag)]
 }
 
 void dym_get_charge_sum(double (*charge_sum)[3][3],
-                        const int num_patom,
+                        const long num_patom,
                         const double factor, /* 4pi/V*unit-conv and denominator */
                         const double q_cart[3],
                         PHPYCONST double (*born)[3][3])
 {
-  int i, j, k, a, b;
+  long i, j, k, a, b;
   double (*q_born)[3];
 
   q_born = (double (*)[3]) malloc(sizeof(double[3]) * num_patom);
@@ -339,14 +339,14 @@ void dym_transform_dynmat_to_fc(double *fc,
                                 const double *dm,
                                 PHPYCONST double (*comm_points)[3],
                                 PHPYCONST double (*shortest_vectors)[27][3],
-                                const int *multiplicities,
+                                const long *multiplicities,
                                 const double *masses,
-                                const int *s2pp_map,
-                                const int *fc_index_map,
-                                const int num_patom,
-                                const int num_satom)
+                                const long *s2pp_map,
+                                const long *fc_index_map,
+                                const long num_patom,
+                                const long num_satom)
 {
-  int i, j, k, l, m, N, adrs, multi;
+  long i, j, k, l, m, N, adrs, multi;
   double coef, phase, cos_phase, sin_phase;
 
   N = num_satom / num_patom;
@@ -387,20 +387,20 @@ void dym_transform_dynmat_to_fc(double *fc,
 
 
 static void get_dynmat_ij(double *dynamical_matrix,
-                          const int num_patom,
-                          const int num_satom,
+                          const long num_patom,
+                          const long num_satom,
                           const double *fc,
                           const double q[3],
                           PHPYCONST double (*svecs)[27][3],
-                          const int *multi,
+                          const long *multi,
                           const double *mass,
-                          const int *s2p_map,
-                          const int *p2s_map,
+                          const long *s2p_map,
+                          const long *p2s_map,
                           PHPYCONST double (*charge_sum)[3][3],
-                          const int i,
-                          const int j)
+                          const long i,
+                          const long j)
 {
-  int k, l, adrs;
+  long k, l, adrs;
   double mass_sqrt;
   double dm_real[3][3], dm_imag[3][3];
 
@@ -443,19 +443,19 @@ static void get_dynmat_ij(double *dynamical_matrix,
 
 static void get_dm(double dm_real[3][3],
                    double dm_imag[3][3],
-                   const int num_patom,
-                   const int num_satom,
+                   const long num_patom,
+                   const long num_satom,
                    const double *fc,
                    const double q[3],
                    PHPYCONST double (*svecs)[27][3],
-                   const int *multi,
-                   const int *p2s_map,
+                   const long *multi,
+                   const long *p2s_map,
                    PHPYCONST double (*charge_sum)[3][3],
-                   const int i,
-                   const int j,
-                   const int k)
+                   const long i,
+                   const long j,
+                   const long k)
 {
-  int l, m;
+  long l, m;
   double phase, cos_phase, sin_phase, fc_elem;
 
   cos_phase = 0;
@@ -487,7 +487,7 @@ static void get_dm(double dm_real[3][3],
 static double get_dielectric_part(const double q_cart[3],
                                   PHPYCONST double dielectric[3][3])
 {
-  int i, j;
+  long i, j;
   double x[3];
   double sum;
 
@@ -508,8 +508,8 @@ static double get_dielectric_part(const double q_cart[3],
 
 static void get_KK(double *dd_part, /* [natom, 3, natom, 3, (real,imag)] */
                    PHPYCONST double (*G_list)[3], /* [num_G, 3] */
-                   const int num_G,
-                   const int num_patom,
+                   const long num_G,
+                   const long num_patom,
                    const double q_cart[3],
                    const double *q_direction_cart,
                    PHPYCONST double dielectric[3][3],
@@ -517,7 +517,7 @@ static void get_KK(double *dd_part, /* [natom, 3, natom, 3, (real,imag)] */
                    const double lambda,
                    const double tolerance)
 {
-  int i, j, k, l, g, adrs;
+  long i, j, k, l, g, adrs;
   double q_K[3];
   double norm, cos_phase, sin_phase, phase, dielectric_part, exp_damp, L2;
   double KK[3][3];
@@ -580,9 +580,9 @@ static void get_KK(double *dd_part, /* [natom, 3, natom, 3, (real,imag)] */
   }
 }
 
-static void make_Hermitian(double *mat, const int num_band)
+static void make_Hermitian(double *mat, const long num_band)
 {
-  int i, j, adrs, adrsT;
+  long i, j, adrs, adrsT;
 
   for (i = 0; i < num_band; i++) {
     for (j = i; j < num_band; j++) {
@@ -605,10 +605,10 @@ static void make_Hermitian(double *mat, const int num_band)
 
 static void multiply_borns(double *dd,
                            const double *dd_in,
-                           const int num_patom,
+                           const long num_patom,
                            PHPYCONST double (*born)[3][3])
 {
-  int i, j, k, l, m, n, adrs, adrs_in;
+  long i, j, k, l, m, n, adrs, adrs_in;
   double zz;
 
   for (i = 0; i < num_patom; i++) {

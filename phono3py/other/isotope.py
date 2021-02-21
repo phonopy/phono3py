@@ -263,7 +263,7 @@ class Isotope(object):
         phono3c.integration_weights(
             self._integration_weights,
             freq_points,
-            thm.get_tetrahedra(),
+            np.array(thm.get_tetrahedra(), dtype='intc', order='C'),
             self._mesh,
             self._grid_points,
             self._frequencies,
@@ -275,11 +275,12 @@ class Isotope(object):
             tfreqs = get_tetrahedra_frequencies(
                 gp,
                 self._mesh,
-                [1, self._mesh[0], self._mesh[0] * self._mesh[1]],
                 self._grid_address,
                 thm.get_tetrahedra(),
                 self._grid_points,
-                self._frequencies)
+                self._frequencies,
+                grid_order=[1, self._mesh[0], self._mesh[0] * self._mesh[1]],
+                lang='Py')
 
             for bi, frequencies in enumerate(tfreqs):
                 thm.set_tetrahedra_omegas(frequencies)
