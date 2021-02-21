@@ -3,6 +3,10 @@
 Change Log
 ==========
 
+Feb-21-2021: Version 1.22.2
+---------------------------
+- Fix PyPI source distribution package
+
 Feb-21-2021: Version 1.22.1
 ---------------------------
 - ``phono3py`` command didn't work. This was fixed.
