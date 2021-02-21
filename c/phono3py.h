@@ -161,6 +161,28 @@ void ph3py_get_detailed_imag_self_energy_at_bands_with_g(
   const char *g_zero,
   const double temperature,
   const double cutoff_frequency);
+void ph3py_get_real_self_energy_at_bands(double *real_self_energy,
+                                         const Darray *fc3_normal_squared,
+                                         const int *band_indices,
+                                         const double *frequencies,
+                                         const size_t (*triplets)[3],
+                                         const int *triplet_weights,
+                                         const double epsilon,
+                                         const double temperature,
+                                         const double unit_conversion_factor,
+                                         const double cutoff_frequency);
+void ph3py_get_real_self_energy_at_frequency_point(
+  double *real_self_energy,
+  const double frequency_point,
+  const Darray *fc3_normal_squared,
+  const int *band_indices,
+  const double *frequencies,
+  const size_t (*triplets)[3],
+  const int *triplet_weights,
+  const double epsilon,
+  const double temperature,
+  const double unit_conversion_factor,
+  const double cutoff_frequency);
 void ph3py_get_collision_matrix(double *collision_matrix,
                                 const Darray *fc3_normal_squared,
                                 const double *frequencies,
