@@ -25,6 +25,8 @@ install:
     - echo $TRAVIS_BRANCH
     - if [[ "$TRAVIS_BRANCH" == "master" ]]; then
         pip install https://github.com/phonopy/phonopy/archive/master.zip --user;
+      elif [[ "$TRAVIS_BRANCH" == "rc" ]]; then
+        pip install https://github.com/phonopy/phonopy/archive/rc.zip --user;
       else
         pip install https://github.com/phonopy/phonopy/archive/develop.zip --user;
       fi

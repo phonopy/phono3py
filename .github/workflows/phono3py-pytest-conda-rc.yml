@@ -2,8 +2,7 @@ name: Python Package using Conda
 
 on:
   push:
-    branches-ignore:
-    - master
+    branches:
     - rc
 
 jobs:
@@ -26,7 +25,7 @@ jobs:
       run: |
         conda install --yes -c conda-forge python=3.8
         conda install --yes -c conda-forge matplotlib-base pyyaml openblas libgfortran gcc_linux-64 gxx_linux-64 h5py scipy pytest codecov pytest-cov spglib
-        pip install https://github.com/phonopy/phonopy/archive/develop.zip --user
+        pip install https://github.com/phonopy/phonopy/archive/rc.zip --user
     - name: Set up phono3py
       run: |
         export CONDA_PREFIX=$CONDA
