@@ -54,6 +54,8 @@ sources = ['c/_phono3py.c',
            'c/real_to_reciprocal.c', 
            'c/reciprocal_to_normal.c', 
            'c/tetrahedron_method.c',
+           'c/triplet.c',
+           'c/triplet_iw.c',
            'c/triplet_kpoint.c']
 
 extra_compile_args = ['-fopenmp', ]
