@@ -255,9 +255,6 @@ scripts_phono3py = ['scripts/phono3py',
 ########################
 include_dirs_lapackepy = (['c', ] + include_dirs_numpy + include_dirs_lapacke)
 sources_lapackepy = ['c/_lapackepy.c',
-                     'c/dynmat.c',
-                     'c/phonon.c',
-                     'c/phonoc_utils.c',
                      'c/lapack_wrapper.c']
 extension_lapackepy = Extension(
     'phono3py._lapackepy',

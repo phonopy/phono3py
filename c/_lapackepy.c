@@ -37,8 +37,6 @@
 #include <assert.h>
 #include <numpy/arrayobject.h>
 #include "lapack_wrapper.h"
-#include "phonon.h"
-#include "phonoc_array.h"
 
 static PyObject * py_phonopy_pinv(PyObject *self, PyObject *args);
 static PyObject * py_phonopy_zheev(PyObject *self, PyObject *args);
