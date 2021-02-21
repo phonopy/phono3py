@@ -45,6 +45,7 @@
 #include "isotope.h"
 #include "fc3.h"
 #include "tetrahedron_method.h"
+#include "triplet.h"
 
 #include <stdio.h>
 
