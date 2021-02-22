@@ -830,26 +830,27 @@ class Conductivity_RTA(Conductivity):
                                       dtype='double', order='C')
             import phono3py._phono3py as phono3c
             if sigma is None:
-                phono3c.pp_collision(collisions,
-                                     thm.get_tetrahedra(),
-                                     self._frequencies,
-                                     self._eigenvectors,
-                                     triplets_at_q,
-                                     weights_at_q,
-                                     self._grid_address,
-                                     bz_map,
-                                     self._mesh,
-                                     fc3,
-                                     svecs,
-                                     multiplicity,
-                                     masses,
-                                     p2s,
-                                     s2p,
-                                     band_indices,
-                                     self._temperatures,
-                                     self._is_N_U * 1,
-                                     symmetrize_fc3_q,
-                                     self._cutoff_frequency)
+                phono3c.pp_collision(
+                    collisions,
+                    np.array(thm.get_tetrahedra(), dtype='intc', order='C'),
+                    self._frequencies,
+                    self._eigenvectors,
+                    triplets_at_q,
+                    weights_at_q,
+                    self._grid_address,
+                    bz_map,
+                    self._mesh,
+                    fc3,
+                    svecs,
+                    multiplicity,
+                    masses,
+                    p2s,
+                    s2p,
+                    band_indices,
+                    self._temperatures,
+                    self._is_N_U * 1,
+                    symmetrize_fc3_q,
+                    self._cutoff_frequency)
             else:
                 if self._sigma_cutoff is None:
                     sigma_cutoff = -1

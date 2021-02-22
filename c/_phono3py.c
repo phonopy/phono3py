@@ -73,7 +73,7 @@ py_set_permutation_symmetry_compact_fc3(PyObject *self, PyObject *args);
 static PyObject * py_set_permutation_symmetry_fc3(PyObject *self,
                                                   PyObject *args);
 static PyObject * py_transpose_compact_fc3(PyObject *self, PyObject *args);
-static PyObject * py_get_neighboring_gird_points(PyObject *self, PyObject *args);
+static PyObject * py_get_neighboring_grid_points(PyObject *self, PyObject *args);
 static PyObject * py_set_integration_weights(PyObject *self, PyObject *args);
 static PyObject *
 py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args);
@@ -193,7 +193,7 @@ static PyMethodDef _phono3py_methods[] = {
    METH_VARARGS,
    "Transpose compact fc3"},
   {"neighboring_grid_points",
-   (PyCFunction)py_get_neighboring_gird_points,
+   (PyCFunction)py_get_neighboring_grid_points,
    METH_VARARGS,
    "Neighboring grid points by relative grid addresses"},
   {"integration_weights",
@@ -1439,7 +1439,7 @@ static PyObject * py_transpose_compact_fc3(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-static PyObject * py_get_neighboring_gird_points(PyObject *self, PyObject *args)
+static PyObject * py_get_neighboring_grid_points(PyObject *self, PyObject *args)
 {
   PyArrayObject *py_relative_grid_points;
   PyArrayObject *py_grid_points;
