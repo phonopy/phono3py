@@ -51,3 +51,10 @@ def nacl_pbe():
     yaml_filename = os.path.join(current_dir,
                                  "phono3py_params_NaCl222.yaml.xz")
     return phono3py.load(yaml_filename, log_level=1)
+
+
+@pytest.fixture(scope='session')
+def aln_lda():
+    yaml_filename = os.path.join(current_dir,
+                                 "phono3py_params_AlN332.yaml.xz")
+    return phono3py.load(yaml_filename, log_level=1)
