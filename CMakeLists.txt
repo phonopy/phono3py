@@ -48,10 +48,8 @@ set(SOURCES_PHONO3PY
   ${PROJECT_SOURCE_DIR}/c/imag_self_energy_with_g.c
   ${PROJECT_SOURCE_DIR}/c/interaction.c
   ${PROJECT_SOURCE_DIR}/c/isotope.c
-  ${PROJECT_SOURCE_DIR}/c/kgrid.c
   ${PROJECT_SOURCE_DIR}/c/kpoint.c
   ${PROJECT_SOURCE_DIR}/c/lapack_wrapper.c
-  ${PROJECT_SOURCE_DIR}/c/mathfunc.c
   ${PROJECT_SOURCE_DIR}/c/phono3py.c
   ${PROJECT_SOURCE_DIR}/c/phonoc_utils.c
   ${PROJECT_SOURCE_DIR}/c/pp_collision.c
