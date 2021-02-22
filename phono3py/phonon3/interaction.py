@@ -331,7 +331,7 @@ class Interaction(object):
         if self._nac_q_direction is not None:
             if (grid_address[grid_point] == 0).all():
                 self._phonon_done[grid_point] = 0
-                self.run_phonon_solver(np.array([grid_point], dtype='uintp'))
+                self.run_phonon_solver(np.array([grid_point], dtype='int_'))
                 rotations = []
                 for r in self._symmetry.get_pointgroup_operations():
                     dq = self._nac_q_direction
@@ -397,7 +397,7 @@ class Interaction(object):
         if solve_dynamical_matrices:
             self.run_phonon_solver(verbose=verbose)
         else:
-            self.run_phonon_solver(np.array([0], dtype='uintp'),
+            self.run_phonon_solver(np.array([0], dtype='int_'),
                                    verbose=verbose)
 
         if (self._grid_address[0] == 0).all():
@@ -437,7 +437,7 @@ class Interaction(object):
 
     def run_phonon_solver(self, grid_points=None, verbose=False):
         if grid_points is None:
-            _grid_points = np.arange(len(self._grid_address), dtype='uintp')
+            _grid_points = np.arange(len(self._grid_address), dtype='int_')
         else:
             _grid_points = grid_points
         self._run_phonon_solver_c(_grid_points, verbose=verbose)

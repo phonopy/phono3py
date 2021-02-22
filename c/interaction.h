@@ -42,8 +42,8 @@ void itr_get_interaction(Darray *fc3_normal_squared,
                          const char *g_zero,
                          const Darray *frequencies,
                          const lapack_complex_double *eigenvectors,
-                         const size_t (*triplets)[3],
-                         const size_t num_triplets,
+                         const long (*triplets)[3],
+                         const long num_triplets,
                          const int *grid_address,
                          const int *mesh,
                          const double *fc3,
@@ -58,13 +58,13 @@ void itr_get_interaction(Darray *fc3_normal_squared,
                          const int symmetrize_fc3_q,
                          const double cutoff_frequency);
 void itr_get_interaction_at_triplet(double *fc3_normal_squared,
-                                    const size_t num_band0,
-                                    const size_t num_band,
+                                    const long num_band0,
+                                    const long num_band,
                                     PHPYCONST int (*g_pos)[4],
-                                    const size_t num_g_pos,
+                                    const long num_g_pos,
                                     const double *frequencies,
                                     const lapack_complex_double *eigenvectors,
-                                    const size_t triplet[3],
+                                    const long triplet[3],
                                     const int *grid_address,
                                     const int *mesh,
                                     const double *fc3,
@@ -78,8 +78,8 @@ void itr_get_interaction_at_triplet(double *fc3_normal_squared,
                                     const int *band_indices,
                                     const int symmetrize_fc3_q,
                                     const double cutoff_frequency,
-                                    const size_t triplet_index, /* only for print */
-                                    const size_t num_triplets, /* only for print */
+                                    const long triplet_index, /* only for print */
+                                    const long num_triplets, /* only for print */
                                     const int openmp_at_bands);
 
 #endif

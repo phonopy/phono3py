@@ -340,7 +340,7 @@ class Conductivity(object):
         elif not self._is_kappa_star:  # All grid points
             coarse_grid_address = get_grid_address(self._coarse_mesh)
             coarse_grid_points = np.arange(np.prod(self._coarse_mesh),
-                                           dtype='uintp')
+                                           dtype='int_')
             self._grid_points = from_coarse_to_dense_grid_points(
                 self._mesh,
                 self._mesh_divisors,

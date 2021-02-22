@@ -89,13 +89,13 @@ static PyObject * py_get_default_colmat_solver(PyObject *self, PyObject *args);
 
 static void pinv_from_eigensolution(double *data,
                                     const double *eigvals,
-                                    const size_t size,
+                                    const long size,
                                     const double cutoff,
                                     const int pinv_method);
 static void show_colmat_info(const PyArrayObject *collision_matrix_py,
-                             const size_t i_sigma,
-                             const size_t i_temp,
-                             const size_t adrs_shift);
+                             const long i_sigma,
+                             const long i_temp,
+                             const long adrs_shift);
 static Iarray* convert_to_iarray(const PyArrayObject* npyary);
 static Darray* convert_to_darray(const PyArrayObject* npyary);
 
@@ -120,7 +120,7 @@ error_out(PyObject *m) {
 
 static PyMethodDef _phono3py_methods[] = {
   {"error_out", (PyCFunction)error_out, METH_NOARGS, NULL},
- {"interaction",
+  {"interaction",
    (PyCFunction)py_get_interaction,
    METH_VARARGS,
    "Interaction of triplets"},
@@ -311,8 +311,8 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   Darray *fc3_normal_squared;
   Darray *freqs;
   lapack_complex_double *eigvecs;
-  size_t (*triplets)[3];
-  npy_intp num_triplets;
+  long (*triplets)[3];
+  long num_triplets;
   char* g_zero;
   int *grid_address;
   int *mesh;
@@ -353,8 +353,8 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   /* npy_cdouble and lapack_complex_double may not be compatible. */
   /* So eigenvectors should not be used in Python side */
   eigvecs = (lapack_complex_double*)PyArray_DATA(py_eigenvectors);
-  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
-  num_triplets = PyArray_DIMS(py_triplets)[0];
+  triplets = (long(*)[3])PyArray_DATA(py_triplets);
+  num_triplets = (long)PyArray_DIMS(py_triplets)[0];
   g_zero = (char*)PyArray_DATA(py_g_zero);
   grid_address = (int*)PyArray_DATA(py_grid_address);
   mesh = (int*)PyArray_DATA(py_mesh);
@@ -429,11 +429,11 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   int (*relative_grid_address)[4][3];
   double *frequencies;
   lapack_complex_double *eigenvectors;
-  size_t (*triplets)[3];
-  npy_intp num_triplets;
-  int *triplet_weights;
+  long (*triplets)[3];
+  long num_triplets;
+  long *triplet_weights;
   int *grid_address;
-  size_t *bz_map;
+  long *bz_map;
   int *mesh;
   double *fc3;
   double *svecs;
@@ -475,11 +475,11 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   relative_grid_address = (int(*)[4][3])PyArray_DATA(py_relative_grid_address);
   frequencies = (double*)PyArray_DATA(py_frequencies);
   eigenvectors = (lapack_complex_double*)PyArray_DATA(py_eigenvectors);
-  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
-  num_triplets = PyArray_DIMS(py_triplets)[0];
-  triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
+  triplets = (long(*)[3])PyArray_DATA(py_triplets);
+  num_triplets = (long)PyArray_DIMS(py_triplets)[0];
+  triplet_weights = (long*)PyArray_DATA(py_triplet_weights);
   grid_address = (int*)PyArray_DATA(py_grid_address);
-  bz_map = (size_t*)PyArray_DATA(py_bz_map);
+  bz_map = (long*)PyArray_DATA(py_bz_map);
   mesh = (int*)PyArray_DATA(py_mesh);
   fc3 = (double*)PyArray_DATA(py_fc3);
   if (PyArray_DIMS(py_fc3)[0] == PyArray_DIMS(py_fc3)[1]) {
@@ -556,9 +556,9 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
   double *gamma;
   double *frequencies;
   lapack_complex_double *eigenvectors;
-  size_t (*triplets)[3];
-  npy_intp num_triplets;
-  int *triplet_weights;
+  long (*triplets)[3];
+  long num_triplets;
+  long *triplet_weights;
   int *grid_address;
   int *mesh;
   double *fc3;
@@ -600,9 +600,9 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
   gamma = (double*)PyArray_DATA(py_gamma);
   frequencies = (double*)PyArray_DATA(py_frequencies);
   eigenvectors = (lapack_complex_double*)PyArray_DATA(py_eigenvectors);
-  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
-  num_triplets = PyArray_DIMS(py_triplets)[0];
-  triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
+  triplets = (long(*)[3])PyArray_DATA(py_triplets);
+  num_triplets = (long)PyArray_DIMS(py_triplets)[0];
+  triplet_weights = (long*)PyArray_DATA(py_triplet_weights);
   grid_address = (int*)PyArray_DATA(py_grid_address);
   mesh = (int*)PyArray_DATA(py_mesh);
   fc3 = (double*)PyArray_DATA(py_fc3);
@@ -671,9 +671,9 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
   double *g;
   char* g_zero;
   double *frequencies;
-  size_t (*triplets)[3];
-  int *triplet_weights;
-  int num_frequency_points;
+  long (*triplets)[3];
+  long *triplet_weights;
+  long num_frequency_points;
 
   if (!PyArg_ParseTuple(args, "OOOOOdOOdi",
                         &py_gamma,
@@ -694,9 +694,9 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
   g = (double*)PyArray_DATA(py_g);
   g_zero = (char*)PyArray_DATA(py_g_zero);
   frequencies = (double*)PyArray_DATA(py_frequencies);
-  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
-  triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
-  num_frequency_points = PyArray_DIMS(py_g)[2];
+  triplets = (long(*)[3])PyArray_DATA(py_triplets);
+  triplet_weights = (long*)PyArray_DATA(py_triplet_weights);
+  num_frequency_points = (long)PyArray_DIMS(py_g)[2];
 
   ph3py_get_imag_self_energy_at_bands_with_g(gamma,
                                              fc3_normal_squared,
@@ -738,8 +738,8 @@ py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args)
   double *g;
   char* g_zero;
   double *frequencies;
-  size_t (*triplets)[3];
-  int *triplet_weights;
+  long (*triplets)[3];
+  long *triplet_weights;
   int *grid_address;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOdOOd",
@@ -765,8 +765,8 @@ py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args)
   g = (double*)PyArray_DATA(py_g);
   g_zero = (char*)PyArray_DATA(py_g_zero);
   frequencies = (double*)PyArray_DATA(py_frequencies);
-  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
-  triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
+  triplets = (long(*)[3])PyArray_DATA(py_triplets);
+  triplet_weights = (long*)PyArray_DATA(py_triplet_weights);
   grid_address = (int*)PyArray_DATA(py_grid_address);
 
   ph3py_get_detailed_imag_self_energy_at_bands_with_g(gamma_detail,
@@ -803,8 +803,8 @@ static PyObject * py_get_real_self_energy_at_bands(PyObject *self,
   double *shift;
   double *frequencies;
   int *band_indices;
-  size_t (*triplets)[3];
-  int *triplet_weights;
+  long (*triplets)[3];
+  long *triplet_weights;
 
   if (!PyArg_ParseTuple(args, "OOOOOOdddd",
                         &py_shift,
@@ -825,8 +825,8 @@ static PyObject * py_get_real_self_energy_at_bands(PyObject *self,
   shift = (double*)PyArray_DATA(py_shift);
   frequencies = (double*)PyArray_DATA(py_frequencies);
   band_indices = (int*)PyArray_DATA(py_band_indices);
-  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
-  triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
+  triplets = (long(*)[3])PyArray_DATA(py_triplets);
+  triplet_weights = (long*)PyArray_DATA(py_triplet_weights);
 
   ph3py_get_real_self_energy_at_bands(shift,
                                       fc3_normal_squared,
@@ -861,8 +861,8 @@ static PyObject * py_get_real_self_energy_at_frequency_point(PyObject *self,
   double *shift;
   double *frequencies;
   int *band_indices;
-  size_t (*triplets)[3];
-  int *triplet_weights;
+  long (*triplets)[3];
+  long *triplet_weights;
 
   if (!PyArg_ParseTuple(args, "OdOOOOOdddd",
                         &py_shift,
@@ -884,8 +884,8 @@ static PyObject * py_get_real_self_energy_at_frequency_point(PyObject *self,
   shift = (double*)PyArray_DATA(py_shift);
   frequencies = (double*)PyArray_DATA(py_frequencies);
   band_indices = (int*)PyArray_DATA(py_band_indices);
-  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
-  triplet_weights = (int*)PyArray_DATA(py_triplet_weights);
+  triplets = (long(*)[3])PyArray_DATA(py_triplets);
+  triplet_weights = (long*)PyArray_DATA(py_triplet_weights);
 
   ph3py_get_real_self_energy_at_frequency_point(shift,
                                                 frequency_point,
@@ -922,11 +922,11 @@ static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args)
   double *collision_matrix;
   double *g;
   double *frequencies;
-  size_t (*triplets)[3];
-  size_t *triplets_map;
-  size_t *map_q;
-  size_t *rotated_grid_points;
-  npy_intp num_gp, num_ir_gp, num_rot;
+  long (*triplets)[3];
+  long *triplets_map;
+  long *map_q;
+  long *rotated_grid_points;
+  long num_gp, num_ir_gp, num_rot;
   double *rotations_cartesian;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOddd",
@@ -949,13 +949,13 @@ static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args)
   collision_matrix = (double*)PyArray_DATA(py_collision_matrix);
   g = (double*)PyArray_DATA(py_g);
   frequencies = (double*)PyArray_DATA(py_frequencies);
-  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
-  triplets_map = (size_t*)PyArray_DATA(py_triplets_map);
-  num_gp = PyArray_DIMS(py_triplets_map)[0];
-  map_q = (size_t*)PyArray_DATA(py_map_q);
-  rotated_grid_points = (size_t*)PyArray_DATA(py_rotated_grid_points);
-  num_ir_gp = PyArray_DIMS(py_rotated_grid_points)[0];
-  num_rot = PyArray_DIMS(py_rotated_grid_points)[1];
+  triplets = (long(*)[3])PyArray_DATA(py_triplets);
+  triplets_map = (long*)PyArray_DATA(py_triplets_map);
+  num_gp = (long)PyArray_DIMS(py_triplets_map)[0];
+  map_q = (long*)PyArray_DATA(py_map_q);
+  rotated_grid_points = (long*)PyArray_DATA(py_rotated_grid_points);
+  num_ir_gp = (long)PyArray_DIMS(py_rotated_grid_points)[0];
+  num_rot = (long)PyArray_DIMS(py_rotated_grid_points)[1];
   rotations_cartesian = (double*)PyArray_DATA(py_rotations_cartesian);
 
   assert(num_rot == PyArray_DIMS(py_rotations_cartesian)[0]);
@@ -998,10 +998,10 @@ static PyObject * py_get_reducible_collision_matrix(PyObject *self, PyObject *ar
   double *collision_matrix;
   double *g;
   double *frequencies;
-  size_t (*triplets)[3];
-  size_t *triplets_map;
-  npy_intp num_gp;
-  size_t *map_q;
+  long (*triplets)[3];
+  long *triplets_map;
+  long num_gp;
+  long *map_q;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOddd",
                         &py_collision_matrix,
@@ -1021,10 +1021,10 @@ static PyObject * py_get_reducible_collision_matrix(PyObject *self, PyObject *ar
   collision_matrix = (double*)PyArray_DATA(py_collision_matrix);
   g = (double*)PyArray_DATA(py_g);
   frequencies = (double*)PyArray_DATA(py_frequencies);
-  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
-  triplets_map = (size_t*)PyArray_DATA(py_triplets_map);
-  num_gp = PyArray_DIMS(py_triplets_map)[0];
-  map_q = (size_t*)PyArray_DATA(py_map_q);
+  triplets = (long(*)[3])PyArray_DATA(py_triplets);
+  triplets_map = (long*)PyArray_DATA(py_triplets_map);
+  num_gp = (long)PyArray_DIMS(py_triplets_map)[0];
+  map_q = (long*)PyArray_DATA(py_map_q);
 
   ph3py_get_reducible_collision_matrix(collision_matrix,
                                        fc3_normal_squared,
@@ -1084,8 +1084,8 @@ static PyObject * py_expand_collision_matrix(PyObject *self, PyObject *args)
   PyArrayObject *py_rot_grid_points;
 
   double *collision_matrix;
-  size_t *rot_grid_points;
-  size_t *ir_grid_points;
+  long *rot_grid_points;
+  long *ir_grid_points;
   long num_band, num_grid_points, num_temp, num_sigma, num_rot, num_ir_gp;
 
   if (!PyArg_ParseTuple(args, "OOO",
@@ -1096,8 +1096,8 @@ static PyObject * py_expand_collision_matrix(PyObject *self, PyObject *args)
   }
 
   collision_matrix = (double*)PyArray_DATA(py_collision_matrix);
-  rot_grid_points = (size_t*)PyArray_DATA(py_rot_grid_points);
-  ir_grid_points = (size_t*)PyArray_DATA(py_ir_grid_points);
+  rot_grid_points = (long*)PyArray_DATA(py_rot_grid_points);
+  ir_grid_points = (long*)PyArray_DATA(py_ir_grid_points);
   num_sigma = (long)PyArray_DIMS(py_collision_matrix)[0];
   num_temp = (long)PyArray_DIMS(py_collision_matrix)[1];
   num_grid_points = (long)PyArray_DIMS(py_collision_matrix)[2];
@@ -1135,7 +1135,7 @@ static PyObject * py_get_isotope_strength(PyObject *self, PyObject *args)
   lapack_complex_double *eigenvectors;
   int *band_indices;
   double *mass_variances;
-  npy_intp num_band, num_band0;
+  long num_band, num_band0;
 
   if (!PyArg_ParseTuple(args, "OlOOOOldd",
                         &py_gamma,
@@ -1156,8 +1156,8 @@ static PyObject * py_get_isotope_strength(PyObject *self, PyObject *args)
   eigenvectors = (lapack_complex_double*)PyArray_DATA(py_eigenvectors);
   band_indices = (int*)PyArray_DATA(py_band_indices);
   mass_variances = (double*)PyArray_DATA(py_mass_variances);
-  num_band = PyArray_DIMS(py_frequencies)[1];
-  num_band0 = PyArray_DIMS(py_band_indices)[0];
+  num_band = (long)PyArray_DIMS(py_frequencies)[1];
+  num_band0 = (long)PyArray_DIMS(py_band_indices)[0];
 
   ph3py_get_isotope_scattering_strength(gamma,
                                         grid_point,
@@ -1189,12 +1189,12 @@ static PyObject * py_get_thm_isotope_strength(PyObject *self, PyObject *args)
 
   double *gamma;
   double *frequencies;
-  size_t *ir_grid_points;
-  int *weights;
+  long *ir_grid_points;
+  long *weights;
   lapack_complex_double *eigenvectors;
   int *band_indices;
   double *mass_variances;
-  npy_intp num_band, num_band0, num_ir_grid_points;
+  long num_band, num_band0, num_ir_grid_points;
   double *integration_weights;
 
   if (!PyArg_ParseTuple(args, "OlOOOOOOOd",
@@ -1214,15 +1214,15 @@ static PyObject * py_get_thm_isotope_strength(PyObject *self, PyObject *args)
 
   gamma = (double*)PyArray_DATA(py_gamma);
   frequencies = (double*)PyArray_DATA(py_frequencies);
-  ir_grid_points = (size_t*)PyArray_DATA(py_ir_grid_points);
-  weights = (int*)PyArray_DATA(py_weights);
+  ir_grid_points = (long*)PyArray_DATA(py_ir_grid_points);
+  weights = (long*)PyArray_DATA(py_weights);
   eigenvectors = (lapack_complex_double*)PyArray_DATA(py_eigenvectors);
   band_indices = (int*)PyArray_DATA(py_band_indices);
   mass_variances = (double*)PyArray_DATA(py_mass_variances);
-  num_band = PyArray_DIMS(py_frequencies)[1];
-  num_band0 = PyArray_DIMS(py_band_indices)[0];
+  num_band = (long)PyArray_DIMS(py_frequencies)[1];
+  num_band0 = (long)PyArray_DIMS(py_band_indices)[0];
   integration_weights = (double*)PyArray_DATA(py_integration_weights);
-  num_ir_grid_points = PyArray_DIMS(py_ir_grid_points)[0];
+  num_ir_grid_points = (long)PyArray_DIMS(py_ir_grid_points)[0];
 
   ph3py_get_thm_isotope_scattering_strength(gamma,
                                             grid_point,
@@ -1252,7 +1252,7 @@ static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
   double *fc3;
   double *rot_cart_inv;
   int *atom_mapping;
-  npy_intp num_atom;
+  long num_atom;
 
   if (!PyArg_ParseTuple(args, "OiiOO",
                         &force_constants_third,
@@ -1266,7 +1266,7 @@ static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
   fc3 = (double*)PyArray_DATA(force_constants_third);
   rot_cart_inv = (double*)PyArray_DATA(rotation_cart_inv);
   atom_mapping = (int*)PyArray_DATA(atom_mapping_py);
-  num_atom = PyArray_DIMS(atom_mapping_py)[0];
+  num_atom = (long)PyArray_DIMS(atom_mapping_py)[0];
 
   ph3py_distribute_fc3(fc3,
                        target,
@@ -1291,7 +1291,7 @@ static PyObject * py_rotate_delta_fc2s(PyObject *self, PyObject *args)
   double *inv_U;
   double (*site_sym_cart)[3][3];
   int *rot_map_syms;
-  npy_intp num_atom, num_disp, num_site_sym;
+  long num_atom, num_disp, num_site_sym;
 
   if (!PyArg_ParseTuple(args, "OOOOO",
                         &py_fc3,
@@ -1313,9 +1313,9 @@ static PyObject * py_rotate_delta_fc2s(PyObject *self, PyObject *args)
   /* (n_sym, natom) */
   rot_map_syms = (int*)PyArray_DATA(py_rot_map_syms);
 
-  num_atom = PyArray_DIMS(py_fc3)[0];
-  num_disp = PyArray_DIMS(py_delta_fc2s)[0];
-  num_site_sym = PyArray_DIMS(py_site_sym_cart)[0];
+  num_atom = (long)PyArray_DIMS(py_fc3)[0];
+  num_disp = (long)PyArray_DIMS(py_delta_fc2s)[0];
+  num_site_sym = (long)PyArray_DIMS(py_site_sym_cart)[0];
 
   ph3py_rotate_delta_fc2(fc3,
                          delta_fc2s,
@@ -1335,14 +1335,14 @@ py_set_permutation_symmetry_fc3(PyObject *self, PyObject *args)
   PyArrayObject *py_fc3;
 
   double *fc3;
-  npy_intp num_atom;
+  long num_atom;
 
   if (!PyArg_ParseTuple(args, "O", &py_fc3)) {
     return NULL;
   }
 
   fc3 = (double*)PyArray_DATA(py_fc3);
-  num_atom = PyArray_DIMS(py_fc3)[0];
+  num_atom = (long)PyArray_DIMS(py_fc3)[0];
 
   ph3py_set_permutation_symmetry_fc3(fc3, num_atom);
 
@@ -1363,7 +1363,7 @@ py_set_permutation_symmetry_compact_fc3(PyObject *self, PyObject *args)
   int *p2s;
   int *nsym_list;
   int *perms;
-  npy_intp n_patom, n_satom;
+  long n_patom, n_satom;
 
   if (!PyArg_ParseTuple(args, "OOOOO",
                         &py_fc3,
@@ -1379,8 +1379,8 @@ py_set_permutation_symmetry_compact_fc3(PyObject *self, PyObject *args)
   s2pp = (int*)PyArray_DATA(py_s2pp_map);
   p2s = (int*)PyArray_DATA(py_p2s_map);
   nsym_list = (int*)PyArray_DATA(py_nsym_list);
-  n_patom = PyArray_DIMS(py_fc3)[0];
-  n_satom = PyArray_DIMS(py_fc3)[1];
+  n_patom = (long)PyArray_DIMS(py_fc3)[0];
+  n_satom = (long)PyArray_DIMS(py_fc3)[1];
 
   ph3py_set_permutation_symmetry_compact_fc3(fc3,
                                              p2s,
@@ -1407,7 +1407,7 @@ static PyObject * py_transpose_compact_fc3(PyObject *self, PyObject *args)
   int *p2s;
   int *nsym_list;
   int *perms;
-  npy_intp n_patom, n_satom;
+  long n_patom, n_satom;
 
   if (!PyArg_ParseTuple(args, "OOOOOi",
                         &py_fc3,
@@ -1424,8 +1424,8 @@ static PyObject * py_transpose_compact_fc3(PyObject *self, PyObject *args)
   s2pp = (int*)PyArray_DATA(py_s2pp_map);
   p2s = (int*)PyArray_DATA(py_p2s_map);
   nsym_list = (int*)PyArray_DATA(py_nsym_list);
-  n_patom = PyArray_DIMS(py_fc3)[0];
-  n_satom = PyArray_DIMS(py_fc3)[1];
+  n_patom = (long)PyArray_DIMS(py_fc3)[0];
+  n_satom = (long)PyArray_DIMS(py_fc3)[1];
 
   ph3py_transpose_compact_fc3(fc3,
                               p2s,
@@ -1448,13 +1448,13 @@ static PyObject * py_get_neighboring_gird_points(PyObject *self, PyObject *args)
   PyArrayObject *py_bz_grid_address;
   PyArrayObject *py_bz_map;
 
-  size_t *relative_grid_points;
-  size_t *grid_points;
-  npy_intp num_grid_points, num_relative_grid_address;
+  long *relative_grid_points;
+  long *grid_points;
+  long num_grid_points, num_relative_grid_address;
   int (*relative_grid_address)[3];
   int *mesh;
   int (*bz_grid_address)[3];
-  size_t *bz_map;
+  long *bz_map;
 
   if (!PyArg_ParseTuple(args, "OOOOOO",
                         &py_relative_grid_points,
@@ -1466,14 +1466,14 @@ static PyObject * py_get_neighboring_gird_points(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  relative_grid_points = (size_t*)PyArray_DATA(py_relative_grid_points);
-  grid_points = (size_t*)PyArray_DATA(py_grid_points);
-  num_grid_points = PyArray_DIMS(py_grid_points)[0];
+  relative_grid_points = (long*)PyArray_DATA(py_relative_grid_points);
+  grid_points = (long*)PyArray_DATA(py_grid_points);
+  num_grid_points = (long)PyArray_DIMS(py_grid_points)[0];
   relative_grid_address = (int(*)[3])PyArray_DATA(py_relative_grid_address);
-  num_relative_grid_address = PyArray_DIMS(py_relative_grid_address)[0];
+  num_relative_grid_address = (long)PyArray_DIMS(py_relative_grid_address)[0];
   mesh = (int*)PyArray_DATA(py_mesh);
   bz_grid_address = (int(*)[3])PyArray_DATA(py_bz_grid_address);
-  bz_map = (size_t*)PyArray_DATA(py_bz_map);
+  bz_map = (long*)PyArray_DATA(py_bz_map);
 
   ph3py_get_neighboring_gird_points(relative_grid_points,
                                     grid_points,
@@ -1500,12 +1500,12 @@ static PyObject * py_set_integration_weights(PyObject *self, PyObject *args)
 
   double *iw;
   double *frequency_points;
-  npy_intp num_band0, num_band, num_gp;
+  long num_band0, num_band, num_gp;
   int (*relative_grid_address)[4][3];
   int *mesh;
-  size_t *grid_points;
+  long *grid_points;
   int (*bz_grid_address)[3];
-  size_t *bz_map;
+  long *bz_map;
   double *frequencies;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOO",
@@ -1522,15 +1522,15 @@ static PyObject * py_set_integration_weights(PyObject *self, PyObject *args)
 
   iw = (double*)PyArray_DATA(py_iw);
   frequency_points = (double*)PyArray_DATA(py_frequency_points);
-  num_band0 = PyArray_DIMS(py_frequency_points)[0];
+  num_band0 = (long)PyArray_DIMS(py_frequency_points)[0];
   relative_grid_address = (int(*)[4][3])PyArray_DATA(py_relative_grid_address);
   mesh = (int*)PyArray_DATA(py_mesh);
-  grid_points = (size_t*)PyArray_DATA(py_grid_points);
-  num_gp = PyArray_DIMS(py_grid_points)[0];
+  grid_points = (long*)PyArray_DATA(py_grid_points);
+  num_gp = (long)PyArray_DIMS(py_grid_points)[0];
   bz_grid_address = (int(*)[3])PyArray_DATA(py_bz_grid_address);
-  bz_map = (size_t*)PyArray_DATA(py_bz_map);
+  bz_map = (long*)PyArray_DATA(py_bz_map);
   frequencies = (double*)PyArray_DATA(py_frequencies);
-  num_band = PyArray_DIMS(py_frequencies)[1];
+  num_band = (long)PyArray_DIMS(py_frequencies)[1];
 
   ph3py_set_integration_weights(iw,
                                 frequency_points,
@@ -1560,12 +1560,12 @@ py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
   int swappable;
 
   int (*grid_address)[3];
-  size_t *map_triplets;
-  size_t *map_q;
+  long *map_triplets;
+  long *map_q;
   int *mesh;
   int (*rot)[3][3];
-  npy_intp num_rot;
-  size_t num_ir;
+  long num_rot;
+  long num_ir;
 
   if (!PyArg_ParseTuple(args, "OOOlOiOi",
                         &py_map_triplets,
@@ -1580,11 +1580,11 @@ py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
   }
 
   grid_address = (int(*)[3])PyArray_DATA(py_grid_address);
-  map_triplets = (size_t*)PyArray_DATA(py_map_triplets);
-  map_q = (size_t*)PyArray_DATA(py_map_q);
+  map_triplets = (long*)PyArray_DATA(py_map_triplets);
+  map_q = (long*)PyArray_DATA(py_map_q);
   mesh = (int*)PyArray_DATA(py_mesh);
   rot = (int(*)[3][3])PyArray_DATA(py_rotations);
-  num_rot = PyArray_DIMS(py_rotations)[0];
+  num_rot = (long)PyArray_DIMS(py_rotations)[0];
   num_ir = ph3py_get_triplets_reciprocal_mesh_at_q(map_triplets,
                                                    map_q,
                                                    grid_address,
@@ -1595,7 +1595,7 @@ py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
                                                    rot,
                                                    swappable);
 
-  return PyLong_FromSize_t(num_ir);
+  return PyLong_FromLong(num_ir);
 }
 
 static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args)
@@ -1607,13 +1607,13 @@ static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args)
   PyArrayObject *py_mesh;
   long grid_point;
 
-  size_t (*triplets)[3];
+  long (*triplets)[3];
   int (*bz_grid_address)[3];
-  size_t *bz_map;
-  size_t *map_triplets;
-  npy_intp num_map_triplets;
+  long *bz_map;
+  long *map_triplets;
+  long num_map_triplets;
   int *mesh;
-  size_t num_ir;
+  long num_ir;
 
   if (!PyArg_ParseTuple(args, "OlOOOO",
                         &py_triplets,
@@ -1625,11 +1625,11 @@ static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
+  triplets = (long(*)[3])PyArray_DATA(py_triplets);
   bz_grid_address = (int(*)[3])PyArray_DATA(py_bz_grid_address);
-  bz_map = (size_t*)PyArray_DATA(py_bz_map);
-  map_triplets = (size_t*)PyArray_DATA(py_map_triplets);
-  num_map_triplets = PyArray_DIMS(py_map_triplets)[0];
+  bz_map = (long*)PyArray_DATA(py_bz_map);
+  map_triplets = (long*)PyArray_DATA(py_map_triplets);
+  num_map_triplets = (long)PyArray_DIMS(py_map_triplets)[0];
   mesh = (int*)PyArray_DATA(py_mesh);
 
   num_ir = ph3py_get_BZ_triplets_at_q(triplets,
@@ -1640,7 +1640,7 @@ static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args)
                                       num_map_triplets,
                                       mesh);
 
-  return PyLong_FromSize_t(num_ir);
+  return PyLong_FromLong(num_ir);
 }
 
 static PyObject *
@@ -1663,11 +1663,11 @@ py_set_triplets_integration_weights(PyObject *self, PyObject *args)
   double *frequency_points;
   int (*relative_grid_address)[4][3];
   int *mesh;
-  size_t (*triplets)[3];
+  long (*triplets)[3];
   int (*bz_grid_address)[3];
-  size_t *bz_map;
+  long *bz_map;
   double *frequencies1, *frequencies2;
-  npy_intp num_band0, num_band1, num_band2, num_triplets;
+  long num_band0, num_band1, num_band2, num_triplets;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOOi",
                         &py_iw,
@@ -1687,17 +1687,17 @@ py_set_triplets_integration_weights(PyObject *self, PyObject *args)
   iw = (double*)PyArray_DATA(py_iw);
   iw_zero = (char*)PyArray_DATA(py_iw_zero);
   frequency_points = (double*)PyArray_DATA(py_frequency_points);
-  num_band0 = PyArray_DIMS(py_frequency_points)[0];
+  num_band0 = (long)PyArray_DIMS(py_frequency_points)[0];
   relative_grid_address = (int(*)[4][3])PyArray_DATA(py_relative_grid_address);
   mesh = (int*)PyArray_DATA(py_mesh);
-  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
-  num_triplets = PyArray_DIMS(py_triplets)[0];
+  triplets = (long(*)[3])PyArray_DATA(py_triplets);
+  num_triplets = (long)PyArray_DIMS(py_triplets)[0];
   bz_grid_address = (int(*)[3])PyArray_DATA(py_bz_grid_address);
-  bz_map = (size_t*)PyArray_DATA(py_bz_map);
+  bz_map = (long*)PyArray_DATA(py_bz_map);
   frequencies1 = (double*)PyArray_DATA(py_frequencies1);
   frequencies2 = (double*)PyArray_DATA(py_frequencies2);
-  num_band1 = PyArray_DIMS(py_frequencies1)[1];
-  num_band2 = PyArray_DIMS(py_frequencies2)[1];
+  num_band1 = (long)PyArray_DIMS(py_frequencies1)[1];
+  num_band2 = (long)PyArray_DIMS(py_frequencies2)[1];
 
   ph3py_get_integration_weight(iw,
                                iw_zero,
@@ -1733,9 +1733,9 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
   double *iw;
   char *iw_zero;
   double *frequency_points;
-  size_t (*triplets)[3];
+  long (*triplets)[3];
   double *frequencies;
-  npy_intp num_band0, num_band, num_iw, num_triplets;
+  long num_band0, num_band, num_iw, num_triplets;
 
   if (!PyArg_ParseTuple(args, "OOOOOdd",
                         &py_iw,
@@ -1751,12 +1751,12 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
   iw = (double*)PyArray_DATA(py_iw);
   iw_zero = (char*)PyArray_DATA(py_iw_zero);
   frequency_points = (double*)PyArray_DATA(py_frequency_points);
-  num_band0 = PyArray_DIMS(py_frequency_points)[0];
-  triplets = (size_t(*)[3])PyArray_DATA(py_triplets);
-  num_triplets = PyArray_DIMS(py_triplets)[0];
+  num_band0 = (long)PyArray_DIMS(py_frequency_points)[0];
+  triplets = (long(*)[3])PyArray_DATA(py_triplets);
+  num_triplets = (long)PyArray_DIMS(py_triplets)[0];
   frequencies = (double*)PyArray_DATA(py_frequencies);
-  num_band = PyArray_DIMS(py_frequencies)[1];
-  num_iw = PyArray_DIMS(py_iw)[0];
+  num_band = (long)PyArray_DIMS(py_frequencies)[1];
+  num_iw = (long)PyArray_DIMS(py_iw)[0];
 
   ph3py_get_integration_weight_with_sigma(iw,
                                           iw_zero,
@@ -1783,8 +1783,8 @@ py_diagonalize_collision_matrix(PyObject *self, PyObject *args)
 
   double *collision_matrix;
   double *eigvals;
-  npy_intp num_temp, num_grid_point, num_band;
-  size_t num_column, adrs_shift;
+  long num_temp, num_grid_point, num_band;
+  long num_column, adrs_shift;
   int info;
 
   if (!PyArg_ParseTuple(args, "OOiidii",
@@ -1803,11 +1803,11 @@ py_diagonalize_collision_matrix(PyObject *self, PyObject *args)
 
   if (PyArray_NDIM(py_collision_matrix) == 2) {
     num_temp = 1;
-    num_column = PyArray_DIM(py_collision_matrix, 1);
+    num_column = (long)PyArray_DIM(py_collision_matrix, 1);
   } else {
-    num_temp = PyArray_DIM(py_collision_matrix, 1);
-    num_grid_point = PyArray_DIM(py_collision_matrix, 2);
-    num_band = PyArray_DIM(py_collision_matrix, 3);
+    num_temp = (long)PyArray_DIM(py_collision_matrix, 1);
+    num_grid_point = (long)PyArray_DIM(py_collision_matrix, 2);
+    num_band = (long)PyArray_DIM(py_collision_matrix, 3);
     if (PyArray_NDIM(py_collision_matrix) == 8) {
       num_column = num_grid_point * num_band * 3;
     } else {
@@ -1838,8 +1838,8 @@ static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args)
 
   double *collision_matrix;
   double *eigvals;
-  npy_intp num_temp, num_grid_point, num_band;
-  size_t num_column, adrs_shift;
+  long num_temp, num_grid_point, num_band;
+  long num_column, adrs_shift;
 
   if (!PyArg_ParseTuple(args, "OOiidi",
                         &py_collision_matrix,
@@ -1853,9 +1853,9 @@ static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args)
 
   collision_matrix = (double*)PyArray_DATA(py_collision_matrix);
   eigvals = (double*)PyArray_DATA(py_eigenvalues);
-  num_temp = PyArray_DIMS(py_collision_matrix)[1];
-  num_grid_point = PyArray_DIMS(py_collision_matrix)[2];
-  num_band = PyArray_DIMS(py_collision_matrix)[3];
+  num_temp = (long)PyArray_DIMS(py_collision_matrix)[1];
+  num_grid_point = (long)PyArray_DIMS(py_collision_matrix)[2];
+  num_band = (long)PyArray_DIMS(py_collision_matrix)[3];
 
   if (PyArray_NDIM(py_collision_matrix) == 8) {
     num_column = num_grid_point * num_band * 3;
@@ -1889,14 +1889,14 @@ static PyObject * py_get_default_colmat_solver(PyObject *self, PyObject *args)
 
 static void pinv_from_eigensolution(double *data,
                                     const double *eigvals,
-                                    const size_t size,
+                                    const long size,
                                     const double cutoff,
                                     const int pinv_method)
 {
-  size_t i, ib, j, k, max_l, i_s, j_s;
+  long i, ib, j, k, max_l, i_s, j_s;
   double *tmp_data;
   double e, sum;
-  size_t *l;
+  long *l;
 
   l = NULL;
   tmp_data = NULL;
@@ -1908,7 +1908,7 @@ static void pinv_from_eigensolution(double *data,
     tmp_data[i] = data[i];
   }
 
-  l = (size_t*)malloc(sizeof(size_t) * size);
+  l = (long*)malloc(sizeof(long) * size);
   max_l = 0;
   for (i = 0; i < size; i++) {
     if (pinv_method == 0) {
@@ -1972,9 +1972,9 @@ static void pinv_from_eigensolution(double *data,
 }
 
 static void show_colmat_info(const PyArrayObject *py_collision_matrix,
-                             const size_t i_sigma,
-                             const size_t i_temp,
-                             const size_t adrs_shift)
+                             const long i_sigma,
+                             const long i_temp,
+                             const long adrs_shift)
 {
   int i;
 

@@ -42,26 +42,26 @@
 #include "triplet.h"
 
 static int ise_set_g_pos_frequency_point(int (*g_pos)[4],
-                                         const size_t num_band0,
-                                         const size_t num_band,
+                                         const long num_band0,
+                                         const long num_band,
                                          const char *g_zero);
 static void
 detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
                                      double *imag_self_energy,
-                                     const size_t num_band0,
-                                     const size_t num_band,
+                                     const long num_band0,
+                                     const long num_band,
                                      const double *fc3_normal_squared,
                                      const double *frequencies,
-                                     const size_t triplet[3],
+                                     const long triplet[3],
                                      const double *g1,
                                      const double *g2_3,
                                      const char *g_zero,
                                      const double *temperatures,
-                                     const size_t num_temps,
+                                     const long num_temps,
                                      const double cutoff_frequency);
 static double
 collect_detailed_imag_self_energy(double *imag_self_energy,
-                                  const size_t num_band,
+                                  const long num_band,
                                   const double *fc3_normal_squared,
                                   const double *n1,
                                   const double *n2,
@@ -70,7 +70,7 @@ collect_detailed_imag_self_energy(double *imag_self_energy,
                                   const char *g_zero);
 static double
 collect_detailed_imag_self_energy_0K(double *imag_self_energy,
-                                     const size_t num_band,
+                                     const long num_band,
                                      const double *fc3_normal_squared,
                                      const double *n1,
                                      const double *n2,
@@ -78,17 +78,17 @@ collect_detailed_imag_self_energy_0K(double *imag_self_energy,
                                      const char *g_zero);
 static void set_occupations(double *n1,
                             double *n2,
-                            const size_t num_band,
+                            const long num_band,
                             const double temperature,
-                            const size_t triplet[3],
+                            const long triplet[3],
                             const double *frequencies,
                             const double cutoff_frequency);
 
 void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
                                               const Darray *fc3_normal_squared,
                                               const double *frequencies,
-                                              const size_t (*triplets)[3],
-                                              const int *weights,
+                                              const long (*triplets)[3],
+                                              const long *triplet_weights,
                                               const double *g,
                                               const char *g_zero,
                                               const double temperature,
@@ -96,8 +96,8 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
                                               const int num_frequency_points,
                                               const int frequency_point_index)
 {
-  size_t i, j, num_triplets, num_band0, num_band, num_band_prod;
-  size_t num_g_pos, g_index_dims, g_index_shift;
+  long i, j, num_triplets, num_band0, num_band, num_band_prod;
+  long num_g_pos, g_index_dims, g_index_shift;
   int (*g_pos)[4];
   double *ise;
   int at_a_frequency_point;
@@ -150,7 +150,7 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
       fc3_normal_squared->data + i * num_band_prod,
       frequencies,
       triplets[i],
-      weights[i],
+      triplet_weights[i],
       g + i * g_index_dims + g_index_shift,
       g + (i + num_triplets) * g_index_dims + g_index_shift,
       g_pos,
@@ -185,8 +185,8 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
  double *imag_self_energy_U,
  const Darray *fc3_normal_squared,
  const double *frequencies,
- const size_t (*triplets)[3],
- const int *weights,
+ const long (*triplets)[3],
+ const long *triplet_weights,
  const int *grid_address,
  const double *g,
  const char *g_zero,
@@ -194,7 +194,7 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
  const double cutoff_frequency)
 {
   double *ise;
-  size_t i, j, num_triplets, num_band0, num_band, num_band_prod;
+  long i, j, num_triplets, num_band0, num_band, num_band_prod;
   int *is_N;
   double ise_tmp, N, U;
 
@@ -237,7 +237,7 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
     U = 0;
 /* #pragma omp parallel for private(ise_tmp) reduction(+:N,U) */
     for (j = 0; j < num_triplets; j++) {
-      ise_tmp = ise[j * num_band0 + i] * weights[j];
+      ise_tmp = ise[j * num_band0 + i] * triplet_weights[j];
       if (is_N[j]) {
         N += ise_tmp;
       } else {
@@ -255,23 +255,23 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
 }
 
 void ise_imag_self_energy_at_triplet(double *imag_self_energy,
-                                     const size_t num_band0,
-                                     const size_t num_band,
+                                     const long num_band0,
+                                     const long num_band,
                                      const double *fc3_normal_squared,
                                      const double *frequencies,
-                                     const size_t triplet[3],
-                                     const int triplet_weight,
+                                     const long triplet[3],
+                                     const long triplet_weight,
                                      const double *g1,
                                      const double *g2_3,
                                      PHPYCONST int (*g_pos)[4],
-                                     const size_t num_g_pos,
+                                     const long num_g_pos,
                                      const double *temperatures,
-                                     const size_t num_temps,
+                                     const long num_temps,
                                      const double cutoff_frequency,
                                      const int openmp_at_bands,
                                      const int at_a_frequency_point)
 {
-  size_t i, j;
+  long i, j;
   double *n1, *n2;
   int g_pos_3;
 
@@ -329,11 +329,11 @@ void ise_imag_self_energy_at_triplet(double *imag_self_energy,
 }
 
 int ise_set_g_pos(int (*g_pos)[4],
-                  const size_t num_band0,
-                  const size_t num_band,
+                  const long num_band0,
+                  const long num_band,
                   const char *g_zero)
 {
-  size_t num_g_pos, j, k, l, jkl;
+  long num_g_pos, j, k, l, jkl;
 
   num_g_pos = 0;
   jkl = 0;
@@ -355,11 +355,11 @@ int ise_set_g_pos(int (*g_pos)[4],
 }
 
 static int ise_set_g_pos_frequency_point(int (*g_pos)[4],
-                                         const size_t num_band0,
-                                         const size_t num_band,
+                                         const long num_band0,
+                                         const long num_band,
                                          const char *g_zero)
 {
-  size_t num_g_pos, j, k, l, kl, jkl;
+  long num_g_pos, j, k, l, kl, jkl;
 
   num_g_pos = 0;
   jkl = 0;
@@ -385,19 +385,19 @@ static int ise_set_g_pos_frequency_point(int (*g_pos)[4],
 static void
 detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
                                      double *imag_self_energy,
-                                     const size_t num_band0,
-                                     const size_t num_band,
+                                     const long num_band0,
+                                     const long num_band,
                                      const double *fc3_normal_squared,
                                      const double *frequencies,
-                                     const size_t triplet[3],
+                                     const long triplet[3],
                                      const double *g1,
                                      const double *g2_3,
                                      const char *g_zero,
                                      const double *temperatures,
-                                     const size_t num_temps,
+                                     const long num_temps,
                                      const double cutoff_frequency)
 {
-  size_t i, j, adrs_shift;
+  long i, j, adrs_shift;
   double *n1, *n2;
 
   n1 = NULL;
@@ -450,7 +450,7 @@ detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
 
 static double
 collect_detailed_imag_self_energy(double *imag_self_energy,
-                                  const size_t num_band,
+                                  const long num_band,
                                   const double *fc3_normal_squared,
                                   const double *n1,
                                   const double *n2,
@@ -458,7 +458,7 @@ collect_detailed_imag_self_energy(double *imag_self_energy,
                                   const double *g2_3,
                                   const char *g_zero)
 {
-  size_t ij, i, j;
+  long ij, i, j;
   double sum_g;
 
   sum_g = 0;
@@ -479,14 +479,14 @@ collect_detailed_imag_self_energy(double *imag_self_energy,
 
 static double
 collect_detailed_imag_self_energy_0K(double *imag_self_energy,
-                                     const size_t num_band,
+                                     const long num_band,
                                      const double *fc3_normal_squared,
                                      const double *n1,
                                      const double *n2,
                                      const double *g1,
                                      const char *g_zero)
 {
-  size_t ij, i, j;
+  long ij, i, j;
   double sum_g;
 
   sum_g = 0;
@@ -505,13 +505,13 @@ collect_detailed_imag_self_energy_0K(double *imag_self_energy,
 
 static void set_occupations(double *n1,
                             double *n2,
-                            const size_t num_band,
+                            const long num_band,
                             const double temperature,
-                            const size_t triplet[3],
+                            const long triplet[3],
                             const double *frequencies,
                             const double cutoff_frequency)
 {
-  size_t j;
+  long j;
   double f1, f2;
 
   for (j = 0; j < num_band; j++) {

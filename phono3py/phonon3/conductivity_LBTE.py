@@ -1023,7 +1023,7 @@ class Conductivity_LBTE(Conductivity):
                                              6), dtype='double')
             self._rot_grid_points = np.zeros(
                 (len(self._ir_grid_points), len(self._point_operations)),
-                dtype='uintp')
+                dtype='int_')
             for i, ir_gp in enumerate(self._ir_grid_points):
                 self._rot_grid_points[i] = get_grid_points_by_rotations(
                     self._grid_address[ir_gp],
@@ -1199,7 +1199,7 @@ class Conductivity_LBTE(Conductivity):
 
         num_mesh_points = np.prod(self._mesh)
         num_rot = len(self._point_operations)
-        rot_grid_points = np.zeros((num_rot, num_mesh_points), dtype='uintp')
+        rot_grid_points = np.zeros((num_rot, num_mesh_points), dtype='int_')
 
         for i in range(num_mesh_points):
             rot_grid_points[:, i] = get_grid_points_by_rotations(
@@ -1253,7 +1253,7 @@ class Conductivity_LBTE(Conductivity):
         """Returns weights used for collision matrix and |X> and |f>
 
         self._rot_grid_points : ndarray
-            shape=(ir_grid_points, point_operations), dtype='uintp'
+            shape=(ir_grid_points, point_operations), dtype='int_'
 
         r_gps : grid points of arms of k-star with duplicates
             len(r_gps) == order of crystallographic point group

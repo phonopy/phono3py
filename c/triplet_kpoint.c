@@ -172,38 +172,38 @@ static int bz_search_space[KPT_NUM_BZ_SEARCH_SPACE][3] = {
 };
 
 static void grid_point_to_address_double(int address_double[3],
-                                         const size_t grid_point,
+                                         const long grid_point,
                                          const int mesh[3],
                                          const int is_shift[3]);
-static size_t get_ir_triplets_at_q(size_t *map_triplets,
-                                   size_t *map_q,
-                                   int (*grid_address)[3],
-                                   const size_t grid_point,
-                                   const int mesh[3],
-                                   const MatINT * rot_reciprocal,
-                                   const int swappable);
-static size_t get_BZ_triplets_at_q(size_t (*triplets)[3],
-                                   const size_t grid_point,
-                                   TPLCONST int (*bz_grid_address)[3],
-                                   const size_t *bz_map,
-                                   const size_t *map_triplets,
-                                   const size_t num_map_triplets,
-                                   const int mesh[3]);
+static long get_ir_triplets_at_q(long *map_triplets,
+                                 long *map_q,
+                                 int (*grid_address)[3],
+                                 const long grid_point,
+                                 const int mesh[3],
+                                 const MatINT * rot_reciprocal,
+                                 const int swappable);
+static long get_BZ_triplets_at_q(long (*triplets)[3],
+                                 const long grid_point,
+                                 TPLCONST int (*bz_grid_address)[3],
+                                 const long *bz_map,
+                                 const long *map_triplets,
+                                 const long num_map_triplets,
+                                 const int mesh[3]);
 static int get_third_q_of_triplets_at_q(int bz_address[3][3],
                                         const int q_index,
-                                        const size_t *bz_map,
+                                        const long *bz_map,
                                         const int mesh[3],
                                         const int bzmesh[3]);
 static void modulo_i3(int v[3], const int m[3]);
 
-size_t tpk_get_ir_triplets_at_q(size_t *map_triplets,
-                                size_t *map_q,
-                                int (*grid_address)[3],
-                                const int grid_point,
-                                const int mesh[3],
-                                const int is_time_reversal,
-                                const MatINT * rotations,
-                                const int swappable)
+long tpk_get_ir_triplets_at_q(long *map_triplets,
+                              long *map_q,
+                              int (*grid_address)[3],
+                              const int grid_point,
+                              const int mesh[3],
+                              const int is_time_reversal,
+                              const MatINT * rotations,
+                              const int swappable)
 {
   int num_ir;
   MatINT *rot_reciprocal;
@@ -220,13 +220,13 @@ size_t tpk_get_ir_triplets_at_q(size_t *map_triplets,
   return num_ir;
 }
 
-size_t tpk_get_BZ_triplets_at_q(size_t (*triplets)[3],
-                                const size_t grid_point,
-                                TPLCONST int (*bz_grid_address)[3],
-                                const size_t *bz_map,
-                                const size_t *map_triplets,
-                                const size_t num_map_triplets,
-                                const int mesh[3])
+long tpk_get_BZ_triplets_at_q(long (*triplets)[3],
+                              const long grid_point,
+                              TPLCONST int (*bz_grid_address)[3],
+                              const long *bz_map,
+                              const long *map_triplets,
+                              const long num_map_triplets,
+                              const int mesh[3])
 {
   return get_BZ_triplets_at_q(triplets,
                               grid_point,
@@ -237,18 +237,18 @@ size_t tpk_get_BZ_triplets_at_q(size_t (*triplets)[3],
                               mesh);
 }
 
-static size_t get_ir_triplets_at_q(size_t *map_triplets,
-                                   size_t *map_q,
-                                   int (*grid_address)[3],
-                                   const size_t grid_point,
-                                   const int mesh[3],
-                                   const MatINT * rot_reciprocal,
-                                   const int swappable)
+static long get_ir_triplets_at_q(long *map_triplets,
+                                 long *map_q,
+                                 int (*grid_address)[3],
+                                 const long grid_point,
+                                 const int mesh[3],
+                                 const MatINT * rot_reciprocal,
+                                 const int swappable)
 {
-  size_t i, j, num_grid, q_2, num_ir_q, num_ir_triplets, ir_grid_point;
+  long i, j, num_grid, q_2, num_ir_q, num_ir_triplets, ir_grid_point;
   int mesh_double[3], is_shift[3];
   int address_double0[3], address_double1[3], address_double2[3];
-  size_t *ir_grid_points, *third_q;
+  long *ir_grid_points, *third_q;
   double tolerance;
   double stabilizer_q[1][3];
   MatINT *rot_reciprocal_q;
@@ -258,7 +258,7 @@ static size_t get_ir_triplets_at_q(size_t *map_triplets,
   rot_reciprocal_q = NULL;
 
   tolerance = 0.01 / (mesh[0] + mesh[1] + mesh[2]);
-  num_grid = mesh[0] * mesh[1] * (size_t)mesh[2];
+  num_grid = mesh[0] * mesh[1] * (long)mesh[2];
 
   for (i = 0; i < 3; i++) {
     /* Only consider the gamma-point */
@@ -286,8 +286,8 @@ static size_t get_ir_triplets_at_q(size_t *map_triplets,
   mat_free_MatINT(rot_reciprocal_q);
   rot_reciprocal_q = NULL;
 
-  third_q = (size_t*) malloc(sizeof(size_t) * num_ir_q);
-  ir_grid_points = (size_t*) malloc(sizeof(size_t) * num_ir_q);
+  third_q = (long*) malloc(sizeof(long) * num_ir_q);
+  ir_grid_points = (long*) malloc(sizeof(long) * num_ir_q);
   num_ir_q = 0;
   for (i = 0; i < num_grid; i++) {
     if (map_q[i] == i) {
@@ -346,18 +346,18 @@ static size_t get_ir_triplets_at_q(size_t *map_triplets,
   return num_ir_triplets;
 }
 
-static size_t get_BZ_triplets_at_q(size_t (*triplets)[3],
-                                   const size_t grid_point,
-                                   TPLCONST int (*bz_grid_address)[3],
-                                   const size_t *bz_map,
-                                   const size_t *map_triplets,
-                                   const size_t num_map_triplets,
-                                   const int mesh[3])
+static long get_BZ_triplets_at_q(long (*triplets)[3],
+                                 const long grid_point,
+                                 TPLCONST int (*bz_grid_address)[3],
+                                 const long *bz_map,
+                                 const long *map_triplets,
+                                 const long num_map_triplets,
+                                 const int mesh[3])
 {
-  size_t i, num_ir;
+  long i, num_ir;
   int j, k;
   int bz_address[3][3], bz_address_double[3], bzmesh[3];
-  size_t *ir_grid_points;
+  long *ir_grid_points;
 
   ir_grid_points = NULL;
 
@@ -366,7 +366,7 @@ static size_t get_BZ_triplets_at_q(size_t (*triplets)[3],
   }
 
   num_ir = 0;
-  ir_grid_points = (size_t*) malloc(sizeof(size_t) * num_map_triplets);
+  ir_grid_points = (long*) malloc(sizeof(long) * num_map_triplets);
   for (i = 0; i < num_map_triplets; i++) {
     if (map_triplets[i] == i) {
       ir_grid_points[num_ir] = i;
@@ -407,16 +407,16 @@ static size_t get_BZ_triplets_at_q(size_t (*triplets)[3],
 
 static int get_third_q_of_triplets_at_q(int bz_address[3][3],
                                         const int q_index,
-                                        const size_t *bz_map,
+                                        const long *bz_map,
                                         const int mesh[3],
                                         const int bzmesh[3])
 {
   int i, j, smallest_g, smallest_index, sum_g, delta_g[3];
-  size_t prod_bzmesh;
-  size_t bzgp[KPT_NUM_BZ_SEARCH_SPACE];
+  long prod_bzmesh;
+  long bzgp[KPT_NUM_BZ_SEARCH_SPACE];
   int bz_address_double[3];
 
-  prod_bzmesh = (size_t)bzmesh[0] * bzmesh[1] * bzmesh[2];
+  prod_bzmesh = (long)bzmesh[0] * bzmesh[1] * bzmesh[2];
 
   modulo_i3(bz_address[q_index], mesh);
   for (i = 0; i < 3; i++) {
@@ -442,7 +442,7 @@ static int get_third_q_of_triplets_at_q(int bz_address[3][3],
     }
   }
 
- escape:
+escape:
 
   smallest_g = 4;
   smallest_index = 0;
@@ -467,7 +467,7 @@ static int get_third_q_of_triplets_at_q(int bz_address[3][3],
 }
 
 static void grid_point_to_address_double(int address_double[3],
-                                         const size_t grid_point,
+                                         const long grid_point,
                                          const int mesh[3],
                                          const int is_shift[3])
 {

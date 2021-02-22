@@ -45,15 +45,19 @@
 #include "fc3.h"
 #include "tetrahedron_method.h"
 #include "triplet.h"
+#include "triplet_iw.h"
+
+#include "kgrid.h"
 
 #include <stdio.h>
+
 
 void ph3py_get_interaction(Darray *fc3_normal_squared,
                            const char *g_zero,
                            const Darray *frequencies,
                            const lapack_complex_double *eigenvectors,
-                           const size_t (*triplets)[3],
-                           const size_t num_triplets,
+                           const long (*triplets)[3],
+                           const long num_triplets,
                            const int *grid_address,
                            const int *mesh,
                            const double *fc3,
@@ -94,11 +98,11 @@ void ph3py_get_pp_collision(double *imag_self_energy,
                             PHPYCONST int relative_grid_address[24][4][3], /* thm */
                             const double *frequencies,
                             const lapack_complex_double *eigenvectors,
-                            const size_t (*triplets)[3],
-                            const size_t num_triplets,
-                            const int *triplet_weights,
+                            const long (*triplets)[3],
+                            const long num_triplets,
+                            const long *triplet_weights,
                             const int *grid_address, /* thm */
-                            const size_t *bz_map, /* thm */
+                            const long *bz_map, /* thm */
                             const int *mesh, /* thm */
                             const double *fc3,
                             const int is_compact_fc3,
@@ -146,9 +150,9 @@ void ph3py_get_pp_collision_with_sigma(
   const double sigma_cutoff,
   const double *frequencies,
   const lapack_complex_double *eigenvectors,
-  const size_t (*triplets)[3],
-  const size_t num_triplets,
-  const int *triplet_weights,
+  const long (*triplets)[3],
+  const long num_triplets,
+  const long *triplet_weights,
   const int *grid_address,
   const int *mesh,
   const double *fc3,
@@ -195,8 +199,8 @@ void ph3py_get_imag_self_energy_at_bands_with_g(
   double *imag_self_energy,
   const Darray *fc3_normal_squared,
   const double *frequencies,
-  const size_t (*triplets)[3],
-  const int *triplet_weights,
+  const long (*triplets)[3],
+  const long *triplet_weights,
   const double *g,
   const char *g_zero,
   const double temperature,
@@ -224,8 +228,8 @@ void ph3py_get_detailed_imag_self_energy_at_bands_with_g(
   double *imag_self_energy_U,
   const Darray *fc3_normal_squared,
   const double *frequencies,
-  const size_t (*triplets)[3],
-  const int *triplet_weights,
+  const long (*triplets)[3],
+  const long *triplet_weights,
   const int *grid_address,
   const double *g,
   const char *g_zero,
@@ -251,8 +255,8 @@ void ph3py_get_real_self_energy_at_bands(double *real_self_energy,
                                          const Darray *fc3_normal_squared,
                                          const int *band_indices,
                                          const double *frequencies,
-                                         const size_t (*triplets)[3],
-                                         const int *triplet_weights,
+                                         const long (*triplets)[3],
+                                         const long *triplet_weights,
                                          const double epsilon,
                                          const double temperature,
                                          const double unit_conversion_factor,
@@ -277,8 +281,8 @@ void ph3py_get_real_self_energy_at_frequency_point(
   const Darray *fc3_normal_squared,
   const int *band_indices,
   const double *frequencies,
-  const size_t (*triplets)[3],
-  const int *triplet_weights,
+  const long (*triplets)[3],
+  const long *triplet_weights,
   const double epsilon,
   const double temperature,
   const double unit_conversion_factor,
@@ -301,15 +305,15 @@ void ph3py_get_real_self_energy_at_frequency_point(
 void ph3py_get_collision_matrix(double *collision_matrix,
                                 const Darray *fc3_normal_squared,
                                 const double *frequencies,
-                                const size_t (*triplets)[3],
-                                const size_t *triplets_map,
-                                const size_t *map_q,
-                                const size_t *rotated_grid_points,
+                                const long (*triplets)[3],
+                                const long *triplets_map,
+                                const long *map_q,
+                                const long *rotated_grid_points,
                                 const double *rotations_cartesian,
                                 const double *g,
-                                const size_t num_ir_gp,
-                                const size_t num_gp,
-                                const size_t num_rot,
+                                const long num_ir_gp,
+                                const long num_gp,
+                                const long num_rot,
                                 const double temperature,
                                 const double unit_conversion_factor,
                                 const double cutoff_frequency)
@@ -335,11 +339,11 @@ void ph3py_get_collision_matrix(double *collision_matrix,
 void ph3py_get_reducible_collision_matrix(double *collision_matrix,
                                           const Darray *fc3_normal_squared,
                                           const double *frequencies,
-                                          const size_t (*triplets)[3],
-                                          const size_t *triplets_map,
-                                          const size_t *map_q,
+                                          const long (*triplets)[3],
+                                          const long *triplets_map,
+                                          const long *map_q,
                                           const double *g,
-                                          const size_t num_gp,
+                                          const long num_gp,
                                           const double temperature,
                                           const double unit_conversion_factor,
                                           const double cutoff_frequency)
@@ -360,14 +364,14 @@ void ph3py_get_reducible_collision_matrix(double *collision_matrix,
 
 void ph3py_get_isotope_scattering_strength(
   double *gamma,
-  const size_t grid_point,
+  const long grid_point,
   const double *mass_variances,
   const double *frequencies,
   const lapack_complex_double *eigenvectors,
-  const size_t num_grid_points,
+  const long num_grid_points,
   const int *band_indices,
-  const size_t num_band,
-  const size_t num_band0,
+  const long num_band,
+  const long num_band0,
   const double sigma,
   const double cutoff_frequency)
 {
@@ -387,16 +391,16 @@ void ph3py_get_isotope_scattering_strength(
 
 void ph3py_get_thm_isotope_scattering_strength
 (double *gamma,
- const size_t grid_point,
- const size_t *ir_grid_points,
- const int *weights,
+ const long grid_point,
+ const long *ir_grid_points,
+ const long *weights,
  const double *mass_variances,
  const double *frequencies,
  const lapack_complex_double *eigenvectors,
- const size_t num_ir_grid_points,
+ const long num_ir_grid_points,
  const int *band_indices,
- const size_t num_band,
- const size_t num_band0,
+ const long num_band,
+ const long num_band0,
  const double *integration_weights,
  const double cutoff_frequency)
 {
@@ -419,7 +423,7 @@ void ph3py_distribute_fc3(double *fc3,
                           const int target,
                           const int source,
                           const int *atom_mapping,
-                          const size_t num_atom,
+                          const long num_atom,
                           const double *rot_cart)
 {
   fc3_distribute_fc3(fc3,
@@ -436,9 +440,9 @@ void ph3py_rotate_delta_fc2(double (*fc3)[3][3][3],
                             const double *inv_U,
                             PHPYCONST double (*site_sym_cart)[3][3],
                             const int *rot_map_syms,
-                            const size_t num_atom,
-                            const size_t num_site_sym,
-                            const size_t num_disp)
+                            const long num_atom,
+                            const long num_site_sym,
+                            const long num_disp)
 {
   fc3_rotate_delta_fc2(fc3,
                        delta_fc2s,
@@ -451,7 +455,7 @@ void ph3py_rotate_delta_fc2(double (*fc3)[3][3][3],
 }
 
 
-void ph3py_set_permutation_symmetry_fc3(double *fc3, const size_t num_atom)
+void ph3py_set_permutation_symmetry_fc3(double *fc3, const long num_atom)
 {
   fc3_set_permutation_symmetry_fc3(fc3, num_atom);
 }
@@ -462,8 +466,8 @@ void ph3py_set_permutation_symmetry_compact_fc3(double * fc3,
                                                 const int s2pp[],
                                                 const int nsym_list[],
                                                 const int perms[],
-                                                const size_t n_satom,
-                                                const size_t n_patom)
+                                                const long n_satom,
+                                                const long n_patom)
 {
   fc3_set_permutation_symmetry_compact_fc3(fc3,
                                            p2s,
@@ -479,8 +483,8 @@ void ph3py_transpose_compact_fc3(double * fc3,
                                  const int s2pp[],
                                  const int nsym_list[],
                                  const int perms[],
-                                 const size_t n_satom,
-                                 const size_t n_patom,
+                                 const long n_satom,
+                                 const long n_patom,
                                  const int t_type)
 {
   fc3_transpose_compact_fc3(fc3,
@@ -494,15 +498,15 @@ void ph3py_transpose_compact_fc3(double * fc3,
 }
 
 
-size_t ph3py_get_triplets_reciprocal_mesh_at_q(size_t *map_triplets,
-                                               size_t *map_q,
-                                               int (*grid_address)[3],
-                                               const size_t grid_point,
-                                               const int mesh[3],
-                                               const int is_time_reversal,
-                                               const int num_rot,
-                                               PHPYCONST int (*rotations)[3][3],
-                                               const int swappable)
+long ph3py_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
+                                             long *map_q,
+                                             int (*grid_address)[3],
+                                             const long grid_point,
+                                             const int mesh[3],
+                                             const int is_time_reversal,
+                                             const long num_rot,
+                                             PHPYCONST int (*rotations)[3][3],
+                                             const int swappable)
 {
   return tpl_get_triplets_reciprocal_mesh_at_q(map_triplets,
                                                map_q,
@@ -516,13 +520,13 @@ size_t ph3py_get_triplets_reciprocal_mesh_at_q(size_t *map_triplets,
 }
 
 
-size_t ph3py_get_BZ_triplets_at_q(size_t (*triplets)[3],
-                                  const size_t grid_point,
-                                  PHPYCONST int (*bz_grid_address)[3],
-                                  const size_t *bz_map,
-                                  const size_t *map_triplets,
-                                  const size_t num_map_triplets,
-                                  const int mesh[3])
+long ph3py_get_BZ_triplets_at_q(long (*triplets)[3],
+                                const long grid_point,
+                                PHPYCONST int (*bz_grid_address)[3],
+                                const long *bz_map,
+                                const long *map_triplets,
+                                const long num_map_triplets,
+                                const int mesh[3])
 {
   return tpl_get_BZ_triplets_at_q(triplets,
                                   grid_point,
@@ -537,18 +541,18 @@ size_t ph3py_get_BZ_triplets_at_q(size_t (*triplets)[3],
 void ph3py_get_integration_weight(double *iw,
                                   char *iw_zero,
                                   const double *frequency_points,
-                                  const size_t num_band0,
+                                  const long num_band0,
                                   PHPYCONST int relative_grid_address[24][4][3],
                                   const int mesh[3],
-                                  PHPYCONST size_t (*triplets)[3],
-                                  const size_t num_triplets,
+                                  PHPYCONST long (*triplets)[3],
+                                  const long num_triplets,
                                   PHPYCONST int (*bz_grid_address)[3],
-                                  const size_t *bz_map,
+                                  const long *bz_map,
                                   const double *frequencies1,
-                                  const size_t num_band1,
+                                  const long num_band1,
                                   const double *frequencies2,
-                                  const size_t num_band2,
-                                  const size_t tp_type,
+                                  const long num_band2,
+                                  const long tp_type,
                                   const int openmp_per_triplets,
                                   const int openmp_per_bands)
 {
@@ -577,12 +581,12 @@ void ph3py_get_integration_weight_with_sigma(double *iw,
                                              const double sigma,
                                              const double sigma_cutoff,
                                              const double *frequency_points,
-                                             const size_t num_band0,
-                                             PHPYCONST size_t (*triplets)[3],
-                                             const size_t num_triplets,
+                                             const long num_band0,
+                                             PHPYCONST long (*triplets)[3],
+                                             const long num_triplets,
                                              const double *frequencies,
-                                             const size_t num_band,
-                                             const size_t tp_type)
+                                             const long num_band,
+                                             const long tp_type)
 {
   tpl_get_integration_weight_with_sigma(iw,
                                         iw_zero,
@@ -625,8 +629,8 @@ void ph3py_symmetrize_collision_matrix(double *collision_matrix,
 
 
 void ph3py_expand_collision_matrix(double *collision_matrix,
-                                   const size_t *rot_grid_points,
-                                   const size_t *ir_grid_points,
+                                   const long *rot_grid_points,
+                                   const long *ir_grid_points,
                                    const long num_ir_gp,
                                    const long num_grid_points,
                                    const long num_rot,
@@ -694,12 +698,12 @@ void ph3py_expand_collision_matrix(double *collision_matrix,
 }
 
 
-void ph3py_get_neighboring_gird_points(size_t *relative_grid_points,
-                                       const size_t *grid_points,
+void ph3py_get_neighboring_gird_points(long *relative_grid_points,
+                                       const long *grid_points,
                                        PHPYCONST int (*relative_grid_address)[3],
                                        const int mesh[3],
                                        PHPYCONST int (*bz_grid_address)[3],
-                                       const size_t *bz_map,
+                                       const long *bz_map,
                                        const long num_grid_points,
                                        const long num_relative_grid_address)
 {
@@ -707,7 +711,7 @@ void ph3py_get_neighboring_gird_points(size_t *relative_grid_points,
 
 #pragma omp parallel for
   for (i = 0; i < num_grid_points; i++) {
-    thm_get_dense_neighboring_grid_points
+    tpi_get_dense_neighboring_grid_points
       (relative_grid_points + i * num_relative_grid_address,
        grid_points[i],
        relative_grid_address,
@@ -726,19 +730,19 @@ void ph3py_set_integration_weights(double *iw,
                                    const long num_gp,
                                    PHPYCONST int (*relative_grid_address)[4][3],
                                    const int mesh[3],
-                                   const size_t *grid_points,
+                                   const long *grid_points,
                                    PHPYCONST int (*bz_grid_address)[3],
-                                   const size_t *bz_map,
+                                   const long *bz_map,
                                    const double *frequencies)
 {
   long i, j, k, bi;
-  size_t vertices[24][4];
+  long vertices[24][4];
   double freq_vertices[24][4];
 
 #pragma omp parallel for private(j, k, bi, vertices, freq_vertices)
   for (i = 0; i < num_gp; i++) {
     for (j = 0; j < 24; j++) {
-      thm_get_dense_neighboring_grid_points(vertices[j],
+      tpi_get_dense_neighboring_grid_points(vertices[j],
                                             grid_points[i],
                                             relative_grid_address[j],
                                             4,

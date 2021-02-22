@@ -75,8 +75,8 @@ def run_phonon_solver_c(dm,
         Lambda = 0
         fc = dm.force_constants
 
-    # assert grid_points.dtype == 'int_'
-    # assert grid_points.flags.c_contiguous
+    assert grid_points.dtype == 'int_'
+    assert grid_points.flags.c_contiguous
 
     fc_p2s, fc_s2p = _get_fc_elements_mapping(dm, fc)
     phononmod.phonons_at_gridpoints(

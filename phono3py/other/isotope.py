@@ -103,7 +103,7 @@ class Isotope(object):
 
     def set_grid_point(self, grid_point):
         self._grid_point = grid_point
-        self._grid_points = np.arange(np.prod(self._mesh), dtype='uintp')
+        self._grid_points = np.arange(np.prod(self._mesh), dtype='int_')
 
         if self._grid_address is None:
             primitive_lattice = np.linalg.inv(self._primitive.cell)
@@ -208,7 +208,7 @@ class Isotope(object):
         gamma = np.zeros(len(self._band_indices), dtype='double')
         if self._sigma is None:
             self._set_integration_weights()
-            weights = np.ones(len(self._grid_points), dtype='intc')
+            weights = np.ones(len(self._grid_points), dtype='int_')
             phono3c.thm_isotope_strength(gamma,
                                          self._grid_point,
                                          self._grid_points,
@@ -246,7 +246,7 @@ class Isotope(object):
         import phono3py._phono3py as phono3c
         unique_vertices = thm.get_unique_tetrahedra_vertices()
         neighboring_grid_points = np.zeros(
-            len(unique_vertices) * len(self._grid_points), dtype='uintp')
+            len(unique_vertices) * len(self._grid_points), dtype='int_')
         phono3c.neighboring_grid_points(
             neighboring_grid_points,
             self._grid_points,
@@ -255,7 +255,7 @@ class Isotope(object):
             self._grid_address,
             self._bz_map)
         unique_grid_points = np.array(np.unique(neighboring_grid_points),
-                                      dtype='uintp')
+                                      dtype='int_')
         self._run_phonon_solver_c(unique_grid_points)
         freq_points = np.array(
             self._frequencies[self._grid_point, self._band_indices],

@@ -109,7 +109,7 @@ class JointDos(object):
 
     def run(self):
         self.run_phonon_solver(
-            np.arange(len(self._grid_address), dtype='uintp'))
+            np.arange(len(self._grid_address), dtype='int_'))
         try:
             import phono3py._phono3py as phono3c
             self._run_c()
@@ -189,7 +189,7 @@ class JointDos(object):
         self._joint_dos = None
         self._frequency_points = None
         self._phonon_done[0] = 0
-        self.run_phonon_solver(np.array([grid_point], dtype='uintp'))
+        self.run_phonon_solver(np.array([grid_point], dtype='int_'))
 
     def get_triplets_at_q(self):
         return self._triplets_at_q, self._weights_at_q

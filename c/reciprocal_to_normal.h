@@ -42,7 +42,7 @@
 void reciprocal_to_normal_squared
 (double *fc3_normal_squared,
  PHPYCONST int (*g_pos)[4],
- const size_t num_g_pos,
+ const long num_g_pos,
  const lapack_complex_double *fc3_reciprocal,
  const double *freqs0,
  const double *freqs1,
@@ -52,8 +52,8 @@ void reciprocal_to_normal_squared
  const lapack_complex_double *eigvecs2,
  const double *masses,
  const int *band_indices,
- const size_t num_band0,
- const size_t num_band,
+ const long num_band0,
+ const long num_band,
  const double cutoff_frequency,
  const int openmp_at_bands);
 
