@@ -70,7 +70,7 @@ class JointDos(object):
                  lapack_zheev_uplo='L'):
 
         self._grid_point = None
-        self._mesh = np.array(mesh, dtype='intc')
+        self._mesh = np.array(mesh, dtype='int_')
         self._primitive = primitive
         self._supercell = supercell
         self._fc2 = fc2

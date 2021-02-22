@@ -546,13 +546,17 @@ def show_drift_fc3(fc3,
     else:
         try:
             import phono3py._phono3py as phono3c
-            s2p_map = primitive.get_supercell_to_primitive_map()
-            p2s_map = primitive.get_primitive_to_supercell_map()
-            p2p_map = primitive.get_primitive_to_primitive_map()
+            s2p_map = primitive.s2p_map
+            p2s_map = primitive.p2s_map
+            p2p_map = primitive.p2p_map
             permutations = primitive.get_atomic_permutations()
             s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map,
                                                          p2p_map,
                                                          permutations)
+            permutations = np.array(permutations, dtype='int_', order='C')
+            s2pp_map = np.array(s2pp_map, dtype='int_')
+            p2s_map = np.array(p2s_map, dtype='int_')
+            nsym_list = np.array(nsym_list, dtype='int_')
             num_patom = fc3.shape[0]
             num_satom = fc3.shape[1]
             maxval1 = 0
