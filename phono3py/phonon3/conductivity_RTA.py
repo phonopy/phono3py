@@ -158,8 +158,8 @@ def _write_gamma_detail(br, interaction, i, compression="gzip", filename=None,
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()
     triplets, weights, map_triplets, _ = interaction.get_triplets_at_q()
-    grid_address = interaction.get_grid_address()
-    bz_map = interaction.get_bz_map()
+    grid_address = interaction.grid_address
+    bz_map = interaction.bz_map
     if map_triplets is None:
         all_triplets = None
     else:
@@ -832,7 +832,7 @@ class Conductivity_RTA(Conductivity):
             if sigma is None:
                 phono3c.pp_collision(
                     collisions,
-                    np.array(thm.get_tetrahedra(), dtype='intc', order='C'),
+                    thm.get_tetrahedra(),
                     self._frequencies,
                     self._eigenvectors,
                     triplets_at_q,

@@ -68,7 +68,7 @@ class Isotope(object):
                  symprec=1e-5,
                  cutoff_frequency=None,
                  lapack_zheev_uplo='L'):
-        self._mesh = np.array(mesh, dtype='intc')
+        self._mesh = np.array(mesh, dtype='int_')
 
         if mass_variances is None:
             self._mass_variances = get_mass_variances(primitive)
@@ -97,9 +97,9 @@ class Isotope(object):
 
         num_band = len(self._primitive) * 3
         if band_indices is None:
-            self._band_indices = np.arange(num_band, dtype='intc')
+            self._band_indices = np.arange(num_band, dtype='int_')
         else:
-            self._band_indices = np.array(band_indices, dtype='intc')
+            self._band_indices = np.array(band_indices, dtype='int_')
 
     def set_grid_point(self, grid_point):
         self._grid_point = grid_point
@@ -263,7 +263,7 @@ class Isotope(object):
         phono3c.integration_weights(
             self._integration_weights,
             freq_points,
-            np.array(thm.get_tetrahedra(), dtype='intc', order='C'),
+            thm.get_tetrahedra(),
             self._mesh,
             self._grid_points,
             self._frequencies,

@@ -37,7 +37,7 @@
 #include <stddef.h>
 #include "mathfunc.h"
 #include "kpoint.h"
-#include "kgrid.h"
+#include "rgrid.h"
 
 #ifdef KPTWARNING
 #include <stdio.h>
@@ -46,39 +46,51 @@
 #define warning_print(...)
 #endif
 
-static MatINT *get_point_group_reciprocal(const MatINT * rotations,
-                                          const int is_time_reversal);
-static MatINT *get_point_group_reciprocal_with_q(const MatINT * rot_reciprocal,
-                                                 const double symprec,
-                                                 const long num_q,
-                                                 SPGCONST double qpoints[][3]);
-static long get_dense_ir_reciprocal_mesh(int grid_address[][3],
+static MatLONG *get_point_group_reciprocal(const MatLONG * rotations,
+                                           const long is_time_reversal);
+static MatLONG *get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
+                                                  const double symprec,
+                                                  const long num_q,
+                                                  KPTCONST double qpoints[][3]);
+static long get_dense_ir_reciprocal_mesh(long grid_address[][3],
                                          long ir_mapping_table[],
-                                         const int mesh[3],
-                                         const int is_shift[3],
-                                         const MatINT *rot_reciprocal);
-static long get_dense_ir_reciprocal_mesh_normal(int grid_address[][3],
+                                         const long mesh[3],
+                                         const long is_shift[3],
+                                         const MatLONG *rot_reciprocal);
+static long get_dense_ir_reciprocal_mesh_normal(long grid_address[][3],
                                                 long ir_mapping_table[],
-                                                const int mesh[3],
-                                                const int is_shift[3],
-                                                const MatINT *rot_reciprocal);
-static long get_dense_ir_reciprocal_mesh_distortion(int grid_address[][3],
+                                                const long mesh[3],
+                                                const long is_shift[3],
+                                                const MatLONG *rot_reciprocal);
+static long get_dense_ir_reciprocal_mesh_distortion(long grid_address[][3],
                                                     long ir_mapping_table[],
-                                                    const int mesh[3],
-                                                    const int is_shift[3],
-                                                    const MatINT *rot_reciprocal);
-static long get_dense_num_ir(long ir_mapping_table[], const int mesh[3]);
-static int check_mesh_symmetry(const int mesh[3],
-                               const int is_shift[3],
-                               const MatINT *rot_reciprocal);
+                                                    const long mesh[3],
+                                                    const long is_shift[3],
+                                                    const MatLONG *rot_reciprocal);
+static long get_dense_num_ir(long ir_mapping_table[], const long mesh[3]);
+static long check_mesh_symmetry(const long mesh[3],
+                                const long is_shift[3],
+                                const MatLONG *rot_reciprocal);
+static long Nint(const double a);
+static double Dabs(const double a);
+static void transpose_matrix_l3(long a[3][3], KPTCONST long b[3][3]);
+static void multiply_matrix_l3(long m[3][3],
+                               KPTCONST long a[3][3], KPTCONST long b[3][3]);
+static long check_identity_matrix_l3(KPTCONST long a[3][3],
+                                     KPTCONST long b[3][3]);
+static void multiply_matrix_vector_ld3(double v[3],
+                                       KPTCONST long a[3][3],
+                                       const double b[3]);
+static void multiply_matrix_vector_l3(long v[3],
+                                      KPTCONST long a[3][3],
+                                      const long b[3]);
 
 
-
-long kpt_get_dense_irreducible_reciprocal_mesh(int grid_address[][3],
+long kpt_get_dense_irreducible_reciprocal_mesh(long grid_address[][3],
                                                long ir_mapping_table[],
-                                               const int mesh[3],
-                                               const int is_shift[3],
-                                               const MatINT *rot_reciprocal)
+                                               const long mesh[3],
+                                               const long is_shift[3],
+                                               const MatLONG *rot_reciprocal)
 {
   long num_ir;
 
@@ -91,16 +103,16 @@ long kpt_get_dense_irreducible_reciprocal_mesh(int grid_address[][3],
   return num_ir;
 }
 
-MatINT *kpt_get_point_group_reciprocal(const MatINT * rotations,
-                                       const int is_time_reversal)
+MatLONG *kpt_get_point_group_reciprocal(const MatLONG * rotations,
+                                        const long is_time_reversal)
 {
   return get_point_group_reciprocal(rotations, is_time_reversal);
 }
 
-MatINT *kpt_get_point_group_reciprocal_with_q(const MatINT * rot_reciprocal,
-                                              const double symprec,
-                                              const long num_q,
-                                              SPGCONST double qpoints[][3])
+MatLONG *kpt_get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
+                                               const double symprec,
+                                               const long num_q,
+                                               KPTCONST double qpoints[][3])
 {
   return get_point_group_reciprocal_with_q(rot_reciprocal,
                                            symprec,
@@ -108,14 +120,62 @@ MatINT *kpt_get_point_group_reciprocal_with_q(const MatINT * rot_reciprocal,
                                            qpoints);
 }
 
-/* Return NULL if failed */
-static MatINT *get_point_group_reciprocal(const MatINT * rotations,
-                                          const int is_time_reversal)
+void kpt_copy_matrix_l3(long a[3][3], KPTCONST long b[3][3])
 {
-  int i, j, num_rot;
-  MatINT *rot_reciprocal, *rot_return;
-  int *unique_rot;
-  SPGCONST int inversion[3][3] = {
+  a[0][0] = b[0][0];
+  a[0][1] = b[0][1];
+  a[0][2] = b[0][2];
+  a[1][0] = b[1][0];
+  a[1][1] = b[1][1];
+  a[1][2] = b[1][2];
+  a[2][0] = b[2][0];
+  a[2][1] = b[2][1];
+  a[2][2] = b[2][2];
+}
+
+MatLONG * kpt_alloc_MatLONG(const long size)
+{
+  MatLONG *matlong;
+
+  matlong = NULL;
+
+  if ((matlong = (MatLONG*) malloc(sizeof(MatLONG))) == NULL) {
+    warning_print("spglib: Memory could not be allocated.");
+    return NULL;
+  }
+
+  matlong->size = size;
+  if (size > 0) {
+    if ((matlong->mat = (long (*)[3][3]) malloc(sizeof(long[3][3]) * size))
+        == NULL) {
+      warning_print("spglib: Memory could not be allocated ");
+      warning_print("(MatLONG, line %d, %s).\n", __LINE__, __FILE__);
+      free(matlong);
+      matlong = NULL;
+      return NULL;
+    }
+  }
+  return matlong;
+}
+
+void kpt_free_MatLONG(MatLONG * matlong)
+{
+  if (matlong->size > 0) {
+    free(matlong->mat);
+    matlong->mat = NULL;
+  }
+  free(matlong);
+}
+
+
+/* Return NULL if failed */
+static MatLONG *get_point_group_reciprocal(const MatLONG * rotations,
+                                           const long is_time_reversal)
+{
+  long i, j, num_rot;
+  MatLONG *rot_reciprocal, *rot_return;
+  long *unique_rot;
+  KPTCONST long inversion[3][3] = {
     {-1, 0, 0 },
     { 0,-1, 0 },
     { 0, 0,-1 }
@@ -126,18 +186,18 @@ static MatINT *get_point_group_reciprocal(const MatINT * rotations,
   unique_rot = NULL;
 
   if (is_time_reversal) {
-    if ((rot_reciprocal = mat_alloc_MatINT(rotations->size * 2)) == NULL) {
+    if ((rot_reciprocal = kpt_alloc_MatLONG(rotations->size * 2)) == NULL) {
       return NULL;
     }
   } else {
-    if ((rot_reciprocal = mat_alloc_MatINT(rotations->size)) == NULL) {
+    if ((rot_reciprocal = kpt_alloc_MatLONG(rotations->size)) == NULL) {
       return NULL;
     }
   }
 
-  if ((unique_rot = (int*)malloc(sizeof(int) * rot_reciprocal->size)) == NULL) {
+  if ((unique_rot = (long*)malloc(sizeof(long) * rot_reciprocal->size)) == NULL) {
     warning_print("spglib: Memory of unique_rot could not be allocated.");
-    mat_free_MatINT(rot_reciprocal);
+    kpt_free_MatLONG(rot_reciprocal);
     rot_reciprocal = NULL;
     return NULL;
   }
@@ -147,20 +207,20 @@ static MatINT *get_point_group_reciprocal(const MatINT * rotations,
   }
 
   for (i = 0; i < rotations->size; i++) {
-    mat_transpose_matrix_i3(rot_reciprocal->mat[i], rotations->mat[i]);
+    transpose_matrix_l3(rot_reciprocal->mat[i], rotations->mat[i]);
 
     if (is_time_reversal) {
-      mat_multiply_matrix_i3(rot_reciprocal->mat[rotations->size+i],
-                             inversion,
-                             rot_reciprocal->mat[i]);
+      multiply_matrix_l3(rot_reciprocal->mat[rotations->size+i],
+                         inversion,
+                         rot_reciprocal->mat[i]);
     }
   }
 
   num_rot = 0;
   for (i = 0; i < rot_reciprocal->size; i++) {
     for (j = 0; j < num_rot; j++) {
-      if (mat_check_identity_matrix_i3(rot_reciprocal->mat[unique_rot[j]],
-                                       rot_reciprocal->mat[i])) {
+      if (check_identity_matrix_l3(rot_reciprocal->mat[unique_rot[j]],
+                                   rot_reciprocal->mat[i])) {
         goto escape;
       }
     }
@@ -170,37 +230,37 @@ static MatINT *get_point_group_reciprocal(const MatINT * rotations,
     ;
   }
 
-  if ((rot_return = mat_alloc_MatINT(num_rot)) != NULL) {
+  if ((rot_return = kpt_alloc_MatLONG(num_rot)) != NULL) {
     for (i = 0; i < num_rot; i++) {
-      mat_copy_matrix_i3(rot_return->mat[i], rot_reciprocal->mat[unique_rot[i]]);
+      kpt_copy_matrix_l3(rot_return->mat[i], rot_reciprocal->mat[unique_rot[i]]);
     }
   }
 
   free(unique_rot);
   unique_rot = NULL;
-  mat_free_MatINT(rot_reciprocal);
+  kpt_free_MatLONG(rot_reciprocal);
   rot_reciprocal = NULL;
 
   return rot_return;
 }
 
 /* Return NULL if failed */
-static MatINT *get_point_group_reciprocal_with_q(const MatINT * rot_reciprocal,
-                                                 const double symprec,
-                                                 const long num_q,
-                                                 SPGCONST double qpoints[][3])
+static MatLONG *get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
+                                                  const double symprec,
+                                                  const long num_q,
+                                                  KPTCONST double qpoints[][3])
 {
-  int i, j, k, l, is_all_ok, num_rot;
-  int *ir_rot;
+  long i, j, k, l, is_all_ok, num_rot;
+  long *ir_rot;
   double q_rot[3], diff[3];
-  MatINT * rot_reciprocal_q;
+  MatLONG * rot_reciprocal_q;
 
   ir_rot = NULL;
   rot_reciprocal_q = NULL;
   is_all_ok = 0;
   num_rot = 0;
 
-  if ((ir_rot = (int*)malloc(sizeof(int) * rot_reciprocal->size)) == NULL) {
+  if ((ir_rot = (long*)malloc(sizeof(long) * rot_reciprocal->size)) == NULL) {
     warning_print("spglib: Memory of ir_rot could not be allocated.");
     return NULL;
   }
@@ -211,19 +271,19 @@ static MatINT *get_point_group_reciprocal_with_q(const MatINT * rot_reciprocal,
   for (i = 0; i < rot_reciprocal->size; i++) {
     for (j = 0; j < num_q; j++) {
       is_all_ok = 0;
-      mat_multiply_matrix_vector_id3(q_rot,
-                                     rot_reciprocal->mat[i],
-                                     qpoints[j]);
+      multiply_matrix_vector_ld3(q_rot,
+                                 rot_reciprocal->mat[i],
+                                 qpoints[j]);
 
       for (k = 0; k < num_q; k++) {
         for (l = 0; l < 3; l++) {
           diff[l] = q_rot[l] - qpoints[k][l];
-          diff[l] -= mat_Nint(diff[l]);
+          diff[l] -= Nint(diff[l]);
         }
 
-        if (mat_Dabs(diff[0]) < symprec &&
-            mat_Dabs(diff[1]) < symprec &&
-            mat_Dabs(diff[2]) < symprec) {
+        if (Dabs(diff[0]) < symprec &&
+            Dabs(diff[1]) < symprec &&
+            Dabs(diff[2]) < symprec) {
           is_all_ok = 1;
           break;
         }
@@ -240,9 +300,9 @@ static MatINT *get_point_group_reciprocal_with_q(const MatINT * rot_reciprocal,
     }
   }
 
-  if ((rot_reciprocal_q = mat_alloc_MatINT(num_rot)) != NULL) {
+  if ((rot_reciprocal_q = kpt_alloc_MatLONG(num_rot)) != NULL) {
     for (i = 0; i < num_rot; i++) {
-      mat_copy_matrix_i3(rot_reciprocal_q->mat[i],
+      kpt_copy_matrix_l3(rot_reciprocal_q->mat[i],
                          rot_reciprocal->mat[ir_rot[i]]);
     }
   }
@@ -253,11 +313,11 @@ static MatINT *get_point_group_reciprocal_with_q(const MatINT * rot_reciprocal,
   return rot_reciprocal_q;
 }
 
-static long get_dense_ir_reciprocal_mesh(int grid_address[][3],
+static long get_dense_ir_reciprocal_mesh(long grid_address[][3],
                                          long ir_mapping_table[],
-                                         const int mesh[3],
-                                         const int is_shift[3],
-                                         const MatINT *rot_reciprocal)
+                                         const long mesh[3],
+                                         const long is_shift[3],
+                                         const MatLONG *rot_reciprocal)
 {
   if (check_mesh_symmetry(mesh, is_shift, rot_reciprocal)) {
     return get_dense_ir_reciprocal_mesh_normal(grid_address,
@@ -274,11 +334,11 @@ static long get_dense_ir_reciprocal_mesh(int grid_address[][3],
   }
 }
 
-static long get_dense_ir_reciprocal_mesh_normal(int grid_address[][3],
+static long get_dense_ir_reciprocal_mesh_normal(long grid_address[][3],
                                                 long ir_mapping_table[],
-                                                const int mesh[3],
-                                                const int is_shift[3],
-                                                const MatINT *rot_reciprocal)
+                                                const long mesh[3],
+                                                const long is_shift[3],
+                                                const MatLONG *rot_reciprocal)
 {
   /* In the following loop, mesh is doubled. */
   /* Even and odd mesh numbers correspond to */
@@ -288,23 +348,23 @@ static long get_dense_ir_reciprocal_mesh_normal(int grid_address[][3],
   /* ir_mapping_table: the mapping from each point to ir-point. */
 
   long i, grid_point_rot;
-  int j;
-  int address_double[3], address_double_rot[3];
+  long j;
+  long address_double[3], address_double_rot[3];
 
-  kgd_get_all_grid_addresses(grid_address, mesh);
+  rgd_get_all_grid_addresses(grid_address, mesh);
 
 #pragma omp parallel for private(j, grid_point_rot, address_double, address_double_rot)
   for (i = 0; i < mesh[0] * mesh[1] * (long)(mesh[2]); i++) {
-    kgd_get_grid_address_double_mesh(address_double,
-                                     grid_address[i],
-                                     mesh,
-                                     is_shift);
+    rgd_get_double_grid_address(address_double,
+                                grid_address[i],
+                                mesh,
+                                is_shift);
     ir_mapping_table[i] = i;
     for (j = 0; j < rot_reciprocal->size; j++) {
-      mat_multiply_matrix_vector_i3(address_double_rot,
-                                    rot_reciprocal->mat[j],
-                                    address_double);
-      grid_point_rot = kgd_get_dense_grid_point_double_mesh(address_double_rot, mesh);
+      multiply_matrix_vector_l3(address_double_rot,
+                                rot_reciprocal->mat[j],
+                                address_double);
+      grid_point_rot = rgd_get_double_grid_index(address_double_rot, mesh);
       if (grid_point_rot < ir_mapping_table[i]) {
 #ifdef _OPENMP
         ir_mapping_table[i] = grid_point_rot;
@@ -320,21 +380,21 @@ static long get_dense_ir_reciprocal_mesh_normal(int grid_address[][3],
 }
 
 static long
-get_dense_ir_reciprocal_mesh_distortion(int grid_address[][3],
+get_dense_ir_reciprocal_mesh_distortion(long grid_address[][3],
                                         long ir_mapping_table[],
-                                        const int mesh[3],
-                                        const int is_shift[3],
-                                        const MatINT *rot_reciprocal)
+                                        const long mesh[3],
+                                        const long is_shift[3],
+                                        const MatLONG *rot_reciprocal)
 {
   long i, grid_point_rot;
-  int j, k, indivisible;
-  int address_double[3], address_double_rot[3];
+  long j, k, indivisible;
+  long address_double[3], address_double_rot[3];
   long long_address_double[3], long_address_double_rot[3], divisor[3];
 
   /* divisor, long_address_double, and long_address_double_rot have */
   /* long integer type to treat dense mesh. */
 
-  kgd_get_all_grid_addresses(grid_address, mesh);
+  rgd_get_all_grid_addresses(grid_address, mesh);
 
   for (j = 0; j < 3; j++) {
     divisor[j] = mesh[(j + 1) % 3] * mesh[(j + 2) % 3];
@@ -342,10 +402,10 @@ get_dense_ir_reciprocal_mesh_distortion(int grid_address[][3],
 
 #pragma omp parallel for private(j, k, grid_point_rot, address_double, address_double_rot, long_address_double, long_address_double_rot)
   for (i = 0; i < mesh[0] * mesh[1] * (long)(mesh[2]); i++) {
-    kgd_get_grid_address_double_mesh(address_double,
-                                     grid_address[i],
-                                     mesh,
-                                     is_shift);
+    rgd_get_double_grid_address(address_double,
+                                grid_address[i],
+                                mesh,
+                                is_shift);
     for (j = 0; j < 3; j++) {
       long_address_double[j] = address_double[j] * divisor[j];
     }
@@ -372,7 +432,7 @@ get_dense_ir_reciprocal_mesh_distortion(int grid_address[][3],
       }
       if (indivisible) {continue;}
       grid_point_rot =
-        kgd_get_dense_grid_point_double_mesh(address_double_rot, mesh);
+        rgd_get_double_grid_index(address_double_rot, mesh);
       if (grid_point_rot < ir_mapping_table[i]) {
 #ifdef _OPENMP
         ir_mapping_table[i] = grid_point_rot;
@@ -387,7 +447,7 @@ get_dense_ir_reciprocal_mesh_distortion(int grid_address[][3],
   return get_dense_num_ir(ir_mapping_table, mesh);
 }
 
-static long get_dense_num_ir(long ir_mapping_table[], const int mesh[3])
+static long get_dense_num_ir(long ir_mapping_table[], const long mesh[3])
 {
   long i, num_ir;
 
@@ -409,12 +469,12 @@ static long get_dense_num_ir(long ir_mapping_table[], const int mesh[3])
   return num_ir;
 }
 
-static int check_mesh_symmetry(const int mesh[3],
-                               const int is_shift[3],
-                               const MatINT *rot_reciprocal)
+static long check_mesh_symmetry(const long mesh[3],
+                                const long is_shift[3],
+                                const MatLONG *rot_reciprocal)
 {
-  int i, j, k, sum;
-  int eq[3];
+  long i, j, k, sum;
+  long eq[3];
 
   eq[0] = 0; /* a=b */
   eq[1] = 0; /* b=c */
@@ -425,7 +485,7 @@ static int check_mesh_symmetry(const int mesh[3],
     sum = 0;
     for (j = 0; j < 3; j++) {
       for (k = 0; k < 3; k++) {
-        sum += abs(rot_reciprocal->mat[i][j][k]);
+        sum += labs(rot_reciprocal->mat[i][j][k]);
       }
     }
     if (sum > 3) {
@@ -449,4 +509,94 @@ static int check_mesh_symmetry(const int mesh[3],
   return (((eq[0] && mesh[0] == mesh[1] && is_shift[0] == is_shift[1]) || (!eq[0])) &&
           ((eq[1] && mesh[1] == mesh[2] && is_shift[1] == is_shift[2]) || (!eq[1])) &&
           ((eq[2] && mesh[2] == mesh[0] && is_shift[2] == is_shift[0]) || (!eq[2])));
+}
+
+
+static long Nint(const double a)
+{
+  if (a < 0.0)
+    return (long) (a - 0.5);
+  else
+    return (long) (a + 0.5);
+}
+
+static double Dabs(const double a)
+{
+  if (a < 0.0)
+    return -a;
+  else
+    return a;
+}
+
+static void transpose_matrix_l3(long a[3][3], KPTCONST long b[3][3])
+{
+  long c[3][3];
+  c[0][0] = b[0][0];
+  c[0][1] = b[1][0];
+  c[0][2] = b[2][0];
+  c[1][0] = b[0][1];
+  c[1][1] = b[1][1];
+  c[1][2] = b[2][1];
+  c[2][0] = b[0][2];
+  c[2][1] = b[1][2];
+  c[2][2] = b[2][2];
+  kpt_copy_matrix_l3(a, c);
+}
+
+static void multiply_matrix_l3(long m[3][3],
+                               KPTCONST long a[3][3],
+                               KPTCONST long b[3][3])
+{
+  long i, j;                   /* a_ij */
+  long c[3][3];
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
+      c[i][j] =
+        a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j];
+    }
+  }
+  kpt_copy_matrix_l3(m, c);
+}
+
+static long check_identity_matrix_l3(KPTCONST long a[3][3],
+                                     KPTCONST long b[3][3])
+{
+  if ( a[0][0] - b[0][0] ||
+       a[0][1] - b[0][1] ||
+       a[0][2] - b[0][2] ||
+       a[1][0] - b[1][0] ||
+       a[1][1] - b[1][1] ||
+       a[1][2] - b[1][2] ||
+       a[2][0] - b[2][0] ||
+       a[2][1] - b[2][1] ||
+       a[2][2] - b[2][2]) {
+    return 0;
+  }
+  else {
+    return 1;
+  }
+}
+
+static void multiply_matrix_vector_ld3(double v[3],
+                                       KPTCONST long a[3][3],
+                                       const double b[3])
+{
+  long i;
+  double c[3];
+  for (i = 0; i < 3; i++)
+    c[i] = a[i][0] * b[0] + a[i][1] * b[1] + a[i][2] * b[2];
+  for (i = 0; i < 3; i++)
+    v[i] = c[i];
+}
+
+static void multiply_matrix_vector_l3(long v[3],
+                                      KPTCONST long a[3][3],
+                                      const long b[3])
+{
+  long i;
+  long c[3];
+  for (i = 0; i < 3; i++)
+    c[i] = a[i][0] * b[0] + a[i][1] * b[1] + a[i][2] * b[2];
+  for (i = 0; i < 3; i++)
+    v[i] = c[i];
 }

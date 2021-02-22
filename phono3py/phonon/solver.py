@@ -83,16 +83,16 @@ def run_phonon_solver_c(dm,
         frequencies,
         eigenvectors,
         phonon_done,
-        np.array(grid_points, dtype='int_'),
-        np.array(grid_address, dtype='int_', order='C'),
+        grid_points,
+        grid_address,
         np.array(mesh, dtype='int_'),
         fc,
         svecs,
-        np.array(multiplicity, dtype='int_', order='C'),
+        multiplicity,
         positions,
         masses,
-        np.array(fc_p2s, dtype='int_'),
-        np.array(fc_s2p, dtype='int_'),
+        fc_p2s,
+        fc_s2p,
         frequency_conversion_factor,
         born,
         dielectric,
@@ -143,7 +143,7 @@ def _extract_params(dm):
         dielectric = None
 
     return (svecs,
-            multiplicity,
+            np.array(multiplicity, dtype='int_', order='C'),
             masses,
             rec_lattice,
             positions,
@@ -166,4 +166,4 @@ def _get_fc_elements_mapping(dm, fc):
         fc_p2s = np.arange(len(p2s_map), dtype='intc')
         fc_s2p = s2pp_map
 
-    return fc_p2s, fc_s2p
+    return np.array(fc_p2s, dtype='int_'), np.array(fc_s2p, dtype='int_')

@@ -588,7 +588,7 @@ class ImagSelfEnergy(object):
             self._pp_strength,
             self._triplets_at_q,
             self._weights_at_q,
-            self._pp.get_grid_address(),
+            self._pp.grid_address,
             self._frequencies,
             self._temperature,
             self._g,

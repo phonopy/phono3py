@@ -35,19 +35,28 @@
 #ifndef __kpoint_H__
 #define __kpoint_H__
 
-#include <stddef.h>
-#include "mathfunc.h"
+#ifndef KPTCONST
+#define KPTCONST
+#endif
 
-long kpt_get_dense_irreducible_reciprocal_mesh(int grid_address[][3],
+typedef struct {
+  long size;
+  long (*mat)[3][3];
+} MatLONG;
+
+long kpt_get_dense_irreducible_reciprocal_mesh(long grid_address[][3],
                                                long ir_mapping_table[],
-                                               const int mesh[3],
-                                               const int is_shift[3],
-                                               const MatINT *rot_reciprocal);
-MatINT *kpt_get_point_group_reciprocal(const MatINT * rotations,
-                                       const int is_time_reversal);
-MatINT *kpt_get_point_group_reciprocal_with_q(const MatINT * rot_reciprocal,
-                                              const double symprec,
-                                              const long num_q,
-                                              SPGCONST double qpoints[][3]);
+                                               const long mesh[3],
+                                               const long is_shift[3],
+                                               const MatLONG *rot_reciprocal);
+MatLONG *kpt_get_point_group_reciprocal(const MatLONG * rotations,
+                                        const long is_time_reversal);
+MatLONG *kpt_get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
+                                               const double symprec,
+                                               const long num_q,
+                                               KPTCONST double qpoints[][3]);
+void kpt_copy_matrix_l3(long a[3][3], KPTCONST long b[3][3]);
+MatLONG * kpt_alloc_MatLONG(const long size);
+void kpt_free_MatLONG(MatLONG * matlong);
 
 #endif

@@ -62,7 +62,7 @@ class Interaction(object):
                  lapack_zheev_uplo='L'):
         self._supercell = supercell
         self._primitive = primitive
-        self._mesh = np.array(mesh, dtype='intc')
+        self._mesh = np.array(mesh, dtype='int_')
         self._symmetry = symmetry
 
         self._band_indices = None
@@ -114,10 +114,10 @@ class Interaction(object):
 
         svecs, multiplicity = self._primitive.get_smallest_vectors()
         self._smallest_vectors = svecs
-        self._multiplicity = multiplicity
+        self._multiplicity = np.array(multiplicity, dtype='int_', order='C')
         self._masses = np.array(self._primitive.masses, dtype='double')
-        self._p2s = self._primitive.p2s_map
-        self._s2p = self._primitive.s2p_map
+        self._p2s = np.array(self._primitive.p2s_map, dtype='int_')
+        self._s2p = np.array(self._primitive.s2p_map, dtype='int_')
 
         self._allocate_phonon()
 
@@ -468,9 +468,9 @@ class Interaction(object):
     def _set_band_indices(self, band_indices):
         num_band = len(self._primitive) * 3
         if band_indices is None:
-            self._band_indices = np.arange(num_band, dtype='intc')
+            self._band_indices = np.arange(num_band, dtype='int_')
         else:
-            self._band_indices = np.array(band_indices, dtype='intc')
+            self._band_indices = np.array(band_indices, dtype='int_')
 
     def _run_c(self, g_zero):
         import phono3py._phono3py as phono3c
