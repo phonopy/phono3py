@@ -33,8 +33,6 @@
 /* POSSIBILITY OF SUCH DAMAGE. */
 
 #include <math.h>
-#include "dynmat.h"
-#include "phonoc_array.h"
 #include "phonoc_const.h"
 #include "phonoc_utils.h"
 #include "lapack_wrapper.h"

@@ -46,7 +46,7 @@ def run_phonon_solver_c(dm,
                         nac_q_direction,  # in reduced coordinates
                         lapack_zheev_uplo,
                         verbose=False):
-    import phono3py._phono3py as phono3c
+    import phono3py._phononmod as phononmod
 
     (svecs,
      multiplicity,
@@ -79,7 +79,7 @@ def run_phonon_solver_c(dm,
     # assert grid_points.flags.c_contiguous
 
     fc_p2s, fc_s2p = _get_fc_elements_mapping(dm, fc)
-    phono3c.phonons_at_gridpoints(
+    phononmod.phonons_at_gridpoints(
         frequencies,
         eigenvectors,
         phonon_done,
