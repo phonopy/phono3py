@@ -81,12 +81,12 @@ def get_fc3(supercell,
         s2p_map = primitive.s2p_map
         p2s_map = primitive.p2s_map
         p2p_map = primitive.p2p_map
-        s2compact = np.array([p2p_map[i] for i in s2p_map], dtype='intc')
+        s2compact = np.array([p2p_map[i] for i in s2p_map], dtype='int_')
         for i in first_disp_atoms:
             assert i in p2s_map
         target_atoms = [i for i in p2s_map if i not in first_disp_atoms]
     else:
-        s2compact = np.arange(supercell.get_number_of_atoms(), dtype='intc')
+        s2compact = np.arange(len(supercell), dtype='int_')
         target_atoms = [i for i in s2compact if i not in first_disp_atoms]
 
     distribute_fc3(fc3,
