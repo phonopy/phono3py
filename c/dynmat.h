@@ -35,7 +35,9 @@
 #ifndef __dynmat_H__
 #define __dynmat_H__
 
+#ifndef PHPYCONST
 #define PHPYCONST
+#endif
 
 long dym_get_dynamical_matrix_at_q(double *dynamical_matrix,
                                    const long num_patom,
