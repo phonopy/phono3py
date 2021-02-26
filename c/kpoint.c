@@ -51,22 +51,22 @@ static MatLONG *get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal
                                                   const double symprec,
                                                   const long num_q,
                                                   KPTCONST double qpoints[][3]);
-static long get_dense_ir_reciprocal_mesh(long grid_address[][3],
-                                         long ir_mapping_table[],
-                                         const long mesh[3],
-                                         const long is_shift[3],
-                                         const MatLONG *rot_reciprocal);
-static long get_dense_ir_reciprocal_mesh_normal(long grid_address[][3],
-                                                long ir_mapping_table[],
-                                                const long mesh[3],
-                                                const long is_shift[3],
-                                                const MatLONG *rot_reciprocal);
-static long get_dense_ir_reciprocal_mesh_distortion(long grid_address[][3],
-                                                    long ir_mapping_table[],
-                                                    const long mesh[3],
-                                                    const long is_shift[3],
-                                                    const MatLONG *rot_reciprocal);
-static long get_dense_num_ir(long ir_mapping_table[], const long mesh[3]);
+static long get_ir_reciprocal_mesh(long grid_address[][3],
+                                   long ir_mapping_table[],
+                                   const long mesh[3],
+                                   const long is_shift[3],
+                                   const MatLONG *rot_reciprocal);
+static long get_ir_reciprocal_mesh_normal(long grid_address[][3],
+                                          long ir_mapping_table[],
+                                          const long mesh[3],
+                                          const long is_shift[3],
+                                          const MatLONG *rot_reciprocal);
+static long get_ir_reciprocal_mesh_distortion(long grid_address[][3],
+                                              long ir_mapping_table[],
+                                              const long mesh[3],
+                                              const long is_shift[3],
+                                              const MatLONG *rot_reciprocal);
+static long get_num_ir(long ir_mapping_table[], const long mesh[3]);
 static long check_mesh_symmetry(const long mesh[3],
                                 const long is_shift[3],
                                 const MatLONG *rot_reciprocal);
@@ -85,19 +85,19 @@ static void multiply_matrix_vector_l3(long v[3],
                                       const long b[3]);
 
 
-long kpt_get_dense_irreducible_reciprocal_mesh(long grid_address[][3],
-                                               long ir_mapping_table[],
-                                               const long mesh[3],
-                                               const long is_shift[3],
-                                               const MatLONG *rot_reciprocal)
+long kpt_get_irreducible_reciprocal_mesh(long grid_address[][3],
+                                         long ir_mapping_table[],
+                                         const long mesh[3],
+                                         const long is_shift[3],
+                                         const MatLONG *rot_reciprocal)
 {
   long num_ir;
 
-  num_ir = get_dense_ir_reciprocal_mesh(grid_address,
-                                        ir_mapping_table,
-                                        mesh,
-                                        is_shift,
-                                        rot_reciprocal);
+  num_ir = get_ir_reciprocal_mesh(grid_address,
+                                  ir_mapping_table,
+                                  mesh,
+                                  is_shift,
+                                  rot_reciprocal);
 
   return num_ir;
 }
@@ -312,32 +312,32 @@ static MatLONG *get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal
   return rot_reciprocal_q;
 }
 
-static long get_dense_ir_reciprocal_mesh(long grid_address[][3],
-                                         long ir_mapping_table[],
-                                         const long mesh[3],
-                                         const long is_shift[3],
-                                         const MatLONG *rot_reciprocal)
+static long get_ir_reciprocal_mesh(long grid_address[][3],
+                                   long ir_mapping_table[],
+                                   const long mesh[3],
+                                   const long is_shift[3],
+                                   const MatLONG *rot_reciprocal)
 {
   if (check_mesh_symmetry(mesh, is_shift, rot_reciprocal)) {
-    return get_dense_ir_reciprocal_mesh_normal(grid_address,
-                                               ir_mapping_table,
-                                               mesh,
-                                               is_shift,
-                                               rot_reciprocal);
+    return get_ir_reciprocal_mesh_normal(grid_address,
+                                         ir_mapping_table,
+                                         mesh,
+                                         is_shift,
+                                         rot_reciprocal);
   } else {
-    return get_dense_ir_reciprocal_mesh_distortion(grid_address,
-                                                   ir_mapping_table,
-                                                   mesh,
-                                                   is_shift,
-                                                   rot_reciprocal);
+    return get_ir_reciprocal_mesh_distortion(grid_address,
+                                             ir_mapping_table,
+                                             mesh,
+                                             is_shift,
+                                             rot_reciprocal);
   }
 }
 
-static long get_dense_ir_reciprocal_mesh_normal(long grid_address[][3],
-                                                long ir_mapping_table[],
-                                                const long mesh[3],
-                                                const long is_shift[3],
-                                                const MatLONG *rot_reciprocal)
+static long get_ir_reciprocal_mesh_normal(long grid_address[][3],
+                                          long ir_mapping_table[],
+                                          const long mesh[3],
+                                          const long is_shift[3],
+                                          const MatLONG *rot_reciprocal)
 {
   /* In the following loop, mesh is doubled. */
   /* Even and odd mesh numbers correspond to */
@@ -375,15 +375,15 @@ static long get_dense_ir_reciprocal_mesh_normal(long grid_address[][3],
     }
   }
 
-  return get_dense_num_ir(ir_mapping_table, mesh);
+  return get_num_ir(ir_mapping_table, mesh);
 }
 
 static long
-get_dense_ir_reciprocal_mesh_distortion(long grid_address[][3],
-                                        long ir_mapping_table[],
-                                        const long mesh[3],
-                                        const long is_shift[3],
-                                        const MatLONG *rot_reciprocal)
+get_ir_reciprocal_mesh_distortion(long grid_address[][3],
+                                  long ir_mapping_table[],
+                                  const long mesh[3],
+                                  const long is_shift[3],
+                                  const MatLONG *rot_reciprocal)
 {
   long i, grid_point_rot;
   long j, k, indivisible;
@@ -443,10 +443,10 @@ get_dense_ir_reciprocal_mesh_distortion(long grid_address[][3],
     }
   }
 
-  return get_dense_num_ir(ir_mapping_table, mesh);
+  return get_num_ir(ir_mapping_table, mesh);
 }
 
-static long get_dense_num_ir(long ir_mapping_table[], const long mesh[3])
+static long get_num_ir(long ir_mapping_table[], const long mesh[3])
 {
   long i, num_ir;
 

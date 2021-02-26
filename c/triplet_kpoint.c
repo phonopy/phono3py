@@ -277,11 +277,11 @@ static long get_ir_triplets_at_q(long *map_triplets,
                                                            tolerance,
                                                            1,
                                                            stabilizer_q);
-  num_ir_q = kpt_get_dense_irreducible_reciprocal_mesh(grid_address,
-                                                       map_q,
-                                                       mesh,
-                                                       is_shift,
-                                                       rot_reciprocal_q);
+  num_ir_q = kpt_get_irreducible_reciprocal_mesh(grid_address,
+                                                 map_q,
+                                                 mesh,
+                                                 is_shift,
+                                                 rot_reciprocal_q);
   kpt_free_MatLONG(rot_reciprocal_q);
   rot_reciprocal_q = NULL;
 

@@ -44,11 +44,11 @@ typedef struct {
   long (*mat)[3][3];
 } MatLONG;
 
-long kpt_get_dense_irreducible_reciprocal_mesh(long grid_address[][3],
-                                               long ir_mapping_table[],
-                                               const long mesh[3],
-                                               const long is_shift[3],
-                                               const MatLONG *rot_reciprocal);
+long kpt_get_irreducible_reciprocal_mesh(long grid_address[][3],
+                                         long ir_mapping_table[],
+                                         const long mesh[3],
+                                         const long is_shift[3],
+                                         const MatLONG *rot_reciprocal);
 MatLONG *kpt_get_point_group_reciprocal(const MatLONG * rotations,
                                         const long is_time_reversal);
 MatLONG *kpt_get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
