@@ -67,12 +67,12 @@ void tpi_get_integration_weight_with_sigma(double *iw,
                                            const long tp_type,
                                            const long openmp_per_bands);
 void
-tpi_get_dense_neighboring_grid_points(long neighboring_grid_points[],
-                                      const long grid_point,
-                                      TPLCONST long relative_grid_address[][3],
-                                      const long num_relative_grid_address,
-                                      const long mesh[3],
-                                      TPLCONST long bz_grid_address[][3],
-                                      const long bz_map[]);
+tpi_get_neighboring_grid_points(long neighboring_grid_points[],
+                                const long grid_point,
+                                TPLCONST long relative_grid_address[][3],
+                                const long num_relative_grid_address,
+                                const long mesh[3],
+                                TPLCONST long bz_grid_address[][3],
+                                const long bz_map[]);
 
 #endif

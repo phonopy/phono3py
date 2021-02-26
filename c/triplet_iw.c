@@ -209,13 +209,13 @@ void tpi_get_integration_weight_with_sigma(double *iw,
 
 
 void
-tpi_get_dense_neighboring_grid_points(long neighboring_grid_points[],
-                                      const long grid_point,
-                                      TPLCONST long relative_grid_address[][3],
-                                      const long num_relative_grid_address,
-                                      const long mesh[3],
-                                      TPLCONST long bz_grid_address[][3],
-                                      const long bz_map[])
+tpi_get_neighboring_grid_points(long neighboring_grid_points[],
+                                const long grid_point,
+                                TPLCONST long relative_grid_address[][3],
+                                const long num_relative_grid_address,
+                                const long mesh[3],
+                                TPLCONST long bz_grid_address[][3],
+                                const long bz_map[])
 {
   long bzmesh[3], address_double[3], bz_address_double[3];
   long i, j, bz_gp, prod_bz_mesh;
@@ -339,13 +339,13 @@ static void get_triplet_tetrahedra_vertices(
 
   for (i = 0; i < 2; i++) {
     for (j = 0; j < 24; j++) {
-      tpi_get_dense_neighboring_grid_points(vertices[i][j],
-                                            triplet[i + 1],
-                                            tp_relative_grid_address[i][j],
-                                            4,
-                                            mesh,
-                                            bz_grid_address,
-                                            bz_map);
+      tpi_get_neighboring_grid_points(vertices[i][j],
+                                      triplet[i + 1],
+                                      tp_relative_grid_address[i][j],
+                                      4,
+                                      mesh,
+                                      bz_grid_address,
+                                      bz_map);
     }
   }
 }

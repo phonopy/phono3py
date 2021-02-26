@@ -709,7 +709,7 @@ void ph3py_get_neighboring_gird_points(long *relative_grid_points,
 
 #pragma omp parallel for
   for (i = 0; i < num_grid_points; i++) {
-    tpi_get_dense_neighboring_grid_points
+    tpi_get_neighboring_grid_points
       (relative_grid_points + i * num_relative_grid_address,
        grid_points[i],
        relative_grid_address,
@@ -740,13 +740,13 @@ void ph3py_set_integration_weights(double *iw,
 #pragma omp parallel for private(j, k, bi, vertices, freq_vertices)
   for (i = 0; i < num_gp; i++) {
     for (j = 0; j < 24; j++) {
-      tpi_get_dense_neighboring_grid_points(vertices[j],
-                                            grid_points[i],
-                                            relative_grid_address[j],
-                                            4,
-                                            mesh,
-                                            bz_grid_address,
-                                            bz_map);
+      tpi_get_neighboring_grid_points(vertices[j],
+                                      grid_points[i],
+                                      relative_grid_address[j],
+                                      4,
+                                      mesh,
+                                      bz_grid_address,
+                                      bz_map);
     }
     for (bi = 0; bi < num_band; bi++) {
       for (j = 0; j < 24; j++) {
