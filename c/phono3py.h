@@ -281,6 +281,12 @@ void ph3py_get_integration_weight_with_sigma(double *iw,
                                              const double *frequencies,
                                              const long num_band,
                                              const long tp_type);
+long ph3py_relocate_BZ_grid_address(long bz_grid_address[][3],
+                                    long bz_map[],
+                                    PHPYCONST long grid_address[][3],
+                                    const long mesh[3],
+                                    PHPYCONST double rec_lattice[3][3],
+                                    const long is_shift[3]);
 
 
 void ph3py_symmetrize_collision_matrix(double *collision_matrix,

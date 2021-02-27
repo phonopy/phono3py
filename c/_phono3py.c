@@ -82,6 +82,8 @@ static PyObject *
 py_set_triplets_integration_weights(PyObject *self, PyObject *args);
 static PyObject *
 py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args);
+static PyObject * py_relocate_BZ_grid_address(PyObject *self, PyObject *args);
+
 static PyObject *
 py_diagonalize_collision_matrix(PyObject *self, PyObject *args);
 static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args);
@@ -216,6 +218,9 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_set_triplets_integration_weights_with_sigma,
    METH_VARARGS,
    "Integration weights of smearing method for triplets"},
+  {"BZ_grid_address",
+   (PyCFunction)py_relocate_BZ_grid_address, METH_VARARGS,
+   "Relocate grid addresses inside Brillouin zone"},
   {"diagonalize_collision_matrix",
    (PyCFunction)py_diagonalize_collision_matrix,
    METH_VARARGS,
@@ -1772,6 +1777,51 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
 
   Py_RETURN_NONE;
 }
+
+static PyObject * py_relocate_BZ_grid_address(PyObject *self, PyObject *args)
+{
+  PyArrayObject* py_bz_grid_address;
+  PyArrayObject* py_bz_map;
+  PyArrayObject* py_grid_address;
+  PyArrayObject* py_mesh;
+  PyArrayObject* py_is_shift;
+  PyArrayObject* py_reciprocal_lattice;
+
+  long (*bz_grid_address)[3];
+  long *bz_map;
+  long (*grid_address)[3];
+  long* mesh;
+  long* is_shift;
+  double (*reciprocal_lattice)[3];
+  long num_ir_gp;
+
+  if (!PyArg_ParseTuple(args, "OOOOOO",
+                        &py_bz_grid_address,
+                        &py_bz_map,
+                        &py_grid_address,
+                        &py_mesh,
+                        &py_reciprocal_lattice,
+                        &py_is_shift)) {
+    return NULL;
+  }
+
+  bz_grid_address = (long(*)[3])PyArray_DATA(py_bz_grid_address);
+  bz_map = (long*)PyArray_DATA(py_bz_map);
+  grid_address = (long(*)[3])PyArray_DATA(py_grid_address);
+  mesh = (long*)PyArray_DATA(py_mesh);
+  is_shift = (long*)PyArray_DATA(py_is_shift);
+  reciprocal_lattice = (double(*)[3])PyArray_DATA(py_reciprocal_lattice);
+
+  num_ir_gp = ph3py_relocate_BZ_grid_address(bz_grid_address,
+                                             bz_map,
+                                             grid_address,
+                                             mesh,
+                                             reciprocal_lattice,
+                                             is_shift);
+
+  return PyLong_FromLong(num_ir_gp);
+}
+
 
 static PyObject *
 py_diagonalize_collision_matrix(PyObject *self, PyObject *args)

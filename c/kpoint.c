@@ -45,6 +45,135 @@
 #define warning_print(...)
 #endif
 
+#define KPT_NUM_BZ_SEARCH_SPACE 125
+static long bz_search_space[KPT_NUM_BZ_SEARCH_SPACE][3] = {
+  { 0,  0,  0},
+  { 0,  0,  1},
+  { 0,  0,  2},
+  { 0,  0, -2},
+  { 0,  0, -1},
+  { 0,  1,  0},
+  { 0,  1,  1},
+  { 0,  1,  2},
+  { 0,  1, -2},
+  { 0,  1, -1},
+  { 0,  2,  0},
+  { 0,  2,  1},
+  { 0,  2,  2},
+  { 0,  2, -2},
+  { 0,  2, -1},
+  { 0, -2,  0},
+  { 0, -2,  1},
+  { 0, -2,  2},
+  { 0, -2, -2},
+  { 0, -2, -1},
+  { 0, -1,  0},
+  { 0, -1,  1},
+  { 0, -1,  2},
+  { 0, -1, -2},
+  { 0, -1, -1},
+  { 1,  0,  0},
+  { 1,  0,  1},
+  { 1,  0,  2},
+  { 1,  0, -2},
+  { 1,  0, -1},
+  { 1,  1,  0},
+  { 1,  1,  1},
+  { 1,  1,  2},
+  { 1,  1, -2},
+  { 1,  1, -1},
+  { 1,  2,  0},
+  { 1,  2,  1},
+  { 1,  2,  2},
+  { 1,  2, -2},
+  { 1,  2, -1},
+  { 1, -2,  0},
+  { 1, -2,  1},
+  { 1, -2,  2},
+  { 1, -2, -2},
+  { 1, -2, -1},
+  { 1, -1,  0},
+  { 1, -1,  1},
+  { 1, -1,  2},
+  { 1, -1, -2},
+  { 1, -1, -1},
+  { 2,  0,  0},
+  { 2,  0,  1},
+  { 2,  0,  2},
+  { 2,  0, -2},
+  { 2,  0, -1},
+  { 2,  1,  0},
+  { 2,  1,  1},
+  { 2,  1,  2},
+  { 2,  1, -2},
+  { 2,  1, -1},
+  { 2,  2,  0},
+  { 2,  2,  1},
+  { 2,  2,  2},
+  { 2,  2, -2},
+  { 2,  2, -1},
+  { 2, -2,  0},
+  { 2, -2,  1},
+  { 2, -2,  2},
+  { 2, -2, -2},
+  { 2, -2, -1},
+  { 2, -1,  0},
+  { 2, -1,  1},
+  { 2, -1,  2},
+  { 2, -1, -2},
+  { 2, -1, -1},
+  {-2,  0,  0},
+  {-2,  0,  1},
+  {-2,  0,  2},
+  {-2,  0, -2},
+  {-2,  0, -1},
+  {-2,  1,  0},
+  {-2,  1,  1},
+  {-2,  1,  2},
+  {-2,  1, -2},
+  {-2,  1, -1},
+  {-2,  2,  0},
+  {-2,  2,  1},
+  {-2,  2,  2},
+  {-2,  2, -2},
+  {-2,  2, -1},
+  {-2, -2,  0},
+  {-2, -2,  1},
+  {-2, -2,  2},
+  {-2, -2, -2},
+  {-2, -2, -1},
+  {-2, -1,  0},
+  {-2, -1,  1},
+  {-2, -1,  2},
+  {-2, -1, -2},
+  {-2, -1, -1},
+  {-1,  0,  0},
+  {-1,  0,  1},
+  {-1,  0,  2},
+  {-1,  0, -2},
+  {-1,  0, -1},
+  {-1,  1,  0},
+  {-1,  1,  1},
+  {-1,  1,  2},
+  {-1,  1, -2},
+  {-1,  1, -1},
+  {-1,  2,  0},
+  {-1,  2,  1},
+  {-1,  2,  2},
+  {-1,  2, -2},
+  {-1,  2, -1},
+  {-1, -2,  0},
+  {-1, -2,  1},
+  {-1, -2,  2},
+  {-1, -2, -2},
+  {-1, -2, -1},
+  {-1, -1,  0},
+  {-1, -1,  1},
+  {-1, -1,  2},
+  {-1, -1, -2},
+  {-1, -1, -1}
+};
+
 static MatLONG *get_point_group_reciprocal(const MatLONG * rotations,
                                            const long is_time_reversal);
 static MatLONG *get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
@@ -66,6 +195,14 @@ static long get_ir_reciprocal_mesh_distortion(long grid_address[][3],
                                               const long mesh[3],
                                               const long is_shift[3],
                                               const MatLONG *rot_reciprocal);
+static long relocate_BZ_grid_address(long bz_grid_address[][3],
+                                     long bz_map[],
+                                     KPTCONST long grid_address[][3],
+                                     const long mesh[3],
+                                     KPTCONST double rec_lattice[3][3],
+                                     const long is_shift[3]);
+static double get_tolerance_for_BZ_reduction(KPTCONST double rec_lattice[3][3],
+                                             const long mesh[3]);
 static long get_num_ir(long ir_mapping_table[], const long mesh[3]);
 static long check_mesh_symmetry(const long mesh[3],
                                 const long is_shift[3],
@@ -83,6 +220,10 @@ static void multiply_matrix_vector_ld3(double v[3],
 static void multiply_matrix_vector_l3(long v[3],
                                       KPTCONST long a[3][3],
                                       const long b[3]);
+static void multiply_matrix_vector_d3(double v[3],
+                                      KPTCONST double a[3][3],
+                                      const double b[3]);
+static double norm_squared_d3(const double a[3]);
 
 
 long kpt_get_irreducible_reciprocal_mesh(long grid_address[][3],
@@ -117,6 +258,21 @@ MatLONG *kpt_get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
                                            symprec,
                                            num_q,
                                            qpoints);
+}
+
+long kpt_relocate_BZ_grid_address(long bz_grid_address[][3],
+                                  long bz_map[],
+                                  KPTCONST long grid_address[][3],
+                                  const long mesh[3],
+                                  KPTCONST double rec_lattice[3][3],
+                                  const long is_shift[3])
+{
+  return relocate_BZ_grid_address(bz_grid_address,
+                                  bz_map,
+                                  grid_address,
+                                  mesh,
+                                  rec_lattice,
+                                  is_shift);
 }
 
 void kpt_copy_matrix_l3(long a[3][3], KPTCONST long b[3][3])
@@ -446,6 +602,103 @@ get_ir_reciprocal_mesh_distortion(long grid_address[][3],
   return get_num_ir(ir_mapping_table, mesh);
 }
 
+static long relocate_BZ_grid_address(long bz_grid_address[][3],
+                                     long bz_map[],
+                                     KPTCONST long grid_address[][3],
+                                     const long mesh[3],
+                                     KPTCONST double rec_lattice[3][3],
+                                     const long is_shift[3])
+{
+  double tolerance, min_distance;
+  double q_vector[3], distance[KPT_NUM_BZ_SEARCH_SPACE];
+  long bzmesh[3], bz_address_double[3];
+  long i, boundary_num_gp, total_num_gp, bzgp, gp, num_bzmesh;
+  long j, k, min_index;
+
+  tolerance = get_tolerance_for_BZ_reduction(rec_lattice, mesh);
+  for (j = 0; j < 3; j++) {
+    bzmesh[j] = mesh[j] * 2;
+  }
+
+  num_bzmesh = bzmesh[0] * bzmesh[1] * bzmesh[2];
+  for (i = 0; i < num_bzmesh; i++) {
+    bz_map[i] = num_bzmesh;
+  }
+
+  boundary_num_gp = 0;
+  total_num_gp = mesh[0] * mesh[1] * mesh[2];
+
+  /* Multithreading doesn't work for this loop since gp calculated */
+  /* with boundary_num_gp is unstable to store bz_grid_address. */
+  for (i = 0; i < total_num_gp; i++) {
+    for (j = 0; j < KPT_NUM_BZ_SEARCH_SPACE; j++) {
+      for (k = 0; k < 3; k++) {
+        q_vector[k] =
+          ((grid_address[i][k] + bz_search_space[j][k] * mesh[k]) * 2 +
+           is_shift[k]) / ((double)mesh[k]) / 2;
+      }
+      multiply_matrix_vector_d3(q_vector, rec_lattice, q_vector);
+      distance[j] = norm_squared_d3(q_vector);
+    }
+    min_distance = distance[0];
+    min_index = 0;
+    for (j = 1; j < KPT_NUM_BZ_SEARCH_SPACE; j++) {
+      if (distance[j] < min_distance) {
+        min_distance = distance[j];
+        min_index = j;
+      }
+    }
+
+    for (j = 0; j < KPT_NUM_BZ_SEARCH_SPACE; j++) {
+      if (distance[j] < min_distance + tolerance) {
+        if (j == min_index) {
+          gp = i;
+        } else {
+          gp = boundary_num_gp + total_num_gp;
+        }
+
+        for (k = 0; k < 3; k++) {
+          bz_grid_address[gp][k] =
+            grid_address[i][k] + bz_search_space[j][k] * mesh[k];
+          bz_address_double[k] = bz_grid_address[gp][k] * 2 + is_shift[k];
+        }
+        bzgp = rgd_get_double_grid_index(bz_address_double, bzmesh);
+        bz_map[bzgp] = gp;
+        if (j != min_index) {
+          boundary_num_gp++;
+        }
+      }
+    }
+  }
+
+  return boundary_num_gp + total_num_gp;
+}
+
+static double get_tolerance_for_BZ_reduction(KPTCONST double rec_lattice[3][3],
+                                             const long mesh[3])
+{
+  long i, j;
+  double tolerance;
+  double length[3];
+
+  for (i = 0; i < 3; i++) {
+    length[i] = 0;
+    for (j = 0; j < 3; j++) {
+      length[i] += rec_lattice[j][i] * rec_lattice[j][i];
+    }
+    length[i] /= mesh[i] * mesh[i];
+  }
+  tolerance = length[0];
+  for (i = 1; i < 3; i++) {
+    if (tolerance < length[i]) {
+      tolerance = length[i];
+    }
+  }
+  tolerance *= 0.01;
+
+  return tolerance;
+}
+
 static long get_num_ir(long ir_mapping_table[], const long mesh[3])
 {
   long i, num_ir;
@@ -453,14 +706,14 @@ static long get_num_ir(long ir_mapping_table[], const long mesh[3])
   num_ir = 0;
 
 #pragma omp parallel for reduction(+:num_ir)
-  for (i = 0; i < mesh[0] * mesh[1] * (long)(mesh[2]); i++) {
+  for (i = 0; i < mesh[0] * mesh[1] * mesh[2]; i++) {
     if (ir_mapping_table[i] == i) {
       num_ir++;
     }
   }
 
 #ifdef _OPENMP
-  for (i = 0; i < mesh[0] * mesh[1] * (long)(mesh[2]); i++) {
+  for (i = 0; i < mesh[0] * mesh[1] * mesh[2]; i++) {
     ir_mapping_table[i] = ir_mapping_table[ir_mapping_table[i]];
   }
 #endif
@@ -598,4 +851,21 @@ static void multiply_matrix_vector_l3(long v[3],
     c[i] = a[i][0] * b[0] + a[i][1] * b[1] + a[i][2] * b[2];
   for (i = 0; i < 3; i++)
     v[i] = c[i];
+}
+
+static void multiply_matrix_vector_d3(double v[3],
+                                      KPTCONST double a[3][3],
+                                      const double b[3])
+{
+  long i;
+  double c[3];
+  for (i = 0; i < 3; i++)
+    c[i] = a[i][0] * b[0] + a[i][1] * b[1] + a[i][2] * b[2];
+  for (i = 0; i < 3; i++)
+    v[i] = c[i];
+}
+
+static double norm_squared_d3(const double a[3])
+{
+  return a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
 }

@@ -108,7 +108,7 @@ class Isotope(object):
         if self._grid_address is None:
             primitive_lattice = np.linalg.inv(self._primitive.cell)
             self._grid_address, self._bz_map = get_bz_grid_address(
-                self._mesh, primitive_lattice, with_boundary=True)
+                self._mesh, primitive_lattice)
 
         if self._phonon_done is None:
             self._allocate_phonon()

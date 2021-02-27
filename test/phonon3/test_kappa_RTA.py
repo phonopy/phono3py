@@ -4,12 +4,16 @@ si_pbesol_kappa_RTA = [107.991, 107.991, 107.991, 0, 0, 0]
 si_pbesol_kappa_RTA_with_sigmas = [109.6985, 109.6985, 109.6985, 0, 0, 0]
 si_pbesol_kappa_RTA_iso = [96.92419, 96.92419, 96.92419, 0, 0, 0]
 si_pbesol_kappa_RTA_with_sigmas_iso = [96.03248, 96.03248, 96.03248, 0, 0, 0]
+si_pbesol_kappa_RTA_si_nosym = [38.242347, 38.700219, 39.198018,
+                                0.3216, 0.207731, 0.283]
+si_pbesol_kappa_RTA_si_nomeshsym = [38.15450, 38.15450, 38.15450, 0, 0, 0]
 nacl_pbe_kappa_RTA = [7.72798252, 7.72798252, 7.72798252, 0, 0, 0]
 nacl_pbe_kappa_RTA_with_sigma = [7.71913708, 7.71913708, 7.71913708, 0, 0, 0]
 
 
 aln_lda_kappa_RTA = [203.304059, 203.304059, 213.003125, 0, 0, 0]
 aln_lda_kappa_RTA_with_sigmas = [213.820000, 213.820000, 224.800121, 0, 0, 0]
+
 
 def test_kappa_RTA_si(si_pbesol):
     kappa = _get_kappa(si_pbesol, [9, 9, 9]).ravel()
@@ -37,6 +41,7 @@ def test_kappa_RTA_si_with_sigma(si_pbesol):
 def test_kappa_RTA_si_with_sigma_full_pp(si_pbesol):
     si_pbesol.sigmas = [0.1, ]
     kappa = _get_kappa(si_pbesol, [9, 9, 9], is_full_pp=True).ravel()
+    print(kappa)
     np.testing.assert_allclose(
         si_pbesol_kappa_RTA_with_sigmas, kappa, atol=0.5)
     si_pbesol.sigmas = None
@@ -53,6 +58,22 @@ def test_kappa_RTA_si_with_sigma_iso(si_pbesol):
 def test_kappa_RTA_si_compact_fc(si_pbesol_compact_fc):
     kappa = _get_kappa(si_pbesol_compact_fc, [9, 9, 9]).ravel()
     np.testing.assert_allclose(si_pbesol_kappa_RTA, kappa, atol=0.5)
+
+
+def test_kappa_RTA_si_nosym(si_pbesol, si_pbesol_nosym):
+    si_pbesol_nosym.fc2 = si_pbesol.fc2
+    si_pbesol_nosym.fc3 = si_pbesol.fc3
+    kappa = _get_kappa(si_pbesol_nosym, [4, 4, 4]).reshape(-1, 3).sum(axis=1)
+    kappa_ref = np.reshape(si_pbesol_kappa_RTA_si_nosym, (-1, 3)).sum(axis=1)
+    np.testing.assert_allclose(kappa_ref, kappa, atol=0.5)
+
+
+def test_kappa_RTA_si_nomeshsym(si_pbesol, si_pbesol_nomeshsym):
+    si_pbesol_nomeshsym.fc2 = si_pbesol.fc2
+    si_pbesol_nomeshsym.fc3 = si_pbesol.fc3
+    kappa = _get_kappa(si_pbesol_nomeshsym, [4, 4, 4]).ravel()
+    kappa_ref = si_pbesol_kappa_RTA_si_nomeshsym
+    np.testing.assert_allclose(kappa_ref, kappa, atol=0.5)
 
 
 def test_kappa_RTA_nacl(nacl_pbe):

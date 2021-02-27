@@ -108,13 +108,12 @@ def get_triplets_at_q(grid_point,
         point_group,
         is_time_reversal=is_time_reversal,
         swappable=swappable)
-    bz_grid_address, bz_map = spglib.relocate_BZ_grid_address(
-        np.array(grid_address, dtype='intc', order='C'),
-        mesh,
-        reciprocal_lattice,
-        is_dense=True)
-    bz_map = np.array(bz_map, dtype='int_')
-    bz_grid_address = np.array(bz_grid_address, dtype='int_', order='C')
+
+    bz_grid_address, bz_map = _relocate_BZ_grid_address(grid_address,
+                                                        mesh,
+                                                        reciprocal_lattice)
+    # bz_map = np.array(bz_map, dtype='int_')
+    # bz_grid_address = np.array(bz_grid_address, dtype='int_', order='C')
     triplets_at_q, weights = _get_BZ_triplets_at_q(
         grid_point,
         bz_grid_address,
@@ -152,13 +151,10 @@ def get_nosym_triplets_at_q(grid_point,
                             mesh,
                             reciprocal_lattice,
                             stores_triplets_map=False):
-    bz_grid_address, bz_map = spglib.relocate_BZ_grid_address(
-        get_grid_address(mesh),
+    bz_grid_address, bz_map = _relocate_BZ_grid_address(
+        np.array(get_grid_address(mesh), dtype='int_', order='C'),
         mesh,
-        reciprocal_lattice,
-        is_dense=True)
-    bz_map = np.array(bz_map, dtype='int_')
-    bz_grid_address = np.array(bz_grid_address, dtype='int_', order='C')
+        reciprocal_lattice)
     map_triplets = np.arange(np.prod(mesh), dtype=bz_map.dtype)
     triplets_at_q, weights = _get_BZ_triplets_at_q(
         grid_point,
@@ -187,19 +183,12 @@ def get_grid_address(mesh):
     return grid_address
 
 
-def get_bz_grid_address(mesh, reciprocal_lattice, with_boundary=False):
-    grid_address = get_grid_address(mesh)
-    bz_grid_address, bz_map = spglib.relocate_BZ_grid_address(
-        grid_address,
+def get_bz_grid_address(mesh, reciprocal_lattice):
+    bz_grid_address, bz_map = _relocate_BZ_grid_address(
+        np.array(get_grid_address(mesh), dtype='int_', order='C'),
         mesh,
-        reciprocal_lattice,
-        is_dense=True)
-    bz_map = np.array(bz_map, dtype='int_')
-    bz_grid_address = np.array(bz_grid_address, dtype='int_', order='C')
-    if with_boundary:
-        return bz_grid_address, bz_map
-    else:
-        return bz_grid_address[:np.prod(mesh)]
+        reciprocal_lattice)
+    return bz_grid_address, bz_map
 
 
 def get_grid_point_from_address_py(address, mesh):
@@ -350,11 +339,11 @@ def get_coarse_ir_grid_points(primitive,
         ir_grid_weights = ir_grid_weights
 
     reciprocal_lattice = np.linalg.inv(primitive.cell)
-    bz_grid_address, bz_map = spglib.relocate_BZ_grid_address(
-        np.array(grid_address, dtype='intc', order='C'),
+
+    bz_grid_address, bz_map = _relocate_BZ_grid_address(
+        grid_address,
         mesh,
-        reciprocal_lattice,
-        is_dense=True)
+        reciprocal_lattice)
 
     return (ir_grid_points,
             ir_grid_weights,
@@ -468,6 +457,62 @@ def get_tetrahedra_vertices(relative_address,
             vgp = bz_map[bz_gp]
             vertices[i, j] = vgp + (vgp == -1) * (gp + 1)
     return vertices
+
+
+def _relocate_BZ_grid_address(grid_address,
+                              mesh,
+                              reciprocal_lattice,  # column vectors
+                              is_shift=None):
+    """Grid addresses are relocated to be inside first Brillouin zone.
+
+    Number of ir-grid-points inside Brillouin zone is returned.
+    It is assumed that the following arrays have the shapes of
+        bz_grid_address : (num_grid_points_in_FBZ, 3)
+        bz_map (prod(mesh * 2), )
+
+    Note that the shape of grid_address is (prod(mesh), 3) and the
+    addresses in grid_address are arranged to be in parallelepiped
+    made of reciprocal basis vectors. The addresses in bz_grid_address
+    are inside the first Brillouin zone or on its surface. Each
+    address in grid_address is mapped to one of those in
+    bz_grid_address by a reciprocal lattice vector (including zero
+    vector) with keeping element order. For those inside first
+    Brillouin zone, the mapping is one-to-one. For those on the first
+    Brillouin zone surface, more than one addresses in bz_grid_address
+    that are equivalent by the reciprocal lattice translations are
+    mapped to one address in grid_address. In this case, those grid
+    points except for one of them are appended to the tail of this array,
+    for which bz_grid_address has the following data storing:
+
+    |------------------array size of bz_grid_address-------------------------|
+    |--those equivalent to grid_address--|--those on surface except for one--|
+    |-----array size of grid_address-----|
+
+    Number of grid points stored in bz_grid_address is returned.
+    bz_map is used to recover grid point index expanded to include BZ
+    surface from grid address. The grid point indices are mapped to
+    (mesh[0] * 2) x (mesh[1] * 2) x (mesh[2] * 2) space (bz_map).
+
+    """
+
+    import phono3py._phono3py as phono3c
+
+    if is_shift is None:
+        _is_shift = np.zeros(3, dtype='int_')
+    else:
+        _is_shift = np.array(is_shift, dtype='int_')
+    bz_grid_address = np.zeros((np.prod(np.add(mesh, 1)), 3), dtype='int_')
+    bz_map = np.zeros(np.prod(np.multiply(mesh, 2)), dtype='int_')
+    num_bz_ir = phono3c.BZ_grid_address(
+        bz_grid_address,
+        bz_map,
+        grid_address,
+        np.array(mesh, dtype='int_'),
+        np.array(reciprocal_lattice, dtype='double', order='C'),
+        _is_shift)
+
+    bz_grid_address = np.array(bz_grid_address[:num_bz_ir], dtype='int_')
+    return bz_grid_address, bz_map
 
 
 def _get_triplets_reciprocal_mesh_at_q(fixed_grid_number,

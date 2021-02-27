@@ -46,6 +46,7 @@
 #include "tetrahedron_method.h"
 #include "triplet.h"
 #include "triplet_iw.h"
+#include "kpoint.h"
 
 #include <stdio.h>
 
@@ -573,7 +574,6 @@ void ph3py_get_integration_weight(double *iw,
                              openmp_per_bands);
 }
 
-
 void ph3py_get_integration_weight_with_sigma(double *iw,
                                              char *iw_zero,
                                              const double sigma,
@@ -597,6 +597,21 @@ void ph3py_get_integration_weight_with_sigma(double *iw,
                                         frequencies,
                                         num_band,
                                         tp_type);
+}
+
+long ph3py_relocate_BZ_grid_address(long bz_grid_address[][3],
+                                    long bz_map[],
+                                    PHPYCONST long grid_address[][3],
+                                    const long mesh[3],
+                                    PHPYCONST double rec_lattice[3][3],
+                                    const long is_shift[3])
+{
+  return kpt_relocate_BZ_grid_address(bz_grid_address,
+                                      bz_map,
+                                      grid_address,
+                                      mesh,
+                                      rec_lattice,
+                                      is_shift);
 }
 
 void ph3py_symmetrize_collision_matrix(double *collision_matrix,
