@@ -83,7 +83,7 @@ def get_triplets_at_q(grid_point,
         shape=(n_grid_points, 3), dtype='intc', order='C'
     bz_map : ndarray
         Grid point mapping table containing BZ surface. See more
-        detail in spglib docstring.
+        detail in _relocate_BZ_grid_address docstring.
         shape=(prod(mesh*2),), dtype='int_'
     map_tripelts : ndarray or None
         Returns when stores_triplets_map=True, otherwise None is
@@ -152,7 +152,7 @@ def get_nosym_triplets_at_q(grid_point,
                             reciprocal_lattice,
                             stores_triplets_map=False):
     bz_grid_address, bz_map = _relocate_BZ_grid_address(
-        np.array(get_grid_address(mesh), dtype='int_', order='C'),
+        get_grid_address(mesh),
         mesh,
         reciprocal_lattice)
     map_triplets = np.arange(np.prod(mesh), dtype=bz_map.dtype)
@@ -173,19 +173,18 @@ def get_nosym_triplets_at_q(grid_point,
 
 
 def get_grid_address(mesh):
-    """Returns grid_address of dtype='intc'"""
-    grid_mapping_table, grid_address = spglib.get_stabilized_reciprocal_mesh(
+    """Returns grid_address of dtype='int_'"""
+    grid_mapping_table, grid_address = _get_stabilized_reciprocal_mesh(
         mesh,
         [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]],
-        is_time_reversal=False,
-        is_dense=True)
+        is_time_reversal=False)
 
     return grid_address
 
 
 def get_bz_grid_address(mesh, reciprocal_lattice):
     bz_grid_address, bz_map = _relocate_BZ_grid_address(
-        np.array(get_grid_address(mesh), dtype='int_', order='C'),
+        get_grid_address(mesh),
         mesh,
         reciprocal_lattice)
     return bz_grid_address, bz_map
@@ -225,13 +224,10 @@ def get_grid_point_from_address(address, mesh):
 def get_ir_grid_points(mesh, rotations, mesh_shifts=None):
     if mesh_shifts is None:
         mesh_shifts = [False, False, False]
-    grid_mapping_table, grid_address = spglib.get_stabilized_reciprocal_mesh(
+    grid_mapping_table, grid_address = _get_stabilized_reciprocal_mesh(
         mesh,
         rotations,
-        is_shift=np.where(mesh_shifts, 1, 0),
-        is_dense=True)
-    grid_mapping_table = np.array(grid_mapping_table, dtype='int_', order='C')
-    grid_address = np.array(grid_address, dtype='int_', order='C')
+        is_shift=np.where(mesh_shifts, 1, 0))
     (ir_grid_points,
      ir_grid_weights) = extract_ir_grid_points(grid_mapping_table)
 
@@ -318,8 +314,7 @@ def get_coarse_ir_grid_points(primitive,
             coarse_mesh_shifts = [False, False, False]
 
         if not is_kappa_star:
-            coarse_grid_address = np.array(get_grid_address(coarse_mesh),
-                                           dtype='int_', order='C')
+            coarse_grid_address = get_grid_address(coarse_mesh)
             coarse_grid_points = np.arange(np.prod(coarse_mesh), dtype='int_')
         else:
             (coarse_ir_grid_points,
@@ -457,6 +452,71 @@ def get_tetrahedra_vertices(relative_address,
             vgp = bz_map[bz_gp]
             vertices[i, j] = vgp + (vgp == -1) * (gp + 1)
     return vertices
+
+
+def _get_stabilized_reciprocal_mesh(mesh,
+                                    rotations,
+                                    is_shift=None,
+                                    is_time_reversal=True,
+                                    qpoints=None):
+    """Return k-point map to the irreducible k-points and k-point grid points.
+
+    The symmetry is searched from the input rotation matrices in real space.
+
+    Parameters
+    ----------
+    mesh : array_like
+        Uniform sampling mesh numbers.
+        dtype='int_', shape=(3,)
+    rotations : array_like
+        Rotation matrices with respect to real space basis vectors.
+        dtype='int_', shape=(rotations, 3)
+    is_shift : array_like
+        [0, 0, 0] gives Gamma center mesh and value 1 gives  half mesh shift.
+        dtype='int_', shape=(3,)
+    is_time_reversal : bool
+        Time reversal symmetry is included or not.
+    qpoints : array_like
+        q-points used as stabilizer(s) given in reciprocal space with respect
+        to reciprocal basis vectors.
+        dtype='double', shape=(qpoints ,3) or (3,)
+
+    Returns
+    -------
+    grid_mapping_table : ndarray
+        Grid point mapping table to ir-gird-points.
+        dtype='int_', shape=(prod(mesh),)
+    grid_address : ndarray
+        Address of all grid points. Each address is given by three unsigned
+        integers.
+        dtype='int_', shape=(prod(mesh), 3)
+
+    """
+
+    import phono3py._phono3py as phono3c
+
+    mapping_table = np.zeros(np.prod(mesh), dtype='int_')
+    grid_address = np.zeros((np.prod(mesh), 3), dtype='int_')
+    if is_shift is None:
+        is_shift = [0, 0, 0]
+    if qpoints is None:
+        qpoints = np.array([[0, 0, 0]], dtype='double', order='C')
+    else:
+        qpoints = np.array(qpoints, dtype='double', order='C')
+        if qpoints.shape == (3,):
+            qpoints = np.array([qpoints], dtype='double', order='C')
+
+    if phono3c.stabilized_reciprocal_mesh(
+            grid_address,
+            mapping_table,
+            np.array(mesh, dtype='int_'),
+            np.array(is_shift, dtype='int_'),
+            is_time_reversal * 1,
+            np.array(rotations, dtype='int_', order='C'),
+            qpoints) > 0:
+        return mapping_table, grid_address
+    else:
+        return None
 
 
 def _relocate_BZ_grid_address(grid_address,

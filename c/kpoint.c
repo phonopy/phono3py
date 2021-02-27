@@ -1,7 +1,7 @@
 /* Copyright (C) 2008 Atsushi Togo */
 /* All rights reserved. */
 
-/* This file is part of spglib. */
+/* This file was originally part of spglib. */
 
 /* Redistribution and use in source and binary forms, with or without */
 /* modification, are permitted provided that the following conditions */
@@ -260,6 +260,42 @@ MatLONG *kpt_get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
                                            qpoints);
 }
 
+long kpt_get_stabilized_reciprocal_mesh(long grid_address[][3],
+                                        long ir_mapping_table[],
+                                        const long mesh[3],
+                                        const long is_shift[3],
+                                        const long is_time_reversal,
+                                        const MatLONG * rotations,
+                                        const long num_q,
+                                        KPTCONST double qpoints[][3])
+{
+  long num_ir;
+  MatLONG *rot_reciprocal, *rot_reciprocal_q;
+  double tolerance;
+
+  rot_reciprocal = NULL;
+  rot_reciprocal_q = NULL;
+
+  rot_reciprocal = get_point_group_reciprocal(rotations, is_time_reversal);
+  tolerance = 0.01 / (mesh[0] + mesh[1] + mesh[2]);
+  rot_reciprocal_q = get_point_group_reciprocal_with_q(rot_reciprocal,
+                                                       tolerance,
+                                                       num_q,
+                                                       qpoints);
+
+  num_ir = get_ir_reciprocal_mesh(grid_address,
+                                  ir_mapping_table,
+                                  mesh,
+                                  is_shift,
+                                  rot_reciprocal_q);
+
+  kpt_free_MatLONG(rot_reciprocal_q);
+  rot_reciprocal_q = NULL;
+  kpt_free_MatLONG(rot_reciprocal);
+  rot_reciprocal = NULL;
+  return num_ir;
+}
+
 long kpt_relocate_BZ_grid_address(long bz_grid_address[][3],
                                   long bz_map[],
                                   KPTCONST long grid_address[][3],
@@ -295,7 +331,7 @@ MatLONG * kpt_alloc_MatLONG(const long size)
   matlong = NULL;
 
   if ((matlong = (MatLONG*) malloc(sizeof(MatLONG))) == NULL) {
-    warning_print("spglib: Memory could not be allocated.");
+    warning_print("Memory could not be allocated.");
     return NULL;
   }
 
@@ -303,7 +339,7 @@ MatLONG * kpt_alloc_MatLONG(const long size)
   if (size > 0) {
     if ((matlong->mat = (long (*)[3][3]) malloc(sizeof(long[3][3]) * size))
         == NULL) {
-      warning_print("spglib: Memory could not be allocated ");
+      warning_print("Memory could not be allocated ");
       warning_print("(MatLONG, line %d, %s).\n", __LINE__, __FILE__);
       free(matlong);
       matlong = NULL;
@@ -351,7 +387,7 @@ static MatLONG *get_point_group_reciprocal(const MatLONG * rotations,
   }
 
   if ((unique_rot = (long*)malloc(sizeof(long) * rot_reciprocal->size)) == NULL) {
-    warning_print("spglib: Memory of unique_rot could not be allocated.");
+    warning_print("Memory of unique_rot could not be allocated.");
     kpt_free_MatLONG(rot_reciprocal);
     rot_reciprocal = NULL;
     return NULL;
@@ -416,7 +452,7 @@ static MatLONG *get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal
   num_rot = 0;
 
   if ((ir_rot = (long*)malloc(sizeof(long) * rot_reciprocal->size)) == NULL) {
-    warning_print("spglib: Memory of ir_rot could not be allocated.");
+    warning_print("Memory of ir_rot could not be allocated.");
     return NULL;
   }
 

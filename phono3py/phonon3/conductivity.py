@@ -339,8 +339,7 @@ class Conductivity(object):
             (self._ir_grid_points,
              self._ir_grid_weights) = self._get_ir_grid_points()
         elif not self._is_kappa_star:  # All grid points
-            coarse_grid_address = np.array(get_grid_address(self._coarse_mesh),
-                                           dtype='int_', order='C')
+            coarse_grid_address = get_grid_address(self._coarse_mesh),
             coarse_grid_points = np.arange(np.prod(self._coarse_mesh),
                                            dtype='int_')
             self._grid_points = from_coarse_to_dense_grid_points(
@@ -431,11 +430,12 @@ class Conductivity(object):
             mesh_shifts = [False, False, False]
         else:
             mesh_shifts = self._coarse_mesh_shifts
+
         (coarse_grid_points,
          coarse_grid_weights,
          coarse_grid_address, _) = get_ir_grid_points(
              self._coarse_mesh,
-             self._symmetry.get_pointgroup_operations(),
+             self._symmetry.pointgroup_operations,
              mesh_shifts=mesh_shifts)
         grid_points = from_coarse_to_dense_grid_points(
             self._mesh,
