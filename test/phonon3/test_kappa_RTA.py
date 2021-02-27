@@ -65,7 +65,7 @@ def test_kappa_RTA_si_nosym(si_pbesol, si_pbesol_nosym):
     si_pbesol_nosym.fc3 = si_pbesol.fc3
     kappa = _get_kappa(si_pbesol_nosym, [4, 4, 4]).reshape(-1, 3).sum(axis=1)
     kappa_ref = np.reshape(si_pbesol_kappa_RTA_si_nosym, (-1, 3)).sum(axis=1)
-    np.testing.assert_allclose(kappa_ref, kappa, atol=0.5)
+    np.testing.assert_allclose(kappa_ref / 3, kappa / 3, atol=0.5)
 
 
 def test_kappa_RTA_si_nomeshsym(si_pbesol, si_pbesol_nomeshsym):
