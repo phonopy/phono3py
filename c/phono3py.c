@@ -36,17 +36,18 @@
 #include "lapack_wrapper.h"
 #include "phonoc_array.h"
 
-#include "interaction.h"
-#include "pp_collision.h"
-#include "imag_self_energy_with_g.h"
-#include "real_self_energy.h"
 #include "collision_matrix.h"
-#include "isotope.h"
 #include "fc3.h"
+#include "interaction.h"
+#include "imag_self_energy_with_g.h"
+#include "isotope.h"
+#include "kpoint.h"
+#include "pp_collision.h"
+#include "real_self_energy.h"
+#include "rgrid.h"
 #include "tetrahedron_method.h"
 #include "triplet.h"
 #include "triplet_iw.h"
-#include "kpoint.h"
 
 #include <stdio.h>
 
@@ -598,6 +599,15 @@ void ph3py_get_integration_weight_with_sigma(double *iw,
                                         num_band,
                                         tp_type);
 }
+
+
+/* From single address to grid index */
+long ph3py_get_grid_index_from_address(const long address[3],
+                                       const long mesh[3])
+{
+  return rgd_get_single_grid_index(address, mesh);
+}
+
 
 long ph3py_get_stabilized_reciprocal_mesh(long grid_address[][3],
                                           long ir_mapping_table[],

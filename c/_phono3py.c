@@ -83,6 +83,8 @@ py_set_triplets_integration_weights(PyObject *self, PyObject *args);
 static PyObject *
 py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args);
 static PyObject *
+py_get_grid_index_from_address(PyObject *self, PyObject *args);
+static PyObject *
 py_get_stabilized_reciprocal_mesh(PyObject *self, PyObject *args);
 static PyObject * py_relocate_BZ_grid_address(PyObject *self, PyObject *args);
 
@@ -220,6 +222,10 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_set_triplets_integration_weights_with_sigma,
    METH_VARARGS,
    "Integration weights of smearing method for triplets"},
+  {"grid_index_from_address",
+   (PyCFunction)py_get_grid_index_from_address,
+   METH_VARARGS,
+   "Grid index from grid address"},
   {"stabilized_reciprocal_mesh",
    (PyCFunction)py_get_stabilized_reciprocal_mesh,
    METH_VARARGS,
@@ -1783,6 +1789,31 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
                                           num_iw);
 
   Py_RETURN_NONE;
+}
+
+
+static PyObject *
+py_get_grid_index_from_address(PyObject *self, PyObject *args)
+{
+  PyArrayObject* py_address;
+  PyArrayObject* py_mesh;
+
+  long* address;
+  long* mesh;
+  long gp;
+
+  if (!PyArg_ParseTuple(args, "OO",
+                        &py_address,
+                        &py_mesh)) {
+    return NULL;
+  }
+
+  address = (long*)PyArray_DATA(py_address);
+  mesh = (long*)PyArray_DATA(py_mesh);
+
+  gp = ph3py_get_grid_index_from_address(address, mesh);
+
+  return PyLong_FromLong(gp);
 }
 
 

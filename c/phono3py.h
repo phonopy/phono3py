@@ -281,6 +281,8 @@ void ph3py_get_integration_weight_with_sigma(double *iw,
                                              const double *frequencies,
                                              const long num_band,
                                              const long tp_type);
+long ph3py_get_grid_index_from_address(const long address[3],
+                                       const long mesh[3]);
 long ph3py_get_stabilized_reciprocal_mesh(long grid_address[][3],
                                           long ir_mapping_table[],
                                           const long mesh[3],

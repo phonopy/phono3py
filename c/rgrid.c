@@ -40,8 +40,8 @@
 static void get_all_grid_addresses(long grid_address[][3], const long mesh[3]);
 static long get_double_grid_index(const long address_double[3],
                                   const long mesh[3]);
-static long get_grid_index_single_mesh(const long address[3],
-                                       const long mesh[3]);
+static long get_single_grid_index(const long address[3],
+                                  const long mesh[3]);
 static void reduce_grid_address(long address[3], const long mesh[3]);
 static void reduce_double_grid_address(long address[3], const long mesh[3]);
 static long mat_modulo_l(const long a, const long b);
@@ -56,6 +56,18 @@ long rgd_get_double_grid_index(const long address_double[3],
                                const long mesh[3])
 {
   return get_double_grid_index(address_double, mesh);
+}
+
+long rgd_get_single_grid_index(const long address[3],
+                               const long mesh[3])
+{
+  long i;
+  long address_mod[3];
+
+  for (i = 0; i < 3; i++) {
+    address_mod[i] = mat_modulo_l(address[i], mesh[i]);
+  }
+  return get_single_grid_index(address_mod, mesh);
 }
 
 void rgd_get_double_grid_address(long address_double[3],
@@ -83,7 +95,7 @@ static void get_all_grid_addresses(long grid_address[][3], const long mesh[3])
       address[1] = j;
       for (k = 0; k < mesh[2]; k++) {
         address[2] = k;
-        grid_index = get_grid_index_single_mesh(address, mesh);
+        grid_index = get_single_grid_index(address, mesh);
 
         assert(mesh[0] * mesh[1] * mesh[2] > grid_index);
 
@@ -108,14 +120,13 @@ static long get_double_grid_index(const long address_double[3],
     } else {
       address[i] = (address_double[i] - 1) / 2;
     }
-    address[i] = mat_modulo_l(address[i], mesh[i]);
   }
 
-  return get_grid_index_single_mesh(address, mesh);
+  return rgd_get_single_grid_index(address, mesh);
 }
 
-static long get_grid_index_single_mesh(const long address[3],
-                                       const long mesh[3])
+static long get_single_grid_index(const long address[3],
+                                  const long mesh[3])
 {
 #ifndef GRID_ORDER_XYZ
   return (address[2] * mesh[0] * (long)(mesh[1])

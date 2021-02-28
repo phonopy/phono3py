@@ -33,7 +33,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-import spglib
 from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.structure.grid_points import extract_ir_grid_points
@@ -206,10 +205,10 @@ def get_grid_point_from_address(address, mesh):
     ----------
     address : array_like
         Grid address.
-        shape=(3,), dtype='intc'
+        shape=(3,), dtype='int_'
     mesh : array_like
         Mesh numbers.
-        shape=(3,), dtype='intc'
+        shape=(3,), dtype='int_'
 
     Returns
     -------
@@ -218,7 +217,11 @@ def get_grid_point_from_address(address, mesh):
 
     """
 
-    return spglib.get_grid_point_from_address(address, mesh)
+    import phono3py._phono3py as phono3c
+
+    gp = phono3c.grid_index_from_address(np.array(address, dtype='int_'),
+                                         np.array(mesh, dtype='int_'))
+    return gp
 
 
 def get_ir_grid_points(mesh, rotations, mesh_shifts=None):
@@ -234,18 +237,36 @@ def get_ir_grid_points(mesh, rotations, mesh_shifts=None):
     return ir_grid_points, ir_grid_weights, grid_address, grid_mapping_table
 
 
-def get_grid_points_by_rotations(grid_point,
+def get_grid_points_by_rotations(address,
                                  reciprocal_rotations,
-                                 mesh,
-                                 mesh_shifts=None):
-    if mesh_shifts is None:
-        mesh_shifts = [False, False, False]
-    return spglib.get_grid_points_by_rotations(
-        grid_point,
-        reciprocal_rotations,
-        mesh,
-        is_shift=np.where(mesh_shifts, 1, 0),
-        is_dense=True)
+                                 mesh):
+    """Returns grid points obtained after rotating input grid address
+
+    Parameters
+    ----------
+    address : array_like
+        Grid point address to be rotated.
+        dtype='int_', shape=(3,)
+    reciprocal_rotations : array_like
+        Rotation matrices {R} with respect to reciprocal basis vectors.
+        Defined by q'=Rq.
+        dtype='int_', shape=(rotations, 3, 3)
+    mesh : array_like
+        dtype='int_', shape=(3,)
+
+    Returns
+    -------
+    rot_grid_indices : ndarray
+        Grid points obtained after rotating input grid address
+        dtype='int_', shape=(rotations,)
+
+    """
+
+    rot_adrs = np.dot(reciprocal_rotations, address)
+    gps = np.zeros(len(reciprocal_rotations), dtype='int_')
+    for i, adrs in enumerate(rot_adrs):
+        gps[i] = get_grid_point_from_address(adrs, mesh)
+    return gps
 
 
 def reduce_grid_points(mesh_divisors,
