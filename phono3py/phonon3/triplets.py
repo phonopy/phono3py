@@ -181,11 +181,13 @@ def get_grid_address(mesh):
     return grid_address
 
 
-def get_bz_grid_address(mesh, reciprocal_lattice):
+def get_bz_grid_address(mesh, reciprocal_lattice, is_dense_bz_map=False):
     bz_grid_address, bz_map = _relocate_BZ_grid_address(
         get_grid_address(mesh),
         mesh,
-        reciprocal_lattice)
+        reciprocal_lattice,
+        is_dense_bz_map=is_dense_bz_map)
+
     return bz_grid_address, bz_map
 
 
@@ -543,7 +545,8 @@ def _get_stabilized_reciprocal_mesh(mesh,
 def _relocate_BZ_grid_address(grid_address,
                               mesh,
                               reciprocal_lattice,  # column vectors
-                              is_shift=None):
+                              is_shift=None,
+                              is_dense_bz_map=False):
     """Grid addresses are relocated to be inside first Brillouin zone.
 
     Number of ir-grid-points inside Brillouin zone is returned.
@@ -557,13 +560,19 @@ def _relocate_BZ_grid_address(grid_address,
     are inside the first Brillouin zone or on its surface. Each
     address in grid_address is mapped to one of those in
     bz_grid_address by a reciprocal lattice vector (including zero
-    vector) with keeping element order. For those inside first
-    Brillouin zone, the mapping is one-to-one. For those on the first
-    Brillouin zone surface, more than one addresses in bz_grid_address
-    that are equivalent by the reciprocal lattice translations are
-    mapped to one address in grid_address. In this case, those grid
-    points except for one of them are appended to the tail of this array,
-    for which bz_grid_address has the following data storing:
+    vector) with keeping element order. For those inside first BZ, the
+    mapping is one-to-one. For those on the first BZ surface, more
+    than one addresses in bz_grid_address that are equivalent by the
+    reciprocal lattice translations are mapped to one address in
+    grid_address. The bz_grid_address and bz_map are given in the
+    following format depending on the choice of ``is_dense_bz_map``.
+
+    is_dense_bz_map = False
+    -----------------------
+
+    Those grid points on the BZ surface except for one of them are
+    appended to the tail of this array, for which bz_grid_address has
+    the following data storing:
 
     |------------------array size of bz_grid_address-------------------------|
     |--those equivalent to grid_address--|--those on surface except for one--|
@@ -574,6 +583,22 @@ def _relocate_BZ_grid_address(grid_address,
     surface from grid address. The grid point indices are mapped to
     (mesh[0] * 2) x (mesh[1] * 2) x (mesh[2] * 2) space (bz_map).
 
+    is_dense_bz_map = True
+    ----------------------
+
+    The translationally equivalent grid points corresponding to one grid point
+    on BZ surface are stored in continuously. If the multiplicity (number of
+    equivalent grid points) is 1, 2, 1, 4, ... for the grid points,
+    ``bz_map`` stores the multiplicites and the index positions of the first
+    grid point of the equivalent grid points, i.e.,
+
+    bz_map[:, 0] = [1, 2, 1, 4, 1, ...]
+    bz_map[:, 1] = [0, 1, 3, 4, 8...]
+    grid_address[0] -> bz_grid_address[0:1]
+    grid_address[1] -> bz_grid_address[1:3]
+    grid_address[2] -> bz_grid_address[3:4]
+    grid_address[3] -> bz_grid_address[4:8]
+
     """
 
     import phono3py._phono3py as phono3c
@@ -583,16 +608,27 @@ def _relocate_BZ_grid_address(grid_address,
     else:
         _is_shift = np.array(is_shift, dtype='int_')
     bz_grid_address = np.zeros((np.prod(np.add(mesh, 1)), 3), dtype='int_')
-    bz_map = np.zeros(np.prod(np.multiply(mesh, 2)), dtype='int_')
-    num_bz_ir = phono3c.BZ_grid_address(
-        bz_grid_address,
-        bz_map,
-        grid_address,
-        np.array(mesh, dtype='int_'),
-        np.array(reciprocal_lattice, dtype='double', order='C'),
-        _is_shift)
 
-    bz_grid_address = np.array(bz_grid_address[:num_bz_ir], dtype='int_')
+    if is_dense_bz_map:
+        bz_map = np.zeros((np.prod(mesh), 2), dtype='int_')
+        num_gp = phono3c.bz_grid_addresses(
+            bz_grid_address,
+            bz_map,
+            grid_address,
+            np.array(mesh, dtype='int_'),
+            np.array(reciprocal_lattice, dtype='double', order='C'),
+            _is_shift)
+    else:
+        bz_map = np.zeros(np.prod(np.multiply(mesh, 2)), dtype='int_')
+        num_gp = phono3c.BZ_grid_address(
+            bz_grid_address,
+            bz_map,
+            grid_address,
+            np.array(mesh, dtype='int_'),
+            np.array(reciprocal_lattice, dtype='double', order='C'),
+            _is_shift)
+
+    bz_grid_address = np.array(bz_grid_address[:num_gp], dtype='int_')
     return bz_grid_address, bz_map
 
 

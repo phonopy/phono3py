@@ -201,6 +201,12 @@ static long relocate_BZ_grid_address(long bz_grid_address[][3],
                                      const long mesh[3],
                                      KPTCONST double rec_lattice[3][3],
                                      const long is_shift[3]);
+static long get_bz_grid_addresses(long bz_grid_address[][3],
+                                  long bz_map[][2],
+                                  KPTCONST long grid_address[][3],
+                                  const long mesh[3],
+                                  KPTCONST double rec_lattice[3][3],
+                                  const long is_shift[3]);
 static double get_tolerance_for_BZ_reduction(KPTCONST double rec_lattice[3][3],
                                              const long mesh[3]);
 static long get_num_ir(long ir_mapping_table[], const long mesh[3]);
@@ -309,6 +315,21 @@ long kpt_relocate_BZ_grid_address(long bz_grid_address[][3],
                                   mesh,
                                   rec_lattice,
                                   is_shift);
+}
+
+long kpt_get_bz_grid_addresses(long bz_grid_address[][3],
+                               long bz_map[][2],
+                               KPTCONST long grid_address[][3],
+                               const long mesh[3],
+                               KPTCONST double rec_lattice[3][3],
+                               const long is_shift[3])
+{
+  return get_bz_grid_addresses(bz_grid_address,
+                               bz_map,
+                               grid_address,
+                               mesh,
+                               rec_lattice,
+                               is_shift);
 }
 
 void kpt_copy_matrix_l3(long a[3][3], KPTCONST long b[3][3])
@@ -708,6 +729,58 @@ static long relocate_BZ_grid_address(long bz_grid_address[][3],
   }
 
   return boundary_num_gp + total_num_gp;
+}
+
+static long get_bz_grid_addresses(long bz_grid_address[][3],
+                                  long bz_map[][2],
+                                  KPTCONST long grid_address[][3],
+                                  const long mesh[3],
+                                  KPTCONST double rec_lattice[3][3],
+                                  const long is_shift[3])
+{
+  double tolerance, min_distance;
+  double q_vector[3], distance[KPT_NUM_BZ_SEARCH_SPACE];
+  long i, j, k, min_index, num_gp, multi;
+
+  tolerance = get_tolerance_for_BZ_reduction(rec_lattice, mesh);
+  num_gp = 0;
+
+  for (i = 0; i < mesh[0] * mesh[1] * mesh[2]; i++) {
+    multi = 0;
+
+    for (j = 0; j < KPT_NUM_BZ_SEARCH_SPACE; j++) {
+      for (k = 0; k < 3; k++) {
+        q_vector[k] =
+          ((grid_address[i][k] + bz_search_space[j][k] * mesh[k]) * 2 +
+           is_shift[k]) / ((double)mesh[k]) / 2;
+      }
+      multiply_matrix_vector_d3(q_vector, rec_lattice, q_vector);
+      distance[j] = norm_squared_d3(q_vector);
+    }
+    min_distance = distance[0];
+    min_index = 0;
+    for (j = 1; j < KPT_NUM_BZ_SEARCH_SPACE; j++) {
+      if (distance[j] < min_distance) {
+        min_distance = distance[j];
+        min_index = j;
+      }
+    }
+
+    for (j = 0; j < KPT_NUM_BZ_SEARCH_SPACE; j++) {
+      if (distance[j] < min_distance + tolerance) {
+        for (k = 0; k < 3; k++) {
+          bz_grid_address[num_gp][k] =
+            grid_address[i][k] + bz_search_space[j][k] * mesh[k];
+        }
+        num_gp++;
+        multi++;
+      }
+    }
+    bz_map[i][0] = multi;
+    bz_map[i][1] = num_gp - multi;
+  }
+
+  return num_gp;
 }
 
 static double get_tolerance_for_BZ_reduction(KPTCONST double rec_lattice[3][3],

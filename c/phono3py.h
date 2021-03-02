@@ -298,7 +298,12 @@ long ph3py_relocate_BZ_grid_address(long bz_grid_address[][3],
                                     const long mesh[3],
                                     PHPYCONST double rec_lattice[3][3],
                                     const long is_shift[3]);
-
+long ph3py_get_bz_grid_addresses(long bz_grid_address[][3],
+                                 long bz_map[][2],
+                                 PHPYCONST long grid_address[][3],
+                                 const long mesh[3],
+                                 PHPYCONST double rec_lattice[3][3],
+                                 const long is_shift[3]);
 
 void ph3py_symmetrize_collision_matrix(double *collision_matrix,
                                        const long num_column,
