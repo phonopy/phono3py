@@ -33,7 +33,7 @@
 /* POSSIBILITY OF SUCH DAMAGE. */
 
 #include <math.h>
-#include "rgrid.h"
+#include "grgrid.h"
 #include "phonoc_utils.h"
 #include "triplet.h"
 #include "triplet_iw.h"
@@ -217,13 +217,14 @@ tpi_get_neighboring_grid_points(long neighboring_grid_points[],
                                 TPLCONST long bz_grid_address[][3],
                                 const long bz_map[])
 {
-  long bzmesh[3], address_double[3], bz_address_double[3];
+  long bzmesh[3], address_double[3], bz_address_double[3], PS[3];
   long i, j, bz_gp, prod_bz_mesh;
 
   prod_bz_mesh = 1;
   for (i = 0; i < 3; i++) {
     bzmesh[i] = mesh[i] * 2;
     prod_bz_mesh *= bzmesh[i];
+    PS[i] = 0;
   }
   for (i = 0; i < num_relative_grid_address; i++) {
     for (j = 0; j < 3; j++) {
@@ -231,10 +232,10 @@ tpi_get_neighboring_grid_points(long neighboring_grid_points[],
                            relative_grid_address[i][j]) * 2;
       bz_address_double[j] = address_double[j];
     }
-    bz_gp = bz_map[rgd_get_double_grid_index(bz_address_double, bzmesh)];
+    bz_gp = bz_map[grg_get_double_grid_index(bz_address_double, bzmesh, PS)];
     if (bz_gp == prod_bz_mesh) {
       neighboring_grid_points[i] =
-        rgd_get_double_grid_index(address_double, mesh);
+        grg_get_double_grid_index(address_double, mesh, PS);
     } else {
       neighboring_grid_points[i] = bz_gp;
     }

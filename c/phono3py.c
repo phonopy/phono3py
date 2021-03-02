@@ -44,7 +44,7 @@
 #include "kpoint.h"
 #include "pp_collision.h"
 #include "real_self_energy.h"
-#include "rgrid.h"
+#include "grgrid.h"
 #include "tetrahedron_method.h"
 #include "triplet.h"
 #include "triplet_iw.h"
@@ -605,7 +605,7 @@ void ph3py_get_integration_weight_with_sigma(double *iw,
 long ph3py_get_grid_index_from_address(const long address[3],
                                        const long mesh[3])
 {
-  return rgd_get_single_grid_index(address, mesh);
+  return grg_get_grid_index(address, mesh);
 }
 
 

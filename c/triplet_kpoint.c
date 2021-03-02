@@ -37,7 +37,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include "kpoint.h"
-#include "rgrid.h"
+#include "grgrid.h"
 #include "triplet.h"
 #include "triplet_kpoint.h"
 
@@ -308,7 +308,7 @@ static long get_ir_triplets_at_q(long *map_triplets,
     for (j = 0; j < 3; j++) { /* q'' */
       address_double2[j] = - address_double0[j] - address_double1[j];
     }
-    third_q[i] = rgd_get_double_grid_index(address_double2, mesh);
+    third_q[i] = grg_get_double_grid_index(address_double2, mesh, is_shift);
   }
 
   num_ir_triplets = 0;
@@ -355,12 +355,13 @@ static long get_BZ_triplets_at_q(long (*triplets)[3],
 {
   long i, num_ir;
   long j, k;
-  long bz_address[3][3], bz_address_double[3], bzmesh[3];
+  long bz_address[3][3], bz_address_double[3], bzmesh[3], PS[3];
   long *ir_grid_points;
 
   ir_grid_points = NULL;
 
   for (i = 0; i < 3; i++) {
+    PS[i] = 0;
     bzmesh[i] = mesh[i] * 2;
   }
 
@@ -394,7 +395,7 @@ static long get_BZ_triplets_at_q(long (*triplets)[3],
         bz_address_double[k] = bz_address[j][k] * 2;
       }
       triplets[i][j] =
-        bz_map[rgd_get_double_grid_index(bz_address_double, bzmesh)];
+        bz_map[grg_get_double_grid_index(bz_address_double, bzmesh, PS)];
     }
   }
 
@@ -413,12 +414,13 @@ static long get_third_q_of_triplets_at_q(long bz_address[3][3],
   long i, j, smallest_g, smallest_index, sum_g, delta_g[3];
   long prod_bzmesh;
   long bzgp[KPT_NUM_BZ_SEARCH_SPACE];
-  long bz_address_double[3];
+  long bz_address_double[3], PS[3];
 
   prod_bzmesh = (long)bzmesh[0] * bzmesh[1] * bzmesh[2];
 
   modulo_l3(bz_address[q_index], mesh);
   for (i = 0; i < 3; i++) {
+    PS[i] = 0;
     delta_g[i] = 0;
     for (j = 0; j < 3; j++) {
       delta_g[i] += bz_address[j][i];
@@ -431,7 +433,7 @@ static long get_third_q_of_triplets_at_q(long bz_address[3][3],
       bz_address_double[j] = (bz_address[q_index][j] +
                               bz_search_space[i][j] * mesh[j]) * 2;
     }
-    bzgp[i] = bz_map[rgd_get_double_grid_index(bz_address_double, bzmesh)];
+    bzgp[i] = bz_map[grg_get_double_grid_index(bz_address_double, bzmesh, PS)];
   }
 
   for (i = 0; i < KPT_NUM_BZ_SEARCH_SPACE; i++) {

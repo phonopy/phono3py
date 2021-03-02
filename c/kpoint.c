@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include "kpoint.h"
-#include "rgrid.h"
+#include "grgrid.h"
 
 #ifdef KPTWARNING
 #include <stdio.h>
@@ -542,11 +542,11 @@ static long get_ir_reciprocal_mesh_normal(long grid_address[][3],
   long j;
   long address_double[3], address_double_rot[3];
 
-  rgd_get_all_grid_addresses(grid_address, mesh);
+  grg_get_all_grid_addresses(grid_address, mesh);
 
 #pragma omp parallel for private(j, grid_point_rot, address_double, address_double_rot)
   for (i = 0; i < mesh[0] * mesh[1] * (long)(mesh[2]); i++) {
-    rgd_get_double_grid_address(address_double,
+    grg_get_double_grid_address(address_double,
                                 grid_address[i],
                                 mesh,
                                 is_shift);
@@ -555,7 +555,7 @@ static long get_ir_reciprocal_mesh_normal(long grid_address[][3],
       multiply_matrix_vector_l3(address_double_rot,
                                 rot_reciprocal->mat[j],
                                 address_double);
-      grid_point_rot = rgd_get_double_grid_index(address_double_rot, mesh);
+      grid_point_rot = grg_get_double_grid_index(address_double_rot, mesh, is_shift);
       if (grid_point_rot < ir_mapping_table[i]) {
 #ifdef _OPENMP
         ir_mapping_table[i] = grid_point_rot;
@@ -585,7 +585,7 @@ get_ir_reciprocal_mesh_distortion(long grid_address[][3],
   /* divisor, long_address_double, and long_address_double_rot have */
   /* long integer type to treat dense mesh. */
 
-  rgd_get_all_grid_addresses(grid_address, mesh);
+  grg_get_all_grid_addresses(grid_address, mesh);
 
   for (j = 0; j < 3; j++) {
     divisor[j] = mesh[(j + 1) % 3] * mesh[(j + 2) % 3];
@@ -593,7 +593,7 @@ get_ir_reciprocal_mesh_distortion(long grid_address[][3],
 
 #pragma omp parallel for private(j, k, grid_point_rot, address_double, address_double_rot, long_address_double, long_address_double_rot)
   for (i = 0; i < mesh[0] * mesh[1] * (long)(mesh[2]); i++) {
-    rgd_get_double_grid_address(address_double,
+    grg_get_double_grid_address(address_double,
                                 grid_address[i],
                                 mesh,
                                 is_shift);
@@ -623,7 +623,7 @@ get_ir_reciprocal_mesh_distortion(long grid_address[][3],
       }
       if (indivisible) {continue;}
       grid_point_rot =
-        rgd_get_double_grid_index(address_double_rot, mesh);
+        grg_get_double_grid_index(address_double_rot, mesh, is_shift);
       if (grid_point_rot < ir_mapping_table[i]) {
 #ifdef _OPENMP
         ir_mapping_table[i] = grid_point_rot;
@@ -698,7 +698,7 @@ static long relocate_BZ_grid_address(long bz_grid_address[][3],
             grid_address[i][k] + bz_search_space[j][k] * mesh[k];
           bz_address_double[k] = bz_grid_address[gp][k] * 2 + is_shift[k];
         }
-        bzgp = rgd_get_double_grid_index(bz_address_double, bzmesh);
+        bzgp = grg_get_double_grid_index(bz_address_double, bzmesh, is_shift);
         bz_map[bzgp] = gp;
         if (j != min_index) {
           boundary_num_gp++;
