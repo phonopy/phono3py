@@ -214,15 +214,11 @@ def get_triplets_at_q(grid_point,
             bz_grid.gp_map, map_triplets, map_q)
 
 
-def get_all_triplets(grid_point,
-                     bz_grid_address,
-                     bz_map,
-                     mesh):
-    bz_grid = BZGrid(addresses=bz_grid_address, gp_map=bz_map)
+def get_all_triplets(grid_point, bz_grid, mesh):
     triplets_at_q, _ = _get_BZ_triplets_at_q(
         grid_point,
         bz_grid,
-        np.arange(np.prod(mesh), dtype=bz_map.dtype),
+        np.arange(np.prod(mesh), dtype='int_'),
         mesh)
 
     return triplets_at_q

@@ -158,15 +158,10 @@ def _write_gamma_detail(br, interaction, i, compression="gzip", filename=None,
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()
     triplets, weights, map_triplets, _ = interaction.get_triplets_at_q()
-    grid_address = interaction.grid_address
-    bz_map = interaction.bz_map
     if map_triplets is None:
         all_triplets = None
     else:
-        all_triplets = get_all_triplets(gp,
-                                        grid_address,
-                                        bz_map,
-                                        mesh)
+        all_triplets = get_all_triplets(gp, interaction.bz_grid, mesh)
 
     if all_bands_exist(interaction):
         for j, sigma in enumerate(sigmas):

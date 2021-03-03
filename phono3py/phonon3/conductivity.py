@@ -69,23 +69,18 @@ def write_pp(conductivity,
     sigma_cutoff = conductivity.get_sigma_cutoff_width()
     mesh = conductivity.get_mesh_numbers()
     triplets, weights, map_triplets, _ = pp.get_triplets_at_q()
-    grid_address = pp.grid_address
-    bz_map = pp.bz_map
     if map_triplets is None:
         all_triplets = None
     else:
-        all_triplets = get_all_triplets(grid_point,
-                                        grid_address,
-                                        bz_map,
-                                        mesh)
+        all_triplets = get_all_triplets(grid_point, pp.bz_grid, mesh)
 
     if len(sigmas) > 1:
         print("Multiple smearing parameters were given. The last one in ")
         print("ph-ph interaction calculations was written in the file.")
 
     write_pp_to_hdf5(mesh,
-                     pp=pp.get_interaction_strength(),
-                     g_zero=pp.get_zero_value_positions(),
+                     pp=pp.interaction_strength,
+                     g_zero=pp.zero_value_positions,
                      grid_point=grid_point,
                      triplet=triplets,
                      weight=weights,
