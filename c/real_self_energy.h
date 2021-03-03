@@ -41,7 +41,7 @@
 
 void rse_get_real_self_energy_at_bands(double *real_self_energy,
                                        const Darray *fc3_normal_squared,
-                                       const int *band_indices,
+                                       const long *band_indices,
                                        const double *frequencies,
                                        const long (*triplets)[3],
                                        const long *triplet_weights,
@@ -53,7 +53,7 @@ void rse_get_real_self_energy_at_frequency_point(
   double *real_self_energy,
   const double frequency_point,
   const Darray *fc3_normal_squared,
-  const int *band_indices,
+  const long *band_indices,
   const double *frequencies,
   const long (*triplets)[3],
   const long *triplet_weights,

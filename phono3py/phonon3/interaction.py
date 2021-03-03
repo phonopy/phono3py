@@ -41,7 +41,7 @@ from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
 from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
 from phono3py.phonon3.triplets import (get_triplets_at_q,
                                        get_nosym_triplets_at_q,
-                                       get_bz_grid_address)
+                                       BZGrid)
 
 
 class Interaction(object):
@@ -62,7 +62,7 @@ class Interaction(object):
                  lapack_zheev_uplo='L'):
         self._supercell = supercell
         self._primitive = primitive
-        self._mesh = np.array(mesh, dtype='intc')
+        self._mesh = np.array(mesh, dtype='int_')
         self._symmetry = symmetry
 
         self._band_indices = None
@@ -98,8 +98,7 @@ class Interaction(object):
         self._weights_at_q = None
         self._triplets_map_at_q = None
         self._ir_map_at_q = None
-        self._grid_address = None
-        self._bz_map = None
+        self._bz_grid = None
         self._interaction_strength = None
         self._g_zero = None
 
@@ -114,10 +113,10 @@ class Interaction(object):
 
         svecs, multiplicity = self._primitive.get_smallest_vectors()
         self._smallest_vectors = svecs
-        self._multiplicity = multiplicity
+        self._multiplicity = np.array(multiplicity, dtype='int_', order='C')
         self._masses = np.array(self._primitive.masses, dtype='double')
-        self._p2s = self._primitive.p2s_map
-        self._s2p = self._primitive.s2p_map
+        self._p2s = np.array(self._primitive.p2s_map, dtype='int_')
+        self._s2p = np.array(self._primitive.s2p_map, dtype='int_')
 
         self._allocate_phonon()
 
@@ -200,15 +199,20 @@ class Interaction(object):
 
     @property
     def grid_address(self):
-        return self._grid_address
+        warnings.warn("Use attribute, bz_grid.addresses.", DeprecationWarning)
+        return self.bz_grid.addresses
+
+    @property
+    def bz_grid(self):
+        return self._bz_grid
 
     def get_grid_address(self):
-        warnings.warn("Use attribute, grid_address.", DeprecationWarning)
-        return self.grid_address
+        warnings.warn("Use attribute, bz_grid.addresses.", DeprecationWarning)
+        return self.bz_grid.addresses
 
     @property
     def bz_map(self):
-        return self._bz_map
+        return self._bz_grid.gp_map
 
     def get_bz_map(self):
         warnings.warn("Use attribute, bz_map.", DeprecationWarning)
@@ -306,7 +310,7 @@ class Interaction(object):
         if not self._is_mesh_symmetry:
             (triplets_at_q,
              weights_at_q,
-             grid_address,
+             bz_grid_addresses,
              bz_map,
              triplets_map_at_q,
              ir_map_at_q) = get_nosym_triplets_at_q(
@@ -317,7 +321,7 @@ class Interaction(object):
         else:
             (triplets_at_q,
              weights_at_q,
-             grid_address,
+             bz_grid_addresses,
              bz_map,
              triplets_map_at_q,
              ir_map_at_q) = get_triplets_at_q(
@@ -329,7 +333,7 @@ class Interaction(object):
 
         # Special treatment of symmetry is applied when q_direction is used.
         if self._nac_q_direction is not None:
-            if (grid_address[grid_point] == 0).all():
+            if (bz_grid_addresses[grid_point] == 0).all():
                 self._phonon_done[grid_point] = 0
                 self.run_phonon_solver(np.array([grid_point], dtype='int_'))
                 rotations = []
@@ -341,7 +345,7 @@ class Interaction(object):
                         rotations.append(r)
                 (triplets_at_q,
                  weights_at_q,
-                 grid_address,
+                 bz_grid_addresses,
                  bz_map,
                  triplets_map_at_q,
                  ir_map_at_q) = get_triplets_at_q(
@@ -353,16 +357,16 @@ class Interaction(object):
                      stores_triplets_map=stores_triplets_map)
 
         for triplet in triplets_at_q:
-            sum_q = (grid_address[triplet]).sum(axis=0)
+            sum_q = (bz_grid_addresses[triplet]).sum(axis=0)
             if (sum_q % self._mesh != 0).any():
                 print("============= Warning ==================")
                 print("%s" % triplet)
                 for tp in triplet:
                     print("%s %s" %
-                          (grid_address[tp],
+                          (bz_grid_addresses[tp],
                            np.linalg.norm(
                                np.dot(reciprocal_lattice,
-                                      grid_address[tp] /
+                                      bz_grid_addresses[tp] /
                                       self._mesh.astype('double')))))
                 print("%s" % sum_q)
                 print("============= Warning ==================")
@@ -371,8 +375,8 @@ class Interaction(object):
         self._triplets_at_q = triplets_at_q
         self._weights_at_q = weights_at_q
         self._triplets_map_at_q = triplets_map_at_q
-        # self._grid_address = grid_address
-        # self._bz_map = bz_map
+        # self._bz_grid.addresses = bz_grid_addresses
+        # self._bz_grid.gp_map = bz_map
         self._ir_map_at_q = ir_map_at_q
 
     def init_dynamical_matrix(self,
@@ -400,7 +404,7 @@ class Interaction(object):
             self.run_phonon_solver(np.array([0], dtype='int_'),
                                    verbose=verbose)
 
-        if (self._grid_address[0] == 0).all():
+        if (self._bz_grid.addresses[0] == 0).all():
             if np.sum(self._frequencies[0] < self._cutoff_frequency) < 3:
                 for i, f in enumerate(self._frequencies[0, :3]):
                     if not (f < self._cutoff_frequency):
@@ -415,12 +419,12 @@ class Interaction(object):
         if nac_q_direction is not None:
             self._nac_q_direction = np.array(nac_q_direction, dtype='double')
 
-    def set_phonon_data(self, frequencies, eigenvectors, grid_address):
-        if grid_address.shape != self._grid_address.shape:
+    def set_phonon_data(self, frequencies, eigenvectors, bz_grid_addresses):
+        if bz_grid_addresses.shape != self._bz_grid.addresses.shape:
             raise RuntimeError("Input grid address size is inconsistent. "
                                "Setting phonons faild.")
 
-        if (self._grid_address - grid_address).all():
+        if (self._bz_grid.addresses - bz_grid_addresses).all():
             raise RuntimeError("Input grid addresses are inconsistent. "
                                "Setting phonons faild.")
         else:
@@ -437,7 +441,7 @@ class Interaction(object):
 
     def run_phonon_solver(self, grid_points=None, verbose=False):
         if grid_points is None:
-            _grid_points = np.arange(len(self._grid_address), dtype='int_')
+            _grid_points = np.arange(len(self._bz_grid.addresses), dtype='int_')
         else:
             _grid_points = grid_points
         self._run_phonon_solver_c(_grid_points, verbose=verbose)
@@ -468,9 +472,9 @@ class Interaction(object):
     def _set_band_indices(self, band_indices):
         num_band = len(self._primitive) * 3
         if band_indices is None:
-            self._band_indices = np.arange(num_band, dtype='intc')
+            self._band_indices = np.arange(num_band, dtype='int_')
         else:
-            self._band_indices = np.array(band_indices, dtype='intc')
+            self._band_indices = np.array(band_indices, dtype='int_')
 
     def _run_c(self, g_zero):
         import phono3py._phono3py as phono3c
@@ -486,7 +490,7 @@ class Interaction(object):
                             self._frequencies,
                             self._eigenvectors,
                             self._triplets_at_q,
-                            self._grid_address,
+                            self._bz_grid.addresses,
                             self._mesh,
                             self._fc3,
                             self._smallest_vectors,
@@ -506,7 +510,7 @@ class Interaction(object):
                             self._eigenvectors,
                             self._phonon_done,
                             grid_points,
-                            self._grid_address,
+                            self._bz_grid.addresses,
                             self._mesh,
                             self._frequency_factor_to_THz,
                             self._nac_q_direction,
@@ -527,7 +531,7 @@ class Interaction(object):
 
         for i, grid_triplet in enumerate(self._triplets_at_q):
             print("%d / %d" % (i + 1, len(self._triplets_at_q)))
-            r2r.run(self._grid_address[grid_triplet])
+            r2r.run(self._bz_grid.addresses[grid_triplet])
             fc3_reciprocal = r2r.get_fc3_reciprocal()
             for gp in grid_triplet:
                 self._run_phonon_solver_py(gp)
@@ -540,7 +544,7 @@ class Interaction(object):
                              self._phonon_done,
                              self._frequencies,
                              self._eigenvectors,
-                             self._grid_address,
+                             self._bz_grid.addresses,
                              self._mesh,
                              self._dm,
                              self._frequency_factor_to_THz,
@@ -548,10 +552,11 @@ class Interaction(object):
 
     def _allocate_phonon(self):
         primitive_lattice = np.linalg.inv(self._primitive.cell)
-        self._grid_address, self._bz_map = get_bz_grid_address(
-            self._mesh, primitive_lattice, with_boundary=True)
+        self._bz_grid = BZGrid()
+        self._bz_grid.set_bz_grid(self._mesh, primitive_lattice,
+                              is_dense_bz_map=False)
         num_band = len(self._primitive) * 3
-        num_grid = len(self._grid_address)
+        num_grid = len(self._bz_grid.addresses)
         self._phonon_done = np.zeros(num_grid, dtype='byte')
         self._frequencies = np.zeros((num_grid, num_band), dtype='double')
         itemsize = self._frequencies.itemsize

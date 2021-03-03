@@ -69,8 +69,8 @@ def write_pp(conductivity,
     sigma_cutoff = conductivity.get_sigma_cutoff_width()
     mesh = conductivity.get_mesh_numbers()
     triplets, weights, map_triplets, _ = pp.get_triplets_at_q()
-    grid_address = pp.get_grid_address()
-    bz_map = pp.get_bz_map()
+    grid_address = pp.grid_address
+    bz_map = pp.bz_map
     if map_triplets is None:
         all_triplets = None
     else:
@@ -138,11 +138,12 @@ class Conductivity(object):
         self._symmetry = symmetry
 
         if not self._is_kappa_star:
-            self._point_operations = np.array([np.eye(3, dtype='intc')],
-                                              dtype='intc')
+            self._point_operations = np.array([np.eye(3, dtype='int_')],
+                                              dtype='int_', order='C')
         else:
-            self._point_operations = symmetry.get_reciprocal_operations()
-        rec_lat = np.linalg.inv(self._primitive.get_cell())
+            self._point_operations = np.array(symmetry.reciprocal_operations,
+                                              dtype='int_', order='C')
+        rec_lat = np.linalg.inv(self._primitive.cell)
         self._rotations_cartesian = np.array(
             [similarity_transformation(rec_lat, r)
              for r in self._point_operations], dtype='double')
@@ -338,7 +339,7 @@ class Conductivity(object):
             (self._ir_grid_points,
              self._ir_grid_weights) = self._get_ir_grid_points()
         elif not self._is_kappa_star:  # All grid points
-            coarse_grid_address = get_grid_address(self._coarse_mesh)
+            coarse_grid_address = get_grid_address(self._coarse_mesh),
             coarse_grid_points = np.arange(np.prod(self._coarse_mesh),
                                            dtype='int_')
             self._grid_points = from_coarse_to_dense_grid_points(
@@ -347,7 +348,7 @@ class Conductivity(object):
                 coarse_grid_points,
                 coarse_grid_address,
                 coarse_mesh_shifts=self._coarse_mesh_shifts)
-            self._grid_weights = np.ones(len(self._grid_points), dtype='intc')
+            self._grid_weights = np.ones(len(self._grid_points), dtype='int_')
             self._ir_grid_points = self._grid_points
             self._ir_grid_weights = self._grid_weights
         else:  # Automatic sampling
@@ -394,7 +395,7 @@ class Conductivity(object):
         self._mesh = self._pp.mesh_numbers
 
         if mesh_divisors is None:
-            self._mesh_divisors = np.array([1, 1, 1], dtype='intc')
+            self._mesh_divisors = np.array([1, 1, 1], dtype='int_')
         else:
             self._mesh_divisors = []
             for i, (m, n) in enumerate(zip(self._mesh, mesh_divisors)):
@@ -405,7 +406,7 @@ class Conductivity(object):
                     print(("Mesh number %d for the " +
                            ["first", "second", "third"][i] +
                            " axis is not dividable by divisor %d.") % (m, n))
-            self._mesh_divisors = np.array(self._mesh_divisors, dtype='intc')
+            self._mesh_divisors = np.array(self._mesh_divisors, dtype='int_')
             if coarse_mesh_shifts is None:
                 self._coarse_mesh_shifts = [False, False, False]
             else:
@@ -429,11 +430,12 @@ class Conductivity(object):
             mesh_shifts = [False, False, False]
         else:
             mesh_shifts = self._coarse_mesh_shifts
+
         (coarse_grid_points,
          coarse_grid_weights,
          coarse_grid_address, _) = get_ir_grid_points(
              self._coarse_mesh,
-             self._symmetry.get_pointgroup_operations(),
+             self._symmetry.pointgroup_operations,
              mesh_shifts=mesh_shifts)
         grid_points = from_coarse_to_dense_grid_points(
             self._mesh,

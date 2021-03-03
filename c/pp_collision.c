@@ -55,59 +55,59 @@ static void get_collision(double *ise,
                           const lapack_complex_double *eigenvectors,
                           const long triplet[3],
                           const long triplet_weight,
-                          const int *grid_address,
-                          const int *mesh,
+                          const long *grid_address,
+                          const long *mesh,
                           const double *fc3,
-                          const int is_compact_fc3,
+                          const long is_compact_fc3,
                           const double *shortest_vectors,
-                          const int svecs_dims[3],
-                          const int *multiplicity,
+                          const long svecs_dims[3],
+                          const long *multiplicity,
                           const double *masses,
-                          const int *p2s_map,
-                          const int *s2p_map,
-                          const int *band_indices,
-                          const int symmetrize_fc3_q,
+                          const long *p2s_map,
+                          const long *s2p_map,
+                          const long *band_indices,
+                          const long symmetrize_fc3_q,
                           const double cutoff_frequency,
-                          const int openmp_per_triplets);
+                          const long openmp_per_triplets);
 static void finalize_ise(double *imag_self_energy,
                          const double *ise,
-                         const int *grid_address,
+                         const long *grid_address,
                          const long (*triplets)[3],
                          const long num_triplets,
                          const long num_temps,
                          const long num_band0,
-                         const int is_NU);
+                         const long is_NU);
 
 void ppc_get_pp_collision(double *imag_self_energy,
-                          PHPYCONST int relative_grid_address[24][4][3], /* thm */
+                          PHPYCONST long relative_grid_address[24][4][3], /* thm */
                           const double *frequencies,
                           const lapack_complex_double *eigenvectors,
                           const long (*triplets)[3],
                           const long num_triplets,
                           const long *triplet_weights,
-                          const int *grid_address, /* thm */
+                          const long *grid_address, /* thm */
                           const long *bz_map, /* thm */
-                          const int *mesh, /* thm */
+                          const long *mesh, /* thm */
                           const double *fc3,
-                          const int is_compact_fc3,
+                          const long is_compact_fc3,
                           const double *shortest_vectors,
-                          const int svecs_dims[3],
-                          const int *multiplicity,
+                          const long svecs_dims[3],
+                          const long *multiplicity,
                           const double *masses,
-                          const int *p2s_map,
-                          const int *s2p_map,
-                          const Iarray *band_indices,
+                          const long *p2s_map,
+                          const long *s2p_map,
+                          const Larray *band_indices,
                           const Darray *temperatures,
-                          const int is_NU,
-                          const int symmetrize_fc3_q,
+                          const long is_NU,
+                          const long symmetrize_fc3_q,
                           const double cutoff_frequency)
 {
   long i;
   long num_band, num_band0, num_band_prod, num_temps;
-  int openmp_per_triplets;
+  long openmp_per_triplets;
   double *ise, *freqs_at_gp, *g;
   char *g_zero;
-  int tp_relative_grid_address[2][24][4][3];
+  long tp_relative_grid_address[2][24][4][3];
 
   ise = NULL;
   freqs_at_gp = NULL;
@@ -147,7 +147,7 @@ void ppc_get_pp_collision(double *imag_self_energy,
                                mesh,
                                triplets[i],
                                1,
-                               (int(*)[3])grid_address,
+                               (long(*)[3])grid_address,
                                bz_map,
                                frequencies,  /* used as f1 */
                                num_band,
@@ -212,25 +212,25 @@ void ppc_get_pp_collision_with_sigma(
   const long (*triplets)[3],
   const long num_triplets,
   const long *triplet_weights,
-  const int *grid_address,
-  const int *mesh,
+  const long *grid_address,
+  const long *mesh,
   const double *fc3,
-  const int is_compact_fc3,
+  const long is_compact_fc3,
   const double *shortest_vectors,
-  const int svecs_dims[3],
-  const int *multiplicity,
+  const long svecs_dims[3],
+  const long *multiplicity,
   const double *masses,
-  const int *p2s_map,
-  const int *s2p_map,
-  const Iarray *band_indices,
+  const long *p2s_map,
+  const long *s2p_map,
+  const Larray *band_indices,
   const Darray *temperatures,
-  const int is_NU,
-  const int symmetrize_fc3_q,
+  const long is_NU,
+  const long symmetrize_fc3_q,
   const double cutoff_frequency)
 {
   long i;
   long num_band, num_band0, num_band_prod, num_temps;
-  int openmp_per_triplets, const_adrs_shift;
+  long openmp_per_triplets, const_adrs_shift;
   double cutoff;
   double *ise, *freqs_at_gp, *g;
   char *g_zero;
@@ -336,32 +336,32 @@ static void get_collision(double *ise,
                           const lapack_complex_double *eigenvectors,
                           const long triplet[3],
                           const long triplet_weight,
-                          const int *grid_address,
-                          const int *mesh,
+                          const long *grid_address,
+                          const long *mesh,
                           const double *fc3,
-                          const int is_compact_fc3,
+                          const long is_compact_fc3,
                           const double *shortest_vectors,
-                          const int svecs_dims[3],
-                          const int *multiplicity,
+                          const long svecs_dims[3],
+                          const long *multiplicity,
                           const double *masses,
-                          const int *p2s_map,
-                          const int *s2p_map,
-                          const int *band_indices,
-                          const int symmetrize_fc3_q,
+                          const long *p2s_map,
+                          const long *s2p_map,
+                          const long *band_indices,
+                          const long symmetrize_fc3_q,
                           const double cutoff_frequency,
-                          const int openmp_per_triplets)
+                          const long openmp_per_triplets)
 {
   long i;
   long num_band_prod, num_g_pos;
   double *fc3_normal_squared;
-  int (*g_pos)[4];
+  long (*g_pos)[4];
 
   fc3_normal_squared = NULL;
   g_pos = NULL;
 
   num_band_prod = num_band0 * num_band * num_band;
   fc3_normal_squared = (double*)malloc(sizeof(double) * num_band_prod);
-  g_pos = (int(*)[4])malloc(sizeof(int[4]) * num_band_prod);
+  g_pos = (long(*)[4])malloc(sizeof(long[4]) * num_band_prod);
 
   for (i = 0; i < num_band_prod; i++) {
     fc3_normal_squared[i] = 0;
@@ -424,15 +424,15 @@ static void get_collision(double *ise,
 
 static void finalize_ise(double *imag_self_energy,
                          const double *ise,
-                         const int *grid_address,
+                         const long *grid_address,
                          const long (*triplets)[3],
                          const long num_triplets,
                          const long num_temps,
                          const long num_band0,
-                         const int is_NU)
+                         const long is_NU)
 {
   long i, j, k;
-  int is_N;
+  long is_N;
 
   if (is_NU) {
     for (i = 0; i < 2 * num_temps * num_band0; i++) {

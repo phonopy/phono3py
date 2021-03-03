@@ -1115,7 +1115,7 @@ class Conductivity_LBTE(Conductivity):
                 self._average_collision_matrix_by_degeneracy()
                 self._expand_collisions()
             self._combine_reducible_collisions()
-            weights = np.ones(np.prod(self._mesh), dtype='intc')
+            weights = np.ones(np.prod(self._mesh), dtype='int_')
             self._symmetrize_collision_matrix()
         else:
             self._combine_collisions()

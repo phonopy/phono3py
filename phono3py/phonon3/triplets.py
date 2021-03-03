@@ -33,11 +33,93 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-import spglib
-from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.structure.grid_points import extract_ir_grid_points
 from phono3py.phonon.func import gaussian
+
+
+class BZGrid(object):
+    """Data structure of BZ grid
+
+    Attributes
+    ----------
+    addresses : ndarray
+        Integer grid address of the points in Brillouin zone including
+        surface.  The first prod(mesh) numbers of points are
+        independent. But the rest of points are
+        translational-symmetrically equivalent to some other points.
+        shape=(n_grid_points, 3), dtype='int_', order='C'
+    gp_map : ndarray
+        Grid point mapping table containing BZ surface. See more
+        detail in _relocate_BZ_grid_address docstring.
+
+    """
+
+    def __init__(self, addresses=None, gp_map=None):
+        self._addresses = addresses
+        self._gp_map = gp_map
+
+    @property
+    def addresses(self):
+        return self._addresses
+
+    @property
+    def gp_map(self):
+        return self._gp_map
+
+    def set_bz_grid(self,
+                    mesh,
+                    reciprocal_lattice,
+                    is_dense_bz_map=False):
+        """Generate BZ grid addresses and grid point mapping table
+
+        mesh : array_like or float
+            Mesh numbers or length.
+            shape=(3,), dtype='int_'
+        reciprocal_lattice : array_like
+            Reciprocal primitive basis vectors given as column vectors
+            shape=(3, 3), dtype='double', order='C'
+        is_dense_bz_map : bool
+            See the detail in the docstring of ``_relocate_BZ_grid_address``.
+
+        """
+        self.relocate(get_grid_address(mesh),
+                      mesh,
+                      reciprocal_lattice,
+                      is_dense_bz_map=is_dense_bz_map)
+
+    def relocate(self,
+                 grid_addresses,
+                 mesh,
+                 reciprocal_lattice,  # column vectors
+                 is_shift=None,
+                 is_dense_bz_map=False):
+        """Transform parallelepiped grid to BZ grid
+
+        grid_addresses : ndarray
+            Address of all grid points in reciprocal cell. Each address is
+            given by three unsigned integers.
+            dtype='int_', shape=(prod(mesh), 3)
+        mesh : array_like or float
+            Mesh numbers or length.
+            shape=(3,), dtype='int_'
+        reciprocal_lattice : array_like
+            Reciprocal primitive basis vectors given as column vectors
+            shape=(3, 3), dtype='double', order='C'
+        is_shift : array_like
+            [0, 0, 0] gives Gamma center mesh and value 1 gives half mesh shift
+            along the basis vectors.
+            dtype='int_', shape=(3,)
+        is_dense_bz_map : bool
+            See the detail in the docstring of ``_relocate_BZ_grid_address``.
+
+        """
+        self._addresses, self._gp_map = _relocate_BZ_grid_address(
+            grid_addresses,
+            mesh,
+            reciprocal_lattice,  # column vectors
+            is_shift=None,
+            is_dense_bz_map=is_dense_bz_map)
 
 
 def get_triplets_at_q(grid_point,
@@ -53,7 +135,7 @@ def get_triplets_at_q(grid_point,
         A grid point
     mesh : array_like
         Mesh numbers
-        shape=(3,), dtype='intc'
+        shape=(3,), dtype='int_'
     point_group : array_like
         Rotation matrices in real space. Note that those in reciprocal space
         mean these matrices transposed (local terminology).
@@ -74,16 +156,16 @@ def get_triplets_at_q(grid_point,
         shape=(n_triplets, 3), dtype='int_'
     weights : ndarray
         Weights of triplets in Brillouin zone
-        shape=(n_triplets,), dtype='intc'
+        shape=(n_triplets,), dtype='int_'
     bz_grid_address : ndarray
         Integer grid address of the points in Brillouin zone including
         surface.  The first prod(mesh) numbers of points are
         independent. But the rest of points are
         translational-symmetrically equivalent to some other points.
-        shape=(n_grid_points, 3), dtype='intc', order='C'
+        shape=(n_grid_points, 3), dtype='int_', order='C'
     bz_map : ndarray
         Grid point mapping table containing BZ surface. See more
-        detail in spglib docstring.
+        detail in _relocate_BZ_grid_address docstring.
         shape=(prod(mesh*2),), dtype='int_'
     map_tripelts : ndarray or None
         Returns when stores_triplets_map=True, otherwise None is
@@ -108,16 +190,14 @@ def get_triplets_at_q(grid_point,
         point_group,
         is_time_reversal=is_time_reversal,
         swappable=swappable)
-    bz_grid_address, bz_map = spglib.relocate_BZ_grid_address(
-        grid_address,
-        mesh,
-        reciprocal_lattice,
-        is_dense=True)
-    bz_map = np.array(bz_map, dtype='int_')
+
+    bz_grid = BZGrid()
+    bz_grid.relocate(grid_address, mesh, reciprocal_lattice)
+    # bz_map = np.array(bz_map, dtype='int_')
+    # bz_grid_address = np.array(bz_grid_address, dtype='int_', order='C')
     triplets_at_q, weights = _get_BZ_triplets_at_q(
         grid_point,
-        bz_grid_address,
-        bz_map,
+        bz_grid,
         map_triplets,
         mesh)
 
@@ -130,17 +210,18 @@ def get_triplets_at_q(grid_point,
         map_triplets = None
         map_q = None
 
-    return triplets_at_q, weights, bz_grid_address, bz_map, map_triplets, map_q
+    return (triplets_at_q, weights, bz_grid.addresses,
+            bz_grid.gp_map, map_triplets, map_q)
 
 
 def get_all_triplets(grid_point,
                      bz_grid_address,
                      bz_map,
                      mesh):
+    bz_grid = BZGrid(addresses=bz_grid_address, gp_map=bz_map)
     triplets_at_q, _ = _get_BZ_triplets_at_q(
         grid_point,
-        bz_grid_address,
-        bz_map,
+        bz_grid,
         np.arange(np.prod(mesh), dtype=bz_map.dtype),
         mesh)
 
@@ -151,18 +232,12 @@ def get_nosym_triplets_at_q(grid_point,
                             mesh,
                             reciprocal_lattice,
                             stores_triplets_map=False):
-    grid_address = get_grid_address(mesh)
-    bz_grid_address, bz_map = spglib.relocate_BZ_grid_address(
-        grid_address,
-        mesh,
-        reciprocal_lattice,
-        is_dense=True)
-    bz_map = np.array(bz_map, dtype='int_')
-    map_triplets = np.arange(len(grid_address), dtype=bz_map.dtype)
+    bz_grid = BZGrid()
+    bz_grid.relocate(get_grid_address(mesh), mesh, reciprocal_lattice)
+    map_triplets = np.arange(np.prod(mesh), dtype='int_')
     triplets_at_q, weights = _get_BZ_triplets_at_q(
         grid_point,
-        bz_grid_address,
-        bz_map,
+        bz_grid,
         map_triplets,
         mesh)
 
@@ -172,30 +247,18 @@ def get_nosym_triplets_at_q(grid_point,
     else:
         map_q = map_triplets.copy()
 
-    return triplets_at_q, weights, bz_grid_address, bz_map, map_triplets, map_q
+    return (triplets_at_q, weights, bz_grid.addresses,
+            bz_grid.gp_map, map_triplets, map_q)
 
 
 def get_grid_address(mesh):
-    grid_mapping_table, grid_address = spglib.get_stabilized_reciprocal_mesh(
+    """Returns grid_address of dtype='int_'"""
+    grid_mapping_table, grid_address = _get_stabilized_reciprocal_mesh(
         mesh,
         [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]],
-        is_time_reversal=False,
-        is_dense=True)
+        is_time_reversal=False)
 
     return grid_address
-
-
-def get_bz_grid_address(mesh, reciprocal_lattice, with_boundary=False):
-    grid_address = get_grid_address(mesh)
-    bz_grid_address, bz_map = spglib.relocate_BZ_grid_address(
-        grid_address,
-        mesh,
-        reciprocal_lattice,
-        is_dense=True)
-    if with_boundary:
-        return bz_grid_address, bz_map
-    else:
-        return bz_grid_address[:np.prod(mesh)]
 
 
 def get_grid_point_from_address_py(address, mesh):
@@ -214,10 +277,10 @@ def get_grid_point_from_address(address, mesh):
     ----------
     address : array_like
         Grid address.
-        shape=(3,), dtype='intc'
+        shape=(3,), dtype='int_'
     mesh : array_like
         Mesh numbers.
-        shape=(3,), dtype='intc'
+        shape=(3,), dtype='int_'
 
     Returns
     -------
@@ -226,35 +289,56 @@ def get_grid_point_from_address(address, mesh):
 
     """
 
-    return spglib.get_grid_point_from_address(address, mesh)
+    import phono3py._phono3py as phono3c
+
+    gp = phono3c.grid_index_from_address(np.array(address, dtype='int_'),
+                                         np.array(mesh, dtype='int_'))
+    return gp
 
 
 def get_ir_grid_points(mesh, rotations, mesh_shifts=None):
     if mesh_shifts is None:
         mesh_shifts = [False, False, False]
-    grid_mapping_table, grid_address = spglib.get_stabilized_reciprocal_mesh(
+    grid_mapping_table, grid_address = _get_stabilized_reciprocal_mesh(
         mesh,
         rotations,
-        is_shift=np.where(mesh_shifts, 1, 0),
-        is_dense=True)
+        is_shift=np.where(mesh_shifts, 1, 0))
     (ir_grid_points,
      ir_grid_weights) = extract_ir_grid_points(grid_mapping_table)
 
     return ir_grid_points, ir_grid_weights, grid_address, grid_mapping_table
 
 
-def get_grid_points_by_rotations(grid_point,
+def get_grid_points_by_rotations(address,
                                  reciprocal_rotations,
-                                 mesh,
-                                 mesh_shifts=None):
-    if mesh_shifts is None:
-        mesh_shifts = [False, False, False]
-    return spglib.get_grid_points_by_rotations(
-        grid_point,
-        reciprocal_rotations,
-        mesh,
-        is_shift=np.where(mesh_shifts, 1, 0),
-        is_dense=True)
+                                 mesh):
+    """Returns grid points obtained after rotating input grid address
+
+    Parameters
+    ----------
+    address : array_like
+        Grid point address to be rotated.
+        dtype='int_', shape=(3,)
+    reciprocal_rotations : array_like
+        Rotation matrices {R} with respect to reciprocal basis vectors.
+        Defined by q'=Rq.
+        dtype='int_', shape=(rotations, 3, 3)
+    mesh : array_like
+        dtype='int_', shape=(3,)
+
+    Returns
+    -------
+    rot_grid_indices : ndarray
+        Grid points obtained after rotating input grid address
+        dtype='int_', shape=(rotations,)
+
+    """
+
+    rot_adrs = np.dot(reciprocal_rotations, address)
+    gps = np.zeros(len(reciprocal_rotations), dtype='int_')
+    for i, adrs in enumerate(rot_adrs):
+        gps[i] = get_grid_point_from_address(adrs, mesh)
+    return gps
 
 
 def reduce_grid_points(mesh_divisors,
@@ -262,11 +346,11 @@ def reduce_grid_points(mesh_divisors,
                        dense_grid_points,
                        dense_grid_weights=None,
                        coarse_mesh_shifts=None):
-    divisors = np.array(mesh_divisors, dtype='intc')
+    divisors = np.array(mesh_divisors, dtype='int_')
     if (divisors == 1).all():
         coarse_grid_points = np.array(dense_grid_points, dtype='int_')
         if dense_grid_weights is not None:
-            coarse_grid_weights = np.array(dense_grid_weights, dtype='intc')
+            coarse_grid_weights = np.array(dense_grid_weights, dtype='int_')
     else:
         if coarse_mesh_shifts is None:
             shift = [0, 0, 0]
@@ -298,80 +382,6 @@ def from_coarse_to_dense_grid_points(dense_mesh,
         dense_grid_points.append(get_grid_point_from_address(dense_address,
                                                              dense_mesh))
     return np.array(dense_grid_points, dtype='int_')
-
-
-def get_coarse_ir_grid_points(primitive,
-                              mesh,
-                              mesh_divisors,
-                              coarse_mesh_shifts,
-                              is_kappa_star=True,
-                              symprec=1e-5):
-    mesh = np.array(mesh, dtype='intc')
-
-    symmetry = Symmetry(primitive, symprec)
-    point_group = symmetry.get_pointgroup_operations()
-
-    if mesh_divisors is None:
-        (ir_grid_points,
-         ir_grid_weights,
-         grid_address,
-         grid_mapping_table) = get_ir_grid_points(mesh, point_group)
-    else:
-        mesh_divs = np.array(mesh_divisors, dtype='intc')
-        coarse_mesh = mesh // mesh_divs
-        if coarse_mesh_shifts is None:
-            coarse_mesh_shifts = [False, False, False]
-
-        if not is_kappa_star:
-            coarse_grid_address = get_grid_address(coarse_mesh)
-            coarse_grid_points = np.arange(np.prod(coarse_mesh), dtype='int_')
-        else:
-            (coarse_ir_grid_points,
-             coarse_ir_grid_weights,
-             coarse_grid_address,
-             coarse_grid_mapping_table) = get_ir_grid_points(
-                 coarse_mesh,
-                 point_group,
-                 mesh_shifts=coarse_mesh_shifts)
-        ir_grid_points = from_coarse_to_dense_grid_points(
-            mesh,
-            mesh_divs,
-            coarse_grid_points,
-            coarse_grid_address,
-            coarse_mesh_shifts=coarse_mesh_shifts)
-        grid_address = get_grid_address(mesh)
-        ir_grid_weights = ir_grid_weights
-
-    reciprocal_lattice = np.linalg.inv(primitive.get_cell())
-    bz_grid_address, bz_map = spglib.relocate_BZ_grid_address(
-        grid_address,
-        mesh,
-        reciprocal_lattice,
-        is_dense=True)
-
-    return (ir_grid_points,
-            ir_grid_weights,
-            bz_grid_address,
-            grid_mapping_table)
-
-
-def get_number_of_triplets(primitive,
-                           mesh,
-                           grid_point,
-                           swappable=True,
-                           symprec=1e-5):
-    mesh = np.array(mesh, dtype='intc')
-    symmetry = Symmetry(primitive, symprec)
-    point_group = symmetry.get_pointgroup_operations()
-    reciprocal_lattice = np.linalg.inv(primitive.get_cell())
-    triplets_at_q, _, _, _, _, _ = get_triplets_at_q(
-        grid_point,
-        mesh,
-        point_group,
-        reciprocal_lattice,
-        swappable=swappable)
-
-    return len(triplets_at_q)
 
 
 def get_triplets_integration_weights(interaction,
@@ -464,6 +474,161 @@ def get_tetrahedra_vertices(relative_address,
     return vertices
 
 
+def _get_stabilized_reciprocal_mesh(mesh,
+                                    rotations,
+                                    is_shift=None,
+                                    is_time_reversal=True,
+                                    qpoints=None):
+    """Return k-point map to the irreducible k-points and k-point grid points.
+
+    The symmetry is searched from the input rotation matrices in real space.
+
+    Parameters
+    ----------
+    mesh : array_like
+        Uniform sampling mesh numbers.
+        dtype='int_', shape=(3,)
+    rotations : array_like
+        Rotation matrices with respect to real space basis vectors.
+        dtype='int_', shape=(rotations, 3)
+    is_shift : array_like
+        [0, 0, 0] gives Gamma center mesh and value 1 gives  half mesh shift.
+        dtype='int_', shape=(3,)
+    is_time_reversal : bool
+        Time reversal symmetry is included or not.
+    qpoints : array_like
+        q-points used as stabilizer(s) given in reciprocal space with respect
+        to reciprocal basis vectors.
+        dtype='double', shape=(qpoints ,3) or (3,)
+
+    Returns
+    -------
+    grid_mapping_table : ndarray
+        Grid point mapping table to ir-gird-points.
+        dtype='int_', shape=(prod(mesh),)
+    grid_address : ndarray
+        Address of all grid points. Each address is given by three unsigned
+        integers.
+        dtype='int_', shape=(prod(mesh), 3)
+
+    """
+
+    import phono3py._phono3py as phono3c
+
+    mapping_table = np.zeros(np.prod(mesh), dtype='int_')
+    grid_address = np.zeros((np.prod(mesh), 3), dtype='int_')
+    if is_shift is None:
+        is_shift = [0, 0, 0]
+    if qpoints is None:
+        qpoints = np.array([[0, 0, 0]], dtype='double', order='C')
+    else:
+        qpoints = np.array(qpoints, dtype='double', order='C')
+        if qpoints.shape == (3,):
+            qpoints = np.array([qpoints], dtype='double', order='C')
+
+    if phono3c.stabilized_reciprocal_mesh(
+            grid_address,
+            mapping_table,
+            np.array(mesh, dtype='int_'),
+            np.array(is_shift, dtype='int_'),
+            is_time_reversal * 1,
+            np.array(rotations, dtype='int_', order='C'),
+            qpoints) > 0:
+        return mapping_table, grid_address
+    else:
+        return None
+
+
+def _relocate_BZ_grid_address(grid_address,
+                              mesh,
+                              reciprocal_lattice,  # column vectors
+                              is_shift=None,
+                              is_dense_bz_map=False):
+    """Grid addresses are relocated to be inside first Brillouin zone.
+
+    Number of ir-grid-points inside Brillouin zone is returned.
+    It is assumed that the following arrays have the shapes of
+        bz_grid_address : (num_grid_points_in_FBZ, 3)
+        bz_map (prod(mesh * 2), )
+
+    Note that the shape of grid_address is (prod(mesh), 3) and the
+    addresses in grid_address are arranged to be in parallelepiped
+    made of reciprocal basis vectors. The addresses in bz_grid_address
+    are inside the first Brillouin zone or on its surface. Each
+    address in grid_address is mapped to one of those in
+    bz_grid_address by a reciprocal lattice vector (including zero
+    vector) with keeping element order. For those inside first BZ, the
+    mapping is one-to-one. For those on the first BZ surface, more
+    than one addresses in bz_grid_address that are equivalent by the
+    reciprocal lattice translations are mapped to one address in
+    grid_address. The bz_grid_address and bz_map are given in the
+    following format depending on the choice of ``is_dense_bz_map``.
+
+    is_dense_bz_map = False
+    -----------------------
+
+    Those grid points on the BZ surface except for one of them are
+    appended to the tail of this array, for which bz_grid_address has
+    the following data storing:
+
+    |------------------array size of bz_grid_address-------------------------|
+    |--those equivalent to grid_address--|--those on surface except for one--|
+    |-----array size of grid_address-----|
+
+    Number of grid points stored in bz_grid_address is returned.
+    bz_map is used to recover grid point index expanded to include BZ
+    surface from grid address. The grid point indices are mapped to
+    (mesh[0] * 2) x (mesh[1] * 2) x (mesh[2] * 2) space (bz_map).
+
+    is_dense_bz_map = True
+    ----------------------
+
+    The translationally equivalent grid points corresponding to one grid point
+    on BZ surface are stored in continuously. If the multiplicity (number of
+    equivalent grid points) is 1, 2, 1, 4, ... for the grid points,
+    ``bz_map`` stores the multiplicites and the index positions of the first
+    grid point of the equivalent grid points, i.e.,
+
+    bz_map[:, 0] = [1, 2, 1, 4, 1, ...]
+    bz_map[:, 1] = [0, 1, 3, 4, 8...]
+    grid_address[0] -> bz_grid_address[0:1]
+    grid_address[1] -> bz_grid_address[1:3]
+    grid_address[2] -> bz_grid_address[3:4]
+    grid_address[3] -> bz_grid_address[4:8]
+
+    """
+
+    import phono3py._phono3py as phono3c
+
+    if is_shift is None:
+        _is_shift = np.zeros(3, dtype='int_')
+    else:
+        _is_shift = np.array(is_shift, dtype='int_')
+    bz_grid_address = np.zeros((np.prod(np.add(mesh, 1)), 3), dtype='int_')
+
+    if is_dense_bz_map:
+        bz_map = np.zeros((np.prod(mesh), 2), dtype='int_')
+        num_gp = phono3c.bz_grid_addresses(
+            bz_grid_address,
+            bz_map,
+            grid_address,
+            np.array(mesh, dtype='int_'),
+            np.array(reciprocal_lattice, dtype='double', order='C'),
+            _is_shift)
+    else:
+        bz_map = np.zeros(np.prod(np.multiply(mesh, 2)), dtype='int_')
+        num_gp = phono3c.BZ_grid_address(
+            bz_grid_address,
+            bz_map,
+            grid_address,
+            np.array(mesh, dtype='int_'),
+            np.array(reciprocal_lattice, dtype='double', order='C'),
+            _is_shift)
+
+    bz_grid_address = np.array(bz_grid_address[:num_gp], dtype='int_')
+    return bz_grid_address, bz_map
+
+
 def _get_triplets_reciprocal_mesh_at_q(fixed_grid_number,
                                        mesh,
                                        rotations,
@@ -479,7 +644,7 @@ def _get_triplets_reciprocal_mesh_at_q(fixed_grid_number,
         Grid point of q0
     mesh : array_like
         Mesh numbers
-        dtype='intc'
+        dtype='int_'
         shape=(3,)
     rotations : array_like
         Rotation matrices in real space. Note that those in reciprocal space
@@ -497,24 +662,23 @@ def _get_triplets_reciprocal_mesh_at_q(fixed_grid_number,
 
     map_triplets = np.zeros(np.prod(mesh), dtype='int_')
     map_q = np.zeros(np.prod(mesh), dtype='int_')
-    grid_address = np.zeros((np.prod(mesh), 3), dtype='intc')
+    grid_address = np.zeros((np.prod(mesh), 3), dtype='int_')
 
     phono3c.triplets_reciprocal_mesh_at_q(
         map_triplets,
         map_q,
         grid_address,
         fixed_grid_number,
-        np.array(mesh, dtype='intc'),
+        np.array(mesh, dtype='int_'),
         is_time_reversal * 1,
-        np.array(rotations, dtype='intc', order='C'),
+        np.array(rotations, dtype='int_', order='C'),
         swappable * 1)
 
     return map_triplets, map_q, grid_address
 
 
 def _get_BZ_triplets_at_q(grid_point,
-                          bz_grid_address,
-                          bz_map,
+                          bz_grid,
                           map_triplets,
                           mesh):
     import phono3py._phono3py as phono3c
@@ -523,14 +687,13 @@ def _get_BZ_triplets_at_q(grid_point,
     for g in map_triplets:
         weights[g] += 1
     ir_weights = np.extract(weights > 0, weights)
-    triplets = np.zeros((len(ir_weights), 3), dtype=bz_map.dtype)
-    # triplets are overwritten.
+    triplets = np.zeros((len(ir_weights), 3), dtype='int_')
     num_ir_ret = phono3c.BZ_triplets_at_q(triplets,
                                           grid_point,
-                                          bz_grid_address,
-                                          bz_map,
+                                          bz_grid.addresses,
+                                          bz_grid.gp_map,
                                           map_triplets,
-                                          np.array(mesh, dtype='intc'))
+                                          np.array(mesh, dtype='int_'))
     assert num_ir_ret == len(ir_weights)
 
     return triplets, np.array(ir_weights, dtype='int_')
@@ -558,18 +721,19 @@ def _set_triplets_integration_weights_c(g,
             phono3c.neighboring_grid_points(
                 neighboring_grid_points,
                 np.array(triplets_at_q[:, i], dtype='int_').ravel(),
-                np.array(j * unique_vertices, dtype='intc', order='C'),
+                np.array(j * unique_vertices, dtype='int_', order='C'),
                 mesh,
                 grid_address,
                 bz_map)
-            interaction.run_phonon_solver(np.unique(neighboring_grid_points))
+            interaction.run_phonon_solver(
+                np.array(np.unique(neighboring_grid_points), dtype='int_'))
 
     frequencies = interaction.get_phonons()[0]
     phono3c.triplets_integration_weights(
         g,
         g_zero,
         frequency_points,  # f0
-        np.array(thm.get_tetrahedra(), dtype='intc', order='C'),
+        thm.get_tetrahedra(),
         mesh,
         triplets_at_q,
         frequencies,  # f1
@@ -581,10 +745,10 @@ def _set_triplets_integration_weights_c(g,
 
 def _set_triplets_integration_weights_py(g, interaction, frequency_points):
     reciprocal_lattice = np.linalg.inv(interaction.get_primitive().get_cell())
-    mesh = interaction.get_mesh_numbers()
+    mesh = interaction.mesh_numbers
     thm = TetrahedronMethod(reciprocal_lattice, mesh=mesh)
-    grid_address = interaction.get_grid_address()
-    bz_map = interaction.get_bz_map()
+    grid_address = interaction.grid_address
+    bz_map = interaction.bz_map
     triplets_at_q = interaction.get_triplets_at_q()[0]
     tetrahedra_vertices = get_tetrahedra_vertices(
         thm.get_tetrahedra(),
@@ -592,7 +756,8 @@ def _set_triplets_integration_weights_py(g, interaction, frequency_points):
         triplets_at_q,
         grid_address,
         bz_map)
-    interaction.run_phonon_solver(np.unique(tetrahedra_vertices))
+    interaction.run_phonon_solver(
+        np.array(np.unique(tetrahedra_vertices), dtype='int_'))
     frequencies = interaction.get_phonons()[0]
     num_band = frequencies.shape[1]
     for i, vertices in enumerate(tetrahedra_vertices):

@@ -41,10 +41,10 @@
 #include "imag_self_energy_with_g.h"
 #include "triplet.h"
 
-static int ise_set_g_pos_frequency_point(int (*g_pos)[4],
-                                         const long num_band0,
-                                         const long num_band,
-                                         const char *g_zero);
+static long ise_set_g_pos_frequency_point(long (*g_pos)[4],
+                                          const long num_band0,
+                                          const long num_band,
+                                          const char *g_zero);
 static void
 detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
                                      double *imag_self_energy,
@@ -93,14 +93,14 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
                                               const char *g_zero,
                                               const double temperature,
                                               const double cutoff_frequency,
-                                              const int num_frequency_points,
-                                              const int frequency_point_index)
+                                              const long num_frequency_points,
+                                              const long frequency_point_index)
 {
   long i, j, num_triplets, num_band0, num_band, num_band_prod;
   long num_g_pos, g_index_dims, g_index_shift;
-  int (*g_pos)[4];
+  long (*g_pos)[4];
   double *ise;
-  int at_a_frequency_point;
+  long at_a_frequency_point;
 
   g_pos = NULL;
   ise = NULL;
@@ -125,7 +125,7 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
 
 #pragma omp parallel for private(num_g_pos, j, g_pos)
   for (i = 0; i < num_triplets; i++) {
-    g_pos = (int(*)[4])malloc(sizeof(int[4]) * num_band_prod);
+    g_pos = (long(*)[4])malloc(sizeof(long[4]) * num_band_prod);
     /* ise_set_g_pos only works for the case of frquency points at */
     /* bands. For frequency sampling mode, g_zero is assumed all */
     /* with the array shape of (num_triplets, num_band0, num_band, */
@@ -187,7 +187,7 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
  const double *frequencies,
  const long (*triplets)[3],
  const long *triplet_weights,
- const int *grid_address,
+ const long *grid_address,
  const double *g,
  const char *g_zero,
  const double temperature,
@@ -195,7 +195,7 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
 {
   double *ise;
   long i, j, num_triplets, num_band0, num_band, num_band_prod;
-  int *is_N;
+  long *is_N;
   double ise_tmp, N, U;
 
   ise = NULL;
@@ -227,7 +227,7 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
        cutoff_frequency);
   }
 
-  is_N = (int*)malloc(sizeof(int) * num_triplets);
+  is_N = (long*)malloc(sizeof(long) * num_triplets);
   for (i = 0; i < num_triplets; i++) {
     is_N[i] = tpl_is_N(triplets[i], grid_address);
   }
@@ -263,17 +263,17 @@ void ise_imag_self_energy_at_triplet(double *imag_self_energy,
                                      const long triplet_weight,
                                      const double *g1,
                                      const double *g2_3,
-                                     PHPYCONST int (*g_pos)[4],
+                                     PHPYCONST long (*g_pos)[4],
                                      const long num_g_pos,
                                      const double *temperatures,
                                      const long num_temps,
                                      const double cutoff_frequency,
-                                     const int openmp_at_bands,
-                                     const int at_a_frequency_point)
+                                     const long openmp_at_bands,
+                                     const long at_a_frequency_point)
 {
   long i, j;
   double *n1, *n2;
-  int g_pos_3;
+  long g_pos_3;
 
   n1 = (double*)malloc(sizeof(double) * num_temps * num_band);
   n2 = (double*)malloc(sizeof(double) * num_temps * num_band);
@@ -328,10 +328,10 @@ void ise_imag_self_energy_at_triplet(double *imag_self_energy,
   n2 = NULL;
 }
 
-int ise_set_g_pos(int (*g_pos)[4],
-                  const long num_band0,
-                  const long num_band,
-                  const char *g_zero)
+long ise_set_g_pos(long (*g_pos)[4],
+                   const long num_band0,
+                   const long num_band,
+                   const char *g_zero)
 {
   long num_g_pos, j, k, l, jkl;
 
@@ -354,10 +354,10 @@ int ise_set_g_pos(int (*g_pos)[4],
   return num_g_pos;
 }
 
-static int ise_set_g_pos_frequency_point(int (*g_pos)[4],
-                                         const long num_band0,
-                                         const long num_band,
-                                         const char *g_zero)
+static long ise_set_g_pos_frequency_point(long (*g_pos)[4],
+                                          const long num_band0,
+                                          const long num_band,
+                                          const char *g_zero)
 {
   long num_g_pos, j, k, l, kl, jkl;
 

@@ -47,8 +47,8 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
                                               const char *g_zero,
                                               const double temperature,
                                               const double cutoff_frequency,
-                                              const int num_frequency_points,
-                                              const int frequency_point_index);
+                                              const long num_frequency_points,
+                                              const long frequency_point_index);
 void ise_get_detailed_imag_self_energy_at_bands_with_g
 (double *detailed_imag_self_energy,
  double *imag_self_energy_N,
@@ -57,7 +57,7 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
  const double *frequencies,
  const long (*triplets)[3],
  const long *triplet_weights,
- const int *grid_address,
+ const long *grid_address,
  const double *g,
  const char *g_zero,
  const double temperature,
@@ -71,16 +71,16 @@ void ise_imag_self_energy_at_triplet(double *imag_self_energy,
                                      const long triplet_weight,
                                      const double *g1,
                                      const double *g2_3,
-                                     PHPYCONST int (*g_pos)[4],
+                                     PHPYCONST long (*g_pos)[4],
                                      const long num_g_pos,
                                      const double *temperatures,
                                      const long num_temps,
                                      const double cutoff_frequency,
-                                     const int openmp_at_bands,
-                                     const int at_a_frequency_point);
-int ise_set_g_pos(int (*g_pos)[4],
-                  const long num_band0,
-                  const long num_band,
-                  const char *g_zero);
+                                     const long openmp_at_bands,
+                                     const long at_a_frequency_point);
+long ise_set_g_pos(long (*g_pos)[4],
+                   const long num_band0,
+                   const long num_band,
+                   const char *g_zero);
 
 #endif

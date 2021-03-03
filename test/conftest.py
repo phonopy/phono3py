@@ -24,6 +24,28 @@ def si_pbesol():
 
 
 @pytest.fixture(scope='session')
+def si_pbesol_nosym():
+    yaml_filename = os.path.join(current_dir, "phono3py_si_pbesol.yaml")
+    forces_fc3_filename = os.path.join(current_dir, "FORCES_FC3_si_pbesol")
+    return phono3py.load(yaml_filename,
+                         forces_fc3_filename=forces_fc3_filename,
+                         is_symmetry=False,
+                         produce_fc=False,
+                         log_level=1)
+
+
+@pytest.fixture(scope='session')
+def si_pbesol_nomeshsym():
+    yaml_filename = os.path.join(current_dir, "phono3py_si_pbesol.yaml")
+    forces_fc3_filename = os.path.join(current_dir, "FORCES_FC3_si_pbesol")
+    return phono3py.load(yaml_filename,
+                         forces_fc3_filename=forces_fc3_filename,
+                         is_mesh_symmetry=False,
+                         produce_fc=False,
+                         log_level=1)
+
+
+@pytest.fixture(scope='session')
 def si_pbesol_compact_fc():
     yaml_filename = os.path.join(current_dir, "phono3py_si_pbesol.yaml")
     forces_fc3_filename = os.path.join(current_dir, "FORCES_FC3_si_pbesol")

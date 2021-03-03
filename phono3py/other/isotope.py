@@ -40,7 +40,7 @@ from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
 from phonopy.units import VaspToTHz
 from phonopy.structure.atoms import isotope_data
 from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
-from phono3py.phonon3.triplets import get_bz_grid_address
+from phono3py.phonon3.triplets import BZGrid
 from phono3py.phonon.func import gaussian
 
 
@@ -68,7 +68,7 @@ class Isotope(object):
                  symprec=1e-5,
                  cutoff_frequency=None,
                  lapack_zheev_uplo='L'):
-        self._mesh = np.array(mesh, dtype='intc')
+        self._mesh = np.array(mesh, dtype='int_')
 
         if mass_variances is None:
             self._mass_variances = get_mass_variances(primitive)
@@ -97,9 +97,9 @@ class Isotope(object):
 
         num_band = len(self._primitive) * 3
         if band_indices is None:
-            self._band_indices = np.arange(num_band, dtype='intc')
+            self._band_indices = np.arange(num_band, dtype='int_')
         else:
-            self._band_indices = np.array(band_indices, dtype='intc')
+            self._band_indices = np.array(band_indices, dtype='int_')
 
     def set_grid_point(self, grid_point):
         self._grid_point = grid_point
@@ -107,8 +107,10 @@ class Isotope(object):
 
         if self._grid_address is None:
             primitive_lattice = np.linalg.inv(self._primitive.cell)
-            self._grid_address, self._bz_map = get_bz_grid_address(
-                self._mesh, primitive_lattice, with_boundary=True)
+            bz_grid = BZGrid()
+            bz_grid.set_bz_grid(self._mesh, primitive_lattice)
+            self._grid_address = bz_grid.addresses
+            self._bz_map = bz_grid.gp_map
 
         if self._phonon_done is None:
             self._allocate_phonon()
@@ -263,7 +265,7 @@ class Isotope(object):
         phono3c.integration_weights(
             self._integration_weights,
             freq_points,
-            np.array(thm.get_tetrahedra(), dtype='intc', order='C'),
+            thm.get_tetrahedra(),
             self._mesh,
             self._grid_points,
             self._frequencies,

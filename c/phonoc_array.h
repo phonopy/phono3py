@@ -39,9 +39,9 @@
 
 /* It is assumed that number of dimensions is known for each array. */
 typedef struct {
-  int dims[MAX_NUM_DIM];
-  int *data;
-} Iarray;
+  long dims[MAX_NUM_DIM];
+  long *data;
+} Larray;
 
 typedef struct {
   int dims[MAX_NUM_DIM];

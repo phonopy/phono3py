@@ -35,7 +35,6 @@
 #ifndef __triplet_iw_H__
 #define __triplet_iw_H__
 
-#include <stddef.h>
 #include "triplet.h"
 
 void
@@ -43,18 +42,18 @@ tpi_get_integration_weight(double *iw,
                            char *iw_zero,
                            const double *frequency_points,
                            const long num_band0,
-                           TPLCONST int tp_relative_grid_address[2][24][4][3],
-                           const int mesh[3],
+                           TPLCONST long tp_relative_grid_address[2][24][4][3],
+                           const long mesh[3],
                            const long triplets[3],
                            const long num_triplets,
-                           TPLCONST int (*bz_grid_address)[3],
+                           TPLCONST long (*bz_grid_address)[3],
                            const long *bz_map,
                            const double *frequencies1,
                            const long num_band1,
                            const double *frequencies2,
                            const long num_band2,
                            const long tp_type,
-                           const int openmp_per_bands);
+                           const long openmp_per_bands);
 void tpi_get_integration_weight_with_sigma(double *iw,
                                            char *iw_zero,
                                            const double sigma,
@@ -66,14 +65,14 @@ void tpi_get_integration_weight_with_sigma(double *iw,
                                            const double *frequencies,
                                            const long num_band,
                                            const long tp_type,
-                                           const int openmp_per_bands);
+                                           const long openmp_per_bands);
 void
-tpi_get_dense_neighboring_grid_points(long neighboring_grid_points[],
-                                      const long grid_point,
-                                      TPLCONST int relative_grid_address[][3],
-                                      const int num_relative_grid_address,
-                                      const int mesh[3],
-                                      TPLCONST int bz_grid_address[][3],
-                                      const long bz_map[]);
+tpi_get_neighboring_grid_points(long neighboring_grid_points[],
+                                const long grid_point,
+                                TPLCONST long relative_grid_address[][3],
+                                const long num_relative_grid_address,
+                                const long mesh[3],
+                                TPLCONST long bz_grid_address[][3],
+                                const long bz_map[]);
 
 #endif

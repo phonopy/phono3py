@@ -34,29 +34,28 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#include <stddef.h>
-#include <mathfunc.h>
+#include "kpoint.h"
 #include "triplet.h"
 #include "triplet_iw.h"
 #include "triplet_kpoint.h"
 
 static long get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                               long *map_q,
-                                              int (*grid_address)[3],
-                                              const int grid_point,
-                                              const int mesh[3],
-                                              const int is_time_reversal,
+                                              long (*grid_address)[3],
+                                              const long grid_point,
+                                              const long mesh[3],
+                                              const long is_time_reversal,
                                               const long num_rot,
-                                              TPLCONST int (*rotations)[3][3],
-                                              const int swappable);
+                                              TPLCONST long (*rotations)[3][3],
+                                              const long swappable);
 
 long tpl_get_BZ_triplets_at_q(long (*triplets)[3],
                               const long grid_point,
-                              TPLCONST int (*bz_grid_address)[3],
+                              TPLCONST long (*bz_grid_address)[3],
                               const long *bz_map,
                               const long *map_triplets,
                               const long num_map_triplets,
-                              const int mesh[3])
+                              const long mesh[3])
 {
   return tpk_get_BZ_triplets_at_q(triplets,
                                   grid_point,
@@ -69,13 +68,13 @@ long tpl_get_BZ_triplets_at_q(long (*triplets)[3],
 
 long tpl_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                            long *map_q,
-                                           int (*grid_address)[3],
+                                           long (*grid_address)[3],
                                            const long grid_point,
-                                           const int mesh[3],
-                                           const int is_time_reversal,
+                                           const long mesh[3],
+                                           const long is_time_reversal,
                                            const long num_rot,
-                                           TPLCONST int (*rotations)[3][3],
-                                           const int swappable)
+                                           TPLCONST long (*rotations)[3][3],
+                                           const long swappable)
 {
   return get_triplets_reciprocal_mesh_at_q(map_triplets,
                                            map_q,
@@ -92,22 +91,22 @@ void tpl_get_integration_weight(double *iw,
                                 char *iw_zero,
                                 const double *frequency_points,
                                 const long num_band0,
-                                TPLCONST int relative_grid_address[24][4][3],
-                                const int mesh[3],
+                                TPLCONST long relative_grid_address[24][4][3],
+                                const long mesh[3],
                                 TPLCONST long (*triplets)[3],
                                 const long num_triplets,
-                                TPLCONST int (*bz_grid_address)[3],
+                                TPLCONST long (*bz_grid_address)[3],
                                 const long *bz_map,
                                 const double *frequencies1,
                                 const long num_band1,
                                 const double *frequencies2,
                                 const long num_band2,
                                 const long tp_type,
-                                const int openmp_per_triplets,
-                                const int openmp_per_bands)
+                                const long openmp_per_triplets,
+                                const long openmp_per_bands)
 {
   long i, num_band_prod;
-  int tp_relative_grid_address[2][24][4][3];
+  long tp_relative_grid_address[2][24][4][3];
 
   tpl_set_relative_grid_address(tp_relative_grid_address,
                                 relative_grid_address,
@@ -174,9 +173,9 @@ void tpl_get_integration_weight_with_sigma(double *iw,
 }
 
 
-int tpl_is_N(const long triplet[3], const int *grid_address)
+long tpl_is_N(const long triplet[3], const long *grid_address)
 {
-  int i, j, sum_q, is_N;
+  long i, j, sum_q, is_N;
 
   is_N = 1;
   for (i = 0; i < 3; i++) {
@@ -193,12 +192,12 @@ int tpl_is_N(const long triplet[3], const int *grid_address)
 }
 
 void tpl_set_relative_grid_address(
-  int tp_relative_grid_address[2][24][4][3],
-  TPLCONST int relative_grid_address[24][4][3],
+  long tp_relative_grid_address[2][24][4][3],
+  TPLCONST long relative_grid_address[24][4][3],
   const long tp_type)
 {
   long i, j, k, l;
-  int signs[2];
+  long signs[2];
 
   signs[0] = 1;
   signs[1] = 1;
@@ -223,20 +222,20 @@ void tpl_set_relative_grid_address(
 
 static long get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                               long *map_q,
-                                              int (*grid_address)[3],
-                                              const int grid_point,
-                                              const int mesh[3],
-                                              const int is_time_reversal,
+                                              long (*grid_address)[3],
+                                              const long grid_point,
+                                              const long mesh[3],
+                                              const long is_time_reversal,
                                               const long num_rot,
-                                              TPLCONST int (*rotations)[3][3],
-                                              const int swappable)
+                                              TPLCONST long (*rotations)[3][3],
+                                              const long swappable)
 {
-  MatINT *rot_real;
+  MatLONG *rot_real;
   long i, num_ir;
 
-  rot_real = mat_alloc_MatINT(num_rot);
+  rot_real = kpt_alloc_MatLONG(num_rot);
   for (i = 0; i < num_rot; i++) {
-    mat_copy_matrix_i3(rot_real->mat[i], rotations[i]);
+    kpt_copy_matrix_l3(rot_real->mat[i], rotations[i]);
   }
 
   num_ir = tpk_get_ir_triplets_at_q(map_triplets,
@@ -248,7 +247,7 @@ static long get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                     rot_real,
                                     swappable);
 
-  mat_free_MatINT(rot_real);
+  kpt_free_MatLONG(rot_real);
 
   return num_ir;
 }

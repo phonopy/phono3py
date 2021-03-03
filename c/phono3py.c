@@ -36,18 +36,18 @@
 #include "lapack_wrapper.h"
 #include "phonoc_array.h"
 
-#include "interaction.h"
-#include "pp_collision.h"
-#include "imag_self_energy_with_g.h"
-#include "real_self_energy.h"
 #include "collision_matrix.h"
-#include "isotope.h"
 #include "fc3.h"
+#include "interaction.h"
+#include "imag_self_energy_with_g.h"
+#include "isotope.h"
+#include "kpoint.h"
+#include "pp_collision.h"
+#include "real_self_energy.h"
+#include "grgrid.h"
 #include "tetrahedron_method.h"
 #include "triplet.h"
 #include "triplet_iw.h"
-
-#include "kgrid.h"
 
 #include <stdio.h>
 
@@ -58,18 +58,18 @@ void ph3py_get_interaction(Darray *fc3_normal_squared,
                            const lapack_complex_double *eigenvectors,
                            const long (*triplets)[3],
                            const long num_triplets,
-                           const int *grid_address,
-                           const int *mesh,
+                           const long *grid_address,
+                           const long *mesh,
                            const double *fc3,
-                           const int is_compact_fc3,
+                           const long is_compact_fc3,
                            const double *shortest_vectors,
-                           const int svecs_dims[3],
-                           const int *multiplicity,
+                           const long svecs_dims[3],
+                           const long *multiplicity,
                            const double *masses,
-                           const int *p2s_map,
-                           const int *s2p_map,
-                           const int *band_indices,
-                           const int symmetrize_fc3_q,
+                           const long *p2s_map,
+                           const long *s2p_map,
+                           const long *band_indices,
+                           const long symmetrize_fc3_q,
                            const double cutoff_frequency)
 {
   itr_get_interaction(fc3_normal_squared,
@@ -95,27 +95,27 @@ void ph3py_get_interaction(Darray *fc3_normal_squared,
 
 
 void ph3py_get_pp_collision(double *imag_self_energy,
-                            PHPYCONST int relative_grid_address[24][4][3], /* thm */
+                            PHPYCONST long relative_grid_address[24][4][3], /* thm */
                             const double *frequencies,
                             const lapack_complex_double *eigenvectors,
                             const long (*triplets)[3],
                             const long num_triplets,
                             const long *triplet_weights,
-                            const int *grid_address, /* thm */
+                            const long *grid_address, /* thm */
                             const long *bz_map, /* thm */
-                            const int *mesh, /* thm */
+                            const long *mesh, /* thm */
                             const double *fc3,
-                            const int is_compact_fc3,
+                            const long is_compact_fc3,
                             const double *shortest_vectors,
-                            const int svecs_dims[3],
-                            const int *multiplicity,
+                            const long svecs_dims[3],
+                            const long *multiplicity,
                             const double *masses,
-                            const int *p2s_map,
-                            const int *s2p_map,
-                            const Iarray *band_indices,
+                            const long *p2s_map,
+                            const long *s2p_map,
+                            const Larray *band_indices,
                             const Darray *temperatures,
-                            const int is_NU,
-                            const int symmetrize_fc3_q,
+                            const long is_NU,
+                            const long symmetrize_fc3_q,
                             const double cutoff_frequency)
 {
   ppc_get_pp_collision(imag_self_energy,
@@ -153,20 +153,20 @@ void ph3py_get_pp_collision_with_sigma(
   const long (*triplets)[3],
   const long num_triplets,
   const long *triplet_weights,
-  const int *grid_address,
-  const int *mesh,
+  const long *grid_address,
+  const long *mesh,
   const double *fc3,
-  const int is_compact_fc3,
+  const long is_compact_fc3,
   const double *shortest_vectors,
-  const int svecs_dims[3],
-  const int *multiplicity,
+  const long svecs_dims[3],
+  const long *multiplicity,
   const double *masses,
-  const int *p2s_map,
-  const int *s2p_map,
-  const Iarray *band_indices,
+  const long *p2s_map,
+  const long *s2p_map,
+  const Larray *band_indices,
   const Darray *temperatures,
-  const int is_NU,
-  const int symmetrize_fc3_q,
+  const long is_NU,
+  const long symmetrize_fc3_q,
   const double cutoff_frequency)
 {
   ppc_get_pp_collision_with_sigma(imag_self_energy,
@@ -205,8 +205,8 @@ void ph3py_get_imag_self_energy_at_bands_with_g(
   const char *g_zero,
   const double temperature,
   const double cutoff_frequency,
-  const int num_frequency_points,
-  const int frequency_point_index)
+  const long num_frequency_points,
+  const long frequency_point_index)
 {
   ise_get_imag_self_energy_at_bands_with_g(imag_self_energy,
                                            fc3_normal_squared,
@@ -230,7 +230,7 @@ void ph3py_get_detailed_imag_self_energy_at_bands_with_g(
   const double *frequencies,
   const long (*triplets)[3],
   const long *triplet_weights,
-  const int *grid_address,
+  const long *grid_address,
   const double *g,
   const char *g_zero,
   const double temperature,
@@ -253,7 +253,7 @@ void ph3py_get_detailed_imag_self_energy_at_bands_with_g(
 
 void ph3py_get_real_self_energy_at_bands(double *real_self_energy,
                                          const Darray *fc3_normal_squared,
-                                         const int *band_indices,
+                                         const long *band_indices,
                                          const double *frequencies,
                                          const long (*triplets)[3],
                                          const long *triplet_weights,
@@ -279,7 +279,7 @@ void ph3py_get_real_self_energy_at_frequency_point(
   double *real_self_energy,
   const double frequency_point,
   const Darray *fc3_normal_squared,
-  const int *band_indices,
+  const long *band_indices,
   const double *frequencies,
   const long (*triplets)[3],
   const long *triplet_weights,
@@ -369,7 +369,7 @@ void ph3py_get_isotope_scattering_strength(
   const double *frequencies,
   const lapack_complex_double *eigenvectors,
   const long num_grid_points,
-  const int *band_indices,
+  const long *band_indices,
   const long num_band,
   const long num_band0,
   const double sigma,
@@ -398,7 +398,7 @@ void ph3py_get_thm_isotope_scattering_strength
  const double *frequencies,
  const lapack_complex_double *eigenvectors,
  const long num_ir_grid_points,
- const int *band_indices,
+ const long *band_indices,
  const long num_band,
  const long num_band0,
  const double *integration_weights,
@@ -420,9 +420,9 @@ void ph3py_get_thm_isotope_scattering_strength
 }
 
 void ph3py_distribute_fc3(double *fc3,
-                          const int target,
-                          const int source,
-                          const int *atom_mapping,
+                          const long target,
+                          const long source,
+                          const long *atom_mapping,
                           const long num_atom,
                           const double *rot_cart)
 {
@@ -439,7 +439,7 @@ void ph3py_rotate_delta_fc2(double (*fc3)[3][3][3],
                             PHPYCONST double (*delta_fc2s)[3][3],
                             const double *inv_U,
                             PHPYCONST double (*site_sym_cart)[3][3],
-                            const int *rot_map_syms,
+                            const long *rot_map_syms,
                             const long num_atom,
                             const long num_site_sym,
                             const long num_disp)
@@ -462,10 +462,10 @@ void ph3py_set_permutation_symmetry_fc3(double *fc3, const long num_atom)
 
 
 void ph3py_set_permutation_symmetry_compact_fc3(double * fc3,
-                                                const int p2s[],
-                                                const int s2pp[],
-                                                const int nsym_list[],
-                                                const int perms[],
+                                                const long p2s[],
+                                                const long s2pp[],
+                                                const long nsym_list[],
+                                                const long perms[],
                                                 const long n_satom,
                                                 const long n_patom)
 {
@@ -479,13 +479,13 @@ void ph3py_set_permutation_symmetry_compact_fc3(double * fc3,
 }
 
 void ph3py_transpose_compact_fc3(double * fc3,
-                                 const int p2s[],
-                                 const int s2pp[],
-                                 const int nsym_list[],
-                                 const int perms[],
+                                 const long p2s[],
+                                 const long s2pp[],
+                                 const long nsym_list[],
+                                 const long perms[],
                                  const long n_satom,
                                  const long n_patom,
-                                 const int t_type)
+                                 const long t_type)
 {
   fc3_transpose_compact_fc3(fc3,
                             p2s,
@@ -500,13 +500,13 @@ void ph3py_transpose_compact_fc3(double * fc3,
 
 long ph3py_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                              long *map_q,
-                                             int (*grid_address)[3],
+                                             long (*grid_address)[3],
                                              const long grid_point,
-                                             const int mesh[3],
-                                             const int is_time_reversal,
+                                             const long mesh[3],
+                                             const long is_time_reversal,
                                              const long num_rot,
-                                             PHPYCONST int (*rotations)[3][3],
-                                             const int swappable)
+                                             PHPYCONST long (*rotations)[3][3],
+                                             const long swappable)
 {
   return tpl_get_triplets_reciprocal_mesh_at_q(map_triplets,
                                                map_q,
@@ -522,11 +522,11 @@ long ph3py_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
 
 long ph3py_get_BZ_triplets_at_q(long (*triplets)[3],
                                 const long grid_point,
-                                PHPYCONST int (*bz_grid_address)[3],
+                                PHPYCONST long (*bz_grid_address)[3],
                                 const long *bz_map,
                                 const long *map_triplets,
                                 const long num_map_triplets,
-                                const int mesh[3])
+                                const long mesh[3])
 {
   return tpl_get_BZ_triplets_at_q(triplets,
                                   grid_point,
@@ -542,19 +542,19 @@ void ph3py_get_integration_weight(double *iw,
                                   char *iw_zero,
                                   const double *frequency_points,
                                   const long num_band0,
-                                  PHPYCONST int relative_grid_address[24][4][3],
-                                  const int mesh[3],
+                                  PHPYCONST long relative_grid_address[24][4][3],
+                                  const long mesh[3],
                                   PHPYCONST long (*triplets)[3],
                                   const long num_triplets,
-                                  PHPYCONST int (*bz_grid_address)[3],
+                                  PHPYCONST long (*bz_grid_address)[3],
                                   const long *bz_map,
                                   const double *frequencies1,
                                   const long num_band1,
                                   const double *frequencies2,
                                   const long num_band2,
                                   const long tp_type,
-                                  const int openmp_per_triplets,
-                                  const int openmp_per_bands)
+                                  const long openmp_per_triplets,
+                                  const long openmp_per_bands)
 {
   tpl_get_integration_weight(iw,
                              iw_zero,
@@ -574,7 +574,6 @@ void ph3py_get_integration_weight(double *iw,
                              openmp_per_triplets,
                              openmp_per_bands);
 }
-
 
 void ph3py_get_integration_weight_with_sigma(double *iw,
                                              char *iw_zero,
@@ -599,6 +598,75 @@ void ph3py_get_integration_weight_with_sigma(double *iw,
                                         frequencies,
                                         num_band,
                                         tp_type);
+}
+
+
+/* From single address to grid index */
+long ph3py_get_grid_index_from_address(const long address[3],
+                                       const long mesh[3])
+{
+  return grg_get_grid_index(address, mesh);
+}
+
+
+long ph3py_get_stabilized_reciprocal_mesh(long grid_address[][3],
+                                          long ir_mapping_table[],
+                                          const long mesh[3],
+                                          const long is_shift[3],
+                                          const long is_time_reversal,
+                                          PHPYCONST long rotations_in[][3][3],
+                                          const long num_rot,
+                                          const long num_q,
+                                          PHPYCONST double qpoints[][3])
+{
+  long i, num_ir;
+  MatLONG *rotations;
+
+  rotations = kpt_alloc_MatLONG(num_rot);
+
+  for (i = 0; i < num_rot; i++) {
+    kpt_copy_matrix_l3(rotations->mat[i], rotations_in[i]);
+  }
+  num_ir = kpt_get_stabilized_reciprocal_mesh(grid_address,
+                                              ir_mapping_table,
+                                              mesh,
+                                              is_shift,
+                                              is_time_reversal,
+                                              rotations,
+                                              num_q,
+                                              qpoints);
+  kpt_free_MatLONG(rotations);
+  return num_ir;
+}
+
+long ph3py_relocate_BZ_grid_address(long bz_grid_address[][3],
+                                    long bz_map[],
+                                    PHPYCONST long grid_address[][3],
+                                    const long mesh[3],
+                                    PHPYCONST double rec_lattice[3][3],
+                                    const long is_shift[3])
+{
+  return kpt_relocate_BZ_grid_address(bz_grid_address,
+                                      bz_map,
+                                      grid_address,
+                                      mesh,
+                                      rec_lattice,
+                                      is_shift);
+}
+
+long ph3py_get_bz_grid_addresses(long bz_grid_address[][3],
+                                 long bz_map[][2],
+                                 PHPYCONST long grid_address[][3],
+                                 const long mesh[3],
+                                 PHPYCONST double rec_lattice[3][3],
+                                 const long is_shift[3])
+{
+  return kpt_get_bz_grid_addresses(bz_grid_address,
+                                   bz_map,
+                                   grid_address,
+                                   mesh,
+                                   rec_lattice,
+                                   is_shift);
 }
 
 void ph3py_symmetrize_collision_matrix(double *collision_matrix,
@@ -700,9 +768,9 @@ void ph3py_expand_collision_matrix(double *collision_matrix,
 
 void ph3py_get_neighboring_gird_points(long *relative_grid_points,
                                        const long *grid_points,
-                                       PHPYCONST int (*relative_grid_address)[3],
-                                       const int mesh[3],
-                                       PHPYCONST int (*bz_grid_address)[3],
+                                       PHPYCONST long (*relative_grid_address)[3],
+                                       const long mesh[3],
+                                       PHPYCONST long (*bz_grid_address)[3],
                                        const long *bz_map,
                                        const long num_grid_points,
                                        const long num_relative_grid_address)
@@ -711,7 +779,7 @@ void ph3py_get_neighboring_gird_points(long *relative_grid_points,
 
 #pragma omp parallel for
   for (i = 0; i < num_grid_points; i++) {
-    tpi_get_dense_neighboring_grid_points
+    tpi_get_neighboring_grid_points
       (relative_grid_points + i * num_relative_grid_address,
        grid_points[i],
        relative_grid_address,
@@ -728,10 +796,10 @@ void ph3py_set_integration_weights(double *iw,
                                    const long num_band0,
                                    const long num_band,
                                    const long num_gp,
-                                   PHPYCONST int (*relative_grid_address)[4][3],
-                                   const int mesh[3],
+                                   PHPYCONST long (*relative_grid_address)[4][3],
+                                   const long mesh[3],
                                    const long *grid_points,
-                                   PHPYCONST int (*bz_grid_address)[3],
+                                   PHPYCONST long (*bz_grid_address)[3],
                                    const long *bz_map,
                                    const double *frequencies)
 {
@@ -742,13 +810,13 @@ void ph3py_set_integration_weights(double *iw,
 #pragma omp parallel for private(j, k, bi, vertices, freq_vertices)
   for (i = 0; i < num_gp; i++) {
     for (j = 0; j < 24; j++) {
-      tpi_get_dense_neighboring_grid_points(vertices[j],
-                                            grid_points[i],
-                                            relative_grid_address[j],
-                                            4,
-                                            mesh,
-                                            bz_grid_address,
-                                            bz_map);
+      tpi_get_neighboring_grid_points(vertices[j],
+                                      grid_points[i],
+                                      relative_grid_address[j],
+                                      4,
+                                      mesh,
+                                      bz_grid_address,
+                                      bz_map);
     }
     for (bi = 0; bi < num_band; bi++) {
       for (j = 0; j < 24; j++) {

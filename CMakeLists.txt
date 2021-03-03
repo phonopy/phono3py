@@ -45,20 +45,19 @@ include_directories("${PROJECT_SOURCE_DIR}/c")
 set(SOURCES_PHONO3PY
   ${PROJECT_SOURCE_DIR}/c/collision_matrix.c
   ${PROJECT_SOURCE_DIR}/c/fc3.c
+  ${PROJECT_SOURCE_DIR}/c/grgrid.c
   ${PROJECT_SOURCE_DIR}/c/imag_self_energy_with_g.c
   ${PROJECT_SOURCE_DIR}/c/interaction.c
   ${PROJECT_SOURCE_DIR}/c/isotope.c
-  ${PROJECT_SOURCE_DIR}/c/kgrid.c
   ${PROJECT_SOURCE_DIR}/c/kpoint.c
   ${PROJECT_SOURCE_DIR}/c/lapack_wrapper.c
-  ${PROJECT_SOURCE_DIR}/c/mathfunc.c
   ${PROJECT_SOURCE_DIR}/c/phono3py.c
   ${PROJECT_SOURCE_DIR}/c/phonoc_utils.c
   ${PROJECT_SOURCE_DIR}/c/pp_collision.c
   ${PROJECT_SOURCE_DIR}/c/real_self_energy.c
   ${PROJECT_SOURCE_DIR}/c/real_to_reciprocal.c
   ${PROJECT_SOURCE_DIR}/c/reciprocal_to_normal.c
-  ${PROJECT_SOURCE_DIR}/c/rgrid.c
+  ${PROJECT_SOURCE_DIR}/c/snf3x3.c
   ${PROJECT_SOURCE_DIR}/c/tetrahedron_method.c
   ${PROJECT_SOURCE_DIR}/c/triplet.c
   ${PROJECT_SOURCE_DIR}/c/triplet_iw.c

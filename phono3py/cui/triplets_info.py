@@ -33,10 +33,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phono3py.file_IO import (write_ir_grid_points,
-                              write_grid_address_to_hdf5)
-from phono3py.phonon3.triplets import (get_coarse_ir_grid_points,
-                                       get_number_of_triplets)
+from phonopy.structure.symmetry import Symmetry
+from phono3py.file_IO import write_ir_grid_points, write_grid_address_to_hdf5
+from phono3py.phonon3.triplets import (
+    get_ir_grid_points, get_grid_address, from_coarse_to_dense_grid_points,
+    get_triplets_at_q, BZGrid)
 
 
 def write_grid_points(primitive,
@@ -57,8 +58,7 @@ def write_grid_points(primitive,
     else:
         (ir_grid_points,
          grid_weights,
-         bz_grid_address,
-         grid_mapping_table) = get_coarse_ir_grid_points(
+         bz_grid) = _get_coarse_ir_grid_points(
              primitive,
              mesh,
              mesh_divs,
@@ -69,11 +69,11 @@ def write_grid_points(primitive,
                              mesh_divs,
                              ir_grid_points,
                              grid_weights,
-                             bz_grid_address,
-                             np.linalg.inv(primitive.get_cell()))
-        gadrs_hdf5_fname = write_grid_address_to_hdf5(bz_grid_address,
+                             bz_grid.addresses,
+                             np.linalg.inv(primitive.cell))
+        gadrs_hdf5_fname = write_grid_address_to_hdf5(bz_grid.addresses,
                                                       mesh,
-                                                      grid_mapping_table,
+                                                      bz_grid.gp_map,
                                                       compression=compression,
                                                       filename=filename)
 
@@ -84,8 +84,8 @@ def write_grid_points(primitive,
             num_temp = len(temperatures)
             num_sigma = len(sigmas)
             num_ir_gp = len(ir_grid_points)
-            num_band = primitive.get_number_of_atoms() * 3
-            num_gp = len(bz_grid_address)
+            num_band = len(primitive) * 3
+            num_gp = len(bz_grid.addresses)
             if band_indices is None:
                 num_band0 = num_band
             else:
@@ -115,35 +115,125 @@ def show_num_triplets(primitive,
                       coarse_mesh_shifts=None,
                       is_kappa_star=True,
                       symprec=1e-5):
-    print("-" * 76)
+    tp_nums = _TripletsNumbers(primitive,
+                               mesh,
+                               mesh_divs=mesh_divs,
+                               coarse_mesh_shifts=coarse_mesh_shifts,
+                               is_kappa_star=is_kappa_star,
+                               symprec=symprec)
 
-    ir_grid_points, _, grid_address, _ = get_coarse_ir_grid_points(
-        primitive,
-        mesh,
-        mesh_divs,
-        coarse_mesh_shifts,
-        is_kappa_star=is_kappa_star,
-        symprec=symprec)
-
-    if grid_points:
-        _grid_points = grid_points
-    else:
-        _grid_points = ir_grid_points
-
-    num_band = primitive.get_number_of_atoms() * 3
+    num_band = len(primitive) * 3
     if band_indices is None:
         num_band0 = num_band
     else:
         num_band0 = len(band_indices)
 
-    print("Grid point        q-point        No. of triplets     Memory size")
+    if grid_points:
+        _grid_points = grid_points
+    else:
+        _grid_points = tp_nums.ir_grid_points
+
+    print("-" * 76)
+    print("Grid point        q-point        No. of triplets     Approx. Mem.")
     for gp in _grid_points:
-        num_triplets = get_number_of_triplets(primitive,
-                                              mesh,
-                                              gp,
-                                              swappable=True,
-                                              symprec=symprec)
-        q = grid_address[gp] / np.array(mesh, dtype='double')
+        num_triplets = tp_nums.get_number_of_triplets(gp)
+        q = tp_nums.bz_grid.addresses[gp] / np.array(mesh, dtype='double')
         size = num_triplets * num_band0 * num_band ** 2 * 8 / 1e6
         print("  %5d     (%5.2f %5.2f %5.2f)  %8d              %d Mb" %
               (gp, q[0], q[1], q[2], num_triplets, size))
+
+
+class _TripletsNumbers(object):
+    def __init__(self,
+                 primitive,
+                 mesh,
+                 mesh_divs=None,
+                 coarse_mesh_shifts=None,
+                 is_kappa_star=True,
+                 symprec=1e-5):
+        self._primitive = primitive
+        self._mesh = mesh
+        self._symprec = symprec
+
+        self.ir_grid_points, _, self.bz_grid = _get_coarse_ir_grid_points(
+            self._primitive,
+            self._mesh,
+            mesh_divs,
+            coarse_mesh_shifts,
+            is_kappa_star=is_kappa_star,
+            symprec=self._symprec)
+
+    def get_number_of_triplets(self, gp):
+        num_triplets = _get_number_of_triplets(self._primitive,
+                                               self._mesh,
+                                               gp,
+                                               swappable=True,
+                                               symprec=self._symprec)
+        return num_triplets
+
+
+def _get_coarse_ir_grid_points(primitive,
+                               mesh,
+                               mesh_divisors,
+                               coarse_mesh_shifts,
+                               is_kappa_star=True,
+                               symprec=1e-5):
+    mesh = np.array(mesh, dtype='int_')
+
+    symmetry = Symmetry(primitive, symprec)
+    point_group = symmetry.pointgroup_operations
+
+    if mesh_divisors is None:
+        (ir_grid_points,
+         ir_grid_weights,
+         grid_address,
+         grid_mapping_table) = get_ir_grid_points(mesh, point_group)
+    else:
+        mesh_divs = np.array(mesh_divisors, dtype='int_')
+        coarse_mesh = mesh // mesh_divs
+        if coarse_mesh_shifts is None:
+            coarse_mesh_shifts = [False, False, False]
+
+        if not is_kappa_star:
+            coarse_grid_address = get_grid_address(coarse_mesh)
+            coarse_grid_points = np.arange(np.prod(coarse_mesh), dtype='int_')
+        else:
+            (coarse_ir_grid_points,
+             coarse_ir_grid_weights,
+             coarse_grid_address,
+             coarse_grid_mapping_table) = get_ir_grid_points(
+                 coarse_mesh,
+                 point_group,
+                 mesh_shifts=coarse_mesh_shifts)
+        ir_grid_points = from_coarse_to_dense_grid_points(
+            mesh,
+            mesh_divs,
+            coarse_grid_points,
+            coarse_grid_address,
+            coarse_mesh_shifts=coarse_mesh_shifts)
+        grid_address = get_grid_address(mesh)
+        ir_grid_weights = ir_grid_weights
+
+    reciprocal_lattice = np.linalg.inv(primitive.cell)
+    bz_grid = BZGrid()
+    bz_grid.relocate(grid_address, mesh, reciprocal_lattice)
+
+    return ir_grid_points, ir_grid_weights, bz_grid
+
+
+def _get_number_of_triplets(primitive,
+                            mesh,
+                            grid_point,
+                            swappable=True,
+                            symprec=1e-5):
+    symmetry = Symmetry(primitive, symprec)
+    point_group = symmetry.pointgroup_operations
+    reciprocal_lattice = np.linalg.inv(primitive.cell)
+    triplets_at_q, _, _, _, _, _ = get_triplets_at_q(
+        grid_point,
+        mesh,
+        point_group,
+        reciprocal_lattice,
+        swappable=swappable)
+
+    return len(triplets_at_q)
