@@ -58,8 +58,6 @@ def get_thermal_conductivity_RTA(
         boundary_mfp=None,  # in micrometre
         use_ave_pp=False,
         gamma_unit_conversion=None,
-        mesh_divisors=None,
-        coarse_mesh_shifts=None,
         is_kappa_star=True,
         gv_delta_q=1e-4,
         is_full_pp=False,
@@ -95,8 +93,6 @@ def get_thermal_conductivity_RTA(
         boundary_mfp=boundary_mfp,
         use_ave_pp=use_ave_pp,
         gamma_unit_conversion=gamma_unit_conversion,
-        mesh_divisors=mesh_divisors,
-        coarse_mesh_shifts=coarse_mesh_shifts,
         is_kappa_star=is_kappa_star,
         gv_delta_q=gv_delta_q,
         is_full_pp=is_full_pp,
@@ -205,7 +201,6 @@ def _write_gamma(br, interaction, i, compression="gzip", filename=None,
     mode_heat_capacities = br.get_mode_heat_capacities()
     ave_pp = br.get_averaged_pp_interaction()
     mesh = br.get_mesh_numbers()
-    mesh_divisors = br.get_mesh_divisors()
     temperatures = br.get_temperatures()
     gamma = br.get_gamma()
     gamma_isotope = br.get_gamma_isotope()
@@ -246,7 +241,6 @@ def _write_gamma(br, interaction, i, compression="gzip", filename=None,
                                 gamma_N=gamma_N_at_sigma,
                                 gamma_U=gamma_U_at_sigma,
                                 averaged_pp_interaction=ave_pp_i,
-                                mesh_divisors=mesh_divisors,
                                 grid_point=gp,
                                 sigma=sigma,
                                 sigma_cutoff=sigma_cutoff,
@@ -286,7 +280,6 @@ def _write_gamma(br, interaction, i, compression="gzip", filename=None,
                     gamma_N=gamma_N_at_sigma,
                     gamma_U=gamma_U_at_sigma,
                     averaged_pp_interaction=ave_pp_ik,
-                    mesh_divisors=mesh_divisors,
                     grid_point=gp,
                     band_index=bi,
                     sigma=sigma,
@@ -334,7 +327,6 @@ def _write_kappa(br, volume, compression="gzip", filename=None, log_level=0):
     gamma_isotope = br.get_gamma_isotope()
     gamma_N, gamma_U = br.get_gamma_N_U()
     mesh = br.get_mesh_numbers()
-    mesh_divisors = br.get_mesh_divisors()
     frequencies = br.get_frequencies()
     gv = br.get_group_velocities()
     gv_by_gv = br.get_gv_by_gv()
@@ -375,7 +367,6 @@ def _write_kappa(br, volume, compression="gzip", filename=None, log_level=0):
                             averaged_pp_interaction=ave_pp,
                             qpoint=qpoints,
                             weight=weights,
-                            mesh_divisors=mesh_divisors,
                             sigma=sigma,
                             sigma_cutoff=sigma_cutoff,
                             kappa_unit_conversion=unit_to_WmK / volume,
@@ -388,7 +379,6 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()
     mesh = br.get_mesh_numbers()
-    mesh_divisors = br.get_mesh_divisors()
     grid_points = br.get_grid_points()
     temperatures = br.get_temperatures()
     num_band = br.get_frequencies().shape[1]
@@ -411,7 +401,6 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
     for j, sigma in enumerate(sigmas):
         data = read_gamma_from_hdf5(
             mesh,
-            mesh_divisors=mesh_divisors,
             sigma=sigma,
             sigma_cutoff=sigma_cutoff,
             filename=filename,
@@ -431,7 +420,6 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
             for i, gp in enumerate(grid_points):
                 data_gp = read_gamma_from_hdf5(
                     mesh,
-                    mesh_divisors=mesh_divisors,
                     grid_point=gp,
                     sigma=sigma,
                     sigma_cutoff=sigma_cutoff,
@@ -452,7 +440,6 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
                     for bi in range(num_band):
                         data_band = read_gamma_from_hdf5(
                             mesh,
-                            mesh_divisors=mesh_divisors,
                             grid_point=gp,
                             band_index=bi,
                             sigma=sigma,
@@ -497,8 +484,6 @@ class Conductivity_RTA(Conductivity):
                  boundary_mfp=None,  # in micrometre
                  use_ave_pp=False,
                  gamma_unit_conversion=None,
-                 mesh_divisors=None,
-                 coarse_mesh_shifts=None,
                  is_kappa_star=True,
                  gv_delta_q=None,
                  is_full_pp=False,
@@ -570,8 +555,6 @@ class Conductivity_RTA(Conductivity):
                               sigma_cutoff=sigma_cutoff,
                               is_isotope=is_isotope,
                               mass_variances=mass_variances,
-                              mesh_divisors=mesh_divisors,
-                              coarse_mesh_shifts=coarse_mesh_shifts,
                               boundary_mfp=boundary_mfp,
                               is_kappa_star=is_kappa_star,
                               gv_delta_q=gv_delta_q,

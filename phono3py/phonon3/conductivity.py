@@ -39,11 +39,8 @@ from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.phonon.thermal_properties import mode_cv as get_mode_cv
 from phonopy.units import THzToEv, EV, THz, Angstrom
 from phono3py.file_IO import write_pp_to_hdf5
-from phono3py.phonon3.triplets import (get_grid_address, reduce_grid_points,
-                                       get_ir_grid_points,
-                                       from_coarse_to_dense_grid_points,
-                                       get_grid_points_by_rotations,
-                                       get_all_triplets)
+from phono3py.phonon3.triplets import (
+    get_ir_grid_points, get_grid_points_by_rotations, get_all_triplets)
 from phono3py.other.isotope import Isotope
 
 unit_to_WmK = ((THz * Angstrom) ** 2 / (Angstrom ** 3) * EV / THz /
@@ -102,8 +99,6 @@ class Conductivity(object):
                  sigma_cutoff=None,
                  is_isotope=False,
                  mass_variances=None,
-                 mesh_divisors=None,
-                 coarse_mesh_shifts=None,
                  boundary_mfp=None,  # in micrometre
                  is_kappa_star=True,
                  gv_delta_q=None,  # finite difference for group veolocity
@@ -163,13 +158,8 @@ class Conductivity(object):
         self._gamma_iso = None
         self._num_sampling_grid_points = 0
 
-        self._mesh = None
-        self._mesh_divisors = None
-        self._coarse_mesh = None
-        self._coarse_mesh_shifts = None
-        self._set_mesh_numbers(mesh_divisors=mesh_divisors,
-                               coarse_mesh_shifts=coarse_mesh_shifts)
-        volume = self._primitive.get_volume()
+        self._mesh = self._pp.mesh_numbers
+        volume = self._primitive.volume
         self._conversion_factor = unit_to_WmK / volume
 
         self._isotope = None
@@ -222,9 +212,6 @@ class Conductivity(object):
 
     def next(self):
         return self.__next__()
-
-    def get_mesh_divisors(self):
-        return self._mesh_divisors
 
     @property
     def mesh_numbers(self):
@@ -326,23 +313,11 @@ class Conductivity(object):
         self._pp.set_nac_q_direction(nac_q_direction=None)
 
         if grid_points is not None:  # Specify grid points
-            self._grid_points = reduce_grid_points(
-                self._mesh_divisors,
-                self._grid_address,
-                grid_points,
-                coarse_mesh_shifts=self._coarse_mesh_shifts)
+            self._grid_points = grid_points,
             (self._ir_grid_points,
              self._ir_grid_weights) = self._get_ir_grid_points()
         elif not self._is_kappa_star:  # All grid points
-            coarse_grid_address = get_grid_address(self._coarse_mesh),
-            coarse_grid_points = np.arange(np.prod(self._coarse_mesh),
-                                           dtype='int_')
-            self._grid_points = from_coarse_to_dense_grid_points(
-                self._mesh,
-                self._mesh_divisors,
-                coarse_grid_points,
-                coarse_grid_address,
-                coarse_mesh_shifts=self._coarse_mesh_shifts)
+            self._grid_points = np.arange(np.prod(self._mesh), dtype='int_')
             self._grid_weights = np.ones(len(self._grid_points), dtype='int_')
             self._ir_grid_points = self._grid_points
             self._ir_grid_weights = self._grid_weights
@@ -386,63 +361,12 @@ class Conductivity(object):
 
         return np.array(gamma_iso, dtype='double', order='C')
 
-    def _set_mesh_numbers(self, mesh_divisors=None, coarse_mesh_shifts=None):
-        self._mesh = self._pp.mesh_numbers
-
-        if mesh_divisors is None:
-            self._mesh_divisors = np.array([1, 1, 1], dtype='int_')
-        else:
-            self._mesh_divisors = []
-            for i, (m, n) in enumerate(zip(self._mesh, mesh_divisors)):
-                if m % n == 0:
-                    self._mesh_divisors.append(n)
-                else:
-                    self._mesh_divisors.append(1)
-                    print(("Mesh number %d for the " +
-                           ["first", "second", "third"][i] +
-                           " axis is not dividable by divisor %d.") % (m, n))
-            self._mesh_divisors = np.array(self._mesh_divisors, dtype='int_')
-            if coarse_mesh_shifts is None:
-                self._coarse_mesh_shifts = [False, False, False]
-            else:
-                self._coarse_mesh_shifts = coarse_mesh_shifts
-            for i in range(3):
-                if (self._coarse_mesh_shifts[i] and
-                    (self._mesh_divisors[i] % 2 != 0)):
-                    print("Coarse grid along " +
-                          ["first", "second", "third"][i] +
-                          " axis can not be shifted. Set False.")
-                    self._coarse_mesh_shifts[i] = False
-
-        self._coarse_mesh = self._mesh // self._mesh_divisors
-
-        if self._log_level:
-            print("Lifetime sampling mesh: [ %d %d %d ]" %
-                  tuple(self._mesh // self._mesh_divisors))
-
     def _get_ir_grid_points(self):
-        if self._coarse_mesh_shifts is None:
-            mesh_shifts = [False, False, False]
-        else:
-            mesh_shifts = self._coarse_mesh_shifts
+        ir_grid_points, ir_grid_weights, _, _ = get_ir_grid_points(
+             self._mesh,
+             self._symmetry.pointgroup_operations)
 
-        (coarse_grid_points,
-         coarse_grid_weights,
-         coarse_grid_address, _) = get_ir_grid_points(
-             self._coarse_mesh,
-             self._symmetry.pointgroup_operations,
-             mesh_shifts=mesh_shifts)
-        grid_points = from_coarse_to_dense_grid_points(
-            self._mesh,
-            self._mesh_divisors,
-            coarse_grid_points,
-            coarse_grid_address,
-            coarse_mesh_shifts=self._coarse_mesh_shifts)
-        grid_weights = coarse_grid_weights
-
-        assert grid_weights.sum() == np.prod(self._mesh // self._mesh_divisors)
-
-        return grid_points, grid_weights
+        return ir_grid_points, ir_grid_weights
 
     def _set_isotope(self, mass_variances):
         if mass_variances is True:

@@ -337,49 +337,6 @@ def get_grid_points_by_rotations(address,
     return gps
 
 
-def reduce_grid_points(mesh_divisors,
-                       grid_address,
-                       dense_grid_points,
-                       dense_grid_weights=None,
-                       coarse_mesh_shifts=None):
-    divisors = np.array(mesh_divisors, dtype='int_')
-    if (divisors == 1).all():
-        coarse_grid_points = np.array(dense_grid_points, dtype='int_')
-        if dense_grid_weights is not None:
-            coarse_grid_weights = np.array(dense_grid_weights, dtype='int_')
-    else:
-        if coarse_mesh_shifts is None:
-            shift = [0, 0, 0]
-        else:
-            shift = np.where(coarse_mesh_shifts, divisors // 2, [0, 0, 0])
-        modulo = grid_address[dense_grid_points] % divisors
-        condition = (modulo == shift).all(axis=1)
-        coarse_grid_points = np.extract(condition, dense_grid_points)
-        if dense_grid_weights is not None:
-            coarse_grid_weights = np.extract(condition, dense_grid_weights)
-
-    if dense_grid_weights is None:
-        return coarse_grid_points
-    else:
-        return coarse_grid_points, coarse_grid_weights
-
-
-def from_coarse_to_dense_grid_points(dense_mesh,
-                                     mesh_divisors,
-                                     coarse_grid_points,
-                                     coarse_grid_address,
-                                     coarse_mesh_shifts=None):
-    if coarse_mesh_shifts is None:
-        coarse_mesh_shifts = [False, False, False]
-    shifts = np.where(coarse_mesh_shifts, 1, 0)
-    dense_grid_points = []
-    for cga in coarse_grid_address[coarse_grid_points]:
-        dense_address = cga * mesh_divisors + shifts * (mesh_divisors // 2)
-        dense_grid_points.append(get_grid_point_from_address(dense_address,
-                                                             dense_mesh))
-    return np.array(dense_grid_points, dtype='int_')
-
-
 def get_triplets_integration_weights(interaction,
                                      frequency_points,
                                      sigma,

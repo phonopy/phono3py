@@ -41,11 +41,9 @@ from phono3py.phonon3.triplets import (
 
 def write_grid_points(primitive,
                       mesh,
-                      mesh_divs=None,
                       band_indices=None,
                       sigmas=None,
                       temperatures=None,
-                      coarse_mesh_shifts=None,
                       is_kappa_star=True,
                       is_lbte=False,
                       compression="gzip",
