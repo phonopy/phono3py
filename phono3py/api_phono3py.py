@@ -1393,6 +1393,7 @@ class Phono3py(object):
                              frequency_points=None,
                              frequency_step=None,
                              num_frequency_points=None,
+                             frequency_points_at_bands=False,
                              scattering_event_class=None,
                              write_txt=False,
                              write_gamma_detail=False,
@@ -1412,7 +1413,8 @@ class Phono3py(object):
             Temperatures where imaginary part of self-energies are calculated.
             dtype=float, shape=(temperatures,)
         frequency_points : array_like, optional
-            Frequency sampling points. Default is None. In this case,
+            Frequency sampling points. Default is None. With
+            frequency_points_at_bands=False and frequency_points is None,
             num_frequency_points or frequency_step is used to generate uniform
             frequency sampling points.
             dtype=float, shape=(frequency_points,)
@@ -1423,6 +1425,9 @@ class Phono3py(object):
             Number of sampling sampling points to be used instead of
             frequency_step. This number includes end points. Default is None,
             which gives 201.
+        frequency_points_at_bands : bool, optional
+            Phonon band frequencies are used as frequency points when True.
+            Default is False.
         scattering_event_class : int, optional
             Specific choice of scattering event class, 1 or 2 that is specified
             1 or 2, respectively. The result is stored in gammas. Therefore
@@ -1458,6 +1463,7 @@ class Phono3py(object):
             sigmas=self._sigmas,
             frequency_points=frequency_points,
             frequency_step=frequency_step,
+            frequency_points_at_bands=frequency_points_at_bands,
             num_frequency_points=num_frequency_points,
             scattering_event_class=scattering_event_class,
             write_gamma_detail=write_gamma_detail,

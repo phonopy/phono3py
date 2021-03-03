@@ -309,7 +309,7 @@ class Conductivity(object):
         pass
 
     def _set_grid_properties(self, grid_points):
-        self._grid_address = self._pp.grid_address
+        self._grid_address = self._pp.bz_grid.addresses
         self._pp.set_nac_q_direction(nac_q_direction=None)
 
         if grid_points is not None:  # Specify grid points

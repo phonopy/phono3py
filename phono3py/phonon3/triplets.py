@@ -388,8 +388,7 @@ def get_triplets_integration_weights(interaction,
 def get_tetrahedra_vertices(relative_address,
                             mesh,
                             triplets_at_q,
-                            bz_grid_address,
-                            bz_map):
+                            bz_grid):
     bzmesh = mesh * 2
     grid_order = [1, mesh[0], mesh[0] * mesh[1]]
     bz_grid_order = [1, bzmesh[0], bzmesh[0] * bzmesh[1]]
@@ -398,10 +397,10 @@ def get_tetrahedra_vertices(relative_address,
     for i, tp in enumerate(triplets_at_q):
         for j, adrs_shift in enumerate(
                 (relative_address, -relative_address)):
-            adrs = bz_grid_address[tp[j + 1]] + adrs_shift
+            adrs = bz_grid.addresses[tp[j + 1]] + adrs_shift
             bz_gp = np.dot(adrs % bzmesh, bz_grid_order)
             gp = np.dot(adrs % mesh, grid_order)
-            vgp = bz_map[bz_gp]
+            vgp = bz_grid.gp_map[bz_gp]
             vertices[i, j] = vgp + (vgp == -1) * (gp + 1)
     return vertices
 
@@ -641,15 +640,15 @@ def _set_triplets_integration_weights_c(g,
     reciprocal_lattice = np.linalg.inv(interaction.primitive.cell)
     mesh = interaction.mesh_numbers
     thm = TetrahedronMethod(reciprocal_lattice, mesh=mesh)
-    grid_address = interaction.grid_address
-    bz_map = interaction.bz_map
+    grid_address = interaction.bz_grid.addresses
+    bz_map = interaction.bz_grid.gp_map
     triplets_at_q = interaction.get_triplets_at_q()[0]
 
     if neighboring_phonons:
         unique_vertices = thm.get_unique_tetrahedra_vertices()
         for i, j in zip((1, 2), (1, -1)):
             neighboring_grid_points = np.zeros(
-                len(unique_vertices) * len(triplets_at_q), dtype=bz_map.dtype)
+                len(unique_vertices) * len(triplets_at_q), dtype='int_')
             phono3c.neighboring_grid_points(
                 neighboring_grid_points,
                 np.array(triplets_at_q[:, i], dtype='int_').ravel(),
@@ -679,15 +678,12 @@ def _set_triplets_integration_weights_py(g, interaction, frequency_points):
     reciprocal_lattice = np.linalg.inv(interaction.get_primitive().get_cell())
     mesh = interaction.mesh_numbers
     thm = TetrahedronMethod(reciprocal_lattice, mesh=mesh)
-    grid_address = interaction.grid_address
-    bz_map = interaction.bz_map
     triplets_at_q = interaction.get_triplets_at_q()[0]
     tetrahedra_vertices = get_tetrahedra_vertices(
         thm.get_tetrahedra(),
         mesh,
         triplets_at_q,
-        grid_address,
-        bz_map)
+        interaction.bz_grid)
     interaction.run_phonon_solver(
         np.array(np.unique(tetrahedra_vertices), dtype='int_'))
     frequencies = interaction.get_phonons()[0]

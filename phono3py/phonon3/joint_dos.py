@@ -109,7 +109,7 @@ class JointDos(object):
 
     def run(self):
         self.run_phonon_solver(
-            np.arange(len(self._grid_address), dtype='int_'))
+            np.arange(len(self._bz_grid.addresses), dtype='int_'))
         try:
             import phono3py._phono3py as phono3c
             self._run_c()
@@ -195,20 +195,26 @@ class JointDos(object):
         return self._triplets_at_q, self._weights_at_q
 
     @property
+    def bz_grid(self):
+        return self._bz_grid
+
+    @property
     def grid_address(self):
-        return self._grid_address
+        warnings.warn("Use attribute, bz_grid.addresses", DeprecationWarning)
+        return self.bz_grid.addresses
 
     def get_grid_address(self):
-        warnings.warn("Use attribute, grid_address", DeprecationWarning)
-        return self.grid_address
+        warnings.warn("Use attribute, bz_grid.addresses", DeprecationWarning)
+        return self.bz_grid.addresses
 
     @property
     def bz_map(self):
-        return self._bz_map
+        warnings.warn("Use attribute, bz_grid.gp_map", DeprecationWarning)
+        return self.bz_grid.gp_map
 
     def get_bz_map(self):
-        warnings.warn("Use attribute, bz_map", DeprecationWarning)
-        return self._bz_map
+        warnings.warn("Use attribute, bz_grid.gp_map", DeprecationWarning)
+        return self.bz_grid.gp_map
 
     def run_phonon_solver(self, grid_points):
         """Calculate phonons at grid_points
@@ -222,7 +228,7 @@ class JointDos(object):
                             self._eigenvectors,
                             self._phonon_done,
                             grid_points,
-                            self._grid_address,
+                            self._bz_grid.addresses,
                             self._mesh,
                             self._frequency_factor_to_THz,
                             self._nac_q_direction,
@@ -294,8 +300,7 @@ class JointDos(object):
             thm.get_tetrahedra(),
             self._mesh,
             self._triplets_at_q,
-            self._grid_address,
-            self._bz_map)
+            self._bz_grid)
         self.run_phonon_solver(self._vertices.ravel())
         f_max = np.max(self._frequencies) * 2
         f_max *= 1.005
@@ -358,11 +363,10 @@ class JointDos(object):
                  self._mesh,
                  self._symmetry.get_pointgroup_operations(),
                  self._reciprocal_lattice)
-        self._grid_address = bz_grid.addresses
-        self._bz_map = bz_grid.gp_map
+        self._bz_grid = bz_grid
 
     def _allocate_phonons(self):
-        num_grid = len(self._grid_address)
+        num_grid = len(self._bz_grid.addresses)
         num_band = self._num_band
         self._phonon_done = np.zeros(num_grid, dtype='byte')
         self._frequencies = np.zeros((num_grid, num_band), dtype='double')

@@ -112,7 +112,7 @@ class Phono3pyJointDos(object):
                       "Grid point %d (%d/%d) "
                       "======================="
                       % (gp, i + 1, len(grid_points)))
-                adrs = self._jdos.grid_address[gp]
+                adrs = self._jdos.bz_grid.addresses[gp]
                 q = adrs.astype('double') / self._mesh_numbers
                 print("q-point: (%5.2f %5.2f %5.2f)" % tuple(q))
                 print("Number of triplets: %d" % len(weights))
