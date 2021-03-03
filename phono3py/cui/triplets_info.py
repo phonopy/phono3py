@@ -36,8 +36,7 @@ import numpy as np
 from phonopy.structure.symmetry import Symmetry
 from phono3py.file_IO import write_ir_grid_points, write_grid_address_to_hdf5
 from phono3py.phonon3.triplets import (
-    get_ir_grid_points, get_grid_address, from_coarse_to_dense_grid_points,
-    get_triplets_at_q, BZGrid)
+    get_ir_grid_points, get_triplets_at_q, BZGrid)
 
 
 def write_grid_points(primitive,
@@ -55,70 +54,62 @@ def write_grid_points(primitive,
     print("-" * 76)
     if mesh is None:
         print("To write grid points, mesh numbers have to be specified.")
-    else:
-        (ir_grid_points,
-         grid_weights,
-         bz_grid) = _get_coarse_ir_grid_points(
-             primitive,
-             mesh,
-             mesh_divs,
-             coarse_mesh_shifts,
-             is_kappa_star=is_kappa_star,
-             symprec=symprec)
-        write_ir_grid_points(mesh,
-                             mesh_divs,
-                             ir_grid_points,
-                             grid_weights,
-                             bz_grid.addresses,
-                             np.linalg.inv(primitive.cell))
-        gadrs_hdf5_fname = write_grid_address_to_hdf5(bz_grid.addresses,
-                                                      mesh,
-                                                      bz_grid.gp_map,
-                                                      compression=compression,
-                                                      filename=filename)
+        return
 
-        print("Ir-grid points are written into \"ir_grid_points.yaml\".")
-        print("Grid addresses are written into \"%s\"." % gadrs_hdf5_fname)
+    ir_grid_points, ir_grid_weights, bz_grid = _get_ir_grid_points(
+        primitive,
+        mesh,
+        is_kappa_star=is_kappa_star,
+        symprec=symprec)
+    write_ir_grid_points(mesh,
+                         ir_grid_points,
+                         ir_grid_weights,
+                         bz_grid.addresses,
+                         np.linalg.inv(primitive.cell))
+    gadrs_hdf5_fname = write_grid_address_to_hdf5(bz_grid.addresses,
+                                                  mesh,
+                                                  bz_grid.gp_map,
+                                                  compression=compression,
+                                                  filename=filename)
 
-        if is_lbte and temperatures is not None:
-            num_temp = len(temperatures)
-            num_sigma = len(sigmas)
-            num_ir_gp = len(ir_grid_points)
-            num_band = len(primitive) * 3
-            num_gp = len(bz_grid.addresses)
-            if band_indices is None:
-                num_band0 = num_band
-            else:
-                num_band0 = len(band_indices)
-            print("Memory requirements:")
-            size = (num_band0 * 3 * num_ir_gp * num_band * 3) * 8 / 1.0e9
-            print("- Piece of collision matrix at each grid point, temp and "
-                  "sigma: %.2f Gb" % size)
-            size = (num_ir_gp * num_band * 3) ** 2 * 8 / 1.0e9
-            print("- Full collision matrix at each temp and sigma: %.2f Gb"
-                  % size)
-            size = num_gp * (num_band ** 2 * 16 + num_band * 8 + 1) / 1.0e9
-            print("- Phonons: %.2f Gb" % size)
-            size = num_gp * 5 * 4 / 1.0e9
-            print("- Grid point information: %.2f Gb" % size)
-            size = (num_ir_gp * num_band0 *
-                    (3 + 6 + num_temp * 2 + num_sigma * num_temp * 15 + 2) *
-                    8 / 1.0e9)
-            print("- Phonon properties: %.2f Gb" % size)
+    print("Ir-grid points are written into \"ir_grid_points.yaml\".")
+    print("Grid addresses are written into \"%s\"." % gadrs_hdf5_fname)
+
+    if is_lbte and temperatures is not None:
+        num_temp = len(temperatures)
+        num_sigma = len(sigmas)
+        num_ir_gp = len(ir_grid_points)
+        num_band = len(primitive) * 3
+        num_gp = len(bz_grid.addresses)
+        if band_indices is None:
+            num_band0 = num_band
+        else:
+            num_band0 = len(band_indices)
+        print("Memory requirements:")
+        size = (num_band0 * 3 * num_ir_gp * num_band * 3) * 8 / 1.0e9
+        print("- Piece of collision matrix at each grid point, temp and "
+              "sigma: %.2f Gb" % size)
+        size = (num_ir_gp * num_band * 3) ** 2 * 8 / 1.0e9
+        print("- Full collision matrix at each temp and sigma: %.2f Gb"
+              % size)
+        size = num_gp * (num_band ** 2 * 16 + num_band * 8 + 1) / 1.0e9
+        print("- Phonons: %.2f Gb" % size)
+        size = num_gp * 5 * 4 / 1.0e9
+        print("- Grid point information: %.2f Gb" % size)
+        size = (num_ir_gp * num_band0 *
+                (3 + 6 + num_temp * 2 + num_sigma * num_temp * 15 + 2) *
+                8 / 1.0e9)
+        print("- Phonon properties: %.2f Gb" % size)
 
 
 def show_num_triplets(primitive,
                       mesh,
-                      mesh_divs=None,
                       band_indices=None,
                       grid_points=None,
-                      coarse_mesh_shifts=None,
                       is_kappa_star=True,
                       symprec=1e-5):
     tp_nums = _TripletsNumbers(primitive,
                                mesh,
-                               mesh_divs=mesh_divs,
-                               coarse_mesh_shifts=coarse_mesh_shifts,
                                is_kappa_star=is_kappa_star,
                                symprec=symprec)
 
@@ -147,19 +138,15 @@ class _TripletsNumbers(object):
     def __init__(self,
                  primitive,
                  mesh,
-                 mesh_divs=None,
-                 coarse_mesh_shifts=None,
                  is_kappa_star=True,
                  symprec=1e-5):
         self._primitive = primitive
         self._mesh = mesh
         self._symprec = symprec
 
-        self.ir_grid_points, _, self.bz_grid = _get_coarse_ir_grid_points(
+        self.ir_grid_points, _, self.bz_grid = _get_ir_grid_points(
             self._primitive,
             self._mesh,
-            mesh_divs,
-            coarse_mesh_shifts,
             is_kappa_star=is_kappa_star,
             symprec=self._symprec)
 
@@ -172,48 +159,15 @@ class _TripletsNumbers(object):
         return num_triplets
 
 
-def _get_coarse_ir_grid_points(primitive,
-                               mesh,
-                               mesh_divisors,
-                               coarse_mesh_shifts,
-                               is_kappa_star=True,
-                               symprec=1e-5):
-    mesh = np.array(mesh, dtype='int_')
-
+def _get_ir_grid_points(primitive,
+                        mesh,
+                        is_kappa_star=True,
+                        symprec=1e-5):
     symmetry = Symmetry(primitive, symprec)
     point_group = symmetry.pointgroup_operations
 
-    if mesh_divisors is None:
-        (ir_grid_points,
-         ir_grid_weights,
-         grid_address,
-         grid_mapping_table) = get_ir_grid_points(mesh, point_group)
-    else:
-        mesh_divs = np.array(mesh_divisors, dtype='int_')
-        coarse_mesh = mesh // mesh_divs
-        if coarse_mesh_shifts is None:
-            coarse_mesh_shifts = [False, False, False]
-
-        if not is_kappa_star:
-            coarse_grid_address = get_grid_address(coarse_mesh)
-            coarse_grid_points = np.arange(np.prod(coarse_mesh), dtype='int_')
-        else:
-            (coarse_ir_grid_points,
-             coarse_ir_grid_weights,
-             coarse_grid_address,
-             coarse_grid_mapping_table) = get_ir_grid_points(
-                 coarse_mesh,
-                 point_group,
-                 mesh_shifts=coarse_mesh_shifts)
-        ir_grid_points = from_coarse_to_dense_grid_points(
-            mesh,
-            mesh_divs,
-            coarse_grid_points,
-            coarse_grid_address,
-            coarse_mesh_shifts=coarse_mesh_shifts)
-        grid_address = get_grid_address(mesh)
-        ir_grid_weights = ir_grid_weights
-
+    ir_grid_points, ir_grid_weights, grid_address, _ = get_ir_grid_points(
+        mesh, point_group)
     reciprocal_lattice = np.linalg.inv(primitive.cell)
     bz_grid = BZGrid()
     bz_grid.relocate(grid_address, mesh, reciprocal_lattice)

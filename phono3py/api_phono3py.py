@@ -1675,8 +1675,6 @@ class Phono3py(object):
             solve_collective_phonon=False,
             use_ave_pp=False,
             gamma_unit_conversion=None,
-            mesh_divisors=None,
-            coarse_mesh_shifts=None,
             is_reducible_collision_matrix=False,
             is_kappa_star=True,
             gv_delta_q=None,  # for group velocity
@@ -1750,8 +1748,6 @@ class Phono3py(object):
                 boundary_mfp=boundary_mfp,
                 use_ave_pp=use_ave_pp,
                 gamma_unit_conversion=gamma_unit_conversion,
-                mesh_divisors=mesh_divisors,
-                coarse_mesh_shifts=coarse_mesh_shifts,
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
                 is_full_pp=is_full_pp,

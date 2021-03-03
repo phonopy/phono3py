@@ -985,11 +985,9 @@ def main(**argparse_control):
     if run_mode == "write_grid_info":
         write_grid_points(phono3py.primitive,
                           phono3py.mesh_numbers,
-                          mesh_divs=settings.mesh_divisors,
                           band_indices=settings.band_indices,
                           sigmas=updated_settings['sigmas'],
                           temperatures=updated_settings['temperatures'],
-                          coarse_mesh_shifts=settings.coarse_mesh_shifts,
                           is_kappa_star=settings.is_kappa_star,
                           is_lbte=(settings.write_collision or
                                    settings.is_lbte),
@@ -1006,10 +1004,8 @@ def main(**argparse_control):
     if run_mode == "show_triplets_info":
         show_num_triplets(phono3py.primitive,
                           phono3py.mesh_numbers,
-                          mesh_divs=settings.mesh_divisors,
                           band_indices=settings.band_indices,
                           grid_points=updated_settings['grid_points'],
-                          coarse_mesh_shifts=settings.coarse_mesh_shifts,
                           is_kappa_star=settings.is_kappa_star,
                           symprec=symprec)
 
@@ -1151,8 +1147,6 @@ def main(**argparse_control):
             solve_collective_phonon=settings.solve_collective_phonon,
             use_ave_pp=settings.use_ave_pp,
             gamma_unit_conversion=settings.gamma_conversion_factor,
-            mesh_divisors=settings.mesh_divisors,
-            coarse_mesh_shifts=settings.coarse_mesh_shifts,
             is_reducible_collision_matrix=settings.is_reducible_collision_matrix,
             is_kappa_star=settings.is_kappa_star,
             gv_delta_q=settings.group_velocity_delta_q,
