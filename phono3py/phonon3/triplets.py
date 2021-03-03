@@ -127,8 +127,7 @@ def get_triplets_at_q(grid_point,
                       point_group,  # real space point group of space group
                       reciprocal_lattice,  # column vectors
                       is_time_reversal=True,
-                      swappable=True,
-                      stores_triplets_map=False):
+                      swappable=True):
     """Parameters
     ----------
     grid_point : int
@@ -157,16 +156,8 @@ def get_triplets_at_q(grid_point,
     weights : ndarray
         Weights of triplets in Brillouin zone
         shape=(n_triplets,), dtype='int_'
-    bz_grid_address : ndarray
-        Integer grid address of the points in Brillouin zone including
-        surface.  The first prod(mesh) numbers of points are
-        independent. But the rest of points are
-        translational-symmetrically equivalent to some other points.
-        shape=(n_grid_points, 3), dtype='int_', order='C'
-    bz_map : ndarray
-        Grid point mapping table containing BZ surface. See more
-        detail in _relocate_BZ_grid_address docstring.
-        shape=(prod(mesh*2),), dtype='int_'
+    bz_grid : BZGrid
+        Data structure to represent BZ grid.
     map_tripelts : ndarray or None
         Returns when stores_triplets_map=True, otherwise None is
         returned.  Mapping table of all triplets to symmetrically
@@ -176,10 +167,8 @@ def get_triplets_at_q(grid_point,
         q''=G-q-q' where G is automatically determined to choose
         smallest |G|.
         shape=(prod(mesh),), dtype='int_'
-    map_q : ndarray or None
-        Returns when stores_triplets_map=True, otherwise None is
-        returned.  Irreducible q-points stabilized by q-point of
-        specified grid_point.
+    map_q : ndarray
+        Irreducible q-points stabilized by q-point of specified grid_point.
         shape=(prod(mesh),), dtype='int_'
 
     """
@@ -193,8 +182,6 @@ def get_triplets_at_q(grid_point,
 
     bz_grid = BZGrid()
     bz_grid.relocate(grid_address, mesh, reciprocal_lattice)
-    # bz_map = np.array(bz_map, dtype='int_')
-    # bz_grid_address = np.array(bz_grid_address, dtype='int_', order='C')
     triplets_at_q, weights = _get_BZ_triplets_at_q(
         grid_point,
         bz_grid,
@@ -205,13 +192,7 @@ def get_triplets_at_q(grid_point,
         "Num grid points %d, sum of weight %d" % (
                     np.prod(mesh), weights.sum())
 
-    # These maps are required for collision matrix calculation.
-    if not stores_triplets_map:
-        map_triplets = None
-        map_q = None
-
-    return (triplets_at_q, weights, bz_grid.addresses,
-            bz_grid.gp_map, map_triplets, map_q)
+    return triplets_at_q, weights, bz_grid, map_triplets, map_q
 
 
 def get_all_triplets(grid_point, bz_grid, mesh):
@@ -226,8 +207,12 @@ def get_all_triplets(grid_point, bz_grid, mesh):
 
 def get_nosym_triplets_at_q(grid_point,
                             mesh,
-                            reciprocal_lattice,
-                            stores_triplets_map=False):
+                            reciprocal_lattice):
+    """Returns triplets information without imposing mesh symmetry
+
+    See the docstring of get_triplets_at_q.
+
+    """
     bz_grid = BZGrid()
     bz_grid.relocate(get_grid_address(mesh), mesh, reciprocal_lattice)
     map_triplets = np.arange(np.prod(mesh), dtype='int_')
@@ -236,15 +221,9 @@ def get_nosym_triplets_at_q(grid_point,
         bz_grid,
         map_triplets,
         mesh)
+    map_q = map_triplets.copy()
 
-    if not stores_triplets_map:
-        map_triplets = None
-        map_q = None
-    else:
-        map_q = map_triplets.copy()
-
-    return (triplets_at_q, weights, bz_grid.addresses,
-            bz_grid.gp_map, map_triplets, map_q)
+    return triplets_at_q, weights, bz_grid, map_triplets, map_q
 
 
 def get_grid_address(mesh):

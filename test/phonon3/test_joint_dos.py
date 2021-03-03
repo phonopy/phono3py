@@ -13,6 +13,17 @@ si_jdos_12 = [10.8993284, 0.0000000,
               0.0000000, 2.0987108,
               0.0000000, 1.1648722,
               0.0000000, 0.0000000]
+si_jdos_nomeshsym_12 = [10.9478722, 0.0000000,
+                        1.9825862, 0.0000000,
+                        1.6458638, 0.4147573,
+                        3.7550744, 0.8847213,
+                        0.0176267, 1.0774414,
+                        0.0000000, 2.1981098,
+                        0.0000000, 1.4959386,
+                        0.0000000, 2.0987108,
+                        0.0000000, 1.1648722,
+                        0.0000000, 0.0000000]
+
 nacl_freq_points = [0.0000000, 1.6322306, 3.2644613, 4.8966919, 6.5289225,
                     8.1611531, 9.7933838, 11.4256144, 13.0578450, 14.6900756]
 nacl_jdos_12 = [20.5529946, 0.0000000,
@@ -69,6 +80,25 @@ def test_jdos_si(si_pbesol):
                                atol=1e-5)
     # print(", ".join(["%.7f" % jd for jd in jdos.joint_dos.ravel()]))
     np.testing.assert_allclose(si_jdos_12[2:], jdos.joint_dos.ravel()[2:],
+                               rtol=1e-2, atol=1e-5)
+
+
+def test_jdso_si_nomeshsym(si_pbesol):
+    si_pbesol.mesh_numbers = [9, 9, 9]
+    jdos = Phono3pyJointDos(
+        si_pbesol.phonon_supercell,
+        si_pbesol.phonon_primitive,
+        si_pbesol.mesh_numbers,
+        si_pbesol.fc2,
+        num_frequency_points=10,
+        is_mesh_symmetry=False,
+        log_level=1)
+    jdos.run([103])
+    # print(", ".join(["%.7f" % fp for fp in jdos.frequency_points]))
+    np.testing.assert_allclose(si_freq_points, jdos.frequency_points,
+                               atol=1e-5)
+    # print(", ".join(["%.7f" % jd for jd in jdos.joint_dos.ravel()]))
+    np.testing.assert_allclose(si_jdos_nomeshsym_12[2:], jdos.joint_dos.ravel()[2:],
                                rtol=1e-2, atol=1e-5)
 
 

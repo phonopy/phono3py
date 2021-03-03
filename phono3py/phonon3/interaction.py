@@ -310,30 +310,26 @@ class Interaction(object):
         if not self._is_mesh_symmetry:
             (triplets_at_q,
              weights_at_q,
-             bz_grid_addresses,
-             bz_map,
+             bz_grid,
              triplets_map_at_q,
              ir_map_at_q) = get_nosym_triplets_at_q(
                  grid_point,
                  self._mesh,
-                 reciprocal_lattice,
-                 stores_triplets_map=stores_triplets_map)
+                 reciprocal_lattice)
         else:
             (triplets_at_q,
              weights_at_q,
-             bz_grid_addresses,
-             bz_map,
+             bz_grid,
              triplets_map_at_q,
              ir_map_at_q) = get_triplets_at_q(
                  grid_point,
                  self._mesh,
-                 self._symmetry.get_pointgroup_operations(),
-                 reciprocal_lattice,
-                 stores_triplets_map=stores_triplets_map)
+                 self._symmetry.pointgroup_operations,
+                 reciprocal_lattice)
 
         # Special treatment of symmetry is applied when q_direction is used.
         if self._nac_q_direction is not None:
-            if (bz_grid_addresses[grid_point] == 0).all():
+            if (bz_grid.addresses[grid_point] == 0).all():
                 self._phonon_done[grid_point] = 0
                 self.run_phonon_solver(np.array([grid_point], dtype='int_'))
                 rotations = []
@@ -345,28 +341,26 @@ class Interaction(object):
                         rotations.append(r)
                 (triplets_at_q,
                  weights_at_q,
-                 bz_grid_addresses,
-                 bz_map,
+                 bz_grid,
                  triplets_map_at_q,
                  ir_map_at_q) = get_triplets_at_q(
                      grid_point,
                      self._mesh,
                      np.array(rotations, dtype='intc', order='C'),
                      reciprocal_lattice,
-                     is_time_reversal=False,
-                     stores_triplets_map=stores_triplets_map)
+                     is_time_reversal=False)
 
         for triplet in triplets_at_q:
-            sum_q = (bz_grid_addresses[triplet]).sum(axis=0)
+            sum_q = (bz_grid.addresses[triplet]).sum(axis=0)
             if (sum_q % self._mesh != 0).any():
                 print("============= Warning ==================")
                 print("%s" % triplet)
                 for tp in triplet:
                     print("%s %s" %
-                          (bz_grid_addresses[tp],
+                          (bz_grid.addresses[tp],
                            np.linalg.norm(
                                np.dot(reciprocal_lattice,
-                                      bz_grid_addresses[tp] /
+                                      bz_grid.addresses[tp] /
                                       self._mesh.astype('double')))))
                 print("%s" % sum_q)
                 print("============= Warning ==================")
@@ -375,8 +369,6 @@ class Interaction(object):
         self._triplets_at_q = triplets_at_q
         self._weights_at_q = weights_at_q
         self._triplets_map_at_q = triplets_map_at_q
-        # self._bz_grid.addresses = bz_grid_addresses
-        # self._bz_grid.gp_map = bz_map
         self._ir_map_at_q = ir_map_at_q
 
     def init_dynamical_matrix(self,

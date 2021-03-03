@@ -181,11 +181,10 @@ def _get_number_of_triplets(primitive,
     symmetry = Symmetry(primitive, symprec)
     point_group = symmetry.pointgroup_operations
     reciprocal_lattice = np.linalg.inv(primitive.cell)
-    triplets_at_q, _, _, _, _, _ = get_triplets_at_q(
-        grid_point,
-        mesh,
-        point_group,
-        reciprocal_lattice,
-        swappable=swappable)
+    triplets_at_q = get_triplets_at_q(grid_point,
+                                      mesh,
+                                      point_group,
+                                      reciprocal_lattice,
+                                      swappable=swappable)[0]
 
     return len(triplets_at_q)

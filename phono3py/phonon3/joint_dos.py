@@ -342,25 +342,24 @@ class JointDos(object):
 
             (self._triplets_at_q,
              self._weights_at_q,
-             self._grid_address,
-             self._bz_map,
+             bz_grid,
              map_triplets,
              map_q) = get_nosym_triplets_at_q(
                  self._grid_point,
                  self._mesh,
-                 self._reciprocal_lattice,
-                 with_bz_map=True)
+                 self._reciprocal_lattice)
         else:
             (self._triplets_at_q,
              self._weights_at_q,
-             self._grid_address,
-             self._bz_map,
+             bz_grid,
              map_triplets,
              map_q) = get_triplets_at_q(
                  self._grid_point,
                  self._mesh,
                  self._symmetry.get_pointgroup_operations(),
                  self._reciprocal_lattice)
+        self._grid_address = bz_grid.addresses
+        self._bz_map = bz_grid.gp_map
 
     def _allocate_phonons(self):
         num_grid = len(self._grid_address)
