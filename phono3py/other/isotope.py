@@ -40,7 +40,7 @@ from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
 from phonopy.units import VaspToTHz
 from phonopy.structure.atoms import isotope_data
 from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
-from phono3py.phonon3.triplets import get_bz_grid_address
+from phono3py.phonon3.triplets import BZGrid
 from phono3py.phonon.func import gaussian
 
 
@@ -107,8 +107,10 @@ class Isotope(object):
 
         if self._grid_address is None:
             primitive_lattice = np.linalg.inv(self._primitive.cell)
-            self._grid_address, self._bz_map = get_bz_grid_address(
-                self._mesh, primitive_lattice)
+            bz_grid = BZGrid()
+            bz_grid.set_bz_grid(self._mesh, primitive_lattice)
+            self._grid_address = bz_grid.addresses
+            self._bz_map = bz_grid.gp_map
 
         if self._phonon_done is None:
             self._allocate_phonon()
