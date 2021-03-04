@@ -158,9 +158,8 @@ def get_triplets_at_q(grid_point,
         shape=(n_triplets,), dtype='int_'
     bz_grid : BZGrid
         Data structure to represent BZ grid.
-    map_tripelts : ndarray or None
-        Returns when stores_triplets_map=True, otherwise None is
-        returned.  Mapping table of all triplets to symmetrically
+    map_triplets : ndarray or None
+        Mapping table of all triplets to symmetrically
         independent tripelts. More precisely, this gives a list of
         index mapping from all q-points to independent q' of
         q+q'+q''=G. Considering q' is enough because q is fixed and
@@ -567,7 +566,8 @@ def _get_triplets_reciprocal_mesh_at_q(fixed_grid_number,
                                        swappable=True):
     """Search symmetry reduced triplets fixing one q-point
 
-    Triplets of (q0, q1, q2) are searched.
+    Triplets of (q0, q1, q2) are searched. This method doesn't consider
+    translationally equivalent points on BZ surface.
 
     Parameters
     ----------
@@ -586,6 +586,25 @@ def _get_triplets_reciprocal_mesh_at_q(fixed_grid_number,
         Inversion symemtry is added if it doesn't exist.
     swappable : bool
         q1 and q2 can be swapped. By this number of triplets decreases.
+
+    Returns
+    -------
+    map_triplets : ndarray or None
+        Mapping table of all triplets to symmetrically
+        independent tripelts. More precisely, this gives a list of
+        index mapping from all q-points to independent q' of
+        q+q'+q''=G. Considering q' is enough because q is fixed and
+        q''=G-q-q' where G is automatically determined to choose
+        smallest |G| without considering BZ surface (see docstring of
+        _get_BZ_triplets_at_q.)
+        shape=(prod(mesh),), dtype='int_'
+    map_q : ndarray
+        Irreducible q-points stabilized by q-point of specified grid_point.
+        shape=(prod(mesh),), dtype='int_'
+    grid_addresses : ndarray
+        Address of all grid points in reciprocal cell. Each address is
+        given by three unsigned integers.
+        dtype='int_', shape=(prod(mesh), 3)
 
     """
 
@@ -612,6 +631,44 @@ def _get_BZ_triplets_at_q(grid_point,
                           bz_grid,
                           map_triplets,
                           mesh):
+    """Grid point triplets are searched considering BZ surface.
+
+    Looking for q+q'+q''=G with smallest |G|. In this condition,
+    a pair in (q, q', q'') can be translationally equivalent points.
+    This is treated an auxiliary grid system (bz_grid).
+
+    Parameters
+    ----------
+    grid_number : int
+        Grid point of q0
+    bz_grid : BZGrid
+        Data structure to represent BZ grid.
+    map_triplets : ndarray or None
+        Mapping table of all triplets to symmetrically
+        independent tripelts. More precisely, this gives a list of
+        index mapping from all q-points to independent q' of
+        q+q'+q''=G. Considering q' is enough because q is fixed and
+        q''=G-q-q' where G is automatically determined to choose
+        smallest |G| without considering BZ surface (see docstring of
+        _get_BZ_triplets_at_q.)
+        shape=(prod(mesh),), dtype='int_'
+    mesh : array_like
+        Mesh numbers
+        dtype='int_'
+        shape=(3,)
+
+    Returns
+    -------
+    triplets : ndarray
+        Symmetry reduced number of triplets are stored as grid point
+        integer numbers.
+        shape=(n_triplets, 3), dtype='int_'
+    ir_weights : ndarray
+        Weights of triplets at a fixed q0.
+        shape=(n_triplets,), dtype='int_'
+
+    """
+
     import phono3py._phono3py as phono3c
 
     weights = np.zeros(len(map_triplets), dtype='int_')

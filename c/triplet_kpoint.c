@@ -244,7 +244,7 @@ static long get_ir_triplets_at_q(long *map_triplets,
                                  const MatLONG * rot_reciprocal,
                                  const long swappable)
 {
-  long i, j, num_grid, q_2, num_ir_q, num_ir_triplets, ir_grid_point;
+  long i, j, num_grid, q_2, num_ir_q, num_ir_triplets, ir_gp;
   long mesh_double[3], is_shift[3];
   long address_double0[3], address_double1[3], address_double2[3];
   long *ir_grid_points, *third_q;
@@ -255,6 +255,7 @@ static long get_ir_triplets_at_q(long *map_triplets,
   ir_grid_points = NULL;
   third_q = NULL;
   rot_reciprocal_q = NULL;
+  num_ir_triplets = 0;
 
   tolerance = 0.01 / (mesh[0] + mesh[1] + mesh[2]);
   num_grid = mesh[0] * mesh[1] * (long)mesh[2];
@@ -285,8 +286,16 @@ static long get_ir_triplets_at_q(long *map_triplets,
   kpt_free_MatLONG(rot_reciprocal_q);
   rot_reciprocal_q = NULL;
 
-  third_q = (long*) malloc(sizeof(long) * num_ir_q);
-  ir_grid_points = (long*) malloc(sizeof(long) * num_ir_q);
+  if ((third_q = (long*) malloc(sizeof(long) * num_ir_q)) == NULL) {
+    warning_print("Memory could not be allocated.");
+    goto ret;
+  }
+
+  if ((ir_grid_points = (long*) malloc(sizeof(long) * num_ir_q)) == NULL) {
+    warning_print("Memory could not be allocated.");
+    goto ret;
+  }
+
   num_ir_q = 0;
   for (i = 0; i < num_grid; i++) {
     if (map_q[i] == i) {
@@ -311,23 +320,21 @@ static long get_ir_triplets_at_q(long *map_triplets,
     third_q[i] = grg_get_double_grid_index(address_double2, mesh, is_shift);
   }
 
-  num_ir_triplets = 0;
-
   if (swappable) { /* search q1 <-> q2 */
     for (i = 0; i < num_ir_q; i++) {
-      ir_grid_point = ir_grid_points[i];
+      ir_gp = ir_grid_points[i];
       q_2 = third_q[i];
       if (map_triplets[map_q[q_2]] < num_grid) {
-        map_triplets[ir_grid_point] = map_triplets[map_q[q_2]];
+        map_triplets[ir_gp] = map_triplets[map_q[q_2]];
       } else {
-        map_triplets[ir_grid_point] = ir_grid_point;
+        map_triplets[ir_gp] = ir_gp;
         num_ir_triplets++;
       }
     }
   } else {
     for (i = 0; i < num_ir_q; i++) {
-      ir_grid_point = ir_grid_points[i];
-      map_triplets[ir_grid_point] = ir_grid_point;
+      ir_gp = ir_grid_points[i];
+      map_triplets[ir_gp] = ir_gp;
       num_ir_triplets++;
     }
   }
@@ -337,11 +344,15 @@ static long get_ir_triplets_at_q(long *map_triplets,
     map_triplets[i] = map_triplets[map_q[i]];
   }
 
-  free(third_q);
-  third_q = NULL;
-  free(ir_grid_points);
-  ir_grid_points = NULL;
-
+ret:
+  if (third_q) {
+    free(third_q);
+    third_q = NULL;
+  }
+  if (ir_grid_points) {
+    free(ir_grid_points);
+    ir_grid_points = NULL;
+  }
   return num_ir_triplets;
 }
 
@@ -366,7 +377,13 @@ static long get_BZ_triplets_at_q(long (*triplets)[3],
   }
 
   num_ir = 0;
-  ir_grid_points = (long*) malloc(sizeof(long) * num_map_triplets);
+
+  if ((ir_grid_points = (long*) malloc(sizeof(long) * num_map_triplets))
+      == NULL) {
+    warning_print("Memory could not be allocated.");
+    goto ret;
+  }
+
   for (i = 0; i < num_map_triplets; i++) {
     if (map_triplets[i] == i) {
       ir_grid_points[num_ir] = i;
@@ -402,6 +419,7 @@ static long get_BZ_triplets_at_q(long (*triplets)[3],
   free(ir_grid_points);
   ir_grid_points = NULL;
 
+ret:
   return num_ir;
 }
 
