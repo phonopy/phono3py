@@ -170,10 +170,6 @@ static long bz_search_space[KPT_NUM_BZ_SEARCH_SPACE][3] = {
   {-1, -1, -1}
 };
 
-static void grid_point_to_address_double(long address_double[3],
-                                         const long grid_point,
-                                         const long mesh[3],
-                                         const long is_shift[3]);
 static long get_ir_triplets_at_q(long *map_triplets,
                                  long *map_q,
                                  long (*grid_address)[3],
@@ -193,6 +189,9 @@ static long get_third_q_of_triplets_at_q(long bz_address[3][3],
                                          const long *bz_map,
                                          const long mesh[3],
                                          const long bzmesh[3]);
+static MatLONG *get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
+                                                  const long mesh[3],
+                                                  const long grid_point);
 static void modulo_l3(long v[3], const long m[3]);
 
 long tpk_get_ir_triplets_at_q(long *map_triplets,
@@ -245,11 +244,9 @@ static long get_ir_triplets_at_q(long *map_triplets,
                                  const long swappable)
 {
   long i, j, num_grid, q_2, num_ir_q, num_ir_triplets, ir_gp;
-  long mesh_double[3], is_shift[3];
-  long address_double0[3], address_double1[3], address_double2[3];
+  long is_shift[3];
+  long adrs0[3], adrs1[3], adrs2[3];
   long *ir_grid_points, *third_q;
-  double tolerance;
-  double stabilizer_q[1][3];
   MatLONG *rot_reciprocal_q;
 
   ir_grid_points = NULL;
@@ -257,27 +254,16 @@ static long get_ir_triplets_at_q(long *map_triplets,
   rot_reciprocal_q = NULL;
   num_ir_triplets = 0;
 
-  tolerance = 0.01 / (mesh[0] + mesh[1] + mesh[2]);
-  num_grid = mesh[0] * mesh[1] * (long)mesh[2];
+  num_grid = mesh[0] * mesh[1] * mesh[2];
 
   for (i = 0; i < 3; i++) {
-    /* Only consider the gamma-point */
     is_shift[i] = 0;
-    mesh_double[i] = mesh[i] * 2;
   }
 
-  /* Search irreducible q-points (map_q) with a stabilizer */
-  /* q */
-  grid_point_to_address_double(address_double0, grid_point, mesh, is_shift);
-  for (i = 0; i < 3; i++) {
-    stabilizer_q[0][i] =
-      (double)address_double0[i] / mesh_double[i] - (address_double0[i] > mesh[i]);
-  }
-
-  rot_reciprocal_q = kpt_get_point_group_reciprocal_with_q(rot_reciprocal,
-                                                           tolerance,
-                                                           1,
-                                                           stabilizer_q);
+  /* Search irreducible q-points (map_q) with a stabilizer. */
+  rot_reciprocal_q = get_point_group_reciprocal_with_q(rot_reciprocal,
+                                                       mesh,
+                                                       grid_point);
   num_ir_q = kpt_get_irreducible_reciprocal_mesh(grid_address,
                                                  map_q,
                                                  mesh,
@@ -308,16 +294,15 @@ static long get_ir_triplets_at_q(long *map_triplets,
     map_triplets[i] = num_grid;  /* When not found, map_triplets == num_grid */
   }
 
-#pragma omp parallel for private(j, address_double1, address_double2)
+  grg_get_grid_address_from_index(adrs0, grid_point, mesh);
+
+#pragma omp parallel for private(j, adrs1, adrs2)
   for (i = 0; i < num_ir_q; i++) {
-    grid_point_to_address_double(address_double1,
-                                 ir_grid_points[i],
-                                 mesh,
-                                 is_shift); /* q' */
+    grg_get_grid_address_from_index(adrs1, ir_grid_points[i], mesh);
     for (j = 0; j < 3; j++) { /* q'' */
-      address_double2[j] = - address_double0[j] - address_double1[j];
+      adrs2[j] = - adrs0[j] - adrs1[j];
     }
-    third_q[i] = grg_get_double_grid_index(address_double2, mesh, is_shift);
+    third_q[i] = grg_get_grid_index(adrs2, mesh);
   }
 
   if (swappable) { /* search q1 <-> q2 */
@@ -434,7 +419,7 @@ static long get_third_q_of_triplets_at_q(long bz_address[3][3],
   long bzgp[KPT_NUM_BZ_SEARCH_SPACE];
   long bz_address_double[3], PS[3];
 
-  prod_bzmesh = (long)bzmesh[0] * bzmesh[1] * bzmesh[2];
+  prod_bzmesh = bzmesh[0] * bzmesh[1] * bzmesh[2];
 
   modulo_l3(bz_address[q_index], mesh);
   for (i = 0; i < 3; i++) {
@@ -484,27 +469,51 @@ escape:
   return smallest_g;
 }
 
-static void grid_point_to_address_double(long address_double[3],
-                                         const long grid_point,
-                                         const long mesh[3],
-                                         const long is_shift[3])
+/* Return NULL if failed */
+static MatLONG *get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
+                                                  const long mesh[3],
+                                                  const long grid_point)
 {
-  long i;
-  long address[3];
+  long i, num_rot, gp_rot;
+  long *ir_rot;
+  long adrs[3], adrs_rot[3];
+  MatLONG * rot_reciprocal_q;
 
-#ifndef GRID_ORDER_XYZ
-  address[2] = grid_point / (mesh[0] * mesh[1]);
-  address[1] = (grid_point - address[2] * mesh[0] * mesh[1]) / mesh[0];
-  address[0] = grid_point % mesh[0];
-#else
-  address[0] = grid_point / (mesh[1] * mesh[2]);
-  address[1] = (grid_point - address[0] * mesh[1] * mesh[2]) / mesh[2];
-  address[2] = grid_point % mesh[2];
-#endif
+  ir_rot = NULL;
+  rot_reciprocal_q = NULL;
+  num_rot = 0;
 
-  for (i = 0; i < 3; i++) {
-    address_double[i] = address[i] * 2 + is_shift[i];
+  grg_get_grid_address_from_index(adrs, grid_point, mesh);
+
+  if ((ir_rot = (long*)malloc(sizeof(long) * rot_reciprocal->size)) == NULL) {
+    warning_print("Memory of ir_rot could not be allocated.");
+    return NULL;
   }
+
+  for (i = 0; i < rot_reciprocal->size; i++) {
+    ir_rot[i] = -1;
+  }
+  for (i = 0; i < rot_reciprocal->size; i++) {
+    kpt_multiply_matrix_vector_l3(adrs_rot, rot_reciprocal->mat[i], adrs);
+    gp_rot = grg_get_grid_index(adrs_rot, mesh);
+
+    if (gp_rot == grid_point) {
+      ir_rot[num_rot] = i;
+      num_rot++;
+    }
+  }
+
+  if ((rot_reciprocal_q = kpt_alloc_MatLONG(num_rot)) != NULL) {
+    for (i = 0; i < num_rot; i++) {
+      kpt_copy_matrix_l3(rot_reciprocal_q->mat[i],
+                         rot_reciprocal->mat[ir_rot[i]]);
+    }
+  }
+
+  free(ir_rot);
+  ir_rot = NULL;
+
+  return rot_reciprocal_q;
 }
 
 static void modulo_l3(long v[3], const long m[3])

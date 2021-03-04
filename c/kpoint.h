@@ -51,18 +51,12 @@ long kpt_get_irreducible_reciprocal_mesh(long grid_address[][3],
                                          const MatLONG *rot_reciprocal);
 MatLONG *kpt_get_point_group_reciprocal(const MatLONG * rotations,
                                         const long is_time_reversal);
-MatLONG *kpt_get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
-                                               const double symprec,
-                                               const long num_q,
-                                               KPTCONST double qpoints[][3]);
-long kpt_get_stabilized_reciprocal_mesh(long grid_address[][3],
-                                        long ir_mapping_table[],
-                                        const long mesh[3],
-                                        const long is_shift[3],
-                                        const long is_time_reversal,
-                                        const MatLONG * rotations,
-                                        const long num_q,
-                                        KPTCONST double qpoints[][3]);
+long kpt_get_ir_reciprocal_mesh(long grid_address[][3],
+                                long ir_mapping_table[],
+                                const long mesh[3],
+                                const long is_shift[3],
+                                const long is_time_reversal,
+                                const MatLONG * rotations);
 long kpt_relocate_BZ_grid_address(long bz_grid_address[][3],
                                   long bz_map[],
                                   KPTCONST long grid_address[][3],
@@ -76,6 +70,9 @@ long kpt_get_bz_grid_addresses(long bz_grid_address[][3],
                                KPTCONST double rec_lattice[3][3],
                                const long is_shift[3]);
 void kpt_copy_matrix_l3(long a[3][3], KPTCONST long b[3][3]);
+void kpt_multiply_matrix_vector_l3(long v[3],
+                                   KPTCONST long a[3][3],
+                                   const long b[3]);
 MatLONG * kpt_alloc_MatLONG(const long size);
 void kpt_free_MatLONG(MatLONG * matlong);
 

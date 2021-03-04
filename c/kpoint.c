@@ -176,10 +176,6 @@ static long bz_search_space[KPT_NUM_BZ_SEARCH_SPACE][3] = {
 
 static MatLONG *get_point_group_reciprocal(const MatLONG * rotations,
                                            const long is_time_reversal);
-static MatLONG *get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
-                                                  const double symprec,
-                                                  const long num_q,
-                                                  KPTCONST double qpoints[][3]);
 static long get_ir_reciprocal_mesh(long grid_address[][3],
                                    long ir_mapping_table[],
                                    const long mesh[3],
@@ -213,19 +209,11 @@ static long get_num_ir(long ir_mapping_table[], const long mesh[3]);
 static long check_mesh_symmetry(const long mesh[3],
                                 const long is_shift[3],
                                 const MatLONG *rot_reciprocal);
-static long Nint(const double a);
-static double Dabs(const double a);
 static void transpose_matrix_l3(long a[3][3], KPTCONST long b[3][3]);
 static void multiply_matrix_l3(long m[3][3],
                                KPTCONST long a[3][3], KPTCONST long b[3][3]);
 static long check_identity_matrix_l3(KPTCONST long a[3][3],
                                      KPTCONST long b[3][3]);
-static void multiply_matrix_vector_ld3(double v[3],
-                                       KPTCONST long a[3][3],
-                                       const double b[3]);
-static void multiply_matrix_vector_l3(long v[3],
-                                      KPTCONST long a[3][3],
-                                      const long b[3]);
 static void multiply_matrix_vector_d3(double v[3],
                                       KPTCONST double a[3][3],
                                       const double b[3]);
@@ -255,48 +243,24 @@ MatLONG *kpt_get_point_group_reciprocal(const MatLONG * rotations,
   return get_point_group_reciprocal(rotations, is_time_reversal);
 }
 
-MatLONG *kpt_get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
-                                               const double symprec,
-                                               const long num_q,
-                                               KPTCONST double qpoints[][3])
-{
-  return get_point_group_reciprocal_with_q(rot_reciprocal,
-                                           symprec,
-                                           num_q,
-                                           qpoints);
-}
-
-long kpt_get_stabilized_reciprocal_mesh(long grid_address[][3],
-                                        long ir_mapping_table[],
-                                        const long mesh[3],
-                                        const long is_shift[3],
-                                        const long is_time_reversal,
-                                        const MatLONG * rotations,
-                                        const long num_q,
-                                        KPTCONST double qpoints[][3])
+long kpt_get_ir_reciprocal_mesh(long grid_address[][3],
+                                long ir_mapping_table[],
+                                const long mesh[3],
+                                const long is_shift[3],
+                                const long is_time_reversal,
+                                const MatLONG * rotations)
 {
   long num_ir;
-  MatLONG *rot_reciprocal, *rot_reciprocal_q;
-  double tolerance;
+  MatLONG *rot_reciprocal;
 
   rot_reciprocal = NULL;
-  rot_reciprocal_q = NULL;
-
   rot_reciprocal = get_point_group_reciprocal(rotations, is_time_reversal);
-  tolerance = 0.01 / (mesh[0] + mesh[1] + mesh[2]);
-  rot_reciprocal_q = get_point_group_reciprocal_with_q(rot_reciprocal,
-                                                       tolerance,
-                                                       num_q,
-                                                       qpoints);
-
   num_ir = get_ir_reciprocal_mesh(grid_address,
                                   ir_mapping_table,
                                   mesh,
                                   is_shift,
-                                  rot_reciprocal_q);
+                                  rot_reciprocal);
 
-  kpt_free_MatLONG(rot_reciprocal_q);
-  rot_reciprocal_q = NULL;
   kpt_free_MatLONG(rot_reciprocal);
   rot_reciprocal = NULL;
   return num_ir;
@@ -343,6 +307,18 @@ void kpt_copy_matrix_l3(long a[3][3], KPTCONST long b[3][3])
   a[2][0] = b[2][0];
   a[2][1] = b[2][1];
   a[2][2] = b[2][2];
+}
+
+void kpt_multiply_matrix_vector_l3(long v[3],
+                                   KPTCONST long a[3][3],
+                                   const long b[3])
+{
+  long i;
+  long c[3];
+  for (i = 0; i < 3; i++)
+    c[i] = a[i][0] * b[0] + a[i][1] * b[1] + a[i][2] * b[2];
+  for (i = 0; i < 3; i++)
+    v[i] = c[i];
 }
 
 MatLONG * kpt_alloc_MatLONG(const long size)
@@ -456,74 +432,6 @@ static MatLONG *get_point_group_reciprocal(const MatLONG * rotations,
   return rot_return;
 }
 
-/* Return NULL if failed */
-static MatLONG *get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
-                                                  const double symprec,
-                                                  const long num_q,
-                                                  KPTCONST double qpoints[][3])
-{
-  long i, j, k, l, is_all_ok, num_rot;
-  long *ir_rot;
-  double q_rot[3], diff[3];
-  MatLONG * rot_reciprocal_q;
-
-  ir_rot = NULL;
-  rot_reciprocal_q = NULL;
-  is_all_ok = 0;
-  num_rot = 0;
-
-  if ((ir_rot = (long*)malloc(sizeof(long) * rot_reciprocal->size)) == NULL) {
-    warning_print("Memory of ir_rot could not be allocated.");
-    return NULL;
-  }
-
-  for (i = 0; i < rot_reciprocal->size; i++) {
-    ir_rot[i] = -1;
-  }
-  for (i = 0; i < rot_reciprocal->size; i++) {
-    for (j = 0; j < num_q; j++) {
-      is_all_ok = 0;
-      multiply_matrix_vector_ld3(q_rot,
-                                 rot_reciprocal->mat[i],
-                                 qpoints[j]);
-
-      for (k = 0; k < num_q; k++) {
-        for (l = 0; l < 3; l++) {
-          diff[l] = q_rot[l] - qpoints[k][l];
-          diff[l] -= Nint(diff[l]);
-        }
-
-        if (Dabs(diff[0]) < symprec &&
-            Dabs(diff[1]) < symprec &&
-            Dabs(diff[2]) < symprec) {
-          is_all_ok = 1;
-          break;
-        }
-      }
-
-      if (! is_all_ok) {
-        break;
-      }
-    }
-
-    if (is_all_ok) {
-      ir_rot[num_rot] = i;
-      num_rot++;
-    }
-  }
-
-  if ((rot_reciprocal_q = kpt_alloc_MatLONG(num_rot)) != NULL) {
-    for (i = 0; i < num_rot; i++) {
-      kpt_copy_matrix_l3(rot_reciprocal_q->mat[i],
-                         rot_reciprocal->mat[ir_rot[i]]);
-    }
-  }
-
-  free(ir_rot);
-  ir_rot = NULL;
-
-  return rot_reciprocal_q;
-}
 
 static long get_ir_reciprocal_mesh(long grid_address[][3],
                                    long ir_mapping_table[],
@@ -566,16 +474,16 @@ static long get_ir_reciprocal_mesh_normal(long grid_address[][3],
   grg_get_all_grid_addresses(grid_address, mesh);
 
 #pragma omp parallel for private(j, grid_point_rot, address_double, address_double_rot)
-  for (i = 0; i < mesh[0] * mesh[1] * (long)(mesh[2]); i++) {
+  for (i = 0; i < mesh[0] * mesh[1] * mesh[2]; i++) {
     grg_get_double_grid_address(address_double,
                                 grid_address[i],
                                 mesh,
                                 is_shift);
     ir_mapping_table[i] = i;
     for (j = 0; j < rot_reciprocal->size; j++) {
-      multiply_matrix_vector_l3(address_double_rot,
-                                rot_reciprocal->mat[j],
-                                address_double);
+      kpt_multiply_matrix_vector_l3(address_double_rot,
+                                    rot_reciprocal->mat[j],
+                                    address_double);
       grid_point_rot = grg_get_double_grid_index(address_double_rot, mesh, is_shift);
       if (grid_point_rot < ir_mapping_table[i]) {
 #ifdef _OPENMP
@@ -613,7 +521,7 @@ get_ir_reciprocal_mesh_distortion(long grid_address[][3],
   }
 
 #pragma omp parallel for private(j, k, grid_point_rot, address_double, address_double_rot, long_address_double, long_address_double_rot)
-  for (i = 0; i < mesh[0] * mesh[1] * (long)(mesh[2]); i++) {
+  for (i = 0; i < mesh[0] * mesh[1] * mesh[2]; i++) {
     grg_get_double_grid_address(address_double,
                                 grid_address[i],
                                 mesh,
@@ -872,23 +780,6 @@ static long check_mesh_symmetry(const long mesh[3],
           ((eq[2] && mesh[2] == mesh[0] && is_shift[2] == is_shift[0]) || (!eq[2])));
 }
 
-
-static long Nint(const double a)
-{
-  if (a < 0.0)
-    return (long) (a - 0.5);
-  else
-    return (long) (a + 0.5);
-}
-
-static double Dabs(const double a)
-{
-  if (a < 0.0)
-    return -a;
-  else
-    return a;
-}
-
 static void transpose_matrix_l3(long a[3][3], KPTCONST long b[3][3])
 {
   long c[3][3];
@@ -936,30 +827,6 @@ static long check_identity_matrix_l3(KPTCONST long a[3][3],
   else {
     return 1;
   }
-}
-
-static void multiply_matrix_vector_ld3(double v[3],
-                                       KPTCONST long a[3][3],
-                                       const double b[3])
-{
-  long i;
-  double c[3];
-  for (i = 0; i < 3; i++)
-    c[i] = a[i][0] * b[0] + a[i][1] * b[1] + a[i][2] * b[2];
-  for (i = 0; i < 3; i++)
-    v[i] = c[i];
-}
-
-static void multiply_matrix_vector_l3(long v[3],
-                                      KPTCONST long a[3][3],
-                                      const long b[3])
-{
-  long i;
-  long c[3];
-  for (i = 0; i < 3; i++)
-    c[i] = a[i][0] * b[0] + a[i][1] * b[1] + a[i][2] * b[2];
-  for (i = 0; i < 3; i++)
-    v[i] = c[i];
 }
 
 static void multiply_matrix_vector_d3(double v[3],

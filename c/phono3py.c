@@ -609,15 +609,13 @@ long ph3py_get_grid_index_from_address(const long address[3],
 }
 
 
-long ph3py_get_stabilized_reciprocal_mesh(long grid_address[][3],
-                                          long ir_mapping_table[],
-                                          const long mesh[3],
-                                          const long is_shift[3],
-                                          const long is_time_reversal,
-                                          PHPYCONST long rotations_in[][3][3],
-                                          const long num_rot,
-                                          const long num_q,
-                                          PHPYCONST double qpoints[][3])
+long ph3py_get_ir_reciprocal_mesh(long grid_address[][3],
+                                  long ir_mapping_table[],
+                                  const long mesh[3],
+                                  const long is_shift[3],
+                                  const long is_time_reversal,
+                                  PHPYCONST long rotations_in[][3][3],
+                                  const long num_rot)
 {
   long i, num_ir;
   MatLONG *rotations;
@@ -627,14 +625,12 @@ long ph3py_get_stabilized_reciprocal_mesh(long grid_address[][3],
   for (i = 0; i < num_rot; i++) {
     kpt_copy_matrix_l3(rotations->mat[i], rotations_in[i]);
   }
-  num_ir = kpt_get_stabilized_reciprocal_mesh(grid_address,
-                                              ir_mapping_table,
-                                              mesh,
-                                              is_shift,
-                                              is_time_reversal,
-                                              rotations,
-                                              num_q,
-                                              qpoints);
+  num_ir = kpt_get_ir_reciprocal_mesh(grid_address,
+                                      ir_mapping_table,
+                                      mesh,
+                                      is_shift,
+                                      is_time_reversal,
+                                      rotations);
   kpt_free_MatLONG(rotations);
   return num_ir;
 }
