@@ -200,13 +200,20 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
                               const long grid_point,
                               const long mesh[3],
                               const long is_time_reversal,
-                              const MatLONG * rotations,
+                              GRGCONST long (*rotations)[3][3],
+                              const long num_rot,
                               const long swappable)
 {
-  long num_ir;
-  MatLONG *rot_reciprocal;
+  long i, num_ir;
+  MatLONG *rot_real, *rot_reciprocal;
 
-  rot_reciprocal = bzg_get_point_group_reciprocal(rotations, is_time_reversal);
+  rot_real = bzg_alloc_MatLONG(num_rot);
+  for (i = 0; i < num_rot; i++) {
+    bzg_copy_matrix_l3(rot_real->mat[i], rotations[i]);
+  }
+  rot_reciprocal = bzg_get_point_group_reciprocal(rot_real, is_time_reversal);
+  bzg_free_MatLONG(rot_real);
+
   num_ir = get_ir_triplets_at_q(map_triplets,
                                 map_q,
                                 grid_address,
@@ -215,6 +222,7 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
                                 rot_reciprocal,
                                 swappable);
   bzg_free_MatLONG(rot_reciprocal);
+
   return num_ir;
 }
 

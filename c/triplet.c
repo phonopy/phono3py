@@ -34,7 +34,6 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#include "bzgrid.h"
 #include "grgrid.h"
 #include "triplet.h"
 #include "triplet_iw.h"
@@ -231,13 +230,7 @@ static long get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                               GRGCONST long (*rotations)[3][3],
                                               const long swappable)
 {
-  MatLONG *rot_real;
-  long i, num_ir;
-
-  rot_real = bzg_alloc_MatLONG(num_rot);
-  for (i = 0; i < num_rot; i++) {
-    bzg_copy_matrix_l3(rot_real->mat[i], rotations[i]);
-  }
+  long num_ir;
 
   num_ir = tpk_get_ir_triplets_at_q(map_triplets,
                                     map_q,
@@ -245,10 +238,8 @@ static long get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                     grid_point,
                                     mesh,
                                     is_time_reversal,
-                                    rot_real,
+                                    rotations,
+                                    num_rot,
                                     swappable);
-
-  bzg_free_MatLONG(rot_real);
-
   return num_ir;
 }

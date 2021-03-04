@@ -36,12 +36,12 @@
 #include "lapack_wrapper.h"
 #include "phonoc_array.h"
 
+#include "bzgrid.h"
 #include "collision_matrix.h"
 #include "fc3.h"
 #include "interaction.h"
 #include "imag_self_energy_with_g.h"
 #include "isotope.h"
-#include "bzgrid.h"
 #include "pp_collision.h"
 #include "real_self_energy.h"
 #include "grgrid.h"
