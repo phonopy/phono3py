@@ -133,6 +133,49 @@ freq_points_nacl_nac = [
     9.93186386, 11.58717451, 13.24248515, 14.89779579]
 
 
+def test_imag_self_energy_at_bands(si_pbesol):
+    si_pbesol.mesh_numbers = [9, 9, 9]
+    si_pbesol.init_phph_interaction()
+    _fpoints, _gammas = si_pbesol.run_imag_self_energy(
+        [1, 103],
+        [300, ],
+        frequency_points_at_bands=True)
+    gammas_ref = [
+        0.00021553, 0.00021553, 0.00084329, 0.04693498, 0.04388354, 0.04388354,
+        0.00383646, 0.00494357, 0.02741665, 0.01407101, 0.04133322, 0.03013125]
+    np.testing.assert_allclose(_gammas.ravel(), gammas_ref, atol=1e-2)
+
+
+def test_imag_self_energy_at_bands_detailed(si_pbesol):
+    si_pbesol.mesh_numbers = [9, 9, 9]
+    si_pbesol.init_phph_interaction()
+    _fpoints, _gammas, _detailed_gammas = si_pbesol.run_imag_self_energy(
+        [1, 103],
+        [300, ],
+        frequency_points_at_bands=True,
+        keep_gamma_detail=True)
+
+    weights_1 = [2, 2, 2, 2, 1, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+                 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+                 6, 12, 12, 12, 12, 6, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+                 12, 12, 12, 12, 12, 12, 12, 12, 6, 12, 12, 12, 12, 12, 12, 12,
+                 12, 6, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 6]
+    weights_103 = [2, ] * 364 + [1, ]
+
+    gammas_1_ref = _gammas[0].ravel()
+    gammas_103_ref = _gammas[1].ravel()
+    gammas_1 = np.dot(weights_1,
+                      _detailed_gammas[0][0, 0].sum(axis=-1).sum(axis=-1))
+    gammas_103 = np.dot(weights_103,
+                        _detailed_gammas[1][0, 0].sum(axis=-1).sum(axis=-1))
+    np.testing.assert_allclose(gammas_1[:2].sum(), gammas_1_ref[:2].sum(),
+                               atol=1e-2)
+    np.testing.assert_allclose(gammas_1[-2:].sum(), gammas_1_ref[-2:].sum(),
+                               atol=1e-2)
+    np.testing.assert_allclose(gammas_1[2:4], gammas_1_ref[2:4], atol=1e-2)
+    np.testing.assert_allclose(gammas_103, gammas_103_ref, atol=1e-2)
+
+
 def test_imag_self_energy_npoints(si_pbesol):
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
