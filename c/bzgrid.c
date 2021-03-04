@@ -35,18 +35,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
-#include "kpoint.h"
+#include "bzgrid.h"
 #include "grgrid.h"
 
-#ifdef KPTWARNING
+#ifdef BZGWARNING
 #include <stdio.h>
 #define warning_print(...) fprintf(stderr,__VA_ARGS__)
 #else
 #define warning_print(...)
 #endif
 
-#define KPT_NUM_BZ_SEARCH_SPACE 125
-static long bz_search_space[KPT_NUM_BZ_SEARCH_SPACE][3] = {
+#define BZG_NUM_BZ_SEARCH_SPACE 125
+static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
   { 0,  0,  0},
   { 0,  0,  1},
   { 0,  0,  2},
@@ -193,34 +193,34 @@ static long get_ir_reciprocal_mesh_distortion(long grid_address[][3],
                                               const MatLONG *rot_reciprocal);
 static long relocate_BZ_grid_address(long bz_grid_address[][3],
                                      long bz_map[],
-                                     KPTCONST long grid_address[][3],
+                                     GRGCONST long grid_address[][3],
                                      const long mesh[3],
-                                     KPTCONST double rec_lattice[3][3],
+                                     GRGCONST double rec_lattice[3][3],
                                      const long is_shift[3]);
 static long get_bz_grid_addresses(long bz_grid_address[][3],
                                   long bz_map[][2],
-                                  KPTCONST long grid_address[][3],
+                                  GRGCONST long grid_address[][3],
                                   const long mesh[3],
-                                  KPTCONST double rec_lattice[3][3],
+                                  GRGCONST double rec_lattice[3][3],
                                   const long is_shift[3]);
-static double get_tolerance_for_BZ_reduction(KPTCONST double rec_lattice[3][3],
+static double get_tolerance_for_BZ_reduction(GRGCONST double rec_lattice[3][3],
                                              const long mesh[3]);
 static long get_num_ir(long ir_mapping_table[], const long mesh[3]);
 static long check_mesh_symmetry(const long mesh[3],
                                 const long is_shift[3],
                                 const MatLONG *rot_reciprocal);
-static void transpose_matrix_l3(long a[3][3], KPTCONST long b[3][3]);
+static void transpose_matrix_l3(long a[3][3], GRGCONST long b[3][3]);
 static void multiply_matrix_l3(long m[3][3],
-                               KPTCONST long a[3][3], KPTCONST long b[3][3]);
-static long check_identity_matrix_l3(KPTCONST long a[3][3],
-                                     KPTCONST long b[3][3]);
+                               GRGCONST long a[3][3], GRGCONST long b[3][3]);
+static long check_identity_matrix_l3(GRGCONST long a[3][3],
+                                     GRGCONST long b[3][3]);
 static void multiply_matrix_vector_d3(double v[3],
-                                      KPTCONST double a[3][3],
+                                      GRGCONST double a[3][3],
                                       const double b[3]);
 static double norm_squared_d3(const double a[3]);
 
 
-long kpt_get_irreducible_reciprocal_mesh(long grid_address[][3],
+long bzg_get_irreducible_reciprocal_mesh(long grid_address[][3],
                                          long ir_mapping_table[],
                                          const long mesh[3],
                                          const long is_shift[3],
@@ -237,13 +237,13 @@ long kpt_get_irreducible_reciprocal_mesh(long grid_address[][3],
   return num_ir;
 }
 
-MatLONG *kpt_get_point_group_reciprocal(const MatLONG * rotations,
+MatLONG *bzg_get_point_group_reciprocal(const MatLONG * rotations,
                                         const long is_time_reversal)
 {
   return get_point_group_reciprocal(rotations, is_time_reversal);
 }
 
-long kpt_get_ir_reciprocal_mesh(long grid_address[][3],
+long bzg_get_ir_reciprocal_mesh(long grid_address[][3],
                                 long ir_mapping_table[],
                                 const long mesh[3],
                                 const long is_shift[3],
@@ -261,16 +261,16 @@ long kpt_get_ir_reciprocal_mesh(long grid_address[][3],
                                   is_shift,
                                   rot_reciprocal);
 
-  kpt_free_MatLONG(rot_reciprocal);
+  bzg_free_MatLONG(rot_reciprocal);
   rot_reciprocal = NULL;
   return num_ir;
 }
 
-long kpt_relocate_BZ_grid_address(long bz_grid_address[][3],
+long bzg_relocate_BZ_grid_address(long bz_grid_address[][3],
                                   long bz_map[],
-                                  KPTCONST long grid_address[][3],
+                                  GRGCONST long grid_address[][3],
                                   const long mesh[3],
-                                  KPTCONST double rec_lattice[3][3],
+                                  GRGCONST double rec_lattice[3][3],
                                   const long is_shift[3])
 {
   return relocate_BZ_grid_address(bz_grid_address,
@@ -281,11 +281,11 @@ long kpt_relocate_BZ_grid_address(long bz_grid_address[][3],
                                   is_shift);
 }
 
-long kpt_get_bz_grid_addresses(long bz_grid_address[][3],
+long bzg_get_bz_grid_addresses(long bz_grid_address[][3],
                                long bz_map[][2],
-                               KPTCONST long grid_address[][3],
+                               GRGCONST long grid_address[][3],
                                const long mesh[3],
-                               KPTCONST double rec_lattice[3][3],
+                               GRGCONST double rec_lattice[3][3],
                                const long is_shift[3])
 {
   return get_bz_grid_addresses(bz_grid_address,
@@ -296,7 +296,7 @@ long kpt_get_bz_grid_addresses(long bz_grid_address[][3],
                                is_shift);
 }
 
-void kpt_copy_matrix_l3(long a[3][3], KPTCONST long b[3][3])
+void bzg_copy_matrix_l3(long a[3][3], GRGCONST long b[3][3])
 {
   a[0][0] = b[0][0];
   a[0][1] = b[0][1];
@@ -309,8 +309,8 @@ void kpt_copy_matrix_l3(long a[3][3], KPTCONST long b[3][3])
   a[2][2] = b[2][2];
 }
 
-void kpt_multiply_matrix_vector_l3(long v[3],
-                                   KPTCONST long a[3][3],
+void bzg_multiply_matrix_vector_l3(long v[3],
+                                   GRGCONST long a[3][3],
                                    const long b[3])
 {
   long i;
@@ -321,7 +321,7 @@ void kpt_multiply_matrix_vector_l3(long v[3],
     v[i] = c[i];
 }
 
-MatLONG * kpt_alloc_MatLONG(const long size)
+MatLONG * bzg_alloc_MatLONG(const long size)
 {
   MatLONG *matlong;
 
@@ -346,7 +346,7 @@ MatLONG * kpt_alloc_MatLONG(const long size)
   return matlong;
 }
 
-void kpt_free_MatLONG(MatLONG * matlong)
+void bzg_free_MatLONG(MatLONG * matlong)
 {
   if (matlong->size > 0) {
     free(matlong->mat);
@@ -363,7 +363,7 @@ static MatLONG *get_point_group_reciprocal(const MatLONG * rotations,
   long i, j, num_rot;
   MatLONG *rot_reciprocal, *rot_return;
   long *unique_rot;
-  KPTCONST long inversion[3][3] = {
+  GRGCONST long inversion[3][3] = {
     {-1, 0, 0 },
     { 0,-1, 0 },
     { 0, 0,-1 }
@@ -374,18 +374,18 @@ static MatLONG *get_point_group_reciprocal(const MatLONG * rotations,
   unique_rot = NULL;
 
   if (is_time_reversal) {
-    if ((rot_reciprocal = kpt_alloc_MatLONG(rotations->size * 2)) == NULL) {
+    if ((rot_reciprocal = bzg_alloc_MatLONG(rotations->size * 2)) == NULL) {
       return NULL;
     }
   } else {
-    if ((rot_reciprocal = kpt_alloc_MatLONG(rotations->size)) == NULL) {
+    if ((rot_reciprocal = bzg_alloc_MatLONG(rotations->size)) == NULL) {
       return NULL;
     }
   }
 
   if ((unique_rot = (long*)malloc(sizeof(long) * rot_reciprocal->size)) == NULL) {
     warning_print("Memory of unique_rot could not be allocated.");
-    kpt_free_MatLONG(rot_reciprocal);
+    bzg_free_MatLONG(rot_reciprocal);
     rot_reciprocal = NULL;
     return NULL;
   }
@@ -418,15 +418,15 @@ static MatLONG *get_point_group_reciprocal(const MatLONG * rotations,
     ;
   }
 
-  if ((rot_return = kpt_alloc_MatLONG(num_rot)) != NULL) {
+  if ((rot_return = bzg_alloc_MatLONG(num_rot)) != NULL) {
     for (i = 0; i < num_rot; i++) {
-      kpt_copy_matrix_l3(rot_return->mat[i], rot_reciprocal->mat[unique_rot[i]]);
+      bzg_copy_matrix_l3(rot_return->mat[i], rot_reciprocal->mat[unique_rot[i]]);
     }
   }
 
   free(unique_rot);
   unique_rot = NULL;
-  kpt_free_MatLONG(rot_reciprocal);
+  bzg_free_MatLONG(rot_reciprocal);
   rot_reciprocal = NULL;
 
   return rot_return;
@@ -481,7 +481,7 @@ static long get_ir_reciprocal_mesh_normal(long grid_address[][3],
                                 is_shift);
     ir_mapping_table[i] = i;
     for (j = 0; j < rot_reciprocal->size; j++) {
-      kpt_multiply_matrix_vector_l3(address_double_rot,
+      bzg_multiply_matrix_vector_l3(address_double_rot,
                                     rot_reciprocal->mat[j],
                                     address_double);
       grid_point_rot = grg_get_double_grid_index(address_double_rot, mesh, is_shift);
@@ -569,13 +569,13 @@ get_ir_reciprocal_mesh_distortion(long grid_address[][3],
 
 static long relocate_BZ_grid_address(long bz_grid_address[][3],
                                      long bz_map[],
-                                     KPTCONST long grid_address[][3],
+                                     GRGCONST long grid_address[][3],
                                      const long mesh[3],
-                                     KPTCONST double rec_lattice[3][3],
+                                     GRGCONST double rec_lattice[3][3],
                                      const long is_shift[3])
 {
   double tolerance, min_distance;
-  double q_vector[3], distance[KPT_NUM_BZ_SEARCH_SPACE];
+  double q_vector[3], distance[BZG_NUM_BZ_SEARCH_SPACE];
   long bzmesh[3], bz_address_double[3];
   long i, boundary_num_gp, total_num_gp, bzgp, gp, num_bzmesh;
   long j, k, min_index;
@@ -596,7 +596,7 @@ static long relocate_BZ_grid_address(long bz_grid_address[][3],
   /* Multithreading doesn't work for this loop since gp calculated */
   /* with boundary_num_gp is unstable to store bz_grid_address. */
   for (i = 0; i < total_num_gp; i++) {
-    for (j = 0; j < KPT_NUM_BZ_SEARCH_SPACE; j++) {
+    for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
       for (k = 0; k < 3; k++) {
         q_vector[k] =
           ((grid_address[i][k] + bz_search_space[j][k] * mesh[k]) * 2 +
@@ -607,14 +607,14 @@ static long relocate_BZ_grid_address(long bz_grid_address[][3],
     }
     min_distance = distance[0];
     min_index = 0;
-    for (j = 1; j < KPT_NUM_BZ_SEARCH_SPACE; j++) {
+    for (j = 1; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
       if (distance[j] < min_distance) {
         min_distance = distance[j];
         min_index = j;
       }
     }
 
-    for (j = 0; j < KPT_NUM_BZ_SEARCH_SPACE; j++) {
+    for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
       if (distance[j] < min_distance + tolerance) {
         if (j == min_index) {
           gp = i;
@@ -641,13 +641,13 @@ static long relocate_BZ_grid_address(long bz_grid_address[][3],
 
 static long get_bz_grid_addresses(long bz_grid_address[][3],
                                   long bz_map[][2],
-                                  KPTCONST long grid_address[][3],
+                                  GRGCONST long grid_address[][3],
                                   const long mesh[3],
-                                  KPTCONST double rec_lattice[3][3],
+                                  GRGCONST double rec_lattice[3][3],
                                   const long is_shift[3])
 {
   double tolerance, min_distance;
-  double q_vector[3], distance[KPT_NUM_BZ_SEARCH_SPACE];
+  double q_vector[3], distance[BZG_NUM_BZ_SEARCH_SPACE];
   long i, j, k, min_index, num_gp, multi;
 
   tolerance = get_tolerance_for_BZ_reduction(rec_lattice, mesh);
@@ -656,7 +656,7 @@ static long get_bz_grid_addresses(long bz_grid_address[][3],
   for (i = 0; i < mesh[0] * mesh[1] * mesh[2]; i++) {
     multi = 0;
 
-    for (j = 0; j < KPT_NUM_BZ_SEARCH_SPACE; j++) {
+    for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
       for (k = 0; k < 3; k++) {
         q_vector[k] =
           ((grid_address[i][k] + bz_search_space[j][k] * mesh[k]) * 2 +
@@ -667,14 +667,14 @@ static long get_bz_grid_addresses(long bz_grid_address[][3],
     }
     min_distance = distance[0];
     min_index = 0;
-    for (j = 1; j < KPT_NUM_BZ_SEARCH_SPACE; j++) {
+    for (j = 1; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
       if (distance[j] < min_distance) {
         min_distance = distance[j];
         min_index = j;
       }
     }
 
-    for (j = 0; j < KPT_NUM_BZ_SEARCH_SPACE; j++) {
+    for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
       if (distance[j] < min_distance + tolerance) {
         for (k = 0; k < 3; k++) {
           bz_grid_address[num_gp][k] =
@@ -691,7 +691,7 @@ static long get_bz_grid_addresses(long bz_grid_address[][3],
   return num_gp;
 }
 
-static double get_tolerance_for_BZ_reduction(KPTCONST double rec_lattice[3][3],
+static double get_tolerance_for_BZ_reduction(GRGCONST double rec_lattice[3][3],
                                              const long mesh[3])
 {
   long i, j;
@@ -780,7 +780,7 @@ static long check_mesh_symmetry(const long mesh[3],
           ((eq[2] && mesh[2] == mesh[0] && is_shift[2] == is_shift[0]) || (!eq[2])));
 }
 
-static void transpose_matrix_l3(long a[3][3], KPTCONST long b[3][3])
+static void transpose_matrix_l3(long a[3][3], GRGCONST long b[3][3])
 {
   long c[3][3];
   c[0][0] = b[0][0];
@@ -792,12 +792,12 @@ static void transpose_matrix_l3(long a[3][3], KPTCONST long b[3][3])
   c[2][0] = b[0][2];
   c[2][1] = b[1][2];
   c[2][2] = b[2][2];
-  kpt_copy_matrix_l3(a, c);
+  bzg_copy_matrix_l3(a, c);
 }
 
 static void multiply_matrix_l3(long m[3][3],
-                               KPTCONST long a[3][3],
-                               KPTCONST long b[3][3])
+                               GRGCONST long a[3][3],
+                               GRGCONST long b[3][3])
 {
   long i, j;                   /* a_ij */
   long c[3][3];
@@ -807,11 +807,11 @@ static void multiply_matrix_l3(long m[3][3],
         a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j];
     }
   }
-  kpt_copy_matrix_l3(m, c);
+  bzg_copy_matrix_l3(m, c);
 }
 
-static long check_identity_matrix_l3(KPTCONST long a[3][3],
-                                     KPTCONST long b[3][3])
+static long check_identity_matrix_l3(GRGCONST long a[3][3],
+                                     GRGCONST long b[3][3])
 {
   if ( a[0][0] - b[0][0] ||
        a[0][1] - b[0][1] ||
@@ -830,7 +830,7 @@ static long check_identity_matrix_l3(KPTCONST long a[3][3],
 }
 
 static void multiply_matrix_vector_d3(double v[3],
-                                      KPTCONST double a[3][3],
+                                      GRGCONST double a[3][3],
                                       const double b[3])
 {
   long i;

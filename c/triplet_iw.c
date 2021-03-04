@@ -42,7 +42,7 @@
 static void set_freq_vertices(double freq_vertices[3][24][4],
                               const double *frequencies1,
                               const double *frequencies2,
-                              TPLCONST long vertices[2][24][4],
+                              GRGCONST long vertices[2][24][4],
                               const long num_band1,
                               const long num_band2,
                               const long b1,
@@ -50,15 +50,15 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
                               const long tp_type);
 static long set_g(double g[3],
                   const double f0,
-                  TPLCONST double freq_vertices[3][24][4],
+                  GRGCONST double freq_vertices[3][24][4],
                   const long max_i);
-static long in_tetrahedra(const double f0, TPLCONST double freq_vertices[24][4]);
+static long in_tetrahedra(const double f0, GRGCONST double freq_vertices[24][4]);
 static void get_triplet_tetrahedra_vertices(
   long vertices[2][24][4],
-  TPLCONST long tp_relative_grid_address[2][24][4][3],
+  GRGCONST long tp_relative_grid_address[2][24][4][3],
   const long mesh[3],
   const long triplet[3],
-  TPLCONST long (*bz_grid_address)[3],
+  GRGCONST long (*bz_grid_address)[3],
   const long *bz_map);
 
 void
@@ -66,11 +66,11 @@ tpi_get_integration_weight(double *iw,
                            char *iw_zero,
                            const double *frequency_points,
                            const long num_band0,
-                           TPLCONST long tp_relative_grid_address[2][24][4][3],
+                           GRGCONST long tp_relative_grid_address[2][24][4][3],
                            const long mesh[3],
                            const long triplets[3],
                            const long num_triplets,
-                           TPLCONST long (*bz_grid_address)[3],
+                           GRGCONST long (*bz_grid_address)[3],
                            const long *bz_map,
                            const double *frequencies1,
                            const long num_band1,
@@ -211,10 +211,10 @@ void tpi_get_integration_weight_with_sigma(double *iw,
 void
 tpi_get_neighboring_grid_points(long neighboring_grid_points[],
                                 const long grid_point,
-                                TPLCONST long relative_grid_address[][3],
+                                GRGCONST long relative_grid_address[][3],
                                 const long num_relative_grid_address,
                                 const long mesh[3],
-                                TPLCONST long bz_grid_address[][3],
+                                GRGCONST long bz_grid_address[][3],
                                 const long bz_map[])
 {
   long bzmesh[3], address_double[3], bz_address_double[3], PS[3];
@@ -245,7 +245,7 @@ tpi_get_neighboring_grid_points(long neighboring_grid_points[],
 static void set_freq_vertices(double freq_vertices[3][24][4],
                               const double *frequencies1,
                               const double *frequencies2,
-                              TPLCONST long vertices[2][24][4],
+                              GRGCONST long vertices[2][24][4],
                               const long num_band1,
                               const long num_band2,
                               const long b1,
@@ -283,7 +283,7 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
 /* calculation. */
 static long set_g(double g[3],
                   const double f0,
-                  TPLCONST double freq_vertices[3][24][4],
+                  GRGCONST double freq_vertices[3][24][4],
                   const long max_i)
 {
   long i, iw_zero;
@@ -302,7 +302,7 @@ static long set_g(double g[3],
   return iw_zero;
 }
 
-static long in_tetrahedra(const double f0, TPLCONST double freq_vertices[24][4])
+static long in_tetrahedra(const double f0, GRGCONST double freq_vertices[24][4])
 {
   long i, j;
   double fmin, fmax;
@@ -330,10 +330,10 @@ static long in_tetrahedra(const double f0, TPLCONST double freq_vertices[24][4])
 
 static void get_triplet_tetrahedra_vertices(
   long vertices[2][24][4],
-  TPLCONST long tp_relative_grid_address[2][24][4][3],
+  GRGCONST long tp_relative_grid_address[2][24][4][3],
   const long mesh[3],
   const long triplet[3],
-  TPLCONST long (*bz_grid_address)[3],
+  GRGCONST long (*bz_grid_address)[3],
   const long *bz_map)
 {
   long i, j;

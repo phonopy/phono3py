@@ -41,7 +41,7 @@
 #include "interaction.h"
 #include "imag_self_energy_with_g.h"
 #include "isotope.h"
-#include "kpoint.h"
+#include "bzgrid.h"
 #include "pp_collision.h"
 #include "real_self_energy.h"
 #include "grgrid.h"
@@ -620,18 +620,18 @@ long ph3py_get_ir_reciprocal_mesh(long grid_address[][3],
   long i, num_ir;
   MatLONG *rotations;
 
-  rotations = kpt_alloc_MatLONG(num_rot);
+  rotations = bzg_alloc_MatLONG(num_rot);
 
   for (i = 0; i < num_rot; i++) {
-    kpt_copy_matrix_l3(rotations->mat[i], rotations_in[i]);
+    bzg_copy_matrix_l3(rotations->mat[i], rotations_in[i]);
   }
-  num_ir = kpt_get_ir_reciprocal_mesh(grid_address,
+  num_ir = bzg_get_ir_reciprocal_mesh(grid_address,
                                       ir_mapping_table,
                                       mesh,
                                       is_shift,
                                       is_time_reversal,
                                       rotations);
-  kpt_free_MatLONG(rotations);
+  bzg_free_MatLONG(rotations);
   return num_ir;
 }
 
@@ -642,7 +642,7 @@ long ph3py_relocate_BZ_grid_address(long bz_grid_address[][3],
                                     PHPYCONST double rec_lattice[3][3],
                                     const long is_shift[3])
 {
-  return kpt_relocate_BZ_grid_address(bz_grid_address,
+  return bzg_relocate_BZ_grid_address(bz_grid_address,
                                       bz_map,
                                       grid_address,
                                       mesh,
@@ -657,7 +657,7 @@ long ph3py_get_bz_grid_addresses(long bz_grid_address[][3],
                                  PHPYCONST double rec_lattice[3][3],
                                  const long is_shift[3])
 {
-  return kpt_get_bz_grid_addresses(bz_grid_address,
+  return bzg_get_bz_grid_addresses(bz_grid_address,
                                    bz_map,
                                    grid_address,
                                    mesh,

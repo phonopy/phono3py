@@ -32,48 +32,46 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef __kpoint_H__
-#define __kpoint_H__
+#ifndef __bzgrid_H__
+#define __bzgrid_H__
 
-#ifndef KPTCONST
-#define KPTCONST
-#endif
+#include "grgrid.h"
 
 typedef struct {
   long size;
   long (*mat)[3][3];
 } MatLONG;
 
-long kpt_get_irreducible_reciprocal_mesh(long grid_address[][3],
+long bzg_get_irreducible_reciprocal_mesh(long grid_address[][3],
                                          long ir_mapping_table[],
                                          const long mesh[3],
                                          const long is_shift[3],
                                          const MatLONG *rot_reciprocal);
-MatLONG *kpt_get_point_group_reciprocal(const MatLONG * rotations,
+MatLONG *bzg_get_point_group_reciprocal(const MatLONG * rotations,
                                         const long is_time_reversal);
-long kpt_get_ir_reciprocal_mesh(long grid_address[][3],
+long bzg_get_ir_reciprocal_mesh(long grid_address[][3],
                                 long ir_mapping_table[],
                                 const long mesh[3],
                                 const long is_shift[3],
                                 const long is_time_reversal,
                                 const MatLONG * rotations);
-long kpt_relocate_BZ_grid_address(long bz_grid_address[][3],
+long bzg_relocate_BZ_grid_address(long bz_grid_address[][3],
                                   long bz_map[],
-                                  KPTCONST long grid_address[][3],
+                                  GRGCONST long grid_address[][3],
                                   const long mesh[3],
-                                  KPTCONST double rec_lattice[3][3],
+                                  GRGCONST double rec_lattice[3][3],
                                   const long is_shift[3]);
-long kpt_get_bz_grid_addresses(long bz_grid_address[][3],
+long bzg_get_bz_grid_addresses(long bz_grid_address[][3],
                                long bz_map[][2],
-                               KPTCONST long grid_address[][3],
+                               GRGCONST long grid_address[][3],
                                const long mesh[3],
-                               KPTCONST double rec_lattice[3][3],
+                               GRGCONST double rec_lattice[3][3],
                                const long is_shift[3]);
-void kpt_copy_matrix_l3(long a[3][3], KPTCONST long b[3][3]);
-void kpt_multiply_matrix_vector_l3(long v[3],
-                                   KPTCONST long a[3][3],
+void bzg_copy_matrix_l3(long a[3][3], GRGCONST long b[3][3]);
+void bzg_multiply_matrix_vector_l3(long v[3],
+                                   GRGCONST long a[3][3],
                                    const long b[3]);
-MatLONG * kpt_alloc_MatLONG(const long size);
-void kpt_free_MatLONG(MatLONG * matlong);
+MatLONG * bzg_alloc_MatLONG(const long size);
+void bzg_free_MatLONG(MatLONG * matlong);
 
 #endif
