@@ -191,8 +191,8 @@ static long relocate_BZ_grid_address(long bz_grid_address[][3],
                                      const long mesh[3],
                                      LAGCONST double rec_lattice[3][3],
                                      const long is_shift[3]);
-static long get_bz_grid_addresses(long bz_grid_address[][3],
-                                  long bz_map[][2],
+static long get_bz_grid_addresses(long (*bz_grid_address)[3],
+                                  long *bz_map,
                                   LAGCONST long grid_address[][3],
                                   const long mesh[3],
                                   LAGCONST double rec_lattice[3][3],
@@ -255,34 +255,25 @@ long bzg_get_ir_reciprocal_mesh(long grid_address[][3],
   return num_ir;
 }
 
-long bzg_relocate_BZ_grid_address(long bz_grid_address[][3],
-                                  long bz_map[],
-                                  LAGCONST long grid_address[][3],
-                                  const long mesh[3],
-                                  LAGCONST double rec_lattice[3][3],
-                                  const long is_shift[3])
-{
-  return relocate_BZ_grid_address(bz_grid_address,
-                                  bz_map,
-                                  grid_address,
-                                  mesh,
-                                  rec_lattice,
-                                  is_shift);
-}
-
-long bzg_get_bz_grid_addresses(long bz_grid_address[][3],
-                               long bz_map[][2],
+void bzg_get_bz_grid_addresses(BZGrid *bzgrid,
                                LAGCONST long grid_address[][3],
-                               const long mesh[3],
-                               LAGCONST double rec_lattice[3][3],
-                               const long is_shift[3])
+                               LAGCONST double rec_lattice[3][3])
 {
-  return get_bz_grid_addresses(bz_grid_address,
-                               bz_map,
-                               grid_address,
-                               mesh,
-                               rec_lattice,
-                               is_shift);
+  if (bzgrid->type == 1) {
+    bzgrid->size = relocate_BZ_grid_address(bzgrid->addresses,
+                                            bzgrid->gp_map,
+                                            grid_address,
+                                            bzgrid->D_diag,
+                                            rec_lattice,
+                                            bzgrid->PS);
+  } else if (bzgrid->type == 2) {
+    bzgrid->size = get_bz_grid_addresses(bzgrid->addresses,
+                                         bzgrid->gp_map,
+                                         grid_address,
+                                         bzgrid->D_diag,
+                                         rec_lattice,
+                                         bzgrid->PS);
+  }
 }
 
 RotMats * bzg_alloc_RotMats(const long size)
@@ -603,8 +594,8 @@ static long relocate_BZ_grid_address(long bz_grid_address[][3],
   return boundary_num_gp + total_num_gp;
 }
 
-static long get_bz_grid_addresses(long bz_grid_address[][3],
-                                  long bz_map[][2],
+static long get_bz_grid_addresses(long (*bz_grid_address)[3],
+                                  long *bz_map,
                                   LAGCONST long grid_address[][3],
                                   const long mesh[3],
                                   LAGCONST double rec_lattice[3][3],
@@ -648,8 +639,8 @@ static long get_bz_grid_addresses(long bz_grid_address[][3],
         multi++;
       }
     }
-    bz_map[i][0] = multi;
-    bz_map[i][1] = num_gp - multi;
+    bz_map[i * 2] = multi;
+    bz_map[i * 2 + 1] = num_gp - multi;
   }
 
   return num_gp;

@@ -636,34 +636,37 @@ long ph3py_get_ir_reciprocal_mesh(long grid_address[][3],
   return num_ir;
 }
 
-long ph3py_relocate_BZ_grid_address(long bz_grid_address[][3],
-                                    long bz_map[],
-                                    PHPYCONST long grid_address[][3],
-                                    const long mesh[3],
-                                    PHPYCONST double rec_lattice[3][3],
-                                    const long is_shift[3])
+long ph3py_get_bz_grid_address(long (*bz_grid_address)[3],
+                               long *bz_map,
+                               PHPYCONST long grid_address[][3],
+                               const long mesh[3],
+                               PHPYCONST double rec_lattice[3][3],
+                               const long is_shift[3],
+                               const long type)
 {
-  return bzg_relocate_BZ_grid_address(bz_grid_address,
-                                      bz_map,
-                                      grid_address,
-                                      mesh,
-                                      rec_lattice,
-                                      is_shift);
-}
+  BZGrid *bzgrid;
+  long i, size;
 
-long ph3py_get_bz_grid_addresses(long bz_grid_address[][3],
-                                 long bz_map[][2],
-                                 PHPYCONST long grid_address[][3],
-                                 const long mesh[3],
-                                 PHPYCONST double rec_lattice[3][3],
-                                 const long is_shift[3])
-{
-  return bzg_get_bz_grid_addresses(bz_grid_address,
-                                   bz_map,
-                                   grid_address,
-                                   mesh,
-                                   rec_lattice,
-                                   is_shift);
+  if ((bzgrid = (BZGrid*) malloc(sizeof(BZGrid))) == NULL) {
+    warning_print("Memory could not be allocated.");
+    return 0;
+  }
+
+  bzgrid->addresses = bz_grid_address;
+  bzgrid->gp_map = bz_map;
+  bzgrid->type = type;
+  for (i = 0; i < 3; i++) {
+    bzgrid->D_diag[i] = mesh[i];
+    bzgrid->PS[i] = is_shift[i];
+  }
+
+  bzg_get_bz_grid_addresses(bzgrid, grid_address, rec_lattice);
+  size = bzgrid->size;
+
+  free(bzgrid);
+  bzgrid = NULL;
+
+  return size;
 }
 
 void ph3py_symmetrize_collision_matrix(double *collision_matrix,

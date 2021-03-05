@@ -524,24 +524,19 @@ def _relocate_BZ_grid_address(grid_address,
 
     if is_dense_bz_map:
         bz_map = np.zeros((np.prod(mesh), 2), dtype='int_')
-        num_gp = phono3c.bz_grid_addresses(
-            bz_grid_address,
-            bz_map,
-            grid_address,
-            np.array(mesh, dtype='int_'),
-            np.array(reciprocal_lattice, dtype='double', order='C'),
-            _is_shift)
     else:
         bz_map = np.zeros(np.prod(np.multiply(mesh, 2)), dtype='int_')
-        num_gp = phono3c.BZ_grid_address(
-            bz_grid_address,
-            bz_map,
-            grid_address,
-            np.array(mesh, dtype='int_'),
-            np.array(reciprocal_lattice, dtype='double', order='C'),
-            _is_shift)
+    num_gp = phono3c.bz_grid_addresses(
+        bz_grid_address,
+        bz_map,
+        grid_address,
+        np.array(mesh, dtype='int_'),
+        np.array(reciprocal_lattice, dtype='double', order='C'),
+        _is_shift,
+        is_dense_bz_map * 1 + 1)
 
-    bz_grid_address = np.array(bz_grid_address[:num_gp], dtype='int_')
+    bz_grid_address = np.array(bz_grid_address[:num_gp],
+                               dtype='int_', order='C')
     return bz_grid_address, bz_map
 
 
