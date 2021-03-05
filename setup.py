@@ -225,8 +225,8 @@ sources_phono3py = ['c/_phono3py.c',
                     'c/snf3x3.c',
                     'c/tetrahedron_method.c',
                     'c/triplet.c',
-                    'c/triplet_iw.c',
-                    'c/triplet_kpoint.c']
+                    'c/triplet_grid.c',
+                    'c/triplet_iw.c']
 extension_phono3py = Extension(
     'phono3py._phono3py',
     include_dirs=include_dirs,

@@ -37,7 +37,7 @@
 #include "lagrid.h"
 #include "triplet.h"
 #include "triplet_iw.h"
-#include "triplet_kpoint.h"
+#include "triplet_grid.h"
 
 static long get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                               long *map_q,

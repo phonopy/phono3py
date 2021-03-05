@@ -61,8 +61,8 @@ set(SOURCES_PHONO3PY
   ${PROJECT_SOURCE_DIR}/c/snf3x3.c
   ${PROJECT_SOURCE_DIR}/c/tetrahedron_method.c
   ${PROJECT_SOURCE_DIR}/c/triplet.c
-  ${PROJECT_SOURCE_DIR}/c/triplet_iw.c
-  ${PROJECT_SOURCE_DIR}/c/triplet_kpoint.c)
+  ${PROJECT_SOURCE_DIR}/c/triplet_grid.c
+  ${PROJECT_SOURCE_DIR}/c/triplet_iw.c)
 
 # Shared library
 add_library(ph3py SHARED ${SOURCES_PHONO3PY})

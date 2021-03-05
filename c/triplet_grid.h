@@ -34,8 +34,8 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef __triplet_kpoint_H__
-#define __triplet_kpoint_H__
+#ifndef __triplet_grid_H__
+#define __triplet_grid_H__
 
 #include "lagrid.h"
 

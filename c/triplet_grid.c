@@ -40,7 +40,7 @@
 #include "grgrid.h"
 #include "lagrid.h"
 #include "triplet.h"
-#include "triplet_kpoint.h"
+#include "triplet_grid.h"
 
 #define BZG_NUM_BZ_SEARCH_SPACE 125
 static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
