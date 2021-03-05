@@ -619,9 +619,9 @@ long ph3py_get_ir_reciprocal_mesh(long grid_address[][3],
                                   const long num_rot)
 {
   long i, num_ir;
-  MatLONG *rotations;
+  RotMats *rotations;
 
-  rotations = bzg_alloc_MatLONG(num_rot);
+  rotations = bzg_alloc_RotMats(num_rot);
 
   for (i = 0; i < num_rot; i++) {
     lagmat_copy_matrix_l3(rotations->mat[i], rotations_in[i]);
@@ -632,7 +632,7 @@ long ph3py_get_ir_reciprocal_mesh(long grid_address[][3],
                                       is_shift,
                                       is_time_reversal,
                                       rotations);
-  bzg_free_MatLONG(rotations);
+  bzg_free_RotMats(rotations);
   return num_ir;
 }
 

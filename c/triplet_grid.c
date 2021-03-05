@@ -176,7 +176,7 @@ static long get_ir_triplets_at_q(long *map_triplets,
                                  long (*grid_address)[3],
                                  const long grid_point,
                                  const long mesh[3],
-                                 const MatLONG * rot_reciprocal,
+                                 const RotMats * rot_reciprocal,
                                  const long swappable);
 static long get_BZ_triplets_at_q(long (*triplets)[3],
                                  const long grid_point,
@@ -190,7 +190,7 @@ static long get_third_q_of_triplets_at_q(long bz_address[3][3],
                                          const long *bz_map,
                                          const long mesh[3],
                                          const long bzmesh[3]);
-static MatLONG *get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
+static RotMats *get_point_group_reciprocal_with_q(const RotMats * rot_reciprocal,
                                                   const long mesh[3],
                                                   const long grid_point);
 static void modulo_l3(long v[3], const long m[3]);
@@ -206,14 +206,14 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
                               const long swappable)
 {
   long i, num_ir;
-  MatLONG *rot_real, *rot_reciprocal;
+  RotMats *rot_real, *rot_reciprocal;
 
-  rot_real = bzg_alloc_MatLONG(num_rot);
+  rot_real = bzg_alloc_RotMats(num_rot);
   for (i = 0; i < num_rot; i++) {
     lagmat_copy_matrix_l3(rot_real->mat[i], rotations[i]);
   }
   rot_reciprocal = bzg_get_point_group_reciprocal(rot_real, is_time_reversal);
-  bzg_free_MatLONG(rot_real);
+  bzg_free_RotMats(rot_real);
 
   num_ir = get_ir_triplets_at_q(map_triplets,
                                 map_q,
@@ -222,7 +222,7 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
                                 mesh,
                                 rot_reciprocal,
                                 swappable);
-  bzg_free_MatLONG(rot_reciprocal);
+  bzg_free_RotMats(rot_reciprocal);
 
   return num_ir;
 }
@@ -249,14 +249,14 @@ static long get_ir_triplets_at_q(long *map_triplets,
                                  long (*grid_address)[3],
                                  const long grid_point,
                                  const long mesh[3],
-                                 const MatLONG * rot_reciprocal,
+                                 const RotMats * rot_reciprocal,
                                  const long swappable)
 {
   long i, j, num_grid, q_2, num_ir_q, num_ir_triplets, ir_gp;
   long is_shift[3];
   long adrs0[3], adrs1[3], adrs2[3];
   long *ir_grid_points, *third_q;
-  MatLONG *rot_reciprocal_q;
+  RotMats *rot_reciprocal_q;
 
   ir_grid_points = NULL;
   third_q = NULL;
@@ -278,7 +278,7 @@ static long get_ir_triplets_at_q(long *map_triplets,
                                                  mesh,
                                                  is_shift,
                                                  rot_reciprocal_q);
-  bzg_free_MatLONG(rot_reciprocal_q);
+  bzg_free_RotMats(rot_reciprocal_q);
   rot_reciprocal_q = NULL;
 
   if ((third_q = (long*) malloc(sizeof(long) * num_ir_q)) == NULL) {
@@ -479,14 +479,14 @@ escape:
 }
 
 /* Return NULL if failed */
-static MatLONG *get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal,
+static RotMats *get_point_group_reciprocal_with_q(const RotMats * rot_reciprocal,
                                                   const long mesh[3],
                                                   const long grid_point)
 {
   long i, num_rot, gp_rot;
   long *ir_rot;
   long adrs[3], adrs_rot[3];
-  MatLONG * rot_reciprocal_q;
+  RotMats * rot_reciprocal_q;
 
   ir_rot = NULL;
   rot_reciprocal_q = NULL;
@@ -512,7 +512,7 @@ static MatLONG *get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal
     }
   }
 
-  if ((rot_reciprocal_q = bzg_alloc_MatLONG(num_rot)) != NULL) {
+  if ((rot_reciprocal_q = bzg_alloc_RotMats(num_rot)) != NULL) {
     for (i = 0; i < num_rot; i++) {
       lagmat_copy_matrix_l3(rot_reciprocal_q->mat[i],
                             rot_reciprocal->mat[ir_rot[i]]);

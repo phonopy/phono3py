@@ -40,21 +40,44 @@
 typedef struct {
   long size;
   long (*mat)[3][3];
-} MatLONG;
+} RotMats;
+
+/* Data structure of Brillouin zone grid
+ *
+ * size : long
+ *     Number of grid points in Brillouin zone including its surface.
+ * gp_map : long array
+ *     Type1 : Twice enlarged grid space along basis vectors.
+ *             Grid index is recovered in the same way as regular grid.
+ *             shape=(prod(mesh * 2), )
+ *     Type2 : In the last index, multiplicity and array index of
+ *             each address of the grid point are stored. Here,
+ *             multiplicity means the number of translationally
+ *             equivalent grid points in BZ.
+ *             shape=(prod(mesh), 2) -> flattened.
+ * addresses : long array
+ *     Grid point addresses.
+ *     shape=(size, 3) */
+typedef struct {
+  long size;
+  long mesh[3];
+  long *gp_map;
+  long (*addresses)[3];
+} BZGrid;
 
 long bzg_get_irreducible_reciprocal_mesh(long grid_address[][3],
                                          long ir_mapping_table[],
                                          const long mesh[3],
                                          const long is_shift[3],
-                                         const MatLONG *rot_reciprocal);
-MatLONG *bzg_get_point_group_reciprocal(const MatLONG * rotations,
+                                         const RotMats *rot_reciprocal);
+RotMats *bzg_get_point_group_reciprocal(const RotMats * rotations,
                                         const long is_time_reversal);
 long bzg_get_ir_reciprocal_mesh(long grid_address[][3],
                                 long ir_mapping_table[],
                                 const long mesh[3],
                                 const long is_shift[3],
                                 const long is_time_reversal,
-                                const MatLONG * rotations);
+                                const RotMats * rotations);
 long bzg_relocate_BZ_grid_address(long bz_grid_address[][3],
                                   long bz_map[],
                                   LAGCONST long grid_address[][3],
@@ -67,7 +90,7 @@ long bzg_get_bz_grid_addresses(long bz_grid_address[][3],
                                const long mesh[3],
                                LAGCONST double rec_lattice[3][3],
                                const long is_shift[3]);
-MatLONG * bzg_alloc_MatLONG(const long size);
-void bzg_free_MatLONG(MatLONG * matlong);
+RotMats * bzg_alloc_RotMats(const long size);
+void bzg_free_RotMats(RotMats * rotmats);
 
 #endif
