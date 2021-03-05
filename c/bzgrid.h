@@ -35,7 +35,7 @@
 #ifndef __bzgrid_H__
 #define __bzgrid_H__
 
-#include "grgrid.h"
+#include "lagrid.h"
 
 typedef struct {
   long size;
@@ -57,20 +57,16 @@ long bzg_get_ir_reciprocal_mesh(long grid_address[][3],
                                 const MatLONG * rotations);
 long bzg_relocate_BZ_grid_address(long bz_grid_address[][3],
                                   long bz_map[],
-                                  GRGCONST long grid_address[][3],
+                                  LAGCONST long grid_address[][3],
                                   const long mesh[3],
-                                  GRGCONST double rec_lattice[3][3],
+                                  LAGCONST double rec_lattice[3][3],
                                   const long is_shift[3]);
 long bzg_get_bz_grid_addresses(long bz_grid_address[][3],
                                long bz_map[][2],
-                               GRGCONST long grid_address[][3],
+                               LAGCONST long grid_address[][3],
                                const long mesh[3],
-                               GRGCONST double rec_lattice[3][3],
+                               LAGCONST double rec_lattice[3][3],
                                const long is_shift[3]);
-void bzg_copy_matrix_l3(long a[3][3], GRGCONST long b[3][3]);
-void bzg_multiply_matrix_vector_l3(long v[3],
-                                   GRGCONST long a[3][3],
-                                   const long b[3]);
 MatLONG * bzg_alloc_MatLONG(const long size);
 void bzg_free_MatLONG(MatLONG * matlong);
 

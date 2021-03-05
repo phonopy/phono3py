@@ -38,6 +38,7 @@
 #include <stdlib.h>
 #include "bzgrid.h"
 #include "grgrid.h"
+#include "lagrid.h"
 #include "triplet.h"
 #include "triplet_kpoint.h"
 
@@ -179,7 +180,7 @@ static long get_ir_triplets_at_q(long *map_triplets,
                                  const long swappable);
 static long get_BZ_triplets_at_q(long (*triplets)[3],
                                  const long grid_point,
-                                 GRGCONST long (*bz_grid_address)[3],
+                                 LAGCONST long (*bz_grid_address)[3],
                                  const long *bz_map,
                                  const long *map_triplets,
                                  const long num_map_triplets,
@@ -200,7 +201,7 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
                               const long grid_point,
                               const long mesh[3],
                               const long is_time_reversal,
-                              GRGCONST long (*rotations)[3][3],
+                              LAGCONST long (*rotations)[3][3],
                               const long num_rot,
                               const long swappable)
 {
@@ -209,7 +210,7 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
 
   rot_real = bzg_alloc_MatLONG(num_rot);
   for (i = 0; i < num_rot; i++) {
-    bzg_copy_matrix_l3(rot_real->mat[i], rotations[i]);
+    lagmat_copy_matrix_l3(rot_real->mat[i], rotations[i]);
   }
   rot_reciprocal = bzg_get_point_group_reciprocal(rot_real, is_time_reversal);
   bzg_free_MatLONG(rot_real);
@@ -228,7 +229,7 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
 
 long tpk_get_BZ_triplets_at_q(long (*triplets)[3],
                               const long grid_point,
-                              GRGCONST long (*bz_grid_address)[3],
+                              LAGCONST long (*bz_grid_address)[3],
                               const long *bz_map,
                               const long *map_triplets,
                               const long num_map_triplets,
@@ -351,7 +352,7 @@ ret:
 
 static long get_BZ_triplets_at_q(long (*triplets)[3],
                                  const long grid_point,
-                                 GRGCONST long (*bz_grid_address)[3],
+                                 LAGCONST long (*bz_grid_address)[3],
                                  const long *bz_map,
                                  const long *map_triplets,
                                  const long num_map_triplets,
@@ -502,7 +503,7 @@ static MatLONG *get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal
     ir_rot[i] = -1;
   }
   for (i = 0; i < rot_reciprocal->size; i++) {
-    bzg_multiply_matrix_vector_l3(adrs_rot, rot_reciprocal->mat[i], adrs);
+    lagmat_multiply_matrix_vector_l3(adrs_rot, rot_reciprocal->mat[i], adrs);
     gp_rot = grg_get_grid_index(adrs_rot, mesh);
 
     if (gp_rot == grid_point) {
@@ -513,8 +514,8 @@ static MatLONG *get_point_group_reciprocal_with_q(const MatLONG * rot_reciprocal
 
   if ((rot_reciprocal_q = bzg_alloc_MatLONG(num_rot)) != NULL) {
     for (i = 0; i < num_rot; i++) {
-      bzg_copy_matrix_l3(rot_reciprocal_q->mat[i],
-                         rot_reciprocal->mat[ir_rot[i]]);
+      lagmat_copy_matrix_l3(rot_reciprocal_q->mat[i],
+                            rot_reciprocal->mat[ir_rot[i]]);
     }
   }
 

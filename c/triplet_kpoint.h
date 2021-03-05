@@ -37,7 +37,7 @@
 #ifndef __triplet_kpoint_H__
 #define __triplet_kpoint_H__
 
-#include "grgrid.h"
+#include "lagrid.h"
 
 long tpk_get_ir_triplets_at_q(long *map_triplets,
                               long *map_q,
@@ -45,12 +45,12 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
                               const long grid_point,
                               const long mesh[3],
                               const long is_time_reversal,
-                              GRGCONST long (*rotations)[3][3],
+                              LAGCONST long (*rotations)[3][3],
                               const long num_rot,
                               const long swappable);
 long tpk_get_BZ_triplets_at_q(long (*triplets)[3],
                               const long grid_point,
-                              GRGCONST long (*bz_grid_address)[3],
+                              LAGCONST long (*bz_grid_address)[3],
                               const long *bz_map,
                               const long *map_triplets,
                               const long num_map_triplets,

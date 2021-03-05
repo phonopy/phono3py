@@ -37,13 +37,7 @@
 #include <stddef.h>
 #include "bzgrid.h"
 #include "grgrid.h"
-
-#ifdef BZGWARNING
-#include <stdio.h>
-#define warning_print(...) fprintf(stderr,__VA_ARGS__)
-#else
-#define warning_print(...)
-#endif
+#include "lagrid.h"
 
 #define BZG_NUM_BZ_SEARCH_SPACE 125
 static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
@@ -193,29 +187,24 @@ static long get_ir_reciprocal_mesh_distortion(long grid_address[][3],
                                               const MatLONG *rot_reciprocal);
 static long relocate_BZ_grid_address(long bz_grid_address[][3],
                                      long bz_map[],
-                                     GRGCONST long grid_address[][3],
+                                     LAGCONST long grid_address[][3],
                                      const long mesh[3],
-                                     GRGCONST double rec_lattice[3][3],
+                                     LAGCONST double rec_lattice[3][3],
                                      const long is_shift[3]);
 static long get_bz_grid_addresses(long bz_grid_address[][3],
                                   long bz_map[][2],
-                                  GRGCONST long grid_address[][3],
+                                  LAGCONST long grid_address[][3],
                                   const long mesh[3],
-                                  GRGCONST double rec_lattice[3][3],
+                                  LAGCONST double rec_lattice[3][3],
                                   const long is_shift[3]);
-static double get_tolerance_for_BZ_reduction(GRGCONST double rec_lattice[3][3],
+static double get_tolerance_for_BZ_reduction(LAGCONST double rec_lattice[3][3],
                                              const long mesh[3]);
 static long get_num_ir(long ir_mapping_table[], const long mesh[3]);
 static long check_mesh_symmetry(const long mesh[3],
                                 const long is_shift[3],
                                 const MatLONG *rot_reciprocal);
-static void transpose_matrix_l3(long a[3][3], GRGCONST long b[3][3]);
-static void multiply_matrix_l3(long m[3][3],
-                               GRGCONST long a[3][3], GRGCONST long b[3][3]);
-static long check_identity_matrix_l3(GRGCONST long a[3][3],
-                                     GRGCONST long b[3][3]);
 static void multiply_matrix_vector_d3(double v[3],
-                                      GRGCONST double a[3][3],
+                                      LAGCONST double a[3][3],
                                       const double b[3]);
 static double norm_squared_d3(const double a[3]);
 
@@ -268,9 +257,9 @@ long bzg_get_ir_reciprocal_mesh(long grid_address[][3],
 
 long bzg_relocate_BZ_grid_address(long bz_grid_address[][3],
                                   long bz_map[],
-                                  GRGCONST long grid_address[][3],
+                                  LAGCONST long grid_address[][3],
                                   const long mesh[3],
-                                  GRGCONST double rec_lattice[3][3],
+                                  LAGCONST double rec_lattice[3][3],
                                   const long is_shift[3])
 {
   return relocate_BZ_grid_address(bz_grid_address,
@@ -283,9 +272,9 @@ long bzg_relocate_BZ_grid_address(long bz_grid_address[][3],
 
 long bzg_get_bz_grid_addresses(long bz_grid_address[][3],
                                long bz_map[][2],
-                               GRGCONST long grid_address[][3],
+                               LAGCONST long grid_address[][3],
                                const long mesh[3],
-                               GRGCONST double rec_lattice[3][3],
+                               LAGCONST double rec_lattice[3][3],
                                const long is_shift[3])
 {
   return get_bz_grid_addresses(bz_grid_address,
@@ -294,31 +283,6 @@ long bzg_get_bz_grid_addresses(long bz_grid_address[][3],
                                mesh,
                                rec_lattice,
                                is_shift);
-}
-
-void bzg_copy_matrix_l3(long a[3][3], GRGCONST long b[3][3])
-{
-  a[0][0] = b[0][0];
-  a[0][1] = b[0][1];
-  a[0][2] = b[0][2];
-  a[1][0] = b[1][0];
-  a[1][1] = b[1][1];
-  a[1][2] = b[1][2];
-  a[2][0] = b[2][0];
-  a[2][1] = b[2][1];
-  a[2][2] = b[2][2];
-}
-
-void bzg_multiply_matrix_vector_l3(long v[3],
-                                   GRGCONST long a[3][3],
-                                   const long b[3])
-{
-  long i;
-  long c[3];
-  for (i = 0; i < 3; i++)
-    c[i] = a[i][0] * b[0] + a[i][1] * b[1] + a[i][2] * b[2];
-  for (i = 0; i < 3; i++)
-    v[i] = c[i];
 }
 
 MatLONG * bzg_alloc_MatLONG(const long size)
@@ -363,7 +327,7 @@ static MatLONG *get_point_group_reciprocal(const MatLONG * rotations,
   long i, j, num_rot;
   MatLONG *rot_reciprocal, *rot_return;
   long *unique_rot;
-  GRGCONST long inversion[3][3] = {
+  LAGCONST long inversion[3][3] = {
     {-1, 0, 0 },
     { 0,-1, 0 },
     { 0, 0,-1 }
@@ -395,20 +359,20 @@ static MatLONG *get_point_group_reciprocal(const MatLONG * rotations,
   }
 
   for (i = 0; i < rotations->size; i++) {
-    transpose_matrix_l3(rot_reciprocal->mat[i], rotations->mat[i]);
+    lagmat_transpose_matrix_l3(rot_reciprocal->mat[i], rotations->mat[i]);
 
     if (is_time_reversal) {
-      multiply_matrix_l3(rot_reciprocal->mat[rotations->size+i],
-                         inversion,
-                         rot_reciprocal->mat[i]);
+      lagmat_multiply_matrix_l3(rot_reciprocal->mat[rotations->size+i],
+                                inversion,
+                                rot_reciprocal->mat[i]);
     }
   }
 
   num_rot = 0;
   for (i = 0; i < rot_reciprocal->size; i++) {
     for (j = 0; j < num_rot; j++) {
-      if (check_identity_matrix_l3(rot_reciprocal->mat[unique_rot[j]],
-                                   rot_reciprocal->mat[i])) {
+      if (lagmat_check_identity_matrix_l3(rot_reciprocal->mat[unique_rot[j]],
+                                          rot_reciprocal->mat[i])) {
         goto escape;
       }
     }
@@ -420,7 +384,7 @@ static MatLONG *get_point_group_reciprocal(const MatLONG * rotations,
 
   if ((rot_return = bzg_alloc_MatLONG(num_rot)) != NULL) {
     for (i = 0; i < num_rot; i++) {
-      bzg_copy_matrix_l3(rot_return->mat[i], rot_reciprocal->mat[unique_rot[i]]);
+      lagmat_copy_matrix_l3(rot_return->mat[i], rot_reciprocal->mat[unique_rot[i]]);
     }
   }
 
@@ -481,9 +445,9 @@ static long get_ir_reciprocal_mesh_normal(long grid_address[][3],
                                 is_shift);
     ir_mapping_table[i] = i;
     for (j = 0; j < rot_reciprocal->size; j++) {
-      bzg_multiply_matrix_vector_l3(address_double_rot,
-                                    rot_reciprocal->mat[j],
-                                    address_double);
+      lagmat_multiply_matrix_vector_l3(address_double_rot,
+                                       rot_reciprocal->mat[j],
+                                       address_double);
       grid_point_rot = grg_get_double_grid_index(address_double_rot, mesh, is_shift);
       if (grid_point_rot < ir_mapping_table[i]) {
 #ifdef _OPENMP
@@ -569,9 +533,9 @@ get_ir_reciprocal_mesh_distortion(long grid_address[][3],
 
 static long relocate_BZ_grid_address(long bz_grid_address[][3],
                                      long bz_map[],
-                                     GRGCONST long grid_address[][3],
+                                     LAGCONST long grid_address[][3],
                                      const long mesh[3],
-                                     GRGCONST double rec_lattice[3][3],
+                                     LAGCONST double rec_lattice[3][3],
                                      const long is_shift[3])
 {
   double tolerance, min_distance;
@@ -641,9 +605,9 @@ static long relocate_BZ_grid_address(long bz_grid_address[][3],
 
 static long get_bz_grid_addresses(long bz_grid_address[][3],
                                   long bz_map[][2],
-                                  GRGCONST long grid_address[][3],
+                                  LAGCONST long grid_address[][3],
                                   const long mesh[3],
-                                  GRGCONST double rec_lattice[3][3],
+                                  LAGCONST double rec_lattice[3][3],
                                   const long is_shift[3])
 {
   double tolerance, min_distance;
@@ -691,7 +655,7 @@ static long get_bz_grid_addresses(long bz_grid_address[][3],
   return num_gp;
 }
 
-static double get_tolerance_for_BZ_reduction(GRGCONST double rec_lattice[3][3],
+static double get_tolerance_for_BZ_reduction(LAGCONST double rec_lattice[3][3],
                                              const long mesh[3])
 {
   long i, j;
@@ -780,57 +744,8 @@ static long check_mesh_symmetry(const long mesh[3],
           ((eq[2] && mesh[2] == mesh[0] && is_shift[2] == is_shift[0]) || (!eq[2])));
 }
 
-static void transpose_matrix_l3(long a[3][3], GRGCONST long b[3][3])
-{
-  long c[3][3];
-  c[0][0] = b[0][0];
-  c[0][1] = b[1][0];
-  c[0][2] = b[2][0];
-  c[1][0] = b[0][1];
-  c[1][1] = b[1][1];
-  c[1][2] = b[2][1];
-  c[2][0] = b[0][2];
-  c[2][1] = b[1][2];
-  c[2][2] = b[2][2];
-  bzg_copy_matrix_l3(a, c);
-}
-
-static void multiply_matrix_l3(long m[3][3],
-                               GRGCONST long a[3][3],
-                               GRGCONST long b[3][3])
-{
-  long i, j;                   /* a_ij */
-  long c[3][3];
-  for (i = 0; i < 3; i++) {
-    for (j = 0; j < 3; j++) {
-      c[i][j] =
-        a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j];
-    }
-  }
-  bzg_copy_matrix_l3(m, c);
-}
-
-static long check_identity_matrix_l3(GRGCONST long a[3][3],
-                                     GRGCONST long b[3][3])
-{
-  if ( a[0][0] - b[0][0] ||
-       a[0][1] - b[0][1] ||
-       a[0][2] - b[0][2] ||
-       a[1][0] - b[1][0] ||
-       a[1][1] - b[1][1] ||
-       a[1][2] - b[1][2] ||
-       a[2][0] - b[2][0] ||
-       a[2][1] - b[2][1] ||
-       a[2][2] - b[2][2]) {
-    return 0;
-  }
-  else {
-    return 1;
-  }
-}
-
 static void multiply_matrix_vector_d3(double v[3],
-                                      GRGCONST double a[3][3],
+                                      LAGCONST double a[3][3],
                                       const double b[3])
 {
   long i;
