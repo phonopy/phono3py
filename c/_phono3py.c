@@ -1656,7 +1656,8 @@ static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args)
                                       bz_map,
                                       map_triplets,
                                       num_map_triplets,
-                                      mesh);
+                                      mesh,
+                                      1);
 
   return PyLong_FromLong(num_ir);
 }

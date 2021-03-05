@@ -248,11 +248,12 @@ long ph3py_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                              const long swappable);
 long ph3py_get_BZ_triplets_at_q(long (*triplets)[3],
                                 const long grid_point,
-                                PHPYCONST long (*bz_grid_address)[3],
+                                const long (*bz_grid_address)[3],
                                 const long *bz_map,
                                 const long *map_triplets,
                                 const long num_map_triplets,
-                                const long mesh[3]);
+                                const long mesh[3],
+                                const long type);
 void ph3py_get_integration_weight(double *iw,
                                   char *iw_zero,
                                   const double *frequency_points,

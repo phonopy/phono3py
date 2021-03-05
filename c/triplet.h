@@ -38,6 +38,7 @@
 #define __triplet_H__
 
 #include <stddef.h>
+#include "bzgrid.h"
 #include "lagrid.h"
 
 /* Irreducible triplets of k-points are searched under conservation of */
@@ -63,11 +64,8 @@ long tpl_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
 /* Number of ir-triplets is returned. */
 long tpl_get_BZ_triplets_at_q(long (*triplets)[3],
                               const long grid_point,
-                              LAGCONST long (*bz_grid_address)[3],
-                              const long *bz_map,
-                              const long *map_triplets,
-                              const long num_map_triplets,
-                              const long mesh[3]);
+                              const ConstBZGrid *bzgrid,
+                              const long *map_triplets);
 void tpl_get_integration_weight(double *iw,
                                 char *iw_zero,
                                 const double *frequency_points,

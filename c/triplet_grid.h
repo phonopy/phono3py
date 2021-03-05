@@ -50,10 +50,7 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
                               const long swappable);
 long tpk_get_BZ_triplets_at_q(long (*triplets)[3],
                               const long grid_point,
-                              LAGCONST long (*bz_grid_address)[3],
-                              const long *bz_map,
-                              const long *map_triplets,
-                              const long num_map_triplets,
-                              const long mesh[3]);
+                              const ConstBZGrid *bzgrid,
+                              const long *map_triplets);
 
 #endif

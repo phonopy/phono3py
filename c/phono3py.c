@@ -523,19 +523,38 @@ long ph3py_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
 
 long ph3py_get_BZ_triplets_at_q(long (*triplets)[3],
                                 const long grid_point,
-                                PHPYCONST long (*bz_grid_address)[3],
+                                const long (*bz_grid_address)[3],
                                 const long *bz_map,
                                 const long *map_triplets,
                                 const long num_map_triplets,
-                                const long mesh[3])
+                                const long mesh[3],
+                                const long type)
 {
-  return tpl_get_BZ_triplets_at_q(triplets,
-                                  grid_point,
-                                  bz_grid_address,
-                                  bz_map,
-                                  map_triplets,
-                                  num_map_triplets,
-                                  mesh);
+  ConstBZGrid *bzgrid;
+  long i, num_ir;
+
+  if ((bzgrid = (ConstBZGrid*) malloc(sizeof(ConstBZGrid))) == NULL) {
+    warning_print("Memory could not be allocated.");
+    return 0;
+  }
+
+  bzgrid->addresses = bz_grid_address;
+  bzgrid->gp_map = bz_map;
+  bzgrid->type = type;
+  for (i = 0; i < 3; i++) {
+    bzgrid->D_diag[i] = mesh[i];
+    bzgrid->PS[i] = 0;
+  }
+  bzgrid->size = num_map_triplets;
+
+  num_ir = tpl_get_BZ_triplets_at_q(triplets,
+                                    grid_point,
+                                    bzgrid,
+                                    map_triplets);
+  free(bzgrid);
+  bzgrid = NULL;
+
+  return num_ir;
 }
 
 

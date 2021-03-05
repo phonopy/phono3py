@@ -34,6 +34,7 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
+#include "bzgrid.h"
 #include "lagrid.h"
 #include "triplet.h"
 #include "triplet_iw.h"
@@ -51,19 +52,13 @@ static long get_triplets_reciprocal_mesh_at_q(long *map_triplets,
 
 long tpl_get_BZ_triplets_at_q(long (*triplets)[3],
                               const long grid_point,
-                              LAGCONST long (*bz_grid_address)[3],
-                              const long *bz_map,
-                              const long *map_triplets,
-                              const long num_map_triplets,
-                              const long mesh[3])
+                              const ConstBZGrid *bzgrid,
+                              const long *map_triplets)
 {
   return tpk_get_BZ_triplets_at_q(triplets,
                                   grid_point,
-                                  bz_grid_address,
-                                  bz_map,
-                                  map_triplets,
-                                  num_map_triplets,
-                                  mesh);
+                                  bzgrid,
+                                  map_triplets);
 }
 
 long tpl_get_triplets_reciprocal_mesh_at_q(long *map_triplets,

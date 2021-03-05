@@ -74,6 +74,14 @@ typedef struct {
   long (*addresses)[3];
   long type;
 } BZGrid;
+typedef struct {
+  long size;
+  long D_diag[3];
+  long PS[3];
+  const long *gp_map;
+  const long (*addresses)[3];
+  long type;
+} ConstBZGrid;
 
 long bzg_get_irreducible_reciprocal_mesh(long grid_address[][3],
                                          long ir_mapping_table[],

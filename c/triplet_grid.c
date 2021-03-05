@@ -180,11 +180,8 @@ static long get_ir_triplets_at_q(long *map_triplets,
                                  const long swappable);
 static long get_BZ_triplets_at_q(long (*triplets)[3],
                                  const long grid_point,
-                                 LAGCONST long (*bz_grid_address)[3],
-                                 const long *bz_map,
-                                 const long *map_triplets,
-                                 const long num_map_triplets,
-                                 const long mesh[3]);
+                                 const ConstBZGrid *bzgrid,
+                                 const long *map_triplets);
 static long get_third_q_of_triplets_at_q(long bz_address[3][3],
                                          const long q_index,
                                          const long *bz_map,
@@ -229,19 +226,13 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
 
 long tpk_get_BZ_triplets_at_q(long (*triplets)[3],
                               const long grid_point,
-                              LAGCONST long (*bz_grid_address)[3],
-                              const long *bz_map,
-                              const long *map_triplets,
-                              const long num_map_triplets,
-                              const long mesh[3])
+                              const ConstBZGrid *bzgrid,
+                              const long *map_triplets)
 {
   return get_BZ_triplets_at_q(triplets,
                               grid_point,
-                              bz_grid_address,
-                              bz_map,
-                              map_triplets,
-                              num_map_triplets,
-                              mesh);
+                              bzgrid,
+                              map_triplets);
 }
 
 static long get_ir_triplets_at_q(long *map_triplets,
@@ -352,11 +343,8 @@ ret:
 
 static long get_BZ_triplets_at_q(long (*triplets)[3],
                                  const long grid_point,
-                                 LAGCONST long (*bz_grid_address)[3],
-                                 const long *bz_map,
-                                 const long *map_triplets,
-                                 const long num_map_triplets,
-                                 const long mesh[3])
+                                 const ConstBZGrid *bzgrid,
+                                 const long *map_triplets)
 {
   long i, num_ir;
   long j, k;
@@ -367,18 +355,18 @@ static long get_BZ_triplets_at_q(long (*triplets)[3],
 
   for (i = 0; i < 3; i++) {
     PS[i] = 0;
-    bzmesh[i] = mesh[i] * 2;
+    bzmesh[i] = bzgrid->D_diag[i] * 2;
   }
 
   num_ir = 0;
 
-  if ((ir_grid_points = (long*) malloc(sizeof(long) * num_map_triplets))
+  if ((ir_grid_points = (long*) malloc(sizeof(long) * bzgrid->size))
       == NULL) {
     warning_print("Memory could not be allocated.");
     goto ret;
   }
 
-  for (i = 0; i < num_map_triplets; i++) {
+  for (i = 0; i < bzgrid->size; i++) {
     if (map_triplets[i] == i) {
       ir_grid_points[num_ir] = i;
       num_ir++;
@@ -388,15 +376,15 @@ static long get_BZ_triplets_at_q(long (*triplets)[3],
 #pragma omp parallel for private(j, k, bz_address, bz_address_double)
   for (i = 0; i < num_ir; i++) {
     for (j = 0; j < 3; j++) {
-      bz_address[0][j] = bz_grid_address[grid_point][j];
-      bz_address[1][j] = bz_grid_address[ir_grid_points[i]][j];
+      bz_address[0][j] = bzgrid->addresses[grid_point][j];
+      bz_address[1][j] = bzgrid->addresses[ir_grid_points[i]][j];
       bz_address[2][j] = - bz_address[0][j] - bz_address[1][j];
     }
     for (j = 2; j > -1; j--) {
       if (get_third_q_of_triplets_at_q(bz_address,
                                        j,
-                                       bz_map,
-                                       mesh,
+                                       bzgrid->gp_map,
+                                       bzgrid->D_diag,
                                        bzmesh) == 0) {
         break;
       }
@@ -405,8 +393,8 @@ static long get_BZ_triplets_at_q(long (*triplets)[3],
       for (k = 0; k < 3; k++) {
         bz_address_double[k] = bz_address[j][k] * 2;
       }
-      triplets[i][j] =
-        bz_map[grg_get_double_grid_index(bz_address_double, bzmesh, PS)];
+      triplets[i][j] = bzgrid->gp_map[
+        grg_get_double_grid_index(bz_address_double, bzmesh, PS)];
     }
   }
 
