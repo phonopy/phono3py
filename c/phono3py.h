@@ -294,9 +294,10 @@ long ph3py_get_ir_reciprocal_mesh(long grid_address[][3],
 long ph3py_get_bz_grid_address(long (*bz_grid_address)[3],
                                long *bz_map,
                                PHPYCONST long grid_address[][3],
-                               const long mesh[3],
+                               const long D_diag[3],
+                               const long Q[3][3],
+                               const long PS[3],
                                PHPYCONST double rec_lattice[3][3],
-                               const long is_shift[3],
                                const long type);
 
 void ph3py_symmetrize_collision_matrix(double *collision_matrix,

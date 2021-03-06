@@ -658,13 +658,14 @@ long ph3py_get_ir_reciprocal_mesh(long grid_address[][3],
 long ph3py_get_bz_grid_address(long (*bz_grid_address)[3],
                                long *bz_map,
                                PHPYCONST long grid_address[][3],
-                               const long mesh[3],
+                               const long D_diag[3],
+                               const long Q[3][3],
+                               const long PS[3],
                                PHPYCONST double rec_lattice[3][3],
-                               const long is_shift[3],
                                const long type)
 {
   BZGrid *bzgrid;
-  long i, size;
+  long i, j, size;
 
   if ((bzgrid = (BZGrid*) malloc(sizeof(BZGrid))) == NULL) {
     warning_print("Memory could not be allocated.");
@@ -675,11 +676,15 @@ long ph3py_get_bz_grid_address(long (*bz_grid_address)[3],
   bzgrid->gp_map = bz_map;
   bzgrid->type = type;
   for (i = 0; i < 3; i++) {
-    bzgrid->D_diag[i] = mesh[i];
-    bzgrid->PS[i] = is_shift[i];
+    bzgrid->D_diag[i] = D_diag[i];
+    bzgrid->PS[i] = PS[i];
+    for (j = 0; j < 3; j++) {
+      bzgrid->Q[i][j] = Q[i][j];
+      bzgrid->reclat[i][j] = rec_lattice[i][j];
+    }
   }
 
-  bzg_get_bz_grid_addresses(bzgrid, grid_address, rec_lattice);
+  bzg_get_bz_grid_addresses(bzgrid, grid_address);
   size = bzgrid->size;
 
   free(bzgrid);

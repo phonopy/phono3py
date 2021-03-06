@@ -64,22 +64,29 @@ typedef struct {
  * addresses : long array
  *     Grid point addresses.
  *     shape=(size, 3)
+ * reclat : double array
+ *     Reciprocal basis vectors given as column vectors.
+ *     shape=(3, 3)
  * type : long
  *     1 or 2. */
 typedef struct {
   long size;
   long D_diag[3];
+  long Q[3][3];
   long PS[3];
   long *gp_map;
   long (*addresses)[3];
+  double reclat[3][3];
   long type;
 } BZGrid;
 typedef struct {
   long size;
   long D_diag[3];
+  long Q[3][3];
   long PS[3];
   const long *gp_map;
   const long (*addresses)[3];
+  double reclat[3][3];
   long type;
 } ConstBZGrid;
 
@@ -97,8 +104,7 @@ long bzg_get_ir_reciprocal_mesh(long grid_address[][3],
                                 const long is_time_reversal,
                                 const RotMats * rotations);
 void bzg_get_bz_grid_addresses(BZGrid *bzgrid,
-                               LAGCONST long grid_address[][3],
-                               LAGCONST double rec_lattice[3][3]);
+                               LAGCONST long grid_address[][3]);
 RotMats * bzg_alloc_RotMats(const long size);
 void bzg_free_RotMats(RotMats * rotmats);
 
