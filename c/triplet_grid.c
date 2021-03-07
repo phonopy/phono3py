@@ -197,8 +197,7 @@ static long get_third_q_of_triplets_at_q_type1(long bz_address[3][3],
                                                const long *bz_map,
                                                const long D_diag[3],
                                                const long bzmesh[3]);
-static double get_G_distance_sqauared(const ConstBZGrid *bzgrid,
-                                      const long G[3]);
+static void get_LQD_inv(double LQD_inv[3][3], const ConstBZGrid *bzgrid);
 static RotMats *get_point_group_reciprocal_with_q(const RotMats * rot_reciprocal,
                                                   const long D_diag[3],
                                                   const long grid_point);
@@ -440,18 +439,19 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
                                        const long *ir_grid_points,
                                        const long num_ir)
 {
-  long i, j, gp2, G[3];
-  long bzgp[3];
+  long i, j, gp2;
+  long bzgp[3], G[3];
   long bz_address[3][3];
   const long *gp_map;
   const long (*bz_adrs)[3];
-  double d2, min_d2;
+  double d, d2, min_d2;
+  double LQD_inv[3][3];
 
   gp_map = bzgrid->gp_map;
   bz_adrs = bzgrid->addresses;
+  get_LQD_inv(LQD_inv, bzgrid);
 
-/* #pragma omp parallel for private(j, k, gp2, bzgp, bz_address, G,
-    d2, min_d2) */
+#pragma omp parallel for private(j, gp2, bzgp, G, bz_address, d, d2, min_d2)
   for (i = 0; i < num_ir; i++) {
     for (j = 0; j < 3; j++) {
       bz_address[0][j] = bz_adrs[gp_map[grid_point]][j];
@@ -475,7 +475,11 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
             }
             goto found;
           }
-          d2 = get_G_distance_sqauared(bzgrid, G);
+          d2 = 0;
+          for (j = 0; j < 3; j++) {
+            d = LQD_inv[j][0] * G[0] + LQD_inv[j][1] * G[1] + LQD_inv[j][2] * G[2];
+            d2 += d * d;
+          }
           if (d2 < min_d2 || min_d2 < 0) {
             min_d2 = d2;
             for (j = 0; j < 3; j++) {
@@ -550,25 +554,19 @@ escape:
   return smallest_g;
 }
 
-static double get_G_distance_sqauared(const ConstBZGrid *bzgrid,
-                                      const long G[3])
+static void get_LQD_inv(double LQD_inv[3][3], const ConstBZGrid *bzgrid)
 {
-  long i, j;
-  double d, d_squared;
+  long i, j, k;
 
-  d_squared = 0;
-  /* LQD^-1G */
-  /* It is assumed that G is divisible by D. */
+  /* LQD^-1 */
   for (i = 0; i < 3; i++) {
     for (j = 0; j < 3; j++) {
-      d = bzgrid->reclat[i][j] * bzgrid->Q[j][0] * G[0] / bzgrid->D_diag[0]
-        + bzgrid->reclat[i][j] * bzgrid->Q[j][1] * G[1] / bzgrid->D_diag[1]
-        + bzgrid->reclat[i][j] * bzgrid->Q[j][2] * G[2] / bzgrid->D_diag[2];
-      d_squared += d * d;
+      for (k = 0; k < 3; k++) {
+        LQD_inv[i][k]
+          = bzgrid->reclat[i][j] * bzgrid->Q[j][k] / bzgrid->D_diag[k];
+      }
     }
   }
-
-  return d_squared;
 }
 
 /* Return NULL if failed */
