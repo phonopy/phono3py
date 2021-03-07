@@ -175,7 +175,7 @@ static long get_ir_triplets_at_q(long *map_triplets,
                                  long *map_q,
                                  long (*grid_address)[3],
                                  const long grid_point,
-                                 const long mesh[3],
+                                 const long D_diag[3],
                                  const RotMats * rot_reciprocal,
                                  const long swappable);
 static long get_BZ_triplets_at_q(long (*triplets)[3],
@@ -195,10 +195,12 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
 static long get_third_q_of_triplets_at_q_type1(long bz_address[3][3],
                                                const long q_index,
                                                const long *bz_map,
-                                               const long mesh[3],
+                                               const long D_diag[3],
                                                const long bzmesh[3]);
+static double get_G_distance_sqauared(const ConstBZGrid *bzgrid,
+                                      const long G[3]);
 static RotMats *get_point_group_reciprocal_with_q(const RotMats * rot_reciprocal,
-                                                  const long mesh[3],
+                                                  const long D_diag[3],
                                                   const long grid_point);
 static void modulo_l3(long v[3], const long m[3]);
 
@@ -206,7 +208,7 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
                               long *map_q,
                               long (*grid_address)[3],
                               const long grid_point,
-                              const long mesh[3],
+                              const long D_diag[3],
                               const long is_time_reversal,
                               LAGCONST long (*rotations)[3][3],
                               const long num_rot,
@@ -226,7 +228,7 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
                                 map_q,
                                 grid_address,
                                 grid_point,
-                                mesh,
+                                D_diag,
                                 rot_reciprocal,
                                 swappable);
   bzg_free_RotMats(rot_reciprocal);
@@ -249,12 +251,12 @@ static long get_ir_triplets_at_q(long *map_triplets,
                                  long *map_q,
                                  long (*grid_address)[3],
                                  const long grid_point,
-                                 const long mesh[3],
+                                 const long D_diag[3],
                                  const RotMats * rot_reciprocal,
                                  const long swappable)
 {
   long i, j, num_grid, q_2, num_ir_q, num_ir_triplets, ir_gp;
-  long is_shift[3];
+  long PS[3];
   long adrs0[3], adrs1[3], adrs2[3];
   long *ir_grid_points, *third_q;
   RotMats *rot_reciprocal_q;
@@ -264,21 +266,21 @@ static long get_ir_triplets_at_q(long *map_triplets,
   rot_reciprocal_q = NULL;
   num_ir_triplets = 0;
 
-  num_grid = mesh[0] * mesh[1] * mesh[2];
+  num_grid = D_diag[0] * D_diag[1] * D_diag[2];
 
   for (i = 0; i < 3; i++) {
-    is_shift[i] = 0;
+    PS[i] = 0;
   }
 
   /* Search irreducible q-points (map_q) with a stabilizer. */
   rot_reciprocal_q = get_point_group_reciprocal_with_q(rot_reciprocal,
-                                                       mesh,
+                                                       D_diag,
                                                        grid_point);
-  num_ir_q = bzg_get_irreducible_reciprocal_mesh(grid_address,
-                                                 map_q,
-                                                 mesh,
-                                                 is_shift,
-                                                 rot_reciprocal_q);
+  num_ir_q = bzg_get_ir_grid_map(grid_address,
+                                 map_q,
+                                 D_diag,
+                                 PS,
+                                 rot_reciprocal_q);
   bzg_free_RotMats(rot_reciprocal_q);
   rot_reciprocal_q = NULL;
 
@@ -304,15 +306,15 @@ static long get_ir_triplets_at_q(long *map_triplets,
     map_triplets[i] = num_grid;  /* When not found, map_triplets == num_grid */
   }
 
-  grg_get_grid_address_from_index(adrs0, grid_point, mesh);
+  grg_get_grid_address_from_index(adrs0, grid_point, D_diag);
 
 #pragma omp parallel for private(j, adrs1, adrs2)
   for (i = 0; i < num_ir_q; i++) {
-    grg_get_grid_address_from_index(adrs1, ir_grid_points[i], mesh);
+    grg_get_grid_address_from_index(adrs1, ir_grid_points[i], D_diag);
     for (j = 0; j < 3; j++) { /* q'' */
       adrs2[j] = - adrs0[j] - adrs1[j];
     }
-    third_q[i] = grg_get_grid_index(adrs2, mesh);
+    third_q[i] = grg_get_grid_index(adrs2, D_diag);
   }
 
   if (swappable) { /* search q1 <-> q2 */
@@ -438,16 +440,18 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
                                        const long *ir_grid_points,
                                        const long num_ir)
 {
-  long i, j, k, gp2, sum;
+  long i, j, gp2, G[3];
   long bzgp[3];
   long bz_address[3][3];
   const long *gp_map;
   const long (*bz_adrs)[3];
+  double d2, min_d2;
 
   gp_map = bzgrid->gp_map;
   bz_adrs = bzgrid->addresses;
 
-/* #pragma omp parallel for private(j, k, gp2, bzgp, bz_address, sum) */
+/* #pragma omp parallel for private(j, k, gp2, bzgp, bz_address, G,
+    d2, min_d2) */
   for (i = 0; i < num_ir; i++) {
     for (j = 0; j < 3; j++) {
       bz_address[0][j] = bz_adrs[gp_map[grid_point]][j];
@@ -455,32 +459,32 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
       bz_address[2][j] = - bz_address[0][j] - bz_address[1][j];
     }
     gp2 = grg_get_grid_index(bz_address[2], bzgrid->D_diag);
+    /* Negative value is the signal to initialize min_d2 later. */
+    min_d2 = -1;
     for (bzgp[0] = gp_map[grid_point];
          bzgp[0] < gp_map[grid_point + 1]; bzgp[0]++) {
       for (bzgp[1] = gp_map[ir_grid_points[i]];
            bzgp[1] < gp_map[ir_grid_points[i] + 1]; bzgp[1]++) {
         for (bzgp[2] = gp_map[gp2]; bzgp[2] < gp_map[gp2 + 1]; bzgp[2]++) {
           for (j = 0; j < 3; j++) {
-            sum = 0;
-            for (k = 0; k < 3; k++) {
-              sum += bz_adrs[bzgp[j]][k];
-            }
-            if (sum != 0) {
-              break;
-            }
+            G[j] = bz_adrs[bzgp[0]][j] + bz_adrs[bzgp[1]][j] + bz_adrs[bzgp[2]][j];
           }
-          if (sum == 0) {
+          if (G[0] == 0 && G[1] == 0 && G[2] == 0) {
             for (j = 0; j < 3; j++) {
               triplets[i][j] = bzgp[j];
             }
             goto found;
           }
+          d2 = get_G_distance_sqauared(bzgrid, G);
+          if (d2 < min_d2 || min_d2 < 0) {
+            min_d2 = d2;
+            for (j = 0; j < 3; j++) {
+              triplets[i][j] = bzgp[j];
+            }
+          }
         }
       }
     }
-    triplets[i][0] = gp_map[grid_point];
-    triplets[i][1] = gp_map[ir_grid_points[i]];
-    triplets[i][2] = gp_map[gp2];
   found:
     ;
   }
@@ -489,7 +493,7 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
 static long get_third_q_of_triplets_at_q_type1(long bz_address[3][3],
                                                const long q_index,
                                                const long *bz_map,
-                                               const long mesh[3],
+                                               const long D_diag[3],
                                                const long bzmesh[3])
 {
   long i, j, smallest_g, smallest_index, sum_g, delta_g[3];
@@ -499,19 +503,19 @@ static long get_third_q_of_triplets_at_q_type1(long bz_address[3][3],
 
   prod_bzmesh = bzmesh[0] * bzmesh[1] * bzmesh[2];
 
-  modulo_l3(bz_address[q_index], mesh);
+  modulo_l3(bz_address[q_index], D_diag);
   for (i = 0; i < 3; i++) {
     delta_g[i] = 0;
     for (j = 0; j < 3; j++) {
       delta_g[i] += bz_address[j][i];
     }
-    delta_g[i] /= mesh[i];
+    delta_g[i] /= D_diag[i];
   }
 
   for (i = 0; i < BZG_NUM_BZ_SEARCH_SPACE; i++) {
     for (j = 0; j < 3; j++) {
       bz_address_search[j]
-        = bz_address[q_index][j] + bz_search_space[i][j] * mesh[j];
+        = bz_address[q_index][j] + bz_search_space[i][j] * D_diag[j];
     }
     bzgp[i] = bz_map[grg_get_grid_index(bz_address_search, bzmesh)];
   }
@@ -540,15 +544,36 @@ escape:
   }
 
   for (i = 0; i < 3; i++) {
-    bz_address[q_index][i] += bz_search_space[smallest_index][i] * mesh[i];
+    bz_address[q_index][i] += bz_search_space[smallest_index][i] * D_diag[i];
   }
 
   return smallest_g;
 }
 
+static double get_G_distance_sqauared(const ConstBZGrid *bzgrid,
+                                      const long G[3])
+{
+  long i, j;
+  double d, d_squared;
+
+  d_squared = 0;
+  /* LQD^-1G */
+  /* It is assumed that G is divisible by D. */
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
+      d = bzgrid->reclat[i][j] * bzgrid->Q[j][0] * G[0] / bzgrid->D_diag[0]
+        + bzgrid->reclat[i][j] * bzgrid->Q[j][1] * G[1] / bzgrid->D_diag[1]
+        + bzgrid->reclat[i][j] * bzgrid->Q[j][2] * G[2] / bzgrid->D_diag[2];
+      d_squared += d * d;
+    }
+  }
+
+  return d_squared;
+}
+
 /* Return NULL if failed */
 static RotMats *get_point_group_reciprocal_with_q(const RotMats * rot_reciprocal,
-                                                  const long mesh[3],
+                                                  const long D_diag[3],
                                                   const long grid_point)
 {
   long i, num_rot, gp_rot;
@@ -560,7 +585,7 @@ static RotMats *get_point_group_reciprocal_with_q(const RotMats * rot_reciprocal
   rot_reciprocal_q = NULL;
   num_rot = 0;
 
-  grg_get_grid_address_from_index(adrs, grid_point, mesh);
+  grg_get_grid_address_from_index(adrs, grid_point, D_diag);
 
   if ((ir_rot = (long*)malloc(sizeof(long) * rot_reciprocal->size)) == NULL) {
     warning_print("Memory of ir_rot could not be allocated.");
@@ -572,7 +597,7 @@ static RotMats *get_point_group_reciprocal_with_q(const RotMats * rot_reciprocal
   }
   for (i = 0; i < rot_reciprocal->size; i++) {
     lagmat_multiply_matrix_vector_l3(adrs_rot, rot_reciprocal->mat[i], adrs);
-    gp_rot = grg_get_grid_index(adrs_rot, mesh);
+    gp_rot = grg_get_grid_index(adrs_rot, D_diag);
 
     if (gp_rot == grid_point) {
       ir_rot[num_rot] = i;

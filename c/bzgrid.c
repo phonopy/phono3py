@@ -170,35 +170,16 @@ static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
 
 static RotMats *get_point_group_reciprocal(const RotMats * rotations,
                                            const long is_time_reversal);
-static long get_ir_reciprocal_mesh(long grid_address[][3],
-                                   long ir_mapping_table[],
-                                   const long mesh[3],
-                                   const long is_shift[3],
-                                   const RotMats *rot_reciprocal);
-static long get_ir_reciprocal_mesh_normal(long grid_address[][3],
-                                          long ir_mapping_table[],
-                                          const long mesh[3],
-                                          const long is_shift[3],
-                                          const RotMats *rot_reciprocal);
-static long get_ir_reciprocal_mesh_distortion(long grid_address[][3],
-                                              long ir_mapping_table[],
-                                              const long mesh[3],
-                                              const long is_shift[3],
-                                              const RotMats *rot_reciprocal);
-static long relocate_BZ_grid_address(long bz_grid_address[][3],
-                                     long bz_map[],
-                                     LAGCONST long grid_address[][3],
-                                     const long mesh[3],
-                                     LAGCONST double rec_lattice[3][3],
-                                     const long is_shift[3]);
-static long get_bz_grid_addresses(BZGrid *bzgrid,
-                                  LAGCONST long grid_address[][3]);
-static double get_tolerance_for_BZ_reduction(LAGCONST double rec_lattice[3][3],
-                                             const long mesh[3]);
-static long get_num_ir(long ir_mapping_table[], const long mesh[3]);
-static long check_mesh_symmetry(const long mesh[3],
-                                const long is_shift[3],
-                                const RotMats *rot_reciprocal);
+static long get_ir_grid_map(long grid_address[][3],
+                            long ir_mapping_table[],
+                            const long D_diag[3],
+                            const long PS[3],
+                            const RotMats *rot_reciprocal);
+static long get_bz_grid_addresses_type1(BZGrid *bzgrid,
+                                        LAGCONST long grid_address[][3]);
+static long get_bz_grid_addresses_type2(BZGrid *bzgrid,
+                                        LAGCONST long grid_address[][3]);
+static double get_tolerance_for_BZ_reduction(const BZGrid *bzgrid);
 static void multiply_matrix_vector_d3(double v[3],
                                       LAGCONST double a[3][3],
                                       const double b[3]);
@@ -209,19 +190,19 @@ static double norm_squared_d3(const double a[3]);
 static long inverse_unimodular_matrix_l3(long m[3][3],
                                          LAGCONST long a[3][3]);
 
-long bzg_get_irreducible_reciprocal_mesh(long grid_address[][3],
-                                         long ir_mapping_table[],
-                                         const long mesh[3],
-                                         const long is_shift[3],
-                                         const RotMats *rot_reciprocal)
+long bzg_get_ir_grid_map(long grid_address[][3],
+                         long ir_mapping_table[],
+                         const long D_diag[3],
+                         const long PS[3],
+                         const RotMats *rot_reciprocal)
 {
   long num_ir;
 
-  num_ir = get_ir_reciprocal_mesh(grid_address,
-                                  ir_mapping_table,
-                                  mesh,
-                                  is_shift,
-                                  rot_reciprocal);
+  num_ir = get_ir_grid_map(grid_address,
+                           ir_mapping_table,
+                           D_diag,
+                           PS,
+                           rot_reciprocal);
 
   return num_ir;
 }
@@ -244,29 +225,24 @@ long bzg_get_ir_reciprocal_mesh(long grid_address[][3],
 
   rot_reciprocal = NULL;
   rot_reciprocal = get_point_group_reciprocal(rotations, is_time_reversal);
-  num_ir = get_ir_reciprocal_mesh(grid_address,
-                                  ir_mapping_table,
-                                  mesh,
-                                  is_shift,
-                                  rot_reciprocal);
+  num_ir = get_ir_grid_map(grid_address,
+                           ir_mapping_table,
+                           mesh,
+                           is_shift,
+                           rot_reciprocal);
 
   bzg_free_RotMats(rot_reciprocal);
   rot_reciprocal = NULL;
   return num_ir;
 }
 
-void bzg_get_bz_grid_addresses(BZGrid *bzgrid,
+long bzg_get_bz_grid_addresses(BZGrid *bzgrid,
                                LAGCONST long grid_address[][3])
 {
   if (bzgrid->type == 1) {
-    bzgrid->size = relocate_BZ_grid_address(bzgrid->addresses,
-                                            bzgrid->gp_map,
-                                            grid_address,
-                                            bzgrid->D_diag,
-                                            bzgrid->reclat,
-                                            bzgrid->PS);
-  } else if (bzgrid->type == 2) {
-    bzgrid->size = get_bz_grid_addresses(bzgrid, grid_address);
+    return get_bz_grid_addresses_type1(bzgrid, grid_address);
+  } else {
+    return get_bz_grid_addresses_type2(bzgrid, grid_address);
   }
 }
 
@@ -381,157 +357,49 @@ static RotMats *get_point_group_reciprocal(const RotMats * rotations,
   return rot_return;
 }
 
-
-static long get_ir_reciprocal_mesh(long grid_address[][3],
-                                   long ir_mapping_table[],
-                                   const long mesh[3],
-                                   const long is_shift[3],
-                                   const RotMats *rot_reciprocal)
+/* It is assumed that the rotations have been examined by
+ * grg_transform_rotations, i.e., no broken symmetry of grid is ensured. */
+static long get_ir_grid_map(long grid_address[][3],
+                            long ir_mapping_table[],
+                            const long D_diag[3],
+                            const long PS[3],
+                            const RotMats *rot_reciprocal)
 {
-  if (check_mesh_symmetry(mesh, is_shift, rot_reciprocal)) {
-    return get_ir_reciprocal_mesh_normal(grid_address,
-                                         ir_mapping_table,
-                                         mesh,
-                                         is_shift,
-                                         rot_reciprocal);
-  } else {
-    return get_ir_reciprocal_mesh_distortion(grid_address,
-                                             ir_mapping_table,
-                                             mesh,
-                                             is_shift,
-                                             rot_reciprocal);
-  }
-}
+  long i, num_ir;
 
-static long get_ir_reciprocal_mesh_normal(long grid_address[][3],
-                                          long ir_mapping_table[],
-                                          const long mesh[3],
-                                          const long is_shift[3],
-                                          const RotMats *rot_reciprocal)
-{
-  /* In the following loop, mesh is doubled. */
-  /* Even and odd mesh numbers correspond to */
-  /* is_shift[i] are 0 or 1, respectively. */
-  /* is_shift = [0,0,0] gives Gamma center mesh. */
-  /* grid: reducible grid points */
-  /* ir_mapping_table: the mapping from each point to ir-point. */
-
-  long i, grid_point_rot;
-  long j;
-  long address_double[3], address_double_rot[3];
-
-  grg_get_all_grid_addresses(grid_address, mesh);
-
-#pragma omp parallel for private(j, grid_point_rot, address_double, address_double_rot)
-  for (i = 0; i < mesh[0] * mesh[1] * mesh[2]; i++) {
-    grg_get_double_grid_address(address_double,
-                                grid_address[i],
-                                mesh,
-                                is_shift);
-    ir_mapping_table[i] = i;
-    for (j = 0; j < rot_reciprocal->size; j++) {
-      lagmat_multiply_matrix_vector_l3(address_double_rot,
-                                       rot_reciprocal->mat[j],
-                                       address_double);
-      grid_point_rot = grg_get_double_grid_index(address_double_rot, mesh, is_shift);
-      if (grid_point_rot < ir_mapping_table[i]) {
-#ifdef _OPENMP
-        ir_mapping_table[i] = grid_point_rot;
-#else
-        ir_mapping_table[i] = ir_mapping_table[grid_point_rot];
-        break;
-#endif
-      }
+  grg_get_all_grid_addresses(grid_address, D_diag);
+  grg_get_ir_grid_map(ir_mapping_table,
+                      rot_reciprocal->mat,
+                      rot_reciprocal->size,
+                      D_diag,
+                      PS);
+  num_ir = 0;
+  for (i = 0; i < D_diag[0] * D_diag[1] * D_diag[2]; i++) {
+    if (ir_mapping_table[i] == i) {
+      num_ir++;
     }
   }
 
-  return get_num_ir(ir_mapping_table, mesh);
+  return num_ir;
 }
 
-static long
-get_ir_reciprocal_mesh_distortion(long grid_address[][3],
-                                  long ir_mapping_table[],
-                                  const long mesh[3],
-                                  const long is_shift[3],
-                                  const RotMats *rot_reciprocal)
-{
-  long i, grid_point_rot;
-  long j, k, indivisible;
-  long address_double[3], address_double_rot[3];
-  long long_address_double[3], long_address_double_rot[3], divisor[3];
-
-  /* divisor, long_address_double, and long_address_double_rot have */
-  /* long integer type to treat dense mesh. */
-
-  grg_get_all_grid_addresses(grid_address, mesh);
-
-  for (j = 0; j < 3; j++) {
-    divisor[j] = mesh[(j + 1) % 3] * mesh[(j + 2) % 3];
-  }
-
-#pragma omp parallel for private(j, k, grid_point_rot, address_double, address_double_rot, long_address_double, long_address_double_rot)
-  for (i = 0; i < mesh[0] * mesh[1] * mesh[2]; i++) {
-    grg_get_double_grid_address(address_double,
-                                grid_address[i],
-                                mesh,
-                                is_shift);
-    for (j = 0; j < 3; j++) {
-      long_address_double[j] = address_double[j] * divisor[j];
-    }
-    ir_mapping_table[i] = i;
-    for (j = 0; j < rot_reciprocal->size; j++) {
-
-      /* Equivalent to mat_multiply_matrix_vector_i3 except for data type */
-      for (k = 0; k < 3; k++) {
-        long_address_double_rot[k] =
-          rot_reciprocal->mat[j][k][0] * long_address_double[0] +
-          rot_reciprocal->mat[j][k][1] * long_address_double[1] +
-          rot_reciprocal->mat[j][k][2] * long_address_double[2];
-      }
-
-      for (k = 0; k < 3; k++) {
-        indivisible = long_address_double_rot[k] % divisor[k];
-        if (indivisible) {break;}
-        address_double_rot[k] = long_address_double_rot[k] / divisor[k];
-        if ((address_double_rot[k] % 2 != 0 && is_shift[k] == 0) ||
-            (address_double_rot[k] % 2 == 0 && is_shift[k] == 1)) {
-          indivisible = 1;
-          break;
-        }
-      }
-      if (indivisible) {continue;}
-      grid_point_rot =
-        grg_get_double_grid_index(address_double_rot, mesh, is_shift);
-      if (grid_point_rot < ir_mapping_table[i]) {
-#ifdef _OPENMP
-        ir_mapping_table[i] = grid_point_rot;
-#else
-        ir_mapping_table[i] = ir_mapping_table[grid_point_rot];
-        break;
-#endif
-      }
-    }
-  }
-
-  return get_num_ir(ir_mapping_table, mesh);
-}
-
-static long relocate_BZ_grid_address(long bz_grid_address[][3],
-                                     long bz_map[],
-                                     LAGCONST long grid_address[][3],
-                                     const long mesh[3],
-                                     LAGCONST double rec_lattice[3][3],
-                                     const long is_shift[3])
+static long get_bz_grid_addresses_type1(BZGrid *bzgrid,
+                                        LAGCONST long grid_address[][3])
 {
   double tolerance, min_distance;
   double q_vector[3], distance[BZG_NUM_BZ_SEARCH_SPACE];
   long bzmesh[3], bz_address_double[3];
   long i, boundary_num_gp, total_num_gp, bzgp, gp, num_bzmesh;
   long j, k, min_index;
+  long (*bz_grid_address)[3];
+  long *bz_map;
 
-  tolerance = get_tolerance_for_BZ_reduction(rec_lattice, mesh);
+  bz_grid_address = bzgrid->addresses;
+  bz_map = bzgrid->gp_map;
+
+  tolerance = get_tolerance_for_BZ_reduction(bzgrid);
   for (j = 0; j < 3; j++) {
-    bzmesh[j] = mesh[j] * 2;
+    bzmesh[j] = bzgrid->D_diag[j] * 2;
   }
 
   num_bzmesh = bzmesh[0] * bzmesh[1] * bzmesh[2];
@@ -540,7 +408,7 @@ static long relocate_BZ_grid_address(long bz_grid_address[][3],
   }
 
   boundary_num_gp = 0;
-  total_num_gp = mesh[0] * mesh[1] * mesh[2];
+  total_num_gp = bzgrid->D_diag[0] * bzgrid->D_diag[1] * bzgrid->D_diag[2];
 
   /* Multithreading doesn't work for this loop since gp calculated */
   /* with boundary_num_gp is unstable to store bz_grid_address. */
@@ -548,10 +416,10 @@ static long relocate_BZ_grid_address(long bz_grid_address[][3],
     for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
       for (k = 0; k < 3; k++) {
         q_vector[k] =
-          ((grid_address[i][k] + bz_search_space[j][k] * mesh[k]) * 2 +
-           is_shift[k]) / ((double)mesh[k]) / 2;
+          ((grid_address[i][k] + bz_search_space[j][k] * bzgrid->D_diag[k]) * 2
+           + bzgrid->PS[k]) / ((double)bzgrid->D_diag[k]) / 2;
       }
-      multiply_matrix_vector_d3(q_vector, rec_lattice, q_vector);
+      multiply_matrix_vector_d3(q_vector, bzgrid->reclat, q_vector);
       distance[j] = norm_squared_d3(q_vector);
     }
     min_distance = distance[0];
@@ -573,10 +441,11 @@ static long relocate_BZ_grid_address(long bz_grid_address[][3],
 
         for (k = 0; k < 3; k++) {
           bz_grid_address[gp][k] =
-            grid_address[i][k] + bz_search_space[j][k] * mesh[k];
-          bz_address_double[k] = bz_grid_address[gp][k] * 2 + is_shift[k];
+            grid_address[i][k] + bz_search_space[j][k] * bzgrid->D_diag[k];
+          bz_address_double[k] = bz_grid_address[gp][k] * 2 + bzgrid->PS[k];
         }
-        bzgp = grg_get_double_grid_index(bz_address_double, bzmesh, is_shift);
+        bzgp = grg_get_double_grid_index(
+          bz_address_double, bzmesh, bzgrid->PS);
         bz_map[bzgp] = gp;
         if (j != min_index) {
           boundary_num_gp++;
@@ -585,11 +454,12 @@ static long relocate_BZ_grid_address(long bz_grid_address[][3],
     }
   }
 
-  return boundary_num_gp + total_num_gp;
+  bzgrid->size = boundary_num_gp + total_num_gp;
+  return 1;
 }
 
-static long get_bz_grid_addresses(BZGrid *bzgrid,
-                                  LAGCONST long grid_address[][3])
+static long get_bz_grid_addresses_type2(BZGrid *bzgrid,
+                                        LAGCONST long grid_address[][3])
 {
   double tolerance, min_distance;
   double q_vec[3], q_red[3], distance[BZG_NUM_BZ_SEARCH_SPACE];
@@ -602,7 +472,7 @@ static long get_bz_grid_addresses(BZGrid *bzgrid,
     return 0;
   }
 
-  tolerance = get_tolerance_for_BZ_reduction(bzgrid->reclat, bzgrid->D_diag);
+  tolerance = get_tolerance_for_BZ_reduction(bzgrid);
   num_gp = 0;
   /* The first element of gp_map is always 0. */
   bzgrid->gp_map[0] = 0;
@@ -649,22 +519,33 @@ static long get_bz_grid_addresses(BZGrid *bzgrid,
     bzgrid->gp_map[i + 1] =  num_gp;
   }
 
-  return num_gp;
+  bzgrid->size = num_gp;
+  return 1;
 }
 
-static double get_tolerance_for_BZ_reduction(LAGCONST double rec_lattice[3][3],
-                                             const long mesh[3])
+/* Note: Tolerance in squared distance. */
+static double get_tolerance_for_BZ_reduction(const BZGrid *bzgrid)
 {
   long i, j;
   double tolerance;
   double length[3];
+  double reclatQ[3][3];
+
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
+      reclatQ[i][j] =
+        bzgrid->reclat[i][0] * bzgrid->Q[0][j]
+        + bzgrid->reclat[i][1] * bzgrid->Q[1][j]
+        + bzgrid->reclat[i][2] * bzgrid->Q[2][j];
+    }
+  }
 
   for (i = 0; i < 3; i++) {
     length[i] = 0;
     for (j = 0; j < 3; j++) {
-      length[i] += rec_lattice[j][i] * rec_lattice[j][i];
+      length[i] += reclatQ[j][i] * reclatQ[j][i];
     }
-    length[i] /= mesh[i] * mesh[i];
+    length[i] /= bzgrid->D_diag[i] * bzgrid->D_diag[i];
   }
   tolerance = length[0];
   for (i = 1; i < 3; i++) {
@@ -675,70 +556,6 @@ static double get_tolerance_for_BZ_reduction(LAGCONST double rec_lattice[3][3],
   tolerance *= 0.01;
 
   return tolerance;
-}
-
-static long get_num_ir(long ir_mapping_table[], const long mesh[3])
-{
-  long i, num_ir;
-
-  num_ir = 0;
-
-#pragma omp parallel for reduction(+:num_ir)
-  for (i = 0; i < mesh[0] * mesh[1] * mesh[2]; i++) {
-    if (ir_mapping_table[i] == i) {
-      num_ir++;
-    }
-  }
-
-#ifdef _OPENMP
-  for (i = 0; i < mesh[0] * mesh[1] * mesh[2]; i++) {
-    ir_mapping_table[i] = ir_mapping_table[ir_mapping_table[i]];
-  }
-#endif
-
-  return num_ir;
-}
-
-static long check_mesh_symmetry(const long mesh[3],
-                                const long is_shift[3],
-                                const RotMats *rot_reciprocal)
-{
-  long i, j, k, sum;
-  long eq[3];
-
-  eq[0] = 0; /* a=b */
-  eq[1] = 0; /* b=c */
-  eq[2] = 0; /* c=a */
-
-  /* Check 3 and 6 fold rotations and non-convensional choice of unit cells */
-  for (i = 0; i < rot_reciprocal->size; i++) {
-    sum = 0;
-    for (j = 0; j < 3; j++) {
-      for (k = 0; k < 3; k++) {
-        sum += labs(rot_reciprocal->mat[i][j][k]);
-      }
-    }
-    if (sum > 3) {
-      return 0;
-    }
-  }
-
-  for (i = 0; i < rot_reciprocal->size; i++) {
-    if (rot_reciprocal->mat[i][0][0] == 0 &&
-        rot_reciprocal->mat[i][1][0] == 1 &&
-        rot_reciprocal->mat[i][2][0] == 0) {eq[0] = 1;}
-    if (rot_reciprocal->mat[i][0][0] == 0 &&
-        rot_reciprocal->mat[i][1][0] == 1 &&
-        rot_reciprocal->mat[i][2][0] == 0) {eq[1] = 1;}
-    if (rot_reciprocal->mat[i][0][0] == 0 &&
-        rot_reciprocal->mat[i][1][0] == 0 &&
-        rot_reciprocal->mat[i][2][0] == 1) {eq[2] = 1;}
-  }
-
-
-  return (((eq[0] && mesh[0] == mesh[1] && is_shift[0] == is_shift[1]) || (!eq[0])) &&
-          ((eq[1] && mesh[1] == mesh[2] && is_shift[1] == is_shift[2]) || (!eq[1])) &&
-          ((eq[2] && mesh[2] == mesh[0] && is_shift[2] == is_shift[0]) || (!eq[2])));
 }
 
 static void multiply_matrix_vector_d3(double v[3],

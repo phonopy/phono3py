@@ -684,8 +684,11 @@ long ph3py_get_bz_grid_address(long (*bz_grid_address)[3],
     }
   }
 
-  bzg_get_bz_grid_addresses(bzgrid, grid_address);
-  size = bzgrid->size;
+  if (bzg_get_bz_grid_addresses(bzgrid, grid_address)) {
+    size = bzgrid->size;
+  } else {
+    size = 0;
+  }
 
   free(bzgrid);
   bzgrid = NULL;
