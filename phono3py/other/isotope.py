@@ -64,6 +64,7 @@ class Isotope(object):
                  mass_variances=None,  # length of list is num_atom.
                  band_indices=None,
                  sigma=None,
+                 bz_grid=None,
                  frequency_factor_to_THz=VaspToTHz,
                  symprec=1e-5,
                  cutoff_frequency=None,
@@ -76,6 +77,7 @@ class Isotope(object):
             self._mass_variances = np.array(mass_variances, dtype='double')
         self._primitive = primitive
         self._sigma = sigma
+        self._bz_grid = bz_grid
         self._symprec = symprec
         if cutoff_frequency is None:
             self._cutoff_frequency = 0
@@ -85,8 +87,6 @@ class Isotope(object):
         self._lapack_zheev_uplo = lapack_zheev_uplo
         self._nac_q_direction = None
 
-        self._grid_address = None
-        self._bz_map = None
         self._grid_points = None
         self._frequencies = None
         self._eigenvectors = None
@@ -101,16 +101,15 @@ class Isotope(object):
         else:
             self._band_indices = np.array(band_indices, dtype='int_')
 
+        if self._bz_grid is None:
+            primitive_lattice = np.linalg.inv(self._primitive.cell)
+            self._bz_grid = BZGrid(is_dense_gp_map=False)
+            self._bz_grid.set_bz_grid(self._mesh, primitive_lattice)
+
     def set_grid_point(self, grid_point):
         self._grid_point = grid_point
-        self._grid_points = np.arange(np.prod(self._mesh), dtype='int_')
-
-        if self._grid_address is None:
-            primitive_lattice = np.linalg.inv(self._primitive.cell)
-            bz_grid = BZGrid()
-            bz_grid.set_bz_grid(self._mesh, primitive_lattice)
-            self._grid_address = bz_grid.addresses
-            self._bz_map = bz_grid.gp_map
+        self._grid_points = np.arange(
+            len(self._bz_grid.addresses), dtype='int_')
 
         if self._phonon_done is None:
             self._allocate_phonon()
@@ -150,12 +149,8 @@ class Isotope(object):
         return self.gamma
 
     @property
-    def grid_address(self):
-        return self._grid_address
-
-    def get_grid_address(self):
-        warnings.warn("Use attribute, grid_address.", DeprecationWarning)
-        return self.grid_address
+    def bz_grid(self):
+        return self._bz_grid
 
     @property
     def mass_variances(self):
@@ -169,14 +164,10 @@ class Isotope(object):
         return self._frequencies, self._eigenvectors, self._phonon_done
 
     def set_phonons(self,
-                    grid_address,
-                    bz_map,
                     frequencies,
                     eigenvectors,
                     phonon_done,
                     dm=None):
-        self._grid_address = grid_address
-        self._bz_map = bz_map
         self._frequencies = frequencies
         self._eigenvectors = eigenvectors
         self._phonon_done = phonon_done
@@ -254,8 +245,8 @@ class Isotope(object):
             self._grid_points,
             unique_vertices,
             self._mesh,
-            self._grid_address,
-            self._bz_map)
+            self._bz_grid.addresses,
+            self._bz_grid.gp_map)
         unique_grid_points = np.array(np.unique(neighboring_grid_points),
                                       dtype='int_')
         self._run_phonon_solver_c(unique_grid_points)
@@ -269,15 +260,15 @@ class Isotope(object):
             self._mesh,
             self._grid_points,
             self._frequencies,
-            self._grid_address,
-            self._bz_map)
+            self._bz_grid.addresses,
+            self._bz_grid.gp_map)
 
     def _set_integration_weights_py(self, thm):
         for i, gp in enumerate(self._grid_points):
             tfreqs = get_tetrahedra_frequencies(
                 gp,
                 self._mesh,
-                self._grid_address,
+                self._bz_grid.addresses,
                 thm.get_tetrahedra(),
                 self._grid_points,
                 self._frequencies,
@@ -326,7 +317,7 @@ class Isotope(object):
                             self._eigenvectors,
                             self._phonon_done,
                             grid_points,
-                            self._grid_address,
+                            self._bz_grid.addresses,
                             self._mesh,
                             self._frequency_factor_to_THz,
                             self._nac_q_direction,
@@ -337,15 +328,15 @@ class Isotope(object):
                              self._phonon_done,
                              self._frequencies,
                              self._eigenvectors,
-                             self._grid_address,
+                             self._bz_grid.addresses,
                              self._mesh,
                              self._dm,
                              self._frequency_factor_to_THz,
                              self._lapack_zheev_uplo)
 
     def _allocate_phonon(self):
-        num_band = self._primitive.get_number_of_atoms() * 3
-        num_grid = len(self._grid_address)
+        num_band = len(self._primitive) * 3
+        num_grid = len(self._bz_grid.addresses)
         self._phonon_done = np.zeros(num_grid, dtype='byte')
         self._frequencies = np.zeros((num_grid, num_band), dtype='double')
         itemsize = self._frequencies.itemsize

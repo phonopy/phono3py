@@ -198,25 +198,8 @@ class Interaction(object):
                 self._ir_map_at_q)
 
     @property
-    def grid_address(self):
-        warnings.warn("Use attribute, bz_grid.addresses.", DeprecationWarning)
-        return self.bz_grid.addresses
-
-    @property
     def bz_grid(self):
         return self._bz_grid
-
-    def get_grid_address(self):
-        warnings.warn("Use attribute, bz_grid.addresses.", DeprecationWarning)
-        return self.bz_grid.addresses
-
-    @property
-    def bz_map(self):
-        return self._bz_grid.gp_map
-
-    def get_bz_map(self):
-        warnings.warn("Use attribute, bz_map.", DeprecationWarning)
-        return self.bz_map
 
     @property
     def band_indices(self):

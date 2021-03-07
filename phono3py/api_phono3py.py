@@ -1058,9 +1058,8 @@ class Phono3py(object):
         """
 
         if self._interaction is not None:
-            grid_address = self._interaction.get_grid_address()
             freqs, eigvecs, _ = self._interaction.get_phonons()
-            return freqs, eigvecs, grid_address
+            return freqs, eigvecs, self._interaction.bz_grid.addresses
         else:
             msg = ("Phono3py.init_phph_interaction has to be called "
                    "before running this method.")

@@ -517,7 +517,7 @@ class Conductivity_RTA(Conductivity):
 
         self._grid_points = None
         self._grid_weights = None
-        self._grid_address = None
+        self._bz_grid = None
 
         self._read_gamma = False
         self._read_gamma_iso = False
@@ -788,7 +788,6 @@ class Conductivity_RTA(Conductivity):
          masses) = self._pp.get_primitive_and_supercell_correspondence()
         fc3 = self._pp.fc3
         triplets_at_q, weights_at_q, _, _ = self._pp.get_triplets_at_q()
-        bz_map = self._pp.bz_map
         symmetrize_fc3_q = 0
 
         if None in self._sigmas:
@@ -815,8 +814,8 @@ class Conductivity_RTA(Conductivity):
                     self._eigenvectors,
                     triplets_at_q,
                     weights_at_q,
-                    self._grid_address,
-                    bz_map,
+                    self._bz_grid.addresses,
+                    self._bz_grid.gp_map,
                     self._mesh,
                     fc3,
                     svecs,
@@ -841,7 +840,7 @@ class Conductivity_RTA(Conductivity):
                                                 self._eigenvectors,
                                                 triplets_at_q,
                                                 weights_at_q,
-                                                self._grid_address,
+                                                self._bz_grid.addresses,
                                                 self._mesh,
                                                 fc3,
                                                 svecs,
@@ -906,7 +905,7 @@ class Conductivity_RTA(Conductivity):
 
     def _show_log_values_on_kstar(self, frequencies, gv, ave_pp, gp, q):
         rotation_map = get_grid_points_by_rotations(
-            self._grid_address[gp],
+            self._bz_grid.addresses[gp],
             self._point_operations,
             self._mesh)
         for i, j in enumerate(np.unique(rotation_map)):

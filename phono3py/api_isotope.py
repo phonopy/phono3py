@@ -76,7 +76,7 @@ class Phono3pyIsotope(object):
 
             print("--------------- Isotope scattering ---------------")
             print("Grid point: %d" % gp)
-            adrs = self._iso.grid_address[gp]
+            adrs = self._iso.bz_grid.addresses[gp]
             q = adrs.astype('double') / self._mesh_numbers
             print("q-point: %s" % q)
 

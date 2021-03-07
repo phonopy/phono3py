@@ -198,24 +198,6 @@ class JointDos(object):
     def bz_grid(self):
         return self._bz_grid
 
-    @property
-    def grid_address(self):
-        warnings.warn("Use attribute, bz_grid.addresses", DeprecationWarning)
-        return self.bz_grid.addresses
-
-    def get_grid_address(self):
-        warnings.warn("Use attribute, bz_grid.addresses", DeprecationWarning)
-        return self.bz_grid.addresses
-
-    @property
-    def bz_map(self):
-        warnings.warn("Use attribute, bz_grid.gp_map", DeprecationWarning)
-        return self.bz_grid.gp_map
-
-    def get_bz_map(self):
-        warnings.warn("Use attribute, bz_grid.gp_map", DeprecationWarning)
-        return self.bz_grid.gp_map
-
     def run_phonon_solver(self, grid_points):
         """Calculate phonons at grid_points
 

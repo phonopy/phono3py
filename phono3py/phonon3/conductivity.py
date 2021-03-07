@@ -140,9 +140,9 @@ class Conductivity(object):
 
         self._grid_points = None
         self._grid_weights = None
-        self._grid_address = None
         self._ir_grid_points = None
         self._ir_grid_weights = None
+        self._bz_grid = self._pp.bz_grid
 
         self._read_gamma = False
         self._read_gamma_iso = False
@@ -309,15 +309,17 @@ class Conductivity(object):
         pass
 
     def _set_grid_properties(self, grid_points):
-        self._grid_address = self._pp.bz_grid.addresses
         self._pp.set_nac_q_direction(nac_q_direction=None)
 
         if grid_points is not None:  # Specify grid points
-            self._grid_points = grid_points,
+            self._grid_points = grid_points
             (self._ir_grid_points,
              self._ir_grid_weights) = self._get_ir_grid_points()
         elif not self._is_kappa_star:  # All grid points
-            self._grid_points = np.arange(np.prod(self._mesh), dtype='int_')
+            _grid_points = np.arange(np.prod(self._mesh), dtype='int_')
+            if self._bz_grid.is_dense_gp_map:
+                _grid_points = self._bz_grid.gp_map[_grid_points]
+            self._grid_points = _grid_points
             self._grid_weights = np.ones(len(self._grid_points), dtype='int_')
             self._ir_grid_points = self._grid_points
             self._ir_grid_weights = self._grid_weights
@@ -326,7 +328,7 @@ class Conductivity(object):
             self._ir_grid_points = self._grid_points
             self._ir_grid_weights = self._grid_weights
 
-        self._qpoints = np.array(self._grid_address[self._grid_points] /
+        self._qpoints = np.array(self._bz_grid.addresses[self._grid_points] /
                                  self._mesh.astype('double'),
                                  dtype='double', order='C')
 
@@ -335,7 +337,6 @@ class Conductivity(object):
 
     def _get_gamma_isotope_at_sigmas(self, i):
         gamma_iso = []
-        bz_map = self._pp.bz_map
         pp_freqs, pp_eigvecs, pp_phonon_done = self._pp.get_phonons()
 
         for j, sigma in enumerate(self._sigmas):
@@ -348,9 +349,7 @@ class Conductivity(object):
                 print(text)
 
             self._isotope.sigma = sigma
-            self._isotope.set_phonons(self._grid_address,
-                                      bz_map,
-                                      pp_freqs,
+            self._isotope.set_phonons(pp_freqs,
                                       pp_eigvecs,
                                       pp_phonon_done,
                                       dm=self._dm)
@@ -366,6 +365,9 @@ class Conductivity(object):
              self._mesh,
              self._symmetry.pointgroup_operations)
 
+        if self._bz_grid.is_dense_gp_map:
+            ir_grid_points = self._bz_grid.gp_map[ir_grid_points]
+
         return ir_grid_points, ir_grid_weights
 
     def _set_isotope(self, mass_variances):
@@ -377,6 +379,7 @@ class Conductivity(object):
             self._mesh,
             self._primitive,
             mass_variances=mv,
+            bz_grid=self._bz_grid,
             frequency_factor_to_THz=self._frequency_factor_to_THz,
             symprec=self._symmetry.get_symmetry_tolerance(),
             cutoff_frequency=self._cutoff_frequency,
@@ -405,7 +408,7 @@ class Conductivity(object):
 
     def _get_gv_by_gv(self, i_irgp, i_data):
         rotation_map = get_grid_points_by_rotations(
-            self._grid_address[self._grid_points[i_irgp]],
+            self._bz_grid.addresses[self._grid_points[i_irgp]],
             self._point_operations,
             self._mesh)
         gv = self._gv[i_data]

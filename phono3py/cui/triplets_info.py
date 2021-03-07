@@ -45,6 +45,7 @@ def write_grid_points(primitive,
                       sigmas=None,
                       temperatures=None,
                       is_kappa_star=True,
+                      is_dense_gp_map=False,
                       is_lbte=False,
                       compression="gzip",
                       symprec=1e-5,
@@ -58,6 +59,7 @@ def write_grid_points(primitive,
         primitive,
         mesh,
         is_kappa_star=is_kappa_star,
+        is_dense_gp_map=is_dense_gp_map,
         symprec=symprec)
     write_ir_grid_points(mesh,
                          ir_grid_points,
@@ -137,6 +139,7 @@ class _TripletsNumbers(object):
                  primitive,
                  mesh,
                  is_kappa_star=True,
+                 is_dense_gp_map=False,
                  symprec=1e-5):
         self._primitive = primitive
         self._mesh = mesh
@@ -146,6 +149,7 @@ class _TripletsNumbers(object):
             self._primitive,
             self._mesh,
             is_kappa_star=is_kappa_star,
+            is_dense_gp_map=is_dense_gp_map,
             symprec=self._symprec)
 
     def get_number_of_triplets(self, gp):
@@ -160,6 +164,7 @@ class _TripletsNumbers(object):
 def _get_ir_grid_points(primitive,
                         mesh,
                         is_kappa_star=True,
+                        is_dense_gp_map=False,
                         symprec=1e-5):
     symmetry = Symmetry(primitive, symprec)
     point_group = symmetry.pointgroup_operations
@@ -167,8 +172,10 @@ def _get_ir_grid_points(primitive,
     ir_grid_points, ir_grid_weights, grid_address, _ = get_ir_grid_points(
         mesh, point_group)
     reciprocal_lattice = np.linalg.inv(primitive.cell)
-    bz_grid = BZGrid()
+    bz_grid = BZGrid(is_dense_gp_map=is_dense_gp_map)
     bz_grid.relocate(grid_address, mesh, reciprocal_lattice)
+    if bz_grid.is_dense_gp_map:
+        ir_grid_points = bz_grid.gp_map[ir_grid_points]
 
     return ir_grid_points, ir_grid_weights, bz_grid
 

@@ -802,7 +802,7 @@ class Conductivity_LBTE(Conductivity):
 
         self._grid_points = None
         self._grid_weights = None
-        self._grid_address = None
+        self._bz_grid = None
         self._ir_grid_points = None
         self._ir_grid_weights = None
 
@@ -1026,7 +1026,7 @@ class Conductivity_LBTE(Conductivity):
                 dtype='int_')
             for i, ir_gp in enumerate(self._ir_grid_points):
                 self._rot_grid_points[i] = get_grid_points_by_rotations(
-                    self._grid_address[ir_gp],
+                    self._bz_grid.addresses[ir_gp],
                     self._point_operations,
                     self._mesh)
             self._collision = CollisionMatrix(
@@ -1203,7 +1203,7 @@ class Conductivity_LBTE(Conductivity):
 
         for i in range(num_mesh_points):
             rot_grid_points[:, i] = get_grid_points_by_rotations(
-                self._grid_address[i],
+                self._bz_grid.addresses[i],
                 self._point_operations,
                 self._mesh)
 
@@ -1609,7 +1609,7 @@ class Conductivity_LBTE(Conductivity):
             for j, (v, f) in enumerate(zip(v_gp, f_gp)):
                 # Do not consider three lowest modes at Gamma-point
                 # It is assumed that there are no imaginary modes.
-                if (self._grid_address[i] == 0).all() and j < 3:
+                if (self._bz_grid.addresses[i] == 0).all() and j < 3:
                     continue
 
                 if rotations_cartesian is None:

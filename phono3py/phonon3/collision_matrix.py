@@ -126,9 +126,7 @@ class CollisionMatrix(ImagSelfEnergy):
              self._weights_at_q,
              self._triplets_map_at_q,
              self._ir_map_at_q) = self._pp.get_triplets_at_q()
-            self._grid_address = self._pp.bz_grid.addresses
             self._grid_point = grid_point
-            self._bz_map = self._pp.bz_grid.gp_map
             self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
 
     def _run_collision_matrix(self):
