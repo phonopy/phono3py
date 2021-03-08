@@ -52,6 +52,7 @@ class Phono3pySettings(Settings):
         'ion_clamped': False,
         'is_bterta': False,
         'is_compact_fc': False,
+        'is_dense_gp_map': False,
         'is_full_pp': False,
         'is_gruneisen': False,
         'is_imag_self_energy': False,
@@ -138,6 +139,9 @@ class Phono3pySettings(Settings):
 
     def set_is_compact_fc(self, val):
         self._v['is_compact_fc'] = val
+
+    def set_is_dense_gp_map(self, val):
+        self._v['is_dense_gp_map'] = val
 
     def set_is_full_pp(self, val):
         self._v['is_full_pp'] = val
@@ -340,6 +344,10 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_compact_fc:
                 self._confs['compact_fc'] = '.true.'
 
+        if 'is_dense_gp_map' in self._args:
+            if self._args.is_dense_gp_map:
+                self._confs['dense_gp_map'] = '.true.'
+
         if 'is_gruneisen' in self._args:
             if self._args.is_gruneisen:
                 self._confs['gruneisen'] = '.true.'
@@ -513,7 +521,7 @@ class Phono3pyConfParser(ConfParser):
                     'write_gamma_detail', 'write_gamma',
                     'write_collision', 'write_phonon', 'write_pp',
                     'write_LBTE_solution', 'full_pp', 'ion_clamped',
-                    'bterta', 'compact_fc', 'real_self_energy',
+                    'bterta', 'compact_fc', 'dense_gp_map', 'real_self_energy',
                     'gruneisen', 'imag_self_energy', 'isotope',
                     'joint_dos', 'lbte', 'N_U', 'spectral_function',
                     'reducible_collision_matrix', 'symmetrize_fc2',
@@ -653,6 +661,10 @@ class Phono3pyConfParser(ConfParser):
         if 'cutoff_pair_distance' in params:
             self._settings.set_cutoff_pair_distance(
                 params['cutoff_pair_distance'])
+
+        # Use new BZ grid system with True.
+        if 'dense_gp_map' in params:
+            self._settings.set_is_dense_gp_map(params['dense_gp_map'])
 
         # Gamma unit conversion factor
         if 'gamma_conversion_factor' in params:

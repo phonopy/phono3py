@@ -90,6 +90,7 @@ class Phono3py(object):
                  is_symmetry=True,
                  is_mesh_symmetry=True,
                  symmetrize_fc3q=False,
+                 is_dense_gp_map=False,
                  symprec=1e-5,
                  calculator=None,
                  log_level=0,
@@ -102,6 +103,7 @@ class Phono3py(object):
         self._is_mesh_symmetry = is_mesh_symmetry
         self._lapack_zheev_uplo = lapack_zheev_uplo
         self._symmetrize_fc3q = symmetrize_fc3q
+        self._is_dense_gp_map = is_dense_gp_map
         self._cutoff_frequency = cutoff_frequency
         self._calculator = calculator
         self._log_level = log_level
@@ -960,6 +962,7 @@ class Phono3py(object):
             cutoff_frequency=self._cutoff_frequency,
             is_mesh_symmetry=self._is_mesh_symmetry,
             symmetrize_fc3q=self._symmetrize_fc3q,
+            is_dense_gp_map=self._is_dense_gp_map,
             lapack_zheev_uplo=self._lapack_zheev_uplo)
         self._interaction.set_nac_q_direction(nac_q_direction=nac_q_direction)
         self._init_dynamical_matrix()

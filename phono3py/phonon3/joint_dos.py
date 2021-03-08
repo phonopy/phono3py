@@ -64,6 +64,7 @@ class JointDos(object):
                  frequency_factor_to_THz=VaspToTHz,
                  frequency_scale_factor=1.0,
                  is_mesh_symmetry=True,
+                 is_dense_gp_map=False,
                  symprec=1e-5,
                  filename=None,
                  log_level=False,
@@ -89,6 +90,7 @@ class JointDos(object):
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._frequency_scale_factor = frequency_scale_factor
         self._is_mesh_symmetry = is_mesh_symmetry
+        self._is_dense_gp_map = is_dense_gp_map
         self._symprec = symprec
         self._filename = filename
         self._log_level = log_level
@@ -334,7 +336,8 @@ class JointDos(object):
              map_q) = get_nosym_triplets_at_q(
                  self._grid_point,
                  self._mesh,
-                 self._reciprocal_lattice)
+                 self._reciprocal_lattice,
+                 is_dense_gp_map=self._is_dense_gp_map)
         else:
             (self._triplets_at_q,
              self._weights_at_q,
@@ -343,8 +346,9 @@ class JointDos(object):
              map_q) = get_triplets_at_q(
                  self._grid_point,
                  self._mesh,
-                 self._symmetry.get_pointgroup_operations(),
-                 self._reciprocal_lattice)
+                 self._symmetry.pointgroup_operations,
+                 self._reciprocal_lattice,
+                 is_dense_gp_map=self._is_dense_gp_map)
         self._bz_grid = bz_grid
 
     def _allocate_phonons(self):

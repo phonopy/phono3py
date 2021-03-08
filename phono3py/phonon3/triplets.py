@@ -209,13 +209,14 @@ def get_all_triplets(grid_point, bz_grid, mesh):
 
 def get_nosym_triplets_at_q(grid_point,
                             mesh,
-                            reciprocal_lattice):
+                            reciprocal_lattice,
+                            is_dense_gp_map=False):
     """Returns triplets information without imposing mesh symmetry
 
     See the docstring of get_triplets_at_q.
 
     """
-    bz_grid = BZGrid()
+    bz_grid = BZGrid(is_dense_gp_map=is_dense_gp_map)
     bz_grid.relocate(get_grid_address(mesh), mesh, reciprocal_lattice)
     map_triplets = np.arange(np.prod(mesh), dtype='int_')
     triplets_at_q, weights = _get_BZ_triplets_at_q(

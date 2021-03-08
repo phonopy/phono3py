@@ -65,6 +65,7 @@ class Isotope(object):
                  band_indices=None,
                  sigma=None,
                  bz_grid=None,
+                 is_dense_gp_map=False,
                  frequency_factor_to_THz=VaspToTHz,
                  symprec=1e-5,
                  cutoff_frequency=None,
@@ -103,7 +104,7 @@ class Isotope(object):
 
         if self._bz_grid is None:
             primitive_lattice = np.linalg.inv(self._primitive.cell)
-            self._bz_grid = BZGrid(is_dense_gp_map=False)
+            self._bz_grid = BZGrid(is_dense_gp_map=is_dense_gp_map)
             self._bz_grid.set_bz_grid(self._mesh, primitive_lattice)
 
     def set_grid_point(self, grid_point):

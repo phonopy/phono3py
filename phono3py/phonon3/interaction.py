@@ -58,6 +58,7 @@ class Interaction(object):
                  unit_conversion=None,
                  is_mesh_symmetry=True,
                  symmetrize_fc3q=False,
+                 is_dense_gp_map=False,
                  cutoff_frequency=None,
                  lapack_zheev_uplo='L'):
         self._supercell = supercell
@@ -88,6 +89,7 @@ class Interaction(object):
         else:
             self._cutoff_frequency = cutoff_frequency
         self._is_mesh_symmetry = is_mesh_symmetry
+        self._is_dense_gp_map = is_dense_gp_map
         self._symmetrize_fc3q = symmetrize_fc3q
         self._lapack_zheev_uplo = lapack_zheev_uplo
 
@@ -527,7 +529,7 @@ class Interaction(object):
 
     def _allocate_phonon(self):
         primitive_lattice = np.linalg.inv(self._primitive.cell)
-        self._bz_grid = BZGrid(is_dense_gp_map=False)
+        self._bz_grid = BZGrid(is_dense_gp_map=self._is_dense_gp_map)
         self._bz_grid.set_bz_grid(self._mesh, primitive_lattice)
         num_band = len(self._primitive) * 3
         num_grid = len(self._bz_grid.addresses)
