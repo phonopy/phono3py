@@ -247,7 +247,8 @@ class Isotope(object):
             unique_vertices,
             self._mesh,
             self._bz_grid.addresses,
-            self._bz_grid.gp_map)
+            self._bz_grid.gp_map,
+            self._bz_grid.is_dense_gp_map * 1 + 1)
         unique_grid_points = np.array(np.unique(neighboring_grid_points),
                                       dtype='int_')
         self._run_phonon_solver_c(unique_grid_points)
@@ -262,7 +263,8 @@ class Isotope(object):
             self._grid_points,
             self._frequencies,
             self._bz_grid.addresses,
-            self._bz_grid.gp_map)
+            self._bz_grid.gp_map,
+            self._bz_grid.is_dense_gp_map * 1 + 1)
 
     def _set_integration_weights_py(self, thm):
         for i, gp in enumerate(self._grid_points):

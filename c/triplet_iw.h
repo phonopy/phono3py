@@ -43,11 +43,9 @@ tpi_get_integration_weight(double *iw,
                            const double *frequency_points,
                            const long num_band0,
                            LAGCONST long tp_relative_grid_address[2][24][4][3],
-                           const long mesh[3],
                            const long triplets[3],
                            const long num_triplets,
-                           LAGCONST long (*bz_grid_address)[3],
-                           const long *bz_map,
+                           const ConstBZGrid *bzgrid,
                            const double *frequencies1,
                            const long num_band1,
                            const double *frequencies2,
@@ -71,8 +69,6 @@ tpi_get_neighboring_grid_points(long neighboring_grid_points[],
                                 const long grid_point,
                                 LAGCONST long relative_grid_address[][3],
                                 const long num_relative_grid_address,
-                                const long mesh[3],
-                                LAGCONST long bz_grid_address[][3],
-                                const long bz_map[]);
+                                const ConstBZGrid *bzgrid);
 
 #endif

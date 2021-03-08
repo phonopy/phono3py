@@ -57,10 +57,8 @@ static long in_tetrahedra(const double f0, LAGCONST double freq_vertices[24][4])
 static void get_triplet_tetrahedra_vertices(
   long vertices[2][24][4],
   LAGCONST long tp_relative_grid_address[2][24][4][3],
-  const long mesh[3],
   const long triplet[3],
-  LAGCONST long (*bz_grid_address)[3],
-  const long *bz_map);
+  const ConstBZGrid *bzgrid);
 
 void
 tpi_get_integration_weight(double *iw,
@@ -68,11 +66,9 @@ tpi_get_integration_weight(double *iw,
                            const double *frequency_points,
                            const long num_band0,
                            LAGCONST long tp_relative_grid_address[2][24][4][3],
-                           const long mesh[3],
                            const long triplets[3],
                            const long num_triplets,
-                           LAGCONST long (*bz_grid_address)[3],
-                           const long *bz_map,
+                           const ConstBZGrid *bzgrid,
                            const double *frequencies1,
                            const long num_band1,
                            const double *frequencies2,
@@ -87,10 +83,8 @@ tpi_get_integration_weight(double *iw,
 
   get_triplet_tetrahedra_vertices(vertices,
                                   tp_relative_grid_address,
-                                  mesh,
                                   triplets,
-                                  bz_grid_address,
-                                  bz_map);
+                                  bzgrid);
 
   num_band_prod = num_triplets * num_band0 * num_band1 * num_band2;
 
@@ -214,29 +208,28 @@ tpi_get_neighboring_grid_points(long neighboring_grid_points[],
                                 const long grid_point,
                                 LAGCONST long relative_grid_address[][3],
                                 const long num_relative_grid_address,
-                                const long mesh[3],
-                                LAGCONST long bz_grid_address[][3],
-                                const long bz_map[])
+                                const ConstBZGrid *bzgrid)
 {
   long bzmesh[3], address_double[3], bz_address_double[3], PS[3];
   long i, j, bz_gp, prod_bz_mesh;
 
   prod_bz_mesh = 1;
   for (i = 0; i < 3; i++) {
-    bzmesh[i] = mesh[i] * 2;
+    bzmesh[i] = bzgrid->D_diag[i] * 2;
     prod_bz_mesh *= bzmesh[i];
     PS[i] = 0;
   }
   for (i = 0; i < num_relative_grid_address; i++) {
     for (j = 0; j < 3; j++) {
-      address_double[j] = (bz_grid_address[grid_point][j] +
+      address_double[j] = (bzgrid->addresses[grid_point][j] +
                            relative_grid_address[i][j]) * 2;
       bz_address_double[j] = address_double[j];
     }
-    bz_gp = bz_map[grg_get_double_grid_index(bz_address_double, bzmesh, PS)];
+    bz_gp = bzgrid->gp_map[
+      grg_get_double_grid_index(bz_address_double, bzmesh, PS)];
     if (bz_gp == prod_bz_mesh) {
       neighboring_grid_points[i] =
-        grg_get_double_grid_index(address_double, mesh, PS);
+        grg_get_double_grid_index(address_double, bzgrid->D_diag, PS);
     } else {
       neighboring_grid_points[i] = bz_gp;
     }
@@ -332,10 +325,8 @@ static long in_tetrahedra(const double f0, LAGCONST double freq_vertices[24][4])
 static void get_triplet_tetrahedra_vertices(
   long vertices[2][24][4],
   LAGCONST long tp_relative_grid_address[2][24][4][3],
-  const long mesh[3],
   const long triplet[3],
-  LAGCONST long (*bz_grid_address)[3],
-  const long *bz_map)
+  const ConstBZGrid *bzgrid)
 {
   long i, j;
 
@@ -345,9 +336,7 @@ static void get_triplet_tetrahedra_vertices(
                                       triplet[i + 1],
                                       tp_relative_grid_address[i][j],
                                       4,
-                                      mesh,
-                                      bz_grid_address,
-                                      bz_map);
+                                      bzgrid);
     }
   }
 }

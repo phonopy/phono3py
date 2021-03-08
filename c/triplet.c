@@ -87,11 +87,9 @@ void tpl_get_integration_weight(double *iw,
                                 const double *frequency_points,
                                 const long num_band0,
                                 LAGCONST long relative_grid_address[24][4][3],
-                                const long mesh[3],
                                 LAGCONST long (*triplets)[3],
                                 const long num_triplets,
-                                LAGCONST long (*bz_grid_address)[3],
-                                const long *bz_map,
+                                const ConstBZGrid *bzgrid,
                                 const double *frequencies1,
                                 const long num_band1,
                                 const double *frequencies2,
@@ -115,11 +113,9 @@ void tpl_get_integration_weight(double *iw,
                                frequency_points,  /* f0 */
                                num_band0,
                                tp_relative_grid_address,
-                               mesh,
                                triplets[i],
                                num_triplets,
-                               bz_grid_address,
-                               bz_map,
+                               bzgrid,
                                frequencies1,  /* f1 */
                                num_band1,
                                frequencies2,  /* f2 */
@@ -168,7 +164,7 @@ void tpl_get_integration_weight_with_sigma(double *iw,
 }
 
 
-long tpl_is_N(const long triplet[3], const long *grid_address)
+long tpl_is_N(const long triplet[3], const long (*bz_grid_addresses)[3])
 {
   long i, j, sum_q, is_N;
 
@@ -176,7 +172,7 @@ long tpl_is_N(const long triplet[3], const long *grid_address)
   for (i = 0; i < 3; i++) {
     sum_q = 0;
     for (j = 0; j < 3; j++) { /* 1st, 2nd, 3rd triplet */
-      sum_q += grid_address[triplet[j] * 3 + i];
+      sum_q += bz_grid_addresses[triplet[j]][i];
     }
     if (sum_q) {
       is_N = 0;

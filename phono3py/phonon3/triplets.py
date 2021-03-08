@@ -702,7 +702,8 @@ def _set_triplets_integration_weights_c(g,
                 np.array(j * unique_vertices, dtype='int_', order='C'),
                 mesh,
                 pp.bz_grid.addresses,
-                pp.bz_grid.gp_map)
+                pp.bz_grid.gp_map,
+                pp.bz_grid.is_dense_gp_map * 1 + 1)
             pp.run_phonon_solver(
                 np.array(np.unique(neighboring_grid_points), dtype='int_'))
 
@@ -718,6 +719,7 @@ def _set_triplets_integration_weights_c(g,
         frequencies,  # f2
         pp.bz_grid.addresses,
         pp.bz_grid.gp_map,
+        pp.bz_grid.is_dense_gp_map * 1 + 1,
         g.shape[0])
 
 
