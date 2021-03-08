@@ -992,6 +992,7 @@ def main(**argparse_control):
                           sigmas=updated_settings['sigmas'],
                           temperatures=updated_settings['temperatures'],
                           is_kappa_star=settings.is_kappa_star,
+                          is_dense_gp_map=settings.is_dense_gp_map,
                           is_lbte=(settings.write_collision or
                                    settings.is_lbte),
                           compression=settings.hdf5_compression,
@@ -1010,6 +1011,7 @@ def main(**argparse_control):
                           band_indices=settings.band_indices,
                           grid_points=updated_settings['grid_points'],
                           is_kappa_star=settings.is_kappa_star,
+                          is_dense_gp_map=settings.is_dense_gp_map,
                           symprec=symprec)
 
         if log_level:

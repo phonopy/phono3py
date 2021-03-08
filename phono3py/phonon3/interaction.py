@@ -300,7 +300,8 @@ class Interaction(object):
              ir_map_at_q) = get_nosym_triplets_at_q(
                  grid_point,
                  self._mesh,
-                 reciprocal_lattice)
+                 reciprocal_lattice,
+                 is_dense_gp_map=self._is_dense_gp_map)
         else:
             (triplets_at_q,
              weights_at_q,
@@ -310,7 +311,8 @@ class Interaction(object):
                  grid_point,
                  self._mesh,
                  self._symmetry.pointgroup_operations,
-                 reciprocal_lattice)
+                 reciprocal_lattice,
+                 is_dense_gp_map=self._is_dense_gp_map)
 
         # Special treatment of symmetry is applied when q_direction is used.
         if self._nac_q_direction is not None:

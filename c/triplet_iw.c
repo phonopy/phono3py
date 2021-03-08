@@ -59,6 +59,18 @@ static void get_triplet_tetrahedra_vertices(
   LAGCONST long tp_relative_grid_address[2][24][4][3],
   const long triplet[3],
   const ConstBZGrid *bzgrid);
+static void
+get_neighboring_grid_points_type1(long neighboring_grid_points[],
+                                  const long grid_point,
+                                  LAGCONST long relative_grid_address[][3],
+                                  const long num_relative_grid_address,
+                                  const ConstBZGrid *bzgrid);
+static void
+get_neighboring_grid_points_type2(long neighboring_grid_points[],
+                                  const long grid_point,
+                                  LAGCONST long relative_grid_address[][3],
+                                  const long num_relative_grid_address,
+                                  const ConstBZGrid *bzgrid);
 
 void
 tpi_get_integration_weight(double *iw,
@@ -210,29 +222,18 @@ tpi_get_neighboring_grid_points(long neighboring_grid_points[],
                                 const long num_relative_grid_address,
                                 const ConstBZGrid *bzgrid)
 {
-  long bzmesh[3], address_double[3], bz_address_double[3], PS[3];
-  long i, j, bz_gp, prod_bz_mesh;
-
-  prod_bz_mesh = 1;
-  for (i = 0; i < 3; i++) {
-    bzmesh[i] = bzgrid->D_diag[i] * 2;
-    prod_bz_mesh *= bzmesh[i];
-    PS[i] = 0;
-  }
-  for (i = 0; i < num_relative_grid_address; i++) {
-    for (j = 0; j < 3; j++) {
-      address_double[j] = (bzgrid->addresses[grid_point][j] +
-                           relative_grid_address[i][j]) * 2;
-      bz_address_double[j] = address_double[j];
-    }
-    bz_gp = bzgrid->gp_map[
-      grg_get_double_grid_index(bz_address_double, bzmesh, PS)];
-    if (bz_gp == prod_bz_mesh) {
-      neighboring_grid_points[i] =
-        grg_get_double_grid_index(address_double, bzgrid->D_diag, PS);
-    } else {
-      neighboring_grid_points[i] = bz_gp;
-    }
+  if (bzgrid->type == 1) {
+    get_neighboring_grid_points_type1(neighboring_grid_points,
+                                      grid_point,
+                                      relative_grid_address,
+                                      num_relative_grid_address,
+                                      bzgrid);
+  } else {
+    get_neighboring_grid_points_type2(neighboring_grid_points,
+                                      grid_point,
+                                      relative_grid_address,
+                                      num_relative_grid_address,
+                                      bzgrid);
   }
 }
 
@@ -322,8 +323,7 @@ static long in_tetrahedra(const double f0, LAGCONST double freq_vertices[24][4])
   }
 }
 
-static void get_triplet_tetrahedra_vertices(
-  long vertices[2][24][4],
+static void get_triplet_tetrahedra_vertices(long vertices[2][24][4],
   LAGCONST long tp_relative_grid_address[2][24][4][3],
   const long triplet[3],
   const ConstBZGrid *bzgrid)
@@ -337,6 +337,66 @@ static void get_triplet_tetrahedra_vertices(
                                       tp_relative_grid_address[i][j],
                                       4,
                                       bzgrid);
+    }
+  }
+}
+
+static void
+get_neighboring_grid_points_type1(long neighboring_grid_points[],
+                                  const long grid_point,
+                                  LAGCONST long relative_grid_address[][3],
+                                  const long num_relative_grid_address,
+                                  const ConstBZGrid *bzgrid)
+{
+  long bzmesh[3], bz_address[3];
+  long i, j, bz_gp, prod_bz_mesh;
+
+  for (i = 0; i < 3; i++) {
+    bzmesh[i] = bzgrid->D_diag[i] * 2;
+  }
+  prod_bz_mesh = bzmesh[0] * bzmesh[1] * bzmesh[2];
+  for (i = 0; i < num_relative_grid_address; i++) {
+    for (j = 0; j < 3; j++) {
+      bz_address[j] = bzgrid->addresses[grid_point][j]
+        + relative_grid_address[i][j];
+    }
+    bz_gp = bzgrid->gp_map[grg_get_grid_index(bz_address, bzmesh)];
+    if (bz_gp == prod_bz_mesh) {
+      neighboring_grid_points[i] =
+        grg_get_grid_index(bz_address, bzgrid->D_diag);
+    } else {
+      neighboring_grid_points[i] = bz_gp;
+    }
+  }
+}
+
+static void
+get_neighboring_grid_points_type2(long neighboring_grid_points[],
+                                  const long grid_point,
+                                  LAGCONST long relative_grid_address[][3],
+                                  const long num_relative_grid_address,
+                                  const ConstBZGrid *bzgrid)
+{
+  long bz_address[3];
+  long i, j, gp;
+
+  for (i = 0; i < num_relative_grid_address; i++) {
+    for (j = 0; j < 3; j++) {
+      bz_address[j] = bzgrid->addresses[grid_point][j]
+        + relative_grid_address[i][j];
+    }
+    gp = grg_get_grid_index(bz_address, bzgrid->D_diag);
+    if (bzgrid->gp_map[gp + 1] - bzgrid->gp_map[gp] > 1) {
+      for (j = bzgrid->gp_map[gp]; j < bzgrid->gp_map[gp + 1]; j++) {
+        if (bz_address[0] == bzgrid->addresses[j][0]
+            && bz_address[1] == bzgrid->addresses[j][1]
+            && bz_address[2] == bzgrid->addresses[j][2]) {
+          neighboring_grid_points[i] = j;
+          break;
+        }
+      }
+    } else {
+      neighboring_grid_points[i] = bzgrid->gp_map[gp];
     }
   }
 }

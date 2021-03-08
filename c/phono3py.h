@@ -39,7 +39,11 @@
 #define PHPYCONST
 #endif
 
-#include "lapack_wrapper.h"
+#ifdef MKL_LAPACKE
+#include <mkl.h>
+#else
+#include <lapacke.h>
+#endif
 #include "phonoc_array.h"
 
 long ph3py_get_interaction(Darray *fc3_normal_squared,

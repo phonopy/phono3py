@@ -107,10 +107,12 @@ def show_num_triplets(primitive,
                       band_indices=None,
                       grid_points=None,
                       is_kappa_star=True,
+                      is_dense_gp_map=False,
                       symprec=1e-5):
     tp_nums = _TripletsNumbers(primitive,
                                mesh,
                                is_kappa_star=is_kappa_star,
+                               is_dense_gp_map=is_dense_gp_map,
                                symprec=symprec)
 
     num_band = len(primitive) * 3
