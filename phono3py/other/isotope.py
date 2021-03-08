@@ -65,8 +65,8 @@ class Isotope(object):
                  band_indices=None,
                  sigma=None,
                  bz_grid=None,
-                 is_dense_gp_map=False,
                  frequency_factor_to_THz=VaspToTHz,
+                 is_dense_gp_map=False,
                  symprec=1e-5,
                  cutoff_frequency=None,
                  lapack_zheev_uplo='L'):

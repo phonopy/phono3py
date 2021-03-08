@@ -747,6 +747,7 @@ def run_jdos_then_exit(phono3py,
         frequency_factor_to_THz=updated_settings['frequency_factor_to_THz'],
         frequency_scale_factor=updated_settings['frequency_scale_factor'],
         is_mesh_symmetry=settings.is_mesh_symmetry,
+        is_dense_gp_map=settings.is_dense_gp_map,
         symprec=phono3py.symmetry.tolerance,
         output_filename=output_filename,
         log_level=log_level)
@@ -776,6 +777,7 @@ def run_isotope_then_exit(phono3py, settings, updated_settings, log_level):
         band_indices=band_indices,
         sigmas=updated_settings['sigmas'],
         frequency_factor_to_THz=updated_settings['frequency_factor_to_THz'],
+        is_dense_gp_map=is_dense_gp_map,
         symprec=phono3py.symmetry.tolerance,
         cutoff_frequency=settings.cutoff_frequency,
         lapack_zheev_uplo=settings.lapack_zheev_uplo)

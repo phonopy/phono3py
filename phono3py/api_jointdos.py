@@ -53,6 +53,7 @@ class Phono3pyJointDos(object):
                  frequency_factor_to_THz=VaspToTHz,
                  frequency_scale_factor=None,
                  is_mesh_symmetry=True,
+                 is_dense_gp_map=False,
                  symprec=1e-5,
                  output_filename=None,
                  log_level=0):
@@ -60,38 +61,28 @@ class Phono3pyJointDos(object):
             self._sigmas = [None]
         else:
             self._sigmas = sigmas
-        self._supercell = supercell
-        self._primitive = primitive
         self._mesh_numbers = mesh
-        self._fc2 = fc2
-        self._nac_params = nac_params
-        self._nac_q_direction = nac_q_direction
-        self._cutoff_frequency = cutoff_frequency
-        self._frequency_step = frequency_step
-        self._num_frequency_points = num_frequency_points
         self._temperatures = temperatures
-        self._frequency_factor_to_THz = frequency_factor_to_THz
-        self._frequency_scale_factor = frequency_scale_factor
         self._is_mesh_symmetry = is_mesh_symmetry
-        self._symprec = symprec
         self._filename = output_filename
         self._log_level = log_level
 
         self._jdos = JointDos(
             self._mesh_numbers,
-            self._primitive,
-            self._supercell,
-            self._fc2,
-            nac_params=self._nac_params,
-            nac_q_direction=self._nac_q_direction,
-            cutoff_frequency=self._cutoff_frequency,
-            frequency_step=self._frequency_step,
-            num_frequency_points=self._num_frequency_points,
+            primitive,
+            supercell,
+            fc2,
+            nac_params=nac_params,
+            nac_q_direction=nac_q_direction,
+            cutoff_frequency=cutoff_frequency,
+            frequency_step=frequency_step,
+            num_frequency_points=num_frequency_points,
             temperatures=self._temperatures,
-            frequency_factor_to_THz=self._frequency_factor_to_THz,
-            frequency_scale_factor=self._frequency_scale_factor,
+            frequency_factor_to_THz=frequency_factor_to_THz,
+            frequency_scale_factor=frequency_scale_factor,
             is_mesh_symmetry=self._is_mesh_symmetry,
-            symprec=self._symprec,
+            is_dense_gp_map=is_dense_gp_map,
+            symprec=symprec,
             filename=output_filename,
             log_level=self._log_level)
 
