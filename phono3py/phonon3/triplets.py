@@ -326,6 +326,19 @@ def get_triplets_integration_weights(interaction,
                                      is_collision_matrix=False,
                                      neighboring_phonons=False,
                                      lang='C'):
+    """Calculate triplets integration weights
+
+    Returns
+    -------
+    g : ndarray
+        Triplets integration weights.
+        shape=(2 or 3, triplets, freq_points, bands, bands), dtype='double'.
+    g_zero : ndarray
+        Location of strictly zero elements.
+        shape=(triplets, ), dtype='byte'
+
+    """
+
     triplets = interaction.get_triplets_at_q()[0]
     frequencies = interaction.get_phonons()[0]
     num_band = frequencies.shape[1]

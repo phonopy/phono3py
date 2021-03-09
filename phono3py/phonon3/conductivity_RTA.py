@@ -570,7 +570,7 @@ class Conductivity_RTA(Conductivity):
             self._allocate_values()
 
     def set_kappa_at_sigmas(self):
-        num_band = self._primitive.get_number_of_atoms() * 3
+        num_band = len(self._primitive) * 3
         for i, grid_point in enumerate(self._grid_points):
             cv = self._cv[:, i, :]
             gp = self._grid_points[i]

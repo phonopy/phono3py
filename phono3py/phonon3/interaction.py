@@ -317,9 +317,9 @@ class Interaction(object):
         if self._nac_q_direction is not None:
             if (bz_grid.addresses[grid_point] == 0).all():
                 self._phonon_done[grid_point] = 0
-                self.run_phonon_solver(np.array([grid_point], dtype='int_'))
+                self.run_phonon_solver(np.array([grid_point, ], dtype='int_'))
                 rotations = []
-                for r in self._symmetry.get_pointgroup_operations():
+                for r in self._symmetry.pointgroup_operations:
                     dq = self._nac_q_direction
                     dq /= np.linalg.norm(dq)
                     diff = np.dot(dq, r) - dq

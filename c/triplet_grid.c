@@ -444,12 +444,14 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
   long bz_address[3][3];
   const long *gp_map;
   const long (*bz_adrs)[3];
-  double d, d2, min_d2;
+  double d, d2, min_d2, tolerance;
   double LQD_inv[3][3];
 
   gp_map = bzgrid->gp_map;
   bz_adrs = bzgrid->addresses;
   get_LQD_inv(LQD_inv, bzgrid);
+  /* This tolerance is used to be consistent to BZ reduction in bzgrid. */
+  tolerance = bzg_get_tolerance_for_BZ_reduction((BZGrid*)bzgrid);
 
 #pragma omp parallel for private(j, gp2, bzgp, G, bz_address, d, d2, min_d2)
   for (i = 0; i < num_ir; i++) {
@@ -480,7 +482,7 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
             d = LQD_inv[j][0] * G[0] + LQD_inv[j][1] * G[1] + LQD_inv[j][2] * G[2];
             d2 += d * d;
           }
-          if (d2 < min_d2 || min_d2 < 0) {
+          if (d2 < min_d2 + tolerance || min_d2 < 0) {
             min_d2 = d2;
             for (j = 0; j < 3; j++) {
               triplets[i][j] = bzgp[j];
