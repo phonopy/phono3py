@@ -40,7 +40,8 @@ from phonopy.units import VaspToTHz
 from phono3py.phonon3.triplets import (get_triplets_at_q,
                                        get_nosym_triplets_at_q,
                                        get_tetrahedra_vertices,
-                                       get_triplets_integration_weights)
+                                       get_triplets_integration_weights,
+                                       BZGrid)
 from phono3py.phonon.solver import run_phonon_solver_c
 from phono3py.phonon.func import bose_einstein
 from phono3py.phonon3.imag_self_energy import get_frequency_points
@@ -108,6 +109,12 @@ class JointDos(object):
 
         self._joint_dos = None
         self._frequency_points = None
+
+        reciprocal_lattice = np.linalg.inv(self._primitive.cell)
+        self._bz_grid = BZGrid(self._mesh,
+                               reciprocal_lattice,
+                               is_dense_gp_map=self._is_dense_gp_map)
+        self._bz_grid.set_bz_grid()
 
     def run(self):
         self.run_phonon_solver(
@@ -331,25 +338,17 @@ class JointDos(object):
 
             (self._triplets_at_q,
              self._weights_at_q,
-             bz_grid,
              map_triplets,
              map_q) = get_nosym_triplets_at_q(
-                 self._grid_point,
-                 self._mesh,
-                 self._reciprocal_lattice,
-                 is_dense_gp_map=self._is_dense_gp_map)
+                 self._grid_point, self._bz_grid)
         else:
             (self._triplets_at_q,
              self._weights_at_q,
-             bz_grid,
              map_triplets,
              map_q) = get_triplets_at_q(
                  self._grid_point,
-                 self._mesh,
                  self._symmetry.pointgroup_operations,
-                 self._reciprocal_lattice,
-                 is_dense_gp_map=self._is_dense_gp_map)
-        self._bz_grid = bz_grid
+                 self._bz_grid)
 
     def _allocate_phonons(self):
         num_grid = len(self._bz_grid.addresses)

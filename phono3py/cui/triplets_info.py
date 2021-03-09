@@ -36,8 +36,7 @@ import numpy as np
 from phonopy.structure.symmetry import Symmetry
 from phono3py.file_IO import write_ir_grid_points, write_grid_address_to_hdf5
 from phono3py.phonon3.triplets import (
-    get_ir_grid_points, get_triplets_at_q,
-    get_grid_point_from_address, BZGrid)
+    get_ir_grid_points, get_triplets_at_q, BZGrid)
 
 
 def write_grid_points(primitive,
@@ -149,23 +148,21 @@ class _TripletsNumbers(object):
         self._is_dense_gp_map = is_dense_gp_map
         self._symprec = symprec
 
-        self.ir_grid_points, _, self.bz_grid = _get_ir_grid_points(
+        self.ir_grid_points, _, self._bz_grid = _get_ir_grid_points(
             self._primitive,
             self._mesh,
             is_kappa_star=is_kappa_star,
             is_dense_gp_map=self._is_dense_gp_map,
             symprec=self._symprec)
 
-    def get_number_of_triplets(self, gp):
-        if self._is_dense_gp_map:
-            _gp = get_grid_point_from_address(
-                self.bz_grid.addresses[gp], self._mesh)
-        else:
-            _gp = gp
+    @property
+    def bz_grid(self):
+        return self._bz_grid
 
+    def get_number_of_triplets(self, gp):
         num_triplets = _get_number_of_triplets(self._primitive,
-                                               self._mesh,
-                                               _gp,
+                                               self._bz_grid,
+                                               gp,
                                                swappable=True,
                                                symprec=self._symprec)
         return num_triplets
@@ -186,24 +183,20 @@ def _get_ir_grid_points(primitive,
                      reciprocal_lattice,
                      is_dense_gp_map=is_dense_gp_map)
     bz_grid.relocate(grid_address)
-    if bz_grid.is_dense_gp_map:
+    if is_dense_gp_map:
         ir_grid_points = bz_grid.gp_map[ir_grid_points]
 
     return ir_grid_points, ir_grid_weights, bz_grid
 
 
 def _get_number_of_triplets(primitive,
-                            mesh,
+                            bz_grid,
                             grid_point,
                             swappable=True,
                             symprec=1e-5):
     symmetry = Symmetry(primitive, symprec)
-    point_group = symmetry.pointgroup_operations
-    reciprocal_lattice = np.linalg.inv(primitive.cell)
     triplets_at_q = get_triplets_at_q(grid_point,
-                                      mesh,
-                                      point_group,
-                                      reciprocal_lattice,
+                                      symmetry.pointgroup_operations,
+                                      bz_grid,
                                       swappable=swappable)[0]
-
     return len(triplets_at_q)

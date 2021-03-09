@@ -41,7 +41,6 @@ from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
 from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
 from phono3py.phonon3.triplets import (get_triplets_at_q,
                                        get_nosym_triplets_at_q,
-                                       get_grid_point_from_address,
                                        BZGrid)
 
 
@@ -292,33 +291,24 @@ class Interaction(object):
 
     def set_grid_point(self, grid_point, stores_triplets_map=False):
         reciprocal_lattice = np.linalg.inv(self._primitive.cell)
-        non_bz_gp = get_grid_point_from_address(
-            self._bz_grid.addresses[grid_point], self._mesh)
         if not self._is_mesh_symmetry:
             (triplets_at_q,
              weights_at_q,
-             bz_grid,
              triplets_map_at_q,
              ir_map_at_q) = get_nosym_triplets_at_q(
-                 non_bz_gp,
-                 self._mesh,
-                 reciprocal_lattice,
-                 is_dense_gp_map=self._is_dense_gp_map)
+                 grid_point, self._bz_grid)
         else:
             (triplets_at_q,
              weights_at_q,
-             bz_grid,
              triplets_map_at_q,
              ir_map_at_q) = get_triplets_at_q(
-                 non_bz_gp,
-                 self._mesh,
+                 grid_point,
                  self._symmetry.pointgroup_operations,
-                 reciprocal_lattice,
-                 is_dense_gp_map=self._is_dense_gp_map)
+                 self._bz_grid)
 
         # Special treatment of symmetry is applied when q_direction is used.
         if self._nac_q_direction is not None:
-            if (bz_grid.addresses[grid_point] == 0).all():
+            if (self._bz_grid.addresses[grid_point] == 0).all():
                 self._phonon_done[grid_point] = 0
                 self.run_phonon_solver(np.array([grid_point, ], dtype='int_'))
                 rotations = []
@@ -330,27 +320,24 @@ class Interaction(object):
                         rotations.append(r)
                 (triplets_at_q,
                  weights_at_q,
-                 bz_grid,
                  triplets_map_at_q,
                  ir_map_at_q) = get_triplets_at_q(
-                     non_bz_gp,
-                     self._mesh,
+                     grid_point,
                      np.array(rotations, dtype='intc', order='C'),
-                     reciprocal_lattice,
-                     is_time_reversal=False,
-                     is_dense_gp_map=self._is_dense_gp_map)
+                     self._bz_grid,
+                     is_time_reversal=False)
 
         for triplet in triplets_at_q:
-            sum_q = (bz_grid.addresses[triplet]).sum(axis=0)
+            sum_q = (self._bz_grid.addresses[triplet]).sum(axis=0)
             if (sum_q % self._mesh != 0).any():
                 print("============= Warning ==================")
                 print("%s" % triplet)
                 for tp in triplet:
                     print("%s %s" %
-                          (bz_grid.addresses[tp],
+                          (self._bz_grid.addresses[tp],
                            np.linalg.norm(
                                np.dot(reciprocal_lattice,
-                                      bz_grid.addresses[tp] /
+                                      self._bz_grid.addresses[tp] /
                                       self._mesh.astype('double')))))
                 print("%s" % sum_q)
                 print("============= Warning ==================")
@@ -532,9 +519,9 @@ class Interaction(object):
                              self._lapack_zheev_uplo)
 
     def _allocate_phonon(self):
-        primitive_lattice = np.linalg.inv(self._primitive.cell)
+        reciprocal_lattice = np.linalg.inv(self._primitive.cell)
         self._bz_grid = BZGrid(self._mesh,
-                               primitive_lattice,
+                               reciprocal_lattice,
                                is_dense_gp_map=self._is_dense_gp_map)
         self._bz_grid.set_bz_grid()
         num_band = len(self._primitive) * 3

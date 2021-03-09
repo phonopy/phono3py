@@ -439,9 +439,9 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
                                        const long *ir_grid_points,
                                        const long num_ir)
 {
-  long i, j, gp2;
+  long i, j, gp0, gp2;
   long bzgp[3], G[3];
-  long bz_address[3][3];
+  long bz_adrs0[3], bz_adrs1[3], bz_adrs2[3];
   const long *gp_map;
   const long (*bz_adrs)[3];
   double d, d2, min_d2, tolerance;
@@ -453,18 +453,21 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
   /* This tolerance is used to be consistent to BZ reduction in bzgrid. */
   tolerance = bzg_get_tolerance_for_BZ_reduction((BZGrid*)bzgrid);
 
-#pragma omp parallel for private(j, gp2, bzgp, G, bz_address, d, d2, min_d2)
+  for (i = 0; i < 3; i++) {
+    bz_adrs0[i] = bz_adrs[grid_point][i];
+  }
+  gp0 = grg_get_grid_index(bz_adrs0, bzgrid->D_diag);
+
+#pragma omp parallel for private(j, gp2, bzgp, G, bz_adrs1, bz_adrs2, d, d2, min_d2)
   for (i = 0; i < num_ir; i++) {
     for (j = 0; j < 3; j++) {
-      bz_address[0][j] = bz_adrs[gp_map[grid_point]][j];
-      bz_address[1][j] = bz_adrs[gp_map[ir_grid_points[i]]][j];
-      bz_address[2][j] = - bz_address[0][j] - bz_address[1][j];
+      bz_adrs1[j] = bz_adrs[gp_map[ir_grid_points[i]]][j];
+      bz_adrs2[j] = - bz_adrs0[j] - bz_adrs1[j];
     }
-    gp2 = grg_get_grid_index(bz_address[2], bzgrid->D_diag);
+    gp2 = grg_get_grid_index(bz_adrs2, bzgrid->D_diag);
     /* Negative value is the signal to initialize min_d2 later. */
     min_d2 = -1;
-    for (bzgp[0] = gp_map[grid_point];
-         bzgp[0] < gp_map[grid_point + 1]; bzgp[0]++) {
+    for (bzgp[0] = gp_map[gp0]; bzgp[0] < gp_map[gp0 + 1]; bzgp[0]++) {
       for (bzgp[1] = gp_map[ir_grid_points[i]];
            bzgp[1] < gp_map[ir_grid_points[i] + 1]; bzgp[1]++) {
         for (bzgp[2] = gp_map[gp2]; bzgp[2] < gp_map[gp2 + 1]; bzgp[2]++) {
