@@ -257,8 +257,9 @@ long ph3py_get_BZ_triplets_at_q(long (*triplets)[3],
                                 const long *bz_map,
                                 const long *map_triplets,
                                 const long num_map_triplets,
-                                const long mesh[3],
-                                const long type);
+                                const long D_diag[3],
+                                const long Q[3][3],
+                                const long bz_grid_type);
 long ph3py_get_integration_weight(double *iw,
                                   char *iw_zero,
                                   const double *frequency_points,

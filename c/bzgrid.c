@@ -179,7 +179,6 @@ static long get_bz_grid_addresses_type1(BZGrid *bzgrid,
                                         LAGCONST long grid_address[][3]);
 static long get_bz_grid_addresses_type2(BZGrid *bzgrid,
                                         LAGCONST long grid_address[][3]);
-static double get_tolerance_for_BZ_reduction(const BZGrid *bzgrid);
 static void multiply_matrix_vector_d3(double v[3],
                                       LAGCONST double a[3][3],
                                       const double b[3]);
@@ -244,6 +243,42 @@ long bzg_get_bz_grid_addresses(BZGrid *bzgrid,
   } else {
     return get_bz_grid_addresses_type2(bzgrid, grid_address);
   }
+}
+
+
+/* Note: Tolerance in squared distance. */
+double bzg_get_tolerance_for_BZ_reduction(const BZGrid *bzgrid)
+{
+  long i, j;
+  double tolerance;
+  double length[3];
+  double reclatQ[3][3];
+
+  for (i = 0; i < 3; i++) {
+    for (j = 0; j < 3; j++) {
+      reclatQ[i][j] =
+        bzgrid->reclat[i][0] * bzgrid->Q[0][j]
+        + bzgrid->reclat[i][1] * bzgrid->Q[1][j]
+        + bzgrid->reclat[i][2] * bzgrid->Q[2][j];
+    }
+  }
+
+  for (i = 0; i < 3; i++) {
+    length[i] = 0;
+    for (j = 0; j < 3; j++) {
+      length[i] += reclatQ[j][i] * reclatQ[j][i];
+    }
+    length[i] /= bzgrid->D_diag[i] * bzgrid->D_diag[i];
+  }
+  tolerance = length[0];
+  for (i = 1; i < 3; i++) {
+    if (tolerance < length[i]) {
+      tolerance = length[i];
+    }
+  }
+  tolerance *= 0.01;
+
+  return tolerance;
 }
 
 RotMats * bzg_alloc_RotMats(const long size)
@@ -397,7 +432,7 @@ static long get_bz_grid_addresses_type1(BZGrid *bzgrid,
   bz_grid_address = bzgrid->addresses;
   bz_map = bzgrid->gp_map;
 
-  tolerance = get_tolerance_for_BZ_reduction(bzgrid);
+  tolerance = bzg_get_tolerance_for_BZ_reduction(bzgrid);
   for (j = 0; j < 3; j++) {
     bzmesh[j] = bzgrid->D_diag[j] * 2;
   }
@@ -472,7 +507,7 @@ static long get_bz_grid_addresses_type2(BZGrid *bzgrid,
     return 0;
   }
 
-  tolerance = get_tolerance_for_BZ_reduction(bzgrid);
+  tolerance = bzg_get_tolerance_for_BZ_reduction(bzgrid);
   num_gp = 0;
   /* The first element of gp_map is always 0. */
   bzgrid->gp_map[0] = 0;
@@ -521,41 +556,6 @@ static long get_bz_grid_addresses_type2(BZGrid *bzgrid,
 
   bzgrid->size = num_gp;
   return 1;
-}
-
-/* Note: Tolerance in squared distance. */
-static double get_tolerance_for_BZ_reduction(const BZGrid *bzgrid)
-{
-  long i, j;
-  double tolerance;
-  double length[3];
-  double reclatQ[3][3];
-
-  for (i = 0; i < 3; i++) {
-    for (j = 0; j < 3; j++) {
-      reclatQ[i][j] =
-        bzgrid->reclat[i][0] * bzgrid->Q[0][j]
-        + bzgrid->reclat[i][1] * bzgrid->Q[1][j]
-        + bzgrid->reclat[i][2] * bzgrid->Q[2][j];
-    }
-  }
-
-  for (i = 0; i < 3; i++) {
-    length[i] = 0;
-    for (j = 0; j < 3; j++) {
-      length[i] += reclatQ[j][i] * reclatQ[j][i];
-    }
-    length[i] /= bzgrid->D_diag[i] * bzgrid->D_diag[i];
-  }
-  tolerance = length[0];
-  for (i = 1; i < 3; i++) {
-    if (tolerance < length[i]) {
-      tolerance = length[i];
-    }
-  }
-  tolerance *= 0.01;
-
-  return tolerance;
 }
 
 static void multiply_matrix_vector_d3(double v[3],

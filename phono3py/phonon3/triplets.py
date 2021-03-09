@@ -665,6 +665,7 @@ def _get_BZ_triplets_at_q(grid_point,
         weights[g] += 1
     ir_weights = np.extract(weights > 0, weights)
     triplets = -np.ones((len(ir_weights), 3), dtype='int_')
+    Q = np.eye(3, dtype='int_', order='C')
     num_ir_ret = phono3c.BZ_triplets_at_q(
         triplets,
         grid_point,
@@ -672,6 +673,7 @@ def _get_BZ_triplets_at_q(grid_point,
         bz_grid.gp_map,
         map_triplets,
         np.array(mesh, dtype='int_'),
+        Q,
         bz_grid.is_dense_gp_map * 1 + 1)
 
     assert num_ir_ret == len(ir_weights)

@@ -105,6 +105,7 @@ long bzg_get_ir_reciprocal_mesh(long grid_address[][3],
                                 const RotMats * rotations);
 long bzg_get_bz_grid_addresses(BZGrid *bzgrid,
                                LAGCONST long grid_address[][3]);
+double bzg_get_tolerance_for_BZ_reduction(const BZGrid *bzgrid);
 RotMats * bzg_alloc_RotMats(const long size);
 void bzg_free_RotMats(RotMats * rotmats);
 

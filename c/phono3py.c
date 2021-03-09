@@ -583,10 +583,11 @@ long ph3py_get_BZ_triplets_at_q(long (*triplets)[3],
                                 const long *map_triplets,
                                 const long num_map_triplets,
                                 const long D_diag[3],
-                                const long type)
+                                const long Q[3][3],
+                                const long bz_grid_type)
 {
   ConstBZGrid *bzgrid;
-  long i, num_ir;
+  long i, j, num_ir;
 
   if ((bzgrid = (ConstBZGrid*) malloc(sizeof(ConstBZGrid))) == NULL) {
     warning_print("Memory could not be allocated.");
@@ -595,10 +596,13 @@ long ph3py_get_BZ_triplets_at_q(long (*triplets)[3],
 
   bzgrid->addresses = bz_grid_addresses;
   bzgrid->gp_map = bz_map;
-  bzgrid->type = type;
+  bzgrid->type = bz_grid_type;
   for (i = 0; i < 3; i++) {
     bzgrid->D_diag[i] = D_diag[i];
     bzgrid->PS[i] = 0;
+    for (j = 0; j < 3; j++) {
+      bzgrid->Q[i][j] = Q[i][j];
+    }
   }
   bzgrid->size = num_map_triplets;
 

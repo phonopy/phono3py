@@ -1631,26 +1631,29 @@ static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args)
   PyArrayObject *py_bz_grid_address;
   PyArrayObject *py_bz_map;
   PyArrayObject *py_map_triplets;
-  PyArrayObject *py_mesh;
+  PyArrayObject *py_D_diag;
+  PyArrayObject *py_Q;
   long grid_point;
-  long type;
+  long bz_grid_type;
 
   long (*triplets)[3];
   long (*bz_grid_address)[3];
   long *bz_map;
   long *map_triplets;
   long num_map_triplets;
-  long *mesh;
+  long *D_diag;
+  long (*Q)[3];
   long num_ir;
 
-  if (!PyArg_ParseTuple(args, "OlOOOOl",
+  if (!PyArg_ParseTuple(args, "OlOOOOOl",
                         &py_triplets,
                         &grid_point,
                         &py_bz_grid_address,
                         &py_bz_map,
                         &py_map_triplets,
-                        &py_mesh,
-                        &type)) {
+                        &py_D_diag,
+                        &py_Q,
+                        &bz_grid_type)) {
     return NULL;
   }
 
@@ -1659,7 +1662,8 @@ static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args)
   bz_map = (long*)PyArray_DATA(py_bz_map);
   map_triplets = (long*)PyArray_DATA(py_map_triplets);
   num_map_triplets = (long)PyArray_DIMS(py_map_triplets)[0];
-  mesh = (long*)PyArray_DATA(py_mesh);
+  D_diag = (long*)PyArray_DATA(py_D_diag);
+  Q = (long(*)[3])PyArray_DATA(py_Q);
 
   num_ir = ph3py_get_BZ_triplets_at_q(triplets,
                                       grid_point,
@@ -1667,8 +1671,9 @@ static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args)
                                       bz_map,
                                       map_triplets,
                                       num_map_triplets,
-                                      mesh,
-                                      type);
+                                      D_diag,
+                                      Q,
+                                      bz_grid_type);
 
   return PyLong_FromLong(num_ir);
 }
