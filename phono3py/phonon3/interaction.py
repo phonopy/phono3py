@@ -95,7 +95,6 @@ class Interaction(object):
 
         self._symprec = symmetry.get_symmetry_tolerance()
 
-        self._grid_point = None
         self._triplets_at_q = None
         self._weights_at_q = None
         self._triplets_map_at_q = None
@@ -335,7 +334,8 @@ class Interaction(object):
                      self._mesh,
                      np.array(rotations, dtype='intc', order='C'),
                      reciprocal_lattice,
-                     is_time_reversal=False)
+                     is_time_reversal=False,
+                     is_dense_gp_map=self._is_dense_gp_map)
 
         for triplet in triplets_at_q:
             sum_q = (bz_grid.addresses[triplet]).sum(axis=0)
@@ -352,7 +352,6 @@ class Interaction(object):
                 print("%s" % sum_q)
                 print("============= Warning ==================")
 
-        self._grid_point = grid_point
         self._triplets_at_q = triplets_at_q
         self._weights_at_q = weights_at_q
         self._triplets_map_at_q = triplets_map_at_q

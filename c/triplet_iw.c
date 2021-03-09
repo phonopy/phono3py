@@ -386,6 +386,7 @@ get_neighboring_grid_points_type2(long neighboring_grid_points[],
         + relative_grid_address[i][j];
     }
     gp = grg_get_grid_index(bz_address, bzgrid->D_diag);
+    neighboring_grid_points[i] = bzgrid->gp_map[gp];
     if (bzgrid->gp_map[gp + 1] - bzgrid->gp_map[gp] > 1) {
       for (j = bzgrid->gp_map[gp]; j < bzgrid->gp_map[gp + 1]; j++) {
         if (bz_address[0] == bzgrid->addresses[j][0]
@@ -395,8 +396,6 @@ get_neighboring_grid_points_type2(long neighboring_grid_points[],
           break;
         }
       }
-    } else {
-      neighboring_grid_points[i] = bzgrid->gp_map[gp];
     }
   }
 }
