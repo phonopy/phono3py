@@ -103,9 +103,10 @@ class Isotope(object):
             self._band_indices = np.array(band_indices, dtype='int_')
 
         if self._bz_grid is None:
-            primitive_lattice = np.linalg.inv(self._primitive.cell)
-            self._bz_grid = BZGrid(is_dense_gp_map=is_dense_gp_map)
-            self._bz_grid.set_bz_grid(self._mesh, primitive_lattice)
+            self._bz_grid = BZGrid(self._mesh,
+                                   np.linalg.inv(self._primitive.cell),
+                                   is_dense_gp_map=is_dense_gp_map)
+            self._bz_grid.set_bz_grid()
 
     def set_grid_point(self, grid_point):
         self._grid_point = grid_point

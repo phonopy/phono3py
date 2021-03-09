@@ -106,10 +106,10 @@ def test_BZGrid(si_pbesol_111):
                60, 61, 65, 66, 67, 68, 69, 70, 71, 72, 73, 77, 78, 79,
                83, 84, 85, 86, 87, 88, 89]
 
-    bzgrid1 = BZGrid(is_dense_gp_map=False)
-    bzgrid1.set_bz_grid(mesh, reclat)
-    bzgrid2 = BZGrid(is_dense_gp_map=True)
-    bzgrid2.set_bz_grid(mesh, reclat)
+    bzgrid1 = BZGrid(mesh, reclat, is_dense_gp_map=False)
+    bzgrid1.set_bz_grid()
+    bzgrid2 = BZGrid(mesh, reclat, is_dense_gp_map=True)
+    bzgrid2.set_bz_grid()
 
     adrs1 = bzgrid1.addresses[:np.prod(mesh)]
     adrs2 = bzgrid2.addresses[bzgrid2.gp_map[:-1]]

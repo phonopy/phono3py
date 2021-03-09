@@ -57,10 +57,32 @@ class BZGrid(object):
 
     """
 
-    def __init__(self, addresses=None, gp_map=None, is_dense_gp_map=False):
-        self._addresses = addresses
-        self._gp_map = gp_map
+    def __init__(self,
+                 mesh,
+                 reciprocal_lattice,
+                 is_shift=None,
+                 is_dense_gp_map=False):
+        """
+
+        mesh : array_like or float
+            Mesh numbers or length.
+            shape=(3,), dtype='int_'
+        reciprocal_lattice : array_like
+            Reciprocal primitive basis vectors given as column vectors
+            shape=(3, 3), dtype='double', order='C'
+        is_shift : array_like or None, optional
+            [0, 0, 0] gives Gamma center mesh and value 1 gives half mesh shift
+            along the basis vectors. Default is None.
+            dtype='int_', shape=(3,)
+
+        """
+        self._mesh = mesh
+        self._reciprocal_lattice = reciprocal_lattice
+        self._is_shift = None
         self._is_dense_gp_map = is_dense_gp_map
+
+        self._addresses = None
+        self._gp_map = None
 
     @property
     def addresses(self):
@@ -74,49 +96,24 @@ class BZGrid(object):
     def is_dense_gp_map(self):
         return self._is_dense_gp_map
 
-    def set_bz_grid(self, mesh, reciprocal_lattice):
-        """Generate BZ grid addresses and grid point mapping table
+    def set_bz_grid(self):
+        """Generate BZ grid addresses and grid point mapping table"""
+        self.relocate(get_grid_address(self._mesh))
 
-        mesh : array_like or float
-            Mesh numbers or length.
-            shape=(3,), dtype='int_'
-        reciprocal_lattice : array_like
-            Reciprocal primitive basis vectors given as column vectors
-            shape=(3, 3), dtype='double', order='C'
-
-        """
-        self.relocate(get_grid_address(mesh),
-                      mesh,
-                      reciprocal_lattice)
-
-    def relocate(self,
-                 grid_addresses,
-                 mesh,
-                 reciprocal_lattice,  # column vectors
-                 is_shift=None):
+    def relocate(self, grid_addresses):
         """Transform parallelepiped grid to BZ grid
 
         grid_addresses : ndarray
             Address of all grid points in reciprocal cell. Each address is
             given by three unsigned integers.
             dtype='int_', shape=(prod(mesh), 3)
-        mesh : array_like or float
-            Mesh numbers or length.
-            shape=(3,), dtype='int_'
-        reciprocal_lattice : array_like
-            Reciprocal primitive basis vectors given as column vectors
-            shape=(3, 3), dtype='double', order='C'
-        is_shift : array_like
-            [0, 0, 0] gives Gamma center mesh and value 1 gives half mesh shift
-            along the basis vectors.
-            dtype='int_', shape=(3,)
 
         """
         self._addresses, self._gp_map = _relocate_BZ_grid_address(
             grid_addresses,
-            mesh,
-            reciprocal_lattice,  # column vectors
-            is_shift=None,
+            self._mesh,
+            self._reciprocal_lattice,  # column vectors
+            is_shift=self._is_shift,
             is_dense_gp_map=self._is_dense_gp_map)
 
 
@@ -180,10 +177,10 @@ def get_triplets_at_q(grid_point,
         is_time_reversal=is_time_reversal,
         swappable=swappable)
 
-    bz_grid = BZGrid(is_dense_gp_map=is_dense_gp_map)
-    bz_grid.relocate(grid_address,
-                     mesh,
-                     reciprocal_lattice)
+    bz_grid = BZGrid(mesh,
+                     reciprocal_lattice,
+                     is_dense_gp_map=is_dense_gp_map)
+    bz_grid.relocate(grid_address)
     triplets_at_q, weights = _get_BZ_triplets_at_q(
         grid_point,
         bz_grid,
@@ -216,8 +213,10 @@ def get_nosym_triplets_at_q(grid_point,
     See the docstring of get_triplets_at_q.
 
     """
-    bz_grid = BZGrid(is_dense_gp_map=is_dense_gp_map)
-    bz_grid.relocate(get_grid_address(mesh), mesh, reciprocal_lattice)
+    bz_grid = BZGrid(mesh,
+                     reciprocal_lattice,
+                     is_dense_gp_map=is_dense_gp_map)
+    bz_grid.relocate(get_grid_address(mesh))
     map_triplets = np.arange(np.prod(mesh), dtype='int_')
     triplets_at_q, weights = _get_BZ_triplets_at_q(
         grid_point,
