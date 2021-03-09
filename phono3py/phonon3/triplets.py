@@ -130,7 +130,7 @@ def get_triplets_at_q(grid_point,
     """Parameters
     ----------
     grid_point : int
-        A grid point
+        A grid point of non-bz-grid.
     mesh : array_like
         Mesh numbers
         shape=(3,), dtype='int_'

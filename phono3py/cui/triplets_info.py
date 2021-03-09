@@ -36,7 +36,8 @@ import numpy as np
 from phonopy.structure.symmetry import Symmetry
 from phono3py.file_IO import write_ir_grid_points, write_grid_address_to_hdf5
 from phono3py.phonon3.triplets import (
-    get_ir_grid_points, get_triplets_at_q, BZGrid)
+    get_ir_grid_points, get_triplets_at_q,
+    get_grid_point_from_address, BZGrid)
 
 
 def write_grid_points(primitive,
@@ -145,19 +146,26 @@ class _TripletsNumbers(object):
                  symprec=1e-5):
         self._primitive = primitive
         self._mesh = mesh
+        self._is_dense_gp_map = is_dense_gp_map
         self._symprec = symprec
 
         self.ir_grid_points, _, self.bz_grid = _get_ir_grid_points(
             self._primitive,
             self._mesh,
             is_kappa_star=is_kappa_star,
-            is_dense_gp_map=is_dense_gp_map,
+            is_dense_gp_map=self._is_dense_gp_map,
             symprec=self._symprec)
 
     def get_number_of_triplets(self, gp):
+        if self._is_dense_gp_map:
+            _gp = get_grid_point_from_address(
+                self.bz_grid.addresses[gp], self._mesh)
+        else:
+            _gp = gp
+
         num_triplets = _get_number_of_triplets(self._primitive,
                                                self._mesh,
-                                               gp,
+                                               _gp,
                                                swappable=True,
                                                symprec=self._symprec)
         return num_triplets

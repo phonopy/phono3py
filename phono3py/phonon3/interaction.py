@@ -41,6 +41,7 @@ from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
 from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
 from phono3py.phonon3.triplets import (get_triplets_at_q,
                                        get_nosym_triplets_at_q,
+                                       get_grid_point_from_address,
                                        BZGrid)
 
 
@@ -291,13 +292,15 @@ class Interaction(object):
 
     def set_grid_point(self, grid_point, stores_triplets_map=False):
         reciprocal_lattice = np.linalg.inv(self._primitive.cell)
+        non_bz_gp = get_grid_point_from_address(
+            self._bz_grid.addresses[grid_point], self._mesh)
         if not self._is_mesh_symmetry:
             (triplets_at_q,
              weights_at_q,
              bz_grid,
              triplets_map_at_q,
              ir_map_at_q) = get_nosym_triplets_at_q(
-                 grid_point,
+                 non_bz_gp,
                  self._mesh,
                  reciprocal_lattice,
                  is_dense_gp_map=self._is_dense_gp_map)
@@ -307,7 +310,7 @@ class Interaction(object):
              bz_grid,
              triplets_map_at_q,
              ir_map_at_q) = get_triplets_at_q(
-                 grid_point,
+                 non_bz_gp,
                  self._mesh,
                  self._symmetry.pointgroup_operations,
                  reciprocal_lattice,
@@ -330,7 +333,7 @@ class Interaction(object):
                  bz_grid,
                  triplets_map_at_q,
                  ir_map_at_q) = get_triplets_at_q(
-                     grid_point,
+                     non_bz_gp,
                      self._mesh,
                      np.array(rotations, dtype='intc', order='C'),
                      reciprocal_lattice,
