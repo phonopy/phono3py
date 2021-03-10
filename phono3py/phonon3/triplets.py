@@ -41,6 +41,27 @@ from phono3py.phonon.func import gaussian
 class BZGrid(object):
     """Data structure of BZ grid
 
+    The grid system of with (this class, BZG) and without (generalized
+    regular grid, GRG) BZ surface are differently designed. Integer triplet
+    to represent a grid point is equivalent up to modulo D_diag (mesh
+    numbers). The conversion of the grid point indices can be done as
+    follows:
+
+    From BZG to GRG
+        gr_gp = get_grid_point_from_address(bz_grid.addresses[bz_gp], D_diag)
+    and the shortcut is
+        gr_gp = bz_grid.bzg2grg(bz_gp)
+
+    From GRG to BZG
+    When is_dense_gp_map=True,
+        bz_gp = bz_grid.gp_map[gr_gp]
+    When is_dense_gp_map=False,
+        bz_gp = gr_gp
+    The shortcut is
+        bz_gp = bz_grid.grg2bzg(gr_gp)
+    When translational equivalent points exist on BZ surface, the one of them
+    is chosen.
+
     Attributes
     ----------
     addresses : ndarray
@@ -127,9 +148,15 @@ class BZGrid(object):
             is_shift=self._is_shift,
             is_dense_gp_map=self._is_dense_gp_map)
 
-    def get_non_bz_grid_index(self, bz_grid_index):
+    def bzg2grg(self, bz_grid_index):
         return get_grid_point_from_address(
             self._addresses[bz_grid_index], self._mesh_numbers)
+
+    def grg2bzg(self, grid_index):
+        if self._is_dense_gp_map:
+            return self._gp_map[grid_index]
+        else:
+            grid_index
 
 
 def get_triplets_at_q(grid_point,
@@ -178,7 +205,7 @@ def get_triplets_at_q(grid_point,
     """
 
     map_triplets, map_q = _get_triplets_reciprocal_mesh_at_q(
-        bz_grid.get_non_bz_grid_index(grid_point),
+        bz_grid.bzg2grg(grid_point),
         bz_grid.mesh_numbers,
         point_group,
         is_time_reversal=is_time_reversal,
