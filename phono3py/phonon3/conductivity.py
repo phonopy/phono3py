@@ -316,10 +316,9 @@ class Conductivity(object):
             (self._ir_grid_points,
              self._ir_grid_weights) = self._get_ir_grid_points()
         elif not self._is_kappa_star:  # All grid points
-            _grid_points = np.arange(np.prod(self._mesh), dtype='int_')
-            if self._bz_grid.is_dense_gp_map:
-                _grid_points = self._bz_grid.gp_map[_grid_points]
-            self._grid_points = _grid_points
+            self._grid_points = np.array(
+                self._bz_grid.grg2bzg[:np.prod(self._mesh)],
+                dtype='int_', order='C')
             self._grid_weights = np.ones(len(self._grid_points), dtype='int_')
             self._ir_grid_points = self._grid_points
             self._ir_grid_weights = self._grid_weights
@@ -331,7 +330,6 @@ class Conductivity(object):
         self._qpoints = np.array(self._bz_grid.addresses[self._grid_points] /
                                  self._mesh.astype('double'),
                                  dtype='double', order='C')
-
         self._grid_point_count = 0
         self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
 
@@ -365,10 +363,8 @@ class Conductivity(object):
         ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(
              self._mesh,
              self._symmetry.pointgroup_operations)
-
-        if self._bz_grid.is_dense_gp_map:
-            ir_grid_points = np.array(self._bz_grid.gp_map[ir_grid_points],
-                                      dtype='int_')
+        ir_grid_points = np.array(
+            self._bz_grid.grg2bzg[ir_grid_points], dtype='int_')
 
         return ir_grid_points, ir_grid_weights
 

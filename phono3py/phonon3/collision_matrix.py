@@ -86,8 +86,11 @@ class CollisionMatrix(ImagSelfEnergy):
 
         if not self._is_reducible_collision_matrix:
             self._ir_grid_points = ir_grid_points
-            self._rot_grid_points = rot_grid_points  # dtype='int_'
-            self._point_operations = point_operations  # dtype='int_', order='C'
+            # rot_grid_points have to be stored in GRGrid.
+            self._rot_grid_points = np.array(
+                self._pp.bz_grid.bzg2grg[rot_grid_points],
+                dtype='int_', order='C')
+            self._point_operations = point_operations
             self._primitive = self._pp.primitive
             rec_lat = np.linalg.inv(self._primitive.cell)
             self._rotations_cartesian = np.array(
@@ -152,7 +155,7 @@ class CollisionMatrix(ImagSelfEnergy):
                                  self._triplets_at_q,
                                  self._triplets_map_at_q,
                                  self._ir_map_at_q,
-                                 self._rot_grid_points,
+                                 self._rot_grid_points,  # in GRGrid
                                  self._rotations_cartesian,
                                  self._temperature,
                                  self._unit_conversion,
