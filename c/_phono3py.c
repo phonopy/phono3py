@@ -85,6 +85,8 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args);
 static PyObject *
 py_get_grid_index_from_address(PyObject *self, PyObject *args);
 static PyObject *
+py_get_gr_grid_addresses(PyObject *self, PyObject *args);
+static PyObject *
 py_get_ir_reciprocal_mesh(PyObject *self, PyObject *args);
 static PyObject * py_get_bz_grid_addresses(PyObject *self, PyObject *args);
 
@@ -230,6 +232,10 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_get_ir_reciprocal_mesh,
    METH_VARARGS,
    "Reciprocal mesh points with ir grid mapping table"},
+  {"gr_grid_addresses",
+   (PyCFunction)py_get_gr_grid_addresses,
+   METH_VARARGS,
+   "Get generalized regular grid addresses"},
   {"bz_grid_addresses",
    (PyCFunction)py_get_bz_grid_addresses,
    METH_VARARGS,
@@ -1833,16 +1839,38 @@ py_get_grid_index_from_address(PyObject *self, PyObject *args)
 
 
 static PyObject *
+py_get_gr_grid_addresses(PyObject *self, PyObject *args)
+{
+  PyArrayObject* py_gr_grid_addresses;
+  PyArrayObject* py_D_diag;
+
+  long (*gr_grid_addresses)[3];
+  long *D_diag;
+
+  if (!PyArg_ParseTuple(args, "OO",
+                        &py_gr_grid_addresses,
+                        &py_D_diag)) {
+    return NULL;
+  }
+
+  gr_grid_addresses = (long(*)[3])PyArray_DATA(py_gr_grid_addresses);
+  D_diag = (long*)PyArray_DATA(py_D_diag);
+
+  ph3py_get_gr_grid_addresses(gr_grid_addresses, D_diag);
+
+  Py_RETURN_NONE;
+}
+
+
+static PyObject *
 py_get_ir_reciprocal_mesh(PyObject *self, PyObject *args)
 {
-  PyArrayObject* py_grid_address;
   PyArrayObject* py_grid_mapping_table;
   PyArrayObject* py_D_diag;
   PyArrayObject* py_is_shift;
   long is_time_reversal;
   PyArrayObject* py_rotations;
 
-  long (*grid_address)[3];
   long* D_diag;
   long* is_shift;
   long (*rot)[3][3];
@@ -1851,8 +1879,7 @@ py_get_ir_reciprocal_mesh(PyObject *self, PyObject *args)
   long *grid_mapping_table;
   long num_ir;
 
-  if (!PyArg_ParseTuple(args, "OOOOlO",
-                        &py_grid_address,
+  if (!PyArg_ParseTuple(args, "OOOlO",
                         &py_grid_mapping_table,
                         &py_D_diag,
                         &py_is_shift,
@@ -1861,15 +1888,13 @@ py_get_ir_reciprocal_mesh(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  grid_address = (long(*)[3])PyArray_DATA(py_grid_address);
   D_diag = (long*)PyArray_DATA(py_D_diag);
   is_shift = (long*)PyArray_DATA(py_is_shift);
   rot = (long(*)[3][3])PyArray_DATA(py_rotations);
   num_rot = (long)PyArray_DIMS(py_rotations)[0];
   grid_mapping_table = (long*)PyArray_DATA(py_grid_mapping_table);
 
-  num_ir = ph3py_get_ir_reciprocal_mesh(grid_address,
-                                        grid_mapping_table,
+  num_ir = ph3py_get_ir_reciprocal_mesh(grid_mapping_table,
                                         D_diag,
                                         is_shift,
                                         is_time_reversal,

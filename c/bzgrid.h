@@ -100,12 +100,12 @@ long bzg_get_ir_grid_map(long ir_mapping_table[],
                          const RotMats *rot_reciprocal);
 RotMats *bzg_get_point_group_reciprocal(const RotMats * rotations,
                                         const long is_time_reversal);
-long bzg_get_ir_reciprocal_mesh(long grid_address[][3],
-                                long ir_mapping_table[],
+long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
                                 const long mesh[3],
                                 const long is_shift[3],
                                 const long is_time_reversal,
-                                const RotMats * rotations);
+                                LAGCONST long (*rotations_in)[3][3],
+                                const long num_rot);
 long bzg_get_bz_grid_addresses(BZGrid *bzgrid,
                                LAGCONST long grid_address[][3]);
 double bzg_get_tolerance_for_BZ_reduction(const BZGrid *bzgrid);

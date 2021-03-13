@@ -42,7 +42,6 @@
 #include "interaction.h"
 #include "imag_self_energy_with_g.h"
 #include "isotope.h"
-#include "lagrid.h"
 #include "pp_collision.h"
 #include "real_self_energy.h"
 #include "grgrid.h"
@@ -705,29 +704,27 @@ long ph3py_get_grid_index_from_address(const long address[3],
 }
 
 
-long ph3py_get_ir_reciprocal_mesh(long grid_address[][3],
-                                  long ir_mapping_table[],
+void ph3py_get_gr_grid_addresses(long gr_grid_addresses[][3],
+                                 const long D_diag[3])
+{
+  grg_get_all_grid_addresses(gr_grid_addresses, D_diag);
+}
+
+long ph3py_get_ir_reciprocal_mesh(long *ir_mapping_table,
                                   const long D_diag[3],
                                   const long is_shift[3],
                                   const long is_time_reversal,
-                                  PHPYCONST long rotations_in[][3][3],
+                                  PHPYCONST long (*rotations)[3][3],
                                   const long num_rot)
 {
-  long i, num_ir;
-  RotMats *rotations;
+  long num_ir;
 
-  rotations = bzg_alloc_RotMats(num_rot);
-
-  for (i = 0; i < num_rot; i++) {
-    lagmat_copy_matrix_l3(rotations->mat[i], rotations_in[i]);
-  }
-  num_ir = bzg_get_ir_reciprocal_mesh(grid_address,
-                                      ir_mapping_table,
+  num_ir = bzg_get_ir_reciprocal_mesh(ir_mapping_table,
                                       D_diag,
                                       is_shift,
                                       is_time_reversal,
-                                      rotations);
-  bzg_free_RotMats(rotations);
+                                      rotations,
+                                      num_rot);
   return num_ir;
 }
 

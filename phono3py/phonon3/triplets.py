@@ -265,14 +265,30 @@ def get_nosym_triplets_at_q(grid_point, bz_grid):
     return triplets_at_q, weights, map_triplets, map_q
 
 
-def get_grid_address(mesh):
-    """Returns grid_address of dtype='int_'"""
-    grid_mapping_table, grid_address = _get_ir_reciprocal_mesh(
-        mesh,
-        [[[1, 0, 0], [0, 1, 0], [0, 0, 1]]],
-        is_time_reversal=False)
+def get_grid_address(D_diag):
+    """Returns generalized regular grid addresses
 
-    return grid_address
+    Parameters
+    ----------
+    D_diag : array_like
+        Three integers that represent the generalized regular grid.
+        shape=(3, ), dtype='int_'
+
+    Returns
+    -------
+    gr_grid_addresses : ndarray
+        Integer triplets that represents grid point addresses in
+        generalized regular grid.
+        shape=(prod(D_diag), 3), dtype='int_'
+
+    """
+
+    import phono3py._phono3py as phono3c
+
+    gr_grid_addresses = np.zeros((np.prod(D_diag), 3), dtype='int_')
+    phono3c.gr_grid_addresses(gr_grid_addresses,
+                              np.array(D_diag, dtype='int_'))
+    return gr_grid_addresses
 
 
 def get_grid_point_from_address_py(address, mesh):
@@ -325,7 +341,7 @@ def get_grid_point_from_address(address, mesh):
 def get_ir_grid_points(mesh, rotations, mesh_shifts=None):
     if mesh_shifts is None:
         mesh_shifts = [False, False, False]
-    grid_mapping_table, grid_address = _get_ir_reciprocal_mesh(
+    grid_mapping_table = _get_ir_reciprocal_mesh(
         mesh,
         rotations,
         is_shift=np.where(mesh_shifts, 1, 0))
@@ -501,18 +517,16 @@ def _get_ir_reciprocal_mesh(mesh,
     import phono3py._phono3py as phono3c
 
     mapping_table = np.zeros(np.prod(mesh), dtype='int_')
-    grid_address = np.zeros((np.prod(mesh), 3), dtype='int_')
     if is_shift is None:
         is_shift = [0, 0, 0]
 
     if phono3c.ir_reciprocal_mesh(
-            grid_address,
             mapping_table,
             np.array(mesh, dtype='int_'),
             np.array(is_shift, dtype='int_'),
             is_time_reversal * 1,
             np.array(rotations, dtype='int_', order='C')) > 0:
-        return mapping_table, grid_address
+        return mapping_table
     else:
         raise RuntimeError(
             "ir_reciprocal_mesh didn't work well.")

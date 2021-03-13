@@ -170,8 +170,7 @@ static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
 
 static RotMats *get_point_group_reciprocal(const RotMats * rotations,
                                            const long is_time_reversal);
-static long get_ir_grid_map(long grid_address[][3],
-                            long ir_mapping_table[],
+static long get_ir_grid_map(long ir_mapping_table[],
                             const long D_diag[3],
                             const long PS[3],
                             const RotMats *rot_reciprocal);
@@ -195,23 +194,11 @@ long bzg_get_ir_grid_map(long ir_mapping_table[],
                          const RotMats *rot_reciprocal)
 {
   long num_ir;
-  long (*grid_address)[3];
 
-  if ((grid_address = (long (*)[3])
-       malloc(sizeof(long[3]) * D_diag[0] * D_diag[1] * D_diag[2]))
-      == NULL) {
-      warning_print("Memory could not be allocated ");
-      return 0;
-  }
-
-  num_ir = get_ir_grid_map(grid_address,
-                           ir_mapping_table,
+  num_ir = get_ir_grid_map(ir_mapping_table,
                            D_diag,
                            PS,
                            rot_reciprocal);
-  free(grid_address);
-  grid_address = NULL;
-
   return num_ir;
 }
 
@@ -221,26 +208,33 @@ RotMats *bzg_get_point_group_reciprocal(const RotMats * rotations,
   return get_point_group_reciprocal(rotations, is_time_reversal);
 }
 
-long bzg_get_ir_reciprocal_mesh(long grid_address[][3],
-                                long ir_mapping_table[],
+long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
                                 const long mesh[3],
                                 const long is_shift[3],
                                 const long is_time_reversal,
-                                const RotMats * rotations)
+                                LAGCONST long (*rotations_in)[3][3],
+                                const long num_rot)
 {
-  long num_ir;
-  RotMats *rot_reciprocal;
+  long i, num_ir;
+  RotMats *rotations, *rot_reciprocal;
+
+  rotations = bzg_alloc_RotMats(num_rot);
+  for (i = 0; i < num_rot; i++) {
+    lagmat_copy_matrix_l3(rotations->mat[i], rotations_in[i]);
+  }
 
   rot_reciprocal = NULL;
   rot_reciprocal = get_point_group_reciprocal(rotations, is_time_reversal);
-  num_ir = get_ir_grid_map(grid_address,
-                           ir_mapping_table,
+  num_ir = get_ir_grid_map(ir_mapping_table,
                            mesh,
                            is_shift,
                            rot_reciprocal);
 
   bzg_free_RotMats(rot_reciprocal);
   rot_reciprocal = NULL;
+  bzg_free_RotMats(rotations);
+  rotations = NULL;
+
   return num_ir;
 }
 
@@ -403,15 +397,13 @@ static RotMats *get_point_group_reciprocal(const RotMats * rotations,
 
 /* It is assumed that the rotations have been examined by
  * grg_transform_rotations, i.e., no broken symmetry of grid is ensured. */
-static long get_ir_grid_map(long grid_address[][3],
-                            long ir_mapping_table[],
+static long get_ir_grid_map(long ir_mapping_table[],
                             const long D_diag[3],
                             const long PS[3],
                             const RotMats *rot_reciprocal)
 {
   long i, num_ir;
 
-  grg_get_all_grid_addresses(grid_address, D_diag);
   grg_get_ir_grid_map(ir_mapping_table,
                       rot_reciprocal->mat,
                       rot_reciprocal->size,
