@@ -362,7 +362,7 @@ class Conductivity(object):
 
     def _get_ir_grid_points(self):
         """Find irreducible grid points"""
-        ir_grid_points, ir_grid_weights, _, _ = get_ir_grid_points(
+        ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(
              self._mesh,
              self._symmetry.pointgroup_operations)
 
@@ -410,9 +410,9 @@ class Conductivity(object):
 
     def _get_gv_by_gv(self, i_irgp, i_data):
         rotation_map = get_grid_points_by_rotations(
-            self._bz_grid.addresses[self._grid_points[i_irgp]],
-            self._point_operations,
-            self._mesh)
+            self._grid_points[i_irgp],
+            self._bz_grid,
+            self._point_operations)
         gv = self._gv[i_data]
         gv_by_gv = np.zeros((len(gv), 3, 3), dtype='double')
 
@@ -454,13 +454,13 @@ class Conductivity(object):
         return cv
 
     def _get_main_diagonal(self, i, j, k):
-        num_band = self._primitive.get_number_of_atoms() * 3
         main_diagonal = self._gamma[j, k, i].copy()
         if self._gamma_iso is not None:
             main_diagonal += self._gamma_iso[j, i]
         if self._boundary_mfp is not None:
             main_diagonal += self._get_boundary_scattering(i)
 
+        # num_band = len(self._primitive) * 3
         # if self._boundary_mfp is not None:
         #     for l in range(num_band):
         #         # Acoustic modes at Gamma are avoided.

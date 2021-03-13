@@ -556,7 +556,6 @@ void ph3py_transpose_compact_fc3(double * fc3,
 
 long ph3py_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                              long *map_q,
-                                             long (*grid_address)[3],
                                              const long grid_point,
                                              const long D_diag[3],
                                              const long is_time_reversal,
@@ -566,7 +565,6 @@ long ph3py_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
 {
   return tpl_get_triplets_reciprocal_mesh_at_q(map_triplets,
                                                map_q,
-                                               grid_address,
                                                grid_point,
                                                D_diag,
                                                is_time_reversal,
@@ -735,6 +733,7 @@ long ph3py_get_ir_reciprocal_mesh(long grid_address[][3],
 
 long ph3py_get_bz_grid_address(long (*bz_grid_addresses)[3],
                                long *bz_map,
+                               long *bzg2grg,
                                PHPYCONST long grid_address[][3],
                                const long D_diag[3],
                                const long Q[3][3],
@@ -752,6 +751,7 @@ long ph3py_get_bz_grid_address(long (*bz_grid_addresses)[3],
 
   bzgrid->addresses = bz_grid_addresses;
   bzgrid->gp_map = bz_map;
+  bzgrid->bzg2grg = bzg2grg;
   bzgrid->type = type;
   for (i = 0; i < 3; i++) {
     bzgrid->D_diag[i] = D_diag[i];

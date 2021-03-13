@@ -49,7 +49,6 @@
 /* in the input. */
 long tpl_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                            long *map_q,
-                                           long (*grid_address)[3],
                                            const long grid_point,
                                            const long mesh[3],
                                            const long is_time_reversal,

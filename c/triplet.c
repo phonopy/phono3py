@@ -40,16 +40,6 @@
 #include "triplet_iw.h"
 #include "triplet_grid.h"
 
-static long get_triplets_reciprocal_mesh_at_q(long *map_triplets,
-                                              long *map_q,
-                                              long (*grid_address)[3],
-                                              const long grid_point,
-                                              const long mesh[3],
-                                              const long is_time_reversal,
-                                              const long num_rot,
-                                              LAGCONST long (*rotations)[3][3],
-                                              const long swappable);
-
 long tpl_get_BZ_triplets_at_q(long (*triplets)[3],
                               const long grid_point,
                               const ConstBZGrid *bzgrid,
@@ -63,7 +53,6 @@ long tpl_get_BZ_triplets_at_q(long (*triplets)[3],
 
 long tpl_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                            long *map_q,
-                                           long (*grid_address)[3],
                                            const long grid_point,
                                            const long mesh[3],
                                            const long is_time_reversal,
@@ -71,15 +60,17 @@ long tpl_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                            LAGCONST long (*rotations)[3][3],
                                            const long swappable)
 {
-  return get_triplets_reciprocal_mesh_at_q(map_triplets,
-                                           map_q,
-                                           grid_address,
-                                           grid_point,
-                                           mesh,
-                                           is_time_reversal,
-                                           num_rot,
-                                           rotations,
-                                           swappable);
+  long num_ir;
+
+  num_ir = tpk_get_ir_triplets_at_q(map_triplets,
+                                    map_q,
+                                    grid_point,
+                                    mesh,
+                                    is_time_reversal,
+                                    rotations,
+                                    num_rot,
+                                    swappable);
+  return num_ir;
 }
 
 void tpl_get_integration_weight(double *iw,
@@ -209,28 +200,4 @@ void tpl_set_relative_grid_address(
       }
     }
   }
-}
-
-static long get_triplets_reciprocal_mesh_at_q(long *map_triplets,
-                                              long *map_q,
-                                              long (*grid_address)[3],
-                                              const long grid_point,
-                                              const long mesh[3],
-                                              const long is_time_reversal,
-                                              const long num_rot,
-                                              LAGCONST long (*rotations)[3][3],
-                                              const long swappable)
-{
-  long num_ir;
-
-  num_ir = tpk_get_ir_triplets_at_q(map_triplets,
-                                    map_q,
-                                    grid_address,
-                                    grid_point,
-                                    mesh,
-                                    is_time_reversal,
-                                    rotations,
-                                    num_rot,
-                                    swappable);
-  return num_ir;
 }

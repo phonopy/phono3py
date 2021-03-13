@@ -1578,7 +1578,6 @@ static PyObject *
 py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
 {
   PyArrayObject *py_map_triplets;
-  PyArrayObject *py_grid_address;
   PyArrayObject *py_map_q;
   PyArrayObject *py_D_diag;
   PyArrayObject *py_rotations;
@@ -1586,7 +1585,6 @@ py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
   long is_time_reversal;
   long swappable;
 
-  long (*grid_address)[3];
   long *map_triplets;
   long *map_q;
   long *D_diag;
@@ -1594,10 +1592,9 @@ py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
   long num_rot;
   long num_ir;
 
-  if (!PyArg_ParseTuple(args, "OOOlOlOl",
+  if (!PyArg_ParseTuple(args, "OOlOlOl",
                         &py_map_triplets,
                         &py_map_q,
-                        &py_grid_address,
                         &fixed_grid_number,
                         &py_D_diag,
                         &is_time_reversal,
@@ -1606,7 +1603,6 @@ py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
     return NULL;
   }
 
-  grid_address = (long(*)[3])PyArray_DATA(py_grid_address);
   map_triplets = (long*)PyArray_DATA(py_map_triplets);
   map_q = (long*)PyArray_DATA(py_map_q);
   D_diag = (long*)PyArray_DATA(py_D_diag);
@@ -1614,7 +1610,6 @@ py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
   num_rot = (long)PyArray_DIMS(py_rotations)[0];
   num_ir = ph3py_get_triplets_reciprocal_mesh_at_q(map_triplets,
                                                    map_q,
-                                                   grid_address,
                                                    fixed_grid_number,
                                                    D_diag,
                                                    is_time_reversal,
@@ -1886,17 +1881,19 @@ py_get_ir_reciprocal_mesh(PyObject *self, PyObject *args)
 
 static PyObject * py_get_bz_grid_addresses(PyObject *self, PyObject *args)
 {
-  PyArrayObject* py_bz_grid_address;
-  PyArrayObject* py_bz_map;
-  PyArrayObject* py_grid_address;
-  PyArrayObject* py_D_diag;
-  PyArrayObject* py_Q;
-  PyArrayObject* py_PS;
-  PyArrayObject* py_reciprocal_lattice;
+  PyArrayObject *py_bz_grid_address;
+  PyArrayObject *py_bz_map;
+  PyArrayObject *py_bzg2grg;
+  PyArrayObject *py_grid_address;
+  PyArrayObject *py_D_diag;
+  PyArrayObject *py_Q;
+  PyArrayObject *py_PS;
+  PyArrayObject *py_reciprocal_lattice;
   long type;
 
   long (*bz_grid_address)[3];
   long *bz_map;
+  long *bzg2grg;
   long (*grid_address)[3];
   long *D_diag;
   long (*Q)[3];
@@ -1904,9 +1901,10 @@ static PyObject * py_get_bz_grid_addresses(PyObject *self, PyObject *args)
   double (*reciprocal_lattice)[3];
   long num_total_gp;
 
-  if (!PyArg_ParseTuple(args, "OOOOOOOl",
+  if (!PyArg_ParseTuple(args, "OOOOOOOOl",
                         &py_bz_grid_address,
                         &py_bz_map,
+                        &py_bzg2grg,
                         &py_grid_address,
                         &py_D_diag,
                         &py_Q,
@@ -1918,6 +1916,7 @@ static PyObject * py_get_bz_grid_addresses(PyObject *self, PyObject *args)
 
   bz_grid_address = (long(*)[3])PyArray_DATA(py_bz_grid_address);
   bz_map = (long*)PyArray_DATA(py_bz_map);
+  bzg2grg = (long*)PyArray_DATA(py_bzg2grg);
   grid_address = (long(*)[3])PyArray_DATA(py_grid_address);
   D_diag = (long*)PyArray_DATA(py_D_diag);
   Q = (long(*)[3])PyArray_DATA(py_Q);
@@ -1926,6 +1925,7 @@ static PyObject * py_get_bz_grid_addresses(PyObject *self, PyObject *args)
 
   num_total_gp = ph3py_get_bz_grid_address(bz_grid_address,
                                            bz_map,
+                                           bzg2grg,
                                            grid_address,
                                            D_diag,
                                            Q,

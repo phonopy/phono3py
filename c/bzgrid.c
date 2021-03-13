@@ -189,19 +189,28 @@ static double norm_squared_d3(const double a[3]);
 static long inverse_unimodular_matrix_l3(long m[3][3],
                                          LAGCONST long a[3][3]);
 
-long bzg_get_ir_grid_map(long grid_address[][3],
-                         long ir_mapping_table[],
+long bzg_get_ir_grid_map(long ir_mapping_table[],
                          const long D_diag[3],
                          const long PS[3],
                          const RotMats *rot_reciprocal)
 {
   long num_ir;
+  long (*grid_address)[3];
+
+  if ((grid_address = (long (*)[3])
+       malloc(sizeof(long[3]) * D_diag[0] * D_diag[1] * D_diag[2]))
+      == NULL) {
+      warning_print("Memory could not be allocated ");
+      return 0;
+  }
 
   num_ir = get_ir_grid_map(grid_address,
                            ir_mapping_table,
                            D_diag,
                            PS,
                            rot_reciprocal);
+  free(grid_address);
+  grid_address = NULL;
 
   return num_ir;
 }
@@ -482,6 +491,7 @@ static long get_bz_grid_addresses_type1(BZGrid *bzgrid,
         bzgp = grg_get_double_grid_index(
           bz_address_double, bzmesh, bzgrid->PS);
         bz_map[bzgp] = gp;
+        bzgrid->bzg2grg[gp] = i;
         if (j != min_index) {
           boundary_num_gp++;
         }
@@ -548,6 +558,7 @@ static long get_bz_grid_addresses_type2(BZGrid *bzgrid,
           bzgrid->addresses[num_gp][k]
             = grid_address[i][k] + deltaG[k] * bzgrid->D_diag[k];
         }
+        bzgrid->bzg2grg[num_gp] = i;
         num_gp++;
       }
     }

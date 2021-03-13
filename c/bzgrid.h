@@ -75,23 +75,26 @@ typedef struct {
   long Q[3][3];
   long PS[3];
   long *gp_map;
+  long *bzg2grg;
   long (*addresses)[3];
   double reclat[3][3];
   long type;
 } BZGrid;
+
 typedef struct {
   long size;
   long D_diag[3];
   long Q[3][3];
   long PS[3];
   const long *gp_map;
+  const long *bzg2grg;
   const long (*addresses)[3];
   double reclat[3][3];
   long type;
 } ConstBZGrid;
 
-long bzg_get_ir_grid_map(long grid_address[][3],
-                         long ir_mapping_table[],
+
+long bzg_get_ir_grid_map(long ir_mapping_table[],
                          const long D_diag[3],
                          const long PS[3],
                          const RotMats *rot_reciprocal);

@@ -176,13 +176,13 @@ def _get_ir_grid_points(primitive,
     symmetry = Symmetry(primitive, symprec)
     point_group = symmetry.pointgroup_operations
 
-    ir_grid_points, ir_grid_weights, grid_address, _ = get_ir_grid_points(
+    ir_grid_points, ir_grid_weights, _, _ = get_ir_grid_points(
         mesh, point_group)
     reciprocal_lattice = np.linalg.inv(primitive.cell)
     bz_grid = BZGrid(mesh,
                      reciprocal_lattice,
                      is_dense_gp_map=is_dense_gp_map)
-    bz_grid.relocate(grid_address)
+    bz_grid.set_bz_grid()
     if is_dense_gp_map:
         ir_grid_points = bz_grid.gp_map[ir_grid_points]
 

@@ -41,7 +41,6 @@
 
 long tpk_get_ir_triplets_at_q(long *map_triplets,
                               long *map_q,
-                              long (*grid_address)[3],
                               const long grid_point,
                               const long D_diag[3],
                               const long is_time_reversal,

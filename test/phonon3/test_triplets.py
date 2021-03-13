@@ -101,6 +101,8 @@ def _show_triplets_info(mesh, bz_grid, triplets, reclat, bztype=2):
 
 
 def test_BZGrid(si_pbesol_111):
+    """Basis test of BZGrid type1 and type2"""
+
     reclat = np.linalg.inv(si_pbesol_111.primitive.cell)
     mesh = [4, 4, 4]
 
@@ -125,3 +127,28 @@ def test_BZGrid(si_pbesol_111):
     dist1 = np.sqrt((np.dot(adrs1, reclat.T) ** 2).sum(axis=1))
     dist2 = np.sqrt((np.dot(adrs2, reclat.T) ** 2).sum(axis=1))
     np.testing.assert_allclose(dist1, dist2, atol=1e-8)
+
+
+def test_BZGrid_bzg2grg(si_pbesol_111):
+    """BZGrid to GRGrid
+
+    This mapping table is stored in BZGrid, but also determined by
+    get_grid_point_from_address. This test checks the consistency.
+
+    """
+
+    reclat = np.linalg.inv(si_pbesol_111.primitive.cell)
+    mesh = [4, 4, 4]
+    bzgrid1 = BZGrid(mesh, reclat, is_dense_gp_map=False)
+    bzgrid1.set_bz_grid()
+    grg = []
+    for i in range(len(bzgrid1.addresses)):
+        grg.append(get_grid_point_from_address(bzgrid1.addresses[i], mesh))
+    np.testing.assert_equal(grg, bzgrid1.bzg2grg)
+
+    bzgrid2 = BZGrid(mesh, reclat, is_dense_gp_map=True)
+    bzgrid2.set_bz_grid()
+    grg = []
+    for i in range(len(bzgrid2.addresses)):
+        grg.append(get_grid_point_from_address(bzgrid2.addresses[i], mesh))
+    np.testing.assert_equal(grg, bzgrid2.bzg2grg)

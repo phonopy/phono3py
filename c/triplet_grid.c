@@ -173,7 +173,6 @@ static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
 
 static long get_ir_triplets_at_q(long *map_triplets,
                                  long *map_q,
-                                 long (*grid_address)[3],
                                  const long grid_point,
                                  const long D_diag[3],
                                  const RotMats * rot_reciprocal,
@@ -205,7 +204,6 @@ static void modulo_l3(long v[3], const long m[3]);
 
 long tpk_get_ir_triplets_at_q(long *map_triplets,
                               long *map_q,
-                              long (*grid_address)[3],
                               const long grid_point,
                               const long D_diag[3],
                               const long is_time_reversal,
@@ -225,7 +223,6 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
 
   num_ir = get_ir_triplets_at_q(map_triplets,
                                 map_q,
-                                grid_address,
                                 grid_point,
                                 D_diag,
                                 rot_reciprocal,
@@ -248,7 +245,6 @@ long tpk_get_BZ_triplets_at_q(long (*triplets)[3],
 
 static long get_ir_triplets_at_q(long *map_triplets,
                                  long *map_q,
-                                 long (*grid_address)[3],
                                  const long grid_point,
                                  const long D_diag[3],
                                  const RotMats * rot_reciprocal,
@@ -275,8 +271,7 @@ static long get_ir_triplets_at_q(long *map_triplets,
   rot_reciprocal_q = get_point_group_reciprocal_with_q(rot_reciprocal,
                                                        D_diag,
                                                        grid_point);
-  num_ir_q = bzg_get_ir_grid_map(grid_address,
-                                 map_q,
+  num_ir_q = bzg_get_ir_grid_map(map_q,
                                  D_diag,
                                  PS,
                                  rot_reciprocal_q);
