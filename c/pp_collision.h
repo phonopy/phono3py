@@ -37,18 +37,17 @@
 
 #include "phonoc_array.h"
 #include "phonoc_const.h"
+#include "bzgrid.h"
 #include "lapack_wrapper.h"
 
 void ppc_get_pp_collision(double *imag_self_energy,
-                          PHPYCONST long relative_grid_address[24][4][3],
+                          PHPYCONST long relative_grid_address[24][4][3], /* thm */
                           const double *frequencies,
                           const lapack_complex_double *eigenvectors,
                           const long (*triplets)[3],
                           const long num_triplets,
                           const long *triplet_weights,
-                          const long *grid_address,
-                          const long *bz_map,
-                          const long *mesh,
+                          const ConstBZGrid *bzgrid,
                           const double *fc3,
                           const long is_compact_fc3,
                           const double *shortest_vectors,
@@ -62,7 +61,6 @@ void ppc_get_pp_collision(double *imag_self_energy,
                           const long is_NU,
                           const long symmetrize_fc3_q,
                           const double cutoff_frequency);
-
 void ppc_get_pp_collision_with_sigma(
   double *imag_self_energy,
   const double sigma,
@@ -72,8 +70,7 @@ void ppc_get_pp_collision_with_sigma(
   const long (*triplets)[3],
   const long num_triplets,
   const long *triplet_weights,
-  const long *grid_address,
-  const long *mesh,
+  const ConstBZGrid *bzgrid,
   const double *fc3,
   const long is_compact_fc3,
   const double *shortest_vectors,

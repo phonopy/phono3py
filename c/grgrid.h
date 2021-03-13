@@ -36,26 +36,17 @@
 #define __grgrid_H__
 
 #include <stddef.h>
-
-#ifndef MATCONST
-#define MATCONST
-#endif
-
-#ifdef MATWARNING
-#define warning_print(...) fprintf(stderr,__VA_ARGS__)
-#else
-#define warning_print(...)
-#endif
+#include "lagrid.h"
 
 long grg_get_snf3x3(long D_diag[3],
                     long P[3][3],
                     long Q[3][3],
-                    MATCONST long A[3][3]);
+                    LAGCONST long A[3][3]);
 long grg_transform_rotations(long (*transformed_rots)[3][3],
-                             MATCONST long (*rotations)[3][3],
+                             LAGCONST long (*rotations)[3][3],
                              const long num_rot,
                              const long D_diag[3],
-                             MATCONST long Q[3][3]);
+                             LAGCONST long Q[3][3]);
 void grg_get_all_grid_addresses(long grid_address[][3], const long D_diag[3]);
 void grg_get_double_grid_address(long address_double[3],
                                  const long address[3],
@@ -74,16 +65,16 @@ void grg_get_grid_address_from_index(long address[3],
                                      const long grid_index,
                                      const long D_diag[3]);
 long grg_rotate_grid_index(const long grid_index,
-                           MATCONST long rotations[3][3],
+                           LAGCONST long rotations[3][3],
                            const long D_diag[3],
                            const long PS[3]);
 void grg_get_ir_grid_map(long ir_grid_indices[],
-                         MATCONST long (*rotations)[3][3],
+                         LAGCONST long (*rotations)[3][3],
                          const long num_rot,
                          const long D_diag[3],
                          const long PS[3]);
 long grg_get_reciprocal_point_group(long rec_rotations[48][3][3],
-                                    MATCONST long (*rotations)[3][3],
+                                    LAGCONST long (*rotations)[3][3],
                                     const long num_rot,
                                     const long is_time_reversal);
 

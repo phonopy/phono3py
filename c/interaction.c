@@ -34,6 +34,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "bzgrid.h"
 #include "phonoc_array.h"
 #include "phonoc_const.h"
 #include "interaction.h"
@@ -102,8 +103,7 @@ void itr_get_interaction(Darray *fc3_normal_squared,
                          const lapack_complex_double *eigenvectors,
                          const long (*triplets)[3],
                          const long num_triplets,
-                         const long *grid_address,
-                         const long *mesh,
+                         const ConstBZGrid *bzgrid,
                          const double *fc3,
                          const long is_compact_fc3,
                          const double *shortest_vectors,
@@ -150,8 +150,7 @@ void itr_get_interaction(Darray *fc3_normal_squared,
       frequencies->data,
       eigenvectors,
       triplets[i],
-      grid_address,
-      mesh,
+      bzgrid,
       fc3,
       is_compact_fc3,
       shortest_vectors,
@@ -180,8 +179,7 @@ void itr_get_interaction_at_triplet(double *fc3_normal_squared,
                                     const double *frequencies,
                                     const lapack_complex_double *eigenvectors,
                                     const long triplet[3],
-                                    const long *grid_address,
-                                    const long *mesh,
+                                    const ConstBZGrid *bzgrid,
                                     const double *fc3,
                                     const long is_compact_fc3,
                                     const double *shortest_vectors,
@@ -204,7 +202,7 @@ void itr_get_interaction_at_triplet(double *fc3_normal_squared,
 
   for (j = 0; j < 3; j++) {
     for (k = 0; k < 3; k++) {
-      q[j * 3 + k] = ((double)grid_address[triplet[j] * 3 + k]) / mesh[k];
+      q[j * 3 + k] = ((double)bzgrid->addresses[triplet[j]][k]) / bzgrid->D_diag[k];
     }
   }
 

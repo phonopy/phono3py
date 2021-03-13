@@ -780,7 +780,6 @@ def write_kappa_to_hdf5(temperature,
                         averaged_pp_interaction=None,
                         qpoint=None,
                         weight=None,
-                        mesh_divisors=None,
                         grid_point=None,
                         band_index=None,
                         sigma=None,
@@ -794,7 +793,6 @@ def write_kappa_to_hdf5(temperature,
     else:
         band_indices = [band_index]
     suffix = _get_filename_suffix(mesh,
-                                  mesh_divisors=mesh_divisors,
                                   grid_point=grid_point,
                                   band_indices=band_indices,
                                   sigma=sigma,
@@ -896,7 +894,6 @@ def write_kappa_to_hdf5(temperature,
 
 
 def read_gamma_from_hdf5(mesh,
-                         mesh_divisors=None,
                          grid_point=None,
                          band_index=None,
                          sigma=None,
@@ -908,7 +905,6 @@ def read_gamma_from_hdf5(mesh,
     else:
         band_indices = [band_index]
     suffix = _get_filename_suffix(mesh,
-                                  mesh_divisors=mesh_divisors,
                                   grid_point=grid_point,
                                   band_indices=band_indices,
                                   sigma=sigma,
@@ -1300,15 +1296,12 @@ def read_phonon_from_hdf5(mesh,
 
 
 def write_ir_grid_points(mesh,
-                         mesh_divs,
                          grid_points,
-                         coarse_grid_weights,
+                         grid_weights,
                          grid_address,
                          primitive_lattice):
     w = open("ir_grid_points.yaml", 'w')
     w.write("mesh: [ %d, %d, %d ]\n" % tuple(mesh))
-    if mesh_divs is not None:
-        w.write("mesh_divisors: [ %d, %d, %d ]\n" % tuple(mesh_divs))
     w.write("reciprocal_lattice:\n")
     for vec, axis in zip(primitive_lattice.T, ('a*', 'b*', 'c*')):
         w.write("- [ %12.8f, %12.8f, %12.8f ] # %2s\n"
@@ -1316,7 +1309,7 @@ def write_ir_grid_points(mesh,
     w.write("num_reduced_ir_grid_points: %d\n" % len(grid_points))
     w.write("ir_grid_points:  # [address, weight]\n")
 
-    for g, weight in zip(grid_points, coarse_grid_weights):
+    for g, weight in zip(grid_points, grid_weights):
         w.write("- grid_point: %d\n" % g)
         w.write("  weight: %d\n" % weight)
         w.write("  grid_address: [ %12d, %12d, %12d ]\n" %
@@ -1517,7 +1510,6 @@ def parse_grid_address(filename):
 
 
 def get_filename_suffix(mesh,
-                        mesh_divisors=None,
                         grid_point=None,
                         band_indices=None,
                         sigma=None,
@@ -1525,7 +1517,6 @@ def get_filename_suffix(mesh,
                         temperature=None,
                         filename=None):
     return _get_filename_suffix(mesh,
-                                mesh_divisors=mesh_divisors,
                                 grid_point=grid_point,
                                 band_indices=band_indices,
                                 sigma=sigma,
@@ -1535,7 +1526,6 @@ def get_filename_suffix(mesh,
 
 
 def _get_filename_suffix(mesh,
-                         mesh_divisors=None,
                          grid_point=None,
                          band_indices=None,
                          sigma=None,
@@ -1543,9 +1533,6 @@ def _get_filename_suffix(mesh,
                          temperature=None,
                          filename=None):
     suffix = "-m%d%d%d" % tuple(mesh)
-    if mesh_divisors is not None:
-        if (np.array(mesh_divisors, dtype=int) != 1).any():
-            suffix += "-d%d%d%d" % tuple(mesh_divisors)
     if grid_point is not None:
         suffix += ("-g%d" % grid_point)
     if band_indices is not None:

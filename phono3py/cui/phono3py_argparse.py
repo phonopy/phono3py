@@ -132,6 +132,10 @@ def get_parser(fc_symmetry=False,
         default=False,
         help="As first stage, get least displacements")
     parser.add_argument(
+        "--dense-gp-map", dest="is_dense_gp_map", action="store_true",
+        default=False,
+        help="Use new BZ grid system")
+    parser.add_argument(
         "--dim", nargs='+', dest="supercell_dimension", default=None,
         help="Supercell dimension")
     parser.add_argument(
@@ -229,10 +233,6 @@ def get_parser(fc_symmetry=False,
     parser.add_argument(
         "--mass", nargs='+', dest="masses", default=None,
         help="Same as MASS tag")
-    parser.add_argument(
-        "--md", "--mesh-divisors", nargs='+', dest="mesh_divisors",
-        default=None,
-        help="Divisors for mesh numbers")
     parser.add_argument(
         "--mesh", nargs='+', dest="mesh_numbers", default=None,
         help="Mesh numbers")

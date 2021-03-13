@@ -158,8 +158,6 @@ def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
             print("NAC q-direction: %s" % settings.nac_q_direction)
     if phono3py.mesh_numbers is not None:
         print("Mesh sampling: [ %d %d %d ]" % tuple(phono3py.mesh_numbers))
-    if settings.mesh_divisors is not None and settings.is_bterta:
-        print("Mesh divisors: [ %d %d %d ]" % tuple(settings.mesh_divisors))
     if settings.band_indices is not None and not settings.is_bterta:
         print(("Band indices: [" + " %s" * len(settings.band_indices) + " ]") %
               tuple([np.array(bi) + 1 for bi in settings.band_indices]))

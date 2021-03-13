@@ -58,8 +58,6 @@ def get_thermal_conductivity_RTA(
         boundary_mfp=None,  # in micrometre
         use_ave_pp=False,
         gamma_unit_conversion=None,
-        mesh_divisors=None,
-        coarse_mesh_shifts=None,
         is_kappa_star=True,
         gv_delta_q=1e-4,
         is_full_pp=False,
@@ -95,8 +93,6 @@ def get_thermal_conductivity_RTA(
         boundary_mfp=boundary_mfp,
         use_ave_pp=use_ave_pp,
         gamma_unit_conversion=gamma_unit_conversion,
-        mesh_divisors=mesh_divisors,
-        coarse_mesh_shifts=coarse_mesh_shifts,
         is_kappa_star=is_kappa_star,
         gv_delta_q=gv_delta_q,
         is_full_pp=is_full_pp,
@@ -158,15 +154,10 @@ def _write_gamma_detail(br, interaction, i, compression="gzip", filename=None,
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()
     triplets, weights, map_triplets, _ = interaction.get_triplets_at_q()
-    grid_address = interaction.grid_address
-    bz_map = interaction.bz_map
     if map_triplets is None:
         all_triplets = None
     else:
-        all_triplets = get_all_triplets(gp,
-                                        grid_address,
-                                        bz_map,
-                                        mesh)
+        all_triplets = get_all_triplets(gp, interaction.bz_grid, mesh)
 
     if all_bands_exist(interaction):
         for j, sigma in enumerate(sigmas):
@@ -210,7 +201,6 @@ def _write_gamma(br, interaction, i, compression="gzip", filename=None,
     mode_heat_capacities = br.get_mode_heat_capacities()
     ave_pp = br.get_averaged_pp_interaction()
     mesh = br.get_mesh_numbers()
-    mesh_divisors = br.get_mesh_divisors()
     temperatures = br.get_temperatures()
     gamma = br.get_gamma()
     gamma_isotope = br.get_gamma_isotope()
@@ -251,7 +241,6 @@ def _write_gamma(br, interaction, i, compression="gzip", filename=None,
                                 gamma_N=gamma_N_at_sigma,
                                 gamma_U=gamma_U_at_sigma,
                                 averaged_pp_interaction=ave_pp_i,
-                                mesh_divisors=mesh_divisors,
                                 grid_point=gp,
                                 sigma=sigma,
                                 sigma_cutoff=sigma_cutoff,
@@ -291,7 +280,6 @@ def _write_gamma(br, interaction, i, compression="gzip", filename=None,
                     gamma_N=gamma_N_at_sigma,
                     gamma_U=gamma_U_at_sigma,
                     averaged_pp_interaction=ave_pp_ik,
-                    mesh_divisors=mesh_divisors,
                     grid_point=gp,
                     band_index=bi,
                     sigma=sigma,
@@ -339,7 +327,6 @@ def _write_kappa(br, volume, compression="gzip", filename=None, log_level=0):
     gamma_isotope = br.get_gamma_isotope()
     gamma_N, gamma_U = br.get_gamma_N_U()
     mesh = br.get_mesh_numbers()
-    mesh_divisors = br.get_mesh_divisors()
     frequencies = br.get_frequencies()
     gv = br.get_group_velocities()
     gv_by_gv = br.get_gv_by_gv()
@@ -380,7 +367,6 @@ def _write_kappa(br, volume, compression="gzip", filename=None, log_level=0):
                             averaged_pp_interaction=ave_pp,
                             qpoint=qpoints,
                             weight=weights,
-                            mesh_divisors=mesh_divisors,
                             sigma=sigma,
                             sigma_cutoff=sigma_cutoff,
                             kappa_unit_conversion=unit_to_WmK / volume,
@@ -393,7 +379,6 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()
     mesh = br.get_mesh_numbers()
-    mesh_divisors = br.get_mesh_divisors()
     grid_points = br.get_grid_points()
     temperatures = br.get_temperatures()
     num_band = br.get_frequencies().shape[1]
@@ -416,7 +401,6 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
     for j, sigma in enumerate(sigmas):
         data = read_gamma_from_hdf5(
             mesh,
-            mesh_divisors=mesh_divisors,
             sigma=sigma,
             sigma_cutoff=sigma_cutoff,
             filename=filename,
@@ -436,7 +420,6 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
             for i, gp in enumerate(grid_points):
                 data_gp = read_gamma_from_hdf5(
                     mesh,
-                    mesh_divisors=mesh_divisors,
                     grid_point=gp,
                     sigma=sigma,
                     sigma_cutoff=sigma_cutoff,
@@ -457,7 +440,6 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
                     for bi in range(num_band):
                         data_band = read_gamma_from_hdf5(
                             mesh,
-                            mesh_divisors=mesh_divisors,
                             grid_point=gp,
                             band_index=bi,
                             sigma=sigma,
@@ -502,8 +484,6 @@ class Conductivity_RTA(Conductivity):
                  boundary_mfp=None,  # in micrometre
                  use_ave_pp=False,
                  gamma_unit_conversion=None,
-                 mesh_divisors=None,
-                 coarse_mesh_shifts=None,
                  is_kappa_star=True,
                  gv_delta_q=None,
                  is_full_pp=False,
@@ -537,7 +517,7 @@ class Conductivity_RTA(Conductivity):
 
         self._grid_points = None
         self._grid_weights = None
-        self._grid_address = None
+        self._bz_grid = None
 
         self._read_gamma = False
         self._read_gamma_iso = False
@@ -575,8 +555,6 @@ class Conductivity_RTA(Conductivity):
                               sigma_cutoff=sigma_cutoff,
                               is_isotope=is_isotope,
                               mass_variances=mass_variances,
-                              mesh_divisors=mesh_divisors,
-                              coarse_mesh_shifts=coarse_mesh_shifts,
                               boundary_mfp=boundary_mfp,
                               is_kappa_star=is_kappa_star,
                               gv_delta_q=gv_delta_q,
@@ -592,7 +570,7 @@ class Conductivity_RTA(Conductivity):
             self._allocate_values()
 
     def set_kappa_at_sigmas(self):
-        num_band = self._primitive.get_number_of_atoms() * 3
+        num_band = len(self._primitive) * 3
         for i, grid_point in enumerate(self._grid_points):
             cv = self._cv[:, i, :]
             gp = self._grid_points[i]
@@ -810,7 +788,6 @@ class Conductivity_RTA(Conductivity):
          masses) = self._pp.get_primitive_and_supercell_correspondence()
         fc3 = self._pp.fc3
         triplets_at_q, weights_at_q, _, _ = self._pp.get_triplets_at_q()
-        bz_map = self._pp.bz_map
         symmetrize_fc3_q = 0
 
         if None in self._sigmas:
@@ -837,8 +814,9 @@ class Conductivity_RTA(Conductivity):
                     self._eigenvectors,
                     triplets_at_q,
                     weights_at_q,
-                    self._grid_address,
-                    bz_map,
+                    self._bz_grid.addresses,
+                    self._bz_grid.gp_map,
+                    self._bz_grid.is_dense_gp_map * 1 + 1,
                     self._mesh,
                     fc3,
                     svecs,
@@ -863,7 +841,7 @@ class Conductivity_RTA(Conductivity):
                                                 self._eigenvectors,
                                                 triplets_at_q,
                                                 weights_at_q,
-                                                self._grid_address,
+                                                self._bz_grid.addresses,
                                                 self._mesh,
                                                 fc3,
                                                 svecs,
@@ -928,9 +906,9 @@ class Conductivity_RTA(Conductivity):
 
     def _show_log_values_on_kstar(self, frequencies, gv, ave_pp, gp, q):
         rotation_map = get_grid_points_by_rotations(
-            self._grid_address[gp],
-            self._point_operations,
-            self._mesh)
+            gp,
+            self._bz_grid,
+            self._point_operations)
         for i, j in enumerate(np.unique(rotation_map)):
             for k, (rot, rot_c) in enumerate(zip(
                     self._point_operations, self._rotations_cartesian)):

@@ -37,11 +37,9 @@
 #ifndef __triplet_H__
 #define __triplet_H__
 
-#ifndef TPLCONST
-#define TPLCONST
-#endif
-
 #include <stddef.h>
+#include "bzgrid.h"
+#include "lagrid.h"
 
 /* Irreducible triplets of k-points are searched under conservation of */
 /* :math:``\mathbf{k}_1 + \mathbf{k}_2 + \mathbf{k}_3 = \mathbf{G}``. */
@@ -51,12 +49,11 @@
 /* in the input. */
 long tpl_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                            long *map_q,
-                                           long (*grid_address)[3],
                                            const long grid_point,
                                            const long mesh[3],
                                            const long is_time_reversal,
                                            const long num_rot,
-                                           TPLCONST long (*rotations)[3][3],
+                                           LAGCONST long (*rotations)[3][3],
                                            const long swappable);
 /* Irreducible grid-point-triplets in BZ are stored. */
 /* triplets are recovered from grid_point and triplet_weights. */
@@ -66,21 +63,16 @@ long tpl_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
 /* Number of ir-triplets is returned. */
 long tpl_get_BZ_triplets_at_q(long (*triplets)[3],
                               const long grid_point,
-                              TPLCONST long (*bz_grid_address)[3],
-                              const long *bz_map,
-                              const long *map_triplets,
-                              const long num_map_triplets,
-                              const long mesh[3]);
+                              const ConstBZGrid *bzgrid,
+                              const long *map_triplets);
 void tpl_get_integration_weight(double *iw,
                                 char *iw_zero,
                                 const double *frequency_points,
                                 const long num_band0,
-                                TPLCONST long relative_grid_address[24][4][3],
-                                const long mesh[3],
-                                TPLCONST long (*triplets)[3],
+                                LAGCONST long relative_grid_address[24][4][3],
+                                LAGCONST long (*triplets)[3],
                                 const long num_triplets,
-                                TPLCONST long (*bz_grid_address)[3],
-                                const long *bz_map,
+                                const ConstBZGrid *bzgrid,
                                 const double *frequencies1,
                                 const long num_band1,
                                 const double *frequencies2,
@@ -94,16 +86,16 @@ void tpl_get_integration_weight_with_sigma(double *iw,
                                            const double sigma_cutoff,
                                            const double *frequency_points,
                                            const long num_band0,
-                                           TPLCONST long (*triplets)[3],
+                                           LAGCONST long (*triplets)[3],
                                            const long num_triplets,
                                            const double *frequencies,
                                            const long num_band,
                                            const long tp_type);
 
-long tpl_is_N(const long triplet[3], const long *grid_address);
+long tpl_is_N(const long triplet[3], const long (*bz_grid_addresses)[3]);
 void tpl_set_relative_grid_address(
   long tp_relative_grid_address[2][24][4][3],
-  TPLCONST long relative_grid_address[24][4][3],
+  LAGCONST long relative_grid_address[24][4][3],
   const long tp_type);
 
 #endif

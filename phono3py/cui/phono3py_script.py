@@ -600,6 +600,7 @@ def init_phono3py(settings,
         is_symmetry=settings.is_symmetry,
         is_mesh_symmetry=settings.is_mesh_symmetry,
         symmetrize_fc3q=settings.is_symmetrize_fc3_q,
+        is_dense_gp_map=settings.is_dense_gp_map,
         symprec=symprec,
         calculator=interface_mode,
         log_level=log_level,
@@ -746,6 +747,7 @@ def run_jdos_then_exit(phono3py,
         frequency_factor_to_THz=updated_settings['frequency_factor_to_THz'],
         frequency_scale_factor=updated_settings['frequency_scale_factor'],
         is_mesh_symmetry=settings.is_mesh_symmetry,
+        is_dense_gp_map=settings.is_dense_gp_map,
         symprec=phono3py.symmetry.tolerance,
         output_filename=output_filename,
         log_level=log_level)
@@ -775,6 +777,7 @@ def run_isotope_then_exit(phono3py, settings, updated_settings, log_level):
         band_indices=band_indices,
         sigmas=updated_settings['sigmas'],
         frequency_factor_to_THz=updated_settings['frequency_factor_to_THz'],
+        is_dense_gp_map=is_dense_gp_map,
         symprec=phono3py.symmetry.tolerance,
         cutoff_frequency=settings.cutoff_frequency,
         lapack_zheev_uplo=settings.lapack_zheev_uplo)
@@ -985,12 +988,11 @@ def main(**argparse_control):
     if run_mode == "write_grid_info":
         write_grid_points(phono3py.primitive,
                           phono3py.mesh_numbers,
-                          mesh_divs=settings.mesh_divisors,
                           band_indices=settings.band_indices,
                           sigmas=updated_settings['sigmas'],
                           temperatures=updated_settings['temperatures'],
-                          coarse_mesh_shifts=settings.coarse_mesh_shifts,
                           is_kappa_star=settings.is_kappa_star,
+                          is_dense_gp_map=settings.is_dense_gp_map,
                           is_lbte=(settings.write_collision or
                                    settings.is_lbte),
                           compression=settings.hdf5_compression,
@@ -1006,11 +1008,10 @@ def main(**argparse_control):
     if run_mode == "show_triplets_info":
         show_num_triplets(phono3py.primitive,
                           phono3py.mesh_numbers,
-                          mesh_divs=settings.mesh_divisors,
                           band_indices=settings.band_indices,
                           grid_points=updated_settings['grid_points'],
-                          coarse_mesh_shifts=settings.coarse_mesh_shifts,
                           is_kappa_star=settings.is_kappa_star,
+                          is_dense_gp_map=settings.is_dense_gp_map,
                           symprec=symprec)
 
         if log_level:
@@ -1151,8 +1152,6 @@ def main(**argparse_control):
             solve_collective_phonon=settings.solve_collective_phonon,
             use_ave_pp=settings.use_ave_pp,
             gamma_unit_conversion=settings.gamma_conversion_factor,
-            mesh_divisors=settings.mesh_divisors,
-            coarse_mesh_shifts=settings.coarse_mesh_shifts,
             is_reducible_collision_matrix=settings.is_reducible_collision_matrix,
             is_kappa_star=settings.is_kappa_star,
             gv_delta_q=settings.group_velocity_delta_q,

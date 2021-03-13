@@ -187,7 +187,7 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
  const double *frequencies,
  const long (*triplets)[3],
  const long *triplet_weights,
- const long *grid_address,
+ const long (*bz_grid_addresses)[3],
  const double *g,
  const char *g_zero,
  const double temperature,
@@ -229,7 +229,7 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
 
   is_N = (long*)malloc(sizeof(long) * num_triplets);
   for (i = 0; i < num_triplets; i++) {
-    is_N[i] = tpl_is_N(triplets[i], grid_address);
+    is_N[i] = tpl_is_N(triplets[i], bz_grid_addresses);
   }
 
   for (i = 0; i < num_band0; i++) {

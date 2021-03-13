@@ -69,6 +69,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
          symmetrize_fc=True,
          is_mesh_symmetry=True,
          is_compact_fc=False,
+         is_dense_gp_map=False,
          symprec=1e-5,
          log_level=0):
     """Create Phono3py instance from parameters and/or input files.
@@ -215,7 +216,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
     is_mesh_symmetry : bool, optional
         Setting False, reciprocal mesh symmetry is not considered.
         Default is True.
-    is_compact_fc : bool
+    is_compact_fc : bool, optional
         fc3 are created in the array whose shape is
             True: (primitive, supercell, supecell, 3, 3, 3)
             False: (supercell, supercell, supecell, 3, 3, 3)
@@ -224,6 +225,8 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
             False: (supercell, supecell, 3, 3)
         where 'supercell' and 'primitive' indicate number of atoms in these
         cells. Default is False.
+    is_dense_gp_map : bool, optional
+        Use new format of BZ grid system. Default is False.
     symprec : float, optional
         Tolerance used to find crystal symmetry. Default is 1e-5.
     log_level : int, optional
@@ -288,6 +291,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
                      symprec=symprec,
                      is_symmetry=is_symmetry,
                      is_mesh_symmetry=is_mesh_symmetry,
+                     is_dense_gp_map=is_dense_gp_map,
                      calculator=calculator,
                      log_level=log_level)
 

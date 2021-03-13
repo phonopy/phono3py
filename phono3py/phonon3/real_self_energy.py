@@ -101,7 +101,7 @@ def get_real_self_energy(interaction,
         frequencies = interaction.get_phonons()[0][gp]
 
         if log_level:
-            qpoint = interaction.grid_address[gp] / mesh.astype(float)
+            qpoint = interaction.bz_grid.addresses[gp] / mesh.astype(float)
             print("Phonon frequencies at (%4.2f, %4.2f, %4.2f):"
                   % tuple(qpoint))
             for bi, freq in enumerate(frequencies):

@@ -40,7 +40,6 @@ class Phono3pySettings(Settings):
     _default = {
         # In micrometre. The default value is just set to avoid divergence.
         'boundary_mfp': 1.0e6,
-        'coarse_mesh_shifts': None,
         'constant_averaged_pp_interaction': None,
         'create_forces_fc2': None,
         'create_forces_fc3': None,
@@ -53,6 +52,7 @@ class Phono3pySettings(Settings):
         'ion_clamped': False,
         'is_bterta': False,
         'is_compact_fc': False,
+        'is_dense_gp_map': False,
         'is_full_pp': False,
         'is_gruneisen': False,
         'is_imag_self_energy': False,
@@ -71,7 +71,6 @@ class Phono3pySettings(Settings):
         'lapack_zheev_uplo': 'L',
         'mass_variances': None,
         'max_freepath': None,
-        'mesh_divisors': None,
         'num_points_in_batch': None,
         'read_collision': None,
         'read_fc2': False,
@@ -104,9 +103,6 @@ class Phono3pySettings(Settings):
 
     def set_boundary_mfp(self, val):
         self._v['boundary_mfp'] = val
-
-    def set_coarse_mesh_shifts(self, val):
-        self._v['coarse_mesh_shifts'] = val
 
     def set_constant_averaged_pp_interaction(self, val):
         self._v['constant_averaged_pp_interaction'] = val
@@ -143,6 +139,9 @@ class Phono3pySettings(Settings):
 
     def set_is_compact_fc(self, val):
         self._v['is_compact_fc'] = val
+
+    def set_is_dense_gp_map(self, val):
+        self._v['is_dense_gp_map'] = val
 
     def set_is_full_pp(self, val):
         self._v['is_full_pp'] = val
@@ -194,9 +193,6 @@ class Phono3pySettings(Settings):
 
     def set_max_freepath(self, val):
         self._v['max_freepath'] = val
-
-    def set_mesh_divisors(self, val):
-        self._v['mesh_divisors'] = val
 
     def set_num_points_in_batch(self, val):
         self._v['num_points_in_batch'] = val
@@ -348,6 +344,10 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_compact_fc:
                 self._confs['compact_fc'] = '.true.'
 
+        if 'is_dense_gp_map' in self._args:
+            if self._args.is_dense_gp_map:
+                self._confs['dense_gp_map'] = '.true.'
+
         if 'is_gruneisen' in self._args:
             if self._args.is_gruneisen:
                 self._confs['gruneisen'] = '.true.'
@@ -420,11 +420,6 @@ class Phono3pyConfParser(ConfParser):
         if 'max_freepath' in self._args:
             if self._args.max_freepath is not None:
                 self._confs['max_freepath'] = self._args.max_freepath
-
-        if 'mesh_divisors' in self._args:
-            mesh_divisors = self._args.mesh_divisors
-            if mesh_divisors is not None:
-                self._confs['mesh_divisors'] = " ".join(mesh_divisors)
 
         if 'num_points_in_batch' in self._args:
             num_points_in_batch = self._args.num_points_in_batch
@@ -526,7 +521,7 @@ class Phono3pyConfParser(ConfParser):
                     'write_gamma_detail', 'write_gamma',
                     'write_collision', 'write_phonon', 'write_pp',
                     'write_LBTE_solution', 'full_pp', 'ion_clamped',
-                    'bterta', 'compact_fc', 'real_self_energy',
+                    'bterta', 'compact_fc', 'dense_gp_map', 'real_self_energy',
                     'gruneisen', 'imag_self_energy', 'isotope',
                     'joint_dos', 'lbte', 'N_U', 'spectral_function',
                     'reducible_collision_matrix', 'symmetrize_fc2',
@@ -603,23 +598,6 @@ class Phono3pyConfParser(ConfParser):
                 else:
                     self.set_parameter('mass_variances', vals)
 
-            if conf_key == 'mesh_divisors':
-                vals = [x for x in confs['mesh_divisors'].split()]
-                if len(vals) == 3:
-                    self.set_parameter('mesh_divisors', [int(x) for x in vals])
-                elif len(vals) == 6:
-                    divs = [int(x) for x in vals[:3]]
-                    is_shift = [x.lower() == 't' for x in vals[3:]]
-                    for i in range(3):
-                        if is_shift[i] and (divs[i] % 2 != 0):
-                            is_shift[i] = False
-                            self.setting_error("Coarse grid shift along the " +
-                                               ["first", "second", "third"][i] +
-                                               " axis is not allowed.")
-                    self.set_parameter('mesh_divisors', divs + is_shift)
-                else:
-                    self.setting_error("Mesh divisors are incorrectly set.")
-
             if conf_key == 'read_collision':
                 if confs['read_collision'] == 'all':
                     self.set_parameter('read_collision', 'all')
@@ -683,6 +661,10 @@ class Phono3pyConfParser(ConfParser):
         if 'cutoff_pair_distance' in params:
             self._settings.set_cutoff_pair_distance(
                 params['cutoff_pair_distance'])
+
+        # Use new BZ grid system with True.
+        if 'dense_gp_map' in params:
+            self._settings.set_is_dense_gp_map(params['dense_gp_map'])
 
         # Gamma unit conversion factor
         if 'gamma_conversion_factor' in params:
@@ -765,13 +747,6 @@ class Phono3pyConfParser(ConfParser):
         # Maximum mean free path
         if 'max_freepath' in params:
             self._settings.set_max_freepath(params['max_freepath'])
-
-        # Divisors for mesh numbers
-        if 'mesh_divisors' in params:
-            self._settings.set_mesh_divisors(params['mesh_divisors'][:3])
-            if len(params['mesh_divisors']) > 3:
-                self._settings.set_coarse_mesh_shifts(
-                    params['mesh_divisors'][3:])
 
         # Cutoff frequency for pseudo inversion of collision matrix
         if 'pinv_cutoff' in params:

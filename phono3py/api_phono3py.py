@@ -90,6 +90,7 @@ class Phono3py(object):
                  is_symmetry=True,
                  is_mesh_symmetry=True,
                  symmetrize_fc3q=False,
+                 is_dense_gp_map=False,
                  symprec=1e-5,
                  calculator=None,
                  log_level=0,
@@ -102,6 +103,7 @@ class Phono3py(object):
         self._is_mesh_symmetry = is_mesh_symmetry
         self._lapack_zheev_uplo = lapack_zheev_uplo
         self._symmetrize_fc3q = symmetrize_fc3q
+        self._is_dense_gp_map = is_dense_gp_map
         self._cutoff_frequency = cutoff_frequency
         self._calculator = calculator
         self._log_level = log_level
@@ -960,6 +962,7 @@ class Phono3py(object):
             cutoff_frequency=self._cutoff_frequency,
             is_mesh_symmetry=self._is_mesh_symmetry,
             symmetrize_fc3q=self._symmetrize_fc3q,
+            is_dense_gp_map=self._is_dense_gp_map,
             lapack_zheev_uplo=self._lapack_zheev_uplo)
         self._interaction.set_nac_q_direction(nac_q_direction=nac_q_direction)
         self._init_dynamical_matrix()
@@ -1058,9 +1061,8 @@ class Phono3py(object):
         """
 
         if self._interaction is not None:
-            grid_address = self._interaction.get_grid_address()
             freqs, eigvecs, _ = self._interaction.get_phonons()
-            return freqs, eigvecs, grid_address
+            return freqs, eigvecs, self._interaction.bz_grid.addresses
         else:
             msg = ("Phono3py.init_phph_interaction has to be called "
                    "before running this method.")
@@ -1393,6 +1395,7 @@ class Phono3py(object):
                              frequency_points=None,
                              frequency_step=None,
                              num_frequency_points=None,
+                             frequency_points_at_bands=False,
                              scattering_event_class=None,
                              write_txt=False,
                              write_gamma_detail=False,
@@ -1412,7 +1415,8 @@ class Phono3py(object):
             Temperatures where imaginary part of self-energies are calculated.
             dtype=float, shape=(temperatures,)
         frequency_points : array_like, optional
-            Frequency sampling points. Default is None. In this case,
+            Frequency sampling points. Default is None. With
+            frequency_points_at_bands=False and frequency_points is None,
             num_frequency_points or frequency_step is used to generate uniform
             frequency sampling points.
             dtype=float, shape=(frequency_points,)
@@ -1423,6 +1427,9 @@ class Phono3py(object):
             Number of sampling sampling points to be used instead of
             frequency_step. This number includes end points. Default is None,
             which gives 201.
+        frequency_points_at_bands : bool, optional
+            Phonon band frequencies are used as frequency points when True.
+            Default is False.
         scattering_event_class : int, optional
             Specific choice of scattering event class, 1 or 2 that is specified
             1 or 2, respectively. The result is stored in gammas. Therefore
@@ -1458,6 +1465,7 @@ class Phono3py(object):
             sigmas=self._sigmas,
             frequency_points=frequency_points,
             frequency_step=frequency_step,
+            frequency_points_at_bands=frequency_points_at_bands,
             num_frequency_points=num_frequency_points,
             scattering_event_class=scattering_event_class,
             write_gamma_detail=write_gamma_detail,
@@ -1675,8 +1683,6 @@ class Phono3py(object):
             solve_collective_phonon=False,
             use_ave_pp=False,
             gamma_unit_conversion=None,
-            mesh_divisors=None,
-            coarse_mesh_shifts=None,
             is_reducible_collision_matrix=False,
             is_kappa_star=True,
             gv_delta_q=None,  # for group velocity
@@ -1750,8 +1756,6 @@ class Phono3py(object):
                 boundary_mfp=boundary_mfp,
                 use_ave_pp=use_ave_pp,
                 gamma_unit_conversion=gamma_unit_conversion,
-                mesh_divisors=mesh_divisors,
-                coarse_mesh_shifts=coarse_mesh_shifts,
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
                 is_full_pp=is_full_pp,

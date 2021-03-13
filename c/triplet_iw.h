@@ -35,19 +35,17 @@
 #ifndef __triplet_iw_H__
 #define __triplet_iw_H__
 
-#include "triplet.h"
+#include "lagrid.h"
 
 void
 tpi_get_integration_weight(double *iw,
                            char *iw_zero,
                            const double *frequency_points,
                            const long num_band0,
-                           TPLCONST long tp_relative_grid_address[2][24][4][3],
-                           const long mesh[3],
+                           LAGCONST long tp_relative_grid_address[2][24][4][3],
                            const long triplets[3],
                            const long num_triplets,
-                           TPLCONST long (*bz_grid_address)[3],
-                           const long *bz_map,
+                           const ConstBZGrid *bzgrid,
                            const double *frequencies1,
                            const long num_band1,
                            const double *frequencies2,
@@ -69,10 +67,8 @@ void tpi_get_integration_weight_with_sigma(double *iw,
 void
 tpi_get_neighboring_grid_points(long neighboring_grid_points[],
                                 const long grid_point,
-                                TPLCONST long relative_grid_address[][3],
+                                LAGCONST long relative_grid_address[][3],
                                 const long num_relative_grid_address,
-                                const long mesh[3],
-                                TPLCONST long bz_grid_address[][3],
-                                const long bz_map[]);
+                                const ConstBZGrid *bzgrid);
 
 #endif
