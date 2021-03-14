@@ -76,7 +76,9 @@ def direction_to_displacement(direction_dataset,
     lattice = supercell.cell.T
     new_dataset = {}
     new_dataset['natom'] = len(supercell)
-    new_dataset['duplicates'] = duplicates
+
+    if duplicates:
+        new_dataset['duplicates'] = duplicates
 
     if cutoff_distance is not None:
         new_dataset['cutoff_distance'] = cutoff_distance
@@ -333,28 +335,73 @@ def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
 
 
 def _find_duplicates(direction_dataset):
-    direction_sets = []
-    id_offset = len(direction_dataset) + 1
+    direction_sets = {}
+    idx = len(direction_dataset) + 1
+    pair_idx = {}
 
     # (List index of direction_sets + id_offset + 1) gives the displacement id.
     # This id is stamped in direction_to_displacement by the sequence of
     # the loops. Therefore the same system of the loops should be used here.
     for direction1 in direction_dataset:
-        number1 = direction1['number']
+        n1 = direction1['number']
         d1 = direction1['direction']
         for directions2 in direction1['second_atoms']:
-            number2 = directions2['number']
-            for d2 in directions2['directions']:
-                direction_sets.append([number1, number2] + d1 + d2)
+            n2 = directions2['number']
+            if (n1, n2) not in direction_sets:
+                direction_sets[(n1, n2)] = []
+                pair_idx[(n1, n2)] = []
+            for i, d2 in enumerate(directions2['directions']):
+                direction_sets[(n1, n2)].append(d1 + d2)
+                pair_idx[(n1, n2)].append(idx + i)
+            idx += len(directions2['directions'])
 
-    direction_sets = np.array(direction_sets)
-    flip_sets = direction_sets[:, [1, 0, 5, 6, 7, 2, 3, 4]]
-    _duplucates = []
-    for i, dset in enumerate(direction_sets):
-        eq_indices = np.where(np.abs(flip_sets - dset).sum(axis=1) == 0)[0]
+    duplucates = []
+    done = []
+    for i, direction1 in enumerate(direction_dataset):
+        n1 = direction1['number']
+        for directions2 in direction1['second_atoms']:
+            n2 = directions2['number']
+            if (n2 > n1 and (n2, n1) not in done and
+                (n2, n1) in direction_sets):
+                done.append((n2, n1))
+                duplucates += _compare(
+                    n1, n2,
+                    direction_sets[(n1, n2)], direction_sets[(n2, n1)],
+                    pair_idx[(n1, n2)], pair_idx[(n2, n1)])
+
+    done = []
+    for i, direction1 in enumerate(direction_dataset):
+        n1 = direction1['number']
+        for directions2 in direction1['second_atoms']:
+            n2 = directions2['number']
+            if n1 == n2 and n1 not in done:
+                done.append(n1)
+                duplucates += _compare_opposite(
+                    n1,
+                    direction_sets[(n1, n1)],
+                    pair_idx[(n1, n1)])
+
+    return duplucates
+
+
+def _compare(n1, n2, dset1, dset2, pidx1, pidx2):
+    flip_sets = np.array(dset2)[:, [3, 4, 5, 0, 1, 2]]
+    duplucates = []
+
+    for i, d1 in enumerate(dset1):
+        eq_indices = np.where(np.abs(flip_sets - d1).sum(axis=1) == 0)[0]
         if len(eq_indices) > 0:
-            _duplucates += [[i + id_offset, j] for j in eq_indices + id_offset]
-        if dset[0] == dset[1] and (dset[2:5] + dset[5:8] == 0).all():
-            _duplucates.append([i + id_offset, 0])
+            duplucates += [[pidx2[j], pidx1[i]] for j in eq_indices]
 
-    return [[i, j] for (i, j) in _duplucates if i > j]
+    return [[i, j] for (i, j) in duplucates if i > j]
+
+
+def _compare_opposite(n1, dset1, pidx1):
+    flip_sets = np.array(dset1)[:, [3, 4, 5, 0, 1, 2]]
+    duplucates = []
+    for i, d1 in enumerate(dset1):
+        eq_indices = np.where(np.abs(flip_sets + d1).sum(axis=1) == 0)[0]
+        if len(eq_indices) > 0:
+            duplucates += [[pidx1[j], 0] for j in eq_indices]
+
+    return [[i, j] for (i, j) in duplucates if i > j]
