@@ -6,7 +6,7 @@ si_pbesol_kappa_RTA_iso = [96.92419, 96.92419, 96.92419, 0, 0, 0]
 si_pbesol_kappa_RTA_with_sigmas_iso = [96.03248, 96.03248, 96.03248, 0, 0, 0]
 si_pbesol_kappa_RTA_si_nosym = [38.242347, 38.700219, 39.198018,
                                 0.3216, 0.207731, 0.283]
-si_pbesol_kappa_RTA_si_nomeshsym = [38.15450, 38.15450, 38.15450, 0, 0, 0]
+si_pbesol_kappa_RTA_si_nomeshsym = [38.90918, 38.90918, 38.90918, 0, 0, 0]
 nacl_pbe_kappa_RTA = [7.72798252, 7.72798252, 7.72798252, 0, 0, 0]
 nacl_pbe_kappa_RTA_with_sigma = [7.71913708, 7.71913708, 7.71913708, 0, 0, 0]
 
