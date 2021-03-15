@@ -195,8 +195,6 @@ static void multiply_matrix_vector_d3(double v[3],
                                       const double a[3][3],
                                       const double b[3]);
 static double norm_squared_d3(const double a[3]);
-static long inverse_unimodular_matrix_l3(long m[3][3],
-                                         const long a[3][3]);
 
 long bzg_get_ir_grid_map(long ir_mapping_table[],
                          const long D_diag[3],
@@ -254,7 +252,7 @@ long bzg_get_bz_grid_addresses(BZGrid *bzgrid,
   long det;
   long Qinv[3][3];
 
-  det = inverse_unimodular_matrix_l3(Qinv, bzgrid->Q);
+  det = bzg_inverse_unimodular_matrix_l3(Qinv, bzgrid->Q);
   if (det == 0) {
     return 0;
   }
@@ -350,6 +348,31 @@ void bzg_multiply_matrix_vector_ld3(double v[3],
   for (i = 0; i < 3; i++) {
     v[i] = c[i];
   }
+}
+
+long bzg_inverse_unimodular_matrix_l3(long m[3][3],
+                                      const long a[3][3])
+{
+  long det;
+  long c[3][3];
+
+  det = lagmat_get_determinant_l3(a);
+  if (labs(det) != 1) {
+    return 0;
+  }
+
+  c[0][0] = (a[1][1] * a[2][2] - a[1][2] * a[2][1]) / det;
+  c[1][0] = (a[1][2] * a[2][0] - a[1][0] * a[2][2]) / det;
+  c[2][0] = (a[1][0] * a[2][1] - a[1][1] * a[2][0]) / det;
+  c[0][1] = (a[2][1] * a[0][2] - a[2][2] * a[0][1]) / det;
+  c[1][1] = (a[2][2] * a[0][0] - a[2][0] * a[0][2]) / det;
+  c[2][1] = (a[2][0] * a[0][1] - a[2][1] * a[0][0]) / det;
+  c[0][2] = (a[0][1] * a[1][2] - a[0][2] * a[1][1]) / det;
+  c[1][2] = (a[0][2] * a[1][0] - a[0][0] * a[1][2]) / det;
+  c[2][2] = (a[0][0] * a[1][1] - a[0][1] * a[1][0]) / det;
+  lagmat_copy_matrix_l3(m, c);
+
+  return det;
 }
 
 /* Return NULL if failed */
@@ -617,29 +640,4 @@ static void multiply_matrix_vector_d3(double v[3],
 static double norm_squared_d3(const double a[3])
 {
   return a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
-}
-
-static long inverse_unimodular_matrix_l3(long m[3][3],
-                                         const long a[3][3])
-{
-  long det;
-  long c[3][3];
-
-  det = lagmat_get_determinant_l3(a);
-  if (labs(det) != 1) {
-    return 0;
-  }
-
-  c[0][0] = (a[1][1] * a[2][2] - a[1][2] * a[2][1]) / det;
-  c[1][0] = (a[1][2] * a[2][0] - a[1][0] * a[2][2]) / det;
-  c[2][0] = (a[1][0] * a[2][1] - a[1][1] * a[2][0]) / det;
-  c[0][1] = (a[2][1] * a[0][2] - a[2][2] * a[0][1]) / det;
-  c[1][1] = (a[2][2] * a[0][0] - a[2][0] * a[0][2]) / det;
-  c[2][1] = (a[2][0] * a[0][1] - a[2][1] * a[0][0]) / det;
-  c[0][2] = (a[0][1] * a[1][2] - a[0][2] * a[1][1]) / det;
-  c[1][2] = (a[0][2] * a[1][0] - a[0][0] * a[1][2]) / det;
-  c[2][2] = (a[0][0] * a[1][1] - a[0][1] * a[1][0]) / det;
-  lagmat_copy_matrix_l3(m, c);
-
-  return det;
 }

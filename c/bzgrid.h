@@ -112,5 +112,7 @@ void bzg_free_RotMats(RotMats * rotmats);
 void bzg_multiply_matrix_vector_ld3(double v[3],
                                     const long a[3][3],
                                     const double b[3]);
+long bzg_inverse_unimodular_matrix_l3(long m[3][3],
+                                      const long a[3][3]);
 
 #endif
