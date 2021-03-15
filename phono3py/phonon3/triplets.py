@@ -666,7 +666,7 @@ def _relocate_BZ_grid_address(gr_grid_addresses,
     if is_dense_gp_map:
         bz_map = np.zeros(np.prod(mesh) + 1, dtype='int_')
     else:
-        bz_map = np.zeros(np.prod(np.multiply(mesh, 2)), dtype='int_')
+        bz_map = np.zeros(np.prod(mesh) * 9 + 1, dtype='int_')
     Q = np.eye(3, dtype='int_', order='C')
     num_gp = phono3c.bz_grid_addresses(
         bz_grid_addresses,

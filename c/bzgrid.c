@@ -482,7 +482,8 @@ static void get_bz_grid_addresses_type1(BZGrid *bzgrid,
   double tolerance, min_distance;
   double distances[BZG_NUM_BZ_SEARCH_SPACE];
   long bzmesh[3], bz_address_double[3], nint[3];
-  long i, j, k, boundary_num_gp, total_num_gp, bzgp, gp, num_bzmesh, is_first;
+  long i, j, k, boundary_num_gp, total_num_gp, bzgp, gp, num_bzmesh;
+  long count, id_shift;
 
   tolerance = bzg_get_tolerance_for_BZ_reduction(bzgrid);
   for (j = 0; j < 3; j++) {
@@ -499,18 +500,20 @@ static void get_bz_grid_addresses_type1(BZGrid *bzgrid,
 
   /* Multithreading doesn't work for this loop since gp calculated */
   /* with boundary_num_gp is unstable to store bz_grid_address. */
+  bzgrid->gp_map[num_bzmesh] = 0;
+  id_shift = 0;
   for (i = 0; i < total_num_gp; i++) {
     min_distance = get_bz_distances(nint, distances, i, bzgrid, grid_address);
-    is_first = 1;
+    count = 0;
     for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
       if (distances[j] < min_distance + tolerance) {
-        if (is_first == 1) {
+        if (count == 0) {
           gp = i;
-          is_first = 0;
         } else {
           gp = boundary_num_gp + total_num_gp;
           boundary_num_gp++;
         }
+        count++;
         set_bz_address(bzgrid->addresses[gp],
                        j,
                        grid_address[i],
@@ -526,8 +529,10 @@ static void get_bz_grid_addresses_type1(BZGrid *bzgrid,
         bzgrid->bzg2grg[gp] = i;
       }
     }
+    /* This is used in get_BZ_triplets_at_q_type1. */
+    id_shift += count - 1;
+    bzgrid->gp_map[num_bzmesh + i + 1] = id_shift;
   }
-
   bzgrid->size = boundary_num_gp + total_num_gp;
 }
 
