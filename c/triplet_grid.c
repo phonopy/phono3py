@@ -193,9 +193,9 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
                                        const long num_ir);
 static long get_third_q_of_triplets_at_q_type1(long bz_address[3][3],
                                                const long q_index,
-                                               const long *bz_map,
-                                               const long D_diag[3],
-                                               const long bzmesh[3]);
+                                               const ConstBZGrid *bzgrid,
+                                               const long bzmesh[3],
+                                               const long QD[3]);
 static void get_LQD_inv(double LQD_inv[3][3], const ConstBZGrid *bzgrid);
 static RotMats *get_point_group_reciprocal_with_q(const RotMats * rot_reciprocal,
                                                   const long D_diag[3],
@@ -399,11 +399,12 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
                                        const long num_ir)
 {
   long i, j;
-  long bz_address[3][3], bzmesh[3];
+  long bz_address[3][3], bzmesh[3], QD[3];
 
   for (i = 0; i < 3; i++) {
     bzmesh[i] = bzgrid->D_diag[i] * 2;
   }
+  lagmat_multiply_matrix_vector_l3(QD, bzgrid->Q, bzgrid->D_diag);
 
 #pragma omp parallel for private(j, bz_address)
   for (i = 0; i < num_ir; i++) {
@@ -415,9 +416,9 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
     for (j = 2; j > -1; j--) {
       if (get_third_q_of_triplets_at_q_type1(bz_address,
                                              j,
-                                             bzgrid->gp_map,
-                                             bzgrid->D_diag,
-                                             bzmesh) == 0) {
+                                             bzgrid,
+                                             bzmesh,
+                                             QD) == 0) {
         break;
       }
     }
@@ -496,30 +497,32 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
 
 static long get_third_q_of_triplets_at_q_type1(long bz_address[3][3],
                                                const long q_index,
-                                               const long *bz_map,
-                                               const long D_diag[3],
-                                               const long bzmesh[3])
+                                               const ConstBZGrid *bzgrid,
+                                               const long bzmesh[3],
+                                               const long QD[3])
 {
   long i, j, smallest_g, smallest_index, sum_g, delta_g[3];
   long prod_bzmesh;
   long bzgp[BZG_NUM_BZ_SEARCH_SPACE];
   long bz_address_search[3];
+  const long *bz_map;
 
+  bz_map = bzgrid->gp_map;
   prod_bzmesh = bzmesh[0] * bzmesh[1] * bzmesh[2];
 
-  modulo_l3(bz_address[q_index], D_diag);
+  modulo_l3(bz_address[q_index], bzgrid->D_diag);
   for (i = 0; i < 3; i++) {
     delta_g[i] = 0;
     for (j = 0; j < 3; j++) {
       delta_g[i] += bz_address[j][i];
     }
-    delta_g[i] /= D_diag[i];
+    delta_g[i] /= bzgrid->D_diag[i];
   }
 
   for (i = 0; i < BZG_NUM_BZ_SEARCH_SPACE; i++) {
     for (j = 0; j < 3; j++) {
       bz_address_search[j]
-        = bz_address[q_index][j] + bz_search_space[i][j] * D_diag[j];
+        = bz_address[q_index][j] + bz_search_space[i][j] * bzgrid->D_diag[j];
     }
     bzgp[i] = bz_map[grg_get_grid_index(bz_address_search, bzmesh)];
   }
@@ -548,7 +551,7 @@ escape:
   }
 
   for (i = 0; i < 3; i++) {
-    bz_address[q_index][i] += bz_search_space[smallest_index][i] * D_diag[i];
+    bz_address[q_index][i] += bz_search_space[smallest_index][i] * bzgrid->D_diag[i];
   }
 
   return smallest_g;

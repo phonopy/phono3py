@@ -178,6 +178,11 @@ static long get_bz_grid_addresses_type1(BZGrid *bzgrid,
                                         const long (*grid_address)[3]);
 static long get_bz_grid_addresses_type2(BZGrid *bzgrid,
                                         const long (*grid_address)[3]);
+static double get_min_distance(long nint[3],
+                               double distance[],
+                               const long gp,
+                               BZGrid *bzgrid,
+                               const long (*grid_address)[3]);
 static void multiply_matrix_vector_d3(double v[3],
                                       const double a[3][3],
                                       const double b[3]);
@@ -526,29 +531,32 @@ static long get_bz_grid_addresses_type2(BZGrid *bzgrid,
 
   for (i = 0;
        i < bzgrid->D_diag[0] * bzgrid->D_diag[1] * bzgrid->D_diag[2]; i++) {
-    for (j = 0; j < 3; j++) {
-      q_red[j] = grid_address[i][j] + bzgrid->PS[j] / 2.0;
-      q_red[j] /= bzgrid->D_diag[j];
-    }
-    bzg_multiply_matrix_vector_ld3(q_red, bzgrid->Q, q_red);
-    for (j = 0; j < 3; j++) {
-      nint[j] = lagmat_Nint(q_red[j]);
-      q_red[j] -= nint[j];
-    }
 
-    for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
-      for (k = 0; k < 3; k++) {
-        q_vec[k] = q_red[k] + bz_search_space[j][k];
-      }
-      multiply_matrix_vector_d3(q_vec, bzgrid->reclat, q_vec);
-      distance[j] = norm_squared_d3(q_vec);
-    }
-    min_distance = distance[0];
-    for (j = 1; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
-      if (distance[j] < min_distance) {
-        min_distance = distance[j];
-      }
-    }
+    /* for (j = 0; j < 3; j++) {
+     *   q_red[j] = grid_address[i][j] + bzgrid->PS[j] / 2.0;
+     *   q_red[j] /= bzgrid->D_diag[j];
+     * }
+     * bzg_multiply_matrix_vector_ld3(q_red, bzgrid->Q, q_red);
+     * for (j = 0; j < 3; j++) {
+     *   nint[j] = lagmat_Nint(q_red[j]);
+     *   q_red[j] -= nint[j];
+     * }
+     *
+     * for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
+     *   for (k = 0; k < 3; k++) {
+     *     q_vec[k] = q_red[k] + bz_search_space[j][k];
+     *   }
+     *   multiply_matrix_vector_d3(q_vec, bzgrid->reclat, q_vec);
+     *   distance[j] = norm_squared_d3(q_vec);
+     * }
+     * min_distance = distance[0];
+     * for (j = 1; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
+     *   if (distance[j] < min_distance) {
+     *     min_distance = distance[j];
+     *   }
+     * } */
+
+    min_distance = get_min_distance(nint, distance, i, bzgrid, grid_address);
 
     for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
       if (distance[j] < min_distance + tolerance) {
@@ -569,6 +577,43 @@ static long get_bz_grid_addresses_type2(BZGrid *bzgrid,
 
   bzgrid->size = num_gp;
   return 1;
+}
+
+static double get_min_distance(long nint[3],
+                               double distance[],
+                               const long gp,
+                               BZGrid *bzgrid,
+                               const long (*grid_address)[3])
+{
+  long j, k;
+  double min_distance;
+  double q_vec[3], q_red[3];
+
+  for (j = 0; j < 3; j++) {
+    q_red[j] = grid_address[gp][j] + bzgrid->PS[j] / 2.0;
+    q_red[j] /= bzgrid->D_diag[j];
+  }
+  bzg_multiply_matrix_vector_ld3(q_red, bzgrid->Q, q_red);
+  for (j = 0; j < 3; j++) {
+    nint[j] = lagmat_Nint(q_red[j]);
+    q_red[j] -= nint[j];
+  }
+
+  for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
+    for (k = 0; k < 3; k++) {
+      q_vec[k] = q_red[k] + bz_search_space[j][k];
+    }
+    multiply_matrix_vector_d3(q_vec, bzgrid->reclat, q_vec);
+    distance[j] = norm_squared_d3(q_vec);
+  }
+  min_distance = distance[0];
+  for (j = 1; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
+    if (distance[j] < min_distance) {
+      min_distance = distance[j];
+    }
+  }
+
+  return min_distance;
 }
 
 static void multiply_matrix_vector_d3(double v[3],
