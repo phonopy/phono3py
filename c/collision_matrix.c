@@ -313,7 +313,7 @@ static void get_inv_sinh(double *inv_sinh,
   for (i = 0; i < num_band; i++) {
     f = frequencies[gp2 * num_band + i];
     if (f > cutoff_frequency) {
-      inv_sinh[i] = inv_sinh_occupation(f, temperature);
+      inv_sinh[i] = phonoc_inv_sinh_occupation(f, temperature);
     } else {
       inv_sinh[i] = 0;
     }

@@ -35,13 +35,11 @@
 #ifndef __reciprocal_to_normal_H__
 #define __reciprocal_to_normal_H__
 
-#include "phonoc_array.h"
-#include "phonoc_const.h"
 #include "lapack_wrapper.h"
 
 void reciprocal_to_normal_squared
 (double *fc3_normal_squared,
- PHPYCONST long (*g_pos)[4],
+ const long (*g_pos)[4],
  const long num_g_pos,
  const lapack_complex_double *fc3_reciprocal,
  const double *freqs0,

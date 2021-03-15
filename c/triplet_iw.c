@@ -34,7 +34,6 @@
 
 #include <math.h>
 #include "grgrid.h"
-#include "lagrid.h"
 #include "phonoc_utils.h"
 #include "triplet.h"
 #include "triplet_iw.h"
@@ -43,7 +42,7 @@
 static void set_freq_vertices(double freq_vertices[3][24][4],
                               const double *frequencies1,
                               const double *frequencies2,
-                              LAGCONST long vertices[2][24][4],
+                              const long vertices[2][24][4],
                               const long num_band1,
                               const long num_band2,
                               const long b1,
@@ -51,24 +50,24 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
                               const long tp_type);
 static long set_g(double g[3],
                   const double f0,
-                  LAGCONST double freq_vertices[3][24][4],
+                  const double freq_vertices[3][24][4],
                   const long max_i);
-static long in_tetrahedra(const double f0, LAGCONST double freq_vertices[24][4]);
+static long in_tetrahedra(const double f0, const double freq_vertices[24][4]);
 static void get_triplet_tetrahedra_vertices(
   long vertices[2][24][4],
-  LAGCONST long tp_relative_grid_address[2][24][4][3],
+  const long tp_relative_grid_address[2][24][4][3],
   const long triplet[3],
   const ConstBZGrid *bzgrid);
 static void
 get_neighboring_grid_points_type1(long neighboring_grid_points[],
                                   const long grid_point,
-                                  LAGCONST long relative_grid_address[][3],
+                                  const long (*relative_grid_address)[3],
                                   const long num_relative_grid_address,
                                   const ConstBZGrid *bzgrid);
 static void
 get_neighboring_grid_points_type2(long neighboring_grid_points[],
                                   const long grid_point,
-                                  LAGCONST long relative_grid_address[][3],
+                                  const long (*relative_grid_address)[3],
                                   const long num_relative_grid_address,
                                   const ConstBZGrid *bzgrid);
 
@@ -77,7 +76,7 @@ tpi_get_integration_weight(double *iw,
                            char *iw_zero,
                            const double *frequency_points,
                            const long num_band0,
-                           LAGCONST long tp_relative_grid_address[2][24][4][3],
+                           const long tp_relative_grid_address[2][24][4][3],
                            const long triplets[3],
                            const long num_triplets,
                            const ConstBZGrid *bzgrid,
@@ -183,9 +182,9 @@ void tpi_get_integration_weight_with_sigma(double *iw,
           g2 = 0;
         } else {
           iw_zero[adrs_shift] = 0;
-          g0 = gaussian(f0 + f1 - f2, sigma);
-          g1 = gaussian(f0 - f1 + f2, sigma);
-          g2 = gaussian(f0 - f1 - f2, sigma);
+          g0 = phonoc_gaussian(f0 + f1 - f2, sigma);
+          g1 = phonoc_gaussian(f0 - f1 + f2, sigma);
+          g2 = phonoc_gaussian(f0 - f1 - f2, sigma);
         }
         if (tp_type == 2) {
           iw[adrs_shift] = g2;
@@ -206,7 +205,7 @@ void tpi_get_integration_weight_with_sigma(double *iw,
           iw[adrs_shift] = 0;
         } else {
           iw_zero[adrs_shift] = 0;
-          iw[adrs_shift] = gaussian(f0 + f1 - f2, sigma);
+          iw[adrs_shift] = phonoc_gaussian(f0 + f1 - f2, sigma);
         }
       }
     }
@@ -218,7 +217,7 @@ void tpi_get_integration_weight_with_sigma(double *iw,
 void
 tpi_get_neighboring_grid_points(long neighboring_grid_points[],
                                 const long grid_point,
-                                LAGCONST long relative_grid_address[][3],
+                                const long (*relative_grid_address)[3],
                                 const long num_relative_grid_address,
                                 const ConstBZGrid *bzgrid)
 {
@@ -240,7 +239,7 @@ tpi_get_neighboring_grid_points(long neighboring_grid_points[],
 static void set_freq_vertices(double freq_vertices[3][24][4],
                               const double *frequencies1,
                               const double *frequencies2,
-                              LAGCONST long vertices[2][24][4],
+                              const long vertices[2][24][4],
                               const long num_band1,
                               const long num_band2,
                               const long b1,
@@ -278,7 +277,7 @@ static void set_freq_vertices(double freq_vertices[3][24][4],
 /* calculation. */
 static long set_g(double g[3],
                   const double f0,
-                  LAGCONST double freq_vertices[3][24][4],
+                  const double freq_vertices[3][24][4],
                   const long max_i)
 {
   long i, iw_zero;
@@ -297,7 +296,7 @@ static long set_g(double g[3],
   return iw_zero;
 }
 
-static long in_tetrahedra(const double f0, LAGCONST double freq_vertices[24][4])
+static long in_tetrahedra(const double f0, const double freq_vertices[24][4])
 {
   long i, j;
   double fmin, fmax;
@@ -324,7 +323,7 @@ static long in_tetrahedra(const double f0, LAGCONST double freq_vertices[24][4])
 }
 
 static void get_triplet_tetrahedra_vertices(long vertices[2][24][4],
-  LAGCONST long tp_relative_grid_address[2][24][4][3],
+  const long tp_relative_grid_address[2][24][4][3],
   const long triplet[3],
   const ConstBZGrid *bzgrid)
 {
@@ -344,7 +343,7 @@ static void get_triplet_tetrahedra_vertices(long vertices[2][24][4],
 static void
 get_neighboring_grid_points_type1(long neighboring_grid_points[],
                                   const long grid_point,
-                                  LAGCONST long relative_grid_address[][3],
+                                  const long (*relative_grid_address)[3],
                                   const long num_relative_grid_address,
                                   const ConstBZGrid *bzgrid)
 {
@@ -373,7 +372,7 @@ get_neighboring_grid_points_type1(long neighboring_grid_points[],
 static void
 get_neighboring_grid_points_type2(long neighboring_grid_points[],
                                   const long grid_point,
-                                  LAGCONST long relative_grid_address[][3],
+                                  const long (*relative_grid_address)[3],
                                   const long num_relative_grid_address,
                                   const ConstBZGrid *bzgrid)
 {

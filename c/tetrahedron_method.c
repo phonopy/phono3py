@@ -178,7 +178,7 @@ static long db_relative_grid_address[4][24][4][3] = {
 
 static double
 get_integration_weight(const double omega,
-                       THMCONST double tetrahedra_omegas[24][4],
+                       const double tetrahedra_omegas[24][4],
                        double (*gn)(const long,
                                     const double,
                                     const double[4]),
@@ -186,11 +186,11 @@ get_integration_weight(const double omega,
                                     const long,
                                     const double,
                                     const double[4]));
-static long get_main_diagonal(THMCONST double rec_lattice[3][3]);
+static long get_main_diagonal(const double rec_lattice[3][3]);
 static long sort_omegas(double v[4]);
 static double norm_squared_d3(const double a[3]);
-static void multiply_matrix_vector_di3(double v[3],
-                                       THMCONST double a[3][3],
+static void multiply_matrix_vector_dl3(double v[3],
+                                       const double a[3][3],
                                        const long b[3]);
 static double _f(const long n,
                  const long m,
@@ -281,7 +281,7 @@ static double _I_4(void);
 
 
 void thm_get_relative_grid_address(long relative_grid_address[24][4][3],
-                                   THMCONST double rec_lattice[3][3])
+                                   const double rec_lattice[3][3])
 {
   long i, j, k, main_diag_index;
 
@@ -314,7 +314,7 @@ void thm_get_all_relative_grid_address(long relative_grid_address[4][24][4][3])
 }
 
 double thm_get_integration_weight(const double omega,
-                                  THMCONST double tetrahedra_omegas[24][4],
+                                  const double tetrahedra_omegas[24][4],
                                   const char function)
 {
   if (function == 'I') {
@@ -330,7 +330,7 @@ double thm_get_integration_weight(const double omega,
 
 static double
 get_integration_weight(const double omega,
-                       THMCONST double tetrahedra_omegas[24][4],
+                       const double tetrahedra_omegas[24][4],
                        double (*gn)(const long,
                                     const double,
                                     const double[4]),
@@ -442,17 +442,17 @@ static long sort_omegas(double v[4])
   return i;
 }
 
-static long get_main_diagonal(THMCONST double rec_lattice[3][3])
+static long get_main_diagonal(const double rec_lattice[3][3])
 {
   long i, shortest;
   double length, min_length;
   double main_diag[3];
 
   shortest = 0;
-  multiply_matrix_vector_di3(main_diag, rec_lattice, main_diagonals[0]);
+  multiply_matrix_vector_dl3(main_diag, rec_lattice, main_diagonals[0]);
   min_length = norm_squared_d3(main_diag);
   for (i = 1; i < 4; i++) {
-    multiply_matrix_vector_di3(main_diag, rec_lattice, main_diagonals[i]);
+    multiply_matrix_vector_dl3(main_diag, rec_lattice, main_diagonals[i]);
     length = norm_squared_d3(main_diag);
     if (min_length > length) {
       min_length = length;
@@ -467,8 +467,8 @@ static double norm_squared_d3(const double a[3])
   return a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
 }
 
-static void multiply_matrix_vector_di3(double v[3],
-                                       THMCONST double a[3][3],
+static void multiply_matrix_vector_dl3(double v[3],
+                                       const double a[3][3],
                                        const long b[3])
 {
   long i;

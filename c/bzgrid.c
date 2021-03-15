@@ -175,18 +175,15 @@ static long get_ir_grid_map(long ir_mapping_table[],
                             const long PS[3],
                             const RotMats *rot_reciprocal);
 static long get_bz_grid_addresses_type1(BZGrid *bzgrid,
-                                        LAGCONST long grid_address[][3]);
+                                        const long (*grid_address)[3]);
 static long get_bz_grid_addresses_type2(BZGrid *bzgrid,
-                                        LAGCONST long grid_address[][3]);
+                                        const long (*grid_address)[3]);
 static void multiply_matrix_vector_d3(double v[3],
-                                      LAGCONST double a[3][3],
+                                      const double a[3][3],
                                       const double b[3]);
-static void multiply_matrix_vector_ld3(double v[3],
-                                       LAGCONST long a[3][3],
-                                       const double b[3]);
 static double norm_squared_d3(const double a[3]);
 static long inverse_unimodular_matrix_l3(long m[3][3],
-                                         LAGCONST long a[3][3]);
+                                         const long a[3][3]);
 
 long bzg_get_ir_grid_map(long ir_mapping_table[],
                          const long D_diag[3],
@@ -212,7 +209,7 @@ long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
                                 const long mesh[3],
                                 const long is_shift[3],
                                 const long is_time_reversal,
-                                LAGCONST long (*rotations_in)[3][3],
+                                const long (*rotations_in)[3][3],
                                 const long num_rot)
 {
   long i, num_ir;
@@ -239,7 +236,7 @@ long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
 }
 
 long bzg_get_bz_grid_addresses(BZGrid *bzgrid,
-                               LAGCONST long grid_address[][3])
+                               const long (*grid_address)[3])
 {
   if (bzgrid->type == 1) {
     return get_bz_grid_addresses_type1(bzgrid, grid_address);
@@ -318,6 +315,19 @@ void bzg_free_RotMats(RotMats * rotmats)
   free(rotmats);
 }
 
+void bzg_multiply_matrix_vector_ld3(double v[3],
+                                    const long a[3][3],
+                                    const double b[3])
+{
+  long i;
+  double c[3];
+  for (i = 0; i < 3; i++) {
+    c[i] = a[i][0] * b[0] + a[i][1] * b[1] + a[i][2] * b[2];
+  }
+  for (i = 0; i < 3; i++) {
+    v[i] = c[i];
+  }
+}
 
 /* Return NULL if failed */
 static RotMats *get_point_group_reciprocal(const RotMats * rotations,
@@ -326,7 +336,7 @@ static RotMats *get_point_group_reciprocal(const RotMats * rotations,
   long i, j, num_rot;
   RotMats *rot_reciprocal, *rot_return;
   long *unique_rot;
-  LAGCONST long inversion[3][3] = {
+  const long inversion[3][3] = {
     {-1, 0, 0 },
     { 0,-1, 0 },
     { 0, 0,-1 }
@@ -420,7 +430,7 @@ static long get_ir_grid_map(long ir_mapping_table[],
 }
 
 static long get_bz_grid_addresses_type1(BZGrid *bzgrid,
-                                        LAGCONST long grid_address[][3])
+                                        const long (*grid_address)[3])
 {
   double tolerance, min_distance;
   double q_vector[3], distance[BZG_NUM_BZ_SEARCH_SPACE];
@@ -496,7 +506,7 @@ static long get_bz_grid_addresses_type1(BZGrid *bzgrid,
 }
 
 static long get_bz_grid_addresses_type2(BZGrid *bzgrid,
-                                        LAGCONST long grid_address[][3])
+                                        const long (*grid_address)[3])
 {
   double tolerance, min_distance;
   double q_vec[3], q_red[3], distance[BZG_NUM_BZ_SEARCH_SPACE];
@@ -520,7 +530,7 @@ static long get_bz_grid_addresses_type2(BZGrid *bzgrid,
       q_red[j] = grid_address[i][j] + bzgrid->PS[j] / 2.0;
       q_red[j] /= bzgrid->D_diag[j];
     }
-    multiply_matrix_vector_ld3(q_red, bzgrid->Q, q_red);
+    bzg_multiply_matrix_vector_ld3(q_red, bzgrid->Q, q_red);
     for (j = 0; j < 3; j++) {
       nint[j] = lagmat_Nint(q_red[j]);
       q_red[j] -= nint[j];
@@ -562,22 +572,8 @@ static long get_bz_grid_addresses_type2(BZGrid *bzgrid,
 }
 
 static void multiply_matrix_vector_d3(double v[3],
-                                      LAGCONST double a[3][3],
+                                      const double a[3][3],
                                       const double b[3])
-{
-  long i;
-  double c[3];
-  for (i = 0; i < 3; i++) {
-    c[i] = a[i][0] * b[0] + a[i][1] * b[1] + a[i][2] * b[2];
-  }
-  for (i = 0; i < 3; i++) {
-    v[i] = c[i];
-  }
-}
-
-static void multiply_matrix_vector_ld3(double v[3],
-                                       LAGCONST long a[3][3],
-                                       const double b[3])
 {
   long i;
   double c[3];
@@ -595,7 +591,7 @@ static double norm_squared_d3(const double a[3])
 }
 
 static long inverse_unimodular_matrix_l3(long m[3][3],
-                                         LAGCONST long a[3][3])
+                                         const long a[3][3])
 {
   long det;
   long c[3][3];

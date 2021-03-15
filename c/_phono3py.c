@@ -322,6 +322,7 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   PyArrayObject *py_triplets;
   PyArrayObject *py_bz_grid_addresses;
   PyArrayObject *py_D_diag;
+  PyArrayObject *py_Q;
   PyArrayObject *py_shortest_vectors;
   PyArrayObject *py_multiplicities;
   PyArrayObject *py_fc3;
@@ -340,6 +341,7 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   char* g_zero;
   long (*bz_grid_addresses)[3];
   long *D_diag;
+  long (*Q)[3];
   double *fc3;
   double *svecs;
   long *multi;
@@ -351,7 +353,7 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   long i;
   long is_compact_fc3;
 
-  if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOld",
+  if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOOld",
                         &py_fc3_normal_squared,
                         &py_g_zero,
                         &py_frequencies,
@@ -359,6 +361,7 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
                         &py_triplets,
                         &py_bz_grid_addresses,
                         &py_D_diag,
+                        &py_Q,
                         &py_fc3,
                         &py_shortest_vectors,
                         &py_multiplicities,
@@ -382,6 +385,7 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   g_zero = (char*)PyArray_DATA(py_g_zero);
   bz_grid_addresses = (long(*)[3])PyArray_DATA(py_bz_grid_addresses);
   D_diag = (long*)PyArray_DATA(py_D_diag);
+  Q = (long(*)[3])PyArray_DATA(py_Q);
   fc3 = (double*)PyArray_DATA(py_fc3);
   if (PyArray_DIMS(py_fc3)[0] == PyArray_DIMS(py_fc3)[1]) {
     is_compact_fc3 = 0;
@@ -406,6 +410,7 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
                         num_triplets,
                         bz_grid_addresses,
                         D_diag,
+                        Q,
                         fc3,
                         is_compact_fc3,
                         svecs,

@@ -35,7 +35,6 @@
 /* POSSIBILITY OF SUCH DAMAGE. */
 
 #include "bzgrid.h"
-#include "lagrid.h"
 #include "triplet.h"
 #include "triplet_iw.h"
 #include "triplet_grid.h"
@@ -57,7 +56,7 @@ long tpl_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                            const long mesh[3],
                                            const long is_time_reversal,
                                            const long num_rot,
-                                           LAGCONST long (*rotations)[3][3],
+                                           const long (*rotations)[3][3],
                                            const long swappable)
 {
   long num_ir;
@@ -77,8 +76,8 @@ void tpl_get_integration_weight(double *iw,
                                 char *iw_zero,
                                 const double *frequency_points,
                                 const long num_band0,
-                                LAGCONST long relative_grid_address[24][4][3],
-                                LAGCONST long (*triplets)[3],
+                                const long relative_grid_address[24][4][3],
+                                const long (*triplets)[3],
                                 const long num_triplets,
                                 const ConstBZGrid *bzgrid,
                                 const double *frequencies1,
@@ -123,7 +122,7 @@ void tpl_get_integration_weight_with_sigma(double *iw,
                                            const double sigma_cutoff,
                                            const double *frequency_points,
                                            const long num_band0,
-                                           LAGCONST long (*triplets)[3],
+                                           const long (*triplets)[3],
                                            const long num_triplets,
                                            const double *frequencies,
                                            const long num_band,
@@ -175,7 +174,7 @@ long tpl_is_N(const long triplet[3], const long (*bz_grid_addresses)[3])
 
 void tpl_set_relative_grid_address(
   long tp_relative_grid_address[2][24][4][3],
-  LAGCONST long relative_grid_address[24][4][3],
+  const long relative_grid_address[24][4][3],
   const long tp_type)
 {
   long i, j, k, l;

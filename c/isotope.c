@@ -87,7 +87,7 @@ iso_get_isotope_scattering_strength(double *gamma,
         if (f < cutoff_frequency) {
           continue;
         }
-        dist = gaussian(f - f0[i], sigma);
+        dist = phonoc_gaussian(f - f0[i], sigma);
         for (l = 0; l < num_band / 3; l++) { /* elements */
           a = 0;
           b = 0;

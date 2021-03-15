@@ -35,8 +35,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include "phonoc_utils.h"
-#include "phonoc_const.h"
-#include "phonoc_array.h"
 #include "reciprocal_to_normal.h"
 #include "lapack_wrapper.h"
 
@@ -73,7 +71,7 @@ static double get_fc3_sum
 
 void reciprocal_to_normal_squared
 (double *fc3_normal_squared,
- PHPYCONST long (*g_pos)[4],
+ const long (*g_pos)[4],
  const long num_g_pos,
  const lapack_complex_double *fc3_reciprocal,
  const double *freqs0,

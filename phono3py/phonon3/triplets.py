@@ -119,9 +119,63 @@ class BZGrid(object):
         self._addresses = None
         self._gp_map = None
 
+        self._Q = np.eye(3, dtype='int_')
+        self._P = np.eye(3, dtype='int_')
+
     @property
     def mesh_numbers(self):
+        """Mesh numbers of conventional regular grid"""
         return self._mesh_numbers
+
+    @property
+    def D_diag(self):
+        """Diagonal elements of diagonal matrix after SNF: D=PAQ
+
+        This corresponds to the mesh numbers in transformed reciprocal
+        basis vectors. q-points with respect to the original recirpocal
+        basis vectors are given by
+
+        q = np.dot(Q, addresses[gp] / D_diag.astype('double'))
+
+        for the Gamma cetnred grid. With shifted, where only half grid shifts
+        that satisfy the symmetry are considered,
+
+        q = np.dot(Q, (addresses[gp] + np.dot(P, s)) / D_diag.astype('double'))
+
+        where s is the shift vectors that are 0 or 1/2. But it is more
+        convenient to use the integer shift vectors S by 0 or 1, which gives
+
+        q = (np.dot(Q, (2 * addresses[gp] + np.dot(P, S))
+                        / D_diag.astype('double'))) / 2
+
+        and this is the definition of PS in this class.
+
+        """
+        return self._mesh_numbers
+
+    @property
+    def P(self):
+        """Left unimodular matrix after SNF: D=PAQ"""
+        return self._P
+
+    @property
+    def Q(self):
+        """Right unimodular matrix after SNF: D=PAQ"""
+        return self._Q
+
+    @property
+    def QDinv(self):
+        """QD^-1"""
+        return np.array(self.Q * (1 / self.D_diag.astype('double')),
+                        dtype='double', order='C')
+
+    @property
+    def PS(self):
+        """Integer shift vectors of GRGrid"""
+        if self._is_shift is None:
+            return np.zeros(3, dtype='int_')
+        else:
+            return np.array(np.dot(self.P, self._is_shift), dtype='int_')
 
     @property
     def addresses(self):

@@ -37,9 +37,9 @@
 
 #include "lapack_wrapper.h"
 
-double bose_einstein(const double x, const double t);
-double gaussian(const double x, const double sigma);
-double inv_sinh_occupation(const double x, const double t);
+double phonoc_bose_einstein(const double x, const double t);
+double phonoc_gaussian(const double x, const double sigma);
+double phonoc_inv_sinh_occupation(const double x, const double t);
 lapack_complex_double
 phonoc_complex_prod(const lapack_complex_double a,
                     const lapack_complex_double b);

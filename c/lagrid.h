@@ -35,47 +35,43 @@
 #ifndef __lagrid_H__
 #define __lagrid_H__
 
-#ifndef LAGCONST
-#define LAGCONST
-#endif
-
 #ifdef LAGWARNING
 #define warning_print(...) fprintf(stderr,__VA_ARGS__)
 #else
 #define warning_print(...)
 #endif
 
-long lagmat_get_determinant_l3(LAGCONST long a[3][3]);
-double lagmat_get_determinant_d3(LAGCONST double a[3][3]);
-void lagmat_cast_matrix_3l_to_3d(double m[3][3], LAGCONST long a[3][3]);
-void lagmat_cast_matrix_3d_to_3l(long m[3][3], LAGCONST double a[3][3]);
+long lagmat_get_determinant_l3(const long a[3][3]);
+double lagmat_get_determinant_d3(const double a[3][3]);
+void lagmat_cast_matrix_3l_to_3d(double m[3][3], const long a[3][3]);
+void lagmat_cast_matrix_3d_to_3l(long m[3][3], const double a[3][3]);
 long lagmat_get_similar_matrix_ld3(double m[3][3],
-                                   LAGCONST long a[3][3],
-                                   LAGCONST double b[3][3],
+                                   const long a[3][3],
+                                   const double b[3][3],
                                    const double precision);
-long lagmat_check_identity_matrix_l3(LAGCONST long a[3][3],
-                                     LAGCONST long b[3][3]);
-long lagmat_check_identity_matrix_ld3(LAGCONST long a[3][3],
-                                      LAGCONST double b[3][3],
+long lagmat_check_identity_matrix_l3(const long a[3][3],
+                                     const long b[3][3]);
+long lagmat_check_identity_matrix_ld3(const long a[3][3],
+                                      const double b[3][3],
                                       const double symprec);
 long lagmat_inverse_matrix_d3(double m[3][3],
-                              LAGCONST double a[3][3],
+                              const double a[3][3],
                               const double precision);
-void lagmat_transpose_matrix_l3(long a[3][3], LAGCONST long b[3][3]);
+void lagmat_transpose_matrix_l3(long a[3][3], const long b[3][3]);
 void lagmat_multiply_matrix_vector_l3(long v[3],
-                                      LAGCONST long a[3][3],
+                                      const long a[3][3],
                                       const long b[3]);
 void lagmat_multiply_matrix_l3(long m[3][3],
-                               LAGCONST long a[3][3],
-                               LAGCONST long b[3][3]);
+                               const long a[3][3],
+                               const long b[3][3]);
 void lagmat_multiply_matrix_ld3(double m[3][3],
-                                LAGCONST long a[3][3],
-                                LAGCONST double b[3][3]);
+                                const long a[3][3],
+                                const double b[3][3]);
 void lagmat_multiply_matrix_d3(double m[3][3],
-                               LAGCONST double a[3][3],
-                               LAGCONST double b[3][3]);
-void lagmat_copy_matrix_l3(long a[3][3], LAGCONST long b[3][3]);
-void lagmat_copy_matrix_d3(double a[3][3], LAGCONST double b[3][3]);
+                               const double a[3][3],
+                               const double b[3][3]);
+void lagmat_copy_matrix_l3(long a[3][3], const long b[3][3]);
+void lagmat_copy_matrix_d3(double a[3][3], const double b[3][3]);
 void lagmat_copy_vector_l3(long a[3], const long b[3]);
 long lagmat_modulo_l(const long a, const long b);
 long lagmat_Nint(const double a);
