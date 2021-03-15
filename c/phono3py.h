@@ -35,10 +35,6 @@
 #ifndef __phono3py_H__
 #define __phono3py_H__
 
-#ifndef PHPYCONST
-#define PHPYCONST
-#endif
-
 #ifdef MKL_LAPACKE
 #include <mkl.h>
 #else
