@@ -59,7 +59,7 @@ static void real_to_normal(double *fc3_normal_squared,
                            const lapack_complex_double *eigvecs2,
                            const double *fc3,
                            const long is_compact_fc3,
-                           const double q_vecs[9], /* q0, q1, q2 */
+                           const double q_vecs[3][3], /* q0, q1, q2 */
                            const double *shortest_vectors,
                            const long svecs_dims[3],
                            const long *multiplicity,
@@ -80,7 +80,7 @@ static void real_to_normal_sym_q(double *fc3_normal_squared,
                                  lapack_complex_double * const eigvecs[3],
                                  const double *fc3,
                                  const long is_compact_fc3,
-                                 const double q_vecs[9], /* q0, q1, q2 */
+                                 const double q_vecs[3][3], /* q0, q1, q2 */
                                  const double *shortest_vectors,
                                  const long svecs_dims[3],
                                  const long *multiplicity,
@@ -197,11 +197,11 @@ void itr_get_interaction_at_triplet(double *fc3_normal_squared,
   long j, k;
   double *freqs[3];
   lapack_complex_double *eigvecs[3];
-  double q_vecs[9];
+  double q_vecs[3][3];
 
   for (j = 0; j < 3; j++) {
     for (k = 0; k < 3; k++) {
-      q_vecs[j * 3 + k] = ((double)bzgrid->addresses[triplet[j]][k]) / bzgrid->D_diag[k];
+      q_vecs[j][k] = ((double)bzgrid->addresses[triplet[j]][k]) / bzgrid->D_diag[k];
     }
   }
 
@@ -284,7 +284,7 @@ static void real_to_normal(double *fc3_normal_squared,
                            const lapack_complex_double *eigvecs2,
                            const double *fc3,
                            const long is_compact_fc3,
-                           const double q_vecs[9], /* q0, q1, q2 */
+                           const double q_vecs[3][3], /* q0, q1, q2 */
                            const double *shortest_vectors,
                            const long svecs_dims[3],
                            const long *multiplicity,
@@ -352,7 +352,7 @@ static void real_to_normal_sym_q(double *fc3_normal_squared,
                                  lapack_complex_double * const eigvecs[3],
                                  const double *fc3,
                                  const long is_compact_fc3,
-                                 const double q_vecs[9], /* q0, q1, q2 */
+                                 const double q_vecs[3][3], /* q0, q1, q2 */
                                  const double *shortest_vectors,
                                  const long svecs_dims[3],
                                  const long *multiplicity,
@@ -369,7 +369,7 @@ static void real_to_normal_sym_q(double *fc3_normal_squared,
 {
   long i, j, k, l;
   long band_ex[3];
-  double q_ex[9];
+  double q_vecs_ex[3][3];
   double *fc3_normal_squared_ex;
 
   fc3_normal_squared_ex =
@@ -382,7 +382,7 @@ static void real_to_normal_sym_q(double *fc3_normal_squared,
   for (i = 0; i < 6; i++) {
     for (j = 0; j < 3; j ++) {
       for (k = 0; k < 3; k ++) {
-        q_ex[j * 3 + k] = q_vecs[index_exchange[i][j] * 3 + k];
+        q_vecs_ex[j][k] = q_vecs[index_exchange[i][j]][k];
       }
     }
     real_to_normal(fc3_normal_squared_ex,
@@ -396,7 +396,7 @@ static void real_to_normal_sym_q(double *fc3_normal_squared,
                    eigvecs[index_exchange[i][2]],
                    fc3,
                    is_compact_fc3,
-                   q_ex, /* q0, q1, q2 */
+                   q_vecs_ex, /* q0, q1, q2 */
                    shortest_vectors,
                    svecs_dims,
                    multiplicity,
