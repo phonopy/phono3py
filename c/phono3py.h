@@ -72,7 +72,8 @@ long ph3py_get_pp_collision(double *imag_self_energy,
                             const long (*bz_grid_addresses)[3], /* thm */
                             const long *bz_map, /* thm */
                             const long bz_grid_type,
-                            const long *mesh, /* thm */
+                            const long D_diag[3],
+                            const long Q[3][3],
                             const double *fc3,
                             const long is_compact_fc3,
                             const double *shortest_vectors,
@@ -96,7 +97,8 @@ long ph3py_get_pp_collision_with_sigma(
   const long num_triplets,
   const long *triplet_weights,
   const long (*bz_grid_addresses)[3],
-  const long *mesh,
+  const long D_diag[3],
+  const long Q[3][3],
   const double *fc3,
   const long is_compact_fc3,
   const double *shortest_vectors,

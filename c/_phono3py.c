@@ -442,6 +442,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   PyArrayObject *py_bz_grid_addresses;
   PyArrayObject *py_bz_map;
   PyArrayObject *py_D_diag;
+  PyArrayObject *py_Q;
   PyArrayObject *py_fc3;
   PyArrayObject *py_shortest_vectors;
   PyArrayObject *py_multiplicities;
@@ -465,6 +466,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   long (*bz_grid_addresses)[3];
   long *bz_map;
   long *D_diag;
+  long (*Q)[3];
   double *fc3;
   double *svecs;
   long *multi;
@@ -477,7 +479,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   long i;
   long is_compact_fc3;
 
-  if (!PyArg_ParseTuple(args, "OOOOOOOOlOOOOOOOOOlld",
+  if (!PyArg_ParseTuple(args, "OOOOOOOOlOOOOOOOOOOlld",
                         &py_gamma,
                         &py_relative_grid_address,
                         &py_frequencies,
@@ -488,6 +490,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
                         &py_bz_map,
                         &bz_grid_type,
                         &py_D_diag,
+                        &py_Q,
                         &py_fc3,
                         &py_shortest_vectors,
                         &py_multiplicities,
@@ -512,6 +515,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   bz_grid_addresses = (long(*)[3])PyArray_DATA(py_bz_grid_addresses);
   bz_map = (long*)PyArray_DATA(py_bz_map);
   D_diag = (long*)PyArray_DATA(py_D_diag);
+  Q = (long(*)[3])PyArray_DATA(py_Q);
   fc3 = (double*)PyArray_DATA(py_fc3);
   if (PyArray_DIMS(py_fc3)[0] == PyArray_DIMS(py_fc3)[1]) {
     is_compact_fc3 = 0;
@@ -540,6 +544,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
                          bz_map,
                          bz_grid_type,
                          D_diag,
+                         Q,
                          fc3,
                          is_compact_fc3,
                          svecs,
@@ -571,6 +576,7 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
   PyArrayObject *py_triplet_weights;
   PyArrayObject *py_bz_grid_addresses;
   PyArrayObject *py_D_diag;
+  PyArrayObject *py_Q;
   PyArrayObject *py_fc3;
   PyArrayObject *py_shortest_vectors;
   PyArrayObject *py_multiplicities;
@@ -593,6 +599,7 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
   long *triplet_weights;
   long (*bz_grid_addresses)[3];
   long *D_diag;
+  long (*Q)[3];
   double *fc3;
   double *svecs;
   long *multi;
@@ -605,7 +612,7 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
   long i;
   long is_compact_fc3;
 
-  if (!PyArg_ParseTuple(args, "OddOOOOOOOOOOOOOOlld",
+  if (!PyArg_ParseTuple(args, "OddOOOOOOOOOOOOOOOlld",
                         &py_gamma,
                         &sigma,
                         &sigma_cutoff,
@@ -615,6 +622,7 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
                         &py_triplet_weights,
                         &py_bz_grid_addresses,
                         &py_D_diag,
+                        &py_Q,
                         &py_fc3,
                         &py_shortest_vectors,
                         &py_multiplicities,
@@ -637,6 +645,7 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
   triplet_weights = (long*)PyArray_DATA(py_triplet_weights);
   bz_grid_addresses = (long(*)[3])PyArray_DATA(py_bz_grid_addresses);
   D_diag = (long*)PyArray_DATA(py_D_diag);
+  Q = (long(*)[3])PyArray_DATA(py_Q);
   fc3 = (double*)PyArray_DATA(py_fc3);
   if (PyArray_DIMS(py_fc3)[0] == PyArray_DIMS(py_fc3)[1]) {
     is_compact_fc3 = 0;
@@ -664,6 +673,7 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
                                     triplet_weights,
                                     bz_grid_addresses,
                                     D_diag,
+                                    Q,
                                     fc3,
                                     is_compact_fc3,
                                     svecs,

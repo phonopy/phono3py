@@ -126,7 +126,8 @@ long ph3py_get_pp_collision(double *imag_self_energy,
                             const long (*bz_grid_addresses)[3], /* thm */
                             const long *bz_map, /* thm */
                             const long bz_grid_type,
-                            const long *D_diag, /* thm */
+                            const long D_diag[3],
+                            const long Q[3][3],
                             const double *fc3,
                             const long is_compact_fc3,
                             const double *shortest_vectors,
@@ -142,7 +143,7 @@ long ph3py_get_pp_collision(double *imag_self_energy,
                             const double cutoff_frequency)
 {
   ConstBZGrid *bzgrid;
-  long i;
+  long i, j;
 
   if ((bzgrid = (ConstBZGrid*) malloc(sizeof(ConstBZGrid))) == NULL) {
     warning_print("Memory could not be allocated.");
@@ -155,6 +156,9 @@ long ph3py_get_pp_collision(double *imag_self_energy,
   for (i = 0; i < 3; i++) {
     bzgrid->D_diag[i] = D_diag[i];
     bzgrid->PS[i] = 0;
+    for (j = 0; j < 3; j++) {
+      bzgrid->Q[i][j] = Q[i][j];
+    }
   }
 
   ppc_get_pp_collision(imag_self_energy,
@@ -196,7 +200,8 @@ long ph3py_get_pp_collision_with_sigma(
   const long num_triplets,
   const long *triplet_weights,
   const long (*bz_grid_addresses)[3],
-  const long *D_diag,
+  const long D_diag[3],
+  const long Q[3][3],
   const double *fc3,
   const long is_compact_fc3,
   const double *shortest_vectors,
@@ -212,7 +217,7 @@ long ph3py_get_pp_collision_with_sigma(
   const double cutoff_frequency)
 {
   ConstBZGrid *bzgrid;
-  long i;
+  long i, j;
 
   if ((bzgrid = (ConstBZGrid*) malloc(sizeof(ConstBZGrid))) == NULL) {
     warning_print("Memory could not be allocated.");
@@ -223,6 +228,9 @@ long ph3py_get_pp_collision_with_sigma(
   for (i = 0; i < 3; i++) {
     bzgrid->D_diag[i] = D_diag[i];
     bzgrid->PS[i] = 0;
+    for (j = 0; j < 3; j++) {
+      bzgrid->Q[i][j] = Q[i][j];
+    }
   }
 
   ppc_get_pp_collision_with_sigma(imag_self_energy,

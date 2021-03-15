@@ -203,6 +203,7 @@ void itr_get_interaction_at_triplet(double *fc3_normal_squared,
     for (k = 0; k < 3; k++) {
       q_vecs[j][k] = ((double)bzgrid->addresses[triplet[j]][k]) / bzgrid->D_diag[k];
     }
+    bzg_multiply_matrix_vector_ld3(q_vecs[j], bzgrid->Q, q_vecs[j]);
   }
 
   if (symmetrize_fc3_q) {
