@@ -395,7 +395,7 @@ static long get_BZ_triplets_at_q_type1(long (*triplets)[3],
                                        const long num_ir)
 {
   long i, j, gp2, bz0, bz1, bz2, prod_bzmesh, det;
-  long bz_address[3][3], bz_shift[3], bzmesh[3], G[3];
+  long bz_address[3][3], bz_shifts[BZG_NUM_BZ_SEARCH_SPACE][3], bzmesh[3], G[3];
   const long *bz_map;
   long Q_inv[3][3], DQ_inv[3][3];
   double d, d2, min_d2, tolerance;
@@ -421,24 +421,25 @@ static long get_BZ_triplets_at_q_type1(long (*triplets)[3],
   }
   prod_bzmesh = bzmesh[0] * bzmesh[1] * bzmesh[2];
 
-#pragma omp parallel for private(j, bz_address, bz_shift, bz0, bz1, bz2, gp2, G, d, d2, min_d2)
+  for (i = 0; i < BZG_NUM_BZ_SEARCH_SPACE; i++) {
+      lagmat_multiply_matrix_vector_l3(
+        bz_shifts[i], DQ_inv, bz_search_space[i]);
+  }
+
+#pragma omp parallel for private(j, bz_address, bz0, bz1, bz2, gp2, G, d, d2, min_d2)
   for (i = 0; i < num_ir; i++) {
     min_d2 = -1;
     for (bz0 = 0; bz0 < BZG_NUM_BZ_SEARCH_SPACE; bz0++) {
-      lagmat_multiply_matrix_vector_l3(
-        bz_shift, DQ_inv, bz_search_space[bz0]);
       for (j = 0; j < 3; j++) {
-        bz_address[0][j] = bzgrid->addresses[grid_point][j] + bz_shift[j];
+        bz_address[0][j] = bzgrid->addresses[grid_point][j] + bz_shifts[bz0][j];
       }
       if (bz_map[grg_get_grid_index(bz_address[0], bzmesh)] == prod_bzmesh) {
         continue;
       }
       for (bz1 = 0; bz1 < BZG_NUM_BZ_SEARCH_SPACE; bz1++) {
-        lagmat_multiply_matrix_vector_l3(
-          bz_shift, DQ_inv, bz_search_space[bz1]);
         for (j = 0; j < 3; j++) {
           bz_address[1][j] =
-            bzgrid->addresses[ir_grid_points[i]][j] + bz_shift[j];
+            bzgrid->addresses[ir_grid_points[i]][j] + bz_shifts[bz1][j];
         }
         if (bz_map[grg_get_grid_index(bz_address[1], bzmesh)] == prod_bzmesh) {
           continue;
@@ -448,10 +449,8 @@ static long get_BZ_triplets_at_q_type1(long (*triplets)[3],
         }
         gp2 = grg_get_grid_index(bz_address[2], bzgrid->D_diag);
         for (bz2 = 0; bz2 < BZG_NUM_BZ_SEARCH_SPACE; bz2++) {
-          lagmat_multiply_matrix_vector_l3(
-            bz_shift, DQ_inv, bz_search_space[bz2]);
           for (j = 0; j < 3; j++) {
-            bz_address[2][j] = bzgrid->addresses[gp2][j] + bz_shift[j];
+            bz_address[2][j] = bzgrid->addresses[gp2][j] + bz_shifts[bz2][j];
           }
           if (bz_map[grg_get_grid_index(bz_address[2], bzmesh)]
               == prod_bzmesh) {
