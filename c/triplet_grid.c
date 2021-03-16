@@ -270,7 +270,7 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
   long bz_adrs0[3], bz_adrs1[3], bz_adrs2[3];
   const long *gp_map;
   const long (*bz_adrs)[3];
-  double d, d2, min_d2, tolerance;
+  double d2, min_d2, tolerance;
   double LQD_inv[3][3];
 
   gp_map = bzgrid->gp_map;
@@ -285,7 +285,7 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
   num_gp = bzgrid->D_diag[0] * bzgrid->D_diag[1] * bzgrid->D_diag[2];
   num_bzgp = num_gp * 8;
 
-#pragma omp parallel for private(j, gp2, bzgp, G, bz_adrs1, bz_adrs2, d, d2, min_d2, bz0, bz1, bz2)
+#pragma omp parallel for private(j, gp2, bzgp, G, bz_adrs1, bz_adrs2, d2, min_d2, bz0, bz1, bz2)
   for (i = 0; i < num_ir; i++) {
     for (j = 0; j < 3; j++) {
       bz_adrs1[j] = bz_adrs[ir_grid_points[i]][j];
@@ -330,7 +330,7 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
             goto found;
           }
           d2 = get_squared_distance(G, LQD_inv);
-          if (d2 < min_d2 + tolerance || min_d2 < 0) {
+          if (d2 < min_d2 - tolerance || min_d2 < 0) {
             min_d2 = d2;
             for (j = 0; j < 3; j++) {
               triplets[i][j] = bzgp[j];
@@ -355,7 +355,7 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
   long bz_adrs0[3], bz_adrs1[3], bz_adrs2[3];
   const long *gp_map;
   const long (*bz_adrs)[3];
-  double d, d2, min_d2, tolerance;
+  double d2, min_d2, tolerance;
   double LQD_inv[3][3];
 
   gp_map = bzgrid->gp_map;
@@ -369,7 +369,7 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
   }
   gp0 = grg_get_grid_index(bz_adrs0, bzgrid->D_diag);
 
-#pragma omp parallel for private(j, gp2, bzgp, G, bz_adrs1, bz_adrs2, d, d2, min_d2)
+#pragma omp parallel for private(j, gp2, bzgp, G, bz_adrs1, bz_adrs2, d2, min_d2)
   for (i = 0; i < num_ir; i++) {
     for (j = 0; j < 3; j++) {
       bz_adrs1[j] = bz_adrs[gp_map[ir_grid_points[i]]][j];
@@ -392,7 +392,7 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
             goto found;
           }
           d2 = get_squared_distance(G, LQD_inv);
-          if (d2 < min_d2 + tolerance || min_d2 < 0) {
+          if (d2 < min_d2 - tolerance || min_d2 < 0) {
             min_d2 = d2;
             for (j = 0; j < 3; j++) {
               triplets[i][j] = bzgp[j];

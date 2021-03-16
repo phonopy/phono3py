@@ -187,10 +187,11 @@ static void set_bz_address(long address[3],
                            const long nint[3],
                            const long Qinv[3][3]);
 static double get_bz_distances(long nint[3],
-                               double distance[],
+                               double distances[],
                                const long gp,
                                const BZGrid *bzgrid,
-                               const long (*grid_address)[3]);
+                               const long (*grid_address)[3],
+                               const double tolerance);
 static void multiply_matrix_vector_d3(double v[3],
                                       const double a[3][3],
                                       const double b[3]);
@@ -503,7 +504,8 @@ static void get_bz_grid_addresses_type1(BZGrid *bzgrid,
   bzgrid->gp_map[num_bzmesh] = 0;
   id_shift = 0;
   for (i = 0; i < total_num_gp; i++) {
-    min_distance = get_bz_distances(nint, distances, i, bzgrid, grid_address);
+    min_distance = get_bz_distances(nint, distances, i, bzgrid, grid_address,
+                                    tolerance);
     count = 0;
     for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
       if (distances[j] < min_distance + tolerance) {
@@ -552,7 +554,8 @@ static void get_bz_grid_addresses_type2(BZGrid *bzgrid,
 
   for (i = 0;
        i < bzgrid->D_diag[0] * bzgrid->D_diag[1] * bzgrid->D_diag[2]; i++) {
-    min_distance = get_bz_distances(nint, distances, i, bzgrid, grid_address);
+    min_distance = get_bz_distances(nint, distances, i, bzgrid, grid_address,
+                                    tolerance);
     for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
       if (distances[j] < min_distance + tolerance) {
         set_bz_address(bzgrid->addresses[num_gp],
@@ -594,7 +597,8 @@ static double get_bz_distances(long nint[3],
                                double distances[],
                                const long gp,
                                const BZGrid *bzgrid,
-                               const long (*grid_address)[3])
+                               const long (*grid_address)[3],
+                               const double tolerance)
 {
   long i, j;
   double min_distance;
@@ -618,9 +622,13 @@ static double get_bz_distances(long nint[3],
     distances[i] = norm_squared_d3(q_vec);
   }
 
+  /* Use of tolerance is important to select first one amount similar
+   * distances. Otherwise the choise of bz grid address among
+   * those translationally equivalent can change by very tiny numerical
+   * fluctuation. */
   min_distance = distances[0];
   for (i = 1; i < BZG_NUM_BZ_SEARCH_SPACE; i++) {
-    if (distances[i] < min_distance) {
+    if (distances[i] < min_distance - tolerance) {
       min_distance = distances[i];
     }
   }
