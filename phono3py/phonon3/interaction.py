@@ -71,7 +71,8 @@ class Interaction(object):
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._frequency_scale_factor = frequency_scale_factor
 
-        self._set_fc3(fc3)
+        if fc3 is not None:
+            self._set_fc3(fc3)
 
         # Unit to eV^2
         if unit_conversion is None:
@@ -447,11 +448,6 @@ class Interaction(object):
         self._g_zero = None
 
     def _set_fc3(self, fc3):
-        if fc3 is None and self._constant_averaged_interaction is None:
-            msg = ("fc3 can not be None unless constant_averaged_interaction "
-                   "is given.")
-            raise AttributeError(msg)
-
         if (type(fc3) == np.ndarray and
             fc3.dtype == np.dtype('double') and
             fc3.flags.aligned and
