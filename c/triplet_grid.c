@@ -42,135 +42,6 @@
 #include "triplet.h"
 #include "triplet_grid.h"
 
-#define BZG_NUM_BZ_SEARCH_SPACE 125
-static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
-  { 0,  0,  0},
-  { 0,  0,  1},
-  { 0,  0,  2},
-  { 0,  0, -2},
-  { 0,  0, -1},
-  { 0,  1,  0},
-  { 0,  1,  1},
-  { 0,  1,  2},
-  { 0,  1, -2},
-  { 0,  1, -1},
-  { 0,  2,  0},
-  { 0,  2,  1},
-  { 0,  2,  2},
-  { 0,  2, -2},
-  { 0,  2, -1},
-  { 0, -2,  0},
-  { 0, -2,  1},
-  { 0, -2,  2},
-  { 0, -2, -2},
-  { 0, -2, -1},
-  { 0, -1,  0},
-  { 0, -1,  1},
-  { 0, -1,  2},
-  { 0, -1, -2},
-  { 0, -1, -1},
-  { 1,  0,  0},
-  { 1,  0,  1},
-  { 1,  0,  2},
-  { 1,  0, -2},
-  { 1,  0, -1},
-  { 1,  1,  0},
-  { 1,  1,  1},
-  { 1,  1,  2},
-  { 1,  1, -2},
-  { 1,  1, -1},
-  { 1,  2,  0},
-  { 1,  2,  1},
-  { 1,  2,  2},
-  { 1,  2, -2},
-  { 1,  2, -1},
-  { 1, -2,  0},
-  { 1, -2,  1},
-  { 1, -2,  2},
-  { 1, -2, -2},
-  { 1, -2, -1},
-  { 1, -1,  0},
-  { 1, -1,  1},
-  { 1, -1,  2},
-  { 1, -1, -2},
-  { 1, -1, -1},
-  { 2,  0,  0},
-  { 2,  0,  1},
-  { 2,  0,  2},
-  { 2,  0, -2},
-  { 2,  0, -1},
-  { 2,  1,  0},
-  { 2,  1,  1},
-  { 2,  1,  2},
-  { 2,  1, -2},
-  { 2,  1, -1},
-  { 2,  2,  0},
-  { 2,  2,  1},
-  { 2,  2,  2},
-  { 2,  2, -2},
-  { 2,  2, -1},
-  { 2, -2,  0},
-  { 2, -2,  1},
-  { 2, -2,  2},
-  { 2, -2, -2},
-  { 2, -2, -1},
-  { 2, -1,  0},
-  { 2, -1,  1},
-  { 2, -1,  2},
-  { 2, -1, -2},
-  { 2, -1, -1},
-  {-2,  0,  0},
-  {-2,  0,  1},
-  {-2,  0,  2},
-  {-2,  0, -2},
-  {-2,  0, -1},
-  {-2,  1,  0},
-  {-2,  1,  1},
-  {-2,  1,  2},
-  {-2,  1, -2},
-  {-2,  1, -1},
-  {-2,  2,  0},
-  {-2,  2,  1},
-  {-2,  2,  2},
-  {-2,  2, -2},
-  {-2,  2, -1},
-  {-2, -2,  0},
-  {-2, -2,  1},
-  {-2, -2,  2},
-  {-2, -2, -2},
-  {-2, -2, -1},
-  {-2, -1,  0},
-  {-2, -1,  1},
-  {-2, -1,  2},
-  {-2, -1, -2},
-  {-2, -1, -1},
-  {-1,  0,  0},
-  {-1,  0,  1},
-  {-1,  0,  2},
-  {-1,  0, -2},
-  {-1,  0, -1},
-  {-1,  1,  0},
-  {-1,  1,  1},
-  {-1,  1,  2},
-  {-1,  1, -2},
-  {-1,  1, -1},
-  {-1,  2,  0},
-  {-1,  2,  1},
-  {-1,  2,  2},
-  {-1,  2, -2},
-  {-1,  2, -1},
-  {-1, -2,  0},
-  {-1, -2,  1},
-  {-1, -2,  2},
-  {-1, -2, -2},
-  {-1, -2, -1},
-  {-1, -1,  0},
-  {-1, -1,  1},
-  {-1, -1,  2},
-  {-1, -1, -2},
-  {-1, -1, -1}
-};
-
 static long get_ir_triplets_at_q(long *map_triplets,
                                  long *map_q,
                                  const long grid_point,
@@ -191,6 +62,8 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
                                        const ConstBZGrid *bzgrid,
                                        const long *ir_grid_points,
                                        const long num_ir);
+static double get_squared_distance(const long G[3],
+                                   const double LQD_inv[3][3]);
 static void get_LQD_inv(double LQD_inv[3][3], const ConstBZGrid *bzgrid);
 static RotMats *get_point_group_reciprocal_with_q(const RotMats * rot_reciprocal,
                                                   const long D_diag[3],
@@ -366,13 +239,6 @@ static long get_BZ_triplets_at_q(long (*triplets)[3],
   }
 
   if (bzgrid->type == 1) {
-    /* if (!get_BZ_triplets_at_q_type1(triplets,
-     *                                 grid_point,
-     *                                 bzgrid,
-     *                                 ir_grid_points,
-     *                                 num_ir)) {
-     *   num_ir = 0;
-     * } */
     get_BZ_triplets_at_q_type1(triplets,
                                grid_point,
                                bzgrid,
@@ -417,7 +283,7 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
     bz_adrs0[i] = bz_adrs[grid_point][i];
   }
   num_gp = bzgrid->D_diag[0] * bzgrid->D_diag[1] * bzgrid->D_diag[2];
-  num_bzgp = bzgrid->D_diag[0] * bzgrid->D_diag[1] * bzgrid->D_diag[2] * 8;
+  num_bzgp = num_gp * 8;
 
 #pragma omp parallel for private(j, gp2, bzgp, G, bz_adrs1, bz_adrs2, d, d2, min_d2, bz0, bz1, bz2)
   for (i = 0; i < num_ir; i++) {
@@ -463,11 +329,7 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
             }
             goto found;
           }
-          d2 = 0;
-          for (j = 0; j < 3; j++) {
-            d = LQD_inv[j][0] * G[0] + LQD_inv[j][1] * G[1] + LQD_inv[j][2] * G[2];
-            d2 += d * d;
-          }
+          d2 = get_squared_distance(G, LQD_inv);
           if (d2 < min_d2 + tolerance || min_d2 < 0) {
             min_d2 = d2;
             for (j = 0; j < 3; j++) {
@@ -529,11 +391,7 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
             }
             goto found;
           }
-          d2 = 0;
-          for (j = 0; j < 3; j++) {
-            d = LQD_inv[j][0] * G[0] + LQD_inv[j][1] * G[1] + LQD_inv[j][2] * G[2];
-            d2 += d * d;
-          }
+          d2 = get_squared_distance(G, LQD_inv);
           if (d2 < min_d2 + tolerance || min_d2 < 0) {
             min_d2 = d2;
             for (j = 0; j < 3; j++) {
@@ -546,6 +404,21 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
   found:
     ;
   }
+}
+
+static double get_squared_distance(const long G[3],
+                                   const double LQD_inv[3][3])
+{
+  double d, d2;
+  long i;
+
+  d2 = 0;
+  for (i = 0; i < 3; i++) {
+    d = LQD_inv[i][0] * G[0] + LQD_inv[i][1] * G[1] + LQD_inv[i][2] * G[2];
+    d2 += d * d;
+  }
+
+  return d2;
 }
 
 static void get_LQD_inv(double LQD_inv[3][3], const ConstBZGrid *bzgrid)
