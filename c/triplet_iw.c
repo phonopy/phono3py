@@ -59,13 +59,13 @@ static void get_triplet_tetrahedra_vertices(
   const long triplet[3],
   const ConstBZGrid *bzgrid);
 static void
-get_neighboring_grid_points_type1(long neighboring_grid_points[],
+get_neighboring_grid_points_type1(long *neighboring_grid_points,
                                   const long grid_point,
                                   const long (*relative_grid_address)[3],
                                   const long num_relative_grid_address,
                                   const ConstBZGrid *bzgrid);
 static void
-get_neighboring_grid_points_type2(long neighboring_grid_points[],
+get_neighboring_grid_points_type2(long *neighboring_grid_points,
                                   const long grid_point,
                                   const long (*relative_grid_address)[3],
                                   const long num_relative_grid_address,
@@ -215,7 +215,7 @@ void tpi_get_integration_weight_with_sigma(double *iw,
 
 
 void
-tpi_get_neighboring_grid_points(long neighboring_grid_points[],
+tpi_get_neighboring_grid_points(long *neighboring_grid_points,
                                 const long grid_point,
                                 const long (*relative_grid_address)[3],
                                 const long num_relative_grid_address,
@@ -341,7 +341,7 @@ static void get_triplet_tetrahedra_vertices(long vertices[2][24][4],
 }
 
 static void
-get_neighboring_grid_points_type1(long neighboring_grid_points[],
+get_neighboring_grid_points_type1(long *neighboring_grid_points,
                                   const long grid_point,
                                   const long (*relative_grid_address)[3],
                                   const long num_relative_grid_address,
@@ -370,7 +370,7 @@ get_neighboring_grid_points_type1(long neighboring_grid_points[],
 }
 
 static void
-get_neighboring_grid_points_type2(long neighboring_grid_points[],
+get_neighboring_grid_points_type2(long *neighboring_grid_points,
                                   const long grid_point,
                                   const long (*relative_grid_address)[3],
                                   const long num_relative_grid_address,

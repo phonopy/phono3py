@@ -218,8 +218,8 @@ RotMats *bzg_get_point_group_reciprocal(const RotMats * rotations,
 }
 
 long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
-                                const long mesh[3],
-                                const long is_shift[3],
+                                const long D_diag[3],
+                                const long PS[3],
                                 const long is_time_reversal,
                                 const long (*rotations_in)[3][3],
                                 const long num_rot)
@@ -235,8 +235,8 @@ long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
   rot_reciprocal = NULL;
   rot_reciprocal = get_point_group_reciprocal(rotations, is_time_reversal);
   num_ir = get_ir_grid_map(ir_mapping_table,
-                           mesh,
-                           is_shift,
+                           D_diag,
+                           PS,
                            rot_reciprocal);
 
   bzg_free_RotMats(rot_reciprocal);

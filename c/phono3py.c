@@ -626,7 +626,9 @@ long ph3py_get_BZ_triplets_at_q(long (*triplets)[3],
   return num_ir;
 }
 
-
+/* relative_grid_addresses are given as P multipled with those from dataset,
+ * i.e.,
+ *     np.dot(relative_grid_addresses, P.T) */
 long ph3py_get_integration_weight(double *iw,
                                   char *iw_zero,
                                   const double *frequency_points,
@@ -659,7 +661,6 @@ long ph3py_get_integration_weight(double *iw,
   bzgrid->type = bz_grid_type;
   for (i = 0; i < 3; i++) {
     bzgrid->D_diag[i] = D_diag[i];
-    bzgrid->PS[i] = 0;
   }
 
   tpl_get_integration_weight(iw,
@@ -723,9 +724,26 @@ void ph3py_get_gr_grid_addresses(long gr_grid_addresses[][3],
   grg_get_all_grid_addresses(gr_grid_addresses, D_diag);
 }
 
+/* Rotation matrices with respect to reciprocal basis vectors are
+ * transformed to those for GRGrid. This set of the rotations are
+ * used always in GRGrid handling. */
+long ph3py_transform_rotations(long (*transformed_rots)[3][3],
+                               const long (*rotations)[3][3],
+                               const long num_rot,
+                               const long D_diag[3],
+                               const long Q[3][3])
+{
+  return grg_transform_rotations(transformed_rots,
+                                 rotations,
+                                 num_rot,
+                                 D_diag,
+                                 Q);
+}
+
+/* The rotations are those after proper transformation in GRGrid. */
 long ph3py_get_ir_reciprocal_mesh(long *ir_mapping_table,
                                   const long D_diag[3],
-                                  const long is_shift[3],
+                                  const long PS[3],
                                   const long is_time_reversal,
                                   const long (*rotations)[3][3],
                                   const long num_rot)
@@ -734,7 +752,7 @@ long ph3py_get_ir_reciprocal_mesh(long *ir_mapping_table,
 
   num_ir = bzg_get_ir_reciprocal_mesh(ir_mapping_table,
                                       D_diag,
-                                      is_shift,
+                                      PS,
                                       is_time_reversal,
                                       rotations,
                                       num_rot);
@@ -881,6 +899,9 @@ void ph3py_expand_collision_matrix(double *collision_matrix,
 }
 
 
+/* relative_grid_addresses are given as P multipled with those from dataset,
+ * i.e.,
+ *     np.dot(relative_grid_addresses, P.T) */
 long ph3py_get_neighboring_gird_points(long *relative_grid_points,
                                        const long *grid_points,
                                        const long (*relative_grid_address)[3],
@@ -904,7 +925,6 @@ long ph3py_get_neighboring_gird_points(long *relative_grid_points,
   bzgrid->type = bz_grid_type;
   for (i = 0; i < 3; i++) {
     bzgrid->D_diag[i] = D_diag[i];
-    bzgrid->PS[i] = 0;
   }
 
 #pragma omp parallel for
@@ -924,6 +944,9 @@ long ph3py_get_neighboring_gird_points(long *relative_grid_points,
 }
 
 
+/* relative_grid_addresses are given as P multipled with those from dataset,
+ * i.e.,
+ *     np.dot(relative_grid_addresses, P.T) */
 long ph3py_set_integration_weights(double *iw,
                                    const double *frequency_points,
                                    const long num_band0,
@@ -952,7 +975,6 @@ long ph3py_set_integration_weights(double *iw,
   bzgrid->type = bz_grid_type;
   for (i = 0; i < 3; i++) {
     bzgrid->D_diag[i] = D_diag[i];
-    bzgrid->PS[i] = 0;
   }
 
 #pragma omp parallel for private(j, k, bi, vertices, freq_vertices)

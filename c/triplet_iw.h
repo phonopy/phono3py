@@ -63,7 +63,7 @@ void tpi_get_integration_weight_with_sigma(double *iw,
                                            const long tp_type,
                                            const long openmp_per_bands);
 void
-tpi_get_neighboring_grid_points(long neighboring_grid_points[],
+tpi_get_neighboring_grid_points(long *neighboring_grid_points,
                                 const long grid_point,
                                 const long (*relative_grid_address)[3],
                                 const long num_relative_grid_address,
