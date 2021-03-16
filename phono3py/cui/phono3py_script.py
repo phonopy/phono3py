@@ -58,7 +58,7 @@ from phono3py.cui.settings import Phono3pyConfParser
 from phono3py.cui.load import set_dataset_and_force_constants
 from phono3py import Phono3py, Phono3pyJointDos, Phono3pyIsotope
 from phono3py.phonon3.gruneisen import run_gruneisen_parameters
-from phono3py.phonon3.triplets import get_grid_point_from_address
+from phono3py.phonon3.triplets import get_grid_point_from_address, BZGrid
 from phono3py.cui.phono3py_argparse import get_parser
 from phono3py.cui.show_log import (
     show_general_settings, show_phono3py_settings, show_phono3py_cells)
@@ -605,6 +605,14 @@ def init_phono3py(settings,
         calculator=interface_mode,
         log_level=log_level,
         lapack_zheev_uplo=settings.lapack_zheev_uplo)
+
+    if updated_settings['grid_points'] is not None:
+        bz_grid = BZGrid(phono3py.mesh_numbers,
+                         np.linalg.inv(phono3py.primitive.cell),
+                         is_dense_gp_map=settings.is_dense_gp_map)
+        bz_grid.set_bz_grid()
+        updated_settings['grid_points'] = bz_grid.grg2bzg[
+            updated_settings['grid_points']]
 
     check_supercell_in_yaml(cell_info, phono3py, log_level)
 
