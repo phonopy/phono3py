@@ -159,8 +159,9 @@ else:
     # For conda: Try installing with dynamic link library of openblas by
     # % conda install numpy scipy h5py pyyaml matplotlib openblas libgfortran
     extra_link_args_lapacke += ['-lopenblas', '-lgfortran']
-    include_dirs_lapacke += [
-        os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
+    if 'CONDA_PREFIX' in os.environ:
+        include_dirs_lapacke += [
+            os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
     if use_setuptools:
         extra_compile_args += ['-DMULTITHREADED_BLAS']
     else:
