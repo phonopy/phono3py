@@ -182,7 +182,6 @@ def _get_ir_grid_points(primitive,
     bz_grid = BZGrid(mesh,
                      reciprocal_lattice,
                      is_dense_gp_map=is_dense_gp_map)
-    bz_grid.set_bz_grid()
     ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype='int_')
 
     return ir_grid_points, ir_grid_weights, bz_grid

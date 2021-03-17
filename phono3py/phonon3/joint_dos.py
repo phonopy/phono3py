@@ -114,7 +114,6 @@ class JointDos(object):
         self._bz_grid = BZGrid(self._mesh,
                                reciprocal_lattice,
                                is_dense_gp_map=self._is_dense_gp_map)
-        self._bz_grid.set_bz_grid()
 
     def run(self):
         self.run_phonon_solver(

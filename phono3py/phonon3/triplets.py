@@ -122,6 +122,8 @@ class BZGrid(object):
         self._Q = np.eye(3, dtype='int_')
         self._P = np.eye(3, dtype='int_')
 
+        self._set_bz_grid()
+
     @property
     def mesh_numbers(self):
         """Mesh numbers of conventional regular grid"""
@@ -205,19 +207,41 @@ class BZGrid(object):
     def is_dense_gp_map(self):
         return self._is_dense_gp_map
 
-    def set_bz_grid(self):
-        """Generate BZ grid addresses and grid point mapping table"""
-        self.relocate(get_grid_address(self._mesh_numbers))
+    def get_indices_from_addresses(self, addresses):
+        """Return BZ grid point indices from grid addresses
 
-    def relocate(self, gr_grid_addresses):
-        """Transform parallelepiped grid to BZ grid
 
-        gr_grid_addresses : ndarray
-            Address of all grid points in generalized regular grid.
-            Each address is given by three integers.
-            dtype='int_', shape=(prod(mesh), 3)
+        Parameters
+        ----------
+        addresses : array_like
+            Integer grid addresses.
+            shape=(n, 3) or (3, ), where n is the number of grid points.
+
+        Returns
+        -------
+        ndarray or int
+            Grid point indices corresponding to the grid addresses. Each
+            returned grid point index is one of those of the
+            translationally equivalent grid points.
+            shape=(n, ), dtype='int_' when multiple addresses are given.
+            Otherwise one integer value is returned.
 
         """
+
+        gps = []
+        for adrs in addresses:
+            try:
+                len(adrs)
+            except TypeError:
+                return get_grid_point_from_address(addresses,
+                                                   self._mesh_numbers)
+            gps.append(get_grid_point_from_address(adrs, self._mesh_numbers))
+
+        return np.array(gps, dtype='int_')
+
+    def _set_bz_grid(self):
+        """Generate BZ grid addresses and grid point mapping table"""
+        gr_grid_addresses = get_grid_address(self._mesh_numbers)
         (self._addresses,
          self._gp_map,
          self._bzg2grg) = _relocate_BZ_grid_address(

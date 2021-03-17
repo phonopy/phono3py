@@ -194,7 +194,7 @@ class Phono3py(object):
 
     @property
     def calculator(self):
-        """Return calculator name
+        """Calculator interface name
 
         str
             Calculator name such as 'vasp', 'qe', etc.
@@ -204,18 +204,7 @@ class Phono3py(object):
 
     @property
     def fc3(self):
-        """
-
-        """
-
-        return self._fc3
-
-    def get_fc3(self):
-        return self.fc3
-
-    @fc3.setter
-    def fc3(self, fc3):
-        """Third order force constants (fc3).
+        """Third order force constants (fc3)
 
         ndarray
             fc3 shape is either (supercell, supecell, supercell, 3, 3, 3) or
@@ -224,7 +213,13 @@ class Phono3py(object):
             these cells.
 
         """
+        return self._fc3
 
+    def get_fc3(self):
+        return self.fc3
+
+    @fc3.setter
+    def fc3(self, fc3):
         self._fc3 = fc3
 
     def set_fc3(self, fc3):
@@ -261,6 +256,14 @@ class Phono3py(object):
 
     @property
     def sigmas(self):
+        """Smearing widths
+
+        list
+            The float values are given as the standard deviations of Gaussian
+            function. If None is given as an element of this list, linear
+            tetrahedron method is used instead of smearing method.
+
+        """
         return self._sigmas
 
     @sigmas.setter
@@ -279,6 +282,13 @@ class Phono3py(object):
 
     @property
     def sigma_cutoff(self):
+        """Smearing cutoff width given as a multiple of the standard deviation
+
+        float
+            For example, if this value is 5, the tail of the Gaussian function
+            is cut at 5 sigma.
+
+        """
         return self._sigma_cutoff
 
     @sigma_cutoff.setter
@@ -899,19 +909,31 @@ class Phono3py(object):
     def detailed_gammas(self):
         return self._detailed_gammas
 
+    @property
+    def grid(self):
+        """Grid information
+
+        BZGrid
+            An instance of BZGrid used for entire phono3py calculation.
+
+        """
+        if self._interaction is None:
+            msg = ("Phono3py.init_phph_interaction has to be called "
+                   "to initialize grid system.")
+            RuntimeError(msg)
+        else:
+            return self._interaction.bz_grid
+
     def init_phph_interaction(self,
                               nac_q_direction=None,
                               constant_averaged_interaction=None,
-                              frequency_scale_factor=None,
-                              solve_dynamical_matrices=True):
+                              frequency_scale_factor=None):
         """Initialize ph-ph interaction calculation
 
         This method creates an instance of Interaction class, which
         is necessary to run ph-ph interaction calculation.
         The input data such as grids, force constants, etc, are
         stored to be ready for the calculation.
-        ``solve_dynamical_matrices=True`` runs harmonic phonon solver
-        immediately to store phonons on all regular mesh grids.
 
         Note
         ----
@@ -934,10 +956,6 @@ class Phono3py(object):
         frequency_scale_factor : float, optional
             All phonon frequences are scaled by this value. Default is None,
             which means phonon frequencies are not scaled.
-        solve_dynamical_matrices : Bool, optional
-            When True, harmonic phonon solver is immediately executed and
-            the phonon data on all regular mesh grids are store phonons.
-            Default is True.
 
         """
 
@@ -966,8 +984,6 @@ class Phono3py(object):
             lapack_zheev_uplo=self._lapack_zheev_uplo)
         self._interaction.set_nac_q_direction(nac_q_direction=nac_q_direction)
         self._init_dynamical_matrix()
-        if solve_dynamical_matrices:
-            self.run_phonon_solver(verbose=self._log_level)
 
     def set_phph_interaction(self,
                              nac_params=None,
@@ -1068,9 +1084,9 @@ class Phono3py(object):
                    "before running this method.")
             raise RuntimeError(msg)
 
-    def run_phonon_solver(self, verbose=False):
+    def run_phonon_solver(self):
         if self._interaction is not None:
-            self._interaction.run_phonon_solver(verbose=verbose)
+            self._interaction.run_phonon_solver()
         else:
             msg = ("Phono3py.init_phph_interaction has to be called "
                    "before running this method.")
@@ -1982,5 +1998,4 @@ class Phono3py(object):
                 self._phonon_supercell,
                 self._phonon_primitive,
                 nac_params=self._nac_params,
-                solve_dynamical_matrices=False,
-                verbose=self._log_level)
+                solve_dynamical_matrices=False)

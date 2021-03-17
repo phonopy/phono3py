@@ -610,7 +610,6 @@ def init_phono3py(settings,
         bz_grid = BZGrid(phono3py.mesh_numbers,
                          np.linalg.inv(phono3py.primitive.cell),
                          is_dense_gp_map=settings.is_dense_gp_map)
-        bz_grid.set_bz_grid()
         updated_settings['grid_points'] = bz_grid.grg2bzg[
             updated_settings['grid_points']]
 
@@ -816,8 +815,9 @@ def init_phph_interaction(phono3py,
     phono3py.init_phph_interaction(
         nac_q_direction=settings.nac_q_direction,
         constant_averaged_interaction=ave_pp,
-        frequency_scale_factor=updated_settings['frequency_scale_factor'],
-        solve_dynamical_matrices=(not settings.read_phonon))
+        frequency_scale_factor=updated_settings['frequency_scale_factor'])
+    if not settings.read_phonon:
+        phono3py.run_phonon_solver()
 
     if log_level > 0:
         dm = phono3py.dynamical_matrix

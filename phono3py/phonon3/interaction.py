@@ -120,9 +120,12 @@ class Interaction(object):
         self._p2s = np.array(self._primitive.p2s_map, dtype='int_')
         self._s2p = np.array(self._primitive.s2p_map, dtype='int_')
 
-        self._allocate_phonon()
+        self._init_bz_grid()
 
     def run(self, lang='C', g_zero=None):
+        if (self._phonon_done == 0).any():
+            self.run_phonon_solver()
+
         num_band = len(self._primitive) * 3
         num_triplets = len(self._triplets_at_q)
 
@@ -354,8 +357,8 @@ class Interaction(object):
                               primitive,
                               nac_params=None,
                               solve_dynamical_matrices=True,
-                              decimals=None,
-                              verbose=False):
+                              decimals=None):
+        self._allocate_phonon()
         self._nac_params = nac_params
         self._dm = get_dynamical_matrix(
             fc2,
@@ -368,10 +371,9 @@ class Interaction(object):
 
         self._phonon_done[0] = 0
         if solve_dynamical_matrices:
-            self.run_phonon_solver(verbose=verbose)
+            self.run_phonon_solver()
         else:
-            self.run_phonon_solver(np.array([0], dtype='int_'),
-                                   verbose=verbose)
+            self.run_phonon_solver(np.array([0], dtype='int_'))
 
         if (self._bz_grid.addresses[0] == 0).all():
             if np.sum(self._frequencies[0] < self._cutoff_frequency) < 3:
@@ -401,19 +403,12 @@ class Interaction(object):
             self._frequencies[:] = frequencies
             self._eigenvectors[:] = eigenvectors
 
-    def set_phonons(self, grid_points=None, verbose=False):
-        msg = ("Interaction.set_phonons is deprecated at v2.0. "
-               "Use Interaction.run_phonon_solver intead.")
-        warnings.warn(msg, DeprecationWarning)
-
-        self.run_phonon_solver(grid_points=grid_points, verbose=verbose)
-
-    def run_phonon_solver(self, grid_points=None, verbose=False):
+    def run_phonon_solver(self, grid_points=None):
         if grid_points is None:
             _grid_points = np.arange(len(self._bz_grid.addresses), dtype='int_')
         else:
             _grid_points = grid_points
-        self._run_phonon_solver_c(_grid_points, verbose=verbose)
+        self._run_phonon_solver_c(_grid_points)
 
     def delete_interaction_strength(self):
         self._interaction_strength = None
@@ -469,7 +464,7 @@ class Interaction(object):
         self._interaction_strength *= self._unit_conversion
         self._g_zero = g_zero
 
-    def _run_phonon_solver_c(self, grid_points, verbose=False):
+    def _run_phonon_solver_c(self, grid_points):
         run_phonon_solver_c(self._dm,
                             self._frequencies,
                             self._eigenvectors,
@@ -479,8 +474,7 @@ class Interaction(object):
                             self._mesh,
                             self._frequency_factor_to_THz,
                             self._nac_q_direction,
-                            self._lapack_zheev_uplo,
-                            verbose=verbose)
+                            self._lapack_zheev_uplo)
 
     def _run_py(self):
         r2r = RealToReciprocal(self._fc3,
@@ -515,12 +509,13 @@ class Interaction(object):
                              self._frequency_factor_to_THz,
                              self._lapack_zheev_uplo)
 
-    def _allocate_phonon(self):
+    def _init_bz_grid(self):
         reciprocal_lattice = np.linalg.inv(self._primitive.cell)
         self._bz_grid = BZGrid(self._mesh,
                                reciprocal_lattice,
                                is_dense_gp_map=self._is_dense_gp_map)
-        self._bz_grid.set_bz_grid()
+
+    def _allocate_phonon(self):
         num_band = len(self._primitive) * 3
         num_grid = len(self._bz_grid.addresses)
         self._phonon_done = np.zeros(num_grid, dtype='byte')
