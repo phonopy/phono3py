@@ -36,7 +36,6 @@
 #include "lapack_wrapper.h"
 #include "phonoc_array.h"
 
-#include "phonon.h"
 #include "interaction.h"
 #include "pp_collision.h"
 #include "imag_self_energy_with_g.h"
@@ -48,92 +47,6 @@
 #include "triplet.h"
 
 #include <stdio.h>
-
-void ph3py_get_phonons_at_gridpoints(double *frequencies,
-                                     lapack_complex_double *eigenvectors,
-                                     char *phonon_done,
-                                     const size_t num_phonons,
-                                     const size_t *grid_points,
-                                     const size_t num_grid_points,
-                                     PHPYCONST int (*grid_address)[3],
-                                     const int mesh[3],
-                                     const double *fc2,
-                                     PHPYCONST double(*svecs_fc2)[27][3],
-                                     const int *multi_fc2,
-                                     PHPYCONST double (*positions_fc2)[3],
-                                     const size_t num_patom,
-                                     const size_t num_satom,
-                                     const double *masses_fc2,
-                                     const int *p2s_fc2,
-                                     const int *s2p_fc2,
-                                     const double unit_conversion_factor,
-                                     PHPYCONST double (*born)[3][3],
-                                     PHPYCONST double dielectric[3][3],
-                                     PHPYCONST double reciprocal_lattice[3][3],
-                                     const double *q_direction, /* pointer */
-                                     const double nac_factor,
-                                     const double *dd_q0,
-                                     PHPYCONST double(*G_list)[3],
-                                     const size_t num_G_points,
-                                     const double lambda,
-                                     const char uplo)
-{
-  if (!dd_q0) {
-    phn_get_phonons_at_gridpoints(frequencies,
-                                  eigenvectors,
-                                  phonon_done,
-                                  num_phonons,
-                                  grid_points,
-                                  num_grid_points,
-                                  grid_address,
-                                  mesh,
-                                  fc2,
-                                  svecs_fc2,
-                                  multi_fc2,
-                                  num_patom,
-                                  num_satom,
-                                  masses_fc2,
-                                  p2s_fc2,
-                                  s2p_fc2,
-                                  unit_conversion_factor,
-                                  born,
-                                  dielectric,
-                                  reciprocal_lattice,
-                                  q_direction,
-                                  nac_factor,
-                                  uplo);
-  } else {
-    phn_get_gonze_phonons_at_gridpoints(frequencies,
-                                        eigenvectors,
-                                        phonon_done,
-                                        num_phonons,
-                                        grid_points,
-                                        num_grid_points,
-                                        grid_address,
-                                        mesh,
-                                        fc2,
-                                        svecs_fc2,
-                                        multi_fc2,
-                                        positions_fc2,
-                                        num_patom,
-                                        num_satom,
-                                        masses_fc2,
-                                        p2s_fc2,
-                                        s2p_fc2,
-                                        unit_conversion_factor,
-                                        born,
-                                        dielectric,
-                                        reciprocal_lattice,
-                                        q_direction,
-                                        nac_factor,
-                                        dd_q0,
-                                        G_list,
-                                        num_G_points,
-                                        lambda,
-                                        uplo);
-  }
-}
-
 
 void ph3py_get_interaction(Darray *fc3_normal_squared,
                            const char *g_zero,

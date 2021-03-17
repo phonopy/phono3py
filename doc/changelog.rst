@@ -3,6 +3,10 @@
 Change Log
 ==========
 
+Mar-17-2021: Version 1.22.3
+---------------------------
+- Fix ``--read-gamma`` option to work.
+
 Feb-21-2021: Version 1.22.2
 ---------------------------
 - Fix PyPI source distribution package

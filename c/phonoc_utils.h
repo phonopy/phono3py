@@ -35,7 +35,6 @@
 #ifndef __phonoc_utils_H__
 #define __phonoc_utils_H__
 
-#include "phonoc_array.h"
 #include "lapack_wrapper.h"
 
 double bose_einstein(const double x, const double t);
