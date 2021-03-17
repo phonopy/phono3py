@@ -228,16 +228,15 @@ class BZGrid(object):
 
         """
 
-        gps = []
-        for adrs in addresses:
-            try:
-                len(adrs)
-            except TypeError:
-                return get_grid_point_from_address(addresses,
-                                                   self._mesh_numbers)
-            gps.append(get_grid_point_from_address(adrs, self._mesh_numbers))
+        try:
+            len(addresses[0])
+        except TypeError:
+            return int(self._gpg2bzg[get_grid_point_from_address(
+                addresses, self._mesh_numbers)])
 
-        return np.array(gps, dtype='int_')
+        gps = [get_grid_point_from_address(adrs, self._mesh_numbers)
+               for adrs in addresses]
+        return np.array(self._gpg2bzg[gps], dtype='int_')
 
     def _set_bz_grid(self):
         """Generate BZ grid addresses and grid point mapping table"""
