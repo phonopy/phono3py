@@ -104,7 +104,7 @@ class Isotope(object):
 
         if self._bz_grid is None:
             self._bz_grid = BZGrid(self._mesh,
-                                   np.linalg.inv(self._primitive.cell),
+                                   lattice=self._primitive.cell,
                                    is_dense_gp_map=is_dense_gp_map)
 
     def set_grid_point(self, grid_point):

@@ -87,7 +87,8 @@ class BZGrid(object):
 
     def __init__(self,
                  mesh,
-                 reciprocal_lattice,
+                 reciprocal_lattice=None,
+                 lattice=None,
                  is_shift=None,
                  is_dense_gp_map=False):
         """
@@ -98,6 +99,9 @@ class BZGrid(object):
         reciprocal_lattice : array_like
             Reciprocal primitive basis vectors given as column vectors
             shape=(3, 3), dtype='double', order='C'
+        lattice : array_like
+            Direct primitive basis vectors given as row vectors
+            shape=(3, 3), dtype='double', order='C'
         is_shift : array_like or None, optional
             [0, 0, 0] gives Gamma center mesh and value 1 gives half mesh shift
             along the basis vectors. Default is None.
@@ -105,14 +109,17 @@ class BZGrid(object):
 
         """
 
-        real_lattice = np.linalg.inv(reciprocal_lattice)
-        if isinstance(mesh, float):
-            self._mesh_numbers = length2mesh(mesh, real_lattice)
-        else:
-            self._mesh_numbers = mesh
-        self._mesh_numbers = np.array(self._mesh_numbers, dtype='int_')
-        self._reciprocal_lattice = np.array(
-            reciprocal_lattice, dtype='double', order='C')
+        if reciprocal_lattice is not None:
+            self._reciprocal_lattice = np.array(
+                reciprocal_lattice, dtype='double', order='C')
+            self._lattice = np.array(
+                np.linalg.inv(reciprocal_lattice), dtype='double', order='C')
+        if lattice is not None:
+            self._lattice = np.array(
+                lattice, dtype='double', order='C')
+            self._reciprocal_lattice = np.array(
+                np.linalg.inv(lattice), dtype='double', order='C')
+        self._set_mesh_numbers(mesh)
         self._is_shift = None
         self._is_dense_gp_map = is_dense_gp_map
 
@@ -254,6 +261,16 @@ class BZGrid(object):
         else:
             self._gpg2bzg = np.arange(
                 np.prod(self._mesh_numbers), dtype='int_')
+
+    def _set_mesh_numbers(self, mesh):
+        """Set mesh numbers from array or float value"""
+        try:
+            num_values = len(mesh)
+            if num_values == 3:
+                self._mesh_numbers = np.array(mesh, dtype='int_')
+        except TypeError:
+            mesh_nums = length2mesh(mesh, self._lattice)
+            self._mesh_numbers = np.array(mesh_nums, dtype='int_')
 
 
 def get_triplets_at_q(grid_point,

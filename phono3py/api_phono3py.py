@@ -69,6 +69,7 @@ from phono3py.phonon3.fc3 import (
     set_translational_invariance_compact_fc3,
     cutoff_fc3_by_zero)
 from phono3py.phonon3.fc3 import get_fc3 as get_phono3py_fc3
+from phono3py.phonon3.triplets import BZGrid
 from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.interface.fc_calculator import get_fc3
@@ -168,7 +169,6 @@ class Phono3py(object):
 
         # Setup interaction
         self._interaction = None
-        self._mesh_numbers = None
         self._band_indices = None
         self._band_indices_flatten = None
         if mesh is not None:
@@ -672,7 +672,7 @@ class Phono3py(object):
     @property
     def mesh_numbers(self):
         """Sampling mesh numbers in reciprocal space"""
-        return self._mesh_numbers
+        return self._bz_grid.mesh_numbers
 
     @mesh_numbers.setter
     def mesh_numbers(self, mesh_numbers):
@@ -917,12 +917,7 @@ class Phono3py(object):
             An instance of BZGrid used for entire phono3py calculation.
 
         """
-        if self._interaction is None:
-            msg = ("Phono3py.init_phph_interaction has to be called "
-                   "to initialize grid system.")
-            RuntimeError(msg)
-        else:
-            return self._interaction.bz_grid
+        return self._bz_grid
 
     def init_phph_interaction(self,
                               nac_q_direction=None,
@@ -959,7 +954,7 @@ class Phono3py(object):
 
         """
 
-        if self._mesh_numbers is None:
+        if self.mesh_numbers is None:
             msg = "Phono3py.mesh_numbers of instance has to be set."
             raise RuntimeError(msg)
 
@@ -970,7 +965,7 @@ class Phono3py(object):
         self._interaction = Interaction(
             self._supercell,
             self._primitive,
-            self._mesh_numbers,
+            self._bz_grid,
             self._primitive_symmetry,
             fc3=self._fc3,
             band_indices=self._band_indices_flatten,
@@ -980,7 +975,6 @@ class Phono3py(object):
             cutoff_frequency=self._cutoff_frequency,
             is_mesh_symmetry=self._is_mesh_symmetry,
             symmetrize_fc3q=self._symmetrize_fc3q,
-            is_dense_gp_map=self._is_dense_gp_map,
             lapack_zheev_uplo=self._lapack_zheev_uplo)
         self._interaction.set_nac_q_direction(nac_q_direction=nac_q_direction)
         self._init_dynamical_matrix()
@@ -1509,7 +1503,7 @@ class Phono3py(object):
     def _write_imag_self_energy(self, output_filename=None):
         write_imag_self_energy(
             self._gammas,
-            self._mesh_numbers,
+            self.mesh_numbers,
             self._grid_points,
             self._band_indices,
             self._frequency_points,
@@ -1608,7 +1602,7 @@ class Phono3py(object):
         if write_txt:
             write_real_self_energy(
                 deltas,
-                self._mesh_numbers,
+                self.mesh_numbers,
                 grid_points,
                 self._band_indices,
                 frequency_points,
@@ -1974,22 +1968,9 @@ class Phono3py(object):
     def _set_mesh_numbers(self, mesh):
         # initialization related to mesh
         self._interaction = None
-
-        _mesh = np.array(mesh)
-        mesh_nums = None
-        if _mesh.shape:
-            if _mesh.shape == (3,):
-                mesh_nums = mesh
-        elif self._primitive_symmetry is None:
-            mesh_nums = length2mesh(mesh, self._primitive.get_cell())
-        else:
-            rotations = self._primitive_symmetry.get_pointgroup_operations()
-            mesh_nums = length2mesh(mesh, self._primitive.cell,
-                                    rotations=rotations)
-        if mesh_nums is None:
-            msg = "mesh has inappropriate type."
-            raise TypeError(msg)
-        self._mesh_numbers = mesh_nums
+        self._bz_grid = BZGrid(mesh,
+                               lattice=self._primitive.cell,
+                               is_dense_gp_map=self._is_dense_gp_map)
 
     def _init_dynamical_matrix(self):
         if self._interaction is not None:

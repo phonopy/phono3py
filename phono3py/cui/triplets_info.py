@@ -178,9 +178,8 @@ def _get_ir_grid_points(primitive,
 
     ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(
         mesh, point_group)
-    reciprocal_lattice = np.linalg.inv(primitive.cell)
     bz_grid = BZGrid(mesh,
-                     reciprocal_lattice,
+                     lattice=primitive.cell,
                      is_dense_gp_map=is_dense_gp_map)
     ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype='int_')
 

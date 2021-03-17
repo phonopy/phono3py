@@ -608,7 +608,7 @@ def init_phono3py(settings,
 
     if updated_settings['grid_points'] is not None:
         bz_grid = BZGrid(phono3py.mesh_numbers,
-                         np.linalg.inv(phono3py.primitive.cell),
+                         lattice=phono3py.primitive.cell,
                          is_dense_gp_map=settings.is_dense_gp_map)
         updated_settings['grid_points'] = bz_grid.grg2bzg[
             updated_settings['grid_points']]
