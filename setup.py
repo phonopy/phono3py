@@ -34,30 +34,6 @@ if (config_var is not None and
     os.environ['CFLAGS'] = config_var.replace(
         "-Werror=declaration-after-statement", "")
 
-sources = ['c/_phono3py.c',
-           'c/collision_matrix.c',
-           'c/dynmat.c',
-           'c/fc3.c',
-           'c/imag_self_energy_with_g.c',
-           'c/interaction.c',
-           'c/isotope.c',
-           'c/kgrid.c',
-           'c/kpoint.c',
-           'c/lapack_wrapper.c',
-           'c/mathfunc.c',
-           'c/phono3py.c',
-           'c/phonoc_array.c',
-           'c/phonoc_utils.c',
-           'c/phonon.c',
-           'c/pp_collision.c',
-           'c/real_self_energy.c',
-           'c/real_to_reciprocal.c',
-           'c/reciprocal_to_normal.c',
-           'c/tetrahedron_method.c',
-           'c/triplet.c',
-           'c/triplet_iw.c',
-           'c/triplet_kpoint.c']
-
 extra_compile_args = ['-fopenmp', ]
 include_dirs = ['c', ] + include_dirs_numpy
 define_macros = []
@@ -183,8 +159,9 @@ else:
     # For conda: Try installing with dynamic link library of openblas by
     # % conda install numpy scipy h5py pyyaml matplotlib openblas libgfortran
     extra_link_args_lapacke += ['-lopenblas', '-lgfortran']
-    include_dirs_lapacke += [
-        os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
+    if 'CONDA_PREFIX' in os.environ:
+        include_dirs_lapacke += [
+            os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
     if use_setuptools:
         extra_compile_args += ['-DMULTITHREADED_BLAS']
     else:
@@ -230,13 +207,54 @@ extra_link_args += extra_link_args_lapacke
 include_dirs += include_dirs_lapacke
 
 print("extra_link_args", extra_link_args)
+sources_phono3py = ['c/_phono3py.c',
+                    'c/collision_matrix.c',
+                    'c/fc3.c',
+                    'c/imag_self_energy_with_g.c',
+                    'c/interaction.c',
+                    'c/isotope.c',
+                    'c/kgrid.c',
+                    'c/kpoint.c',
+                    'c/lapack_wrapper.c',
+                    'c/mathfunc.c',
+                    'c/phono3py.c',
+                    'c/phonoc_utils.c',
+                    'c/pp_collision.c',
+                    'c/real_self_energy.c',
+                    'c/real_to_reciprocal.c',
+                    'c/reciprocal_to_normal.c',
+                    'c/tetrahedron_method.c',
+                    'c/triplet.c',
+                    'c/triplet_iw.c',
+                    'c/triplet_kpoint.c']
 extension_phono3py = Extension(
     'phono3py._phono3py',
     include_dirs=include_dirs,
     extra_compile_args=extra_compile_args,
     extra_link_args=extra_link_args,
     define_macros=define_macros,
-    sources=sources)
+    sources=sources_phono3py)
+
+sources_phononmod = ['c/_phononmod.c',
+                     'c/dynmat.c',
+                     'c/lapack_wrapper.c',
+                     'c/phonon.c',
+                     'c/phononmod.c']
+extension_phononmod = Extension(
+    'phono3py._phononmod',
+    include_dirs=include_dirs,
+    extra_compile_args=extra_compile_args,
+    extra_link_args=extra_link_args,
+    sources=sources_phononmod)
+
+sources_lapackepy = ['c/_lapackepy.c',
+                     'c/lapack_wrapper.c']
+extension_lapackepy = Extension(
+    'phono3py._lapackepy',
+    extra_compile_args=extra_compile_args,
+    extra_link_args=extra_link_args,
+    include_dirs=include_dirs,
+    sources=sources_lapackepy)
 
 packages_phono3py = ['phono3py',
                      'phono3py.cui',
@@ -254,19 +272,6 @@ scripts_phono3py = ['scripts/phono3py',
 ########################
 # _lapackepy extension #
 ########################
-include_dirs_lapackepy = (['c', ] + include_dirs_numpy + include_dirs_lapacke)
-sources_lapackepy = ['c/_lapackepy.c',
-                     'c/dynmat.c',
-                     'c/phonon.c',
-                     'c/phonoc_array.c',
-                     'c/phonoc_utils.c',
-                     'c/lapack_wrapper.c']
-extension_lapackepy = Extension(
-    'phono3py._lapackepy',
-    extra_compile_args=extra_compile_args,
-    extra_link_args=extra_link_args,
-    include_dirs=include_dirs_lapackepy,
-    sources=sources_lapackepy)
 
 if __name__ == '__main__':
     version_nums = [None, None, None]
@@ -310,10 +315,12 @@ if __name__ == '__main__':
               url='http://phonopy.github.io/phono3py/',
               packages=packages_phono3py,
               install_requires=['numpy', 'scipy', 'PyYAML', 'matplotlib',
-                                'h5py', 'spglib', 'phonopy>=2.9,<2.10'],
+                                'h5py', 'spglib', 'phonopy>=2.9.3,<2.10'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
-              ext_modules=[extension_lapackepy, extension_phono3py])
+              ext_modules=[extension_phono3py,
+                           extension_lapackepy,
+                           extension_phononmod])
     else:
         setup(name='phono3py',
               version=version,
@@ -326,4 +333,6 @@ if __name__ == '__main__':
                         'phonopy', 'spglib'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
-              ext_modules=[extension_lapackepy, extension_phono3py])
+              ext_modules=[extension_phono3py,
+                           extension_lapackepy,
+                           extension_phononmod])

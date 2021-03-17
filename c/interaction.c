@@ -118,7 +118,7 @@ void itr_get_interaction(Darray *fc3_normal_squared,
 {
   int openmp_per_triplets;
   int (*g_pos)[4];
-  size_t i, j, k, l, jkl;
+  size_t i;
   size_t num_band, num_band0, num_band_prod, num_g_pos;
 
   g_pos = NULL;
