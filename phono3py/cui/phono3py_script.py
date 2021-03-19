@@ -816,13 +816,16 @@ def init_phph_interaction(phono3py,
         nac_q_direction=settings.nac_q_direction,
         constant_averaged_interaction=ave_pp,
         frequency_scale_factor=updated_settings['frequency_scale_factor'])
-    if not settings.read_phonon:
-        phono3py.run_phonon_solver()
 
-    if log_level > 0:
-        dm = phono3py.dynamical_matrix
-        if (dm.is_nac() and dm.nac_method == 'gonze'):
-            dm.show_Gonze_nac_message()
+    if not settings.read_phonon:
+        if log_level:
+            print("-" * 27 + " Phonon calculations " + "-" * 28)
+            dm = phono3py.dynamical_matrix
+            if (dm.is_nac() and dm.nac_method == 'gonze'):
+                dm.show_Gonze_nac_message()
+            print("Running harmonic phonon calculations...")
+            sys.stdout.flush()
+        phono3py.run_phonon_solver()
 
     if settings.write_phonon:
         freqs, eigvecs, grid_address = phono3py.get_phonon_data()
