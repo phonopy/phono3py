@@ -28,23 +28,21 @@ def test_get_grid_point_from_address(agno2_cell):
 
 def test_get_triplets_at_q_type1(si_pbesol_111):
     pcell = si_pbesol_111.primitive
-    reclat = np.linalg.inv(pcell.cell)
     psym = si_pbesol_111.primitive_symmetry
     grid_point = 1
     mesh = [4, 4, 4]
 
     bz_grid = BZGrid(mesh,
-                     reclat,
+                     lattice=pcell.cell,
                      is_dense_gp_map=False)
-    bz_grid.set_bz_grid()
     triplets, weights = get_triplets_at_q(
         grid_point,
         psym.pointgroup_operations,
         bz_grid)[:2]
 
-    triplets_ref = [1, 0, 3, 1, 1, 64, 1, 4, 15, 1,
+    triplets_ref = [1, 0, 3, 1, 1, 2, 1, 4, 15, 1,
                     5, 14, 1, 6, 13, 1, 7, 12, 1, 8,
-                    11, 1, 9, 66, 1, 24, 59, 1, 26, 88]
+                    11, 1, 9, 10, 1, 24, 59, 1, 26, 57,]
     weights_ref = [2, 2, 6, 6, 6, 6, 6, 6, 12, 12]
 
     # _show_triplets_info(mesh, bzgrid, triplets, reclat, bztype=1)
@@ -55,15 +53,13 @@ def test_get_triplets_at_q_type1(si_pbesol_111):
 
 def test_get_triplets_at_q_type2(si_pbesol_111):
     pcell = si_pbesol_111.primitive
-    reclat = np.linalg.inv(pcell.cell)
     psym = si_pbesol_111.primitive_symmetry
     grid_point = 1
     mesh = [4, 4, 4]
 
     bz_grid = BZGrid(mesh,
-                     reclat,
+                     lattice=pcell.cell,
                      is_dense_gp_map=True)
-    bz_grid.set_bz_grid()
     triplets, weights = get_triplets_at_q(
         grid_point,
         psym.pointgroup_operations,
@@ -103,7 +99,8 @@ def _show_triplets_info(mesh, bz_grid, triplets, reclat, bztype=2):
 def test_BZGrid(si_pbesol_111):
     """Basis test of BZGrid type1 and type2"""
 
-    reclat = np.linalg.inv(si_pbesol_111.primitive.cell)
+    lat = si_pbesol_111.primitive.cell
+    reclat = np.linalg.inv(lat)
     mesh = [4, 4, 4]
 
     gp_map2 = [0, 1, 2, 4, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 17, 18,
@@ -112,10 +109,8 @@ def test_BZGrid(si_pbesol_111):
                60, 61, 65, 66, 67, 68, 69, 70, 71, 72, 73, 77, 78, 79,
                83, 84, 85, 86, 87, 88, 89]
 
-    bzgrid1 = BZGrid(mesh, reclat, is_dense_gp_map=False)
-    bzgrid1.set_bz_grid()
-    bzgrid2 = BZGrid(mesh, reclat, is_dense_gp_map=True)
-    bzgrid2.set_bz_grid()
+    bzgrid1 = BZGrid(mesh, lattice=lat, is_dense_gp_map=False)
+    bzgrid2 = BZGrid(mesh, lattice=lat, is_dense_gp_map=True)
 
     adrs1 = bzgrid1.addresses[:np.prod(mesh)]
     adrs2 = bzgrid2.addresses[bzgrid2.gp_map[:-1]]
@@ -137,17 +132,15 @@ def test_BZGrid_bzg2grg(si_pbesol_111):
 
     """
 
-    reclat = np.linalg.inv(si_pbesol_111.primitive.cell)
+    lat = si_pbesol_111.primitive.cell
     mesh = [4, 4, 4]
-    bzgrid1 = BZGrid(mesh, reclat, is_dense_gp_map=False)
-    bzgrid1.set_bz_grid()
+    bzgrid1 = BZGrid(mesh, lattice=lat, is_dense_gp_map=False)
     grg = []
     for i in range(len(bzgrid1.addresses)):
         grg.append(get_grid_point_from_address(bzgrid1.addresses[i], mesh))
     np.testing.assert_equal(grg, bzgrid1.bzg2grg)
 
-    bzgrid2 = BZGrid(mesh, reclat, is_dense_gp_map=True)
-    bzgrid2.set_bz_grid()
+    bzgrid2 = BZGrid(mesh, lattice=lat, is_dense_gp_map=True)
     grg = []
     for i in range(len(bzgrid2.addresses)):
         grg.append(get_grid_point_from_address(bzgrid2.addresses[i], mesh))

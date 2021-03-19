@@ -39,7 +39,7 @@
 #include "lapack_wrapper.h"
 
 void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
-                            const double q[9],
+                            const double q_vecs[3][3],
                             const double *fc3,
                             const long is_compact_fc3,
                             const double *shortest_vectors,

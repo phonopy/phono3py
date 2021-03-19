@@ -35,10 +35,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "bzgrid.h"
-#include "phonoc_array.h"
-#include "phonoc_const.h"
 #include "interaction.h"
 #include "imag_self_energy_with_g.h"
+#include "phonoc_array.h"
 #include "real_to_reciprocal.h"
 #include "reciprocal_to_normal.h"
 #include "lapack_wrapper.h"
@@ -50,7 +49,7 @@ static const long index_exchange[6][3] = {{0, 1, 2},
                                           {0, 2, 1},
                                           {1, 0, 2}};
 static void real_to_normal(double *fc3_normal_squared,
-                           PHPYCONST long (*g_pos)[4],
+                           const long (*g_pos)[4],
                            const long num_g_pos,
                            const double *freqs0,
                            const double *freqs1,
@@ -60,7 +59,7 @@ static void real_to_normal(double *fc3_normal_squared,
                            const lapack_complex_double *eigvecs2,
                            const double *fc3,
                            const long is_compact_fc3,
-                           const double q[9], /* q0, q1, q2 */
+                           const double q_vecs[3][3], /* q0, q1, q2 */
                            const double *shortest_vectors,
                            const long svecs_dims[3],
                            const long *multiplicity,
@@ -75,13 +74,13 @@ static void real_to_normal(double *fc3_normal_squared,
                            const long num_triplets,
                            const long openmp_at_bands);
 static void real_to_normal_sym_q(double *fc3_normal_squared,
-                                 PHPYCONST long (*g_pos)[4],
+                                 const long (*g_pos)[4],
                                  const long num_g_pos,
-                                 PHPYCONST double *freqs[3],
-                                 PHPYCONST lapack_complex_double *eigvecs[3],
+                                 double * const freqs[3],
+                                 lapack_complex_double * const eigvecs[3],
                                  const double *fc3,
                                  const long is_compact_fc3,
-                                 const double q[9], /* q0, q1, q2 */
+                                 const double q_vecs[3][3], /* q0, q1, q2 */
                                  const double *shortest_vectors,
                                  const long svecs_dims[3],
                                  const long *multiplicity,
@@ -174,7 +173,7 @@ void itr_get_interaction(Darray *fc3_normal_squared,
 void itr_get_interaction_at_triplet(double *fc3_normal_squared,
                                     const long num_band0,
                                     const long num_band,
-                                    PHPYCONST long (*g_pos)[4],
+                                    const long (*g_pos)[4],
                                     const long num_g_pos,
                                     const double *frequencies,
                                     const lapack_complex_double *eigenvectors,
@@ -198,12 +197,13 @@ void itr_get_interaction_at_triplet(double *fc3_normal_squared,
   long j, k;
   double *freqs[3];
   lapack_complex_double *eigvecs[3];
-  double q[9];
+  double q_vecs[3][3];
 
   for (j = 0; j < 3; j++) {
     for (k = 0; k < 3; k++) {
-      q[j * 3 + k] = ((double)bzgrid->addresses[triplet[j]][k]) / bzgrid->D_diag[k];
+      q_vecs[j][k] = ((double)bzgrid->addresses[triplet[j]][k]) / bzgrid->D_diag[k];
     }
+    bzg_multiply_matrix_vector_ld3(q_vecs[j], bzgrid->Q, q_vecs[j]);
   }
 
   if (symmetrize_fc3_q) {
@@ -225,7 +225,7 @@ void itr_get_interaction_at_triplet(double *fc3_normal_squared,
                          eigvecs,
                          fc3,
                          is_compact_fc3,
-                         q, /* q0, q1, q2 */
+                         q_vecs, /* q0, q1, q2 */
                          shortest_vectors,
                          svecs_dims,
                          multiplicity,
@@ -257,7 +257,7 @@ void itr_get_interaction_at_triplet(double *fc3_normal_squared,
                    eigenvectors + triplet[2] * num_band * num_band,
                    fc3,
                    is_compact_fc3,
-                   q, /* q0, q1, q2 */
+                   q_vecs, /* q0, q1, q2 */
                    shortest_vectors,
                    svecs_dims,
                    multiplicity,
@@ -275,7 +275,7 @@ void itr_get_interaction_at_triplet(double *fc3_normal_squared,
 }
 
 static void real_to_normal(double *fc3_normal_squared,
-                           PHPYCONST long (*g_pos)[4],
+                           const long (*g_pos)[4],
                            const long num_g_pos,
                            const double *freqs0,
                            const double *freqs1,
@@ -285,7 +285,7 @@ static void real_to_normal(double *fc3_normal_squared,
                            const lapack_complex_double *eigvecs2,
                            const double *fc3,
                            const long is_compact_fc3,
-                           const double q[9], /* q0, q1, q2 */
+                           const double q_vecs[3][3], /* q0, q1, q2 */
                            const double *shortest_vectors,
                            const long svecs_dims[3],
                            const long *multiplicity,
@@ -309,7 +309,7 @@ static void real_to_normal(double *fc3_normal_squared,
     (lapack_complex_double*)malloc(sizeof(lapack_complex_double) *
                                    num_patom * num_patom * num_patom * 27);
   r2r_real_to_reciprocal(fc3_reciprocal,
-                         q,
+                         q_vecs,
                          fc3,
                          is_compact_fc3,
                          shortest_vectors,
@@ -347,13 +347,13 @@ static void real_to_normal(double *fc3_normal_squared,
 }
 
 static void real_to_normal_sym_q(double *fc3_normal_squared,
-                                 PHPYCONST long (*g_pos)[4],
+                                 const long (*g_pos)[4],
                                  const long num_g_pos,
-                                 PHPYCONST double *freqs[3],
-                                 PHPYCONST lapack_complex_double *eigvecs[3],
+                                 double * const freqs[3],
+                                 lapack_complex_double * const eigvecs[3],
                                  const double *fc3,
                                  const long is_compact_fc3,
-                                 const double q[9], /* q0, q1, q2 */
+                                 const double q_vecs[3][3], /* q0, q1, q2 */
                                  const double *shortest_vectors,
                                  const long svecs_dims[3],
                                  const long *multiplicity,
@@ -370,7 +370,7 @@ static void real_to_normal_sym_q(double *fc3_normal_squared,
 {
   long i, j, k, l;
   long band_ex[3];
-  double q_ex[9];
+  double q_vecs_ex[3][3];
   double *fc3_normal_squared_ex;
 
   fc3_normal_squared_ex =
@@ -383,7 +383,7 @@ static void real_to_normal_sym_q(double *fc3_normal_squared,
   for (i = 0; i < 6; i++) {
     for (j = 0; j < 3; j ++) {
       for (k = 0; k < 3; k ++) {
-        q_ex[j * 3 + k] = q[index_exchange[i][j] * 3 + k];
+        q_vecs_ex[j][k] = q_vecs[index_exchange[i][j]][k];
       }
     }
     real_to_normal(fc3_normal_squared_ex,
@@ -397,7 +397,7 @@ static void real_to_normal_sym_q(double *fc3_normal_squared,
                    eigvecs[index_exchange[i][2]],
                    fc3,
                    is_compact_fc3,
-                   q_ex, /* q0, q1, q2 */
+                   q_vecs_ex, /* q0, q1, q2 */
                    shortest_vectors,
                    svecs_dims,
                    multiplicity,

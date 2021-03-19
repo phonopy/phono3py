@@ -44,8 +44,7 @@ def run_phonon_solver_c(dm,
                         mesh,
                         frequency_conversion_factor,
                         nac_q_direction,  # in reduced coordinates
-                        lapack_zheev_uplo,
-                        verbose=False):
+                        lapack_zheev_uplo):
     import phono3py._phononmod as phononmod
 
     (svecs,

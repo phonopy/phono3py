@@ -34,12 +34,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "phonoc_array.h"
-#include "phonoc_const.h"
-#include "phonoc_utils.h"
 #include "imag_self_energy_with_g.h"
-#include "pp_collision.h"
 #include "interaction.h"
+#include "phonoc_array.h"
+#include "phonoc_utils.h"
+#include "pp_collision.h"
 #include "triplet.h"
 #include "triplet_iw.h"
 #include "lapack_wrapper.h"
@@ -78,7 +77,7 @@ static void finalize_ise(double *imag_self_energy,
                          const long is_NU);
 
 void ppc_get_pp_collision(double *imag_self_energy,
-                          PHPYCONST long relative_grid_address[24][4][3], /* thm */
+                          const long relative_grid_address[24][4][3], /* thm */
                           const double *frequencies,
                           const lapack_complex_double *eigenvectors,
                           const long (*triplets)[3],

@@ -61,11 +61,11 @@ static void get_double_grid_address(long address_double[3],
                                     const long address[3],
                                     const long PS[3]);
 static long rotate_grid_index(const long grid_index,
-                              LAGCONST long rotation[3][3],
+                              const long rotation[3][3],
                               const long D_diag[3],
                               const long PS[3]);
 static void get_ir_grid_map(long ir_grid_indices[],
-                            LAGCONST long (*rotations)[3][3],
+                            const long (*rotations)[3][3],
                             const long num_rot,
                             const long D_diag[3],
                             const long PS[3]);
@@ -74,7 +74,7 @@ static void get_ir_grid_map(long ir_grid_indices[],
 long grg_get_snf3x3(long D_diag[3],
                     long P[3][3],
                     long Q[3][3],
-                    LAGCONST long A[3][3])
+                    const long A[3][3])
 {
   long i, j, succeeded;
   long D[3][3];
@@ -109,10 +109,10 @@ err:
 /*    vectors. */
 /* num_rot : Number of rotations */
 long grg_transform_rotations(long (*transformed_rots)[3][3],
-                             LAGCONST long (*rotations)[3][3],
+                             const long (*rotations)[3][3],
                              const long num_rot,
                              const long D_diag[3],
-                             LAGCONST long Q[3][3])
+                             const long Q[3][3])
 {
   long i, j, k;
   double r[3][3], Q_double[3][3];
@@ -146,7 +146,7 @@ long grg_transform_rotations(long (*transformed_rots)[3][3],
 /* -------------------------------*/
 /* address : Single grid address. */
 /* D_diag : Diagnal elements of D. */
-void grg_get_all_grid_addresses(long grid_address[][3], const long D_diag[3])
+void grg_get_all_grid_addresses(long (*grid_address)[3], const long D_diag[3])
 {
   get_all_grid_addresses(grid_address, D_diag);
 }
@@ -227,7 +227,7 @@ void grg_get_grid_address_from_index(long address[3],
 /* Rotate grid point by index */
 /* ---------------------------*/
 long grg_rotate_grid_index(const long grid_index,
-                           LAGCONST long rotation[3][3],
+                           const long rotation[3][3],
                            const long D_diag[3],
                            const long PS[3])
 {
@@ -238,7 +238,7 @@ long grg_rotate_grid_index(const long grid_index,
 /* Find irreducible grid points */
 /* -----------------------------*/
 void grg_get_ir_grid_map(long ir_grid_indices[],
-                         LAGCONST long (*rotations)[3][3],
+                         const long (*rotations)[3][3],
                          const long num_rot,
                          const long D_diag[3],
                          const long PS[3])
@@ -255,12 +255,12 @@ void grg_get_ir_grid_map(long ir_grid_indices[],
 /* included. */
 /* Return 0 if failed */
 long grg_get_reciprocal_point_group(long rec_rotations[48][3][3],
-                                    LAGCONST long (*rotations)[3][3],
+                                    const long (*rotations)[3][3],
                                     const long num_rot,
                                     const long is_time_reversal)
 {
   long i, j, num_rot_ret, inv_exist;
-  LAGCONST long inversion[3][3] = {
+  const long inversion[3][3] = {
     {-1, 0, 0 },
     { 0,-1, 0 },
     { 0, 0,-1 }
@@ -428,7 +428,7 @@ static void get_double_grid_address(long address_double[3],
 }
 
 static long rotate_grid_index(const long grid_index,
-                              LAGCONST long rotation[3][3],
+                              const long rotation[3][3],
                               const long D_diag[3],
                               const long PS[3])
 {
@@ -441,7 +441,7 @@ static long rotate_grid_index(const long grid_index,
 }
 
 static void get_ir_grid_map(long ir_grid_indices[],
-                            LAGCONST long (*rotations)[3][3],
+                            const long (*rotations)[3][3],
                             const long num_rot,
                             const long D_diag[3],
                             const long PS[3])

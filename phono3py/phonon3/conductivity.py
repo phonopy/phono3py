@@ -331,7 +331,11 @@ class Conductivity(object):
                                  self._mesh.astype('double'),
                                  dtype='double', order='C')
         self._grid_point_count = 0
-        self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
+        (self._frequencies,
+         self._eigenvectors,
+         phonon_done) = self._pp.get_phonons()
+        if (phonon_done == 0).any():
+            self._pp.run_phonon_solver()
 
     def _get_gamma_isotope_at_sigmas(self, i):
         gamma_iso = []

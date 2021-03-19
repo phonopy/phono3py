@@ -110,11 +110,9 @@ class JointDos(object):
         self._joint_dos = None
         self._frequency_points = None
 
-        reciprocal_lattice = np.linalg.inv(self._primitive.cell)
         self._bz_grid = BZGrid(self._mesh,
-                               reciprocal_lattice,
+                               lattice=self._primitive.cell,
                                is_dense_gp_map=self._is_dense_gp_map)
-        self._bz_grid.set_bz_grid()
 
     def run(self):
         self.run_phonon_solver(

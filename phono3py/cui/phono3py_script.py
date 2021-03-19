@@ -58,7 +58,7 @@ from phono3py.cui.settings import Phono3pyConfParser
 from phono3py.cui.load import set_dataset_and_force_constants
 from phono3py import Phono3py, Phono3pyJointDos, Phono3pyIsotope
 from phono3py.phonon3.gruneisen import run_gruneisen_parameters
-from phono3py.phonon3.triplets import get_grid_point_from_address
+from phono3py.phonon3.triplets import get_grid_point_from_address, BZGrid
 from phono3py.cui.phono3py_argparse import get_parser
 from phono3py.cui.show_log import (
     show_general_settings, show_phono3py_settings, show_phono3py_cells)
@@ -606,6 +606,13 @@ def init_phono3py(settings,
         log_level=log_level,
         lapack_zheev_uplo=settings.lapack_zheev_uplo)
 
+    if updated_settings['grid_points'] is not None:
+        bz_grid = BZGrid(phono3py.mesh_numbers,
+                         lattice=phono3py.primitive.cell,
+                         is_dense_gp_map=settings.is_dense_gp_map)
+        updated_settings['grid_points'] = bz_grid.grg2bzg[
+            updated_settings['grid_points']]
+
     check_supercell_in_yaml(cell_info, phono3py, log_level)
 
     if cell_info['phonopy_yaml'] is not None:
@@ -808,13 +815,17 @@ def init_phph_interaction(phono3py,
     phono3py.init_phph_interaction(
         nac_q_direction=settings.nac_q_direction,
         constant_averaged_interaction=ave_pp,
-        frequency_scale_factor=updated_settings['frequency_scale_factor'],
-        solve_dynamical_matrices=(not settings.read_phonon))
+        frequency_scale_factor=updated_settings['frequency_scale_factor'])
 
-    if log_level > 0:
-        dm = phono3py.dynamical_matrix
-        if (dm.is_nac() and dm.nac_method == 'gonze'):
-            dm.show_Gonze_nac_message()
+    if not settings.read_phonon:
+        if log_level:
+            print("-" * 27 + " Phonon calculations " + "-" * 28)
+            dm = phono3py.dynamical_matrix
+            if (dm.is_nac() and dm.nac_method == 'gonze'):
+                dm.show_Gonze_nac_message()
+            print("Running harmonic phonon calculations...")
+            sys.stdout.flush()
+        phono3py.run_phonon_solver()
 
     if settings.write_phonon:
         freqs, eigvecs, grid_address = phono3py.get_phonon_data()

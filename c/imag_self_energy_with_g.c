@@ -35,9 +35,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include "lagrid.h"
 #include "phonoc_array.h"
 #include "phonoc_utils.h"
-#include "phonoc_const.h"
 #include "imag_self_energy_with_g.h"
 #include "triplet.h"
 
@@ -263,7 +263,7 @@ void ise_imag_self_energy_at_triplet(double *imag_self_energy,
                                      const long triplet_weight,
                                      const double *g1,
                                      const double *g2_3,
-                                     PHPYCONST long (*g_pos)[4],
+                                     const long (*g_pos)[4],
                                      const long num_g_pos,
                                      const double *temperatures,
                                      const long num_temps,
@@ -518,12 +518,12 @@ static void set_occupations(double *n1,
     f1 = frequencies[triplet[1] * num_band + j];
     f2 = frequencies[triplet[2] * num_band + j];
     if (f1 > cutoff_frequency) {
-      n1[j] = bose_einstein(f1, temperature);
+      n1[j] = phonoc_bose_einstein(f1, temperature);
     } else {
       n1[j] = -1;
     }
     if (f2 > cutoff_frequency) {
-      n2[j] = bose_einstein(f2, temperature);
+      n2[j] = phonoc_bose_einstein(f2, temperature);
     } else {
       n2[j] = -1;
     }

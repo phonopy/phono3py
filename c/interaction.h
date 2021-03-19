@@ -35,8 +35,9 @@
 #ifndef __interaction_H__
 #define __interaction_H__
 
-#include "phonoc_array.h"
+#include "bzgrid.h"
 #include "lapack_wrapper.h"
+#include "phonoc_array.h"
 
 void itr_get_interaction(Darray *fc3_normal_squared,
                          const char *g_zero,
@@ -59,7 +60,7 @@ void itr_get_interaction(Darray *fc3_normal_squared,
 void itr_get_interaction_at_triplet(double *fc3_normal_squared,
                                     const long num_band0,
                                     const long num_band,
-                                    PHPYCONST long (*g_pos)[4],
+                                    const long (*g_pos)[4],
                                     const long num_g_pos,
                                     const double *frequencies,
                                     const lapack_complex_double *eigenvectors,

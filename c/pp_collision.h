@@ -35,13 +35,12 @@
 #ifndef __pp_collision_H__
 #define __pp_collision_H__
 
-#include "phonoc_array.h"
-#include "phonoc_const.h"
 #include "bzgrid.h"
 #include "lapack_wrapper.h"
+#include "phonoc_array.h"
 
 void ppc_get_pp_collision(double *imag_self_energy,
-                          PHPYCONST long relative_grid_address[24][4][3], /* thm */
+                          const long relative_grid_address[24][4][3], /* thm */
                           const double *frequencies,
                           const lapack_complex_double *eigenvectors,
                           const long (*triplets)[3],

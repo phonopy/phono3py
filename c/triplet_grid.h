@@ -44,7 +44,7 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
                               const long grid_point,
                               const long D_diag[3],
                               const long is_time_reversal,
-                              LAGCONST long (*rotations)[3][3],
+                              const long (*rotations)[3][3],
                               const long num_rot,
                               const long swappable);
 long tpk_get_BZ_triplets_at_q(long (*triplets)[3],

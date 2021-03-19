@@ -87,7 +87,8 @@ class BZGrid(object):
 
     def __init__(self,
                  mesh,
-                 reciprocal_lattice,
+                 reciprocal_lattice=None,
+                 lattice=None,
                  is_shift=None,
                  is_dense_gp_map=False):
         """
@@ -98,6 +99,9 @@ class BZGrid(object):
         reciprocal_lattice : array_like
             Reciprocal primitive basis vectors given as column vectors
             shape=(3, 3), dtype='double', order='C'
+        lattice : array_like
+            Direct primitive basis vectors given as row vectors
+            shape=(3, 3), dtype='double', order='C'
         is_shift : array_like or None, optional
             [0, 0, 0] gives Gamma center mesh and value 1 gives half mesh shift
             along the basis vectors. Default is None.
@@ -105,23 +109,82 @@ class BZGrid(object):
 
         """
 
-        real_lattice = np.linalg.inv(reciprocal_lattice)
-        if isinstance(mesh, float):
-            self._mesh_numbers = length2mesh(mesh, real_lattice)
-        else:
-            self._mesh_numbers = mesh
-        self._mesh_numbers = np.array(self._mesh_numbers, dtype='int_')
-        self._reciprocal_lattice = np.array(
-            reciprocal_lattice, dtype='double', order='C')
+        if reciprocal_lattice is not None:
+            self._reciprocal_lattice = np.array(
+                reciprocal_lattice, dtype='double', order='C')
+            self._lattice = np.array(
+                np.linalg.inv(reciprocal_lattice), dtype='double', order='C')
+        if lattice is not None:
+            self._lattice = np.array(
+                lattice, dtype='double', order='C')
+            self._reciprocal_lattice = np.array(
+                np.linalg.inv(lattice), dtype='double', order='C')
+        self._set_mesh_numbers(mesh)
         self._is_shift = None
         self._is_dense_gp_map = is_dense_gp_map
 
         self._addresses = None
         self._gp_map = None
 
+        self._Q = np.eye(3, dtype='int_')
+        self._P = np.eye(3, dtype='int_')
+
+        self._set_bz_grid()
+
     @property
     def mesh_numbers(self):
+        """Mesh numbers of conventional regular grid"""
         return self._mesh_numbers
+
+    @property
+    def D_diag(self):
+        """Diagonal elements of diagonal matrix after SNF: D=PAQ
+
+        This corresponds to the mesh numbers in transformed reciprocal
+        basis vectors. q-points with respect to the original recirpocal
+        basis vectors are given by
+
+        q = np.dot(Q, addresses[gp] / D_diag.astype('double'))
+
+        for the Gamma cetnred grid. With shifted, where only half grid shifts
+        that satisfy the symmetry are considered,
+
+        q = np.dot(Q, (addresses[gp] + np.dot(P, s)) / D_diag.astype('double'))
+
+        where s is the shift vectors that are 0 or 1/2. But it is more
+        convenient to use the integer shift vectors S by 0 or 1, which gives
+
+        q = (np.dot(Q, (2 * addresses[gp] + np.dot(P, S))
+                        / D_diag.astype('double'))) / 2
+
+        and this is the definition of PS in this class.
+
+        """
+        return self._mesh_numbers
+
+    @property
+    def P(self):
+        """Left unimodular matrix after SNF: D=PAQ"""
+        return self._P
+
+    @property
+    def Q(self):
+        """Right unimodular matrix after SNF: D=PAQ"""
+        return self._Q
+
+    @property
+    def QDinv(self):
+        """QD^-1"""
+        return np.array(self.Q * (1 / self.D_diag.astype('double')),
+                        dtype='double', order='C')
+
+    @property
+    def PS(self):
+        """Integer shift vectors of GRGrid"""
+        if self._is_shift is None:
+            return np.zeros(3, dtype='int_')
+        else:
+            return np.array(np.dot(self.P, self._is_shift), dtype='int_')
 
     @property
     def addresses(self):
@@ -151,19 +214,40 @@ class BZGrid(object):
     def is_dense_gp_map(self):
         return self._is_dense_gp_map
 
-    def set_bz_grid(self):
-        """Generate BZ grid addresses and grid point mapping table"""
-        self.relocate(get_grid_address(self._mesh_numbers))
+    def get_indices_from_addresses(self, addresses):
+        """Return BZ grid point indices from grid addresses
 
-    def relocate(self, gr_grid_addresses):
-        """Transform parallelepiped grid to BZ grid
 
-        gr_grid_addresses : ndarray
-            Address of all grid points in generalized regular grid.
-            Each address is given by three integers.
-            dtype='int_', shape=(prod(mesh), 3)
+        Parameters
+        ----------
+        addresses : array_like
+            Integer grid addresses.
+            shape=(n, 3) or (3, ), where n is the number of grid points.
+
+        Returns
+        -------
+        ndarray or int
+            Grid point indices corresponding to the grid addresses. Each
+            returned grid point index is one of those of the
+            translationally equivalent grid points.
+            shape=(n, ), dtype='int_' when multiple addresses are given.
+            Otherwise one integer value is returned.
 
         """
+
+        try:
+            len(addresses[0])
+        except TypeError:
+            return int(self._gpg2bzg[get_grid_point_from_address(
+                addresses, self._mesh_numbers)])
+
+        gps = [get_grid_point_from_address(adrs, self._mesh_numbers)
+               for adrs in addresses]
+        return np.array(self._gpg2bzg[gps], dtype='int_')
+
+    def _set_bz_grid(self):
+        """Generate BZ grid addresses and grid point mapping table"""
+        gr_grid_addresses = get_grid_address(self._mesh_numbers)
         (self._addresses,
          self._gp_map,
          self._bzg2grg) = _relocate_BZ_grid_address(
@@ -177,6 +261,16 @@ class BZGrid(object):
         else:
             self._gpg2bzg = np.arange(
                 np.prod(self._mesh_numbers), dtype='int_')
+
+    def _set_mesh_numbers(self, mesh):
+        """Set mesh numbers from array or float value"""
+        try:
+            num_values = len(mesh)
+            if num_values == 3:
+                self._mesh_numbers = np.array(mesh, dtype='int_')
+        except TypeError:
+            mesh_nums = length2mesh(mesh, self._lattice)
+            self._mesh_numbers = np.array(mesh_nums, dtype='int_')
 
 
 def get_triplets_at_q(grid_point,
@@ -612,7 +706,7 @@ def _relocate_BZ_grid_address(gr_grid_addresses,
     if is_dense_gp_map:
         bz_map = np.zeros(np.prod(mesh) + 1, dtype='int_')
     else:
-        bz_map = np.zeros(np.prod(np.multiply(mesh, 2)), dtype='int_')
+        bz_map = np.zeros(np.prod(mesh) * 9 + 1, dtype='int_')
     Q = np.eye(3, dtype='int_', order='C')
     num_gp = phono3c.bz_grid_addresses(
         bz_grid_addresses,

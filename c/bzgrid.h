@@ -35,8 +35,6 @@
 #ifndef __bzgrid_H__
 #define __bzgrid_H__
 
-#include "lagrid.h"
-
 typedef struct {
   long size;
   long (*mat)[3][3];
@@ -101,15 +99,20 @@ long bzg_get_ir_grid_map(long ir_mapping_table[],
 RotMats *bzg_get_point_group_reciprocal(const RotMats * rotations,
                                         const long is_time_reversal);
 long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
-                                const long mesh[3],
-                                const long is_shift[3],
+                                const long D_diag[3],
+                                const long PS[3],
                                 const long is_time_reversal,
-                                LAGCONST long (*rotations_in)[3][3],
+                                const long (*rotations_in)[3][3],
                                 const long num_rot);
 long bzg_get_bz_grid_addresses(BZGrid *bzgrid,
-                               LAGCONST long grid_address[][3]);
+                               const long grid_address[][3]);
 double bzg_get_tolerance_for_BZ_reduction(const BZGrid *bzgrid);
 RotMats * bzg_alloc_RotMats(const long size);
 void bzg_free_RotMats(RotMats * rotmats);
+void bzg_multiply_matrix_vector_ld3(double v[3],
+                                    const long a[3][3],
+                                    const double b[3]);
+long bzg_inverse_unimodular_matrix_l3(long m[3][3],
+                                      const long a[3][3]);
 
 #endif

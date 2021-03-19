@@ -33,21 +33,20 @@
 /* POSSIBILITY OF SUCH DAMAGE. */
 
 #include <stdlib.h>
-#include "phonoc_const.h"
 #include "fc3.h"
 
 static void rotate_delta_fc2s(double (*rot_delta_fc2s)[3][3],
                               const long i_atom,
                               const long j_atom,
-                              PHPYCONST double (*delta_fc2s)[3][3],
-                              PHPYCONST double (*site_sym_cart)[3][3],
+                              const double (*delta_fc2s)[3][3],
+                              const double (*site_sym_cart)[3][3],
                               const long *rot_map_sym,
                               const long num_atom,
                               const long num_site_sym,
                               const long num_disp);
 static void tensor2_rotation(double rot_tensor[3][3],
-                             PHPYCONST double tensor[3][3],
-                             PHPYCONST double r[3][3]);
+                             const double tensor[3][3],
+                             const double r[3][3]);
 static void tensor3_rotation(double *rot_tensor,
                              const double *tensor,
                              const double *rot_cartesian);
@@ -110,9 +109,9 @@ void fc3_distribute_fc3(double *fc3,
 }
 
 void fc3_rotate_delta_fc2(double (*fc3)[3][3][3],
-                          PHPYCONST double (*delta_fc2s)[3][3],
+                          const double (*delta_fc2s)[3][3],
                           const double *inv_U,
-                          PHPYCONST double (*site_sym_cart)[3][3],
+                          const double (*site_sym_cart)[3][3],
                           const long *rot_map_syms,
                           const long num_atom,
                           const long num_site_sym,
@@ -225,8 +224,8 @@ void fc3_transpose_compact_fc3(double * fc3,
 static void rotate_delta_fc2s(double (*rot_delta_fc2s)[3][3],
                               const long i_atom,
                               const long j_atom,
-                              PHPYCONST double (*delta_fc2s)[3][3],
-                              PHPYCONST double (*site_sym_cart)[3][3],
+                              const double (*delta_fc2s)[3][3],
+                              const double (*site_sym_cart)[3][3],
                               const long *rot_map_sym,
                               const long num_atom,
                               const long num_site_sym,
@@ -246,8 +245,8 @@ static void rotate_delta_fc2s(double (*rot_delta_fc2s)[3][3],
 }
 
 static void tensor2_rotation(double rot_tensor[3][3],
-                             PHPYCONST double tensor[3][3],
-                             PHPYCONST double r[3][3])
+                             const double tensor[3][3],
+                             const double r[3][3])
 {
   long i, j, k, l;
 
