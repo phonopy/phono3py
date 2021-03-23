@@ -35,6 +35,7 @@
 import warnings
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
+from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
 from phonopy.units import VaspToTHz
@@ -103,8 +104,10 @@ class Isotope(object):
             self._band_indices = np.array(band_indices, dtype='int_')
 
         if self._bz_grid is None:
+            primitive_symmetry = Symmetry(self._primitive, self._symprec)
             self._bz_grid = BZGrid(self._mesh,
                                    lattice=self._primitive.cell,
+                                   primitive_symmetry=primitive_symmetry,
                                    is_dense_gp_map=is_dense_gp_map)
 
     def set_grid_point(self, grid_point):

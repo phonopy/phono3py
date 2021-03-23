@@ -173,13 +173,14 @@ def _get_ir_grid_points(primitive,
                         is_kappa_star=True,
                         is_dense_gp_map=False,
                         symprec=1e-5):
-    symmetry = Symmetry(primitive, symprec)
-    point_group = symmetry.pointgroup_operations
+    primitive_symmetry = Symmetry(primitive, symprec)
+    point_group = primitive_symmetry.pointgroup_operations
 
     ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(
         mesh, point_group)
     bz_grid = BZGrid(mesh,
                      lattice=primitive.cell,
+                     primitive_symmetry=primitive_symmetry,
                      is_dense_gp_map=is_dense_gp_map)
     ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype='int_')
 

@@ -145,3 +145,29 @@ def test_BZGrid_bzg2grg(si_pbesol_111):
     for i in range(len(bzgrid2.addresses)):
         grg.append(get_grid_point_from_address(bzgrid2.addresses[i], mesh))
     np.testing.assert_equal(grg, bzgrid2.bzg2grg)
+
+
+def test_BZGrid_SNF(si_pbesol_111):
+    """SNF in BZGrid"""
+    from phonopy.structure.atoms import PhonopyAtoms
+    from phonopy.interface.vasp import get_vasp_structure_lines
+
+    lat = si_pbesol_111.primitive.cell
+    mesh = 10
+    bzgrid1 = BZGrid(mesh,
+                     lattice=lat,
+                     primitive_symmetry=si_pbesol_111.primitive_symmetry,
+                     is_dense_gp_map=False)
+    A = bzgrid1.grid_matrix
+    D_diag = bzgrid1.D_diag
+    P = bzgrid1.P
+    Q = bzgrid1.Q
+    np.testing.assert_equal(np.dot(P, np.dot(A, Q)), np.diag(D_diag))
+
+    print(D_diag)
+    grg2bzg = bzgrid1.grg2bzg
+    qpoints = np.dot(bzgrid1.addresses[grg2bzg], bzgrid1.QDinv.T)
+    cell = PhonopyAtoms(cell=np.linalg.inv(lat).T,
+                        scaled_positions=qpoints,
+                        numbers=[1,] * len(qpoints))
+    print("\n".join(get_vasp_structure_lines(cell)))

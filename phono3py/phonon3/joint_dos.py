@@ -112,6 +112,7 @@ class JointDos(object):
 
         self._bz_grid = BZGrid(self._mesh,
                                lattice=self._primitive.cell,
+                               primitive_symmetry=self._symmetry,
                                is_dense_gp_map=self._is_dense_gp_map)
 
     def run(self):

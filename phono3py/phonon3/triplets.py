@@ -33,6 +33,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
+from phonopy.structure.cells import (
+    get_primitive_matrix_by_centring, estimate_supercell_matrix)
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.structure.grid_points import extract_ir_grid_points, length2mesh
 from phono3py.phonon.func import gaussian
@@ -89,6 +91,7 @@ class BZGrid(object):
                  mesh,
                  reciprocal_lattice=None,
                  lattice=None,
+                 primitive_symmetry=None,
                  is_shift=None,
                  is_dense_gp_map=False):
         """
@@ -102,12 +105,25 @@ class BZGrid(object):
         lattice : array_like
             Direct primitive basis vectors given as row vectors
             shape=(3, 3), dtype='double', order='C'
+        primitive_symmetry : Symmetry
+            Phonopy's Symmetry class instance of the primitive cell
+            corresponding to ``reciprocal_lattice`` or ``lattice``.
         is_shift : array_like or None, optional
             [0, 0, 0] gives Gamma center mesh and value 1 gives half mesh shift
             along the basis vectors. Default is None.
             dtype='int_', shape=(3,)
 
         """
+
+        self._primitive_symmetry = primitive_symmetry
+        self._is_shift = is_shift
+        self._is_dense_gp_map = is_dense_gp_map
+        self._addresses = None
+        self._gp_map = None
+        self._grid_matrix = None
+        self._D_diag = np.ones(3, dtype='int_')
+        self._Q = np.eye(3, dtype='int_', order='C')
+        self._P = np.eye(3, dtype='int_', order='C')
 
         if reciprocal_lattice is not None:
             self._reciprocal_lattice = np.array(
@@ -119,22 +135,14 @@ class BZGrid(object):
                 lattice, dtype='double', order='C')
             self._reciprocal_lattice = np.array(
                 np.linalg.inv(lattice), dtype='double', order='C')
+
         self._set_mesh_numbers(mesh)
-        self._is_shift = None
-        self._is_dense_gp_map = is_dense_gp_map
-
-        self._addresses = None
-        self._gp_map = None
-
-        self._Q = np.eye(3, dtype='int_')
-        self._P = np.eye(3, dtype='int_')
-
         self._set_bz_grid()
 
     @property
     def mesh_numbers(self):
         """Mesh numbers of conventional regular grid"""
-        return self._mesh_numbers
+        return self.D_diag
 
     @property
     def D_diag(self):
@@ -160,7 +168,7 @@ class BZGrid(object):
         and this is the definition of PS in this class.
 
         """
-        return self._mesh_numbers
+        return self._D_diag
 
     @property
     def P(self):
@@ -187,6 +195,11 @@ class BZGrid(object):
             return np.array(np.dot(self.P, self._is_shift), dtype='int_')
 
     @property
+    def grid_matrix(self):
+        """Grid generating matrix to be represented by SNF"""
+        return self._grid_matrix
+
+    @property
     def addresses(self):
         return self._addresses
 
@@ -200,7 +213,7 @@ class BZGrid(object):
 
         Equivalent to
             get_grid_point_from_address(
-                self._addresses[bz_grid_index], self._mesh_numbers)
+                self._addresses[bz_grid_index], self._D_diag)
 
         """
         return self._bzg2grg
@@ -239,20 +252,20 @@ class BZGrid(object):
             len(addresses[0])
         except TypeError:
             return int(self._gpg2bzg[get_grid_point_from_address(
-                addresses, self._mesh_numbers)])
+                addresses, self._D_diag)])
 
-        gps = [get_grid_point_from_address(adrs, self._mesh_numbers)
+        gps = [get_grid_point_from_address(adrs, self._D_diag)
                for adrs in addresses]
         return np.array(self._gpg2bzg[gps], dtype='int_')
 
     def _set_bz_grid(self):
         """Generate BZ grid addresses and grid point mapping table"""
-        gr_grid_addresses = get_grid_address(self._mesh_numbers)
+        gr_grid_addresses = get_grid_address(self._D_diag)
         (self._addresses,
          self._gp_map,
          self._bzg2grg) = _relocate_BZ_grid_address(
              gr_grid_addresses,
-             self._mesh_numbers,
+             self._D_diag,
              self._reciprocal_lattice,  # column vectors
              is_shift=self._is_shift,
              is_dense_gp_map=self._is_dense_gp_map)
@@ -260,17 +273,46 @@ class BZGrid(object):
             self._gpg2bzg = self._gp_map[:-1]
         else:
             self._gpg2bzg = np.arange(
-                np.prod(self._mesh_numbers), dtype='int_')
+                np.prod(self._D_diag), dtype='int_')
 
     def _set_mesh_numbers(self, mesh):
         """Set mesh numbers from array or float value"""
         try:
             num_values = len(mesh)
             if num_values == 3:
-                self._mesh_numbers = np.array(mesh, dtype='int_')
+                self._D_diag = np.array(mesh, dtype='int_')
         except TypeError:
-            mesh_nums = length2mesh(mesh, self._lattice)
-            self._mesh_numbers = np.array(mesh_nums, dtype='int_')
+            length = float(mesh)
+            if self._primitive_symmetry is None:
+                self._D_diag = np.array(
+                    length2mesh(length, self._lattice), dtype='int_')
+            else:
+                self._set_SNF(length)
+
+    def _set_SNF(self, length):
+        sym_dataset = self._primitive_symmetry.dataset
+        tmat = sym_dataset['transformation_matrix']
+        centring = sym_dataset['international'][0]
+        pmat = get_primitive_matrix_by_centring(centring)
+        conv_lat = np.dot(np.linalg.inv(tmat).T, self._lattice)
+        num_cells = np.prod(length2mesh(length, conv_lat))
+        conv_mesh_numbers = estimate_supercell_matrix(
+            sym_dataset,
+            max_num_atoms=num_cells * len(sym_dataset['std_types']))
+        inv_pmat = np.linalg.inv(pmat)
+        inv_pmat_int = np.rint(inv_pmat).astype(int)
+        assert (np.abs(inv_pmat - inv_pmat_int) < 1e-5).all()
+        # transpose in reciprocal space
+        self._grid_matrix = np.array(
+            (inv_pmat_int * conv_mesh_numbers).T, dtype='int_', order='C')
+
+        import phono3py._phono3py as phono3c
+        if not phono3c.snf3x3(self._D_diag,
+                              self._P,
+                              self._Q,
+                              self._grid_matrix):
+            msg = "SNF3x3 failed."
+            raise RuntimeError(msg)
 
 
 def get_triplets_at_q(grid_point,
