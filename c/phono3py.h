@@ -296,6 +296,15 @@ long ph3py_transform_rotations(long (*transformed_rots)[3][3],
                                const long num_rot,
                                const long D_diag[3],
                                const long Q[3][3]);
+long ph3py_get_snf3x3(long D_diag[3],
+                      long P[3][3],
+                      long Q[3][3],
+                      const long A[3][3]);
+long ph3py_transform_rotations(long (*transformed_rots)[3][3],
+                               const long (*rotations)[3][3],
+                               const long num_rot,
+                               const long D_diag[3],
+                               const long Q[3][3]);
 long ph3py_get_ir_reciprocal_mesh(long *ir_mapping_table,
                                   const long D_diag[3],
                                   const long PS[3],
