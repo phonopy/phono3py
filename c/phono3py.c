@@ -753,7 +753,7 @@ long ph3py_get_ir_reciprocal_mesh(long *ir_mapping_table,
                                   const long D_diag[3],
                                   const long PS[3],
                                   const long is_time_reversal,
-                                  const long (*rotations)[3][3],
+                                  const long (*rec_rotations)[3][3],
                                   const long num_rot)
 {
   long num_ir;
@@ -762,7 +762,7 @@ long ph3py_get_ir_reciprocal_mesh(long *ir_mapping_table,
                                       D_diag,
                                       PS,
                                       is_time_reversal,
-                                      rotations,
+                                      rec_rotations,
                                       num_rot);
   return num_ir;
 }

@@ -364,9 +364,7 @@ class Conductivity(object):
 
     def _get_ir_grid_points(self):
         """Find irreducible grid points"""
-        ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(
-             self._mesh,
-             self._symmetry.pointgroup_operations)
+        ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(self._bz_grid)
         ir_grid_points = np.array(
             self._bz_grid.grg2bzg[ir_grid_points], dtype='int_')
 

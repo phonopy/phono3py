@@ -506,15 +506,13 @@ def get_grid_point_from_address(address, mesh):
     return gps
 
 
-def get_ir_grid_points(mesh, rotations, mesh_shifts=None):
+def get_ir_grid_points(bz_grid):
     """Returns ir-grid-points in generalized regular grid."""
 
-    if mesh_shifts is None:
-        mesh_shifts = [False, False, False]
     grid_mapping_table = _get_ir_reciprocal_mesh(
-        mesh,
-        rotations,
-        is_shift=np.where(mesh_shifts, 1, 0))
+        bz_grid.D_diag,
+        bz_grid.rotations,
+        is_shift=bz_grid.PS)
     (ir_grid_points,
      ir_grid_weights) = extract_ir_grid_points(grid_mapping_table)
 
@@ -659,7 +657,7 @@ def get_tetrahedra_vertices(relative_address,
 
 
 def _get_ir_reciprocal_mesh(mesh,
-                            rotations,
+                            rec_rotations,
                             is_shift=None,
                             is_time_reversal=True):
     """Irreducible k-points are searched under a fixed q-point.
@@ -669,9 +667,9 @@ def _get_ir_reciprocal_mesh(mesh,
     mesh : array_like
         Uniform sampling mesh numbers.
         dtype='int_', shape=(3,)
-    rotations : array_like
-        Rotation matrices with respect to real space basis vectors.
-        dtype='int_', shape=(rotations, 3)
+    rec_rotations : array_like
+        Rotation matrices with respect to reciprocal basis vectors.
+        dtype='int_', shape=(rec_rotations, 3)
     is_shift : array_like
         [0, 0, 0] gives Gamma center mesh and value 1 gives  half mesh shift.
         dtype='int_', shape=(3,)
@@ -698,7 +696,7 @@ def _get_ir_reciprocal_mesh(mesh,
             np.array(mesh, dtype='int_'),
             np.array(is_shift, dtype='int_'),
             is_time_reversal * 1,
-            np.array(rotations, dtype='int_', order='C')) > 0:
+            np.array(rec_rotations, dtype='int_', order='C')) > 0:
         return mapping_table
     else:
         raise RuntimeError(
