@@ -462,7 +462,7 @@ class Interaction(object):
                             self._phonon_done,
                             grid_points,
                             self._bz_grid.addresses,
-                            self.mesh_numbers,
+                            self._bz_grid.QDinv,
                             self._frequency_factor_to_THz,
                             self._nac_q_direction,
                             self._lapack_zheev_uplo)
@@ -495,7 +495,7 @@ class Interaction(object):
                              self._frequencies,
                              self._eigenvectors,
                              self._bz_grid.addresses,
-                             self.mesh_numbers,
+                             self._bz_grid.QDinv,
                              self._dm,
                              self._frequency_factor_to_THz,
                              self._lapack_zheev_uplo)

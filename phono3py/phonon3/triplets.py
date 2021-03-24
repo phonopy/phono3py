@@ -958,7 +958,8 @@ def _set_triplets_integration_weights_c(g,
         g,
         g_zero,
         frequency_points,  # f0
-        thm.get_tetrahedra(),
+        np.array(np.dot(thm.get_tetrahedra(), pp.bz_grid.P.T),
+                 dtype='int_', order='C'),
         mesh,
         triplets_at_q,
         frequencies,  # f1
@@ -975,7 +976,8 @@ def _set_triplets_integration_weights_py(g, pp, frequency_points):
     thm = TetrahedronMethod(reciprocal_lattice, mesh=mesh)
     triplets_at_q = pp.get_triplets_at_q()[0]
     tetrahedra_vertices = get_tetrahedra_vertices(
-        thm.get_tetrahedra(),
+        np.array(np.dot(thm.get_tetrahedra(), pp.bz_grid.P.T),
+                 dtype='int_', order='C'),
         mesh,
         triplets_at_q,
         pp.bz_grid)

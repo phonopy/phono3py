@@ -223,15 +223,15 @@ class Isotope(object):
                                      self._frequencies,
                                      self._eigenvectors,
                                      self._band_indices,
-                                     np.prod(self._mesh),
+                                     np.prod(self._bz_grid.D_diag),
                                      self._sigma,
                                      self._cutoff_frequency)
 
-        self._gamma = gamma / np.prod(self._mesh)
+        self._gamma = gamma / np.prod(self._bz_grid.D_diag)
 
     def _set_integration_weights(self):
         primitive_lattice = np.linalg.inv(self._primitive.cell)
-        thm = TetrahedronMethod(primitive_lattice, mesh=self._mesh)
+        thm = TetrahedronMethod(primitive_lattice, mesh=self._bz_grid.D_diag)
         num_grid_points = len(self._grid_points)
         num_band = len(self._primitive) * 3
         self._integration_weights = np.zeros(
@@ -248,7 +248,7 @@ class Isotope(object):
             neighboring_grid_points,
             self._grid_points,
             unique_vertices,
-            self._mesh,
+            self._bz_grid.D_diag,
             self._bz_grid.addresses,
             self._bz_grid.gp_map,
             self._bz_grid.is_dense_gp_map * 1 + 1)
@@ -261,8 +261,9 @@ class Isotope(object):
         phono3c.integration_weights(
             self._integration_weights,
             freq_points,
-            thm.get_tetrahedra(),
-            self._mesh,
+            np.array(np.dot(thm.get_tetrahedra(), self._bz_grid.P.T),
+                     dtype='int_', order='C'),
+            self._bz_grid.D_diag,
             self._grid_points,
             self._frequencies,
             self._bz_grid.addresses,
@@ -273,12 +274,14 @@ class Isotope(object):
         for i, gp in enumerate(self._grid_points):
             tfreqs = get_tetrahedra_frequencies(
                 gp,
-                self._mesh,
+                self._bz_grid.D_diag,
                 self._bz_grid.addresses,
-                thm.get_tetrahedra(),
+                np.array(np.dot(thm.get_tetrahedra(), self._bz_grid.P.T),
+                         dtype='int_', order='C'),
                 self._grid_points,
                 self._frequencies,
-                grid_order=[1, self._mesh[0], self._mesh[0] * self._mesh[1]],
+                grid_order=[1, self._bz_grid.D_diag[0],
+                            self._bz_grid.D_diag[0] * self._bz_grid.D_diag[1]],
                 lang='Py')
 
             for bi, frequencies in enumerate(tfreqs):
@@ -313,7 +316,8 @@ class Isotope(object):
                             i, bi, j]
                     else:
                         ti_sum += ti_sum_band * gaussian(f0 - f, self._sigma)
-            t_inv.append(np.pi / 2 / np.prod(self._mesh) * f0 ** 2 * ti_sum)
+            t_inv.append(np.pi / 2
+                         / np.prod(self._bz_grid.D_diag) * f0 ** 2 * ti_sum)
 
         self._gamma = np.array(t_inv, dtype='double') / 2
 
@@ -324,7 +328,7 @@ class Isotope(object):
                             self._phonon_done,
                             grid_points,
                             self._bz_grid.addresses,
-                            self._mesh,
+                            self._bz_grid.QDinv,
                             self._frequency_factor_to_THz,
                             self._nac_q_direction,
                             self._lapack_zheev_uplo)
@@ -335,7 +339,7 @@ class Isotope(object):
                              self._frequencies,
                              self._eigenvectors,
                              self._bz_grid.addresses,
-                             self._mesh,
+                             self._bz_grid.QDinv,
                              self._dm,
                              self._frequency_factor_to_THz,
                              self._lapack_zheev_uplo)

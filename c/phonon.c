@@ -48,7 +48,7 @@ static void get_undone_phonons(double *frequencies,
                                const long *undone_grid_points,
                                const long num_undone_grid_points,
                                const long (*grid_address)[3],
-                               const long mesh[3],
+                               const double QDinv[3][3],
                                const double *fc2,
                                const double(*svecs_fc2)[27][3],
                                const long *multi_fc2,
@@ -69,7 +69,7 @@ static void get_gonze_undone_phonons(double *frequencies,
                                      const long *undone_grid_points,
                                      const long num_undone_grid_points,
                                      const long (*grid_address)[3],
-                                     const long mesh[3],
+                                     const double QDinv[3][3],
                                      const double *fc2,
                                      const double(*svecs_fc2)[27][3],
                                      const long *multi_fc2,
@@ -167,7 +167,7 @@ phn_get_phonons_at_gridpoints(double *frequencies,
                               const long *grid_points,
                               const long num_grid_points,
                               const long (*grid_address)[3],
-                              const long mesh[3],
+                              const double QDinv[3][3],
                               const double *fc2,
                               const double(*svecs_fc2)[27][3],
                               const long *multi_fc2,
@@ -198,7 +198,7 @@ phn_get_phonons_at_gridpoints(double *frequencies,
                      undone,
                      num_undone,
                      grid_address,
-                     mesh,
+                     QDinv,
                      fc2,
                      svecs_fc2,
                      multi_fc2,
@@ -227,7 +227,7 @@ phn_get_gonze_phonons_at_gridpoints(double *frequencies,
                                     const long *grid_points,
                                     const long num_grid_points,
                                     const long (*grid_address)[3],
-                                    const long mesh[3],
+                                    const double QDinv[3][3],
                                     const double *fc2,
                                     const double(*svecs_fc2)[27][3],
                                     const long *multi_fc2,
@@ -263,7 +263,7 @@ phn_get_gonze_phonons_at_gridpoints(double *frequencies,
                            undone,
                            num_undone,
                            grid_address,
-                           mesh,
+                           QDinv,
                            fc2,
                            svecs_fc2,
                            multi_fc2,
@@ -314,7 +314,7 @@ static void get_undone_phonons(double *frequencies,
                                const long *undone_grid_points,
                                const long num_undone_grid_points,
                                const long (*grid_address)[3],
-                               const long mesh[3],
+                               const double QDinv[3][3],
                                const double *fc2,
                                const double(*svecs_fc2)[27][3],
                                const long *multi_fc2,
@@ -342,7 +342,9 @@ static void get_undone_phonons(double *frequencies,
   for (i = 0; i < num_undone_grid_points; i++) {
     gp = undone_grid_points[i];
     for (j = 0; j < 3; j++) {
-      q[j] = ((double)grid_address[gp][j]) / mesh[j];
+      q[j] = QDinv[j][0] * grid_address[gp][0]
+        + QDinv[j][1] * grid_address[gp][1]
+        + QDinv[j][2] * grid_address[gp][2];
     }
 
     is_nac = needs_nac(born, grid_address, gp, q_direction);
@@ -392,7 +394,7 @@ static void get_gonze_undone_phonons(double *frequencies,
                                      const long *undone_grid_points,
                                      const long num_undone_grid_points,
                                      const long (*grid_address)[3],
-                                     const long mesh[3],
+                                     const double QDinv[3][3],
                                      const double *fc2,
                                      const double(*svecs_fc2)[27][3],
                                      const long *multi_fc2,
@@ -425,7 +427,9 @@ static void get_gonze_undone_phonons(double *frequencies,
   for (i = 0; i < num_undone_grid_points; i++) {
     gp = undone_grid_points[i];
     for (j = 0; j < 3; j++) {
-      q[j] = ((double)grid_address[gp][j]) / mesh[j];
+      q[j] = QDinv[j][0] * grid_address[gp][0]
+        + QDinv[j][1] * grid_address[gp][1]
+        + QDinv[j][2] * grid_address[gp][2];
     }
     is_nac = needs_nac(born, grid_address, gp, q_direction);
     get_gonze_phonons(eigenvectors + num_band * num_band * gp,

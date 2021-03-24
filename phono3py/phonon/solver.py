@@ -41,7 +41,7 @@ def run_phonon_solver_c(dm,
                         phonon_done,
                         grid_points,
                         grid_address,
-                        mesh,
+                        QDinv,
                         frequency_conversion_factor,
                         nac_q_direction,  # in reduced coordinates
                         lapack_zheev_uplo):
@@ -84,7 +84,7 @@ def run_phonon_solver_c(dm,
         phonon_done,
         grid_points,
         grid_address,
-        np.array(mesh, dtype='int_'),
+        np.array(QDinv, dtype='double', order='C'),
         fc,
         svecs,
         multiplicity,
@@ -109,14 +109,14 @@ def run_phonon_solver_py(grid_point,
                          frequencies,
                          eigenvectors,
                          grid_address,
-                         mesh,
+                         QDinv,
                          dynamical_matrix,
                          frequency_conversion_factor,
                          lapack_zheev_uplo):
     gp = grid_point
     if phonon_done[gp] == 0:
         phonon_done[gp] = 1
-        q = grid_address[gp].astype('double') / mesh
+        q = np.dot(grid_address[gp], QDinv.T)
         dynamical_matrix.run(q)
         dm = dynamical_matrix.dynamical_matrix
         eigvals, eigvecs = np.linalg.eigh(dm, UPLO=lapack_zheev_uplo)

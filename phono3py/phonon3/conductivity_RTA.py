@@ -809,7 +809,8 @@ class Conductivity_RTA(Conductivity):
             if sigma is None:
                 phono3c.pp_collision(
                     collisions,
-                    thm.get_tetrahedra(),
+                    np.array(np.dot(thm.get_tetrahedra(), self._bz_grid.P.T),
+                             dtype='int_', order='C'),
                     self._frequencies,
                     self._eigenvectors,
                     triplets_at_q,

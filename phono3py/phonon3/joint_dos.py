@@ -211,7 +211,7 @@ class JointDos(object):
                             self._phonon_done,
                             grid_points,
                             self._bz_grid.addresses,
-                            self._bz_grid.D_diag,
+                            self._bz_grid.QDinv,
                             self._frequency_factor_to_THz,
                             self._nac_q_direction,
                             self._lapack_zheev_uplo)
@@ -280,7 +280,8 @@ class JointDos(object):
         thm = TetrahedronMethod(self._reciprocal_lattice,
                                 mesh=self._bz_grid.D_diag)
         self._vertices = get_tetrahedra_vertices(
-            thm.get_tetrahedra(),
+            np.array(np.dot(thm.get_tetrahedra(), self._bz_grid.P.T),
+                     dtype='int_', order='C'),
             self._bz_grid.D_diag,
             self._triplets_at_q,
             self._bz_grid)
