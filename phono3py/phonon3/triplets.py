@@ -139,7 +139,8 @@ class BZGrid(object):
 
         self._set_mesh_numbers(mesh)
         self._set_bz_grid()
-        self._set_rotations()
+        if self._primitive_symmetry is not None:
+            self._set_rotations()
 
     @property
     def mesh_numbers(self):
@@ -289,8 +290,8 @@ class BZGrid(object):
                 self._D_diag = np.array(mesh, dtype='int_')
         except TypeError:
             length = float(mesh)
-            if (self._primitive_symmetry.dataset is None or
-                self._primitive_symmetry is None):
+            if (self._primitive_symmetry is None or
+                self._primitive_symmetry.dataset is None):
                 self._D_diag = np.array(
                     length2mesh(length, self._lattice), dtype='int_')
             else:
@@ -817,7 +818,7 @@ def _get_triplets_reciprocal_mesh_at_q(fixed_grid_number,
     rotations : array_like
         Rotation matrices in real space. Note that those in reciprocal space
         mean these matrices transposed (local terminology).
-        dtype='intc'
+        dtype='int_'
         shape=(n_rot, 3, 3)
     is_time_reversal : bool
         Inversion symemtry is added if it doesn't exist.

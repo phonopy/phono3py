@@ -149,25 +149,81 @@ def test_BZGrid_bzg2grg(si_pbesol_111):
 
 def test_BZGrid_SNF(si_pbesol_111):
     """SNF in BZGrid"""
-    from phonopy.structure.atoms import PhonopyAtoms
-    from phonopy.interface.vasp import get_vasp_structure_lines
-
     lat = si_pbesol_111.primitive.cell
     mesh = 10
     bzgrid1 = BZGrid(mesh,
                      lattice=lat,
                      primitive_symmetry=si_pbesol_111.primitive_symmetry,
                      is_dense_gp_map=False)
-    A = bzgrid1.grid_matrix
-    D_diag = bzgrid1.D_diag
-    P = bzgrid1.P
-    Q = bzgrid1.Q
+    _test_BZGrid_SNF(bzgrid1)
+
+    bzgrid2 = BZGrid(mesh,
+                     lattice=lat,
+                     primitive_symmetry=si_pbesol_111.primitive_symmetry,
+                     is_dense_gp_map=True)
+    _test_BZGrid_SNF(bzgrid2)
+
+
+def _test_BZGrid_SNF(bzgrid):
+    # from phonopy.structure.atoms import PhonopyAtoms
+    # from phonopy.interface.vasp import get_vasp_structure_lines
+
+    A = bzgrid.grid_matrix
+    D_diag = bzgrid.D_diag
+    P = bzgrid.P
+    Q = bzgrid.Q
     np.testing.assert_equal(np.dot(P, np.dot(A, Q)), np.diag(D_diag))
 
-    print(D_diag)
-    grg2bzg = bzgrid1.grg2bzg
-    qpoints = np.dot(bzgrid1.addresses[grg2bzg], bzgrid1.QDinv.T)
-    cell = PhonopyAtoms(cell=np.linalg.inv(lat).T,
-                        scaled_positions=qpoints,
-                        numbers=[1,] * len(qpoints))
-    print("\n".join(get_vasp_structure_lines(cell)))
+    # print(D_diag)
+    # grg2bzg = bzgrid.grg2bzg
+    # qpoints = np.dot(bzgrid.addresses[grg2bzg], bzgrid.QDinv.T)
+    # cell = PhonopyAtoms(cell=np.linalg.inv(lat).T,
+    #                     scaled_positions=qpoints,
+    #                     numbers=[1,] * len(qpoints))
+    # print("\n".join(get_vasp_structure_lines(cell)))
+
+    gr_addresses = bzgrid.addresses[bzgrid.grg2bzg]
+    # print(D_diag)
+    # print(len(gr_addresses))
+    # for line in gr_addresses.reshape(-1, 12):
+    #     print("".join(["%d, " % i for i in line]))
+
+    ref = [0, 0, 0, -1, 0, 0, 0, 1, 0, 1, 1, 0,
+           0, -2, 0, -1, -2, 0, 0, -1, 0, -1, -1, 0,
+           0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1,
+           0, 2, 1, 1, 2, 1, 0, -1, 1, -1, -1, 1,
+           0, 0, -2, -1, 0, -2, 0, 1, 2, 1, 1, 2,
+           0, -2, -2, -1, -2, -2, 0, -1, -2, -1, -1, -2,
+           0, 0, -1, -1, 0, -1, 0, 1, -1, -1, 1, -1,
+           0, -2, -1, -1, -2, -1, 0, -1, -1, -1, -1, -1]
+
+    assert (((np.reshape(ref, (-1, 3)) - gr_addresses)
+            % bzgrid.D_diag).ravel() == 0).all()
+
+    ref_rots = [
+        1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 2, 1, -1, 2, 2, -1,
+        1, 0, 0, 2, -1, 0, 4, 0, -1, 1, 0, 0, 0, -1, 1, 2, -2, 1,
+        -1, 0, 0, 0, -1, 0, -2, -2, 1, -1, 0, 0, 0, 1, -1, 0, 0, -1,
+        -1, 0, 0, -2, 1, 0, -2, 2, -1, -1, 0, 0, -2, -1, 1, -4, 0, 1,
+        -1, -1, 1, 0, -1, 1, -2, -1, 2, -1, -1, 1, 0, -2, 1, 0, -3, 2,
+        -1, -1, 1, -2, -1, 1, -2, -3, 2, -1, -1, 1, -2, 0, 1, -4, -1, 2,
+        1, 1, -1, 0, 1, -1, 0, 3, -2, 1, 1, -1, 2, 0, -1, 2, 1, -2,
+        1, 1, -1, 2, 1, -1, 4, 1, -2, 1, 1, -1, 0, 2, -1, 2, 3, -2,
+        -1, 1, 0, -2, 0, 1, -2, 1, 1, -1, 1, 0, -2, 1, 0, -4, 1, 1,
+        -1, 1, 0, 0, 2, -1, -2, 3, -1, -1, 1, 0, 0, 1, 0, 0, 3, -1,
+        1, -1, 0, 2, 0, -1, 4, -1, -1, 1, -1, 0, 0, -1, 0, 2, -1, -1,
+        1, -1, 0, 0, -2, 1, 0, -3, 1, 1, -1, 0, 2, -1, 0, 2, -3, 1,
+        -1, 0, 0, 0, -1, 0, 0, 0, -1, -1, 0, 0, -2, -1, 1, -2, -2, 1,
+        -1, 0, 0, -2, 1, 0, -4, 0, 1, -1, 0, 0, 0, 1, -1, -2, 2, -1,
+        1, 0, 0, 0, 1, 0, 2, 2, -1, 1, 0, 0, 0, -1, 1, 0, 0, 1,
+        1, 0, 0, 2, -1, 0, 2, -2, 1, 1, 0, 0, 2, 1, -1, 4, 0, -1,
+        1, 1, -1, 0, 1, -1, 2, 1, -2, 1, 1, -1, 0, 2, -1, 0, 3, -2,
+        1, 1, -1, 2, 1, -1, 2, 3, -2, 1, 1, -1, 2, 0, -1, 4, 1, -2,
+        -1, -1, 1, 0, -1, 1, 0, -3, 2, -1, -1, 1, -2, 0, 1, -2, -1, 2,
+        -1, -1, 1, -2, -1, 1, -4, -1, 2, -1, -1, 1, 0, -2, 1, -2, -3, 2,
+        1, -1, 0, 2, 0, -1, 2, -1, -1, 1, -1, 0, 2, -1, 0, 4, -1, -1,
+        1, -1, 0, 0, -2, 1, 2, -3, 1, 1, -1, 0, 0, -1, 0, 0, -3, 1,
+        -1, 1, 0, -2, 0, 1, -4, 1, 1, -1, 1, 0, 0, 1, 0, -2, 1, 1,
+        -1, 1, 0, 0, 2, -1, 0, 3, -1, -1, 1, 0, -2, 1, 0, -2, 3, -1]
+
+    np.testing.assert_equal(ref_rots, bzgrid.rotations.ravel())
