@@ -34,11 +34,9 @@ def test_get_triplets_at_q_type1(si_pbesol_111):
 
     bz_grid = BZGrid(mesh,
                      lattice=pcell.cell,
+                     primitive_symmetry=psym,
                      is_dense_gp_map=False)
-    triplets, weights = get_triplets_at_q(
-        grid_point,
-        psym.pointgroup_operations,
-        bz_grid)[:2]
+    triplets, weights = get_triplets_at_q(grid_point, bz_grid)[:2]
 
     triplets_ref = [1, 0, 3, 1, 1, 2, 1, 4, 15, 1,
                     5, 14, 1, 6, 13, 1, 7, 12, 1, 8,
@@ -59,11 +57,9 @@ def test_get_triplets_at_q_type2(si_pbesol_111):
 
     bz_grid = BZGrid(mesh,
                      lattice=pcell.cell,
+                     primitive_symmetry=psym,
                      is_dense_gp_map=True)
-    triplets, weights = get_triplets_at_q(
-        grid_point,
-        psym.pointgroup_operations,
-        bz_grid)[:2]
+    triplets, weights = get_triplets_at_q(grid_point, bz_grid)[:2]
 
     triplets_ref = [1, 0, 4, 1, 1, 2, 1, 5, 18, 1, 6, 17, 1, 7, 16, 1,
                     8, 15, 1, 10, 14, 1, 11, 12, 1, 27, 84, 1, 29, 82]

@@ -247,7 +247,7 @@ long ph3py_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                              const long mesh[3],
                                              const long is_time_reversal,
                                              const long num_rot,
-                                             const long (*rotations)[3][3],
+                                             const long (*rec_rotations)[3][3],
                                              const long swappable);
 long ph3py_get_BZ_triplets_at_q(long (*triplets)[3],
                                 const long grid_point,

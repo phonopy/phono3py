@@ -35,13 +35,11 @@
 import warnings
 import sys
 import numpy as np
-from phonopy.structure.symmetry import Symmetry
 from phonopy.units import VaspToTHz
 from phono3py.phonon3.triplets import (get_triplets_at_q,
                                        get_nosym_triplets_at_q,
                                        get_tetrahedra_vertices,
-                                       get_triplets_integration_weights,
-                                       BZGrid)
+                                       get_triplets_integration_weights)
 from phono3py.phonon.solver import run_phonon_solver_c
 from phono3py.phonon.func import bose_einstein
 from phono3py.phonon3.imag_self_energy import get_frequency_points
@@ -51,9 +49,9 @@ from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
 class JointDos(object):
     def __init__(self,
-                 mesh,
                  primitive,
                  supercell,
+                 bz_grid,
                  fc2,
                  nac_params=None,
                  nac_q_direction=None,
@@ -72,9 +70,9 @@ class JointDos(object):
                  lapack_zheev_uplo='L'):
 
         self._grid_point = None
-        self._mesh = np.array(mesh, dtype='int_')
         self._primitive = primitive
         self._supercell = supercell
+        self._bz_grid = bz_grid
         self._fc2 = fc2
         self._nac_params = nac_params
         self.nac_q_direction = nac_q_direction
@@ -100,7 +98,6 @@ class JointDos(object):
         self._num_band = len(self._primitive) * 3
         self._reciprocal_lattice = np.linalg.inv(self._primitive.cell)
         self._init_dynamical_matrix()
-        self._symmetry = Symmetry(primitive, symprec)
 
         self._tetrahedron_method = None
         self._phonon_done = None
@@ -109,11 +106,6 @@ class JointDos(object):
 
         self._joint_dos = None
         self._frequency_points = None
-
-        self._bz_grid = BZGrid(self._mesh,
-                               lattice=self._primitive.cell,
-                               primitive_symmetry=self._symmetry,
-                               is_dense_gp_map=self._is_dense_gp_map)
 
     def run(self):
         self.run_phonon_solver(
@@ -162,7 +154,7 @@ class JointDos(object):
 
     @property
     def mesh_numbers(self):
-        return self._mesh
+        return self._bz_grid.D_diag
 
     def get_mesh_numbers(self):
         warnings.warn("Use attribute, mesh_numbers", DeprecationWarning)
@@ -219,7 +211,7 @@ class JointDos(object):
                             self._phonon_done,
                             grid_points,
                             self._bz_grid.addresses,
-                            self._mesh,
+                            self._bz_grid.D_diag,
                             self._frequency_factor_to_THz,
                             self._nac_q_direction,
                             self._lapack_zheev_uplo)
@@ -282,13 +274,14 @@ class JointDos(object):
                                                 g[1, :, 0, k, l],
                                                 self._weights_at_q)
 
-        self._joint_dos = jdos / np.prod(self._mesh)
+        self._joint_dos = jdos / np.prod(self._bz_grid.D_diag)
 
     def _run_py_tetrahedron_method(self):
-        thm = TetrahedronMethod(self._reciprocal_lattice, mesh=self._mesh)
+        thm = TetrahedronMethod(self._reciprocal_lattice,
+                                mesh=self._bz_grid.D_diag)
         self._vertices = get_tetrahedra_vertices(
             thm.get_tetrahedra(),
-            self._mesh,
+            self._bz_grid.D_diag,
             self._triplets_at_q,
             self._bz_grid)
         self.run_phonon_solver(self._vertices.ravel())
@@ -318,7 +311,7 @@ class JointDos(object):
                 iw = thm.get_integration_weight()
                 jdos[:, 0] += iw * w
 
-        self._joint_dos = jdos / np.prod(self._mesh)
+        self._joint_dos = jdos / np.prod(self._bz_grid.D_diag)
 
     def _init_dynamical_matrix(self):
         self._dm = get_dynamical_matrix(
@@ -344,10 +337,7 @@ class JointDos(object):
             (self._triplets_at_q,
              self._weights_at_q,
              map_triplets,
-             map_q) = get_triplets_at_q(
-                 self._grid_point,
-                 self._symmetry.pointgroup_operations,
-                 self._bz_grid)
+             map_q) = get_triplets_at_q(self._grid_point, self._bz_grid)
 
     def _allocate_phonons(self):
         num_grid = len(self._bz_grid.addresses)

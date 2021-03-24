@@ -74,27 +74,27 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
                               const long grid_point,
                               const long D_diag[3],
                               const long is_time_reversal,
-                              const long (*rotations)[3][3],
+                              const long (*rec_rotations_in)[3][3],
                               const long num_rot,
                               const long swappable)
 {
   long i, num_ir;
-  RotMats *rot_real, *rot_reciprocal;
+  RotMats *rec_rotations, *rotations;
 
-  rot_real = bzg_alloc_RotMats(num_rot);
+  rec_rotations = bzg_alloc_RotMats(num_rot);
   for (i = 0; i < num_rot; i++) {
-    lagmat_copy_matrix_l3(rot_real->mat[i], rotations[i]);
+    lagmat_copy_matrix_l3(rec_rotations->mat[i], rec_rotations_in[i]);
   }
-  rot_reciprocal = bzg_get_point_group_reciprocal(rot_real, is_time_reversal);
-  bzg_free_RotMats(rot_real);
+  rotations = bzg_get_point_group_reciprocal(rec_rotations, is_time_reversal);
+  bzg_free_RotMats(rec_rotations);
 
   num_ir = get_ir_triplets_at_q(map_triplets,
                                 map_q,
                                 grid_point,
                                 D_diag,
-                                rot_reciprocal,
+                                rotations,
                                 swappable);
-  bzg_free_RotMats(rot_reciprocal);
+  bzg_free_RotMats(rotations);
 
   return num_ir;
 }

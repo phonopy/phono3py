@@ -215,7 +215,7 @@ long bzg_get_ir_grid_map(long ir_mapping_table[],
 RotMats *bzg_get_point_group_reciprocal(const RotMats * rotations,
                                         const long is_time_reversal)
 {
-  return get_point_group_reciprocal(rotations, is_time_reversal, 1);
+  return get_point_group_reciprocal(rotations, is_time_reversal, 0);
 }
 
 long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,

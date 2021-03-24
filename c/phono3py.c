@@ -572,7 +572,7 @@ long ph3py_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                              const long D_diag[3],
                                              const long is_time_reversal,
                                              const long num_rot,
-                                             const long (*rotations)[3][3],
+                                             const long (*rec_rotations)[3][3],
                                              const long swappable)
 {
   return tpl_get_triplets_reciprocal_mesh_at_q(map_triplets,
@@ -581,7 +581,7 @@ long ph3py_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                                D_diag,
                                                is_time_reversal,
                                                num_rot,
-                                               rotations,
+                                               rec_rotations,
                                                swappable);
 }
 

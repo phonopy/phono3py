@@ -341,20 +341,20 @@ class BZGrid(object):
 
 
 def get_triplets_at_q(grid_point,
-                      point_group,
                       bz_grid,
+                      reciprocal_rotations=None,
                       is_time_reversal=True,
                       swappable=True):
     """Parameters
     ----------
     grid_point : int
         A grid point in the grid type chosen by is_dense_gp_map.
-    point_group : array_like
-        Rotation matrices in real space. Note that those in reciprocal space
-        mean these matrices transposed (local terminology).
-        shape=(n_rot, 3, 3), dtype='intc', order='C'
     bz_grid : BZGrid
         Data structure to represent BZ grid.
+    reciprocal_rotations : array_like or None, optional
+        Rotation matrices {R} with respect to reciprocal basis vectors.
+        Defined by q'=Rq.
+        dtype='int_', shape=(rotations, 3, 3)
     is_time_reversal : bool, optional
         Inversion symemtry is added if it doesn't exist. Default is True.
     swappable : bool, optional
@@ -386,10 +386,15 @@ def get_triplets_at_q(grid_point,
 
     """
 
+    if reciprocal_rotations is None:
+        rotations = bz_grid.rotations
+    else:
+        rotations = reciprocal_rotations
+
     map_triplets, map_q = _get_triplets_reciprocal_mesh_at_q(
         bz_grid.bzg2grg[grid_point],
         bz_grid.mesh_numbers,
-        point_group,
+        rotations,
         is_time_reversal=is_time_reversal,
         swappable=swappable)
     triplets_at_q, weights = _get_BZ_triplets_at_q(
@@ -530,7 +535,7 @@ def get_grid_points_by_rotations(gp,
         Grid point index defined by bz_grid.
     bz_grid : BZGrid
         Data structure to represent BZ grid.
-    reciprocal_rotations : array_like or None
+    reciprocal_rotations : array_like or None, optional
         Rotation matrices {R} with respect to reciprocal basis vectors.
         Defined by q'=Rq.
         dtype='int_', shape=(rotations, 3, 3)
@@ -796,8 +801,8 @@ def _relocate_BZ_grid_address(gr_grid_addresses,
 
 
 def _get_triplets_reciprocal_mesh_at_q(fixed_grid_number,
-                                       mesh,
-                                       rotations,
+                                       D_diag,
+                                       rec_rotations,
                                        is_time_reversal=True,
                                        swappable=True):
     """Search symmetry reduced triplets fixing one q-point
@@ -809,15 +814,13 @@ def _get_triplets_reciprocal_mesh_at_q(fixed_grid_number,
     ----------
     fixed_grid_number : int
         Grid point of q0
-    mesh : array_like
-        Mesh numbers
-        dtype='int_'
-        shape=(3,)
-    rotations : array_like
-        Rotation matrices in real space. Note that those in reciprocal space
-        mean these matrices transposed (local terminology).
-        dtype='int_'
-        shape=(n_rot, 3, 3)
+    D_diag : array_like
+        Diagonal part of the diagonal matrix by SNF.
+        shape=(3,), dtype='int_'
+    rec_rotations : array_like
+        Rotation matrices in reciprocal space, where the rotation matrix
+        R is defined like q'=Rq.
+        shape=(n_rot, 3, 3), dtype='int_'
     is_time_reversal : bool
         Inversion symemtry is added if it doesn't exist.
     swappable : bool
@@ -842,16 +845,16 @@ def _get_triplets_reciprocal_mesh_at_q(fixed_grid_number,
 
     import phono3py._phono3py as phono3c
 
-    map_triplets = np.zeros(np.prod(mesh), dtype='int_')
-    map_q = np.zeros(np.prod(mesh), dtype='int_')
+    map_triplets = np.zeros(np.prod(D_diag), dtype='int_')
+    map_q = np.zeros(np.prod(D_diag), dtype='int_')
 
     phono3c.triplets_reciprocal_mesh_at_q(
         map_triplets,
         map_q,
         fixed_grid_number,
-        np.array(mesh, dtype='int_'),
+        np.array(D_diag, dtype='int_'),
         is_time_reversal * 1,
-        np.array(rotations, dtype='int_', order='C'),
+        np.array(rec_rotations, dtype='int_', order='C'),
         swappable * 1)
 
     return map_triplets, map_q

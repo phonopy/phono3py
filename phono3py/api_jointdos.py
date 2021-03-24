@@ -32,8 +32,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import numpy as np
 from phonopy.units import VaspToTHz
+from phonopy.structure.symmetry import Symmetry
 from phono3py.phonon3.joint_dos import JointDos
+from phono3py.phonon3.triplets import BZGrid
+
 from phono3py.file_IO import write_joint_dos
 
 
@@ -41,8 +45,8 @@ class Phono3pyJointDos(object):
     def __init__(self,
                  supercell,
                  primitive,
-                 mesh,
                  fc2,
+                 mesh=None,
                  nac_params=None,
                  nac_q_direction=None,
                  sigmas=None,
@@ -61,16 +65,21 @@ class Phono3pyJointDos(object):
             self._sigmas = [None]
         else:
             self._sigmas = sigmas
-        self._mesh_numbers = mesh
         self._temperatures = temperatures
         self._is_mesh_symmetry = is_mesh_symmetry
         self._filename = output_filename
         self._log_level = log_level
 
+        symmetry = Symmetry(primitive, symprec)
+        self._bz_grid = BZGrid(mesh,
+                               lattice=primitive.cell,
+                               primitive_symmetry=symmetry,
+                               is_dense_gp_map=is_dense_gp_map)
+
         self._jdos = JointDos(
-            self._mesh_numbers,
             primitive,
             supercell,
+            self._bz_grid,
             fc2,
             nac_params=nac_params,
             nac_q_direction=nac_q_direction,
@@ -92,7 +101,7 @@ class Phono3pyJointDos(object):
         if self._log_level:
             print("--------------------------------- Joint DOS "
                   "---------------------------------")
-            print("Sampling mesh: [ %d %d %d ]" % tuple(self._mesh_numbers))
+            print("Sampling mesh: [ %d %d %d ]" % tuple(self._bz_grid.D_diag))
 
         for i, gp in enumerate(grid_points):
             self._jdos.set_grid_point(gp)
@@ -104,7 +113,7 @@ class Phono3pyJointDos(object):
                       "======================="
                       % (gp, i + 1, len(grid_points)))
                 adrs = self._jdos.bz_grid.addresses[gp]
-                q = adrs.astype('double') / self._mesh_numbers
+                q = np.dot(adrs, self._bz_grid.QDinv.T)
                 print("q-point: (%5.2f %5.2f %5.2f)" % tuple(q))
                 print("Number of triplets: %d" % len(weights))
                 print("Frequency")
@@ -142,9 +151,9 @@ class Phono3pyJointDos(object):
 
     def _write(self, gp, sigma=None):
         return write_joint_dos(gp,
-                               self._mesh_numbers,
-                               self._jdos.get_frequency_points(),
-                               self._jdos.get_joint_dos(),
+                               self._bz_grid.D_diag,
+                               self._jdos.frequency_points,
+                               self._jdos.joint_dos,
                                sigma=sigma,
                                temperatures=self._temperatures,
                                filename=self._filename,

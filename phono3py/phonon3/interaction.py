@@ -299,10 +299,7 @@ class Interaction(object):
             (triplets_at_q,
              weights_at_q,
              triplets_map_at_q,
-             ir_map_at_q) = get_triplets_at_q(
-                 grid_point,
-                 self._symmetry.pointgroup_operations,
-                 self._bz_grid)
+             ir_map_at_q) = get_triplets_at_q(grid_point, self._bz_grid)
 
         # Special treatment of symmetry is applied when q_direction is used.
         if self._nac_q_direction is not None:
@@ -310,10 +307,10 @@ class Interaction(object):
                 self._phonon_done[grid_point] = 0
                 self.run_phonon_solver(np.array([grid_point, ], dtype='int_'))
                 rotations = []
-                for r in self._symmetry.pointgroup_operations:
+                for r in self._symmetry.reciprocal_operations:
                     dq = self._nac_q_direction
                     dq /= np.linalg.norm(dq)
-                    diff = np.dot(dq, r) - dq
+                    diff = np.dot(r, dq) - dq
                     if (abs(diff) < 1e-5).all():
                         rotations.append(r)
                 (triplets_at_q,
@@ -321,8 +318,8 @@ class Interaction(object):
                  triplets_map_at_q,
                  ir_map_at_q) = get_triplets_at_q(
                      grid_point,
-                     np.array(rotations, dtype='intc', order='C'),
                      self._bz_grid,
+                     reciprocal_rotations=rotations,
                      is_time_reversal=False)
 
         for triplet in triplets_at_q:

@@ -160,11 +160,8 @@ class _TripletsNumbers(object):
         return self._bz_grid
 
     def get_number_of_triplets(self, gp):
-        num_triplets = _get_number_of_triplets(self._primitive,
-                                               self._bz_grid,
-                                               gp,
-                                               swappable=True,
-                                               symprec=self._symprec)
+        num_triplets = _get_number_of_triplets(
+            self._bz_grid, gp, swappable=True)
         return num_triplets
 
 
@@ -184,14 +181,10 @@ def _get_ir_grid_points(primitive,
     return ir_grid_points, ir_grid_weights, bz_grid
 
 
-def _get_number_of_triplets(primitive,
-                            bz_grid,
+def _get_number_of_triplets(bz_grid,
                             grid_point,
-                            swappable=True,
-                            symprec=1e-5):
-    symmetry = Symmetry(primitive, symprec)
+                            swappable=True):
     triplets_at_q = get_triplets_at_q(grid_point,
-                                      symmetry.pointgroup_operations,
                                       bz_grid,
                                       swappable=swappable)[0]
     return len(triplets_at_q)
