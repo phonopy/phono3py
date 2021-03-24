@@ -327,9 +327,9 @@ class Conductivity(object):
             self._ir_grid_points = self._grid_points
             self._ir_grid_weights = self._grid_weights
 
-        self._qpoints = np.array(self._bz_grid.addresses[self._grid_points] /
-                                 self._mesh.astype('double'),
-                                 dtype='double', order='C')
+        self._qpoints = np.array(
+            np.dot(self._bz_grid.addresses[self._grid_points],
+                   self._bz_grid.QDinv.T), dtype='double', order='C')
         self._grid_point_count = 0
         (self._frequencies,
          self._eigenvectors,
@@ -411,8 +411,7 @@ class Conductivity(object):
     def _get_gv_by_gv(self, i_irgp, i_data):
         rotation_map = get_grid_points_by_rotations(
             self._grid_points[i_irgp],
-            self._bz_grid,
-            self._point_operations)
+            self._bz_grid)
         gv = self._gv[i_data]
         gv_by_gv = np.zeros((len(gv), 3, 3), dtype='double')
 

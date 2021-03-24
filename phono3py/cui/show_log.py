@@ -176,6 +176,8 @@ def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
 
     if settings.is_lbte and settings.read_collision is not None:
         pass
+    elif settings.is_joint_dos:
+        pass
     elif (settings.is_real_self_energy or
           settings.is_imag_self_energy or
           settings.is_spectral_function or

@@ -124,6 +124,7 @@ class BZGrid(object):
         self._D_diag = np.ones(3, dtype='int_')
         self._Q = np.eye(3, dtype='int_', order='C')
         self._P = np.eye(3, dtype='int_', order='C')
+        self._rotations = np.eye(3, dtype='int_', order='C').reshape(1, 3, 3)
 
         if reciprocal_lattice is not None:
             self._reciprocal_lattice = np.array(
@@ -138,6 +139,7 @@ class BZGrid(object):
 
         self._set_mesh_numbers(mesh)
         self._set_bz_grid()
+        self._set_rotations()
 
     @property
     def mesh_numbers(self):
@@ -227,6 +229,10 @@ class BZGrid(object):
     def is_dense_gp_map(self):
         return self._is_dense_gp_map
 
+    @property
+    def rotations(self):
+        return self._rotations
+
     def get_indices_from_addresses(self, addresses):
         """Return BZ grid point indices from grid addresses
 
@@ -283,7 +289,8 @@ class BZGrid(object):
                 self._D_diag = np.array(mesh, dtype='int_')
         except TypeError:
             length = float(mesh)
-            if self._primitive_symmetry is None:
+            if (self._primitive_symmetry.dataset is None or
+                self._primitive_symmetry is None):
                 self._D_diag = np.array(
                     length2mesh(length, self._lattice), dtype='int_')
             else:
@@ -313,6 +320,23 @@ class BZGrid(object):
                               self._grid_matrix):
             msg = "SNF3x3 failed."
             raise RuntimeError(msg)
+
+    def _set_rotations(self):
+        if self._primitive_symmetry.reciprocal_operations is not None:
+            self._rotations = np.array(
+                self._primitive_symmetry.reciprocal_operations,
+                dtype='int_', order='C')
+
+        transformed_rotations = np.zeros_like(self._rotations)
+        import phono3py._phono3py as phono3c
+        if not phono3c.transform_rotations(transformed_rotations,
+                                           self._rotations,
+                                           self._D_diag,
+                                           self._Q):
+            msg = "Generarized regular grid symmetry is broken."
+            raise RuntimeError(msg)
+
+        self._rotations = transformed_rotations
 
 
 def get_triplets_at_q(grid_point,
@@ -498,7 +522,7 @@ def get_ir_grid_points(mesh, rotations, mesh_shifts=None):
 
 def get_grid_points_by_rotations(gp,
                                  bz_grid,
-                                 reciprocal_rotations):
+                                 reciprocal_rotations=None):
     """Returns grid points obtained after rotating input grid address
 
     Parameters
@@ -507,7 +531,7 @@ def get_grid_points_by_rotations(gp,
         Grid point index defined by bz_grid.
     bz_grid : BZGrid
         Data structure to represent BZ grid.
-    reciprocal_rotations : array_like
+    reciprocal_rotations : array_like or None
         Rotation matrices {R} with respect to reciprocal basis vectors.
         Defined by q'=Rq.
         dtype='int_', shape=(rotations, 3, 3)
@@ -520,7 +544,12 @@ def get_grid_points_by_rotations(gp,
 
     """
 
-    rot_adrs = np.dot(reciprocal_rotations, bz_grid.addresses[gp])
+    if reciprocal_rotations is not None:
+        rec_rots = reciprocal_rotations
+    else:
+        rec_rots = bz_grid.rotations
+
+    rot_adrs = np.dot(rec_rots, bz_grid.addresses[gp])
     gps = bz_grid.grg2bzg[
         get_grid_point_from_address(rot_adrs, bz_grid.mesh_numbers)]
     return gps
