@@ -273,6 +273,7 @@ class BZGrid(object):
          self._bzg2grg) = _relocate_BZ_grid_address(
              gr_grid_addresses,
              self._D_diag,
+             self._Q,
              self._reciprocal_lattice,  # column vectors
              is_shift=self._is_shift,
              is_dense_gp_map=self._is_dense_gp_map)
@@ -314,13 +315,17 @@ class BZGrid(object):
         self._grid_matrix = np.array(
             (inv_pmat_int * conv_mesh_numbers).T, dtype='int_', order='C')
 
-        import phono3py._phono3py as phono3c
-        if not phono3c.snf3x3(self._D_diag,
-                              self._P,
-                              self._Q,
-                              self._grid_matrix):
-            msg = "SNF3x3 failed."
-            raise RuntimeError(msg)
+        gm_diag = np.diagonal(self._grid_matrix)
+        if (np.diag(gm_diag) == self._grid_matrix).all():
+            self._D_diag = np.array(gm_diag, dtype='int_')
+        else:
+            import phono3py._phono3py as phono3c
+            if not phono3c.snf3x3(self._D_diag,
+                                  self._P,
+                                  self._Q,
+                                  self._grid_matrix):
+                msg = "SNF3x3 failed."
+                raise RuntimeError(msg)
 
     def _set_rotations(self):
         if self._primitive_symmetry.reciprocal_operations is not None:
@@ -709,7 +714,8 @@ def _get_ir_reciprocal_mesh(mesh,
 
 
 def _relocate_BZ_grid_address(gr_grid_addresses,
-                              mesh,
+                              D_diag,
+                              Q,
                               reciprocal_lattice,  # column vectors
                               is_shift=None,
                               is_dense_gp_map=False):
@@ -774,22 +780,21 @@ def _relocate_BZ_grid_address(gr_grid_addresses,
         _is_shift = np.zeros(3, dtype='int_')
     else:
         _is_shift = np.array(is_shift, dtype='int_')
-    bz_grid_addresses = np.zeros((np.prod(np.add(mesh, 1)), 3),
+    bz_grid_addresses = np.zeros((np.prod(np.add(D_diag, 1)), 3),
                                  dtype='int_', order='C')
     bzg2grg = np.zeros(len(bz_grid_addresses), dtype='int_')
 
     if is_dense_gp_map:
-        bz_map = np.zeros(np.prod(mesh) + 1, dtype='int_')
+        bz_map = np.zeros(np.prod(D_diag) + 1, dtype='int_')
     else:
-        bz_map = np.zeros(np.prod(mesh) * 9 + 1, dtype='int_')
-    Q = np.eye(3, dtype='int_', order='C')
+        bz_map = np.zeros(np.prod(D_diag) * 9 + 1, dtype='int_')
     num_gp = phono3c.bz_grid_addresses(
         bz_grid_addresses,
         bz_map,
         bzg2grg,
         gr_grid_addresses,
-        np.array(mesh, dtype='int_'),
-        Q,
+        np.array(D_diag, dtype='int_'),
+        np.array(Q, dtype='int_', order='C'),
         _is_shift,
         np.array(reciprocal_lattice, dtype='double', order='C'),
         is_dense_gp_map * 1 + 1)

@@ -998,7 +998,7 @@ def main(**argparse_control):
     #########################################################
     if run_mode == "write_grid_info":
         write_grid_points(phono3py.primitive,
-                          phono3py.mesh_numbers,
+                          settings.mesh_numbers,
                           band_indices=settings.band_indices,
                           sigmas=updated_settings['sigmas'],
                           temperatures=updated_settings['temperatures'],

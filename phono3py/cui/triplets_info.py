@@ -61,16 +61,22 @@ def write_grid_points(primitive,
         is_kappa_star=is_kappa_star,
         is_dense_gp_map=is_dense_gp_map,
         symprec=symprec)
-    write_ir_grid_points(mesh,
+    write_ir_grid_points(bz_grid,
                          ir_grid_points,
                          ir_grid_weights,
-                         bz_grid.addresses,
                          np.linalg.inv(primitive.cell))
     gadrs_hdf5_fname = write_grid_address_to_hdf5(bz_grid.addresses,
-                                                  mesh,
+                                                  bz_grid.D_diag,
                                                   bz_grid.gp_map,
                                                   compression=compression,
                                                   filename=filename)
+
+    # print("D_diag:")
+    # print(bz_grid.D_diag)
+    # print("P:")
+    # print(bz_grid.P)
+    # print("Q:")
+    # print(bz_grid.Q)
 
     print("Ir-grid points are written into \"ir_grid_points.yaml\".")
     print("Grid addresses are written into \"%s\"." % gadrs_hdf5_fname)
