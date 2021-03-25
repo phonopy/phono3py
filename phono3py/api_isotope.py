@@ -68,6 +68,10 @@ class Phono3pyIsotope(object):
     def dynamical_matrix(self):
         return self._iso.dynamical_matrix
 
+    @property
+    def grid(self):
+        return self._iso.bz_grid
+
     def run(self, grid_points):
         gamma = np.zeros(
             (len(self._sigmas), len(grid_points), len(self._iso.band_indices)),

@@ -141,7 +141,6 @@ def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
     sigmas = updated_settings['sigmas']
     temperatures = updated_settings['temperatures']
     temperature_points = updated_settings['temperature_points']
-    grid_points = updated_settings['grid_points']
     cutoff_frequency = updated_settings['cutoff_frequency']
     frequency_factor_to_THz = updated_settings['frequency_factor_to_THz']
     frequency_scale_factor = updated_settings['frequency_scale_factor']
@@ -156,8 +155,6 @@ def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
                   % phono3py.nac_params['factor'])
         if settings.nac_q_direction is not None:
             print("NAC q-direction: %s" % settings.nac_q_direction)
-    if phono3py.mesh_numbers is not None:
-        print("Mesh sampling: [ %d %d %d ]" % tuple(phono3py.mesh_numbers))
     if settings.band_indices is not None and not settings.is_bterta:
         print(("Band indices: [" + " %s" * len(settings.band_indices) + " ]") %
               tuple([np.array(bi) + 1 for bi in settings.band_indices]))
@@ -195,19 +192,6 @@ def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
             print("Scattering event class: %s"
                   % settings.scattering_event_class)
 
-    if grid_points is not None:
-        text = "Grid point to be calculated: "
-        if len(grid_points) > 8:
-            for i, gp in enumerate(grid_points):
-                if i % 10 == 0:
-                    text += "\n"
-                    text += " "
-                text += "%d " % gp
-        else:
-            for gp in grid_points:
-                text += "%d " % gp
-        print(text)
-
     if cutoff_frequency:
         print("Cutoff frequency: %s" % cutoff_frequency)
 
@@ -235,4 +219,27 @@ def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
             print("Number of frequency sampling points: %d" %
                   num_frequency_points)
 
+    if settings.mesh_numbers is not None:
+        try:
+            if len(settings.mesh_numbers) == 3:
+                print("Mesh sampling: [ %d %d %d ]" %
+                      tuple(settings.mesh_numbers))
+        except TypeError:
+            print("Length for sampling mesh generation: %.2f" %
+                  settings.mesh_numbers)
+
     sys.stdout.flush()
+
+
+def show_grid_points(grid_points):
+    text = "Grid point to be calculated: "
+    if len(grid_points) > 8:
+        for i, gp in enumerate(grid_points):
+            if i % 10 == 0:
+                text += "\n"
+                text += " "
+            text += "%d " % gp
+    else:
+        for gp in grid_points:
+            text += "%d " % gp
+    print(text)

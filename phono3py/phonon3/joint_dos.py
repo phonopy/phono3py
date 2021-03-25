@@ -277,8 +277,7 @@ class JointDos(object):
         self._joint_dos = jdos / np.prod(self._bz_grid.D_diag)
 
     def _run_py_tetrahedron_method(self):
-        thm = TetrahedronMethod(self._reciprocal_lattice,
-                                mesh=self._bz_grid.D_diag)
+        thm = TetrahedronMethod(self._bz_grid.microzone_lattice)
         self._vertices = get_tetrahedra_vertices(
             np.array(np.dot(thm.get_tetrahedra(), self._bz_grid.P.T),
                      dtype='int_', order='C'),

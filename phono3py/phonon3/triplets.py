@@ -125,6 +125,8 @@ class BZGrid(object):
         self._Q = np.eye(3, dtype='int_', order='C')
         self._P = np.eye(3, dtype='int_', order='C')
         self._rotations = np.eye(3, dtype='int_', order='C').reshape(1, 3, 3)
+        self._QDinv = None
+        self._microzone_lattice = None
 
         if reciprocal_lattice is not None:
             self._reciprocal_lattice = np.array(
@@ -186,8 +188,7 @@ class BZGrid(object):
     @property
     def QDinv(self):
         """QD^-1"""
-        return np.array(self.Q * (1 / self.D_diag.astype('double')),
-                        dtype='double', order='C')
+        return self._QDinv
 
     @property
     def PS(self):
@@ -225,6 +226,10 @@ class BZGrid(object):
     def grg2bzg(self):
         """Transform grid point indices from GRG to BZG"""
         return self._gpg2bzg
+
+    @property
+    def microzone_lattice(self):
+        return self._microzone_lattice
 
     @property
     def is_dense_gp_map(self):
@@ -283,6 +288,11 @@ class BZGrid(object):
             self._gpg2bzg = np.arange(
                 np.prod(self._D_diag), dtype='int_')
 
+        self._QDinv = np.array(self.Q * (1 / self.D_diag.astype('double')),
+                               dtype='double', order='C')
+        self._microzone_lattice = np.dot(
+            self._reciprocal_lattice, np.dot(self._QDinv, self._P))
+
     def _set_mesh_numbers(self, mesh):
         """Set mesh numbers from array or float value"""
         try:
@@ -299,15 +309,24 @@ class BZGrid(object):
                 self._set_SNF(length)
 
     def _set_SNF(self, length):
+        """Calculate Smith normal form
+
+        Microzone is defined as the regular grid of a conventional
+        unit cell. To find the conventional unit cell, symmetry
+        information is used.
+
+        """
         sym_dataset = self._primitive_symmetry.dataset
         tmat = sym_dataset['transformation_matrix']
         centring = sym_dataset['international'][0]
         pmat = get_primitive_matrix_by_centring(centring)
         conv_lat = np.dot(np.linalg.inv(tmat).T, self._lattice)
-        num_cells = np.prod(length2mesh(length, conv_lat))
+        num_cells = int(np.prod(length2mesh(length, conv_lat)))
+        max_num_atoms = num_cells * len(sym_dataset['std_types'])
         conv_mesh_numbers = estimate_supercell_matrix(
             sym_dataset,
-            max_num_atoms=num_cells * len(sym_dataset['std_types']))
+            max_num_atoms=max_num_atoms,
+            max_iter=200)
         inv_pmat = np.linalg.inv(pmat)
         inv_pmat_int = np.rint(inv_pmat).astype(int)
         assert (np.abs(inv_pmat - inv_pmat_int) < 1e-5).all()
@@ -315,6 +334,7 @@ class BZGrid(object):
         self._grid_matrix = np.array(
             (inv_pmat_int * conv_mesh_numbers).T, dtype='int_', order='C')
 
+        # If grid_matrix is a diagonal matrix, use it as D matrix.
         gm_diag = np.diagonal(self._grid_matrix)
         if (np.diag(gm_diag) == self._grid_matrix).all():
             self._D_diag = np.array(gm_diag, dtype='int_')
@@ -328,6 +348,8 @@ class BZGrid(object):
                 raise RuntimeError(msg)
 
     def _set_rotations(self):
+        """Rotation matrices are transformed those for GRGrid."""
+
         if self._primitive_symmetry.reciprocal_operations is not None:
             self._rotations = np.array(
                 self._primitive_symmetry.reciprocal_operations,
@@ -937,9 +959,7 @@ def _set_triplets_integration_weights_c(g,
                                         neighboring_phonons=False):
     import phono3py._phono3py as phono3c
 
-    reciprocal_lattice = np.linalg.inv(pp.primitive.cell)
-    mesh = pp.mesh_numbers
-    thm = TetrahedronMethod(reciprocal_lattice, mesh=mesh)
+    thm = TetrahedronMethod(pp.bz_grid.microzone_lattice)
     triplets_at_q = pp.get_triplets_at_q()[0]
 
     if neighboring_phonons:
@@ -952,7 +972,7 @@ def _set_triplets_integration_weights_c(g,
                 neighboring_grid_points,
                 np.array(triplets_at_q[:, i], dtype='int_').ravel(),
                 np.array(j * unique_vertices, dtype='int_', order='C'),
-                mesh,
+                pp.bz_grid.D_diag,
                 pp.bz_grid.addresses,
                 pp.bz_grid.gp_map,
                 pp.bz_grid.is_dense_gp_map * 1 + 1)
@@ -966,7 +986,7 @@ def _set_triplets_integration_weights_c(g,
         frequency_points,  # f0
         np.array(np.dot(thm.get_tetrahedra(), pp.bz_grid.P.T),
                  dtype='int_', order='C'),
-        mesh,
+        pp.bz_grid.D_diag,
         triplets_at_q,
         frequencies,  # f1
         frequencies,  # f2
@@ -977,14 +997,12 @@ def _set_triplets_integration_weights_c(g,
 
 
 def _set_triplets_integration_weights_py(g, pp, frequency_points):
-    reciprocal_lattice = np.linalg.inv(pp.primitive.cell)
-    mesh = pp.mesh_numbers
-    thm = TetrahedronMethod(reciprocal_lattice, mesh=mesh)
+    thm = TetrahedronMethod(pp.bz_grid.microzone_lattice)
     triplets_at_q = pp.get_triplets_at_q()[0]
     tetrahedra_vertices = get_tetrahedra_vertices(
         np.array(np.dot(thm.get_tetrahedra(), pp.bz_grid.P.T),
                  dtype='int_', order='C'),
-        mesh,
+        pp.bz_grid.D_diag,
         triplets_at_q,
         pp.bz_grid)
     pp.run_phonon_solver(

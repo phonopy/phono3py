@@ -791,8 +791,7 @@ class Conductivity_RTA(Conductivity):
         symmetrize_fc3_q = 0
 
         if None in self._sigmas:
-            reclat = np.linalg.inv(self._pp.primitive.cell)
-            thm = TetrahedronMethod(reclat, mesh=self._mesh)
+            thm = TetrahedronMethod(self._bz_grid.microzone_lattice)
 
         # It is assumed that self._sigmas = [None].
         for j, sigma in enumerate(self._sigmas):

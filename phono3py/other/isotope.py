@@ -230,8 +230,7 @@ class Isotope(object):
         self._gamma = gamma / np.prod(self._bz_grid.D_diag)
 
     def _set_integration_weights(self):
-        primitive_lattice = np.linalg.inv(self._primitive.cell)
-        thm = TetrahedronMethod(primitive_lattice, mesh=self._bz_grid.D_diag)
+        thm = TetrahedronMethod(self._bz_grid.microzone_lattice)
         num_grid_points = len(self._grid_points)
         num_band = len(self._primitive) * 3
         self._integration_weights = np.zeros(
@@ -241,7 +240,9 @@ class Isotope(object):
 
     def _set_integration_weights_c(self, thm):
         import phono3py._phono3py as phono3c
-        unique_vertices = thm.get_unique_tetrahedra_vertices()
+        unique_vertices = np.array(
+            np.dot(thm.get_unique_tetrahedra_vertices(), self._bz_grid.P.T),
+            dtype='int_', order='C')
         neighboring_grid_points = np.zeros(
             len(unique_vertices) * len(self._grid_points), dtype='int_')
         phono3c.neighboring_grid_points(

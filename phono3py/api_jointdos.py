@@ -97,6 +97,10 @@ class Phono3pyJointDos(object):
 
         self._joint_dos = None
 
+    @property
+    def grid(self):
+        return self._bz_grid
+
     def run(self, grid_points, write_jdos=False):
         if self._log_level:
             print("--------------------------------- Joint DOS "
