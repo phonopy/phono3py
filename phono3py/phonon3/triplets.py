@@ -555,7 +555,7 @@ def get_grid_points_by_rotations(gp,
 
     rot_adrs = np.dot(rec_rots, bz_grid.addresses[gp])
     gps = bz_grid.grg2bzg[
-        get_grid_point_from_address(rot_adrs, bz_grid.mesh_numbers)]
+        get_grid_point_from_address(rot_adrs, bz_grid.D_diag)]
     return gps
 
 
@@ -938,7 +938,8 @@ def _set_triplets_integration_weights_c(g,
     triplets_at_q = pp.get_triplets_at_q()[0]
 
     if neighboring_phonons:
-        unique_vertices = thm.get_unique_tetrahedra_vertices()
+        unique_vertices = np.dot(
+            thm.get_unique_tetrahedra_vertices(), pp.bz_grid.P.T)
         for i, j in zip((1, 2), (1, -1)):
             neighboring_grid_points = np.zeros(
                 len(unique_vertices) * len(triplets_at_q), dtype='int_')

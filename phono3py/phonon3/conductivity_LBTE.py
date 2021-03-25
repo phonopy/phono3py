@@ -125,7 +125,7 @@ def get_thermal_conductivity_LBTE(
             print("Reading collision failed.")
             return False
         if log_level:
-            temps_read = lbte.get_temperatures()
+            temps_read = lbte.temperatures
             if len(temps_read) > 5:
                 text = (" %.1f " * 5 + "...") % tuple(temps_read[:5])
                 text += " %.1f" % temps_read[-1]
@@ -1027,8 +1027,7 @@ class Conductivity_LBTE(Conductivity):
             for i, ir_gp in enumerate(self._ir_grid_points):
                 self._rot_grid_points[i] = get_grid_points_by_rotations(
                     ir_gp,
-                    self._bz_grid,
-                    self._point_operations)
+                    self._bz_grid)
             self._collision = CollisionMatrix(
                 self._pp,
                 point_operations=self._point_operations,
@@ -1205,10 +1204,8 @@ class Conductivity_LBTE(Conductivity):
             self._bz_grid.bzg2grg[self._ir_grid_points], dtype='int_')
         for i in range(num_mesh_points):
             rot_grid_points[:, i] = self._bz_grid.bzg2grg[
-                get_grid_points_by_rotations(
-                self._bz_grid.grg2bzg[i],
-                self._bz_grid,
-                self._point_operations)]
+                get_grid_points_by_rotations(self._bz_grid.grg2bzg[i],
+                                             self._bz_grid)]
 
         try:
             import phono3py._phono3py as phono3c

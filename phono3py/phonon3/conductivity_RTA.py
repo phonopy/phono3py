@@ -908,10 +908,7 @@ class Conductivity_RTA(Conductivity):
                       (f, v[0], v[1], v[2], np.linalg.norm(v)))
 
     def _show_log_values_on_kstar(self, frequencies, gv, ave_pp, gp, q):
-        rotation_map = get_grid_points_by_rotations(
-            gp,
-            self._bz_grid,
-            self._point_operations)
+        rotation_map = get_grid_points_by_rotations(gp, self._bz_grid)
         for i, j in enumerate(np.unique(rotation_map)):
             for k, (rot, rot_c) in enumerate(zip(
                     self._point_operations, self._rotations_cartesian)):
