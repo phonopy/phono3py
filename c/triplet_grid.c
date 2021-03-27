@@ -167,18 +167,18 @@ static long get_ir_triplets_at_q(long *map_triplets,
     map_triplets[i] = num_grid;  /* When not found, map_triplets == num_grid */
   }
 
-  grg_get_grid_address_from_index(adrs0, grid_point, D_diag);
+  if (swappable) { /* search q1 <-> q2 */
+    grg_get_grid_address_from_index(adrs0, grid_point, D_diag);
 
 #pragma omp parallel for private(j, adrs1, adrs2)
-  for (i = 0; i < num_ir_q; i++) {
-    grg_get_grid_address_from_index(adrs1, ir_grid_points[i], D_diag);
-    for (j = 0; j < 3; j++) { /* q'' */
-      adrs2[j] = - adrs0[j] - adrs1[j];
+    for (i = 0; i < num_ir_q; i++) {
+      grg_get_grid_address_from_index(adrs1, ir_grid_points[i], D_diag);
+      for (j = 0; j < 3; j++) { /* q'' */
+        adrs2[j] = - adrs0[j] - adrs1[j];
+      }
+      third_q[i] = grg_get_grid_index(adrs2, D_diag);
     }
-    third_q[i] = grg_get_grid_index(adrs2, D_diag);
-  }
 
-  if (swappable) { /* search q1 <-> q2 */
     for (i = 0; i < num_ir_q; i++) {
       ir_gp = ir_grid_points[i];
       q_2 = third_q[i];
@@ -189,7 +189,7 @@ static long get_ir_triplets_at_q(long *map_triplets,
         num_ir_triplets++;
       }
     }
-  } else {
+  } else { /* Do not search q1 <-> q2 */
     for (i = 0; i < num_ir_q; i++) {
       ir_gp = ir_grid_points[i];
       map_triplets[ir_gp] = ir_gp;

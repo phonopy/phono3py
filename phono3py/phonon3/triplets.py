@@ -90,15 +90,14 @@ def get_triplets_at_q(grid_point,
 
     map_triplets, map_q = _get_triplets_reciprocal_mesh_at_q(
         bz_grid.bzg2grg[grid_point],
-        bz_grid.mesh_numbers,
+        bz_grid.D_diag,
         rotations,
         is_time_reversal=is_time_reversal,
         swappable=swappable)
     triplets_at_q, weights = _get_BZ_triplets_at_q(
         grid_point,
         bz_grid,
-        map_triplets,
-        bz_grid.mesh_numbers)
+        map_triplets)
 
     assert np.prod(bz_grid.mesh_numbers) == weights.sum(), \
         "Num grid points %d, sum of weight %d" % (
@@ -107,12 +106,11 @@ def get_triplets_at_q(grid_point,
     return triplets_at_q, weights, map_triplets, map_q
 
 
-def get_all_triplets(grid_point, bz_grid, mesh):
+def get_all_triplets(grid_point, bz_grid):
     triplets_at_q, _ = _get_BZ_triplets_at_q(
         grid_point,
         bz_grid,
-        np.arange(np.prod(mesh), dtype='int_'),
-        mesh)
+        np.arange(np.prod(bz_grid.D_diag), dtype='int_'))
 
     return triplets_at_q
 
@@ -124,12 +122,11 @@ def get_nosym_triplets_at_q(grid_point, bz_grid):
 
     """
 
-    map_triplets = np.arange(np.prod(bz_grid.mesh_numbers), dtype='int_')
+    map_triplets = np.arange(np.prod(bz_grid.D_diag), dtype='int_')
     triplets_at_q, weights = _get_BZ_triplets_at_q(
         grid_point,
         bz_grid,
-        map_triplets,
-        bz_grid.mesh_numbers)
+        map_triplets)
     map_q = map_triplets.copy()
 
     return triplets_at_q, weights, map_triplets, map_q
@@ -297,10 +294,7 @@ def _get_triplets_reciprocal_mesh_at_q(fixed_grid_number,
     return map_triplets, map_q
 
 
-def _get_BZ_triplets_at_q(grid_point,
-                          bz_grid,
-                          map_triplets,
-                          mesh):
+def _get_BZ_triplets_at_q(grid_point, bz_grid, map_triplets):
     """Grid point triplets are searched considering BZ surface.
 
     Looking for q+q'+q''=G with smallest |G|. In this condition,
@@ -322,10 +316,6 @@ def _get_BZ_triplets_at_q(grid_point,
         smallest |G| without considering BZ surface (see docstring of
         _get_BZ_triplets_at_q.)
         shape=(prod(mesh),), dtype='int_'
-    mesh : array_like
-        Mesh numbers
-        dtype='int_'
-        shape=(3,)
 
     Returns
     -------
@@ -353,7 +343,7 @@ def _get_BZ_triplets_at_q(grid_point,
         bz_grid.addresses,
         bz_grid.gp_map,
         map_triplets,
-        np.array(mesh, dtype='int_'),
+        np.array(bz_grid.D_diag, dtype='int_'),
         Q,
         bz_grid.is_dense_gp_map * 1 + 1)
 

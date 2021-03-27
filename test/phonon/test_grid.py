@@ -151,3 +151,7 @@ def _test_BZGrid_SNF(bzgrid):
         -1, 1, 0, 0, 2, -1, 0, 3, -1, -1, 1, 0, -2, 1, 0, -2, 3, -1]
 
     np.testing.assert_equal(ref_rots, bzgrid.rotations.ravel())
+
+
+def test_SNF_grid(aln_lda):
+    pass

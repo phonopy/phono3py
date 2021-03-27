@@ -154,10 +154,7 @@ def _write_gamma_detail(br, interaction, i, compression="gzip", filename=None,
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()
     triplets, weights, map_triplets, _ = interaction.get_triplets_at_q()
-    if map_triplets is None:
-        all_triplets = None
-    else:
-        all_triplets = get_all_triplets(gp, interaction.bz_grid, mesh)
+    all_triplets = get_all_triplets(gp, interaction.bz_grid)
 
     if all_bands_exist(interaction):
         for j, sigma in enumerate(sigmas):
@@ -538,7 +535,6 @@ class Conductivity_RTA(Conductivity):
         self._num_ignored_phonon_modes = None
         self._num_sampling_grid_points = None
 
-        self._mesh = None
         self._conversion_factor = None
 
         self._is_isotope = None
@@ -721,7 +717,7 @@ class Conductivity_RTA(Conductivity):
 
             if self._read_pp:
                 pp, _g_zero = read_pp_from_hdf5(
-                    self._mesh,
+                    self._pp.mesh_numbers,
                     grid_point=self._grid_points[i],
                     sigma=sigma,
                     sigma_cutoff=self._sigma_cutoff,

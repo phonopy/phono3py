@@ -453,7 +453,6 @@ class ImagSelfEnergy(object):
         self._g_zero = None  # Necessary elements of interaction strength
         self._g_zero_frequency_points = None
         self._g_zero_zeros = None   # always zeros for frequency sampling mode
-        self._mesh = self._pp.mesh_numbers
         self._is_collision_matrix = False
 
         # Unit to THz of Gamma
@@ -587,7 +586,7 @@ class ImagSelfEnergy(object):
     def set_averaged_pp_interaction(self, ave_pp):
         num_triplets = len(self._triplets_at_q)
         num_band = self._pp.get_primitive().get_number_of_atoms() * 3
-        num_grid = np.prod(self._mesh)
+        num_grid = np.prod(self._pp.mesh_numbers)
         bi = self._pp.get_band_indices()
         self._pp_strength = np.zeros(
             (num_triplets, len(bi), num_band, num_band), dtype='double')

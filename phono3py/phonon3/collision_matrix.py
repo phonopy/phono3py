@@ -39,10 +39,13 @@ from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
 
 
 class CollisionMatrix(ImagSelfEnergy):
-    """
+    """Collision matrix for direct solution of LBTE for one grid point
+
     Main diagonal part (imag-self-energy) and
     the other part are separately stored.
+
     """
+
     def __init__(self,
                  interaction,
                  point_operations=None,
@@ -70,7 +73,6 @@ class CollisionMatrix(ImagSelfEnergy):
         self._unit_conversion = None
         self._cutoff_frequency = None
         self._g = None
-        self._mesh = None
         self._is_collision_matrix = None
         self._unit_conversion = None
         self._log_level = log_level
@@ -89,8 +91,7 @@ class CollisionMatrix(ImagSelfEnergy):
             self._rot_grid_points = np.array(
                 self._pp.bz_grid.bzg2grg[rot_grid_points],
                 dtype='int_', order='C')
-            self._primitive = self._pp.primitive
-            rec_lat = np.linalg.inv(self._primitive.cell)
+            rec_lat = np.linalg.inv(self._pp.primitive.cell)
             self._rotations_cartesian = np.array(
                 [similarity_transformation(rec_lat, r)
                  for r in point_operations], dtype='double', order='C')
@@ -104,7 +105,7 @@ class CollisionMatrix(ImagSelfEnergy):
         self._imag_self_energy = np.zeros(num_band0, dtype='double')
 
         if self._is_reducible_collision_matrix:
-            num_mesh_points = np.prod(self._mesh)
+            num_mesh_points = np.prod(self._pp.mesh_numbers)
             self._collision_matrix = np.zeros(
                 (num_band0, num_mesh_points, num_band), dtype='double')
         else:
@@ -192,7 +193,7 @@ class CollisionMatrix(ImagSelfEnergy):
                         self._collision_matrix[j, :, i, k, :] += collision * r
 
     def _run_py_reducible_collision_matrix(self):
-        num_mesh_points = np.prod(self._mesh)
+        num_mesh_points = np.prod(self._pp.mesh_numbers)
         num_band0 = self._pp_strength.shape[1]
         num_band = self._pp_strength.shape[2]
         gp2tp_map = self._get_gp2tp_map()

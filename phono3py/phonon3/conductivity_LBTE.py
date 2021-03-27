@@ -824,7 +824,6 @@ class Conductivity_LBTE(Conductivity):
         self._gamma_iso = None
         self._averaged_pp_interaction = None
 
-        self._mesh = None
         self._conversion_factor = None
 
         self._is_isotope = None
@@ -895,7 +894,7 @@ class Conductivity_LBTE(Conductivity):
         return self._mfp
 
     def get_frequencies_all(self):
-        return self._frequencies[:np.prod(self._mesh)]
+        return self._frequencies[:np.prod(self._pp.mesh_numbers)]
 
     def get_kappa_RTA(self):
         return self._kappa_RTA
@@ -942,7 +941,7 @@ class Conductivity_LBTE(Conductivity):
         num_band = len(self._primitive) * 3
         num_ir_grid_points = len(self._ir_grid_points)
         num_temp = len(self._temperatures)
-        num_mesh_points = np.prod(self._mesh)
+        num_mesh_points = np.prod(self._pp.mesh_numbers)
 
         if self._is_reducible_collision_matrix:
             num_grid_points = num_mesh_points
@@ -1067,7 +1066,7 @@ class Conductivity_LBTE(Conductivity):
 
             if self._read_pp:
                 pp, _g_zero = read_pp_from_hdf5(
-                    self._mesh,
+                    self._pp.mesh_numbers,
                     grid_point=self._grid_points[i],
                     sigma=sigma,
                     sigma_cutoff=self._sigma_cutoff,
@@ -1114,7 +1113,7 @@ class Conductivity_LBTE(Conductivity):
                 self._average_collision_matrix_by_degeneracy()
                 self._expand_collisions()
             self._combine_reducible_collisions()
-            weights = np.ones(np.prod(self._mesh), dtype='int_')
+            weights = np.ones(np.prod(self._pp.mesh_numbers), dtype='int_')
             self._symmetrize_collision_matrix()
         else:
             self._combine_collisions()
@@ -1178,7 +1177,7 @@ class Conductivity_LBTE(Conductivity):
 
     def _combine_reducible_collisions(self):
         num_band = len(self._primitive) * 3
-        num_mesh_points = np.prod(self._mesh)
+        num_mesh_points = np.prod(self._pp.mesh_numbers)
 
         for j, k in list(
                 np.ndindex((len(self._sigmas), len(self._temperatures)))):
@@ -1195,7 +1194,7 @@ class Conductivity_LBTE(Conductivity):
             sys.stdout.write("- Expanding properties to all grid points ")
             sys.stdout.flush()
 
-        num_mesh_points = np.prod(self._mesh)
+        num_mesh_points = np.prod(self._pp.mesh_numbers)
         num_rot = len(self._point_operations)
         rot_grid_points = np.zeros((num_rot, num_mesh_points), dtype='int_')
 
@@ -1390,7 +1389,7 @@ class Conductivity_LBTE(Conductivity):
         num_band = len(self._primitive) * 3
 
         if self._is_reducible_collision_matrix:
-            num_grid_points = np.prod(self._mesh)
+            num_grid_points = np.prod(self._pp.mesh_numbers)
             size = num_grid_points * num_band
         else:
             num_grid_points = len(self._ir_grid_points)
@@ -1488,7 +1487,7 @@ class Conductivity_LBTE(Conductivity):
         N = self._num_sampling_grid_points
         if self._is_reducible_collision_matrix:
             X = self._get_X(i_temp, weights, self._gv)
-            num_mesh_points = np.prod(self._mesh)
+            num_mesh_points = np.prod(self._pp.mesh_numbers)
             Y = self._get_Y(i_sigma, i_temp, weights, X)
             self._set_mean_free_path(i_sigma, i_temp, weights, Y)
             # Putting self._rotations_cartesian is to symmetrize kappa.
@@ -1537,7 +1536,7 @@ class Conductivity_LBTE(Conductivity):
             # This RTA is not equivalent to conductivity_RTA.
             # The lifetime is defined from the diagonal part of
             # collision matrix.
-            num_mesh_points = np.prod(self._mesh)
+            num_mesh_points = np.prod(self._pp.mesh_numbers)
             size = num_mesh_points * num_band
             v_diag = np.diagonal(
                 self._collision_matrix[i_sigma, i_temp].reshape(size, size))

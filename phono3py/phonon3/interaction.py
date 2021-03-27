@@ -301,26 +301,28 @@ class Interaction(object):
              triplets_map_at_q,
              ir_map_at_q) = get_triplets_at_q(grid_point, self._bz_grid)
 
-        # Special treatment of symmetry is applied when q_direction is used.
-        if self._nac_q_direction is not None:
-            if (self._bz_grid.addresses[grid_point] == 0).all():
-                self._phonon_done[grid_point] = 0
-                self.run_phonon_solver(np.array([grid_point, ], dtype='int_'))
-                rotations = []
-                for r in self._symmetry.reciprocal_operations:
-                    dq = self._nac_q_direction
-                    dq /= np.linalg.norm(dq)
-                    diff = np.dot(r, dq) - dq
-                    if (abs(diff) < 1e-5).all():
-                        rotations.append(r)
-                (triplets_at_q,
-                 weights_at_q,
-                 triplets_map_at_q,
-                 ir_map_at_q) = get_triplets_at_q(
-                     grid_point,
-                     self._bz_grid,
-                     reciprocal_rotations=rotations,
-                     is_time_reversal=False)
+            # Special treatment of symmetry is applied when q_direction is used.
+            if self._nac_q_direction is not None:
+                if (self._bz_grid.addresses[grid_point] == 0).all():
+                    self._phonon_done[grid_point] = 0
+                    self.run_phonon_solver(np.array([grid_point, ],
+                                                    dtype='int_'))
+                    rotations = []
+                    for i, r in enumerate(
+                            self._symmetry.reciprocal_operations):
+                        dq = self._nac_q_direction
+                        dq /= np.linalg.norm(dq)
+                        diff = np.dot(r, dq) - dq
+                        if (abs(diff) < 1e-5).all():
+                            rotations.append(self._bz_grid.rotations[i])
+                    (triplets_at_q,
+                     weights_at_q,
+                     triplets_map_at_q,
+                     ir_map_at_q) = get_triplets_at_q(
+                         grid_point,
+                         self._bz_grid,
+                         reciprocal_rotations=rotations,
+                         is_time_reversal=False)
 
         for triplet in triplets_at_q:
             sum_q = (self._bz_grid.addresses[triplet]).sum(axis=0)
