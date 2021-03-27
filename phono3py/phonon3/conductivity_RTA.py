@@ -151,7 +151,7 @@ def _write_gamma_detail(br, interaction, i, compression="gzip", filename=None,
     gp = grid_points[i]
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()
-    triplets, weights, map_triplets, _ = interaction.get_triplets_at_q()
+    triplets, weights, _, _ = interaction.get_triplets_at_q()
     all_triplets = get_all_triplets(gp, interaction.bz_grid)
 
     if all_bands_exist(interaction):
@@ -163,7 +163,6 @@ def _write_gamma_detail(br, interaction, i, compression="gzip", filename=None,
                 grid_point=gp,
                 triplet=triplets,
                 weight=weights,
-                triplet_map=map_triplets,
                 triplet_all=all_triplets,
                 sigma=sigma,
                 sigma_cutoff=sigma_cutoff,
@@ -626,10 +625,7 @@ class Conductivity_RTA(Conductivity):
                 self._collision.set_grid_point(grid_point)
                 self._set_gamma_at_sigmas(i)
         else:
-            self._collision.set_grid_point(
-                grid_point,
-                stores_triplets_map=(self._is_full_pp or
-                                     self._is_gamma_detail))
+            self._collision.set_grid_point(grid_point)
             num_triplets = len(self._pp.get_triplets_at_q()[0])
             if self._log_level:
                 print("Number of triplets: %d" % num_triplets)

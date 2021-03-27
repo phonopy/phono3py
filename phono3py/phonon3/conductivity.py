@@ -66,7 +66,7 @@ def write_pp(conductivity,
     sigmas = conductivity.get_sigmas()
     sigma_cutoff = conductivity.get_sigma_cutoff_width()
     mesh = conductivity.mesh_numbers
-    triplets, weights, map_triplets, _ = pp.get_triplets_at_q()
+    triplets, weights, _, _ = pp.get_triplets_at_q()
     all_triplets = get_all_triplets(grid_point, pp.bz_grid)
 
     if len(sigmas) > 1:
@@ -79,7 +79,6 @@ def write_pp(conductivity,
                      grid_point=grid_point,
                      triplet=triplets,
                      weight=weights,
-                     triplet_map=map_triplets,
                      triplet_all=all_triplets,
                      sigma=sigmas[-1],
                      sigma_cutoff=sigma_cutoff,

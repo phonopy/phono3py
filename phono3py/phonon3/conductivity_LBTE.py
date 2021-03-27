@@ -115,6 +115,7 @@ def get_thermal_conductivity_LBTE(
     if read_collision:
         read_from = _set_collision_from_file(
             lbte,
+            interaction.bz_grid,
             indices=read_collision,
             is_reducible_collision_matrix=is_reducible_collision_matrix,
             filename=input_filename,
@@ -196,7 +197,7 @@ def _write_collision(lbte,
             igp = 0
         else:
             if is_reducible_collision_matrix:
-                igp = gp
+                igp = interaction.bz_grid.bzg2grg[gp]
             else:
                 igp = i
         if all_bands_exist(interaction):
@@ -217,7 +218,7 @@ def _write_collision(lbte,
                     filename=filename)
         else:
             for j, sigma in enumerate(sigmas):
-                for k, bi in enumerate(interaction.get_band_indices()):
+                for k, bi in enumerate(interaction.band_indices):
                     if gamma_isotope is not None:
                         gamma_isotope_at_sigma = gamma_isotope[j, igp, k]
                     else:
@@ -340,6 +341,7 @@ def _write_kappa(lbte,
 
 
 def _set_collision_from_file(lbte,
+                             bz_grid,
                              indices='all',
                              is_reducible_collision_matrix=False,
                              filename=None,
@@ -425,6 +427,7 @@ def _set_collision_from_file(lbte,
                                              sigma_cutoff,
                                              i,
                                              gp,
+                                             bz_grid.bzg2grg,
                                              indices,
                                              is_reducible_collision_matrix,
                                              filename,
@@ -440,6 +443,7 @@ def _set_collision_from_file(lbte,
                                 sigma_cutoff,
                                 i,
                                 gp,
+                                bz_grid.bzg2grg,
                                 j,
                                 indices,
                                 is_reducible_collision_matrix,
@@ -540,6 +544,7 @@ def _collect_collision_gp(colmat_at_sigma,
                           sigma_cutoff,
                           i,
                           gp,
+                          bzg2grg,
                           indices,
                           is_reducible_collision_matrix,
                           filename,
@@ -562,7 +567,7 @@ def _collect_collision_gp(colmat_at_sigma,
      gamma_at_gp,
      temperatures_at_gp) = collision_gp
     if is_reducible_collision_matrix:
-        igp = gp
+        igp = bzg2grg[gp]
     else:
         igp = i
     gamma_at_sigma[0, :, igp] = gamma_at_gp
@@ -580,6 +585,7 @@ def _collect_collision_band(colmat_at_sigma,
                             sigma_cutoff,
                             i,
                             gp,
+                            bzg2grg,
                             j,
                             indices,
                             is_reducible_collision_matrix,
@@ -604,7 +610,7 @@ def _collect_collision_band(colmat_at_sigma,
      gamma_at_band,
      temperatures_at_band) = collision_band
     if is_reducible_collision_matrix:
-        igp = gp
+        igp = bzg2grg[gp]
     else:
         igp = i
     gamma_at_sigma[0, :, igp, j] = gamma_at_band
@@ -889,7 +895,7 @@ class Conductivity_LBTE(Conductivity):
         return self._mfp
 
     def get_frequencies_all(self):
-        return self._frequencies[:np.prod(self._pp.mesh_numbers)]
+        return self._frequencies[self._bz_grid.grg2bzg]
 
     def get_kappa_RTA(self):
         return self._kappa_RTA
@@ -1523,7 +1529,7 @@ class Conductivity_LBTE(Conductivity):
 
     def _set_kappa_RTA(self, i_sigma, i_temp, weights):
         N = self._num_sampling_grid_points
-        num_band = self._primitive.get_number_of_atoms() * 3
+        num_band = len(self._primitive) * 3
         X = self._get_X(i_temp, weights, self._gv)
         Y = np.zeros_like(X)
 
@@ -1597,11 +1603,11 @@ class Conductivity_LBTE(Conductivity):
                         rotations_cartesian,
                         i_sigma,
                         i_temp):
-        num_band = self._primitive.get_number_of_atoms() * 3
-        for i, (v_gp, f_gp) in enumerate(zip(X.reshape(num_grid_points,
-                                                       num_band, 3),
-                                             Y.reshape(num_grid_points,
-                                                       num_band, 3))):
+        num_band = len(self._primitive) * 3
+        for i, (v_gp, f_gp) in enumerate(
+                zip(X.reshape(num_grid_points, num_band, 3),
+                    Y.reshape(num_grid_points, num_band, 3))):
+
             for j, (v, f) in enumerate(zip(v_gp, f_gp)):
                 # Do not consider three lowest modes at Gamma-point
                 # It is assumed that there are no imaginary modes.

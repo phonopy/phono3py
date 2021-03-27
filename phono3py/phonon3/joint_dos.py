@@ -330,14 +330,14 @@ class JointDos(object):
 
             (self._triplets_at_q,
              self._weights_at_q,
-             map_triplets,
-             map_q) = get_nosym_triplets_at_q(
+             _,
+             _) = get_nosym_triplets_at_q(
                  self._grid_point, self._bz_grid)
         else:
             (self._triplets_at_q,
              self._weights_at_q,
-             map_triplets,
-             map_q) = get_triplets_at_q(self._grid_point, self._bz_grid)
+             _,
+             _) = get_triplets_at_q(self._grid_point, self._bz_grid)
 
     def _allocate_phonons(self):
         num_grid = len(self._bz_grid.addresses)

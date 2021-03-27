@@ -291,7 +291,7 @@ class Interaction(object):
         self._interaction_strength = pp_strength
         self._g_zero = g_zero
 
-    def set_grid_point(self, grid_point, stores_triplets_map=False):
+    def set_grid_point(self, grid_point, store_triplets_map=False):
         reciprocal_lattice = np.linalg.inv(self._primitive.cell)
         if not self._is_mesh_symmetry:
             (triplets_at_q,
@@ -345,8 +345,10 @@ class Interaction(object):
 
         self._triplets_at_q = triplets_at_q
         self._weights_at_q = weights_at_q
-        self._triplets_map_at_q = triplets_map_at_q
-        self._ir_map_at_q = ir_map_at_q
+
+        if store_triplets_map:
+            self._triplets_map_at_q = triplets_map_at_q
+            self._ir_map_at_q = ir_map_at_q
 
     def init_dynamical_matrix(self,
                               fc2,
