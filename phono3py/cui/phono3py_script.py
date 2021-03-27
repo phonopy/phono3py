@@ -58,7 +58,7 @@ from phono3py.cui.settings import Phono3pyConfParser
 from phono3py.cui.load import set_dataset_and_force_constants
 from phono3py import Phono3py, Phono3pyJointDos, Phono3pyIsotope
 from phono3py.phonon3.gruneisen import run_gruneisen_parameters
-from phono3py.phonon3.triplets import get_grid_point_from_address, BZGrid
+from phono3py.phonon.grid import get_grid_point_from_address
 from phono3py.cui.phono3py_argparse import get_parser
 from phono3py.cui.show_log import (
     show_general_settings, show_phono3py_settings, show_phono3py_cells)

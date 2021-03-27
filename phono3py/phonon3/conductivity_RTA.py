@@ -42,8 +42,8 @@ from phono3py.phonon3.conductivity import (Conductivity, all_bands_exist,
 from phono3py.phonon3.conductivity import write_pp as _write_pp
 from phono3py.phonon3.imag_self_energy import (ImagSelfEnergy,
                                                average_by_degeneracy)
-from phono3py.phonon3.triplets import (get_grid_points_by_rotations,
-                                       get_all_triplets)
+from phono3py.phonon3.triplets import get_all_triplets
+from phono3py.phonon.grid import get_grid_points_by_rotations
 
 
 def get_thermal_conductivity_RTA(

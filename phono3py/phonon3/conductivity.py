@@ -39,9 +39,10 @@ from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.phonon.thermal_properties import mode_cv as get_mode_cv
 from phonopy.units import THzToEv, EV, THz, Angstrom
 from phono3py.file_IO import write_pp_to_hdf5
-from phono3py.phonon3.triplets import (
-    get_ir_grid_points, get_grid_points_by_rotations, get_all_triplets)
+from phono3py.phonon3.triplets import get_all_triplets
 from phono3py.other.isotope import Isotope
+from phono3py.phonon.grid import (get_ir_grid_points,
+                                  get_grid_points_by_rotations)
 
 unit_to_WmK = ((THz * Angstrom) ** 2 / (Angstrom ** 3) * EV / THz /
                (2 * np.pi))  # 2pi comes from definition of lifetime.

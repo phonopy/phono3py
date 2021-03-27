@@ -1,10 +1,9 @@
 import os
 import numpy as np
 
-from phono3py.phonon3.triplets import (get_grid_point_from_address,
-                                       get_grid_point_from_address_py,
-                                       get_triplets_at_q,
-                                       BZGrid)
+from phono3py.phonon3.triplets import get_triplets_at_q
+from phono3py.phonon.grid import (get_grid_point_from_address,
+                                  get_grid_point_from_address_py, BZGrid)
 
 data_dir = os.path.dirname(os.path.abspath(__file__))
 

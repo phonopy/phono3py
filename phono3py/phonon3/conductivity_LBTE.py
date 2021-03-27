@@ -40,7 +40,7 @@ from phono3py.phonon3.conductivity import (Conductivity, all_bands_exist,
                                            unit_to_WmK)
 from phono3py.phonon3.conductivity import write_pp as _write_pp
 from phono3py.phonon3.collision_matrix import CollisionMatrix
-from phono3py.phonon3.triplets import get_grid_points_by_rotations
+from phono3py.phonon.grid import get_grid_points_by_rotations
 from phono3py.file_IO import (write_kappa_to_hdf5,
                               write_collision_to_hdf5,
                               read_collision_from_hdf5,

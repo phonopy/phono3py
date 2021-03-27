@@ -41,7 +41,7 @@ from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
 from phonopy.units import VaspToTHz
 from phonopy.structure.atoms import isotope_data
 from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
-from phono3py.phonon3.triplets import BZGrid
+from phono3py.phonon.grid import BZGrid
 from phono3py.phonon.func import gaussian
 
 
