@@ -1305,6 +1305,10 @@ def write_ir_grid_points(bz_grid,
     for vec, axis in zip(primitive_lattice.T, ('a*', 'b*', 'c*')):
         w.write("- [ %12.8f, %12.8f, %12.8f ] # %2s\n"
                 % (tuple(vec) + (axis,)))
+    w.write("microzone_lattice:\n")
+    for vec, axis in zip(bz_grid.microzone_lattice.T, ('a*', 'b*', 'c*')):
+        w.write("- [ %12.8f, %12.8f, %12.8f ] # %2s\n"
+                % (tuple(vec) + (axis,)))
     w.write("num_reduced_ir_grid_points: %d\n" % len(grid_points))
     w.write("ir_grid_points:  # [address, weight]\n")
 

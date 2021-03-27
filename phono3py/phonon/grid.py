@@ -137,7 +137,7 @@ class BZGrid(object):
             self._reciprocal_lattice = np.array(
                 np.linalg.inv(lattice), dtype='double', order='C')
 
-        self._generate_grid(mesh, force_SNF=True)
+        self._generate_grid(mesh, force_SNF=False)
 
     @property
     def mesh_numbers(self):
