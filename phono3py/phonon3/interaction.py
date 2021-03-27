@@ -48,7 +48,7 @@ class Interaction(object):
                  supercell,
                  primitive,
                  bz_grid,
-                 symmetry,
+                 primitive_symmetry,
                  fc3=None,
                  band_indices=None,
                  constant_averaged_interaction=None,
@@ -62,7 +62,7 @@ class Interaction(object):
         self._supercell = supercell
         self._primitive = primitive
         self._bz_grid = bz_grid
-        self._symmetry = symmetry
+        self._primitive_symmetry = primitive_symmetry
 
         self._band_indices = None
         self._set_band_indices(band_indices)
@@ -91,7 +91,7 @@ class Interaction(object):
         self._symmetrize_fc3q = symmetrize_fc3q
         self._lapack_zheev_uplo = lapack_zheev_uplo
 
-        self._symprec = symmetry.get_symmetry_tolerance()
+        self._symprec = self._primitive_symmetry.tolerance
 
         self._triplets_at_q = None
         self._weights_at_q = None
@@ -181,6 +181,10 @@ class Interaction(object):
     def get_primitive(self):
         warnings.warn("Use attribute, primitive.", DeprecationWarning)
         return self.primitive
+
+    @property
+    def primitive_symmetry(self):
+        return self._primitive_symmetry
 
     @property
     def supercell(self):
@@ -309,7 +313,7 @@ class Interaction(object):
                                                     dtype='int_'))
                     rotations = []
                     for i, r in enumerate(
-                            self._symmetry.reciprocal_operations):
+                            self._primitive_symmetry.reciprocal_operations):
                         dq = self._nac_q_direction
                         dq /= np.linalg.norm(dq)
                         diff = np.dot(r, dq) - dq

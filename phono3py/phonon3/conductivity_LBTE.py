@@ -52,7 +52,6 @@ from phonopy.units import THzToEv, Kb
 
 def get_thermal_conductivity_LBTE(
         interaction,
-        symmetry,
         temperatures=None,
         sigmas=None,
         sigma_cutoff=None,
@@ -95,7 +94,6 @@ def get_thermal_conductivity_LBTE(
 
     lbte = Conductivity_LBTE(
         interaction,
-        symmetry,
         grid_points=grid_points,
         temperatures=temps,
         sigmas=sigmas,
@@ -764,7 +762,6 @@ def diagonalize_collision_matrix(collision_matrices,
 class Conductivity_LBTE(Conductivity):
     def __init__(self,
                  interaction,
-                 symmetry,
                  grid_points=None,
                  temperatures=None,
                  sigmas=None,
@@ -796,7 +793,6 @@ class Conductivity_LBTE(Conductivity):
         self._cutoff_frequency = None
         self._boundary_mfp = None
 
-        self._symmetry = None
         self._point_operations = None
         self._rotations_cartesian = None
 
@@ -835,7 +831,6 @@ class Conductivity_LBTE(Conductivity):
 
         Conductivity.__init__(self,
                               interaction,
-                              symmetry,
                               grid_points=grid_points,
                               temperatures=temperatures,
                               sigmas=sigmas,
@@ -1030,7 +1025,7 @@ class Conductivity_LBTE(Conductivity):
             self._collision = CollisionMatrix(
                 self._pp,
                 point_operations=self._point_operations,
-                ir_grid_points=self._ir_grid_points,
+                num_ir_grid_points=len(self._ir_grid_points),
                 rot_grid_points=self._rot_grid_points,
                 log_level=self._log_level)
             if self._collision_matrix is None:

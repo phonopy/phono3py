@@ -1724,7 +1724,6 @@ class Phono3py(object):
                 _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_LBTE(
                 self._interaction,
-                self._primitive_symmetry,
                 temperatures=_temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,
@@ -1756,7 +1755,6 @@ class Phono3py(object):
                 _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_RTA(
                 self._interaction,
-                self._primitive_symmetry,
                 temperatures=_temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,

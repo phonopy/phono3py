@@ -48,7 +48,6 @@ from phono3py.phonon.grid import get_grid_points_by_rotations
 
 def get_thermal_conductivity_RTA(
         interaction,
-        symmetry,
         temperatures=None,
         sigmas=None,
         sigma_cutoff=None,
@@ -83,7 +82,6 @@ def get_thermal_conductivity_RTA(
               "--------------------")
     br = Conductivity_RTA(
         interaction,
-        symmetry,
         grid_points=grid_points,
         temperatures=_temperatures,
         sigmas=sigmas,
@@ -471,7 +469,6 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
 class Conductivity_RTA(Conductivity):
     def __init__(self,
                  interaction,
-                 symmetry,
                  grid_points=None,
                  temperatures=None,
                  sigmas=None,
@@ -508,7 +505,6 @@ class Conductivity_RTA(Conductivity):
         self._cutoff_frequency = None
         self._boundary_mfp = None
 
-        self._symmetry = None
         self._point_operations = None
         self._rotations_cartesian = None
 
@@ -544,7 +540,6 @@ class Conductivity_RTA(Conductivity):
 
         Conductivity.__init__(self,
                               interaction,
-                              symmetry,
                               grid_points=grid_points,
                               temperatures=temperatures,
                               sigmas=sigmas,

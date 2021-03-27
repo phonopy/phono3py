@@ -90,7 +90,6 @@ def write_pp(conductivity,
 class Conductivity(object):
     def __init__(self,
                  interaction,
-                 symmetry,
                  grid_points=None,
                  temperatures=None,
                  sigmas=None,
@@ -123,14 +122,13 @@ class Conductivity(object):
         self._cutoff_frequency = self._pp.cutoff_frequency
         self._boundary_mfp = boundary_mfp
 
-        self._symmetry = symmetry
-
         if not self._is_kappa_star:
             self._point_operations = np.array([np.eye(3, dtype='int_')],
                                               dtype='int_', order='C')
         else:
-            self._point_operations = np.array(symmetry.reciprocal_operations,
-                                              dtype='int_', order='C')
+            self._point_operations = np.array(
+                self._pp.primitive_symmetry.reciprocal_operations,
+                dtype='int_', order='C')
         rec_lat = np.linalg.inv(self._primitive.cell)
         self._rotations_cartesian = np.array(
             [similarity_transformation(rec_lat, r)
@@ -188,7 +186,7 @@ class Conductivity(object):
         self._gv_obj = GroupVelocity(
             self._dm,
             q_length=self._gv_delta_q,
-            symmetry=self._symmetry,
+            symmetry=self._pp.primitive_symmetry,
             frequency_factor_to_THz=self._frequency_factor_to_THz)
         # gv_delta_q may be changed.
         self._gv_delta_q = self._gv_obj.get_q_length()
@@ -378,7 +376,7 @@ class Conductivity(object):
             mass_variances=mv,
             bz_grid=self._bz_grid,
             frequency_factor_to_THz=self._frequency_factor_to_THz,
-            symprec=self._symmetry.get_symmetry_tolerance(),
+            symprec=self._pp.primitive_symmetry.tolerance,
             cutoff_frequency=self._cutoff_frequency,
             lapack_zheev_uplo=self._pp.lapack_zheev_uplo)
         self._mass_variances = self._isotope.mass_variances
