@@ -1030,7 +1030,7 @@ class Conductivity_LBTE(Conductivity):
                     self._bz_grid)
             self._collision = CollisionMatrix(
                 self._pp,
-                point_operations=self._point_operations,
+                rotations_cartesian=self._rotations_cartesian,
                 num_ir_grid_points=len(self._ir_grid_points),
                 rot_grid_points=self._rot_grid_points,
                 log_level=self._log_level)
@@ -1163,11 +1163,11 @@ class Conductivity_LBTE(Conductivity):
 
     def _combine_collisions(self):
         num_band = len(self._primitive) * 3
-        for j, k in list(np.ndindex((len(self._sigmas),
-                                     len(self._temperatures)))):
+        for j, k in list(np.ndindex(
+                (len(self._sigmas), len(self._temperatures)))):
             for i, ir_gp in enumerate(self._ir_grid_points):
-                for r, r_gp in zip(self._rotations_cartesian,
-                                   self._rot_grid_points[i]):
+                for r, r_gp in zip(
+                        self._rotations_cartesian, self._rot_grid_points[i]):
                     if ir_gp != r_gp:
                         continue
 
@@ -1270,6 +1270,17 @@ class Conductivity_LBTE(Conductivity):
         n = float(self._rot_grid_points.shape[1])
         for r_gps in self._rot_grid_points:
             weights.append(np.sqrt(len(np.unique(r_gps)) / n))
+
+            sym_broken = False
+            for gp in np.unique(r_gps):
+                if (len(np.where(r_gps == gp)[0]) !=
+                    self._rot_grid_points.shape[1] // len(np.unique(r_gps))):
+                    sym_broken = True
+
+            if sym_broken:
+                print("=" * 26 + " Warning " + "=" * 26)
+                print("Symmetry of grid is broken.")
+
         return weights
 
     def _symmetrize_collision_matrix(self):

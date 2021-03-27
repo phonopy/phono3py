@@ -335,7 +335,7 @@ static long *create_gp2tp_map(const long *triplets_map,
     if (triplets_map[i] == i) {
       gp2tp_map[i] = num_ir;
       num_ir++;
-    } else { /* This should not happen. */
+    } else { /* This should not be used. */
       gp2tp_map[i] = -1;
     }
   }

@@ -34,7 +34,6 @@
 
 import numpy as np
 from phonopy.units import THzToEv, Kb
-from phonopy.harmonic.force_constants import similarity_transformation
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
 
 
@@ -48,7 +47,7 @@ class CollisionMatrix(ImagSelfEnergy):
 
     def __init__(self,
                  interaction,
-                 point_operations=None,
+                 rotations_cartesian=None,
                  num_ir_grid_points=None,
                  rot_grid_points=None,
                  temperature=None,
@@ -91,10 +90,7 @@ class CollisionMatrix(ImagSelfEnergy):
             self._rot_grid_points = np.array(
                 self._pp.bz_grid.bzg2grg[rot_grid_points],
                 dtype='int_', order='C')
-            rec_lat = np.linalg.inv(self._pp.primitive.cell)
-            self._rotations_cartesian = np.array(
-                [similarity_transformation(rec_lat, r)
-                 for r in point_operations], dtype='double', order='C')
+            self._rotations_cartesian = rotations_cartesian
 
     def run(self):
         if self._pp_strength is None:

@@ -1,4 +1,5 @@
 import numpy as np
+from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phono3py.phonon.grid import (get_grid_point_from_address,
                                   get_grid_point_from_address_py, BZGrid)
 
@@ -153,5 +154,28 @@ def _test_BZGrid_SNF(bzgrid):
     np.testing.assert_equal(ref_rots, bzgrid.rotations.ravel())
 
 
-def test_SNF_grid(aln_lda):
-    pass
+def test_SNF_tetrahedra_relative_grid(aln_lda):
+    """Check if relative grid q-points agree with points around microzone.
+
+    Compare between microzone and primitive lattices in
+    reciprocal Cartesian coordinates.
+
+    """
+
+    aln_lda.mesh_numbers = 25
+    bz_grid = aln_lda.grid
+    plat = np.linalg.inv(aln_lda.primitive.cell)
+    mlat = bz_grid.microzone_lattice
+    bz_grid._generate_grid(25, force_SNF=True)
+    thm = TetrahedronMethod(mlat)
+    snf_tetrahedra = np.dot(thm.get_tetrahedra(), bz_grid.P.T)
+
+    np.testing.assert_equal(bz_grid.D_diag, [2, 8, 24])
+
+    for mtet, ptet in zip(thm.get_tetrahedra(), snf_tetrahedra):
+        np.testing.assert_allclose(
+            np.dot(mtet, mlat.T),
+            np.dot(np.dot(ptet, bz_grid.QDinv.T), plat.T),
+            atol=1e-8)
+        # print(np.dot(mtet, mlat.T))
+        # print(np.dot(np.dot(ptet, bz_grid.QDinv.T), plat.T))
