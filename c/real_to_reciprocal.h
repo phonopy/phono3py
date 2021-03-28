@@ -39,13 +39,13 @@
 #include "lapack_wrapper.h"
 
 void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
-                            const double q[9],
+                            const double q_vecs[3][3],
                             const double *fc3,
-                            const int is_compact_fc3,
+                            const long is_compact_fc3,
                             const double *shortest_vectors,
-                            const int svecs_dims[3],
-                            const int *multiplicity,
-                            const int *p2s_map,
-                            const int *s2p_map,
-                            const int openmp_at_bands);
+                            const long svecs_dims[3],
+                            const long *multiplicity,
+                            const long *p2s_map,
+                            const long *s2p_map,
+                            const long openmp_at_bands);
 #endif

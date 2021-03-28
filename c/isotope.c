@@ -40,18 +40,18 @@
 
 void
 iso_get_isotope_scattering_strength(double *gamma,
-                                    const size_t grid_point,
+                                    const long grid_point,
                                     const double *mass_variances,
                                     const double *frequencies,
                                     const lapack_complex_double *eigenvectors,
-                                    const size_t num_grid_points,
-                                    const int *band_indices,
-                                    const size_t num_band,
-                                    const size_t num_band0,
+                                    const long num_grid_points,
+                                    const long *band_indices,
+                                    const long num_band,
+                                    const long num_band0,
                                     const double sigma,
                                     const double cutoff_frequency)
 {
-  size_t i, j, k, l, m;
+  long i, j, k, l, m;
   double *e0_r, *e0_i, e1_r, e1_i, a, b, f, *f0, dist, sum_g, sum_g_k;
 
   e0_r = (double*)malloc(sizeof(double) * num_band * num_band0);
@@ -87,7 +87,7 @@ iso_get_isotope_scattering_strength(double *gamma,
         if (f < cutoff_frequency) {
           continue;
         }
-        dist = gaussian(f - f0[i], sigma);
+        dist = phonoc_gaussian(f - f0[i], sigma);
         for (l = 0; l < num_band / 3; l++) { /* elements */
           a = 0;
           b = 0;
@@ -128,20 +128,20 @@ iso_get_isotope_scattering_strength(double *gamma,
 
 void iso_get_thm_isotope_scattering_strength
 (double *gamma,
- const size_t grid_point,
- const size_t *ir_grid_points,
- const int *weights,
+ const long grid_point,
+ const long *ir_grid_points,
+ const long *weights,
  const double *mass_variances,
  const double *frequencies,
  const lapack_complex_double *eigenvectors,
- const size_t num_grid_points,
- const int *band_indices,
- const size_t num_band,
- const size_t num_band0,
+ const long num_grid_points,
+ const long *band_indices,
+ const long num_band,
+ const long num_band0,
  const double *integration_weights,
  const double cutoff_frequency)
 {
-  size_t i, j, k, l, m, gp;
+  long i, j, k, l, m, gp;
   double *e0_r, *e0_i, *f0, *gamma_ij;
   double e1_r, e1_i, a, b, f, dist, sum_g_k;
 

@@ -49,6 +49,7 @@ def get_imag_self_energy(interaction,
                          frequency_points=None,
                          frequency_step=None,
                          num_frequency_points=None,
+                         frequency_points_at_bands=False,
                          num_points_in_batch=None,
                          scattering_event_class=None,  # class 1 or 2
                          write_gamma_detail=False,
@@ -76,7 +77,8 @@ def get_imag_self_energy(interaction,
         which results in [None, ].
         dtype=float, shape=(sigmas,)
     frequency_points : array_like, optional
-        Frequency sampling points. Default is None. In this case,
+        Frequency sampling points. Default is None. With
+        frequency_points_at_bands=False and frequency_points is None,
         num_frequency_points or frequency_step is used to generate uniform
         frequency sampling points.
         dtype=float, shape=(frequency_points,)
@@ -87,6 +89,9 @@ def get_imag_self_energy(interaction,
         Number of sampling sampling points to be used instead of
         frequency_step. This number includes end points. Default is None,
         which gives 201.
+    frequency_points_at_bands : bool, optional
+        Phonon band frequencies are used as frequency points when True.
+        Default is False.
     num_points_in_batch: int, optional
         Number of sampling points in one batch. This is for the frequency
         sampling mode and the sampling points are divided into batches.
@@ -122,27 +127,35 @@ def get_imag_self_energy(interaction,
             print("Running harmonic phonon calculations...")
         interaction.run_phonon_solver()
 
-    mesh = interaction.mesh_numbers
     frequencies = interaction.get_phonons()[0]
     max_phonon_freq = np.amax(frequencies)
+    num_band0 = len(interaction.band_indices)
+    mesh = interaction.mesh_numbers
 
-    _frequency_points = get_frequency_points(
-        max_phonon_freq=max_phonon_freq,
-        sigmas=_sigmas,
-        frequency_points=frequency_points,
-        frequency_step=frequency_step,
-        num_frequency_points=num_frequency_points)
+    if frequency_points_at_bands:
+        _frequency_points = None
+        _num_frequency_points = num_band0
+        gamma = np.zeros((len(grid_points), len(_sigmas), len(temperatures),
+                          _num_frequency_points), dtype='double', order='C')
+    else:
+        _frequency_points = get_frequency_points(
+            max_phonon_freq=max_phonon_freq,
+            sigmas=_sigmas,
+            frequency_points=frequency_points,
+            frequency_step=frequency_step,
+            num_frequency_points=num_frequency_points)
+        _num_frequency_points = len(_frequency_points)
+        gamma = np.zeros(
+            (len(grid_points), len(_sigmas), len(temperatures),
+             num_band0, _num_frequency_points), dtype='double', order='C')
+
+    detailed_gamma = []
 
     ise = ImagSelfEnergy(
         interaction, with_detail=(write_gamma_detail or return_gamma_detail))
-    gamma = np.zeros(
-        (len(grid_points), len(_sigmas), len(temperatures),
-         len(interaction.band_indices), len(_frequency_points)),
-        dtype='double', order='C')
-    detailed_gamma = []
-
     for i, gp in enumerate(grid_points):
         ise.set_grid_point(gp)
+
         if log_level:
             weights = interaction.get_triplets_at_q()[1]
             print("------------------- Imaginary part of self energy (%d/%d) "
@@ -150,11 +163,7 @@ def get_imag_self_energy(interaction,
             print("Grid point: %d" % gp)
             print("Number of ir-triplets: "
                   "%d / %d" % (len(weights), weights.sum()))
-
-        ise.run_interaction()
-
-        if log_level:
-            adrs = interaction.grid_address[gp]
+            adrs = interaction.bz_grid.addresses[gp]
             q = adrs.astype('double') / mesh
             print("q-point: %s" % q)
             print("Phonon frequency:")
@@ -167,68 +176,147 @@ def get_imag_self_energy(interaction,
             print(text)
             sys.stdout.flush()
 
-        if write_gamma_detail or return_gamma_detail:
-            (triplets, weights,
-             map_triplets, _) = interaction.get_triplets_at_q()
-            num_band0 = len(interaction.band_indices)
-            num_band = frequencies.shape[1]
-            detailed_gamma_at_gp = np.zeros(
-                (len(_sigmas), len(temperatures), len(_frequency_points),
-                 len(weights), num_band0, num_band, num_band),
-                dtype='double')
-        else:
-            detailed_gamma_at_gp = None
-
-        for j, sigma in enumerate(_sigmas):
-            if log_level:
-                if sigma:
-                    print("Sigma: %s" % sigma)
-                else:
-                    print("Tetrahedron method is used for BZ integration.")
-
-            ise.set_sigma(sigma)
-
-            # Run one by one at frequency points
-            if detailed_gamma_at_gp is None:
-                detailed_gamma_at_gp_at_j = None
-            else:
-                detailed_gamma_at_gp_at_j = detailed_gamma_at_gp[j]
-            run_ise_at_frequency_points_batch(
-                _frequency_points,
-                ise,
-                temperatures,
-                gamma[i, j],
-                write_gamma_detail=write_gamma_detail,
-                return_gamma_detail=return_gamma_detail,
-                detailed_gamma_at_gp=detailed_gamma_at_gp_at_j,
-                scattering_event_class=scattering_event_class,
-                nelems_in_batch=num_points_in_batch,
-                log_level=log_level)
-
-            if write_gamma_detail:
-                full_filename = write_gamma_detail_to_hdf5(
-                    temperatures,
-                    mesh,
-                    gamma_detail=detailed_gamma_at_gp[j],
-                    grid_point=gp,
-                    triplet=triplets,
-                    weight=weights,
-                    triplet_map=map_triplets,
-                    sigma=sigma,
-                    frequency_points=_frequency_points,
-                    filename=output_filename)
-
-                if log_level:
-                    print("Contribution of each triplet to imaginary part of "
-                          "self energy is written in\n\"%s\"." % full_filename)
-
-            if return_gamma_detail:
-                detailed_gamma.append(detailed_gamma_at_gp)
+        ise.run_interaction()
+        _get_imag_self_energy_at_gp(gamma,
+                                    detailed_gamma,
+                                    i,
+                                    gp,
+                                    _sigmas,
+                                    temperatures,
+                                    _frequency_points,
+                                    _num_frequency_points,
+                                    scattering_event_class,
+                                    num_points_in_batch,
+                                    interaction,
+                                    ise,
+                                    write_gamma_detail,
+                                    return_gamma_detail,
+                                    output_filename,
+                                    log_level)
 
     if return_gamma_detail:
         return _frequency_points, gamma, detailed_gamma
     else:
         return _frequency_points, gamma
+
+
+def _get_imag_self_energy_at_gp(gamma,
+                                detailed_gamma,
+                                i,
+                                gp,
+                                _sigmas,
+                                temperatures,
+                                _frequency_points,
+                                _num_frequency_points,
+                                scattering_event_class,
+                                num_points_in_batch,
+                                interaction,
+                                ise,
+                                write_gamma_detail,
+                                return_gamma_detail,
+                                output_filename,
+                                log_level):
+    num_band0 = len(interaction.band_indices)
+    frequencies = interaction.get_phonons()[0]
+    mesh = interaction.mesh_numbers
+
+    if write_gamma_detail or return_gamma_detail:
+        triplets, weights, _, _ = interaction.get_triplets_at_q()
+        num_band = frequencies.shape[1]
+        if _frequency_points is None:
+            detailed_gamma_at_gp = np.zeros(
+                (len(_sigmas), len(temperatures),
+                 len(weights), num_band0, num_band, num_band),
+                dtype='double')
+        else:
+            detailed_gamma_at_gp = np.zeros(
+                (len(_sigmas), len(temperatures), _num_frequency_points,
+                 len(weights), num_band0, num_band, num_band),
+                dtype='double')
+    else:
+        detailed_gamma_at_gp = None
+
+    for j, sigma in enumerate(_sigmas):
+        if log_level:
+            if sigma:
+                print("Sigma: %s" % sigma)
+            else:
+                print("Tetrahedron method is used for BZ integration.")
+
+        ise.set_sigma(sigma)
+        _get_imag_self_energy_at_sigma(gamma,
+                                       detailed_gamma_at_gp,
+                                       i,
+                                       j,
+                                       temperatures,
+                                       _frequency_points,
+                                       scattering_event_class,
+                                       num_points_in_batch,
+                                       ise,
+                                       write_gamma_detail,
+                                       return_gamma_detail,
+                                       log_level)
+
+        if write_gamma_detail:
+            full_filename = write_gamma_detail_to_hdf5(
+                temperatures,
+                mesh,
+                gamma_detail=detailed_gamma_at_gp[j],
+                grid_point=gp,
+                triplet=triplets,
+                weight=weights,
+                sigma=sigma,
+                frequency_points=_frequency_points,
+                filename=output_filename)
+
+            if log_level:
+                print("Contribution of each triplet to imaginary part of "
+                      "self energy is written in\n\"%s\"." % full_filename)
+
+        if return_gamma_detail:
+            detailed_gamma.append(detailed_gamma_at_gp)
+
+
+def _get_imag_self_energy_at_sigma(gamma,
+                                   detailed_gamma_at_gp,
+                                   i,
+                                   j,
+                                   temperatures,
+                                   _frequency_points,
+                                   scattering_event_class,
+                                   num_points_in_batch,
+                                   ise,
+                                   write_gamma_detail,
+                                   return_gamma_detail,
+                                   log_level):
+    # Run one by one at frequency points
+    if detailed_gamma_at_gp is None:
+        detailed_gamma_at_gp_at_j = None
+    else:
+        detailed_gamma_at_gp_at_j = detailed_gamma_at_gp[j]
+
+    if _frequency_points is None:
+        ise.set_integration_weights(
+            scattering_event_class=scattering_event_class)
+        for k, t in enumerate(temperatures):
+            ise.set_temperature(t)
+            ise.run()
+            gamma[i, k, :] = ise.get_imag_self_energy()
+            if write_gamma_detail or return_gamma_detail:
+                detailed_gamma_at_gp[k] = (
+                    ise.get_detailed_imag_self_energy())
+    else:
+        run_ise_at_frequency_points_batch(
+            _frequency_points,
+            ise,
+            temperatures,
+            gamma[i, j],
+            write_gamma_detail=write_gamma_detail,
+            return_gamma_detail=return_gamma_detail,
+            detailed_gamma_at_gp=detailed_gamma_at_gp_at_j,
+            scattering_event_class=scattering_event_class,
+            nelems_in_batch=num_points_in_batch,
+            log_level=log_level)
 
 
 def get_frequency_points(max_phonon_freq=None,
@@ -363,7 +451,6 @@ class ImagSelfEnergy(object):
         self._g_zero = None  # Necessary elements of interaction strength
         self._g_zero_frequency_points = None
         self._g_zero_zeros = None   # always zeros for frequency sampling mode
-        self._mesh = self._pp.mesh_numbers
         self._is_collision_matrix = False
 
         # Unit to THz of Gamma
@@ -379,6 +466,7 @@ class ImagSelfEnergy(object):
             self.run_interaction()
 
         num_band0 = self._pp_strength.shape[1]
+
         if self._frequency_points is None:
             self._imag_self_energy = np.zeros(num_band0, dtype='double')
             if self._with_detail:
@@ -456,12 +544,11 @@ class ImagSelfEnergy(object):
     def get_unit_conversion_factor(self):
         return self._unit_conversion
 
-    def set_grid_point(self, grid_point=None, stores_triplets_map=False):
+    def set_grid_point(self, grid_point=None):
         if grid_point is None:
             self._grid_point = None
         else:
-            self._pp.set_grid_point(grid_point,
-                                    stores_triplets_map=stores_triplets_map)
+            self._pp.set_grid_point(grid_point)
             self._pp_strength = None
             (self._triplets_at_q,
              self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
@@ -495,8 +582,8 @@ class ImagSelfEnergy(object):
 
     def set_averaged_pp_interaction(self, ave_pp):
         num_triplets = len(self._triplets_at_q)
-        num_band = self._pp.get_primitive().get_number_of_atoms() * 3
-        num_grid = np.prod(self._mesh)
+        num_band = len(self._pp.primitive) * 3
+        num_grid = np.prod(self._pp.mesh_numbers)
         bi = self._pp.get_band_indices()
         self._pp_strength = np.zeros(
             (num_triplets, len(bi), num_band, num_band), dtype='double')
@@ -588,7 +675,7 @@ class ImagSelfEnergy(object):
             self._pp_strength,
             self._triplets_at_q,
             self._weights_at_q,
-            self._pp.get_grid_address(),
+            self._pp.bz_grid.addresses,
             self._frequencies,
             self._temperature,
             self._g,
@@ -642,7 +729,7 @@ class ImagSelfEnergy(object):
                     self._pp_strength,
                     self._triplets_at_q,
                     self._weights_at_q,
-                    self._pp.grid_address,
+                    self._pp.bz_grid.addresses,
                     self._frequencies,
                     self._temperature,
                     g,

@@ -34,27 +34,22 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef __triplet_kpoint_H__
-#define __triplet_kpoint_H__
+#ifndef __triplet_grid_H__
+#define __triplet_grid_H__
 
-#include <stddef.h>
-#include "mathfunc.h"
-#include "triplet.h"
+#include "lagrid.h"
 
-size_t tpk_get_ir_triplets_at_q(size_t *map_triplets,
-                                size_t *map_q,
-                                int (*grid_address)[3],
-                                const int grid_point,
-                                const int mesh[3],
-                                const int is_time_reversal,
-                                const MatINT * rotations,
-                                const int swappable);
-size_t tpk_get_BZ_triplets_at_q(size_t (*triplets)[3],
-                                const size_t grid_point,
-                                TPLCONST int (*bz_grid_address)[3],
-                                const size_t *bz_map,
-                                const size_t *map_triplets,
-                                const size_t num_map_triplets,
-                                const int mesh[3]);
+long tpk_get_ir_triplets_at_q(long *map_triplets,
+                              long *map_q,
+                              const long grid_point,
+                              const long D_diag[3],
+                              const long is_time_reversal,
+                              const long (*rec_rotations_in)[3][3],
+                              const long num_rot,
+                              const long swappable);
+long tpk_get_BZ_triplets_at_q(long (*triplets)[3],
+                              const long grid_point,
+                              const ConstBZGrid *bzgrid,
+                              const long *map_triplets);
 
 #endif

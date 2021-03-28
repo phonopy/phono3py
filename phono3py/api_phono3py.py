@@ -69,6 +69,7 @@ from phono3py.phonon3.fc3 import (
     set_translational_invariance_compact_fc3,
     cutoff_fc3_by_zero)
 from phono3py.phonon3.fc3 import get_fc3 as get_phono3py_fc3
+from phono3py.phonon.grid import BZGrid
 from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.interface.fc_calculator import get_fc3
@@ -90,6 +91,7 @@ class Phono3py(object):
                  is_symmetry=True,
                  is_mesh_symmetry=True,
                  symmetrize_fc3q=False,
+                 is_dense_gp_map=False,
                  symprec=1e-5,
                  calculator=None,
                  log_level=0,
@@ -102,6 +104,7 @@ class Phono3py(object):
         self._is_mesh_symmetry = is_mesh_symmetry
         self._lapack_zheev_uplo = lapack_zheev_uplo
         self._symmetrize_fc3q = symmetrize_fc3q
+        self._is_dense_gp_map = is_dense_gp_map
         self._cutoff_frequency = cutoff_frequency
         self._calculator = calculator
         self._log_level = log_level
@@ -166,7 +169,6 @@ class Phono3py(object):
 
         # Setup interaction
         self._interaction = None
-        self._mesh_numbers = None
         self._band_indices = None
         self._band_indices_flatten = None
         if mesh is not None:
@@ -192,7 +194,7 @@ class Phono3py(object):
 
     @property
     def calculator(self):
-        """Return calculator name
+        """Calculator interface name
 
         str
             Calculator name such as 'vasp', 'qe', etc.
@@ -202,18 +204,7 @@ class Phono3py(object):
 
     @property
     def fc3(self):
-        """
-
-        """
-
-        return self._fc3
-
-    def get_fc3(self):
-        return self.fc3
-
-    @fc3.setter
-    def fc3(self, fc3):
-        """Third order force constants (fc3).
+        """Third order force constants (fc3)
 
         ndarray
             fc3 shape is either (supercell, supecell, supercell, 3, 3, 3) or
@@ -222,7 +213,13 @@ class Phono3py(object):
             these cells.
 
         """
+        return self._fc3
 
+    def get_fc3(self):
+        return self.fc3
+
+    @fc3.setter
+    def fc3(self, fc3):
         self._fc3 = fc3
 
     def set_fc3(self, fc3):
@@ -259,6 +256,14 @@ class Phono3py(object):
 
     @property
     def sigmas(self):
+        """Smearing widths
+
+        list
+            The float values are given as the standard deviations of Gaussian
+            function. If None is given as an element of this list, linear
+            tetrahedron method is used instead of smearing method.
+
+        """
         return self._sigmas
 
     @sigmas.setter
@@ -277,6 +282,13 @@ class Phono3py(object):
 
     @property
     def sigma_cutoff(self):
+        """Smearing cutoff width given as a multiple of the standard deviation
+
+        float
+            For example, if this value is 5, the tail of the Gaussian function
+            is cut at 5 sigma.
+
+        """
         return self._sigma_cutoff
 
     @sigma_cutoff.setter
@@ -660,7 +672,7 @@ class Phono3py(object):
     @property
     def mesh_numbers(self):
         """Sampling mesh numbers in reciprocal space"""
-        return self._mesh_numbers
+        return self._bz_grid.mesh_numbers
 
     @mesh_numbers.setter
     def mesh_numbers(self, mesh_numbers):
@@ -897,19 +909,26 @@ class Phono3py(object):
     def detailed_gammas(self):
         return self._detailed_gammas
 
+    @property
+    def grid(self):
+        """Grid information
+
+        BZGrid
+            An instance of BZGrid used for entire phono3py calculation.
+
+        """
+        return self._bz_grid
+
     def init_phph_interaction(self,
                               nac_q_direction=None,
                               constant_averaged_interaction=None,
-                              frequency_scale_factor=None,
-                              solve_dynamical_matrices=True):
+                              frequency_scale_factor=None):
         """Initialize ph-ph interaction calculation
 
         This method creates an instance of Interaction class, which
         is necessary to run ph-ph interaction calculation.
         The input data such as grids, force constants, etc, are
         stored to be ready for the calculation.
-        ``solve_dynamical_matrices=True`` runs harmonic phonon solver
-        immediately to store phonons on all regular mesh grids.
 
         Note
         ----
@@ -932,14 +951,10 @@ class Phono3py(object):
         frequency_scale_factor : float, optional
             All phonon frequences are scaled by this value. Default is None,
             which means phonon frequencies are not scaled.
-        solve_dynamical_matrices : Bool, optional
-            When True, harmonic phonon solver is immediately executed and
-            the phonon data on all regular mesh grids are store phonons.
-            Default is True.
 
         """
 
-        if self._mesh_numbers is None:
+        if self.mesh_numbers is None:
             msg = "Phono3py.mesh_numbers of instance has to be set."
             raise RuntimeError(msg)
 
@@ -950,7 +965,7 @@ class Phono3py(object):
         self._interaction = Interaction(
             self._supercell,
             self._primitive,
-            self._mesh_numbers,
+            self._bz_grid,
             self._primitive_symmetry,
             fc3=self._fc3,
             band_indices=self._band_indices_flatten,
@@ -963,8 +978,6 @@ class Phono3py(object):
             lapack_zheev_uplo=self._lapack_zheev_uplo)
         self._interaction.set_nac_q_direction(nac_q_direction=nac_q_direction)
         self._init_dynamical_matrix()
-        if solve_dynamical_matrices:
-            self.run_phonon_solver(verbose=self._log_level)
 
     def set_phph_interaction(self,
                              nac_params=None,
@@ -1058,17 +1071,16 @@ class Phono3py(object):
         """
 
         if self._interaction is not None:
-            grid_address = self._interaction.get_grid_address()
             freqs, eigvecs, _ = self._interaction.get_phonons()
-            return freqs, eigvecs, grid_address
+            return freqs, eigvecs, self._interaction.bz_grid.addresses
         else:
             msg = ("Phono3py.init_phph_interaction has to be called "
                    "before running this method.")
             raise RuntimeError(msg)
 
-    def run_phonon_solver(self, verbose=False):
+    def run_phonon_solver(self):
         if self._interaction is not None:
-            self._interaction.run_phonon_solver(verbose=verbose)
+            self._interaction.run_phonon_solver()
         else:
             msg = ("Phono3py.init_phph_interaction has to be called "
                    "before running this method.")
@@ -1393,6 +1405,7 @@ class Phono3py(object):
                              frequency_points=None,
                              frequency_step=None,
                              num_frequency_points=None,
+                             frequency_points_at_bands=False,
                              scattering_event_class=None,
                              write_txt=False,
                              write_gamma_detail=False,
@@ -1412,7 +1425,8 @@ class Phono3py(object):
             Temperatures where imaginary part of self-energies are calculated.
             dtype=float, shape=(temperatures,)
         frequency_points : array_like, optional
-            Frequency sampling points. Default is None. In this case,
+            Frequency sampling points. Default is None. With
+            frequency_points_at_bands=False and frequency_points is None,
             num_frequency_points or frequency_step is used to generate uniform
             frequency sampling points.
             dtype=float, shape=(frequency_points,)
@@ -1423,6 +1437,9 @@ class Phono3py(object):
             Number of sampling sampling points to be used instead of
             frequency_step. This number includes end points. Default is None,
             which gives 201.
+        frequency_points_at_bands : bool, optional
+            Phonon band frequencies are used as frequency points when True.
+            Default is False.
         scattering_event_class : int, optional
             Specific choice of scattering event class, 1 or 2 that is specified
             1 or 2, respectively. The result is stored in gammas. Therefore
@@ -1458,6 +1475,7 @@ class Phono3py(object):
             sigmas=self._sigmas,
             frequency_points=frequency_points,
             frequency_step=frequency_step,
+            frequency_points_at_bands=frequency_points_at_bands,
             num_frequency_points=num_frequency_points,
             scattering_event_class=scattering_event_class,
             write_gamma_detail=write_gamma_detail,
@@ -1485,7 +1503,7 @@ class Phono3py(object):
     def _write_imag_self_energy(self, output_filename=None):
         write_imag_self_energy(
             self._gammas,
-            self._mesh_numbers,
+            self.mesh_numbers,
             self._grid_points,
             self._band_indices,
             self._frequency_points,
@@ -1584,7 +1602,7 @@ class Phono3py(object):
         if write_txt:
             write_real_self_energy(
                 deltas,
-                self._mesh_numbers,
+                self.mesh_numbers,
                 grid_points,
                 self._band_indices,
                 frequency_points,
@@ -1675,8 +1693,6 @@ class Phono3py(object):
             solve_collective_phonon=False,
             use_ave_pp=False,
             gamma_unit_conversion=None,
-            mesh_divisors=None,
-            coarse_mesh_shifts=None,
             is_reducible_collision_matrix=False,
             is_kappa_star=True,
             gv_delta_q=None,  # for group velocity
@@ -1708,7 +1724,6 @@ class Phono3py(object):
                 _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_LBTE(
                 self._interaction,
-                self._primitive_symmetry,
                 temperatures=_temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,
@@ -1740,7 +1755,6 @@ class Phono3py(object):
                 _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_RTA(
                 self._interaction,
-                self._primitive_symmetry,
                 temperatures=_temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,
@@ -1750,8 +1764,6 @@ class Phono3py(object):
                 boundary_mfp=boundary_mfp,
                 use_ave_pp=use_ave_pp,
                 gamma_unit_conversion=gamma_unit_conversion,
-                mesh_divisors=mesh_divisors,
-                coarse_mesh_shifts=coarse_mesh_shifts,
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
                 is_full_pp=is_full_pp,
@@ -1954,22 +1966,10 @@ class Phono3py(object):
     def _set_mesh_numbers(self, mesh):
         # initialization related to mesh
         self._interaction = None
-
-        _mesh = np.array(mesh)
-        mesh_nums = None
-        if _mesh.shape:
-            if _mesh.shape == (3,):
-                mesh_nums = mesh
-        elif self._primitive_symmetry is None:
-            mesh_nums = length2mesh(mesh, self._primitive.get_cell())
-        else:
-            rotations = self._primitive_symmetry.get_pointgroup_operations()
-            mesh_nums = length2mesh(mesh, self._primitive.cell,
-                                    rotations=rotations)
-        if mesh_nums is None:
-            msg = "mesh has inappropriate type."
-            raise TypeError(msg)
-        self._mesh_numbers = mesh_nums
+        self._bz_grid = BZGrid(mesh,
+                               lattice=self._primitive.cell,
+                               primitive_symmetry=self._primitive_symmetry,
+                               is_dense_gp_map=self._is_dense_gp_map)
 
     def _init_dynamical_matrix(self):
         if self._interaction is not None:
@@ -1978,5 +1978,4 @@ class Phono3py(object):
                 self._phonon_supercell,
                 self._phonon_primitive,
                 nac_params=self._nac_params,
-                solve_dynamical_matrices=False,
-                verbose=self._log_level)
+                solve_dynamical_matrices=False)

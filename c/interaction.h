@@ -35,51 +35,50 @@
 #ifndef __interaction_H__
 #define __interaction_H__
 
-#include "phonoc_array.h"
+#include "bzgrid.h"
 #include "lapack_wrapper.h"
+#include "phonoc_array.h"
 
 void itr_get_interaction(Darray *fc3_normal_squared,
                          const char *g_zero,
                          const Darray *frequencies,
                          const lapack_complex_double *eigenvectors,
-                         const size_t (*triplets)[3],
-                         const size_t num_triplets,
-                         const int *grid_address,
-                         const int *mesh,
+                         const long (*triplets)[3],
+                         const long num_triplets,
+                         const ConstBZGrid *bzgrid,
                          const double *fc3,
-                         const int is_compact_fc3,
+                         const long is_compact_fc3,
                          const double *shortest_vectors,
-                         const int svecs_dims[3],
-                         const int *multiplicity,
+                         const long svecs_dims[3],
+                         const long *multiplicity,
                          const double *masses,
-                         const int *p2s_map,
-                         const int *s2p_map,
-                         const int *band_indices,
-                         const int symmetrize_fc3_q,
+                         const long *p2s_map,
+                         const long *s2p_map,
+                         const long *band_indices,
+                         const long symmetrize_fc3_q,
                          const double cutoff_frequency);
 void itr_get_interaction_at_triplet(double *fc3_normal_squared,
-                                    const size_t num_band0,
-                                    const size_t num_band,
-                                    PHPYCONST int (*g_pos)[4],
-                                    const size_t num_g_pos,
+                                    const long num_band0,
+                                    const long num_band,
+                                    const long (*g_pos)[4],
+                                    const long num_g_pos,
                                     const double *frequencies,
                                     const lapack_complex_double *eigenvectors,
-                                    const size_t triplet[3],
-                                    const int *grid_address,
-                                    const int *mesh,
+                                    const long triplet[3],
+                                    const ConstBZGrid *bzgrid,
                                     const double *fc3,
-                                    const int is_compact_fc3,
+                                    const long is_compact_fc3,
                                     const double *shortest_vectors,
-                                    const int svecs_dims[3],
-                                    const int *multiplicity,
+                                    const long svecs_dims[3],
+                                    const long *multiplicity,
                                     const double *masses,
-                                    const int *p2s_map,
-                                    const int *s2p_map,
-                                    const int *band_indices,
-                                    const int symmetrize_fc3_q,
+                                    const long *p2s_map,
+                                    const long *s2p_map,
+                                    const long *band_indices,
+                                    const long symmetrize_fc3_q,
                                     const double cutoff_frequency,
-                                    const size_t triplet_index, /* only for print */
-                                    const size_t num_triplets, /* only for print */
-                                    const int openmp_at_bands);
+                                    const long triplet_index, /* only for print */
+                                    const long num_triplets, /* only for print */
+                                    const long openmp_at_bands);
 
 #endif

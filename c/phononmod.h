@@ -35,10 +35,6 @@
 #ifndef __phononmod_H__
 #define __phononmod_H__
 
-#ifndef PHPYCONST
-#define PHPYCONST
-#endif
-
 #include "lapack_wrapper.h"
 
 void phmod_get_phonons_at_gridpoints(double *frequencies,
@@ -47,25 +43,25 @@ void phmod_get_phonons_at_gridpoints(double *frequencies,
                                      const long num_phonons,
                                      const long *grid_points,
                                      const long num_grid_points,
-                                     PHPYCONST long (*grid_address)[3],
-                                     const long mesh[3],
+                                     const long (*grid_address)[3],
+                                     const double QDinv[3][3],
                                      const double *fc2,
-                                     PHPYCONST double(*svecs_fc2)[27][3],
+                                     const double(*svecs_fc2)[27][3],
                                      const long *multi_fc2,
-                                     PHPYCONST double (*positions_fc2)[3],
+                                     const double (*positions_fc2)[3],
                                      const long num_patom,
                                      const long num_satom,
                                      const double *masses_fc2,
                                      const long *p2s_fc2,
                                      const long *s2p_fc2,
                                      const double unit_conversion_factor,
-                                     PHPYCONST double (*born)[3][3],
-                                     PHPYCONST double dielectric[3][3],
-                                     PHPYCONST double reciprocal_lattice[3][3],
+                                     const double (*born)[3][3],
+                                     const double dielectric[3][3],
+                                     const double reciprocal_lattice[3][3],
                                      const double *q_direction, /* pointer */
                                      const double nac_factor,
                                      const double *dd_q0,
-                                     PHPYCONST double(*G_list)[3],
+                                     const double(*G_list)[3],
                                      const long num_G_points,
                                      const double lambda,
                                      const char uplo);

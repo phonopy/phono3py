@@ -81,12 +81,12 @@ def get_fc3(supercell,
         s2p_map = primitive.s2p_map
         p2s_map = primitive.p2s_map
         p2p_map = primitive.p2p_map
-        s2compact = np.array([p2p_map[i] for i in s2p_map], dtype='intc')
+        s2compact = np.array([p2p_map[i] for i in s2p_map], dtype='int_')
         for i in first_disp_atoms:
             assert i in p2s_map
         target_atoms = [i for i in p2s_map if i not in first_disp_atoms]
     else:
-        s2compact = np.arange(supercell.get_number_of_atoms(), dtype='intc')
+        s2compact = np.arange(len(supercell), dtype='int_')
         target_atoms = [i for i in s2compact if i not in first_disp_atoms]
 
     distribute_fc3(fc3,
@@ -156,7 +156,7 @@ def distribute_fc3(fc3,
             rot_indices = np.where(permutations[:, i_target] == i_done)[0]
             if len(rot_indices) > 0:
                 atom_mapping = np.array(permutations[rot_indices[0]],
-                                        dtype='intc')
+                                        dtype='int_')
                 rot = rotations[rot_indices[0]]
                 rot_cart_inv = np.array(
                     similarity_transformation(lattice, rot).T,
@@ -175,8 +175,8 @@ def distribute_fc3(fc3,
         try:
             import phono3py._phono3py as phono3c
             phono3c.distribute_fc3(fc3,
-                                   int(s2compact[i_target]),
-                                   int(s2compact[i_done]),
+                                   s2compact[i_target],
+                                   s2compact[i_done],
                                    atom_mapping,
                                    rot_cart_inv)
         except ImportError:
@@ -206,18 +206,19 @@ def set_permutation_symmetry_fc3(fc3):
 def set_permutation_symmetry_compact_fc3(fc3, primitive):
     try:
         import phono3py._phono3py as phono3c
-        s2p_map = primitive.get_supercell_to_primitive_map()
-        p2s_map = primitive.get_primitive_to_supercell_map()
-        p2p_map = primitive.get_primitive_to_primitive_map()
+        s2p_map = primitive.s2p_map
+        p2s_map = primitive.p2s_map
+        p2p_map = primitive.p2p_map
         permutations = primitive.get_atomic_permutations()
         s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map,
                                                      p2p_map,
                                                      permutations)
-        phono3c.permutation_symmetry_compact_fc3(fc3,
-                                                 permutations,
-                                                 s2pp_map,
-                                                 p2s_map,
-                                                 nsym_list)
+        phono3c.permutation_symmetry_compact_fc3(
+            fc3,
+            np.array(permutations, dtype='int_', order='C'),
+            np.array(s2pp_map, dtype='int_'),
+            np.array(p2s_map, dtype='int_'),
+            np.array(nsym_list, dtype='int_'))
     except ImportError:
         text = ("Import error at phono3c.permutation_symmetry_compact_fc3. "
                 "Corresponding python code is not implemented.")
@@ -254,26 +255,33 @@ def set_translational_invariance_fc3(fc3):
 def set_translational_invariance_compact_fc3(fc3, primitive):
     try:
         import phono3py._phono3py as phono3c
-        s2p_map = primitive.get_supercell_to_primitive_map()
-        p2s_map = primitive.get_primitive_to_supercell_map()
-        p2p_map = primitive.get_primitive_to_primitive_map()
+        s2p_map = primitive.s2p_map
+        p2s_map = primitive.p2s_map
+        p2p_map = primitive.p2p_map
         permutations = primitive.get_atomic_permutations()
         s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map,
                                                      p2p_map,
                                                      permutations)
-        phono3c.transpose_compact_fc3(fc3,
-                                      permutations,
-                                      s2pp_map,
-                                      p2s_map,
-                                      nsym_list,
-                                      0)  # dim[0] <--> dim[1]
+
+        permutations = np.array(permutations, dtype='int_', order='C')
+        s2pp_map = np.array(s2pp_map, dtype='int_')
+        p2s_map = np.array(p2s_map, dtype='int_')
+        nsym_list = np.array(nsym_list, dtype='int_')
+        phono3c.transpose_compact_fc3(
+            fc3,
+            permutations,
+            s2pp_map,
+            p2s_map,
+            nsym_list,
+            0)  # dim[0] <--> dim[1]
         set_translational_invariance_fc3_per_index(fc3, index=1)
-        phono3c.transpose_compact_fc3(fc3,
-                                      permutations,
-                                      s2pp_map,
-                                      p2s_map,
-                                      nsym_list,
-                                      0)  # dim[0] <--> dim[1]
+        phono3c.transpose_compact_fc3(
+            fc3,
+            permutations,
+            s2pp_map,
+            p2s_map,
+            nsym_list,
+            0)  # dim[0] <--> dim[1]
         set_translational_invariance_fc3_per_index(fc3, index=1)
         set_translational_invariance_fc3_per_index(fc3, index=2)
 
@@ -441,6 +449,7 @@ def solve_fc3(first_atom_num,
                                                  positions,
                                                  site_symmetry,
                                                  symprec)
+    rot_map_syms = np.array(rot_map_syms, dtype='int_', order='C')
     rot_disps = get_rotated_displacement(displacements_first, site_sym_cart)
 
     logger.debug("pinv")
@@ -537,13 +546,17 @@ def show_drift_fc3(fc3,
     else:
         try:
             import phono3py._phono3py as phono3c
-            s2p_map = primitive.get_supercell_to_primitive_map()
-            p2s_map = primitive.get_primitive_to_supercell_map()
-            p2p_map = primitive.get_primitive_to_primitive_map()
+            s2p_map = primitive.s2p_map
+            p2s_map = primitive.p2s_map
+            p2p_map = primitive.p2p_map
             permutations = primitive.get_atomic_permutations()
             s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map,
                                                          p2p_map,
                                                          permutations)
+            permutations = np.array(permutations, dtype='int_', order='C')
+            s2pp_map = np.array(s2pp_map, dtype='int_')
+            p2s_map = np.array(p2s_map, dtype='int_')
+            nsym_list = np.array(nsym_list, dtype='int_')
             num_patom = fc3.shape[0]
             num_satom = fc3.shape[1]
             maxval1 = 0

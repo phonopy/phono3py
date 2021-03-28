@@ -45,6 +45,7 @@ class Phono3pyIsotope(object):
                  band_indices=None,
                  sigmas=None,
                  frequency_factor_to_THz=VaspToTHz,
+                 is_dense_gp_map=False,
                  symprec=1e-5,
                  cutoff_frequency=None,
                  lapack_zheev_uplo='L'):
@@ -58,6 +59,7 @@ class Phono3pyIsotope(object):
                             mass_variances=mass_variances,
                             band_indices=band_indices,
                             frequency_factor_to_THz=frequency_factor_to_THz,
+                            is_dense_gp_map=is_dense_gp_map,
                             symprec=symprec,
                             cutoff_frequency=cutoff_frequency,
                             lapack_zheev_uplo=lapack_zheev_uplo)
@@ -65,6 +67,10 @@ class Phono3pyIsotope(object):
     @property
     def dynamical_matrix(self):
         return self._iso.dynamical_matrix
+
+    @property
+    def grid(self):
+        return self._iso.bz_grid
 
     def run(self, grid_points):
         gamma = np.zeros(
@@ -76,7 +82,7 @@ class Phono3pyIsotope(object):
 
             print("--------------- Isotope scattering ---------------")
             print("Grid point: %d" % gp)
-            adrs = self._iso.grid_address[gp]
+            adrs = self._iso.bz_grid.addresses[gp]
             q = adrs.astype('double') / self._mesh_numbers
             print("q-point: %s" % q)
 

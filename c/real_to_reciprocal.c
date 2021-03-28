@@ -44,63 +44,63 @@
 
 static void
 real_to_reciprocal_single_thread(lapack_complex_double *fc3_reciprocal,
-                                 const double q[9],
+                                 const double q_vecs[3][3],
                                  const double *fc3,
-                                 const int is_compact_fc3,
+                                 const long is_compact_fc3,
                                  const double *shortest_vectors,
-                                 const int svecs_dims[3],
-                                 const int *multiplicity,
-                                 const int *p2s_map,
-                                 const int *s2p_map);
+                                 const long svecs_dims[3],
+                                 const long *multiplicity,
+                                 const long *p2s_map,
+                                 const long *s2p_map);
 static void
 real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
-                          const double q[9],
+                          const double q_vecs[3][3],
                           const double *fc3,
-                          const int is_compact_fc3,
+                          const long is_compact_fc3,
                           const double *shortest_vectors,
-                          const int svecs_dims[3],
-                          const int *multiplicity,
-                          const int *p2s_map,
-                          const int *s2p_map);
+                          const long svecs_dims[3],
+                          const long *multiplicity,
+                          const long *p2s_map,
+                          const long *s2p_map);
 static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
-                                        const double q[9],
+                                        const double q_vecs[3][3],
                                         const double *fc3,
-                                        const int is_compact_fc3,
+                                        const long is_compact_fc3,
                                         const double *shortest_vectors,
-                                        const int svecs_dims[3],
-                                        const int *multiplicity,
-                                        const int *p2s,
-                                        const int *s2p,
-                                        const size_t pi0,
-                                        const size_t pi1,
-                                        const size_t pi2);
-static lapack_complex_double get_phase_factor(const double q[],
-                                              const int qi,
+                                        const long svecs_dims[3],
+                                        const long *multiplicity,
+                                        const long *p2s,
+                                        const long *s2p,
+                                        const long pi0,
+                                        const long pi1,
+                                        const long pi2);
+static lapack_complex_double get_phase_factor(const double q[3][3],
+                                              const long qi,
                                               const double *shortest_vectors,
-                                              const int multi);
+                                              const long multi);
 static lapack_complex_double
-get_pre_phase_factor(const size_t i,
-                     const double q[9],
+get_pre_phase_factor(const long i,
+                     const double q_vecs[3][3],
                      const double *shortest_vectors,
-                     const int svecs_dims[3],
-                     const int *multiplicity,
-                     const int *p2s_map);
+                     const long svecs_dims[3],
+                     const long *multiplicity,
+                     const long *p2s_map);
 
 /* fc3_reciprocal[num_patom, num_patom, num_patom, 3, 3, 3] */
 void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
-                            const double q[9],
+                            const double q_vecs[3][3],
                             const double *fc3,
-                            const int is_compact_fc3,
+                            const long is_compact_fc3,
                             const double *shortest_vectors,
-                            const int svecs_dims[3],
-                            const int *multiplicity,
-                            const int *p2s_map,
-                            const int *s2p_map,
-                            const int openmp_at_bands)
+                            const long svecs_dims[3],
+                            const long *multiplicity,
+                            const long *p2s_map,
+                            const long *s2p_map,
+                            const long openmp_at_bands)
 {
   if (openmp_at_bands) {
     real_to_reciprocal_openmp(fc3_reciprocal,
-                              q,
+                              q_vecs,
                               fc3,
                               is_compact_fc3,
                               shortest_vectors,
@@ -110,7 +110,7 @@ void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
                               s2p_map);
   } else {
     real_to_reciprocal_single_thread(fc3_reciprocal,
-                                     q,
+                                     q_vecs,
                                      fc3,
                                      is_compact_fc3,
                                      shortest_vectors,
@@ -124,17 +124,17 @@ void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
 
 static void
 real_to_reciprocal_single_thread(lapack_complex_double *fc3_reciprocal,
-                                 const double q[9],
+                                 const double q_vecs[3][3],
                                  const double *fc3,
-                                 const int is_compact_fc3,
+                                 const long is_compact_fc3,
                                  const double *shortest_vectors,
-                                 const int svecs_dims[3],
-                                 const int *multiplicity,
-                                 const int *p2s_map,
-                                 const int *s2p_map)
+                                 const long svecs_dims[3],
+                                 const long *multiplicity,
+                                 const long *p2s_map,
+                                 const long *s2p_map)
 {
-  size_t i, j, k;
-  size_t num_patom, adrs_shift;
+  long i, j, k;
+  long num_patom, adrs_shift;
   lapack_complex_double pre_phase_factor;
 
   num_patom = svecs_dims[1];
@@ -146,7 +146,7 @@ real_to_reciprocal_single_thread(lapack_complex_double *fc3_reciprocal,
                                     i * 27 * num_patom * num_patom +
                                     j * 27 * num_patom +
                                     k * 27,
-                                    q,
+                                    q_vecs,
                                     fc3,
                                     is_compact_fc3,
                                     shortest_vectors,
@@ -159,7 +159,7 @@ real_to_reciprocal_single_thread(lapack_complex_double *fc3_reciprocal,
       }
     }
     pre_phase_factor = get_pre_phase_factor(
-      i, q, shortest_vectors, svecs_dims, multiplicity, p2s_map);
+      i, q_vecs, shortest_vectors, svecs_dims, multiplicity, p2s_map);
     adrs_shift = i * num_patom * num_patom * 27;
     for (j = 0; j < num_patom * num_patom * 27; j++) {
       fc3_reciprocal[adrs_shift + j] =
@@ -170,17 +170,17 @@ real_to_reciprocal_single_thread(lapack_complex_double *fc3_reciprocal,
 
 static void
 real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
-                          const double q[9],
+                          const double q_vecs[3][3],
                           const double *fc3,
-                          const int is_compact_fc3,
+                          const long is_compact_fc3,
                           const double *shortest_vectors,
-                          const int svecs_dims[3],
-                          const int *multiplicity,
-                          const int *p2s_map,
-                          const int *s2p_map)
+                          const long svecs_dims[3],
+                          const long *multiplicity,
+                          const long *p2s_map,
+                          const long *s2p_map)
 {
-  size_t i, j, k, jk;
-  size_t num_patom, adrs_shift;
+  long i, j, k, jk;
+  long num_patom, adrs_shift;
   lapack_complex_double pre_phase_factor;
 
   num_patom = svecs_dims[1];
@@ -194,7 +194,7 @@ real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
                                   i * 27 * num_patom * num_patom +
                                   j * 27 * num_patom +
                                   k * 27,
-                                  q,
+                                  q_vecs,
                                   fc3,
                                   is_compact_fc3,
                                   shortest_vectors,
@@ -206,7 +206,7 @@ real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
 
     }
     pre_phase_factor = get_pre_phase_factor(
-      i, q, shortest_vectors, svecs_dims, multiplicity, p2s_map);
+      i, q_vecs, shortest_vectors, svecs_dims, multiplicity, p2s_map);
     adrs_shift = i * num_patom * num_patom * 27;
 #pragma omp parallel for
     for (j = 0; j < num_patom * num_patom * 27; j++) {
@@ -217,20 +217,20 @@ real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
 }
 
 static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
-                                        const double q[9],
+                                        const double q_vecs[3][3],
                                         const double *fc3,
-                                        const int is_compact_fc3,
+                                        const long is_compact_fc3,
                                         const double *shortest_vectors,
-                                        const int svecs_dims[3],
-                                        const int *multiplicity,
-                                        const int *p2s,
-                                        const int *s2p,
-                                        const size_t pi0,
-                                        const size_t pi1,
-                                        const size_t pi2)
+                                        const long svecs_dims[3],
+                                        const long *multiplicity,
+                                        const long *p2s,
+                                        const long *s2p,
+                                        const long pi0,
+                                        const long pi1,
+                                        const long pi2)
 {
-  size_t i, j, k, l;
-  size_t num_satom, adrs_shift, adrs_vec1, adrs_vec2 ;
+  long i, j, k, l;
+  long num_satom, adrs_shift, adrs_vec1, adrs_vec2 ;
   lapack_complex_double phase_factor, phase_factor1, phase_factor2;
   double fc3_rec_real[27], fc3_rec_imag[27];
 
@@ -253,7 +253,7 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
     }
 
     adrs_vec1 = j * svecs_dims[1] + pi0;
-    phase_factor1 = get_phase_factor(q,
+    phase_factor1 = get_phase_factor(q_vecs,
                                      1,
                                      shortest_vectors +
                                      adrs_vec1 * svecs_dims[2] * 3,
@@ -263,7 +263,7 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
         continue;
       }
       adrs_vec2 = k * svecs_dims[1] + pi0;
-      phase_factor2 = get_phase_factor(q,
+      phase_factor2 = get_phase_factor(q_vecs,
                                        2,
                                        shortest_vectors +
                                        adrs_vec2 * svecs_dims[2] * 3,
@@ -286,14 +286,14 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
 }
 
 static lapack_complex_double
-get_pre_phase_factor(const size_t i,
-                     const double q[9],
+get_pre_phase_factor(const long i,
+                     const double q_vecs[3][3],
                      const double *shortest_vectors,
-                     const int svecs_dims[3],
-                     const int *multiplicity,
-                     const int *p2s_map)
+                     const long svecs_dims[3],
+                     const long *multiplicity,
+                     const long *p2s_map)
 {
-  int j;
+  long j;
   double pre_phase;
   lapack_complex_double pre_phase_factor;
 
@@ -301,7 +301,7 @@ get_pre_phase_factor(const size_t i,
   for (j = 0; j < 3; j++) {
     pre_phase += shortest_vectors[
       p2s_map[i] * svecs_dims[1] * svecs_dims[2] * 3 + j] *
-      (q[j] + q[3 + j] + q[6 + j]);
+      (q_vecs[0][j] + q_vecs[1][j] + q_vecs[2][j]);
   }
 
   assert(multiplicity[p2s_map[i] * svecs_dims[1]] == 1);
@@ -312,12 +312,12 @@ get_pre_phase_factor(const size_t i,
   return pre_phase_factor;
 }
 
-static lapack_complex_double get_phase_factor(const double q[],
-                                              const int qi,
+static lapack_complex_double get_phase_factor(const double q[3][3],
+                                              const long qi,
                                               const double *shortest_vectors,
-                                              const int multi)
+                                              const long multi)
 {
-  int i, j;
+  long i, j;
   double sum_real, sum_imag, phase;
 
   sum_real = 0;
@@ -325,7 +325,7 @@ static lapack_complex_double get_phase_factor(const double q[],
   for (i = 0; i < multi; i++) {
     phase = 0;
     for (j = 0; j < 3; j++) {
-      phase += q[qi * 3 + j] * shortest_vectors[i * 3 + j];
+      phase += q[qi][j] * shortest_vectors[i * 3 + j];
     }
     sum_real += cos(M_2PI * phase);
     sum_imag += sin(M_2PI * phase);

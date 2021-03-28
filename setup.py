@@ -208,25 +208,26 @@ include_dirs += include_dirs_lapacke
 
 print("extra_link_args", extra_link_args)
 sources_phono3py = ['c/_phono3py.c',
+                    'c/bzgrid.c',
                     'c/collision_matrix.c',
                     'c/fc3.c',
+                    'c/grgrid.c',
                     'c/imag_self_energy_with_g.c',
                     'c/interaction.c',
                     'c/isotope.c',
-                    'c/kgrid.c',
-                    'c/kpoint.c',
+                    'c/lagrid.c',
                     'c/lapack_wrapper.c',
-                    'c/mathfunc.c',
                     'c/phono3py.c',
                     'c/phonoc_utils.c',
                     'c/pp_collision.c',
                     'c/real_self_energy.c',
                     'c/real_to_reciprocal.c',
                     'c/reciprocal_to_normal.c',
+                    'c/snf3x3.c',
                     'c/tetrahedron_method.c',
                     'c/triplet.c',
-                    'c/triplet_iw.c',
-                    'c/triplet_kpoint.c']
+                    'c/triplet_grid.c',
+                    'c/triplet_iw.c']
 extension_phono3py = Extension(
     'phono3py._phono3py',
     include_dirs=include_dirs,
