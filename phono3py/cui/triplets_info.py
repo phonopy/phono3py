@@ -33,41 +33,29 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.structure.symmetry import Symmetry
 from phono3py.file_IO import write_ir_grid_points, write_grid_address_to_hdf5
-from phono3py.phonon3.triplets import (
-    get_ir_grid_points, get_triplets_at_q, BZGrid)
+from phono3py.phonon3.triplets import get_triplets_at_q
+from phono3py.phonon.grid import get_ir_grid_points
 
 
 def write_grid_points(primitive,
-                      mesh,
+                      bz_grid,
                       band_indices=None,
                       sigmas=None,
                       temperatures=None,
                       is_kappa_star=True,
-                      is_dense_gp_map=False,
                       is_lbte=False,
                       compression="gzip",
-                      symprec=1e-5,
                       filename=None):
-    print("-" * 76)
-    if mesh is None:
-        print("To write grid points, mesh numbers have to be specified.")
-        return
-
-    ir_grid_points, ir_grid_weights, bz_grid = _get_ir_grid_points(
-        primitive,
-        mesh,
-        is_kappa_star=is_kappa_star,
-        is_dense_gp_map=is_dense_gp_map,
-        symprec=symprec)
-    write_ir_grid_points(mesh,
+    ir_grid_points, ir_grid_weights = _get_ir_grid_points(
+        bz_grid,
+        is_kappa_star=is_kappa_star)
+    write_ir_grid_points(bz_grid,
                          ir_grid_points,
                          ir_grid_weights,
-                         bz_grid.addresses,
                          np.linalg.inv(primitive.cell))
     gadrs_hdf5_fname = write_grid_address_to_hdf5(bz_grid.addresses,
-                                                  mesh,
+                                                  bz_grid.D_diag,
                                                   bz_grid.gp_map,
                                                   compression=compression,
                                                   filename=filename)
@@ -103,18 +91,11 @@ def write_grid_points(primitive,
 
 
 def show_num_triplets(primitive,
-                      mesh,
+                      bz_grid,
                       band_indices=None,
                       grid_points=None,
-                      is_kappa_star=True,
-                      is_dense_gp_map=False,
-                      symprec=1e-5):
-    tp_nums = _TripletsNumbers(primitive,
-                               mesh,
-                               is_kappa_star=is_kappa_star,
-                               is_dense_gp_map=is_dense_gp_map,
-                               symprec=symprec)
-
+                      is_kappa_star=True):
+    tp_nums = _TripletsNumbers(bz_grid, is_kappa_star=is_kappa_star)
     num_band = len(primitive) * 3
     if band_indices is None:
         num_band0 = num_band
@@ -130,70 +111,36 @@ def show_num_triplets(primitive,
     print("Grid point        q-point        No. of triplets     Approx. Mem.")
     for gp in _grid_points:
         num_triplets = tp_nums.get_number_of_triplets(gp)
-        q = tp_nums.bz_grid.addresses[gp] / np.array(mesh, dtype='double')
+        q = np.dot(bz_grid.addresses[gp], bz_grid.QDinv.T)
         size = num_triplets * num_band0 * num_band ** 2 * 8 / 1e6
         print("  %5d     (%5.2f %5.2f %5.2f)  %8d              %d Mb" %
               (gp, q[0], q[1], q[2], num_triplets, size))
 
 
 class _TripletsNumbers(object):
-    def __init__(self,
-                 primitive,
-                 mesh,
-                 is_kappa_star=True,
-                 is_dense_gp_map=False,
-                 symprec=1e-5):
-        self._primitive = primitive
-        self._mesh = mesh
-        self._is_dense_gp_map = is_dense_gp_map
-        self._symprec = symprec
-
-        self.ir_grid_points, _, self._bz_grid = _get_ir_grid_points(
-            self._primitive,
-            self._mesh,
-            is_kappa_star=is_kappa_star,
-            is_dense_gp_map=self._is_dense_gp_map,
-            symprec=self._symprec)
-
-    @property
-    def bz_grid(self):
-        return self._bz_grid
+    def __init__(self, bz_grid, is_kappa_star=True):
+        self._bz_grid = bz_grid
+        self.ir_grid_points, _, = _get_ir_grid_points(
+            self._bz_grid,
+            is_kappa_star=is_kappa_star)
 
     def get_number_of_triplets(self, gp):
-        num_triplets = _get_number_of_triplets(self._primitive,
-                                               self._bz_grid,
-                                               gp,
-                                               swappable=True,
-                                               symprec=self._symprec)
+        num_triplets = _get_number_of_triplets(
+            self._bz_grid, gp, swappable=True)
         return num_triplets
 
 
-def _get_ir_grid_points(primitive,
-                        mesh,
-                        is_kappa_star=True,
-                        is_dense_gp_map=False,
-                        symprec=1e-5):
-    symmetry = Symmetry(primitive, symprec)
-    point_group = symmetry.pointgroup_operations
-
-    ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(
-        mesh, point_group)
-    bz_grid = BZGrid(mesh,
-                     lattice=primitive.cell,
-                     is_dense_gp_map=is_dense_gp_map)
+def _get_ir_grid_points(bz_grid, is_kappa_star=True):
+    ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bz_grid)
     ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype='int_')
 
-    return ir_grid_points, ir_grid_weights, bz_grid
+    return ir_grid_points, ir_grid_weights
 
 
-def _get_number_of_triplets(primitive,
-                            bz_grid,
+def _get_number_of_triplets(bz_grid,
                             grid_point,
-                            swappable=True,
-                            symprec=1e-5):
-    symmetry = Symmetry(primitive, symprec)
+                            swappable=True):
     triplets_at_q = get_triplets_at_q(grid_point,
-                                      symmetry.pointgroup_operations,
                                       bz_grid,
                                       swappable=swappable)[0]
     return len(triplets_at_q)

@@ -58,7 +58,7 @@ from phono3py.cui.settings import Phono3pyConfParser
 from phono3py.cui.load import set_dataset_and_force_constants
 from phono3py import Phono3py, Phono3pyJointDos, Phono3pyIsotope
 from phono3py.phonon3.gruneisen import run_gruneisen_parameters
-from phono3py.phonon3.triplets import get_grid_point_from_address, BZGrid
+from phono3py.phonon.grid import get_grid_point_from_address
 from phono3py.cui.phono3py_argparse import get_parser
 from phono3py.cui.show_log import (
     show_general_settings, show_phono3py_settings, show_phono3py_cells)
@@ -482,13 +482,6 @@ def get_cell_info(settings, cell_filename, symprec, log_level):
 
 
 def get_default_values(settings):
-    mesh_numbers = settings.mesh_numbers
-    grid_points = settings.grid_points
-    grid_addresses = settings.grid_addresses
-    if grid_addresses is not None:
-        grid_points = [get_grid_point_from_address(ga, mesh_numbers)
-                       for ga in grid_addresses]
-
     # Brillouin zone integration: Tetrahedron (default) or smearing method
     sigma = settings.sigma
     if sigma is None:
@@ -548,7 +541,6 @@ def get_default_values(settings):
         cutoff_frequency = settings.cutoff_frequency
 
     params = {}
-    params['grid_points'] = grid_points
     params['sigmas'] = sigmas
     params['temperature_points'] = temperature_points
     params['temperatures'] = temperatures
@@ -579,7 +571,7 @@ def init_phono3py(settings,
         unitcell.cell = lattice
 
     # updated_settings keys
-    # ('grid_points', 'sigmas', 'temperature_points', 'temperatures',
+    # ('sigmas', 'temperature_points', 'temperatures',
     #  'frequency_factor_to_THz', 'num_frequency_points',
     #  'frequency_step', 'frequency_scale_factor',
     #  'cutoff_frequency')
@@ -591,7 +583,6 @@ def init_phono3py(settings,
         primitive_matrix=cell_info['primitive_matrix'],
         phonon_supercell_matrix=cell_info['phonon_supercell_matrix'],
         masses=settings.masses,
-        mesh=settings.mesh_numbers,
         band_indices=settings.band_indices,
         sigmas=updated_settings['sigmas'],
         sigma_cutoff=settings.sigma_cutoff_width,
@@ -605,13 +596,6 @@ def init_phono3py(settings,
         calculator=interface_mode,
         log_level=log_level,
         lapack_zheev_uplo=settings.lapack_zheev_uplo)
-
-    if updated_settings['grid_points'] is not None:
-        bz_grid = BZGrid(phono3py.mesh_numbers,
-                         lattice=phono3py.primitive.cell,
-                         is_dense_gp_map=settings.is_dense_gp_map)
-        updated_settings['grid_points'] = bz_grid.grg2bzg[
-            updated_settings['grid_points']]
 
     check_supercell_in_yaml(cell_info, phono3py, log_level)
 
@@ -628,6 +612,23 @@ def init_phono3py(settings,
                 sys.exit(1)
 
     return phono3py, updated_settings
+
+
+def settings_to_grid_points(settings, bz_grid):
+    if settings.grid_addresses is not None:
+        grid_points = grid_addresses_to_grid_points(
+            settings.grid_addresses, bz_grid)
+    elif settings.grid_points is not None:
+        grid_points = settings.grid_points
+    else:
+        grid_points = None
+    return grid_points
+
+
+def grid_addresses_to_grid_points(grid_addresses, bz_grid):
+    grid_points = [get_grid_point_from_address(ga, bz_grid.D_diag)
+                   for ga in grid_addresses]
+    return bz_grid.grg2bzg[grid_points]
 
 
 def store_force_constants(phono3py,
@@ -742,8 +743,8 @@ def run_jdos_then_exit(phono3py,
     joint_dos = Phono3pyJointDos(
         phono3py.phonon_supercell,
         phono3py.phonon_primitive,
-        phono3py.mesh_numbers,
         phono3py.fc2,
+        mesh=settings.mesh_numbers,
         nac_params=phono3py.nac_params,
         nac_q_direction=settings.nac_q_direction,
         sigmas=updated_settings['sigmas'],
@@ -764,7 +765,8 @@ def run_jdos_then_exit(phono3py,
         if (dm.is_nac() and dm.nac_method == 'gonze'):
             dm.show_Gonze_nac_message()
 
-    joint_dos.run(updated_settings['grid_points'], write_jdos=True)
+    grid_points = settings_to_grid_points(settings, joint_dos.grid)
+    joint_dos.run(grid_points, write_jdos=True)
 
     if log_level:
         print_end()
@@ -799,7 +801,9 @@ def run_isotope_then_exit(phono3py, settings, updated_settings, log_level):
         if (dm.is_nac() and dm.nac_method == 'gonze'):
             dm.show_Gonze_nac_message()
 
-    iso.run(updated_settings['grid_points'])
+    grid_points = settings_to_grid_points(settings, iso.grid)
+    iso.run(grid_points)
+
     if log_level:
         print_end()
     sys.exit(0)
@@ -812,6 +816,13 @@ def init_phph_interaction(phono3py,
                           output_filename,
                           log_level):
     ave_pp = settings.constant_averaged_pp_interaction
+    if log_level:
+        sys.stdout.write("Generating grid system ... ")
+        sys.stdout.flush()
+    phono3py.mesh_numbers = settings.mesh_numbers
+    if log_level:
+        print("[ %d %d %d ]" % tuple(phono3py.mesh_numbers))
+
     phono3py.init_phph_interaction(
         nac_q_direction=settings.nac_q_direction,
         constant_averaged_interaction=ave_pp,
@@ -939,7 +950,7 @@ def main(**argparse_control):
     # Initialize phono3py #
     #######################
     # updated_settings keys
-    # ('grid_points', 'sigmas', 'temperature_points', 'temperatures',
+    # ('sigmas', 'temperature_points', 'temperatures',
     #  'frequency_factor_to_THz', 'num_frequency_points',
     #  'frequency_step', 'frequency_scale_factor',
     #  'cutoff_frequency')
@@ -976,7 +987,7 @@ def main(**argparse_control):
                            "imag_self_energy", "jdos", "isotope",
                            "write_grid_info", "show_triplets_info")
     run_modes_with_gp = ("imag_self_energy", "jdos", "isotope")
-    if phono3py.mesh_numbers is None and run_mode in run_modes_with_mesh:
+    if settings.mesh_numbers is None and run_mode in run_modes_with_mesh:
         print("")
         print("Mesh numbers have to be specified.")
         print("")
@@ -985,7 +996,8 @@ def main(**argparse_control):
         sys.exit(1)
 
     if (run_mode in run_modes_with_gp and
-        updated_settings['grid_points'] is None):
+        settings.grid_points is None and
+        settings.grid_addresses is None):
         print("")
         print("Grid point(s) has to be specified.")
         print("")
@@ -997,17 +1009,16 @@ def main(**argparse_control):
     # Write ir-grid points and grid addresses and then exit #
     #########################################################
     if run_mode == "write_grid_info":
+        phono3py.mesh_numbers = settings.mesh_numbers
         write_grid_points(phono3py.primitive,
-                          phono3py.mesh_numbers,
+                          phono3py.grid,
                           band_indices=settings.band_indices,
                           sigmas=updated_settings['sigmas'],
                           temperatures=updated_settings['temperatures'],
                           is_kappa_star=settings.is_kappa_star,
-                          is_dense_gp_map=settings.is_dense_gp_map,
                           is_lbte=(settings.write_collision or
                                    settings.is_lbte),
-                          compression=settings.hdf5_compression,
-                          symprec=symprec)
+                          compression=settings.hdf5_compression)
 
         if log_level:
             print_end()
@@ -1017,13 +1028,13 @@ def main(**argparse_control):
     # Show reduced number of triplets at grid points and then exit #
     ################################################################
     if run_mode == "show_triplets_info":
+        phono3py.mesh_numbers = settings.mesh_numbers
+        grid_points = settings_to_grid_points(settings, phono3py.grid)
         show_num_triplets(phono3py.primitive,
-                          phono3py.mesh_numbers,
+                          phono3py.grid,
                           band_indices=settings.band_indices,
-                          grid_points=updated_settings['grid_points'],
-                          is_kappa_star=settings.is_kappa_star,
-                          is_dense_gp_map=settings.is_dense_gp_map,
-                          symprec=symprec)
+                          grid_points=grid_points,
+                          is_kappa_star=settings.is_kappa_star)
 
         if log_level:
             print_end()
@@ -1114,7 +1125,7 @@ def main(**argparse_control):
     #######################################################
     if run_mode == "imag_self_energy":
         phono3py.run_imag_self_energy(
-            updated_settings['grid_points'],
+            settings_to_grid_points(settings, phono3py.grid),
             updated_settings['temperature_points'],
             frequency_step=updated_settings['frequency_step'],
             num_frequency_points=updated_settings['num_frequency_points'],
@@ -1128,7 +1139,7 @@ def main(**argparse_control):
     #####################################################
     elif run_mode == "real_self_energy":
         phono3py.run_real_self_energy(
-            updated_settings['grid_points'],
+            settings_to_grid_points(settings, phono3py.grid),
             updated_settings['temperature_points'],
             frequency_step=updated_settings['frequency_step'],
             num_frequency_points=updated_settings['num_frequency_points'],
@@ -1140,7 +1151,7 @@ def main(**argparse_control):
     #######################################################
     elif run_mode == "spectral_function":
         phono3py.run_spectral_function(
-            updated_settings['grid_points'],
+            settings_to_grid_points(settings, phono3py.grid),
             updated_settings['temperature_points'],
             frequency_step=updated_settings['frequency_step'],
             num_frequency_points=updated_settings['num_frequency_points'],
@@ -1153,12 +1164,13 @@ def main(**argparse_control):
     # Run lattice thermal conductivity #
     ####################################
     elif run_mode == "conductivity-RTA" or run_mode == "conductivity-LBTE":
+        grid_points = settings_to_grid_points(settings, phono3py.grid)
         phono3py.run_thermal_conductivity(
             is_LBTE=settings.is_lbte,
             temperatures=updated_settings['temperatures'],
             is_isotope=settings.is_isotope,
             mass_variances=settings.mass_variances,
-            grid_points=updated_settings['grid_points'],
+            grid_points=grid_points,
             boundary_mfp=settings.boundary_mfp,
             solve_collective_phonon=settings.solve_collective_phonon,
             use_ave_pp=settings.use_ave_pp,

@@ -169,7 +169,8 @@ static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
 };
 
 static RotMats *get_point_group_reciprocal(const RotMats * rotations,
-                                           const long is_time_reversal);
+                                           const long is_time_reversal,
+                                           const long is_transose);
 static long get_ir_grid_map(long ir_mapping_table[],
                             const long D_diag[3],
                             const long PS[3],
@@ -188,9 +189,8 @@ static void set_bz_address(long address[3],
                            const long Qinv[3][3]);
 static double get_bz_distances(long nint[3],
                                double distances[],
-                               const long gp,
                                const BZGrid *bzgrid,
-                               const long (*grid_address)[3],
+                               const long grid_address[3],
                                const double tolerance);
 static void multiply_matrix_vector_d3(double v[3],
                                       const double a[3][3],
@@ -214,14 +214,14 @@ long bzg_get_ir_grid_map(long ir_mapping_table[],
 RotMats *bzg_get_point_group_reciprocal(const RotMats * rotations,
                                         const long is_time_reversal)
 {
-  return get_point_group_reciprocal(rotations, is_time_reversal);
+  return get_point_group_reciprocal(rotations, is_time_reversal, 0);
 }
 
 long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
                                 const long D_diag[3],
                                 const long PS[3],
                                 const long is_time_reversal,
-                                const long (*rotations_in)[3][3],
+                                const long (*rec_rotations_in)[3][3],
                                 const long num_rot)
 {
   long i, num_ir;
@@ -229,11 +229,11 @@ long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
 
   rotations = bzg_alloc_RotMats(num_rot);
   for (i = 0; i < num_rot; i++) {
-    lagmat_copy_matrix_l3(rotations->mat[i], rotations_in[i]);
+    lagmat_copy_matrix_l3(rotations->mat[i], rec_rotations_in[i]);
   }
 
   rot_reciprocal = NULL;
-  rot_reciprocal = get_point_group_reciprocal(rotations, is_time_reversal);
+  rot_reciprocal = get_point_group_reciprocal(rotations, is_time_reversal, 0);
   num_ir = get_ir_grid_map(ir_mapping_table,
                            D_diag,
                            PS,
@@ -378,7 +378,8 @@ long bzg_inverse_unimodular_matrix_l3(long m[3][3],
 
 /* Return NULL if failed */
 static RotMats *get_point_group_reciprocal(const RotMats * rotations,
-                                           const long is_time_reversal)
+                                           const long is_time_reversal,
+                                           const long is_transpose)
 {
   long i, j, num_rot;
   RotMats *rot_reciprocal, *rot_return;
@@ -414,11 +415,19 @@ static RotMats *get_point_group_reciprocal(const RotMats * rotations,
     unique_rot[i] = -1;
   }
 
-  for (i = 0; i < rotations->size; i++) {
-    lagmat_transpose_matrix_l3(rot_reciprocal->mat[i], rotations->mat[i]);
+  if (is_transpose) {
+    for (i = 0; i < rotations->size; i++) {
+      lagmat_transpose_matrix_l3(rot_reciprocal->mat[i], rotations->mat[i]);
+    }
+  } else {
+    for (i = 0; i < rotations->size; i++) {
+      lagmat_copy_matrix_l3(rot_reciprocal->mat[i], rotations->mat[i]);
+    }
+  }
 
-    if (is_time_reversal) {
-      lagmat_multiply_matrix_l3(rot_reciprocal->mat[rotations->size+i],
+  if (is_time_reversal) {
+    for (i = 0; i < rotations->size; i++) {
+      lagmat_multiply_matrix_l3(rot_reciprocal->mat[rotations->size + i],
                                 inversion,
                                 rot_reciprocal->mat[i]);
     }
@@ -504,7 +513,7 @@ static void get_bz_grid_addresses_type1(BZGrid *bzgrid,
   bzgrid->gp_map[num_bzmesh] = 0;
   id_shift = 0;
   for (i = 0; i < total_num_gp; i++) {
-    min_distance = get_bz_distances(nint, distances, i, bzgrid, grid_address,
+    min_distance = get_bz_distances(nint, distances, bzgrid, grid_address[i],
                                     tolerance);
     count = 0;
     for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
@@ -554,7 +563,7 @@ static void get_bz_grid_addresses_type2(BZGrid *bzgrid,
 
   for (i = 0;
        i < bzgrid->D_diag[0] * bzgrid->D_diag[1] * bzgrid->D_diag[2]; i++) {
-    min_distance = get_bz_distances(nint, distances, i, bzgrid, grid_address,
+    min_distance = get_bz_distances(nint, distances, bzgrid, grid_address[i],
                                     tolerance);
     for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
       if (distances[j] < min_distance + tolerance) {
@@ -595,9 +604,8 @@ static void set_bz_address(long address[3],
 
 static double get_bz_distances(long nint[3],
                                double distances[],
-                               const long gp,
                                const BZGrid *bzgrid,
-                               const long (*grid_address)[3],
+                               const long grid_address[3],
                                const double tolerance)
 {
   long i, j;
@@ -605,7 +613,7 @@ static double get_bz_distances(long nint[3],
   double q_vec[3], q_red[3];
 
   for (i = 0; i < 3; i++) {
-    q_red[i] = grid_address[gp][i] + bzgrid->PS[i] / 2.0;
+    q_red[i] = grid_address[i] + bzgrid->PS[i] / 2.0;
     q_red[i] /= bzgrid->D_diag[i];
   }
   bzg_multiply_matrix_vector_ld3(q_red, bzgrid->Q, q_red);
@@ -622,8 +630,8 @@ static double get_bz_distances(long nint[3],
     distances[i] = norm_squared_d3(q_vec);
   }
 
-  /* Use of tolerance is important to select first one amount similar
-   * distances. Otherwise the choise of bz grid address among
+  /* Use of tolerance is important to select first one among similar
+   * distances. Otherwise the choice of bz grid address among
    * those translationally equivalent can change by very tiny numerical
    * fluctuation. */
   min_distance = distances[0];

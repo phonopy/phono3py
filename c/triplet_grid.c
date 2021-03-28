@@ -48,6 +48,17 @@ static long get_ir_triplets_at_q(long *map_triplets,
                                  const long D_diag[3],
                                  const RotMats * rot_reciprocal,
                                  const long swappable);
+static long get_ir_triplets_at_q_perm_q1q2(long *map_triplets,
+                                           const long *map_q,
+                                           const long grid_point,
+                                           const long D_diag[3],
+                                           const RotMats * rot_reciprocal_q,
+                                           const long num_ir_q);
+static long get_ir_triplets_at_q_noperm(long *map_triplets,
+                                        const long *map_q,
+                                        const long grid_point,
+                                        const long D_diag[3],
+                                        const RotMats * rot_reciprocal_q);
 static long get_BZ_triplets_at_q(long (*triplets)[3],
                                  const long grid_point,
                                  const ConstBZGrid *bzgrid,
@@ -55,12 +66,12 @@ static long get_BZ_triplets_at_q(long (*triplets)[3],
 static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
                                        const long grid_point,
                                        const ConstBZGrid *bzgrid,
-                                       const long *ir_grid_points,
+                                       const long *ir_q1_gps,
                                        const long num_ir);
 static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
                                        const long grid_point,
                                        const ConstBZGrid *bzgrid,
-                                       const long *ir_grid_points,
+                                       const long *ir_q1_gps,
                                        const long num_ir);
 static double get_squared_distance(const long G[3],
                                    const double LQD_inv[3][3]);
@@ -74,27 +85,27 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
                               const long grid_point,
                               const long D_diag[3],
                               const long is_time_reversal,
-                              const long (*rotations)[3][3],
+                              const long (*rec_rotations_in)[3][3],
                               const long num_rot,
                               const long swappable)
 {
   long i, num_ir;
-  RotMats *rot_real, *rot_reciprocal;
+  RotMats *rec_rotations, *rotations;
 
-  rot_real = bzg_alloc_RotMats(num_rot);
+  rec_rotations = bzg_alloc_RotMats(num_rot);
   for (i = 0; i < num_rot; i++) {
-    lagmat_copy_matrix_l3(rot_real->mat[i], rotations[i]);
+    lagmat_copy_matrix_l3(rec_rotations->mat[i], rec_rotations_in[i]);
   }
-  rot_reciprocal = bzg_get_point_group_reciprocal(rot_real, is_time_reversal);
-  bzg_free_RotMats(rot_real);
+  rotations = bzg_get_point_group_reciprocal(rec_rotations, is_time_reversal);
+  bzg_free_RotMats(rec_rotations);
 
   num_ir = get_ir_triplets_at_q(map_triplets,
                                 map_q,
                                 grid_point,
                                 D_diag,
-                                rot_reciprocal,
+                                rotations,
                                 swappable);
-  bzg_free_RotMats(rot_reciprocal);
+  bzg_free_RotMats(rotations);
 
   return num_ir;
 }
@@ -117,18 +128,11 @@ static long get_ir_triplets_at_q(long *map_triplets,
                                  const RotMats * rot_reciprocal,
                                  const long swappable)
 {
-  long i, j, num_grid, q_2, num_ir_q, num_ir_triplets, ir_gp;
+  long i, num_ir_q, num_ir_triplets;
   long PS[3];
-  long adrs0[3], adrs1[3], adrs2[3];
-  long *ir_grid_points, *third_q;
   RotMats *rot_reciprocal_q;
 
-  ir_grid_points = NULL;
-  third_q = NULL;
   rot_reciprocal_q = NULL;
-  num_ir_triplets = 0;
-
-  num_grid = D_diag[0] * D_diag[1] * D_diag[2];
 
   for (i = 0; i < 3; i++) {
     PS[i] = 0;
@@ -142,56 +146,82 @@ static long get_ir_triplets_at_q(long *map_triplets,
                                  D_diag,
                                  PS,
                                  rot_reciprocal_q);
+
+  if (swappable) {
+    num_ir_triplets =  get_ir_triplets_at_q_perm_q1q2(map_triplets,
+                                                      map_q,
+                                                      grid_point,
+                                                      D_diag,
+                                                      rot_reciprocal_q,
+                                                      num_ir_q);
+  } else {
+    num_ir_triplets = get_ir_triplets_at_q_noperm(map_triplets,
+                                                  map_q,
+                                                  grid_point,
+                                                  D_diag,
+                                                  rot_reciprocal_q);
+  }
+
   bzg_free_RotMats(rot_reciprocal_q);
   rot_reciprocal_q = NULL;
 
-  if ((third_q = (long*) malloc(sizeof(long) * num_ir_q)) == NULL) {
+  return num_ir_triplets;
+}
+
+static long get_ir_triplets_at_q_perm_q1q2(long *map_triplets,
+                                           const long *map_q,
+                                           const long grid_point,
+                                           const long D_diag[3],
+                                           const RotMats * rot_reciprocal_q,
+                                           const long num_ir_q)
+{
+  long i, j, num_grid, num_ir_triplets, ir_gp, count;
+  long adrs0[3], adrs1[3], adrs2[3];
+  long *ir_gps_at_q, *q_2;
+
+  ir_gps_at_q = NULL;
+  q_2 = NULL;
+  num_ir_triplets = 0;
+
+  num_grid = D_diag[0] * D_diag[1] * D_diag[2];
+
+  if ((q_2 = (long*) malloc(sizeof(long) * num_ir_q)) == NULL) {
     warning_print("Memory could not be allocated.");
     goto ret;
   }
 
-  if ((ir_grid_points = (long*) malloc(sizeof(long) * num_ir_q)) == NULL) {
+  if ((ir_gps_at_q = (long*) malloc(sizeof(long) * num_ir_q)) == NULL) {
     warning_print("Memory could not be allocated.");
     goto ret;
   }
 
-  num_ir_q = 0;
+  count = 0;
   for (i = 0; i < num_grid; i++) {
     if (map_q[i] == i) {
-      ir_grid_points[num_ir_q] = i;
-      num_ir_q++;
+      ir_gps_at_q[count] = i;
+      count++;
     }
-  }
-
-  for (i = 0; i < num_grid; i++) {
-    map_triplets[i] = num_grid;  /* When not found, map_triplets == num_grid */
   }
 
   grg_get_grid_address_from_index(adrs0, grid_point, D_diag);
 
 #pragma omp parallel for private(j, adrs1, adrs2)
   for (i = 0; i < num_ir_q; i++) {
-    grg_get_grid_address_from_index(adrs1, ir_grid_points[i], D_diag);
+    grg_get_grid_address_from_index(adrs1, ir_gps_at_q[i], D_diag);
     for (j = 0; j < 3; j++) { /* q'' */
       adrs2[j] = - adrs0[j] - adrs1[j];
     }
-    third_q[i] = grg_get_grid_index(adrs2, D_diag);
+   q_2[i] = grg_get_grid_index(adrs2, D_diag);
   }
 
-  if (swappable) { /* search q1 <-> q2 */
-    for (i = 0; i < num_ir_q; i++) {
-      ir_gp = ir_grid_points[i];
-      q_2 = third_q[i];
-      if (map_triplets[map_q[q_2]] < num_grid) {
-        map_triplets[ir_gp] = map_triplets[map_q[q_2]];
-      } else {
-        map_triplets[ir_gp] = ir_gp;
-        num_ir_triplets++;
-      }
-    }
-  } else {
-    for (i = 0; i < num_ir_q; i++) {
-      ir_gp = ir_grid_points[i];
+  /* map_q[q_2[i]] is in ir_gps_at_q. */
+  /* If map_q[q_2[i]] < ir_gps_at_q[i], this should be already */
+  /* stored. So the counter is not incremented. */
+  for (i = 0; i < num_ir_q; i++) {
+    ir_gp = ir_gps_at_q[i];
+    if (map_q[q_2[i]] < ir_gp) {
+      map_triplets[ir_gp] = map_q[q_2[i]];
+    } else {
       map_triplets[ir_gp] = ir_gp;
       num_ir_triplets++;
     }
@@ -203,14 +233,37 @@ static long get_ir_triplets_at_q(long *map_triplets,
   }
 
 ret:
-  if (third_q) {
-    free(third_q);
-    third_q = NULL;
+  if (q_2) {
+    free(q_2);
+    q_2 = NULL;
   }
-  if (ir_grid_points) {
-    free(ir_grid_points);
-    ir_grid_points = NULL;
+  if (ir_gps_at_q) {
+    free(ir_gps_at_q);
+    ir_gps_at_q = NULL;
   }
+  return num_ir_triplets;
+}
+
+static long get_ir_triplets_at_q_noperm(long *map_triplets,
+                                        const long *map_q,
+                                        const long grid_point,
+                                        const long D_diag[3],
+                                        const RotMats * rot_reciprocal_q)
+{
+  long i, num_grid, num_ir_triplets;
+
+  num_ir_triplets = 0;
+  num_grid = D_diag[0] * D_diag[1] * D_diag[2];
+
+  for (i = 0; i < num_grid; i++) {
+    if (map_q[i] == i) {
+      map_triplets[i] = i;
+      num_ir_triplets++;
+    } else {
+      map_triplets[i] = map_triplets[map_q[i]];
+    }
+  }
+
   return num_ir_triplets;
 }
 
@@ -220,12 +273,12 @@ static long get_BZ_triplets_at_q(long (*triplets)[3],
                                  const long *map_triplets)
 {
   long i, num_ir;
-  long *ir_grid_points;
+  long *ir_q1_gps;
 
-  ir_grid_points = NULL;
+  ir_q1_gps = NULL;
   num_ir = 0;
 
-  if ((ir_grid_points = (long*) malloc(sizeof(long) * bzgrid->size))
+  if ((ir_q1_gps = (long*) malloc(sizeof(long) * bzgrid->size))
       == NULL) {
     warning_print("Memory could not be allocated.");
     goto ret;
@@ -233,7 +286,7 @@ static long get_BZ_triplets_at_q(long (*triplets)[3],
 
   for (i = 0; i < bzgrid->size; i++) {
     if (map_triplets[i] == i) {
-      ir_grid_points[num_ir] = i;
+      ir_q1_gps[num_ir] = i;
       num_ir++;
     }
   }
@@ -242,18 +295,18 @@ static long get_BZ_triplets_at_q(long (*triplets)[3],
     get_BZ_triplets_at_q_type1(triplets,
                                grid_point,
                                bzgrid,
-                               ir_grid_points,
+                               ir_q1_gps,
                                num_ir);
   } else {
     get_BZ_triplets_at_q_type2(triplets,
                                grid_point,
                                bzgrid,
-                               ir_grid_points,
+                               ir_q1_gps,
                                num_ir);
   }
 
-  free(ir_grid_points);
-  ir_grid_points = NULL;
+  free(ir_q1_gps);
+  ir_q1_gps = NULL;
 
 ret:
   return num_ir;
@@ -262,7 +315,7 @@ ret:
 static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
                                        const long grid_point,
                                        const ConstBZGrid *bzgrid,
-                                       const long *ir_grid_points,
+                                       const long *ir_q1_gps,
                                        const long num_ir)
 {
   long i, j, gp2, num_gp, num_bzgp, bz0, bz1, bz2;
@@ -288,7 +341,7 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
 #pragma omp parallel for private(j, gp2, bzgp, G, bz_adrs1, bz_adrs2, d2, min_d2, bz0, bz1, bz2)
   for (i = 0; i < num_ir; i++) {
     for (j = 0; j < 3; j++) {
-      bz_adrs1[j] = bz_adrs[ir_grid_points[i]][j];
+      bz_adrs1[j] = bz_adrs[ir_q1_gps[i]][j];
       bz_adrs2[j] = - bz_adrs0[j] - bz_adrs1[j];
     }
     gp2 = grg_get_grid_index(bz_adrs2, bzgrid->D_diag);
@@ -304,13 +357,13 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
         bzgp[0] = num_gp + gp_map[num_bzgp + grid_point] + bz0 - 1;
       }
       for (bz1 = 0;
-           bz1 < gp_map[num_bzgp + ir_grid_points[i] + 1]
-             - gp_map[num_bzgp + ir_grid_points[i]] + 1;
+           bz1 < gp_map[num_bzgp + ir_q1_gps[i] + 1]
+             - gp_map[num_bzgp + ir_q1_gps[i]] + 1;
            bz1++) {
         if (bz1 == 0) {
-          bzgp[1] = ir_grid_points[i];
+          bzgp[1] = ir_q1_gps[i];
         } else {
-          bzgp[1] = num_gp + gp_map[num_bzgp + ir_grid_points[i]] + bz1 - 1;
+          bzgp[1] = num_gp + gp_map[num_bzgp + ir_q1_gps[i]] + bz1 - 1;
         }
         for (bz2 = 0;
              bz2 < gp_map[num_bzgp + gp2 + 1] - gp_map[num_bzgp + gp2] + 1;
@@ -347,7 +400,7 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
 static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
                                        const long grid_point,
                                        const ConstBZGrid *bzgrid,
-                                       const long *ir_grid_points,
+                                       const long *ir_q1_gps,
                                        const long num_ir)
 {
   long i, j, gp0, gp2;
@@ -372,15 +425,15 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
 #pragma omp parallel for private(j, gp2, bzgp, G, bz_adrs1, bz_adrs2, d2, min_d2)
   for (i = 0; i < num_ir; i++) {
     for (j = 0; j < 3; j++) {
-      bz_adrs1[j] = bz_adrs[gp_map[ir_grid_points[i]]][j];
+      bz_adrs1[j] = bz_adrs[gp_map[ir_q1_gps[i]]][j];
       bz_adrs2[j] = - bz_adrs0[j] - bz_adrs1[j];
     }
     gp2 = grg_get_grid_index(bz_adrs2, bzgrid->D_diag);
     /* Negative value is the signal to initialize min_d2 later. */
     min_d2 = -1;
     for (bzgp[0] = gp_map[gp0]; bzgp[0] < gp_map[gp0 + 1]; bzgp[0]++) {
-      for (bzgp[1] = gp_map[ir_grid_points[i]];
-           bzgp[1] < gp_map[ir_grid_points[i] + 1]; bzgp[1]++) {
+      for (bzgp[1] = gp_map[ir_q1_gps[i]];
+           bzgp[1] < gp_map[ir_q1_gps[i] + 1]; bzgp[1]++) {
         for (bzgp[2] = gp_map[gp2]; bzgp[2] < gp_map[gp2 + 1]; bzgp[2]++) {
           for (j = 0; j < 3; j++) {
             G[j] = bz_adrs[bzgp[0]][j] + bz_adrs[bzgp[1]][j] + bz_adrs[bzgp[2]][j];

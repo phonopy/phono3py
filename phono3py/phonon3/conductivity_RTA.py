@@ -42,13 +42,12 @@ from phono3py.phonon3.conductivity import (Conductivity, all_bands_exist,
 from phono3py.phonon3.conductivity import write_pp as _write_pp
 from phono3py.phonon3.imag_self_energy import (ImagSelfEnergy,
                                                average_by_degeneracy)
-from phono3py.phonon3.triplets import (get_grid_points_by_rotations,
-                                       get_all_triplets)
+from phono3py.phonon3.triplets import get_all_triplets
+from phono3py.phonon.grid import get_grid_points_by_rotations
 
 
 def get_thermal_conductivity_RTA(
         interaction,
-        symmetry,
         temperatures=None,
         sigmas=None,
         sigma_cutoff=None,
@@ -83,7 +82,6 @@ def get_thermal_conductivity_RTA(
               "--------------------")
     br = Conductivity_RTA(
         interaction,
-        symmetry,
         grid_points=grid_points,
         temperatures=_temperatures,
         sigmas=sigmas,
@@ -153,11 +151,8 @@ def _write_gamma_detail(br, interaction, i, compression="gzip", filename=None,
     gp = grid_points[i]
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()
-    triplets, weights, map_triplets, _ = interaction.get_triplets_at_q()
-    if map_triplets is None:
-        all_triplets = None
-    else:
-        all_triplets = get_all_triplets(gp, interaction.bz_grid, mesh)
+    triplets, weights, _, _ = interaction.get_triplets_at_q()
+    all_triplets = get_all_triplets(gp, interaction.bz_grid)
 
     if all_bands_exist(interaction):
         for j, sigma in enumerate(sigmas):
@@ -168,7 +163,6 @@ def _write_gamma_detail(br, interaction, i, compression="gzip", filename=None,
                 grid_point=gp,
                 triplet=triplets,
                 weight=weights,
-                triplet_map=map_triplets,
                 triplet_all=all_triplets,
                 sigma=sigma,
                 sigma_cutoff=sigma_cutoff,
@@ -474,7 +468,6 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
 class Conductivity_RTA(Conductivity):
     def __init__(self,
                  interaction,
-                 symmetry,
                  grid_points=None,
                  temperatures=None,
                  sigmas=None,
@@ -511,7 +504,6 @@ class Conductivity_RTA(Conductivity):
         self._cutoff_frequency = None
         self._boundary_mfp = None
 
-        self._symmetry = None
         self._point_operations = None
         self._rotations_cartesian = None
 
@@ -538,7 +530,6 @@ class Conductivity_RTA(Conductivity):
         self._num_ignored_phonon_modes = None
         self._num_sampling_grid_points = None
 
-        self._mesh = None
         self._conversion_factor = None
 
         self._is_isotope = None
@@ -548,7 +539,6 @@ class Conductivity_RTA(Conductivity):
 
         Conductivity.__init__(self,
                               interaction,
-                              symmetry,
                               grid_points=grid_points,
                               temperatures=temperatures,
                               sigmas=sigmas,
@@ -635,10 +625,7 @@ class Conductivity_RTA(Conductivity):
                 self._collision.set_grid_point(grid_point)
                 self._set_gamma_at_sigmas(i)
         else:
-            self._collision.set_grid_point(
-                grid_point,
-                stores_triplets_map=(self._is_full_pp or
-                                     self._is_gamma_detail))
+            self._collision.set_grid_point(grid_point)
             num_triplets = len(self._pp.get_triplets_at_q()[0])
             if self._log_level:
                 print("Number of triplets: %d" % num_triplets)
@@ -721,7 +708,7 @@ class Conductivity_RTA(Conductivity):
 
             if self._read_pp:
                 pp, _g_zero = read_pp_from_hdf5(
-                    self._mesh,
+                    self._pp.mesh_numbers,
                     grid_point=self._grid_points[i],
                     sigma=sigma,
                     sigma_cutoff=self._sigma_cutoff,
@@ -791,8 +778,7 @@ class Conductivity_RTA(Conductivity):
         symmetrize_fc3_q = 0
 
         if None in self._sigmas:
-            reclat = np.linalg.inv(self._pp.primitive.cell)
-            thm = TetrahedronMethod(reclat, mesh=self._mesh)
+            thm = TetrahedronMethod(self._bz_grid.microzone_lattice)
 
         # It is assumed that self._sigmas = [None].
         for j, sigma in enumerate(self._sigmas):
@@ -809,7 +795,8 @@ class Conductivity_RTA(Conductivity):
             if sigma is None:
                 phono3c.pp_collision(
                     collisions,
-                    thm.get_tetrahedra(),
+                    np.array(np.dot(thm.get_tetrahedra(), self._bz_grid.P.T),
+                             dtype='int_', order='C'),
                     self._frequencies,
                     self._eigenvectors,
                     triplets_at_q,
@@ -907,10 +894,7 @@ class Conductivity_RTA(Conductivity):
                       (f, v[0], v[1], v[2], np.linalg.norm(v)))
 
     def _show_log_values_on_kstar(self, frequencies, gv, ave_pp, gp, q):
-        rotation_map = get_grid_points_by_rotations(
-            gp,
-            self._bz_grid,
-            self._point_operations)
+        rotation_map = get_grid_points_by_rotations(gp, self._bz_grid)
         for i, j in enumerate(np.unique(rotation_map)):
             for k, (rot, rot_c) in enumerate(zip(
                     self._point_operations, self._rotations_cartesian)):

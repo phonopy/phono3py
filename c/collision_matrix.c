@@ -305,11 +305,15 @@ static void get_inv_sinh(double *inv_sinh,
   long i, gp2;
   double f;
 
+  /* This assumes the algorithm of get_ir_triplets_at_q_perm_q1q2, */
+  /* where defined triplets_map[gp] == triplets_map[map_q[gp]]. */
+  /* If triplets_map[map_q[gp]] != map_q[gp], q1 and q2 are permuted. */
   if (triplets_map[gp] == map_q[gp]) {
     gp2 = triplet[2];
   } else {
     gp2 = triplet[1];
   }
+
   for (i = 0; i < num_band; i++) {
     f = frequencies[gp2 * num_band + i];
     if (f > cutoff_frequency) {
@@ -320,29 +324,23 @@ static void get_inv_sinh(double *inv_sinh,
   }
 }
 
+/* Symmetrically independent triplets are indexed. */
+/* Inverse definition of ir_grid_points in get_BZ_triplets_at_q */
+/* in triplet_grid.c. */
 static long *create_gp2tp_map(const long *triplets_map,
                               const long num_gp)
 {
-  long i, max_i, count;
+  long i, num_ir;
   long *gp2tp_map;
 
-  max_i = 0;
-  for (i = 0; i < num_gp; i++) {
-    if (max_i < triplets_map[i]) {
-      max_i = triplets_map[i];
-    }
-  }
-
-  gp2tp_map = (long*)malloc(sizeof(long) * (max_i + 1));
-  for (i = 0; i < max_i + 1; i++) {
-    gp2tp_map[i] = 0;
-  }
-
-  count = 0;
+  gp2tp_map = (long*)malloc(sizeof(long) * num_gp);
+  num_ir = 0;
   for (i = 0; i < num_gp; i++) {
     if (triplets_map[i] == i) {
-      gp2tp_map[i] = count;
-      count++;
+      gp2tp_map[i] = num_ir;
+      num_ir++;
+    } else { /* This should not be used. */
+      gp2tp_map[i] = -1;
     }
   }
 

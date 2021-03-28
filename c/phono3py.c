@@ -572,7 +572,7 @@ long ph3py_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                              const long D_diag[3],
                                              const long is_time_reversal,
                                              const long num_rot,
-                                             const long (*rotations)[3][3],
+                                             const long (*rec_rotations)[3][3],
                                              const long swappable)
 {
   return tpl_get_triplets_reciprocal_mesh_at_q(map_triplets,
@@ -581,7 +581,7 @@ long ph3py_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                                D_diag,
                                                is_time_reversal,
                                                num_rot,
-                                               rotations,
+                                               rec_rotations,
                                                swappable);
 }
 
@@ -740,12 +740,20 @@ long ph3py_transform_rotations(long (*transformed_rots)[3][3],
                                  Q);
 }
 
+long ph3py_get_snf3x3(long D_diag[3],
+                      long P[3][3],
+                      long Q[3][3],
+                      const long A[3][3])
+{
+  return grg_get_snf3x3(D_diag, P, Q, A);
+}
+
 /* The rotations are those after proper transformation in GRGrid. */
 long ph3py_get_ir_reciprocal_mesh(long *ir_mapping_table,
                                   const long D_diag[3],
                                   const long PS[3],
                                   const long is_time_reversal,
-                                  const long (*rotations)[3][3],
+                                  const long (*rec_rotations)[3][3],
                                   const long num_rot)
 {
   long num_ir;
@@ -754,7 +762,7 @@ long ph3py_get_ir_reciprocal_mesh(long *ir_mapping_table,
                                       D_diag,
                                       PS,
                                       is_time_reversal,
-                                      rotations,
+                                      rec_rotations,
                                       num_rot);
   return num_ir;
 }

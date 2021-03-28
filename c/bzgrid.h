@@ -102,7 +102,7 @@ long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
                                 const long D_diag[3],
                                 const long PS[3],
                                 const long is_time_reversal,
-                                const long (*rotations_in)[3][3],
+                                const long (*rec_rotations_in)[3][3],
                                 const long num_rot);
 long bzg_get_bz_grid_addresses(BZGrid *bzgrid,
                                const long grid_address[][3]);

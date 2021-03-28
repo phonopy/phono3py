@@ -1295,15 +1295,18 @@ def read_phonon_from_hdf5(mesh,
     return None
 
 
-def write_ir_grid_points(mesh,
+def write_ir_grid_points(bz_grid,
                          grid_points,
                          grid_weights,
-                         grid_address,
                          primitive_lattice):
     w = open("ir_grid_points.yaml", 'w')
-    w.write("mesh: [ %d, %d, %d ]\n" % tuple(mesh))
+    w.write("mesh: [ %d, %d, %d ]\n" % tuple(bz_grid.D_diag))
     w.write("reciprocal_lattice:\n")
     for vec, axis in zip(primitive_lattice.T, ('a*', 'b*', 'c*')):
+        w.write("- [ %12.8f, %12.8f, %12.8f ] # %2s\n"
+                % (tuple(vec) + (axis,)))
+    w.write("microzone_lattice:\n")
+    for vec, axis in zip(bz_grid.microzone_lattice.T, ('a*', 'b*', 'c*')):
         w.write("- [ %12.8f, %12.8f, %12.8f ] # %2s\n"
                 % (tuple(vec) + (axis,)))
     w.write("num_reduced_ir_grid_points: %d\n" % len(grid_points))
@@ -1313,9 +1316,9 @@ def write_ir_grid_points(mesh,
         w.write("- grid_point: %d\n" % g)
         w.write("  weight: %d\n" % weight)
         w.write("  grid_address: [ %12d, %12d, %12d ]\n" %
-                tuple(grid_address[g]))
-        w.write("  q-point:      [ %12.7f, %12.7f, %12.7f ]\n" %
-                tuple(grid_address[g].astype('double') / mesh))
+                tuple(bz_grid.addresses[g]))
+        q = np.dot(bz_grid.addresses[g], bz_grid.QDinv.T)
+        w.write("  q-point:      [ %12.7f, %12.7f, %12.7f ]\n" % tuple(q))
 
 
 def parse_disp_fc2_yaml(filename="disp_fc2.yaml", return_cell=False):

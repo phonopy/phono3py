@@ -87,6 +87,10 @@ py_get_grid_index_from_address(PyObject *self, PyObject *args);
 static PyObject *
 py_get_gr_grid_addresses(PyObject *self, PyObject *args);
 static PyObject *
+py_transform_rotations(PyObject *self, PyObject *args);
+static PyObject *
+py_get_snf3x3(PyObject *self, PyObject *args);
+static PyObject *
 py_get_ir_reciprocal_mesh(PyObject *self, PyObject *args);
 static PyObject * py_get_bz_grid_addresses(PyObject *self, PyObject *args);
 
@@ -236,6 +240,14 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_get_gr_grid_addresses,
    METH_VARARGS,
    "Get generalized regular grid addresses"},
+  {"transform_rotations",
+   (PyCFunction)py_transform_rotations,
+   METH_VARARGS,
+   "Transform rotations to those in generalized regular grid"},
+  {"snf3x3",
+   (PyCFunction)py_get_snf3x3,
+   METH_VARARGS,
+   "Get Smith formal form for 3x3 integer matrix"},
   {"bz_grid_addresses",
    (PyCFunction)py_get_bz_grid_addresses,
    METH_VARARGS,
@@ -1827,7 +1839,6 @@ py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-
 static PyObject *
 py_get_grid_index_from_address(PyObject *self, PyObject *args)
 {
@@ -1852,7 +1863,6 @@ py_get_grid_index_from_address(PyObject *self, PyObject *args)
   return PyLong_FromLong(gp);
 }
 
-
 static PyObject *
 py_get_gr_grid_addresses(PyObject *self, PyObject *args)
 {
@@ -1876,6 +1886,80 @@ py_get_gr_grid_addresses(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+static PyObject *
+py_transform_rotations(PyObject *self, PyObject *args)
+{
+  PyArrayObject* py_transformed_rotations;
+  PyArrayObject* py_rotations;
+  PyArrayObject* py_D_diag;
+  PyArrayObject* py_Q;
+
+  long (*transformed_rotations)[3][3];
+  long (*rotations)[3][3];
+  long *D_diag;
+  long (*Q)[3];
+  long num_rot, succeeded;
+
+  if (!PyArg_ParseTuple(args, "OOOO",
+                        &py_transformed_rotations,
+                        &py_rotations,
+                        &py_D_diag,
+                        &py_Q)) {
+    return NULL;
+  }
+
+  transformed_rotations = (long(*)[3][3])PyArray_DATA(py_transformed_rotations);
+  rotations = (long(*)[3][3])PyArray_DATA(py_rotations);
+  D_diag = (long*)PyArray_DATA(py_D_diag);
+  Q = (long(*)[3])PyArray_DATA(py_Q);
+  num_rot = (long)PyArray_DIMS(py_transformed_rotations)[0];
+
+  succeeded = ph3py_transform_rotations(transformed_rotations,
+                                        rotations,
+                                        num_rot,
+                                        D_diag,
+                                        Q);
+  if (succeeded) {
+    Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
+  }
+}
+
+static PyObject *
+py_get_snf3x3(PyObject *self, PyObject *args)
+{
+  PyArrayObject* py_D_diag;
+  PyArrayObject* py_P;
+  PyArrayObject* py_Q;
+  PyArrayObject* py_A;
+
+  long *D_diag;
+  long (*P)[3];
+  long (*Q)[3];
+  long (*A)[3];
+  long succeeded;
+
+  if (!PyArg_ParseTuple(args, "OOOO",
+                        &py_D_diag,
+                        &py_P,
+                        &py_Q,
+                        &py_A)) {
+    return NULL;
+  }
+
+  D_diag = (long*)PyArray_DATA(py_D_diag);
+  P = (long(*)[3])PyArray_DATA(py_P);
+  Q = (long(*)[3])PyArray_DATA(py_Q);
+  A = (long(*)[3])PyArray_DATA(py_A);
+
+  succeeded = ph3py_get_snf3x3(D_diag, P, Q, A);
+  if (succeeded) {
+    Py_RETURN_TRUE;
+  } else {
+    Py_RETURN_FALSE;
+  }
+}
 
 static PyObject *
 py_get_ir_reciprocal_mesh(PyObject *self, PyObject *args)
@@ -1917,7 +2001,6 @@ py_get_ir_reciprocal_mesh(PyObject *self, PyObject *args)
                                         num_rot);
   return PyLong_FromLong(num_ir);
 }
-
 
 static PyObject * py_get_bz_grid_addresses(PyObject *self, PyObject *args)
 {
@@ -1975,7 +2058,6 @@ static PyObject * py_get_bz_grid_addresses(PyObject *self, PyObject *args)
 
   return PyLong_FromLong(num_total_gp);
 }
-
 
 static PyObject *
 py_diagonalize_collision_matrix(PyObject *self, PyObject *args)
@@ -2207,7 +2289,6 @@ static Larray* convert_to_larray(const PyArrayObject* npyary)
   ary->data = (long*)PyArray_DATA(npyary);
   return ary;
 }
-
 
 static Darray* convert_to_darray(const PyArrayObject* npyary)
 {

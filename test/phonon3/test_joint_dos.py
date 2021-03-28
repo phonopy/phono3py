@@ -70,8 +70,8 @@ def test_jdos_si(si_pbesol):
     jdos = Phono3pyJointDos(
         si_pbesol.phonon_supercell,
         si_pbesol.phonon_primitive,
-        si_pbesol.mesh_numbers,
         si_pbesol.fc2,
+        mesh=si_pbesol.mesh_numbers,
         num_frequency_points=10,
         log_level=1)
     jdos.run([103])
@@ -88,8 +88,8 @@ def test_jdso_si_nomeshsym(si_pbesol):
     jdos = Phono3pyJointDos(
         si_pbesol.phonon_supercell,
         si_pbesol.phonon_primitive,
-        si_pbesol.mesh_numbers,
         si_pbesol.fc2,
+        mesh=si_pbesol.mesh_numbers,
         num_frequency_points=10,
         is_mesh_symmetry=False,
         log_level=1)
@@ -107,8 +107,8 @@ def test_jdos_nacl(nacl_pbe):
     jdos = Phono3pyJointDos(
         nacl_pbe.phonon_supercell,
         nacl_pbe.phonon_primitive,
-        nacl_pbe.mesh_numbers,
         nacl_pbe.fc2,
+        mesh=nacl_pbe.mesh_numbers,
         nac_params=nacl_pbe.nac_params,
         num_frequency_points=10,
         log_level=1)
@@ -126,8 +126,8 @@ def test_jdos_nacl_gamma(nacl_pbe):
     jdos = Phono3pyJointDos(
         nacl_pbe.phonon_supercell,
         nacl_pbe.phonon_primitive,
-        nacl_pbe.mesh_numbers,
         nacl_pbe.fc2,
+        mesh=nacl_pbe.mesh_numbers,
         nac_params=nacl_pbe.nac_params,
         nac_q_direction=[1, 0, 0],
         num_frequency_points=10,
@@ -147,8 +147,8 @@ def test_jdos_nacl_at_300K(nacl_pbe):
     jdos = Phono3pyJointDos(
         nacl_pbe.phonon_supercell,
         nacl_pbe.phonon_primitive,
-        nacl_pbe.mesh_numbers,
         nacl_pbe.fc2,
+        mesh=nacl_pbe.mesh_numbers,
         nac_params=nacl_pbe.nac_params,
         num_frequency_points=10,
         temperatures=[300, ],

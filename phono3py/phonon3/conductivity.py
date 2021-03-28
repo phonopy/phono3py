@@ -39,9 +39,10 @@ from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.phonon.thermal_properties import mode_cv as get_mode_cv
 from phonopy.units import THzToEv, EV, THz, Angstrom
 from phono3py.file_IO import write_pp_to_hdf5
-from phono3py.phonon3.triplets import (
-    get_ir_grid_points, get_grid_points_by_rotations, get_all_triplets)
+from phono3py.phonon3.triplets import get_all_triplets
 from phono3py.other.isotope import Isotope
+from phono3py.phonon.grid import (get_ir_grid_points,
+                                  get_grid_points_by_rotations)
 
 unit_to_WmK = ((THz * Angstrom) ** 2 / (Angstrom ** 3) * EV / THz /
                (2 * np.pi))  # 2pi comes from definition of lifetime.
@@ -64,12 +65,9 @@ def write_pp(conductivity,
     grid_point = conductivity.get_grid_points()[i]
     sigmas = conductivity.get_sigmas()
     sigma_cutoff = conductivity.get_sigma_cutoff_width()
-    mesh = conductivity.get_mesh_numbers()
-    triplets, weights, map_triplets, _ = pp.get_triplets_at_q()
-    if map_triplets is None:
-        all_triplets = None
-    else:
-        all_triplets = get_all_triplets(grid_point, pp.bz_grid, mesh)
+    mesh = conductivity.mesh_numbers
+    triplets, weights, _, _ = pp.get_triplets_at_q()
+    all_triplets = get_all_triplets(grid_point, pp.bz_grid)
 
     if len(sigmas) > 1:
         print("Multiple smearing parameters were given. The last one in ")
@@ -81,7 +79,6 @@ def write_pp(conductivity,
                      grid_point=grid_point,
                      triplet=triplets,
                      weight=weights,
-                     triplet_map=map_triplets,
                      triplet_all=all_triplets,
                      sigma=sigmas[-1],
                      sigma_cutoff=sigma_cutoff,
@@ -92,7 +89,6 @@ def write_pp(conductivity,
 class Conductivity(object):
     def __init__(self,
                  interaction,
-                 symmetry,
                  grid_points=None,
                  temperatures=None,
                  sigmas=None,
@@ -125,14 +121,13 @@ class Conductivity(object):
         self._cutoff_frequency = self._pp.cutoff_frequency
         self._boundary_mfp = boundary_mfp
 
-        self._symmetry = symmetry
-
         if not self._is_kappa_star:
             self._point_operations = np.array([np.eye(3, dtype='int_')],
                                               dtype='int_', order='C')
         else:
-            self._point_operations = np.array(symmetry.reciprocal_operations,
-                                              dtype='int_', order='C')
+            self._point_operations = np.array(
+                self._pp.primitive_symmetry.reciprocal_operations,
+                dtype='int_', order='C')
         rec_lat = np.linalg.inv(self._primitive.cell)
         self._rotations_cartesian = np.array(
             [similarity_transformation(rec_lat, r)
@@ -158,7 +153,6 @@ class Conductivity(object):
         self._gamma_iso = None
         self._num_sampling_grid_points = 0
 
-        self._mesh = self._pp.mesh_numbers
         volume = self._primitive.volume
         self._conversion_factor = unit_to_WmK / volume
 
@@ -191,7 +185,7 @@ class Conductivity(object):
         self._gv_obj = GroupVelocity(
             self._dm,
             q_length=self._gv_delta_q,
-            symmetry=self._symmetry,
+            symmetry=self._pp.primitive_symmetry,
             frequency_factor_to_THz=self._frequency_factor_to_THz)
         # gv_delta_q may be changed.
         self._gv_delta_q = self._gv_obj.get_q_length()
@@ -215,7 +209,7 @@ class Conductivity(object):
 
     @property
     def mesh_numbers(self):
-        return self._mesh
+        return self._pp.mesh_numbers
 
     def get_mesh_numbers(self):
         return self.mesh_numbers
@@ -317,7 +311,7 @@ class Conductivity(object):
              self._ir_grid_weights) = self._get_ir_grid_points()
         elif not self._is_kappa_star:  # All grid points
             self._grid_points = np.array(
-                self._bz_grid.grg2bzg[:np.prod(self._mesh)],
+                self._bz_grid.grg2bzg[:np.prod(self._pp.mesh_numbers)],
                 dtype='int_', order='C')
             self._grid_weights = np.ones(len(self._grid_points), dtype='int_')
             self._ir_grid_points = self._grid_points
@@ -327,9 +321,9 @@ class Conductivity(object):
             self._ir_grid_points = self._grid_points
             self._ir_grid_weights = self._grid_weights
 
-        self._qpoints = np.array(self._bz_grid.addresses[self._grid_points] /
-                                 self._mesh.astype('double'),
-                                 dtype='double', order='C')
+        self._qpoints = np.array(
+            np.dot(self._bz_grid.addresses[self._grid_points],
+                   self._bz_grid.QDinv.T), dtype='double', order='C')
         self._grid_point_count = 0
         (self._frequencies,
          self._eigenvectors,
@@ -364,9 +358,7 @@ class Conductivity(object):
 
     def _get_ir_grid_points(self):
         """Find irreducible grid points"""
-        ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(
-             self._mesh,
-             self._symmetry.pointgroup_operations)
+        ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(self._bz_grid)
         ir_grid_points = np.array(
             self._bz_grid.grg2bzg[ir_grid_points], dtype='int_')
 
@@ -378,12 +370,12 @@ class Conductivity(object):
         else:
             mv = mass_variances
         self._isotope = Isotope(
-            self._mesh,
+            self._pp.mesh_numbers,
             self._primitive,
             mass_variances=mv,
             bz_grid=self._bz_grid,
             frequency_factor_to_THz=self._frequency_factor_to_THz,
-            symprec=self._symmetry.get_symmetry_tolerance(),
+            symprec=self._pp.primitive_symmetry.tolerance,
             cutoff_frequency=self._cutoff_frequency,
             lapack_zheev_uplo=self._pp.lapack_zheev_uplo)
         self._mass_variances = self._isotope.mass_variances
@@ -411,8 +403,7 @@ class Conductivity(object):
     def _get_gv_by_gv(self, i_irgp, i_data):
         rotation_map = get_grid_points_by_rotations(
             self._grid_points[i_irgp],
-            self._bz_grid,
-            self._point_operations)
+            self._bz_grid)
         gv = self._gv[i_data]
         gv_by_gv = np.zeros((len(gv), 3, 3), dtype='double')
 

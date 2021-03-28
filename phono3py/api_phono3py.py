@@ -69,7 +69,7 @@ from phono3py.phonon3.fc3 import (
     set_translational_invariance_compact_fc3,
     cutoff_fc3_by_zero)
 from phono3py.phonon3.fc3 import get_fc3 as get_phono3py_fc3
-from phono3py.phonon3.triplets import BZGrid
+from phono3py.phonon.grid import BZGrid
 from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.interface.fc_calculator import get_fc3
@@ -1724,7 +1724,6 @@ class Phono3py(object):
                 _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_LBTE(
                 self._interaction,
-                self._primitive_symmetry,
                 temperatures=_temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,
@@ -1756,7 +1755,6 @@ class Phono3py(object):
                 _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_RTA(
                 self._interaction,
-                self._primitive_symmetry,
                 temperatures=_temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,
@@ -1970,6 +1968,7 @@ class Phono3py(object):
         self._interaction = None
         self._bz_grid = BZGrid(mesh,
                                lattice=self._primitive.cell,
+                               primitive_symmetry=self._primitive_symmetry,
                                is_dense_gp_map=self._is_dense_gp_map)
 
     def _init_dynamical_matrix(self):
