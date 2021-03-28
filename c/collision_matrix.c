@@ -305,11 +305,15 @@ static void get_inv_sinh(double *inv_sinh,
   long i, gp2;
   double f;
 
+  /* This assumes the algorithm of get_ir_triplets_at_q_perm_q1q2, */
+  /* where defined triplets_map[gp] == triplets_map[map_q[gp]]. */
+  /* If triplets_map[map_q[gp]] != map_q[gp], q1 and q2 are permuted. */
   if (triplets_map[gp] == map_q[gp]) {
     gp2 = triplet[2];
   } else {
     gp2 = triplet[1];
   }
+
   for (i = 0; i < num_band; i++) {
     f = frequencies[gp2 * num_band + i];
     if (f > cutoff_frequency) {
