@@ -1518,7 +1518,7 @@ class Phono3py(object):
             self,
             grid_points,
             temperatures,
-            run_on_bands=False,
+            frequency_points_at_bands=False,
             frequency_points=None,
             frequency_step=None,
             num_frequency_points=None,
@@ -1539,7 +1539,7 @@ class Phono3py(object):
         temperatures : array_like
             Temperatures where real part of self-energies  are calculated.
             dtype=float, shape=(temperatures,)
-        run_on_bands : bool, optional
+        frequency_points_at_bands : bool, optional
             With False, frequency shifts are calculated at frquency sampling
             points. When True, they are done at the phonon frequencies.
             Default is False.
@@ -1590,7 +1590,7 @@ class Phono3py(object):
             self._interaction,
             grid_points,
             temperatures,
-            run_on_bands=run_on_bands,
+            frequency_points_at_bands=frequency_points_at_bands,
             frequency_points=frequency_points,
             frequency_step=frequency_step,
             num_frequency_points=num_frequency_points,

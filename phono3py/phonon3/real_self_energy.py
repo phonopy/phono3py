@@ -45,7 +45,7 @@ from phono3py.phonon3.imag_self_energy import get_frequency_points
 def get_real_self_energy(interaction,
                          grid_points,
                          temperatures,
-                         run_on_bands=False,
+                         frequency_points_at_bands=False,
                          frequency_points=None,
                          frequency_step=None,
                          num_frequency_points=None,
@@ -71,7 +71,7 @@ def get_real_self_energy(interaction,
     max_phonon_freq = np.amax(frequencies)
     band_indices = interaction.band_indices
 
-    if run_on_bands:
+    if frequency_points_at_bands:
         _frequency_points = None
         all_deltas = np.zeros((len(_epsilons), len(grid_points),
                                len(_temperatures), len(band_indices)),
@@ -114,7 +114,7 @@ def get_real_self_energy(interaction,
                 fst.run()
                 all_deltas[i, j, k] = fst.real_self_energy.T
 
-                # if not run_on_bands:
+                # if not frequency_points_at_bands:
                 #     pos = 0
                 #     for bi_set in [[bi, ] for bi in band_indices]:
                 #         filename = write_real_self_energy(
