@@ -1590,11 +1590,11 @@ class Phono3py(object):
             self._interaction,
             grid_points,
             temperatures,
-            frequency_points_at_bands=frequency_points_at_bands,
+            epsilons=_epsilons,
             frequency_points=frequency_points,
             frequency_step=frequency_step,
             num_frequency_points=num_frequency_points,
-            epsilons=_epsilons,
+            frequency_points_at_bands=frequency_points_at_bands,
             write_hdf5=write_hdf5,
             output_filename=output_filename,
             log_level=self._log_level)

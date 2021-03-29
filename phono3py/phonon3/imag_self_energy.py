@@ -115,6 +115,15 @@ def get_imag_self_energy(interaction,
         (frequency_points, gammas) are returned. With return_gamma_detail=True,
         (frequency_points, gammas, detailed_gammas) are returned.
 
+        When frequency_points_at_bands is True,
+
+            gamma.shape = (grid_points, sigmas, temperatures, band_indices)
+
+        otherwise
+
+            gamma.shape = (grid_points, sigmas, temperatures,
+                           band_indices, frequency_points)
+
     """
 
     if sigmas is None:
@@ -157,26 +166,29 @@ def get_imag_self_energy(interaction,
         ise.set_grid_point(gp)
 
         if log_level:
+            bz_grid = interaction.bz_grid
             weights = interaction.get_triplets_at_q()[1]
-            print("------------------- Imaginary part of self energy (%d/%d) "
-                  "-------------------" % (i + 1, len(grid_points)))
+            if len(grid_points) > 1:
+                print("---------------- Imaginary part of self energy -o- (%d/%d) "
+                      "----------------" % (i + 1, len(grid_points)))
+            else:
+                print("-------------------- Imaginary part of self energy -o- "
+                      "--------------------")
             print("Grid point: %d" % gp)
             print("Number of ir-triplets: "
                   "%d / %d" % (len(weights), weights.sum()))
-            adrs = interaction.bz_grid.addresses[gp]
-            q = adrs.astype('double') / mesh
-            print("q-point: %s" % q)
-            print("Phonon frequency:")
-            text = "[ "
-            for bi, freq in enumerate(frequencies[gp]):
-                if bi % 6 == 0 and bi != 0:
-                    text += "\n"
-                text += "%8.4f " % freq
-            text += "]"
-            print(text)
-            sys.stdout.flush()
 
         ise.run_interaction()
+        frequencies = interaction.get_phonons()[0][gp]
+
+        if log_level:
+            qpoint = np.dot(bz_grid.QDinv, bz_grid.addresses[gp])
+            print("Phonon frequencies at (%4.2f, %4.2f, %4.2f):"
+                  % tuple(qpoint))
+            for bi, freq in enumerate(frequencies):
+                print("%3d  %f" % (bi + 1, freq))
+            sys.stdout.flush()
+
         _get_imag_self_energy_at_gp(gamma,
                                     detailed_gamma,
                                     i,

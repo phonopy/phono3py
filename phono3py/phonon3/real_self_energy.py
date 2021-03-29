@@ -45,14 +45,73 @@ from phono3py.phonon3.imag_self_energy import get_frequency_points
 def get_real_self_energy(interaction,
                          grid_points,
                          temperatures,
-                         frequency_points_at_bands=False,
+                         epsilons=None,
                          frequency_points=None,
                          frequency_step=None,
                          num_frequency_points=None,
-                         epsilons=None,
+                         frequency_points_at_bands=False,
                          write_hdf5=True,
                          output_filename=None,
                          log_level=0):
+    """Real part of self energy at frequency points
+
+    Band indices to be calculated at are kept in Interaction instance.
+
+    Parameters
+    ----------
+    interaction : Interaction
+        Ph-ph interaction.
+    grid_points : array_like
+        Grid-point indices where imag-self-energeis are caclculated.
+        dtype=int, shape=(grid_points,)
+    temperatures : array_like
+        Temperatures where imag-self-energies are calculated.
+        dtype=float, shape=(temperatures,)
+    epsilons : array_like
+        Smearing widths to computer principal part. When multiple values
+        are given frequency shifts for those values are returned.
+        dtype=float, shape=(epsilons,)
+    frequency_points : array_like, optional
+        Frequency sampling points. Default is None. With
+        frequency_points_at_bands=False and frequency_points is None,
+        num_frequency_points or frequency_step is used to generate uniform
+        frequency sampling points.
+        dtype=float, shape=(frequency_points,)
+    frequency_step : float, optional
+        Uniform pitch of frequency sampling points. Default is None. This
+        results in using num_frequency_points.
+    num_frequency_points: int, optional
+        Number of sampling sampling points to be used instead of
+        frequency_step. This number includes end points. Default is None,
+        which gives 201.
+    frequency_points_at_bands : bool, optional
+        Phonon band frequencies are used as frequency points when True.
+        Default is False.
+    num_points_in_batch: int, optional
+        Number of sampling points in one batch. This is for the frequency
+        sampling mode and the sampling points are divided into batches.
+        Lager number provides efficient use of multi-cores but more
+        memory demanding. Default is None, which give the number of 10.
+    log_level: int
+        Log level. Default is 0.
+
+    Returns
+    -------
+    tuple :
+        (frequency_points, all_deltas) are returned.
+
+        When frequency_points_at_bands is True,
+
+            all_deltas.shape = (epsilons, grid_points, temperatures,
+                                band_indices)
+
+        otherwise
+
+            all_deltas.shape = (epsilons, grid_points, temperatures,
+                                band_indices, frequency_points)
+
+    """
+
     if epsilons is None:
         _epsilons = [None, ]
     else:
@@ -93,7 +152,13 @@ def get_real_self_energy(interaction,
         fst.grid_point = gp
         if log_level:
             weights = interaction.get_triplets_at_q()[1]
-            print("------ Re self-energy -o- at grid point %d ------" % gp)
+            if len(grid_points) > 1:
+                print("------------------- Real part of self energy -o- (%d/%d) "
+                      "-------------------" % (j + 1, len(grid_points)))
+            else:
+                print("----------------------- Real part of self energy -o- "
+                      "-----------------------")
+            print("Grid point: %d" % gp)
             print("Number of ir-triplets: %d / %d"
                   % (len(weights), weights.sum()))
 
@@ -101,11 +166,13 @@ def get_real_self_energy(interaction,
         frequencies = interaction.get_phonons()[0][gp]
 
         if log_level:
-            qpoint = interaction.bz_grid.addresses[gp] / mesh.astype(float)
+            bz_grid = interaction.bz_grid
+            qpoint = np.dot(bz_grid.QDinv, bz_grid.addresses[gp])
             print("Phonon frequencies at (%4.2f, %4.2f, %4.2f):"
                   % tuple(qpoint))
             for bi, freq in enumerate(frequencies):
                 print("%3d  %f" % (bi + 1, freq))
+            sys.stdout.flush()
 
         for i, epsilon in enumerate(_epsilons):
             fst.epsilon = epsilon
