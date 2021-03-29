@@ -133,7 +133,7 @@ def test_real_self_energy_with_band_indices(si_pbesol):
         [300, ],
         write_hdf5=False,
         frequency_points_at_bands=True)
-    np.testing.assert_allclose(si_pbesol_Delta, delta[0, :, 0], atol=0.01)
+    np.testing.assert_allclose(si_pbesol_Delta, delta[0, 0, :], atol=0.01)
 
 
 def test_real_self_energy_with_frequency_points(si_pbesol):
@@ -151,7 +151,7 @@ def test_real_self_energy_with_frequency_points(si_pbesol):
     np.testing.assert_allclose(
         si_pbesol_Delta_fps[0], delta[0, 0, 0].ravel(), atol=0.01)
     np.testing.assert_allclose(
-        si_pbesol_Delta_fps[1], delta[0, 1, 0].ravel(), atol=0.01)
+        si_pbesol_Delta_fps[1], delta[0, 0, 1].ravel(), atol=0.01)
 
     # for b in delta[0, 0, 0]:
     #     print("".join("%.8f, " % s for s in b))

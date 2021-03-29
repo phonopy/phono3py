@@ -175,10 +175,7 @@ def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
         pass
     elif settings.is_joint_dos:
         pass
-    elif (settings.is_real_self_energy or
-          settings.is_imag_self_energy or
-          settings.is_spectral_function or
-          settings.is_bterta):
+    elif settings.is_bterta:
         if len(temperatures) > 5:
             text = (" %.1f " * 5 + "...") % tuple(temperatures[:5])
             text += " %.1f" % temperatures[-1]

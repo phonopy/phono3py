@@ -984,9 +984,11 @@ def main(**argparse_control):
     # Check settings #
     ##################
     run_modes_with_mesh = ("conductivity-RTA", "conductivity-LBTE",
-                           "imag_self_energy", "jdos", "isotope",
+                           "imag_self_energy", "real_self_energy",
+                           "jdos", "isotope",
                            "write_grid_info", "show_triplets_info")
-    run_modes_with_gp = ("imag_self_energy", "jdos", "isotope")
+    run_modes_with_gp = ("imag_self_energy", "real_self_energy",
+                         "jdos", "isotope")
     if settings.mesh_numbers is None and run_mode in run_modes_with_mesh:
         print("")
         print("Mesh numbers have to be specified.")
@@ -1144,6 +1146,7 @@ def main(**argparse_control):
             frequency_step=updated_settings['frequency_step'],
             num_frequency_points=updated_settings['num_frequency_points'],
             write_txt=True,
+            write_hdf5=True,
             output_filename=output_filename)
 
     #######################################################

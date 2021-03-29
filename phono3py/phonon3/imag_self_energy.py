@@ -113,16 +113,27 @@ def get_imag_self_energy(interaction,
     -------
     tuple :
         (frequency_points, gammas) are returned. With return_gamma_detail=True,
-        (frequency_points, gammas, detailed_gammas) are returned.
+        (frequency_points, gammas, detailed_gamma) are returned.
+        detailed_gamma is a list of detailed_gamma_at_gp's.
 
         When frequency_points_at_bands is True,
 
-            gamma.shape = (grid_points, sigmas, temperatures, band_indices)
+            gamma.shape = (sigmas, temperatures, grid_points, band_indices)
+            detailed_gamma_at_gp.shape = (sigmas, temperatures, triplets,
+                                          band_indices, num_band, num_band)
+        else:
+            detailed_gamma_at_gp = np.zeros(
+                (len(_sigmas), len(temperatures), _num_frequency_points,
+                 len(weights), num_band0, num_band, num_band),
+                dtype='double')
 
         otherwise
 
-            gamma.shape = (grid_points, sigmas, temperatures,
+            gamma.shape = (sigmas, temperatures, grid_points,
                            band_indices, frequency_points)
+            detailed_gamma_at_gp.shape = (sigmas, temperatures, triplets,
+                                          frequency_points,
+                                          band_indices, num_band, num_band)
 
     """
 
@@ -144,7 +155,7 @@ def get_imag_self_energy(interaction,
     if frequency_points_at_bands:
         _frequency_points = None
         _num_frequency_points = num_band0
-        gamma = np.zeros((len(grid_points), len(_sigmas), len(temperatures),
+        gamma = np.zeros((len(_sigmas), len(temperatures), len(grid_points),
                           _num_frequency_points), dtype='double', order='C')
     else:
         _frequency_points = get_frequency_points(
@@ -155,7 +166,7 @@ def get_imag_self_energy(interaction,
             num_frequency_points=num_frequency_points)
         _num_frequency_points = len(_frequency_points)
         gamma = np.zeros(
-            (len(grid_points), len(_sigmas), len(temperatures),
+            (len(_sigmas), len(temperatures), len(grid_points),
              num_band0, _num_frequency_points), dtype='double', order='C')
 
     detailed_gamma = []
@@ -313,16 +324,18 @@ def _get_imag_self_energy_at_sigma(gamma,
         for k, t in enumerate(temperatures):
             ise.set_temperature(t)
             ise.run()
-            gamma[i, k, :] = ise.get_imag_self_energy()
+            gamma[j, k, i] = ise.get_imag_self_energy()
             if write_gamma_detail or return_gamma_detail:
                 detailed_gamma_at_gp[k] = (
                     ise.get_detailed_imag_self_energy())
     else:
         run_ise_at_frequency_points_batch(
+            i,
+            j,
             _frequency_points,
             ise,
             temperatures,
-            gamma[i, j],
+            gamma,
             write_gamma_detail=write_gamma_detail,
             return_gamma_detail=return_gamma_detail,
             detailed_gamma_at_gp=detailed_gamma_at_gp_at_j,
@@ -387,9 +400,9 @@ def write_imag_self_energy(imag_self_energy,
                            output_filename=None,
                            is_mesh_symmetry=True,
                            log_level=0):
-    for gp, ise_sigmas in zip(grid_points, imag_self_energy):
-        for sigma, ise_temps in zip(sigmas, ise_sigmas):
-            for t, ise in zip(temperatures, ise_temps):
+    for sigma, ise_temps in zip(sigmas, imag_self_energy):
+        for t, ise_gps in zip(temperatures, ise_temps):
+            for gp, ise in zip(grid_points, ise_gps):
                 for i, bi in enumerate(band_indices):
                     pos = 0
                     for j in range(i):
@@ -833,6 +846,8 @@ class ImagSelfEnergy(object):
 
 
 def run_ise_at_frequency_points_batch(
+        i,
+        j,
         _frequency_points,
         ise,
         temperatures,
@@ -865,7 +880,7 @@ def run_ise_at_frequency_points_batch(
         for l, t in enumerate(temperatures):
             ise.set_temperature(t)
             ise.run()
-            gamma[l, :, fpts_batch] = ise.get_imag_self_energy()
+            gamma[j, l, i, :, fpts_batch] = ise.get_imag_self_energy()
             if write_gamma_detail or return_gamma_detail:
                 detailed_gamma_at_gp[l, fpts_batch] = (
                     ise.get_detailed_imag_self_energy())

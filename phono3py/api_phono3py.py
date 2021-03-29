@@ -1671,13 +1671,13 @@ class Phono3py(object):
         self._spectral_function = run_spectral_function(
             self._interaction,
             grid_points,
+            temperatures=temperatures,
+            sigmas=self._sigmas,
             frequency_points=frequency_points,
             frequency_step=frequency_step,
             num_frequency_points=num_frequency_points,
             num_points_in_batch=num_points_in_batch,
-            temperatures=temperatures,
             band_indices=self._band_indices,
-            sigmas=self._sigmas,
             write_txt=write_txt,
             write_hdf5=write_hdf5,
             log_level=self._log_level)

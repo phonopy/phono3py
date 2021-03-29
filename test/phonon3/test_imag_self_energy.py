@@ -162,8 +162,8 @@ def test_imag_self_energy_at_bands_detailed(si_pbesol):
                  12, 6, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 6]
     weights_103 = [2, ] * 364 + [1, ]
 
-    gammas_1_ref = _gammas[0].ravel()
-    gammas_103_ref = _gammas[1].ravel()
+    gammas_1_ref = _gammas[:, :, 0].ravel()
+    gammas_103_ref = _gammas[:, :, 1].ravel()
     gammas_1 = np.dot(weights_1,
                       _detailed_gammas[0][0, 0].sum(axis=-1).sum(axis=-1))
     gammas_103 = np.dot(weights_103,
