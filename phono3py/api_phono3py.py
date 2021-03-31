@@ -1078,9 +1078,25 @@ class Phono3py(object):
                    "before running this method.")
             raise RuntimeError(msg)
 
-    def run_phonon_solver(self):
+    def run_phonon_solver(self, grid_points=None):
+        """Run harmonic phonon calculation on grid points.
+
+        Parameters
+        ----------
+        grid_points : array_like or None, optional
+            A list of grid point indices of Phono3py.grid.addresses.
+            Specifying None runs all phonons on the grid points unless
+            those phonons were already calculated. Normally phonons at
+            [0, 0, 0] point is already calculated before calling this method.
+            Phonon calculations are performed automatically when needed
+            internally for ph-ph calculation. Therefore calling this method
+            is not necessary in most cases.
+            The phonon results are obtained by Phono3py.get_phonon_data().
+
+        """
+
         if self._interaction is not None:
-            self._interaction.run_phonon_solver()
+            self._interaction.run_phonon_solver(grid_points=grid_points)
         else:
             msg = ("Phono3py.init_phph_interaction has to be called "
                    "before running this method.")
