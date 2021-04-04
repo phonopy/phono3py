@@ -131,7 +131,7 @@ class Conductivity(object):
         rec_lat = np.linalg.inv(self._primitive.cell)
         self._rotations_cartesian = np.array(
             [similarity_transformation(rec_lat, r)
-             for r in self._point_operations], dtype='double')
+             for r in self._point_operations], dtype='double', order='C')
 
         self._grid_points = None
         self._grid_weights = None
@@ -381,13 +381,33 @@ class Conductivity(object):
         self._mass_variances = self._isotope.mass_variances
 
     def _set_harmonic_properties(self, i_irgp, i_data):
+        """Set group velocity and mode heat capacity"""
         grid_point = self._grid_points[i_irgp]
         freqs = self._frequencies[grid_point][self._pp.band_indices]
         self._cv[:, i_data, :] = self._get_cv(freqs)
-        gv = self._get_gv(self._qpoints[i_irgp])
-        self._gv[i_data] = gv[self._pp.band_indices, :]
+        self._gv_obj.run([self._qpoints[i_irgp], ])
+        gv = self._gv_obj.get_group_velocity()[0, self._pp.band_indices, :]
+        self._gv[i_data] = gv
 
-        # Outer product of group velocities (v x v) [num_k*, num_freqs, 3, 3]
+    def _get_cv(self, freqs):
+        cv = np.zeros((len(self._temperatures), len(freqs)), dtype='double')
+        # T/freq has to be large enough to avoid divergence.
+        # Otherwise just set 0.
+        for i, f in enumerate(freqs):
+            finite_t = (self._temperatures > f / 100)
+            if f > self._cutoff_frequency:
+                cv[:, i] = np.where(
+                    finite_t, get_mode_cv(
+                        np.where(finite_t, self._temperatures, 10000),
+                        f * THzToEv), 0)
+        return cv
+
+    def _set_gv_by_gv(self, i_irgp, i_data):
+        """Outer product of group velocities.
+
+        (v x v) [num_k*, num_freqs, 3, 3]
+
+        """
         gv_by_gv_tensor, order_kstar = self._get_gv_by_gv(i_irgp, i_data)
         self._num_sampling_grid_points += order_kstar
 
@@ -395,10 +415,6 @@ class Conductivity(object):
         for j, vxv in enumerate(
             ([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])):
             self._gv_sum2[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
-
-    def _get_gv(self, q):
-        self._gv_obj.run([q])
-        return self._gv_obj.get_group_velocity()[0]
 
     def _get_gv_by_gv(self, i_irgp, i_data):
         rotation_map = get_grid_points_by_rotations(
@@ -431,19 +447,6 @@ class Conductivity(object):
 
         return gv_by_gv, order_kstar
 
-    def _get_cv(self, freqs):
-        cv = np.zeros((len(self._temperatures), len(freqs)), dtype='double')
-        # T/freq has to be large enough to avoid divergence.
-        # Otherwise just set 0.
-        for i, f in enumerate(freqs):
-            finite_t = (self._temperatures > f / 100)
-            if f > self._cutoff_frequency:
-                cv[:, i] = np.where(
-                    finite_t, get_mode_cv(
-                        np.where(finite_t, self._temperatures, 10000),
-                        f * THzToEv), 0)
-        return cv
-
     def _get_main_diagonal(self, i, j, k):
         main_diagonal = self._gamma[j, k, i].copy()
         if self._gamma_iso is not None:
@@ -467,7 +470,7 @@ class Conductivity(object):
         return main_diagonal
 
     def _get_boundary_scattering(self, i):
-        num_band = self._primitive.get_number_of_atoms() * 3
+        num_band = len(self._primitive) * 3
         g_boundary = np.zeros(num_band, dtype='double')
         for l in range(num_band):
             g_boundary[l] = (np.linalg.norm(self._gv[i, l]) * Angstrom * 1e6 /

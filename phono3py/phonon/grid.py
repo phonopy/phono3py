@@ -66,12 +66,12 @@ class BZGrid(object):
     ----------
     addresses : ndarray
         Integer grid address of the points in Brillouin zone including
-        surface.  The first prod(mesh) numbers of points are
-        independent. But the rest of points are
-        translational-symmetrically equivalent to some other points.
-        shape=(n_grid_points, 3), dtype='int_', order='C'
+        surface. There are two types of address order by either is_dense_gp_map
+        is True or False.
+        shape=(np.prod(D_diag) + some on surface, 3), dtype='int_', order='C'
     gp_map : ndarray
-        Grid point mapping table containing BZ surface. See more
+        Grid point mapping table containing BZ surface. There are two types of
+        address order by either is_dense_gp_map is True or False. See more
         detail in _relocate_BZ_grid_address docstring.
     bzg2grg : ndarray
         Grid index mapping table from BZGrid to GRgrid.
@@ -79,7 +79,7 @@ class BZGrid(object):
     grg2bzg : ndarray
         Grid index mapping table from GRgrid to BZGrid. Unique one
         of translationally equivalent grid points in BZGrid is chosen.
-        shape=(len(addresses), ), dtype='int_'
+        shape=(prod(D_diag), ), dtype='int_'
     is_dense_gp_map : bool, optional
         See the detail in the docstring of ``_relocate_BZ_grid_address``.
 
@@ -220,7 +220,7 @@ class BZGrid(object):
     @property
     def grg2bzg(self):
         """Transform grid point indices from GRG to BZG"""
-        return self._gpg2bzg
+        return self._grg2bzg
 
     @property
     def microzone_lattice(self):
@@ -258,12 +258,12 @@ class BZGrid(object):
         try:
             len(addresses[0])
         except TypeError:
-            return int(self._gpg2bzg[get_grid_point_from_address(
+            return int(self._grg2bzg[get_grid_point_from_address(
                 addresses, self._D_diag)])
 
         gps = [get_grid_point_from_address(adrs, self._D_diag)
                for adrs in addresses]
-        return np.array(self._gpg2bzg[gps], dtype='int_')
+        return np.array(self._grg2bzg[gps], dtype='int_')
 
     def _set_bz_grid(self):
         """Generate BZ grid addresses and grid point mapping table"""
@@ -278,9 +278,9 @@ class BZGrid(object):
              is_shift=self._is_shift,
              is_dense_gp_map=self._is_dense_gp_map)
         if self._is_dense_gp_map:
-            self._gpg2bzg = self._gp_map[:-1]
+            self._grg2bzg = self._gp_map[:-1]
         else:
-            self._gpg2bzg = np.arange(
+            self._grg2bzg = np.arange(
                 np.prod(self._D_diag), dtype='int_')
 
         self._QDinv = np.array(self.Q * (1 / self.D_diag.astype('double')),
@@ -599,7 +599,7 @@ def _get_ir_reciprocal_mesh(mesh,
                             rec_rotations,
                             is_shift=None,
                             is_time_reversal=True):
-    """Irreducible k-points are searched under a fixed q-point.
+    """Irreducible k-points are searched.
 
     Parameters
     ----------

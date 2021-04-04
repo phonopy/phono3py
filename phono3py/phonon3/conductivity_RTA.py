@@ -619,6 +619,7 @@ class Conductivity_RTA(Conductivity):
         self._show_log_header(i)
         grid_point = self._grid_points[i]
         self._set_harmonic_properties(i, i)
+        self._set_gv_by_gv(i, i)
 
         if self._read_gamma:
             if self._use_ave_pp:

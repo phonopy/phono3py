@@ -929,6 +929,7 @@ class Conductivity_LBTE(Conductivity):
         else:
             i_data = i
         self._set_harmonic_properties(i, i_data)
+        self._set_gv_by_gv(i, i_data)
         if self._isotope is not None:
             gamma_iso = self._get_gamma_isotope_at_sigmas(i)
             band_indices = self._pp.band_indices
