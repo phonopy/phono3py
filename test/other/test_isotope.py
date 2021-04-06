@@ -26,7 +26,7 @@ def test_Phono3pyIsotope(si_pbesol):
         nac_params=si_pbesol.nac_params)
     iso.run([23, 103])
     # print(iso.gamma[0])
-    np.testing.assert_allclose(si_pbesol_iso, iso.gamma[0], atol=2e-4)
+    np.testing.assert_allclose(si_pbesol_iso, iso.gamma[0], atol=3e-4)
 
 
 def test_Phono3pyIsotope_with_sigma(si_pbesol):
@@ -43,4 +43,4 @@ def test_Phono3pyIsotope_with_sigma(si_pbesol):
         nac_params=si_pbesol.nac_params)
     iso.run([23, 103])
     # print(iso.gamma[0])
-    np.testing.assert_allclose(si_pbesol_iso_sigma, iso.gamma[0], atol=2e-4)
+    np.testing.assert_allclose(si_pbesol_iso_sigma, iso.gamma[0], atol=3e-4)

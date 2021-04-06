@@ -1300,7 +1300,7 @@ class Conductivity_LBTE(Conductivity):
         return weights
 
     def _symmetrize_collision_matrix(self):
-        """(\Omega + \Omega^T) / 2"""
+        r"""(\Omega + \Omega^T) / 2"""
 
         start = time.time()
 
@@ -1416,7 +1416,7 @@ class Conductivity_LBTE(Conductivity):
             return np.zeros_like(X.reshape(-1, 3))
 
     def _get_Y(self, i_sigma, i_temp, weights, X):
-        """Y = (\Omega^-1, X)"""
+        r"""Y = (\Omega^-1, X)"""
         solver = _select_solver(self._pinv_solver)
         num_band = len(self._primitive) * 3
 
