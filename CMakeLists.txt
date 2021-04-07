@@ -114,3 +114,40 @@ install(TARGETS phmod_static ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # Header file
 install(FILES ${PROJECT_SOURCE_DIR}/c/phononmod.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+########
+# grid #
+########
+
+# Source code
+set(SOURCES_GRIDMOD
+  ${PROJECT_SOURCE_DIR}/c/bzgrid.c
+  ${PROJECT_SOURCE_DIR}/c/grgrid.c
+  ${PROJECT_SOURCE_DIR}/c/gridsys.c
+  ${PROJECT_SOURCE_DIR}/c/lagrid.c
+  ${PROJECT_SOURCE_DIR}/c/phonoc_utils.c
+  ${PROJECT_SOURCE_DIR}/c/snf3x3.c
+  ${PROJECT_SOURCE_DIR}/c/tetrahedron_method.c
+  ${PROJECT_SOURCE_DIR}/c/triplet.c
+  ${PROJECT_SOURCE_DIR}/c/triplet_grid.c
+  ${PROJECT_SOURCE_DIR}/c/triplet_iw.c)
+
+# Shared library
+add_library(gridmod SHARED ${SOURCES_GRIDMOD})
+
+if(NOT MSVC)
+  target_link_libraries(gridmod m ${openmp})
+endif()
+set_property(TARGET gridmod PROPERTY VERSION ${serial})
+set_property(TARGET gridmod PROPERTY SOVERSION ${soserial})
+install(TARGETS gridmod LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+# Static link library
+add_library(gridmod_static STATIC ${SOURCES_PHONONMOD})
+set_property(TARGET gridmod_static PROPERTY VERSION ${serial})
+set_property(TARGET gridmod_static PROPERTY SOVERSION ${soserial})
+set_property(TARGET gridmod_static PROPERTY OUTPUT_NAME phmod)
+install(TARGETS gridmod_static ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+# Header file
+install(FILES ${PROJECT_SOURCE_DIR}/c/gridmod.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

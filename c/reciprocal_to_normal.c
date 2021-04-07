@@ -34,7 +34,6 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include "phonoc_utils.h"
 #include "reciprocal_to_normal.h"
 #include "lapack_wrapper.h"
 
