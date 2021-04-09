@@ -417,9 +417,16 @@ class Conductivity(object):
             self._gv_sum2[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
 
     def _get_gv_by_gv(self, i_irgp, i_data):
-        rotation_map = get_grid_points_by_rotations(
-            self._grid_points[i_irgp],
-            self._bz_grid)
+        if self._is_kappa_star:
+            rotation_map = get_grid_points_by_rotations(
+                self._grid_points[i_irgp],
+                self._bz_grid)
+        else:
+            rotation_map = get_grid_points_by_rotations(
+                self._grid_points[i_irgp],
+                self._bz_grid,
+                reciprocal_rotations=self._point_operations)
+
         gv = self._gv[i_data]
         gv_by_gv = np.zeros((len(gv), 3, 3), dtype='double')
 
