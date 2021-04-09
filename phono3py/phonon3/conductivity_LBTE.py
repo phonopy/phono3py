@@ -1661,7 +1661,7 @@ class Conductivity_LBTE(Conductivity):
                         i_temp):
         """Calculate mode thermal conductivity.
 
-        mode_kappa is overwritten.
+        The first parameter, mode_kappa, is overwritten.
 
         """
         num_band = len(self._primitive) * 3

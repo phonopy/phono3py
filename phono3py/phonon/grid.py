@@ -362,7 +362,11 @@ class BZGrid(object):
                 raise RuntimeError(msg)
 
     def _set_rotations(self):
-        """Rotation matrices are transformed those for GRGrid."""
+        """Rotation matrices are transformed those for non-diagonal D matrix.
+
+        Terminate when symmetry of grid is broken.
+
+        """
 
         if self._primitive_symmetry.reciprocal_operations is not None:
             self._rotations = np.array(
@@ -375,7 +379,7 @@ class BZGrid(object):
                                            self._rotations,
                                            self._D_diag,
                                            self._Q):
-            msg = "Generarized regular grid symmetry is broken."
+            msg = "Grid symmetry is broken. Use mesh=distance."
             raise RuntimeError(msg)
 
         self._rotations = transformed_rotations
