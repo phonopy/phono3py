@@ -137,7 +137,9 @@ void tpl_get_integration_weight_with_sigma(double *iw,
   num_band_prod = num_band0 * num_band * num_band;
   const_adrs_shift = num_triplets * num_band0 * num_band * num_band;
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for
+#endif
   for (i = 0; i < num_triplets; i++) {
     tpi_get_integration_weight_with_sigma(
       iw + i * num_band_prod,

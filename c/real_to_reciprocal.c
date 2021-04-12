@@ -185,7 +185,9 @@ real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
   num_patom = svecs_dims[1];
 
   for (i = 0; i < num_patom; i++) {
+#ifdef PHPYOPENMP
 #pragma omp parallel for private(j, k)
+#endif
     for (jk = 0; jk < num_patom * num_patom; jk++) {
       j = jk / num_patom;
       k = jk % num_patom;
@@ -207,7 +209,9 @@ real_to_reciprocal_openmp(lapack_complex_double *fc3_reciprocal,
     pre_phase_factor = get_pre_phase_factor(
       i, q_vecs, shortest_vectors, svecs_dims, multiplicity, p2s_map);
     adrs_shift = i * num_patom * num_patom * 27;
+#ifdef PHPYOPENMP
 #pragma omp parallel for
+#endif
     for (j = 0; j < num_patom * num_patom * 27; j++) {
       fc3_reciprocal[adrs_shift + j] =
         phonoc_complex_prod(fc3_reciprocal[adrs_shift + j], pre_phase_factor);

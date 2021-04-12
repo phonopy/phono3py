@@ -2189,7 +2189,9 @@ static void pinv_from_eigensolution(double *data,
 
   tmp_data = (double*)malloc(sizeof(double) * size * size);
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for
+#endif
   for (i = 0; i < size * size; i++) {
     tmp_data[i] = data[i];
   }
@@ -2208,7 +2210,9 @@ static void pinv_from_eigensolution(double *data,
     }
   }
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for private(ib, j, k, i_s, j_s, sum)
+#endif
   for (i = 0; i < size / 2; i++) {
     /* from front */
     i_s = i * size;

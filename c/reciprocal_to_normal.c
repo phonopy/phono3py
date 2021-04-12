@@ -101,7 +101,9 @@ void reciprocal_to_normal_squared
   loopStartCPUTime = clock();
 #endif
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for if (openmp_at_bands)
+#endif
   for (i = 0; i < num_g_pos; i++) {
     if (freqs0[band_indices[g_pos[i][0]]] > cutoff_frequency) {
       fc3_normal_squared[g_pos[i][3]] = get_fc3_sum(g_pos[i][1],

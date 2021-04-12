@@ -130,7 +130,9 @@ void phonopy_pinv_mt(double *data_out,
 {
   int i;
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for
+#endif
   for (i = 0; i < num_thread; i++) {
     info_out[i] = phonopy_pinv(data_out + i * max_row_num * column_num,
                                data_in + i * max_row_num * column_num,

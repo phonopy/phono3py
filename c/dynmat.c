@@ -97,7 +97,9 @@ long dym_get_dynamical_matrix_at_q(double *dynamical_matrix,
   long i, j, ij;
 
   if (with_openmp) {
+#ifdef PHPYOPENMP
 #pragma omp parallel for
+#endif
     for (ij = 0; ij < num_patom * num_patom ; ij++) {
       get_dynmat_ij(dynamical_matrix,
                     num_patom,
