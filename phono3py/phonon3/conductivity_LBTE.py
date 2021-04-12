@@ -904,10 +904,12 @@ class Conductivity_LBTE(Conductivity):
         return self._mode_kappa_RTA
 
     def delete_gp_collision_and_pp(self):
+        """Deallocate large arrays"""
         self._collision.delete_integration_weights()
         self._pp.delete_interaction_strength()
 
     def _run_at_grid_point(self):
+        """Calculate properties at a grid point"""
         i = self._grid_point_count
         self._show_log_header(i)
         gp = self._grid_points[i]
@@ -994,10 +996,7 @@ class Conductivity_LBTE(Conductivity):
                                          num_band0,
                                          6), dtype='double')
 
-    def _allocate_reducible_colmat_values(self,
-                                          num_temp,
-                                          num_band0,
-                                          num_band):
+    def _allocate_reducible_colmat_values(self, num_temp, num_band0, num_band):
         """Allocate arrays for reducilble collision matrix."""
         num_mesh_points = np.prod(self._pp.mesh_numbers)
         if self._all_grid_points:
@@ -1020,10 +1019,7 @@ class Conductivity_LBTE(Conductivity):
             (len(self._sigmas), num_temp, num_mesh_points * num_band),
             dtype='double', order='C')
 
-    def _allocate_ir_colmat_values(self,
-                                   num_temp,
-                                   num_band0,
-                                   num_band):
+    def _allocate_ir_colmat_values(self, num_temp, num_band0, num_band):
         """Allocate arrays for ir collision matrix."""
         num_ir_grid_points = len(self._ir_grid_points)
         num_grid_points = len(self._grid_points)
@@ -1060,6 +1056,13 @@ class Conductivity_LBTE(Conductivity):
             dtype='double', order='C')
 
     def _set_collision_matrix_at_sigmas(self, i):
+        """Calculate collision matrices at grid point
+
+        i : int
+            Grid point count.
+
+        """
+
         for j, sigma in enumerate(self._sigmas):
             if self._log_level:
                 text = "Calculating collision matrix with "
@@ -1120,6 +1123,7 @@ class Conductivity_LBTE(Conductivity):
                     self._collision.get_collision_matrix())
 
     def _set_kappa_at_sigmas(self):
+        """Calculate thermal conductivity"""
         if self._is_reducible_collision_matrix:
             if self._is_kappa_star:
                 self._average_collision_matrix_by_degeneracy()
@@ -1475,13 +1479,19 @@ class Conductivity_LBTE(Conductivity):
         return Y
 
     def _set_f_vectors(self, Y, num_grid_points, weights):
-        # Collision matrix is half of that defined in Chaput's paper.
-        # Therefore Y is divided by 2.
+        """Calculate f-vectors
+
+        Collision matrix is half of that defined in Chaput's paper.
+        Therefore Y is divided by 2.
+
+        """
         num_band = len(self._primitive) * 3
         self._f_vectors[:] = ((Y / 2).reshape(num_grid_points, num_band * 3).T
                               / weights).T.reshape(self._f_vectors.shape)
 
     def _get_eigvals_pinv(self, i_sigma, i_temp):
+        """Return inverse eigenvalues of eigenvalues > epsilon."""
+
         w = self._collision_eigenvalues[i_sigma, i_temp]
         e = np.zeros_like(w)
         for l, val in enumerate(w):
@@ -1516,12 +1526,18 @@ class Conductivity_LBTE(Conductivity):
         return I_mat
 
     def _set_kappa(self, i_sigma, i_temp, weights):
+        """Calculate direct solution thermal conductivity
+
+        Either ir or full colmat.
+
+        """
         if self._is_reducible_collision_matrix:
             self._set_kappa_reducible_colmat(i_sigma, i_temp, weights)
         else:
             self._set_kappa_ir_colmat(i_sigma, i_temp, weights)
 
     def _set_kappa_ir_colmat(self, i_sigma, i_temp, weights):
+        """Calculate direct solution thermal conductivity of ir colmat"""
         if self._solve_collective_phonon:
             self._set_mode_kappa_Chaput(i_sigma, i_temp, weights)
         else:
@@ -1547,6 +1563,7 @@ class Conductivity_LBTE(Conductivity):
             self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N)
 
     def _set_kappa_reducible_colmat(self, i_sigma, i_temp, weights):
+        """Calculate direct solution thermal conductivity of full colmat"""
         N = self._num_sampling_grid_points
         X = self._get_X(i_temp, weights, self._gv)
         num_mesh_points = np.prod(self._pp.mesh_numbers)
@@ -1566,6 +1583,7 @@ class Conductivity_LBTE(Conductivity):
             self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N)
 
     def _set_kappa_RTA(self, i_sigma, i_temp, weights):
+        """Calculate RTA thermal conductivity either ir or full colmat"""
         if self._is_reducible_collision_matrix:
             self._set_kappa_RTA_reducible_colmat(i_sigma, i_temp, weights)
         else:
