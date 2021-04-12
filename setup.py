@@ -38,6 +38,11 @@ extra_compile_args = ['-fopenmp', ]
 include_dirs = ['c', ] + include_dirs_numpy
 define_macros = []
 
+if use_setuptools:
+    extra_compile_args += ['-DPHPYOPENMP', ]
+else:
+    define_macros += [('PHPYOPENMP', None), ]
+
 extra_link_args_lapacke = []
 include_dirs_lapacke = []
 

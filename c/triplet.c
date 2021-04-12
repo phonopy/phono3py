@@ -96,7 +96,9 @@ void tpl_get_integration_weight(double *iw,
                                 tp_type);
   num_band_prod = num_band0 * num_band1 * num_band2;
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for if (openmp_per_triplets)
+#endif
   for (i = 0; i < num_triplets; i++) {
     tpi_get_integration_weight(iw + i * num_band_prod,
                                iw_zero + i * num_band_prod,

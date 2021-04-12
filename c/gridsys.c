@@ -44,6 +44,120 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void gridsys_get_all_grid_addresses(long (*gr_grid_addresses)[3],
+                                    const long D_diag[3])
+{
+  grg_get_all_grid_addresses(gr_grid_addresses, D_diag);
+}
+
+
+void gridsys_get_double_grid_address(long address_double[3],
+                                     const long address[3],
+                                     const long D_diag[3],
+                                     const long PS[3])
+{
+  grg_get_double_grid_address(address_double, address, D_diag, PS);
+}
+
+
+void gridsys_get_grid_address_from_index(long address[3],
+                                         const long grid_index,
+                                         const long D_diag[3])
+{
+  grg_get_grid_address_from_index(address, grid_index, D_diag);
+}
+
+
+long gridsys_get_double_grid_index(const long address_double[3],
+                                   const long D_diag[3],
+                                   const long PS[3])
+{
+  return grg_get_double_grid_index(address_double, D_diag, PS);
+}
+
+
+/* From single address to grid index */
+long gridsys_get_grid_index_from_address(const long address[3],
+                                         const long D_diag[3])
+{
+  return grg_get_grid_index(address, D_diag);
+}
+
+
+long gridsys_get_reciprocal_point_group(long rec_rotations[48][3][3],
+                                        const long (*rotations)[3][3],
+                                        const long num_rot,
+                                        const long is_time_reversal)
+{
+  return grg_get_reciprocal_point_group(rec_rotations,
+                                        rotations,
+                                        num_rot,
+                                        is_time_reversal);
+}
+
+
+long gridsys_get_snf3x3(long D_diag[3],
+                        long P[3][3],
+                        long Q[3][3],
+                        const long A[3][3])
+{
+  return grg_get_snf3x3(D_diag, P, Q, A);
+}
+
+
+/* Rotation matrices with respect to reciprocal basis vectors are
+ * transformed to those for GRGrid. This set of the rotations are
+ * used always in GRGrid handling. */
+long gridsys_transform_rotations(long (*transformed_rots)[3][3],
+                                 const long (*rotations)[3][3],
+                                 const long num_rot,
+                                 const long D_diag[3],
+                                 const long Q[3][3])
+{
+  long succeeded;
+  succeeded = grg_transform_rotations(transformed_rots,
+                                      rotations,
+                                      num_rot,
+                                      D_diag,
+                                      Q);
+  return succeeded;
+}
+
+
+double gridsys_get_thm_integration_weight(const double omega,
+                                          const double tetrahedra_omegas[24][4],
+                                          const char function)
+{
+  return thm_get_integration_weight(omega, tetrahedra_omegas, function);
+}
+
+
+/* rec_lattice : microzone basis vectors in column vectors */
+void gridsys_get_thm_relative_grid_address(long relative_grid_addresses[24][4][3],
+                                           const double rec_lattice[3][3])
+{
+  thm_get_relative_grid_address(relative_grid_addresses, rec_lattice);
+}
+
+
+/* The rotations are those after proper transformation in GRGrid. */
+void gridsys_get_ir_grid_map(long *ir_grid_indices,
+                             const long (*rotations)[3][3],
+                             const long num_rot,
+                             const long D_diag[3],
+                             const long PS[3])
+{
+  grg_get_ir_grid_map(ir_grid_indices, rotations, num_rot, D_diag, PS);
+}
+
+
+
+
+
+
+
+
+
 long
 gridsys_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                           long *map_q,
@@ -189,63 +303,6 @@ void gridsys_get_integration_weight_with_sigma(double *iw,
 }
 
 
-/* From single address to grid index */
-long gridsys_get_grid_index_from_address(const long address[3],
-                                         const long D_diag[3])
-{
-  return grg_get_grid_index(address, D_diag);
-}
-
-
-void gridsys_get_gr_grid_addresses(long gr_grid_addresses[][3],
-                                   const long D_diag[3])
-{
-  grg_get_all_grid_addresses(gr_grid_addresses, D_diag);
-}
-
-/* Rotation matrices with respect to reciprocal basis vectors are
- * transformed to those for GRGrid. This set of the rotations are
- * used always in GRGrid handling. */
-long gridsys_transform_rotations(long (*transformed_rots)[3][3],
-                                 const long (*rotations)[3][3],
-                                 const long num_rot,
-                                 const long D_diag[3],
-                                 const long Q[3][3])
-{
-  return grg_transform_rotations(transformed_rots,
-                                 rotations,
-                                 num_rot,
-                                 D_diag,
-                                 Q);
-}
-
-long gridsys_get_snf3x3(long D_diag[3],
-                        long P[3][3],
-                        long Q[3][3],
-                        const long A[3][3])
-{
-  return grg_get_snf3x3(D_diag, P, Q, A);
-}
-
-/* The rotations are those after proper transformation in GRGrid. */
-long gridsys_get_ir_reciprocal_mesh(long *ir_mapping_table,
-                                    const long D_diag[3],
-                                    const long PS[3],
-                                    const long is_time_reversal,
-                                    const long (*rec_rotations)[3][3],
-                                    const long num_rot)
-{
-  long num_ir;
-
-  num_ir = bzg_get_ir_reciprocal_mesh(ir_mapping_table,
-                                      D_diag,
-                                      PS,
-                                      is_time_reversal,
-                                      rec_rotations,
-                                      num_rot);
-  return num_ir;
-}
-
 long gridsys_get_bz_grid_address(long (*bz_grid_addresses)[3],
                                  long *bz_map,
                                  long *bzg2grg,
@@ -318,7 +375,9 @@ gridsys_get_neighboring_gird_points(long *relative_grid_points,
     bzgrid->D_diag[i] = D_diag[i];
   }
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for
+#endif
   for (i = 0; i < num_grid_points; i++) {
     tpi_get_neighboring_grid_points
       (relative_grid_points + i * num_relative_grid_address,
@@ -368,7 +427,9 @@ long gridsys_set_integration_weights(double *iw,
     bzgrid->D_diag[i] = D_diag[i];
   }
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for private(j, k, bi, vertices, freq_vertices)
+#endif
   for (i = 0; i < num_gp; i++) {
     for (j = 0; j < 24; j++) {
       tpi_get_neighboring_grid_points(vertices[j],

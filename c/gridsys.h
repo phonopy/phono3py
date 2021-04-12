@@ -32,8 +32,53 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef __grid_H__
-#define __grid_H__
+#ifndef __gridsys_H__
+#define __gridsys_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void gridsys_get_all_grid_addresses(long (*gr_grid_addresses)[3],
+                                    const long D_diag[3]);
+void gridsys_get_double_grid_address(long address_double[3],
+                                     const long address[3],
+                                     const long D_diag[3],
+                                     const long PS[3]);
+void gridsys_get_grid_address_from_index(long address[3],
+                                         const long grid_index,
+                                         const long D_diag[3]);
+long gridsys_get_double_grid_index(const long address_double[3],
+                                   const long D_diag[3],
+                                   const long PS[3]);
+long gridsys_get_grid_index_from_address(const long address[3],
+                                         const long D_diag[3]);
+long gridsys_get_reciprocal_point_group(long rec_rotations[48][3][3],
+                                        const long (*rotations)[3][3],
+                                        const long num_rot,
+                                        const long is_time_reversal);
+long gridsys_get_snf3x3(long D_diag[3],
+                        long P[3][3],
+                        long Q[3][3],
+                        const long A[3][3]);
+long gridsys_transform_rotations(long (*transformed_rots)[3][3],
+                                 const long (*rotations)[3][3],
+                                 const long num_rot,
+                                 const long D_diag[3],
+                                 const long Q[3][3]);
+double gridsys_get_thm_integration_weight(const double omega,
+                                          const double tetrahedra_omegas[24][4],
+                                          const char function);
+void gridsys_get_thm_relative_grid_address(long relative_grid_addresses[24][4][3],
+                                           const double rec_lattice[3][3]);
+void gridsys_get_ir_grid_map(long *ir_grid_indices,
+                             const long (*rotations)[3][3],
+                             const long num_rot,
+                             const long D_diag[3],
+                             const long PS[3]);
+
+
+
 
 long
 gridsys_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
@@ -82,25 +127,6 @@ void gridsys_get_integration_weight_with_sigma(double *iw,
                                                const double *frequencies,
                                                const long num_band,
                                                const long tp_type);
-long gridsys_get_grid_index_from_address(const long address[3],
-                                         const long D_diag[3]);
-void gridsys_get_gr_grid_addresses(long gr_grid_addresses[][3],
-                                   const long D_diag[3]);
-long gridsys_transform_rotations(long (*transformed_rots)[3][3],
-                                 const long (*rotations)[3][3],
-                                 const long num_rot,
-                                 const long D_diag[3],
-                                 const long Q[3][3]);
-long gridsys_get_snf3x3(long D_diag[3],
-                        long P[3][3],
-                        long Q[3][3],
-                        const long A[3][3]);
-long gridsys_get_ir_reciprocal_mesh(long *ir_mapping_table,
-                                    const long D_diag[3],
-                                    const long PS[3],
-                                    const long is_time_reversal,
-                                    const long (*rec_rotations)[3][3],
-                                    const long num_rot);
 long gridsys_get_bz_grid_address(long (*bz_grid_addresses)[3],
                                  long *bz_map,
                                  long *bzg2grg,
@@ -132,5 +158,9 @@ long gridsys_set_integration_weights(double *iw,
                                      const long *bz_map,
                                      const long bz_grid_type,
                                      const double *frequencies);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
