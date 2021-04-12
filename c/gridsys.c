@@ -84,6 +84,14 @@ long gridsys_get_grid_index_from_address(const long address[3],
 }
 
 
+long gridsys_rotate_grid_index(const long grid_index,
+                               const long rotation[3][3],
+                               const long D_diag[3],
+                               const long PS[3])
+{
+  return grg_rotate_grid_index(grid_index, rotation, D_diag, PS);
+}
+
 long gridsys_get_reciprocal_point_group(long rec_rotations[48][3][3],
                                         const long (*rotations)[3][3],
                                         const long num_rot,
