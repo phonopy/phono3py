@@ -551,6 +551,10 @@ class Phono3pyConfParser(ConfParser):
                     fnames = confs[conf_key]
                 self.set_parameter(conf_key, fnames)
 
+            if conf_key == 'create_forces_fc3_file':
+                self.set_parameter(
+                    'create_forces_fc3_file', confs['create_forces_fc3_file'])
+
             if conf_key == 'dim_fc2':
                 matrix = [ int(x) for x in confs['dim_fc2'].split() ]
                 if len(matrix) == 9:
