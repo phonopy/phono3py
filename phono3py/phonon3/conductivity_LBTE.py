@@ -873,7 +873,8 @@ class Conductivity_LBTE(Conductivity):
             import sys
             sys.exit(1)
         else:
-            self._set_kappa_at_sigmas()
+            weights = self._prepare_collision_matrix()
+            self._set_kappa_at_sigmas(weights)
 
     def set_collision_matrix(self, collision_matrix):
         self._collision_matrix = collision_matrix
@@ -1120,14 +1121,26 @@ class Conductivity_LBTE(Conductivity):
                 self._gamma[j, k, i_data] = (
                     self._collision.get_imag_self_energy())
                 self._collision_matrix[j, k, i_data] = (
-                    self._collision.get_collision_matrix())
+                   self._collision.get_collision_matrix())
 
-    def _set_kappa_at_sigmas(self):
-        """Calculate thermal conductivity"""
+    def _prepare_collision_matrix(self):
+        """Prepare collision matrix to be solved."""
         if self._is_reducible_collision_matrix:
             if self._is_kappa_star:
                 self._average_collision_matrix_by_degeneracy()
-                self._expand_collisions()
+                num_mesh_points = np.prod(self._pp.mesh_numbers)
+                num_rot = len(self._point_operations)
+                rot_grid_points = np.zeros(
+                    (num_rot, num_mesh_points), dtype='int_')
+                # Ir-grid points and rot_grid_points in generalized regular grid
+                ir_gr_grid_points = np.array(
+                    self._bz_grid.bzg2grg[self._ir_grid_points], dtype='int_')
+                for i in range(num_mesh_points):
+                    rot_grid_points[:, i] = self._bz_grid.bzg2grg[
+                        get_grid_points_by_rotations(self._bz_grid.grg2bzg[i],
+                                                     self._bz_grid)]
+                self._expand_collisions(ir_gr_grid_points, rot_grid_points)
+                self._expand_local_values(ir_gr_grid_points, rot_grid_points)
             self._combine_reducible_collisions()
             weights = np.ones(np.prod(self._pp.mesh_numbers), dtype='int_')
             self._symmetrize_collision_matrix()
@@ -1140,6 +1153,10 @@ class Conductivity_LBTE(Conductivity):
             self._average_collision_matrix_by_degeneracy()
             self._symmetrize_collision_matrix()
 
+        return weights
+
+    def _set_kappa_at_sigmas(self, weights):
+        """Calculate thermal conductivity"""
         for j, sigma in enumerate(self._sigmas):
             if self._log_level:
                 text = "----------- Thermal conductivity (W/m-k) "
@@ -1208,24 +1225,12 @@ class Conductivity_LBTE(Conductivity):
                     self._collision_matrix[
                         j, k, i, l, i, l] += main_diagonal[l]
 
-    def _expand_collisions(self):
+    def _expand_collisions(self, ir_gr_grid_points, rot_grid_points):
         """Fill elements of full collision matrix by symmetry"""
         start = time.time()
         if self._log_level:
             sys.stdout.write("- Expanding properties to all grid points ")
             sys.stdout.flush()
-
-        num_mesh_points = np.prod(self._pp.mesh_numbers)
-        num_rot = len(self._point_operations)
-        rot_grid_points = np.zeros((num_rot, num_mesh_points), dtype='int_')
-
-        # Ir-grid points and rot_grid_points in generalized regular grid
-        ir_gr_grid_points = np.array(
-            self._bz_grid.bzg2grg[self._ir_grid_points], dtype='int_')
-        for i in range(num_mesh_points):
-            rot_grid_points[:, i] = self._bz_grid.bzg2grg[
-                get_grid_points_by_rotations(self._bz_grid.grg2bzg[i],
-                                             self._bz_grid)]
 
         try:
             import phono3py._phono3py as phono3c
@@ -1246,6 +1251,12 @@ class Conductivity_LBTE(Conductivity):
                         self._collision_matrix[:, :, gp_r, :, gp_c, :] += (
                             colmat_irgp[:, :, :, k, :])
 
+        if self._log_level:
+            print("[%.3fs]" % (time.time() - start))
+            sys.stdout.flush()
+
+    def _expand_local_values(self, ir_gr_grid_points, rot_grid_points):
+        """Fill elements of local properties at grid points"""
         for i, ir_gp in enumerate(ir_gr_grid_points):
             gv_irgp = self._gv[ir_gp].copy()
             self._gv[ir_gp] = 0
@@ -1264,10 +1275,6 @@ class Conductivity_LBTE(Conductivity):
                     self._gamma_iso[:, gp_r, :] += gamma_iso_irgp / multi
                 self._gv[gp_r] += np.dot(gv_irgp, r.T) / multi
                 self._cv[:, gp_r, :] += cv_irgp / multi
-
-        if self._log_level:
-            print("[%.3fs]" % (time.time() - start))
-            sys.stdout.flush()
 
     def _get_weights(self):
         """Returns weights used for collision matrix and |X> and |f>
