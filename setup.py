@@ -139,6 +139,23 @@ elif ('CONDA_PREFIX' in os.environ and
             extra_compile_args += ['-DMULTITHREADED_BLAS']
         else:
             define_macros += [('MULTITHREADED_BLAS', None)]
+elif ('CONDA_PREFIX' in os.environ and
+      (os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
+                                   'lib', 'libmkl_rt.dylib')) or
+       os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
+                                   'lib', 'libmkl_rt.so'))) and
+      (os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
+                                   'include', 'mkl_lapacke.h')))):
+    include_dirs_lapacke += [
+        os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
+    extra_link_args_lapacke += ['-lmkl_rt']
+    if use_setuptools:
+        extra_compile_args += ['-DMKL_LAPACKE',
+                               '-DMULTITHREADED_BLAS']
+    else:
+        define_macros += [('MKL_LAPACKE', None),
+                          ('MULTITHREADED_BLAS', None)]
+
 elif os.path.isfile('/usr/lib/liblapacke.so'):
     # This supposes that lapacke with single-thread BLAS is installed on
     # system.
