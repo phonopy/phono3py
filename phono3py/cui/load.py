@@ -435,8 +435,12 @@ def set_dataset_and_force_constants(
         if os.path.isfile("disp_fc2.yaml"):
             if ph3py_yaml is None:
                 disp_filename = "disp_fc2.yaml"
-            elif ph3py_yaml.dataset is None:
+            elif ph3py_yaml.phonon_dataset is None:
                 disp_filename = "disp_fc2.yaml"
+        if disp_filename is None and ph3py_yaml.phonon_dataset is None:
+            msg = ("\"FORCES_FC2\" was found. "
+                   "But displacement dataset was not found.")
+            raise RuntimeError(msg)
         _set_forces_fc2(ph3py,
                         ph3py_yaml,
                         "FORCES_FC2",
@@ -560,7 +564,6 @@ def _set_forces_fc2(ph3py,
                            disp_filename=disp_filename,
                            fc_type=fc_type,
                            log_level=log_level)
-
     if fc_type == 'phonon_fc2':
         ph3py.phonon_dataset = dataset
     else:
