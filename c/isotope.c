@@ -79,7 +79,9 @@ iso_get_isotope_scattering_strength(double *gamma,
       continue;
     }
     sum_g = 0;
+#ifdef PHPYOPENMP
 #pragma omp parallel for private(k, l, m, f, e1_r, e1_i, a, b, dist, sum_g_k) reduction(+:sum_g)
+#endif
     for (j = 0; j < num_grid_points; j++) {
       sum_g_k = 0;
       for (k = 0; k < num_band; k++) { /* band index */
@@ -162,12 +164,16 @@ void iso_get_thm_isotope_scattering_strength
   }
 
   gamma_ij = (double*)malloc(sizeof(double) * num_grid_points * num_band0);
+#ifdef PHPYOPENMP
 #pragma omp parallel for
+#endif
   for (i = 0; i < num_grid_points * num_band0; i++) {
     gamma_ij[i] = 0;
   }
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for private(j, k, l, m, f, gp, e1_r, e1_i, a, b, dist, sum_g_k)
+#endif
   for (i = 0; i < num_grid_points; i++) {
     gp = ir_grid_points[i];
     for (j = 0; j < num_band0; j++) { /* band index0 */

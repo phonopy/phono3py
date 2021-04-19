@@ -4,7 +4,7 @@ cmake_policy(SET CMP0007 NEW)
 project(phono3py C)
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_C_FLAGS_RELEASE "-Wall -O2")
-set(CMAKE_C_FLAGS_DEBUG "-g -DTHMWARNING -DMATWARNING -DKPTWARNING")
+set(CMAKE_C_FLAGS_DEBUG "-g -DLAGWARNING -DTHMWARNING")
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif(NOT CMAKE_BUILD_TYPE)
@@ -120,7 +120,7 @@ install(FILES ${PROJECT_SOURCE_DIR}/c/phononmod.h DESTINATION ${CMAKE_INSTALL_IN
 ########
 
 # Source code
-set(SOURCES_GRIDMOD
+set(SOURCES_GRIDSYSMOD
   ${PROJECT_SOURCE_DIR}/c/bzgrid.c
   ${PROJECT_SOURCE_DIR}/c/grgrid.c
   ${PROJECT_SOURCE_DIR}/c/gridsys.c
@@ -133,21 +133,21 @@ set(SOURCES_GRIDMOD
   ${PROJECT_SOURCE_DIR}/c/triplet_iw.c)
 
 # Shared library
-add_library(gridmod SHARED ${SOURCES_GRIDMOD})
+add_library(gridsysmod SHARED ${SOURCES_GRIDSYSMOD})
 
-if(NOT MSVC)
-  target_link_libraries(gridmod m ${openmp})
-endif()
-set_property(TARGET gridmod PROPERTY VERSION ${serial})
-set_property(TARGET gridmod PROPERTY SOVERSION ${soserial})
-install(TARGETS gridmod LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+# if(NOT MSVC)
+#   target_link_libraries(gridsysmod m ${openmp})
+# endif()
+set_property(TARGET gridsysmod PROPERTY VERSION ${serial})
+set_property(TARGET gridsysmod PROPERTY SOVERSION ${soserial})
+install(TARGETS gridsysmod LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # Static link library
-add_library(gridmod_static STATIC ${SOURCES_PHONONMOD})
-set_property(TARGET gridmod_static PROPERTY VERSION ${serial})
-set_property(TARGET gridmod_static PROPERTY SOVERSION ${soserial})
-set_property(TARGET gridmod_static PROPERTY OUTPUT_NAME phmod)
-install(TARGETS gridmod_static ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+add_library(gridsysmod_static STATIC ${SOURCES_GRIDSYSMOD})
+set_property(TARGET gridsysmod_static PROPERTY VERSION ${serial})
+set_property(TARGET gridsysmod_static PROPERTY SOVERSION ${soserial})
+set_property(TARGET gridsysmod_static PROPERTY OUTPUT_NAME gridsysmod)
+install(TARGETS gridsysmod_static ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # Header file
-install(FILES ${PROJECT_SOURCE_DIR}/c/gridmod.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES ${PROJECT_SOURCE_DIR}/c/gridsys.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

@@ -123,7 +123,9 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
     g_index_shift = frequency_point_index * num_band * num_band;
   }
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for private(num_g_pos, j, g_pos)
+#endif
   for (i = 0; i < num_triplets; i++) {
     g_pos = (long(*)[4])malloc(sizeof(long[4]) * num_band_prod);
     /* ise_set_g_pos only works for the case of frquency points at */
@@ -209,7 +211,9 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
 
   /* detailed_imag_self_energy has the same shape as fc3_normal_squared. */
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for
+#endif
   for (i = 0; i < num_triplets; i++) {
     detailed_imag_self_energy_at_triplet
       (detailed_imag_self_energy + i * num_band_prod,
@@ -235,7 +239,9 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
   for (i = 0; i < num_band0; i++) {
     N = 0;
     U = 0;
+/* #ifdef PHPYOPENMP */
 /* #pragma omp parallel for private(ise_tmp) reduction(+:N,U) */
+/* #endif */
     for (j = 0; j < num_triplets; j++) {
       ise_tmp = ise[j * num_band0 + i] * triplet_weights[j];
       if (is_N[j]) {

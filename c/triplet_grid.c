@@ -205,7 +205,9 @@ static long get_ir_triplets_at_q_perm_q1q2(long *map_triplets,
 
   grg_get_grid_address_from_index(adrs0, grid_point, D_diag);
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for private(j, adrs1, adrs2)
+#endif
   for (i = 0; i < num_ir_q; i++) {
     grg_get_grid_address_from_index(adrs1, ir_gps_at_q[i], D_diag);
     for (j = 0; j < 3; j++) { /* q'' */
@@ -227,7 +229,9 @@ static long get_ir_triplets_at_q_perm_q1q2(long *map_triplets,
     }
   }
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for
+#endif
   for (i = 0; i < num_grid; i++) {
     map_triplets[i] = map_triplets[map_q[i]];
   }
@@ -338,7 +342,9 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
   num_gp = bzgrid->D_diag[0] * bzgrid->D_diag[1] * bzgrid->D_diag[2];
   num_bzgp = num_gp * 8;
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for private(j, gp2, bzgp, G, bz_adrs1, bz_adrs2, d2, min_d2, bz0, bz1, bz2)
+#endif
   for (i = 0; i < num_ir; i++) {
     for (j = 0; j < 3; j++) {
       bz_adrs1[j] = bz_adrs[ir_q1_gps[i]][j];
@@ -422,7 +428,9 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
   }
   gp0 = grg_get_grid_index(bz_adrs0, bzgrid->D_diag);
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for private(j, gp2, bzgp, G, bz_adrs1, bz_adrs2, d2, min_d2)
+#endif
   for (i = 0; i < num_ir; i++) {
     for (j = 0; j < 3; j++) {
       bz_adrs1[j] = bz_adrs[gp_map[ir_q1_gps[i]]][j];

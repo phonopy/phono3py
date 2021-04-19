@@ -132,7 +132,9 @@ void itr_get_interaction(Darray *fc3_normal_squared,
     openmp_per_triplets = 0;
   }
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for schedule(guided) private(num_g_pos, g_pos) if (openmp_per_triplets)
+#endif
   for (i = 0; i < num_triplets; i++) {
     g_pos = (long(*)[4])malloc(sizeof(long[4]) * num_band_prod);
     num_g_pos = ise_set_g_pos(g_pos,

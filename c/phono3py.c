@@ -51,6 +51,7 @@
 #include "triplet_iw.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 
 long ph3py_get_interaction(Darray *fc3_normal_squared,
@@ -523,13 +524,13 @@ void ph3py_rotate_delta_fc2(double (*fc3)[3][3][3],
 }
 
 
-void ph3py_set_permutation_symmetry_fc3(double *fc3, const long num_atom)
+void ph3py_get_permutation_symmetry_fc3(double *fc3, const long num_atom)
 {
   fc3_set_permutation_symmetry_fc3(fc3, num_atom);
 }
 
 
-void ph3py_set_permutation_symmetry_compact_fc3(double * fc3,
+void ph3py_get_permutation_symmetry_compact_fc3(double * fc3,
                                                 const long p2s[],
                                                 const long s2pp[],
                                                 const long nsym_list[],
@@ -823,7 +824,9 @@ void ph3py_symmetrize_collision_matrix(double *collision_matrix,
       adrs_shift = (i * num_column * num_column * num_temp +
                     j * num_column * num_column);
       /* show_colmat_info(py_collision_matrix, i, j, adrs_shift); */
+#ifdef PHPYOPENMP
 #pragma omp parallel for schedule(guided) private(l, val)
+#endif
       for (k = 0; k < num_column; k++) {
         for (l = k + 1; l < num_column; l++) {
           val = (collision_matrix[adrs_shift + k * num_column + l] +
@@ -859,7 +862,9 @@ void ph3py_expand_collision_matrix(double *collision_matrix,
   num_column = num_grid_points * num_band;
   num_bgb = num_band * num_grid_points * num_band;
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for schedule(guided) private(j, ir_gp)
+#endif
   for (i = 0; i < num_ir_gp; i++) {
     ir_gp = ir_grid_points[i];
     multi[i] = 0;
@@ -874,7 +879,9 @@ void ph3py_expand_collision_matrix(double *collision_matrix,
     for (j = 0; j < num_temp; j++) {
       adrs_shift = (i * num_column * num_column * num_temp +
                     j * num_column * num_column);
+#ifdef PHPYOPENMP
 #pragma omp parallel for private(ir_gp, adrs_shift_plus, colmat_copy, l, gp_r, m, n, p)
+#endif
       for (k = 0; k < num_ir_gp; k++) {
         ir_gp = ir_grid_points[k];
         adrs_shift_plus = adrs_shift + ir_gp * num_bgb;
@@ -906,8 +913,9 @@ void ph3py_expand_collision_matrix(double *collision_matrix,
   multi = NULL;
 }
 
-
-/* relative_grid_addresses are given as P multipled with those from dataset,
+/* tpi_get_neighboring_grid_points around multiple grid points for using openmp
+ *
+ * relative_grid_addresses are given as P multipled with those from dataset,
  * i.e.,
  *     np.dot(relative_grid_addresses, P.T) */
 long ph3py_get_neighboring_gird_points(long *relative_grid_points,
@@ -935,7 +943,9 @@ long ph3py_get_neighboring_gird_points(long *relative_grid_points,
     bzgrid->D_diag[i] = D_diag[i];
   }
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for
+#endif
   for (i = 0; i < num_grid_points; i++) {
     tpi_get_neighboring_grid_points
       (relative_grid_points + i * num_relative_grid_address,
@@ -952,21 +962,24 @@ long ph3py_get_neighboring_gird_points(long *relative_grid_points,
 }
 
 
-/* relative_grid_addresses are given as P multipled with those from dataset,
+/* thm_get_integration_weight at multiple grid points for using openmp
+ *
+ * relative_grid_addresses are given as P multipled with those from dataset,
  * i.e.,
  *     np.dot(relative_grid_addresses, P.T) */
-long ph3py_set_integration_weights(double *iw,
-                                   const double *frequency_points,
-                                   const long num_band0,
-                                   const long num_band,
-                                   const long num_gp,
-                                   const long (*relative_grid_address)[4][3],
-                                   const long D_diag[3],
-                                   const long *grid_points,
-                                   const long (*bz_grid_addresses)[3],
-                                   const long *bz_map,
-                                   const long bz_grid_type,
-                                   const double *frequencies)
+long ph3py_get_thm_integration_weights_at_grid_points(
+  double *iw,
+  const double *frequency_points,
+  const long num_band0,
+  const long num_band,
+  const long num_gp,
+  const long (*relative_grid_address)[4][3],
+  const long D_diag[3],
+  const long *grid_points,
+  const long (*bz_grid_addresses)[3],
+  const long *bz_map,
+  const long bz_grid_type,
+  const double *frequencies)
 {
   long i, j, k, bi;
   long vertices[24][4];
@@ -985,7 +998,9 @@ long ph3py_set_integration_weights(double *iw,
     bzgrid->D_diag[i] = D_diag[i];
   }
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for private(j, k, bi, vertices, freq_vertices)
+#endif
   for (i = 0; i < num_gp; i++) {
     for (j = 0; j < 24; j++) {
       tpi_get_neighboring_grid_points(vertices[j],

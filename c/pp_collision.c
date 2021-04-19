@@ -131,7 +131,9 @@ void ppc_get_pp_collision(double *imag_self_energy,
                                 relative_grid_address,
                                 2);
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for schedule(guided) private(g, g_zero) if (openmp_per_triplets)
+#endif
   for (i = 0; i < num_triplets; i++) {
     g = (double*)malloc(sizeof(double) * 2 * num_band_prod);
     g_zero = (char*)malloc(sizeof(char) * num_band_prod);
@@ -253,7 +255,9 @@ void ppc_get_pp_collision_with_sigma(
 
   cutoff = sigma * sigma_cutoff;
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for schedule(guided) private(g, g_zero) if (openmp_per_triplets)
+#endif
   for (i = 0; i < num_triplets; i++) {
     g = (double*)malloc(sizeof(double) * 2 * num_band_prod);
     g_zero = (char*)malloc(sizeof(char) * num_band_prod);
