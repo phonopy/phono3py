@@ -225,8 +225,8 @@ void ph3py_rotate_delta_fc2(double (*fc3)[3][3][3],
                             const long num_atom,
                             const long num_site_sym,
                             const long num_disp);
-void ph3py_set_permutation_symmetry_fc3(double *fc3, const long num_atom);
-void ph3py_set_permutation_symmetry_compact_fc3(double * fc3,
+void ph3py_get_permutation_symmetry_fc3(double *fc3, const long num_atom);
+void ph3py_get_permutation_symmetry_compact_fc3(double * fc3,
                                                 const long p2s[],
                                                 const long s2pp[],
                                                 const long nsym_list[],
@@ -343,17 +343,18 @@ long ph3py_get_neighboring_gird_points(long *relative_grid_points,
                                        const long bz_grid_type,
                                        const long num_grid_points,
                                        const long num_relative_grid_address);
-long ph3py_set_integration_weights(double *iw,
-                                   const double *frequency_points,
-                                   const long num_band0,
-                                   const long num_band,
-                                   const long num_gp,
-                                   const long (*relative_grid_address)[4][3],
-                                   const long mesh[3],
-                                   const long *grid_points,
-                                   const long (*bz_grid_addresses)[3],
-                                   const long *bz_map,
-                                   const long bz_grid_type,
-                                   const double *frequencies);
+long ph3py_get_thm_integration_weights_at_grid_points(
+  double *iw,
+  const double *frequency_points,
+  const long num_band0,
+  const long num_band,
+  const long num_gp,
+  const long (*relative_grid_address)[4][3],
+  const long D_diag[3],
+  const long *grid_points,
+  const long (*bz_grid_addresses)[3],
+  const long *bz_map,
+  const long bz_grid_type,
+  const double *frequencies);
 
 #endif

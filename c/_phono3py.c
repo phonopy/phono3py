@@ -67,21 +67,20 @@ static PyObject * py_rotate_delta_fc2s(PyObject *self, PyObject *args);
 static PyObject * py_get_isotope_strength(PyObject *self, PyObject *args);
 static PyObject * py_get_thm_isotope_strength(PyObject *self, PyObject *args);
 static PyObject *
-py_set_permutation_symmetry_fc3(PyObject *self, PyObject *args);
+py_get_permutation_symmetry_fc3(PyObject *self, PyObject *args);
 static PyObject *
-py_set_permutation_symmetry_compact_fc3(PyObject *self, PyObject *args);
-static PyObject * py_set_permutation_symmetry_fc3(PyObject *self,
-                                                  PyObject *args);
+py_get_permutation_symmetry_compact_fc3(PyObject *self, PyObject *args);
 static PyObject * py_transpose_compact_fc3(PyObject *self, PyObject *args);
 static PyObject * py_get_neighboring_grid_points(PyObject *self, PyObject *args);
-static PyObject * py_set_integration_weights(PyObject *self, PyObject *args);
+static PyObject *
+py_get_thm_integration_weights_at_grid_points(PyObject *self, PyObject *args);
 static PyObject *
 py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args);
 static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args);
 static PyObject *
-py_set_triplets_integration_weights(PyObject *self, PyObject *args);
+py_get_triplets_integration_weights(PyObject *self, PyObject *args);
 static PyObject *
-py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args);
+py_get_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args);
 static PyObject *
 py_get_grid_index_from_address(PyObject *self, PyObject *args);
 static PyObject *
@@ -193,11 +192,11 @@ static PyMethodDef _phono3py_methods[] = {
    METH_VARARGS,
    "Isotope scattering strength for tetrahedron_method"},
   {"permutation_symmetry_fc3",
-   (PyCFunction)py_set_permutation_symmetry_fc3,
+   (PyCFunction)py_get_permutation_symmetry_fc3,
    METH_VARARGS,
    "Set permutation symmetry for fc3"},
   {"permutation_symmetry_compact_fc3",
-   (PyCFunction)py_set_permutation_symmetry_compact_fc3,
+   (PyCFunction)py_get_permutation_symmetry_compact_fc3,
    METH_VARARGS,
    "Set permutation symmetry for compact-fc3"},
   {"transpose_compact_fc3",
@@ -208,10 +207,10 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_get_neighboring_grid_points,
    METH_VARARGS,
    "Neighboring grid points by relative grid addresses"},
-  {"integration_weights",
-   (PyCFunction)py_set_integration_weights,
+  {"integration_weights_at_grid_points",
+   (PyCFunction)py_get_thm_integration_weights_at_grid_points,
    METH_VARARGS,
-   "Integration weights of tetrahedron method"},
+   "Integration weights of tetrahedron method at grid points"},
   {"triplets_reciprocal_mesh_at_q",
    (PyCFunction)py_tpl_get_triplets_reciprocal_mesh_at_q,
    METH_VARARGS,
@@ -221,11 +220,11 @@ static PyMethodDef _phono3py_methods[] = {
    METH_VARARGS,
    "Triplets in reciprocal primitive lattice are transformed to those in BZ."},
   {"triplets_integration_weights",
-   (PyCFunction)py_set_triplets_integration_weights,
+   (PyCFunction)py_get_triplets_integration_weights,
    METH_VARARGS,
    "Integration weights of tetrahedron method for triplets"},
   {"triplets_integration_weights_with_sigma",
-   (PyCFunction)py_set_triplets_integration_weights_with_sigma,
+   (PyCFunction)py_get_triplets_integration_weights_with_sigma,
    METH_VARARGS,
    "Integration weights of smearing method for triplets"},
   {"grid_index_from_address",
@@ -1384,7 +1383,7 @@ static PyObject * py_rotate_delta_fc2s(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-py_set_permutation_symmetry_fc3(PyObject *self, PyObject *args)
+py_get_permutation_symmetry_fc3(PyObject *self, PyObject *args)
 {
   PyArrayObject *py_fc3;
 
@@ -1398,13 +1397,13 @@ py_set_permutation_symmetry_fc3(PyObject *self, PyObject *args)
   fc3 = (double*)PyArray_DATA(py_fc3);
   num_atom = (long)PyArray_DIMS(py_fc3)[0];
 
-  ph3py_set_permutation_symmetry_fc3(fc3, num_atom);
+  ph3py_get_permutation_symmetry_fc3(fc3, num_atom);
 
   Py_RETURN_NONE;
 }
 
 static PyObject *
-py_set_permutation_symmetry_compact_fc3(PyObject *self, PyObject *args)
+py_get_permutation_symmetry_compact_fc3(PyObject *self, PyObject *args)
 {
   PyArrayObject* py_fc3;
   PyArrayObject* py_permutations;
@@ -1436,7 +1435,7 @@ py_set_permutation_symmetry_compact_fc3(PyObject *self, PyObject *args)
   n_patom = (long)PyArray_DIMS(py_fc3)[0];
   n_satom = (long)PyArray_DIMS(py_fc3)[1];
 
-  ph3py_set_permutation_symmetry_compact_fc3(fc3,
+  ph3py_get_permutation_symmetry_compact_fc3(fc3,
                                              p2s,
                                              s2pp,
                                              nsym_list,
@@ -1544,7 +1543,8 @@ static PyObject * py_get_neighboring_grid_points(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
-static PyObject * py_set_integration_weights(PyObject *self, PyObject *args)
+static PyObject *
+py_get_thm_integration_weights_at_grid_points(PyObject *self, PyObject *args)
 {
   PyArrayObject *py_iw;
   PyArrayObject *py_frequency_points;
@@ -1591,18 +1591,19 @@ static PyObject * py_set_integration_weights(PyObject *self, PyObject *args)
   frequencies = (double*)PyArray_DATA(py_frequencies);
   num_band = (long)PyArray_DIMS(py_frequencies)[1];
 
-  ph3py_set_integration_weights(iw,
-                                frequency_points,
-                                num_band0,
-                                num_band,
-                                num_gp,
-                                relative_grid_address,
-                                D_diag,
-                                grid_points,
-                                bz_grid_address,
-                                bz_map,
-                                bz_grid_type,
-                                frequencies);
+  ph3py_get_thm_integration_weights_at_grid_points(
+    iw,
+    frequency_points,
+    num_band0,
+    num_band,
+    num_gp,
+    relative_grid_address,
+    D_diag,
+    grid_points,
+    bz_grid_address,
+    bz_map,
+    bz_grid_type,
+    frequencies);
 
   Py_RETURN_NONE;
 }
@@ -1707,7 +1708,7 @@ static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-py_set_triplets_integration_weights(PyObject *self, PyObject *args)
+py_get_triplets_integration_weights(PyObject *self, PyObject *args)
 {
   PyArrayObject *py_iw;
   PyArrayObject *py_iw_zero;
@@ -1787,7 +1788,7 @@ py_set_triplets_integration_weights(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-py_set_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
+py_get_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
 {
   PyArrayObject *py_iw;
   PyArrayObject *py_iw_zero;

@@ -259,7 +259,7 @@ class Isotope(object):
         freq_points = np.array(
             self._frequencies[self._grid_point, self._band_indices],
             dtype='double', order='C')
-        phono3c.integration_weights(
+        phono3c.integration_weights_at_grid_points(
             self._integration_weights,
             freq_points,
             np.array(np.dot(thm.get_tetrahedra(), self._bz_grid.P.T),

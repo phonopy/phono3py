@@ -83,16 +83,14 @@ void gridsys_get_ir_grid_map(long *ir_grid_indices,
 
 
 
-
-long
-gridsys_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
-                                          long *map_q,
-                                          const long grid_point,
-                                          const long D_diag[3],
-                                          const long is_time_reversal,
-                                          const long num_rot,
-                                          const long (*rec_rotations)[3][3],
-                                          const long swappable);
+long gridsys_get_triplets_at_q(long *map_triplets,
+                               long *map_q,
+                               const long grid_point,
+                               const long D_diag[3],
+                               const long is_time_reversal,
+                               const long num_rot,
+                               const long (*rec_rotations)[3][3],
+                               const long swappable);
 long gridsys_get_BZ_triplets_at_q(long (*triplets)[3],
                                   const long grid_point,
                                   const long (*bz_grid_addresses)[3],
@@ -140,28 +138,7 @@ long gridsys_get_bz_grid_address(long (*bz_grid_addresses)[3],
                                  const long PS[3],
                                  const double rec_lattice[3][3],
                                  const long type);
-long
-gridsys_get_neighboring_gird_points(long *relative_grid_points,
-                                    const long *grid_points,
-                                    const long (*relative_grid_address)[3],
-                                    const long D_diag[3],
-                                    const long (*bz_grid_addresses)[3],
-                                    const long *bz_map,
-                                    const long bz_grid_type,
-                                    const long num_grid_points,
-                                    const long num_relative_grid_address);
-long gridsys_set_integration_weights(double *iw,
-                                     const double *frequency_points,
-                                     const long num_band0,
-                                     const long num_band,
-                                     const long num_gp,
-                                     const long (*relative_grid_address)[4][3],
-                                     const long D_diag[3],
-                                     const long *grid_points,
-                                     const long (*bz_grid_addresses)[3],
-                                     const long *bz_map,
-                                     const long bz_grid_type,
-                                     const double *frequencies);
+
 
 #ifdef __cplusplus
 }
