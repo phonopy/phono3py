@@ -34,7 +34,14 @@ endif()
 include_directories($ENV{CONDA_PREFIX}/include)
 link_directories($ENV{CONDA_PREFIX}/lib)
 set(LAPACK_LIBRARIES "-llapack")
-set(BLAS_LIBRARIES "-lopenblas")
+if (USE_MKL)
+  message(STATUS "BLAS library: MKL")
+  set(BLAS_LIBRARIES "-lmkl_rt")
+  add_compile_definitions(MKL_LAPACKE)
+else()
+  message(STATUS "BLAS library: OpenBLAS")
+  set(BLAS_LIBRARIES "-lopenblas")
+endif()
 
 ############
 # phono3py #
