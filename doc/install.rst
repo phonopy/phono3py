@@ -116,11 +116,12 @@ installed::
 
    % conda install -c conda-forge numpy scipy h5py pyyaml matplotlib
 
-When using hdf5 files from NFS mouted location, the latest h5py may
-not work. In this case, installation of an older version is
-recommended::
+Note that using hdf5 files on NFS mouted file system, you may have to
+disable file locking by setting
 
-   % conda install hdf5=1.8.18
+::
+
+   export HDF5_USE_FILE_LOCKING=FALSE
 
 This openblas package contains BLAS, LAPACK, and LAPACKE. When this
 ``libopenblas`` is linked and the ``else`` statement of the C macro
@@ -230,7 +231,11 @@ This installation instruction supposes linux x86-64 environment.
       % bash ~/miniconda.sh -b -p $HOME/miniconda
       % export PATH="$HOME/miniconda/bin:$PATH"
 
-   The detailed installation instruction is found at https://conda.io/projects/conda/en/latest/user-guide/install/index.html.
+   The detailed installation instruction is found at
+   https://conda.io/projects/conda/en/latest/user-guide/install/index.html. To
+   use the conda-forge channel as the default one, ``~/.condarc`` may be
+   written following the conda-forge official documentation
+   (https://conda-forge.org/docs/user/tipsandtricks.html).
 
 2. Initialization of conda and setup of conda environment
 
@@ -248,36 +253,27 @@ This installation instruction supposes linux x86-64 environment.
 
    ::
 
-      % conda create -n phono3py -c conda-forge python=3.7
+      % conda create -n phono3py -c conda-forge python=3.8
       % conda activate phono3py
 
    Use of this is strongly recommended, otherwise proper settings of
    ``CONDA_PREFIX``, ``C_INCLUDE_PATH``, and ``LD_LIBRARY_PATH`` will
    be necessary.
 
-2. Installation of compiler from conda
-
-   For usual 64-bit Linux system::
-
-      % conda install -c conda-forge gcc_linux-64
-
-   For macOS::
-
-      % conda install clang_osx-64 llvm-openmp
-
-3. Install necessary conda packages for phono3py
+2. Install necessary conda packages for phono3py
 
    ::
 
-      % conda install -c conda-forge numpy scipy h5py pyyaml matplotlib openblas libgfortran
+      % conda install -c conda-forge numpy scipy h5py pyyaml matplotlib-base compilers "libblas=*=*mkl" spglib mkl-include
 
-   When using hdf5 files from NFS mouted location, the latest h5py may
-   not work. In this case, installation of an older version is
-   recommended::
+   Note that using hdf5 files on NFS mouted file system, you may have to
+   disable file locking by setting
 
-      % conda install -c conda-forge hdf5=1.8.18
+   ::
 
-   Install the latest phonopy and phono3py::
+      export HDF5_USE_FILE_LOCKING=FALSE
+
+   Install the latest phonopy and phono3py from github sources::
 
       % mkdir dev
       % cd dev
