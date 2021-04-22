@@ -64,7 +64,7 @@ static long rotate_grid_index(const long grid_index,
                               const long rotation[3][3],
                               const long D_diag[3],
                               const long PS[3]);
-static void get_ir_grid_map(long ir_grid_indices[],
+static void get_ir_grid_map(long *ir_grid_map,
                             const long (*rotations)[3][3],
                             const long num_rot,
                             const long D_diag[3],
@@ -237,13 +237,13 @@ long grg_rotate_grid_index(const long grid_index,
 /* -----------------------------*/
 /* Find irreducible grid points */
 /* -----------------------------*/
-void grg_get_ir_grid_map(long ir_grid_indices[],
+void grg_get_ir_grid_map(long *ir_grid_map,
                          const long (*rotations)[3][3],
                          const long num_rot,
                          const long D_diag[3],
                          const long PS[3])
 {
-  get_ir_grid_map(ir_grid_indices,
+  get_ir_grid_map(ir_grid_map,
                   rotations,
                   num_rot,
                   D_diag,
@@ -440,7 +440,10 @@ static long rotate_grid_index(const long grid_index,
   return get_double_grid_index(dadrs_rot, D_diag, PS);
 }
 
-static void get_ir_grid_map(long ir_grid_indices[],
+/* Find ir-grid points. */
+/* This algorithm relies on the ir-grid index is always smallest */
+/* number among symmetrically equivalent grid points. */
+static void get_ir_grid_map(long *ir_grid_map,
                             const long (*rotations)[3][3],
                             const long num_rot,
                             const long D_diag[3],
@@ -452,7 +455,7 @@ static void get_ir_grid_map(long ir_grid_indices[],
   num_gp = D_diag[0] * D_diag[1] * D_diag[2];
 
   for (gp = 0; gp < num_gp; gp++) {
-    ir_grid_indices[gp] = num_gp;
+    ir_grid_map[gp] = num_gp;
   }
 
   /* Do not simply multithreaded this for-loop. */
@@ -461,12 +464,12 @@ static void get_ir_grid_map(long ir_grid_indices[],
     for (i = 0; i < num_rot; i++) {
       r_gp = rotate_grid_index(gp, rotations[i], D_diag, PS);
       if (r_gp < gp) {
-        ir_grid_indices[gp] = ir_grid_indices[r_gp];
+        ir_grid_map[gp] = ir_grid_map[r_gp];
         break;
       }
     }
-    if (ir_grid_indices[gp] == num_gp) {
-      ir_grid_indices[gp] = gp;
+    if (ir_grid_map[gp] == num_gp) {
+      ir_grid_map[gp] = gp;
     }
   }
 

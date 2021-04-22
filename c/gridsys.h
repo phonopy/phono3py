@@ -75,14 +75,20 @@ double gridsys_get_thm_integration_weight(const double omega,
                                           const char function);
 void gridsys_get_thm_relative_grid_address(long relative_grid_addresses[24][4][3],
                                            const double rec_lattice[3][3]);
-void gridsys_get_ir_grid_map(long *ir_grid_indices,
+void gridsys_get_ir_grid_map(long *ir_grid_map,
                              const long (*rotations)[3][3],
                              const long num_rot,
                              const long D_diag[3],
                              const long PS[3]);
-
-
-
+long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3],
+                                   long *bz_map,
+                                   long *bzg2grg,
+                                   const long (*gr_grid_addresses)[3],
+                                   const long D_diag[3],
+                                   const long Q[3][3],
+                                   const long PS[3],
+                                   const double rec_lattice[3][3],
+                                   const long type);
 long gridsys_get_triplets_at_q(long *map_triplets,
                                long *map_q,
                                const long grid_point,
@@ -129,15 +135,6 @@ void gridsys_get_integration_weight_with_sigma(double *iw,
                                                const double *frequencies,
                                                const long num_band,
                                                const long tp_type);
-long gridsys_get_bz_grid_address(long (*bz_grid_addresses)[3],
-                                 long *bz_map,
-                                 long *bzg2grg,
-                                 const long (*grid_address)[3],
-                                 const long D_diag[3],
-                                 const long Q[3][3],
-                                 const long PS[3],
-                                 const double rec_lattice[3][3],
-                                 const long type);
 
 
 #ifdef __cplusplus

@@ -140,6 +140,8 @@ double gridsys_get_thm_integration_weight(const double omega,
 }
 
 
+/* Get one dataset of relative grid address used for tetrahedron */
+/* method. rec_lattice is used to choose the one. */
 /* rec_lattice : microzone basis vectors in column vectors */
 void gridsys_get_thm_relative_grid_address(long relative_grid_addresses[24][4][3],
                                            const double rec_lattice[3][3])
@@ -149,21 +151,81 @@ void gridsys_get_thm_relative_grid_address(long relative_grid_addresses[24][4][3
 
 
 /* The rotations are those after proper transformation in GRGrid. */
-void gridsys_get_ir_grid_map(long *ir_grid_indices,
+void gridsys_get_ir_grid_map(long *ir_grid_map,
                              const long (*rotations)[3][3],
                              const long num_rot,
                              const long D_diag[3],
                              const long PS[3])
 {
-  grg_get_ir_grid_map(ir_grid_indices, rotations, num_rot, D_diag, PS);
+  grg_get_ir_grid_map(ir_grid_map, rotations, num_rot, D_diag, PS);
 }
 
 
+/* Find shortest grid points from Gamma considering periodicity of */
+/* reciprocal lattice. See the details in docstring of BZGrid. */
+/* */
+/* Parameters */
+/* ---------- */
+/* type : Data structure type of bz_map. type=2 is always */
+/*        recommended.*/
+/* Returns */
+/* ------- */
+/* bz_grid_addresses : */
+/*     Grid point addresses of shortest grid points. */
+/*     len(bz_grid_addresses) <= product(D_diag + 1) */
+/*     for full gr_grid_addresses. */
+/* bz_map : */
+/*     List of accumulated numbers of BZ grid points from the first GR */
+/*     grid point to the last grid point. */
+/*     [0, 1, 3, 4, ...] means multiplicities of [1, 2, 1, ...] */
+/*     With type=2, len(bz_map)=product(D_diag) + 1. */
+/* bzg2grg : */
+/*     Mapping table of bz_grid_addresses to gr_grid_addresses. */
+/*     len(bzg2grg) == len(bz_grid_addresses) <= product(D_diag + 1). */
+/* (function return) size : */
+/*     Number of bz_grid_addresses stored. */
+long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3],
+                                   long *bz_map,
+                                   long *bzg2grg,
+                                   const long (*gr_grid_addresses)[3],
+                                   const long D_diag[3],
+                                   const long Q[3][3],
+                                   const long PS[3],
+                                   const double rec_lattice[3][3],
+                                   const long type)
+{
+  BZGrid *bzgrid;
+  long i, j, size;
 
+  if ((bzgrid = (BZGrid*) malloc(sizeof(BZGrid))) == NULL) {
+    warning_print("Memory could not be allocated.");
+    return 0;
+  }
 
+  bzgrid->addresses = bz_grid_addresses;
+  bzgrid->gp_map = bz_map;
+  bzgrid->bzg2grg = bzg2grg;
+  bzgrid->type = type;
+  for (i = 0; i < 3; i++) {
+    bzgrid->D_diag[i] = D_diag[i];
+    bzgrid->PS[i] = PS[i];
+    for (j = 0; j < 3; j++) {
+      bzgrid->Q[i][j] = Q[i][j];
+      bzgrid->reclat[i][j] = rec_lattice[i][j];
+    }
+  }
 
+  if (bzg_get_bz_grid_addresses(bzgrid, gr_grid_addresses)) {
+    size = bzgrid->size;
+  } else {
+    size = 0;
+  }
 
+  free(bzgrid);
+  bzgrid = NULL;
 
+  return size;
+}
 
 
 long gridsys_get_triplets_at_q(long *map_triplets,
@@ -226,9 +288,9 @@ long gridsys_get_BZ_triplets_at_q(long (*triplets)[3],
   return num_ir;
 }
 
-/* relative_grid_addresses are given as P multipled with those from dataset,
- * i.e.,
- *     np.dot(relative_grid_addresses, P.T) */
+/* relative_grid_addresses are given as P multipled with those from */
+/* dataset, i.e., */
+/*     np.dot(relative_grid_addresses, P.T) */
 long gridsys_get_integration_weight(double *iw,
                                     char *iw_zero,
                                     const double *frequency_points,
@@ -307,48 +369,4 @@ void gridsys_get_integration_weight_with_sigma(double *iw,
                                         frequencies,
                                         num_band,
                                         tp_type);
-}
-
-
-long gridsys_get_bz_grid_address(long (*bz_grid_addresses)[3],
-                                 long *bz_map,
-                                 long *bzg2grg,
-                                 const long (*grid_address)[3],
-                                 const long D_diag[3],
-                                 const long Q[3][3],
-                                 const long PS[3],
-                                 const double rec_lattice[3][3],
-                                 const long type)
-{
-  BZGrid *bzgrid;
-  long i, j, size;
-
-  if ((bzgrid = (BZGrid*) malloc(sizeof(BZGrid))) == NULL) {
-    warning_print("Memory could not be allocated.");
-    return 0;
-  }
-
-  bzgrid->addresses = bz_grid_addresses;
-  bzgrid->gp_map = bz_map;
-  bzgrid->bzg2grg = bzg2grg;
-  bzgrid->type = type;
-  for (i = 0; i < 3; i++) {
-    bzgrid->D_diag[i] = D_diag[i];
-    bzgrid->PS[i] = PS[i];
-    for (j = 0; j < 3; j++) {
-      bzgrid->Q[i][j] = Q[i][j];
-      bzgrid->reclat[i][j] = rec_lattice[i][j];
-    }
-  }
-
-  if (bzg_get_bz_grid_addresses(bzgrid, grid_address)) {
-    size = bzgrid->size;
-  } else {
-    size = 0;
-  }
-
-  free(bzgrid);
-  bzgrid = NULL;
-
-  return size;
 }
