@@ -67,7 +67,7 @@ long grg_rotate_grid_index(const long grid_index,
                            const long rotations[3][3],
                            const long D_diag[3],
                            const long PS[3]);
-void grg_get_ir_grid_map(long ir_grid_indices[],
+void grg_get_ir_grid_map(long *ir_grid_map,
                          const long (*rotations)[3][3],
                          const long num_rot,
                          const long D_diag[3],
