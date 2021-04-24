@@ -506,7 +506,7 @@ def _get_bz_grid_points_by_rotations_py(grgps, rot_adrs, bz_grid):
         if len(indices) == 0:
             msg = "with_surface did not work properly."
             raise RuntimeError(msg)
-        bzgps[i] = bz_grid.gp_map[gp + indices[0]]
+        bzgps[i] = bz_grid.gp_map[gp] + indices[0]
     return bzgps
 
 
