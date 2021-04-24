@@ -100,7 +100,8 @@ long gridsys_get_reciprocal_point_group(long rec_rotations[48][3][3],
   return grg_get_reciprocal_point_group(rec_rotations,
                                         rotations,
                                         num_rot,
-                                        is_time_reversal);
+                                        is_time_reversal,
+                                        1);
 }
 
 

@@ -75,6 +75,7 @@ void grg_get_ir_grid_map(long *ir_grid_map,
 long grg_get_reciprocal_point_group(long rec_rotations[48][3][3],
                                     const long (*rotations)[3][3],
                                     const long num_rot,
-                                    const long is_time_reversal);
+                                    const long is_time_reversal,
+                                    const long is_transpose);
 
 #endif

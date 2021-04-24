@@ -250,14 +250,20 @@ void grg_get_ir_grid_map(long *ir_grid_map,
                   PS);
 }
 
-/* Extract unique rotation matrices and transpose them. */
-/* When is_time_reversal == 1, inverse of the extracted matrices are */
-/* included. */
+/* Unique reciprocal rotations are collected from input rotations. */
+/* is_transpose == 0 : Input rotations are considered those for */
+/* reciprocal space. */
+/* is_transpose != 0 : Input rotations are considered those for */
+/* direct space, i.e., the rotation matrices are transposed. */
+/* is_time_reversal controls if inversion is added in the group of */
+/* reciprocal space rotations. */
 /* Return 0 if failed */
 long grg_get_reciprocal_point_group(long rec_rotations[48][3][3],
                                     const long (*rotations)[3][3],
                                     const long num_rot,
-                                    const long is_time_reversal)
+                                    const long is_time_reversal,
+                                    const long is_transpose)
+
 {
   long i, j, num_rot_ret, inv_exist;
   const long inversion[3][3] = {
@@ -266,6 +272,7 @@ long grg_get_reciprocal_point_group(long rec_rotations[48][3][3],
     { 0, 0,-1 }
   };
 
+  /* Collect unique rotations */
   num_rot_ret = 0;
   for (i = 0; i < num_rot; i++) {
     for (j = 0; j < num_rot_ret; j++) {
@@ -282,8 +289,14 @@ long grg_get_reciprocal_point_group(long rec_rotations[48][3][3],
     ;
   }
 
-  inv_exist = 0;
+  if (is_transpose) {
+    for (i = 0; i < num_rot_ret; i++) {
+      lagmat_transpose_matrix_l3(rec_rotations[i], rec_rotations[i]);
+    }
+  }
+
   if (is_time_reversal) {
+    inv_exist = 0;
     for (i = 0; i < num_rot_ret; i++) {
       if (lagmat_check_identity_matrix_l3(inversion, rec_rotations[i])) {
         inv_exist = 1;
@@ -302,10 +315,6 @@ long grg_get_reciprocal_point_group(long rec_rotations[48][3][3],
       }
       num_rot_ret *= 2;
     }
-  }
-
-  for (i = 0; i < num_rot_ret; i++) {
-    lagmat_transpose_matrix_l3(rec_rotations[i], rec_rotations[i]);
   }
 
   return num_rot_ret;

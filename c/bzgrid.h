@@ -92,12 +92,10 @@ typedef struct {
 } ConstBZGrid;
 
 
-long bzg_get_ir_grid_map(long ir_mapping_table[],
-                         const long D_diag[3],
-                         const long PS[3],
-                         const RotMats *rot_reciprocal);
-RotMats *bzg_get_point_group_reciprocal(const RotMats * rotations,
-                                        const long is_time_reversal);
+RotMats *bzg_get_reciprocal_point_group(const long (*rec_rotations_in)[3][3],
+                                        const long num_rot,
+                                        const long is_time_reversal,
+                                        const long is_transpose);
 long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
                                 const long D_diag[3],
                                 const long PS[3],

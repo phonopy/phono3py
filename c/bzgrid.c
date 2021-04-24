@@ -168,9 +168,7 @@ static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
   {-1, -1, -1}
 };
 
-static RotMats *get_point_group_reciprocal(const RotMats * rotations,
-                                           const long is_time_reversal,
-                                           const long is_transose);
+
 static long get_ir_grid_map(long ir_mapping_table[],
                             const long D_diag[3],
                             const long PS[3],
@@ -197,24 +195,31 @@ static void multiply_matrix_vector_d3(double v[3],
                                       const double b[3]);
 static double norm_squared_d3(const double a[3]);
 
-long bzg_get_ir_grid_map(long ir_mapping_table[],
-                         const long D_diag[3],
-                         const long PS[3],
-                         const RotMats *rot_reciprocal)
-{
-  long num_ir;
 
-  num_ir = get_ir_grid_map(ir_mapping_table,
-                           D_diag,
-                           PS,
-                           rot_reciprocal);
-  return num_ir;
-}
-
-RotMats *bzg_get_point_group_reciprocal(const RotMats * rotations,
-                                        const long is_time_reversal)
+RotMats *bzg_get_reciprocal_point_group(const long (*rec_rotations_in)[3][3],
+                                        const long num_rot,
+                                        const long is_time_reversal,
+                                        const long is_transpose)
 {
-  return get_point_group_reciprocal(rotations, is_time_reversal, 0);
+  long i, num_rot_out;
+  long rec_rotations_out[48][3][3];
+  RotMats *rec_rotations;
+
+  num_rot_out = grg_get_reciprocal_point_group(rec_rotations_out,
+                                               rec_rotations_in,
+                                               num_rot,
+                                               is_time_reversal,
+                                               is_transpose);
+  if (num_rot_out == 0) {
+    return NULL;
+  }
+
+  rec_rotations = bzg_alloc_RotMats(num_rot_out);
+  for (i = 0; i < num_rot_out; i++) {
+    lagmat_copy_matrix_l3(rec_rotations->mat[i], rec_rotations_out[i]);
+  }
+
+  return rec_rotations;
 }
 
 long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
@@ -224,16 +229,17 @@ long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
                                 const long (*rec_rotations_in)[3][3],
                                 const long num_rot)
 {
-  long i, num_ir;
-  RotMats *rotations, *rot_reciprocal;
+  long num_ir;
+  RotMats *rot_reciprocal;
 
-  rotations = bzg_alloc_RotMats(num_rot);
-  for (i = 0; i < num_rot; i++) {
-    lagmat_copy_matrix_l3(rotations->mat[i], rec_rotations_in[i]);
+  rot_reciprocal = bzg_get_reciprocal_point_group(rec_rotations_in,
+                                                  num_rot,
+                                                  is_time_reversal,
+                                                  0);
+  if (rot_reciprocal == NULL) {
+    return 0;
   }
 
-  rot_reciprocal = NULL;
-  rot_reciprocal = get_point_group_reciprocal(rotations, is_time_reversal, 0);
   num_ir = get_ir_grid_map(ir_mapping_table,
                            D_diag,
                            PS,
@@ -241,8 +247,6 @@ long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
 
   bzg_free_RotMats(rot_reciprocal);
   rot_reciprocal = NULL;
-  bzg_free_RotMats(rotations);
-  rotations = NULL;
 
   return num_ir;
 }
@@ -376,90 +380,6 @@ long bzg_inverse_unimodular_matrix_l3(long m[3][3],
   return det;
 }
 
-/* Return NULL if failed */
-static RotMats *get_point_group_reciprocal(const RotMats * rotations,
-                                           const long is_time_reversal,
-                                           const long is_transpose)
-{
-  long i, j, num_rot;
-  RotMats *rot_reciprocal, *rot_return;
-  long *unique_rot;
-  const long inversion[3][3] = {
-    {-1, 0, 0 },
-    { 0,-1, 0 },
-    { 0, 0,-1 }
-  };
-
-  rot_reciprocal = NULL;
-  rot_return = NULL;
-  unique_rot = NULL;
-
-  if (is_time_reversal) {
-    if ((rot_reciprocal = bzg_alloc_RotMats(rotations->size * 2)) == NULL) {
-      return NULL;
-    }
-  } else {
-    if ((rot_reciprocal = bzg_alloc_RotMats(rotations->size)) == NULL) {
-      return NULL;
-    }
-  }
-
-  if ((unique_rot = (long*)malloc(sizeof(long) * rot_reciprocal->size)) == NULL) {
-    warning_print("Memory of unique_rot could not be allocated.");
-    bzg_free_RotMats(rot_reciprocal);
-    rot_reciprocal = NULL;
-    return NULL;
-  }
-
-  for (i = 0; i < rot_reciprocal->size; i++) {
-    unique_rot[i] = -1;
-  }
-
-  if (is_transpose) {
-    for (i = 0; i < rotations->size; i++) {
-      lagmat_transpose_matrix_l3(rot_reciprocal->mat[i], rotations->mat[i]);
-    }
-  } else {
-    for (i = 0; i < rotations->size; i++) {
-      lagmat_copy_matrix_l3(rot_reciprocal->mat[i], rotations->mat[i]);
-    }
-  }
-
-  if (is_time_reversal) {
-    for (i = 0; i < rotations->size; i++) {
-      lagmat_multiply_matrix_l3(rot_reciprocal->mat[rotations->size + i],
-                                inversion,
-                                rot_reciprocal->mat[i]);
-    }
-  }
-
-  num_rot = 0;
-  for (i = 0; i < rot_reciprocal->size; i++) {
-    for (j = 0; j < num_rot; j++) {
-      if (lagmat_check_identity_matrix_l3(rot_reciprocal->mat[unique_rot[j]],
-                                          rot_reciprocal->mat[i])) {
-        goto escape;
-      }
-    }
-    unique_rot[num_rot] = i;
-    num_rot++;
-  escape:
-    ;
-  }
-
-  if ((rot_return = bzg_alloc_RotMats(num_rot)) != NULL) {
-    for (i = 0; i < num_rot; i++) {
-      lagmat_copy_matrix_l3(rot_return->mat[i], rot_reciprocal->mat[unique_rot[i]]);
-    }
-  }
-
-  free(unique_rot);
-  unique_rot = NULL;
-  bzg_free_RotMats(rot_reciprocal);
-  rot_reciprocal = NULL;
-
-  return rot_return;
-}
 
 /* It is assumed that the rotations have been examined by
  * grg_transform_rotations, i.e., no broken symmetry of grid is ensured. */

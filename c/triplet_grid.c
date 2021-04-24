@@ -89,15 +89,16 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
                               const long num_rot,
                               const long swappable)
 {
-  long i, num_ir;
-  RotMats *rec_rotations, *rotations;
+  long num_ir;
+  RotMats *rotations;
 
-  rec_rotations = bzg_alloc_RotMats(num_rot);
-  for (i = 0; i < num_rot; i++) {
-    lagmat_copy_matrix_l3(rec_rotations->mat[i], rec_rotations_in[i]);
+  rotations = bzg_get_reciprocal_point_group(rec_rotations_in,
+                                             num_rot,
+                                             is_time_reversal,
+                                             0);
+  if (rotations == NULL) {
+    return 0;
   }
-  rotations = bzg_get_point_group_reciprocal(rec_rotations, is_time_reversal);
-  bzg_free_RotMats(rec_rotations);
 
   num_ir = get_ir_triplets_at_q(map_triplets,
                                 map_q,
@@ -106,6 +107,7 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
                                 rotations,
                                 swappable);
   bzg_free_RotMats(rotations);
+  rotations = NULL;
 
   return num_ir;
 }
@@ -142,18 +144,26 @@ static long get_ir_triplets_at_q(long *map_triplets,
   rot_reciprocal_q = get_point_group_reciprocal_with_q(rot_reciprocal,
                                                        D_diag,
                                                        grid_point);
-  num_ir_q = bzg_get_ir_grid_map(map_q,
-                                 D_diag,
-                                 PS,
-                                 rot_reciprocal_q);
+
+  grg_get_ir_grid_map(map_q,
+                      rot_reciprocal_q->mat,
+                      rot_reciprocal_q->size,
+                      D_diag,
+                      PS);
+  num_ir_q = 0;
+  for (i = 0; i < D_diag[0] * D_diag[1] * D_diag[2]; i++) {
+    if (map_q[i] == i) {
+      num_ir_q++;
+    }
+  }
 
   if (swappable) {
-    num_ir_triplets =  get_ir_triplets_at_q_perm_q1q2(map_triplets,
-                                                      map_q,
-                                                      grid_point,
-                                                      D_diag,
-                                                      rot_reciprocal_q,
-                                                      num_ir_q);
+    num_ir_triplets = get_ir_triplets_at_q_perm_q1q2(map_triplets,
+                                                     map_q,
+                                                     grid_point,
+                                                     D_diag,
+                                                     rot_reciprocal_q,
+                                                     num_ir_q);
   } else {
     num_ir_triplets = get_ir_triplets_at_q_noperm(map_triplets,
                                                   map_q,
