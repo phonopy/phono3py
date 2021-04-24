@@ -310,9 +310,7 @@ class Conductivity(object):
             (self._ir_grid_points,
              self._ir_grid_weights) = self._get_ir_grid_points()
         elif not self._is_kappa_star:  # All grid points
-            self._grid_points = np.array(
-                self._bz_grid.grg2bzg[:np.prod(self._pp.mesh_numbers)],
-                dtype='int_', order='C')
+            self._grid_points = self._bz_grid.grg2bzg
             self._grid_weights = np.ones(len(self._grid_points), dtype='int_')
             self._ir_grid_points = self._grid_points
             self._ir_grid_weights = self._grid_weights
