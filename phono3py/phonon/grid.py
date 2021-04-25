@@ -41,11 +41,23 @@ from phonopy.structure.grid_points import length2mesh, extract_ir_grid_points
 class BZGrid(object):
     """Data structure of BZ grid
 
-    The grid system of with (this class, BZG) and without (generalized
-    regular grid, GRG) BZ surface are differently designed. Integer triplet
-    to represent a grid point is equivalent up to modulo D_diag (mesh
-    numbers). The conversion of the grid point indices can be done as
-    follows:
+    GR-grid and BZ-grid
+    -------------------
+    GR-grid address is defined by three integers of {0 <= m_i < D_diag[i]}.
+    Therefore number of unique grid points represented by GR-grid is
+    prod(D_diag).
+
+    BZ-grid address is defined on GR-grid but to be closest to the origin
+    in Cartesian coordinates of the reciprocal space in the periodic boundary
+    condition of the reciprocal lattice. The translationally equivalent
+    grid points on BZ surface can be equidistant from the origin.
+    In this case, those all grid addresses are contained in the data structure
+    of BZGrid. Therefore number of unique grid points represented by BZ-grid
+    can be larger than prod(D_diag).
+
+    The grid systems with (BZ-grid, BZG) and without (GR-grid, GRG) BZ surface
+    are mutually related up to modulo D_diag. More precisely the conversion
+    of grid adresses are performed as follows:
 
     From BZG to GRG
         gr_gp = get_grid_point_from_address(bz_grid.addresses[bz_gp], D_diag)
@@ -59,8 +71,28 @@ class BZGrid(object):
         bz_gp = gr_gp
     The shortcut is
         bz_gp = bz_grid.grg2bzg[gr_gp]
-    When translational equivalent points exist on BZ surface, the one of them
+    When translationally equivalent points exist on BZ surface, the one of them
     is chosen.
+
+    Recovering reduced coordinates
+    ------------------------------
+    q-points with respect to the original recirpocal
+    basis vectors are given by
+
+    q = np.dot(Q, addresses[gp] / D_diag.astype('double'))
+
+    for the Gamma cetnred grid. With shifted, where only half grid shifts
+    that satisfy the symmetry are considered,
+
+    q = np.dot(Q, (addresses[gp] + np.dot(P, s)) / D_diag.astype('double'))
+
+    where s is the shift vectors that are 0 or 1/2. But it is more
+    convenient to use the integer shift vectors S by 0 or 1, which gives
+
+    q = (np.dot(Q, (2 * addresses[gp] + np.dot(P, S))
+                    / D_diag.astype('double'))) / 2
+
+    and this is the definition of PS in this class.
 
     Attributes
     ----------
@@ -82,6 +114,22 @@ class BZGrid(object):
         shape=(prod(D_diag), ), dtype='int_'
     is_dense_gp_map : bool, optional
         See the detail in the docstring of ``_relocate_BZ_grid_address``.
+    rotations : ndarray
+        Rotation matrices for GR-grid addresses.
+        shape=(rotations, 3, 3), dtype='int_', order='C'.
+    D_diag : ndarray
+        This corresponds to the mesh numbers in transformed reciprocal
+        basis vectors.
+        shape=(3,), dtype='int_'
+    P : ndarray
+        Left unimodular matrix after SNF: D=PAQ.
+        shape=(3, 3), dtype='int_', order='C'
+    Q : ndarray
+        Right unimodular matrix after SNF: D=PAQ.
+        shape=(3, 3), dtype='int_', order='C'
+    microzone_lattice : ndarray
+        Basis vectors of microzone of GR-grid.
+        shape=(3, 3), dtype='double', order='C'
 
     """
 
@@ -140,34 +188,8 @@ class BZGrid(object):
         self._generate_grid(mesh, force_SNF=True)
 
     @property
-    def mesh_numbers(self):
-        """Mesh numbers of conventional regular grid"""
-        return self.D_diag
-
-    @property
     def D_diag(self):
-        """Diagonal elements of diagonal matrix after SNF: D=PAQ
-
-        This corresponds to the mesh numbers in transformed reciprocal
-        basis vectors. q-points with respect to the original recirpocal
-        basis vectors are given by
-
-        q = np.dot(Q, addresses[gp] / D_diag.astype('double'))
-
-        for the Gamma cetnred grid. With shifted, where only half grid shifts
-        that satisfy the symmetry are considered,
-
-        q = np.dot(Q, (addresses[gp] + np.dot(P, s)) / D_diag.astype('double'))
-
-        where s is the shift vectors that are 0 or 1/2. But it is more
-        convenient to use the integer shift vectors S by 0 or 1, which gives
-
-        q = (np.dot(Q, (2 * addresses[gp] + np.dot(P, S))
-                        / D_diag.astype('double'))) / 2
-
-        and this is the definition of PS in this class.
-
-        """
+        """Diagonal elements of diagonal matrix after SNF: D=PAQ"""
         return self._D_diag
 
     @property
@@ -200,10 +222,12 @@ class BZGrid(object):
 
     @property
     def addresses(self):
+        """BZ-grid addresses"""
         return self._addresses
 
     @property
     def gp_map(self):
+        """Definitions of grid index."""
         return self._gp_map
 
     @property
@@ -224,6 +248,7 @@ class BZGrid(object):
 
     @property
     def microzone_lattice(self):
+        """Basis vectors of microzone"""
         return self._microzone_lattice
 
     @property
@@ -395,16 +420,18 @@ def get_grid_point_from_address_py(address, mesh):
             (address[2] % m[2]) * m[0] * m[1])
 
 
-def get_grid_point_from_address(address, mesh):
-    """Return GR grid point index of grid address.
+def get_grid_point_from_address(address, D_diag):
+    """Return GR grid-point indices of grid addresses.
 
     Parameters
     ----------
     address : array_like
         Grid address.
         shape=(3, ) or (n, 3), dtype='int_'
-    mesh : array_like
-        Mesh numbers.
+    D_diag : array_like
+        This corresponds to mesh numbers. More precisely, this gives
+        diagonal elements of diagonal matrix of Smith normal form of
+        grid generating matrix. See the detail in the docstring of BZGrid.
         shape=(3,), dtype='int_'
 
     Returns
@@ -422,7 +449,7 @@ def get_grid_point_from_address(address, mesh):
     import phono3py._phono3py as phono3c
 
     adrs_array = np.array(address, dtype='int_', order='C')
-    mesh_array = np.array(mesh, dtype='int_')
+    mesh_array = np.array(D_diag, dtype='int_')
 
     if adrs_array.ndim == 1:
         return phono3c.grid_index_from_address(adrs_array, mesh_array)
@@ -434,28 +461,33 @@ def get_grid_point_from_address(address, mesh):
 
 
 def get_ir_grid_points(bz_grid):
-    """Returns ir-grid-points in generalized regular grid."""
+    """Returns ir-grid-points in generalized regular grid.
 
-    grid_mapping_table = _get_ir_reciprocal_mesh(
+    bz_grid : BZGrid
+        Data structure to represent BZ grid.
+
+    """
+
+    ir_grid_map = _get_ir_grid_map(
         bz_grid.D_diag,
         bz_grid.rotations,
-        is_shift=bz_grid.PS)
+        PS=bz_grid.PS)
     (ir_grid_points,
-     ir_grid_weights) = extract_ir_grid_points(grid_mapping_table)
+     ir_grid_weights) = extract_ir_grid_points(ir_grid_map)
 
-    return ir_grid_points, ir_grid_weights, grid_mapping_table
+    return ir_grid_points, ir_grid_weights, ir_grid_map
 
 
-def get_grid_points_by_rotations(gp,
+def get_grid_points_by_rotations(bz_gp,
                                  bz_grid,
                                  reciprocal_rotations=None,
                                  with_surface=False):
-    """Returns grid points obtained after rotating input grid address
+    """Returns BZ-grid point indices rotated from a BZ-grid point index
 
     Parameters
     ----------
-    gp : int
-        Grid point index defined by bz_grid.
+    bz_gp : int
+        BZ-grid point index.
     bz_grid : BZGrid
         Data structure to represent BZ grid.
     reciprocal_rotations : array_like or None, optional
@@ -472,7 +504,7 @@ def get_grid_points_by_rotations(gp,
     Returns
     -------
     rot_grid_indices : ndarray
-        Grid points obtained after rotating input grid address
+        BZ-grid point indices obtained after rotating a grid point index.
         dtype='int_', shape=(rotations,)
 
     """
@@ -482,7 +514,7 @@ def get_grid_points_by_rotations(gp,
     else:
         rec_rots = bz_grid.rotations
 
-    rot_adrs = np.dot(rec_rots, bz_grid.addresses[gp])
+    rot_adrs = np.dot(rec_rots, bz_grid.addresses[bz_gp])
     grgps = get_grid_point_from_address(rot_adrs, bz_grid.D_diag)
 
     if with_surface:
@@ -497,7 +529,13 @@ def get_grid_points_by_rotations(gp,
 
 
 def _get_bz_grid_points_by_rotations_py(grgps, rot_adrs, bz_grid):
-    """Return BZ-grid point indices generated by rotations"""
+    """Return BZ-grid point indices generated by rotations
+
+    Rotated BZ-grid addresses are compared with translationally
+    equivalent BZ-grid addresses to get the respective BZ-grid point
+    indices.
+
+    """
     bzgps = np.zeros(len(grgps), dtype='int_')
     for i, (gp, adrs) in enumerate(zip(grgps, rot_adrs)):
         indices = np.where(
@@ -628,29 +666,28 @@ def _relocate_BZ_grid_address(gr_grid_addresses,
     return bz_grid_addresses, bz_map, bzg2grg
 
 
-def _get_ir_reciprocal_mesh(mesh,
-                            rec_rotations,
-                            is_shift=None,
-                            is_time_reversal=True):
+def _get_ir_grid_map(D_diag,
+                     grg_rotations,
+                     PS=None):
     """Irreducible k-points are searched.
 
     Parameters
     ----------
-    mesh : array_like
-        Uniform sampling mesh numbers.
+    D_diag : array_like
+        This corresponds to mesh numbers. More precisely, this gives
+        diagonal elements of diagonal matrix of Smith normal form of
+        grid generating matrix. See the detail in the docstring of BZGrid.
+        shape=(3,), dtype='int_'
+    grg_rotations : array_like
+        GR-grid rotation matrices.
+        dtype='int_', shape=(grg_rotations, 3)
+    PS : array_like
+        GR-grid shift defined.
         dtype='int_', shape=(3,)
-    rec_rotations : array_like
-        Rotation matrices with respect to reciprocal basis vectors.
-        dtype='int_', shape=(rec_rotations, 3)
-    is_shift : array_like
-        [0, 0, 0] gives Gamma center mesh and value 1 gives  half mesh shift.
-        dtype='int_', shape=(3,)
-    is_time_reversal : bool
-        Time reversal symmetry is included or not.
 
     Returns
     -------
-    grid_mapping_table : ndarray
+    ir_grid_map : ndarray
         Grid point mapping table to ir-gird-points in gereralized
         regular grid.
         dtype='int_', shape=(prod(mesh),)
@@ -659,17 +696,19 @@ def _get_ir_reciprocal_mesh(mesh,
 
     import phono3py._phono3py as phono3c
 
-    mapping_table = np.zeros(np.prod(mesh), dtype='int_')
-    if is_shift is None:
-        is_shift = [0, 0, 0]
-
-    if phono3c.ir_reciprocal_mesh(
-            mapping_table,
-            np.array(mesh, dtype='int_'),
-            np.array(is_shift, dtype='int_'),
-            is_time_reversal * 1,
-            np.array(rec_rotations, dtype='int_', order='C')) > 0:
-        return mapping_table
+    ir_grid_map = np.zeros(np.prod(D_diag), dtype='int_')
+    if PS is None:
+        _PS = np.zeros(3, dtype='int_')
     else:
-        raise RuntimeError(
-            "ir_reciprocal_mesh didn't work well.")
+        _PS = np.array(PS, dtype='int_')
+
+    num_ir = phono3c.ir_grid_map(
+        ir_grid_map,
+        np.array(D_diag, dtype='int_'),
+        _PS,
+        np.array(grg_rotations, dtype='int_', order='C'))
+
+    if num_ir > 0:
+        return ir_grid_map
+    else:
+        raise RuntimeError("_get_ir_grid_map failed to find ir-grid-points.")

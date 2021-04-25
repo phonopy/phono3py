@@ -672,7 +672,7 @@ class Phono3py(object):
     @property
     def mesh_numbers(self):
         """Sampling mesh numbers in reciprocal space"""
-        return self._bz_grid.mesh_numbers
+        return self._bz_grid.D_diag
 
     @mesh_numbers.setter
     def mesh_numbers(self, mesh_numbers):

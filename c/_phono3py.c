@@ -90,7 +90,7 @@ py_transform_rotations(PyObject *self, PyObject *args);
 static PyObject *
 py_get_snf3x3(PyObject *self, PyObject *args);
 static PyObject *
-py_get_ir_reciprocal_mesh(PyObject *self, PyObject *args);
+py_get_ir_grid_map(PyObject *self, PyObject *args);
 static PyObject * py_get_bz_grid_addresses(PyObject *self, PyObject *args);
 
 static PyObject *
@@ -231,8 +231,8 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_get_grid_index_from_address,
    METH_VARARGS,
    "Grid index from grid address"},
-  {"ir_reciprocal_mesh",
-   (PyCFunction)py_get_ir_reciprocal_mesh,
+  {"ir_grid_map",
+   (PyCFunction)py_get_ir_grid_map,
    METH_VARARGS,
    "Reciprocal mesh points with ir grid mapping table"},
   {"gr_grid_addresses",
@@ -1963,12 +1963,11 @@ py_get_snf3x3(PyObject *self, PyObject *args)
 }
 
 static PyObject *
-py_get_ir_reciprocal_mesh(PyObject *self, PyObject *args)
+py_get_ir_grid_map(PyObject *self, PyObject *args)
 {
   PyArrayObject* py_grid_mapping_table;
   PyArrayObject* py_D_diag;
   PyArrayObject* py_is_shift;
-  long is_time_reversal;
   PyArrayObject* py_rotations;
 
   long* D_diag;
@@ -1979,11 +1978,10 @@ py_get_ir_reciprocal_mesh(PyObject *self, PyObject *args)
   long *grid_mapping_table;
   long num_ir;
 
-  if (!PyArg_ParseTuple(args, "OOOlO",
+  if (!PyArg_ParseTuple(args, "OOOO",
                         &py_grid_mapping_table,
                         &py_D_diag,
                         &py_is_shift,
-                        &is_time_reversal,
                         &py_rotations)) {
     return NULL;
   }
@@ -1994,12 +1992,11 @@ py_get_ir_reciprocal_mesh(PyObject *self, PyObject *args)
   num_rot = (long)PyArray_DIMS(py_rotations)[0];
   grid_mapping_table = (long*)PyArray_DATA(py_grid_mapping_table);
 
-  num_ir = ph3py_get_ir_reciprocal_mesh(grid_mapping_table,
-                                        D_diag,
-                                        is_shift,
-                                        is_time_reversal,
-                                        rot,
-                                        num_rot);
+  num_ir = ph3py_get_ir_grid_map(grid_mapping_table,
+                                 D_diag,
+                                 is_shift,
+                                 rot,
+                                 num_rot);
   return PyLong_FromLong(num_ir);
 }
 

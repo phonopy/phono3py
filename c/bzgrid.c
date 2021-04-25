@@ -222,20 +222,21 @@ RotMats *bzg_get_reciprocal_point_group(const long (*rec_rotations_in)[3][3],
   return rec_rotations;
 }
 
-long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
-                                const long D_diag[3],
-                                const long PS[3],
-                                const long is_time_reversal,
-                                const long (*rec_rotations_in)[3][3],
-                                const long num_rot)
+long bzg_get_ir_grid_map(long *ir_mapping_table,
+                         const long D_diag[3],
+                         const long PS[3],
+                         const long (*rotations_in)[3][3],
+                         const long num_rot,
+                         const long is_time_reversal,
+                         const long is_transpose)
 {
   long num_ir;
   RotMats *rot_reciprocal;
 
-  rot_reciprocal = bzg_get_reciprocal_point_group(rec_rotations_in,
+  rot_reciprocal = bzg_get_reciprocal_point_group(rotations_in,
                                                   num_rot,
                                                   is_time_reversal,
-                                                  0);
+                                                  is_transpose);
   if (rot_reciprocal == NULL) {
     return 0;
   }

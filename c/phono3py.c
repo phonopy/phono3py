@@ -750,21 +750,23 @@ long ph3py_get_snf3x3(long D_diag[3],
 }
 
 /* The rotations are those after proper transformation in GRGrid. */
-long ph3py_get_ir_reciprocal_mesh(long *ir_mapping_table,
-                                  const long D_diag[3],
-                                  const long PS[3],
-                                  const long is_time_reversal,
-                                  const long (*rec_rotations)[3][3],
-                                  const long num_rot)
+long ph3py_get_ir_grid_map(long *ir_grid_map,
+                           const long D_diag[3],
+                           const long PS[3],
+                           const long (*grg_rotations)[3][3],
+                           const long num_rot)
 {
-  long num_ir;
+  long num_ir, i;
 
-  num_ir = bzg_get_ir_reciprocal_mesh(ir_mapping_table,
-                                      D_diag,
-                                      PS,
-                                      is_time_reversal,
-                                      rec_rotations,
-                                      num_rot);
+  grg_get_ir_grid_map(ir_grid_map, grg_rotations, num_rot, D_diag, PS);
+
+  num_ir = 0;
+  for (i = 0; i < D_diag[0] * D_diag[1] * D_diag[2]; i ++) {
+    if (ir_grid_map[i] == i) {
+      num_ir++;
+    }
+  }
+
   return num_ir;
 }
 

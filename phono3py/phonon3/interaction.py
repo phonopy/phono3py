@@ -148,7 +148,7 @@ class Interaction(object):
 
     @property
     def mesh_numbers(self):
-        return self._bz_grid.mesh_numbers
+        return self._bz_grid.D_diag
 
     def get_mesh_numbers(self):
         warnings.warn("Use attribute, mesh_numbers.", DeprecationWarning)
