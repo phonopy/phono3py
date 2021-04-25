@@ -42,8 +42,6 @@
 #define IDENTITY_TOL 1e-5
 
 static void reduce_grid_address(long address[3], const long D_diag[3]);
-static void reduce_double_grid_address(long address_double[3],
-                                       const long D_diag[3]);
 static long get_double_grid_index(const long address_double[3],
                                   const long D_diag[3],
                                   const long PS[3]);
@@ -154,33 +152,31 @@ void grg_get_all_grid_addresses(long (*grid_address)[3], const long D_diag[3])
 /* -------------------------------------------------------*/
 /* Get address in double grid from address in single grid */
 /* -------------------------------------------------------*/
+/* This function doubles single-grid address and shifts it by PS. */
+/* No modulo operation is applied to returned double-grid address. */
 /* address_double : Double grid address. */
 /* address : Single grid address. */
-/* D_diag : Diagnal elements of D. */
 /* PS : Shifts transformed by P. s_i is 0 or 1. */
 void grg_get_double_grid_address(long address_double[3],
                                  const long address[3],
-                                 const long D_diag[3],
                                  const long PS[3])
 {
   get_double_grid_address(address_double, address, PS);
-  reduce_double_grid_address(address_double, D_diag);
 }
 
 /* -------------------------------------------------------*/
 /* Get address in single grid from address in double grid */
 /* -------------------------------------------------------*/
+/* This function shifts double-grid adress by PS and divides it by 2. */
+/* No modulo operation is applied to returned single-grid address. */
 /* address : Single grid address. */
 /* address_double : Double grid address. */
-/* D_diag : Diagnal elements of D. */
 /* PS : Shifts transformed by P. s_i is 0 or 1. */
 void grg_get_grid_address(long address[3],
                           const long address_double[3],
-                          const long D_diag[3],
                           const long PS[3])
 {
   get_grid_address(address, address_double, PS);
-  reduce_grid_address(address, D_diag);
 }
 
 /* -------------------------------------------------*/
@@ -332,15 +328,6 @@ static void reduce_grid_address(long address[3], const long D_diag[3])
   }
 }
 
-static void reduce_double_grid_address(long address_double[3],
-                                       const long D_diag[3])
-{
-  long i;
-
-  for (i = 0; i < 3; i++) {
-    address_double[i] = lagmat_modulo_l(address_double[i], 2 * D_diag[i]);
-  }
-}
 
 static long get_double_grid_index(const long address_double[3],
                                   const long D_diag[3],
@@ -348,10 +335,8 @@ static long get_double_grid_index(const long address_double[3],
 {
   long address[3];
 
-  grg_get_grid_address(address,
-                       address_double,
-                       D_diag,
-                       PS);
+  get_grid_address(address, address_double, PS);
+  reduce_grid_address(address, D_diag);
   return get_grid_index_from_address(address, D_diag);
 }
 

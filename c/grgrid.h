@@ -49,11 +49,9 @@ long grg_transform_rotations(long (*transformed_rots)[3][3],
 void grg_get_all_grid_addresses(long (*grid_address)[3], const long D_diag[3]);
 void grg_get_double_grid_address(long address_double[3],
                                  const long address[3],
-                                 const long D_diag[3],
                                  const long PS[3]);
 void grg_get_grid_address(long address[3],
                           const long address_double[3],
-                          const long D_diag[3],
                           const long PS[3]);
 long grg_get_grid_index(const long address[3],
                         const long D_diag[3]);

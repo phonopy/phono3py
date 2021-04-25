@@ -92,7 +92,7 @@ py_get_snf3x3(PyObject *self, PyObject *args);
 static PyObject *
 py_get_ir_grid_map(PyObject *self, PyObject *args);
 static PyObject * py_get_bz_grid_addresses(PyObject *self, PyObject *args);
-
+static PyObject * py_rotate_bz_grid_addresses(PyObject *self, PyObject *args);
 static PyObject *
 py_diagonalize_collision_matrix(PyObject *self, PyObject *args);
 static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args);
@@ -251,6 +251,10 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_get_bz_grid_addresses,
    METH_VARARGS,
    "Get grid addresses including Brillouin zone surface"},
+  {"rotate_bz_grid_index",
+   (PyCFunction)py_rotate_bz_grid_addresses,
+   METH_VARARGS,
+   "Rotate grid point considering Brillouin zone surface"},
   {"diagonalize_collision_matrix",
    (PyCFunction)py_diagonalize_collision_matrix,
    METH_VARARGS,
@@ -323,6 +327,7 @@ PyInit__phono3py(void)
   return module;
 #endif
 }
+
 
 static PyObject * py_get_interaction(PyObject *self, PyObject *args)
 {
@@ -441,6 +446,7 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
 
   Py_RETURN_NONE;
 }
+
 
 static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
 {
@@ -578,6 +584,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+
 static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
 {
   PyArrayObject *py_gamma;
@@ -707,6 +714,7 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+
 static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
 {
   PyArrayObject *py_gamma;
@@ -768,6 +776,7 @@ static PyObject * py_get_imag_self_energy_with_g(PyObject *self, PyObject *args)
 
   Py_RETURN_NONE;
 }
+
 
 static PyObject *
 py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args)
@@ -841,6 +850,7 @@ py_get_detailed_imag_self_energy_with_g(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+
 static PyObject * py_get_real_self_energy_at_bands(PyObject *self,
                                                    PyObject *args)
 {
@@ -897,6 +907,7 @@ static PyObject * py_get_real_self_energy_at_bands(PyObject *self,
 
   Py_RETURN_NONE;
 }
+
 
 static PyObject * py_get_real_self_energy_at_frequency_point(PyObject *self,
                                                              PyObject *args)
@@ -957,6 +968,7 @@ static PyObject * py_get_real_self_energy_at_frequency_point(PyObject *self,
 
   Py_RETURN_NONE;
 }
+
 
 static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args)
 {
@@ -1036,6 +1048,7 @@ static PyObject * py_get_collision_matrix(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+
 static PyObject * py_get_reducible_collision_matrix(PyObject *self, PyObject *args)
 {
   PyArrayObject *py_collision_matrix;
@@ -1097,6 +1110,7 @@ static PyObject * py_get_reducible_collision_matrix(PyObject *self, PyObject *ar
   Py_RETURN_NONE;
 }
 
+
 static PyObject * py_symmetrize_collision_matrix(PyObject *self, PyObject *args)
 {
   PyArrayObject *py_collision_matrix;
@@ -1129,6 +1143,7 @@ static PyObject * py_symmetrize_collision_matrix(PyObject *self, PyObject *args)
 
   Py_RETURN_NONE;
 }
+
 
 static PyObject * py_expand_collision_matrix(PyObject *self, PyObject *args)
 {
@@ -1170,6 +1185,7 @@ static PyObject * py_expand_collision_matrix(PyObject *self, PyObject *args)
 
   Py_RETURN_NONE;
 }
+
 
 static PyObject * py_get_isotope_strength(PyObject *self, PyObject *args)
 {
@@ -1226,6 +1242,7 @@ static PyObject * py_get_isotope_strength(PyObject *self, PyObject *args)
 
   Py_RETURN_NONE;
 }
+
 
 static PyObject * py_get_thm_isotope_strength(PyObject *self, PyObject *args)
 {
@@ -1294,6 +1311,7 @@ static PyObject * py_get_thm_isotope_strength(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+
 static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
 {
   PyArrayObject *force_constants_third;
@@ -1330,6 +1348,7 @@ static PyObject * py_distribute_fc3(PyObject *self, PyObject *args)
 
   Py_RETURN_NONE;
 }
+
 
 static PyObject * py_rotate_delta_fc2s(PyObject *self, PyObject *args)
 {
@@ -1382,6 +1401,7 @@ static PyObject * py_rotate_delta_fc2s(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+
 static PyObject *
 py_get_permutation_symmetry_fc3(PyObject *self, PyObject *args)
 {
@@ -1401,6 +1421,7 @@ py_get_permutation_symmetry_fc3(PyObject *self, PyObject *args)
 
   Py_RETURN_NONE;
 }
+
 
 static PyObject *
 py_get_permutation_symmetry_compact_fc3(PyObject *self, PyObject *args)
@@ -1445,6 +1466,7 @@ py_get_permutation_symmetry_compact_fc3(PyObject *self, PyObject *args)
 
   Py_RETURN_NONE;
 }
+
 
 static PyObject * py_transpose_compact_fc3(PyObject *self, PyObject *args)
 {
@@ -1491,6 +1513,7 @@ static PyObject * py_transpose_compact_fc3(PyObject *self, PyObject *args)
 
   Py_RETURN_NONE;
 }
+
 
 static PyObject * py_get_neighboring_grid_points(PyObject *self, PyObject *args)
 {
@@ -1542,6 +1565,7 @@ static PyObject * py_get_neighboring_grid_points(PyObject *self, PyObject *args)
 
   Py_RETURN_NONE;
 }
+
 
 static PyObject *
 py_get_thm_integration_weights_at_grid_points(PyObject *self, PyObject *args)
@@ -1608,6 +1632,7 @@ py_get_thm_integration_weights_at_grid_points(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+
 static PyObject *
 py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
 {
@@ -1653,6 +1678,7 @@ py_tpl_get_triplets_reciprocal_mesh_at_q(PyObject *self, PyObject *args)
 
   return PyLong_FromLong(num_ir);
 }
+
 
 static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args)
 {
@@ -1706,6 +1732,7 @@ static PyObject * py_tpl_get_BZ_triplets_at_q(PyObject *self, PyObject *args)
 
   return PyLong_FromLong(num_ir);
 }
+
 
 static PyObject *
 py_get_triplets_integration_weights(PyObject *self, PyObject *args)
@@ -1787,6 +1814,7 @@ py_get_triplets_integration_weights(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+
 static PyObject *
 py_get_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
 {
@@ -1840,6 +1868,7 @@ py_get_triplets_integration_weights_with_sigma(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+
 static PyObject *
 py_get_grid_index_from_address(PyObject *self, PyObject *args)
 {
@@ -1887,6 +1916,7 @@ py_get_gr_grid_addresses(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+
 static PyObject *
 py_transform_rotations(PyObject *self, PyObject *args)
 {
@@ -1927,8 +1957,8 @@ py_transform_rotations(PyObject *self, PyObject *args)
   }
 }
 
-static PyObject *
-py_get_snf3x3(PyObject *self, PyObject *args)
+
+static PyObject *py_get_snf3x3(PyObject *self, PyObject *args)
 {
   PyArrayObject* py_D_diag;
   PyArrayObject* py_P;
@@ -1962,8 +1992,8 @@ py_get_snf3x3(PyObject *self, PyObject *args)
   }
 }
 
-static PyObject *
-py_get_ir_grid_map(PyObject *self, PyObject *args)
+
+static PyObject *py_get_ir_grid_map(PyObject *self, PyObject *args)
 {
   PyArrayObject* py_grid_mapping_table;
   PyArrayObject* py_D_diag;
@@ -1999,6 +2029,7 @@ py_get_ir_grid_map(PyObject *self, PyObject *args)
                                  num_rot);
   return PyLong_FromLong(num_ir);
 }
+
 
 static PyObject * py_get_bz_grid_addresses(PyObject *self, PyObject *args)
 {
@@ -2057,6 +2088,53 @@ static PyObject * py_get_bz_grid_addresses(PyObject *self, PyObject *args)
   return PyLong_FromLong(num_total_gp);
 }
 
+
+static PyObject * py_rotate_bz_grid_addresses(PyObject *self, PyObject *args)
+{
+  PyArrayObject *py_bz_grid_addresses;
+  PyArrayObject *py_rotation;
+  PyArrayObject *py_bz_map;
+  PyArrayObject *py_D_diag;
+  PyArrayObject *py_PS;
+  long bz_grid_index;
+  long type;
+
+  long (*bz_grid_addresses)[3];
+  long (*rotation)[3];
+  long *bz_map;
+  long *D_diag;
+  long *PS;
+  long ret_bz_gp;
+
+  if (!PyArg_ParseTuple(args, "lOOOOOl",
+                        &bz_grid_index,
+                        &py_rotation,
+                        &py_bz_grid_addresses,
+                        &py_bz_map,
+                        &py_D_diag,
+                        &py_PS,
+                        &type)) {
+    return NULL;
+  }
+
+  bz_grid_addresses = (long(*)[3])PyArray_DATA(py_bz_grid_addresses);
+  rotation = (long(*)[3])PyArray_DATA(py_rotation);
+  bz_map = (long*)PyArray_DATA(py_bz_map);
+  D_diag = (long*)PyArray_DATA(py_D_diag);
+  PS = (long*)PyArray_DATA(py_PS);
+
+  ret_bz_gp = ph3py_rotate_bz_grid_index(bz_grid_index,
+                                         rotation,
+                                         bz_grid_addresses,
+                                         bz_map,
+                                         D_diag,
+                                         PS,
+                                         type);
+
+  return PyLong_FromLong(ret_bz_gp);
+}
+
+
 static PyObject *
 py_diagonalize_collision_matrix(PyObject *self, PyObject *args)
 {
@@ -2113,6 +2191,7 @@ py_diagonalize_collision_matrix(PyObject *self, PyObject *args)
   return PyLong_FromLong(info);
 }
 
+
 static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args)
 {
   PyArrayObject *py_collision_matrix;
@@ -2157,6 +2236,7 @@ static PyObject * py_pinv_from_eigensolution(PyObject *self, PyObject *args)
   Py_RETURN_NONE;
 }
 
+
 static PyObject * py_get_default_colmat_solver(PyObject *self, PyObject *args)
 {
   if (!PyArg_ParseTuple(args, "")) {
@@ -2170,6 +2250,7 @@ static PyObject * py_get_default_colmat_solver(PyObject *self, PyObject *args)
 #endif
 
 }
+
 
 static void pinv_from_eigensolution(double *data,
                                     const double *eigvals,
@@ -2258,6 +2339,7 @@ static void pinv_from_eigensolution(double *data,
   free(tmp_data);
   tmp_data = NULL;
 }
+
 
 static void show_colmat_info(const PyArrayObject *py_collision_matrix,
                              const long i_sigma,

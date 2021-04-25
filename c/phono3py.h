@@ -319,7 +319,13 @@ long ph3py_get_bz_grid_address(long (*bz_grid_addresses)[3],
                                const long PS[3],
                                const double rec_lattice[3][3],
                                const long type);
-
+long ph3py_rotate_bz_grid_index(const long bz_grid_index,
+                                const long rotation[3][3],
+                                const long (*bz_grid_addresses)[3],
+                                const long *bz_map,
+                                const long D_diag[3],
+                                const long PS[3],
+                                const long bz_grid_type);
 void ph3py_symmetrize_collision_matrix(double *collision_matrix,
                                        const long num_column,
                                        const long num_temp,

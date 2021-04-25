@@ -134,6 +134,9 @@ class Phono3py(object):
         if masses is not None:
             self._set_masses(masses)
 
+        # Grid
+        self._bz_grid = None
+
         # Set supercell, primitive, and phonon supercell symmetries
         self._symmetry = None
         self._primitive_symmetry = None

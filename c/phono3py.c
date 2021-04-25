@@ -813,6 +813,39 @@ long ph3py_get_bz_grid_address(long (*bz_grid_addresses)[3],
   return size;
 }
 
+long ph3py_rotate_bz_grid_index(const long bz_grid_index,
+                                const long rotation[3][3],
+                                const long (*bz_grid_addresses)[3],
+                                const long *bz_map,
+                                const long D_diag[3],
+                                const long PS[3],
+                                const long bz_grid_type)
+{
+  ConstBZGrid *bzgrid;
+  long i, rot_bz_gp;
+
+  if ((bzgrid = (ConstBZGrid*) malloc(sizeof(ConstBZGrid))) == NULL) {
+    warning_print("Memory could not be allocated.");
+    return 0;
+  }
+
+  bzgrid->addresses = bz_grid_addresses;
+  bzgrid->gp_map = bz_map;
+  bzgrid->type = bz_grid_type;
+  for (i = 0; i < 3; i++) {
+    bzgrid->D_diag[i] = D_diag[i];
+    bzgrid->PS[i] = 0;
+  }
+
+  rot_bz_gp = bzg_rotate_grid_index(bz_grid_index, rotation, bzgrid);
+
+  free(bzgrid);
+  bzgrid = NULL;
+
+  return rot_bz_gp;
+}
+
+
 void ph3py_symmetrize_collision_matrix(double *collision_matrix,
                                        const long num_column,
                                        const long num_temp,

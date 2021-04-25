@@ -53,10 +53,9 @@ void gridsys_get_all_grid_addresses(long (*gr_grid_addresses)[3],
 
 void gridsys_get_double_grid_address(long address_double[3],
                                      const long address[3],
-                                     const long D_diag[3],
                                      const long PS[3])
 {
-  grg_get_double_grid_address(address_double, address, D_diag, PS);
+  grg_get_double_grid_address(address_double, address, PS);
 }
 
 

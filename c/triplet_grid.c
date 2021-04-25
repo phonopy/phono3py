@@ -76,9 +76,13 @@ static void get_BZ_triplets_at_q_type2(long (*triplets)[3],
 static double get_squared_distance(const long G[3],
                                    const double LQD_inv[3][3]);
 static void get_LQD_inv(double LQD_inv[3][3], const ConstBZGrid *bzgrid);
-static RotMats *get_point_group_reciprocal_with_q(const RotMats * rot_reciprocal,
+static RotMats *get_reciprocal_point_group_with_q(const RotMats * rot_reciprocal,
                                                   const long D_diag[3],
                                                   const long grid_point);
+static RotMats *get_reciprocal_point_group(const long (*rec_rotations_in)[3][3],
+                                           const long num_rot,
+                                           const long is_time_reversal,
+                                           const long is_transpose);
 
 long tpk_get_ir_triplets_at_q(long *map_triplets,
                               long *map_q,
@@ -92,10 +96,10 @@ long tpk_get_ir_triplets_at_q(long *map_triplets,
   long num_ir;
   RotMats *rotations;
 
-  rotations = bzg_get_reciprocal_point_group(rec_rotations_in,
-                                             num_rot,
-                                             is_time_reversal,
-                                             0);
+  rotations = get_reciprocal_point_group(rec_rotations_in,
+                                         num_rot,
+                                         is_time_reversal,
+                                         0);
   if (rotations == NULL) {
     return 0;
   }
@@ -141,7 +145,7 @@ static long get_ir_triplets_at_q(long *map_triplets,
   }
 
   /* Search irreducible q-points (map_q) with a stabilizer. */
-  rot_reciprocal_q = get_point_group_reciprocal_with_q(rot_reciprocal,
+  rot_reciprocal_q = get_reciprocal_point_group_with_q(rot_reciprocal,
                                                        D_diag,
                                                        grid_point);
 
@@ -508,7 +512,7 @@ static void get_LQD_inv(double LQD_inv[3][3], const ConstBZGrid *bzgrid)
 }
 
 /* Return NULL if failed */
-static RotMats *get_point_group_reciprocal_with_q(const RotMats * rot_reciprocal,
+static RotMats *get_reciprocal_point_group_with_q(const RotMats * rot_reciprocal,
                                                   const long D_diag[3],
                                                   const long grid_point)
 {
@@ -552,4 +556,31 @@ static RotMats *get_point_group_reciprocal_with_q(const RotMats * rot_reciprocal
   ir_rot = NULL;
 
   return rot_reciprocal_q;
+}
+
+
+static RotMats *get_reciprocal_point_group(const long (*rec_rotations_in)[3][3],
+                                           const long num_rot,
+                                           const long is_time_reversal,
+                                           const long is_transpose)
+{
+  long i, num_rot_out;
+  long rec_rotations_out[48][3][3];
+  RotMats *rec_rotations;
+
+  num_rot_out = grg_get_reciprocal_point_group(rec_rotations_out,
+                                               rec_rotations_in,
+                                               num_rot,
+                                               is_time_reversal,
+                                               is_transpose);
+  if (num_rot_out == 0) {
+    return NULL;
+  }
+
+  rec_rotations = bzg_alloc_RotMats(num_rot_out);
+  for (i = 0; i < num_rot_out; i++) {
+    lagmat_copy_matrix_l3(rec_rotations->mat[i], rec_rotations_out[i]);
+  }
+
+  return rec_rotations;
 }
