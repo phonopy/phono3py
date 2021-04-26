@@ -92,18 +92,9 @@ typedef struct {
 } ConstBZGrid;
 
 
-long bzg_get_ir_grid_map(long ir_mapping_table[],
-                         const long D_diag[3],
-                         const long PS[3],
-                         const RotMats *rot_reciprocal);
-RotMats *bzg_get_point_group_reciprocal(const RotMats * rotations,
-                                        const long is_time_reversal);
-long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
-                                const long D_diag[3],
-                                const long PS[3],
-                                const long is_time_reversal,
-                                const long (*rec_rotations_in)[3][3],
-                                const long num_rot);
+long bzg_rotate_grid_index(const long grid_index,
+                           const long rotation[3][3],
+                           const ConstBZGrid *bzgrid);
 long bzg_get_bz_grid_addresses(BZGrid *bzgrid,
                                const long grid_address[][3]);
 double bzg_get_tolerance_for_BZ_reduction(const BZGrid *bzgrid);
@@ -112,7 +103,5 @@ void bzg_free_RotMats(RotMats * rotmats);
 void bzg_multiply_matrix_vector_ld3(double v[3],
                                     const long a[3][3],
                                     const double b[3]);
-long bzg_inverse_unimodular_matrix_l3(long m[3][3],
-                                      const long a[3][3]);
 
 #endif

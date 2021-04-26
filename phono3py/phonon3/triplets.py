@@ -99,9 +99,9 @@ def get_triplets_at_q(grid_point,
         bz_grid,
         map_triplets)
 
-    assert np.prod(bz_grid.mesh_numbers) == weights.sum(), \
+    assert np.prod(bz_grid.D_diag) == weights.sum(), \
         "Num grid points %d, sum of weight %d" % (
-                    np.prod(bz_grid.mesh_numbers), weights.sum())
+                    np.prod(bz_grid.D_diag), weights.sum())
 
     return triplets_at_q, weights, map_triplets, map_q
 

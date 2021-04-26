@@ -42,8 +42,6 @@
 #define IDENTITY_TOL 1e-5
 
 static void reduce_grid_address(long address[3], const long D_diag[3]);
-static void reduce_double_grid_address(long address_double[3],
-                                       const long D_diag[3]);
 static long get_double_grid_index(const long address_double[3],
                                   const long D_diag[3],
                                   const long PS[3]);
@@ -154,33 +152,31 @@ void grg_get_all_grid_addresses(long (*grid_address)[3], const long D_diag[3])
 /* -------------------------------------------------------*/
 /* Get address in double grid from address in single grid */
 /* -------------------------------------------------------*/
+/* This function doubles single-grid address and shifts it by PS. */
+/* No modulo operation is applied to returned double-grid address. */
 /* address_double : Double grid address. */
 /* address : Single grid address. */
-/* D_diag : Diagnal elements of D. */
 /* PS : Shifts transformed by P. s_i is 0 or 1. */
 void grg_get_double_grid_address(long address_double[3],
                                  const long address[3],
-                                 const long D_diag[3],
                                  const long PS[3])
 {
   get_double_grid_address(address_double, address, PS);
-  reduce_double_grid_address(address_double, D_diag);
 }
 
 /* -------------------------------------------------------*/
 /* Get address in single grid from address in double grid */
 /* -------------------------------------------------------*/
+/* This function shifts double-grid adress by PS and divides it by 2. */
+/* No modulo operation is applied to returned single-grid address. */
 /* address : Single grid address. */
 /* address_double : Double grid address. */
-/* D_diag : Diagnal elements of D. */
 /* PS : Shifts transformed by P. s_i is 0 or 1. */
 void grg_get_grid_address(long address[3],
                           const long address_double[3],
-                          const long D_diag[3],
                           const long PS[3])
 {
   get_grid_address(address, address_double, PS);
-  reduce_grid_address(address, D_diag);
 }
 
 /* -------------------------------------------------*/
@@ -250,14 +246,20 @@ void grg_get_ir_grid_map(long *ir_grid_map,
                   PS);
 }
 
-/* Extract unique rotation matrices and transpose them. */
-/* When is_time_reversal == 1, inverse of the extracted matrices are */
-/* included. */
+/* Unique reciprocal rotations are collected from input rotations. */
+/* is_transpose == 0 : Input rotations are considered those for */
+/* reciprocal space. */
+/* is_transpose != 0 : Input rotations are considered those for */
+/* direct space, i.e., the rotation matrices are transposed. */
+/* is_time_reversal controls if inversion is added in the group of */
+/* reciprocal space rotations. */
 /* Return 0 if failed */
 long grg_get_reciprocal_point_group(long rec_rotations[48][3][3],
                                     const long (*rotations)[3][3],
                                     const long num_rot,
-                                    const long is_time_reversal)
+                                    const long is_time_reversal,
+                                    const long is_transpose)
+
 {
   long i, j, num_rot_ret, inv_exist;
   const long inversion[3][3] = {
@@ -266,6 +268,7 @@ long grg_get_reciprocal_point_group(long rec_rotations[48][3][3],
     { 0, 0,-1 }
   };
 
+  /* Collect unique rotations */
   num_rot_ret = 0;
   for (i = 0; i < num_rot; i++) {
     for (j = 0; j < num_rot_ret; j++) {
@@ -282,8 +285,14 @@ long grg_get_reciprocal_point_group(long rec_rotations[48][3][3],
     ;
   }
 
-  inv_exist = 0;
+  if (is_transpose) {
+    for (i = 0; i < num_rot_ret; i++) {
+      lagmat_transpose_matrix_l3(rec_rotations[i], rec_rotations[i]);
+    }
+  }
+
   if (is_time_reversal) {
+    inv_exist = 0;
     for (i = 0; i < num_rot_ret; i++) {
       if (lagmat_check_identity_matrix_l3(inversion, rec_rotations[i])) {
         inv_exist = 1;
@@ -304,10 +313,6 @@ long grg_get_reciprocal_point_group(long rec_rotations[48][3][3],
     }
   }
 
-  for (i = 0; i < num_rot_ret; i++) {
-    lagmat_transpose_matrix_l3(rec_rotations[i], rec_rotations[i]);
-  }
-
   return num_rot_ret;
 err:
   return 0;
@@ -323,15 +328,6 @@ static void reduce_grid_address(long address[3], const long D_diag[3])
   }
 }
 
-static void reduce_double_grid_address(long address_double[3],
-                                       const long D_diag[3])
-{
-  long i;
-
-  for (i = 0; i < 3; i++) {
-    address_double[i] = lagmat_modulo_l(address_double[i], 2 * D_diag[i]);
-  }
-}
 
 static long get_double_grid_index(const long address_double[3],
                                   const long D_diag[3],
@@ -339,10 +335,8 @@ static long get_double_grid_index(const long address_double[3],
 {
   long address[3];
 
-  grg_get_grid_address(address,
-                       address_double,
-                       D_diag,
-                       PS);
+  get_grid_address(address, address_double, PS);
+  reduce_grid_address(address, D_diag);
   return get_grid_index_from_address(address, D_diag);
 }
 

@@ -305,12 +305,11 @@ long ph3py_transform_rotations(long (*transformed_rots)[3][3],
                                const long num_rot,
                                const long D_diag[3],
                                const long Q[3][3]);
-long ph3py_get_ir_reciprocal_mesh(long *ir_mapping_table,
-                                  const long D_diag[3],
-                                  const long PS[3],
-                                  const long is_time_reversal,
-                                  const long (*rec_rotations)[3][3],
-                                  const long num_rot);
+long ph3py_get_ir_grid_map(long *ir_grid_map,
+                           const long D_diag[3],
+                           const long PS[3],
+                           const long (*grg_rotations)[3][3],
+                           const long num_rot);
 long ph3py_get_bz_grid_address(long (*bz_grid_addresses)[3],
                                long *bz_map,
                                long *bzg2grg,
@@ -320,7 +319,13 @@ long ph3py_get_bz_grid_address(long (*bz_grid_addresses)[3],
                                const long PS[3],
                                const double rec_lattice[3][3],
                                const long type);
-
+long ph3py_rotate_bz_grid_index(const long bz_grid_index,
+                                const long rotation[3][3],
+                                const long (*bz_grid_addresses)[3],
+                                const long *bz_map,
+                                const long D_diag[3],
+                                const long PS[3],
+                                const long bz_grid_type);
 void ph3py_symmetrize_collision_matrix(double *collision_matrix,
                                        const long num_column,
                                        const long num_temp,

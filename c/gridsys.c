@@ -53,10 +53,9 @@ void gridsys_get_all_grid_addresses(long (*gr_grid_addresses)[3],
 
 void gridsys_get_double_grid_address(long address_double[3],
                                      const long address[3],
-                                     const long D_diag[3],
                                      const long PS[3])
 {
-  grg_get_double_grid_address(address_double, address, D_diag, PS);
+  grg_get_double_grid_address(address_double, address, PS);
 }
 
 
@@ -100,7 +99,8 @@ long gridsys_get_reciprocal_point_group(long rec_rotations[48][3][3],
   return grg_get_reciprocal_point_group(rec_rotations,
                                         rotations,
                                         num_rot,
-                                        is_time_reversal);
+                                        is_time_reversal,
+                                        1);
 }
 
 

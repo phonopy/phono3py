@@ -40,6 +40,7 @@
 #include "lagrid.h"
 
 #define BZG_NUM_BZ_SEARCH_SPACE 125
+#define GRID_TOLERANCE_FACTOR 0.01
 static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
   { 0,  0,  0},
   { 0,  0,  1},
@@ -168,13 +169,7 @@ static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
   {-1, -1, -1}
 };
 
-static RotMats *get_point_group_reciprocal(const RotMats * rotations,
-                                           const long is_time_reversal,
-                                           const long is_transose);
-static long get_ir_grid_map(long ir_mapping_table[],
-                            const long D_diag[3],
-                            const long PS[3],
-                            const RotMats *rot_reciprocal);
+
 static void get_bz_grid_addresses_type1(BZGrid *bzgrid,
                                         const long (*gr_grid_addresses)[3],
                                         const long Qinv[3][3]);
@@ -195,57 +190,53 @@ static double get_bz_distances(long nint[3],
 static void multiply_matrix_vector_d3(double v[3],
                                       const double a[3][3],
                                       const double b[3]);
+static long get_inverse_unimodular_matrix_l3(long m[3][3],
+                                             const long a[3][3]);
 static double norm_squared_d3(const double a[3]);
 
-long bzg_get_ir_grid_map(long ir_mapping_table[],
-                         const long D_diag[3],
-                         const long PS[3],
-                         const RotMats *rot_reciprocal)
+
+long bzg_rotate_grid_index(const long bz_grid_index,
+                           const long rotation[3][3],
+                           const ConstBZGrid *bzgrid)
 {
-  long num_ir;
+  long i, gp, num_bzgp, num_grgp;
+  long dadrs[3], dadrs_rot[3], adrs_rot[3];
 
-  num_ir = get_ir_grid_map(ir_mapping_table,
-                           D_diag,
-                           PS,
-                           rot_reciprocal);
-  return num_ir;
-}
+  grg_get_double_grid_address(dadrs, bzgrid->addresses[bz_grid_index], bzgrid->PS);
+  lagmat_multiply_matrix_vector_l3(dadrs_rot, rotation, dadrs);
+  grg_get_grid_address(adrs_rot, dadrs_rot, bzgrid->PS);
+  gp = grg_get_grid_index(adrs_rot, bzgrid->D_diag);
 
-RotMats *bzg_get_point_group_reciprocal(const RotMats * rotations,
-                                        const long is_time_reversal)
-{
-  return get_point_group_reciprocal(rotations, is_time_reversal, 0);
-}
-
-long bzg_get_ir_reciprocal_mesh(long *ir_mapping_table,
-                                const long D_diag[3],
-                                const long PS[3],
-                                const long is_time_reversal,
-                                const long (*rec_rotations_in)[3][3],
-                                const long num_rot)
-{
-  long i, num_ir;
-  RotMats *rotations, *rot_reciprocal;
-
-  rotations = bzg_alloc_RotMats(num_rot);
-  for (i = 0; i < num_rot; i++) {
-    lagmat_copy_matrix_l3(rotations->mat[i], rec_rotations_in[i]);
+  if (bzgrid->type == 1) {
+    if (bzgrid->addresses[gp][0] == adrs_rot[0]  &&
+        bzgrid->addresses[gp][1] == adrs_rot[1]  &&
+        bzgrid->addresses[gp][2] == adrs_rot[2]) {
+      return gp;
+    }
+    num_grgp = bzgrid->D_diag[0] * bzgrid->D_diag[1] * bzgrid->D_diag[2];
+    num_bzgp = num_grgp * 8;
+    for (i = bzgrid->gp_map[num_bzgp + gp] + num_grgp;
+         i < bzgrid->gp_map[num_bzgp + gp + 1] + num_grgp; i++) {
+      if (bzgrid->addresses[i][0] == adrs_rot[0]  &&
+          bzgrid->addresses[i][1] == adrs_rot[1]  &&
+          bzgrid->addresses[i][2] == adrs_rot[2]) {
+        return i;
+      }
+    }
+  } else {
+    for (i = bzgrid->gp_map[gp]; i < bzgrid->gp_map[gp + 1]; i++) {
+      if (bzgrid->addresses[i][0] == adrs_rot[0]  &&
+          bzgrid->addresses[i][1] == adrs_rot[1]  &&
+          bzgrid->addresses[i][2] == adrs_rot[2]) {
+        return i;
+      }
+    }
   }
 
-  rot_reciprocal = NULL;
-  rot_reciprocal = get_point_group_reciprocal(rotations, is_time_reversal, 0);
-  num_ir = get_ir_grid_map(ir_mapping_table,
-                           D_diag,
-                           PS,
-                           rot_reciprocal);
-
-  bzg_free_RotMats(rot_reciprocal);
-  rot_reciprocal = NULL;
-  bzg_free_RotMats(rotations);
-  rotations = NULL;
-
-  return num_ir;
+  /* This should not happen, but possible when bzgrid is ill-defined. */
+  return bzgrid->gp_map[gp];
 }
+
 
 long bzg_get_bz_grid_addresses(BZGrid *bzgrid,
                                const long (*grid_address)[3])
@@ -253,7 +244,7 @@ long bzg_get_bz_grid_addresses(BZGrid *bzgrid,
   long det;
   long Qinv[3][3];
 
-  det = bzg_inverse_unimodular_matrix_l3(Qinv, bzgrid->Q);
+  det = get_inverse_unimodular_matrix_l3(Qinv, bzgrid->Q);
   if (det == 0) {
     return 0;
   }
@@ -298,7 +289,7 @@ double bzg_get_tolerance_for_BZ_reduction(const BZGrid *bzgrid)
       tolerance = length[i];
     }
   }
-  tolerance *= 0.01;
+  tolerance *= GRID_TOLERANCE_FACTOR;
 
   return tolerance;
 }
@@ -349,140 +340,6 @@ void bzg_multiply_matrix_vector_ld3(double v[3],
   for (i = 0; i < 3; i++) {
     v[i] = c[i];
   }
-}
-
-long bzg_inverse_unimodular_matrix_l3(long m[3][3],
-                                      const long a[3][3])
-{
-  long det;
-  long c[3][3];
-
-  det = lagmat_get_determinant_l3(a);
-  if (labs(det) != 1) {
-    return 0;
-  }
-
-  c[0][0] = (a[1][1] * a[2][2] - a[1][2] * a[2][1]) / det;
-  c[1][0] = (a[1][2] * a[2][0] - a[1][0] * a[2][2]) / det;
-  c[2][0] = (a[1][0] * a[2][1] - a[1][1] * a[2][0]) / det;
-  c[0][1] = (a[2][1] * a[0][2] - a[2][2] * a[0][1]) / det;
-  c[1][1] = (a[2][2] * a[0][0] - a[2][0] * a[0][2]) / det;
-  c[2][1] = (a[2][0] * a[0][1] - a[2][1] * a[0][0]) / det;
-  c[0][2] = (a[0][1] * a[1][2] - a[0][2] * a[1][1]) / det;
-  c[1][2] = (a[0][2] * a[1][0] - a[0][0] * a[1][2]) / det;
-  c[2][2] = (a[0][0] * a[1][1] - a[0][1] * a[1][0]) / det;
-  lagmat_copy_matrix_l3(m, c);
-
-  return det;
-}
-
-/* Return NULL if failed */
-static RotMats *get_point_group_reciprocal(const RotMats * rotations,
-                                           const long is_time_reversal,
-                                           const long is_transpose)
-{
-  long i, j, num_rot;
-  RotMats *rot_reciprocal, *rot_return;
-  long *unique_rot;
-  const long inversion[3][3] = {
-    {-1, 0, 0 },
-    { 0,-1, 0 },
-    { 0, 0,-1 }
-  };
-
-  rot_reciprocal = NULL;
-  rot_return = NULL;
-  unique_rot = NULL;
-
-  if (is_time_reversal) {
-    if ((rot_reciprocal = bzg_alloc_RotMats(rotations->size * 2)) == NULL) {
-      return NULL;
-    }
-  } else {
-    if ((rot_reciprocal = bzg_alloc_RotMats(rotations->size)) == NULL) {
-      return NULL;
-    }
-  }
-
-  if ((unique_rot = (long*)malloc(sizeof(long) * rot_reciprocal->size)) == NULL) {
-    warning_print("Memory of unique_rot could not be allocated.");
-    bzg_free_RotMats(rot_reciprocal);
-    rot_reciprocal = NULL;
-    return NULL;
-  }
-
-  for (i = 0; i < rot_reciprocal->size; i++) {
-    unique_rot[i] = -1;
-  }
-
-  if (is_transpose) {
-    for (i = 0; i < rotations->size; i++) {
-      lagmat_transpose_matrix_l3(rot_reciprocal->mat[i], rotations->mat[i]);
-    }
-  } else {
-    for (i = 0; i < rotations->size; i++) {
-      lagmat_copy_matrix_l3(rot_reciprocal->mat[i], rotations->mat[i]);
-    }
-  }
-
-  if (is_time_reversal) {
-    for (i = 0; i < rotations->size; i++) {
-      lagmat_multiply_matrix_l3(rot_reciprocal->mat[rotations->size + i],
-                                inversion,
-                                rot_reciprocal->mat[i]);
-    }
-  }
-
-  num_rot = 0;
-  for (i = 0; i < rot_reciprocal->size; i++) {
-    for (j = 0; j < num_rot; j++) {
-      if (lagmat_check_identity_matrix_l3(rot_reciprocal->mat[unique_rot[j]],
-                                          rot_reciprocal->mat[i])) {
-        goto escape;
-      }
-    }
-    unique_rot[num_rot] = i;
-    num_rot++;
-  escape:
-    ;
-  }
-
-  if ((rot_return = bzg_alloc_RotMats(num_rot)) != NULL) {
-    for (i = 0; i < num_rot; i++) {
-      lagmat_copy_matrix_l3(rot_return->mat[i], rot_reciprocal->mat[unique_rot[i]]);
-    }
-  }
-
-  free(unique_rot);
-  unique_rot = NULL;
-  bzg_free_RotMats(rot_reciprocal);
-  rot_reciprocal = NULL;
-
-  return rot_return;
-}
-
-/* It is assumed that the rotations have been examined by
- * grg_transform_rotations, i.e., no broken symmetry of grid is ensured. */
-static long get_ir_grid_map(long ir_mapping_table[],
-                            const long D_diag[3],
-                            const long PS[3],
-                            const RotMats *rot_reciprocal)
-{
-  long i, num_ir;
-
-  grg_get_ir_grid_map(ir_mapping_table,
-                      rot_reciprocal->mat,
-                      rot_reciprocal->size,
-                      D_diag,
-                      PS);
-  num_ir = 0;
-  for (i = 0; i < D_diag[0] * D_diag[1] * D_diag[2]; i++) {
-    if (ir_mapping_table[i] == i) {
-      num_ir++;
-    }
-  }
-
-  return num_ir;
 }
 
 static void get_bz_grid_addresses_type1(BZGrid *bzgrid,
@@ -541,6 +398,8 @@ static void get_bz_grid_addresses_type1(BZGrid *bzgrid,
       }
     }
     /* This is used in get_BZ_triplets_at_q_type1. */
+    /* The first one among those found is treated specially, so */
+    /* excluded from the gp_map address shift by -1. */
     id_shift += count - 1;
     bzgrid->gp_map[num_bzmesh + i + 1] = id_shift;
   }
@@ -656,6 +515,31 @@ static void multiply_matrix_vector_d3(double v[3],
   for (i = 0; i < 3; i++) {
     v[i] = c[i];
   }
+}
+
+static long get_inverse_unimodular_matrix_l3(long m[3][3],
+                                             const long a[3][3])
+{
+  long det;
+  long c[3][3];
+
+  det = lagmat_get_determinant_l3(a);
+  if (labs(det) != 1) {
+    return 0;
+  }
+
+  c[0][0] = (a[1][1] * a[2][2] - a[1][2] * a[2][1]) / det;
+  c[1][0] = (a[1][2] * a[2][0] - a[1][0] * a[2][2]) / det;
+  c[2][0] = (a[1][0] * a[2][1] - a[1][1] * a[2][0]) / det;
+  c[0][1] = (a[2][1] * a[0][2] - a[2][2] * a[0][1]) / det;
+  c[1][1] = (a[2][2] * a[0][0] - a[2][0] * a[0][2]) / det;
+  c[2][1] = (a[2][0] * a[0][1] - a[2][1] * a[0][0]) / det;
+  c[0][2] = (a[0][1] * a[1][2] - a[0][2] * a[1][1]) / det;
+  c[1][2] = (a[0][2] * a[1][0] - a[0][0] * a[1][2]) / det;
+  c[2][2] = (a[0][0] * a[1][1] - a[0][1] * a[1][0]) / det;
+  lagmat_copy_matrix_l3(m, c);
+
+  return det;
 }
 
 static double norm_squared_d3(const double a[3])
