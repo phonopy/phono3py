@@ -1985,6 +1985,7 @@ class Phono3py(object):
     def _set_mesh_numbers(self, mesh):
         # initialization related to mesh
         self._interaction = None
+
         self._bz_grid = BZGrid(
             mesh,
             lattice=self._primitive.cell,

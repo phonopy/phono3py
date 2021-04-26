@@ -115,7 +115,11 @@ class BZGrid(object):
     is_dense_gp_map : bool, optional
         See the detail in the docstring of ``_relocate_BZ_grid_address``.
     rotations : ndarray
-        Rotation matrices for GR-grid addresses.
+        Rotation matrices for GR-grid addresses (g) defined as g'=Rg.
+        shape=(rotations, 3, 3), dtype='int_', order='C'.
+    reciprocal_operations : ndarray
+        Reciprocal space rotation matrices in fractional coordinates defined as
+        q'=Rq.
         shape=(rotations, 3, 3), dtype='int_', order='C'.
     D_diag : ndarray
         This corresponds to the mesh numbers in transformed reciprocal
@@ -162,7 +166,12 @@ class BZGrid(object):
 
         """
 
-        self._symmetry_dataset = symmetry_dataset
+        if symmetry_dataset is None:
+            self._symmetry_dataset = {
+                'rotations': np.eye(3, dtype='int_', order='C').reshape(1, 3, 3),
+                'translations': np.array([[0, 0, 0]], dtype='double')}
+        else:
+            self._symmetry_dataset = symmetry_dataset
         self._is_shift = is_shift
         self._is_time_reversal = is_time_reversal
         self._is_dense_gp_map = is_dense_gp_map
@@ -172,9 +181,10 @@ class BZGrid(object):
         self._D_diag = np.ones(3, dtype='int_')
         self._Q = np.eye(3, dtype='int_', order='C')
         self._P = np.eye(3, dtype='int_', order='C')
-        self._rotations = np.eye(3, dtype='int_', order='C').reshape(1, 3, 3)
         self._QDinv = None
         self._microzone_lattice = None
+        self._rotations = None
+        self._reciprocal_operations = None
 
         if reciprocal_lattice is not None:
             self._reciprocal_lattice = np.array(
@@ -261,6 +271,14 @@ class BZGrid(object):
     def rotations(self):
         return self._rotations
 
+    @property
+    def reciprocal_operations(self):
+        return self._reciprocal_operations
+
+    @property
+    def symmetry_dataset(self):
+        return self._symmetry_dataset
+
     def get_indices_from_addresses(self, addresses):
         """Return BZ grid point indices from grid addresses
 
@@ -318,8 +336,7 @@ class BZGrid(object):
     def _generate_grid(self, mesh, force_SNF=False):
         self._set_mesh_numbers(mesh, force_SNF=force_SNF)
         self._set_bz_grid()
-        if self._symmetry_dataset is not None:
-            self._set_rotations()
+        self._set_rotations()
 
     def _set_mesh_numbers(self, mesh, force_SNF=False):
         """Set mesh numbers from array or float value
@@ -342,11 +359,7 @@ class BZGrid(object):
                 self._D_diag = np.array(mesh, dtype='int_')
         except TypeError:
             length = float(mesh)
-            if self._symmetry_dataset is None:
-                self._D_diag = np.array(
-                    length2mesh(length, self._lattice), dtype='int_')
-            else:
-                self._set_SNF(length, force_SNF=force_SNF)
+            self._set_SNF(length, force_SNF=force_SNF)
 
     def _set_SNF(self, length, force_SNF=False):
         """Calculate Smith normal form
@@ -401,17 +414,16 @@ class BZGrid(object):
         num_rec_rot = phono3c.reciprocal_rotations(rec_rotations,
                                                    direct_rotations,
                                                    self._is_time_reversal)
-        self._rotations = np.array(rec_rotations[:num_rec_rot],
+        self._reciprocal_operations = np.array(rec_rotations[:num_rec_rot],
+                                               dtype='int_', order='C')
+        self._rotations = np.zeros(self._reciprocal_operations.shape,
                                    dtype='int_', order='C')
-        transformed_rotations = np.zeros_like(self._rotations)
-        if not phono3c.transform_rotations(transformed_rotations,
-                                           self._rotations,
+        if not phono3c.transform_rotations(self._rotations,
+                                           self._reciprocal_operations,
                                            self._D_diag,
                                            self._Q):
             msg = "Grid symmetry is broken. Use mesh=distance."
             raise RuntimeError(msg)
-
-        self._rotations = transformed_rotations
 
 
 def get_grid_point_from_address_py(address, mesh):

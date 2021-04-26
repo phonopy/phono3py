@@ -314,7 +314,7 @@ class Interaction(object):
                                                     dtype='int_'))
                     rotations = []
                     for i, r in enumerate(
-                            self._primitive_symmetry.reciprocal_operations):
+                            self._bz_grid.reciprocal_operations):
                         dq = self._nac_q_direction
                         dq /= np.linalg.norm(dq)
                         diff = np.dot(r, dq) - dq
