@@ -36,6 +36,7 @@ import warnings
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
 from phonopy.units import VaspToTHz, Hbar, EV, Angstrom, THz, AMU
+from phono3py.phonon.grid import get_ir_grid_points
 from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
 from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
 from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
@@ -403,11 +404,26 @@ class Interaction(object):
             self._eigenvectors[:] = eigenvectors
 
     def run_phonon_solver(self, grid_points=None):
+        """Run phonon solver at BZ-grid points"""
         if grid_points is None:
-            _grid_points = np.arange(len(self._bz_grid.addresses), dtype='int_')
+            self._get_phonons_at_all_bz_grid_points()
         else:
             _grid_points = grid_points
-        self._run_phonon_solver_c(_grid_points)
+            self._run_phonon_solver_c(_grid_points)
+
+    def _get_phonons_at_all_bz_grid_points(self, rotate_phonons=False):
+        """Get phonons at all BZ-grid points
+
+        """
+        if rotate_phonons:
+            self._rotate_phonons()
+        else:
+            grid_points = np.arange(len(self._bz_grid.addresses), dtype='int_')
+            self._run_phonon_solver_c(grid_points)
+
+    def _rotate_phonons(self):
+        ir_grid_points, _, _ = get_ir_grid_points(self._bz_grid)
+        self._run_phonon_solver_c(ir_grid_points)
 
     def delete_interaction_strength(self):
         self._interaction_strength = None

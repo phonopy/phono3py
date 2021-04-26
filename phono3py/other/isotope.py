@@ -107,7 +107,7 @@ class Isotope(object):
             primitive_symmetry = Symmetry(self._primitive, self._symprec)
             self._bz_grid = BZGrid(self._mesh,
                                    lattice=self._primitive.cell,
-                                   primitive_symmetry=primitive_symmetry,
+                                   symmetry_dataset=primitive_symmetry.dataset,
                                    is_dense_gp_map=is_dense_gp_map)
 
     def set_grid_point(self, grid_point):

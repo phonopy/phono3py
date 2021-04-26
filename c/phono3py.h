@@ -291,6 +291,10 @@ long ph3py_get_grid_index_from_address(const long address[3],
                                        const long mesh[3]);
 void ph3py_get_gr_grid_addresses(long gr_grid_addresses[][3],
                                  const long D_diag[3]);
+long ph3py_get_reciprocal_rotations(long rec_rotations[48][3][3],
+                                    const long (*rotations)[3][3],
+                                    const long num_rot,
+                                    const long is_time_reversal);
 long ph3py_transform_rotations(long (*transformed_rots)[3][3],
                                const long (*rotations)[3][3],
                                const long num_rot,

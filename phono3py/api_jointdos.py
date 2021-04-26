@@ -73,7 +73,7 @@ class Phono3pyJointDos(object):
         symmetry = Symmetry(primitive, symprec)
         self._bz_grid = BZGrid(mesh,
                                lattice=primitive.cell,
-                               primitive_symmetry=symmetry,
+                               symmetry_dataset=symmetry.dataset,
                                is_dense_gp_map=is_dense_gp_map)
 
         self._jdos = JointDos(

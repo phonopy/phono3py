@@ -85,8 +85,8 @@ static PyObject *
 py_get_grid_index_from_address(PyObject *self, PyObject *args);
 static PyObject *
 py_get_gr_grid_addresses(PyObject *self, PyObject *args);
-static PyObject *
-py_transform_rotations(PyObject *self, PyObject *args);
+static PyObject *py_get_reciprocal_rotations(PyObject *self, PyObject *args);
+static PyObject *py_transform_rotations(PyObject *self, PyObject *args);
 static PyObject *
 py_get_snf3x3(PyObject *self, PyObject *args);
 static PyObject *
@@ -239,6 +239,10 @@ static PyMethodDef _phono3py_methods[] = {
    (PyCFunction)py_get_gr_grid_addresses,
    METH_VARARGS,
    "Get generalized regular grid addresses"},
+  {"reciprocal_rotations",
+   (PyCFunction)py_get_reciprocal_rotations,
+   METH_VARARGS,
+   "Return rotation matrices in reciprocal space"},
   {"transform_rotations",
    (PyCFunction)py_transform_rotations,
    METH_VARARGS,
@@ -1917,8 +1921,39 @@ py_get_gr_grid_addresses(PyObject *self, PyObject *args)
 }
 
 
-static PyObject *
-py_transform_rotations(PyObject *self, PyObject *args)
+static PyObject *py_get_reciprocal_rotations(PyObject *self, PyObject *args)
+{
+  PyArrayObject* py_rec_rotations;
+  PyArrayObject* py_rotations;
+  long is_time_reversal;
+
+  long (*rec_rotations)[3][3];
+  long (*rotations)[3][3];
+  long num_rot, num_rec_rot;
+
+
+
+  if (!PyArg_ParseTuple(args, "OOl",
+                        &py_rec_rotations,
+                        &py_rotations,
+                        &is_time_reversal)) {
+    return NULL;
+  }
+
+  rec_rotations = (long(*)[3][3])PyArray_DATA(py_rec_rotations);
+  rotations = (long(*)[3][3])PyArray_DATA(py_rotations);
+  num_rot = (long)PyArray_DIMS(py_rotations)[0];
+
+  num_rec_rot = ph3py_get_reciprocal_rotations(rec_rotations,
+                                               rotations,
+                                               num_rot,
+                                               is_time_reversal);
+
+  return PyLong_FromLong(num_rec_rot);
+}
+
+
+static PyObject *py_transform_rotations(PyObject *self, PyObject *args)
 {
   PyArrayObject* py_transformed_rotations;
   PyArrayObject* py_rotations;

@@ -137,8 +137,9 @@ class BZGrid(object):
                  mesh,
                  reciprocal_lattice=None,
                  lattice=None,
-                 primitive_symmetry=None,
+                 symmetry_dataset=None,
                  is_shift=None,
+                 is_time_reversal=True,
                  is_dense_gp_map=False):
         """
 
@@ -151,8 +152,8 @@ class BZGrid(object):
         lattice : array_like
             Direct primitive basis vectors given as row vectors
             shape=(3, 3), dtype='double', order='C'
-        primitive_symmetry : Symmetry
-            Phonopy's Symmetry class instance of the primitive cell
+        symmetry_dataset : dict
+            Symmetry dataset (Symmetry.dataset) searched for the primitive cell
             corresponding to ``reciprocal_lattice`` or ``lattice``.
         is_shift : array_like or None, optional
             [0, 0, 0] gives Gamma center mesh and value 1 gives half mesh shift
@@ -161,8 +162,9 @@ class BZGrid(object):
 
         """
 
-        self._primitive_symmetry = primitive_symmetry
+        self._symmetry_dataset = symmetry_dataset
         self._is_shift = is_shift
+        self._is_time_reversal = is_time_reversal
         self._is_dense_gp_map = is_dense_gp_map
         self._addresses = None
         self._gp_map = None
@@ -316,7 +318,7 @@ class BZGrid(object):
     def _generate_grid(self, mesh, force_SNF=False):
         self._set_mesh_numbers(mesh, force_SNF=force_SNF)
         self._set_bz_grid()
-        if self._primitive_symmetry is not None:
+        if self._symmetry_dataset is not None:
             self._set_rotations()
 
     def _set_mesh_numbers(self, mesh, force_SNF=False):
@@ -340,8 +342,7 @@ class BZGrid(object):
                 self._D_diag = np.array(mesh, dtype='int_')
         except TypeError:
             length = float(mesh)
-            if (self._primitive_symmetry is None or
-                self._primitive_symmetry.dataset is None):
+            if self._symmetry_dataset is None:
                 self._D_diag = np.array(
                     length2mesh(length, self._lattice), dtype='int_')
             else:
@@ -355,7 +356,7 @@ class BZGrid(object):
         information is used.
 
         """
-        sym_dataset = self._primitive_symmetry.dataset
+        sym_dataset = self._symmetry_dataset
         tmat = sym_dataset['transformation_matrix']
         centring = sym_dataset['international'][0]
         pmat = get_primitive_matrix_by_centring(centring)
@@ -392,14 +393,17 @@ class BZGrid(object):
         Terminate when symmetry of grid is broken.
 
         """
-
-        if self._primitive_symmetry.reciprocal_operations is not None:
-            self._rotations = np.array(
-                self._primitive_symmetry.reciprocal_operations,
-                dtype='int_', order='C')
-
-        transformed_rotations = np.zeros_like(self._rotations)
         import phono3py._phono3py as phono3c
+
+        direct_rotations = np.array(self._symmetry_dataset['rotations'],
+                                    dtype='int_', order='C')
+        rec_rotations = np.zeros((48, 3, 3), dtype='int_', order='C')
+        num_rec_rot = phono3c.reciprocal_rotations(rec_rotations,
+                                                   direct_rotations,
+                                                   self._is_time_reversal)
+        self._rotations = np.array(rec_rotations[:num_rec_rot],
+                                   dtype='int_', order='C')
+        transformed_rotations = np.zeros_like(self._rotations)
         if not phono3c.transform_rotations(transformed_rotations,
                                            self._rotations,
                                            self._D_diag,

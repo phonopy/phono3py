@@ -126,6 +126,10 @@ def run_phonon_solver_py(grid_point,
         eigenvectors[gp] = eigvecs
 
 
+def rotate_eigenvector(eigvecs_at_q):
+    pass
+
+
 def _extract_params(dm):
     svecs, multiplicity = dm.primitive.get_smallest_vectors()
     masses = np.array(dm.primitive.masses, dtype='double')
