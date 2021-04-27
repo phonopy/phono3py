@@ -33,6 +33,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
+from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.structure.cells import (
     get_primitive_matrix_by_centring, estimate_supercell_matrix)
 from phonopy.structure.grid_points import length2mesh, extract_ir_grid_points
@@ -272,6 +273,10 @@ class BZGrid(object):
         return self._rotations
 
     @property
+    def rotations_cartesian(self):
+        return self._rotations_cartesian
+
+    @property
     def reciprocal_operations(self):
         return self._reciprocal_operations
 
@@ -416,6 +421,9 @@ class BZGrid(object):
                                                    self._is_time_reversal)
         self._reciprocal_operations = np.array(rec_rotations[:num_rec_rot],
                                                dtype='int_', order='C')
+        self._rotations_cartesian = np.array(
+            [similarity_transformation(self._reciprocal_lattice, r)
+             for r in self._reciprocal_operations], dtype='double', order='C')
         self._rotations = np.zeros(self._reciprocal_operations.shape,
                                    dtype='int_', order='C')
         if not phono3c.transform_rotations(self._rotations,
@@ -481,6 +489,20 @@ def get_ir_grid_points(bz_grid):
 
     bz_grid : BZGrid
         Data structure to represent BZ grid.
+
+    Returns
+    -------
+    ir_grid_points : ndarray
+        Irreducible grid point indices in GR-grid.
+        shape=(num_ir_grid_points, ), dtype='int_'
+    ir_grid_weights : ndarray
+        Weights of irreducible grid points. Its sum is the number of
+        grid points in GR-grid (prod(D_diag)).
+        shape=(num_ir_grid_points, ), dtype='int_'
+    ir_grid_map : ndarray
+        Index mapping table to irreducible grid points from all grid points
+        such as, [0, 0, 2, 3, 3, ...].
+        shape=(prod(D_diag), ), dtype='int_'
 
     """
 

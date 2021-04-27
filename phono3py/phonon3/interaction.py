@@ -36,7 +36,8 @@ import warnings
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
 from phonopy.units import VaspToTHz, Hbar, EV, Angstrom, THz, AMU
-from phono3py.phonon.grid import get_ir_grid_points
+from phonopy.structure.cells import determinant
+from phono3py.phonon.grid import get_ir_grid_points, get_grid_points_by_rotations
 from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
 from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
 from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
@@ -422,8 +423,56 @@ class Interaction(object):
             self._run_phonon_solver_c(grid_points)
 
     def _rotate_phonons(self):
+        """Phonons at ir-grid-points are copied to those at all grid-points.
+
+        The following data are updated.
+            self._frequencies
+            self._eigenvectors
+            self._phonon_done
+
+        """
+
         ir_grid_points, _, _ = get_ir_grid_points(self._bz_grid)
-        self._run_phonon_solver_c(ir_grid_points)
+        ir_bz_grid_points = self._bz_grid.grg2bzg[ir_grid_points]
+        self._run_phonon_solver_c(ir_bz_grid_points)
+
+        identity = np.eye(3, dtype='int_')
+        for r in self._bz_grid.rotations:
+            if (r + identity == 0).all():
+                self._get_phonons_at_minus_q(ir_bz_grid_points, r)
+
+        for r, rc in enumerate(self._bz_grid.rotations,
+                               self._bz_grid.rotations_cartesian):
+            if determinant(r) == -1:
+                continue
+
+            for irgp in self._bz_grid.grg2bzg[ir_grid_points]:
+                bzgp = get_grid_points_by_rotations(
+                    irgp, self._bz_grid, [r,], with_surface=True)
+                if not self._phonon_done[bzgp]:
+                    self._rotate_eigvecs(eigvec, rc)
+
+    def _get_phonons_at_minus_q(self, ir_bz_grid_points, r_inv):
+        """Phonons at -q are given by phonons at q."""
+        for irgp in ir_bz_grid_points:
+            bzgp = get_grid_points_by_rotations(
+                irgp, self._bz_grid, [r_inv,], with_surface=True)
+
+            if self._phonon_done[bzgp]:
+                continue
+
+            self._phonon_done[bzgp] = 1
+            self._frequencies[bzgp, :] = self._frequencies[irgp, :]
+            self._eigenvectors[bzgp, :, :] = np.conj(
+                self._eigenvectors[irgp, :, :])
+
+    def _rotate_eigvecs(self, eigvec, r_cart):
+        r"""Rotate eigenvectors at q to those Rq.
+
+        R e(q) exp(-iRq.\tau)
+
+        """
+        pass
 
     def delete_interaction_strength(self):
         self._interaction_strength = None
