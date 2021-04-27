@@ -126,7 +126,7 @@ class Conductivity(object):
                                               dtype='int_', order='C')
         else:
             self._point_operations = np.array(
-                self._pp.primitive_symmetry.reciprocal_operations,
+                self._pp.bz_grid.reciprocal_operations,
                 dtype='int_', order='C')
         rec_lat = np.linalg.inv(self._primitive.cell)
         self._rotations_cartesian = np.array(

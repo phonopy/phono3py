@@ -33,8 +33,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
+from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.structure.cells import (
-    get_primitive_matrix_by_centring, estimate_supercell_matrix)
+    get_primitive_matrix_by_centring, estimate_supercell_matrix,
+    get_reduced_bases)
 from phonopy.structure.grid_points import length2mesh, extract_ir_grid_points
 
 
@@ -115,7 +117,11 @@ class BZGrid(object):
     is_dense_gp_map : bool, optional
         See the detail in the docstring of ``_relocate_BZ_grid_address``.
     rotations : ndarray
-        Rotation matrices for GR-grid addresses.
+        Rotation matrices for GR-grid addresses (g) defined as g'=Rg.
+        shape=(rotations, 3, 3), dtype='int_', order='C'.
+    reciprocal_operations : ndarray
+        Reciprocal space rotation matrices in fractional coordinates defined as
+        q'=Rq.
         shape=(rotations, 3, 3), dtype='int_', order='C'.
     D_diag : ndarray
         This corresponds to the mesh numbers in transformed reciprocal
@@ -137,8 +143,9 @@ class BZGrid(object):
                  mesh,
                  reciprocal_lattice=None,
                  lattice=None,
-                 primitive_symmetry=None,
+                 symmetry_dataset=None,
                  is_shift=None,
+                 is_time_reversal=True,
                  is_dense_gp_map=False):
         """
 
@@ -151,8 +158,8 @@ class BZGrid(object):
         lattice : array_like
             Direct primitive basis vectors given as row vectors
             shape=(3, 3), dtype='double', order='C'
-        primitive_symmetry : Symmetry
-            Phonopy's Symmetry class instance of the primitive cell
+        symmetry_dataset : dict
+            Symmetry dataset (Symmetry.dataset) searched for the primitive cell
             corresponding to ``reciprocal_lattice`` or ``lattice``.
         is_shift : array_like or None, optional
             [0, 0, 0] gives Gamma center mesh and value 1 gives half mesh shift
@@ -161,8 +168,14 @@ class BZGrid(object):
 
         """
 
-        self._primitive_symmetry = primitive_symmetry
+        if symmetry_dataset is None:
+            self._symmetry_dataset = {
+                'rotations': np.eye(3, dtype='int_', order='C').reshape(1, 3, 3),
+                'translations': np.array([[0, 0, 0]], dtype='double')}
+        else:
+            self._symmetry_dataset = symmetry_dataset
         self._is_shift = is_shift
+        self._is_time_reversal = is_time_reversal
         self._is_dense_gp_map = is_dense_gp_map
         self._addresses = None
         self._gp_map = None
@@ -170,9 +183,10 @@ class BZGrid(object):
         self._D_diag = np.ones(3, dtype='int_')
         self._Q = np.eye(3, dtype='int_', order='C')
         self._P = np.eye(3, dtype='int_', order='C')
-        self._rotations = np.eye(3, dtype='int_', order='C').reshape(1, 3, 3)
         self._QDinv = None
         self._microzone_lattice = None
+        self._rotations = None
+        self._reciprocal_operations = None
 
         if reciprocal_lattice is not None:
             self._reciprocal_lattice = np.array(
@@ -185,7 +199,7 @@ class BZGrid(object):
             self._reciprocal_lattice = np.array(
                 np.linalg.inv(lattice), dtype='double', order='C')
 
-        self._generate_grid(mesh, force_SNF=True)
+        self._generate_grid(mesh, force_SNF=False)
 
     @property
     def D_diag(self):
@@ -259,6 +273,18 @@ class BZGrid(object):
     def rotations(self):
         return self._rotations
 
+    @property
+    def rotations_cartesian(self):
+        return self._rotations_cartesian
+
+    @property
+    def reciprocal_operations(self):
+        return self._reciprocal_operations
+
+    @property
+    def symmetry_dataset(self):
+        return self._symmetry_dataset
+
     def get_indices_from_addresses(self, addresses):
         """Return BZ grid point indices from grid addresses
 
@@ -292,11 +318,9 @@ class BZGrid(object):
 
     def _set_bz_grid(self):
         """Generate BZ grid addresses and grid point mapping table"""
-        gr_grid_addresses = _get_grid_address(self._D_diag)
         (self._addresses,
          self._gp_map,
          self._bzg2grg) = _relocate_BZ_grid_address(
-             gr_grid_addresses,
              self._D_diag,
              self._Q,
              self._reciprocal_lattice,  # column vectors
@@ -316,8 +340,7 @@ class BZGrid(object):
     def _generate_grid(self, mesh, force_SNF=False):
         self._set_mesh_numbers(mesh, force_SNF=force_SNF)
         self._set_bz_grid()
-        if self._primitive_symmetry is not None:
-            self._set_rotations()
+        self._set_rotations()
 
     def _set_mesh_numbers(self, mesh, force_SNF=False):
         """Set mesh numbers from array or float value
@@ -340,12 +363,7 @@ class BZGrid(object):
                 self._D_diag = np.array(mesh, dtype='int_')
         except TypeError:
             length = float(mesh)
-            if (self._primitive_symmetry is None or
-                self._primitive_symmetry.dataset is None):
-                self._D_diag = np.array(
-                    length2mesh(length, self._lattice), dtype='int_')
-            else:
-                self._set_SNF(length, force_SNF=force_SNF)
+            self._set_SNF(length, force_SNF=force_SNF)
 
     def _set_SNF(self, length, force_SNF=False):
         """Calculate Smith normal form
@@ -355,7 +373,7 @@ class BZGrid(object):
         information is used.
 
         """
-        sym_dataset = self._primitive_symmetry.dataset
+        sym_dataset = self._symmetry_dataset
         tmat = sym_dataset['transformation_matrix']
         centring = sym_dataset['international'][0]
         pmat = get_primitive_matrix_by_centring(centring)
@@ -392,22 +410,27 @@ class BZGrid(object):
         Terminate when symmetry of grid is broken.
 
         """
-
-        if self._primitive_symmetry.reciprocal_operations is not None:
-            self._rotations = np.array(
-                self._primitive_symmetry.reciprocal_operations,
-                dtype='int_', order='C')
-
-        transformed_rotations = np.zeros_like(self._rotations)
         import phono3py._phono3py as phono3c
-        if not phono3c.transform_rotations(transformed_rotations,
-                                           self._rotations,
+
+        direct_rotations = np.array(self._symmetry_dataset['rotations'],
+                                    dtype='int_', order='C')
+        rec_rotations = np.zeros((48, 3, 3), dtype='int_', order='C')
+        num_rec_rot = phono3c.reciprocal_rotations(rec_rotations,
+                                                   direct_rotations,
+                                                   self._is_time_reversal)
+        self._reciprocal_operations = np.array(rec_rotations[:num_rec_rot],
+                                               dtype='int_', order='C')
+        self._rotations_cartesian = np.array(
+            [similarity_transformation(self._reciprocal_lattice, r)
+             for r in self._reciprocal_operations], dtype='double', order='C')
+        self._rotations = np.zeros(self._reciprocal_operations.shape,
+                                   dtype='int_', order='C')
+        if not phono3c.transform_rotations(self._rotations,
+                                           self._reciprocal_operations,
                                            self._D_diag,
                                            self._Q):
             msg = "Grid symmetry is broken. Use mesh=distance."
             raise RuntimeError(msg)
-
-        self._rotations = transformed_rotations
 
 
 def get_grid_point_from_address_py(address, mesh):
@@ -465,6 +488,20 @@ def get_ir_grid_points(bz_grid):
 
     bz_grid : BZGrid
         Data structure to represent BZ grid.
+
+    Returns
+    -------
+    ir_grid_points : ndarray
+        Irreducible grid point indices in GR-grid.
+        shape=(num_ir_grid_points, ), dtype='int_'
+    ir_grid_weights : ndarray
+        Weights of irreducible grid points. Its sum is the number of
+        grid points in GR-grid (prod(D_diag)).
+        shape=(num_ir_grid_points, ), dtype='int_'
+    ir_grid_map : ndarray
+        Index mapping table to irreducible grid points from all grid points
+        such as, [0, 0, 2, 3, 3, ...].
+        shape=(prod(D_diag), ), dtype='int_'
 
     """
 
@@ -559,6 +596,7 @@ def _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid, rotations):
     indices.
 
     """
+
     rot_adrs = np.dot(rotations, bz_grid.addresses[bz_gp])
     grgps = get_grid_point_from_address(rot_adrs, bz_grid.D_diag)
     bzgps = np.zeros(len(grgps), dtype='int_')
@@ -614,8 +652,7 @@ def _get_grid_address(D_diag):
     return gr_grid_addresses
 
 
-def _relocate_BZ_grid_address(gr_grid_addresses,
-                              D_diag,
+def _relocate_BZ_grid_address(D_diag,
                               Q,
                               reciprocal_lattice,  # column vectors
                               is_shift=None,
@@ -689,15 +726,21 @@ def _relocate_BZ_grid_address(gr_grid_addresses,
         bz_map = np.zeros(np.prod(D_diag) + 1, dtype='int_')
     else:
         bz_map = np.zeros(np.prod(D_diag) * 9 + 1, dtype='int_')
+
+    reclat_T = np.array(reciprocal_lattice.T, dtype='double', order='C')
+    reduced_basis = get_reduced_bases(reclat_T)
+    tmat_inv = np.dot(np.linalg.inv(reduced_basis.T), reclat_T.T)
+    tmat_inv_int = np.rint(tmat_inv).astype('int_')
+    assert (np.abs(tmat_inv - tmat_inv_int) < 1e-5).all()
+
     num_gp = phono3c.bz_grid_addresses(
         bz_grid_addresses,
         bz_map,
         bzg2grg,
-        gr_grid_addresses,
         np.array(D_diag, dtype='int_'),
-        np.array(Q, dtype='int_', order='C'),
+        np.array(np.dot(tmat_inv_int, Q), dtype='int_', order='C'),
         _is_shift,
-        np.array(reciprocal_lattice, dtype='double', order='C'),
+        np.array(reduced_basis.T, dtype='double', order='C'),
         is_dense_gp_map * 1 + 1)
 
     bz_grid_addresses = np.array(bz_grid_addresses[:num_gp],

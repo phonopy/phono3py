@@ -80,13 +80,13 @@ def test_BZGrid_SNF(si_pbesol_111):
     mesh = 10
     bzgrid1 = BZGrid(mesh,
                      lattice=lat,
-                     primitive_symmetry=si_pbesol_111.primitive_symmetry,
+                     symmetry_dataset=si_pbesol_111.primitive_symmetry.dataset,
                      is_dense_gp_map=False)
     _test_BZGrid_SNF(bzgrid1)
 
     bzgrid2 = BZGrid(mesh,
                      lattice=lat,
-                     primitive_symmetry=si_pbesol_111.primitive_symmetry,
+                     symmetry_dataset=si_pbesol_111.primitive_symmetry.dataset,
                      is_dense_gp_map=True)
     _test_BZGrid_SNF(bzgrid2)
 
@@ -221,12 +221,12 @@ def test_get_grid_points_by_bz_rotations(si_pbesol_111):
     bz_grid_type1 = BZGrid(
         mesh,
         lattice=lat,
-        primitive_symmetry=si_pbesol_111.primitive_symmetry,
+        symmetry_dataset=si_pbesol_111.primitive_symmetry.dataset,
         is_dense_gp_map=False)
     bz_grid_type2 = BZGrid(
         mesh,
         lattice=lat,
-        primitive_symmetry=si_pbesol_111.primitive_symmetry,
+        symmetry_dataset=si_pbesol_111.primitive_symmetry.dataset,
         is_dense_gp_map=True)
 
     # Check data consistency by reducing to GR-grid.

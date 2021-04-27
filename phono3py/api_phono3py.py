@@ -1985,10 +1985,12 @@ class Phono3py(object):
     def _set_mesh_numbers(self, mesh):
         # initialization related to mesh
         self._interaction = None
-        self._bz_grid = BZGrid(mesh,
-                               lattice=self._primitive.cell,
-                               primitive_symmetry=self._primitive_symmetry,
-                               is_dense_gp_map=self._is_dense_gp_map)
+
+        self._bz_grid = BZGrid(
+            mesh,
+            lattice=self._primitive.cell,
+            symmetry_dataset=self._primitive_symmetry.dataset,
+            is_dense_gp_map=self._is_dense_gp_map)
 
     def _init_dynamical_matrix(self):
         if self._interaction is not None:

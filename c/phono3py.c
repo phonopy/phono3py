@@ -725,6 +725,20 @@ void ph3py_get_gr_grid_addresses(long gr_grid_addresses[][3],
   grg_get_all_grid_addresses(gr_grid_addresses, D_diag);
 }
 
+
+long ph3py_get_reciprocal_rotations(long rec_rotations[48][3][3],
+                                    const long (*rotations)[3][3],
+                                    const long num_rot,
+                                    const long is_time_reversal)
+{
+  return grg_get_reciprocal_point_group(rec_rotations,
+                                        rotations,
+                                        num_rot,
+                                        is_time_reversal,
+                                        1);
+}
+
+
 /* Rotation matrices with respect to reciprocal basis vectors are
  * transformed to those for GRGrid. This set of the rotations are
  * used always in GRGrid handling. */
@@ -770,15 +784,14 @@ long ph3py_get_ir_grid_map(long *ir_grid_map,
   return num_ir;
 }
 
-long ph3py_get_bz_grid_address(long (*bz_grid_addresses)[3],
-                               long *bz_map,
-                               long *bzg2grg,
-                               const long (*grid_address)[3],
-                               const long D_diag[3],
-                               const long Q[3][3],
-                               const long PS[3],
-                               const double rec_lattice[3][3],
-                               const long type)
+long ph3py_get_bz_grid_addresses(long (*bz_grid_addresses)[3],
+                                 long *bz_map,
+                                 long *bzg2grg,
+                                 const long D_diag[3],
+                                 const long Q[3][3],
+                                 const long PS[3],
+                                 const double rec_lattice[3][3],
+                                 const long type)
 {
   BZGrid *bzgrid;
   long i, j, size;
@@ -801,7 +814,7 @@ long ph3py_get_bz_grid_address(long (*bz_grid_addresses)[3],
     }
   }
 
-  if (bzg_get_bz_grid_addresses(bzgrid, grid_address)) {
+  if (bzg_get_bz_grid_addresses(bzgrid)) {
     size = bzgrid->size;
   } else {
     size = 0;
