@@ -187,7 +187,6 @@ void gridsys_get_ir_grid_map(long *ir_grid_map,
 long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3],
                                    long *bz_map,
                                    long *bzg2grg,
-                                   const long (*gr_grid_addresses)[3],
                                    const long D_diag[3],
                                    const long Q[3][3],
                                    const long PS[3],
@@ -215,7 +214,7 @@ long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3],
     }
   }
 
-  if (bzg_get_bz_grid_addresses(bzgrid, gr_grid_addresses)) {
+  if (bzg_get_bz_grid_addresses(bzgrid)) {
     size = bzgrid->size;
   } else {
     size = 0;

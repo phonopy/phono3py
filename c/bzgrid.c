@@ -171,10 +171,8 @@ static long bz_search_space[BZG_NUM_BZ_SEARCH_SPACE][3] = {
 
 
 static void get_bz_grid_addresses_type1(BZGrid *bzgrid,
-                                        const long (*gr_grid_addresses)[3],
                                         const long Qinv[3][3]);
 static void get_bz_grid_addresses_type2(BZGrid *bzgrid,
-                                        const long (*gr_grid_addresses)[3],
                                         const long Qinv[3][3]);
 static void set_bz_address(long address[3],
                            const long bz_index,
@@ -238,8 +236,7 @@ long bzg_rotate_grid_index(const long bz_grid_index,
 }
 
 
-long bzg_get_bz_grid_addresses(BZGrid *bzgrid,
-                               const long (*grid_address)[3])
+long bzg_get_bz_grid_addresses(BZGrid *bzgrid)
 {
   long det;
   long Qinv[3][3];
@@ -250,9 +247,9 @@ long bzg_get_bz_grid_addresses(BZGrid *bzgrid,
   }
 
   if (bzgrid->type == 1) {
-    get_bz_grid_addresses_type1(bzgrid, grid_address, Qinv);
+    get_bz_grid_addresses_type1(bzgrid, Qinv);
   } else {
-    get_bz_grid_addresses_type2(bzgrid, grid_address, Qinv);
+    get_bz_grid_addresses_type2(bzgrid, Qinv);
   }
 
   return 1;
@@ -343,12 +340,11 @@ void bzg_multiply_matrix_vector_ld3(double v[3],
 }
 
 static void get_bz_grid_addresses_type1(BZGrid *bzgrid,
-                                        const long (*gr_grid_addresses)[3],
                                         const long Qinv[3][3])
 {
   double tolerance, min_distance;
   double distances[BZG_NUM_BZ_SEARCH_SPACE];
-  long bzmesh[3], bz_address_double[3], nint[3];
+  long bzmesh[3], bz_address_double[3], nint[3], gr_adrs[3];
   long i, j, k, boundary_num_gp, total_num_gp, bzgp, gp, num_bzmesh;
   long count, id_shift;
 
@@ -370,8 +366,9 @@ static void get_bz_grid_addresses_type1(BZGrid *bzgrid,
   bzgrid->gp_map[num_bzmesh] = 0;
   id_shift = 0;
   for (i = 0; i < total_num_gp; i++) {
+    grg_get_grid_address_from_index(gr_adrs, i, bzgrid->D_diag);
     min_distance = get_bz_distances(nint, distances, bzgrid,
-                                    gr_grid_addresses[i], tolerance);
+                                    gr_adrs, tolerance);
     count = 0;
     for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
       if (distances[j] < min_distance + tolerance) {
@@ -384,7 +381,7 @@ static void get_bz_grid_addresses_type1(BZGrid *bzgrid,
         count++;
         set_bz_address(bzgrid->addresses[gp],
                        j,
-                       gr_grid_addresses[i],
+                       gr_adrs,
                        bzgrid->D_diag,
                        nint,
                        Qinv);
@@ -407,12 +404,11 @@ static void get_bz_grid_addresses_type1(BZGrid *bzgrid,
 }
 
 static void get_bz_grid_addresses_type2(BZGrid *bzgrid,
-                                        const long (*gr_grid_addresses)[3],
                                         const long Qinv[3][3])
 {
   double tolerance, min_distance;
   double distances[BZG_NUM_BZ_SEARCH_SPACE];
-  long nint[3];
+  long nint[3], gr_adrs[3];
   long i, j, num_gp;
 
   tolerance = bzg_get_tolerance_for_BZ_reduction(bzgrid);
@@ -422,13 +418,14 @@ static void get_bz_grid_addresses_type2(BZGrid *bzgrid,
 
   for (i = 0;
        i < bzgrid->D_diag[0] * bzgrid->D_diag[1] * bzgrid->D_diag[2]; i++) {
+    grg_get_grid_address_from_index(gr_adrs, i, bzgrid->D_diag);
     min_distance = get_bz_distances(nint, distances, bzgrid,
-                                    gr_grid_addresses[i], tolerance);
+                                    gr_adrs, tolerance);
     for (j = 0; j < BZG_NUM_BZ_SEARCH_SPACE; j++) {
       if (distances[j] < min_distance + tolerance) {
         set_bz_address(bzgrid->addresses[num_gp],
                        j,
-                       gr_grid_addresses[i],
+                       gr_adrs,
                        bzgrid->D_diag,
                        nint,
                        Qinv);
@@ -468,12 +465,14 @@ static double get_bz_distances(long nint[3],
                                const double tolerance)
 {
   long i, j;
+  long dadrs[3];
   double min_distance;
   double q_vec[3], q_red[3];
 
+  grg_get_double_grid_address(dadrs, grid_address, bzgrid->PS);
+
   for (i = 0; i < 3; i++) {
-    q_red[i] = grid_address[i] + bzgrid->PS[i] / 2.0;
-    q_red[i] /= bzgrid->D_diag[i];
+    q_red[i] = dadrs[i] / (2.0 * bzgrid->D_diag[i]);
   }
   bzg_multiply_matrix_vector_ld3(q_red, bzgrid->Q, q_red);
   for (i = 0; i < 3; i++) {

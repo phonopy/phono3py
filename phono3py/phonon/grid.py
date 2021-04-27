@@ -35,7 +35,8 @@
 import numpy as np
 from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.structure.cells import (
-    get_primitive_matrix_by_centring, estimate_supercell_matrix)
+    get_primitive_matrix_by_centring, estimate_supercell_matrix,
+    get_reduced_bases)
 from phonopy.structure.grid_points import length2mesh, extract_ir_grid_points
 
 
@@ -198,7 +199,7 @@ class BZGrid(object):
             self._reciprocal_lattice = np.array(
                 np.linalg.inv(lattice), dtype='double', order='C')
 
-        self._generate_grid(mesh, force_SNF=True)
+        self._generate_grid(mesh, force_SNF=False)
 
     @property
     def D_diag(self):
@@ -317,11 +318,9 @@ class BZGrid(object):
 
     def _set_bz_grid(self):
         """Generate BZ grid addresses and grid point mapping table"""
-        gr_grid_addresses = _get_grid_address(self._D_diag)
         (self._addresses,
          self._gp_map,
          self._bzg2grg) = _relocate_BZ_grid_address(
-             gr_grid_addresses,
              self._D_diag,
              self._Q,
              self._reciprocal_lattice,  # column vectors
@@ -597,6 +596,7 @@ def _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid, rotations):
     indices.
 
     """
+
     rot_adrs = np.dot(rotations, bz_grid.addresses[bz_gp])
     grgps = get_grid_point_from_address(rot_adrs, bz_grid.D_diag)
     bzgps = np.zeros(len(grgps), dtype='int_')
@@ -652,8 +652,7 @@ def _get_grid_address(D_diag):
     return gr_grid_addresses
 
 
-def _relocate_BZ_grid_address(gr_grid_addresses,
-                              D_diag,
+def _relocate_BZ_grid_address(D_diag,
                               Q,
                               reciprocal_lattice,  # column vectors
                               is_shift=None,
@@ -727,15 +726,21 @@ def _relocate_BZ_grid_address(gr_grid_addresses,
         bz_map = np.zeros(np.prod(D_diag) + 1, dtype='int_')
     else:
         bz_map = np.zeros(np.prod(D_diag) * 9 + 1, dtype='int_')
+
+    reclat_T = np.array(reciprocal_lattice.T, dtype='double', order='C')
+    reduced_basis = get_reduced_bases(reclat_T)
+    tmat_inv = np.dot(np.linalg.inv(reduced_basis.T), reclat_T.T)
+    tmat_inv_int = np.rint(tmat_inv).astype('int_')
+    assert (np.abs(tmat_inv - tmat_inv_int) < 1e-5).all()
+
     num_gp = phono3c.bz_grid_addresses(
         bz_grid_addresses,
         bz_map,
         bzg2grg,
-        gr_grid_addresses,
         np.array(D_diag, dtype='int_'),
-        np.array(Q, dtype='int_', order='C'),
+        np.array(np.dot(tmat_inv_int, Q), dtype='int_', order='C'),
         _is_shift,
-        np.array(reciprocal_lattice, dtype='double', order='C'),
+        np.array(reduced_basis.T, dtype='double', order='C'),
         is_dense_gp_map * 1 + 1)
 
     bz_grid_addresses = np.array(bz_grid_addresses[:num_gp],

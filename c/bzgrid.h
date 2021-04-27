@@ -95,8 +95,7 @@ typedef struct {
 long bzg_rotate_grid_index(const long grid_index,
                            const long rotation[3][3],
                            const ConstBZGrid *bzgrid);
-long bzg_get_bz_grid_addresses(BZGrid *bzgrid,
-                               const long grid_address[][3]);
+long bzg_get_bz_grid_addresses(BZGrid *bzgrid);
 double bzg_get_tolerance_for_BZ_reduction(const BZGrid *bzgrid);
 RotMats * bzg_alloc_RotMats(const long size);
 void bzg_free_RotMats(RotMats * rotmats);
