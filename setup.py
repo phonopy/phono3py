@@ -338,7 +338,7 @@ if __name__ == '__main__':
               url='http://phonopy.github.io/phono3py/',
               packages=packages_phono3py,
               install_requires=['numpy', 'scipy', 'PyYAML', 'matplotlib',
-                                'h5py', 'spglib', 'phonopy>=2.9.3,<2.10'],
+                                'h5py', 'spglib', 'phonopy>=2.10,<2.11'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
               ext_modules=[extension_phono3py,
