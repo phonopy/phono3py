@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 
 import sys
+import argparse
 import numpy as np
+import h5py
+from phonopy.structure.cells import get_primitive
+from phonopy.structure.symmetry import Symmetry
 from phonopy.phonon.tetrahedron_mesh import TetrahedronMesh
 from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.interface.calculator import read_crystal_structure
-from phono3py.phonon3.triplets import (get_ir_grid_points,
-                                       get_grid_points_by_rotations,
-                                       get_grid_address)
+from phono3py.phonon.grid import (
+    BZGrid, get_ir_grid_points, get_grid_points_by_rotations)
 from phonopy.phonon.dos import NormalDistribution
 
 epsilon = 1.0e-8
@@ -124,23 +127,21 @@ def fracval(frac):
         return float(x[0]) / float(x[1])
 
 
-def get_grid_symmetry(primitive, mesh, weights, qpoints):
-    symmetry = Symmetry(primitive)
-    rotations = symmetry.get_pointgroup_operations()
+def get_grid_symmetry(primitive, symmetry, mesh, weights, qpoints):
     (ir_grid_points,
      weights_for_check,
-     grid_address,
-     grid_mapping_table) = get_ir_grid_points(mesh, rotations)
+     grid_mapping_table) = get_ir_grid_points(bz_grid)
 
     try:
         np.testing.assert_array_equal(weights, weights_for_check)
-    except:
+    except AssertionError:
         print("*******************************")
         print("** Might forget --pa option? **")
         print("*******************************")
         raise
 
-    qpoints_for_check = grid_address[ir_grid_points] / mesh.astype('double')
+    qpoints_for_check = bz_grid.grid_address[
+        ir_grid_points] / mesh.astype('double')
     diff_q = qpoints - qpoints_for_check
     np.testing.assert_almost_equal(diff_q, np.rint(diff_q))
 
@@ -153,8 +154,8 @@ def get_gv_by_gv(gv,
                  mesh,
                  grid_points,
                  grid_address):
-    point_operations = symmetry.get_reciprocal_operations()
-    rec_lat = np.linalg.inv(primitive.get_cell())
+    point_operations = symmetry.reciprocal_operations
+    rec_lat = np.linalg.inv(primitive.cell)
     rotations_cartesian = np.array(
         [similarity_transformation(rec_lat, r)
          for r in point_operations], dtype='double')
@@ -324,14 +325,8 @@ class GammaDOStetrahedron(GammaDOS):
                     self._gamma[:, i] * self._ir_grid_weights[i], iw.T)
 
 
-if __name__ == '__main__':
-    """Incremental kappa with respect to frequency and the derivative"""
-
-    import h5py
-    from phonopy.structure.cells import get_primitive
-    from phonopy.structure.symmetry import Symmetry
-    import argparse
-
+def get_parser():
+    """Return args of ArgumentParser."""
     parser = argparse.ArgumentParser(description="Show unit cell volume")
     parser.add_argument(
         "--pa", dest="primitive_matrix", default="1 0 0 0 1 0 0 0 1",
@@ -402,7 +397,11 @@ if __name__ == '__main__':
         help="Deactivate summation of partial kappa at q-stars")
     parser.add_argument('filenames', nargs='*')
     args = parser.parse_args()
+    return args
 
+
+def get_calculator(args):
+    """Return calculator name."""
     interface_mode = None
     if args.qe_mode:
         interface_mode = 'qe'
@@ -412,6 +411,12 @@ if __name__ == '__main__':
         interface_mode = 'abinit'
     elif args.turbomole_mode:
         interface_mode = 'turbomole'
+    return interface_mode
+
+
+def read_files(args):
+    """Read crystal structure and kappa.hdf5 files."""
+    interface_mode = get_calculator(args)
     if len(args.filenames) > 1:
         cell, _ = read_crystal_structure(args.filenames[0],
                                          interface_mode=interface_mode)
@@ -421,59 +426,73 @@ if __name__ == '__main__':
                                          interface_mode=interface_mode)
         f = h5py.File(args.filenames[0], 'r')
 
+    return cell, f
+
+
+def main():
+    """Calculate kappa spectrum."""
+    args = get_parser()
+    cell, f_kappa = read_files(args)
+
     primitive_matrix = np.reshape(
         [fracval(x) for x in args.primitive_matrix.split()], (3, 3))
     primitive = get_primitive(cell, primitive_matrix)
+    primitive_symmetry = Symmetry(primitive)
 
-    if 'mesh' in f:
-        mesh = np.array(f['mesh'][:], dtype='intc')
+    if 'mesh' in f_kappa:
+        mesh = np.array(f_kappa['mesh'][:], dtype='intc')
     else:
         mesh = np.array([int(x) for x in args.mesh.split()], dtype='intc')
 
-    if 'temperature' in f:
-        temperatures = f['temperature'][:]
+    if 'temperature' in f_kappa:
+        temperatures = f_kappa['temperature'][:]
     else:
         temperatures = None
-    weights = f['weight'][:]
+    weights = f_kappa['weight'][:]
+
+    bz_grid = BZGrid(mesh,
+                     lattice=primitive.cell,
+                     symmetry_dataset=primitive_symmetry.dataset,
+                     is_dense_gp_map=False)
 
     if args.no_kappa_stars or (weights == 1).all():
-        grid_address = get_grid_address(mesh)
-        ir_grid_points = np.arange(np.prod(mesh), dtype='uintp')
-        grid_mapping_table = np.arange(np.prod(mesh), dtype='uintp')
+        grid_address = bz_grid.addresses
+        ir_grid_points = np.arange(np.prod(mesh), dtype='int_')
+        grid_mapping_table = np.arange(np.prod(mesh), dtype='int_')
     else:
         (ir_grid_points,
          grid_address,
          grid_mapping_table) = get_grid_symmetry(primitive,
+                                                 primitive_symmetry,
                                                  mesh,
                                                  weights,
-                                                 f['qpoint'][:])
+                                                 f_kappa['qpoint'][:])
 
     ################
     # Set property #
     ################
     if args.gv:
-        if 'gv_by_gv' in f:
-            gv_sum2 = f['gv_by_gv'][:]
+        if 'gv_by_gv' in f_kappa:
+            gv_sum2 = f_kappa['gv_by_gv'][:]
         else:  # For backward compatibility. This will be removed someday.
-            gv = f['group_velocity'][:]
-            symmetry = Symmetry(primitive)
+            gv = f_kappa['group_velocity'][:]
             gv_sum2 = get_gv_by_gv(gv,
-                                   symmetry,
+                                   primitive_symmetry,
                                    primitive,
                                    mesh,
                                    ir_grid_points,
                                    grid_address)
 
         # gv x gv is divied by primitive cell volume.
-        unit_conversion = primitive.get_volume()
+        unit_conversion = primitive.volume
         mode_prop = gv_sum2.reshape((1,) + gv_sum2.shape) / unit_conversion
     else:
-        if 'mode_kappa' in f:
-            mode_prop = f['mode_kappa'][:]
+        if 'mode_kappa' in f_kappa:
+            mode_prop = f_kappa['mode_kappa'][:]
         else:
             mode_prop = None
 
-    frequencies = f['frequency'][:]
+    frequencies = f_kappa['frequency'][:]
     conditions = frequencies > 0
     if np.logical_not(conditions).sum() > 3:
         sys.stderr.write("# Imaginary frequencies are found. "
@@ -486,21 +505,21 @@ if __name__ == '__main__':
     if (args.gamma or args.gruneisen or args.pqj or
         args.cv or args.tau or args.gv_norm):
         if args.pqj:
-            mode_prop = f['ave_pp'][:].reshape((1,) + f['ave_pp'].shape)
+            mode_prop = f_kappa['ave_pp'][:].reshape((1,) + f_kappa['ave_pp'].shape)
         elif args.cv:
-            mode_prop = f['heat_capacity'][:]
+            mode_prop = f_kappa['heat_capacity'][:]
         elif args.tau:
-            g = f['gamma'][:]
+            g = f_kappa['gamma'][:]
             g = np.where(g > 0, g, -1)
             mode_prop = np.where(g > 0, 1.0 / (2 * 2 * np.pi * g), 0)  # tau
         elif args.gv_norm:
             mode_prop = np.sqrt(
-                (f['group_velocity'][:, :, :] ** 2).sum(axis=2))
+                (f_kappa['group_velocity'][:, :, :] ** 2).sum(axis=2))
             mode_prop = mode_prop.reshape((1,) + mode_prop.shape)
         elif args.gamma:
-            mode_prop = f['gamma'][:]
+            mode_prop = f_kappa['gamma'][:]
         elif args.gruneisen:
-            mode_prop = f['gruneisen'][:].reshape((1,) + f['gruneisen'].shape)
+            mode_prop = f_kappa['gruneisen'][:].reshape((1,) + f_kappa['gruneisen'].shape)
             mode_prop **= 2
         else:
             raise
@@ -534,11 +553,11 @@ if __name__ == '__main__':
         show_scalar(gdos, temperatures, sampling_points, args)
     else:
         if args.mfp:
-            if 'mean_free_path' in f:
-                mfp = f['mean_free_path'][:]
+            if 'mean_free_path' in f_kappa:
+                mfp = f_kappa['mean_free_path'][:]
                 mean_freepath = np.sqrt((mfp ** 2).sum(axis=3))
             else:
-                mean_freepath = get_mfp(f['gamma'][:], f['group_velocity'][:])
+                mean_freepath = get_mfp(f_kappa['gamma'][:], f_kappa['group_velocity'][:])
             if args.temperature is not None:
                 (temperatures,
                  mode_prop,
@@ -570,3 +589,7 @@ if __name__ == '__main__':
                                                  ir_grid_points,
                                                  args.num_sampling_points)
             show_tensor(kdos, temperatures, sampling_points, args)
+
+
+if __name__ == '__main__':
+    main()
