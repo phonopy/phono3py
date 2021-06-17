@@ -1586,7 +1586,7 @@ py_get_thm_integration_weights_at_grid_points(PyObject *self, PyObject *args)
 
   double *iw;
   double *frequency_points;
-  long num_band0, num_band, num_gp;
+  long num_frequency_points, num_band, num_gp;
   long (*relative_grid_address)[4][3];
   long *D_diag;
   long *grid_points;
@@ -1609,7 +1609,7 @@ py_get_thm_integration_weights_at_grid_points(PyObject *self, PyObject *args)
 
   iw = (double*)PyArray_DATA(py_iw);
   frequency_points = (double*)PyArray_DATA(py_frequency_points);
-  num_band0 = (long)PyArray_DIMS(py_frequency_points)[0];
+  num_frequency_points = (long)PyArray_DIMS(py_frequency_points)[0];
   relative_grid_address = (long(*)[4][3])PyArray_DATA(py_relative_grid_address);
   D_diag = (long*)PyArray_DATA(py_D_diag);
   grid_points = (long*)PyArray_DATA(py_grid_points);
@@ -1622,7 +1622,7 @@ py_get_thm_integration_weights_at_grid_points(PyObject *self, PyObject *args)
   ph3py_get_thm_integration_weights_at_grid_points(
     iw,
     frequency_points,
-    num_band0,
+    num_frequency_points,
     num_band,
     num_gp,
     relative_grid_address,

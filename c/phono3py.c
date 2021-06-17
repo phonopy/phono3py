@@ -1018,7 +1018,7 @@ long ph3py_get_neighboring_gird_points(long *relative_grid_points,
 long ph3py_get_thm_integration_weights_at_grid_points(
   double *iw,
   const double *frequency_points,
-  const long num_band0,
+  const long num_frequency_points,
   const long num_band,
   const long num_gp,
   const long (*relative_grid_address)[4][3],
@@ -1063,8 +1063,8 @@ long ph3py_get_thm_integration_weights_at_grid_points(
           freq_vertices[j][k] = frequencies[vertices[j][k] * num_band + bi];
         }
       }
-      for (j = 0; j < num_band0; j++) {
-        iw[i * num_band0 * num_band + j * num_band + bi] =
+      for (j = 0; j < num_frequency_points; j++) {
+        iw[i * num_frequency_points * num_band + j * num_band + bi] =
           thm_get_integration_weight(frequency_points[j], freq_vertices, 'I');
       }
     }
