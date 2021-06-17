@@ -52,7 +52,6 @@ static long set_g(double g[3],
                   const double f0,
                   const double freq_vertices[3][24][4],
                   const long max_i);
-static long in_tetrahedra(const double f0, const double freq_vertices[24][4]);
 static void get_triplet_tetrahedra_vertices(
   long vertices[2][24][4],
   const long tp_relative_grid_address[2][24][4][3],
@@ -289,7 +288,7 @@ static long set_g(double g[3],
   iw_zero = 1;
 
   for (i = 0; i < max_i; i++) {
-    if (in_tetrahedra(f0, freq_vertices[i])) {
+    if (thm_in_tetrahedra(f0, freq_vertices[i])) {
       g[i] = thm_get_integration_weight(f0, freq_vertices[i], 'I');
       iw_zero = 0;
     } else {
@@ -298,32 +297,6 @@ static long set_g(double g[3],
   }
 
   return iw_zero;
-}
-
-static long in_tetrahedra(const double f0, const double freq_vertices[24][4])
-{
-  long i, j;
-  double fmin, fmax;
-
-  fmin = freq_vertices[0][0];
-  fmax = freq_vertices[0][0];
-
-  for (i = 0; i < 24; i++) {
-    for (j = 0; j < 4; j++) {
-      if (fmin > freq_vertices[i][j]) {
-        fmin = freq_vertices[i][j];
-      }
-      if (fmax < freq_vertices[i][j]) {
-        fmax = freq_vertices[i][j];
-      }
-    }
-  }
-
-  if (fmin > f0 || fmax < f0) {
-    return 0;
-  } else {
-    return 1;
-  }
 }
 
 static void get_triplet_tetrahedra_vertices(long vertices[2][24][4],

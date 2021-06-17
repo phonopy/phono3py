@@ -328,6 +328,32 @@ double thm_get_integration_weight(const double omega,
   }
 }
 
+long thm_in_tetrahedra(const double f0, const double freq_vertices[24][4])
+{
+  long i, j;
+  double fmin, fmax;
+
+  fmin = freq_vertices[0][0];
+  fmax = freq_vertices[0][0];
+
+  for (i = 0; i < 24; i++) {
+    for (j = 0; j < 4; j++) {
+      if (fmin > freq_vertices[i][j]) {
+        fmin = freq_vertices[i][j];
+      }
+      if (fmax < freq_vertices[i][j]) {
+        fmax = freq_vertices[i][j];
+      }
+    }
+  }
+
+  if (fmin > f0 || fmax < f0) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
 static double
 get_integration_weight(const double omega,
                        const double tetrahedra_omegas[24][4],
