@@ -1,3 +1,4 @@
+"""Regular grid tools."""
 # Copyright (C) 2021 Atsushi Togo
 # All rights reserved.
 #
@@ -41,7 +42,7 @@ from phonopy.structure.grid_points import length2mesh, extract_ir_grid_points
 
 
 class BZGrid(object):
-    """Data structure of BZ grid
+    """Data structure of BZ grid.
 
     GR-grid and BZ-grid
     -------------------
@@ -147,7 +148,7 @@ class BZGrid(object):
                  is_shift=None,
                  is_time_reversal=True,
                  is_dense_gp_map=False):
-        """
+        """Init method.
 
         mesh : array_like or float
             Mesh numbers or length.
@@ -167,10 +168,10 @@ class BZGrid(object):
             dtype='int_', shape=(3,)
 
         """
-
         if symmetry_dataset is None:
+            identity = np.eye(3, dtype='int_', order='C')
             self._symmetry_dataset = {
-                'rotations': np.eye(3, dtype='int_', order='C').reshape(1, 3, 3),
+                'rotations': identity.reshape(1, 3, 3),
                 'translations': np.array([[0, 0, 0]], dtype='double')}
         else:
             self._symmetry_dataset = symmetry_dataset
@@ -203,27 +204,27 @@ class BZGrid(object):
 
     @property
     def D_diag(self):
-        """Diagonal elements of diagonal matrix after SNF: D=PAQ"""
+        """Diagonal elements of diagonal matrix after SNF: D=PAQ."""
         return self._D_diag
 
     @property
     def P(self):
-        """Left unimodular matrix after SNF: D=PAQ"""
+        """Left unimodular matrix after SNF: D=PAQ."""
         return self._P
 
     @property
     def Q(self):
-        """Right unimodular matrix after SNF: D=PAQ"""
+        """Right unimodular matrix after SNF: D=PAQ."""
         return self._Q
 
     @property
     def QDinv(self):
-        """QD^-1"""
+        """QD^-1."""
         return self._QDinv
 
     @property
     def PS(self):
-        """Integer shift vectors of GRGrid"""
+        """Integer shift vectors of GRGrid."""
         if self._is_shift is None:
             return np.zeros(3, dtype='int_')
         else:
@@ -231,12 +232,12 @@ class BZGrid(object):
 
     @property
     def grid_matrix(self):
-        """Grid generating matrix to be represented by SNF"""
+        """Grid generating matrix to be represented by SNF."""
         return self._grid_matrix
 
     @property
     def addresses(self):
-        """BZ-grid addresses"""
+        """BZ-grid addresses."""
         return self._addresses
 
     @property
@@ -246,7 +247,7 @@ class BZGrid(object):
 
     @property
     def bzg2grg(self):
-        """Transform grid point indices from BZG to GRG
+        """Transform grid point indices from BZG to GRG.
 
         Equivalent to
             get_grid_point_from_address(
@@ -257,37 +258,41 @@ class BZGrid(object):
 
     @property
     def grg2bzg(self):
-        """Transform grid point indices from GRG to BZG"""
+        """Transform grid point indices from GRG to BZG."""
         return self._grg2bzg
 
     @property
     def microzone_lattice(self):
-        """Basis vectors of microzone"""
+        """Basis vectors of microzone."""
         return self._microzone_lattice
 
     @property
     def is_dense_gp_map(self):
+        """Return gp_map type."""
         return self._is_dense_gp_map
 
     @property
     def rotations(self):
+        """Return rotations."""
         return self._rotations
 
     @property
     def rotations_cartesian(self):
+        """Return rotations in Cartesian coordinates."""
         return self._rotations_cartesian
 
     @property
     def reciprocal_operations(self):
+        """Return reciprocal rotations."""
         return self._reciprocal_operations
 
     @property
     def symmetry_dataset(self):
+        """Return Symmetry.dataset."""
         return self._symmetry_dataset
 
     def get_indices_from_addresses(self, addresses):
-        """Return BZ grid point indices from grid addresses
-
+        """Return BZ grid point indices from grid addresses.
 
         Parameters
         ----------
@@ -305,7 +310,6 @@ class BZGrid(object):
             Otherwise one integer value is returned.
 
         """
-
         try:
             len(addresses[0])
         except TypeError:
@@ -317,7 +321,7 @@ class BZGrid(object):
         return np.array(self._grg2bzg[gps], dtype='int_')
 
     def _set_bz_grid(self):
-        """Generate BZ grid addresses and grid point mapping table"""
+        """Generate BZ grid addresses and grid point mapping table."""
         (self._addresses,
          self._gp_map,
          self._bzg2grg) = _relocate_BZ_grid_address(
@@ -343,7 +347,7 @@ class BZGrid(object):
         self._set_rotations()
 
     def _set_mesh_numbers(self, mesh, force_SNF=False):
-        """Set mesh numbers from array or float value
+        """Set mesh numbers from array or float value.
 
         Three case:
         1) Three integers are given.
@@ -366,7 +370,7 @@ class BZGrid(object):
             self._set_SNF(length, force_SNF=force_SNF)
 
     def _set_SNF(self, length, force_SNF=False):
-        """Calculate Smith normal form
+        """Calculate Smith normal form.
 
         Microzone is defined as the regular grid of a conventional
         unit cell. To find the conventional unit cell, symmetry
@@ -434,7 +438,7 @@ class BZGrid(object):
 
 
 def get_grid_point_from_address_py(address, mesh):
-    """This is python version of get_grid_point_from_address."""
+    """Python version of get_grid_point_from_address."""
     # X runs first in XYZ
     # (*In spglib, Z first is possible with MACRO setting.)
     m = mesh
@@ -468,7 +472,6 @@ def get_grid_point_from_address(address, D_diag):
         shape=(n, ), dtype='int_'
 
     """
-
     import phono3py._phono3py as phono3c
 
     adrs_array = np.array(address, dtype='int_', order='C')
@@ -484,7 +487,7 @@ def get_grid_point_from_address(address, D_diag):
 
 
 def get_ir_grid_points(bz_grid):
-    """Returns ir-grid-points in generalized regular grid.
+    """Return ir-grid-points in generalized regular grid.
 
     bz_grid : BZGrid
         Data structure to represent BZ grid.
@@ -504,7 +507,6 @@ def get_ir_grid_points(bz_grid):
         shape=(prod(D_diag), ), dtype='int_'
 
     """
-
     ir_grid_map = _get_ir_grid_map(
         bz_grid.D_diag,
         bz_grid.rotations,
@@ -519,7 +521,7 @@ def get_grid_points_by_rotations(bz_gp,
                                  bz_grid,
                                  reciprocal_rotations=None,
                                  with_surface=False):
-    """Returns BZ-grid point indices rotated from a BZ-grid point index
+    """Return BZ-grid point indices rotated from a BZ-grid point index.
 
     Parameters
     ----------
@@ -545,7 +547,6 @@ def get_grid_points_by_rotations(bz_gp,
         dtype='int_', shape=(rotations,)
 
     """
-
     if reciprocal_rotations is not None:
         rec_rots = reciprocal_rotations
     else:
@@ -558,14 +559,14 @@ def get_grid_points_by_rotations(bz_gp,
 
 
 def _get_grid_points_by_rotations(bz_gp, bz_grid, rotations):
-    """Grid point rotations without surface treatment"""
+    """Grid point rotations without surface treatment."""
     rot_adrs = np.dot(rotations, bz_grid.addresses[bz_gp])
     grgps = get_grid_point_from_address(rot_adrs, bz_grid.D_diag)
     return bz_grid.grg2bzg[grgps]
 
 
 def _get_grid_points_by_bz_rotations(bz_gp, bz_grid, rotations, lang='C'):
-    """Grid point rotations with surface treatment"""
+    """Grid point rotations with surface treatment."""
     if lang == 'C':
         return _get_grid_points_by_bz_rotations_c(bz_gp, bz_grid, rotations)
     else:
@@ -589,21 +590,20 @@ def _get_grid_points_by_bz_rotations_c(bz_gp, bz_grid, rotations):
 
 
 def _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid, rotations):
-    """Return BZ-grid point indices generated by rotations
+    """Return BZ-grid point indices generated by rotations.
 
     Rotated BZ-grid addresses are compared with translationally
     equivalent BZ-grid addresses to get the respective BZ-grid point
     indices.
 
     """
-
     rot_adrs = np.dot(rotations, bz_grid.addresses[bz_gp])
     grgps = get_grid_point_from_address(rot_adrs, bz_grid.D_diag)
     bzgps = np.zeros(len(grgps), dtype='int_')
     if bz_grid.is_dense_gp_map:
         for i, (gp, adrs) in enumerate(zip(grgps, rot_adrs)):
             indices = np.where(
-                (bz_grid.addresses[bz_grid.gp_map[gp] : bz_grid.gp_map[gp + 1]]
+                (bz_grid.addresses[bz_grid.gp_map[gp]:bz_grid.gp_map[gp + 1]]
                  == adrs).all(axis=1))[0]
             if len(indices) == 0:
                 msg = "with_surface did not work properly."
@@ -627,7 +627,7 @@ def _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid, rotations):
 
 
 def _get_grid_address(D_diag):
-    """Returns generalized regular grid addresses
+    """Return generalized regular grid addresses.
 
     Parameters
     ----------
@@ -643,7 +643,6 @@ def _get_grid_address(D_diag):
         shape=(prod(D_diag), 3), dtype='int_'
 
     """
-
     import phono3py._phono3py as phono3c
 
     gr_grid_addresses = np.zeros((np.prod(D_diag), 3), dtype='int_')
@@ -711,7 +710,6 @@ def _relocate_BZ_grid_address(D_diag,
     shape=(prod(mesh) + 1, )
 
     """
-
     import phono3py._phono3py as phono3c
 
     if is_shift is None:
@@ -776,7 +774,6 @@ def _get_ir_grid_map(D_diag,
         dtype='int_', shape=(prod(mesh),)
 
     """
-
     import phono3py._phono3py as phono3c
 
     ir_grid_map = np.zeros(np.prod(D_diag), dtype='int_')
