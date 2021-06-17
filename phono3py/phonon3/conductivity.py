@@ -168,7 +168,7 @@ class Conductivity(object):
         self._set_grid_properties(grid_points)
 
         if (self._dm.is_nac() and
-            self._dm.get_nac_method() == 'gonze' and
+            self._dm.nac_method == 'gonze' and
             self._gv_delta_q is None):
             self._gv_delta_q = 1e-5
             if self._log_level:
