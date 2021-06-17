@@ -1,3 +1,4 @@
+"""Isotope scattering calculation."""
 # Copyright (C) 2015 Atsushi Togo
 # All rights reserved.
 #
@@ -46,6 +47,7 @@ from phono3py.phonon.func import gaussian
 
 
 def get_mass_variances(primitive):
+    """Calculate mass variances."""
     symbols = primitive.symbols
     mass_variances = []
     for s in symbols:
@@ -59,6 +61,8 @@ def get_mass_variances(primitive):
 
 
 class Isotope(object):
+    """Isotope scattering calculation class."""
+
     def __init__(self,
                  mesh,
                  primitive,
@@ -71,6 +75,7 @@ class Isotope(object):
                  symprec=1e-5,
                  cutoff_frequency=None,
                  lapack_zheev_uplo='L'):
+        """Init method."""
         self._mesh = np.array(mesh, dtype='int_')
 
         if mass_variances is None:
@@ -111,6 +116,7 @@ class Isotope(object):
                                    is_dense_gp_map=is_dense_gp_map)
 
     def set_grid_point(self, grid_point):
+        """Initialize grid points."""
         self._grid_point = grid_point
         self._grid_points = np.arange(
             len(self._bz_grid.addresses), dtype='int_')
@@ -119,10 +125,12 @@ class Isotope(object):
             self._allocate_phonon()
 
     def run(self):
+        """Run isotope scattering calculation."""
         self._run_c()
 
     @property
     def sigma(self):
+        """Setter and getter of smearing width."""
         return self._sigma
 
     @sigma.setter
@@ -133,38 +141,53 @@ class Isotope(object):
             self._sigma = float(sigma)
 
     def set_sigma(self, sigma):
-        warnings.warn("Use attribute, sigma.", DeprecationWarning)
+        """Set smearing width."""
+        warnings.warn("Isotope.set_sigma() is deprecated."
+                      "Use Isotope.sigma attribute.",
+                      DeprecationWarning)
         self.sigma = sigma
 
     @property
     def dynamical_matrix(self):
+        """Return DynamicalMatrix* class instance."""
         return self._dm
 
     @property
     def band_indices(self):
+        """Return specified band indices."""
         return self._band_indices
 
     @property
     def gamma(self):
+        """Return scattering strength."""
         return self._gamma
 
     def get_gamma(self):
-        warnings.warn("Use attribute, gamma.", DeprecationWarning)
+        """Return scattering strength."""
+        warnings.warn("Isotope.get_gamma() is deprecated."
+                      "Use Isotope.gamma attribute.",
+                      DeprecationWarning)
         return self.gamma
 
     @property
     def bz_grid(self):
+        """Return BZ grid."""
         return self._bz_grid
 
     @property
     def mass_variances(self):
+        """Return mass variances."""
         return self._mass_variances
 
     def get_mass_variances(self):
-        warnings.warn("Use attribute, mass_variances.", DeprecationWarning)
+        """Return mass variances."""
+        warnings.warn("Isotope.get_mass_variances() is deprecated."
+                      "Use Isotope.mass_variances attribute.",
+                      DeprecationWarning)
         return self.mass_variances
 
     def get_phonons(self):
+        """Return phonons on grid."""
         return self._frequencies, self._eigenvectors, self._phonon_done
 
     def set_phonons(self,
@@ -172,6 +195,7 @@ class Isotope(object):
                     eigenvectors,
                     phonon_done,
                     dm=None):
+        """Set phonons on grid."""
         self._frequencies = frequencies
         self._eigenvectors = eigenvectors
         self._phonon_done = phonon_done
@@ -185,6 +209,7 @@ class Isotope(object):
                               nac_params=None,
                               frequency_scale_factor=None,
                               decimals=None):
+        """Initialize dynamical matrix."""
         self._primitive = primitive
         self._dm = get_dynamical_matrix(
             fc2,
@@ -196,6 +221,7 @@ class Isotope(object):
             symprec=self._symprec)
 
     def set_nac_q_direction(self, nac_q_direction=None):
+        """Set q-direction at q->0 used for NAC."""
         if nac_q_direction is not None:
             self._nac_q_direction = np.array(nac_q_direction, dtype='double')
 
