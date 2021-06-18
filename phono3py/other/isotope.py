@@ -41,6 +41,8 @@ from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
 from phonopy.units import VaspToTHz
 from phonopy.structure.atoms import isotope_data
+from phono3py.other.tetrahedron_method import (
+    get_integration_weights, get_unique_grid_points)
 from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
 from phono3py.phonon.grid import BZGrid
 from phono3py.phonon.func import gaussian
@@ -256,48 +258,28 @@ class Isotope(object):
         self._gamma = gamma / np.prod(self._bz_grid.D_diag)
 
     def _set_integration_weights(self):
+        self._set_integration_weights_c()
+
+    def _set_integration_weights_c(self):
+        unique_grid_points = get_unique_grid_points(self._grid_points,
+                                                    self._bz_grid)
+        self._run_phonon_solver_c(unique_grid_points)
+        freq_points = np.array(
+            self._frequencies[self._grid_point, self._band_indices],
+            dtype='double', order='C')
+        self._integration_weights = get_integration_weights(
+            freq_points,
+            self._frequencies,
+            self._bz_grid,
+            grid_points=self._grid_points)
+
+    def _set_integration_weights_py(self):
         thm = TetrahedronMethod(self._bz_grid.microzone_lattice)
         num_grid_points = len(self._grid_points)
         num_band = len(self._primitive) * 3
         self._integration_weights = np.zeros(
             (num_grid_points, len(self._band_indices), num_band),
             dtype='double')
-        self._set_integration_weights_c(thm)
-
-    def _set_integration_weights_c(self, thm):
-        import phono3py._phono3py as phono3c
-        unique_vertices = np.array(
-            np.dot(thm.get_unique_tetrahedra_vertices(), self._bz_grid.P.T),
-            dtype='int_', order='C')
-        neighboring_grid_points = np.zeros(
-            len(unique_vertices) * len(self._grid_points), dtype='int_')
-        phono3c.neighboring_grid_points(
-            neighboring_grid_points,
-            self._grid_points,
-            unique_vertices,
-            self._bz_grid.D_diag,
-            self._bz_grid.addresses,
-            self._bz_grid.gp_map,
-            self._bz_grid.is_dense_gp_map * 1 + 1)
-        unique_grid_points = np.array(np.unique(neighboring_grid_points),
-                                      dtype='int_')
-        self._run_phonon_solver_c(unique_grid_points)
-        freq_points = np.array(
-            self._frequencies[self._grid_point, self._band_indices],
-            dtype='double', order='C')
-        phono3c.integration_weights_at_grid_points(
-            self._integration_weights,
-            freq_points,
-            np.array(np.dot(thm.get_tetrahedra(), self._bz_grid.P.T),
-                     dtype='int_', order='C'),
-            self._bz_grid.D_diag,
-            self._grid_points,
-            self._frequencies,
-            self._bz_grid.addresses,
-            self._bz_grid.gp_map,
-            self._bz_grid.is_dense_gp_map * 1 + 1)
-
-    def _set_integration_weights_py(self, thm):
         for i, gp in enumerate(self._grid_points):
             tfreqs = get_tetrahedra_frequencies(
                 gp,
