@@ -38,17 +38,39 @@ from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
 
 def get_unique_grid_points(grid_points, bz_grid):
-    """Collect grid points that are on tetrahedron vertices."""
+    """Collect grid points on tetrahedron vertices around input grid points.
+
+    Find grid points of 24 tetrahedra around each grid point and
+    collect those grid points that are unique.
+
+    Parameters
+    ----------
+    grid_points : array_like
+        Grid point indices.
+    bz_grid : BZGrid
+        Grid information in reciprocal space.
+
+    Returns
+    -------
+    ndarray
+        Unique grid points on tetrahedron vertices around input grid points.
+        shape=(unique_grid_points, ), dtype='int_'.
+
+    """
     import phono3py._phono3py as phono3c
+    if _check_ndarray_state(grid_points, 'int_'):
+        _grid_points = grid_points
+    else:
+        _grid_points = np.array(grid_points, dtype='int_')
     thm = TetrahedronMethod(bz_grid.microzone_lattice)
     unique_vertices = np.array(
         np.dot(thm.get_unique_tetrahedra_vertices(), bz_grid.P.T),
         dtype='int_', order='C')
     neighboring_grid_points = np.zeros(
-        len(unique_vertices) * len(grid_points), dtype='int_')
+        len(unique_vertices) * len(_grid_points), dtype='int_')
     phono3c.neighboring_grid_points(
         neighboring_grid_points,
-        grid_points,
+        _grid_points,
         unique_vertices,
         bz_grid.D_diag,
         bz_grid.addresses,
