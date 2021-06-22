@@ -1,3 +1,4 @@
+"""Phono3py main class."""
 # Copyright (C) 2016 Atsushi Togo
 # All rights reserved.
 #
@@ -50,7 +51,6 @@ from phonopy.harmonic.force_constants import get_fc2 as get_phonopy_fc2
 from phonopy.interface.fc_calculator import get_fc2
 from phonopy.harmonic.displacement import (
     get_least_displacements, directions_to_displacement_dataset)
-from phonopy.structure.grid_points import length2mesh
 from phono3py.version import __version__
 from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
                                                write_imag_self_energy)
@@ -76,6 +76,27 @@ from phono3py.interface.fc_calculator import get_fc3
 
 
 class Phono3py(object):
+    """Phono3py main class.
+
+    Attributes
+    ----------
+    version
+    calculator
+    fc3 : getter and setter
+    fc2 : getter and setter
+    force_constants
+    sigma : getter and setter
+    sigma_cutoff : getter and setter
+    nac_params : getter and setter
+    dynamical_matrix
+    primitive
+    unitcell
+    supercell
+    phonon_supercell
+    phonon_primitive
+
+    """
+
     def __init__(self,
                  unitcell,
                  supercell_matrix,
@@ -96,6 +117,7 @@ class Phono3py(object):
                  calculator=None,
                  log_level=0,
                  lapack_zheev_uplo='L'):
+        """Init method."""
         self.sigmas = sigmas
         self.sigma_cutoff = sigma_cutoff
         self._symprec = symprec
@@ -175,29 +197,32 @@ class Phono3py(object):
         self._band_indices = None
         self._band_indices_flatten = None
         if mesh is not None:
-            warnings.warn("Phono3py(mesh) is deprecated."
-                          "Use Phono3py.mesh_number to set sampling mesh.",
+            warnings.warn("Phono3py init parameter of mesh is deprecated."
+                          "Use Phono3py.mesh_number attribute instead.",
                           DeprecationWarning)
             self._set_mesh_numbers(mesh)
         self.band_indices = band_indices
 
     @property
     def version(self):
-        """Phono3py release version number
+        """Return phono3py release version number.
 
         str
             Phono3py release version number
 
         """
-
         return __version__
 
     def get_version(self):
+        """Return phono3py release version number."""
+        warnings.warn("Phono3py.get_version() is deprecated."
+                      "Use Phono3py.version attribute instead.",
+                      DeprecationWarning)
         return self.version
 
     @property
     def calculator(self):
-        """Calculator interface name
+        """Return calculator interface name.
 
         str
             Calculator name such as 'vasp', 'qe', etc.
@@ -207,7 +232,7 @@ class Phono3py(object):
 
     @property
     def fc3(self):
-        """Third order force constants (fc3)
+        """Setter and getter of third order force constants (fc3).
 
         ndarray
             fc3 shape is either (supercell, supecell, supercell, 3, 3, 3) or
@@ -219,6 +244,10 @@ class Phono3py(object):
         return self._fc3
 
     def get_fc3(self):
+        """Return third order force constants (fc3)."""
+        warnings.warn("Phono3py.get_fc3() is deprecated."
+                      "Use Phono3py.fc3 attribute instead.",
+                      DeprecationWarning)
         return self.fc3
 
     @fc3.setter
@@ -226,11 +255,15 @@ class Phono3py(object):
         self._fc3 = fc3
 
     def set_fc3(self, fc3):
+        """Set fc3."""
+        warnings.warn("Phono3py.set_fc3() is deprecated."
+                      "Use Phono3py.fc3 attribute instead.",
+                      DeprecationWarning)
         self.fc3 = fc3
 
     @property
     def fc2(self):
-        """Second order force constants (fc2).
+        """Setter and getter of second order force constants (fc2).
 
         ndarray
             fc2 shape is either (supercell, supecell, 3, 3) or
@@ -239,10 +272,13 @@ class Phono3py(object):
             these cells.
 
         """
-
         return self._fc2
 
     def get_fc2(self):
+        """Return second order force constants (fc2)."""
+        warnings.warn("Phono3py.get_fc2() is deprecated."
+                      "Use Phono3py.fc2 attribute instead.",
+                      DeprecationWarning)
         return self.fc2
 
     @fc2.setter
@@ -250,16 +286,20 @@ class Phono3py(object):
         self._fc2 = fc2
 
     def set_fc2(self, fc2):
+        """Set fc2."""
+        warnings.warn("Phono3py.set_fc2() is deprecated."
+                      "Use Phono3py.fc2 attribute instead.",
+                      DeprecationWarning)
         self.fc2 = fc2
 
     @property
     def force_constants(self):
-        """Alias to fc2"""
+        """Return fc2. This is same as the getter attribute `fc2`."""
         return self.fc2
 
     @property
     def sigmas(self):
-        """Smearing widths
+        """Setter and getter of smearing widths.
 
         list
             The float values are given as the standard deviations of Gaussian
@@ -285,7 +325,9 @@ class Phono3py(object):
 
     @property
     def sigma_cutoff(self):
-        """Smearing cutoff width given as a multiple of the standard deviation
+        """Setter and getter of Smearing cutoff width.
+
+        This is given as a multiple of the standard deviation.
 
         float
             For example, if this value is 5, the tail of the Gaussian function
@@ -300,7 +342,7 @@ class Phono3py(object):
 
     @property
     def nac_params(self):
-        """Parameters for non-analytical term correction
+        """Setter and getter of parameters for non-analytical term correction.
 
         dict
             Parameters used for non-analytical term correction
@@ -317,6 +359,10 @@ class Phono3py(object):
         return self._nac_params
 
     def get_nac_params(self):
+        """Return NAC parameters."""
+        warnings.warn("Phono3py.get_nac_params() is deprecated."
+                      "Use Phono3py.nac_params attribute instead.",
+                      DeprecationWarning)
         return self.nac_params
 
     @nac_params.setter
@@ -325,11 +371,15 @@ class Phono3py(object):
         self._init_dynamical_matrix()
 
     def set_nac_params(self, nac_params):
+        """Set NAC parameters."""
+        warnings.warn("Phono3py.set_nac_params() is deprecated."
+                      "Use Phono3py.nac_params attribute instead.",
+                      DeprecationWarning)
         self.nac_params = nac_params
 
     @property
     def dynamical_matrix(self):
-        """DynamicalMatrix instance
+        """Return DynamicalMatrix instance.
 
         This is not dynamical matrices but the instance of DynamicalMatrix
         class.
@@ -342,63 +392,75 @@ class Phono3py(object):
 
     @property
     def primitive(self):
-        """Primitive cell
+        """Return primitive cell.
 
         Primitive
             Primitive cell.
 
         """
-
         return self._primitive
 
     def get_primitive(self):
+        """Return primitive cell."""
+        warnings.warn("Phono3py.get_primitive() is deprecated."
+                      "Use Phono3py.primitive attribute instead.",
+                      DeprecationWarning)
         return self.primitive
 
     @property
     def unitcell(self):
-        """Unit cell
+        """Return Unit cell.
 
         PhonopyAtoms
             Unit cell.
 
         """
-
         return self._unitcell
 
     def get_unitcell(self):
+        """Return Unit cell."""
+        warnings.warn("Phono3py.get_unitcell() is deprecated."
+                      "Use Phono3py.unitcell attribute instead.",
+                      DeprecationWarning)
         return self.unitcell
 
     @property
     def supercell(self):
-        """Supercell
+        """Return supercell.
 
         Supercell
             Supercell.
 
         """
-
         return self._supercell
 
     def get_supercell(self):
+        """Return supercell."""
+        warnings.warn("Phono3py.get_supercell() is deprecated."
+                      "Use Phono3py.supercell attribute instead.",
+                      DeprecationWarning)
         return self.supercell
 
     @property
     def phonon_supercell(self):
-        """Supercell for fc2.
+        """Return supercell for fc2.
 
         Supercell
             Supercell for fc2.
 
         """
-
         return self._phonon_supercell
 
     def get_phonon_supercell(self):
+        """Return supercell for fc2."""
+        warnings.warn("Phono3py.get_phonon_supercell() is deprecated."
+                      "Use Phono3py.phonon_supercell attribute instead.",
+                      DeprecationWarning)
         return self.phonon_supercell
 
     @property
     def phonon_primitive(self):
-        """Primitive cell for fc2.
+        """Return primitive cell for fc2.
 
         Primitive
             Primitive cell for fc2. This should be the same as the primitive
@@ -406,10 +468,13 @@ class Phono3py(object):
             can be not numerically perfectly identical.
 
         """
-
         return self._phonon_primitive
 
     def get_phonon_primitive(self):
+        """Return primitive cell for fc2."""
+        warnings.warn("Phono3py.get_phonon_primitive() is deprecated."
+                      "Use Phono3py.phonon_primitive attribute instead.",
+                      DeprecationWarning)
         return self.phonon_primitive
 
     @property
