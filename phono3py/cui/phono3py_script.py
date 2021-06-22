@@ -368,7 +368,9 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(settings,
                       % force_filename)
 
         if force_sets:
-            write_FORCES_FC3(disp_dataset, force_sets, filename="FORCES_FC3")
+            write_FORCES_FC3(disp_dataset,
+                             forces_fc3=force_sets,
+                             filename="FORCES_FC3")
             if log_level:
                 print("")
                 print("%s has been created." % "FORCES_FC3")
