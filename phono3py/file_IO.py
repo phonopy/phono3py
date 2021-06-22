@@ -1,3 +1,4 @@
+"""File I/O methods."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -33,6 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import warnings
 import numpy as np
 import h5py
 
@@ -43,6 +45,15 @@ from phonopy.cui.load_helper import read_force_constants_from_hdf5
 
 
 def write_cell_yaml(w, supercell):
+    """Write cell info.
+
+    This is only used from write_disp_fc3_yaml and write_disp_fc2_yaml.
+    These methods are also deprecated.
+
+    """
+    warnings.warn("write_cell_yaml() is deprecated.",
+                  DeprecationWarning)
+
     w.write("lattice:\n")
     for axis in supercell.get_cell():
         w.write("- [ %20.15f,%20.15f,%20.15f ]\n" % tuple(axis))
@@ -55,6 +66,10 @@ def write_cell_yaml(w, supercell):
 
 
 def write_disp_fc3_yaml(dataset, supercell, filename='disp_fc3.yaml'):
+    """Write disp_fc3.yaml."""
+    warnings.warn("write_disp_fc3_yaml() is deprecated.",
+                  DeprecationWarning)
+
     w = open(filename, 'w')
     w.write("natom: %d\n" % dataset['natom'])
 
@@ -142,6 +157,10 @@ def write_disp_fc3_yaml(dataset, supercell, filename='disp_fc3.yaml'):
 
 
 def write_disp_fc2_yaml(dataset, supercell, filename='disp_fc2.yaml'):
+    """Write disp_fc2.yaml."""
+    warnings.warn("write_disp_fc2_yaml() is deprecated.",
+                  DeprecationWarning)
+
     w = open(filename, 'w')
     w.write("natom: %d\n" % dataset['natom'])
 
@@ -167,6 +186,12 @@ def write_FORCES_FC2(disp_dataset,
                      forces_fc2=None,
                      fp=None,
                      filename="FORCES_FC2"):
+    """Write FORCES_FC2.
+
+    fp : IO object, optional, default=None
+        When this is given, FORCES_FC2 content is written into this IO object.
+
+    """
     if fp is None:
         w = open(filename, 'w')
     else:
@@ -188,6 +213,12 @@ def write_FORCES_FC3(disp_dataset,
                      forces_fc3=None,
                      fp=None,
                      filename="FORCES_FC3"):
+    """Write FORCES_FC3.
+
+    fp : IO object, optional, default=None
+        When this is given, FORCES_FC3 content is written into this IO object.
+
+    """
     if fp is None:
         w = open(filename, 'w')
     else:
@@ -231,6 +262,10 @@ def write_FORCES_FC3(disp_dataset,
 
 
 def write_fc3_dat(force_constants_third, filename='fc3.dat'):
+    """Write fc3.dat."""
+    warnings.warn("write_fc3_dat() is deprecated.",
+                  DeprecationWarning)
+
     w = open(filename, 'w')
     for i in range(force_constants_third.shape[0]):
         for j in range(force_constants_third.shape[1]):
@@ -248,7 +283,7 @@ def write_fc3_to_hdf5(fc3,
                       filename='fc3.hdf5',
                       p2s_map=None,
                       compression="gzip"):
-    """Write third-order force constants in hdf5 format.
+    """Write fc3 in fc3.hdf5.
 
     Parameters
     ----------
@@ -267,7 +302,6 @@ def write_fc3_to_hdf5(fc3,
         h5py.Group.create_dataset. Default is "gzip".
 
     """
-
     with h5py.File(filename, 'w') as w:
         w.create_dataset('fc3', data=fc3, compression=compression)
         if p2s_map is not None:
@@ -275,6 +309,16 @@ def write_fc3_to_hdf5(fc3,
 
 
 def read_fc3_from_hdf5(filename='fc3.hdf5', p2s_map=None):
+    """Read fc3 from fc3.hdf5.
+
+    fc3 can be in full or compact format. They are distinguished by
+    the array shape.
+
+    p2s_map is optionally stored in fc3.hdf5, which gives the mapping
+    table from primitive cell atoms to corresponding supercell atoms by
+    respective indices.
+
+    """
     with h5py.File(filename, 'r') as f:
         fc3 = f['fc3'][:]
         if 'p2s_map' in f:
@@ -293,6 +337,10 @@ def read_fc3_from_hdf5(filename='fc3.hdf5', p2s_map=None):
 
 
 def write_fc2_dat(force_constants, filename='fc2.dat'):
+    """Write fc2.dat."""
+    warnings.warn("write_fc2_dat() is deprecated.",
+                  DeprecationWarning)
+
     w = open(filename, 'w')
     for i, fcs in enumerate(force_constants):
         for j, fcb in enumerate(fcs):
@@ -307,6 +355,7 @@ def write_fc2_to_hdf5(force_constants,
                       p2s_map=None,
                       physical_unit=None,
                       compression="gzip"):
+    """Write fc2 in fc2.hdf5."""
     write_force_constants_to_hdf5(force_constants,
                                   filename=filename,
                                   p2s_map=p2s_map,
@@ -316,6 +365,7 @@ def write_fc2_to_hdf5(force_constants,
 
 def read_fc2_from_hdf5(filename='fc2.hdf5',
                        p2s_map=None):
+    """Read fc2 from fc2.hdf5."""
     return read_force_constants_from_hdf5(filename=filename,
                                           p2s_map=p2s_map,
                                           calculator='vasp')
@@ -327,6 +377,10 @@ def write_triplets(triplets,
                    grid_address,
                    grid_point=None,
                    filename=None):
+    """Write triplets in triplets.dat."""
+    warnings.warn("write_triplets() is deprecated.",
+                  DeprecationWarning)
+
     triplets_filename = "triplets"
     suffix = "-m%d%d%d" % tuple(mesh)
     if grid_point is not None:
@@ -345,6 +399,10 @@ def write_triplets(triplets,
 
 
 def write_grid_address(grid_address, mesh, filename=None):
+    """Write grid addresses in grid_address.dat."""
+    warnings.warn("write_grid_address() is deprecated.",
+                  DeprecationWarning)
+
     grid_address_filename = "grid_address"
     suffix = "-m%d%d%d" % tuple(mesh)
     if filename is not None:
@@ -372,6 +430,7 @@ def write_grid_address_to_hdf5(grid_address,
                                grid_mapping_table,
                                compression="gzip",
                                filename=None):
+    """Write grid addresses to grid_address.hdf5."""
     suffix = _get_filename_suffix(mesh, filename=filename)
     full_filename = "grid_address" + suffix + ".hdf5"
     with h5py.File(full_filename, 'w') as w:
@@ -394,6 +453,7 @@ def write_imag_self_energy_at_grid_point(gp,
                                          scattering_event_class=None,
                                          filename=None,
                                          is_mesh_symmetry=True):
+    """Write imaginary part of self-energy spectrum in gamma-*.dat."""
     gammas_filename = "gammas"
     gammas_filename += "-m%d%d%d-g%d-" % (mesh[0], mesh[1], mesh[2], gp)
     if sigma is not None:
@@ -430,6 +490,7 @@ def write_joint_dos(gp,
                     temperatures=None,
                     filename=None,
                     is_mesh_symmetry=True):
+    """Write joint-DOS spectrum in jdos-*.dat."""
     if temperatures is None:
         return _write_joint_dos_at_t(gp,
                                      mesh,
@@ -489,6 +550,7 @@ def write_real_self_energy_at_grid_point(gp,
                                          temperature,
                                          filename=None,
                                          is_mesh_symmetry=True):
+    """Write real part of self-energy spectrum in deltas-*.dat."""
     deltas_filename = "deltas"
     deltas_filename += _get_filename_suffix(mesh, grid_point=gp)
     if epsilon > 1e-5:
@@ -521,7 +583,7 @@ def write_real_self_energy_to_hdf5(grid_point,
                                    frequency_points=None,
                                    frequencies=None,
                                    filename=None):
-    """Wirte real part of self energy (currently only bubble) in hdf5
+    """Wirte real part of self energy (currently only bubble) in hdf5.
 
     deltas : ndarray
         Real part of self energy.
@@ -568,6 +630,7 @@ def write_spectral_function_at_grid_point(gp,
                                           sigma=None,
                                           filename=None,
                                           is_mesh_symmetry=True):
+    """Write spectral function spectrum in spectral-*.dat."""
     spectral_filename = "spectral"
     spectral_filename += _get_filename_suffix(mesh, grid_point=gp, sigma=sigma)
     if temperature is not None:
@@ -598,7 +661,7 @@ def write_spectral_function_to_hdf5(grid_point,
                                     frequency_points=None,
                                     frequencies=None,
                                     filename=None):
-    """Wirte spectral functions (currently only bubble) in hdf5
+    """Wirte spectral functions (currently only bubble) in hdf5.
 
     spectral_functions : ndarray
         Spectral functions.
@@ -639,6 +702,7 @@ def write_collision_to_hdf5(temperature,
                             sigma=None,
                             sigma_cutoff=None,
                             filename=None):
+    """Write collision matrix to collision-*.hdf5."""
     if band_index is None:
         band_indices = None
     else:
@@ -686,6 +750,7 @@ def write_collision_to_hdf5(temperature,
 
 
 def write_full_collision_matrix(collision_matrix, filename='fcm.hdf5'):
+    """Write full (non-symmetrized) collision matrix to collision-*.hdf5."""
     with h5py.File(filename, 'w') as w:
         w.create_dataset('collision_matrix', data=collision_matrix)
 
@@ -704,7 +769,6 @@ def write_unitary_matrix_to_hdf5(temperature,
     either column-wise or row-wise.
 
     """
-
     suffix = _get_filename_suffix(mesh,
                                   sigma=sigma,
                                   sigma_cutoff=sigma_cutoff,
@@ -743,6 +807,7 @@ def write_collision_eigenvalues_to_hdf5(temperatures,
                                         sigma_cutoff=None,
                                         filename=None,
                                         verbose=True):
+    """Write eigenvalues of collision matrix to coleigs-*.hdf5."""
     suffix = _get_filename_suffix(mesh,
                                   sigma=sigma,
                                   sigma_cutoff=sigma_cutoff,
@@ -788,6 +853,7 @@ def write_kappa_to_hdf5(temperature,
                         compression="gzip",
                         filename=None,
                         verbose=True):
+    """Write thermal conductivity related properties in kappa-*.hdf5."""
     if band_index is None:
         band_indices = None
     else:
@@ -802,9 +868,13 @@ def write_kappa_to_hdf5(temperature,
     with h5py.File(full_filename, 'w') as w:
         w.create_dataset('temperature', data=temperature)
         w.create_dataset('mesh', data=mesh)
+
         if frequency is not None:
-            w.create_dataset('frequency', data=frequency,
-                             compression=compression)
+            if isinstance(frequency, np.floating):
+                w.create_dataset('frequency', data=frequency)
+            else:
+                w.create_dataset('frequency', data=frequency,
+                                 compression=compression)
         if group_velocity is not None:
             w.create_dataset('group_velocity', data=group_velocity,
                              compression=compression)
@@ -900,6 +970,7 @@ def read_gamma_from_hdf5(mesh,
                          sigma_cutoff=None,
                          filename=None,
                          verbose=True):
+    """Read gamma from kappa-*.hdf5 file."""
     if band_index is None:
         band_indices = None
     else:

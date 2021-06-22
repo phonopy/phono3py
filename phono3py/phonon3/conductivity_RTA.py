@@ -370,6 +370,7 @@ def _write_kappa(br, volume, compression="gzip", filename=None, log_level=0):
 
 
 def _set_gamma_from_file(br, filename=None, verbose=True):
+    """Read kappa-*.hdf5 files for thermal conductivity calculation."""
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()
     mesh = br.get_mesh_numbers()
