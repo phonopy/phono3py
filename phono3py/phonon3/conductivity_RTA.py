@@ -200,7 +200,7 @@ def _write_gamma(br, interaction, i, compression="gzip", filename=None,
     gamma_isotope = br.get_gamma_isotope()
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()
-    volume = interaction.get_primitive().get_volume()
+    volume = interaction.primitive.volume
     gamma_N, gamma_U = br.get_gamma_N_U()
 
     gp = grid_points[i]

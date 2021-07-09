@@ -48,8 +48,8 @@ class RealToReciprocal(object):
         self._mesh = mesh
         self._symprec = symprec
 
-        self._p2s_map = primitive.get_primitive_to_supercell_map()
-        self._s2p_map = primitive.get_supercell_to_primitive_map()
+        self._p2s_map = primitive.p2s_map
+        self._s2p_map = primitive.s2p_map
         # Reduce supercell atom index to primitive index
         (self._smallest_vectors,
          self._multiplicity) = primitive.get_smallest_vectors()

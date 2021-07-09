@@ -153,7 +153,7 @@ class Phono3py(object):
         # Create supercell and primitive cell
         self._unitcell = unitcell
         self._supercell_matrix = shape_supercell_matrix(supercell_matrix)
-        if type(primitive_matrix) is str and primitive_matrix == 'auto':
+        if isinstance(primitive_matrix, str) and primitive_matrix == 'auto':
             self._primitive_matrix = self._guess_primitive_matrix()
         else:
             self._primitive_matrix = primitive_matrix
@@ -2227,28 +2227,27 @@ class Phono3py(object):
         else:
             t_mat = np.dot(inv_supercell_matrix, primitive_matrix)
 
-        return get_primitive(supercell, t_mat, self._symprec)
+        return get_primitive(supercell, t_mat, self._symprec,
+                             store_dense_svecs=False)
 
     def _guess_primitive_matrix(self):
         return guess_primitive_matrix(self._unitcell, symprec=self._symprec)
 
     def _set_masses(self, masses):
         p_masses = np.array(masses)
-        self._primitive.set_masses(p_masses)
-        p2p_map = self._primitive.get_primitive_to_primitive_map()
-        s_masses = p_masses[[p2p_map[x] for x in
-                             self._primitive.get_supercell_to_primitive_map()]]
-        self._supercell.set_masses(s_masses)
-        u2s_map = self._supercell.get_unitcell_to_supercell_map()
+        self._primitive.masses = p_masses
+        p2p_map = self._primitive.p2p_map
+        s_masses = p_masses[[p2p_map[x] for x in self._primitive.s2p_map]]
+        self._supercell.masses = s_masses
+        u2s_map = self._supercell.u2s_map
         u_masses = s_masses[u2s_map]
-        self._unitcell.set_masses(u_masses)
+        self._unitcell.masses = u_masses
 
-        self._phonon_primitive.set_masses(p_masses)
-        p2p_map = self._phonon_primitive.get_primitive_to_primitive_map()
+        self._phonon_primitive.masses = p_masses
+        p2p_map = self._phonon_primitive.p2p_map
         s_masses = p_masses[
-            [p2p_map[x] for x in
-             self._phonon_primitive.get_supercell_to_primitive_map()]]
-        self._phonon_supercell.set_masses(s_masses)
+            [p2p_map[x] for x in self._phonon_primitive.s2p_map]]
+        self._phonon_supercell.masses = s_masses
 
     def _set_mesh_numbers(self, mesh):
         # initialization related to mesh
