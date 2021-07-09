@@ -158,8 +158,8 @@ def get_third_order_displacements(cell,
 
     """
 
-    positions = cell.get_scaled_positions()
-    lattice = cell.get_cell().T
+    positions = cell.scaled_positions
+    lattice = cell.cell.T
 
     # Least displacements of first atoms (Atom 1) are searched by
     # using respective site symmetries of the original crystal.
@@ -296,12 +296,13 @@ def get_equivalent_smallest_vectors(atom_number_supercell,
                                     atom_number_primitive,
                                     supercell,
                                     symprec):
-    s_pos = supercell.get_scaled_positions()
-    svecs, multi = get_smallest_vectors(supercell.get_cell(),
+    s_pos = supercell.scaled_positions
+    svecs, multi = get_smallest_vectors(supercell.cell,
                                         [s_pos[atom_number_supercell]],
                                         [s_pos[atom_number_primitive]],
+                                        store_dense_svecs=True,
                                         symprec=symprec)
-    return svecs[0, 0]
+    return svecs[0]
 
 
 def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):

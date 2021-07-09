@@ -51,8 +51,7 @@ class RealToReciprocal(object):
         self._p2s_map = primitive.p2s_map
         self._s2p_map = primitive.s2p_map
         # Reduce supercell atom index to primitive index
-        (self._smallest_vectors,
-         self._multiplicity) = primitive.get_smallest_vectors()
+        self._svecs, self._multi = primitive.get_smallest_vectors()
         self._fc3_reciprocal = None
 
     def run(self, triplet):
@@ -105,9 +104,10 @@ class RealToReciprocal(object):
         p0 = patom0_index
         phase = 1+0j
         for i in (0, 1):
-            vs = self._smallest_vectors[si[i], p0,
-                                        :self._multiplicity[si[i], p0]]
+            svecs_adrs = self._multi[si[i], p0, 1]
+            multi = self._multi[si[i], p0, 0]
+            vs = self._svecs[svecs_adrs:(svecs_adrs + multi)]
             phase *= (np.exp(2j * np.pi * np.dot(
-                        vs, self._triplet[i + 1].astype('double') /
-                        self._mesh)).sum() / self._multiplicity[si[i], p0])
+                vs, self._triplet[i + 1].astype('double') /
+                self._mesh)).sum() / multi)
         return phase
