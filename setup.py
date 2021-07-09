@@ -44,7 +44,10 @@ if use_setuptools:
 else:
     define_macros += [('PHPYOPENMP', None), ]
 
+
 use_mkl = False
+include_dirs_lapacke = []
+extra_link_args_lapacke = []
 # C macro definitions:
 # - MULTITHREADED_BLAS
 #   This deactivates OpenMP multithread harmonic phonon calculation,
@@ -103,8 +106,12 @@ elif os.path.isfile("libopenblas.py"):
     # Example of libopenblas.py
     # extra_link_args_lapacke += ['-lopenblas']
 
-    from libopenblas import extra_link_args_lapacke, include_dirs_lapacke
-    include_dirs_lapacke += []
+    from libopenblas import (
+        extra_link_args_lapacke as obl_extra_link_args_lapacke,
+        include_dirs_lapacke as obl_include_dirs_lapacke)
+    extra_link_args_lapacke = obl_extra_link_args_lapacke
+    include_dirs_lapacke = obl_include_dirs_lapacke
+
     if use_setuptools:
         extra_compile_args += ['-DMULTITHREADED_BLAS']
     else:
