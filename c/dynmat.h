@@ -40,8 +40,8 @@ long dym_get_dynamical_matrix_at_q(double *dynamical_matrix,
                                    const long num_satom,
                                    const double *fc,
                                    const double q[3],
-                                   const double (*svecs)[27][3],
-                                   const long *multi,
+                                   const double (*svecs)[3],
+                                   const long (*multi)[2],
                                    const double *mass,
                                    const long *s2p_map,
                                    const long *p2s_map,
@@ -76,14 +76,14 @@ void dym_get_charge_sum(double (*charge_sum)[3][3],
                         const double (*born)[3][3]);
 /* fc[num_patom, num_satom, 3, 3] */
 /* dm[num_comm_points, num_patom * 3, num_patom *3] */
-/* comm_points[num_satom, num_patom, 27, 3] */
-/* shortest_vectors[num_satom, num_patom, 27, 3] */
-/* multiplicities[num_satom, num_patom] */
+/* comm_points[num_satom / num_patom, 3] */
+/* shortest_vectors[:, 3] */
+/* multiplicities[num_satom, num_patom, 2] */
 void dym_transform_dynmat_to_fc(double *fc,
                                 const double *dm,
                                 const double (*comm_points)[3],
-                                const double (*shortest_vectors)[27][3],
-                                const long *multiplicities,
+                                const double (*svecs)[3],
+                                const long (*multi)[2],
                                 const double *masses,
                                 const long *s2pp_map,
                                 const long *fc_index_map,

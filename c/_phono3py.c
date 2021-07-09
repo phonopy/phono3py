@@ -343,8 +343,8 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   PyArrayObject *py_bz_grid_addresses;
   PyArrayObject *py_D_diag;
   PyArrayObject *py_Q;
-  PyArrayObject *py_shortest_vectors;
-  PyArrayObject *py_multiplicities;
+  PyArrayObject *py_svecs;
+  PyArrayObject *py_multi;
   PyArrayObject *py_fc3;
   PyArrayObject *py_masses;
   PyArrayObject *py_p2s_map;
@@ -363,13 +363,13 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   long *D_diag;
   long (*Q)[3];
   double *fc3;
-  double *svecs;
-  long *multi;
+  double (*svecs)[3];
+  long (*multi)[2];
   double *masses;
   long *p2s;
   long *s2p;
   long *band_indices;
-  long svecs_dims[3];
+  long multi_dims[2];
   long i;
   long is_compact_fc3;
 
@@ -383,8 +383,8 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
                         &py_D_diag,
                         &py_Q,
                         &py_fc3,
-                        &py_shortest_vectors,
-                        &py_multiplicities,
+                        &py_svecs,
+                        &py_multi,
                         &py_masses,
                         &py_p2s_map,
                         &py_s2p_map,
@@ -412,11 +412,11 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
   } else {
     is_compact_fc3 = 1;
   }
-  svecs = (double*)PyArray_DATA(py_shortest_vectors);
-  for (i = 0; i < 3; i++) {
-    svecs_dims[i] = PyArray_DIMS(py_shortest_vectors)[i];
+  svecs = (double(*)[3])PyArray_DATA(py_svecs);
+  for (i = 0; i < 2; i++) {
+    multi_dims[i] = PyArray_DIMS(py_multi)[i];
   }
-  multi = (long*)PyArray_DATA(py_multiplicities);
+  multi = (long(*)[2])PyArray_DATA(py_multi);
   masses = (double*)PyArray_DATA(py_masses);
   p2s = (long*)PyArray_DATA(py_p2s_map);
   s2p = (long*)PyArray_DATA(py_s2p_map);
@@ -434,7 +434,7 @@ static PyObject * py_get_interaction(PyObject *self, PyObject *args)
                         fc3,
                         is_compact_fc3,
                         svecs,
-                        svecs_dims,
+                        multi_dims,
                         multi,
                         masses,
                         p2s,
@@ -465,8 +465,8 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   PyArrayObject *py_D_diag;
   PyArrayObject *py_Q;
   PyArrayObject *py_fc3;
-  PyArrayObject *py_shortest_vectors;
-  PyArrayObject *py_multiplicities;
+  PyArrayObject *py_svecs;
+  PyArrayObject *py_multi;
   PyArrayObject *py_masses;
   PyArrayObject *py_p2s_map;
   PyArrayObject *py_s2p_map;
@@ -489,14 +489,14 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   long *D_diag;
   long (*Q)[3];
   double *fc3;
-  double *svecs;
-  long *multi;
+  double (*svecs)[3];
+  long (*multi)[2];
   double *masses;
   long *p2s;
   long *s2p;
   Larray *band_indices;
   Darray *temperatures;
-  long svecs_dims[3];
+  long multi_dims[2];
   long i;
   long is_compact_fc3;
 
@@ -513,8 +513,8 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
                         &py_D_diag,
                         &py_Q,
                         &py_fc3,
-                        &py_shortest_vectors,
-                        &py_multiplicities,
+                        &py_svecs,
+                        &py_multi,
                         &py_masses,
                         &py_p2s_map,
                         &py_s2p_map,
@@ -543,11 +543,11 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
   } else {
     is_compact_fc3 = 1;
   }
-  svecs = (double*)PyArray_DATA(py_shortest_vectors);
-  for (i = 0; i < 3; i++) {
-    svecs_dims[i] = PyArray_DIMS(py_shortest_vectors)[i];
+  svecs = (double(*)[3])PyArray_DATA(py_svecs);
+  for (i = 0; i < 2; i++) {
+    multi_dims[i] = PyArray_DIMS(py_multi)[i];
   }
-  multi = (long*)PyArray_DATA(py_multiplicities);
+  multi = (long(*)[2])PyArray_DATA(py_multi);
   masses = (double*)PyArray_DATA(py_masses);
   p2s = (long*)PyArray_DATA(py_p2s_map);
   s2p = (long*)PyArray_DATA(py_s2p_map);
@@ -569,7 +569,7 @@ static PyObject * py_get_pp_collision(PyObject *self, PyObject *args)
                          fc3,
                          is_compact_fc3,
                          svecs,
-                         svecs_dims,
+                         multi_dims,
                          multi,
                          masses,
                          p2s,
@@ -600,8 +600,8 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
   PyArrayObject *py_D_diag;
   PyArrayObject *py_Q;
   PyArrayObject *py_fc3;
-  PyArrayObject *py_shortest_vectors;
-  PyArrayObject *py_multiplicities;
+  PyArrayObject *py_svecs;
+  PyArrayObject *py_multi;
   PyArrayObject *py_masses;
   PyArrayObject *py_p2s_map;
   PyArrayObject *py_s2p_map;
@@ -623,14 +623,14 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
   long *D_diag;
   long (*Q)[3];
   double *fc3;
-  double *svecs;
-  long *multi;
+  double (*svecs)[3];
+  long (*multi)[2];
   double *masses;
   long *p2s;
   long *s2p;
   Larray *band_indices;
   Darray *temperatures;
-  long svecs_dims[3];
+  long multi_dims[2];
   long i;
   long is_compact_fc3;
 
@@ -646,8 +646,8 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
                         &py_D_diag,
                         &py_Q,
                         &py_fc3,
-                        &py_shortest_vectors,
-                        &py_multiplicities,
+                        &py_svecs,
+                        &py_multi,
                         &py_masses,
                         &py_p2s_map,
                         &py_s2p_map,
@@ -674,11 +674,11 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
   } else {
     is_compact_fc3 = 1;
   }
-  svecs = (double*)PyArray_DATA(py_shortest_vectors);
-  for (i = 0; i < 3; i++) {
-    svecs_dims[i] = PyArray_DIMS(py_shortest_vectors)[i];
+  svecs = (double(*)[3])PyArray_DATA(py_svecs);
+  for (i = 0; i < 2; i++) {
+    multi_dims[i] = PyArray_DIMS(py_multi)[i];
   }
-  multi = (long*)PyArray_DATA(py_multiplicities);
+  multi = (long(*)[2])PyArray_DATA(py_multi);
   masses = (double*)PyArray_DATA(py_masses);
   p2s = (long*)PyArray_DATA(py_p2s_map);
   s2p = (long*)PyArray_DATA(py_s2p_map);
@@ -699,7 +699,7 @@ static PyObject * py_get_pp_collision_with_sigma(PyObject *self, PyObject *args)
                                     fc3,
                                     is_compact_fc3,
                                     svecs,
-                                    svecs_dims,
+                                    multi_dims,
                                     multi,
                                     masses,
                                     p2s,

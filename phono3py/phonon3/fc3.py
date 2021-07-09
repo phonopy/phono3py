@@ -510,7 +510,7 @@ def cutoff_fc3_by_zero(fc3, supercell, cutoff_distance, symprec=1e-5):
             min_distances[i, j] = np.linalg.norm(
                 np.dot(lattice,
                        get_equivalent_smallest_vectors(
-                           i, j, supercell, symprec)[0]))
+                           i, j, supercell, symprec)))
 
     for i, j, k in np.ndindex(num_atom, num_atom, num_atom):
         for pair in ((i, j), (j, k), (k, i)):
@@ -752,7 +752,7 @@ def _get_fc3_done(supercell, disp_dataset, symmetry, array_shape):
                     first_atom_num,
                     second_atoms['number'],
                     supercell,
-                    symprec)[0]
+                    symprec)
                 min_distance = np.linalg.norm(np.dot(lattice, min_vec))
                 if 'pair_distance' in second_atoms:
                     assert (abs(min_distance - second_atoms['pair_distance'])

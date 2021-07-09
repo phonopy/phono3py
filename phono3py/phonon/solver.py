@@ -33,6 +33,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
+from phonopy.structure.cells import sparse_to_dense_svecs
 
 
 def run_phonon_solver_c(dm,
@@ -45,16 +46,23 @@ def run_phonon_solver_c(dm,
                         frequency_conversion_factor,
                         nac_q_direction,  # in reduced coordinates
                         lapack_zheev_uplo):
+    """Bulid and solve dynamical matrices on grid in C-API."""
     import phono3py._phononmod as phononmod
 
     (svecs,
-     multiplicity,
+     multi,
      masses,
      rec_lattice,  # column vectors
      positions,
      born,
      nac_factor,
      dielectric) = _extract_params(dm)
+
+    if dm.primitive.store_dense_svecs:
+        _svecs = svecs
+        _multi = multi
+    else:
+        _svecs, _multi = sparse_to_dense_svecs(svecs, multi)
 
     if dm.is_nac() and dm.nac_method == 'gonze':
         gonze_nac_dataset = dm.Gonze_nac_dataset
@@ -86,8 +94,8 @@ def run_phonon_solver_c(dm,
         grid_address,
         np.array(QDinv, dtype='double', order='C'),
         fc,
-        svecs,
-        multiplicity,
+        _svecs,
+        _multi,
         positions,
         masses,
         fc_p2s,
@@ -113,6 +121,7 @@ def run_phonon_solver_py(grid_point,
                          dynamical_matrix,
                          frequency_conversion_factor,
                          lapack_zheev_uplo):
+    """Bulid and solve dynamical matrices on grid in python."""
     gp = grid_point
     if phonon_done[gp] == 0:
         phonon_done[gp] = 1
@@ -124,10 +133,6 @@ def run_phonon_solver_py(grid_point,
         frequencies[gp] = (np.sqrt(np.abs(eigvals)) * np.sign(eigvals)
                            * frequency_conversion_factor)
         eigenvectors[gp] = eigvecs
-
-
-def rotate_eigenvector(eigvecs_at_q):
-    pass
 
 
 def _extract_params(dm):
@@ -146,7 +151,7 @@ def _extract_params(dm):
         dielectric = None
 
     return (svecs,
-            np.array(multiplicity, dtype='int_', order='C'),
+            multiplicity,
             masses,
             rec_lattice,
             positions,

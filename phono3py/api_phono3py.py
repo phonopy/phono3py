@@ -2228,7 +2228,7 @@ class Phono3py(object):
             t_mat = np.dot(inv_supercell_matrix, primitive_matrix)
 
         return get_primitive(supercell, t_mat, self._symprec,
-                             store_dense_svecs=False)
+                             store_dense_svecs=True)
 
     def _guess_primitive_matrix(self):
         return guess_primitive_matrix(self._unitcell, symprec=self._symprec)
