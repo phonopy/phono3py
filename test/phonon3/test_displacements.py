@@ -1,5 +1,22 @@
 import phono3py
 import numpy as np
+from phono3py.phonon3.displacement_fc3 import get_equivalent_smallest_vectors
+
+
+distances_NaCl = [
+    0.0000000, 5.6903015, 5.6903015, 8.0473015, 5.6903015,
+    8.0473015, 8.0473015, 9.8558913, 4.0236508, 6.9691675,
+    4.0236508, 6.9691675, 4.0236508, 6.9691675, 4.0236508,
+    6.9691675, 4.0236508, 4.0236508, 6.9691675, 6.9691675,
+    4.0236508, 4.0236508, 6.9691675, 6.9691675, 4.0236508,
+    4.0236508, 4.0236508, 4.0236508, 6.9691675, 6.9691675,
+    6.9691675, 6.9691675, 4.9279456, 4.9279456, 4.9279456,
+    4.9279456, 4.9279456, 4.9279456, 4.9279456, 4.9279456,
+    2.8451507, 2.8451507, 6.3619505, 6.3619505, 6.3619505,
+    6.3619505, 8.5354522, 8.5354522, 2.8451507, 6.3619505,
+    2.8451507, 6.3619505, 6.3619505, 8.5354522, 6.3619505,
+    8.5354522, 2.8451507, 6.3619505, 6.3619505, 8.5354522,
+    2.8451507, 6.3619505, 6.3619505, 8.5354522]
 
 
 def test_agno2(agno2_cell):
@@ -39,3 +56,26 @@ def test_nacl_pbe(nacl_pbe):
     # print("".join(["%d, " % i for i in np.array(pairs).ravel()]))
 
     np.testing.assert_equal(pairs_ref, np.array(pairs).ravel())
+
+
+def test_get_equivalent_smallest_vectors(nacl_pbe):
+    ph = nacl_pbe
+    distances = []
+    for i in range(len(ph.supercell)):
+        vec = get_equivalent_smallest_vectors(
+            i, 0, ph.supercell, 1e-5)
+        if vec.ndim == 2:
+            vec = vec[0]
+        distances.append(np.linalg.norm(np.dot(vec, ph.supercell.cell)))
+
+    # _show(distances)
+    np.testing.assert_allclose(distances_NaCl, distances, rtol=0, atol=1e-6)
+
+
+
+
+def _show(vals):
+    for i, v in enumerate(vals):
+        print("%.7f, " % v, end="")
+        if (i + 1) % 5 == 0:
+            print("")

@@ -76,6 +76,27 @@ def nacl_pbe():
 
 
 @pytest.fixture(scope='session')
+def nacl_pbe_cutoff_fc3():
+    yaml_filename = os.path.join(current_dir,
+                                 "phono3py_params_NaCl222.yaml.xz")
+    ph3 = phono3py.load(yaml_filename, log_level=1)
+    forces = ph3.forces
+    ph3.generate_displacements(cutoff_pair_distance=5)
+    dataset = ph3.dataset
+    dataset['first_atoms'][0]['forces'] = forces[0]
+    dataset['first_atoms'][1]['forces'] = forces[0]
+    count = 2
+    for first_atoms in dataset['first_atoms']:
+        for second_atoms in first_atoms['second_atoms']:
+            assert second_atoms['id'] == count + 1
+            second_atoms['forces'] = forces[count]
+            count += 1
+    ph3.dataset = dataset
+    ph3.produce_fc3(symmetrize_fc3r=True)
+    return ph3
+
+
+@pytest.fixture(scope='session')
 def aln_lda():
     yaml_filename = os.path.join(current_dir,
                                  "phono3py_params_AlN332.yaml.xz")
