@@ -71,7 +71,7 @@ def get_thermal_conductivity_RTA(
         input_filename=None,
         output_filename=None,
         log_level=0):
-
+    """Run RTA thermal conductivity calculation."""
     if temperatures is None:
         _temperatures = np.arange(0, 1001, 10, dtype='double')
     else:
@@ -134,7 +134,7 @@ def get_thermal_conductivity_RTA(
             _show_kappa(br, log_level)
         if write_kappa:
             _write_kappa(br,
-                         interaction.get_primitive().get_volume(),
+                         interaction.primitive.volume,
                          compression=compression,
                          filename=output_filename,
                          log_level=log_level)

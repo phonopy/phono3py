@@ -1,3 +1,4 @@
+"""Phono3py main command line script."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -75,7 +76,8 @@ from phono3py.interface.phono3py_yaml import Phono3pyYaml
 
 # AA is created at http://www.network-science.de/ascii/.
 def print_phono3py():
-    print("""        _                      _____
+    """Show phono3py logo."""
+    print(r"""        _                      _____
   _ __ | |__   ___  _ __   ___|___ / _ __  _   _
  | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
  | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
@@ -106,7 +108,6 @@ def finalize_phono3py(phono3py,
         phono3py.yaml is written in this filename.
 
     """
-
     if displacements_mode:
         _calculator = phono3py.calculator
     else:
@@ -137,6 +138,7 @@ def finalize_phono3py(phono3py,
 
 
 def get_run_mode(settings):
+    """Extract run mode from settings."""
     run_mode = None
     if settings.is_gruneisen:
         run_mode = "gruneisen"
@@ -162,8 +164,7 @@ def get_run_mode(settings):
 
 
 def start_phono3py(**argparse_control):
-    """Parse arguments and set some basic parameters"""
-
+    """Parse arguments and set some basic parameters."""
     parser, deprecated = get_parser(**argparse_control)
     args = parser.parse_args()
 
@@ -193,8 +194,14 @@ def start_phono3py(**argparse_control):
 
 
 def read_phono3py_settings(args, argparse_control, log_level):
-    """Read phono3py settings"""
+    """Read phono3py settings.
 
+    From:
+    * Traditional configuration file.
+    * phono3py.yaml type file
+    * Command line options
+
+    """
     load_phono3py_yaml = argparse_control.get('load_phono3py_yaml', False)
 
     if len(args.filename) > 0:
@@ -222,6 +229,7 @@ def read_phono3py_settings(args, argparse_control, log_level):
 
 
 def create_FORCES_FC2_from_FORCE_SETS_then_exit(log_level):
+    """Convert FORCE_SETS to FORCES_FC2."""
     filename = 'FORCE_SETS'
     file_exists(filename, log_level)
     disp_dataset = parse_FORCE_SETS(filename=filename)
@@ -238,6 +246,7 @@ def create_FORCES_FC2_from_FORCE_SETS_then_exit(log_level):
 def create_FORCE_SETS_from_FORCES_FCx_then_exit(phonon_smat,
                                                 input_filename,
                                                 log_level):
+    """Convert FORCES_FC3 or FORCES_FC2 to FORCE_SETS."""
     if phonon_smat is not None:
         if input_filename is None:
             disp_filename = 'disp_fc2.yaml'
@@ -279,6 +288,7 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(settings,
                                                input_filename,
                                                output_filename,
                                                log_level):
+    """Create FORCES_FC3 and FORCES_FC2 from files."""
     interface_mode = settings.calculator
 
     #####################
@@ -444,6 +454,7 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(settings,
 
 
 def get_input_output_filenames_from_args(args):
+    """Return strings inserted to input and output filenames."""
     input_filename = args.input_filename
     output_filename = args.output_filename
     if args.input_output_filename is not None:
@@ -453,8 +464,7 @@ def get_input_output_filenames_from_args(args):
 
 
 def get_cell_info(settings, cell_filename, symprec, log_level):
-    """calculator interface and crystal structure information"""
-
+    """Return calculator interface and crystal structure information."""
     cell_info = collect_cell_info(
         supercell_matrix=settings.supercell_matrix,
         primitive_matrix=settings.primitive_matrix,
@@ -484,6 +494,7 @@ def get_cell_info(settings, cell_filename, symprec, log_level):
 
 
 def get_default_values(settings):
+    """Set default values."""
     # Brillouin zone integration: Tetrahedron (default) or smearing method
     sigma = settings.sigma
     if sigma is None:
@@ -562,6 +573,7 @@ def init_phono3py(settings,
                   output_filename,
                   symprec,
                   log_level):
+    """Initialize phono3py and update settings by default values."""
     physical_units = get_default_physical_units(interface_mode)
     distance_to_A = physical_units['distance_to_A']
 
@@ -603,7 +615,7 @@ def init_phono3py(settings,
 
     if cell_info['phonopy_yaml'] is not None:
         if (cell_info['phonopy_yaml'].phonon_supercell is not None and
-            phono3py.phonon_supercell is not None):
+            phono3py.phonon_supercell is not None):  # noqa E129
             if not cells_isclose(cell_info['phonopy_yaml'].phonon_supercell,
                                  phono3py.phonon_supercell):
                 if log_level:
@@ -617,6 +629,7 @@ def init_phono3py(settings,
 
 
 def settings_to_grid_points(settings, bz_grid):
+    """Read or set grid point indices."""
     if settings.grid_addresses is not None:
         grid_points = grid_addresses_to_grid_points(
             settings.grid_addresses, bz_grid)
@@ -628,6 +641,7 @@ def settings_to_grid_points(settings, bz_grid):
 
 
 def grid_addresses_to_grid_points(grid_addresses, bz_grid):
+    """Return grid point indices from grid addresses."""
     grid_points = [get_grid_point_from_address(ga, bz_grid.D_diag)
                    for ga in grid_addresses]
     return bz_grid.grg2bzg[grid_points]
@@ -641,6 +655,7 @@ def store_force_constants(phono3py,
                           output_filename,
                           load_phono3py_yaml,
                           log_level):
+    """Calculate, read, and write force constants."""
     if load_phono3py_yaml:
         if log_level:
             print("-" * 29 + " Force constants " + "-" * 30)
@@ -690,9 +705,10 @@ def store_force_constants(phono3py,
 
 
 def run_gruneisen_then_exit(phono3py, settings, output_filename, log_level):
+    """Run mode Grueneisen parameter calculation from fc3."""
     if (settings.mesh_numbers is None and
         settings.band_paths is None and
-        settings.qpoints is None):
+        settings.qpoints is None):  # noqa E129
         print("An option of --mesh, --band, or --qpoints has to be specified.")
         if log_level:
             print_error()
@@ -742,6 +758,7 @@ def run_jdos_then_exit(phono3py,
                        updated_settings,
                        output_filename,
                        log_level):
+    """Run joint-DOS calculation."""
     joint_dos = Phono3pyJointDos(
         phono3py.phonon_supercell,
         phono3py.phonon_primitive,
@@ -776,6 +793,7 @@ def run_jdos_then_exit(phono3py,
 
 
 def run_isotope_then_exit(phono3py, settings, updated_settings, log_level):
+    """Run isotope scattering calculation."""
     mass_variances = settings.mass_variances
     if settings.band_indices is not None:
         band_indices = np.hstack(settings.band_indices).astype('intc')
@@ -788,7 +806,7 @@ def run_isotope_then_exit(phono3py, settings, updated_settings, log_level):
         band_indices=band_indices,
         sigmas=updated_settings['sigmas'],
         frequency_factor_to_THz=updated_settings['frequency_factor_to_THz'],
-        is_dense_gp_map=is_dense_gp_map,
+        is_dense_gp_map=settings.is_dense_gp_map,
         symprec=phono3py.symmetry.tolerance,
         cutoff_frequency=settings.cutoff_frequency,
         lapack_zheev_uplo=settings.lapack_zheev_uplo)
@@ -817,6 +835,7 @@ def init_phph_interaction(phono3py,
                           input_filename,
                           output_filename,
                           log_level):
+    """Initialize ph-ph interaction and phonons on grid."""
     ave_pp = settings.constant_averaged_pp_interaction
     if log_level:
         sys.stdout.write("Generating grid system ... ")
@@ -835,7 +854,7 @@ def init_phph_interaction(phono3py,
             print("-" * 27 + " Phonon calculations " + "-" * 28)
             dm = phono3py.dynamical_matrix
             if (dm.is_nac() and dm.nac_method == 'gonze'):
-                dm.show_Gonze_nac_message()
+                dm.show_nac_message()
             print("Running harmonic phonon calculations...")
             sys.stdout.flush()
         phono3py.run_phonon_solver()
@@ -877,6 +896,9 @@ def init_phph_interaction(phono3py,
 
 
 def main(**argparse_control):
+    """Phono3py main part of command line interface."""
+    # import warnings
+    # warnings.simplefilter('error')
     load_phono3py_yaml = argparse_control.get('load_phono3py_yaml', False)
 
     args, log_level = start_phono3py(**argparse_control)
@@ -1001,7 +1023,7 @@ def main(**argparse_control):
 
     if (run_mode in run_modes_with_gp and
         settings.grid_points is None and
-        settings.grid_addresses is None):
+        settings.grid_addresses is None):  # noqa E129
         print("")
         print("Grid point(s) has to be specified.")
         print("")

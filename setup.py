@@ -1,3 +1,4 @@
+"""Phono3py setup.py."""
 import os
 import sys
 import numpy
@@ -22,7 +23,7 @@ if 'setuptools_scm' in sys.modules.keys():
     try:
         git_ver = get_version()
         git_num = int(git_ver.split('.')[3].split('+')[0].replace("dev", ""))
-    except:
+    except Exception:
         git_num = None
 
 include_dirs_numpy = [numpy.get_include()]
@@ -30,7 +31,7 @@ extra_link_args = []
 # Workaround Python issue 21121
 config_var = sysconfig.get_config_var("CFLAGS")
 if (config_var is not None and
-    "-Werror=declaration-after-statement" in config_var):
+    "-Werror=declaration-after-statement" in config_var):  # noqa E129
     os.environ['CFLAGS'] = config_var.replace(
         "-Werror=declaration-after-statement", "")
 
@@ -42,10 +43,6 @@ if use_setuptools:
     extra_compile_args += ['-DPHPYOPENMP', ]
 else:
     define_macros += [('PHPYOPENMP', None), ]
-
-extra_link_args_lapacke = []
-include_dirs_lapacke = []
-
 
 use_mkl = False
 # C macro definitions:
@@ -68,7 +65,7 @@ if os.path.isfile("setup_mkl.py"):
 
     from setup_mkl import mkl_extra_link_args_lapacke, mkl_include_dirs_lapacke
 
-    #### Examples of setup_mkl.py ####
+    # Examples of setup_mkl.py
     # For 2015
     # intel_root = "/opt/intel/composer_xe_2015.7.235"
     # mkl_root = "%s/mkl" % intel_root
@@ -90,8 +87,8 @@ if os.path.isfile("setup_mkl.py"):
     # mkl_include_dirs_lapacke = ["%s/include" % mkl_root]
 
     use_mkl = True
-    extra_link_args_lapacke += mkl_extra_link_args_lapacke
-    include_dirs_lapacke += mkl_include_dirs_lapacke
+    extra_link_args_lapacke = mkl_extra_link_args_lapacke
+    include_dirs_lapacke = mkl_include_dirs_lapacke
 
     if use_setuptools:
         extra_compile_args += ['-DMKL_LAPACKE',
@@ -103,7 +100,7 @@ elif os.path.isfile("libopenblas.py"):
     # This supposes that multithread openBLAS is used.
     # This is invoked when libopenblas.py exists on the current directory.
 
-    #### Example of libopenblas.py ####
+    # Example of libopenblas.py
     # extra_link_args_lapacke += ['-lopenblas']
 
     from libopenblas import extra_link_args_lapacke, include_dirs_lapacke
@@ -119,16 +116,16 @@ elif (platform.system() == 'Darwin' and
     # % sudo port install gcc6
     # % sudo port select --set gcc mp-gcc
     # % sudo port install OpenBLAS +gcc6
-    extra_link_args_lapacke += ['/opt/local/lib/libopenblas.a']
-    include_dirs_lapacke += ['/opt/local/include']
+    extra_link_args_lapacke = ['/opt/local/lib/libopenblas.a']
+    include_dirs_lapacke = ['/opt/local/include']
 elif ('CONDA_PREFIX' in os.environ and
       (os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
                                    'lib', 'liblapacke.dylib')) or
        os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
                                    'lib', 'liblapacke.so')))):
     # This is for the system prepared with conda openblas.
-    extra_link_args_lapacke += ['-llapacke']
-    include_dirs_lapacke += [
+    extra_link_args_lapacke = ['-llapacke']
+    include_dirs_lapacke = [
         os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
     if os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
                                    'include', 'mkl.h')):
@@ -151,21 +148,20 @@ elif ('CONDA_PREFIX' in os.environ and
                                    'lib', 'libmkl_rt.so'))) and
       (os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
                                    'include', 'mkl_lapacke.h')))):
-    include_dirs_lapacke += [
+    include_dirs_lapacke = [
         os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
-    extra_link_args_lapacke += ['-lmkl_rt']
+    extra_link_args_lapacke = ['-lmkl_rt']
     if use_setuptools:
         extra_compile_args += ['-DMKL_LAPACKE',
                                '-DMULTITHREADED_BLAS']
     else:
         define_macros += [('MKL_LAPACKE', None),
                           ('MULTITHREADED_BLAS', None)]
-
 elif os.path.isfile('/usr/lib/liblapacke.so'):
     # This supposes that lapacke with single-thread BLAS is installed on
     # system.
-    extra_link_args_lapacke += ['-llapacke', '-llapack', '-lblas']
-    include_dirs_lapacke += []
+    extra_link_args_lapacke = ['-llapacke', '-llapack', '-lblas']
+    include_dirs_lapacke = []
 else:
     # Here is the default lapacke linkage setting.
     # Please modify according to your system environment.
@@ -180,9 +176,9 @@ else:
     #
     # For conda: Try installing with dynamic link library of openblas by
     # % conda install numpy scipy h5py pyyaml matplotlib openblas libgfortran
-    extra_link_args_lapacke += ['-lopenblas', '-lgfortran']
+    extra_link_args_lapacke = ['-lopenblas', '-lgfortran']
     if 'CONDA_PREFIX' in os.environ:
-        include_dirs_lapacke += [
+        include_dirs_lapacke = [
             os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
     if use_setuptools:
         extra_compile_args += ['-DMULTITHREADED_BLAS']
@@ -222,7 +218,7 @@ if cc == 'gcc' or cc is None:
 if lib_omp:
     extra_link_args.append(lib_omp)
 
-## Uncomment below to measure reciprocal_to_normal_squared_openmp performance
+# Uncomment below to measure reciprocal_to_normal_squared_openmp performance
 # define_macros += [('MEASURE_R2N', None)]
 
 extra_link_args += extra_link_args_lapacke
@@ -338,7 +334,7 @@ if __name__ == '__main__':
               url='http://phonopy.github.io/phono3py/',
               packages=packages_phono3py,
               install_requires=['numpy', 'scipy', 'PyYAML', 'matplotlib',
-                                'h5py', 'spglib', 'phonopy>=2.10,<2.11'],
+                                'h5py', 'spglib', 'phonopy>=2.11,<2.12'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
               ext_modules=[extension_phono3py,

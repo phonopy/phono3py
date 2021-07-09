@@ -75,7 +75,7 @@ def get_fc3(supercell,
         [x['number'] for x in disp_dataset['first_atoms']])
     rotations = symmetry.get_symmetry_operations()['rotations']
     lattice = supercell.cell.T
-    permutations = symmetry.get_atomic_permutations()
+    permutations = symmetry.atomic_permutations
 
     if is_compact_fc:
         s2p_map = primitive.s2p_map
@@ -112,7 +112,7 @@ def get_fc3(supercell,
                    verbose=verbose)
 
     if is_compact_fc:
-        p2s_map = primitive.get_primitive_to_supercell_map()
+        p2s_map = primitive.p2s_map
         fc2 = np.array(fc2[p2s_map], dtype='double', order='C')
 
     return fc2, fc3
@@ -209,7 +209,7 @@ def set_permutation_symmetry_compact_fc3(fc3, primitive):
         s2p_map = primitive.s2p_map
         p2s_map = primitive.p2s_map
         p2p_map = primitive.p2p_map
-        permutations = primitive.get_atomic_permutations()
+        permutations = primitive.atomic_permutations
         s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map,
                                                      p2p_map,
                                                      permutations)
@@ -258,7 +258,7 @@ def set_translational_invariance_compact_fc3(fc3, primitive):
         s2p_map = primitive.s2p_map
         p2s_map = primitive.p2s_map
         p2p_map = primitive.p2p_map
-        permutations = primitive.get_atomic_permutations()
+        permutations = primitive.atomic_permutations
         s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map,
                                                      p2p_map,
                                                      permutations)
@@ -549,7 +549,7 @@ def show_drift_fc3(fc3,
             s2p_map = primitive.s2p_map
             p2s_map = primitive.p2s_map
             p2p_map = primitive.p2p_map
-            permutations = primitive.get_atomic_permutations()
+            permutations = primitive.atomic_permutations
             s2pp_map, nsym_list = get_nsym_list_and_s2pp(s2p_map,
                                                          p2p_map,
                                                          permutations)
@@ -633,15 +633,15 @@ def _get_fc3_least_atoms(supercell,
                          symmetry,
                          is_compact_fc=False,
                          verbose=True):
-    symprec = symmetry.get_symmetry_tolerance()
-    num_satom = supercell.get_number_of_atoms()
+    symprec = symmetry.tolerance
+    num_satom = len(supercell)
     unique_first_atom_nums = np.unique(
         [x['number'] for x in disp_dataset['first_atoms']])
 
     if is_compact_fc:
         num_patom = primitive.get_number_of_atoms()
-        s2p_map = primitive.get_supercell_to_primitive_map()
-        p2p_map = primitive.get_primitive_to_primitive_map()
+        s2p_map = primitive.s2p_map
+        p2p_map = primitive.p2p_map
         first_atom_nums = []
         for i in unique_first_atom_nums:
             if i != s2p_map[i]:

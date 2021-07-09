@@ -169,7 +169,7 @@ def get_third_order_displacements(cell,
                                           is_plusminus=is_plusminus,
                                           is_diagonal=False)
 
-    symprec = symmetry.get_symmetry_tolerance()
+    symprec = symmetry.tolerance
 
     dds = []
     for disp in disps_first:

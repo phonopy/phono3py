@@ -2157,8 +2157,8 @@ class Phono3py(object):
                 self._phonon_supercell_matrix,
                 self._primitive_matrix)
             if (self._primitive is not None and
-                (self._primitive.get_atomic_numbers() !=
-                 self._phonon_primitive.get_atomic_numbers()).any()):
+                (self._primitive.numbers !=
+                 self._phonon_primitive.numbers).any()):
                 print(" Primitive cells for fc2 and fc3 can be different.")
                 raise RuntimeError
 
