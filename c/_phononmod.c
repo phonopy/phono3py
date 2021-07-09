@@ -161,8 +161,8 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
   long (*grid_address)[3];
   double (*QDinv)[3];
   double* fc2;
-  double(*svecs_fc2)[27][3];
-  long* multi_fc2;
+  double(*svecs_fc2)[3];
+  long (*multi_fc2)[2];
   double (*positions_fc2)[3];
   double* masses_fc2;
   long* p2s_fc2;
@@ -206,8 +206,8 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
   grid_address = (long(*)[3])PyArray_DATA(py_grid_address);
   QDinv = (double(*)[3])PyArray_DATA(py_QDinv);
   fc2 = (double*)PyArray_DATA(py_fc2);
-  svecs_fc2 = (double(*)[27][3])PyArray_DATA(py_shortest_vectors_fc2);
-  multi_fc2 = (long*)PyArray_DATA(py_multiplicity_fc2);
+  svecs_fc2 = (double(*)[3])PyArray_DATA(py_shortest_vectors_fc2);
+  multi_fc2 = (long(*)[2])PyArray_DATA(py_multiplicity_fc2);
   masses_fc2 = (double*)PyArray_DATA(py_masses_fc2);
   p2s_fc2 = (long*)PyArray_DATA(py_p2s_map_fc2);
   s2p_fc2 = (long*)PyArray_DATA(py_s2p_map_fc2);

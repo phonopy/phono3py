@@ -203,7 +203,7 @@ def get_third_order_displacements(cell,
             min_vec = get_equivalent_smallest_vectors(atom1,
                                                       atom2,
                                                       cell,
-                                                      symprec)[0]
+                                                      symprec)
             min_distance = np.linalg.norm(np.dot(lattice, min_vec))
             dds_atom2['distance'] = min_distance
             dds_atom1['second_atoms'].append(dds_atom2)
