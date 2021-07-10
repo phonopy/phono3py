@@ -23,10 +23,8 @@ itr_RTA_AlN = [
     6.713107e-08, 6.710084e-08, 6.698233e-08, 6.694871e-08]
 
 
-@pytest.mark.parametrize("store_dense_svecs,lang",
-                         [(True, "C"), (False, "C"),
-                          (True, "Py"), (False, "Py")])
-def test_interaction_RTA_si(si_pbesol, store_dense_svecs, lang):
+@pytest.mark.parametrize("lang", ["C", "Py"])
+def test_interaction_RTA_si(si_pbesol, lang):
     """Test interaction_strength of Si."""
     itr = _get_irt(si_pbesol, [4, 4, 4])
     itr.set_grid_point(1)
