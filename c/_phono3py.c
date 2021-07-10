@@ -1581,6 +1581,7 @@ py_get_thm_integration_weights_at_grid_points(PyObject *self, PyObject *args)
   PyArrayObject *py_grid_points;
   PyArrayObject *py_frequencies;
   PyArrayObject *py_bz_grid_address;
+  PyArrayObject *py_gp2irgp_map;
   PyArrayObject *py_bz_map;
   long bz_grid_type;
   char* function;
@@ -1593,9 +1594,10 @@ py_get_thm_integration_weights_at_grid_points(PyObject *self, PyObject *args)
   long *grid_points;
   long (*bz_grid_address)[3];
   long *bz_map;
+  long *gp2irgp_map;
   double *frequencies;
 
-  if (!PyArg_ParseTuple(args, "OOOOOOOOls",
+  if (!PyArg_ParseTuple(args, "OOOOOOOOOls",
                         &py_iw,
                         &py_frequency_points,
                         &py_relative_grid_address,
@@ -1604,6 +1606,7 @@ py_get_thm_integration_weights_at_grid_points(PyObject *self, PyObject *args)
                         &py_frequencies,
                         &py_bz_grid_address,
                         &py_bz_map,
+                        &py_gp2irgp_map,
                         &bz_grid_type,
                         &function)) {
     return NULL;
@@ -1618,6 +1621,7 @@ py_get_thm_integration_weights_at_grid_points(PyObject *self, PyObject *args)
   num_gp = (long)PyArray_DIMS(py_grid_points)[0];
   bz_grid_address = (long(*)[3])PyArray_DATA(py_bz_grid_address);
   bz_map = (long*)PyArray_DATA(py_bz_map);
+  gp2irgp_map = (long*)PyArray_DATA(py_gp2irgp_map);
   frequencies = (double*)PyArray_DATA(py_frequencies);
   num_band = (long)PyArray_DIMS(py_frequencies)[1];
 
@@ -1634,6 +1638,7 @@ py_get_thm_integration_weights_at_grid_points(PyObject *self, PyObject *args)
     bz_map,
     bz_grid_type,
     frequencies,
+    gp2irgp_map,
     function[0]);
 
   Py_RETURN_NONE;

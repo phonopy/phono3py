@@ -85,6 +85,7 @@ def get_integration_weights(sampling_points,
                             grid_values,
                             bz_grid,
                             grid_points=None,
+                            gp2irgp_map=None,
                             function='I'):
     """Return tetrahedron method integration weights.
 
@@ -102,8 +103,18 @@ def get_integration_weights(sampling_points,
     grid_points : array_like, optional, default=None
         Grid point indices. If None, all regular grid points.
         shape=(grid_points, ), dtype='int_'
+    gp2irgp_map : array_like, optional, default=None
+        Grid point index mapping from bz_grid to index of the first
+        dimension of `grid_values` array, i.e., usually irreducible
+        grid point count.
     function : str, 'I' or 'J', optional, default='I'
         'J' is for intetration and 'I' is for its derivative.
+
+    Returns
+    -------
+    integration_weights : ndarray
+        shape=(grid_points, sampling_points, num_band),
+        dtype='double', order='C'
 
     """
     import phono3py._phono3py as phono3c
@@ -123,11 +134,18 @@ def get_integration_weights(sampling_points,
         _sampling_points = sampling_points
     else:
         _sampling_points = np.array(sampling_points, dtype='double')
+    if gp2irgp_map is None:
+        _gp2irgp_map = np.arange(len(grid_values), dtype='int_')
+    elif _check_ndarray_state(gp2irgp_map, 'int_'):
+        _gp2irgp_map = gp2irgp_map
+    else:
+        _gp2irgp_map = np.array(gp2irgp_map, dtype='int_')
 
     num_grid_points = len(_grid_points)
     num_band = _grid_values.shape[1]
     integration_weights = np.zeros(
-        (num_grid_points, len(_sampling_points), num_band), dtype='double')
+        (num_grid_points, len(_sampling_points), num_band),
+        dtype='double', order='C')
     phono3c.integration_weights_at_grid_points(
         integration_weights,
         _sampling_points,
@@ -138,6 +156,7 @@ def get_integration_weights(sampling_points,
         _grid_values,
         bz_grid.addresses,
         bz_grid.gp_map,
+        _gp2irgp_map,
         bz_grid.is_dense_gp_map * 1 + 1,
         function)
     return integration_weights
