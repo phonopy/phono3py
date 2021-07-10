@@ -161,10 +161,10 @@ def get_grid_symmetry(bz_grid, weights, qpoints):
         print("*******************************")
         raise
 
-    addresses = bz_grid.grid_addresses[ir_grid_points]
+    addresses = bz_grid.addresses[ir_grid_points]
     D_diag = bz_grid.D_diag.astype('double')
 
-    qpoints_for_check = np.dot(bz_grid.Q, addresses / D_diag)
+    qpoints_for_check = np.dot(addresses / D_diag, bz_grid.Q.T)
     diff_q = qpoints - qpoints_for_check
     np.testing.assert_almost_equal(diff_q, np.rint(diff_q))
 
