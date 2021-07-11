@@ -59,14 +59,14 @@ def test_nacl_pbe(nacl_pbe):
 
 
 def test_get_equivalent_smallest_vectors(nacl_pbe):
-    ph = nacl_pbe
+    ph3 = nacl_pbe
     distances = []
-    for i in range(len(ph.supercell)):
+    for i in range(len(ph3.supercell)):
         vec = get_equivalent_smallest_vectors(
-            i, 0, ph.supercell, 1e-5)
+            i, 0, ph3.supercell, 1e-5)
         if vec.ndim == 2:
             vec = vec[0]
-        distances.append(np.linalg.norm(np.dot(vec, ph.supercell.cell)))
+        distances.append(np.linalg.norm(np.dot(vec, ph3.supercell.cell)))
 
     # _show(distances)
     np.testing.assert_allclose(distances_NaCl, distances, rtol=0, atol=1e-6)

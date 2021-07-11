@@ -18,11 +18,11 @@ from phono3py.other.tetrahedron_method import get_integration_weights
 epsilon = 1.0e-8
 
 
-def _get_gp2irgp_map(bz_grid, grid_mapping_table):
-    unique_gps = np.unique(grid_mapping_table)
+def _get_gp2irgp_map(bz_grid, ir_grid_map):
+    unique_gps = np.unique(ir_grid_map)
     gp_map = {j: i for i, j in enumerate(unique_gps)}
     gp2irgp_map = np.array(
-        [gp_map[grid_mapping_table[grgp]] for grgp in bz_grid.bzg2grg],
+        [gp_map[ir_grid_map[grgp]] for grgp in bz_grid.bzg2grg],
         dtype='int_')
     return gp2irgp_map
 
