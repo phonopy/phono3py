@@ -34,7 +34,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from phono3py.cui.phono3py_kaccum import main
+from phono3py.cui.kaccum import main
 
 if __name__ == '__main__':
     main()

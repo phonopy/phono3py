@@ -257,13 +257,10 @@ def _set_T_target(temperatures,
 
 def _run_prop_dos(frequencies,
                   mode_prop,
-                  primitive,
-                  mesh,
-                  grid_address,
                   ir_grid_map,
                   ir_grid_points,
                   num_sampling_points,
-                  bz_grid=None):
+                  bz_grid):
     """Run DOS-like calculation."""
     kappa_dos = KappaDOS(mode_prop,
                          frequencies,
@@ -286,23 +283,24 @@ def _get_mfp(g, gv):
 
 def _run_mfp_dos(mean_freepath,
                  mode_prop,
-                 primitive,
-                 mesh,
-                 grid_address,
                  ir_grid_map,
                  ir_grid_points,
-                 num_sampling_points):
-    """Run DOS-like calculation for mean free path."""
+                 num_sampling_points,
+                 bz_grid):
+    """Run DOS-like calculation for mean free path.
+
+    mean_freepath : shape=(temperatures, ir_grid_points, 6)
+    mode_prop : shape=(temperatures, ir_grid_points, 6, 6)
+
+    """
     kdos = []
     sampling_points = []
-    for i, mfp in enumerate(mean_freepath):
+    for i, _ in enumerate(mean_freepath):
         kappa_dos = KappaDOS(mode_prop[i:i+1, :, :],
-                             primitive,
-                             mfp,
-                             mesh,
-                             grid_address,
-                             ir_grid_map,
+                             mean_freepath[i],
+                             bz_grid,
                              ir_grid_points,
+                             ir_grid_map=ir_grid_map,
                              num_sampling_points=num_sampling_points)
         sampling_points_at_T, kdos_at_T = kappa_dos.get_kdos()
         kdos.append(kdos_at_T[0])
@@ -443,9 +441,12 @@ def _get_mode_property(args, f_kappa):
         mode_prop = f_kappa['gruneisen'][:].reshape(
             (1,) + f_kappa['gruneisen'].shape)
         mode_prop **= 2
+    elif args.dos:
+        mode_prop = np.ones((1, ) + f_kappa['frequency'].shape,
+                            dtype='double', order='C')
     else:
         raise RuntimeError("No property target is specified.")
-    return mode_prop, g
+    return mode_prop
 
 
 def _get_init_params(args, f_kappa):
@@ -488,6 +489,9 @@ def _get_parser():
     parser.add_argument(
         '--tau', action='store_true',
         help='Calculate for lifetimes (scalar)')
+    parser.add_argument(
+        '--dos', action='store_true',
+        help='Calculate for phonon DOS (scalar)')
     parser.add_argument(
         '--gamma', action='store_true',
         help='Calculate for Gamma (scalar)')
@@ -597,12 +601,12 @@ def main():
     # Run #
     #######
     if (args.gamma or args.gruneisen or args.pqj or
-        args.cv or args.tau or args.gv_norm): # noqa E129
+        args.cv or args.tau or args.gv_norm or args.dos): # noqa E129
 
-        mode_prop, g = _get_mode_property(args, f_kappa)
+        mode_prop = _get_mode_property(args, f_kappa)
 
         if (args.temperature is not None and
-            not (args.gv_norm or args.pqj or args.gruneisen)): # noqa E129
+            not (args.gv_norm or args.pqj or args.gruneisen or args.dos)): # noqa E129
             temperatures, mode_prop = _set_T_target(temperatures,
                                                     mode_prop,
                                                     args.temperature)
@@ -647,12 +651,10 @@ def main():
 
             kdos, sampling_points = _run_mfp_dos(mean_freepath,
                                                  mode_prop,
-                                                 primitive,
-                                                 mesh,
-                                                 grid_address,
                                                  ir_grid_map,
                                                  ir_grid_points,
-                                                 args.num_sampling_points)
+                                                 args.num_sampling_points,
+                                                 bz_grid)
             _show_tensor(kdos, temperatures, sampling_points, args)
         else:
             if args.temperature is not None and not args.gv:
@@ -661,11 +663,8 @@ def main():
                                                         args.temperature)
             kdos, sampling_points = _run_prop_dos(frequencies,
                                                   mode_prop,
-                                                  primitive,
-                                                  mesh,
-                                                  grid_address,
                                                   ir_grid_map,
                                                   ir_grid_points,
                                                   args.num_sampling_points,
-                                                  bz_grid=bz_grid)
+                                                  bz_grid)
             _show_tensor(kdos, temperatures, sampling_points, args)
