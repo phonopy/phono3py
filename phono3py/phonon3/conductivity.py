@@ -170,7 +170,7 @@ class Conductivity(object):
 
         if (self._dm.is_nac() and
             self._dm.nac_method == 'gonze' and
-            self._gv_delta_q is None):
+            self._gv_delta_q is None):  # noqa E129
             self._gv_delta_q = 1e-5
             if self._log_level:
                 msg = "Group velocity calculation:\n"
@@ -192,9 +192,11 @@ class Conductivity(object):
         self._gv_delta_q = self._gv_obj.get_q_length()
 
     def __iter__(self):
+        """Iteratively calculate mode kappa at each grid point."""
         return self
 
     def __next__(self):
+        """Return grid point count for mode kappa."""
         if self._grid_point_count == len(self._grid_points):
             if self._log_level:
                 print("=================== End of collection of collisions "
@@ -206,6 +208,7 @@ class Conductivity(object):
             return self._grid_point_count - 1
 
     def next(self):
+        """For backward compatibility."""
         return self.__next__()
 
     @property
@@ -306,11 +309,19 @@ class Conductivity(object):
 
     @property
     def grid_points(self):
-        """Return grid point indices where mode kappa are calculated."""
+        """Return grid point indices where mode kappa are calculated.
+
+        Grid point indices are given in BZ-grid.
+
+        """
         return self._grid_points
 
     def get_grid_points(self):
-        """Return grid point indices where mode kappa are calculated."""
+        """Return grid point indices where mode kappa are calculated.
+
+        Grid point indices are given in BZ-grid.
+
+        """
         warnings.warn("Use attribute, Conductivity.grid_points "
                       "instead of Conductivity.get_grid_points().",
                       DeprecationWarning)
@@ -473,11 +484,11 @@ class Conductivity(object):
         return self.averaged_pp_interaction
 
     def _run_at_grid_point(self):
-        """This has to be implementated in the derived class"""
+        """Must be implementated in the inherited class."""
         raise NotImplementedError()
 
     def _allocate_values(self):
-        """This has to be implementated in the derived class"""
+        """Must be implementated in the inherited class."""
         raise NotImplementedError()
 
     def _set_grid_properties(self, grid_points):
@@ -533,7 +544,7 @@ class Conductivity(object):
         return np.array(gamma_iso, dtype='double', order='C')
 
     def _get_ir_grid_points(self):
-        """Find irreducible grid points"""
+        """Find irreducible grid points."""
         ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(self._bz_grid)
         ir_grid_points = np.array(
             self._bz_grid.grg2bzg[ir_grid_points], dtype='int_')
@@ -557,7 +568,7 @@ class Conductivity(object):
         self._mass_variances = self._isotope.mass_variances
 
     def _set_harmonic_properties(self, i_irgp, i_data):
-        """Set group velocity and mode heat capacity"""
+        """Set group velocity and mode heat capacity."""
         grid_point = self._grid_points[i_irgp]
         freqs = self._frequencies[grid_point][self._pp.band_indices]
         self._cv[:, i_data, :] = self._get_cv(freqs)
@@ -589,7 +600,7 @@ class Conductivity(object):
 
         # Sum all vxv at k*
         for j, vxv in enumerate(
-            ([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])):
+                ([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])):
             self._gv_sum2[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
 
     def _get_gv_by_gv(self, i_irgp, i_data):
