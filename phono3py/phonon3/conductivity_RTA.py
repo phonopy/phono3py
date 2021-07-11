@@ -285,11 +285,11 @@ def _write_gamma(br, interaction, i, compression="gzip", filename=None,
 
 
 def _show_kappa(br, log_level):
-    temperatures = br.get_temperatures()
-    sigmas = br.get_sigmas()
-    kappa = br.get_kappa()
+    temperatures = br.temperatures
+    sigmas = br.sigmas
+    kappa = br.kappa
     num_ignored_phonon_modes = br.get_number_of_ignored_phonon_modes()
-    num_band = br.get_frequencies().shape[1]
+    num_band = br.frequencies.shape[1]
     num_phonon_modes = br.get_number_of_sampling_grid_points() * num_band
     for i, sigma in enumerate(sigmas):
         text = "----------- Thermal conductivity (W/m-k) "

@@ -32,6 +32,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import warnings
 import textwrap
 import numpy as np
 from phonopy.phonon.group_velocity import GroupVelocity
@@ -209,98 +210,275 @@ class Conductivity(object):
 
     @property
     def mesh_numbers(self):
+        """Return mesh numbers of GR-grid."""
         return self._pp.mesh_numbers
 
     def get_mesh_numbers(self):
+        """Return mesh numbers of GR-grid."""
+        warnings.warn("Use attribute, Conductivity.mesh_numbers "
+                      "instead of Conductivity.get_mesh_numbers().",
+                      DeprecationWarning)
         return self.mesh_numbers
 
-    def get_mode_heat_capacities(self):
+    @property
+    def mode_heat_capacities(self):
+        """Return mode heat capacity at constant volume at grid points.
+
+        Grid points are those at mode kappa are calculated.
+
+        """
         return self._cv
 
-    def get_group_velocities(self):
+    def get_mode_heat_capacities(self):
+        """Return mode heat capacity at constant volume at grid points.
+
+        Grid points are those at mode kappa are calculated.
+
+        """
+        warnings.warn("Use attribute, Conductivity.mode_heat_capacities "
+                      "instead of Conductivity.get_mode_heat_capacities().",
+                      DeprecationWarning)
+        return self.mode_heat_capacities
+
+    @property
+    def group_velocities(self):
+        """Return group velocities at grid points.
+
+        Grid points are those at mode kappa are calculated.
+
+        """
         return self._gv
 
-    def get_gv_by_gv(self):
+    def get_group_velocities(self):
+        """Return group velocities at grid points.
+
+        Grid points are those at mode kappa are calculated.
+
+        """
+        warnings.warn("Use attribute, Conductivity.group_velocities "
+                      "instead of Conductivity.get_group_velocities().",
+                      DeprecationWarning)
+        return self.group_velocities
+
+    @property
+    def gv_by_gv(self):
+        """Return gv_by_gv at grid points where mode kappa are calculated."""
         return self._gv_sum2
 
-    def get_frequencies(self):
+    def get_gv_by_gv(self):
+        """Return gv_by_gv at grid points where mode kappa are calculated."""
+        warnings.warn("Use attribute, Conductivity.gv_by_gv "
+                      "instead of Conductivity.get_gv_by_gv().",
+                      DeprecationWarning)
+        return self.gv_by_gv
+
+    @property
+    def frequencies(self):
+        """Return frequencies at grid points.
+
+        Grid points are those at mode kappa are calculated.
+
+        """
         return self._frequencies[self._grid_points]
 
-    def get_qpoints(self):
+    def get_frequencies(self):
+        """Return frequencies at grid points.
+
+        Grid points are those at mode kappa are calculated.
+
+        """
+        warnings.warn("Use attribute, Conductivity.frequencies "
+                      "instead of Conductivity.get_frequencies().",
+                      DeprecationWarning)
+        return self.frequencies
+
+    @property
+    def qpoints(self):
+        """Return q-points where mode kappa are calculated."""
         return self._qpoints
 
-    def get_grid_points(self):
+    def get_qpoints(self):
+        """Return q-points where mode kappa are calculated."""
+        warnings.warn("Use attribute, Conductivity.qpoints "
+                      "instead of Conductivity.get_qpoints().",
+                      DeprecationWarning)
+        return self.qpoints
+
+    @property
+    def grid_points(self):
+        """Return grid point indices where mode kappa are calculated."""
         return self._grid_points
 
-    def get_grid_weights(self):
+    def get_grid_points(self):
+        """Return grid point indices where mode kappa are calculated."""
+        warnings.warn("Use attribute, Conductivity.grid_points "
+                      "instead of Conductivity.get_grid_points().",
+                      DeprecationWarning)
+        return self.grid_points
+
+    @property
+    def grid_weights(self):
+        """Return grid point weights where mode kappa are calculated."""
         return self._grid_weights
+
+    def get_grid_weights(self):
+        """Return grid point weights where mode kappa are calculated."""
+        warnings.warn("Use attribute, Conductivity.grid_weights "
+                      "instead of Conductivity.get_grid_weights().",
+                      DeprecationWarning)
+        return self.grid_weights
 
     @property
     def temperatures(self):
+        """Setter and getter of temperatures."""
         return self._temperatures
 
-    def get_temperatures(self):
-        return self.temperatures
-
-    def set_temperatures(self, temperatures):
+    @temperatures.setter
+    def temperatures(self, temperatures):
         self._temperatures = temperatures
         self._allocate_values()
 
-    def set_gamma(self, gamma):
-        self._gamma = gamma
-        self._read_gamma = True
+    def get_temperatures(self):
+        """Return temperatures."""
+        warnings.warn("Use attribute, Conductivity.temperatures "
+                      "instead of Conductivity.get_temperatures().",
+                      DeprecationWarning)
+        return self.temperatures
 
-    def set_gamma_isotope(self, gamma_iso):
-        self._gamma_iso = gamma_iso
-        self._read_gamma_iso = True
+    def set_temperatures(self, temperatures):
+        """Set temperatures."""
+        warnings.warn("Use attribute, Conductivity.temperatures "
+                      "instead of Conductivity.set_temperatures().",
+                      DeprecationWarning)
+        self.temperatures = temperatures
 
     @property
     def gamma(self):
+        """Setter and getter of gamma."""
         return self._gamma
 
+    @gamma.setter
+    def gamma(self, gamma):
+        self._gamma = gamma
+        self._read_gamma = True
+
     def get_gamma(self):
+        """Return gamma."""
+        warnings.warn("Use attribute, Conductivity.gamma "
+                      "instead of Conductivity.get_gamma().",
+                      DeprecationWarning)
         return self.gamma
+
+    def set_gamma(self, gamma):
+        """Set gamma."""
+        warnings.warn("Use attribute, Conductivity.gamma "
+                      "instead of Conductivity.set_gamma().",
+                      DeprecationWarning)
+        self.gamma = gamma
 
     @property
     def gamma_isotope(self):
+        """Setter and getter of gamma from isotope."""
         return self._gamma_iso
 
+    @gamma_isotope.setter
+    def gamma_isotope(self, gamma_iso):
+        self._gamma_iso = gamma_iso
+        self._read_gamma_iso = True
+
     def get_gamma_isotope(self):
+        """Return gamma from isotope."""
+        warnings.warn("Use attribute, Conductivity.gamma_isotope "
+                      "instead of Conductivity.get_gamma_isotope().",
+                      DeprecationWarning)
         return self.gamma_isotope
+
+    def set_gamma_isotope(self, gamma_iso):
+        """Set gamma from isotope."""
+        warnings.warn("Use attribute, Conductivity.gamma_isotope "
+                      "instead of Conductivity.set_gamma_isotope().",
+                      DeprecationWarning)
+        self.gamma_isotope = gamma_iso
 
     @property
     def kappa(self):
+        """Return kappa."""
         return self._kappa
 
     def get_kappa(self):
+        """Return kappa."""
+        warnings.warn("Use attribute, Conductivity.kappa "
+                      "instead of Conductivity.get_kappa().",
+                      DeprecationWarning)
         return self.kappa
 
     @property
     def mode_kappa(self):
+        """Return mode_kappa."""
         return self._mode_kappa
 
     def get_mode_kappa(self):
+        """Return mode_kappa."""
+        warnings.warn("Use attribute, Conductivity.mode_kappa "
+                      "instead of Conductivity.get_mode_kappa().",
+                      DeprecationWarning)
         return self.mode_kappa
 
-    def get_sigmas(self):
+    @property
+    def sigmas(self):
+        """Return sigmas."""
         return self._sigmas
 
-    def get_sigma_cutoff_width(self):
+    def get_sigmas(self):
+        """Return sigmas."""
+        warnings.warn("Use attribute, Conductivity.sigmas "
+                      "instead of Conductivity.get_sigmas().",
+                      DeprecationWarning)
+        return self.sigmas
+
+    @property
+    def sigma_cutoff_width(self):
+        """Return smearing width cutoff."""
         return self._sigma_cutoff
 
-    def get_grid_point_count(self):
+    def get_sigma_cutoff_width(self):
+        """Return smearing width cutoff."""
+        warnings.warn("Use attribute, Conductivity.sigma_cutoff_width "
+                      "instead of Conductivity.get_sigma_cutoff_width().",
+                      DeprecationWarning)
+        return self.sigma_cutoff_width
+
+    @property
+    def grid_point_count(self):
+        """Return interator count of self."""
         return self._grid_point_count
 
-    def get_averaged_pp_interaction(self):
+    def get_grid_point_count(self):
+        """Return interator count of self."""
+        warnings.warn("Use attribute, Conductivity.grid_point_count "
+                      "instead of Conductivity.get_grid_point_count().",
+                      DeprecationWarning)
+        return self.grid_point_count
+
+    @property
+    def averaged_pp_interaction(self):
+        """Return averaged pp strength."""
         return self._averaged_pp_interaction
+
+    def get_averaged_pp_interaction(self):
+        """Return averaged pp interaction strength."""
+        warnings.warn("Use attribute, Conductivity.averaged_pp_interaction "
+                      "instead of Conductivity.get_averaged_pp_interaction().",
+                      DeprecationWarning)
+        return self.averaged_pp_interaction
 
     def _run_at_grid_point(self):
         """This has to be implementated in the derived class"""
-        pass
+        raise NotImplementedError()
 
     def _allocate_values(self):
         """This has to be implementated in the derived class"""
-        pass
+        raise NotImplementedError()
 
     def _set_grid_properties(self, grid_points):
         self._pp.set_nac_q_direction(nac_q_direction=None)
