@@ -49,7 +49,9 @@ def test_kappados_si(si_pbesol):
     ph3.mesh_numbers = [7, 7, 7]
     ph3.init_phph_interaction()
     ph3.run_thermal_conductivity(temperatures=[300, ])
-    freq_points, kdos = _calculate_kappados(ph3)
+    freq_points_in = np.array(kappados_si).reshape(-1, 3)[:, 0]
+    freq_points, kdos = _calculate_kappados(
+        ph3, freq_points=freq_points_in)
     # for f, (jval, ival) in zip(freq_points, kdos):
     #     print("%.7f, %.7f, %.7f," % (f, jval, ival))
     np.testing.assert_allclose(
@@ -57,12 +59,13 @@ def test_kappados_si(si_pbesol):
         np.vstack((freq_points, kdos.T)).T.ravel(),
         rtol=0, atol=0.5)
 
-    freq_points, mfpdos = _calculate_mfpdos(ph3)
+    mfp_points_in = np.array(mfpdos_si).reshape(-1, 3)[:, 0]
+    mfp_points, mfpdos = _calculate_mfpdos(ph3, mfp_points_in)
     # for f, (jval, ival) in zip(freq_points, mfpdos):
     #     print("%.7f, %.7f, %.7f," % (f, jval, ival))
     np.testing.assert_allclose(
         mfpdos_si,
-        np.vstack((freq_points, mfpdos.T)).T.ravel(),
+        np.vstack((mfp_points, mfpdos.T)).T.ravel(),
         rtol=0, atol=0.5)
 
 
@@ -71,7 +74,9 @@ def test_kappados_nacl(nacl_pbe):
     ph3.mesh_numbers = [7, 7, 7]
     ph3.init_phph_interaction()
     ph3.run_thermal_conductivity(temperatures=[300, ])
-    freq_points, kdos = _calculate_kappados(ph3)
+    freq_points_in = np.array(kappados_nacl).reshape(-1, 3)[:, 0]
+    freq_points, kdos = _calculate_kappados(
+        ph3, freq_points=freq_points_in)
     # for f, (jval, ival) in zip(freq_points, kdos):
     #     print("%.7f, %.7f, %.7f," % (f, jval, ival))
     np.testing.assert_allclose(
@@ -79,16 +84,17 @@ def test_kappados_nacl(nacl_pbe):
         np.vstack((freq_points, kdos.T)).T.ravel(),
         rtol=0, atol=0.5)
 
-    freq_points, mfpdos = _calculate_mfpdos(ph3)
+    mfp_points_in = np.array(mfpdos_nacl).reshape(-1, 3)[:, 0]
+    mfp_points, mfpdos = _calculate_mfpdos(ph3, mfp_points_in)
     # for f, (jval, ival) in zip(freq_points, mfpdos):
     #     print("%.7f, %.7f, %.7f," % (f, jval, ival))
     np.testing.assert_allclose(
         mfpdos_nacl,
-        np.vstack((freq_points, mfpdos.T)).T.ravel(),
+        np.vstack((mfp_points, mfpdos.T)).T.ravel(),
         rtol=0, atol=0.5)
 
 
-def _calculate_kappados(ph3):
+def _calculate_kappados(ph3, freq_points=None):
     tc = ph3.thermal_conductivity
     bz_grid = ph3.grid
     frequencies, _, _ = ph3.get_phonon_data()
@@ -97,6 +103,7 @@ def _calculate_kappados(ph3):
         frequencies,
         bz_grid,
         bz_grid.bzg2grg[tc.grid_points],
+        frequency_points=freq_points,
         num_sampling_points=10)
     freq_points, kdos = kappados.get_kdos()
 
@@ -107,6 +114,7 @@ def _calculate_kappados(ph3):
         bz_grid,
         ir_grid_points,
         ir_grid_map=ir_grid_map,
+        frequency_points=freq_points,
         num_sampling_points=10)
     ir_freq_points, ir_kdos = kappados.get_kdos()
     np.testing.assert_allclose(ir_freq_points, freq_points, rtol=0, atol=1e-5)
@@ -115,7 +123,7 @@ def _calculate_kappados(ph3):
     return freq_points, kdos[0, :, :, 0]
 
 
-def _calculate_mfpdos(ph3):
+def _calculate_mfpdos(ph3, mfp_points=None):
     tc = ph3.thermal_conductivity
     bz_grid = ph3.grid
     mean_freepath = _get_mfp(tc.gamma[0], tc.group_velocities)
@@ -126,6 +134,7 @@ def _calculate_mfpdos(ph3):
         bz_grid,
         ir_grid_points,
         ir_grid_map=ir_grid_map,
+        frequency_points=mfp_points,
         num_sampling_points=10)
     freq_points, kdos = mfpdos.get_kdos()
 

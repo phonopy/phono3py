@@ -36,6 +36,7 @@ class KappaDOS(object):
                  bz_grid,
                  ir_grid_points,
                  ir_grid_map=None,
+                 frequency_points=None,
                  num_sampling_points=100):
         """Init method.
 
@@ -50,15 +51,22 @@ class KappaDOS(object):
         ir_grid_map : ndarray, optional, default=None
             Mapping table to ir-grid point indices in GR-grid.
             None gives `np.arange(len(frequencies), 'int_')`.
+        frequency_points : array_like, optional, default=None
+            This is used as the frequency points. When None,
+            frequency points are created from `num_sampling_points`.
         num_sampling_points : int, optional, default=100
             Number of uniform sampling points.
 
         """
         min_freq = min(frequencies.ravel())
         max_freq = max(frequencies.ravel()) + epsilon
-        self._frequency_points = np.linspace(min_freq,
-                                             max_freq,
-                                             num_sampling_points)
+        if frequency_points is None:
+            self._frequency_points = np.linspace(
+                min_freq, max_freq, num_sampling_points, dtype='double')
+        else:
+            self._frequency_points = np.array(
+                frequency_points, dtype='double')
+
         self._kdos = np.zeros(
             (len(mode_kappa), len(self._frequency_points), 2, 6),
             dtype='double')
