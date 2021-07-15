@@ -6,7 +6,6 @@ import h5py
 from phonopy.cui.settings import fracval
 from phonopy.structure.cells import get_primitive
 from phonopy.structure.symmetry import Symmetry
-from phonopy.phonon.tetrahedron_mesh import TetrahedronMesh
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.interface.calculator import read_crystal_structure
@@ -41,9 +40,11 @@ class KappaDOS(object):
         """Init method.
 
         mode_kappa : ndarray
-            shape=(temperatures, ir_grid_points, num_band, 6), dtype='double'
+            Target value.
+            shape=(temperatures, ir_grid_points, num_band, num_elem),
+            dtype='double'
         frequencies : ndarray
-            shape=(ir_grid_points, 6), dtype='double'
+            shape=(ir_grid_points, num_band), dtype='double'
         bz_grid : BZGrid
         ir_grid_points : ndarray
             Ir-grid point indices in GR-grid.
@@ -67,9 +68,9 @@ class KappaDOS(object):
             self._frequency_points = np.array(
                 frequency_points, dtype='double')
 
+        n_temp, _, _, n_elem = mode_kappa.shape
         self._kdos = np.zeros(
-            (len(mode_kappa), len(self._frequency_points), 2, 6),
-            dtype='double')
+            (n_temp, len(self._frequency_points), 2, n_elem), dtype='double')
 
         if ir_grid_map is None:
             gp2irgp_map = None
@@ -96,20 +97,21 @@ class KappaDOS(object):
             frequency_points : ndarray
                 shape=(sampling_points, ), dtype='double'
             kdos : ndarray
-                shape=(temperatures, sampling_points, 2 (J, I), 6),
+                shape=(temperatures, sampling_points, 2 (J, I), num_elem),
                 dtype='double', order='C'
 
         """
         return self._frequency_points, self._kdos
 
 
-class GammaDOS(object):
-    """Class to calculate Gamma spectram."""
+class GammaDOSsmearing(object):
+    """Class to calculate Gamma spectram by smearing method."""
 
     def __init__(self,
                  gamma,
                  frequencies,
                  ir_grid_weights,
+                 sigma=None,
                  num_fpoints=200):
         """Init method."""
         self._gamma = gamma
@@ -119,6 +121,13 @@ class GammaDOS(object):
         self._set_frequency_points()
         self._gdos = np.zeros(
             (len(gamma), len(self._frequency_points), 2), dtype='double')
+        if sigma is None:
+            self._sigma = (max(self._frequency_points) -
+                           min(self._frequency_points)) / 100
+        else:
+            self._sigma = 0.1
+        self._smearing_function = NormalDistribution(self._sigma)
+        self._run_smearing_method()
 
     def get_gdos(self):
         """Return Gamma spectram."""
@@ -131,30 +140,6 @@ class GammaDOS(object):
                                              max_freq,
                                              self._num_fpoints)
 
-
-class GammaDOSsmearing(GammaDOS):
-    """Class to calculate Gamma spectram by smearing method."""
-
-    def __init__(self,
-                 gamma,
-                 frequencies,
-                 ir_grid_weights,
-                 sigma=None,
-                 num_fpoints=200):
-        """Init method."""
-        GammaDOS.__init__(self,
-                          gamma,
-                          frequencies,
-                          ir_grid_weights,
-                          num_fpoints=num_fpoints)
-        if sigma is None:
-            self._sigma = (max(self._frequency_points) -
-                           min(self._frequency_points)) / 100
-        else:
-            self._sigma = 0.1
-        self._smearing_function = NormalDistribution(self._sigma)
-        self._run_smearing_method()
-
     def _run_smearing_method(self):
         self._dos = []
         num_gp = np.sum(self._ir_grid_weights)
@@ -163,55 +148,6 @@ class GammaDOSsmearing(GammaDOS):
             for j, g_t in enumerate(self._gamma):
                 self._gdos[j, i, 1] = np.sum(np.dot(self._ir_grid_weights,
                                                     dos * g_t)) / num_gp
-
-
-class GammaDOStetrahedron(GammaDOS):
-    """Class to calculate Gamma spectram by tetrahedron method."""
-
-    def __init__(self,
-                 gamma,
-                 cell,
-                 frequencies,
-                 mesh,
-                 grid_address,
-                 ir_grid_map,
-                 ir_grid_points,
-                 ir_grid_weights,
-                 num_fpoints=200):
-        """Init method."""
-        GammaDOS.__init__(self,
-                          gamma,
-                          frequencies,
-                          ir_grid_weights,
-                          num_fpoints=num_fpoints)
-        self._cell = cell
-        self._mesh = mesh
-        self._grid_address = grid_address
-        self._ir_grid_map = ir_grid_map
-        self._ir_grid_points = ir_grid_points
-
-        self._set_tetrahedron_method()
-        self._run_tetrahedron_method()
-
-    def _set_tetrahedron_method(self):
-        self._tetrahedron_mesh = TetrahedronMesh(
-            self._cell,
-            self._frequencies,
-            self._mesh,
-            self._grid_address,
-            self._ir_grid_map,
-            self._ir_grid_points)
-
-    def _run_tetrahedron_method(self):
-        thm = self._tetrahedron_mesh
-        for j, value in enumerate(('J', 'I')):
-            thm.set(value=value, frequency_points=self._frequency_points)
-            for i, iw in enumerate(thm):
-                # gdos[temp, freq_points, IJ]
-                # iw[freq_points, band]
-                # gamma[temp, ir_gp, band]
-                self._gdos[:, :, j] += np.dot(
-                    self._gamma[:, i] * self._ir_grid_weights[i], iw.T)
 
 
 def _show_tensor(kdos, temperatures, sampling_points, args):
@@ -241,7 +177,7 @@ def _show_scalar(gdos, temperatures, sampling_points, args):
     else:
         for i, gdos_t in enumerate(gdos):
             print("# %d K" % temperatures[i])
-            for f, g in zip(sampling_points, gdos_t):
+            for f, g in zip(sampling_points[i], gdos_t):
                 print("%f %f %f" % (f, g[0], g[1]))
             print('')
             print('')
@@ -555,7 +491,7 @@ def main():
     """Calculate kappa spectrum."""
     args = _get_parser()
     cell, f_kappa = _read_files(args)
-    mesh, temperatures, weights = _get_init_params(args, f_kappa)
+    mesh, temperatures, ir_weights = _get_init_params(args, f_kappa)
     primitive_matrix = np.reshape(
         [fracval(x) for x in args.primitive_matrix.split()], (3, 3))
     primitive = get_primitive(cell, primitive_matrix)
@@ -567,12 +503,12 @@ def main():
                      is_dense_gp_map=False)
     grid_address = bz_grid.addresses
 
-    if args.no_kappa_stars or (weights == 1).all():
+    if args.no_kappa_stars or (ir_weights == 1).all():
         ir_grid_points = np.arange(np.prod(mesh), dtype='int_')
         ir_grid_map = np.arange(np.prod(mesh), dtype='int_')
     else:
         ir_grid_points, ir_grid_map = _get_grid_symmetry(
-            bz_grid, weights, f_kappa['qpoint'][:])
+            bz_grid, ir_weights, f_kappa['qpoint'][:])
 
     ################
     # Set property #
@@ -622,25 +558,21 @@ def main():
             mode_prop_dos = GammaDOSsmearing(
                 mode_prop,
                 frequencies,
-                weights,
+                ir_weights,
                 num_fpoints=args.num_sampling_points)
             sampling_points, gdos = mode_prop_dos.get_gdos()
+            sampling_points = np.tile(sampling_points, (len(gdos), 1))
+            _show_scalar(gdos[:, :, :], temperatures, sampling_points, args)
         else:
-            mode_prop_dos = GammaDOStetrahedron(
-                mode_prop,
-                primitive,
-                frequencies,
-                mesh,
-                grid_address,
-                ir_grid_map,
-                ir_grid_points,
-                weights,
-                num_fpoints=args.num_sampling_points)
-            sampling_points, gdos = mode_prop_dos.get_gdos()
-            for i, gdos_t in enumerate(gdos):
-                total = np.dot(weights, mode_prop[i]).sum() / weights.sum()
-                assert np.isclose(gdos_t[-1][0], total)
-        _show_scalar(gdos, temperatures, sampling_points, args)
+            for i, w in enumerate(ir_weights):
+                mode_prop[:, i, :] *= w
+            kdos, sampling_points = _run_prop_dos(frequencies,
+                                                  mode_prop[:, :, :, None],
+                                                  ir_grid_map,
+                                                  ir_grid_points,
+                                                  args.num_sampling_points,
+                                                  bz_grid)
+            _show_scalar(kdos[:, :, :, 0], temperatures, sampling_points, args)
     else:
         if args.mfp:
             if 'mean_free_path' in f_kappa:

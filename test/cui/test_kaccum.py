@@ -1,5 +1,6 @@
 import numpy as np
-from phono3py.cui.kaccum import KappaDOS, _get_mfp
+from phono3py.cui.kaccum import (
+    KappaDOS, _get_mfp)
 from phono3py.phonon.grid import get_ir_grid_points
 
 kappados_si = [-0.0000002, 0.0000000, 0.0000000,
@@ -22,6 +23,16 @@ mfpdos_si = [0.0000000, 0.0000000, 0.0000000,
              5647.6624690, 78.2273252, 0.0035758,
              6454.4713932, 80.5493065, 0.0020836,
              7261.2803173, 81.4303646, 0.0000000]
+gammados_si = [-0.0000002, 0.0000000, 0.0000000,
+               1.6966400, 0.0000063, 0.0000149,
+               3.3932803, 0.0004133, 0.0012312,
+               5.0899206, 0.0071709, 0.0057356,
+               6.7865608, 0.0099381, 0.0006492,
+               8.4832011, 0.0133390, 0.0049604,
+               10.1798413, 0.0394030, 0.0198106,
+               11.8764816, 0.0495160, 0.0044113,
+               13.5731219, 0.0560223, 0.0050103,
+               15.2697621, 0.1300596, 0.0000000]
 kappados_nacl = [-0.0000002, 0.0000000, 0.0000000,
                  0.8051732, 0.0366488, 0.1820668,
                  1.6103466, 0.7748514, 1.5172957,
@@ -42,6 +53,16 @@ mfpdos_nacl = [0.0000000, 0.0000000, 0.0000000,
                822.4250321, 8.0024702, 0.0004844,
                939.9143223, 8.0375053, 0.0001382,
                1057.4036126, 8.0430831, 0.0000000]
+gammados_nacl = [-0.0000002, 0.0000000, 0.0000000,
+                 0.8051732, 0.0000822, 0.0004081,
+                 1.6103466, 0.0018975, 0.0053389,
+                 2.4155199, 0.0114668, 0.0182495,
+                 3.2206933, 0.0353621, 0.0329440,
+                 4.0258667, 0.0604996, 0.1138884,
+                 4.8310401, 0.1038315, 0.0716216,
+                 5.6362134, 0.1481243, 0.0468421,
+                 6.4413868, 0.1982823, 0.0662494,
+                 7.2465602, 0.2429551, 0.0000000]
 
 
 def test_kappados_si(si_pbesol):
@@ -49,13 +70,21 @@ def test_kappados_si(si_pbesol):
     ph3.mesh_numbers = [7, 7, 7]
     ph3.init_phph_interaction()
     ph3.run_thermal_conductivity(temperatures=[300, ])
+    tc = ph3.thermal_conductivity
     freq_points_in = np.array(kappados_si).reshape(-1, 3)[:, 0]
     freq_points, kdos = _calculate_kappados(
-        ph3, freq_points=freq_points_in)
+        ph3, tc.mode_kappa[0], freq_points=freq_points_in)
     # for f, (jval, ival) in zip(freq_points, kdos):
     #     print("%.7f, %.7f, %.7f," % (f, jval, ival))
     np.testing.assert_allclose(
         kappados_si,
+        np.vstack((freq_points, kdos.T)).T.ravel(),
+        rtol=0, atol=0.5)
+
+    freq_points, kdos = _calculate_kappados(
+        ph3, tc.gamma[0, :, :, :, None], freq_points=freq_points_in)
+    np.testing.assert_allclose(
+        gammados_si,
         np.vstack((freq_points, kdos.T)).T.ravel(),
         rtol=0, atol=0.5)
 
@@ -74,13 +103,21 @@ def test_kappados_nacl(nacl_pbe):
     ph3.mesh_numbers = [7, 7, 7]
     ph3.init_phph_interaction()
     ph3.run_thermal_conductivity(temperatures=[300, ])
+    tc = ph3.thermal_conductivity
     freq_points_in = np.array(kappados_nacl).reshape(-1, 3)[:, 0]
     freq_points, kdos = _calculate_kappados(
-        ph3, freq_points=freq_points_in)
+        ph3, tc.mode_kappa[0], freq_points=freq_points_in)
     # for f, (jval, ival) in zip(freq_points, kdos):
     #     print("%.7f, %.7f, %.7f," % (f, jval, ival))
     np.testing.assert_allclose(
         kappados_nacl,
+        np.vstack((freq_points, kdos.T)).T.ravel(),
+        rtol=0, atol=0.5)
+
+    freq_points, kdos = _calculate_kappados(
+        ph3, tc.gamma[0, :, :, :, None], freq_points=freq_points_in)
+    np.testing.assert_allclose(
+        gammados_nacl,
         np.vstack((freq_points, kdos.T)).T.ravel(),
         rtol=0, atol=0.5)
 
@@ -94,12 +131,12 @@ def test_kappados_nacl(nacl_pbe):
         rtol=0, atol=0.5)
 
 
-def _calculate_kappados(ph3, freq_points=None):
+def _calculate_kappados(ph3, mode_prop, freq_points=None):
     tc = ph3.thermal_conductivity
     bz_grid = ph3.grid
     frequencies, _, _ = ph3.get_phonon_data()
     kappados = KappaDOS(
-        tc.mode_kappa[0],
+        mode_prop,
         frequencies,
         bz_grid,
         bz_grid.bzg2grg[tc.grid_points],
@@ -109,7 +146,7 @@ def _calculate_kappados(ph3, freq_points=None):
 
     ir_grid_points, _, ir_grid_map = get_ir_grid_points(bz_grid)
     kappados = KappaDOS(
-        tc.mode_kappa[0],
+        mode_prop,
         tc.frequencies,
         bz_grid,
         ir_grid_points,
@@ -139,3 +176,33 @@ def _calculate_mfpdos(ph3, mfp_points=None):
     freq_points, kdos = mfpdos.get_kdos()
 
     return freq_points, kdos[0, :, :, 0]
+
+
+def _test_gammados_si(si_pbesol):
+    _calculate_legacy_gammados(si_pbesol)
+
+
+def _test_gammados_nacl(nacl_pbe):
+    _calculate_legacy_gammados(nacl_pbe)
+
+
+def _calculate_legacy_gammados(ph3):
+    ph3.mesh_numbers = [7, 7, 7]
+    ph3.init_phph_interaction()
+    ph3.run_thermal_conductivity(temperatures=[300, ])
+    tc = ph3.thermal_conductivity
+    bz_grid = ph3.grid
+    ir_grid_points, ir_weights, ir_grid_map = get_ir_grid_points(bz_grid)
+    gamma_dos = GammaDOStetrahedron(
+        tc.gamma[0],
+        ph3.primitive,
+        tc.frequencies,
+        tc.mesh_numbers,
+        bz_grid.addresses,
+        ir_grid_map,
+        ir_grid_points,
+        ir_weights,
+        num_fpoints=10)
+    freq_points, gdos = gamma_dos.get_gdos()
+    for f, g in zip(freq_points, gdos[0, :, :]):
+        print("%.7f, %.7f, %.7f," % (f, g[0], g[1]))
