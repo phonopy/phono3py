@@ -304,37 +304,6 @@ def _get_grid_symmetry(bz_grid, weights, qpoints):
     return ir_grid_points, ir_grid_map
 
 
-def _get_gv_by_gv(gv,
-                  symmetry,
-                  primitive,
-                  mesh,
-                  grid_points,
-                  grid_address):
-    point_operations = symmetry.reciprocal_operations
-    rec_lat = np.linalg.inv(primitive.cell)
-    rotations_cartesian = np.array(
-        [similarity_transformation(rec_lat, r)
-         for r in point_operations], dtype='double')
-
-    num_band = gv.shape[1]
-    gv_sum2 = np.zeros((gv.shape[0], num_band, 6), dtype='double')
-    for i, gp in enumerate(grid_points):
-        rotation_map = get_grid_points_by_rotations(
-            grid_address[gp],
-            point_operations,
-            mesh)
-        gv_by_gv = np.zeros((num_band, 3, 3), dtype='double')
-        for r in rotations_cartesian:
-            gvs_rot = np.dot(gv[i], r.T)
-            gv_by_gv += [np.outer(r_gv, r_gv) for r_gv in gvs_rot]
-        gv_by_gv /= len(rotation_map) // len(np.unique(rotation_map))
-        for j, vxv in enumerate(
-                ([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])):
-            gv_sum2[i, :, j] = gv_by_gv[:, vxv[0], vxv[1]]
-
-    return gv_sum2
-
-
 def _get_calculator(args):
     """Return calculator name."""
     interface_mode = None
@@ -496,44 +465,16 @@ def main():
         [fracval(x) for x in args.primitive_matrix.split()], (3, 3))
     primitive = get_primitive(cell, primitive_matrix)
     primitive_symmetry = Symmetry(primitive)
-
     bz_grid = BZGrid(mesh,
                      lattice=primitive.cell,
                      symmetry_dataset=primitive_symmetry.dataset,
                      is_dense_gp_map=False)
-    grid_address = bz_grid.addresses
-
     if args.no_kappa_stars or (ir_weights == 1).all():
         ir_grid_points = np.arange(np.prod(mesh), dtype='int_')
         ir_grid_map = np.arange(np.prod(mesh), dtype='int_')
     else:
         ir_grid_points, ir_grid_map = _get_grid_symmetry(
             bz_grid, ir_weights, f_kappa['qpoint'][:])
-
-    ################
-    # Set property #
-    ################
-    if args.gv:
-        if 'gv_by_gv' in f_kappa:
-            gv_sum2 = f_kappa['gv_by_gv'][:]
-        else:  # For backward compatibility. This will be removed someday.
-            gv = f_kappa['group_velocity'][:]
-            gv_sum2 = _get_gv_by_gv(gv,
-                                    primitive_symmetry,
-                                    primitive,
-                                    mesh,
-                                    ir_grid_points,
-                                    grid_address)
-
-        # gv x gv is divied by primitive cell volume.
-        unit_conversion = primitive.volume
-        mode_prop = gv_sum2.reshape((1,) + gv_sum2.shape) / unit_conversion
-    else:
-        if 'mode_kappa' in f_kappa:
-            mode_prop = f_kappa['mode_kappa'][:]
-        else:
-            mode_prop = None
-
     frequencies = f_kappa['frequency'][:]
     conditions = frequencies > 0
     if np.logical_not(conditions).sum() > 3:
@@ -541,9 +482,7 @@ def main():
                          "They are set to be zero.\n")
         frequencies = np.where(conditions, frequencies, 0)
 
-    #######
-    # Run #
-    #######
+    # Run for scaler
     if (args.gamma or args.gruneisen or args.pqj or
         args.cv or args.tau or args.gv_norm or args.dos): # noqa E129
 
@@ -573,7 +512,16 @@ def main():
                                                   args.num_sampling_points,
                                                   bz_grid)
             _show_scalar(kdos[:, :, :, 0], temperatures, sampling_points, args)
-    else:
+
+    else:  # Run for tensor
+        if args.gv:
+            gv_sum2 = f_kappa['gv_by_gv'][:]
+            # gv x gv is divied by primitive cell volume.
+            unit_conversion = primitive.volume
+            mode_prop = gv_sum2.reshape((1,) + gv_sum2.shape) / unit_conversion
+        else:
+            mode_prop = f_kappa['mode_kappa'][:]
+
         if args.mfp:
             if 'mean_free_path' in f_kappa:
                 mfp = f_kappa['mean_free_path'][:]
