@@ -6,24 +6,12 @@ import h5py
 from phonopy.cui.settings import fracval
 from phonopy.structure.cells import get_primitive
 from phonopy.structure.symmetry import Symmetry
-from phonopy.structure.tetrahedron_method import TetrahedronMethod
-from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.interface.calculator import read_crystal_structure
 from phonopy.phonon.dos import NormalDistribution
-from phono3py.phonon.grid import (
-    BZGrid, get_ir_grid_points, get_grid_points_by_rotations)
+from phono3py.phonon.grid import BZGrid, get_ir_grid_points
 from phono3py.other.tetrahedron_method import get_integration_weights
 
 epsilon = 1.0e-8
-
-
-def _get_gp2irgp_map(bz_grid, ir_grid_map):
-    unique_gps = np.unique(ir_grid_map)
-    gp_map = {j: i for i, j in enumerate(unique_gps)}
-    gp2irgp_map = np.array(
-        [gp_map[ir_grid_map[grgp]] for grgp in bz_grid.bzg2grg],
-        dtype='int_')
-    return gp2irgp_map
 
 
 class KappaDOS(object):
@@ -75,7 +63,7 @@ class KappaDOS(object):
         if ir_grid_map is None:
             gp2irgp_map = None
         else:
-            gp2irgp_map = _get_gp2irgp_map(bz_grid, ir_grid_map)
+            gp2irgp_map = self._get_gp2irgp_map(bz_grid, ir_grid_map)
         for j, function in enumerate(('J', 'I')):
             iweights = get_integration_weights(self._frequency_points,
                                                frequencies,
@@ -102,6 +90,14 @@ class KappaDOS(object):
 
         """
         return self._frequency_points, self._kdos
+
+    def _get_gp2irgp_map(self, bz_grid, ir_grid_map):
+        unique_gps = np.unique(ir_grid_map)
+        gp_map = {j: i for i, j in enumerate(unique_gps)}
+        gp2irgp_map = np.array(
+            [gp_map[ir_grid_map[grgp]] for grgp in bz_grid.bzg2grg],
+            dtype='int_')
+        return gp2irgp_map
 
 
 class GammaDOSsmearing(object):
@@ -255,33 +251,6 @@ def _run_mfp_dos(mean_freepath,
     return kdos, sampling_points
 
 
-def _get_integration_weights(grid_points,
-                             bz_grid,
-                             frequencies,
-                             freq_points,
-                             function='I'):
-    import phono3py._phono3py as phono3c
-    thm = TetrahedronMethod(bz_grid.microzone_lattice)
-    num_grid_points = len(grid_points)
-    num_band = frequencies.shape[1]
-    integration_weights = np.zeros(
-        (num_grid_points, len(freq_points), num_band),
-        dtype='double', order='C')
-    phono3c.integration_weights_at_grid_points(
-        integration_weights,
-        np.array(freq_points, dtype='double'),
-        np.array(np.dot(thm.get_tetrahedra(), bz_grid.P.T),
-                 dtype='int_', order='C'),
-        bz_grid.D_diag,
-        grid_points,
-        frequencies,
-        bz_grid.addresses,
-        bz_grid.gp_map,
-        bz_grid.is_dense_gp_map * 1 + 1,
-        function)
-    return integration_weights
-
-
 def _get_grid_symmetry(bz_grid, weights, qpoints):
     (ir_grid_points,
      weights_for_check,
@@ -343,7 +312,7 @@ def _get_mode_property(args, f_kappa):
     elif args.tau:
         g = f_kappa['gamma'][:]
         g = np.where(g > 0, g, -1)
-        mode_prop = np.where(g > 0, 1.0 / (2 * 2 * np.pi * g), 0)  # tau
+        mode_prop = np.where(g > 0, 1.0 / (2 * 2 * np.pi * g), 0)
     elif args.gv_norm:
         mode_prop = np.sqrt(
             (f_kappa['group_velocity'][:, :, :] ** 2).sum(axis=2))
@@ -362,31 +331,12 @@ def _get_mode_property(args, f_kappa):
     return mode_prop
 
 
-def _get_init_params(args, f_kappa):
-    """Read parameter data from hdf5 file object."""
-    if 'mesh' in f_kappa:
-        mesh = np.array(f_kappa['mesh'][:], dtype='int_')
-    else:
-        mesh = np.array([int(x) for x in args.mesh.split()], dtype='int_')
-
-    if 'temperature' in f_kappa:
-        temperatures = f_kappa['temperature'][:]
-    else:
-        temperatures = None
-    weights = f_kappa['weight'][:]
-
-    return mesh, temperatures, weights
-
-
 def _get_parser():
     """Return args of ArgumentParser."""
     parser = argparse.ArgumentParser(description="Show unit cell volume")
     parser.add_argument(
         "--pa", dest="primitive_matrix", default="1 0 0 0 1 0 0 0 1",
         help="Primitive matrix")
-    parser.add_argument(
-        "--mesh", dest="mesh", default="1 1 1",
-        help="Mesh numbers")
     parser.add_argument(
         "-c", "--cell", dest="cell_filename",
         help="Unit cell filename")
@@ -460,7 +410,9 @@ def main():
     """Calculate kappa spectrum."""
     args = _get_parser()
     cell, f_kappa = _read_files(args)
-    mesh, temperatures, ir_weights = _get_init_params(args, f_kappa)
+    mesh = np.array(f_kappa['mesh'][:], dtype='int_')
+    temperatures = f_kappa['temperature'][:]
+    ir_weights = f_kappa['weight'][:]
     primitive_matrix = np.reshape(
         [fracval(x) for x in args.primitive_matrix.split()], (3, 3))
     primitive = get_primitive(cell, primitive_matrix)
