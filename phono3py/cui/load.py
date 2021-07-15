@@ -138,12 +138,15 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         dtype=int
     primitive_matrix : array_like or str, optional
         Primitive matrix multiplied to input cell basis vectors. Default is
-        the identity matrix. Default is None, which is equivalent to 'auto'.
-        shape=(3, 3), dtype=float.
+        the identity matrix.
+        When given as array_like, shape=(3, 3), dtype=float.
         When 'F', 'I', 'A', 'C', or 'R' is given instead of a 3x3 matrix,
         the primitive matrix defined at
         https://spglib.github.io/spglib/definition.html
         is used.
+        When 'auto' is given, the centring type ('F', 'I', 'A', 'C', 'R', or
+        primitive 'P') is automatically chosen.
+        Default is 'auto'.
     phonon_supercell_matrix : array_like, optional
         Supercell matrix used for fc2. In phono3py, supercell matrix for fc3
         and fc2 can be different to support longer range interaction of fc2
@@ -233,11 +236,10 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         Verbosity control. Default is 0.
 
     """
-
     if (supercell is not None or
         supercell_filename is not None or
         unitcell is not None or
-        unitcell_filename is not None):
+        unitcell_filename is not None):  # noqa E129
         cell, smat, pmat = load_helper.get_cell_settings(
             supercell_matrix=supercell_matrix,
             primitive_matrix=primitive_matrix,
@@ -336,6 +338,7 @@ def set_dataset_and_force_constants(
         is_compact_fc=False,
         cutoff_pair_distance=None,
         log_level=0):
+    """Set displacements, forces, and create force constants."""
     read_fc = {'fc2': False, 'fc3': False}
     p2s_map = ph3py.primitive.p2s_map
     if fc3_filename is not None:

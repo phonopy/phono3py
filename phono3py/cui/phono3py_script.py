@@ -596,7 +596,6 @@ def init_phono3py(settings,
         cell_info['supercell_matrix'],
         primitive_matrix=cell_info['primitive_matrix'],
         phonon_supercell_matrix=cell_info['phonon_supercell_matrix'],
-        masses=settings.masses,
         band_indices=settings.band_indices,
         sigmas=updated_settings['sigmas'],
         sigma_cutoff=settings.sigma_cutoff_width,
@@ -610,6 +609,8 @@ def init_phono3py(settings,
         calculator=interface_mode,
         log_level=log_level,
         lapack_zheev_uplo=settings.lapack_zheev_uplo)
+    phono3py.masses = settings.masses
+    phono3py.band_indices = settings.band_indices
 
     check_supercell_in_yaml(cell_info, phono3py, log_level)
 
