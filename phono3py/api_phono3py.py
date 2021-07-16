@@ -294,7 +294,7 @@ class Phono3py(object):
         if symmetrize_fc3q is not None:
             warnings.warn(
                 "Phono3py init parameter of symmetrize_fc3q is deprecated. "
-                "Set this at Phono3py.init_phph_interaction()."
+                "Set this at Phono3py.init_phph_interaction().",
                 DeprecationWarning)
             self._symmetrize_fc3q = symmetrize_fc3q
         else:

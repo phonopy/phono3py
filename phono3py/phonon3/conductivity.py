@@ -63,9 +63,9 @@ def write_pp(conductivity,
              i,
              filename=None,
              compression="gzip"):
-    grid_point = conductivity.get_grid_points()[i]
-    sigmas = conductivity.get_sigmas()
-    sigma_cutoff = conductivity.get_sigma_cutoff_width()
+    grid_point = conductivity.grid_points[i]
+    sigmas = conductivity.sigmas
+    sigma_cutoff = conductivity.sigma_cutoff_width
     mesh = conductivity.mesh_numbers
     triplets, weights, _, _ = pp.get_triplets_at_q()
     all_triplets = get_all_triplets(grid_point, pp.bz_grid)

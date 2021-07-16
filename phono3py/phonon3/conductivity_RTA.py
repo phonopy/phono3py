@@ -1,3 +1,4 @@
+"""Lattice thermal conductivity calculation with RTA."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -189,17 +190,18 @@ def _write_gamma_detail(br, interaction, i, compression="gzip", filename=None,
 
 def _write_gamma(br, interaction, i, compression="gzip", filename=None,
                  verbose=True):
-    grid_points = br.get_grid_points()
-    group_velocities = br.get_group_velocities()
-    gv_by_gv = br.get_gv_by_gv()
-    mode_heat_capacities = br.get_mode_heat_capacities()
-    ave_pp = br.get_averaged_pp_interaction()
-    mesh = br.get_mesh_numbers()
-    temperatures = br.get_temperatures()
-    gamma = br.get_gamma()
-    gamma_isotope = br.get_gamma_isotope()
-    sigmas = br.get_sigmas()
-    sigma_cutoff = br.get_sigma_cutoff_width()
+    """Write mode kappa related properties into a hdf5 file."""
+    grid_points = br.grid_points
+    group_velocities = br.group_velocities
+    gv_by_gv = br.gv_by_gv
+    mode_heat_capacities = br.mode_heat_capacities
+    ave_pp = br.averaged_pp_interaction
+    mesh = br.mesh_numbers
+    temperatures = br.temperatures
+    gamma = br.gamma
+    gamma_isotope = br.gamma_isotope
+    sigmas = br.sigmas
+    sigma_cutoff = br.sigma_cutoff_width
     volume = interaction.primitive.volume
     gamma_N, gamma_U = br.get_gamma_N_U()
 
@@ -314,22 +316,22 @@ def _show_kappa(br, log_level):
 
 
 def _write_kappa(br, volume, compression="gzip", filename=None, log_level=0):
-    temperatures = br.get_temperatures()
-    sigmas = br.get_sigmas()
-    sigma_cutoff = br.get_sigma_cutoff_width()
-    gamma = br.get_gamma()
-    gamma_isotope = br.get_gamma_isotope()
+    temperatures = br.temperatures
+    sigmas = br.sigmas
+    sigma_cutoff = br.sigma_cutoff_width
+    gamma = br.gamma
+    gamma_isotope = br.gamma_isotope
     gamma_N, gamma_U = br.get_gamma_N_U()
-    mesh = br.get_mesh_numbers()
-    frequencies = br.get_frequencies()
-    gv = br.get_group_velocities()
-    gv_by_gv = br.get_gv_by_gv()
-    mode_cv = br.get_mode_heat_capacities()
-    ave_pp = br.get_averaged_pp_interaction()
-    qpoints = br.get_qpoints()
-    weights = br.get_grid_weights()
-    kappa = br.get_kappa()
-    mode_kappa = br.get_mode_kappa()
+    mesh = br.mesh_numbers
+    frequencies = br.frequencies
+    gv = br.group_velocities
+    gv_by_gv = br.gv_by_gv
+    mode_cv = br.mode_heat_capacities
+    ave_pp = br.averaged_pp_interaction
+    qpoints = br.qpoints
+    weights = br.grid_weights
+    kappa = br.kappa
+    mode_kappa = br.mode_kappa
 
     for i, sigma in enumerate(sigmas):
         kappa_at_sigma = kappa[i]
@@ -467,6 +469,8 @@ def _set_gamma_from_file(br, filename=None, verbose=True):
 
 
 class Conductivity_RTA(Conductivity):
+    """Lattice thermal conductivity calculation with RTA."""
+
     def __init__(self,
                  interaction,
                  grid_points=None,
@@ -488,6 +492,7 @@ class Conductivity_RTA(Conductivity):
                  is_gamma_detail=False,
                  is_frequency_shift_by_bubble=False,
                  log_level=0):
+        """Init method."""
         self._pp = None
         self._temperatures = None
         self._sigmas = None
@@ -561,6 +566,7 @@ class Conductivity_RTA(Conductivity):
             self._allocate_values()
 
     def set_kappa_at_sigmas(self):
+        """Calculate kappa from ph-ph interaction results."""
         num_band = len(self._primitive) * 3
         for i, grid_point in enumerate(self._grid_points):
             cv = self._cv[:, i, :]
@@ -571,16 +577,16 @@ class Conductivity_RTA(Conductivity):
             for j in range(len(self._sigmas)):
                 for k in range(len(self._temperatures)):
                     g_sum = self._get_main_diagonal(i, j, k)
-                    for l in range(num_band):
-                        if frequencies[l] < self._cutoff_frequency:
+                    for ll in range(num_band):
+                        if frequencies[ll] < self._cutoff_frequency:
                             self._num_ignored_phonon_modes[j, k] += 1
                             continue
 
                         old_settings = np.seterr(all='raise')
                         try:
-                            self._mode_kappa[j, k, i, l] = (
-                                self._gv_sum2[i, l] * cv[k, l] /
-                                (g_sum[l] * 2) * self._conversion_factor)
+                            self._mode_kappa[j, k, i, ll] = (
+                                self._gv_sum2[i, ll] * cv[k, ll] /
+                                (g_sum[ll] * 2) * self._conversion_factor)
                         except FloatingPointError:
                             # supposed that g is almost 0 and |gv|=0
                             pass
@@ -589,7 +595,7 @@ class Conductivity_RTA(Conductivity):
                             print(" Unexpected physical condition of ph-ph "
                                   "interaction calculation was found.")
                             print(" g=%f at gp=%d, band=%d, freq=%f" %
-                                  (g_sum[l], gp, l + 1, frequencies[l]))
+                                  (g_sum[ll], gp, ll + 1, frequencies[ll]))
                             print("=" * 61)
                         np.seterr(**old_settings)
 
@@ -597,16 +603,20 @@ class Conductivity_RTA(Conductivity):
         self._kappa = self._mode_kappa.sum(axis=2).sum(axis=2) / N
 
     def get_gamma_N_U(self):
+        """Return N and U parts of gamma."""
         return (self._gamma_N, self._gamma_U)
 
     def set_gamma_N_U(self, gamma_N, gamma_U):
+        """Set N and U parts of gamma."""
         self._gamma_N = gamma_N
         self._gamma_U = gamma_U
 
     def get_gamma_detail_at_q(self):
+        """Return contribution of each triplet to gamma at current q-point."""
         return self._gamma_detail_at_q
 
     def get_number_of_ignored_phonon_modes(self):
+        """Return number of ignored phonon modes."""
         return self._num_ignored_phonon_modes
 
     def get_number_of_sampling_grid_points(self):

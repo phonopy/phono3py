@@ -597,13 +597,10 @@ def init_phono3py(settings,
         primitive_matrix=cell_info['primitive_matrix'],
         phonon_supercell_matrix=cell_info['phonon_supercell_matrix'],
         band_indices=settings.band_indices,
-        sigmas=updated_settings['sigmas'],
-        sigma_cutoff=settings.sigma_cutoff_width,
         cutoff_frequency=updated_settings['cutoff_frequency'],
         frequency_factor_to_THz=updated_settings['frequency_factor_to_THz'],
         is_symmetry=settings.is_symmetry,
         is_mesh_symmetry=settings.is_mesh_symmetry,
-        symmetrize_fc3q=settings.is_symmetrize_fc3_q,
         is_dense_gp_map=settings.is_dense_gp_map,
         symprec=symprec,
         calculator=interface_mode,
@@ -611,6 +608,8 @@ def init_phono3py(settings,
         lapack_zheev_uplo=settings.lapack_zheev_uplo)
     phono3py.masses = settings.masses
     phono3py.band_indices = settings.band_indices
+    phono3py.sigmas = updated_settings['sigmas']
+    phono3py.sigma_cutoff = settings.sigma_cutoff_width
 
     check_supercell_in_yaml(cell_info, phono3py, log_level)
 
@@ -848,7 +847,8 @@ def init_phph_interaction(phono3py,
     phono3py.init_phph_interaction(
         nac_q_direction=settings.nac_q_direction,
         constant_averaged_interaction=ave_pp,
-        frequency_scale_factor=updated_settings['frequency_scale_factor'])
+        frequency_scale_factor=updated_settings['frequency_scale_factor'],
+        symmetrize_fc3q=settings.is_symmetrize_fc3_q)
 
     if not settings.read_phonon:
         if log_level:
