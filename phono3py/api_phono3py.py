@@ -134,7 +134,7 @@ class Phono3py(object):
                  symprec=1e-5,
                  calculator=None,
                  log_level=0,
-                 lapack_zheev_uplo='L'):
+                 lapack_zheev_uplo=None):
         """Init method.
 
         Parameters
@@ -182,17 +182,24 @@ class Phono3py(object):
             Use crystal symmetry in reciprocal space grid handling when True.
             Default is True.
         symmetrize_fc3q : Deprecated.
-            Use Phono3py.sigma_cutoff attribute after instanciation.
+            See Phono3py.init_phph_interaction().
+        is_dense_gp_map : bool, optional
+            Use dense format of BZ grid system. Default is False.
+        symprec : float, optional
+            Tolerance used to find crystal symmetry. Default is 1e-5.
         calculator : str, optional.
             Calculator used for computing forces. This is used to switch the set
             of physical units. Default is None, which is equivalent to "vasp".
+        log_level : int, optional
+            Verbosity control. Default is 0. This can be 0, 1, or 2.
+        lapack_zheev_uplo : Deprecated.
+            See Phono3py.init_phph_interaction().
 
         """
         self._symprec = symprec
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._is_symmetry = is_symmetry
         self._is_mesh_symmetry = is_mesh_symmetry
-        self._lapack_zheev_uplo = lapack_zheev_uplo
         self._is_dense_gp_map = is_dense_gp_map
         self._cutoff_frequency = cutoff_frequency
         self._calculator = calculator
@@ -294,11 +301,20 @@ class Phono3py(object):
         if symmetrize_fc3q is not None:
             warnings.warn(
                 "Phono3py init parameter of symmetrize_fc3q is deprecated. "
-                "Set this at Phono3py.init_phph_interaction()."
+                "Set this at Phono3py.init_phph_interaction().",
                 DeprecationWarning)
             self._symmetrize_fc3q = symmetrize_fc3q
         else:
             self._symmetrize_fc3q = None
+
+        if lapack_zheev_uplo is not None:
+            warnings.warn(
+                "Phono3py init parameter of lapack_zheev_uplo is deprecated. "
+                "Set this at Phono3py.init_phph_interaction().",
+                DeprecationWarning)
+            self._lapack_zheev_uplo = lapack_zheev_uplo
+        else:
+            self._lapack_zheev_uplo = None
 
     @property
     def version(self):
@@ -1167,7 +1183,8 @@ class Phono3py(object):
                               nac_q_direction=None,
                               constant_averaged_interaction=None,
                               frequency_scale_factor=None,
-                              symmetrize_fc3q=False):
+                              symmetrize_fc3q=False,
+                              lapack_zheev_uplo='L'):
         """Initialize ph-ph interaction calculation.
 
         This method creates an instance of Interaction class, which
@@ -1199,6 +1216,9 @@ class Phono3py(object):
         symmetrize_fc3q : bool, optional
             fc3 in phonon space is symmetrized by permutation symmetry.
             Default is False.
+        lapack_zheev_uplo : str, optional
+            'L' or 'U'. Default is 'L'. This is passed to LAPACK zheev
+            used for phonon solver.
 
         """
         if self.mesh_numbers is None:
@@ -1208,6 +1228,16 @@ class Phono3py(object):
         if self._fc2 is None:
             msg = "Phono3py.fc2 of instance is not found."
             raise RuntimeError(msg)
+
+        if self._symmetrize_fc3q is None:
+            _symmetrize_fc3q = symmetrize_fc3q
+        else:
+            _symmetrize_fc3q = self._symmetrize_fc3q
+
+        if self._lapack_zheev_uplo is None:
+            _lapack_zheev_uplo = lapack_zheev_uplo
+        else:
+            _lapack_zheev_uplo = self._lapack_zheev_uplo
 
         self._interaction = Interaction(
             self._supercell,
@@ -1221,8 +1251,8 @@ class Phono3py(object):
             frequency_scale_factor=frequency_scale_factor,
             cutoff_frequency=self._cutoff_frequency,
             is_mesh_symmetry=self._is_mesh_symmetry,
-            symmetrize_fc3q=symmetrize_fc3q,
-            lapack_zheev_uplo=self._lapack_zheev_uplo)
+            symmetrize_fc3q=_symmetrize_fc3q,
+            lapack_zheev_uplo=_lapack_zheev_uplo)
         self._interaction.set_nac_q_direction(nac_q_direction=nac_q_direction)
         self._init_dynamical_matrix()
 
