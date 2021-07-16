@@ -259,22 +259,22 @@ def _write_kappa(lbte,
                  filename=None,
                  log_level=0):
     temperatures = lbte.temperatures
-    sigmas = lbte.get_sigmas()
-    sigma_cutoff = lbte.get_sigma_cutoff_width()
+    sigmas = lbte.sigmas
+    sigma_cutoff = lbte.sigma_cutoff_width
     mesh = lbte.mesh_numbers
-    weights = lbte.get_grid_weights()
-    frequencies = lbte.get_frequencies()
-    ave_pp = lbte.get_averaged_pp_interaction()
-    qpoints = lbte.get_qpoints()
+    weights = lbte.grid_weights
+    frequencies = lbte.frequencies
+    ave_pp = lbte.averaged_pp_interaction
+    qpoints = lbte.qpoints
     kappa = lbte.kappa
     kappa_RTA = lbte.get_kappa_RTA()
     gamma = lbte.gamma
     gamma_isotope = lbte.gamma_isotope
-    gv = lbte.get_group_velocities()
+    gv = lbte.group_velocities
     f_vector = lbte.get_f_vectors()
-    gv_by_gv = lbte.get_gv_by_gv()
-    mode_cv = lbte.get_mode_heat_capacities()
-    mode_kappa = lbte.get_mode_kappa()
+    gv_by_gv = lbte.gv_by_gv
+    mode_cv = lbte.mode_heat_capacities
+    mode_kappa = lbte.mode_kappa
     mode_kappa_RTA = lbte.get_mode_kappa_RTA()
     mfp = lbte.get_mean_free_path()
 
@@ -285,7 +285,7 @@ def _write_kappa(lbte,
     if is_reducible_collision_matrix:
         frequencies = lbte.get_frequencies_all()
     else:
-        frequencies = lbte.get_frequencies()
+        frequencies = lbte.frequencies
 
     for i, sigma in enumerate(sigmas):
         if gamma_isotope is not None:
