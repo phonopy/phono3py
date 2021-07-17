@@ -38,7 +38,7 @@ import numpy as np
 from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.cells import (
     get_supercell, get_primitive, guess_primitive_matrix,
-    shape_supercell_matrix)
+    shape_supercell_matrix, get_primitive_matrix)
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.dataset import get_displacements_and_forces
 from phonopy.units import VaspToTHz
@@ -209,10 +209,8 @@ class Phono3py(object):
         # Create supercell and primitive cell
         self._unitcell = unitcell
         self._supercell_matrix = shape_supercell_matrix(supercell_matrix)
-        if isinstance(primitive_matrix, str) and primitive_matrix == 'auto':
-            self._primitive_matrix = self._guess_primitive_matrix()
-        else:
-            self._primitive_matrix = primitive_matrix
+        pmat = self._determine_primitive_matrix(primitive_matrix)
+        self._primitive_matrix = pmat
         self._nac_params = None
         if phonon_supercell_matrix is not None:
             self._phonon_supercell_matrix = shape_supercell_matrix(
@@ -2369,8 +2367,13 @@ class Phono3py(object):
         return get_primitive(supercell, t_mat, self._symprec,
                              store_dense_svecs=True)
 
-    def _guess_primitive_matrix(self):
-        return guess_primitive_matrix(self._unitcell, symprec=self._symprec)
+    def _determine_primitive_matrix(self, primitive_matrix):
+        pmat = get_primitive_matrix(primitive_matrix, symprec=self._symprec)
+        if isinstance(pmat, str) and pmat == 'auto':
+            return guess_primitive_matrix(self._unitcell,
+                                          symprec=self._symprec)
+        else:
+            return pmat
 
     def _set_mesh_numbers(self, mesh):
         # initialization related to mesh
