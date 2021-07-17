@@ -728,14 +728,14 @@ def run_gruneisen_then_exit(phono3py, settings, output_filename, log_level):
     else:
         bands = None
 
-    rotations = phono3py.primitive_symmetry.get_pointgroup_operations()
+    rotations = phono3py.primitive_symmetry.pointgroup_operations
     run_gruneisen_parameters(
         phono3py.fc2,
         phono3py.fc3,
         phono3py.supercell,
         phono3py.primitive,
         bands,
-        phono3py.mesh_numbers,
+        settings.mesh_numbers,
         rotations,
         settings.qpoints,
         nac_params=phono3py.nac_params,
@@ -1202,7 +1202,7 @@ def main(**argparse_control):
             solve_collective_phonon=settings.solve_collective_phonon,
             use_ave_pp=settings.use_ave_pp,
             gamma_unit_conversion=settings.gamma_conversion_factor,
-            is_reducible_collision_matrix=settings.is_reducible_collision_matrix,
+            is_reducible_collision_matrix=settings.is_reducible_collision_matrix,  # noqa E501
             is_kappa_star=settings.is_kappa_star,
             gv_delta_q=settings.group_velocity_delta_q,
             is_full_pp=settings.is_full_pp,
