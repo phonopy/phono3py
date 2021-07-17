@@ -246,7 +246,7 @@ def _write_gamma(br, interaction, i, compression="gzip", filename=None,
                                 verbose=verbose)
     else:
         for j, sigma in enumerate(sigmas):
-            for k, bi in enumerate(interaction.get_band_indices()):
+            for k, bi in enumerate(interaction.band_indices):
                 if ave_pp is None:
                     ave_pp_ik = None
                 else:
@@ -590,7 +590,7 @@ class Conductivity_RTA(Conductivity):
                         except FloatingPointError:
                             # supposed that g is almost 0 and |gv|=0
                             pass
-                        except:
+                        except Exception:
                             print("=" * 26 + " Warning " + "=" * 26)
                             print(" Unexpected physical condition of ph-ph "
                                   "interaction calculation was found.")
@@ -619,10 +619,8 @@ class Conductivity_RTA(Conductivity):
         """Return number of ignored phonon modes."""
         return self._num_ignored_phonon_modes
 
-    def get_number_of_sampling_grid_points(self):
-        return self._num_sampling_grid_points
-
     def set_averaged_pp_interaction(self, ave_pp):
+        """Set averaged ph-ph interaction."""
         self._averaged_pp_interaction = ave_pp
 
     def _run_at_grid_point(self):
@@ -647,7 +645,7 @@ class Conductivity_RTA(Conductivity):
                 self._store_pp or
                 self._use_ave_pp or
                 self._use_const_ave_pp or
-                self._is_gamma_detail):
+                self._is_gamma_detail):  # noqa E129
                 self._set_gamma_at_sigmas(i)
             else:  # can save memory space
                 self._set_gamma_at_sigmas_lowmem(i)
@@ -917,7 +915,7 @@ class Conductivity_RTA(Conductivity):
                       ((i + 1,) + tuple(np.dot(rot, q))))
                 if (self._is_full_pp or
                     self._use_ave_pp or
-                    self._use_const_ave_pp):
+                    self._use_const_ave_pp):  # noqa E129
                     for f, v, pp in zip(frequencies,
                                         np.dot(rot_c, gv.T).T,
                                         ave_pp):

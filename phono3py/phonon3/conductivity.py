@@ -1,3 +1,4 @@
+"""Thermal conductivity base class."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -50,6 +51,7 @@ unit_to_WmK = ((THz * Angstrom) ** 2 / (Angstrom ** 3) * EV / THz /
 
 
 def all_bands_exist(interaction):
+    """Return if all bands are selected or not."""
     band_indices = interaction.band_indices
     num_band = len(interaction.primitive) * 3
     if len(band_indices) == num_band:
@@ -63,6 +65,7 @@ def write_pp(conductivity,
              i,
              filename=None,
              compression="gzip"):
+    """Write ph-ph interaction strength in hdf5 file."""
     grid_point = conductivity.grid_points[i]
     sigmas = conductivity.sigmas
     sigma_cutoff = conductivity.sigma_cutoff_width
@@ -88,6 +91,8 @@ def write_pp(conductivity,
 
 
 class Conductivity(object):
+    """Thermal conductivity base class."""
+
     def __init__(self,
                  interaction,
                  grid_points=None,
@@ -101,6 +106,7 @@ class Conductivity(object):
                  gv_delta_q=None,  # finite difference for group veolocity
                  is_full_pp=False,
                  log_level=0):
+        """Init method."""
         if sigmas is None:
             self._sigmas = []
         else:
@@ -192,7 +198,7 @@ class Conductivity(object):
         self._gv_delta_q = self._gv_obj.get_q_length()
 
     def __iter__(self):
-        """Iteratively calculate mode kappa at each grid point."""
+        """Calculate mode kappa at each grid point."""
         return self
 
     def __next__(self):
@@ -483,6 +489,15 @@ class Conductivity(object):
                       DeprecationWarning)
         return self.averaged_pp_interaction
 
+    def get_number_of_sampling_grid_points(self):
+        """Return number of grid points.
+
+        This is calculated by the sum of numbers of arms of k-start in
+        `Conductivity._set_gv_by_gv`.
+
+        """
+        return self._num_sampling_grid_points
+
     def _run_at_grid_point(self):
         """Must be implementated in the inherited class."""
         raise NotImplementedError()
@@ -666,9 +681,9 @@ class Conductivity(object):
     def _get_boundary_scattering(self, i):
         num_band = len(self._primitive) * 3
         g_boundary = np.zeros(num_band, dtype='double')
-        for l in range(num_band):
-            g_boundary[l] = (np.linalg.norm(self._gv[i, l]) * Angstrom * 1e6 /
-                             (4 * np.pi * self._boundary_mfp))
+        for ll in range(num_band):
+            g_boundary[ll] = (np.linalg.norm(self._gv[i, ll]) * Angstrom * 1e6
+                              / (4 * np.pi * self._boundary_mfp))
         return g_boundary
 
     def _show_log_header(self, i):

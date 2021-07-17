@@ -188,8 +188,9 @@ class Phono3py(object):
         symprec : float, optional
             Tolerance used to find crystal symmetry. Default is 1e-5.
         calculator : str, optional.
-            Calculator used for computing forces. This is used to switch the set
-            of physical units. Default is None, which is equivalent to "vasp".
+            Calculator used for computing forces. This is used to switch
+            the set of physical units. Default is None, which is equivalent
+            to "vasp".
         log_level : int, optional
             Verbosity control. Default is 0. This can be 0, 1, or 2.
         lapack_zheev_uplo : Deprecated.

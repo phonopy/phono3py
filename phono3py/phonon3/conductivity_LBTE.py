@@ -1,3 +1,4 @@
+"""Calculate lattice thermal conductivity by direct solution."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -76,6 +77,7 @@ def get_thermal_conductivity_LBTE(
         input_filename=None,
         output_filename=None,
         log_level=0):
+    """Calculate lattice thermal conductivity by direct solution."""
     if temperatures is None:
         _temperatures = [300, ]
     else:
@@ -157,7 +159,7 @@ def get_thermal_conductivity_LBTE(
              all_bands_exist(interaction) and
              read_from == "grid_points" and
              grid_points is None) or
-            (not read_collision)):
+            (not read_collision)):  # noqa E129
             _write_collision(lbte, interaction, filename=output_filename)
 
     if grid_points is None and all_bands_exist(interaction):
@@ -686,7 +688,6 @@ def diagonalize_collision_matrix(collision_matrices,
         shape=(size_of_collision_matrix,), dtype='double'
 
     """
-
     start = time.time()
 
     # Matrix size of collision matrix to be diagonalized.
@@ -766,6 +767,8 @@ def diagonalize_collision_matrix(collision_matrices,
 
 
 class Conductivity_LBTE(Conductivity):
+    """Lattice thermal conductivity calculation by direct solution."""
+
     def __init__(self,
                  interaction,
                  grid_points=None,
@@ -785,6 +788,7 @@ class Conductivity_LBTE(Conductivity):
                  pinv_cutoff=1.0e-8,
                  pinv_solver=0,
                  log_level=0):
+        """Init method."""
         self._pp = None
         self._temperatures = None
         self._sigmas = None
@@ -1132,7 +1136,8 @@ class Conductivity_LBTE(Conductivity):
                 num_rot = len(self._point_operations)
                 rot_grid_points = np.zeros(
                     (num_rot, num_mesh_points), dtype='int_')
-                # Ir-grid points and rot_grid_points in generalized regular grid
+                # Ir-grid points and rot_grid_points in generalized regular
+                # grid
                 ir_gr_grid_points = np.array(
                     self._bz_grid.bzg2grg[self._ir_grid_points], dtype='int_')
                 for i in range(num_mesh_points):
@@ -1207,9 +1212,9 @@ class Conductivity_LBTE(Conductivity):
                         continue
 
                     main_diagonal = self._get_main_diagonal(i, j, k)
-                    for l in range(num_band):
+                    for ll in range(num_band):
                         self._collision_matrix[
-                            j, k, i, l, :, i, l, :] += main_diagonal[l] * r
+                            j, k, i, ll, :, i, ll, :] += main_diagonal[ll] * r
 
     def _combine_reducible_collisions(self):
         """Include diagonal elements into collision matrix."""
@@ -1221,9 +1226,9 @@ class Conductivity_LBTE(Conductivity):
                 np.ndindex((len(self._sigmas), len(self._temperatures)))):
             for i in range(num_mesh_points):
                 main_diagonal = self._get_main_diagonal(i, j, k)
-                for l in range(num_band):
+                for ll in range(num_band):
                     self._collision_matrix[
-                        j, k, i, l, i, l] += main_diagonal[l]
+                        j, k, i, ll, i, ll] += main_diagonal[ll]
 
     def _expand_collisions(self, ir_gr_grid_points, rot_grid_points):
         """Fill elements of full collision matrix by symmetry"""
@@ -1239,16 +1244,18 @@ class Conductivity_LBTE(Conductivity):
                                             rot_grid_points)
         except ImportError:
             print("Phono3py C-routine is not compiled correctly.")
+            num_mesh_points = np.prod(self._pp.mesh_numbers)
+            colmat = self._collision_matrix
             for i, ir_gp in enumerate(ir_gr_grid_points):
                 multi = (rot_grid_points[:, ir_gp] == ir_gp).sum()
-                colmat_irgp = self._collision_matrix[:, :, ir_gp, :, :, :].copy()
+                colmat_irgp = colmat[:, :, ir_gp, :, :, :].copy()
                 colmat_irgp /= multi
-                self._collision_matrix[:, :, ir_gp, :, :, :] = 0
+                colmat[:, :, ir_gp, :, :, :] = 0
                 for j, r in enumerate(self._rotations_cartesian):
                     gp_r = rot_grid_points[j, ir_gp]
                     for k in range(num_mesh_points):
                         gp_c = rot_grid_points[j, k]
-                        self._collision_matrix[:, :, gp_r, :, gp_c, :] += (
+                        colmat[:, :, gp_r, :, gp_c, :] += (
                             colmat_irgp[:, :, :, k, :])
 
         if self._log_level:
@@ -1301,7 +1308,7 @@ class Conductivity_LBTE(Conductivity):
             sym_broken = False
             for gp in np.unique(r_gps):
                 if (len(np.where(r_gps == gp)[0]) !=
-                    self._rot_grid_points.shape[1] // len(np.unique(r_gps))):
+                    self._rot_grid_points.shape[1] // len(np.unique(r_gps))):  # noqa E129
                     sym_broken = True
 
             if sym_broken:
@@ -1501,9 +1508,9 @@ class Conductivity_LBTE(Conductivity):
 
         w = self._collision_eigenvalues[i_sigma, i_temp]
         e = np.zeros_like(w)
-        for l, val in enumerate(w):
+        for ll, val in enumerate(w):
             if abs(val) > self._pinv_cutoff:
-                e[l] = 1 / val
+                e[ll] = 1 / val
         return e
 
     def _get_I(self, a, b, size, plus_transpose=True):
@@ -1617,7 +1624,7 @@ class Conductivity_LBTE(Conductivity):
                     old_settings = np.seterr(all='raise')
                     try:
                         Y[i_mode, :] = X[i_mode, :] / g[j]
-                    except:
+                    except Exception:
                         print("=" * 26 + " Warning " + "=" * 26)
                         print(" Unexpected physical condition of ph-ph "
                               "interaction calculation was found.")
@@ -1775,7 +1782,8 @@ class Conductivity_LBTE(Conductivity):
                 sum_k = np.zeros((3, 3), dtype='double')
                 for r in rotations_cartesian:
                     sum_k += np.outer(np.dot(r, v), np.dot(r, mfp))
-                sum_k = (sum_k + sum_k.T) / 2 * cv * weights[i] ** 2 * 2 * np.pi
+                sum_k = ((sum_k + sum_k.T) / 2 * cv * weights[i] ** 2
+                         * 2 * np.pi)
                 for k, vxf in enumerate(
                         ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))):
                     self._mode_kappa[i_sigma, i_temp, i, j, k] = sum_k[vxf]
@@ -1827,17 +1835,17 @@ class Conductivity_LBTE(Conductivity):
         for i in range(num_ir_grid_points):
             for j in range(num_band):
                 for k in range(3):
-                    for l in range(num_ir_grid_points):
+                    for ll in range(num_ir_grid_points):
                         for m in range(num_band):
                             for n in range(3):
                                 self._py_set_symmetrized_element(
-                                    i, j, k, l, m, n)
+                                    i, j, k, ll, m, n)
 
-    def _py_set_symmetrized_element(self, i, j, k, l, m, n):
-        sym_val = (self._collision_matrix[:, :, i, j, k, l, m, n] +
-                   self._collision_matrix[:, :, l, m, n, i, j, k]) / 2
-        self._collision_matrix[:, :, i, j, k, l, m, n] = sym_val
-        self._collision_matrix[:, :, l, m, n, i, j, k] = sym_val
+    def _py_set_symmetrized_element(self, i, j, k, ll, m, n):
+        sym_val = (self._collision_matrix[:, :, i, j, k, ll, m, n] +
+                   self._collision_matrix[:, :, ll, m, n, i, j, k]) / 2
+        self._collision_matrix[:, :, i, j, k, ll, m, n] = sym_val
+        self._collision_matrix[:, :, ll, m, n, i, j, k] = sym_val
 
     def _py_symmetrize_collision_matrix_no_kappa_stars(self):
         num_band = self._primitive.get_number_of_atoms() * 3
@@ -1845,12 +1853,12 @@ class Conductivity_LBTE(Conductivity):
         for i in range(num_ir_grid_points):
             for j in range(num_band):
                 for k in range(num_ir_grid_points):
-                    for l in range(num_band):
+                    for ll in range(num_band):
                         self._py_set_symmetrized_element_no_kappa_stars(
-                            i, j, k, l)
+                            i, j, k, ll)
 
-    def _py_set_symmetrized_element_no_kappa_stars(self, i, j, k, l):
-        sym_val = (self._collision_matrix[:, :, i, j, k, l] +
-                   self._collision_matrix[:, :, k, l, i, j]) / 2
-        self._collision_matrix[:, :, i, j, k, l] = sym_val
-        self._collision_matrix[:, :, k, l, i, j] = sym_val
+    def _py_set_symmetrized_element_no_kappa_stars(self, i, j, k, ll):
+        sym_val = (self._collision_matrix[:, :, i, j, k, ll] +
+                   self._collision_matrix[:, :, k, ll, i, j]) / 2
+        self._collision_matrix[:, :, i, j, k, ll] = sym_val
+        self._collision_matrix[:, :, k, ll, i, j] = sym_val
