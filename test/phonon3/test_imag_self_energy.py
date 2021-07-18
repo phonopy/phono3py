@@ -1,3 +1,5 @@
+"""Test for imag_free_energy.py."""
+import pytest
 import numpy as np
 
 gammas = [
@@ -134,23 +136,36 @@ freq_points_nacl_nac = [
 
 
 def test_imag_self_energy_at_bands(si_pbesol):
+    """Imaginary part of self energy spectrum of Si.
+
+    * at frequencies of band indices.
+
+    """
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
-    _fpoints, _gammas = si_pbesol.run_imag_self_energy(
-        [1, 103],
-        [300, ],
-        frequency_points_at_bands=True)
-    gammas_ref = [
+    gammas_ref = np.reshape([
         0.00021553, 0.00021553, 0.00084329, 0.04693498, 0.04388354, 0.04388354,
-        0.00383646, 0.00494357, 0.02741665, 0.01407101, 0.04133322, 0.03013125]
-    np.testing.assert_allclose(_gammas.ravel(), gammas_ref, atol=1e-2)
+        0.00383646, 0.00494357, 0.02741665, 0.01407101, 0.04133322, 0.03013125],
+        (2, -1))
+    for i, grgp in enumerate((1, 103)):
+        _fpoints, _gammas = si_pbesol.run_imag_self_energy(
+            [si_pbesol.grid.grg2bzg[grgp], ],
+            [300, ],
+            frequency_points_at_bands=True)
+        np.testing.assert_allclose(_gammas.ravel(), gammas_ref[i], atol=1e-2)
 
 
 def test_imag_self_energy_at_bands_detailed(si_pbesol):
+    """Imaginary part of self energy spectrum of Si.
+
+    * at frequencies of band indices.
+    * contribution from each triplet is returned.
+
+    """
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     _fpoints, _gammas, _detailed_gammas = si_pbesol.run_imag_self_energy(
-        [1, 103],
+        si_pbesol.grid.grg2bzg[[1, 103]],
         [300, ],
         frequency_points_at_bands=True,
         keep_gamma_detail=True)
@@ -177,10 +192,15 @@ def test_imag_self_energy_at_bands_detailed(si_pbesol):
 
 
 def test_imag_self_energy_npoints(si_pbesol):
+    """Imaginary part of self energy spectrum of Si.
+
+    * at 10 frequency points sampled uniformly.
+
+    """
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     _fpoints, _gammas = si_pbesol.run_imag_self_energy(
-        [1, 103],
+        si_pbesol.grid.grg2bzg[[1, 103]],
         [300, ],
         num_frequency_points=10)
     np.testing.assert_allclose(
@@ -190,11 +210,17 @@ def test_imag_self_energy_npoints(si_pbesol):
 
 
 def test_imag_self_energy_npoints_with_sigma(si_pbesol):
+    """Imaginary part of self energy spectrum of Si.
+
+    * at 10 frequency points sampled uniformly.
+    * with smearing method
+
+    """
     si_pbesol.sigmas = [0.1, ]
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     _fpoints, _gammas = si_pbesol.run_imag_self_energy(
-        [1, 103],
+        si_pbesol.grid.grg2bzg[[1, 103]],
         [300, ],
         num_frequency_points=10)
     # for _g_line in np.swapaxes(_gammas, -1, -2).reshape(-1, 6):
@@ -208,10 +234,15 @@ def test_imag_self_energy_npoints_with_sigma(si_pbesol):
 
 
 def test_imag_self_energy_freq_points(si_pbesol):
+    """Imaginary part of self energy spectrum of Si.
+
+    * specified frquency points
+
+    """
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     _fpoints, _gammas = si_pbesol.run_imag_self_energy(
-        [1, 103],
+        si_pbesol.grid.grg2bzg[[1, 103]],
         [300, ],
         frequency_points=freq_points)
     np.testing.assert_allclose(
@@ -221,10 +252,16 @@ def test_imag_self_energy_freq_points(si_pbesol):
 
 
 def test_imag_self_energy_detailed(si_pbesol):
+    """Imaginary part of self energy spectrum of Si.
+
+    * specified frquency points
+    * contribution from each triplet is returned.
+
+    """
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     _fpoints, _gammas, _detailed_gammas = si_pbesol.run_imag_self_energy(
-        [1, ],
+        si_pbesol.grid.grg2bzg[[1, ]],
         [300, ],
         frequency_points=freq_points,
         keep_gamma_detail=True)
@@ -235,10 +272,16 @@ def test_imag_self_energy_detailed(si_pbesol):
 
 
 def test_imag_self_energy_scat_class1(si_pbesol):
+    """Imaginary part of self energy spectrum of Si.
+
+    * specified frquency points
+    * scattering event class 1
+
+    """
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     _fpoints, _gammas = si_pbesol.run_imag_self_energy(
-        [1, 103],
+        si_pbesol.grid.grg2bzg[[1, 103]],
         [300, ],
         frequency_points=freq_points,
         scattering_event_class=1)
@@ -249,10 +292,16 @@ def test_imag_self_energy_scat_class1(si_pbesol):
 
 
 def test_imag_self_energy_scat_class2(si_pbesol):
+    """Imaginary part of self energy spectrum of Si.
+
+    * specified frquency points
+    * scattering event class 2
+
+    """
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     _fpoints, _gammas = si_pbesol.run_imag_self_energy(
-        [1, 103],
+        si_pbesol.grid.grg2bzg[[1, 103]],
         [300, ],
         frequency_points=freq_points,
         scattering_event_class=2)
@@ -263,10 +312,15 @@ def test_imag_self_energy_scat_class2(si_pbesol):
 
 
 def test_imag_self_energy_nacl_npoints(nacl_pbe):
+    """Imaginary part of self energy spectrum of NaCl.
+
+    * at 10 frequency points sampled uniformly.
+
+    """
     nacl_pbe.mesh_numbers = [9, 9, 9]
     nacl_pbe.init_phph_interaction()
     _fpoints, _gammas = nacl_pbe.run_imag_self_energy(
-        [1, 103],
+        nacl_pbe.grid.grg2bzg[[1, 103]],
         [300, ],
         num_frequency_points=10)
     # for line in np.swapaxes(_gammas, -1, -2).ravel().reshape(-1, 6):
@@ -279,10 +333,16 @@ def test_imag_self_energy_nacl_npoints(nacl_pbe):
 
 
 def test_imag_self_energy_nacl_nac_npoints(nacl_pbe):
+    """Imaginary part of self energy spectrum of NaCl.
+
+    * at 10 frequency points sampled uniformly.
+    * at q->0
+
+    """
     nacl_pbe.mesh_numbers = [9, 9, 9]
     nacl_pbe.init_phph_interaction(nac_q_direction=[1, 0, 0])
     _fpoints, _gammas = nacl_pbe.run_imag_self_energy(
-        [0, ],
+        nacl_pbe.grid.grg2bzg[[0, ]],
         [300, ],
         num_frequency_points=10)
     # for line in np.swapaxes(_gammas, -1, -2).ravel().reshape(-1, 6):
