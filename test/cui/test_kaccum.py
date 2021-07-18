@@ -1,3 +1,4 @@
+"""Test for kaccum.py."""
 import numpy as np
 from phono3py.cui.kaccum import (
     KappaDOS, _get_mfp)
@@ -66,6 +67,13 @@ gammados_nacl = [-0.0000002, 0.0000000, 0.0000000,
 
 
 def test_kappados_si(si_pbesol):
+    """Test KappaDOS class with Si.
+
+    * 3x3 tensor vs frequency
+    * scalar vs frequency
+    * kappa vs mean free path
+
+    """
     ph3 = si_pbesol
     ph3.mesh_numbers = [7, 7, 7]
     ph3.init_phph_interaction()
@@ -74,8 +82,8 @@ def test_kappados_si(si_pbesol):
     freq_points_in = np.array(kappados_si).reshape(-1, 3)[:, 0]
     freq_points, kdos = _calculate_kappados(
         ph3, tc.mode_kappa[0], freq_points=freq_points_in)
-    # for f, (jval, ival) in zip(freq_points, kdos):
-    #     print("%.7f, %.7f, %.7f," % (f, jval, ival))
+    for f, (jval, ival) in zip(freq_points, kdos):
+        print("%.7f, %.7f, %.7f," % (f, jval, ival))
     np.testing.assert_allclose(
         kappados_si,
         np.vstack((freq_points, kdos.T)).T.ravel(),
@@ -99,6 +107,13 @@ def test_kappados_si(si_pbesol):
 
 
 def test_kappados_nacl(nacl_pbe):
+    """Test KappaDOS class with NaCl.
+
+    * 3x3 tensor vs frequency
+    * scalar vs frequency
+    * kappa vs mean free path
+
+    """
     ph3 = nacl_pbe
     ph3.mesh_numbers = [7, 7, 7]
     ph3.init_phph_interaction()
@@ -139,9 +154,8 @@ def _calculate_kappados(ph3, mode_prop, freq_points=None):
         mode_prop,
         frequencies,
         bz_grid,
-        bz_grid.bzg2grg[tc.grid_points],
-        frequency_points=freq_points,
-        num_sampling_points=10)
+        tc.grid_points,
+        frequency_points=freq_points)
     freq_points, kdos = kappados.get_kdos()
 
     ir_grid_points, _, ir_grid_map = get_ir_grid_points(bz_grid)
@@ -149,14 +163,13 @@ def _calculate_kappados(ph3, mode_prop, freq_points=None):
         mode_prop,
         tc.frequencies,
         bz_grid,
-        ir_grid_points,
+        tc.grid_points,
         ir_grid_map=ir_grid_map,
-        frequency_points=freq_points,
-        num_sampling_points=10)
+        frequency_points=freq_points)
     ir_freq_points, ir_kdos = kappados.get_kdos()
+    np.testing.assert_equal(bz_grid.bzg2grg[tc.grid_points], ir_grid_points)
     np.testing.assert_allclose(ir_freq_points, freq_points, rtol=0, atol=1e-5)
     np.testing.assert_allclose(ir_kdos, kdos, rtol=0, atol=1e-5)
-
     return freq_points, kdos[0, :, :, 0]
 
 
@@ -164,45 +177,15 @@ def _calculate_mfpdos(ph3, mfp_points=None):
     tc = ph3.thermal_conductivity
     bz_grid = ph3.grid
     mean_freepath = _get_mfp(tc.gamma[0], tc.group_velocities)
-    ir_grid_points, _, ir_grid_map = get_ir_grid_points(bz_grid)
+    _, _, ir_grid_map = get_ir_grid_points(bz_grid)
     mfpdos = KappaDOS(
         tc.mode_kappa[0],
         mean_freepath[0],
         bz_grid,
-        ir_grid_points,
+        tc.grid_points,
         ir_grid_map=ir_grid_map,
         frequency_points=mfp_points,
         num_sampling_points=10)
     freq_points, kdos = mfpdos.get_kdos()
 
     return freq_points, kdos[0, :, :, 0]
-
-
-def _test_gammados_si(si_pbesol):
-    _calculate_legacy_gammados(si_pbesol)
-
-
-def _test_gammados_nacl(nacl_pbe):
-    _calculate_legacy_gammados(nacl_pbe)
-
-
-def _calculate_legacy_gammados(ph3):
-    ph3.mesh_numbers = [7, 7, 7]
-    ph3.init_phph_interaction()
-    ph3.run_thermal_conductivity(temperatures=[300, ])
-    tc = ph3.thermal_conductivity
-    bz_grid = ph3.grid
-    ir_grid_points, ir_weights, ir_grid_map = get_ir_grid_points(bz_grid)
-    gamma_dos = GammaDOStetrahedron(
-        tc.gamma[0],
-        ph3.primitive,
-        tc.frequencies,
-        tc.mesh_numbers,
-        bz_grid.addresses,
-        ir_grid_map,
-        ir_grid_points,
-        ir_weights,
-        num_fpoints=10)
-    freq_points, gdos = gamma_dos.get_gdos()
-    for f, g in zip(freq_points, gdos[0, :, :]):
-        print("%.7f, %.7f, %.7f," % (f, g[0], g[1]))

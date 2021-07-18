@@ -61,15 +61,15 @@ class KappaDOS(object):
             (n_temp, len(self._frequency_points), 2, n_elem), dtype='double')
 
         if ir_grid_map is None:
-            gp2irgp_map = None
+            bzgp2irgp_map = None
         else:
-            gp2irgp_map = self._get_gp2irgp_map(bz_grid, ir_grid_map)
+            bzgp2irgp_map = self._get_bzgp2irgp_map(bz_grid, ir_grid_map)
         for j, function in enumerate(('J', 'I')):
             iweights = get_integration_weights(self._frequency_points,
                                                frequencies,
                                                bz_grid,
                                                grid_points=ir_grid_points,
-                                               gp2irgp_map=gp2irgp_map,
+                                               bzgp2irgp_map=bzgp2irgp_map,
                                                function=function)
             for i, iw in enumerate(iweights):
                 self._kdos[:, :, j] += np.transpose(
@@ -91,13 +91,13 @@ class KappaDOS(object):
         """
         return self._frequency_points, self._kdos
 
-    def _get_gp2irgp_map(self, bz_grid, ir_grid_map):
+    def _get_bzgp2irgp_map(self, bz_grid, ir_grid_map):
         unique_gps = np.unique(ir_grid_map)
         gp_map = {j: i for i, j in enumerate(unique_gps)}
-        gp2irgp_map = np.array(
+        bzgp2irgp_map = np.array(
             [gp_map[ir_grid_map[grgp]] for grgp in bz_grid.bzg2grg],
             dtype='int_')
-        return gp2irgp_map
+        return bzgp2irgp_map
 
 
 class GammaDOSsmearing(object):

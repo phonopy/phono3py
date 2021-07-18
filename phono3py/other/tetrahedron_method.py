@@ -85,7 +85,7 @@ def get_integration_weights(sampling_points,
                             grid_values,
                             bz_grid,
                             grid_points=None,
-                            gp2irgp_map=None,
+                            bzgp2irgp_map=None,
                             function='I'):
     """Return tetrahedron method integration weights.
 
@@ -101,9 +101,9 @@ def get_integration_weights(sampling_points,
     bz_grid : BZGrid
         Grid information in reciprocal space.
     grid_points : array_like, optional, default=None
-        Grid point indices. If None, all regular grid points.
+        Grid point indices in BZ-grid. If None, all regular grid points.
         shape=(grid_points, ), dtype='int_'
-    gp2irgp_map : array_like, optional, default=None
+    bzgp2irgp_map : array_like, optional, default=None
         Grid point index mapping from bz_grid to index of the first
         dimension of `grid_values` array, i.e., usually irreducible
         grid point count.
@@ -134,12 +134,12 @@ def get_integration_weights(sampling_points,
         _sampling_points = sampling_points
     else:
         _sampling_points = np.array(sampling_points, dtype='double')
-    if gp2irgp_map is None:
-        _gp2irgp_map = np.arange(len(grid_values), dtype='int_')
-    elif _check_ndarray_state(gp2irgp_map, 'int_'):
-        _gp2irgp_map = gp2irgp_map
+    if bzgp2irgp_map is None:
+        _bzgp2irgp_map = np.arange(len(grid_values), dtype='int_')
+    elif _check_ndarray_state(bzgp2irgp_map, 'int_'):
+        _bzgp2irgp_map = bzgp2irgp_map
     else:
-        _gp2irgp_map = np.array(gp2irgp_map, dtype='int_')
+        _bzgp2irgp_map = np.array(bzgp2irgp_map, dtype='int_')
 
     num_grid_points = len(_grid_points)
     num_band = _grid_values.shape[1]
@@ -156,7 +156,7 @@ def get_integration_weights(sampling_points,
         _grid_values,
         bz_grid.addresses,
         bz_grid.gp_map,
-        _gp2irgp_map,
+        _bzgp2irgp_map,
         bz_grid.store_dense_gp_map * 1 + 1,
         function)
     return integration_weights
