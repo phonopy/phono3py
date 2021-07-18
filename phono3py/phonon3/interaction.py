@@ -39,7 +39,8 @@ from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
 from phonopy.structure.cells import sparse_to_dense_svecs
 from phonopy.units import VaspToTHz, Hbar, EV, Angstrom, THz, AMU
 from phonopy.structure.cells import compute_all_sg_permutations
-from phono3py.phonon.grid import get_ir_grid_points, get_grid_points_by_rotations
+from phono3py.phonon.grid import (
+    get_ir_grid_points, get_grid_points_by_rotations)
 from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
 from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
 from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
@@ -348,6 +349,7 @@ class Interaction(object):
         return self._frequency_factor_to_THz
 
     def get_frequency_factor_to_THz(self):
+        """Return phonon frequency conversion factor to THz."""
         warnings.warn("Use attribute, Interaction.frequency_factor_to_THz ",
                       "instead of Interaction.get_frequency_factor_to_THz().",
                       DeprecationWarning)
@@ -390,6 +392,7 @@ class Interaction(object):
         return v_sum / np.prod(v.shape[2:])
 
     def get_primitive_and_supercell_correspondence(self):
+        """Return atomic pair information."""
         return (self._svecs,
                 self._multi,
                 self._p2s,
@@ -397,16 +400,20 @@ class Interaction(object):
                 self._masses)
 
     def get_unit_conversion_factor(self):
+        """Return unit conversion factor."""
         return self._unit_conversion
 
     def get_constant_averaged_interaction(self):
+        """Return constant averaged interaction."""
         return self._constant_averaged_interaction
 
     def set_interaction_strength(self, pp_strength, g_zero=None):
+        """Set interaction strength."""
         self._interaction_strength = pp_strength
         self._g_zero = g_zero
 
     def set_grid_point(self, grid_point, store_triplets_map=False):
+        """Set grid point and prepare grid point triplets."""
         reciprocal_lattice = np.linalg.inv(self._primitive.cell)
         if not self._is_mesh_symmetry:
             (triplets_at_q,
@@ -420,7 +427,8 @@ class Interaction(object):
              triplets_map_at_q,
              ir_map_at_q) = get_triplets_at_q(grid_point, self._bz_grid)
 
-            # Special treatment of symmetry is applied when q_direction is used.
+            # Special treatment of symmetry is applied when q_direction is
+            # used.
             if self._nac_q_direction is not None:
                 if (self._bz_grid.addresses[grid_point] == 0).all():
                     self._phonon_done[grid_point] = 0
@@ -507,10 +515,12 @@ class Interaction(object):
                         print("=" * 61)
 
     def set_nac_q_direction(self, nac_q_direction=None):
+        """Set NAC q-point direction valid at q->0."""
         if nac_q_direction is not None:
             self._nac_q_direction = np.array(nac_q_direction, dtype='double')
 
     def set_phonon_data(self, frequencies, eigenvectors, bz_grid_addresses):
+        """Set phonons on grid."""
         if bz_grid_addresses.shape != self._bz_grid.addresses.shape:
             raise RuntimeError("Input grid address size is inconsistent. "
                                "Setting phonons faild.")
@@ -524,7 +534,7 @@ class Interaction(object):
             self._eigenvectors[:] = eigenvectors
 
     def run_phonon_solver(self, grid_points=None):
-        """Run phonon solver at BZ-grid points"""
+        """Run phonon solver at BZ-grid points."""
         if grid_points is None:
             self._get_phonons_at_all_bz_grid_points()
         else:
@@ -532,7 +542,7 @@ class Interaction(object):
             self._run_phonon_solver_c(_grid_points)
 
     def _get_phonons_at_all_bz_grid_points(self, expand_phonons=False):
-        """Get phonons at all BZ-grid points"""
+        """Get phonons at all BZ-grid points."""
         if expand_phonons:
             self._expand_phonons()
         else:
@@ -550,7 +560,6 @@ class Interaction(object):
             self._phonon_done
 
         """
-
         ir_grid_points, _, _ = get_ir_grid_points(self._bz_grid)
         ir_bz_grid_points = self._bz_grid.grg2bzg[ir_grid_points]
         self._run_phonon_solver_c(ir_bz_grid_points)
@@ -571,7 +580,7 @@ class Interaction(object):
             for irgp in ir_bz_grid_points:
                 bzgp = get_grid_points_by_rotations(irgp,
                                                     self._bz_grid,
-                                                    reciprocal_rotations=[r,],
+                                                    reciprocal_rotations=[r, ],
                                                     with_surface=True)[0]
                 if self._phonon_done[bzgp]:
                     continue
@@ -586,7 +595,7 @@ class Interaction(object):
             print(bz_grid_points_solved)
 
     def _get_reciprocal_rotations_in_space_group_operations(self):
-        """Collect reciprocal rotations that belong to space group operations
+        """Collect reciprocal rotations that belong to space group operations.
 
         Exclude reciprocal rotations that are made by time reversal symmetry.
 
@@ -613,7 +622,6 @@ class Interaction(object):
         e_j'(Rq) = R e_j(q) exp(-iRq.\tau)
 
         """
-
         Rq = np.dot(self._bz_grid.QDinv, self._bz_grid.addresses[bzgp])
         tau = self._bz_grid.symmetry_dataset['translations'][t_i]
         phase_factor = np.exp(-2j * np.pi * np.dot(Rq, tau))
@@ -647,11 +655,11 @@ class Interaction(object):
             bzgp_mq = get_grid_points_by_rotations(
                 bzgp,
                 self._bz_grid,
-                reciprocal_rotations=[r_inv,],
+                reciprocal_rotations=[r_inv, ],
                 with_surface=True)[0]
 
             if self._phonon_done[bzgp_mq] == 0:
-                self._run_phonon_solver_c(np.array([bzgp_mq,], dtype='int_'))
+                self._run_phonon_solver_c(np.array([bzgp_mq, ], dtype='int_'))
                 bz_grid_points_solved.append(bzgp_mq)
 
             self._phonon_done[bzgp] = 1
@@ -662,6 +670,12 @@ class Interaction(object):
         return bz_grid_points_solved
 
     def delete_interaction_strength(self):
+        """Delete large arrays loosely.
+
+        Memory deallocation would rely on garbage collector of python.
+        So this may not work as expected.
+
+        """
         self._interaction_strength = None
         self._g_zero = None
 
@@ -671,7 +685,7 @@ class Interaction(object):
             fc3.flags.aligned and
             fc3.flags.owndata and
             fc3.flags.c_contiguous and
-            self._frequency_scale_factor is None):
+            self._frequency_scale_factor is None):  # noqa E129
             self._fc3 = fc3
         elif self._frequency_scale_factor is None:
             self._fc3 = np.array(fc3, dtype='double', order='C')
