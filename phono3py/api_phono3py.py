@@ -130,7 +130,8 @@ class Phono3py(object):
                  is_symmetry=True,
                  is_mesh_symmetry=True,
                  symmetrize_fc3q=None,
-                 is_dense_gp_map=False,
+                 store_dense_gp_map=False,
+                 store_dense_svecs=True,
                  symprec=1e-5,
                  calculator=None,
                  log_level=0,
@@ -183,8 +184,12 @@ class Phono3py(object):
             Default is True.
         symmetrize_fc3q : Deprecated.
             See Phono3py.init_phph_interaction().
-        is_dense_gp_map : bool, optional
-            Use dense format of BZ grid system. Default is False.
+        store_dense_gp_map : bool, optional
+            Use dense format of BZ grid system. Default is True.
+        store_dense_svecs : bool, optional
+            Shortest vectors are stored in the dense array format. This is
+            expected to be always True. Setting False is for rough
+            compatibility with v1.x. Default is True.
         symprec : float, optional
             Tolerance used to find crystal symmetry. Default is 1e-5.
         calculator : str, optional.
@@ -201,7 +206,8 @@ class Phono3py(object):
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._is_symmetry = is_symmetry
         self._is_mesh_symmetry = is_mesh_symmetry
-        self._is_dense_gp_map = is_dense_gp_map
+        self._store_dense_gp_map = store_dense_gp_map
+        self._store_dense_svecs = store_dense_svecs
         self._cutoff_frequency = cutoff_frequency
         self._calculator = calculator
         self._log_level = log_level
@@ -2365,7 +2371,7 @@ class Phono3py(object):
             t_mat = np.dot(inv_supercell_matrix, primitive_matrix)
 
         return get_primitive(supercell, t_mat, self._symprec,
-                             store_dense_svecs=True)
+                             store_dense_svecs=self._store_dense_svecs)
 
     def _determine_primitive_matrix(self, primitive_matrix):
         pmat = get_primitive_matrix(primitive_matrix, symprec=self._symprec)
@@ -2383,7 +2389,7 @@ class Phono3py(object):
             mesh,
             lattice=self._primitive.cell,
             symmetry_dataset=self._primitive_symmetry.dataset,
-            is_dense_gp_map=self._is_dense_gp_map)
+            store_dense_gp_map=self._store_dense_gp_map)
 
     def _init_dynamical_matrix(self):
         if self._interaction is not None:

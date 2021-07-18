@@ -36,8 +36,8 @@ def test_BZGrid(si_pbesol_111):
                60, 61, 65, 66, 67, 68, 69, 70, 71, 72, 73, 77, 78, 79,
                83, 84, 85, 86, 87, 88, 89]
 
-    bzgrid1 = BZGrid(mesh, lattice=lat, is_dense_gp_map=False)
-    bzgrid2 = BZGrid(mesh, lattice=lat, is_dense_gp_map=True)
+    bzgrid1 = BZGrid(mesh, lattice=lat, store_dense_gp_map=False)
+    bzgrid2 = BZGrid(mesh, lattice=lat, store_dense_gp_map=True)
 
     adrs1 = bzgrid1.addresses[:np.prod(mesh)]
     adrs2 = bzgrid2.addresses[bzgrid2.gp_map[:-1]]
@@ -61,13 +61,13 @@ def test_BZGrid_bzg2grg(si_pbesol_111):
 
     lat = si_pbesol_111.primitive.cell
     mesh = [4, 4, 4]
-    bzgrid1 = BZGrid(mesh, lattice=lat, is_dense_gp_map=False)
+    bzgrid1 = BZGrid(mesh, lattice=lat, store_dense_gp_map=False)
     grg = []
     for i in range(len(bzgrid1.addresses)):
         grg.append(get_grid_point_from_address(bzgrid1.addresses[i], mesh))
     np.testing.assert_equal(grg, bzgrid1.bzg2grg)
 
-    bzgrid2 = BZGrid(mesh, lattice=lat, is_dense_gp_map=True)
+    bzgrid2 = BZGrid(mesh, lattice=lat, store_dense_gp_map=True)
     grg = []
     for i in range(len(bzgrid2.addresses)):
         grg.append(get_grid_point_from_address(bzgrid2.addresses[i], mesh))
@@ -81,13 +81,13 @@ def test_BZGrid_SNF(si_pbesol_111):
     bzgrid1 = BZGrid(mesh,
                      lattice=lat,
                      symmetry_dataset=si_pbesol_111.primitive_symmetry.dataset,
-                     is_dense_gp_map=False)
+                     store_dense_gp_map=False)
     _test_BZGrid_SNF(bzgrid1)
 
     bzgrid2 = BZGrid(mesh,
                      lattice=lat,
                      symmetry_dataset=si_pbesol_111.primitive_symmetry.dataset,
-                     is_dense_gp_map=True)
+                     store_dense_gp_map=True)
     _test_BZGrid_SNF(bzgrid2)
 
 
@@ -222,12 +222,12 @@ def test_get_grid_points_by_bz_rotations(si_pbesol_111):
         mesh,
         lattice=lat,
         symmetry_dataset=si_pbesol_111.primitive_symmetry.dataset,
-        is_dense_gp_map=False)
+        store_dense_gp_map=False)
     bz_grid_type2 = BZGrid(
         mesh,
         lattice=lat,
         symmetry_dataset=si_pbesol_111.primitive_symmetry.dataset,
-        is_dense_gp_map=True)
+        store_dense_gp_map=True)
 
     # Check data consistency by reducing to GR-grid.
     # Grid point 10 in type-1 and 12 in type-2 are the same points in GR-grid.

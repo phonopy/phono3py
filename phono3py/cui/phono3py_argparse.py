@@ -132,7 +132,7 @@ def get_parser(fc_symmetry=False,
         default=False,
         help="As first stage, get least displacements")
     parser.add_argument(
-        "--dense-gp-map", dest="is_dense_gp_map", action="store_true",
+        "--dense-gp-map", dest="store_dense_gp_map", action="store_true",
         default=False,
         help="Use new BZ grid system")
     parser.add_argument(

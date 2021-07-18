@@ -420,7 +420,7 @@ def main():
     bz_grid = BZGrid(mesh,
                      lattice=primitive.cell,
                      symmetry_dataset=primitive_symmetry.dataset,
-                     is_dense_gp_map=False)
+                     store_dense_gp_map=False)
     if args.no_kappa_stars or (ir_weights == 1).all():
         ir_grid_points = np.arange(np.prod(mesh), dtype='int_')
         ir_grid_map = np.arange(np.prod(mesh), dtype='int_')
@@ -436,7 +436,7 @@ def main():
 
     # Run for scaler
     if (args.gamma or args.gruneisen or args.pqj or
-        args.cv or args.tau or args.gv_norm or args.dos): # noqa E129
+        args.cv or args.tau or args.gv_norm or args.dos):  # noqa E129
 
         mode_prop = _get_mode_property(args, f_kappa)
 

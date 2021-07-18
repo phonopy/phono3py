@@ -822,7 +822,7 @@ class Conductivity_RTA(Conductivity):
                     weights_at_q,
                     self._bz_grid.addresses,
                     self._bz_grid.gp_map,
-                    self._bz_grid.is_dense_gp_map * 1 + 1,
+                    self._bz_grid.store_dense_gp_map * 1 + 1,
                     self._bz_grid.D_diag,
                     self._bz_grid.Q,
                     fc3,

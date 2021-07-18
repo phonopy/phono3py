@@ -75,7 +75,7 @@ def get_unique_grid_points(grid_points, bz_grid):
         bz_grid.D_diag,
         bz_grid.addresses,
         bz_grid.gp_map,
-        bz_grid.is_dense_gp_map * 1 + 1)
+        bz_grid.store_dense_gp_map * 1 + 1)
     unique_grid_points = np.array(np.unique(neighboring_grid_points),
                                   dtype='int_')
     return unique_grid_points
@@ -157,7 +157,7 @@ def get_integration_weights(sampling_points,
         bz_grid.addresses,
         bz_grid.gp_map,
         _gp2irgp_map,
-        bz_grid.is_dense_gp_map * 1 + 1,
+        bz_grid.store_dense_gp_map * 1 + 1,
         function)
     return integration_weights
 

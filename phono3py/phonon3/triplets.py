@@ -45,7 +45,7 @@ def get_triplets_at_q(grid_point,
     """Parameters
     ----------
     grid_point : int
-        A grid point in the grid type chosen by is_dense_gp_map.
+        A grid point in the grid type chosen by `store_dense_gp_map`.
     bz_grid : BZGrid
         Data structure to represent BZ grid.
     reciprocal_rotations : array_like or None, optional
@@ -56,7 +56,7 @@ def get_triplets_at_q(grid_point,
         Inversion symemtry is added if it doesn't exist. Default is True.
     swappable : bool, optional
         q1 and q2 among (q0, q1, q2) can be swapped. Deafult is True.
-    is_dense_gp_map : bool, optional
+    store_dense_gp_map : bool, optional
         See the detail in the docstring of ``_relocate_BZ_grid_address``.
 
     Returns
@@ -345,7 +345,7 @@ def _get_BZ_triplets_at_q(grid_point, bz_grid, map_triplets):
         map_triplets,
         np.array(bz_grid.D_diag, dtype='int_'),
         Q,
-        bz_grid.is_dense_gp_map * 1 + 1)
+        bz_grid.store_dense_gp_map * 1 + 1)
 
     assert num_ir_ret == len(ir_weights)
 
@@ -375,7 +375,7 @@ def _set_triplets_integration_weights_c(g,
                 pp.bz_grid.D_diag,
                 pp.bz_grid.addresses,
                 pp.bz_grid.gp_map,
-                pp.bz_grid.is_dense_gp_map * 1 + 1)
+                pp.bz_grid.store_dense_gp_map * 1 + 1)
             pp.run_phonon_solver(
                 np.array(np.unique(neighboring_grid_points), dtype='int_'))
 
@@ -392,7 +392,7 @@ def _set_triplets_integration_weights_c(g,
         frequencies,  # f2
         pp.bz_grid.addresses,
         pp.bz_grid.gp_map,
-        pp.bz_grid.is_dense_gp_map * 1 + 1,
+        pp.bz_grid.store_dense_gp_map * 1 + 1,
         g.shape[0])
 
 

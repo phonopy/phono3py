@@ -63,7 +63,7 @@ class JointDos(object):
                  frequency_factor_to_THz=VaspToTHz,
                  frequency_scale_factor=1.0,
                  is_mesh_symmetry=True,
-                 is_dense_gp_map=False,
+                 store_dense_gp_map=False,
                  symprec=1e-5,
                  filename=None,
                  log_level=False,
@@ -89,7 +89,7 @@ class JointDos(object):
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._frequency_scale_factor = frequency_scale_factor
         self._is_mesh_symmetry = is_mesh_symmetry
-        self._is_dense_gp_map = is_dense_gp_map
+        self._store_dense_gp_map = store_dense_gp_map
         self._symprec = symprec
         self._filename = filename
         self._log_level = log_level

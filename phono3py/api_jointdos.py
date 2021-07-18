@@ -57,7 +57,7 @@ class Phono3pyJointDos(object):
                  frequency_factor_to_THz=VaspToTHz,
                  frequency_scale_factor=None,
                  is_mesh_symmetry=True,
-                 is_dense_gp_map=False,
+                 store_dense_gp_map=False,
                  symprec=1e-5,
                  output_filename=None,
                  log_level=0):
@@ -74,7 +74,7 @@ class Phono3pyJointDos(object):
         self._bz_grid = BZGrid(mesh,
                                lattice=primitive.cell,
                                symmetry_dataset=symmetry.dataset,
-                               is_dense_gp_map=is_dense_gp_map)
+                               store_dense_gp_map=store_dense_gp_map)
 
         self._jdos = JointDos(
             primitive,
@@ -90,7 +90,7 @@ class Phono3pyJointDos(object):
             frequency_factor_to_THz=frequency_factor_to_THz,
             frequency_scale_factor=frequency_scale_factor,
             is_mesh_symmetry=self._is_mesh_symmetry,
-            is_dense_gp_map=is_dense_gp_map,
+            store_dense_gp_map=store_dense_gp_map,
             symprec=symprec,
             filename=output_filename,
             log_level=self._log_level)

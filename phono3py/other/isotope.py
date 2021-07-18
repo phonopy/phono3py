@@ -73,7 +73,7 @@ class Isotope(object):
                  sigma=None,
                  bz_grid=None,
                  frequency_factor_to_THz=VaspToTHz,
-                 is_dense_gp_map=False,
+                 store_dense_gp_map=False,
                  symprec=1e-5,
                  cutoff_frequency=None,
                  lapack_zheev_uplo='L'):
@@ -115,7 +115,7 @@ class Isotope(object):
             self._bz_grid = BZGrid(self._mesh,
                                    lattice=self._primitive.cell,
                                    symmetry_dataset=primitive_symmetry.dataset,
-                                   is_dense_gp_map=is_dense_gp_map)
+                                   store_dense_gp_map=store_dense_gp_map)
 
     def set_grid_point(self, grid_point):
         """Initialize grid points."""

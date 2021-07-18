@@ -52,7 +52,6 @@ class Phono3pySettings(Settings):
         'ion_clamped': False,
         'is_bterta': False,
         'is_compact_fc': False,
-        'is_dense_gp_map': False,
         'is_full_pp': False,
         'is_gruneisen': False,
         'is_imag_self_energy': False,
@@ -85,6 +84,7 @@ class Phono3pySettings(Settings):
         'scattering_event_class': None,  # scattering event class 1 or 2
         'sigma_cutoff_width': None,
         'solve_collective_phonon': False,
+        'store_dense_gp_map': False,
         'subtract_forces': None,
         'use_ave_pp': False,
         'write_collision': False,
@@ -140,9 +140,6 @@ class Phono3pySettings(Settings):
     def set_is_compact_fc(self, val):
         self._v['is_compact_fc'] = val
 
-    def set_is_dense_gp_map(self, val):
-        self._v['is_dense_gp_map'] = val
-
     def set_is_full_pp(self, val):
         self._v['is_full_pp'] = val
 
@@ -175,6 +172,9 @@ class Phono3pySettings(Settings):
 
     def set_is_spectral_function(self, val):
         self._v['is_spectral_function'] = val
+
+    def set_store_dense_gp_map(self, val):
+        self._v['store_dense_gp_map'] = val
 
     def set_is_symmetrize_fc2(self, val):
         self._v['is_symmetrize_fc2'] = val
@@ -344,8 +344,8 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_compact_fc:
                 self._confs['compact_fc'] = '.true.'
 
-        if 'is_dense_gp_map' in self._args:
-            if self._args.is_dense_gp_map:
+        if 'store_dense_gp_map' in self._args:
+            if self._args.store_dense_gp_map:
                 self._confs['dense_gp_map'] = '.true.'
 
         if 'is_gruneisen' in self._args:
@@ -668,7 +668,7 @@ class Phono3pyConfParser(ConfParser):
 
         # Use new BZ grid system with True.
         if 'dense_gp_map' in params:
-            self._settings.set_is_dense_gp_map(params['dense_gp_map'])
+            self._settings.set_store_dense_gp_map(params['dense_gp_map'])
 
         # Gamma unit conversion factor
         if 'gamma_conversion_factor' in params:

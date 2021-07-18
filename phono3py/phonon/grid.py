@@ -68,9 +68,9 @@ class BZGrid(object):
         gr_gp = bz_grid.bzg2grg[bz_gp]
 
     From GRG to BZG
-    When is_dense_gp_map=True,
+    When store_dense_gp_map=True,
         bz_gp = bz_grid.gp_map[gr_gp]
-    When is_dense_gp_map=False,
+    When store_dense_gp_map=False,
         bz_gp = gr_gp
     The shortcut is
         bz_gp = bz_grid.grg2bzg[gr_gp]
@@ -101,12 +101,12 @@ class BZGrid(object):
     ----------
     addresses : ndarray
         Integer grid address of the points in Brillouin zone including
-        surface. There are two types of address order by either is_dense_gp_map
-        is True or False.
+        surface. There are two types of address order by either
+        `store_dense_gp_map` is True or False.
         shape=(np.prod(D_diag) + some on surface, 3), dtype='int_', order='C'
     gp_map : ndarray
         Grid point mapping table containing BZ surface. There are two types of
-        address order by either is_dense_gp_map is True or False. See more
+        address order by either `store_dense_gp_map` is True or False. See more
         detail in _relocate_BZ_grid_address docstring.
     bzg2grg : ndarray
         Grid index mapping table from BZGrid to GRgrid.
@@ -115,7 +115,7 @@ class BZGrid(object):
         Grid index mapping table from GRgrid to BZGrid. Unique one
         of translationally equivalent grid points in BZGrid is chosen.
         shape=(prod(D_diag), ), dtype='int_'
-    is_dense_gp_map : bool, optional
+    store_dense_gp_map : bool, optional
         See the detail in the docstring of ``_relocate_BZ_grid_address``.
     rotations : ndarray
         Rotation matrices for GR-grid addresses (g) defined as g'=Rg.
@@ -147,7 +147,7 @@ class BZGrid(object):
                  symmetry_dataset=None,
                  is_shift=None,
                  is_time_reversal=True,
-                 is_dense_gp_map=False):
+                 store_dense_gp_map=False):
         """Init method.
 
         mesh : array_like or float
@@ -177,7 +177,7 @@ class BZGrid(object):
             self._symmetry_dataset = symmetry_dataset
         self._is_shift = is_shift
         self._is_time_reversal = is_time_reversal
-        self._is_dense_gp_map = is_dense_gp_map
+        self._store_dense_gp_map = store_dense_gp_map
         self._addresses = None
         self._gp_map = None
         self._grid_matrix = None
@@ -267,9 +267,9 @@ class BZGrid(object):
         return self._microzone_lattice
 
     @property
-    def is_dense_gp_map(self):
+    def store_dense_gp_map(self):
         """Return gp_map type."""
-        return self._is_dense_gp_map
+        return self._store_dense_gp_map
 
     @property
     def rotations(self):
@@ -329,8 +329,8 @@ class BZGrid(object):
              self._Q,
              self._reciprocal_lattice,  # column vectors
              is_shift=self._is_shift,
-             is_dense_gp_map=self._is_dense_gp_map)
-        if self._is_dense_gp_map:
+             store_dense_gp_map=self._store_dense_gp_map)
+        if self._store_dense_gp_map:
             self._grg2bzg = self._gp_map[:-1]
         else:
             self._grg2bzg = np.arange(
@@ -585,7 +585,7 @@ def _get_grid_points_by_bz_rotations_c(bz_gp, bz_grid, rotations):
             bz_grid.gp_map,
             bz_grid.D_diag,
             bz_grid.PS,
-            bz_grid.is_dense_gp_map * 1 + 1)
+            bz_grid.store_dense_gp_map * 1 + 1)
     return bzgps
 
 
@@ -600,7 +600,7 @@ def _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid, rotations):
     rot_adrs = np.dot(rotations, bz_grid.addresses[bz_gp])
     grgps = get_grid_point_from_address(rot_adrs, bz_grid.D_diag)
     bzgps = np.zeros(len(grgps), dtype='int_')
-    if bz_grid.is_dense_gp_map:
+    if bz_grid.store_dense_gp_map:
         for i, (gp, adrs) in enumerate(zip(grgps, rot_adrs)):
             indices = np.where(
                 (bz_grid.addresses[bz_grid.gp_map[gp]:bz_grid.gp_map[gp + 1]]
@@ -655,7 +655,7 @@ def _relocate_BZ_grid_address(D_diag,
                               Q,
                               reciprocal_lattice,  # column vectors
                               is_shift=None,
-                              is_dense_gp_map=False):
+                              store_dense_gp_map=False):
     """Grid addresses are relocated to be inside first Brillouin zone.
 
     Number of ir-grid-points inside Brillouin zone is returned.
@@ -674,10 +674,10 @@ def _relocate_BZ_grid_address(D_diag,
     than one addresses in bz_grid_address that are equivalent by the
     reciprocal lattice translations are mapped to one address in
     grid_address. The bz_grid_address and bz_map are given in the
-    following format depending on the choice of ``is_dense_gp_map``.
+    following format depending on the choice of `store_dense_gp_map`.
 
-    is_dense_gp_map = False
-    -----------------------
+    store_dense_gp_map = False
+    --------------------------
 
     Those grid points on the BZ surface except for one of them are
     appended to the tail of this array, for which bz_grid_address has
@@ -692,8 +692,8 @@ def _relocate_BZ_grid_address(D_diag,
     surface from grid address. The grid point indices are mapped to
     (mesh[0] * 2) x (mesh[1] * 2) x (mesh[2] * 2) space (bz_map).
 
-    is_dense_gp_map = True
-    ----------------------
+    store_dense_gp_map = True
+    -------------------------
 
     The translationally equivalent grid points corresponding to one grid point
     on BZ surface are stored in continuously. If the multiplicity (number of
@@ -720,7 +720,7 @@ def _relocate_BZ_grid_address(D_diag,
                                  dtype='int_', order='C')
     bzg2grg = np.zeros(len(bz_grid_addresses), dtype='int_')
 
-    if is_dense_gp_map:
+    if store_dense_gp_map:
         bz_map = np.zeros(np.prod(D_diag) + 1, dtype='int_')
     else:
         bz_map = np.zeros(np.prod(D_diag) * 9 + 1, dtype='int_')
@@ -739,7 +739,7 @@ def _relocate_BZ_grid_address(D_diag,
         np.array(np.dot(tmat_inv_int, Q), dtype='int_', order='C'),
         _is_shift,
         np.array(reduced_basis.T, dtype='double', order='C'),
-        is_dense_gp_map * 1 + 1)
+        store_dense_gp_map * 1 + 1)
 
     bz_grid_addresses = np.array(bz_grid_addresses[:num_gp],
                                  dtype='int_', order='C')
