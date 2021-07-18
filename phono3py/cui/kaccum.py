@@ -441,7 +441,7 @@ def main():
         mode_prop = _get_mode_property(args, f_kappa)
 
         if (args.temperature is not None and
-            not (args.gv_norm or args.pqj or args.gruneisen or args.dos)): # noqa E129
+            not (args.gv_norm or args.pqj or args.gruneisen or args.dos)):  # noqa E129
             temperatures, mode_prop = _set_T_target(temperatures,
                                                     mode_prop,
                                                     args.temperature)

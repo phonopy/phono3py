@@ -1,3 +1,4 @@
+"""Phono3py command option argument parser."""
 # Copyright (C) 2015 Atsushi Togo
 # All rights reserved.
 #
@@ -39,6 +40,7 @@ from phonopy.cui.phonopy_argparse import fix_deprecated_option_names
 def get_parser(fc_symmetry=False,
                is_nac=False,
                load_phono3py_yaml=False):
+    """Return ArgumentParser instance."""
     deprecated = fix_deprecated_option_names(sys.argv)
     import argparse
     from phonopy.interface.calculator import add_arguments_of_calculators

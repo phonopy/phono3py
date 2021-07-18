@@ -1,3 +1,4 @@
+"""Phono3py command option and conf file parser."""
 # Copyright (C) 2015 Atsushi Togo
 # All rights reserved.
 #
@@ -37,6 +38,8 @@ from phonopy.cui.settings import Settings, ConfParser, fracval
 
 
 class Phono3pySettings(Settings):
+    """Setting parameter container."""
+
     _default = {
         # In micrometre. The default value is just set to avoid divergence.
         'boundary_mfp': 1.0e6,
@@ -96,173 +99,234 @@ class Phono3pySettings(Settings):
     }
 
     def __init__(self, default=None):
+        """Init method.
+
+        self._v comes from the parent class.
+
+        """
         Settings.__init__(self)
         self._v.update(Phono3pySettings._default.copy())
         if default is not None:
             self._v.update(default)
 
     def set_boundary_mfp(self, val):
+        """Set boundary_mfp."""
         self._v['boundary_mfp'] = val
 
     def set_constant_averaged_pp_interaction(self, val):
+        """Set constant_averaged_pp_interaction."""
         self._v['constant_averaged_pp_interaction'] = val
 
     def set_create_forces_fc2(self, val):
+        """Set create_forces_fc2."""
         self._v['create_forces_fc2'] = val
 
     def set_create_forces_fc3(self, val):
+        """Set create_forces_fc3."""
         self._v['create_forces_fc3'] = val
 
     def set_create_forces_fc3_file(self, val):
+        """Set create_forces_fc3_file."""
         self._v['create_forces_fc3_file'] = val
 
     def set_cutoff_fc3_distance(self, val):
+        """Set cutoff_fc3_distance."""
         self._v['cutoff_fc3_distance'] = val
 
     def set_cutoff_pair_distance(self, val):
+        """Set cutoff_pair_distance."""
         self._v['cutoff_pair_distance'] = val
 
     def set_gamma_conversion_factor(self, val):
+        """Set gamma_conversion_factor."""
         self._v['gamma_conversion_factor'] = val
 
     def set_grid_addresses(self, val):
+        """Set grid_addresses."""
         self._v['grid_addresses'] = val
 
     def set_grid_points(self, val):
+        """Set grid_points."""
         self._v['grid_points'] = val
 
     def set_ion_clamped(self, val):
+        """Set ion_clamped."""
         self._v['ion_clamped'] = val
 
     def set_is_bterta(self, val):
+        """Set is_bterta."""
         self._v['is_bterta'] = val
 
     def set_is_compact_fc(self, val):
+        """Set is_compact_fc."""
         self._v['is_compact_fc'] = val
 
     def set_is_full_pp(self, val):
+        """Set is_full_pp."""
         self._v['is_full_pp'] = val
 
     def set_is_gruneisen(self, val):
+        """Set is_gruneisen."""
         self._v['is_gruneisen'] = val
 
     def set_is_imag_self_energy(self, val):
+        """Set is_imag_self_energy."""
         self._v['is_imag_self_energy'] = val
 
     def set_is_isotope(self, val):
+        """Set is_isotope."""
         self._v['is_isotope'] = val
 
     def set_is_joint_dos(self, val):
+        """Set is_joint_dos."""
         self._v['is_joint_dos'] = val
 
     def set_is_kappa_star(self, val):
+        """Set is_kappa_star."""
         self._v['is_kappa_star'] = val
 
     def set_is_lbte(self, val):
+        """Set is_lbte."""
         self._v['is_lbte'] = val
 
     def set_is_N_U(self, val):
+        """Set is_N_U."""
         self._v['is_N_U'] = val
 
     def set_is_real_self_energy(self, val):
+        """Set is_real_self_energy."""
         self._v['is_real_self_energy'] = val
 
     def set_is_reducible_collision_matrix(self, val):
+        """Set is_reducible_collision_matrix."""
         self._v['is_reducible_collision_matrix'] = val
 
     def set_is_spectral_function(self, val):
+        """Set is_spectral_function."""
         self._v['is_spectral_function'] = val
 
     def set_store_dense_gp_map(self, val):
+        """Set store_dense_gp_map."""
         self._v['store_dense_gp_map'] = val
 
     def set_is_symmetrize_fc2(self, val):
+        """Set is_symmetrize_fc2."""
         self._v['is_symmetrize_fc2'] = val
 
     def set_is_symmetrize_fc3_q(self, val):
+        """Set is_symmetrize_fc3_q."""
         self._v['is_symmetrize_fc3_q'] = val
 
     def set_is_symmetrize_fc3_r(self, val):
+        """Set is_symmetrize_fc3_r."""
         self._v['is_symmetrize_fc3_r'] = val
 
     def set_lapack_zheev_uplo(self, val):
+        """Set lapack_zheev_uplo."""
         self._v['lapack_zheev_uplo'] = val
 
     def set_mass_variances(self, val):
+        """Set mass_variances."""
         self._v['mass_variances'] = val
 
     def set_max_freepath(self, val):
+        """Set max_freepath."""
         self._v['max_freepath'] = val
 
     def set_num_points_in_batch(self, val):
+        """Set num_points_in_batch."""
         self._v['num_points_in_batch'] = val
 
     def set_phonon_supercell_matrix(self, val):
+        """Set phonon_supercell_matrix."""
         self._v['phonon_supercell_matrix'] = val
 
     def set_pinv_cutoff(self, val):
+        """Set pinv_cutoff."""
         self._v['pinv_cutoff'] = val
 
     def set_pinv_solver(self, val):
+        """Set pinv_solver."""
         self._v['pinv_solver'] = val
 
     def set_pp_conversion_factor(self, val):
+        """Set pp_conversion_factor."""
         self._v['pp_conversion_factor'] = val
 
     def set_read_collision(self, val):
+        """Set read_collision."""
         self._v['read_collision'] = val
 
     def set_read_fc2(self, val):
+        """Set read_fc2."""
         self._v['read_fc2'] = val
 
     def set_read_fc3(self, val):
+        """Set read_fc3."""
         self._v['read_fc3'] = val
 
     def set_read_gamma(self, val):
+        """Set read_gamma."""
         self._v['read_gamma'] = val
 
     def set_read_phonon(self, val):
+        """Set read_phonon."""
         self._v['read_phonon'] = val
 
     def set_read_pp(self, val):
+        """Set read_pp."""
         self._v['read_pp'] = val
 
     def set_scattering_event_class(self, val):
+        """Set scattering_event_class."""
         self._v['scattering_event_class'] = val
 
     def set_sigma_cutoff_width(self, val):
+        """Set sigma_cutoff_width."""
         self._v['sigma_cutoff_width'] = val
 
     def set_solve_collective_phonon(self, val):
+        """Set solve_collective_phonon."""
         self._v['solve_collective_phonon'] = val
 
     def set_subtract_forces(self, val):
+        """Set subtract_forces."""
         self._v['subtract_forces'] = val
 
     def set_use_ave_pp(self, val):
+        """Set use_ave_pp."""
         self._v['use_ave_pp'] = val
 
     def set_write_collision(self, val):
+        """Set write_collision."""
         self._v['write_collision'] = val
 
     def set_write_gamma_detail(self, val):
+        """Set write_gamma_detail."""
         self._v['write_gamma_detail'] = val
 
     def set_write_gamma(self, val):
+        """Set write_gamma."""
         self._v['write_gamma'] = val
 
     def set_write_phonon(self, val):
+        """Set write_phonon."""
         self._v['write_phonon'] = val
 
     def set_write_pp(self, val):
+        """Set write_pp."""
         self._v['write_pp'] = val
 
     def set_write_LBTE_solution(self, val):
+        """Set write_LBTE_solution."""
         self._v['write_LBTE_solution'] = val
 
 
 class Phono3pyConfParser(ConfParser):
+    """Parse command options and conf file."""
+
     def __init__(self, filename=None, args=None, default_settings=None):
+        """Init method."""
         self._settings = Phono3pySettings(default=default_settings)
         confs = {}
         if filename is not None:
@@ -556,7 +620,7 @@ class Phono3pyConfParser(ConfParser):
                     'create_forces_fc3_file', confs['create_forces_fc3_file'])
 
             if conf_key == 'dim_fc2':
-                matrix = [ int(x) for x in confs['dim_fc2'].split() ]
+                matrix = [int(x) for x in confs['dim_fc2'].split()]
                 if len(matrix) == 9:
                     matrix = np.array(matrix).reshape(3, 3)
                 elif len(matrix) == 3:
@@ -575,7 +639,8 @@ class Phono3pyConfParser(ConfParser):
 
             if conf_key in ('constant_averaged_pp_interaction'
                             'const_ave_pp'):
-                self.set_parameter('const_ave_pp', float(confs['const_ave_pp']))
+                self.set_parameter('const_ave_pp',
+                                   float(confs['const_ave_pp']))
 
             if conf_key == 'grid_addresses':
                 vals = [int(x) for x in
@@ -598,7 +663,8 @@ class Phono3pyConfParser(ConfParser):
             if conf_key == 'mass_variances':
                 vals = [fracval(x) for x in confs['mass_variances'].split()]
                 if len(vals) < 1:
-                    self.setting_error("Mass variance parameters are incorrectly set.")
+                    self.setting_error(
+                        "Mass variance parameters are incorrectly set.")
                 else:
                     self.set_parameter('mass_variances', vals)
 
@@ -683,7 +749,8 @@ class Phono3pyConfParser(ConfParser):
         if 'grid_points' in params:
             self._settings.set_grid_points(params['grid_points'])
 
-        # Atoms are clamped under applied strain in Gruneisen parameter calculation
+        # Atoms are clamped under applied strain in Gruneisen parameter
+        # calculation.
         if 'ion_clamped' in params:
             self._settings.set_ion_clamped(params['ion_clamped'])
 
@@ -808,7 +875,8 @@ class Phono3pyConfParser(ConfParser):
 
         # Calculate spectral_functions
         if 'spectral_function' in params:
-            self._settings.set_is_spectral_function(params['spectral_function'])
+            self._settings.set_is_spectral_function(
+                params['spectral_function'])
 
         # Subtract residual forces to create FORCES_FC2 and FORCES_FC3
         if 'subtract_forces' in params:

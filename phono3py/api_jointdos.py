@@ -125,7 +125,8 @@ class Phono3pyJointDos(object):
                     print("%8.3f" % f)
 
             if not self._sigmas:
-                raise RuntimeError("sigma or tetrahedron method has to be set.")
+                raise RuntimeError(
+                    "sigma or tetrahedron method has to be set.")
 
             for sigma in self._sigmas:
                 if self._log_level:
