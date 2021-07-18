@@ -1,6 +1,7 @@
+"""Tests of displacements.py."""
 import phono3py
 import numpy as np
-from phono3py.phonon3.displacement_fc3 import get_equivalent_smallest_vectors
+from phono3py.phonon3.displacement_fc3 import get_smallest_vector_of_atom_pair
 
 
 distances_NaCl = [
@@ -19,7 +20,8 @@ distances_NaCl = [
     2.8451507, 6.3619505, 6.3619505, 8.5354522]
 
 
-def test_agno2(agno2_cell):
+def test_duplicates_agno2(agno2_cell):
+    """Test duplicated pairs of displacements."""
     ph3 = phono3py.load(unitcell=agno2_cell,
                         supercell_matrix=[1, 1, 1])
     ph3.generate_displacements()
@@ -31,6 +33,7 @@ def test_agno2(agno2_cell):
 
 
 def test_nacl_pbe(nacl_pbe):
+    """Test generated displacements and duplicates."""
     ph3 = nacl_pbe
     ph3.generate_displacements()
     duplicates_ref = [[77, 41]]
@@ -58,20 +61,19 @@ def test_nacl_pbe(nacl_pbe):
     np.testing.assert_equal(pairs_ref, np.array(pairs).ravel())
 
 
-def test_get_equivalent_smallest_vectors(nacl_pbe):
-    ph = nacl_pbe
+def test_get_smallest_vector_of_atom_pair(nacl_pbe):
+    """Test get_smallest_vector_of_atom_pair."""
+    ph3 = nacl_pbe
     distances = []
-    for i in range(len(ph.supercell)):
-        vec = get_equivalent_smallest_vectors(
-            i, 0, ph.supercell, 1e-5)
+    for i in range(len(ph3.supercell)):
+        vec = get_smallest_vector_of_atom_pair(
+            i, 0, ph3.supercell, 1e-5)
         if vec.ndim == 2:
             vec = vec[0]
-        distances.append(np.linalg.norm(np.dot(vec, ph.supercell.cell)))
+        distances.append(np.linalg.norm(np.dot(vec, ph3.supercell.cell)))
 
     # _show(distances)
     np.testing.assert_allclose(distances_NaCl, distances, rtol=0, atol=1e-6)
-
-
 
 
 def _show(vals):

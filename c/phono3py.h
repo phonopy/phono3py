@@ -364,6 +364,7 @@ long ph3py_get_thm_integration_weights_at_grid_points(
   const long *bz_map,
   const long bz_grid_type,
   const double *frequencies,
+  const long *gp2irgp_map,
   const char function);
 
 #endif

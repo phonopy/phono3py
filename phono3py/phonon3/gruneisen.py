@@ -1,3 +1,4 @@
+"""Calculation of mode Grueneisen parameters from fc3."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -37,6 +38,7 @@ import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
 from phonopy.units import VaspToTHz
 from phonopy.structure.grid_points import get_qpoints
+from phonopy.structure.cells import sparse_to_dense_svecs
 
 
 def run_gruneisen_parameters(fc2,
@@ -54,6 +56,11 @@ def run_gruneisen_parameters(fc2,
                              symprec=1e-5,
                              output_filename=None,
                              log_level=1):
+    """Run mode Grueneisen parameter calculation.
+
+    The results is written into files.
+
+    """
     if log_level:
         print("-" * 23 + " Phonon Gruneisen parameter " + "-" * 23)
         if mesh is not None:
@@ -109,6 +116,8 @@ def run_gruneisen_parameters(fc2,
 
 
 class Gruneisen(object):
+    """Calculat mode Grueneisen parameters from fc3."""
+
     def __init__(self,
                  fc2,
                  fc3,
@@ -119,6 +128,7 @@ class Gruneisen(object):
                  ion_clamped=False,
                  factor=VaspToTHz,
                  symprec=1e-5):
+        """Init method."""
         self._fc2 = fc2
         self._fc3 = fc3
         self._scell = supercell
@@ -133,8 +143,12 @@ class Gruneisen(object):
                                         symprec=self._symprec)
         self._nac_q_direction = nac_q_direction
 
-        (self._shortest_vectors,
-         self._multiplicity) = self._pcell.get_smallest_vectors()
+        svecs, multi = self._pcell.get_smallest_vectors()
+        if self._pcell.store_dense_svecs:
+            self._svecs = svecs
+            self._multi = multi
+        else:
+            self._svecs, self._multi = sparse_to_dense_svecs(svecs, multi)
 
         if self._ion_clamped:
             num_atom_prim = self._pcell.get_number_of_atoms()
@@ -153,6 +167,7 @@ class Gruneisen(object):
         self._weights = None
 
     def run(self):
+        """Run mode Grueneisen parameter calculation."""
         if self._run_mode == 'band':
             (self._gruneisen_parameters,
              self._frequencies) = self._calculate_band_paths()
@@ -164,12 +179,15 @@ class Gruneisen(object):
 
     @property
     def dynamical_matrix(self):
+        """Return DynamicalMatrix instance."""
         return self._dm
 
     def get_gruneisen_parameters(self):
+        """Return mode Grueneisen paraterms."""
         return self._gruneisen_parameters
 
     def set_qpoints(self, qpoints):
+        """Set q-points."""
         self._run_mode = 'qpoints'
         self._qpoints = qpoints
 
@@ -178,16 +196,18 @@ class Gruneisen(object):
                           rotations=None,
                           shift=None,
                           is_gamma_center=False):
+        """Set sampling mesh."""
         self._run_mode = 'mesh'
         self._mesh = np.array(mesh, dtype='intc')
         self._qpoints, self._weights = get_qpoints(
             self._mesh,
-            np.linalg.inv(self._pcell.get_cell()),
+            np.linalg.inv(self._pcell.cell),
             q_mesh_shift=shift,
             is_gamma_center=is_gamma_center,
             rotations=rotations)
 
     def set_band_structure(self, paths):
+        """Set band structure paths."""
         self._run_mode = 'band'
         self._band_paths = paths
         rec_lattice = np.linalg.inv(self._pcell.get_cell())
@@ -201,6 +221,7 @@ class Gruneisen(object):
             self._band_distances.append(distances_at_path)
 
     def write(self, filename="gruneisen"):
+        """Write result in a file."""
         if self._gruneisen_parameters is not None:
             if self._run_mode == 'band':
                 self._write_band_yaml(filename + ".yaml")
@@ -219,7 +240,8 @@ class Gruneisen(object):
                 zip(self._qpoints,
                     self._gruneisen_parameters,
                     self._frequencies)):
-                f.write("- q-position: [ %10.7f, %10.7f, %10.7f ]\n" % tuple(q))
+                f.write("- q-position: [ %10.7f, %10.7f, %10.7f ]\n"
+                        % tuple(q))
                 if self._weights is not None:
                     f.write("  multiplicity: %d\n" % self._weights[i])
                 f.write("  band:\n")
@@ -242,7 +264,7 @@ class Gruneisen(object):
                 f.write("- nqpoint: %d\n" % len(path))
                 f.write("  phonon:\n")
                 for i, (q, d, g_at_q, freqs_at_q) in enumerate(
-                    zip(path, distances, gs, fs)):
+                    zip(path, distances, gs, fs)):  # noqa E125
                     f.write("  - q-position: [ %10.7f, %10.7f, %10.7f ]\n"
                             % tuple(q))
                     f.write("    distance: %10.7f\n" % d)
@@ -334,31 +356,33 @@ class Gruneisen(object):
                     for nu in range(num_atom_prim):
                         for pi in range(num_atom_prim):
                             g[s] += (w[nu * 3 + i, s].conjugate() *
-                                     dDdu[nu, pi, i, j] * w[pi * 3 + j, s]).real
+                                     dDdu[nu, pi, i, j] * w[pi * 3 + j, s]
+                                     ).real
 
             g[s] *= -1.0 / 2 / omega2[s]
 
         return g, omega2
 
     def _get_dDdu(self, q):
-        num_atom_prim = self._pcell.get_number_of_atoms()
-        num_atom_super = self._scell.get_number_of_atoms()
-        p2s = self._pcell.get_primitive_to_supercell_map()
-        s2p = self._pcell.get_supercell_to_primitive_map()
-        vecs = self._shortest_vectors
-        multi = self._multiplicity
-        m = self._pcell.get_masses()
+        num_atom_prim = len(self._pcell)
+        num_atom_super = len(self._scell)
+        p2s = self._pcell.p2s_map
+        s2p = self._pcell.s2p_map
+        m = self._pcell.masses
         dPhidu = self._dPhidu
-        dDdu = np.zeros((num_atom_prim, num_atom_prim, 3, 3, 3, 3), dtype=complex)
+        dDdu = np.zeros((num_atom_prim, num_atom_prim, 3, 3, 3, 3),
+                        dtype=complex)
 
         for nu in range(num_atom_prim):
             for pi, p in enumerate(p2s):
                 for Ppi, s in enumerate(s2p):
-                    if not s==p:
+                    if not s == p:
                         continue
+                    adrs = self._multi[Ppi, nu][1]
+                    multi = self._multi[Ppi, nu][0]
                     phase = np.exp(2j * np.pi * np.dot(
-                            vecs[Ppi,nu,:multi[Ppi, nu], :], q)
-                                   ).sum() / multi[Ppi, nu]
+                            self._svecs[adrs:(adrs + multi), :], q)
+                                   ).sum() / multi
                     dDdu[nu, pi] += phase * dPhidu[nu, Ppi]
                 dDdu[nu, pi] /= np.sqrt(m[nu] * m[pi])
 
@@ -366,9 +390,9 @@ class Gruneisen(object):
 
     def _get_dPhidu(self):
         fc3 = self._fc3
-        num_atom_prim = self._pcell.get_number_of_atoms()
-        num_atom_super = self._scell.get_number_of_atoms()
-        p2s = self._pcell.get_primitive_to_supercell_map()
+        num_atom_prim = len(self._pcell)
+        num_atom_super = len(self._scell)
+        p2s = self._pcell.p2s_map
         dPhidu = np.zeros((num_atom_prim, num_atom_super, 3, 3, 3, 3),
                           dtype=float)
 
@@ -378,29 +402,25 @@ class Gruneisen(object):
                 for i in range(3):
                     for j in range(3):
                         for k in range(3):
-                            for l in range(3):
+                            for ll in range(3):
                                 for m in range(3):
-                                    dPhidu[nu, pi, i, j, k, l] = (
+                                    dPhidu[nu, pi, i, j, k, ll] = (
                                         fc3[p2s[nu], pi, :, i, j, :] *
-                                        Y[:, :, k, l]).sum()
-                                    # (Y[:,:,k,l] + Y[:,:,l,k]) / 2).sum() # Symmetrization?
+                                        Y[:, :, k, ll]).sum()
+                                    # Symmetrization?
+                                    # (Y[:,:,k,l] + Y[:,:,l,k]) / 2).sum()
 
         return dPhidu
 
     def _get_Y(self, nu):
         P = self._fc2
         X = self._X
-        vecs = self._shortest_vectors
-        multi = self._multiplicity
-        lat = self._pcell.get_cell()
-        num_atom_super = self._scell.get_number_of_atoms()
-        R = np.array(
-            [np.dot(vecs[Npi, nu, :multi[Npi,nu], :].sum(axis=0) /
-                    multi[Npi,nu], lat) for Npi in range(num_atom_super)])
-
-        p2s = self._pcell.get_primitive_to_supercell_map()
-        s2p = self._pcell.get_supercell_to_primitive_map()
-        p2p = self._pcell.get_primitive_to_primitive_map()
+        lat = self._pcell.cell
+        num_atom_super = len(self._scell)
+        R = self._get_R(num_atom_super, nu, lat)
+        p2s = self._pcell.p2s_map
+        s2p = self._pcell.s2p_map
+        p2p = self._pcell.p2p_map
 
         Y = np.zeros((num_atom_super, 3, 3, 3), dtype=float)
 
@@ -412,34 +432,38 @@ class Gruneisen(object):
         return Y
 
     def _get_X(self):
-        num_atom_super = self._scell.get_number_of_atoms()
-        num_atom_prim = self._pcell.get_number_of_atoms()
-        p2s = self._pcell.get_primitive_to_supercell_map()
-        lat = self._pcell.get_cell()
-        vecs = self._shortest_vectors
-        multi = self._multiplicity
+        num_atom_super = len(self._scell)
+        num_atom_prim = len(self._pcell)
+        p2s = self._pcell.p2s_map
+        lat = self._pcell.cell
         X = np.zeros((num_atom_prim, 3, 3, 3), dtype=float)
         G = self._get_Gamma()
         P = self._fc2
 
         for mu in range(num_atom_prim):
             for nu in range(num_atom_prim):
-                R = np.array(
-                    [np.dot(vecs[Npi, nu, :multi[Npi, nu], :].sum(axis=0) /
-                            multi[Npi, nu], lat)
-                     for Npi in range(num_atom_super)])
+                R = self._get_R(num_atom_super, nu, lat)
                 for i in range(3):
                     for j in range(3):
                         for k in range(3):
-                            for l in range(3):
-                                X[mu, i, j, k] -= G[mu, nu, i, l] * \
-                                    np.dot(P[p2s[nu], :, l, j], R[:, k])
+                            for ll in range(3):
+                                X[mu, i, j, k] -= G[mu, nu, i, ll] * \
+                                    np.dot(P[p2s[nu], :, ll, j], R[:, k])
 
         return X
 
+    def _get_R(self, num_atom_super, nu, lat):
+        R = []
+        for Npi in range(num_atom_super):
+            adrs = self._multi[Npi, nu][1]
+            multi = self._multi[Npi, nu][0]
+            R.append(np.dot(self._svecs[adrs:(adrs + multi), :].sum(axis=0) /
+                            multi, lat))
+        return np.array(R)
+
     def _get_Gamma(self):
-        num_atom_prim = self._pcell.get_number_of_atoms()
-        m = self._pcell.get_masses()
+        num_atom_prim = len(self._pcell)
+        m = self._pcell.masses
         self._dm.run([0, 0, 0])
         vals, vecs = np.linalg.eigh(self._dm.dynamical_matrix.real)
         G = np.zeros((num_atom_prim, num_atom_prim, 3, 3), dtype=float)

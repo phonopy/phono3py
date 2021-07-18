@@ -1028,6 +1028,7 @@ long ph3py_get_thm_integration_weights_at_grid_points(
   const long *bz_map,
   const long bz_grid_type,
   const double *frequencies,
+  const long *gp2irgp_map,
   const char function)
 {
   long i, j, k, bi;
@@ -1061,7 +1062,8 @@ long ph3py_get_thm_integration_weights_at_grid_points(
     for (bi = 0; bi < num_band; bi++) {
       for (j = 0; j < 24; j++) {
         for (k = 0; k < 4; k++) {
-          freq_vertices[j][k] = frequencies[vertices[j][k] * num_band + bi];
+          freq_vertices[j][k] = frequencies[
+            gp2irgp_map[vertices[j][k]] * num_band + bi];
         }
       }
       for (j = 0; j < num_frequency_points; j++) {

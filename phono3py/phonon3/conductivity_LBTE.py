@@ -1,3 +1,4 @@
+"""Calculate lattice thermal conductivity by direct solution."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -34,6 +35,7 @@
 
 import sys
 import time
+import warnings
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
 from phono3py.phonon3.conductivity import (Conductivity, all_bands_exist,
@@ -76,6 +78,7 @@ def get_thermal_conductivity_LBTE(
         input_filename=None,
         output_filename=None,
         log_level=0):
+    """Calculate lattice thermal conductivity by direct solution."""
     if temperatures is None:
         _temperatures = [300, ]
     else:
@@ -157,7 +160,7 @@ def get_thermal_conductivity_LBTE(
              all_bands_exist(interaction) and
              read_from == "grid_points" and
              grid_points is None) or
-            (not read_collision)):
+            (not read_collision)):  # noqa E129
             _write_collision(lbte, interaction, filename=output_filename)
 
     if grid_points is None and all_bands_exist(interaction):
@@ -259,22 +262,22 @@ def _write_kappa(lbte,
                  filename=None,
                  log_level=0):
     temperatures = lbte.temperatures
-    sigmas = lbte.get_sigmas()
-    sigma_cutoff = lbte.get_sigma_cutoff_width()
+    sigmas = lbte.sigmas
+    sigma_cutoff = lbte.sigma_cutoff_width
     mesh = lbte.mesh_numbers
-    weights = lbte.get_grid_weights()
-    frequencies = lbte.get_frequencies()
-    ave_pp = lbte.get_averaged_pp_interaction()
-    qpoints = lbte.get_qpoints()
+    weights = lbte.grid_weights
+    frequencies = lbte.frequencies
+    ave_pp = lbte.averaged_pp_interaction
+    qpoints = lbte.qpoints
     kappa = lbte.kappa
     kappa_RTA = lbte.get_kappa_RTA()
     gamma = lbte.gamma
     gamma_isotope = lbte.gamma_isotope
-    gv = lbte.get_group_velocities()
+    gv = lbte.group_velocities
     f_vector = lbte.get_f_vectors()
-    gv_by_gv = lbte.get_gv_by_gv()
-    mode_cv = lbte.get_mode_heat_capacities()
-    mode_kappa = lbte.get_mode_kappa()
+    gv_by_gv = lbte.gv_by_gv
+    mode_cv = lbte.mode_heat_capacities
+    mode_kappa = lbte.mode_kappa
     mode_kappa_RTA = lbte.get_mode_kappa_RTA()
     mfp = lbte.get_mean_free_path()
 
@@ -285,7 +288,7 @@ def _write_kappa(lbte,
     if is_reducible_collision_matrix:
         frequencies = lbte.get_frequencies_all()
     else:
-        frequencies = lbte.get_frequencies()
+        frequencies = lbte.frequencies
 
     for i, sigma in enumerate(sigmas):
         if gamma_isotope is not None:
@@ -686,7 +689,6 @@ def diagonalize_collision_matrix(collision_matrices,
         shape=(size_of_collision_matrix,), dtype='double'
 
     """
-
     start = time.time()
 
     # Matrix size of collision matrix to be diagonalized.
@@ -766,6 +768,8 @@ def diagonalize_collision_matrix(collision_matrices,
 
 
 class Conductivity_LBTE(Conductivity):
+    """Lattice thermal conductivity calculation by direct solution."""
+
     def __init__(self,
                  interaction,
                  grid_points=None,
@@ -785,6 +789,7 @@ class Conductivity_LBTE(Conductivity):
                  pinv_cutoff=1.0e-8,
                  pinv_solver=0,
                  log_level=0):
+        """Init method."""
         self._pp = None
         self._temperatures = None
         self._sigmas = None
@@ -868,6 +873,7 @@ class Conductivity_LBTE(Conductivity):
             self._allocate_values()
 
     def set_kappa_at_sigmas(self):
+        """Calculate lattice thermal conductivity from collision matrix."""
         if len(self._grid_points) != len(self._ir_grid_points):
             print("Collision matrix is not well created.")
             import sys
@@ -876,41 +882,60 @@ class Conductivity_LBTE(Conductivity):
             weights = self._prepare_collision_matrix()
             self._set_kappa_at_sigmas(weights)
 
-    def set_collision_matrix(self, collision_matrix):
-        self._collision_matrix = collision_matrix
-
     def get_f_vectors(self):
+        """Return f vectors."""
         return self._f_vectors
 
     @property
     def collision_matrix(self):
+        """Setter and getter of collision matrix."""
         return self._collision_matrix
 
+    @collision_matrix.setter
+    def collision_matrix(self, collision_matrix):
+        self._collision_matrix = collision_matrix
+
     def get_collision_matrix(self):
+        """Return collision matrix."""
+        warnings.warn("Use attribute, Conductivity_LBTE.collision_matrix "
+                      "instead of Conductivity_LBTE.get_collision_matrix().",
+                      DeprecationWarning)
         return self.collision_matrix
 
+    def set_collision_matrix(self, collision_matrix):
+        """Set collision matrix."""
+        warnings.warn("Use attribute, Conductivity_LBTE.collision_matrix "
+                      "instead of Conductivity_LBTE.set_collision_matrix().",
+                      DeprecationWarning)
+        self.collision_matrix = collision_matrix
+
     def get_collision_eigenvalues(self):
+        """Return eigenvalues of collision matrix."""
         return self._collision_eigenvalues
 
     def get_mean_free_path(self):
+        """Return mean free path."""
         return self._mfp
 
     def get_frequencies_all(self):
+        """Return phonon frequencies on GR-grid."""
         return self._frequencies[self._bz_grid.grg2bzg]
 
     def get_kappa_RTA(self):
+        """Return RTA lattice thermal conductivity."""
         return self._kappa_RTA
 
     def get_mode_kappa_RTA(self):
+        """Return RTA mode lattice thermal conductivities."""
         return self._mode_kappa_RTA
 
     def delete_gp_collision_and_pp(self):
-        """Deallocate large arrays"""
+        """Deallocate large arrays."""
         self._collision.delete_integration_weights()
         self._pp.delete_interaction_strength()
 
     def _run_at_grid_point(self):
-        """Calculate properties at a grid point"""
+        """Calculate properties at a grid point."""
         i = self._grid_point_count
         self._show_log_header(i)
         gp = self._grid_points[i]
@@ -1057,13 +1082,12 @@ class Conductivity_LBTE(Conductivity):
             dtype='double', order='C')
 
     def _set_collision_matrix_at_sigmas(self, i):
-        """Calculate collision matrices at grid point
+        """Calculate collision matrices at grid point.
 
         i : int
             Grid point count.
 
         """
-
         for j, sigma in enumerate(self._sigmas):
             if self._log_level:
                 text = "Calculating collision matrix with "
@@ -1132,7 +1156,8 @@ class Conductivity_LBTE(Conductivity):
                 num_rot = len(self._point_operations)
                 rot_grid_points = np.zeros(
                     (num_rot, num_mesh_points), dtype='int_')
-                # Ir-grid points and rot_grid_points in generalized regular grid
+                # Ir-grid points and rot_grid_points in generalized regular
+                # grid
                 ir_gr_grid_points = np.array(
                     self._bz_grid.bzg2grg[self._ir_grid_points], dtype='int_')
                 for i in range(num_mesh_points):
@@ -1156,7 +1181,7 @@ class Conductivity_LBTE(Conductivity):
         return weights
 
     def _set_kappa_at_sigmas(self, weights):
-        """Calculate thermal conductivity"""
+        """Calculate thermal conductivity from collision matrix."""
         for j, sigma in enumerate(self._sigmas):
             if self._log_level:
                 text = "----------- Thermal conductivity (W/m-k) "
@@ -1196,7 +1221,6 @@ class Conductivity_LBTE(Conductivity):
 
     def _combine_collisions(self):
         """Include diagonal elements into collision matrix."""
-
         num_band = len(self._primitive) * 3
         for j, k in list(np.ndindex(
                 (len(self._sigmas), len(self._temperatures)))):
@@ -1207,13 +1231,12 @@ class Conductivity_LBTE(Conductivity):
                         continue
 
                     main_diagonal = self._get_main_diagonal(i, j, k)
-                    for l in range(num_band):
+                    for ll in range(num_band):
                         self._collision_matrix[
-                            j, k, i, l, :, i, l, :] += main_diagonal[l] * r
+                            j, k, i, ll, :, i, ll, :] += main_diagonal[ll] * r
 
     def _combine_reducible_collisions(self):
         """Include diagonal elements into collision matrix."""
-
         num_band = len(self._primitive) * 3
         num_mesh_points = np.prod(self._pp.mesh_numbers)
 
@@ -1221,12 +1244,12 @@ class Conductivity_LBTE(Conductivity):
                 np.ndindex((len(self._sigmas), len(self._temperatures)))):
             for i in range(num_mesh_points):
                 main_diagonal = self._get_main_diagonal(i, j, k)
-                for l in range(num_band):
+                for ll in range(num_band):
                     self._collision_matrix[
-                        j, k, i, l, i, l] += main_diagonal[l]
+                        j, k, i, ll, i, ll] += main_diagonal[ll]
 
     def _expand_collisions(self, ir_gr_grid_points, rot_grid_points):
-        """Fill elements of full collision matrix by symmetry"""
+        """Fill elements of full collision matrix by symmetry."""
         start = time.time()
         if self._log_level:
             sys.stdout.write("- Expanding properties to all grid points ")
@@ -1239,16 +1262,18 @@ class Conductivity_LBTE(Conductivity):
                                             rot_grid_points)
         except ImportError:
             print("Phono3py C-routine is not compiled correctly.")
+            num_mesh_points = np.prod(self._pp.mesh_numbers)
+            colmat = self._collision_matrix
             for i, ir_gp in enumerate(ir_gr_grid_points):
                 multi = (rot_grid_points[:, ir_gp] == ir_gp).sum()
-                colmat_irgp = self._collision_matrix[:, :, ir_gp, :, :, :].copy()
+                colmat_irgp = colmat[:, :, ir_gp, :, :, :].copy()
                 colmat_irgp /= multi
-                self._collision_matrix[:, :, ir_gp, :, :, :] = 0
+                colmat[:, :, ir_gp, :, :, :] = 0
                 for j, r in enumerate(self._rotations_cartesian):
                     gp_r = rot_grid_points[j, ir_gp]
                     for k in range(num_mesh_points):
                         gp_c = rot_grid_points[j, k]
-                        self._collision_matrix[:, :, gp_r, :, gp_c, :] += (
+                        colmat[:, :, gp_r, :, gp_c, :] += (
                             colmat_irgp[:, :, :, k, :])
 
         if self._log_level:
@@ -1256,7 +1281,7 @@ class Conductivity_LBTE(Conductivity):
             sys.stdout.flush()
 
     def _expand_local_values(self, ir_gr_grid_points, rot_grid_points):
-        """Fill elements of local properties at grid points"""
+        """Fill elements of local properties at grid points."""
         for i, ir_gp in enumerate(ir_gr_grid_points):
             gv_irgp = self._gv[ir_gp].copy()
             self._gv[ir_gp] = 0
@@ -1277,7 +1302,7 @@ class Conductivity_LBTE(Conductivity):
                 self._cv[:, gp_r, :] += cv_irgp / multi
 
     def _get_weights(self):
-        """Returns weights used for collision matrix and |X> and |f>
+        """Return weights used for collision matrix and |X> and |f>.
 
         self._rot_grid_points : ndarray
             shape=(ir_grid_points, point_operations), dtype='int_'
@@ -1301,7 +1326,7 @@ class Conductivity_LBTE(Conductivity):
             sym_broken = False
             for gp in np.unique(r_gps):
                 if (len(np.where(r_gps == gp)[0]) !=
-                    self._rot_grid_points.shape[1] // len(np.unique(r_gps))):
+                    self._rot_grid_points.shape[1] // len(np.unique(r_gps))):  # noqa E129
                     sym_broken = True
 
             if sym_broken:
@@ -1311,8 +1336,11 @@ class Conductivity_LBTE(Conductivity):
         return weights
 
     def _symmetrize_collision_matrix(self):
-        r"""(\Omega + \Omega^T) / 2"""
+        r"""Symmetrize collision matrix.
 
+        (\Omega + \Omega^T) / 2.
+
+        """
         start = time.time()
 
         try:
@@ -1343,7 +1371,7 @@ class Conductivity_LBTE(Conductivity):
             sys.stdout.flush()
 
     def _average_collision_matrix_by_degeneracy(self):
-        """Average symmetrically equivalent elemetns of collision matrix"""
+        """Average symmetrically equivalent elemetns of collision matrix."""
         start = time.time()
 
         # Average matrix elements belonging to degenerate bands
@@ -1427,7 +1455,7 @@ class Conductivity_LBTE(Conductivity):
             return np.zeros_like(X.reshape(-1, 3))
 
     def _get_Y(self, i_sigma, i_temp, weights, X):
-        r"""Y = (\Omega^-1, X)"""
+        r"""Calculate Y = (\Omega^-1, X)."""
         solver = _select_solver(self._pinv_solver)
         num_band = len(self._primitive) * 3
 
@@ -1486,7 +1514,7 @@ class Conductivity_LBTE(Conductivity):
         return Y
 
     def _set_f_vectors(self, Y, num_grid_points, weights):
-        """Calculate f-vectors
+        """Calculate f-vectors.
 
         Collision matrix is half of that defined in Chaput's paper.
         Therefore Y is divided by 2.
@@ -1498,12 +1526,11 @@ class Conductivity_LBTE(Conductivity):
 
     def _get_eigvals_pinv(self, i_sigma, i_temp):
         """Return inverse eigenvalues of eigenvalues > epsilon."""
-
         w = self._collision_eigenvalues[i_sigma, i_temp]
         e = np.zeros_like(w)
-        for l, val in enumerate(w):
+        for ll, val in enumerate(w):
             if abs(val) > self._pinv_cutoff:
-                e[l] = 1 / val
+                e[ll] = 1 / val
         return e
 
     def _get_I(self, a, b, size, plus_transpose=True):
@@ -1533,7 +1560,7 @@ class Conductivity_LBTE(Conductivity):
         return I_mat
 
     def _set_kappa(self, i_sigma, i_temp, weights):
-        """Calculate direct solution thermal conductivity
+        """Calculate direct solution thermal conductivity.
 
         Either ir or full colmat.
 
@@ -1544,7 +1571,7 @@ class Conductivity_LBTE(Conductivity):
             self._set_kappa_ir_colmat(i_sigma, i_temp, weights)
 
     def _set_kappa_ir_colmat(self, i_sigma, i_temp, weights):
-        """Calculate direct solution thermal conductivity of ir colmat"""
+        """Calculate direct solution thermal conductivity of ir colmat."""
         if self._solve_collective_phonon:
             self._set_mode_kappa_Chaput(i_sigma, i_temp, weights)
         else:
@@ -1570,7 +1597,7 @@ class Conductivity_LBTE(Conductivity):
             self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N)
 
     def _set_kappa_reducible_colmat(self, i_sigma, i_temp, weights):
-        """Calculate direct solution thermal conductivity of full colmat"""
+        """Calculate direct solution thermal conductivity of full colmat."""
         N = self._num_sampling_grid_points
         X = self._get_X(i_temp, weights, self._gv)
         num_mesh_points = np.prod(self._pp.mesh_numbers)
@@ -1590,14 +1617,14 @@ class Conductivity_LBTE(Conductivity):
             self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N)
 
     def _set_kappa_RTA(self, i_sigma, i_temp, weights):
-        """Calculate RTA thermal conductivity either ir or full colmat"""
+        """Calculate RTA thermal conductivity with either ir or full colmat."""
         if self._is_reducible_collision_matrix:
             self._set_kappa_RTA_reducible_colmat(i_sigma, i_temp, weights)
         else:
             self._set_kappa_RTA_ir_colmat(i_sigma, i_temp, weights)
 
     def _set_kappa_RTA_ir_colmat(self, i_sigma, i_temp, weights):
-        """Calculate RTA thermal conductivity
+        """Calculate RTA thermal conductivity.
 
         This RTA is supposed to be the same as conductivity_RTA.
 
@@ -1617,7 +1644,7 @@ class Conductivity_LBTE(Conductivity):
                     old_settings = np.seterr(all='raise')
                     try:
                         Y[i_mode, :] = X[i_mode, :] / g[j]
-                    except:
+                    except Exception:
                         print("=" * 26 + " Warning " + "=" * 26)
                         print(" Unexpected physical condition of ph-ph "
                               "interaction calculation was found.")
@@ -1638,7 +1665,7 @@ class Conductivity_LBTE(Conductivity):
             N)
 
     def _set_kappa_RTA_reducible_colmat(self, i_sigma, i_temp, weights):
-        """Calculate RTA thermal conductivity
+        """Calculate RTA thermal conductivity.
 
         This RTA is not equivalent to conductivity_RTA.
         The lifetime is defined from the diagonal part of
@@ -1724,7 +1751,6 @@ class Conductivity_LBTE(Conductivity):
         memory space.
 
         """
-
         X = self._get_X(i_temp, weights, self._gv).ravel()
         num_ir_grid_points = len(self._ir_grid_points)
         num_band = len(self._primitive) * 3
@@ -1775,7 +1801,8 @@ class Conductivity_LBTE(Conductivity):
                 sum_k = np.zeros((3, 3), dtype='double')
                 for r in rotations_cartesian:
                     sum_k += np.outer(np.dot(r, v), np.dot(r, mfp))
-                sum_k = (sum_k + sum_k.T) / 2 * cv * weights[i] ** 2 * 2 * np.pi
+                sum_k = ((sum_k + sum_k.T) / 2 * cv * weights[i] ** 2
+                         * 2 * np.pi)
                 for k, vxf in enumerate(
                         ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))):
                     self._mode_kappa[i_sigma, i_temp, i, j, k] = sum_k[vxf]
@@ -1827,17 +1854,17 @@ class Conductivity_LBTE(Conductivity):
         for i in range(num_ir_grid_points):
             for j in range(num_band):
                 for k in range(3):
-                    for l in range(num_ir_grid_points):
+                    for ll in range(num_ir_grid_points):
                         for m in range(num_band):
                             for n in range(3):
                                 self._py_set_symmetrized_element(
-                                    i, j, k, l, m, n)
+                                    i, j, k, ll, m, n)
 
-    def _py_set_symmetrized_element(self, i, j, k, l, m, n):
-        sym_val = (self._collision_matrix[:, :, i, j, k, l, m, n] +
-                   self._collision_matrix[:, :, l, m, n, i, j, k]) / 2
-        self._collision_matrix[:, :, i, j, k, l, m, n] = sym_val
-        self._collision_matrix[:, :, l, m, n, i, j, k] = sym_val
+    def _py_set_symmetrized_element(self, i, j, k, ll, m, n):
+        sym_val = (self._collision_matrix[:, :, i, j, k, ll, m, n] +
+                   self._collision_matrix[:, :, ll, m, n, i, j, k]) / 2
+        self._collision_matrix[:, :, i, j, k, ll, m, n] = sym_val
+        self._collision_matrix[:, :, ll, m, n, i, j, k] = sym_val
 
     def _py_symmetrize_collision_matrix_no_kappa_stars(self):
         num_band = self._primitive.get_number_of_atoms() * 3
@@ -1845,12 +1872,12 @@ class Conductivity_LBTE(Conductivity):
         for i in range(num_ir_grid_points):
             for j in range(num_band):
                 for k in range(num_ir_grid_points):
-                    for l in range(num_band):
+                    for ll in range(num_band):
                         self._py_set_symmetrized_element_no_kappa_stars(
-                            i, j, k, l)
+                            i, j, k, ll)
 
-    def _py_set_symmetrized_element_no_kappa_stars(self, i, j, k, l):
-        sym_val = (self._collision_matrix[:, :, i, j, k, l] +
-                   self._collision_matrix[:, :, k, l, i, j]) / 2
-        self._collision_matrix[:, :, i, j, k, l] = sym_val
-        self._collision_matrix[:, :, k, l, i, j] = sym_val
+    def _py_set_symmetrized_element_no_kappa_stars(self, i, j, k, ll):
+        sym_val = (self._collision_matrix[:, :, i, j, k, ll] +
+                   self._collision_matrix[:, :, k, ll, i, j]) / 2
+        self._collision_matrix[:, :, i, j, k, ll] = sym_val
+        self._collision_matrix[:, :, k, ll, i, j] = sym_val

@@ -596,20 +596,18 @@ def init_phono3py(settings,
         cell_info['supercell_matrix'],
         primitive_matrix=cell_info['primitive_matrix'],
         phonon_supercell_matrix=cell_info['phonon_supercell_matrix'],
-        masses=settings.masses,
-        band_indices=settings.band_indices,
-        sigmas=updated_settings['sigmas'],
-        sigma_cutoff=settings.sigma_cutoff_width,
         cutoff_frequency=updated_settings['cutoff_frequency'],
         frequency_factor_to_THz=updated_settings['frequency_factor_to_THz'],
         is_symmetry=settings.is_symmetry,
         is_mesh_symmetry=settings.is_mesh_symmetry,
-        symmetrize_fc3q=settings.is_symmetrize_fc3_q,
         is_dense_gp_map=settings.is_dense_gp_map,
         symprec=symprec,
         calculator=interface_mode,
-        log_level=log_level,
-        lapack_zheev_uplo=settings.lapack_zheev_uplo)
+        log_level=log_level)
+    phono3py.masses = settings.masses
+    phono3py.band_indices = settings.band_indices
+    phono3py.sigmas = updated_settings['sigmas']
+    phono3py.sigma_cutoff = settings.sigma_cutoff_width
 
     check_supercell_in_yaml(cell_info, phono3py, log_level)
 
@@ -730,14 +728,14 @@ def run_gruneisen_then_exit(phono3py, settings, output_filename, log_level):
     else:
         bands = None
 
-    rotations = phono3py.primitive_symmetry.get_pointgroup_operations()
+    rotations = phono3py.primitive_symmetry.pointgroup_operations
     run_gruneisen_parameters(
         phono3py.fc2,
         phono3py.fc3,
         phono3py.supercell,
         phono3py.primitive,
         bands,
-        phono3py.mesh_numbers,
+        settings.mesh_numbers,
         rotations,
         settings.qpoints,
         nac_params=phono3py.nac_params,
@@ -847,7 +845,9 @@ def init_phph_interaction(phono3py,
     phono3py.init_phph_interaction(
         nac_q_direction=settings.nac_q_direction,
         constant_averaged_interaction=ave_pp,
-        frequency_scale_factor=updated_settings['frequency_scale_factor'])
+        frequency_scale_factor=updated_settings['frequency_scale_factor'],
+        symmetrize_fc3q=settings.is_symmetrize_fc3_q,
+        lapack_zheev_uplo=settings.lapack_zheev_uplo)
 
     if not settings.read_phonon:
         if log_level:
@@ -897,8 +897,8 @@ def init_phph_interaction(phono3py,
 
 def main(**argparse_control):
     """Phono3py main part of command line interface."""
-    # import warnings
-    # warnings.simplefilter('error')
+    import warnings
+    warnings.simplefilter('error')
     load_phono3py_yaml = argparse_control.get('load_phono3py_yaml', False)
 
     args, log_level = start_phono3py(**argparse_control)
@@ -1202,7 +1202,7 @@ def main(**argparse_control):
             solve_collective_phonon=settings.solve_collective_phonon,
             use_ave_pp=settings.use_ave_pp,
             gamma_unit_conversion=settings.gamma_conversion_factor,
-            is_reducible_collision_matrix=settings.is_reducible_collision_matrix,
+            is_reducible_collision_matrix=settings.is_reducible_collision_matrix,  # noqa E501
             is_kappa_star=settings.is_kappa_star,
             gv_delta_q=settings.group_velocity_delta_q,
             is_full_pp=settings.is_full_pp,

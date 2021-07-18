@@ -388,7 +388,7 @@ def get_parser(fc_symmetry=False,
         help="Symmetry tolerance to search")
     parser.add_argument(
         "--uplo", dest="lapack_zheev_uplo", default=None,
-        help="Lapack zheev UPLO (default: L)")
+        help="Lapack zheev UPLO for phonon solver (default: L)")
     parser.add_argument(
         "-v", "--verbose", dest="verbose", action="store_true", default=False,
         help="Detailed run-time information is displayed")

@@ -38,7 +38,7 @@ import numpy as np
 from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.cells import (
     get_supercell, get_primitive, guess_primitive_matrix,
-    shape_supercell_matrix)
+    shape_supercell_matrix, get_primitive_matrix)
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.dataset import get_displacements_and_forces
 from phonopy.units import VaspToTHz
@@ -122,7 +122,6 @@ class Phono3py(object):
                  primitive_matrix=None,
                  phonon_supercell_matrix=None,
                  masses=None,
-                 mesh=None,
                  band_indices=None,
                  sigmas=None,
                  sigma_cutoff=None,
@@ -130,21 +129,78 @@ class Phono3py(object):
                  frequency_factor_to_THz=VaspToTHz,
                  is_symmetry=True,
                  is_mesh_symmetry=True,
-                 symmetrize_fc3q=False,
+                 symmetrize_fc3q=None,
                  is_dense_gp_map=False,
                  symprec=1e-5,
                  calculator=None,
                  log_level=0,
-                 lapack_zheev_uplo='L'):
-        """Init method."""
-        self.sigmas = sigmas
-        self.sigma_cutoff = sigma_cutoff
+                 lapack_zheev_uplo=None):
+        """Init method.
+
+        Parameters
+        ----------
+        unitcell : PhonopyAtoms, optional
+            Input unit cell.
+        supercell_matrix : array_like
+            Supercell matrix multiplied to input cell basis vectors.
+            shape=(3, ) or (3, 3), where the former is considered a diagonal
+            matrix. The elements have to be given by integers.
+        primitive_matrix : array_like or str, optional
+            Primitive matrix multiplied to input cell basis vectors. Default is
+            the identity matrix.
+            When given as array_like, shape=(3, 3), dtype=float.
+            When 'F', 'I', 'A', 'C', or 'R' is given instead of a 3x3 matrix,
+            the primitive matrix defined at
+            https://spglib.github.io/spglib/definition.html
+            is used.
+            When 'auto' is given, the centring type ('F', 'I', 'A', 'C', 'R',
+            or primitive 'P') is automatically chosen.
+        phonon_supercell_matrix : array_like, optional
+            Supercell matrix used for fc2. In phono3py, supercell matrix for
+            fc3 and fc2 can be different to support longer range interaction of
+            fc2 than that of fc3. Unless setting this, supercell_matrix is
+            used. This is only valide when unitcell or unitcell_filename is
+            given. Default is None.
+        masses : Deprecated.
+            Use Phono3py.masses attribute after instanciation.
+        band_indices : Deprecated.
+            Use Phono3py.band_indices attribute after instanciation.
+        sigmas : Deprecated.
+            Use Phono3py.sigmas attribute after instanciation.
+        sigma_cutoff : Deprecated.
+            Use Phono3py.sigma_cutoff attribute after instanciation.
+        cutoff_frequency : float, optional
+            Phonon frequency below this value is ignored when the cutoff is
+            needed for the computation. Default is 1e-4.
+        frequency_factor_to_THz : float, optional
+            Phonon frequency unit conversion factor. Unless specified, default
+            unit conversion factor for each calculator is used.
+        is_symmetry : bool, optional
+            Use crystal symmetry in most calculations when True. Default is
+            True.
+        is_mesh_symmetry : bool, optional
+            Use crystal symmetry in reciprocal space grid handling when True.
+            Default is True.
+        symmetrize_fc3q : Deprecated.
+            See Phono3py.init_phph_interaction().
+        is_dense_gp_map : bool, optional
+            Use dense format of BZ grid system. Default is False.
+        symprec : float, optional
+            Tolerance used to find crystal symmetry. Default is 1e-5.
+        calculator : str, optional.
+            Calculator used for computing forces. This is used to switch
+            the set of physical units. Default is None, which is equivalent
+            to "vasp".
+        log_level : int, optional
+            Verbosity control. Default is 0. This can be 0, 1, or 2.
+        lapack_zheev_uplo : Deprecated.
+            See Phono3py.init_phph_interaction().
+
+        """
         self._symprec = symprec
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._is_symmetry = is_symmetry
         self._is_mesh_symmetry = is_mesh_symmetry
-        self._lapack_zheev_uplo = lapack_zheev_uplo
-        self._symmetrize_fc3q = symmetrize_fc3q
         self._is_dense_gp_map = is_dense_gp_map
         self._cutoff_frequency = cutoff_frequency
         self._calculator = calculator
@@ -153,10 +209,8 @@ class Phono3py(object):
         # Create supercell and primitive cell
         self._unitcell = unitcell
         self._supercell_matrix = shape_supercell_matrix(supercell_matrix)
-        if isinstance(primitive_matrix, str) and primitive_matrix == 'auto':
-            self._primitive_matrix = self._guess_primitive_matrix()
-        else:
-            self._primitive_matrix = primitive_matrix
+        pmat = self._determine_primitive_matrix(primitive_matrix)
+        self._primitive_matrix = pmat
         self._nac_params = None
         if phonon_supercell_matrix is not None:
             self._phonon_supercell_matrix = shape_supercell_matrix(
@@ -172,8 +226,8 @@ class Phono3py(object):
         self._build_phonon_supercell()
         self._build_phonon_primitive_cell()
 
-        if masses is not None:
-            self._set_masses(masses)
+        self._sigmas = [None, ]
+        self._sigma_cutoff = None
 
         # Grid
         self._bz_grid = None
@@ -215,12 +269,51 @@ class Phono3py(object):
         self._interaction = None
         self._band_indices = None
         self._band_indices_flatten = None
-        if mesh is not None:
-            warnings.warn("Phono3py init parameter of mesh is deprecated."
-                          "Use Phono3py.mesh_number attribute instead.",
+        self._set_band_indices()
+
+        if masses is not None:
+            warnings.warn("Phono3py init parameter of masses is deprecated. "
+                          "Use Phono3py.masses attribute instead.",
                           DeprecationWarning)
-            self._set_mesh_numbers(mesh)
-        self.band_indices = band_indices
+            self.masses = masses
+
+        if band_indices is not None:
+            warnings.warn(
+                "Phono3py init parameter of band_indices is deprecated. "
+                "Use Phono3py.band_indices attribute instead.",
+                DeprecationWarning)
+            self.band_indices = band_indices
+
+        if sigmas is not None:
+            warnings.warn("Phono3py init parameter of sigmas is deprecated. "
+                          "Use Phono3py.sigmas attribute instead.",
+                          DeprecationWarning)
+            self.sigmas = sigmas
+
+        if sigma_cutoff is not None:
+            warnings.warn(
+                "Phono3py init parameter of sigma_cutoff is deprecated. "
+                "Use Phono3py.sigma_cutoff attribute instead.",
+                DeprecationWarning)
+            self.sigma_cutoff = sigma_cutoff
+
+        if symmetrize_fc3q is not None:
+            warnings.warn(
+                "Phono3py init parameter of symmetrize_fc3q is deprecated. "
+                "Set this at Phono3py.init_phph_interaction().",
+                DeprecationWarning)
+            self._symmetrize_fc3q = symmetrize_fc3q
+        else:
+            self._symmetrize_fc3q = None
+
+        if lapack_zheev_uplo is not None:
+            warnings.warn(
+                "Phono3py init parameter of lapack_zheev_uplo is deprecated. "
+                "Set this at Phono3py.init_phph_interaction().",
+                DeprecationWarning)
+            self._lapack_zheev_uplo = lapack_zheev_uplo
+        else:
+            self._lapack_zheev_uplo = None
 
     @property
     def version(self):
@@ -738,13 +831,7 @@ class Phono3py(object):
 
     @band_indices.setter
     def band_indices(self, band_indices):
-        if band_indices is None:
-            num_band = len(self._primitive) * 3
-            self._band_indices = [np.arange(num_band, dtype='intc')]
-        else:
-            self._band_indices = band_indices
-        self._band_indices_flatten = np.hstack(
-            self._band_indices).astype('intc')
+        self._set_band_indices(band_indices=band_indices)
 
     def set_band_indices(self, band_indices):
         """Set band indices."""
@@ -752,6 +839,38 @@ class Phono3py(object):
                       "Use Phono3py.band_indices attribute instead.",
                       DeprecationWarning)
         self.band_indices = band_indices
+
+    def _set_band_indices(self, band_indices=None):
+        if band_indices is None:
+            num_band = len(self._primitive) * 3
+            self._band_indices = [np.arange(num_band, dtype='int_')]
+        else:
+            self._band_indices = band_indices
+        self._band_indices_flatten = np.hstack(
+            self._band_indices).astype('int_')
+
+    @property
+    def masses(self):
+        """Setter and getter of atomic masses of primitive cell."""
+        return self._primitive.masses
+
+    @masses.setter
+    def masses(self, masses):
+        if masses is None:
+            return
+        p_masses = np.array(masses)
+        self._primitive.masses = p_masses
+        p2p_map = self._primitive.p2p_map
+        s_masses = p_masses[[p2p_map[x] for x in self._primitive.s2p_map]]
+        self._supercell.masses = s_masses
+        u2s_map = self._supercell.u2s_map
+        u_masses = s_masses[u2s_map]
+        self._unitcell.masses = u_masses
+        self._phonon_primitive.masses = p_masses
+        p2p_map = self._phonon_primitive.p2p_map
+        s_masses = p_masses[
+            [p2p_map[x] for x in self._phonon_primitive.s2p_map]]
+        self._phonon_supercell.masses = s_masses
 
     @property
     def supercells_with_displacements(self):
@@ -1062,7 +1181,9 @@ class Phono3py(object):
     def init_phph_interaction(self,
                               nac_q_direction=None,
                               constant_averaged_interaction=None,
-                              frequency_scale_factor=None):
+                              frequency_scale_factor=None,
+                              symmetrize_fc3q=False,
+                              lapack_zheev_uplo='L'):
         """Initialize ph-ph interaction calculation.
 
         This method creates an instance of Interaction class, which
@@ -1091,6 +1212,12 @@ class Phono3py(object):
         frequency_scale_factor : float, optional
             All phonon frequences are scaled by this value. Default is None,
             which means phonon frequencies are not scaled.
+        symmetrize_fc3q : bool, optional
+            fc3 in phonon space is symmetrized by permutation symmetry.
+            Default is False.
+        lapack_zheev_uplo : str, optional
+            'L' or 'U'. Default is 'L'. This is passed to LAPACK zheev
+            used for phonon solver.
 
         """
         if self.mesh_numbers is None:
@@ -1100,6 +1227,16 @@ class Phono3py(object):
         if self._fc2 is None:
             msg = "Phono3py.fc2 of instance is not found."
             raise RuntimeError(msg)
+
+        if self._symmetrize_fc3q is None:
+            _symmetrize_fc3q = symmetrize_fc3q
+        else:
+            _symmetrize_fc3q = self._symmetrize_fc3q
+
+        if self._lapack_zheev_uplo is None:
+            _lapack_zheev_uplo = lapack_zheev_uplo
+        else:
+            _lapack_zheev_uplo = self._lapack_zheev_uplo
 
         self._interaction = Interaction(
             self._supercell,
@@ -1113,8 +1250,8 @@ class Phono3py(object):
             frequency_scale_factor=frequency_scale_factor,
             cutoff_frequency=self._cutoff_frequency,
             is_mesh_symmetry=self._is_mesh_symmetry,
-            symmetrize_fc3q=self._symmetrize_fc3q,
-            lapack_zheev_uplo=self._lapack_zheev_uplo)
+            symmetrize_fc3q=_symmetrize_fc3q,
+            lapack_zheev_uplo=_lapack_zheev_uplo)
         self._interaction.set_nac_q_direction(nac_q_direction=nac_q_direction)
         self._init_dynamical_matrix()
 
@@ -2230,24 +2367,13 @@ class Phono3py(object):
         return get_primitive(supercell, t_mat, self._symprec,
                              store_dense_svecs=True)
 
-    def _guess_primitive_matrix(self):
-        return guess_primitive_matrix(self._unitcell, symprec=self._symprec)
-
-    def _set_masses(self, masses):
-        p_masses = np.array(masses)
-        self._primitive.masses = p_masses
-        p2p_map = self._primitive.p2p_map
-        s_masses = p_masses[[p2p_map[x] for x in self._primitive.s2p_map]]
-        self._supercell.masses = s_masses
-        u2s_map = self._supercell.u2s_map
-        u_masses = s_masses[u2s_map]
-        self._unitcell.masses = u_masses
-
-        self._phonon_primitive.masses = p_masses
-        p2p_map = self._phonon_primitive.p2p_map
-        s_masses = p_masses[
-            [p2p_map[x] for x in self._phonon_primitive.s2p_map]]
-        self._phonon_supercell.masses = s_masses
+    def _determine_primitive_matrix(self, primitive_matrix):
+        pmat = get_primitive_matrix(primitive_matrix, symprec=self._symprec)
+        if isinstance(pmat, str) and pmat == 'auto':
+            return guess_primitive_matrix(self._unitcell,
+                                          symprec=self._symprec)
+        else:
+            return pmat
 
     def _set_mesh_numbers(self, mesh):
         # initialization related to mesh
