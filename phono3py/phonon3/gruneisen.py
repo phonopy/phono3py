@@ -38,6 +38,7 @@ import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
 from phonopy.units import VaspToTHz
 from phonopy.structure.grid_points import get_qpoints
+from phonopy.structure.cells import sparse_to_dense_svecs
 
 
 def run_gruneisen_parameters(fc2,
@@ -142,7 +143,12 @@ class Gruneisen(object):
                                         symprec=self._symprec)
         self._nac_q_direction = nac_q_direction
 
-        self._svecs, self._multi = self._pcell.get_smallest_vectors()
+        svecs, multi = self._pcell.get_smallest_vectors()
+        if self._pcell.store_dense_svecs:
+            self._svecs = svecs
+            self._multi = multi
+        else:
+            self._svecs, self._multi = sparse_to_dense_svecs(svecs, multi)
 
         if self._ion_clamped:
             num_atom_prim = self._pcell.get_number_of_atoms()

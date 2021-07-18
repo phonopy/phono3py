@@ -777,9 +777,18 @@ class Conductivity_RTA(Conductivity):
                         self._collision.get_detailed_imag_self_energy())
 
     def _set_gamma_at_sigmas_lowmem(self, i):
+        """Calculate gamma without storing ph-ph interaction strength.
+
+        `svecs` and `multi` below must not be simply replaced by
+        `self._primitive.get_smallest_vectors()` because they must be in dense
+        format as always so in Interaction class instance.
+        `p2s`, `s2p`, and `masses` have to be also given from Interaction
+        class instance.
+
+        """
         band_indices = self._pp.band_indices
         (svecs,
-         multiplicity,
+         multi,
          p2s,
          s2p,
          masses) = self._pp.get_primitive_and_supercell_correspondence()
@@ -818,7 +827,7 @@ class Conductivity_RTA(Conductivity):
                     self._bz_grid.Q,
                     fc3,
                     svecs,
-                    multiplicity,
+                    multi,
                     masses,
                     p2s,
                     s2p,
@@ -844,7 +853,7 @@ class Conductivity_RTA(Conductivity):
                                                 self._bz_grid.Q,
                                                 fc3,
                                                 svecs,
-                                                multiplicity,
+                                                multi,
                                                 masses,
                                                 p2s,
                                                 s2p,
