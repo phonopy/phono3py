@@ -130,7 +130,7 @@ class Phono3py(object):
                  is_symmetry=True,
                  is_mesh_symmetry=True,
                  symmetrize_fc3q=None,
-                 store_dense_gp_map=False,
+                 store_dense_gp_map=True,
                  store_dense_svecs=True,
                  symprec=1e-5,
                  calculator=None,

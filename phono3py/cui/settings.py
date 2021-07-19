@@ -87,7 +87,7 @@ class Phono3pySettings(Settings):
         'scattering_event_class': None,  # scattering event class 1 or 2
         'sigma_cutoff_width': None,
         'solve_collective_phonon': False,
-        'store_dense_gp_map': False,
+        'emulate_v1': False,
         'subtract_forces': None,
         'use_ave_pp': False,
         'write_collision': False,
@@ -136,6 +136,10 @@ class Phono3pySettings(Settings):
     def set_cutoff_pair_distance(self, val):
         """Set cutoff_pair_distance."""
         self._v['cutoff_pair_distance'] = val
+
+    def set_emulate_v1(self, val):
+        """Set emulate_v1."""
+        self._v['emulate_v1'] = val
 
     def set_gamma_conversion_factor(self, val):
         """Set gamma_conversion_factor."""
@@ -204,10 +208,6 @@ class Phono3pySettings(Settings):
     def set_is_spectral_function(self, val):
         """Set is_spectral_function."""
         self._v['is_spectral_function'] = val
-
-    def set_store_dense_gp_map(self, val):
-        """Set store_dense_gp_map."""
-        self._v['store_dense_gp_map'] = val
 
     def set_is_symmetrize_fc2(self, val):
         """Set is_symmetrize_fc2."""
@@ -408,9 +408,9 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_compact_fc:
                 self._confs['compact_fc'] = '.true.'
 
-        if 'store_dense_gp_map' in self._args:
-            if self._args.store_dense_gp_map:
-                self._confs['dense_gp_map'] = '.true.'
+        if 'emulate_v1' in self._args:
+            if self._args.emulate_v1:
+                self._confs['emulate_v1'] = '.true.'
 
         if 'is_gruneisen' in self._args:
             if self._args.is_gruneisen:
@@ -585,7 +585,7 @@ class Phono3pyConfParser(ConfParser):
                     'write_gamma_detail', 'write_gamma',
                     'write_collision', 'write_phonon', 'write_pp',
                     'write_LBTE_solution', 'full_pp', 'ion_clamped',
-                    'bterta', 'compact_fc', 'dense_gp_map', 'real_self_energy',
+                    'bterta', 'compact_fc', 'emulate_v1', 'real_self_energy',
                     'gruneisen', 'imag_self_energy', 'isotope',
                     'joint_dos', 'lbte', 'N_U', 'spectral_function',
                     'reducible_collision_matrix', 'symmetrize_fc2',
@@ -732,9 +732,9 @@ class Phono3pyConfParser(ConfParser):
             self._settings.set_cutoff_pair_distance(
                 params['cutoff_pair_distance'])
 
-        # Use new BZ grid system with True.
-        if 'dense_gp_map' in params:
-            self._settings.set_store_dense_gp_map(params['dense_gp_map'])
+        # Emulate v1.x grid system and shortest vectors.
+        if 'emulate_v1' in params:
+            self._settings.set_emulate_v1(params['emulate_v1'])
 
         # Gamma unit conversion factor
         if 'gamma_conversion_factor' in params:

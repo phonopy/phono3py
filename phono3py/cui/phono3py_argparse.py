@@ -134,16 +134,16 @@ def get_parser(fc_symmetry=False,
         default=False,
         help="As first stage, get least displacements")
     parser.add_argument(
-        "--dense-gp-map", dest="store_dense_gp_map", action="store_true",
-        default=False,
-        help="Use new BZ grid system")
-    parser.add_argument(
         "--dim", nargs='+', dest="supercell_dimension", default=None,
         help="Supercell dimension")
     parser.add_argument(
         "--dim-fc2", nargs='+', dest="phonon_supercell_dimension",
         default=None,
         help="Supercell dimension for extra fc2")
+    parser.add_argument(
+        "--emulate-v1", dest="emulate_v1", action="store_true",
+        default=False,
+        help="Emulate v1.x grid system and shortest vectors.")
     parser.add_argument(
         "--factor", dest="frequency_conversion_factor", type=float,
         default=None,

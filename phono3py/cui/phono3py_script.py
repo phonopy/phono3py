@@ -570,7 +570,6 @@ def get_default_values(settings):
 def init_phono3py(settings,
                   cell_info,
                   interface_mode,
-                  output_filename,
                   symprec,
                   log_level):
     """Initialize phono3py and update settings by default values."""
@@ -600,7 +599,8 @@ def init_phono3py(settings,
         frequency_factor_to_THz=updated_settings['frequency_factor_to_THz'],
         is_symmetry=settings.is_symmetry,
         is_mesh_symmetry=settings.is_mesh_symmetry,
-        store_dense_gp_map=settings.store_dense_gp_map,
+        store_dense_gp_map=(not settings.emulate_v1),
+        store_dense_svecs=(not settings.emulate_v1),
         symprec=symprec,
         calculator=interface_mode,
         log_level=log_level)
@@ -898,7 +898,7 @@ def init_phph_interaction(phono3py,
 def main(**argparse_control):
     """Phono3py main part of command line interface."""
     import warnings
-    warnings.simplefilter('error')
+    # warnings.simplefilter('error')
     load_phono3py_yaml = argparse_control.get('load_phono3py_yaml', False)
 
     args, log_level = start_phono3py(**argparse_control)
@@ -981,7 +981,6 @@ def main(**argparse_control):
     phono3py, updated_settings = init_phono3py(settings,
                                                cell_info,
                                                interface_mode,
-                                               output_filename,
                                                symprec,
                                                log_level)
 
