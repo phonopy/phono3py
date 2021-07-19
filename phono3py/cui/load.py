@@ -70,6 +70,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
          symmetrize_fc=True,
          is_mesh_symmetry=True,
          is_compact_fc=False,
+         use_grg=False,
          store_dense_gp_map=True,
          store_dense_svecs=True,
          symprec=1e-5,
@@ -230,6 +231,8 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
             False: (supercell, supecell, 3, 3)
         where 'supercell' and 'primitive' indicate number of atoms in these
         cells. Default is False.
+    use_grg : bool, optional
+        Use generalized regular grid when True. Default is False.
     store_dense_gp_map : bool, optional
         Use new format of BZ grid system. Default is True.
     store_dense_svecs : bool, optional
@@ -299,6 +302,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
                      symprec=symprec,
                      is_symmetry=is_symmetry,
                      is_mesh_symmetry=is_mesh_symmetry,
+                     use_grg=use_grg,
                      store_dense_gp_map=store_dense_gp_map,
                      store_dense_svecs=store_dense_svecs,
                      calculator=calculator,

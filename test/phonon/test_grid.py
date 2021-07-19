@@ -81,12 +81,14 @@ def test_BZGrid_SNF(si_pbesol_111):
     bzgrid1 = BZGrid(mesh,
                      lattice=lat,
                      symmetry_dataset=si_pbesol_111.primitive_symmetry.dataset,
+                     use_grg=True,
                      store_dense_gp_map=False)
     _test_BZGrid_SNF(bzgrid1)
 
     bzgrid2 = BZGrid(mesh,
                      lattice=lat,
                      symmetry_dataset=si_pbesol_111.primitive_symmetry.dataset,
+                     use_grg=True,
                      store_dense_gp_map=True)
     _test_BZGrid_SNF(bzgrid2)
 
@@ -162,8 +164,11 @@ def test_SNF_tetrahedra_relative_grid(aln_lda):
     Compare between microzone and primitive lattices in
     reciprocal Cartesian coordinates.
 
-    """
+    Hexagonal AlN is used as the test. Generalized regular grid
+    with force_SNF=True gives [2, 8, 24] mesh.
 
+    """
+    aln_lda._use_grg = True
     aln_lda.mesh_numbers = 25
     bz_grid = aln_lda.grid
     plat = np.linalg.inv(aln_lda.primitive.cell)
@@ -184,7 +189,7 @@ def test_SNF_tetrahedra_relative_grid(aln_lda):
 
 
 def test_get_grid_points_by_bz_rotations(si_pbesol_111):
-    """Rotate grid point by rotations with and without considering BZ surface
+    """Rotate grid point by rotations with and without considering BZ surface.
 
     The following three methods are tested between type-1 and type-2.
 
@@ -192,9 +197,7 @@ def test_get_grid_points_by_bz_rotations(si_pbesol_111):
         _get_grid_points_by_bz_rotations_c
         _get_grid_points_by_bz_rotations_py
 
-
     """
-
     ref10_type1 = [10, 26, 10, 26, 26, 10, 26, 10, 88, 80, 200, 208,
                    200, 208, 88, 80, 208, 88, 80, 200, 208, 88, 80, 200,
                    26, 10, 26, 10, 10, 26, 10, 26, 200, 208, 88, 80,
@@ -222,11 +225,13 @@ def test_get_grid_points_by_bz_rotations(si_pbesol_111):
         mesh,
         lattice=lat,
         symmetry_dataset=si_pbesol_111.primitive_symmetry.dataset,
+        use_grg=True,
         store_dense_gp_map=False)
     bz_grid_type2 = BZGrid(
         mesh,
         lattice=lat,
         symmetry_dataset=si_pbesol_111.primitive_symmetry.dataset,
+        use_grg=True,
         store_dense_gp_map=True)
 
     # Check data consistency by reducing to GR-grid.

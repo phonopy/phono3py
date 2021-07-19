@@ -129,6 +129,7 @@ class Phono3py(object):
                  frequency_factor_to_THz=VaspToTHz,
                  is_symmetry=True,
                  is_mesh_symmetry=True,
+                 use_grg=False,
                  symmetrize_fc3q=None,
                  store_dense_gp_map=True,
                  store_dense_svecs=True,
@@ -182,6 +183,8 @@ class Phono3py(object):
         is_mesh_symmetry : bool, optional
             Use crystal symmetry in reciprocal space grid handling when True.
             Default is True.
+        use_grg : bool, optional
+            Use generalized regular grid when True. Default is False.
         symmetrize_fc3q : Deprecated.
             See Phono3py.init_phph_interaction().
         store_dense_gp_map : bool, optional
@@ -206,6 +209,7 @@ class Phono3py(object):
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._is_symmetry = is_symmetry
         self._is_mesh_symmetry = is_mesh_symmetry
+        self._use_grg = use_grg
         self._store_dense_gp_map = store_dense_gp_map
         self._store_dense_svecs = store_dense_svecs
         self._cutoff_frequency = cutoff_frequency
@@ -2389,6 +2393,7 @@ class Phono3py(object):
             mesh,
             lattice=self._primitive.cell,
             symmetry_dataset=self._primitive_symmetry.dataset,
+            use_grg=self._use_grg,
             store_dense_gp_map=self._store_dense_gp_map)
 
     def _init_dynamical_matrix(self):

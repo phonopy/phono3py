@@ -134,6 +134,9 @@ class BZGrid(object):
     Q : ndarray
         Right unimodular matrix after SNF: D=PAQ.
         shape=(3, 3), dtype='int_', order='C'
+    grid_matrix : ndarray
+        Grid generating matrix used for SNF.
+        shape=(3, 3), dtype='int_', order='C'
     microzone_lattice : ndarray
         Basis vectors of microzone of GR-grid.
         shape=(3, 3), dtype='double', order='C'
@@ -147,7 +150,8 @@ class BZGrid(object):
                  symmetry_dataset=None,
                  is_shift=None,
                  is_time_reversal=True,
-                 store_dense_gp_map=False):
+                 use_grg=False,
+                 store_dense_gp_map=True):
         """Init method.
 
         mesh : array_like or float
@@ -166,6 +170,14 @@ class BZGrid(object):
             [0, 0, 0] gives Gamma center mesh and value 1 gives half mesh shift
             along the basis vectors. Default is None.
             dtype='int_', shape=(3,)
+        is_time_reveral : bool, optional
+            Inversion symmetry is included in reciprocal point group.
+            Default is True.
+        use_grg : bool, optional
+            Use generalized regular grid. Default is False.
+        store_dense_gp_map : bool, optional
+            See the detail in the docstring of `_relocate_BZ_grid_address`.
+            Default is True.
 
         """
         if symmetry_dataset is None:
@@ -177,6 +189,7 @@ class BZGrid(object):
             self._symmetry_dataset = symmetry_dataset
         self._is_shift = is_shift
         self._is_time_reversal = is_time_reversal
+        self._use_grg = use_grg
         self._store_dense_gp_map = store_dense_gp_map
         self._addresses = None
         self._gp_map = None
@@ -200,7 +213,7 @@ class BZGrid(object):
             self._reciprocal_lattice = np.array(
                 np.linalg.inv(lattice), dtype='double', order='C')
 
-        self._generate_grid(mesh, force_SNF=False)
+        self._generate_grid(mesh)
 
     @property
     def D_diag(self):
@@ -354,7 +367,9 @@ class BZGrid(object):
             Use these numbers as regular grid.
         2) One number is given with no symmetry provided.
             Regular grid is computed from this value.
-        3) One number is given with symmetry provided.
+        3) One number is given and use_grg=True.
+            Regular grid is computed from this value and point group symmetry.
+        4) One number is given with symmetry provided and use_grg=True.
             Generalized regular grid is generated. However if the grid
             generating matrix is a diagonal matrix, use it as the D matrix
             of SNF and P and Q are set as identity matrices. Otherwise
@@ -367,7 +382,10 @@ class BZGrid(object):
                 self._D_diag = np.array(mesh, dtype='int_')
         except TypeError:
             length = float(mesh)
-            self._set_SNF(length, force_SNF=force_SNF)
+            if self._use_grg:
+                self._set_SNF(length, force_SNF=force_SNF)
+            else:
+                self._D_diag = length2mesh(length, self._lattice)
 
     def _set_SNF(self, length, force_SNF=False):
         """Calculate Smith normal form.
@@ -394,7 +412,6 @@ class BZGrid(object):
         # transpose in reciprocal space
         self._grid_matrix = np.array(
             (inv_pmat_int * conv_mesh_numbers).T, dtype='int_', order='C')
-
         # If grid_matrix is a diagonal matrix, use it as D matrix.
         gm_diag = np.diagonal(self._grid_matrix)
         if (np.diag(gm_diag) == self._grid_matrix).all() and not force_SNF:
@@ -433,7 +450,7 @@ class BZGrid(object):
                                            self._reciprocal_operations,
                                            self._D_diag,
                                            self._Q):
-            msg = "Grid symmetry is broken. Use mesh=distance."
+            msg = "Grid symmetry is broken. Use generalized regular grid."
             raise RuntimeError(msg)
 
 

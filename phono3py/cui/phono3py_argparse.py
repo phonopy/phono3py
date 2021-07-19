@@ -196,6 +196,10 @@ def get_parser(fc_symmetry=False,
         "--gp", "--grid-points", nargs='+', dest="grid_points", default=None,
         help="Fixed grid points where anharmonic properties are calculated")
     parser.add_argument(
+        "--grg", "--generalized-regular-grid", dest="use_grg",
+        action="store_true", default=False,
+        help="Use generalized regular grid.")
+    parser.add_argument(
         "--gruneisen", dest="is_gruneisen", action="store_true", default=False,
         help="Calculate phonon Gruneisen parameter")
     parser.add_argument(

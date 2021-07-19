@@ -90,6 +90,7 @@ class Phono3pySettings(Settings):
         'emulate_v1': False,
         'subtract_forces': None,
         'use_ave_pp': False,
+        'use_grg': False,
         'write_collision': False,
         'write_gamma_detail': False,
         'write_gamma': False,
@@ -296,6 +297,10 @@ class Phono3pySettings(Settings):
     def set_use_ave_pp(self, val):
         """Set use_ave_pp."""
         self._v['use_ave_pp'] = val
+
+    def set_use_grg(self, val):
+        """Set use_grg."""
+        self._v['use_grg'] = val
 
     def set_write_collision(self, val):
         """Set write_collision."""
@@ -549,6 +554,10 @@ class Phono3pyConfParser(ConfParser):
             if self._args.use_ave_pp:
                 self._confs['use_ave_pp'] = '.true.'
 
+        if 'use_grg' in self._args:
+            if self._args.use_grg:
+                self._confs['use_grg'] = '.true.'
+
         if 'write_gamma_detail' in self._args:
             if self._args.write_gamma_detail:
                 self._confs['write_gamma_detail'] = '.true.'
@@ -581,7 +590,7 @@ class Phono3pyConfParser(ConfParser):
             # Boolean
             if conf_key in (
                     'read_fc2', 'read_fc3', 'read_gamma', 'read_phonon',
-                    'read_pp', 'use_ave_pp', 'collective_phonon',
+                    'read_pp', 'use_ave_pp', 'use_grg', 'collective_phonon',
                     'write_gamma_detail', 'write_gamma',
                     'write_collision', 'write_phonon', 'write_pp',
                     'write_LBTE_solution', 'full_pp', 'ion_clamped',
@@ -885,6 +894,10 @@ class Phono3pyConfParser(ConfParser):
         # Use averaged ph-ph interaction
         if 'use_ave_pp' in params:
             self._settings.set_use_ave_pp(params['use_ave_pp'])
+
+        # Use generalized regular grid
+        if 'use_grg' in params:
+            self._settings.set_use_grg(params['use_grg'])
 
         # Write detailed imag-part of self energy to hdf5
         if 'write_gamma_detail' in params:

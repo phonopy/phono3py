@@ -599,6 +599,7 @@ def init_phono3py(settings,
         frequency_factor_to_THz=updated_settings['frequency_factor_to_THz'],
         is_symmetry=settings.is_symmetry,
         is_mesh_symmetry=settings.is_mesh_symmetry,
+        use_grg=settings.use_grg,
         store_dense_gp_map=(not settings.emulate_v1),
         store_dense_svecs=(not settings.emulate_v1),
         symprec=symprec,
@@ -834,14 +835,27 @@ def init_phph_interaction(phono3py,
                           output_filename,
                           log_level):
     """Initialize ph-ph interaction and phonons on grid."""
-    ave_pp = settings.constant_averaged_pp_interaction
     if log_level:
         sys.stdout.write("Generating grid system ... ")
         sys.stdout.flush()
     phono3py.mesh_numbers = settings.mesh_numbers
+    bz_grid = phono3py.grid
+    identity = np.eye(3, dtype='int_')
+    not_grg = ((bz_grid.P == identity).all() and
+               (bz_grid.Q == identity).all())
     if log_level:
-        print("[ %d %d %d ]" % tuple(phono3py.mesh_numbers))
+        if not_grg:
+            print("[ %d %d %d ]" % tuple(phono3py.mesh_numbers))
+        else:
+            print("")
+            print("Generalized regular grid: [ %d %d %d ]"
+                  % tuple(bz_grid.D_diag))
+            print("Grid generation matrix:")
+            print("  [ %d %d %d ]" % tuple(bz_grid.grid_matrix[0]))
+            print("  [ %d %d %d ]" % tuple(bz_grid.grid_matrix[1]))
+            print("  [ %d %d %d ]" % tuple(bz_grid.grid_matrix[2]))
 
+    ave_pp = settings.constant_averaged_pp_interaction
     phono3py.init_phph_interaction(
         nac_q_direction=settings.nac_q_direction,
         constant_averaged_interaction=ave_pp,
