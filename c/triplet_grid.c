@@ -394,7 +394,7 @@ static void get_BZ_triplets_at_q_type1(long (*triplets)[3],
             bzgp[2] = num_gp + gp_map[num_bzgp + gp2] + bz2 - 1;
           }
           for (j = 0; j < 3; j++) {
-            G[j] = bz_adrs[bz0][j] + bz_adrs[bz1][j] + bz_adrs[bzgp[2]][j];
+            G[j] = bz_adrs[bzgp[0]][j] + bz_adrs[bzgp[1]][j] + bz_adrs[bzgp[2]][j];
           }
           if (G[0] == 0 && G[1] == 0 && G[2] == 0) {
             for (j = 0; j < 3; j++) {

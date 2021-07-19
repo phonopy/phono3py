@@ -107,7 +107,7 @@ class BZGrid(object):
     gp_map : ndarray
         Grid point mapping table containing BZ surface. There are two types of
         address order by either `store_dense_gp_map` is True or False. See more
-        detail in _relocate_BZ_grid_address docstring.
+        detail in `_relocate_BZ_grid_address` docstring.
     bzg2grg : ndarray
         Grid index mapping table from BZGrid to GRgrid.
         shape=(len(addresses), ), dtype='int_'
@@ -116,7 +116,7 @@ class BZGrid(object):
         of translationally equivalent grid points in BZGrid is chosen.
         shape=(prod(D_diag), ), dtype='int_'
     store_dense_gp_map : bool, optional
-        See the detail in the docstring of ``_relocate_BZ_grid_address``.
+        See the detail in the docstring of `_relocate_BZ_grid_address`.
     rotations : ndarray
         Rotation matrices for GR-grid addresses (g) defined as g'=Rg.
         shape=(rotations, 3, 3), dtype='int_', order='C'.
@@ -661,7 +661,6 @@ def _relocate_BZ_grid_address(D_diag,
     Number of ir-grid-points inside Brillouin zone is returned.
     It is assumed that the following arrays have the shapes of
         bz_grid_address : (num_grid_points_in_FBZ, 3)
-        bz_map (prod(mesh * 2), )
 
     Note that the shape of grid_address is (prod(mesh), 3) and the
     addresses in grid_address are arranged to be in parallelepiped
@@ -678,7 +677,6 @@ def _relocate_BZ_grid_address(D_diag,
 
     store_dense_gp_map = False
     --------------------------
-
     Those grid points on the BZ surface except for one of them are
     appended to the tail of this array, for which bz_grid_address has
     the following data storing:
@@ -691,10 +689,13 @@ def _relocate_BZ_grid_address(D_diag,
     bz_map is used to recover grid point index expanded to include BZ
     surface from grid address. The grid point indices are mapped to
     (mesh[0] * 2) x (mesh[1] * 2) x (mesh[2] * 2) space (bz_map).
+    bz_map[(prod(mesh) * 8):(prod(mesh) * 9 + 1)] contains equivalent
+    information to bz_map[:] with `store_dense_gp_map=True`.
+
+    shape=(prod(mesh * 9) + 1, )
 
     store_dense_gp_map = True
     -------------------------
-
     The translationally equivalent grid points corresponding to one grid point
     on BZ surface are stored in continuously. If the multiplicity (number of
     equivalent grid points) is 1, 2, 1, 4, ... for the grid points,
