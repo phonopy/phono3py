@@ -26,7 +26,7 @@ build:
 
 requirements:
   build:
-    - python
+    - python>=3.5
     - pip
     - numpy>=1.11
     - scipy
@@ -39,7 +39,7 @@ requirements:
     - spglib
 
   run:
-    - python
+    - python>=3.5
     - pip
     - numpy>=1.11
     - scipy

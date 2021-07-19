@@ -340,6 +340,7 @@ if __name__ == '__main__':
               author_email='atz.togo@gmail.com',
               url='http://phonopy.github.io/phono3py/',
               packages=packages_phono3py,
+              python_requires='>=3.5',
               install_requires=['numpy', 'scipy', 'PyYAML', 'matplotlib',
                                 'h5py', 'spglib', 'phonopy>=2.11,<2.12'],
               provides=['phono3py'],
