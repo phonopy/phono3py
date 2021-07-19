@@ -1,3 +1,4 @@
+"""Test spectral_function.py."""
 import numpy as np
 from phono3py.phonon3.spectral_function import SpectralFunction
 
@@ -47,10 +48,11 @@ spec_funcs = [
 
 
 def test_SpectralFunction(si_pbesol):
+    """Spectral function of Si."""
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     sf = SpectralFunction(si_pbesol.phph_interaction,
-                          [1, 103],
+                          si_pbesol.grid.grg2bzg[[1, 103]],
                           temperatures=[300, ],
                           num_frequency_points=10,
                           log_level=1)

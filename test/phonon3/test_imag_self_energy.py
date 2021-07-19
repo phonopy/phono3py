@@ -144,8 +144,10 @@ def test_imag_self_energy_at_bands(si_pbesol):
     si_pbesol.mesh_numbers = [9, 9, 9]
     si_pbesol.init_phph_interaction()
     gammas_ref = np.reshape([
-        0.00021553, 0.00021553, 0.00084329, 0.04693498, 0.04388354, 0.04388354,
-        0.00383646, 0.00494357, 0.02741665, 0.01407101, 0.04133322, 0.03013125],
+        0.00021553, 0.00021553, 0.00084329,
+        0.04693498, 0.04388354, 0.04388354,
+        0.00383646, 0.00494357, 0.02741665,
+        0.01407101, 0.04133322, 0.03013125],
         (2, -1))
     for i, grgp in enumerate((1, 103)):
         _fpoints, _gammas = si_pbesol.run_imag_self_energy(
