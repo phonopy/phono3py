@@ -46,8 +46,7 @@ from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phonopy.phonon.band_structure import get_band_qpoints
 from phonopy.cui.phonopy_script import (
     store_nac_params, print_end, print_error, print_error_message,
-    print_version, file_exists, files_exist, get_fc_calculator_params,
-    check_supercell_in_yaml)
+    print_version, file_exists, files_exist, get_fc_calculator_params)
 from phonopy.structure.cells import isclose as cells_isclose
 from phono3py.version import __version__
 from phono3py.file_IO import (
@@ -567,6 +566,37 @@ def get_default_values(settings):
     return params
 
 
+def check_supercell_in_yaml(cell_info, ph3, distance_to_A, log_level):
+    """Check consistency between generated cells and cells in yaml."""
+    if cell_info['phonopy_yaml'] is not None:
+        if distance_to_A is None:
+            d2A = 1.0
+        else:
+            d2A = distance_to_A
+        if (cell_info['phonopy_yaml'].supercell is not None and
+            ph3.supercell is not None):  # noqa E129
+            yaml_cell = cell_info['phonopy_yaml'].supercell.copy()
+            yaml_cell.cell = yaml_cell.cell * d2A
+            if not cells_isclose(yaml_cell, ph3.supercell):
+                if log_level:
+                    print("Generated supercell is inconsistent with "
+                          "that in \"%s\"." %
+                          cell_info['optional_structure_info'][0])
+                    print_error()
+                sys.exit(1)
+        if (cell_info['phonopy_yaml'].phonon_supercell is not None and
+            ph3.phonon_supercell is not None):  # noqa E129
+            yaml_cell = cell_info['phonopy_yaml'].phonon_supercell.copy()
+            yaml_cell.cell = yaml_cell.cell * d2A
+            if not cells_isclose(yaml_cell, ph3.phonon_supercell):
+                if log_level:
+                    print("Generated phonon supercell is inconsistent with "
+                          "that in \"%s\"." %
+                          cell_info['optional_structure_info'][0])
+                    print_error()
+                sys.exit(1)
+
+
 def init_phono3py(settings,
                   cell_info,
                   interface_mode,
@@ -610,19 +640,7 @@ def init_phono3py(settings,
     phono3py.sigmas = updated_settings['sigmas']
     phono3py.sigma_cutoff = settings.sigma_cutoff_width
 
-    check_supercell_in_yaml(cell_info, phono3py, log_level)
-
-    if cell_info['phonopy_yaml'] is not None:
-        if (cell_info['phonopy_yaml'].phonon_supercell is not None and
-            phono3py.phonon_supercell is not None):  # noqa E129
-            if not cells_isclose(cell_info['phonopy_yaml'].phonon_supercell,
-                                 phono3py.phonon_supercell):
-                if log_level:
-                    print("Generated phonon supercell is inconsistent with "
-                          "that in \"%s\"." %
-                          cell_info['optional_structure_info'][0])
-                    print_error()
-                sys.exit(1)
+    check_supercell_in_yaml(cell_info, phono3py, distance_to_A, log_level)
 
     return phono3py, updated_settings
 
