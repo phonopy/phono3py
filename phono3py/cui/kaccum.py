@@ -8,6 +8,8 @@ from phonopy.structure.cells import get_primitive
 from phonopy.structure.symmetry import Symmetry
 from phonopy.interface.calculator import read_crystal_structure
 from phonopy.phonon.dos import NormalDistribution
+from phonopy.structure.cells import (
+    get_primitive_matrix, guess_primitive_matrix)
 from phono3py.phonon.grid import BZGrid, get_ir_grid_points
 from phono3py.other.tetrahedron_method import get_integration_weights
 
@@ -335,11 +337,12 @@ def _get_parser():
     """Return args of ArgumentParser."""
     parser = argparse.ArgumentParser(description="Show unit cell volume")
     parser.add_argument(
-        "--pa", dest="primitive_matrix", default="1 0 0 0 1 0 0 0 1",
-        help="Primitive matrix")
+        "--pa", "--primitive-axis", "--primitive-axes", nargs='+',
+        dest="primitive_matrix", default=None,
+        help="Same as PRIMITIVE_AXES tags")
     parser.add_argument(
-        "-c", "--cell", dest="cell_filename",
-        help="Unit cell filename")
+        "-c", "--cell", dest="cell_filename", metavar="FILE", default=None,
+        help="Read unit cell")
     parser.add_argument(
         '--gv', action='store_true',
         help='Calculate for gv_x_gv (tensor)')
@@ -406,6 +409,35 @@ def _get_parser():
     return args
 
 
+def _analyze_primitive_matrix_option(args, unitcell=None):
+    """Analyze --pa option argument."""
+    if args.primitive_matrix is not None:
+        if type(args.primitive_matrix) is list:
+            _primitive_matrix = " ".join(args.primitive_matrix)
+        else:
+            _primitive_matrix = args.primitive_matrix.strip()
+
+        if _primitive_matrix.lower() == 'auto':
+            primitive_matrix = 'auto'
+        elif _primitive_matrix.upper() in ('P', 'F', 'I', 'A', 'C', 'R'):
+            primitive_matrix = _primitive_matrix.upper()
+        elif len(_primitive_matrix.split()) != 9:
+            raise SyntaxError(
+                "Number of elements in --pa option argument has to be 9.")
+        else:
+            primitive_matrix = np.reshape(
+                [fracval(x) for x in _primitive_matrix.split()], (3, 3))
+            if np.linalg.det(primitive_matrix) < 1e-8:
+                raise SyntaxError(
+                    "Primitive matrix has to have positive determinant.")
+
+    pmat = get_primitive_matrix(primitive_matrix)
+    if unitcell is not None and isinstance(pmat, str) and pmat == 'auto':
+        return guess_primitive_matrix(unitcell)
+    else:
+        return pmat
+
+
 def main():
     """Calculate kappa spectrum."""
     args = _get_parser()
@@ -413,8 +445,7 @@ def main():
     mesh = np.array(f_kappa['mesh'][:], dtype='int_')
     temperatures = f_kappa['temperature'][:]
     ir_weights = f_kappa['weight'][:]
-    primitive_matrix = np.reshape(
-        [fracval(x) for x in args.primitive_matrix.split()], (3, 3))
+    primitive_matrix = _analyze_primitive_matrix_option(args, unitcell=cell)
     primitive = get_primitive(cell, primitive_matrix)
     primitive_symmetry = Symmetry(primitive)
     bz_grid = BZGrid(mesh,
