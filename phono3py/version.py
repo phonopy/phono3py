@@ -1,3 +1,4 @@
+"""Define phono3py version."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
