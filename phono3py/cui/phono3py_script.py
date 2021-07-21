@@ -65,7 +65,8 @@ from phono3py.cui.show_log import (
 from phono3py.cui.triplets_info import write_grid_points, show_num_triplets
 from phono3py.cui.create_supercells import create_phono3py_supercells
 from phono3py.cui.create_force_constants import create_phono3py_force_constants
-from phono3py.interface.phono3py_yaml import Phono3pyYaml
+from phono3py.interface.phono3py_yaml import (
+    Phono3pyYaml, displacements_yaml_lines_type1)
 
 
 # import logging
@@ -233,11 +234,17 @@ def create_FORCES_FC2_from_FORCE_SETS_then_exit(log_level):
     file_exists(filename, log_level)
     disp_dataset = parse_FORCE_SETS(filename=filename)
     write_FORCES_FC2(disp_dataset)
-    write_disp_fc2_yaml(disp_dataset, None)
 
     if log_level:
-        print("FORCES_FC2 and disp_fc2.yaml have been created from "
-              "FORCE_SETS.")
+        print("")
+        print("FORCES_FC2 has been created from FORCE_SETS.")
+        print("The following yaml lines should replace respective part of")
+        print("phono3py_disp.yaml made with --dim-fc2=dim_of_FORCE_SETS.")
+
+    print("")
+    print("\n".join(displacements_yaml_lines_type1(disp_dataset)))
+
+    if log_level:
         print_end()
     sys.exit(0)
 
