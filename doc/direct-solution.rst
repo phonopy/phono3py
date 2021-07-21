@@ -19,12 +19,14 @@ memory space. When running multiple temperature points, simply the
 memory space needed is multiplied by the number of the temperature
 points. Therefore it is normally recommended to specify :ref:`--ts
 option <ts_option>`. An example to run with the direct solution of
-LBTE for ``example/Si-PBEsol`` is as follows::
+LBTE for ``example/Si-PBEsol`` is as follows:
+
+.. code-block:: bash
 
    % phono3py --dim="2 2 2" --sym-fc -c POSCAR-unitcell
    ...
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="11 11 11" --fc3 --fc2 --lbte --ts=300
+   % phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="11 11 11" --fc3 --fc2 --lbte --ts=300
    ...
 
    =================== End of collection of collisions ===================
@@ -41,11 +43,8 @@ LBTE for ``example/Si-PBEsol`` is as follows::
    Thermal conductivity and related properties were written into
    "kappa-m111111.hdf5".
    Eigenvalues of collision matrix were written into "coleigs-m111111.hdf5"
-                    _
-      ___ _ __   __| |
-     / _ \ '_ \ / _` |
-    |  __/ | | | (_| |
-     \___|_| |_|\__,_|
+
+   ...
 
 Memory usage
 -------------
@@ -69,9 +68,11 @@ memory space is consumed in total.
 
 When phono3py runs with :ref:`--wgp option <wgp_option>` together with
 ``--lbte`` option, estimated memory space needed for storing collision
-matrix is presented. An example for ``example/Si-PBEsol`` is as follows::
+matrix is presented. An example for ``example/Si-PBEsol`` is as follows:
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="40 40 40" --wgp --lbte
+.. code-block:: bash
+
+   % phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="40 40 40" --wgp --lbte
    ...
 
    Memory requirements:
@@ -149,19 +150,26 @@ The summary of the procedure is as follows:
    file names of the results at different temperatures.
 
 Examples of command options are shown below using ``Si-PBE`` example.
-Irreducible grid point indices are obtained by :ref:`--wgp option<wgp_option>`::
+Irreducible grid point indices are obtained by :ref:`--wgp option<wgp_option>`:
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --lbte --wgp
+.. code-block:: bash
+
+   % phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --lbte --wgp
 
 and the information is given in ``ir_grid_points.yaml``. For
-distribution of collision matrix calculation (see also :ref:`workload_distribution`)::
+distribution of collision matrix calculation
+(see also :ref:`workload_distribution`):
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --lbte --ts=300 --write-collision --gp="grid_point_numbers..."
+.. code-block:: bash
+
+   % phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --lbte --ts=300 --write-collision --gp="grid_point_numbers..."
 
 
-To collect distributed pieces of the collision matrix::
+To collect distributed pieces of the collision matrix:
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --lbte --ts=300 --read-collision=0
+.. code-block:: bash
+
+   % phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --lbte --ts=300 --read-collision=0
 
 Distribution of phonon-phonon interaction strengths
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -203,20 +211,26 @@ The summary of the procedure is as follows:
    temperatures.
 
 Examples of command options are shown below using ``Si-PBE`` example.
-Irreducible grid point indices are obtained by :ref:`--wgp option<wgp_option>`::
+Irreducible grid point indices are obtained by :ref:`--wgp option<wgp_option>`
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --lbte --wgp
+.. code-block:: bash
+
+   % phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --lbte --wgp
 
 and the grid point information is provided in
 ``ir_grid_points.yaml``. All phonons on mesh grid points are saved
-by::
+by
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc2 --write-phonon
+.. code-block:: bash
+
+   % phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --fc2 --write-phonon
 
 For distribution of ph-ph interaction strength calculation (see also
-:ref:`workload_distribution`)::
+:ref:`workload_distribution`)
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --lbte --ts=300 --write-pp --gp="grid_point_numbers..." --read-phonon
+.. code-block:: bash
+
+   % phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --lbte --ts=300 --write-pp --gp="grid_point_numbers..." --read-phonon
 
 Here one temperature has to be specified but any one of temperatures
 is OK since ph-ph interaction strength computed here is assumed to be
@@ -224,9 +238,9 @@ temperature independent. Then the computed ph-ph interaction strengths
 are read and used to compute collision matrix and lattice thermal
 conductivity at a temperature by
 
-::
+.. code-block:: bash
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --lbte --ts=300 --read-pp --read-phonon
+   % phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --lbte --ts=300 --read-pp --read-phonon
 
 This last command is repeated at different temperatures to obtain the
 properties at multiple temperatures.
@@ -246,7 +260,9 @@ is clear gap between non-zero eigenvalue and nearly-zero eigenvalues.
 After running the direct solution of LBTE, ``coleigs-mxxx.hdf5`` is
 created. This contains the eigenvalues of the collision matrix (either
 symmetrized or non-symmetrized). The eigenvalues are plotted using
-``phono3py-coleigplot`` in the phono3py package::
+``phono3py-coleigplot`` in the phono3py package:
+
+.. code-block:: bash
 
    phono3py-coleigplot coleigs-mxxx.hdf5
 

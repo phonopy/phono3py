@@ -52,28 +52,21 @@ Creating supercells with displacements
 
 ``--cutoff-pair`` option is employed when creating supercells with
 displacements, therefore this option must be used with ``-d`` option
-when running phono3py, for example for the Si example::
+when running phono3py, for the Si-PBEsol example:
+
+.. code-block:: bash
 
    % phono3py --cutoff-pair=5 -d --dim="2 2 2" -c POSCAR-unitcell
-           _                      _____
-     _ __ | |__   ___  _ __   ___|___ / _ __  _   _
-    | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
-    | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
-    | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
-    |_|                                |_|    |___/
-                                             1.11.11
+   ...
 
-   Run mode: displacements
-
+   Unit cell was read from "POSCAR-unitcell".
    Displacement distance: 0.03
    Number of displacements: 111
    Cutoff distance for displacements: 5.0
    Number of displacement supercell files created: 51
-                    _
-      ___ _ __   __| |
-     / _ \ '_ \ / _` |
-    |  __/ | | | (_| |
-     \___|_| |_|\__,_|
+
+   Displacement dataset was written in "phono3py_disp.yaml".
+   ...
 
    % ls POSCAR-0*
    POSCAR-00001  POSCAR-00032  POSCAR-00043  POSCAR-00080  POSCAR-00097
@@ -95,12 +88,12 @@ displacements when this is run without ``--cutoff-pair``
 option. ``Number of displacement supercell files created: 51`` gives
 the contracted number of supercells with displacements by
 ``--cutoff-pair`` option. There number of ``POSCAR-0xxxx`` files is found
-51. At this step, a special ``disp_fc3.yaml`` is created. This
+1.  At this step, a special ``phono3py_disp.yaml`` is created. This
 contains information on this contraction and used in the other
 calculation step, therefore this file must be kept carefully.
 
 Supercell files
-^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 ``POSCAR-xxxxx`` (in the other calculator interface, the prefix of the
 filename is different) are not generated if distance between a pair of
@@ -112,13 +105,13 @@ displacements but ``POSCAR-xxxxx`` files not being included are not
 generated. The reason of this indexing is that it can be useful when
 changing the cutoff-pair-distance.
 
-Special ``disp_fc3.yaml``
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Special ``phono3py_disp.yaml``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Using ``--cutoff-pair`` option together with ``-d`` option, a special
-``disp_fc3.yaml`` is created. This contains information on distances
+``phono3py_disp.yaml`` is created. This contains information on distances
 between displaced atomic-pairs and whether those pairs are to be
-computed or not. This special ``disp_fc3.yaml`` is necessary to create
+computed or not. This special ``phono3py_disp.yaml`` is necessary to create
 fc3, therefore be careful not to overwrite it by running the option
 ``-d`` without ``--cutoff-pair`` or with different ``--cutoff-pair``
 with different value.
@@ -128,7 +121,7 @@ Making ``FORCES_FC3``
 
 To create ``FORCES_FC3``, only output files of the supercells created
 using ``--cutoff-pair`` option are passed to ``phono3py`` as the
-arguments. The special ``disp_fc3.yaml`` file is necessary to be
+arguments. The special ``phono3py_disp.yaml`` file is necessary to be
 located at current directory.
 
 An example is shown below for the Si example. Here, it is supposed
@@ -137,146 +130,150 @@ directories. After running force calculations, there should be the
 output file containing forces in each directory (for VASP
 ``vasprun.xml``).
 
-::
+.. code-block:: bash
 
    % phono3py --cf3 disp-{00001,00002,00003,00016,00017,00018,00019,00024,00025,00026,00027,00032,00033,00034,00035,00036,00037,00038,00039,00040,00041,00042,00043,00070,00071,00072,00073,00074,00075,00076,00077,00078,00079,00080,00081,00082,00083,00084,00085,00086,00087,00088,00089,00096,00097,00098,00099,00100,00101,00102,00103}/vasprun.xml
-           _                      _____
-     _ __ | |__   ___  _ __   ___|___ / _ __  _   _
-    | '_ \| '_ \ / _ \| '_ \ / _ \ |_ \| '_ \| | | |
-    | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
-    | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
-    |_|                                |_|    |___/
-                                             1.11.7
+   ...
 
-   Displacement dataset is read from disp_fc3.yaml.
+   Displacement dataset is read from phono3py_disp.yaml.
    counter (file index): 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51
    FORCES_FC3 has been created.
-                    _
-      ___ _ __   __| |
-     / _ \ '_ \ / _` |
-    |  __/ | | | (_| |
-     \___|_| |_|\__,_|
 
-Using :ref:`--cf3_file option <cf3_file_option>` may be recommended
-when the number of force files is large. ::
+
+Using :ref:`--cf3-file option <cf3_file_option>` may be recommended
+when the number of force files is large.
+
+.. code-block:: bash
 
    % for i in `ls POSCAR-0*|sed s/POSCAR-//`;do echo disp-$i/vasprun.xml;done > file_list.dat
-   % phono3py --cf3_file file_list.dat
+   % phono3py --cf3-file file_list.dat
 
-Using a python script, ``disp_fc3.yaml`` is easily parsed. So
+Using a python script, ``phono3py_disp.yaml`` is easily parsed. So
 it is also easy to create the file list by a python
 script:
 
 .. code-block:: python
 
    #!/usr/bin/env python
-   import yaml
 
+   from phono3py.interface.phono3py_yaml import Phono3pyYaml
+
+   p3yaml = Phono3pyYaml()
+   p3yaml.read("phono3py_disp.yaml")
+   dds = p3yaml.dataset
    file_name_tmpl = "disp-%05d/vasprun.xml"
-   dds = yaml.load(open("disp_fc3.yaml"))
    count = 1
    for d1 in dds['first_atoms']:
        print(file_name_tmpl % count)
        count += 1
    for d1 in dds['first_atoms']:
        for d2 in d1['second_atoms']:
-           for d in d2['displacements']:
-               if d2['included']:
-                   print(file_name_tmpl % count)
-               count += 1
+           if d2['included']:
+               print(file_name_tmpl % count)
+           count += 1
 
 Running phonon-phonon interaction calculation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To create fc3, ``--cutoff-pair`` option is not necessary but the
-special ``disp_fc3.yaml`` is required.
+special ``phono3py_disp.yaml`` is required.
 
-::
+.. code-block:: bash
 
-   % phono3py --dim="2 2 2" -c POSCAR-unitcell
+   % phono3py
    ...
 
-   Displacement dataset is read from disp_fc3.yaml.
-   Sets of supercell forces are read from FORCES_FC3.
-   Solving fc3[ 1, x, x ] with a displacement:
+   ----------------------------- General settings -----------------------------
+   Run mode: None
+   HDF5 data compression filter: gzip
+   Crystal structure was read from "phono3py_disp.yaml".
+   Supercell (dim): [2 2 2]
+   Primitive matrix:
+     [0.  0.5 0.5]
+     [0.5 0.  0.5]
+     [0.5 0.5 0. ]
+   Spacegroup: Fd-3m (227)
+   Use -v option to watch primitive cell, unit cell, and supercell structures.
+   ----------------------------- Force constants ------------------------------
+   Imposing translational and index exchange symmetry to fc2: False
+   Imposing translational and index exchange symmetry to fc3: False
+   Imposing symmetry of index exchange to fc3 in reciprocal space: False
+   Displacement dataset for fc3 was read from "phono3py_disp.yaml".
+   Sets of supercell forces were read from "FORCES_FC3".
+   Computing fc3[ 1, x, x ] using numpy.linalg.pinv with a displacement:
        [ 0.0300  0.0000  0.0000]
-   Expanding fc3
+   Expanding fc3.
    Cutting-off fc3 (cut-off distance: 5.000000)
    Building atom mapping table...
    Creating contracted fc3...
-   Writing fc3 to fc3.hdf5
-   max drift of fc3: 0.043921 (zyx) 0.043921 (yzx) 0.043921 (yxz)
-   Solving fc2
-   Writing fc2 to fc2.hdf5
-   max drift of fc2: -0.000001 (xx) -0.000001 (xx)
-   *************** None of ph-ph interaction was calculated. ****************
-                    _
-      ___ _ __   __| |
-     / _ \ '_ \ / _` |
-    |  __/ | | | (_| |
-     \___|_| |_|\__,_|
+   Writing fc3 to "fc3.hdf5".
+   Max drift of fc3: 0.047748 (yxz) 0.047748 (xyz) 0.047748 (xzy)
+   Displacement dataset for fc2 was read from "phono3py_disp.yaml".
+   Sets of supercell forces were read from "FORCES_FC3".
+   Writing fc2 to "fc2.hdf5".
+   Max drift of fc2: -0.000001 (zz) -0.000001 (zz)
+   ----------- None of ph-ph interaction calculation was performed. -----------
+
+   Summary of calculation was written in "phono3py.yaml".
+   ...
 
 Once ``fc3.hdf5`` and ``fc2.hdf5`` are created, ``--cutoff-pair``
-option and the special ``disp_fc3.yaml`` are not needed anymore.
+option and the special ``phono3py_disp.yaml`` are not needed anymore.
 
-::
+.. code-block:: bash
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="11 11 11" --fc3 --fc2 --br
+   % phono3py --mesh="11 11 11" --fc3 --fc2 --br
    ...
 
-     300.0     118.778    118.778    118.778     -0.000     -0.000      0.000
-
+     300.0     108.051    108.051    108.051      0.000      0.000     -0.000
    ...
 
-
-A script extract supercell IDs from ``disp_fc3.yaml``
------------------------------------------------------
+A script extract supercell IDs from ``phono3py_disp.yaml``
+----------------------------------------------------------
 
 The following script is an example to collect supercell IDs
 with the cutoff-pair distance, for which ``included: true`` is used
-to hook. ``duplicates`` in ``disp_fc3.yaml`` gives the pairs of
+to hook them. ``duplicates`` in ``phono3py_disp.yaml`` gives the pairs of
 exactly same supercells having different IDs. Therefore one of each
 pair is necessary to calculate. As a ratio, the number is not many,
 but if we want to save very much the computational demand, it is good
 to consider.
 
-::
+.. code-block:: python
 
    #!/usr/bin/env python
 
-   import yaml
-   try:
-       from yaml import CLoader as Loader
-   except ImportError:
-       from yaml import Loader
+   from phono3py.interface.phono3py_yaml import Phono3pyYaml
 
-   with open("disp_fc3.yaml", 'r') as f:
-       data = yaml.load(f, Loader=Loader)
+   p3yaml = Phono3pyYaml()
+   p3yaml.read("phono3py_disp.yaml")
+   data = p3yaml.dataset
 
    disp_ids = []
    for data1 in data['first_atoms']:
-       disp_ids.append(data1['displacement_id'])
+       disp_ids.append(data1['id'])
 
    for data1 in data['first_atoms']:
        for data2 in data1['second_atoms']:
            if data2['included']:
-               disp_ids += data2['displacement_ids']
+               disp_ids.append(data2['id'])
 
-   # # To remove duplicates
-   # duplicates = data['duplicates']
-   # print(len(duplicates))
+   # To remove duplicates
+   # duplicates = dict(data['duplicates'])
    # disp_ids_nodup = [i for i in disp_ids if i not in duplicates]
 
    print(" ".join(["%05d" % i for i in disp_ids]))
 
-Even for the case that ``disp_fc3.yaml`` was created without
-``--cutoff-pair`` option, if we replace the line in the above script::
+Even for the case that ``phono3py_disp.yaml`` was created without
+``--cutoff-pair`` option, if we replace the line in the above script:
+
+.. code-block:: python
 
            if data2['included']:
 
 by
 
-::
+.. code-block:: python
 
            if data2['distance'] < 5.0:  # 5.0 is cutoff-pair distance
 
@@ -293,11 +290,11 @@ Si-PBE
 For testing, thermal conductivities with respect to ``--cutoff-pair``
 values are calculated as follows. Note that if ``FORCES_FC3`` for full
 fc3 elements exists, the same ``FORCES_FC3`` file can be used for
-generating contracted fc3 for each special ``disp_fc3.yaml``.
+generating contracted fc3 for each special ``phono3py_disp.yaml``.
 
-::
+.. code-block:: bash
 
-   % egrep '^\s+distance' disp_fc3.yaml|awk '{print $2}'|sort|uniq
+   % egrep '^\s+pair_distance' phono3py_disp.yaml|awk '{print $2}'|sort|uniq
    0.000000
    2.366961
    3.865232
@@ -308,50 +305,53 @@ generating contracted fc3 for each special ``disp_fc3.yaml``.
    7.100884
    7.730463
    9.467845
-   % for i in {2..10};do d=`grep distance disp_fc3.yaml|awk '{print $2}'|sort|uniq|sed "${i}q;d"`; d=$((d+0.1)); phono3py --cutoff-pair=$d -o $i -d --dim="2 2 2" -c POSCAR-unitcell ;done
-   % ls disp_fc3.*.yaml
-   disp_fc3.10.yaml  disp_fc3.4.yaml  disp_fc3.7.yaml
-   disp_fc3.2.yaml   disp_fc3.5.yaml  disp_fc3.8.yaml
-   disp_fc3.3.yaml   disp_fc3.6.yaml  disp_fc3.9.yaml
-   % for i in {2..10};do grep num_displacements_created disp_fc3.$i.yaml;done
-   num_displacements_created: 11
-   num_displacements_created: 31
-   num_displacements_created: 51
-   num_displacements_created: 56
-   num_displacements_created: 76
-   num_displacements_created: 96
-   num_displacements_created: 104
-   num_displacements_created: 109
-   num_displacements_created: 111
-   % for i in {2..10};do phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="11 11 11" --br --io=$i|tee std.$i.out;done
+   % cp phono3py_disp.yaml phono3py_disp.orig.yaml
+   % for i in {2..10};do d=`grep pair_distance phono3py_disp.orig.yaml|awk '{print $2}'|sort|uniq|sed "${i}q;d"`; d=$((d+0.1)); phono3py --cutoff-pair=$d -o $i -d --pa="F" --dim="2 2 2" -c POSCAR-unitcell; mv phono3py_disp.yaml phono3py_disp.$i.yaml; done
+   % ls phono3py_disp.*.yaml
+   % ls phono3py_disp.*.yaml
+   phono3py_disp.10.yaml  phono3py_disp.5.yaml  phono3py_disp.9.yaml
+   phono3py_disp.2.yaml   phono3py_disp.6.yaml  phono3py_disp.orig.yaml
+   phono3py_disp.3.yaml   phono3py_disp.7.yaml
+   phono3py_disp.4.yaml   phono3py_disp.8.yaml
+   % for i in {2..10};do grep number_of_pairs_in_cutoff phono3py_disp.$i.yaml;done
+   number_of_pairs_in_cutoff: 10
+   number_of_pairs_in_cutoff: 30
+   number_of_pairs_in_cutoff: 50
+   number_of_pairs_in_cutoff: 55
+   number_of_pairs_in_cutoff: 75
+   number_of_pairs_in_cutoff: 95
+   number_of_pairs_in_cutoff: 103
+   number_of_pairs_in_cutoff: 108
+   number_of_pairs_in_cutoff: 110
+   % for i in {2..10};do cp phono3py_disp.$i.yaml phono3py_disp.yaml; phono3py --mesh="11 11 11" --br|tee std.$i.out;done
    % for i in {2..10};do egrep '^\s+300' std.$i.out;done
-     300.0     123.559    123.559    123.559     -0.000     -0.000      0.000
-     300.0     118.586    118.586    118.586     -0.000     -0.000      0.000
-     300.0     118.778    118.778    118.778     -0.000     -0.000      0.000
-     300.0     118.839    118.839    118.839     -0.000     -0.000      0.000
-     300.0     119.433    119.433    119.433     -0.000     -0.000      0.000
-     300.0     119.453    119.453    119.453     -0.000     -0.000      0.000
-     300.0     119.466    119.466    119.466     -0.000     -0.000      0.000
-     300.0     119.447    119.447    119.447     -0.000     -0.000      0.000
-     300.0     119.445    119.445    119.445     -0.000     -0.000      0.000
-   % for i in {2..10};do phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="11 11 11" --sym-fc --br -i $i -o sym-$i|tee std.sym-$i.out;done
+     300.0     123.606    123.606    123.606     -0.000     -0.000      0.000
+     300.0     118.617    118.617    118.617     -0.000     -0.000      0.000
+     300.0     118.818    118.818    118.818     -0.000     -0.000      0.000
+     300.0     118.879    118.879    118.879     -0.000     -0.000      0.000
+     300.0     119.468    119.468    119.468     -0.000     -0.000      0.000
+     300.0     119.489    119.489    119.489     -0.000     -0.000      0.000
+     300.0     119.501    119.501    119.501     -0.000     -0.000      0.000
+     300.0     119.483    119.483    119.483     -0.000     -0.000      0.000
+     300.0     119.481    119.481    119.481     -0.000     -0.000      0.000
+   % for i in {2..10};do cp phono3py_disp.$i.yaml phono3py_disp.yaml; phono3py --sym-fc --mesh="11 11 11" --br|tee std.sym-$i.out;done
    % for i in {2..10};do egrep '^\s+300' std.sym-$i.out;done
-     300.0     124.626    124.626    124.626     -0.000      0.000      0.000
-     300.0     119.721    119.721    119.721     -0.000      0.000      0.000
-     300.0     118.806    118.806    118.806     -0.000      0.000      0.000
-     300.0     118.741    118.741    118.741     -0.000      0.000      0.000
-     300.0     119.446    119.446    119.446     -0.000      0.000      0.000
-     300.0     119.339    119.339    119.339     -0.000      0.000      0.000
-     300.0     119.323    119.323    119.323     -0.000      0.000      0.000
-     300.0     119.313    119.313    119.313     -0.000      0.000      0.000
-     300.0     119.311    119.311    119.311     -0.000      0.000      0.000
+     300.0     124.650    124.650    124.650     -0.000     -0.000      0.000
+     300.0     119.765    119.765    119.765     -0.000     -0.000      0.000
+     300.0     118.847    118.847    118.847     -0.000     -0.000      0.000
+     300.0     118.782    118.782    118.782     -0.000     -0.000      0.000
+     300.0     119.471    119.471    119.471     -0.000     -0.000      0.000
+     300.0     119.366    119.366    119.366     -0.000     -0.000      0.000
+     300.0     119.350    119.350    119.350     -0.000     -0.000      0.000
+     300.0     119.339    119.339    119.339     -0.000     -0.000      0.000
+     300.0     119.337    119.337    119.337     -0.000     -0.000      0.000
 
 AlN-LDA
 ~~~~~~~
 
-::
+.. code-block:: bash
 
-   % egrep '^\s+distance' disp_fc3.yaml|awk '{print $2}'|sort|uniq
+   % egrep '^\s+pair_distance' phono3py_disp.yaml|awk '{print $2}'|sort|uniq
    0.000000
    1.889907
    1.901086
@@ -374,72 +374,70 @@ AlN-LDA
    6.205027
    6.469591
    7.335901
-   % for i in {2..22};do d=`egrep '^\s+distance' disp_fc3.yaml|awk '{print $2}'|sort|uniq|sed "${i}q;d"`; d=$((d+0.0001)); phono3py --cutoff-pair=$d -o $i -d --dim="3 3 2" -c POSCAR-unitcell ;done
-   % for i in {2..22};do grep num_displacements_created disp_fc3.$i.yaml;done
-   num_displacements_created: 78
-   num_displacements_created: 98
-   num_displacements_created: 202
-   num_displacements_created: 222
-   num_displacements_created: 318
-   num_displacements_created: 370
-   num_displacements_created: 466
-   num_displacements_created: 570
-   num_displacements_created: 666
-   num_displacements_created: 718
-   num_displacements_created: 718
-   num_displacements_created: 770
-   num_displacements_created: 790
-   num_displacements_created: 894
-   num_displacements_created: 934
-   num_displacements_created: 986
-   num_displacements_created: 1026
-   num_displacements_created: 1122
-   num_displacements_created: 1162
-   num_displacements_created: 1214
-   num_displacements_created: 1254
-   % for i in {2..22};do phono3py --dim="3 3 2" -c POSCAR-unitcell --mesh="13 13 9" --br --nac --io $i|tee std.$i.out; done
-   % for i in {2..22};do egrep '^\s+300\.0' std.$i.out;done
-     300.0     201.530    201.530    192.685     -0.000     -0.000     -0.000
-     300.0     212.963    212.963    204.362     -0.000     -0.000     -0.000
-     300.0     208.005    208.005    196.684     -0.000     -0.000     -0.000
-     300.0     212.213    212.213    200.778     -0.000     -0.000     -0.000
-     300.0     223.019    223.019    214.702     -0.000     -0.000     -0.000
-     300.0     223.181    223.181    214.351     -0.000     -0.000     -0.000
-     300.0     222.360    222.360    213.924     -0.000     -0.000     -0.000
-     300.0     223.245    223.245    214.561     -0.000     -0.000     -0.000
-     300.0     223.812    223.812    215.359     -0.000     -0.000     -0.000
-     300.0     223.959    223.959    215.701     -0.000     -0.000     -0.000
-     300.0     223.959    223.959    215.701     -0.000     -0.000     -0.000
-     300.0     224.507    224.507    215.384     -0.000     -0.000     -0.000
-     300.0     224.278    224.278    215.396     -0.000     -0.000     -0.000
-     300.0     223.551    223.551    212.671     -0.000     -0.000     -0.000
-     300.0     224.732    224.732    214.463     -0.000     -0.000     -0.000
-     300.0     224.291    224.291    213.270     -0.000     -0.000     -0.000
-     300.0     224.805    224.805    214.771     -0.000     -0.000     -0.000
-     300.0     224.834    224.834    215.025     -0.000     -0.000     -0.000
-     300.0     224.645    224.645    215.260     -0.000     -0.000     -0.000
-     300.0     224.769    224.769    215.220     -0.000     -0.000     -0.000
-     300.0     224.650    224.650    215.090     -0.000     -0.000     -0.000
-   % for i in {2..22};do phono3py --dim="3 3 2" -c POSCAR-unitcell --mesh="13 13 9" --sym-fc --br --nac -i $i -o sym-$i|tee std.sym-$i.out; done
-   % for i in {2..22};do egrep '^\s+300\.0' std.sym-$i.out;done
-     300.0     224.122    224.122    213.086      0.000     -0.000      0.000
-     300.0     225.394    225.394    215.683      0.000     -0.000      0.000
-     300.0     223.748    223.748    213.682      0.000     -0.000      0.000
-     300.0     223.973    223.973    213.543      0.000     -0.000      0.000
-     300.0     224.876    224.876    216.489      0.000     -0.000      0.000
-     300.0     224.603    224.603    216.204      0.000     -0.000      0.000
-     300.0     223.773    223.773    214.657      0.000     -0.000      0.000
-     300.0     224.173    224.173    215.517      0.000     -0.000      0.000
-     300.0     224.596    224.596    215.896      0.000     -0.000      0.000
-     300.0     224.401    224.401    215.955      0.000     -0.000      0.000
-     300.0     224.401    224.401    215.955      0.000     -0.000      0.000
-     300.0     224.077    224.077    215.565      0.000     -0.000      0.000
-     300.0     224.285    224.285    215.654      0.000     -0.000      0.000
-     300.0     224.136    224.136    215.053      0.000     -0.000      0.000
-     300.0     224.469    224.469    215.462      0.000     -0.000      0.000
-     300.0     224.109    224.109    215.011      0.000     -0.000      0.000
-     300.0     224.108    224.108    215.447      0.000     -0.000      0.000
-     300.0     224.592    224.592    215.046      0.000     -0.000      0.000
-     300.0     224.640    224.640    215.113      0.000     -0.000      0.000
-     300.0     224.344    224.344    215.203      0.000     -0.000      0.000
-     300.0     224.481    224.481    214.936      0.000     -0.000      0.000
+   % cp phono3py_disp.yaml phono3py_disp.orig.yaml
+   % for i in {2..21};do d=`grep pair_distance phono3py_disp.orig.yaml|awk '{print $2}'|sort|uniq|sed "${i}q;d"`; d=$((d+0.0001)); phono3py --cutoff-pair=$d -o $i -d --dim="3 3 2" -c POSCAR-unitcell; mv phono3py_disp.yaml phono3py_disp.$i.yaml; done
+   % for i in {2..21};do grep number_of_pairs_in_cutoff phono3py_disp.$i.yaml;done
+   number_of_pairs_in_cutoff: 72
+   number_of_pairs_in_cutoff: 92
+   number_of_pairs_in_cutoff: 196
+   number_of_pairs_in_cutoff: 216
+   number_of_pairs_in_cutoff: 312
+   number_of_pairs_in_cutoff: 364
+   number_of_pairs_in_cutoff: 460
+   number_of_pairs_in_cutoff: 564
+   number_of_pairs_in_cutoff: 660
+   number_of_pairs_in_cutoff: 712
+   number_of_pairs_in_cutoff: 764
+   number_of_pairs_in_cutoff: 784
+   number_of_pairs_in_cutoff: 888
+   number_of_pairs_in_cutoff: 928
+   number_of_pairs_in_cutoff: 980
+   number_of_pairs_in_cutoff: 1020
+   number_of_pairs_in_cutoff: 1116
+   number_of_pairs_in_cutoff: 1156
+   number_of_pairs_in_cutoff: 1208
+   number_of_pairs_in_cutoff: 1248
+   % for i in {2..21};do cp phono3py_disp.$i.yaml phono3py_disp.yaml; phono3py --mesh="13 13 9" --br --nac --io $i|tee std.$i.out; done
+   % for i in {2..21};do egrep '^\s+300\.0' std.$i.out;done
+     300.0     205.550    205.550    193.665     -0.000     -0.000     -0.000
+     300.0     218.963    218.963    204.942     -0.000     -0.000     -0.000
+     300.0     213.624    213.624    193.863     -0.000     -0.000     -0.000
+     300.0     219.932    219.932    199.819     -0.000     -0.000     -0.000
+     300.0     235.516    235.516    218.843     -0.000     -0.000     -0.000
+     300.0     234.750    234.750    217.384     -0.000     -0.000     -0.000
+     300.0     234.355    234.355    218.030     -0.000     -0.000     -0.000
+     300.0     235.381    235.381    218.609     -0.000     -0.000     -0.000
+     300.0     235.996    235.996    219.785     -0.000     -0.000     -0.000
+     300.0     236.220    236.220    219.867     -0.000     -0.000     -0.000
+     300.0     236.161    236.161    219.298     -0.000     -0.000     -0.000
+     300.0     236.096    236.096    219.313     -0.000     -0.000     -0.000
+     300.0     234.602    234.602    217.064     -0.000     -0.000     -0.000
+     300.0     235.914    235.914    218.689     -0.000     -0.000     -0.000
+     300.0     235.049    235.049    217.935     -0.000     -0.000     -0.000
+     300.0     235.877    235.877    219.065     -0.000     -0.000     -0.000
+     300.0     236.133    236.133    219.364     -0.000     -0.000     -0.000
+     300.0     236.207    236.207    219.595     -0.000     -0.000     -0.000
+     300.0     236.035    236.035    219.463     -0.000     -0.000     -0.000
+     300.0     236.104    236.104    219.348     -0.000     -0.000     -0.000
+   % for i in {2..21};do cp phono3py_disp.$i.yaml phono3py_disp.yaml; phono3py --mesh="13 13 9" --br --nac --io $i|tee std.$i.out; done|tee std.sym-$i.out; done
+   % for i in {2..21};do egrep '^\s+300\.0' std.sym-$i.out;done
+     300.0     232.964    232.964    216.333      0.000     -0.000     -0.000
+     300.0     235.442    235.442    219.602      0.000     -0.000     -0.000
+     300.0     235.521    235.521    217.767      0.000     -0.000     -0.000
+     300.0     235.581    235.581    217.687      0.000     -0.000     -0.000
+     300.0     236.837    236.837    219.933      0.000     -0.000     -0.000
+     300.0     236.020    236.020    219.324      0.000     -0.000     -0.000
+     300.0     235.482    235.482    218.633      0.000     -0.000     -0.000
+     300.0     236.313    236.313    219.677      0.000     -0.000     -0.000
+     300.0     236.308    236.308    219.955      0.000     -0.000     -0.000
+     300.0     236.074    236.074    219.882      0.000     -0.000     -0.000
+     300.0     235.520    235.520    219.450      0.000     -0.000     -0.000
+     300.0     235.769    235.769    219.562      0.000     -0.000     -0.000
+     300.0     235.441    235.441    219.168      0.000     -0.000     -0.000
+     300.0     235.892    235.892    219.590      0.000     -0.000     -0.000
+     300.0     235.509    235.509    219.167      0.000     -0.000     -0.000
+     300.0     235.646    235.646    219.521      0.000     -0.000     -0.000
+     300.0     235.783    235.783    219.311      0.000     -0.000     -0.000
+     300.0     235.887    235.887    219.301      0.000     -0.000     -0.000
+     300.0     235.642    235.642    219.348      0.000     -0.000     -0.000
+     300.0     235.728    235.728    219.102      0.000     -0.000     -0.000

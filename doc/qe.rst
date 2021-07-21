@@ -10,8 +10,10 @@ phono3py, i.e., using the finite displacement and supercell approach.
 
 An example for QE (pw) is found in the ``example-phono3py/Si-QE`` directory.
 
-To invoke the QE (pw) interface, ``--qe`` option has to be always
-specified::
+Unless a proper ``phono3py_disp.yaml`` containing calculator information,
+to invoke the QE (pw) interface, ``--qe`` option has to be specified,
+
+.. code-block:: bash
 
    % phono3py --qe [options] [arguments]
 
@@ -29,15 +31,15 @@ Workflow
 
 1. Create supercells with displacements
 
-   ::
+   .. code-block:: bash
 
-      % phono3py --qe -d --dim="2 2 2" -c Si.in
+      % phono3py --qe -d --dim="2 2 2" --pa="F" -c Si.in
 
    In this example, probably 111 different supercells with
    displacements are created. Supercell files (``supercell-xxx.in``)
    are created but they contain only the crystal
    structures. Calculation setting has to be added before running the
-   calculation.
+   calculation. In this step, the option ``--qe`` is necessary.
 
 2. Run QE (pw) for supercell force calculations
 
@@ -49,24 +51,33 @@ Workflow
 3. Collect forces
 
    ``FORCES_FC3`` is obtained with ``--cf3`` options collecting the
-   forces on atoms in QE (pw) calculation results::
+   forces on atoms in QE (pw) calculation results:
 
-      % phono3py --qe --cf3 disp-00001/Si-supercell.out disp-00002/Si-supercell.out ...
+   .. code-block:: bash
 
-   or in recent bash or zsh::
+      % phono3py --cf3 disp-00001/Si-supercell.out disp-00002/Si-supercell.out ...
 
-      % phono3py --qe --cf3 disp-{00001..00111}/Si-supercell.out
+   or in recent bash or zsh:
 
-   ``disp_fc3.yaml`` is used to create ``FORCES_FC3``, therefore it
+   .. code-block:: bash
+
+      % phono3py --cf3 disp-{00001..00111}/Si-supercell.out
+
+   ``phono3py_disp.yaml`` is used to create ``FORCES_FC3``, therefore it
    must exist in current directory.
 
 4) Calculate 3rd and 2nd order force constants
 
-   ``fc3.hdf5`` and ``fc2.hdf5`` files are created by::
+   ``fc3.hdf5`` and ``fc2.hdf5`` files are created by:
 
-      % phono3py --qe --dim="2 2 2" -c Si.in --sym-fc
+   .. code-block:: bash
 
-5) Calculate lattice thermal conductivity, e.g., by::
+      % phono3py --sym-fc
 
-      % phono3py --qe --dim="2 2 2" -c Si.in --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" \
-         --mesh="11 11 11" --fc3 --fc2 --br
+   where ``--sym-fc`` symmetrizes fc3 and fc2.
+
+5) Calculate lattice thermal conductivity, e.g., by:
+
+.. code-block:: bash
+
+      % phono3py --mesh="11 11 11" --fc3 --fc2 --br

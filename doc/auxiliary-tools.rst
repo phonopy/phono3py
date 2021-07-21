@@ -40,14 +40,16 @@ How to use ``phono3py-kaccum``
 Let's computer lattice thermal conductivity of Si using the ``Si-PBEsol``
 example found in the example directory.
 
-::
+.. code-block:: shell
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="11 11 11" --sym-fc --br
+   % phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="11 11 11" --sym-fc --br
 
 Then using the output file, ``kappa-m111111.hdf5``, run
-``phono3py-kaccum`` as follows::
+``phono3py-kaccum`` as follows:
 
-   % phono3py-kaccum --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell kappa-m111111.hdf5 |tee kaccum.dat
+.. code-block:: shell
+
+   % phono3py-kaccum --pa="F" -c POSCAR-unitcell kappa-m111111.hdf5 |tee kaccum.dat
 
 Here ``--pa`` is optional. The definition of ``--pa`` option is same
 as :ref:`pa_option`. ``POSCAR-unitcell`` is the unit cell filename
@@ -66,7 +68,7 @@ temperatures calculated.
 To plot the output by gnuplot at temperature index 30 that may
 correspond to 300 K,
 
-::
+.. code-block:: shell
 
    % gnuplot
    ...
@@ -106,9 +108,11 @@ POSCAR-unitcell``.
 ^^^^^^^^
 
 Let ``phono3py-kaccum`` read a QE (pw) unit cell file with ``-c``
-option, for example::
+option, for example:
 
-   phono3py-kaccum --qe --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c Si.in kappa-m191919.hdf5
+.. code-block:: bash
+
+   phono3py-kaccum --qe --pa="F" -c Si.in kappa-m191919.hdf5
 
 .. |ipwscf| image:: Si-kaccum-pwscf.png
                     :width: 25%
@@ -201,25 +205,25 @@ convergence.
 
 
 ``--gv``
-^^^^^^^^^
+^^^^^^^^
 
 Outer product of group velocities :math:`\mathbf{v}_\lambda \otimes
 \mathbf{v}_\lambda` divided by primitive cell volume (in :math:`\text{THz}^2 /
 \text{Angstrom}`)
 
 ``--average``
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 Output the traces of the tensors divided by 3 rather than the unique
 elements.
 
 ``--trace``
-^^^^^^^^^^^^
+^^^^^^^^^^^
 
 Output the traces of the tensors rather than the unique elements.
 
 Options for scalar properties
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For the following properties, those values are normalized by the
 number of full grid points. This is understood as normalized for one
@@ -230,30 +234,35 @@ frequency, cumulative property, and derivative of cumulative property
 such like DOS.
 
 ``--gamma``
-^^^^^^^^^^^^
+^^^^^^^^^^^
 
 :math:`\Gamma_\lambda(\omega_\lambda)` (in THz)
 
 ``--tau``
-^^^^^^^^^^^
+^^^^^^^^^
 
 Lifetime :math:`\tau_\lambda = \frac{1}{2\Gamma_\lambda(\omega_\lambda)}` (in ps)
 
 ``--cv``
-^^^^^^^^^
+^^^^^^^^
 
 Modal heat capacity :math:`C_\lambda` (in eV/K)
 
 ``--gv-norm``
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 Absolute value of group velocity :math:`|\mathbf{v}_\lambda|` (in
 :math:`\text{THz}\cdot\text{Angstrom}`)
 
 ``--pqj``
-^^^^^^^^^^^^^^
+^^^^^^^^^
 
 Averaged phonon-phonon interaction :math:`P_{\mathbf{q}j}` (in :math:`\text{eV}^2`)
+
+``--dos``
+^^^^^^^^^
+
+Constant value of 1. This results in phonon DOS.
 
 .. _auxiliary_tools_kdeplot:
 
@@ -271,7 +280,9 @@ Then (frequency, lifetime)-data points are superimposed on the density
 plot.
 
 ``phono3py-kdeplot`` reads a result of the thermal conductivity
-calculation as the first argument::
+calculation as the first argument:
+
+.. code-block:: shell
 
    % phono3py-kdeplot kappa-m111111.hdf5
 
@@ -318,7 +329,7 @@ This option controls the resolution of the density plot. The default
 value is 100. With larger nbins, the resolution of the plot becomes
 better, but the computation will take more time.
 
-::
+.. code-block:: shell
 
    % phono3py-kdeplot --nbins=200 kappa-m111111.hdf5
 
@@ -342,7 +353,7 @@ respectively.
 of drawing region along y-axis, therefore as a side effect, the
 computation will be roughly twice faster.
 
-::
+.. code-block:: shell
 
    % phono3py-kdeplot --ymax=60 kappa-m111111.hdf5
 
@@ -363,7 +374,7 @@ maximum density. Normally smaller value results in larger drawing
 region. The default value is 0.1. When ``--ymax`` is specified
 together, this option is ignored.
 
-::
+.. code-block:: shell
 
    % phono3py-kdeplot --dr=0.01 kappa-m111111.hdf5
 
@@ -375,7 +386,7 @@ presented at the matplotlib documentation,
 https://matplotlib.org/users/colormaps.html. The default colormap
 depends on your matplotlib environment.
 
-::
+.. code-block:: shell
 
    % phono3py-kdeplot --cmap="OrRd" kappa-m111111.hdf5
 
