@@ -35,57 +35,53 @@
 #ifndef __pp_collision_H__
 #define __pp_collision_H__
 
-#include "phonoc_array.h"
-#include "phonoc_const.h"
+#include "bzgrid.h"
 #include "lapack_wrapper.h"
+#include "phonoc_array.h"
 
 void ppc_get_pp_collision(double *imag_self_energy,
-                          PHPYCONST int relative_grid_address[24][4][3],
+                          const long relative_grid_address[24][4][3], /* thm */
                           const double *frequencies,
                           const lapack_complex_double *eigenvectors,
-                          const size_t (*triplets)[3],
-                          const size_t num_triplets,
-                          const int *weights,
-                          const int *grid_address,
-                          const size_t *bz_map,
-                          const int *mesh,
+                          const long (*triplets)[3],
+                          const long num_triplets,
+                          const long *triplet_weights,
+                          const ConstBZGrid *bzgrid,
                           const double *fc3,
-                          const int is_compact_fc3,
-                          const double *shortest_vectors,
-                          const int svecs_dims[3],
-                          const int *multiplicity,
+                          const long is_compact_fc3,
+                          const double (*svecs)[3],
+                          const long multi_dims[2],
+                          const long (*multiplicity)[2],
                           const double *masses,
-                          const int *p2s_map,
-                          const int *s2p_map,
-                          const Iarray *band_indices,
+                          const long *p2s_map,
+                          const long *s2p_map,
+                          const Larray *band_indices,
                           const Darray *temperatures,
-                          const int is_NU,
-                          const int symmetrize_fc3_q,
+                          const long is_NU,
+                          const long symmetrize_fc3_q,
                           const double cutoff_frequency);
-
 void ppc_get_pp_collision_with_sigma(
   double *imag_self_energy,
   const double sigma,
   const double sigma_cutoff,
   const double *frequencies,
   const lapack_complex_double *eigenvectors,
-  const size_t (*triplets)[3],
-  const size_t num_triplets,
-  const int *weights,
-  const int *grid_address,
-  const int *mesh,
+  const long (*triplets)[3],
+  const long num_triplets,
+  const long *triplet_weights,
+  const ConstBZGrid *bzgrid,
   const double *fc3,
-  const int is_compact_fc3,
-  const double *shortest_vectors,
-  const int svecs_dims[3],
-  const int *multiplicity,
+  const long is_compact_fc3,
+  const double (*svecs)[3],
+  const long multi_dims[2],
+  const long (*multiplicity)[2],
   const double *masses,
-  const int *p2s_map,
-  const int *s2p_map,
-  const Iarray *band_indices,
+  const long *p2s_map,
+  const long *s2p_map,
+  const Larray *band_indices,
   const Darray *temperatures,
-  const int is_NU,
-  const int symmetrize_fc3_q,
+  const long is_NU,
+  const long symmetrize_fc3_q,
   const double cutoff_frequency);
 
 #endif

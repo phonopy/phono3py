@@ -132,7 +132,7 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
   PyArrayObject* py_phonon_done;
   PyArrayObject* py_grid_points;
   PyArrayObject* py_grid_address;
-  PyArrayObject* py_mesh;
+  PyArrayObject* py_QDinv;
   PyArrayObject* py_shortest_vectors_fc2;
   PyArrayObject* py_multiplicity_fc2;
   PyArrayObject* py_positions_fc2;
@@ -159,10 +159,10 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
   char* phonon_done;
   long* grid_points;
   long (*grid_address)[3];
-  long* mesh;
+  double (*QDinv)[3];
   double* fc2;
-  double(*svecs_fc2)[27][3];
-  long* multi_fc2;
+  double(*svecs_fc2)[3];
+  long (*multi_fc2)[2];
   double (*positions_fc2)[3];
   double* masses_fc2;
   long* p2s_fc2;
@@ -178,7 +178,7 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
                         &py_phonon_done,
                         &py_grid_points,
                         &py_grid_address,
-                        &py_mesh,
+                        &py_QDinv,
                         &py_fc2,
                         &py_shortest_vectors_fc2,
                         &py_multiplicity_fc2,
@@ -204,10 +204,10 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
   phonon_done = (char*)PyArray_DATA(py_phonon_done);
   grid_points = (long*)PyArray_DATA(py_grid_points);
   grid_address = (long(*)[3])PyArray_DATA(py_grid_address);
-  mesh = (long*)PyArray_DATA(py_mesh);
+  QDinv = (double(*)[3])PyArray_DATA(py_QDinv);
   fc2 = (double*)PyArray_DATA(py_fc2);
-  svecs_fc2 = (double(*)[27][3])PyArray_DATA(py_shortest_vectors_fc2);
-  multi_fc2 = (long*)PyArray_DATA(py_multiplicity_fc2);
+  svecs_fc2 = (double(*)[3])PyArray_DATA(py_shortest_vectors_fc2);
+  multi_fc2 = (long(*)[2])PyArray_DATA(py_multiplicity_fc2);
   masses_fc2 = (double*)PyArray_DATA(py_masses_fc2);
   p2s_fc2 = (long*)PyArray_DATA(py_p2s_map_fc2);
   s2p_fc2 = (long*)PyArray_DATA(py_s2p_map_fc2);
@@ -261,7 +261,7 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
                                   grid_points,
                                   num_grid_points,
                                   grid_address,
-                                  mesh,
+                                  QDinv,
                                   fc2,
                                   svecs_fc2,
                                   multi_fc2,

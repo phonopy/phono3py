@@ -34,80 +34,76 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "phonoc_array.h"
-#include "phonoc_const.h"
-#include "phonoc_utils.h"
 #include "imag_self_energy_with_g.h"
-#include "pp_collision.h"
 #include "interaction.h"
+#include "phonoc_array.h"
+#include "phonoc_utils.h"
+#include "pp_collision.h"
 #include "triplet.h"
 #include "triplet_iw.h"
 #include "lapack_wrapper.h"
 
 static void get_collision(double *ise,
-                          const size_t num_band0,
-                          const size_t num_band,
-                          const size_t num_temps,
+                          const long num_band0,
+                          const long num_band,
+                          const long num_temps,
                           const double *temperatures,
                           const double *g,
                           const char *g_zero,
                           const double *frequencies,
                           const lapack_complex_double *eigenvectors,
-                          const size_t triplet[3],
-                          const int weight,
-                          const int *grid_address,
-                          const int *mesh,
+                          const long triplet[3],
+                          const long triplet_weight,
+                          const ConstBZGrid *bzgrid,
                           const double *fc3,
-                          const int is_compact_fc3,
-                          const double *shortest_vectors,
-                          const int svecs_dims[3],
-                          const int *multiplicity,
+                          const long is_compact_fc3,
+                          const double (*svecs)[3],
+                          const long multi_dims[2],
+                          const long (*multiplicity)[2],
                           const double *masses,
-                          const int *p2s_map,
-                          const int *s2p_map,
-                          const int *band_indices,
-                          const int symmetrize_fc3_q,
+                          const long *p2s_map,
+                          const long *s2p_map,
+                          const long *band_indices,
+                          const long symmetrize_fc3_q,
                           const double cutoff_frequency,
-                          const int openmp_per_triplets);
+                          const long openmp_per_triplets);
 static void finalize_ise(double *imag_self_energy,
                          const double *ise,
-                         const int *grid_address,
-                         const size_t (*triplets)[3],
-                         const size_t num_triplets,
-                         const size_t num_temps,
-                         const size_t num_band0,
-                         const int is_NU);
+                         const long (*bz_grid_address)[3],
+                         const long (*triplets)[3],
+                         const long num_triplets,
+                         const long num_temps,
+                         const long num_band0,
+                         const long is_NU);
 
 void ppc_get_pp_collision(double *imag_self_energy,
-                          PHPYCONST int relative_grid_address[24][4][3], /* thm */
+                          const long relative_grid_address[24][4][3], /* thm */
                           const double *frequencies,
                           const lapack_complex_double *eigenvectors,
-                          const size_t (*triplets)[3],
-                          const size_t num_triplets,
-                          const int *weights,
-                          const int *grid_address, /* thm */
-                          const size_t *bz_map, /* thm */
-                          const int *mesh, /* thm */
+                          const long (*triplets)[3],
+                          const long num_triplets,
+                          const long *triplet_weights,
+                          const ConstBZGrid *bzgrid,
                           const double *fc3,
-                          const int is_compact_fc3,
-                          const double *shortest_vectors,
-                          const int svecs_dims[3],
-                          const int *multiplicity,
+                          const long is_compact_fc3,
+                          const double (*svecs)[3],
+                          const long multi_dims[2],
+                          const long (*multiplicity)[2],
                           const double *masses,
-                          const int *p2s_map,
-                          const int *s2p_map,
-                          const Iarray *band_indices,
+                          const long *p2s_map,
+                          const long *s2p_map,
+                          const Larray *band_indices,
                           const Darray *temperatures,
-                          const int is_NU,
-                          const int symmetrize_fc3_q,
+                          const long is_NU,
+                          const long symmetrize_fc3_q,
                           const double cutoff_frequency)
 {
-  size_t i;
-  size_t num_band, num_band0, num_band_prod, num_temps;
-  int openmp_per_triplets;
+  long i;
+  long num_band, num_band0, num_band_prod, num_temps;
+  long openmp_per_triplets;
   double *ise, *freqs_at_gp, *g;
   char *g_zero;
-  int tp_relative_grid_address[2][24][4][3];
+  long tp_relative_grid_address[2][24][4][3];
 
   ise = NULL;
   freqs_at_gp = NULL;
@@ -115,7 +111,7 @@ void ppc_get_pp_collision(double *imag_self_energy,
   g_zero = NULL;
 
   num_band0 = band_indices->dims[0];
-  num_band = svecs_dims[1] * 3;
+  num_band = multi_dims[1] * 3;
   num_band_prod = num_band0 * num_band * num_band;
   num_temps = temperatures->dims[0];
   ise = (double*)malloc(sizeof(double) * num_triplets * num_temps * num_band0);
@@ -135,7 +131,9 @@ void ppc_get_pp_collision(double *imag_self_energy,
                                 relative_grid_address,
                                 2);
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for schedule(guided) private(g, g_zero) if (openmp_per_triplets)
+#endif
   for (i = 0; i < num_triplets; i++) {
     g = (double*)malloc(sizeof(double) * 2 * num_band_prod);
     g_zero = (char*)malloc(sizeof(char) * num_band_prod);
@@ -144,11 +142,9 @@ void ppc_get_pp_collision(double *imag_self_energy,
                                freqs_at_gp,  /* used as f0 */
                                num_band0,
                                tp_relative_grid_address,
-                               mesh,
                                triplets[i],
                                1,
-                               (int(*)[3])grid_address,
-                               bz_map,
+                               bzgrid,
                                frequencies,  /* used as f1 */
                                num_band,
                                frequencies,  /* used as f2 */
@@ -166,13 +162,12 @@ void ppc_get_pp_collision(double *imag_self_energy,
                   frequencies,
                   eigenvectors,
                   triplets[i],
-                  weights[i],
-                  grid_address,
-                  mesh,
+                  triplet_weights[i],
+                  bzgrid,
                   fc3,
                   is_compact_fc3,
-                  shortest_vectors,
-                  svecs_dims,
+                  svecs,
+                  multi_dims,
                   multiplicity,
                   masses,
                   p2s_map,
@@ -190,7 +185,7 @@ void ppc_get_pp_collision(double *imag_self_energy,
 
   finalize_ise(imag_self_energy,
                ise,
-               grid_address,
+               bzgrid->addresses,
                triplets,
                num_triplets,
                num_temps,
@@ -209,28 +204,27 @@ void ppc_get_pp_collision_with_sigma(
   const double sigma_cutoff,
   const double *frequencies,
   const lapack_complex_double *eigenvectors,
-  const size_t (*triplets)[3],
-  const size_t num_triplets,
-  const int *weights,
-  const int *grid_address,
-  const int *mesh,
+  const long (*triplets)[3],
+  const long num_triplets,
+  const long *triplet_weights,
+  const ConstBZGrid *bzgrid,
   const double *fc3,
-  const int is_compact_fc3,
-  const double *shortest_vectors,
-  const int svecs_dims[3],
-  const int *multiplicity,
+  const long is_compact_fc3,
+  const double (*svecs)[3],
+  const long multi_dims[2],
+  const long (*multiplicity)[2],
   const double *masses,
-  const int *p2s_map,
-  const int *s2p_map,
-  const Iarray *band_indices,
+  const long *p2s_map,
+  const long *s2p_map,
+  const Larray *band_indices,
   const Darray *temperatures,
-  const int is_NU,
-  const int symmetrize_fc3_q,
+  const long is_NU,
+  const long symmetrize_fc3_q,
   const double cutoff_frequency)
 {
-  size_t i;
-  size_t num_band, num_band0, num_band_prod, num_temps;
-  int openmp_per_triplets, const_adrs_shift;
+  long i;
+  long num_band, num_band0, num_band_prod, num_temps;
+  long openmp_per_triplets, const_adrs_shift;
   double cutoff;
   double *ise, *freqs_at_gp, *g;
   char *g_zero;
@@ -241,7 +235,7 @@ void ppc_get_pp_collision_with_sigma(
   g_zero = NULL;
 
   num_band0 = band_indices->dims[0];
-  num_band = svecs_dims[1] * 3;
+  num_band = multi_dims[1] * 3;
   num_band_prod = num_band0 * num_band * num_band;
   num_temps = temperatures->dims[0];
   const_adrs_shift = num_band_prod;
@@ -261,7 +255,9 @@ void ppc_get_pp_collision_with_sigma(
 
   cutoff = sigma * sigma_cutoff;
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for schedule(guided) private(g, g_zero) if (openmp_per_triplets)
+#endif
   for (i = 0; i < num_triplets; i++) {
     g = (double*)malloc(sizeof(double) * 2 * num_band_prod);
     g_zero = (char*)malloc(sizeof(char) * num_band_prod);
@@ -288,13 +284,12 @@ void ppc_get_pp_collision_with_sigma(
                   frequencies,
                   eigenvectors,
                   triplets[i],
-                  weights[i],
-                  grid_address,
-                  mesh,
+                  triplet_weights[i],
+                  bzgrid,
                   fc3,
                   is_compact_fc3,
-                  shortest_vectors,
-                  svecs_dims,
+                  svecs,
+                  multi_dims,
                   multiplicity,
                   masses,
                   p2s_map,
@@ -312,7 +307,7 @@ void ppc_get_pp_collision_with_sigma(
 
   finalize_ise(imag_self_energy,
                ise,
-               grid_address,
+               bzgrid->addresses,
                triplets,
                num_triplets,
                num_temps,
@@ -326,42 +321,41 @@ void ppc_get_pp_collision_with_sigma(
 }
 
 static void get_collision(double *ise,
-                          const size_t num_band0,
-                          const size_t num_band,
-                          const size_t num_temps,
+                          const long num_band0,
+                          const long num_band,
+                          const long num_temps,
                           const double *temperatures,
                           const double *g,
                           const char *g_zero,
                           const double *frequencies,
                           const lapack_complex_double *eigenvectors,
-                          const size_t triplet[3],
-                          const int weight,
-                          const int *grid_address,
-                          const int *mesh,
+                          const long triplet[3],
+                          const long triplet_weight,
+                          const ConstBZGrid *bzgrid,
                           const double *fc3,
-                          const int is_compact_fc3,
-                          const double *shortest_vectors,
-                          const int svecs_dims[3],
-                          const int *multiplicity,
+                          const long is_compact_fc3,
+                          const double (*svecs)[3],
+                          const long multi_dims[2],
+                          const long (*multiplicity)[2],
                           const double *masses,
-                          const int *p2s_map,
-                          const int *s2p_map,
-                          const int *band_indices,
-                          const int symmetrize_fc3_q,
+                          const long *p2s_map,
+                          const long *s2p_map,
+                          const long *band_indices,
+                          const long symmetrize_fc3_q,
                           const double cutoff_frequency,
-                          const int openmp_per_triplets)
+                          const long openmp_per_triplets)
 {
-  size_t i;
-  size_t num_band_prod, num_g_pos;
+  long i;
+  long num_band_prod, num_g_pos;
   double *fc3_normal_squared;
-  int (*g_pos)[4];
+  long (*g_pos)[4];
 
   fc3_normal_squared = NULL;
   g_pos = NULL;
 
   num_band_prod = num_band0 * num_band * num_band;
   fc3_normal_squared = (double*)malloc(sizeof(double) * num_band_prod);
-  g_pos = (int(*)[4])malloc(sizeof(int[4]) * num_band_prod);
+  g_pos = (long(*)[4])malloc(sizeof(long[4]) * num_band_prod);
 
   for (i = 0; i < num_band_prod; i++) {
     fc3_normal_squared[i] = 0;
@@ -381,12 +375,11 @@ static void get_collision(double *ise,
     frequencies,
     eigenvectors,
     triplet,
-    grid_address,
-    mesh,
+    bzgrid,
     fc3,
     is_compact_fc3,
-    shortest_vectors,
-    svecs_dims,
+    svecs,
+    multi_dims,
     multiplicity,
     masses,
     p2s_map,
@@ -405,7 +398,7 @@ static void get_collision(double *ise,
     fc3_normal_squared,
     frequencies,
     triplet,
-    weight,
+    triplet_weight,
     g,
     g + num_band_prod,
     g_pos,
@@ -424,22 +417,22 @@ static void get_collision(double *ise,
 
 static void finalize_ise(double *imag_self_energy,
                          const double *ise,
-                         const int *grid_address,
-                         const size_t (*triplets)[3],
-                         const size_t num_triplets,
-                         const size_t num_temps,
-                         const size_t num_band0,
-                         const int is_NU)
+                         const long (*bz_grid_addresses)[3],
+                         const long (*triplets)[3],
+                         const long num_triplets,
+                         const long num_temps,
+                         const long num_band0,
+                         const long is_NU)
 {
-  size_t i, j, k;
-  int is_N;
+  long i, j, k;
+  long is_N;
 
   if (is_NU) {
     for (i = 0; i < 2 * num_temps * num_band0; i++) {
       imag_self_energy[i] = 0;
     }
     for (i = 0; i < num_triplets; i++) {
-      is_N = tpl_is_N(triplets[i], grid_address);
+      is_N = tpl_is_N(triplets[i], bz_grid_addresses);
       for (j = 0; j < num_temps; j++) {
         for (k = 0; k < num_band0; k++) {
           if (is_N) {

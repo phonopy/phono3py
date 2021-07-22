@@ -1,8 +1,27 @@
+"""Tests of displacements.py."""
 import phono3py
 import numpy as np
+from phono3py.phonon3.displacement_fc3 import get_smallest_vector_of_atom_pair
 
 
-def test_agno2(agno2_cell):
+distances_NaCl = [
+    0.0000000, 5.6903015, 5.6903015, 8.0473015, 5.6903015,
+    8.0473015, 8.0473015, 9.8558913, 4.0236508, 6.9691675,
+    4.0236508, 6.9691675, 4.0236508, 6.9691675, 4.0236508,
+    6.9691675, 4.0236508, 4.0236508, 6.9691675, 6.9691675,
+    4.0236508, 4.0236508, 6.9691675, 6.9691675, 4.0236508,
+    4.0236508, 4.0236508, 4.0236508, 6.9691675, 6.9691675,
+    6.9691675, 6.9691675, 4.9279456, 4.9279456, 4.9279456,
+    4.9279456, 4.9279456, 4.9279456, 4.9279456, 4.9279456,
+    2.8451507, 2.8451507, 6.3619505, 6.3619505, 6.3619505,
+    6.3619505, 8.5354522, 8.5354522, 2.8451507, 6.3619505,
+    2.8451507, 6.3619505, 6.3619505, 8.5354522, 6.3619505,
+    8.5354522, 2.8451507, 6.3619505, 6.3619505, 8.5354522,
+    2.8451507, 6.3619505, 6.3619505, 8.5354522]
+
+
+def test_duplicates_agno2(agno2_cell):
+    """Test duplicated pairs of displacements."""
     ph3 = phono3py.load(unitcell=agno2_cell,
                         supercell_matrix=[1, 1, 1])
     ph3.generate_displacements()
@@ -14,6 +33,7 @@ def test_agno2(agno2_cell):
 
 
 def test_nacl_pbe(nacl_pbe):
+    """Test generated displacements and duplicates."""
     ph3 = nacl_pbe
     ph3.generate_displacements()
     duplicates_ref = [[77, 41]]
@@ -39,3 +59,25 @@ def test_nacl_pbe(nacl_pbe):
     # print("".join(["%d, " % i for i in np.array(pairs).ravel()]))
 
     np.testing.assert_equal(pairs_ref, np.array(pairs).ravel())
+
+
+def test_get_smallest_vector_of_atom_pair(nacl_pbe):
+    """Test get_smallest_vector_of_atom_pair."""
+    ph3 = nacl_pbe
+    distances = []
+    for i in range(len(ph3.supercell)):
+        vec = get_smallest_vector_of_atom_pair(
+            i, 0, ph3.supercell, 1e-5)
+        if vec.ndim == 2:
+            vec = vec[0]
+        distances.append(np.linalg.norm(np.dot(vec, ph3.supercell.cell)))
+
+    # _show(distances)
+    np.testing.assert_allclose(distances_NaCl, distances, rtol=0, atol=1e-6)
+
+
+def _show(vals):
+    for i, v in enumerate(vals):
+        print("%.7f, " % v, end="")
+        if (i + 1) % 5 == 0:
+            print("")

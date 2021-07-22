@@ -43,17 +43,69 @@ from phono3py.file_IO import (
 
 def run_spectral_function(interaction,
                           grid_points,
+                          temperatures=None,
+                          sigmas=None,
                           frequency_points=None,
                           frequency_step=None,
                           num_frequency_points=None,
                           num_points_in_batch=None,
-                          sigmas=None,
-                          temperatures=None,
                           band_indices=None,
                           write_txt=False,
                           write_hdf5=False,
                           output_filename=None,
                           log_level=0):
+    """Spectral function of self energy at frequency points
+
+    Band indices to be calculated at are kept in Interaction instance.
+
+    Parameters
+    ----------
+    interaction : Interaction
+        Ph-ph interaction.
+    grid_points : array_like
+        Grid-point indices where imag-self-energeis are caclculated.
+        dtype=int, shape=(grid_points,)
+    temperatures : array_like
+        Temperatures where imag-self-energies are calculated.
+        dtype=float, shape=(temperatures,)
+    sigmas : array_like, optional
+        A set of sigmas. simgas=[None, ] means to use tetrahedron method,
+        otherwise smearing method with real positive value of sigma.
+        For example, sigmas=[None, 0.01, 0.03] is possible. Default is None,
+        which results in [None, ].
+        dtype=float, shape=(sigmas,)
+    frequency_points : array_like, optional
+        Frequency sampling points. Default is None. With
+        frequency_points_at_bands=False and frequency_points is None,
+        num_frequency_points or frequency_step is used to generate uniform
+        frequency sampling points.
+        dtype=float, shape=(frequency_points,)
+    frequency_step : float, optional
+        Uniform pitch of frequency sampling points. Default is None. This
+        results in using num_frequency_points.
+    num_frequency_points : int, optional
+        Number of sampling sampling points to be used instead of
+        frequency_step. This number includes end points. Default is None,
+        which gives 201.
+    num_points_in_batch : int, optional
+        Number of sampling points in one batch. This is for the frequency
+        sampling mode and the sampling points are divided into batches.
+        Lager number provides efficient use of multi-cores but more
+        memory demanding. Default is None, which give the number of 10.
+    band_indices : list
+        Lists of list. Each list in list contains band indices.
+    log_level: int
+        Log level. Default is 0.
+
+    Returns
+    -------
+    SpectralFunction
+        spf.spectral_functions.shape = (sigmas, temperatures, grid_points,
+                                        band_indices, frequency_points)
+        spf.half_linewidths, spf.shifts have the same shape as above.
+
+    """
+
     spf = SpectralFunction(interaction,
                            grid_points,
                            frequency_points=frequency_points,
@@ -67,7 +119,7 @@ def run_spectral_function(interaction,
         frequencies = interaction.get_phonons()[0]
         for sigma_i, sigma in enumerate(spf.sigmas):
             for t, spf_at_t in zip(
-                    temperatures, spf.spectral_functions[sigma_i, i]):
+                    temperatures, spf.spectral_functions[sigma_i, :, i]):
                 for j, bi in enumerate(band_indices):
                     pos = 0
                     for k in range(j):
@@ -90,9 +142,9 @@ def run_spectral_function(interaction,
                 gp,
                 band_indices,
                 temperatures,
-                spf.spectral_functions[sigma_i, i],
-                spf.shifts[sigma_i, i],
-                spf.half_linewidths[sigma_i, i],
+                spf.spectral_functions[sigma_i, :, i],
+                spf.shifts[sigma_i, :, i],
+                spf.half_linewidths[sigma_i, :, i],
                 interaction.mesh_numbers,
                 sigma=sigma,
                 frequency_points=spf.frequency_points,
@@ -205,8 +257,8 @@ class SpectralFunction(object):
     def _prepare(self):
         self._set_frequency_points()
         self._gammas = np.zeros(
-            (len(self._sigmas), len(self._grid_points),
-             len(self._temperatures), len(self._interaction.band_indices),
+            (len(self._sigmas), len(self._temperatures),
+             len(self._grid_points), len(self._interaction.band_indices),
              len(self._frequency_points)),
             dtype='double', order='C')
         self._deltas = np.zeros_like(self._gammas)
@@ -219,10 +271,12 @@ class SpectralFunction(object):
 
         ise.set_sigma(sigma)
         run_ise_at_frequency_points_batch(
+            i,
+            sigma_i,
             self._frequency_points,
             ise,
             self._temperatures,
-            self._gammas[sigma_i, i],
+            self._gammas,
             nelems_in_batch=self._num_points_in_batch,
             log_level=self._log_level)
 
@@ -234,8 +288,8 @@ class SpectralFunction(object):
         for j, temp in enumerate(self._temperatures):
             for k, bi in enumerate(self._interaction.band_indices):
                 re_part, fpoints = imag_to_real(
-                    self._gammas[sigma_i, i, j, k], self._frequency_points)
-                self._deltas[sigma_i, i, j, k] = -re_part
+                    self._gammas[sigma_i, j, i, k], self._frequency_points)
+                self._deltas[sigma_i, j, i, k] = -re_part
         assert (np.abs(self._frequency_points - fpoints) < 1e-8).all()
 
     def _run_spectral_function(self, i, grid_point, sigma_i):
@@ -261,10 +315,10 @@ class SpectralFunction(object):
         for j, temp in enumerate(self._temperatures):
             for k, bi in enumerate(self._interaction.band_indices):
                 freq = frequencies[grid_point, bi]
-                gammas = self._gammas[sigma_i, i, j, k]
-                deltas = self._deltas[sigma_i, i, j, k]
+                gammas = self._gammas[sigma_i, j, i, k]
+                deltas = self._deltas[sigma_i, j, i, k]
                 vals = self._get_spectral_function(gammas, deltas, freq)
-                self._spectral_functions[sigma_i, i, j, k] = vals
+                self._spectral_functions[sigma_i, j, i, k] = vals
 
     def _get_spectral_function(self, gammas, deltas, freq):
         fpoints = self._frequency_points

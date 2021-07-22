@@ -1,3 +1,4 @@
+"""Phono3py main class."""
 # Copyright (C) 2016 Atsushi Togo
 # All rights reserved.
 #
@@ -37,7 +38,7 @@ import numpy as np
 from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.cells import (
     get_supercell, get_primitive, guess_primitive_matrix,
-    shape_supercell_matrix)
+    shape_supercell_matrix, get_primitive_matrix)
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.dataset import get_displacements_and_forces
 from phonopy.units import VaspToTHz
@@ -50,7 +51,6 @@ from phonopy.harmonic.force_constants import get_fc2 as get_phonopy_fc2
 from phonopy.interface.fc_calculator import get_fc2
 from phonopy.harmonic.displacement import (
     get_least_displacements, directions_to_displacement_dataset)
-from phonopy.structure.grid_points import length2mesh
 from phono3py.version import __version__
 from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
                                                write_imag_self_energy)
@@ -69,19 +69,59 @@ from phono3py.phonon3.fc3 import (
     set_translational_invariance_compact_fc3,
     cutoff_fc3_by_zero)
 from phono3py.phonon3.fc3 import get_fc3 as get_phono3py_fc3
+from phono3py.phonon.grid import BZGrid
 from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.interface.fc_calculator import get_fc3
 
 
 class Phono3py(object):
+    """Phono3py main class.
+
+    Attributes
+    ----------
+    version
+    calculator
+    fc3 : getter and setter
+    fc2 : getter and setter
+    force_constants
+    sigma : getter and setter
+    sigma_cutoff : getter and setter
+    nac_params : getter and setter
+    dynamical_matrix
+    primitive
+    unitcell
+    supercell
+    phonon_supercell
+    phonon_primitive
+    symmetry
+    primitive_symmetry
+    phonon_supercell_symmetry
+    supercell_matrix
+    phonon_supercell_matrix
+    primitive_matrix
+    unit_conversion_factor
+    dataset : getter and setter
+    phonon_dataset : getter and setter
+    band_indices : getter and setter
+    phonon_supercells_with_displacements
+    supercells_with_displacements
+    mesh_numbers : getter and setter
+    thermal_conductivity
+    displacements : getter and setter
+    forces : getter and setter
+    phonon_displacements : getter and setter
+    phonon_forces : getter and setter
+    phph_interaction
+
+    """
+
     def __init__(self,
                  unitcell,
                  supercell_matrix,
                  primitive_matrix=None,
                  phonon_supercell_matrix=None,
                  masses=None,
-                 mesh=None,
                  band_indices=None,
                  sigmas=None,
                  sigma_cutoff=None,
@@ -89,19 +129,89 @@ class Phono3py(object):
                  frequency_factor_to_THz=VaspToTHz,
                  is_symmetry=True,
                  is_mesh_symmetry=True,
-                 symmetrize_fc3q=False,
+                 use_grg=False,
+                 symmetrize_fc3q=None,
+                 store_dense_gp_map=True,
+                 store_dense_svecs=True,
                  symprec=1e-5,
                  calculator=None,
                  log_level=0,
-                 lapack_zheev_uplo='L'):
-        self.sigmas = sigmas
-        self.sigma_cutoff = sigma_cutoff
+                 lapack_zheev_uplo=None):
+        """Init method.
+
+        Parameters
+        ----------
+        unitcell : PhonopyAtoms, optional
+            Input unit cell.
+        supercell_matrix : array_like
+            Supercell matrix multiplied to input cell basis vectors.
+            shape=(3, ) or (3, 3), where the former is considered a diagonal
+            matrix. The elements have to be given by integers.
+        primitive_matrix : array_like or str, optional
+            Primitive matrix multiplied to input cell basis vectors. Default is
+            the identity matrix.
+            When given as array_like, shape=(3, 3), dtype=float.
+            When 'F', 'I', 'A', 'C', or 'R' is given instead of a 3x3 matrix,
+            the primitive matrix defined at
+            https://spglib.github.io/spglib/definition.html
+            is used.
+            When 'auto' is given, the centring type ('F', 'I', 'A', 'C', 'R',
+            or primitive 'P') is automatically chosen.
+        phonon_supercell_matrix : array_like, optional
+            Supercell matrix used for fc2. In phono3py, supercell matrix for
+            fc3 and fc2 can be different to support longer range interaction of
+            fc2 than that of fc3. Unless setting this, supercell_matrix is
+            used. This is only valide when unitcell or unitcell_filename is
+            given. Default is None.
+        masses : Deprecated.
+            Use Phono3py.masses attribute after instanciation.
+        band_indices : Deprecated.
+            Use Phono3py.band_indices attribute after instanciation.
+        sigmas : Deprecated.
+            Use Phono3py.sigmas attribute after instanciation.
+        sigma_cutoff : Deprecated.
+            Use Phono3py.sigma_cutoff attribute after instanciation.
+        cutoff_frequency : float, optional
+            Phonon frequency below this value is ignored when the cutoff is
+            needed for the computation. Default is 1e-4.
+        frequency_factor_to_THz : float, optional
+            Phonon frequency unit conversion factor. Unless specified, default
+            unit conversion factor for each calculator is used.
+        is_symmetry : bool, optional
+            Use crystal symmetry in most calculations when True. Default is
+            True.
+        is_mesh_symmetry : bool, optional
+            Use crystal symmetry in reciprocal space grid handling when True.
+            Default is True.
+        use_grg : bool, optional
+            Use generalized regular grid when True. Default is False.
+        symmetrize_fc3q : Deprecated.
+            See Phono3py.init_phph_interaction().
+        store_dense_gp_map : bool, optional
+            Use dense format of BZ grid system. Default is True.
+        store_dense_svecs : bool, optional
+            Shortest vectors are stored in the dense array format. This is
+            expected to be always True. Setting False is for rough
+            compatibility with v1.x. Default is True.
+        symprec : float, optional
+            Tolerance used to find crystal symmetry. Default is 1e-5.
+        calculator : str, optional.
+            Calculator used for computing forces. This is used to switch
+            the set of physical units. Default is None, which is equivalent
+            to "vasp".
+        log_level : int, optional
+            Verbosity control. Default is 0. This can be 0, 1, or 2.
+        lapack_zheev_uplo : Deprecated.
+            See Phono3py.init_phph_interaction().
+
+        """
         self._symprec = symprec
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._is_symmetry = is_symmetry
         self._is_mesh_symmetry = is_mesh_symmetry
-        self._lapack_zheev_uplo = lapack_zheev_uplo
-        self._symmetrize_fc3q = symmetrize_fc3q
+        self._use_grg = use_grg
+        self._store_dense_gp_map = store_dense_gp_map
+        self._store_dense_svecs = store_dense_svecs
         self._cutoff_frequency = cutoff_frequency
         self._calculator = calculator
         self._log_level = log_level
@@ -109,10 +219,8 @@ class Phono3py(object):
         # Create supercell and primitive cell
         self._unitcell = unitcell
         self._supercell_matrix = shape_supercell_matrix(supercell_matrix)
-        if type(primitive_matrix) is str and primitive_matrix == 'auto':
-            self._primitive_matrix = self._guess_primitive_matrix()
-        else:
-            self._primitive_matrix = primitive_matrix
+        pmat = self._determine_primitive_matrix(primitive_matrix)
+        self._primitive_matrix = pmat
         self._nac_params = None
         if phonon_supercell_matrix is not None:
             self._phonon_supercell_matrix = shape_supercell_matrix(
@@ -128,8 +236,11 @@ class Phono3py(object):
         self._build_phonon_supercell()
         self._build_phonon_primitive_cell()
 
-        if masses is not None:
-            self._set_masses(masses)
+        self._sigmas = [None, ]
+        self._sigma_cutoff = None
+
+        # Grid
+        self._bz_grid = None
 
         # Set supercell, primitive, and phonon supercell symmetries
         self._symmetry = None
@@ -166,33 +277,74 @@ class Phono3py(object):
 
         # Setup interaction
         self._interaction = None
-        self._mesh_numbers = None
         self._band_indices = None
         self._band_indices_flatten = None
-        if mesh is not None:
-            warnings.warn("Phono3py(mesh) is deprecated."
-                          "Use Phono3py.mesh_number to set sampling mesh.",
+        self._set_band_indices()
+
+        if masses is not None:
+            warnings.warn("Phono3py init parameter of masses is deprecated. "
+                          "Use Phono3py.masses attribute instead.",
                           DeprecationWarning)
-            self._set_mesh_numbers(mesh)
-        self.band_indices = band_indices
+            self.masses = masses
+
+        if band_indices is not None:
+            warnings.warn(
+                "Phono3py init parameter of band_indices is deprecated. "
+                "Use Phono3py.band_indices attribute instead.",
+                DeprecationWarning)
+            self.band_indices = band_indices
+
+        if sigmas is not None:
+            warnings.warn("Phono3py init parameter of sigmas is deprecated. "
+                          "Use Phono3py.sigmas attribute instead.",
+                          DeprecationWarning)
+            self.sigmas = sigmas
+
+        if sigma_cutoff is not None:
+            warnings.warn(
+                "Phono3py init parameter of sigma_cutoff is deprecated. "
+                "Use Phono3py.sigma_cutoff attribute instead.",
+                DeprecationWarning)
+            self.sigma_cutoff = sigma_cutoff
+
+        if symmetrize_fc3q is not None:
+            warnings.warn(
+                "Phono3py init parameter of symmetrize_fc3q is deprecated. "
+                "Set this at Phono3py.init_phph_interaction().",
+                DeprecationWarning)
+            self._symmetrize_fc3q = symmetrize_fc3q
+        else:
+            self._symmetrize_fc3q = None
+
+        if lapack_zheev_uplo is not None:
+            warnings.warn(
+                "Phono3py init parameter of lapack_zheev_uplo is deprecated. "
+                "Set this at Phono3py.init_phph_interaction().",
+                DeprecationWarning)
+            self._lapack_zheev_uplo = lapack_zheev_uplo
+        else:
+            self._lapack_zheev_uplo = None
 
     @property
     def version(self):
-        """Phono3py release version number
+        """Return phono3py release version number.
 
         str
             Phono3py release version number
 
         """
-
         return __version__
 
     def get_version(self):
+        """Return phono3py release version number."""
+        warnings.warn("Phono3py.get_version() is deprecated."
+                      "Use Phono3py.version attribute instead.",
+                      DeprecationWarning)
         return self.version
 
     @property
     def calculator(self):
-        """Return calculator name
+        """Return calculator interface name.
 
         str
             Calculator name such as 'vasp', 'qe', etc.
@@ -202,18 +354,7 @@ class Phono3py(object):
 
     @property
     def fc3(self):
-        """
-
-        """
-
-        return self._fc3
-
-    def get_fc3(self):
-        return self.fc3
-
-    @fc3.setter
-    def fc3(self, fc3):
-        """Third order force constants (fc3).
+        """Setter and getter of third order force constants (fc3).
 
         ndarray
             fc3 shape is either (supercell, supecell, supercell, 3, 3, 3) or
@@ -222,15 +363,29 @@ class Phono3py(object):
             these cells.
 
         """
+        return self._fc3
 
+    @fc3.setter
+    def fc3(self, fc3):
         self._fc3 = fc3
 
+    def get_fc3(self):
+        """Return third order force constants (fc3)."""
+        warnings.warn("Phono3py.get_fc3() is deprecated."
+                      "Use Phono3py.fc3 attribute instead.",
+                      DeprecationWarning)
+        return self.fc3
+
     def set_fc3(self, fc3):
+        """Set fc3."""
+        warnings.warn("Phono3py.set_fc3() is deprecated."
+                      "Use Phono3py.fc3 attribute instead.",
+                      DeprecationWarning)
         self.fc3 = fc3
 
     @property
     def fc2(self):
-        """Second order force constants (fc2).
+        """Setter and getter of second order force constants (fc2).
 
         ndarray
             fc2 shape is either (supercell, supecell, 3, 3) or
@@ -239,26 +394,41 @@ class Phono3py(object):
             these cells.
 
         """
-
         return self._fc2
-
-    def get_fc2(self):
-        return self.fc2
 
     @fc2.setter
     def fc2(self, fc2):
         self._fc2 = fc2
 
+    def get_fc2(self):
+        """Return second order force constants (fc2)."""
+        warnings.warn("Phono3py.get_fc2() is deprecated."
+                      "Use Phono3py.fc2 attribute instead.",
+                      DeprecationWarning)
+        return self.fc2
+
     def set_fc2(self, fc2):
+        """Set fc2."""
+        warnings.warn("Phono3py.set_fc2() is deprecated."
+                      "Use Phono3py.fc2 attribute instead.",
+                      DeprecationWarning)
         self.fc2 = fc2
 
     @property
     def force_constants(self):
-        """Alias to fc2"""
+        """Return fc2. This is same as the getter attribute `fc2`."""
         return self.fc2
 
     @property
     def sigmas(self):
+        """Setter and getter of smearing widths.
+
+        list
+            The float values are given as the standard deviations of Gaussian
+            function. If None is given as an element of this list, linear
+            tetrahedron method is used instead of smearing method.
+
+        """
         return self._sigmas
 
     @sigmas.setter
@@ -277,6 +447,15 @@ class Phono3py(object):
 
     @property
     def sigma_cutoff(self):
+        """Setter and getter of Smearing cutoff width.
+
+        This is given as a multiple of the standard deviation.
+
+        float
+            For example, if this value is 5, the tail of the Gaussian function
+            is cut at 5 sigma.
+
+        """
         return self._sigma_cutoff
 
     @sigma_cutoff.setter
@@ -285,7 +464,7 @@ class Phono3py(object):
 
     @property
     def nac_params(self):
-        """Parameters for non-analytical term correction
+        """Setter and getter of parameters for non-analytical term correction.
 
         dict
             Parameters used for non-analytical term correction
@@ -301,20 +480,28 @@ class Phono3py(object):
         """
         return self._nac_params
 
-    def get_nac_params(self):
-        return self.nac_params
-
     @nac_params.setter
     def nac_params(self, nac_params):
         self._nac_params = nac_params
         self._init_dynamical_matrix()
 
+    def get_nac_params(self):
+        """Return NAC parameters."""
+        warnings.warn("Phono3py.get_nac_params() is deprecated."
+                      "Use Phono3py.nac_params attribute instead.",
+                      DeprecationWarning)
+        return self.nac_params
+
     def set_nac_params(self, nac_params):
+        """Set NAC parameters."""
+        warnings.warn("Phono3py.set_nac_params() is deprecated."
+                      "Use Phono3py.nac_params attribute instead.",
+                      DeprecationWarning)
         self.nac_params = nac_params
 
     @property
     def dynamical_matrix(self):
-        """DynamicalMatrix instance
+        """Return DynamicalMatrix instance.
 
         This is not dynamical matrices but the instance of DynamicalMatrix
         class.
@@ -327,63 +514,75 @@ class Phono3py(object):
 
     @property
     def primitive(self):
-        """Primitive cell
+        """Return primitive cell.
 
         Primitive
             Primitive cell.
 
         """
-
         return self._primitive
 
     def get_primitive(self):
+        """Return primitive cell."""
+        warnings.warn("Phono3py.get_primitive() is deprecated."
+                      "Use Phono3py.primitive attribute instead.",
+                      DeprecationWarning)
         return self.primitive
 
     @property
     def unitcell(self):
-        """Unit cell
+        """Return Unit cell.
 
         PhonopyAtoms
             Unit cell.
 
         """
-
         return self._unitcell
 
     def get_unitcell(self):
+        """Return Unit cell."""
+        warnings.warn("Phono3py.get_unitcell() is deprecated."
+                      "Use Phono3py.unitcell attribute instead.",
+                      DeprecationWarning)
         return self.unitcell
 
     @property
     def supercell(self):
-        """Supercell
+        """Return supercell.
 
         Supercell
             Supercell.
 
         """
-
         return self._supercell
 
     def get_supercell(self):
+        """Return supercell."""
+        warnings.warn("Phono3py.get_supercell() is deprecated."
+                      "Use Phono3py.supercell attribute instead.",
+                      DeprecationWarning)
         return self.supercell
 
     @property
     def phonon_supercell(self):
-        """Supercell for fc2.
+        """Return supercell for fc2.
 
         Supercell
             Supercell for fc2.
 
         """
-
         return self._phonon_supercell
 
     def get_phonon_supercell(self):
+        """Return supercell for fc2."""
+        warnings.warn("Phono3py.get_phonon_supercell() is deprecated."
+                      "Use Phono3py.phonon_supercell attribute instead.",
+                      DeprecationWarning)
         return self.phonon_supercell
 
     @property
     def phonon_primitive(self):
-        """Primitive cell for fc2.
+        """Return primitive cell for fc2.
 
         Primitive
             Primitive cell for fc2. This should be the same as the primitive
@@ -391,102 +590,125 @@ class Phono3py(object):
             can be not numerically perfectly identical.
 
         """
-
         return self._phonon_primitive
 
     def get_phonon_primitive(self):
+        """Return primitive cell for fc2."""
+        warnings.warn("Phono3py.get_phonon_primitive() is deprecated."
+                      "Use Phono3py.phonon_primitive attribute instead.",
+                      DeprecationWarning)
         return self.phonon_primitive
 
     @property
     def symmetry(self):
-        """Symmetry of supercell
+        """Return symmetry of supercell.
 
         Symmetry
             Symmetry of supercell
 
         """
-
         return self._symmetry
 
     def get_symmetry(self):
+        """Return symmetry of supercell."""
+        warnings.warn("Phono3py.get_symmetry() is deprecated."
+                      "Use Phono3py.symmetry attribute instead.",
+                      DeprecationWarning)
         return self.symmetry
 
     @property
     def primitive_symmetry(self):
-        """Symmetry of primitive cell
+        """Return symmetry of primitive cell.
 
         Symmetry
             Symmetry of primitive cell.
 
         """
-
         return self._primitive_symmetry
 
     def get_primitive_symmetry(self):
+        """Return symmetry of primitive cell."""
+        warnings.warn("Phono3py.get_primitive_symmetry() is deprecated."
+                      "Use Phono3py.primitive_symmetry attribute instead.",
+                      DeprecationWarning)
         return self.primitive_symmetry
 
     @property
     def phonon_supercell_symmetry(self):
-        """Symmetry of supercell for fc2.
+        """Return symmetry of supercell for fc2.
 
         Symmetry
             Symmetry of supercell for fc2 (phonon_supercell).
 
         """
-
         return self._phonon_supercell_symmetry
 
     def get_phonon_supercell_symmetry(self):
+        """Return symmetry of supercell for fc2."""
+        warnings.warn(
+            "Phono3py.get_phonon_supercell_symmetry() is deprecated."
+            "Use Phono3py.phonon_supercell_symmetry attribute instead.",
+            DeprecationWarning)
         return self.phonon_supercell_symmetry
 
     @property
     def supercell_matrix(self):
-        """Transformation matrix to supercell cell from unit cell
+        """Return transformation matrix to supercell cell from unit cell.
 
         ndarray
             Supercell matrix with respect to unit cell.
             shape=(3, 3), dtype='intc', order='C'
 
         """
-
         return self._supercell_matrix
 
     def get_supercell_matrix(self):
+        """Return transformation matrix to supercell cell from unit cell."""
+        warnings.warn("Phono3py.get_supercell_matrix() is deprecated."
+                      "Use Phono3py.supercell_matrix attribute instead.",
+                      DeprecationWarning)
         return self.supercell_matrix
 
     @property
     def phonon_supercell_matrix(self):
-        """Transformation matrix to supercell cell from unit cell for fc2
+        """Return transformation matrix to phonon supercell from unit cell.
 
         ndarray
             Supercell matrix with respect to unit cell.
             shape=(3, 3), dtype='intc', order='C'
 
         """
-
         return self._phonon_supercell_matrix
 
     def get_phonon_supercell_matrix(self):
+        """Return transformation matrix to phonon supercell from unit cell."""
+        warnings.warn(
+            "Phono3py.get_phonon_supercell_matrix() is deprecated."
+            "Use Phono3py.phonon_supercell_matrix attribute instead.",
+            DeprecationWarning)
         return self.phonon_supercell_matrix
 
     @property
     def primitive_matrix(self):
-        """Transformation matrix to primitive cell from unit cell
+        """Return transformation matrix to primitive cell from unit cell.
 
         ndarray
             Primitive matrix with respect to unit cell.
             shape=(3, 3), dtype='double', order='C'
 
         """
-
         return self._primitive_matrix
 
     def get_primitive_matrix(self):
+        """Return transformation matrix to primitive cell from unit cell."""
+        warnings.warn("Phono3py.get_primitive_matrix() is deprecated."
+                      "Use Phono3py.primitive_matrix attribute instead.",
+                      DeprecationWarning)
         return self.primitive_matrix
 
     @property
     def unit_conversion_factor(self):
-        """Phonon frequency unit conversion factor.
+        """Return phonon frequency unit conversion factor.
 
         float
             Phonon frequency unit conversion factor. This factor
@@ -494,15 +716,18 @@ class Phono3py(object):
             (ordinary frequency).
 
         """
-
         return self._frequency_factor_to_THz
 
     def set_displacement_dataset(self, dataset):
+        """Set displacement-force dataset."""
+        warnings.warn("Phono3py.set_displacement_dataset() is deprecated."
+                      "Use Phono3py.dataset attribute instead.",
+                      DeprecationWarning)
         self._dataset = dataset
 
     @property
     def dataset(self):
-        """Displacement dataset
+        """Setter and getter of displacement-force dataset.
 
         dict
             Displacements in supercells. There are two types of formats.
@@ -538,7 +763,6 @@ class Phono3py(object):
             duplicated supercell ids as pairs.
 
         """
-
         return self._dataset
 
     @dataset.setter
@@ -546,8 +770,23 @@ class Phono3py(object):
         self._dataset = dataset
 
     @property
+    def displacement_dataset(self):
+        """Return displacement-force dataset."""
+        warnings.warn("Phono3py.displacement_dataset is deprecated."
+                      "Use Phono3py.dataset.",
+                      DeprecationWarning)
+        return self.dataset
+
+    def get_displacement_dataset(self):
+        """Return displacement-force dataset."""
+        warnings.warn("Phono3py.get_displacement_dataset() is deprecated."
+                      "Use Phono3py.dataset.",
+                      DeprecationWarning)
+        return self.displacement_dataset
+
+    @property
     def phonon_dataset(self):
-        """Displacement dataset for fc2
+        """Setter and getter of displacement-force dataset for fc2.
 
         dict
             Displacements in supercells. There are two types of formats.
@@ -567,7 +806,6 @@ class Phono3py(object):
             (supercells, natom, 3).
 
         """
-
         return self._phonon_dataset
 
     @phonon_dataset.setter
@@ -575,77 +813,105 @@ class Phono3py(object):
         self._phonon_dataset = dataset
 
     @property
-    def band_indices(self):
-        """Band index
-
-        array_like
-            List of band indices specified to select specific bands
-            to computer ph-ph interaction related properties.
-
-        """
-
-        return self._band_indices
-
-    @band_indices.setter
-    def band_indices(self, band_indices):
-        if band_indices is None:
-            num_band = len(self._primitive) * 3
-            self._band_indices = [np.arange(num_band, dtype='intc')]
-        else:
-            self._band_indices = band_indices
-        self._band_indices_flatten = np.hstack(
-            self._band_indices).astype('intc')
-
-    def set_band_indices(self, band_indices):
-        self.band_indices = band_indices
-
-    @property
-    def displacement_dataset(self):
-        warnings.warn("Phono3py.displacement_dataset is deprecated."
-                      "Use Phono3py.dataset.",
-                      DeprecationWarning)
-        return self.dataset
-
-    def get_displacement_dataset(self):
-        return self.displacement_dataset
-
-    @property
     def phonon_displacement_dataset(self):
+        """Return phonon dispalcement-force dataset."""
         warnings.warn("Phono3py.phonon_displacement_dataset is deprecated."
                       "Use Phono3py.phonon_dataset.",
                       DeprecationWarning)
         return self._phonon_dataset
 
     def get_phonon_displacement_dataset(self):
+        """Return phonon dispalcement-force dataset."""
+        warnings.warn(
+            "Phono3py.get_phonon_displacement_dataset() is deprecated."
+            "Use Phono3py.phonon_dataset.",
+            DeprecationWarning)
         return self.phonon_displacement_dataset
 
     @property
+    def band_indices(self):
+        """Setter and getter of band indices.
+
+        array_like
+            List of band indices specified to select specific bands
+            to computer ph-ph interaction related properties.
+
+        """
+        return self._band_indices
+
+    @band_indices.setter
+    def band_indices(self, band_indices):
+        self._set_band_indices(band_indices=band_indices)
+
+    def set_band_indices(self, band_indices):
+        """Set band indices."""
+        warnings.warn("Phono3py.set_band_indices() is deprecated."
+                      "Use Phono3py.band_indices attribute instead.",
+                      DeprecationWarning)
+        self.band_indices = band_indices
+
+    def _set_band_indices(self, band_indices=None):
+        if band_indices is None:
+            num_band = len(self._primitive) * 3
+            self._band_indices = [np.arange(num_band, dtype='int_')]
+        else:
+            self._band_indices = band_indices
+        self._band_indices_flatten = np.hstack(
+            self._band_indices).astype('int_')
+
+    @property
+    def masses(self):
+        """Setter and getter of atomic masses of primitive cell."""
+        return self._primitive.masses
+
+    @masses.setter
+    def masses(self, masses):
+        if masses is None:
+            return
+        p_masses = np.array(masses)
+        self._primitive.masses = p_masses
+        p2p_map = self._primitive.p2p_map
+        s_masses = p_masses[[p2p_map[x] for x in self._primitive.s2p_map]]
+        self._supercell.masses = s_masses
+        u2s_map = self._supercell.u2s_map
+        u_masses = s_masses[u2s_map]
+        self._unitcell.masses = u_masses
+        self._phonon_primitive.masses = p_masses
+        p2p_map = self._phonon_primitive.p2p_map
+        s_masses = p_masses[
+            [p2p_map[x] for x in self._phonon_primitive.s2p_map]]
+        self._phonon_supercell.masses = s_masses
+
+    @property
     def supercells_with_displacements(self):
-        """Supercells with displacements
+        """Return supercells with displacements.
 
         list of PhonopyAtoms
             Supercells with displacements generated by
             Phono3py.generate_displacements.
 
         """
-
         if self._supercells_with_displacements is None:
             self._build_supercells_with_displacements()
         return self._supercells_with_displacements
 
     def get_supercells_with_displacements(self):
+        """Return supercells with displacements."""
+        warnings.warn(
+            "Phono3py.get_supercells_with_displacements() is deprecated."
+            "Use Phono3py.supercells_with_displacements attribute instead.",
+            DeprecationWarning)
         return self.supercells_with_displacements
 
     @property
     def phonon_supercells_with_displacements(self):
-        """Supercells with displacements for fc2
+        """Return supercells with displacements for fc2.
 
         list of PhonopyAtoms
             Supercells with displacements generated by
             Phono3py.generate_displacements.
 
         """
-
         if self._phonon_supercells_with_displacements is None:
             if self._phonon_dataset is not None:
                 self._phonon_supercells_with_displacements = \
@@ -655,12 +921,21 @@ class Phono3py(object):
         return self._phonon_supercells_with_displacements
 
     def get_phonon_supercells_with_displacements(self):
+        """Return supercells with displacements for fc2."""
+        warnings.warn(
+            "Phono3py.get_phonon_supercells_with_displacements() "
+            "is deprecated. Use Phono3py.phonon_supercells_with_displacements "
+            "attribute instead.",
+            DeprecationWarning)
         return self.phonon_supercells_with_displacements
 
     @property
     def mesh_numbers(self):
-        """Sampling mesh numbers in reciprocal space"""
-        return self._mesh_numbers
+        """Setter and getter of sampling mesh numbers in reciprocal space."""
+        if self._bz_grid is None:
+            return None
+        else:
+            return self._bz_grid.D_diag
 
     @mesh_numbers.setter
     def mesh_numbers(self, mesh_numbers):
@@ -668,15 +943,19 @@ class Phono3py(object):
 
     @property
     def thermal_conductivity(self):
-        """Thermal conductivity class instance"""
+        """Return thermal conductivity class instance."""
         return self._thermal_conductivity
 
     def get_thermal_conductivity(self):
+        """Return thermal conductivity class instance."""
+        warnings.warn("Phono3py.get_thermal_conductivity() is deprecated."
+                      "Use Phono3py.thermal_conductivity attribute instead.",
+                      DeprecationWarning)
         return self.thermal_conductivity
 
     @property
     def displacements(self):
-        """Displacements in supercells
+        """Setter and getter displacements in supercells.
 
         getter : ndarray
             Displacements of all atoms of all supercells in Cartesian
@@ -693,7 +972,6 @@ class Phono3py(object):
             exists already information of forces is preserved.
 
         """
-
         dataset = self._dataset
 
         if 'first_atoms' in dataset:
@@ -733,7 +1011,7 @@ class Phono3py(object):
 
     @property
     def forces(self):
-        """Set forces in displacement dataset
+        """Setter and getter of forces in displacement dataset.
 
         A set of atomic forces in displaced supercells. The order of
         displaced supercells has to match with that in displacement dataset.
@@ -746,7 +1024,6 @@ class Phono3py(object):
             be the same order of supercells_with_displacements.
 
         """
-
         dataset = self._dataset
         if 'forces' in dataset:
             return dataset['forces']
@@ -787,7 +1064,7 @@ class Phono3py(object):
 
     @property
     def phonon_displacements(self):
-        """Displacements in supercells for fc2
+        """Setter and getter of displacements in supercells for fc2.
 
         Displacements of all atoms of all supercells in Cartesian
         coordinates.
@@ -802,7 +1079,6 @@ class Phono3py(object):
             exists already information of forces is preserved.
 
         """
-
         if self._phonon_dataset is None:
             raise RuntimeError("phonon_displacement_dataset does not exist.")
 
@@ -822,7 +1098,7 @@ class Phono3py(object):
         return displacements
 
     @phonon_displacements.setter
-    def phonno_displacements(self, displacements):
+    def phonon_displacements(self, displacements):
         if self._phonon_dataset is None:
             raise RuntimeError("phonon_displacement_dataset does not exist.")
 
@@ -839,7 +1115,7 @@ class Phono3py(object):
 
     @property
     def phonon_forces(self):
-        """Set forces in displacement dataset for fc2
+        """Setter and getter of forces in displacement dataset for fc2.
 
         A set of atomic forces in displaced supercells. The order of
         displaced supercells has to match with that in phonon displacement
@@ -853,7 +1129,6 @@ class Phono3py(object):
             be the same order of phonon_supercells_with_displacements.
 
         """
-
         if self._phonon_dataset is None:
             raise RuntimeError("phonon_displacement_dataset does not exist.")
 
@@ -888,28 +1163,43 @@ class Phono3py(object):
 
     @property
     def phph_interaction(self):
+        """Return Interaction instance."""
         return self._interaction
 
     def get_phph_interaction(self):
+        """Return Interaction instance."""
+        warnings.warn("Phono3py.get_phph_interaction() is deprecated."
+                      "Use Phono3py.phph_interaction attribute instead.",
+                      DeprecationWarning)
         return self.phph_interaction
 
     @property
     def detailed_gammas(self):
+        """Return detailed gamma."""
         return self._detailed_gammas
+
+    @property
+    def grid(self):
+        """Return Brillouin zone grid information.
+
+        BZGrid
+            An instance of BZGrid used for entire phono3py calculation.
+
+        """
+        return self._bz_grid
 
     def init_phph_interaction(self,
                               nac_q_direction=None,
                               constant_averaged_interaction=None,
                               frequency_scale_factor=None,
-                              solve_dynamical_matrices=True):
-        """Initialize ph-ph interaction calculation
+                              symmetrize_fc3q=False,
+                              lapack_zheev_uplo='L'):
+        """Initialize ph-ph interaction calculation.
 
         This method creates an instance of Interaction class, which
         is necessary to run ph-ph interaction calculation.
         The input data such as grids, force constants, etc, are
         stored to be ready for the calculation.
-        ``solve_dynamical_matrices=True`` runs harmonic phonon solver
-        immediately to store phonons on all regular mesh grids.
 
         Note
         ----
@@ -932,14 +1222,15 @@ class Phono3py(object):
         frequency_scale_factor : float, optional
             All phonon frequences are scaled by this value. Default is None,
             which means phonon frequencies are not scaled.
-        solve_dynamical_matrices : Bool, optional
-            When True, harmonic phonon solver is immediately executed and
-            the phonon data on all regular mesh grids are store phonons.
-            Default is True.
+        symmetrize_fc3q : bool, optional
+            fc3 in phonon space is symmetrized by permutation symmetry.
+            Default is False.
+        lapack_zheev_uplo : str, optional
+            'L' or 'U'. Default is 'L'. This is passed to LAPACK zheev
+            used for phonon solver.
 
         """
-
-        if self._mesh_numbers is None:
+        if self.mesh_numbers is None:
             msg = "Phono3py.mesh_numbers of instance has to be set."
             raise RuntimeError(msg)
 
@@ -947,10 +1238,20 @@ class Phono3py(object):
             msg = "Phono3py.fc2 of instance is not found."
             raise RuntimeError(msg)
 
+        if self._symmetrize_fc3q is None:
+            _symmetrize_fc3q = symmetrize_fc3q
+        else:
+            _symmetrize_fc3q = self._symmetrize_fc3q
+
+        if self._lapack_zheev_uplo is None:
+            _lapack_zheev_uplo = lapack_zheev_uplo
+        else:
+            _lapack_zheev_uplo = self._lapack_zheev_uplo
+
         self._interaction = Interaction(
             self._supercell,
             self._primitive,
-            self._mesh_numbers,
+            self._bz_grid,
             self._primitive_symmetry,
             fc3=self._fc3,
             band_indices=self._band_indices_flatten,
@@ -959,12 +1260,10 @@ class Phono3py(object):
             frequency_scale_factor=frequency_scale_factor,
             cutoff_frequency=self._cutoff_frequency,
             is_mesh_symmetry=self._is_mesh_symmetry,
-            symmetrize_fc3q=self._symmetrize_fc3q,
-            lapack_zheev_uplo=self._lapack_zheev_uplo)
+            symmetrize_fc3q=_symmetrize_fc3q,
+            lapack_zheev_uplo=_lapack_zheev_uplo)
         self._interaction.set_nac_q_direction(nac_q_direction=nac_q_direction)
         self._init_dynamical_matrix()
-        if solve_dynamical_matrices:
-            self.run_phonon_solver(verbose=self._log_level)
 
     def set_phph_interaction(self,
                              nac_params=None,
@@ -972,7 +1271,7 @@ class Phono3py(object):
                              constant_averaged_interaction=None,
                              frequency_scale_factor=None,
                              solve_dynamical_matrices=True):
-        """Initialize ph-ph interaction calculation
+        """Initialize ph-ph interaction calculation.
 
         This method is deprecated at v2.0. Phono3py.init_phph_interaction
         should be used instead of this method.
@@ -994,7 +1293,6 @@ class Phono3py(object):
                 shape=(3, 3), dtype='double', order='C'
 
         """
-
         msg = ("Phono3py.init_phph_interaction is deprecated at v2.0. "
                "Use Phono3py.prepare_interaction instead.")
         warnings.warn(msg, DeprecationWarning)
@@ -1011,7 +1309,7 @@ class Phono3py(object):
             solve_dynamical_matrices=solve_dynamical_matrices)
 
     def set_phonon_data(self, frequencies, eigenvectors, grid_address):
-        """Set phonon frequencies and eigenvectors in Interaction instance
+        """Set phonon frequencies and eigenvectors in Interaction instance.
 
         Harmonic phonon information is stored in Interaction instance. For
         example, this information store in a file is read and passed to
@@ -1035,13 +1333,12 @@ class Phono3py(object):
             shape=(num_grid_points, 3), dtype='intc', order='C'
 
         """
-
         if self._interaction is not None:
             self._interaction.set_phonon_data(
                 frequencies, eigenvectors, grid_address)
 
     def get_phonon_data(self):
-        """Get phonon frequencies and eigenvectors in Interaction instance
+        """Get phonon frequencies and eigenvectors in Interaction instance.
 
         Harmonic phonon information is stored in Interaction instance. This
         information can be obtained. The grid_address returned give the
@@ -1056,19 +1353,32 @@ class Phono3py(object):
             See more details at the docstring of set_phonon_data.
 
         """
-
         if self._interaction is not None:
-            grid_address = self._interaction.get_grid_address()
             freqs, eigvecs, _ = self._interaction.get_phonons()
-            return freqs, eigvecs, grid_address
+            return freqs, eigvecs, self._interaction.bz_grid.addresses
         else:
             msg = ("Phono3py.init_phph_interaction has to be called "
                    "before running this method.")
             raise RuntimeError(msg)
 
-    def run_phonon_solver(self, verbose=False):
+    def run_phonon_solver(self, grid_points=None):
+        """Run harmonic phonon calculation on grid points.
+
+        Parameters
+        ----------
+        grid_points : array_like or None, optional
+            A list of grid point indices of Phono3py.grid.addresses.
+            Specifying None runs all phonons on the grid points unless
+            those phonons were already calculated. Normally phonons at
+            [0, 0, 0] point is already calculated before calling this method.
+            Phonon calculations are performed automatically when needed
+            internally for ph-ph calculation. Therefore calling this method
+            is not necessary in most cases.
+            The phonon results are obtained by Phono3py.get_phonon_data().
+
+        """
         if self._interaction is not None:
-            self._interaction.run_phonon_solver(verbose=verbose)
+            self._interaction.run_phonon_solver(grid_points=grid_points)
         else:
             msg = ("Phono3py.init_phph_interaction has to be called "
                    "before running this method.")
@@ -1079,7 +1389,7 @@ class Phono3py(object):
                                cutoff_pair_distance=None,
                                is_plusminus='auto',
                                is_diagonal=True):
-        """Generate displacement dataset in supercell for fc3
+        """Generate displacement dataset in supercell for fc3.
 
         This systematically generates single and pair atomic displacements
         in supercells to calculate fc3 considering crystal symmetry.
@@ -1122,7 +1432,6 @@ class Phono3py(object):
             may be reduced.
 
         """
-
         direction_dataset = get_third_order_displacements(
             self._supercell,
             self._symmetry,
@@ -1143,7 +1452,7 @@ class Phono3py(object):
                                    distance=0.03,
                                    is_plusminus='auto',
                                    is_diagonal=False):
-        """Generate displacement dataset in phonon supercell for fc2
+        """Generate displacement dataset in phonon supercell for fc2.
 
         This systematically generates single atomic displacements
         in supercells to calculate phonon_fc2 considering crystal symmetry.
@@ -1172,7 +1481,6 @@ class Phono3py(object):
             may be reduced. Default is False.
 
         """
-
         if self._phonon_supercell_matrix is None:
             msg = ("phonon_supercell_matrix is not set. "
                    "This method is used to generate displacements to "
@@ -1196,7 +1504,7 @@ class Phono3py(object):
                     is_compact_fc=False,
                     fc_calculator=None,
                     fc_calculator_options=None):
-        """Calculate fc3 from displacements and forces
+        """Calculate fc3 from displacements and forces.
 
         Parameters
         ----------
@@ -1226,7 +1534,6 @@ class Phono3py(object):
             Options for external force constants calculator.
 
         """
-
         if displacement_dataset is None:
             disp_dataset = self._dataset
         else:
@@ -1289,7 +1596,7 @@ class Phono3py(object):
                     is_compact_fc=False,
                     fc_calculator=None,
                     fc_calculator_options=None):
-        """Calculate fc2 from displacements and forces
+        """Calculate fc2 from displacements and forces.
 
         Parameters
         ----------
@@ -1316,7 +1623,6 @@ class Phono3py(object):
             Options for external force constants calculator.
 
         """
-
         if displacement_dataset is None:
             if self._phonon_dataset is None:
                 disp_dataset = self._dataset
@@ -1366,6 +1672,7 @@ class Phono3py(object):
                     symmetrize_force_constants(self._fc2)
 
     def cutoff_fc3_by_zero(self, cutoff_distance, fc3=None):
+        """Set zero to fc3 elements out of cutoff distance."""
         if fc3 is None:
             _fc3 = self._fc3
         else:
@@ -1376,12 +1683,19 @@ class Phono3py(object):
                            self._symprec)
 
     def set_permutation_symmetry(self):
+        """Enforce permutation symmetry to fc2 and fc3."""
         if self._fc2 is not None:
             set_permutation_symmetry(self._fc2)
         if self._fc3 is not None:
             set_permutation_symmetry_fc3(self._fc3)
 
     def set_translational_invariance(self):
+        """Enforce translation invariance.
+
+        This subtracts drift divided by number of elements in each row and
+        column.
+
+        """
         if self._fc2 is not None:
             set_translational_invariance(self._fc2)
         if self._fc3 is not None:
@@ -1393,12 +1707,13 @@ class Phono3py(object):
                              frequency_points=None,
                              frequency_step=None,
                              num_frequency_points=None,
+                             frequency_points_at_bands=False,
                              scattering_event_class=None,
                              write_txt=False,
                              write_gamma_detail=False,
                              keep_gamma_detail=False,
                              output_filename=None):
-        """Calculate imaginary part of self-energy of bubble diagram (Gamma)
+        """Calculate imaginary part of self-energy of bubble diagram (Gamma).
 
         Pi = Delta - i Gamma.
 
@@ -1412,7 +1727,8 @@ class Phono3py(object):
             Temperatures where imaginary part of self-energies are calculated.
             dtype=float, shape=(temperatures,)
         frequency_points : array_like, optional
-            Frequency sampling points. Default is None. In this case,
+            Frequency sampling points. Default is None. With
+            frequency_points_at_bands=False and frequency_points is None,
             num_frequency_points or frequency_step is used to generate uniform
             frequency sampling points.
             dtype=float, shape=(frequency_points,)
@@ -1423,6 +1739,9 @@ class Phono3py(object):
             Number of sampling sampling points to be used instead of
             frequency_step. This number includes end points. Default is None,
             which gives 201.
+        frequency_points_at_bands : bool, optional
+            Phonon band frequencies are used as frequency points when True.
+            Default is False.
         scattering_event_class : int, optional
             Specific choice of scattering event class, 1 or 2 that is specified
             1 or 2, respectively. The result is stored in gammas. Therefore
@@ -1439,7 +1758,6 @@ class Phono3py(object):
             This string is inserted in the output file names.
 
         """
-
         if self._interaction is None:
             msg = ("Phono3py.init_phph_interaction has to be called "
                    "before running this method.")
@@ -1458,6 +1776,7 @@ class Phono3py(object):
             sigmas=self._sigmas,
             frequency_points=frequency_points,
             frequency_step=frequency_step,
+            frequency_points_at_bands=frequency_points_at_bands,
             num_frequency_points=num_frequency_points,
             scattering_event_class=scattering_event_class,
             write_gamma_detail=write_gamma_detail,
@@ -1477,6 +1796,7 @@ class Phono3py(object):
         return vals
 
     def write_imag_self_energy(self, filename=None):
+        """Write imaginary part of self energy to a file."""
         warnings.warn("Phono3py.write_imag_self_energy is deprecated."
                       "Use Phono3py.run_imag_self_energy with write_txt=True.",
                       DeprecationWarning)
@@ -1485,7 +1805,7 @@ class Phono3py(object):
     def _write_imag_self_energy(self, output_filename=None):
         write_imag_self_energy(
             self._gammas,
-            self._mesh_numbers,
+            self.mesh_numbers,
             self._grid_points,
             self._band_indices,
             self._frequency_points,
@@ -1500,7 +1820,7 @@ class Phono3py(object):
             self,
             grid_points,
             temperatures,
-            run_on_bands=False,
+            frequency_points_at_bands=False,
             frequency_points=None,
             frequency_step=None,
             num_frequency_points=None,
@@ -1508,7 +1828,7 @@ class Phono3py(object):
             write_txt=False,
             write_hdf5=False,
             output_filename=None):
-        """Calculate real-part of self-energy of bubble diagram (Delta)
+        """Calculate real-part of self-energy of bubble diagram (Delta).
 
         Pi = Delta - i Gamma.
 
@@ -1521,7 +1841,7 @@ class Phono3py(object):
         temperatures : array_like
             Temperatures where real part of self-energies  are calculated.
             dtype=float, shape=(temperatures,)
-        run_on_bands : bool, optional
+        frequency_points_at_bands : bool, optional
             With False, frequency shifts are calculated at frquency sampling
             points. When True, they are done at the phonon frequencies.
             Default is False.
@@ -1551,7 +1871,6 @@ class Phono3py(object):
             This string is inserted in the output file names.
 
         """
-
         if self._interaction is None:
             msg = ("Phono3py.init_phph_interaction has to be called "
                    "before running this method.")
@@ -1572,11 +1891,11 @@ class Phono3py(object):
             self._interaction,
             grid_points,
             temperatures,
-            run_on_bands=run_on_bands,
+            epsilons=_epsilons,
             frequency_points=frequency_points,
             frequency_step=frequency_step,
             num_frequency_points=num_frequency_points,
-            epsilons=_epsilons,
+            frequency_points_at_bands=frequency_points_at_bands,
             write_hdf5=write_hdf5,
             output_filename=output_filename,
             log_level=self._log_level)
@@ -1584,7 +1903,7 @@ class Phono3py(object):
         if write_txt:
             write_real_self_energy(
                 deltas,
-                self._mesh_numbers,
+                self.mesh_numbers,
                 grid_points,
                 self._band_indices,
                 frequency_points,
@@ -1644,7 +1963,6 @@ class Phono3py(object):
             This string is inserted in the output file names.
 
         """
-
         if self._interaction is None:
             msg = ("Phono3py.init_phph_interaction has to be called "
                    "before running this method.")
@@ -1653,13 +1971,13 @@ class Phono3py(object):
         self._spectral_function = run_spectral_function(
             self._interaction,
             grid_points,
+            temperatures=temperatures,
+            sigmas=self._sigmas,
             frequency_points=frequency_points,
             frequency_step=frequency_step,
             num_frequency_points=num_frequency_points,
             num_points_in_batch=num_points_in_batch,
-            temperatures=temperatures,
             band_indices=self._band_indices,
-            sigmas=self._sigmas,
             write_txt=write_txt,
             write_hdf5=write_hdf5,
             log_level=self._log_level)
@@ -1675,8 +1993,6 @@ class Phono3py(object):
             solve_collective_phonon=False,
             use_ave_pp=False,
             gamma_unit_conversion=None,
-            mesh_divisors=None,
-            coarse_mesh_shifts=None,
             is_reducible_collision_matrix=False,
             is_kappa_star=True,
             gv_delta_q=None,  # for group velocity
@@ -1696,6 +2012,136 @@ class Phono3py(object):
             compression="gzip",
             input_filename=None,
             output_filename=None):
+        """Run thermal conductivity calculation.
+
+        Parameters
+        ----------
+        is_LBTE : bool, optional, default is False
+            RTA (False) or direct solution (True).
+        temperatures : array_like, optional, default is None
+            Temperatures at which thermal conductivity is calculated.
+            shape=(temperature_points, ), dtype='double'.
+            With None,
+                `is_LBTE=False` gives temperatures=[0, 10, ..., 1000].
+                `is_LBTE=True` gives temperatures=[300, ].
+        is_isotope : bool, optional, default is False
+            With or without isotope scattering.
+        mass_variances : array_like, optiona, default is None
+            Mass variances for isotope scattering calculation. When None,
+            the values stored in phono3py are used with `is_isotope=True`.
+            shape(atoms_in_primitive, ), dtype='double'.
+        grid_points : array_like, optional, default is None
+            List of grid point indices where mode thermal conductivities are
+            calculated. With None, all the grid points that are necessary
+            for thermal conductivity are set internally.
+            shape(num_grid_points, ), dtype='int_'.
+        boundary_mfp : float, optiona, default is None
+            Mean free path in micrometre to calculate simple boundary
+            scattering contribution to thermal conductivity.
+            None gives 1 metre, which is supposed negligible contribution,
+            but this value is used to avoid divergence of phonon lifetime.
+        solve_collective_phonon : bool, optional, default is False
+            This is an option for the feature under development.
+        use_ave_pp : bool, optional, default is False
+            RTA only (`is_LBTE=False`). Averaged phonon-phonon interaction
+            strength is used to calculate phonon lifetime. This does not
+            reduce computational demand, but may be used to model thermal
+            conductivity for analyze the calculation results.
+        gamma_unit_conversion : float, optional, default is None
+            RTA only (`is_LBTE=False`). Unit conversion factor when calculating
+            inversion phonon lifetime. This option should not be used
+            by users.
+        is_reducible_collision_matrix : bool, optional, default is False
+            Direct solution only (`is_LBTE=True`). This is an experimental
+            option. With True, full collision matrix is created and solved.
+        is_kappa_star : bool, optional, default is True
+            With true, symmetry is considered when sampling grid points
+            at which mode thermal conductivities are calculated.
+        gv_delta_q : float, optional, default is None,  # for group velocity
+            With non-analytical correction, group velocity is calculated
+            by central finite difference method. This value gives the distance
+            in both directions in 1/Angstrom. The default value will be 1e-5.
+        is_full_pp : bool, optional, default is False
+            With True, full elements of phonon-phonon interaction strength
+            are computed. However with tetrahedron method, part of them are
+            known to be zero and unnecessary to calculation. With False,
+            those elements are not calculated, by which considerable
+            improve of efficiency is expected.
+            With smearing method, even if this is set False, full elements
+            are computed unless `sigma_cutoff` is specified.
+        pinv_cutoff : float, optional, default is 1.0e-8
+            Direct solution only (`is_LBTE=True`). This is used as a criterion
+            to judge the eigenvalues are considered as zero or not in
+            pseudo-inversion of collision matrix.
+        pinv_solver : int, optional, default is 0
+            Direct solution only (`is_LBTE=True`). Choice of solver of
+            pseudo-inversion of collision matrix. 0 means the default choice.
+                1. Lapacke dsyev: Smaller memory consumption than dsyevd, but
+                   slower. This is the default solver when MKL LAPACKE is
+                   integrated or scipy is not installed.
+                2. Lapacke dsyevd: Larger memory consumption than dsyev, but
+                   faster. This is not recommended because sometimes a wrong
+                   result is obtained.
+                3. Numpy’s dsyevd (linalg.eigh). This is not recommended
+                   because sometimes a wrong result is obtained.
+                4. Scipy’s dsyev: This is the default solver when scipy is
+                   installed and MKL LAPACKE is not integrated.
+                5. Scipy’s dsyevd. This is not recommended because sometimes
+                   a wrong result is obtained.
+            The solver choices other than --pinv-solver=1 and
+            --pinv-solver=4 are dangerous and not recommend.
+        write_gamma : bool, optional, default is False
+            RTA only (`is_LBTE=False`). With True, Write mode thermal
+            conductivity properties into files at each grid point. With
+            `band_indices` or multiple `sigmas` is specified, the files
+            are made for each of them, too.
+        read_gamma : bool, optional, default is False
+            RTA only (`is_LBTE=False`). With True, dead files created by
+            `write_gamma=True` instead of calculating phonon-phonon
+            interaction strength and imaginary parts of self-energy.
+        is_N_U : bool, optional, default is False
+            RTA only (`is_LBTE=False`). With True, categorization of normal
+            and Umklapp scattering is made and imaginary parts of self energy
+            for them are separated.
+        write_kappa : bool, optional, default is False
+            With True, thermal conductivity and related properties are
+            written into a file. With multiple `sigmas`, respective files
+            are created.
+        write_gamma_detail : bool, optional, default is False
+            RTA only (`is_LBTE=False`). With True, detailed information of
+            imaginary parts of self energy is stored into files such as
+            those made by `write_gamma`.
+        write_collision : bool, optional, default is False
+            Direct solution only (`is_LBTE=True`). With True, collision matrix
+            is written into a file. With multiple `sigmas` specified,
+            respective files are created. Be careful that this file can be
+            huge.
+        read_collision : bool, optional, default is False
+            Direct solution only (`is_LBTE=True`). With True, collision matrix
+            is read from a file.
+        write_pp : bool, optional, default is False
+            With True, phonon-phonon interaction strength is written into
+            files at each grid point. This option assumes single value is in
+            `sigmas`.
+        read_pp : bool, optional, default is False
+            With True, phonon-phonon interaction strength is read from files.
+        write_LBTE_solution : bool, optional, default is False
+            Direct solution only (`is_LBTE=True`). With True, eigenvectors of
+            collision matrix is written in a file as the row vectors except
+            unless `pinv_solver=3` (for this, column vectors). With multiple
+            `sigmas` specified, respective files are created. Be careful that
+            this file can be huge.
+        compression: str, optional, default is "gzip"
+            When writing results into files in hdf5, large data are compressed
+            by this options. See the detail at h5py documentation.
+        input_filename : str, optiona, default is None
+            When specified, the string is inserted before filename extension
+            in reading files.
+        output_filename=None
+            When specified, the string is inserted before filename extension
+            in writing files.
+
+        """
         if self._interaction is None:
             msg = ("Phono3py.init_phph_interaction has to be called "
                    "before running this method.")
@@ -1708,7 +2154,6 @@ class Phono3py(object):
                 _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_LBTE(
                 self._interaction,
-                self._primitive_symmetry,
                 temperatures=_temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,
@@ -1740,7 +2185,6 @@ class Phono3py(object):
                 _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_RTA(
                 self._interaction,
-                self._primitive_symmetry,
                 temperatures=_temperatures,
                 sigmas=self._sigmas,
                 sigma_cutoff=self._sigma_cutoff,
@@ -1750,8 +2194,6 @@ class Phono3py(object):
                 boundary_mfp=boundary_mfp,
                 use_ave_pp=use_ave_pp,
                 gamma_unit_conversion=gamma_unit_conversion,
-                mesh_divisors=mesh_divisors,
-                coarse_mesh_shifts=coarse_mesh_shifts,
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
                 is_full_pp=is_full_pp,
@@ -1806,7 +2248,7 @@ class Phono3py(object):
                                             self._symprec,
                                             self._is_symmetry)
         if (len(self._symmetry.get_pointgroup_operations()) !=
-            len(self._primitive_symmetry.get_pointgroup_operations())):
+            len(self._primitive_symmetry.get_pointgroup_operations())):  # noqa E129
             print("Warning: point group symmetries of supercell and primitive"
                   "cell are different.")
 
@@ -1824,24 +2266,28 @@ class Phono3py(object):
                                         self._symprec)
 
     def _build_primitive_cell(self):
-        """
+        """Create primitive cell.
+
         primitive_matrix:
           Relative axes of primitive cell to the input unit cell.
           Relative axes to the supercell is calculated by:
              supercell_matrix^-1 * primitive_matrix
           Therefore primitive cell lattice is finally calculated by:
              (supercell_lattice * (supercell_matrix)^-1 * primitive_matrix)^T
+
         """
         self._primitive = self._get_primitive_cell(
             self._supercell, self._supercell_matrix, self._primitive_matrix)
 
     def _build_phonon_supercell(self):
-        """
+        """Create phonon supercell for fc2.
+
         phonon_supercell:
           This supercell is used for harmonic phonons (frequencies,
           eigenvectors, group velocities, ...)
         phonon_supercell_matrix:
           Different supercell size can be specified.
+
         """
         if self._phonon_supercell_matrix is None:
             self._phonon_supercell = self._supercell
@@ -1858,8 +2304,8 @@ class Phono3py(object):
                 self._phonon_supercell_matrix,
                 self._primitive_matrix)
             if (self._primitive is not None and
-                (self._primitive.get_atomic_numbers() !=
-                 self._phonon_primitive.get_atomic_numbers()).any()):
+                (self._primitive.numbers !=
+                 self._phonon_primitive.numbers).any()):
                 print(" Primitive cells for fc2 and fc3 can be different.")
                 raise RuntimeError
 
@@ -1928,48 +2374,27 @@ class Phono3py(object):
         else:
             t_mat = np.dot(inv_supercell_matrix, primitive_matrix)
 
-        return get_primitive(supercell, t_mat, self._symprec)
+        return get_primitive(supercell, t_mat, self._symprec,
+                             store_dense_svecs=self._store_dense_svecs)
 
-    def _guess_primitive_matrix(self):
-        return guess_primitive_matrix(self._unitcell, symprec=self._symprec)
-
-    def _set_masses(self, masses):
-        p_masses = np.array(masses)
-        self._primitive.set_masses(p_masses)
-        p2p_map = self._primitive.get_primitive_to_primitive_map()
-        s_masses = p_masses[[p2p_map[x] for x in
-                             self._primitive.get_supercell_to_primitive_map()]]
-        self._supercell.set_masses(s_masses)
-        u2s_map = self._supercell.get_unitcell_to_supercell_map()
-        u_masses = s_masses[u2s_map]
-        self._unitcell.set_masses(u_masses)
-
-        self._phonon_primitive.set_masses(p_masses)
-        p2p_map = self._phonon_primitive.get_primitive_to_primitive_map()
-        s_masses = p_masses[
-            [p2p_map[x] for x in
-             self._phonon_primitive.get_supercell_to_primitive_map()]]
-        self._phonon_supercell.set_masses(s_masses)
+    def _determine_primitive_matrix(self, primitive_matrix):
+        pmat = get_primitive_matrix(primitive_matrix, symprec=self._symprec)
+        if isinstance(pmat, str) and pmat == 'auto':
+            return guess_primitive_matrix(self._unitcell,
+                                          symprec=self._symprec)
+        else:
+            return pmat
 
     def _set_mesh_numbers(self, mesh):
         # initialization related to mesh
         self._interaction = None
 
-        _mesh = np.array(mesh)
-        mesh_nums = None
-        if _mesh.shape:
-            if _mesh.shape == (3,):
-                mesh_nums = mesh
-        elif self._primitive_symmetry is None:
-            mesh_nums = length2mesh(mesh, self._primitive.get_cell())
-        else:
-            rotations = self._primitive_symmetry.get_pointgroup_operations()
-            mesh_nums = length2mesh(mesh, self._primitive.cell,
-                                    rotations=rotations)
-        if mesh_nums is None:
-            msg = "mesh has inappropriate type."
-            raise TypeError(msg)
-        self._mesh_numbers = mesh_nums
+        self._bz_grid = BZGrid(
+            mesh,
+            lattice=self._primitive.cell,
+            symmetry_dataset=self._primitive_symmetry.dataset,
+            use_grg=self._use_grg,
+            store_dense_gp_map=self._store_dense_gp_map)
 
     def _init_dynamical_matrix(self):
         if self._interaction is not None:
@@ -1978,5 +2403,4 @@ class Phono3py(object):
                 self._phonon_supercell,
                 self._phonon_primitive,
                 nac_params=self._nac_params,
-                solve_dynamical_matrices=False,
-                verbose=self._log_level)
+                solve_dynamical_matrices=False)

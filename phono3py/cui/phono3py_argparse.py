@@ -1,3 +1,4 @@
+"""Phono3py command option argument parser."""
 # Copyright (C) 2015 Atsushi Togo
 # All rights reserved.
 #
@@ -39,6 +40,7 @@ from phonopy.cui.phonopy_argparse import fix_deprecated_option_names
 def get_parser(fc_symmetry=False,
                is_nac=False,
                load_phono3py_yaml=False):
+    """Return ArgumentParser instance."""
     deprecated = fix_deprecated_option_names(sys.argv)
     import argparse
     from phonopy.interface.calculator import add_arguments_of_calculators
@@ -139,6 +141,10 @@ def get_parser(fc_symmetry=False,
         default=None,
         help="Supercell dimension for extra fc2")
     parser.add_argument(
+        "--emulate-v1", dest="emulate_v1", action="store_true",
+        default=False,
+        help="Emulate v1.x grid system and shortest vectors.")
+    parser.add_argument(
         "--factor", dest="frequency_conversion_factor", type=float,
         default=None,
         help="Frequency unit conversion factor")
@@ -190,6 +196,10 @@ def get_parser(fc_symmetry=False,
         "--gp", "--grid-points", nargs='+', dest="grid_points", default=None,
         help="Fixed grid points where anharmonic properties are calculated")
     parser.add_argument(
+        "--grg", "--generalized-regular-grid", dest="use_grg",
+        action="store_true", default=False,
+        help="Use generalized regular grid.")
+    parser.add_argument(
         "--gruneisen", dest="is_gruneisen", action="store_true", default=False,
         help="Calculate phonon Gruneisen parameter")
     parser.add_argument(
@@ -229,10 +239,6 @@ def get_parser(fc_symmetry=False,
     parser.add_argument(
         "--mass", nargs='+', dest="masses", default=None,
         help="Same as MASS tag")
-    parser.add_argument(
-        "--md", "--mesh-divisors", nargs='+', dest="mesh_divisors",
-        default=None,
-        help="Divisors for mesh numbers")
     parser.add_argument(
         "--mesh", nargs='+', dest="mesh_numbers", default=None,
         help="Mesh numbers")
@@ -388,7 +394,7 @@ def get_parser(fc_symmetry=False,
         help="Symmetry tolerance to search")
     parser.add_argument(
         "--uplo", dest="lapack_zheev_uplo", default=None,
-        help="Lapack zheev UPLO (default: L)")
+        help="Lapack zheev UPLO for phonon solver (default: L)")
     parser.add_argument(
         "-v", "--verbose", dest="verbose", action="store_true", default=False,
         help="Detailed run-time information is displayed")

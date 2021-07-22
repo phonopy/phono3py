@@ -1,3 +1,4 @@
+"""Phono3py setup.py."""
 import os
 import sys
 import numpy
@@ -22,7 +23,7 @@ if 'setuptools_scm' in sys.modules.keys():
     try:
         git_ver = get_version()
         git_num = int(git_ver.split('.')[3].split('+')[0].replace("dev", ""))
-    except:
+    except Exception:
         git_num = None
 
 include_dirs_numpy = [numpy.get_include()]
@@ -30,7 +31,7 @@ extra_link_args = []
 # Workaround Python issue 21121
 config_var = sysconfig.get_config_var("CFLAGS")
 if (config_var is not None and
-    "-Werror=declaration-after-statement" in config_var):
+    "-Werror=declaration-after-statement" in config_var):  # noqa E129
     os.environ['CFLAGS'] = config_var.replace(
         "-Werror=declaration-after-statement", "")
 
@@ -38,11 +39,15 @@ extra_compile_args = ['-fopenmp', ]
 include_dirs = ['c', ] + include_dirs_numpy
 define_macros = []
 
-extra_link_args_lapacke = []
-include_dirs_lapacke = []
+if use_setuptools:
+    extra_compile_args += ['-DPHPYOPENMP', ]
+else:
+    define_macros += [('PHPYOPENMP', None), ]
 
 
 use_mkl = False
+include_dirs_lapacke = []
+extra_link_args_lapacke = []
 # C macro definitions:
 # - MULTITHREADED_BLAS
 #   This deactivates OpenMP multithread harmonic phonon calculation,
@@ -63,7 +68,7 @@ if os.path.isfile("setup_mkl.py"):
 
     from setup_mkl import mkl_extra_link_args_lapacke, mkl_include_dirs_lapacke
 
-    #### Examples of setup_mkl.py ####
+    # Examples of setup_mkl.py
     # For 2015
     # intel_root = "/opt/intel/composer_xe_2015.7.235"
     # mkl_root = "%s/mkl" % intel_root
@@ -85,8 +90,8 @@ if os.path.isfile("setup_mkl.py"):
     # mkl_include_dirs_lapacke = ["%s/include" % mkl_root]
 
     use_mkl = True
-    extra_link_args_lapacke += mkl_extra_link_args_lapacke
-    include_dirs_lapacke += mkl_include_dirs_lapacke
+    extra_link_args_lapacke = mkl_extra_link_args_lapacke
+    include_dirs_lapacke = mkl_include_dirs_lapacke
 
     if use_setuptools:
         extra_compile_args += ['-DMKL_LAPACKE',
@@ -98,11 +103,15 @@ elif os.path.isfile("libopenblas.py"):
     # This supposes that multithread openBLAS is used.
     # This is invoked when libopenblas.py exists on the current directory.
 
-    #### Example of libopenblas.py ####
+    # Example of libopenblas.py
     # extra_link_args_lapacke += ['-lopenblas']
 
-    from libopenblas import extra_link_args_lapacke, include_dirs_lapacke
-    include_dirs_lapacke += []
+    from libopenblas import (
+        extra_link_args_lapacke as obl_extra_link_args_lapacke,
+        include_dirs_lapacke as obl_include_dirs_lapacke)
+    extra_link_args_lapacke = obl_extra_link_args_lapacke
+    include_dirs_lapacke = obl_include_dirs_lapacke
+
     if use_setuptools:
         extra_compile_args += ['-DMULTITHREADED_BLAS']
     else:
@@ -114,16 +123,16 @@ elif (platform.system() == 'Darwin' and
     # % sudo port install gcc6
     # % sudo port select --set gcc mp-gcc
     # % sudo port install OpenBLAS +gcc6
-    extra_link_args_lapacke += ['/opt/local/lib/libopenblas.a']
-    include_dirs_lapacke += ['/opt/local/include']
+    extra_link_args_lapacke = ['/opt/local/lib/libopenblas.a']
+    include_dirs_lapacke = ['/opt/local/include']
 elif ('CONDA_PREFIX' in os.environ and
       (os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
                                    'lib', 'liblapacke.dylib')) or
        os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
                                    'lib', 'liblapacke.so')))):
     # This is for the system prepared with conda openblas.
-    extra_link_args_lapacke += ['-llapacke']
-    include_dirs_lapacke += [
+    extra_link_args_lapacke = ['-llapacke']
+    include_dirs_lapacke = [
         os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
     if os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
                                    'include', 'mkl.h')):
@@ -139,11 +148,27 @@ elif ('CONDA_PREFIX' in os.environ and
             extra_compile_args += ['-DMULTITHREADED_BLAS']
         else:
             define_macros += [('MULTITHREADED_BLAS', None)]
+elif ('CONDA_PREFIX' in os.environ and
+      (os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
+                                   'lib', 'libmkl_rt.dylib')) or
+       os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
+                                   'lib', 'libmkl_rt.so'))) and
+      (os.path.isfile(os.path.join(os.environ['CONDA_PREFIX'],
+                                   'include', 'mkl_lapacke.h')))):
+    include_dirs_lapacke = [
+        os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
+    extra_link_args_lapacke = ['-lmkl_rt']
+    if use_setuptools:
+        extra_compile_args += ['-DMKL_LAPACKE',
+                               '-DMULTITHREADED_BLAS']
+    else:
+        define_macros += [('MKL_LAPACKE', None),
+                          ('MULTITHREADED_BLAS', None)]
 elif os.path.isfile('/usr/lib/liblapacke.so'):
     # This supposes that lapacke with single-thread BLAS is installed on
     # system.
-    extra_link_args_lapacke += ['-llapacke', '-llapack', '-lblas']
-    include_dirs_lapacke += []
+    extra_link_args_lapacke = ['-llapacke', '-llapack', '-lblas']
+    include_dirs_lapacke = []
 else:
     # Here is the default lapacke linkage setting.
     # Please modify according to your system environment.
@@ -158,9 +183,9 @@ else:
     #
     # For conda: Try installing with dynamic link library of openblas by
     # % conda install numpy scipy h5py pyyaml matplotlib openblas libgfortran
-    extra_link_args_lapacke += ['-lopenblas', '-lgfortran']
+    extra_link_args_lapacke = ['-lopenblas', '-lgfortran']
     if 'CONDA_PREFIX' in os.environ:
-        include_dirs_lapacke += [
+        include_dirs_lapacke = [
             os.path.join(os.environ['CONDA_PREFIX'], 'include'), ]
     if use_setuptools:
         extra_compile_args += ['-DMULTITHREADED_BLAS']
@@ -200,7 +225,7 @@ if cc == 'gcc' or cc is None:
 if lib_omp:
     extra_link_args.append(lib_omp)
 
-## Uncomment below to measure reciprocal_to_normal_squared_openmp performance
+# Uncomment below to measure reciprocal_to_normal_squared_openmp performance
 # define_macros += [('MEASURE_R2N', None)]
 
 extra_link_args += extra_link_args_lapacke
@@ -208,25 +233,26 @@ include_dirs += include_dirs_lapacke
 
 print("extra_link_args", extra_link_args)
 sources_phono3py = ['c/_phono3py.c',
+                    'c/bzgrid.c',
                     'c/collision_matrix.c',
                     'c/fc3.c',
+                    'c/grgrid.c',
                     'c/imag_self_energy_with_g.c',
                     'c/interaction.c',
                     'c/isotope.c',
-                    'c/kgrid.c',
-                    'c/kpoint.c',
+                    'c/lagrid.c',
                     'c/lapack_wrapper.c',
-                    'c/mathfunc.c',
                     'c/phono3py.c',
                     'c/phonoc_utils.c',
                     'c/pp_collision.c',
                     'c/real_self_energy.c',
                     'c/real_to_reciprocal.c',
                     'c/reciprocal_to_normal.c',
+                    'c/snf3x3.c',
                     'c/tetrahedron_method.c',
                     'c/triplet.c',
-                    'c/triplet_iw.c',
-                    'c/triplet_kpoint.c']
+                    'c/triplet_grid.c',
+                    'c/triplet_iw.c']
 extension_phono3py = Extension(
     'phono3py._phono3py',
     include_dirs=include_dirs,
@@ -314,8 +340,9 @@ if __name__ == '__main__':
               author_email='atz.togo@gmail.com',
               url='http://phonopy.github.io/phono3py/',
               packages=packages_phono3py,
+              python_requires='>=3.5',
               install_requires=['numpy', 'scipy', 'PyYAML', 'matplotlib',
-                                'h5py', 'spglib', 'phonopy>=2.9.3,<2.10'],
+                                'h5py', 'spglib', 'phonopy>=2.11,<2.12'],
               provides=['phono3py'],
               scripts=scripts_phono3py,
               ext_modules=[extension_phono3py,

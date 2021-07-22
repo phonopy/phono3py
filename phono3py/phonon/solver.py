@@ -1,3 +1,4 @@
+"""Create dynamical matrix and solve harmonic phonons on grid."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -33,6 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
+from phonopy.structure.cells import sparse_to_dense_svecs
 
 
 def run_phonon_solver_c(dm,
@@ -41,21 +43,27 @@ def run_phonon_solver_c(dm,
                         phonon_done,
                         grid_points,
                         grid_address,
-                        mesh,
+                        QDinv,
                         frequency_conversion_factor,
                         nac_q_direction,  # in reduced coordinates
-                        lapack_zheev_uplo,
-                        verbose=False):
+                        lapack_zheev_uplo):
+    """Bulid and solve dynamical matrices on grid in C-API."""
     import phono3py._phononmod as phononmod
 
     (svecs,
-     multiplicity,
+     multi,
      masses,
      rec_lattice,  # column vectors
      positions,
      born,
      nac_factor,
      dielectric) = _extract_params(dm)
+
+    if dm.primitive.store_dense_svecs:
+        _svecs = svecs
+        _multi = multi
+    else:
+        _svecs, _multi = sparse_to_dense_svecs(svecs, multi)
 
     if dm.is_nac() and dm.nac_method == 'gonze':
         gonze_nac_dataset = dm.Gonze_nac_dataset
@@ -75,24 +83,24 @@ def run_phonon_solver_c(dm,
         Lambda = 0
         fc = dm.force_constants
 
-    # assert grid_points.dtype == 'int_'
-    # assert grid_points.flags.c_contiguous
+    assert grid_points.dtype == 'int_'
+    assert grid_points.flags.c_contiguous
 
     fc_p2s, fc_s2p = _get_fc_elements_mapping(dm, fc)
     phononmod.phonons_at_gridpoints(
         frequencies,
         eigenvectors,
         phonon_done,
-        np.array(grid_points, dtype='int_'),
-        np.array(grid_address, dtype='int_', order='C'),
-        np.array(mesh, dtype='int_'),
+        grid_points,
+        grid_address,
+        np.array(QDinv, dtype='double', order='C'),
         fc,
-        svecs,
-        np.array(multiplicity, dtype='int_', order='C'),
+        _svecs,
+        _multi,
         positions,
         masses,
-        np.array(fc_p2s, dtype='int_'),
-        np.array(fc_s2p, dtype='int_'),
+        fc_p2s,
+        fc_s2p,
         frequency_conversion_factor,
         born,
         dielectric,
@@ -110,14 +118,15 @@ def run_phonon_solver_py(grid_point,
                          frequencies,
                          eigenvectors,
                          grid_address,
-                         mesh,
+                         QDinv,
                          dynamical_matrix,
                          frequency_conversion_factor,
                          lapack_zheev_uplo):
+    """Bulid and solve dynamical matrices on grid in python."""
     gp = grid_point
     if phonon_done[gp] == 0:
         phonon_done[gp] = 1
-        q = grid_address[gp].astype('double') / mesh
+        q = np.dot(grid_address[gp], QDinv.T)
         dynamical_matrix.run(q)
         dm = dynamical_matrix.dynamical_matrix
         eigvals, eigvecs = np.linalg.eigh(dm, UPLO=lapack_zheev_uplo)
@@ -166,4 +175,4 @@ def _get_fc_elements_mapping(dm, fc):
         fc_p2s = np.arange(len(p2s_map), dtype='intc')
         fc_s2p = s2pp_map
 
-    return fc_p2s, fc_s2p
+    return np.array(fc_p2s, dtype='int_'), np.array(fc_s2p, dtype='int_')

@@ -34,9 +34,6 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include "phonoc_utils.h"
-#include "phonoc_const.h"
-#include "phonoc_array.h"
 #include "reciprocal_to_normal.h"
 #include "lapack_wrapper.h"
 
@@ -46,20 +43,20 @@
 #endif
 
 static lapack_complex_double fc3_sum_in_reciprocal_to_normal
-(const size_t bi0,
- const size_t bi1,
- const size_t bi2,
+(const long bi0,
+ const long bi1,
+ const long bi2,
  const lapack_complex_double *eigvecs0,
  const lapack_complex_double *eigvecs1,
  const lapack_complex_double *eigvecs2,
  const lapack_complex_double *fc3_reciprocal,
  const double *masses,
- const size_t num_atom);
+ const long num_atom);
 
 static double get_fc3_sum
-(const size_t j,
- const size_t k,
- const size_t bi,
+(const long j,
+ const long k,
+ const long bi,
  const double *freqs0,
  const double *freqs1,
  const double *freqs2,
@@ -68,13 +65,13 @@ static double get_fc3_sum
  const lapack_complex_double *eigvecs2,
  const lapack_complex_double *fc3_reciprocal,
  const double *masses,
- const size_t num_atom,
+ const long num_atom,
  const double cutoff_frequency);
 
 void reciprocal_to_normal_squared
 (double *fc3_normal_squared,
- PHPYCONST int (*g_pos)[4],
- const size_t num_g_pos,
+ const long (*g_pos)[4],
+ const long num_g_pos,
  const lapack_complex_double *fc3_reciprocal,
  const double *freqs0,
  const double *freqs1,
@@ -83,13 +80,13 @@ void reciprocal_to_normal_squared
  const lapack_complex_double *eigvecs1,
  const lapack_complex_double *eigvecs2,
  const double *masses,
- const int *band_indices,
- const size_t num_band0,
- const size_t num_band,
+ const long *band_indices,
+ const long num_band0,
+ const long num_band,
  const double cutoff_frequency,
- const int openmp_at_bands)
+ const long openmp_at_bands)
 {
-  size_t i, num_atom;
+  long i, num_atom;
 
 #ifdef MEASURE_R2N
   double loopTotalCPUTime, loopTotalWallTime;
@@ -104,7 +101,9 @@ void reciprocal_to_normal_squared
   loopStartCPUTime = clock();
 #endif
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for if (openmp_at_bands)
+#endif
   for (i = 0; i < num_g_pos; i++) {
     if (freqs0[band_indices[g_pos[i][0]]] > cutoff_frequency) {
       fc3_normal_squared[g_pos[i][3]] = get_fc3_sum(g_pos[i][1],
@@ -124,17 +123,17 @@ void reciprocal_to_normal_squared
   }
 
 #ifdef MEASURE_R2N
-      loopTotalCPUTime = (double)(clock() - loopStartCPUTime) / CLOCKS_PER_SEC;
-      loopTotalWallTime = difftime(time(NULL), loopStartWallTime);
-      printf("  %1.3fs (%1.3fs CPU)\n", loopTotalWallTime, loopTotalCPUTime);
+  loopTotalCPUTime = (double)(clock() - loopStartCPUTime) / CLOCKS_PER_SEC;
+  loopTotalWallTime = difftime(time(NULL), loopStartWallTime);
+  printf("  %1.3fs (%1.3fs CPU)\n", loopTotalWallTime, loopTotalCPUTime);
 #endif
 
 }
 
 static double get_fc3_sum
-(const size_t j,
- const size_t k,
- const size_t bi,
+(const long j,
+ const long k,
+ const long bi,
  const double *freqs0,
  const double *freqs1,
  const double *freqs2,
@@ -143,7 +142,7 @@ static double get_fc3_sum
  const lapack_complex_double *eigvecs2,
  const lapack_complex_double *fc3_reciprocal,
  const double *masses,
- const size_t num_atom,
+ const long num_atom,
  const double cutoff_frequency)
 {
   double fff, sum_real, sum_imag;
@@ -166,17 +165,17 @@ static double get_fc3_sum
 }
 
 static lapack_complex_double fc3_sum_in_reciprocal_to_normal
-(const size_t bi0,
- const size_t bi1,
- const size_t bi2,
+(const long bi0,
+ const long bi1,
+ const long bi2,
  const lapack_complex_double *eigvecs0,
  const lapack_complex_double *eigvecs1,
  const lapack_complex_double *eigvecs2,
  const lapack_complex_double *fc3_reciprocal,
  const double *masses,
- const size_t num_atom)
+ const long num_atom)
 {
-  size_t baseIndex, index_l, index_lm, i, j, k, l, m, n;
+  long baseIndex, index_l, index_lm, i, j, k, l, m, n;
   double sum_real, sum_imag, mmm, mass_l, mass_lm;
   lapack_complex_double eig_prod, eig_prod1;
 
