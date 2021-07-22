@@ -35,35 +35,21 @@
 #include <math.h>
 #include "phonoc_const.h"
 #include "phonoc_utils.h"
-#include "lapack_wrapper.h"
 
 #define THZTOEVPARKB 47.992398658977166
 #define INVSQRT2PI 0.3989422804014327
 
-double bose_einstein(const double x, const double t)
+double phonoc_bose_einstein(const double x, const double t)
 {
   return 1.0 / (exp(THZTOEVPARKB * x / t) - 1);
 }
 
-double gaussian(const double x, const double sigma)
+double phonoc_gaussian(const double x, const double sigma)
 {
   return INVSQRT2PI / sigma * exp(-x * x / 2 / sigma / sigma);
 }
 
-double inv_sinh_occupation(const double x, const double t)
+double phonoc_inv_sinh_occupation(const double x, const double t)
 {
   return 1.0 / sinh(x * THZTOEVPARKB / 2 / t);
-}
-
-lapack_complex_double
-phonoc_complex_prod(const lapack_complex_double a,
-                    const lapack_complex_double b)
-{
-  lapack_complex_double c;
-  c = lapack_make_complex_double
-    (lapack_complex_double_real(a) * lapack_complex_double_real(b) -
-     lapack_complex_double_imag(a) * lapack_complex_double_imag(b),
-     lapack_complex_double_imag(a) * lapack_complex_double_real(b) +
-     lapack_complex_double_real(a) * lapack_complex_double_imag(b));
-  return c;
 }

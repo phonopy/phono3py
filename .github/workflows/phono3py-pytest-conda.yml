@@ -25,7 +25,7 @@ jobs:
     - name: Install dependencies
       run: |
         conda install --yes -c conda-forge python=3.8
-        conda install --yes -c conda-forge matplotlib-base pyyaml openblas libgfortran gcc_linux-64 gxx_linux-64 h5py scipy pytest codecov pytest-cov spglib
+        conda install --yes -c conda-forge matplotlib-base pyyaml openblas libgfortran gcc_linux-64 gxx_linux-64 "h5py=3.1.0" scipy pytest codecov pytest-cov spglib
         pip install https://github.com/phonopy/phonopy/archive/develop.zip --user
     - name: Set up phono3py
       run: |

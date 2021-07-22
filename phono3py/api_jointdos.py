@@ -32,8 +32,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import numpy as np
 from phonopy.units import VaspToTHz
+from phonopy.structure.symmetry import Symmetry
 from phono3py.phonon3.joint_dos import JointDos
+from phono3py.phonon.grid import BZGrid
+
 from phono3py.file_IO import write_joint_dos
 
 
@@ -41,8 +45,8 @@ class Phono3pyJointDos(object):
     def __init__(self,
                  supercell,
                  primitive,
-                 mesh,
                  fc2,
+                 mesh=None,
                  nac_params=None,
                  nac_q_direction=None,
                  sigmas=None,
@@ -53,6 +57,7 @@ class Phono3pyJointDos(object):
                  frequency_factor_to_THz=VaspToTHz,
                  frequency_scale_factor=None,
                  is_mesh_symmetry=True,
+                 store_dense_gp_map=False,
                  symprec=1e-5,
                  output_filename=None,
                  log_level=0):
@@ -60,48 +65,47 @@ class Phono3pyJointDos(object):
             self._sigmas = [None]
         else:
             self._sigmas = sigmas
-        self._supercell = supercell
-        self._primitive = primitive
-        self._mesh_numbers = mesh
-        self._fc2 = fc2
-        self._nac_params = nac_params
-        self._nac_q_direction = nac_q_direction
-        self._cutoff_frequency = cutoff_frequency
-        self._frequency_step = frequency_step
-        self._num_frequency_points = num_frequency_points
         self._temperatures = temperatures
-        self._frequency_factor_to_THz = frequency_factor_to_THz
-        self._frequency_scale_factor = frequency_scale_factor
         self._is_mesh_symmetry = is_mesh_symmetry
-        self._symprec = symprec
         self._filename = output_filename
         self._log_level = log_level
 
+        symmetry = Symmetry(primitive, symprec)
+        self._bz_grid = BZGrid(mesh,
+                               lattice=primitive.cell,
+                               symmetry_dataset=symmetry.dataset,
+                               store_dense_gp_map=store_dense_gp_map)
+
         self._jdos = JointDos(
-            self._mesh_numbers,
-            self._primitive,
-            self._supercell,
-            self._fc2,
-            nac_params=self._nac_params,
-            nac_q_direction=self._nac_q_direction,
-            cutoff_frequency=self._cutoff_frequency,
-            frequency_step=self._frequency_step,
-            num_frequency_points=self._num_frequency_points,
+            primitive,
+            supercell,
+            self._bz_grid,
+            fc2,
+            nac_params=nac_params,
+            nac_q_direction=nac_q_direction,
+            cutoff_frequency=cutoff_frequency,
+            frequency_step=frequency_step,
+            num_frequency_points=num_frequency_points,
             temperatures=self._temperatures,
-            frequency_factor_to_THz=self._frequency_factor_to_THz,
-            frequency_scale_factor=self._frequency_scale_factor,
+            frequency_factor_to_THz=frequency_factor_to_THz,
+            frequency_scale_factor=frequency_scale_factor,
             is_mesh_symmetry=self._is_mesh_symmetry,
-            symprec=self._symprec,
+            store_dense_gp_map=store_dense_gp_map,
+            symprec=symprec,
             filename=output_filename,
             log_level=self._log_level)
 
         self._joint_dos = None
 
+    @property
+    def grid(self):
+        return self._bz_grid
+
     def run(self, grid_points, write_jdos=False):
         if self._log_level:
             print("--------------------------------- Joint DOS "
                   "---------------------------------")
-            print("Sampling mesh: [ %d %d %d ]" % tuple(self._mesh_numbers))
+            print("Sampling mesh: [ %d %d %d ]" % tuple(self._bz_grid.D_diag))
 
         for i, gp in enumerate(grid_points):
             self._jdos.set_grid_point(gp)
@@ -112,8 +116,8 @@ class Phono3pyJointDos(object):
                       "Grid point %d (%d/%d) "
                       "======================="
                       % (gp, i + 1, len(grid_points)))
-                adrs = self._jdos.grid_address[gp]
-                q = adrs.astype('double') / self._mesh_numbers
+                adrs = self._jdos.bz_grid.addresses[gp]
+                q = np.dot(adrs, self._bz_grid.QDinv.T)
                 print("q-point: (%5.2f %5.2f %5.2f)" % tuple(q))
                 print("Number of triplets: %d" % len(weights))
                 print("Frequency")
@@ -121,7 +125,8 @@ class Phono3pyJointDos(object):
                     print("%8.3f" % f)
 
             if not self._sigmas:
-                raise RuntimeError("sigma or tetrahedron method has to be set.")
+                raise RuntimeError(
+                    "sigma or tetrahedron method has to be set.")
 
             for sigma in self._sigmas:
                 if self._log_level:
@@ -151,9 +156,9 @@ class Phono3pyJointDos(object):
 
     def _write(self, gp, sigma=None):
         return write_joint_dos(gp,
-                               self._mesh_numbers,
-                               self._jdos.get_frequency_points(),
-                               self._jdos.get_joint_dos(),
+                               self._bz_grid.D_diag,
+                               self._jdos.frequency_points,
+                               self._jdos.joint_dos,
                                sigma=sigma,
                                temperatures=self._temperatures,
                                filename=self._filename,

@@ -1,3 +1,4 @@
+"""Force constants calculation utilities for command line user interface."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -60,6 +61,7 @@ def create_phono3py_force_constants(phono3py,
                                     output_filename=None,
                                     phono3py_yaml_filename=None,
                                     log_level=1):
+    """Read or calculate force constants."""
     if settings.fc_calculator is None:
         symmetrize_fc3r = (settings.is_symmetrize_fc3_r or
                            settings.fc_symmetry)
@@ -81,7 +83,7 @@ def create_phono3py_force_constants(phono3py,
         settings.read_gamma or
         settings.read_pp or
         (not settings.is_bterta and settings.write_phonon) or
-        settings.constant_averaged_pp_interaction is not None):
+        settings.constant_averaged_pp_interaction is not None):  # noqa E129
         pass
     else:
         if settings.read_fc3:
@@ -93,9 +95,7 @@ def create_phono3py_force_constants(phono3py,
             _create_phono3py_fc3(phono3py,
                                  ph3py_yaml,
                                  symmetrize_fc3r,
-                                 symmetrize_fc2,
                                  input_filename,
-                                 output_filename,
                                  settings.is_compact_fc,
                                  settings.cutoff_pair_distance,
                                  settings.fc_calculator,
@@ -181,6 +181,7 @@ def parse_forces(phono3py,
                  disp_filename=None,
                  fc_type=None,
                  log_level=0):
+    """Read displacements and forces."""
     filename_read_from = None
 
     if fc_type == 'phonon_fc2':
@@ -197,7 +198,7 @@ def parse_forces(phono3py,
     # None is returned unless type-2.
     # can emit FileNotFoundError.
     if (dataset is None or
-        dataset is not None and not forces_in_dataset(dataset)):
+        dataset is not None and not forces_in_dataset(dataset)):  # noqa E129
         _dataset = _get_type2_dataset(natom,
                                       phono3py.calculator,
                                       filename=force_filename,
@@ -249,6 +250,7 @@ def parse_forces(phono3py,
 
 
 def forces_in_dataset(dataset):
+    """Return whether forces in dataset or not."""
     return ('forces' in dataset or
             ('first_atoms' in dataset and
              'forces' in dataset['first_atoms'][0]))
@@ -356,15 +358,13 @@ def _get_type2_dataset(natom, calculator, filename="FORCES_FC3", log_level=0):
 def _create_phono3py_fc3(phono3py,
                          ph3py_yaml,
                          symmetrize_fc3r,
-                         symmetrize_fc2,
                          input_filename,
-                         output_filename,
                          is_compact_fc,
                          cutoff_pair_distance,
                          fc_calculator,
                          fc_calculator_options,
                          log_level):
-    """
+    """Read or calculate fc3.
 
     Note
     ----

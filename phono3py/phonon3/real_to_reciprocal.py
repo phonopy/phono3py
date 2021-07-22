@@ -1,3 +1,4 @@
+"""Transform fc3 in real space to reciprocal space."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -33,41 +34,51 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
+from phonopy.structure.cells import sparse_to_dense_svecs
 
 
 class RealToReciprocal(object):
+    """Transform fc3 in real space to reciprocal space."""
+
     def __init__(self,
                  fc3,
                  supercell,
                  primitive,
                  mesh,
                  symprec=1e-5):
+        """Init method."""
         self._fc3 = fc3
         self._supercell = supercell
         self._primitive = primitive
         self._mesh = mesh
         self._symprec = symprec
 
-        self._p2s_map = primitive.get_primitive_to_supercell_map()
-        self._s2p_map = primitive.get_supercell_to_primitive_map()
+        self._p2s_map = primitive.p2s_map
+        self._s2p_map = primitive.s2p_map
         # Reduce supercell atom index to primitive index
-        (self._smallest_vectors,
-         self._multiplicity) = primitive.get_smallest_vectors()
+        svecs, multi = self._primitive.get_smallest_vectors()
+        if self._primitive.store_dense_svecs:
+            self._svecs = svecs
+            self._multi = multi
+        else:
+            self._svecs, self._multi = sparse_to_dense_svecs(svecs, multi)
         self._fc3_reciprocal = None
 
     def run(self, triplet):
+        """Run at each triplet of q-vectors."""
         self._triplet = triplet
-        num_patom = self._primitive.get_number_of_atoms()
+        num_patom = len(self._primitive)
         dtype = "c%d" % (np.dtype('double').itemsize * 2)
         self._fc3_reciprocal = np.zeros(
             (num_patom, num_patom, num_patom, 3, 3, 3), dtype=dtype)
         self._real_to_reciprocal()
 
     def get_fc3_reciprocal(self):
+        """Return fc3 in reciprocal space."""
         return self._fc3_reciprocal
 
     def _real_to_reciprocal(self):
-        num_patom = self._primitive.get_number_of_atoms()
+        num_patom = len(self._primitive)
         sum_triplets = np.where(
             np.all(self._triplet != 0, axis=0), self._triplet.sum(axis=0), 0)
         sum_q = sum_triplets.astype('double') / self._mesh
@@ -81,7 +92,7 @@ class RealToReciprocal(object):
             self._fc3_reciprocal[i] *= prephase
 
     def _real_to_reciprocal_elements(self, patom_indices):
-        num_satom = self._supercell.get_number_of_atoms()
+        num_satom = len(self._supercell)
         pi = patom_indices
         i = self._p2s_map[pi[0]]
         dtype = "c%d" % (np.dtype('double').itemsize * 2)
@@ -97,7 +108,7 @@ class RealToReciprocal(object):
         return fc3_reciprocal
 
     def _get_prephase(self, sum_q, patom_index):
-        r = self._primitive.get_scaled_positions()[patom_index]
+        r = self._primitive.scaled_positions[patom_index]
         return np.exp(2j * np.pi * np.dot(sum_q, r))
 
     def _get_phase(self, satom_indices, patom0_index):
@@ -105,9 +116,10 @@ class RealToReciprocal(object):
         p0 = patom0_index
         phase = 1+0j
         for i in (0, 1):
-            vs = self._smallest_vectors[si[i], p0,
-                                        :self._multiplicity[si[i], p0]]
+            svecs_adrs = self._multi[si[i], p0, 1]
+            multi = self._multi[si[i], p0, 0]
+            vs = self._svecs[svecs_adrs:(svecs_adrs + multi)]
             phase *= (np.exp(2j * np.pi * np.dot(
-                        vs, self._triplet[i + 1].astype('double') /
-                        self._mesh)).sum() / self._multiplicity[si[i], p0])
+                vs, self._triplet[i + 1].astype('double') /
+                self._mesh)).sum() / multi)
         return phase

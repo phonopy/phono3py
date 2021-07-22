@@ -130,7 +130,9 @@ void phonopy_pinv_mt(double *data_out,
 {
   int i;
 
+#ifdef PHPYOPENMP
 #pragma omp parallel for
+#endif
   for (i = 0; i < num_thread; i++) {
     info_out[i] = phonopy_pinv(data_out + i * max_row_num * column_num,
                                data_in + i * max_row_num * column_num,
@@ -226,4 +228,18 @@ int phonopy_dsyev(double *data,
   }
 
   return (int)info;
+}
+
+
+lapack_complex_double
+phonoc_complex_prod(const lapack_complex_double a,
+                    const lapack_complex_double b)
+{
+  lapack_complex_double c;
+  c = lapack_make_complex_double
+    (lapack_complex_double_real(a) * lapack_complex_double_real(b) -
+     lapack_complex_double_imag(a) * lapack_complex_double_imag(b),
+     lapack_complex_double_imag(a) * lapack_complex_double_real(b) +
+     lapack_complex_double_real(a) * lapack_complex_double_imag(b));
+  return c;
 }

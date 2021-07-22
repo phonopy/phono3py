@@ -1,3 +1,4 @@
+"""Procedures to handle atomic displacements for fc3."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -69,7 +70,6 @@ def direction_to_displacement(direction_dataset,
            {'number': atom1, ... }, ... ]}
 
     """
-
     duplicates = _find_duplicates(direction_dataset)
     d3_count = len(direction_dataset) + 1
 
@@ -121,7 +121,7 @@ def get_third_order_displacements(cell,
                                   symmetry,
                                   is_plusminus='auto',
                                   is_diagonal=False):
-    """Create dispalcement dataset
+    """Create dispalcement dataset.
 
     Note
     ----
@@ -147,7 +147,6 @@ def get_third_order_displacements(cell,
 
     Returns
     -------
-
     [{'number': atom1,
       'direction': [1, 0, 0],  # int
       'second_atoms': [ {'number': atom2,
@@ -157,9 +156,8 @@ def get_third_order_displacements(cell,
      {'number': atom1, ... } ]
 
     """
-
-    positions = cell.get_scaled_positions()
-    lattice = cell.get_cell().T
+    positions = cell.scaled_positions
+    lattice = cell.cell.T
 
     # Least displacements of first atoms (Atom 1) are searched by
     # using respective site symmetries of the original crystal.
@@ -169,7 +167,7 @@ def get_third_order_displacements(cell,
                                           is_plusminus=is_plusminus,
                                           is_diagonal=False)
 
-    symprec = symmetry.get_symmetry_tolerance()
+    symprec = symmetry.tolerance
 
     dds = []
     for disp in disps_first:
@@ -192,18 +190,18 @@ def get_third_order_displacements(cell,
                                         symprec)
 
         for atom2 in second_atoms:
-            dds_atom2 = get_next_displacements(atom1,
-                                               atom2,
-                                               reduced_site_sym,
-                                               lattice,
-                                               positions,
-                                               symprec,
-                                               is_diagonal)
+            dds_atom2 = _get_next_displacements(atom1,
+                                                atom2,
+                                                reduced_site_sym,
+                                                lattice,
+                                                positions,
+                                                symprec,
+                                                is_diagonal)
 
-            min_vec = get_equivalent_smallest_vectors(atom1,
-                                                      atom2,
-                                                      cell,
-                                                      symprec)[0]
+            min_vec = get_smallest_vector_of_atom_pair(atom1,
+                                                       atom2,
+                                                       cell,
+                                                       symprec)
             min_distance = np.linalg.norm(np.dot(lattice, min_vec))
             dds_atom2['distance'] = min_distance
             dds_atom1['second_atoms'].append(dds_atom2)
@@ -212,13 +210,14 @@ def get_third_order_displacements(cell,
     return dds
 
 
-def get_next_displacements(atom1,
-                           atom2,
-                           reduced_site_sym,
-                           lattice,
-                           positions,
-                           symprec,
-                           is_diagonal):
+def _get_next_displacements(atom1,
+                            atom2,
+                            reduced_site_sym,
+                            lattice,
+                            positions,
+                            symprec,
+                            is_diagonal):
+    """Find displacements of second atom."""
     # Bond symmetry between first and second atoms.
     reduced_bond_sym = get_bond_symmetry(
         reduced_site_sym,
@@ -248,6 +247,7 @@ def get_next_displacements(atom1,
 
 
 def get_reduced_site_symmetry(site_sym, direction, symprec=1e-5):
+    """Return site symmetry that may be broken by a displacement."""
     reduced_site_sym = []
     for rot in site_sym:
         if (abs(direction - np.dot(direction, rot.T)) < symprec).all():
@@ -261,9 +261,11 @@ def get_bond_symmetry(site_symmetry,
                       atom_center,
                       atom_disp,
                       symprec=1e-5):
-    """
+    """Return bond symmetry.
+
     Bond symmetry is the symmetry operations that keep the symmetry
     of the cell containing two fixed atoms.
+
     """
     bond_sym = []
     pos = positions
@@ -280,7 +282,7 @@ def get_bond_symmetry(site_symmetry,
 
 
 def get_least_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
-    """Find least orbits for a centering atom"""
+    """Find least orbits for a centering atom."""
     orbits = _get_orbits(atom_index, cell, site_symmetry, symprec)
     mapping = np.arange(cell.get_number_of_atoms())
 
@@ -292,16 +294,18 @@ def get_least_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
     return np.unique(mapping)
 
 
-def get_equivalent_smallest_vectors(atom_number_supercell,
-                                    atom_number_primitive,
-                                    supercell,
-                                    symprec):
-    s_pos = supercell.get_scaled_positions()
-    svecs, multi = get_smallest_vectors(supercell.get_cell(),
+def get_smallest_vector_of_atom_pair(atom_number_supercell,
+                                     atom_number_primitive,
+                                     supercell,
+                                     symprec):
+    """Return smallest vectors of an atom pair in supercell."""
+    s_pos = supercell.scaled_positions
+    svecs, multi = get_smallest_vectors(supercell.cell,
                                         [s_pos[atom_number_supercell]],
                                         [s_pos[atom_number_primitive]],
+                                        store_dense_svecs=True,
                                         symprec=symprec)
-    return svecs[0, 0]
+    return svecs[0]
 
 
 def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
@@ -362,7 +366,7 @@ def _find_duplicates(direction_dataset):
         for directions2 in direction1['second_atoms']:
             n2 = directions2['number']
             if (n2 > n1 and (n2, n1) not in done and
-                (n2, n1) in direction_sets):
+                (n2, n1) in direction_sets):  # noqa E129
                 done.append((n2, n1))
                 duplucates += _compare(
                     n1, n2,

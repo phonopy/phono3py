@@ -67,4 +67,8 @@ int phonopy_dsyev(double *data,
                   const int size,
                   const int algorithm);
 
+lapack_complex_double
+phonoc_complex_prod(const lapack_complex_double a,
+                    const lapack_complex_double b);
+
 #endif

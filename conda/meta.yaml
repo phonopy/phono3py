@@ -4,7 +4,7 @@ package:
 
 source:
   git_url: https://github.com/phonopy/phono3py.git
-  git_branch: {{ environ.get('GIT_BRANCH','master') }}
+  git_branch: {{ environ.get('GIT_BRANCH', 'master') }}
 
 build:
   script_env:
@@ -26,27 +26,27 @@ build:
 
 requirements:
   build:
-    - python
+    - python>=3.5
     - pip
     - numpy>=1.11
     - scipy
     - matplotlib-base
     - pyyaml
     - h5py
-    - phonopy>=2.9.3,<2.10
+    - phonopy>=2.11,<2.12
     - openblas
     - libgfortran
     - spglib
 
   run:
-    - python
+    - python>=3.5
     - pip
     - numpy>=1.11
     - scipy
     - matplotlib-base
     - pyyaml
     - h5py
-    - phonopy>=2.9.3,<2.10
+    - phonopy>=2.10,<2.11
     - openblas
     - libgfortran
     - spglib

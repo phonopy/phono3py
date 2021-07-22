@@ -34,19 +34,21 @@
 
 import numpy as np
 from phonopy.units import THzToEv, Kb
-from phonopy.harmonic.force_constants import similarity_transformation
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
 
 
 class CollisionMatrix(ImagSelfEnergy):
-    """
+    """Collision matrix for direct solution of LBTE for one grid point
+
     Main diagonal part (imag-self-energy) and
     the other part are separately stored.
+
     """
+
     def __init__(self,
                  interaction,
-                 point_operations=None,
-                 ir_grid_points=None,
+                 rotations_cartesian=None,
+                 num_ir_grid_points=None,
                  rot_grid_points=None,
                  temperature=None,
                  sigma=None,
@@ -70,7 +72,6 @@ class CollisionMatrix(ImagSelfEnergy):
         self._unit_conversion = None
         self._cutoff_frequency = None
         self._g = None
-        self._mesh = None
         self._is_collision_matrix = None
         self._unit_conversion = None
         self._log_level = log_level
@@ -85,14 +86,11 @@ class CollisionMatrix(ImagSelfEnergy):
         self._is_collision_matrix = True
 
         if not self._is_reducible_collision_matrix:
-            self._ir_grid_points = ir_grid_points
-            self._rot_grid_points = rot_grid_points
-            self._point_operations = point_operations
-            self._primitive = self._pp.primitive
-            rec_lat = np.linalg.inv(self._primitive.cell)
-            self._rotations_cartesian = np.array(
-                [similarity_transformation(rec_lat, r)
-                 for r in self._point_operations], dtype='double', order='C')
+            self._num_ir_grid_points = num_ir_grid_points
+            self._rot_grid_points = np.array(
+                self._pp.bz_grid.bzg2grg[rot_grid_points],
+                dtype='int_', order='C')
+            self._rotations_cartesian = rotations_cartesian
 
     def run(self):
         if self._pp_strength is None:
@@ -103,12 +101,12 @@ class CollisionMatrix(ImagSelfEnergy):
         self._imag_self_energy = np.zeros(num_band0, dtype='double')
 
         if self._is_reducible_collision_matrix:
-            num_mesh_points = np.prod(self._mesh)
+            num_mesh_points = np.prod(self._pp.mesh_numbers)
             self._collision_matrix = np.zeros(
                 (num_band0, num_mesh_points, num_band), dtype='double')
         else:
             self._collision_matrix = np.zeros(
-                (num_band0, 3, len(self._ir_grid_points), num_band, 3),
+                (num_band0, 3, self._num_ir_grid_points, num_band, 3),
                 dtype='double')
         self._run_with_band_indices()
         self._run_collision_matrix()
@@ -120,15 +118,13 @@ class CollisionMatrix(ImagSelfEnergy):
         if grid_point is None:
             self._grid_point = None
         else:
-            self._pp.set_grid_point(grid_point, stores_triplets_map=True)
+            self._pp.set_grid_point(grid_point, store_triplets_map=True)
             self._pp_strength = None
             (self._triplets_at_q,
              self._weights_at_q,
              self._triplets_map_at_q,
              self._ir_map_at_q) = self._pp.get_triplets_at_q()
-            self._grid_address = self._pp.grid_address
             self._grid_point = grid_point
-            self._bz_map = self._pp.bz_map
             self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
 
     def _run_collision_matrix(self):
@@ -154,7 +150,7 @@ class CollisionMatrix(ImagSelfEnergy):
                                  self._triplets_at_q,
                                  self._triplets_map_at_q,
                                  self._ir_map_at_q,
-                                 self._rot_grid_points,
+                                 self._rot_grid_points,  # in GRGrid
                                  self._rotations_cartesian,
                                  self._temperature,
                                  self._unit_conversion,
@@ -178,7 +174,7 @@ class CollisionMatrix(ImagSelfEnergy):
         num_band = self._pp_strength.shape[2]
         gp2tp_map = self._get_gp2tp_map()
 
-        for i, ir_gp in enumerate(self._ir_grid_points):
+        for i in range(self._num_ir_grid_points):
             r_gps = self._rot_grid_points[i]
             for r, r_gp in zip(self._rotations_cartesian, r_gps):
                 ti = gp2tp_map[self._triplets_map_at_q[r_gp]]
@@ -193,7 +189,7 @@ class CollisionMatrix(ImagSelfEnergy):
                         self._collision_matrix[j, :, i, k, :] += collision * r
 
     def _run_py_reducible_collision_matrix(self):
-        num_mesh_points = np.prod(self._mesh)
+        num_mesh_points = np.prod(self._pp.mesh_numbers)
         num_band0 = self._pp_strength.shape[1]
         num_band = self._pp_strength.shape[2]
         gp2tp_map = self._get_gp2tp_map()

@@ -1,3 +1,4 @@
+"""Phono3py loader."""
 # Copyright (C) 2019 Atsushi Togo
 # All rights reserved.
 #
@@ -69,6 +70,9 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
          symmetrize_fc=True,
          is_mesh_symmetry=True,
          is_compact_fc=False,
+         use_grg=False,
+         store_dense_gp_map=True,
+         store_dense_svecs=True,
          symprec=1e-5,
          log_level=0):
     """Create Phono3py instance from parameters and/or input files.
@@ -137,12 +141,15 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         dtype=int
     primitive_matrix : array_like or str, optional
         Primitive matrix multiplied to input cell basis vectors. Default is
-        the identity matrix. Default is None, which is equivalent to 'auto'.
-        shape=(3, 3), dtype=float.
+        the identity matrix.
+        When given as array_like, shape=(3, 3), dtype=float.
         When 'F', 'I', 'A', 'C', or 'R' is given instead of a 3x3 matrix,
         the primitive matrix defined at
         https://spglib.github.io/spglib/definition.html
         is used.
+        When 'auto' is given, the centring type ('F', 'I', 'A', 'C', 'R', or
+        primitive 'P') is automatically chosen.
+        Default is 'auto'.
     phonon_supercell_matrix : array_like, optional
         Supercell matrix used for fc2. In phono3py, supercell matrix for fc3
         and fc2 can be different to support longer range interaction of fc2
@@ -215,7 +222,7 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
     is_mesh_symmetry : bool, optional
         Setting False, reciprocal mesh symmetry is not considered.
         Default is True.
-    is_compact_fc : bool
+    is_compact_fc : bool, optional
         fc3 are created in the array whose shape is
             True: (primitive, supercell, supecell, 3, 3, 3)
             False: (supercell, supercell, supecell, 3, 3, 3)
@@ -224,17 +231,24 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
             False: (supercell, supecell, 3, 3)
         where 'supercell' and 'primitive' indicate number of atoms in these
         cells. Default is False.
+    use_grg : bool, optional
+        Use generalized regular grid when True. Default is False.
+    store_dense_gp_map : bool, optional
+        Use new format of BZ grid system. Default is True.
+    store_dense_svecs : bool, optional
+        Shortest vectors are stored in the dense array format. This is
+        expected to be always True. Setting False is for rough
+        compatibility with v1.x. Default is True.
     symprec : float, optional
         Tolerance used to find crystal symmetry. Default is 1e-5.
     log_level : int, optional
         Verbosity control. Default is 0.
 
     """
-
     if (supercell is not None or
         supercell_filename is not None or
         unitcell is not None or
-        unitcell_filename is not None):
+        unitcell_filename is not None):  # noqa E129
         cell, smat, pmat = load_helper.get_cell_settings(
             supercell_matrix=supercell_matrix,
             primitive_matrix=primitive_matrix,
@@ -288,6 +302,9 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
                      symprec=symprec,
                      is_symmetry=is_symmetry,
                      is_mesh_symmetry=is_mesh_symmetry,
+                     use_grg=use_grg,
+                     store_dense_gp_map=store_dense_gp_map,
+                     store_dense_svecs=store_dense_svecs,
                      calculator=calculator,
                      log_level=log_level)
 
@@ -332,6 +349,7 @@ def set_dataset_and_force_constants(
         is_compact_fc=False,
         cutoff_pair_distance=None,
         log_level=0):
+    """Set displacements, forces, and create force constants."""
     read_fc = {'fc2': False, 'fc3': False}
     p2s_map = ph3py.primitive.p2s_map
     if fc3_filename is not None:
@@ -431,8 +449,12 @@ def set_dataset_and_force_constants(
         if os.path.isfile("disp_fc2.yaml"):
             if ph3py_yaml is None:
                 disp_filename = "disp_fc2.yaml"
-            elif ph3py_yaml.dataset is None:
+            elif ph3py_yaml.phonon_dataset is None:
                 disp_filename = "disp_fc2.yaml"
+        if disp_filename is None and ph3py_yaml.phonon_dataset is None:
+            msg = ("\"FORCES_FC2\" was found. "
+                   "But displacement dataset was not found.")
+            raise RuntimeError(msg)
         _set_forces_fc2(ph3py,
                         ph3py_yaml,
                         "FORCES_FC2",
@@ -502,10 +524,11 @@ def set_dataset_and_force_constants(
                                    name='fc2')
 
     # Cases that dataset is in phono3py.yaml but not forces.
-    if (ph3py_yaml is not None and ph3py_yaml.dataset is not None):
-        ph3py.dataset = ph3py_yaml.dataset
-    if (ph3py_yaml is not None and ph3py_yaml.phonon_dataset is not None):
-        ph3py.phonon_dataset = ph3py_yaml.phonon_dataset
+    if ph3py.dataset is None:
+        if (ph3py_yaml is not None and ph3py_yaml.dataset is not None):
+            ph3py.dataset = ph3py_yaml.dataset
+        if (ph3py_yaml is not None and ph3py_yaml.phonon_dataset is not None):
+            ph3py.phonon_dataset = ph3py_yaml.phonon_dataset
 
     return read_fc
 
@@ -555,7 +578,6 @@ def _set_forces_fc2(ph3py,
                            disp_filename=disp_filename,
                            fc_type=fc_type,
                            log_level=log_level)
-
     if fc_type == 'phonon_fc2':
         ph3py.phonon_dataset = dataset
     else:
