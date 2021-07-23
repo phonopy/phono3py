@@ -9,6 +9,7 @@ This is a major version release. There are some backword-incompatible changes.
    is changed.
 2. Most of integer array data type is changed to
    `dtype='int_'` from `dtype='intc'`.
+3. Python 3.5 or later is required.
 
 To emulate the version 1.x behaviour in `phono3py` command,
 try `--v1` option. To emurate the version 1.x behaviour in API,
