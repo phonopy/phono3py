@@ -325,18 +325,33 @@ For example, :math:`\kappa_{\lambda,{xx}}` is calculated by::
    array([  1.02050201e+03,   1.02050201e+03,   1.02050201e+03,
             4.40486209e-15,   0.00000000e+00,  -4.40486209e-15])
 
-How to know grid point number corresponding to grid address
-------------------------------------------------------------
+How to know grid point index number corresponding to grid address
+-----------------------------------------------------------------
 
-Runngin with ``--write-gamma``, hdf5 files are written out file names
-with grid point numbers such as ``kappa-m202020-g4200.hdf5``. You may
-want to know the grid point number with given grid address. This is
-done using ``get_grid_point_from_address`` as follows::
+Runngin with ``--write-gamma``, hdf5 files are written out with file names
+such as ``kappa-m202020-g4448.hdf5``. You may want to know the grid point
+index number with given grid address. This is done as follows:
 
-   In [1]: from phono3py.phonon3.triplets import get_grid_point_from_address
+.. code-block:: python
 
-   In [2]: get_grid_point_from_address([0, 10, 10], [20, 20, 20])
-   Out[2]: 4200
+   In [1]: import phono3py
 
-Here the first argument of this method is the grid address and the
-second argument is the mesh numbers.
+   In [2]: ph3 = phono3py.load("phono3py_disp.yaml")
+
+   In [3]: ph3.mesh_numbers = [20, 20, 20]
+
+   In [4]: ph3.grid.get_indices_from_addresses([0, 10, 10])
+   Out[4]: 4448
+
+This index number is different between phono3py version 1.x and 2.x.
+To get the number corresponding to the phono3py version 1.x,
+``store_dense_gp_map=False`` should be specified in ``phono3py.load``,
+
+.. code-block:: python
+
+   In [5]: ph3 = phono3py.load("phono3py_disp.yaml", store_dense_gp_map=False)
+
+   In [6]: ph3.mesh_numbers = [20, 20, 20]
+
+   In [7]: ph3.grid.get_indices_from_addresses([0, 10, 10])
+   Out[7]: 4200

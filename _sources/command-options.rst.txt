@@ -13,7 +13,9 @@ instead of and together with the command options. The setting tags are
 mostly equivalent to the respective most command options, but when
 both are set simultaneously, the command options are preferred. An
 example of configuration (e.g., saved in a file ``setting.conf``) is
-as follow::
+as follow:
+
+.. code-block:: bash
 
    DIM = 2 2 2
    DIM_FC2 = 4 4 4
@@ -27,13 +29,13 @@ as follow::
 
 where the setting tag names are case insensitive. This is run by
 
-::
+.. code-block:: bash
 
    % phono3py setting.conf [comannd options]
 
 or
 
-::
+.. code-block:: bash
 
    % phono3py [comannd options] -- setting.conf
 
@@ -50,7 +52,7 @@ Input cell file name
 
 This specifies input unit cell filename.
 
-::
+.. code-block:: bash
 
    % phono3py -c POSCAR-unitcell ... (many options)
 
@@ -83,18 +85,18 @@ These options have no respective configuration file tags.
 ``--cf3`` (command option only)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This is used to create ``FORCES_FC3`` from ``disp_fc3.yaml`` and
-force calculator outputs containing forces in supercells. ``disp_fc3.yaml``
+This is used to create ``FORCES_FC3`` from ``phono3py_disp.yaml`` and
+force calculator outputs containing forces in supercells. ``phono3py_disp.yaml``
 has to be located at the current directory. Calculator interface has
 to be specified except for VASP (default) case.
 
-::
+.. code-block:: bash
 
    % phono3py --cf3 disp-{00001..00755}/vasprun.xml
 
-::
+.. code-block:: bash
 
-   % phono3py --qe --cf3 supercell_out/disp-{00001..00111}/Si.out
+   % phono3py --cf3 supercell_out/disp-{00001..00111}/Si.out
 
 .. _cf3_file_option:
 
@@ -102,16 +104,18 @@ to be specified except for VASP (default) case.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is used to create ``FORCES_FC3`` from a text file containing a
-list of calculator output file names. ``disp_fc3.yaml`` has to be
+list of calculator output file names. ``phono3py_disp.yaml`` has to be
 located at the current directory. Calculator interface has to be
 specified except for VASP (default) case.
 
-::
+.. code-block:: bash
 
    % phono3py --cf3-file file_list.dat
 
 where ``file_list.dat`` contains file names that can be recognized
-from the current directory and is expected to be like::
+from the current directory and is expected to be like:
+
+.. code-block:: bash
 
   disp-00001/vasprun.xml
   disp-00002/vasprun.xml
@@ -128,12 +132,12 @@ to be used together with ``--cutoff-pair`` option.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is used to create ``FORCES_FC2`` similarly to ``--cf3``
-option. ``disp_fc2.yaml`` has to be located at the current
+option. ``phono3py_disp.yaml`` has to be located at the current
 directory. This is optional. Calculator interface has to be specified
 except for VASP (default) case. ``FORCES_FC2`` is necessary to run
 with ``--dim-fc2`` option.
 
-::
+.. code-block:: bash
 
    % phono3py --cf2 disp_fc2-{00001..00002}/vasprun.xml
 
@@ -153,7 +157,7 @@ the forces of the perfect supercells. In ideal case, these forces are
 zero, but often they are not. Here, this is called "residual
 forces". Sometimes quality of force constants is improved in this way.
 
-::
+.. code-block:: bash
 
    % phono3py --cf3 disp3-{00001..01254}/vasprun.xml --cfz disp3-00000/vasprun.xml
    % phono3py --cf2 disp2-{00001..00006}/vasprun.xml --cfz disp2-00000/vasprun.xml
@@ -163,10 +167,10 @@ forces". Sometimes quality of force constants is improved in this way.
 ``--fs2f2`` or ``--force-sets-to-forces-fc2`` (command option only)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``FORCES_FC2`` and ``disp_fc2.yaml`` are created
-from phonopy's ``FORCE_SETS`` file.
+``FORCES_FC2`` is created from phonopy's ``FORCE_SETS`` file.
+Necessary yaml lines for ``phono3py_disp.yaml`` is displayed as text.
 
-::
+.. code-block:: bash
 
    % phono3py --fs2f2
 
@@ -176,17 +180,17 @@ from phonopy's ``FORCE_SETS`` file.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Phonopy's ``FORCE_SETS`` is created from
-``FORCES_FC3`` and ``disp_fc3.yaml``.
+``FORCES_FC3`` and ``phono3py_disp.yaml``.
 
-::
+.. code-block:: bash
 
    % phono3py --cfs
 
 In conjunction with :ref:`--dim-fc2 <dim_fc2_option>`, phonopy's
-``FORCE_SETS`` is created from ``FORCES_FC2`` and ``disp_fc2.yaml``
-instead of ``FORCES_FC3`` and ``disp_fc3.yaml``.
+``FORCE_SETS`` is created from ``FORCES_FC2`` and ``phono3py_disp.yaml``
+instead of ``FORCES_FC3`` and ``phono3py_disp.yaml``.
 
-::
+.. code-block:: bash
 
    % phono3py --cfs --dim-fc2="x x x"
 
@@ -199,7 +203,9 @@ Supercell and primitive cell
 ~~~~~~~~~~~~~~~~~~~
 
 Supercell dimension is specified. See the
-detail at http://phonopy.github.io/phonopy/setting-tags.html#dim .
+detail at http://phonopy.github.io/phonopy/setting-tags.html#dim.
+When a proper ``phono3py_disp.yaml`` exists in the current directory,
+this is unnecessary to be specified.
 
 .. _dim_fc2_option:
 
@@ -208,6 +214,8 @@ detail at http://phonopy.github.io/phonopy/setting-tags.html#dim .
 
 Supercell dimension for 2nd order force constants (for harmonic
 phonons) is specified. This is optional.
+When a proper ``phono3py_disp.yaml`` exists in the current directory,
+this is unnecessary to be specified.
 
 A larger and different supercell size for 2nd order force constants
 than that for 3rd order force constants can be specified with this
@@ -218,31 +226,31 @@ order force constants may be a good idea.
 
 Using this option with ``-d`` option, the structure files
 (e.g. ``POSCAR_FC2-xxxxx`` or equivalent files for the other
-interfaces) and ``disp_fc2.yaml`` are created. These are used to
+interfaces) and ``phono3py_disp.yaml`` are created. These are used to
 calculate 2nd order force constants for the larger supercell size and
 these force calculations have to be done in addition to the usual
 force calculations for 3rd order force constants.
 
-::
+.. code-block:: bash
 
    phono3py -d --dim="2 2 2" --dim-fc2="4 4 4" -c POSCAR-unitcell
 
 After the force calculations, ``--cf2`` option is used to create
 ``FORCES_FC2``.
 
-::
+.. code-block:: bash
 
    phono3py --cf2 disp-{001,002}/vasprun.xml
 
 To calculate 2nd order force constants for the larger supercell size,
-``FORCES_FC2`` and ``disp_fc2.yaml`` are necessary. Whenever running
+``FORCES_FC2`` and ``phono3py_disp.yaml`` are necessary. Whenever running
 phono3py for the larger 2nd order force constants, ``--dim-fc2``
 option has to be specified. ``fc2.hdf5`` created as a result of
 running phono3py contains the 2nd order force constants with
 larger supercell size. The filename is the same as that created in the
 usual phono3py run without ``--dim-fc2`` option.
 
-::
+.. code-block:: bash
 
    phono3py --dim="2 2 2" --dim_fc2="4 4 4" -c POSCAR-unitcell ... (many options)
 
@@ -253,7 +261,9 @@ usual phono3py run without ``--dim-fc2`` option.
 
 Transformation matrix from a non-primitive cell to the primitive
 cell. See phonopy ``PRIMITIVE_AXES`` tag (``--pa`` option) at
-http://phonopy.github.io/phonopy/setting-tags.html#primitive-axis
+http://phonopy.github.io/phonopy/setting-tags.html#primitive-axis.
+When a proper ``phono3py_disp.yaml`` exists in the current directory,
+this is unnecessary to be specified.
 
 Displacement creation
 ---------------------
@@ -265,8 +275,10 @@ Displacement creation
 
 Supercell with displacements are created. Using with ``--amplitude``
 option, atomic displacement distances are controlled. With this
-option, files for supercells with displacements and ``disp_fc3.yaml``
-file are created.
+option, files for supercells with displacements and ``phono3py_disp.yaml``
+file are created. ``--pa`` should be specified if the input unit cell
+structure is not a primitive cell, e.g., ``--pa="F"`` if the input
+unit cell has F-centring.
 
 .. _amplitude_option:
 
@@ -304,9 +316,9 @@ using with ``--sym-fc``, the calculated results will become slightly
 different due to imperfect symmetrization scheme that phono3py
 employs.
 
-::
+.. code-block:: bash
 
-   % phono3py --dim="2 2 2" --cfc --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell
+   % phono3py --dim="2 2 2" --cfc --pa="F" -c POSCAR-unitcell
 
 .. _symmetrization_option:
 
@@ -398,9 +410,9 @@ Indices of grid points are specified by space or comma (``,``)
 separated numbers. The mapping table between grid points to its
 indices is obtained by running with ``--loglevel=2`` option.
 
-::
+.. code-block:: bash
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --write-gamma --gp="0 1 2 3 4 5"
+   % phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --fc3 --fc2 --br --write-gamma --gp="0 1 2 3 4 5"
 
 where ``--gp="0 1 2 3 4 5"`` can be also written
 ``--gp="0,1,2,3,4,5"``. ``--ga`` option below can be used similarly
@@ -432,7 +444,7 @@ indices used to be averaged. The calculated values at indices
 separated by space are averaged, and those separated by comma are
 separately calculated.
 
-::
+.. code-block:: bash
 
    % phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" -c POSCAR-unitcell --nac --gp="34" --bi="4 5, 6"
 
@@ -457,9 +469,9 @@ grid points and their grid addresses in integers. Q-points
 corresponding to grid points are calculated divided these integers by
 sampling mesh numbers for respective reciprocal axes.
 
-::
+.. code-block:: bash
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --wgp
+   % phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --wgp
 
 .. _stp_option:
 
@@ -471,9 +483,9 @@ points for specified sampling mesh numbers are shown. This can be used
 to estimate how large a calculation is. Only those for specific grid
 points are shown by using with ``--gp`` or ``--ga`` option.
 
-::
+.. code-block:: bash
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="19 19 19" --stp --gp 20
+   % phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="19 19 19" --stp --gp 20
 
 Brillouin zone integration
 ---------------------------
@@ -585,7 +597,7 @@ parameters are read from database of the natural abundance data for
 elements, which refers Laeter *et al.*, Pure Appl. Chem., **75**, 683
 (2003).
 
-::
+.. code-block:: bash
 
    % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --isotope
 
@@ -599,11 +611,15 @@ option. For example of GaN, this may be set like ``--mv="1.97e-4
 of atoms in the primitive cell.
 
 Isotope effect to thermal conductivity may be checked first running
-without isotope calculation::
+without isotope calculation:
+
+.. code-block:: bash
 
    % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br
 
-Then running with isotope calculation::
+Then running with isotope calculation:
+
+.. code-block:: bash
 
    % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --read-gamma --mv="1.97e-4 1.97e-4 0 0"
 
@@ -660,13 +676,13 @@ together with ``-o`` option is strongly recommended.
 
 First, run full conductivity calculation,
 
-::
+.. code-block:: bash
 
    % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br
 
 Then
 
-::
+.. code-block:: bash
 
    % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --read-gamma --ave-pp -o ave_pp
 
@@ -680,7 +696,7 @@ conductivity calculation. This option works only when ``--br`` options
 are activated. Therefore third-order force constants are not necessary
 to input. The physical unit of the value is :math:`\text{eV}^2`.
 
-::
+.. code-block:: bash
 
    % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --const-ave-pp=1e-10
 
@@ -702,9 +718,9 @@ accessed by ``gamma_N`` and ``gamma_U`` keys. The shape of the arrays
 is the same as that of ``gamma`` (see
 :ref:`kappa_hdf5_file_gamma`). An example (Si-PBEsol) is shown below:
 
-::
+.. code-block:: bash
 
-   % phono3py --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="11 11 11" --fc3 --fc2 --br --nu
+   % phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="11 11 11" --fc3 --fc2 --br --nu
    ...
    % ipython
 
@@ -748,7 +764,7 @@ Temperature
 
 Specific temperatures are specified by ``--ts``.
 
-::
+.. code-block:: bash
 
    % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" -c POSCAR-unitcell --br --ts="200 300 400"
 
@@ -760,7 +776,7 @@ Temperatures at equal interval are specified by ``--tmax``,
 http://phonopy.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep
 .
 
-::
+.. code-block:: bash
 
    % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="11 11 11" -c POSCAR-unitcell --br --tmin=100 --tmax=1000 --tstep=50
 
@@ -782,7 +798,7 @@ first line of ``BORN`` file.
 
 This is used with ``--nac`` to specify reciprocal-space direction
 at :math:`\mathbf{q}\rightarrow \mathbf{0}`. See the detail
-at http://phonopy.github.io/phonopy/setting-tags.html#q-direction .
+at http://phonopy.github.io/phonopy/setting-tags.html#q-direction.
 
 .. _write_gamma_option:
 
@@ -800,7 +816,7 @@ calculated with respect to :math:`\omega`. The output is written to
 with respect to frequency in THz (without :math:`2\pi`). Frequency sampling
 points can be specified by :ref:`freq_sampling_option`.
 
-::
+.. code-block:: bash
 
    % phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" -c POSCAR-unitcell --nac --q-direction="1 0 0" --gp=0 --ise --bi="4 5, 6"
 
@@ -832,9 +848,9 @@ are the values given as follows, respectively,
    \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'') \delta(\omega-\omega_{\lambda'}
    -\omega_{\lambda''}).
 
-::
+.. code-block:: bash
 
-   % phono3py --fc2 --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="16 16 16" --jdos --ga="0 0 0  8 8 8"
+   % phono3py --fc2 --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="16 16 16" --jdos --ga="0 0 0  8 8 8"
 
 When temperatures are specified, two classes of weighted JDOS are
 calculated. The result is written into
@@ -856,9 +872,9 @@ the values given as follows, respectively,
    (n_{\lambda'}+ n_{\lambda''}+1) \delta( \omega - \omega_{\lambda'} -
    \omega_{\lambda''}).
 
-::
+.. code-block:: bash
 
-   % phono3py --fc2 --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" -c POSCAR-unitcell --mesh="16 16 16" --jdos --ga="0 0 0  8 8 8" --ts=300
+   % phono3py --fc2 --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="16 16 16" --jdos --ga="0 0 0  8 8 8" --ts=300
 
 This is an example of ``Si-PBEsol``.
 
@@ -891,11 +907,15 @@ Mode-Gruneisen parameter from 3rd order force constants
 
 Mode-Gruneisen-parameters are calculated from fc3.
 
-Mesh sampling mode::
+Mesh sampling mode:
+
+.. code-block:: bash
 
    % phono3py --fc3 --fc2 --dim="2 2 2" -v --mesh="16 16 16" -c POSCAR-unitcell --nac --gruneisen
 
-Band path mode::
+Band path mode:
+
+.. code-block:: bash
 
    % phono3py --fc3 --fc2 --dim="2 2 2" -v -c POSCAR-unitcell --nac --gruneisen --band="0 0 0  0 0 1/2"
 
@@ -1015,9 +1035,9 @@ Phonon frequencies, eigenvectors, and grid point addresses are stored
 in ``phonon-mxxx.hdf5`` file. :ref:`--pa <pa_option>` and :ref:`--nac
 <nac_option>` may be required depending on calculation setting.
 
-::
+.. code-block:: bash
 
-   % phono3py --fc2 --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" --mesh="11 11 11" -c POSCAR-unitcell --nac --write-phoonon
+   % phono3py --fc2 --dim="2 2 2" --pa="F" --mesh="11 11 11" -c POSCAR-unitcell --nac --write-phoonon
 
 Contents of ``phonon-mxxx.hdf5`` are watched by::
 
@@ -1065,9 +1085,9 @@ different eigenvalue solvers or different CPU
 architectures. :ref:`--pa <pa_option>` and :ref:`--nac <nac_option>`
 may be required depending on calculation setting.
 
-::
+.. code-block:: bash
 
-   % phono3py --fc2 --fc3 --dim="2 2  2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" --mesh="11 11 11" -c POSCAR-unitcell --nac --read-phoonon --br
+   % phono3py --fc2 --fc3 --dim="2 2  2" --pa="F" --mesh="11 11 11" -c POSCAR-unitcell --nac --read-phoonon --br
 
 .. _write_read_pp_option:
 
@@ -1086,13 +1106,13 @@ conductivity calculation, in writing and reading, ph-ph interaction
 strength has to be stored in memory, so there is overhead in memory
 than usual RTA calculation.
 
-::
+.. code-block:: bash
 
-   % phono3py --fc2 --fc3 --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" --mesh="11 11 11" -c POSCAR-unitcell --nac --write-pp --br --gp=1
+   % phono3py --fc2 --fc3 --dim="2 2 2" --pa="F" --mesh="11 11 11" -c POSCAR-unitcell --nac --write-pp --br --gp=1
 
-::
+.. code-block:: bash
 
-   % phono3py --fc2 --dim="2 2 2" --pa="0 1/2 1/2 1/2 0 1/2 1/2 1/2 0" --mesh="11 11 11" -c POSCAR-unitcell --nac --read-pp --br --gp=1
+   % phono3py --fc2 --dim="2 2 2" --pa="F" --mesh="11 11 11" -c POSCAR-unitcell --nac --read-pp --br --gp=1
 
 
 .. _hdf5_compression_option:
@@ -1125,8 +1145,6 @@ This rule is applied to
 - ``kappa-xxx.hdf5``
 - ``phonon-xxx.hdf5``
 - ``pp-xxx.hdf5``
-- ``disp_fc3.yaml``
-- ``disp_fc2.yaml``
 - ``gamma_detail-xxx.hdf5`` (write only)
 
 .. _input_filename_option:
@@ -1147,8 +1165,6 @@ This rule is applied to
 - ``kappa-xxx.hdf5``
 - ``phonon-xxx.hdf5``
 - ``pp-xxx.hdf5``
-- ``disp_fc3.yaml``
-- ``disp_fc2.yaml``
 
 ``--io`` (command option only)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

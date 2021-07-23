@@ -3,6 +3,22 @@
 Change Log
 ==========
 
+Version 2.0.0
+-------------
+
+This is a major version release. There are some backword-incompatible changes.
+
+1. Grid point index corresponding to the grid point address (q-point)
+   is changed.
+2. Most of integer array data type is changed to
+   ``dtype='int_'`` from ``dtype='intc'``.
+
+To emulate the version 1.x behaviour in ``phono3py`` command,
+try ``--v1`` option. To emurate the version 1.x behaviour in API,
+specify ``store_dense_gp_map=False``
+and ``store_dense_svecs=False`` in instatiation of ``Phono3py`` class
+or phon3py loader.
+
 Mar-17-2021: Version 1.22.3
 ---------------------------
 - Fix ``--read-gamma`` option to work.
