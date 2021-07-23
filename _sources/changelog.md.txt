@@ -7,7 +7,7 @@ This is a major version release. There are some backword-incompatible changes.
 
 1. Grid point indexing system to address grid points of q-points
    is changed.
-2. Most of integer array data type is changed to
+2. Array data types of most of the integer arrays are changed to
    `dtype='int_'` from `dtype='intc'`.
 3. Python 3.5 or later is required.
 
