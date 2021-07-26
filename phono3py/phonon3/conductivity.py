@@ -507,7 +507,7 @@ class Conductivity(object):
         raise NotImplementedError()
 
     def _set_grid_properties(self, grid_points):
-        self._pp.set_nac_q_direction(nac_q_direction=None)
+        self._pp.nac_q_direction = None
 
         if grid_points is not None:  # Specify grid points
             self._grid_points = grid_points

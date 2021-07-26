@@ -295,8 +295,24 @@ class Interaction(object):
 
     @property
     def nac_q_direction(self):
-        """Return q-direction used for NAC at q->0."""
+        """Return q-direction used for NAC at q->0.
+
+        Direction of q-vector watching from Gamma point used for
+        non-analytical term correction. This is effective only at q=0
+        (physically q->0). The direction is given in crystallographic
+        (fractional) coordinates.
+        shape=(3,), dtype='double'.
+        Default value is None, which means this feature is not used.
+
+        """
         return self._nac_q_direction
+
+    @nac_q_direction.setter
+    def nac_q_direction(self, nac_q_direction):
+        if nac_q_direction is None:
+            self._nac_q_direction = None
+        else:
+            self._nac_q_direction = np.array(nac_q_direction, dtype='double')
 
     def get_nac_q_direction(self):
         """Return q-direction used for NAC at q->0."""
@@ -304,6 +320,13 @@ class Interaction(object):
                       "instead of Interaction.get_nac_q_direction().",
                       DeprecationWarning)
         return self.nac_q_direction
+
+    def set_nac_q_direction(self, nac_q_direction=None):
+        """Set NAC q-point direction valid at q->0."""
+        warnings.warn("Use attribute, Interaction.nac_q_direction "
+                      "instead of Interaction.set_nac_q_direction().",
+                      DeprecationWarning)
+        self.nac_q_direction = nac_q_direction
 
     @property
     def zero_value_positions(self):
@@ -513,11 +536,6 @@ class Interaction(object):
                               "is calculated to be %f." % (i + 1, f))
                         print(" But this frequency is forced to be zero.")
                         print("=" * 61)
-
-    def set_nac_q_direction(self, nac_q_direction=None):
-        """Set NAC q-point direction valid at q->0."""
-        if nac_q_direction is not None:
-            self._nac_q_direction = np.array(nac_q_direction, dtype='double')
 
     def set_phonon_data(self, frequencies, eigenvectors, bz_grid_addresses):
         """Set phonons on grid."""
@@ -730,16 +748,17 @@ class Interaction(object):
         self._g_zero = g_zero
 
     def _run_phonon_solver_c(self, grid_points):
-        run_phonon_solver_c(self._dm,
-                            self._frequencies,
-                            self._eigenvectors,
-                            self._phonon_done,
-                            grid_points,
-                            self._bz_grid.addresses,
-                            self._bz_grid.QDinv,
-                            self._frequency_factor_to_THz,
-                            self._nac_q_direction,
-                            self._lapack_zheev_uplo)
+        run_phonon_solver_c(
+            self._dm,
+            self._frequencies,
+            self._eigenvectors,
+            self._phonon_done,
+            grid_points,
+            self._bz_grid.addresses,
+            self._bz_grid.QDinv,
+            frequency_conversion_factor=self._frequency_factor_to_THz,
+            nac_q_direction=self._nac_q_direction,
+            lapack_zheev_uplo=self._lapack_zheev_uplo)
 
     def _run_py(self):
         r2r = RealToReciprocal(self._fc3,

@@ -100,46 +100,18 @@ class BZGrid(object):
     Attributes
     ----------
     addresses : ndarray
-        Integer grid address of the points in Brillouin zone including
-        surface. There are two types of address order by either
-        `store_dense_gp_map` is True or False.
-        shape=(np.prod(D_diag) + some on surface, 3), dtype='int_', order='C'
     gp_map : ndarray
-        Grid point mapping table containing BZ surface. There are two types of
-        address order by either `store_dense_gp_map` is True or False. See more
-        detail in `_relocate_BZ_grid_address` docstring.
     bzg2grg : ndarray
-        Grid index mapping table from BZGrid to GRgrid.
-        shape=(len(addresses), ), dtype='int_'
     grg2bzg : ndarray
-        Grid index mapping table from GRgrid to BZGrid. Unique one
-        of translationally equivalent grid points in BZGrid is chosen.
-        shape=(prod(D_diag), ), dtype='int_'
     store_dense_gp_map : bool, optional
-        See the detail in the docstring of `_relocate_BZ_grid_address`.
     rotations : ndarray
-        Rotation matrices for GR-grid addresses (g) defined as g'=Rg.
-        shape=(rotations, 3, 3), dtype='int_', order='C'.
     reciprocal_operations : ndarray
-        Reciprocal space rotation matrices in fractional coordinates defined as
-        q'=Rq.
-        shape=(rotations, 3, 3), dtype='int_', order='C'.
     D_diag : ndarray
-        This corresponds to the mesh numbers in transformed reciprocal
-        basis vectors.
-        shape=(3,), dtype='int_'
     P : ndarray
-        Left unimodular matrix after SNF: D=PAQ.
-        shape=(3, 3), dtype='int_', order='C'
     Q : ndarray
-        Right unimodular matrix after SNF: D=PAQ.
-        shape=(3, 3), dtype='int_', order='C'
+    QDinv : ndarray
     grid_matrix : ndarray
-        Grid generating matrix used for SNF.
-        shape=(3, 3), dtype='int_', order='C'
     microzone_lattice : ndarray
-        Basis vectors of microzone of GR-grid.
-        shape=(3, 3), dtype='double', order='C'
 
     """
 
@@ -217,22 +189,43 @@ class BZGrid(object):
 
     @property
     def D_diag(self):
-        """Diagonal elements of diagonal matrix after SNF: D=PAQ."""
+        """Diagonal elements of diagonal matrix after SNF: D=PAQ.
+
+        This corresponds to the mesh numbers in transformed reciprocal
+        basis vectors.
+        shape=(3,), dtype='int_'
+
+        """
         return self._D_diag
 
     @property
     def P(self):
-        """Left unimodular matrix after SNF: D=PAQ."""
+        """Left unimodular matrix after SNF: D=PAQ.
+
+        Left unimodular matrix after SNF: D=PAQ.
+        shape=(3, 3), dtype='int_', order='C'.
+
+        """
         return self._P
 
     @property
     def Q(self):
-        """Right unimodular matrix after SNF: D=PAQ."""
+        """Right unimodular matrix after SNF: D=PAQ.
+
+        Right unimodular matrix after SNF: D=PAQ.
+        shape=(3, 3), dtype='int_', order='C'.
+
+        """
         return self._Q
 
     @property
     def QDinv(self):
-        """QD^-1."""
+        """QD^-1.
+
+        ndarray :
+            shape=(3, 3), dtype='double', order='C'.
+
+        """
         return self._QDinv
 
     @property
@@ -245,22 +238,43 @@ class BZGrid(object):
 
     @property
     def grid_matrix(self):
-        """Grid generating matrix to be represented by SNF."""
+        """Grid generating matrix to be represented by SNF.
+
+        Grid generating matrix used for SNF.
+        shape=(3, 3), dtype='int_', order='C'.
+
+        """
         return self._grid_matrix
 
     @property
     def addresses(self):
-        """BZ-grid addresses."""
+        """BZ-grid addresses.
+
+        Integer grid address of the points in Brillouin zone including
+        surface. There are two types of address order by either
+        `store_dense_gp_map` is True or False.
+        shape=(np.prod(D_diag) + some on surface, 3), dtype='int_', order='C'.
+
+        """
         return self._addresses
 
     @property
     def gp_map(self):
-        """Definitions of grid index."""
+        """Definitions of grid index.
+
+        Grid point mapping table containing BZ surface. There are two types of
+        address order by either `store_dense_gp_map` is True or False. See more
+        detail in `_relocate_BZ_grid_address` docstring.
+
+        """
         return self._gp_map
 
     @property
     def bzg2grg(self):
         """Transform grid point indices from BZG to GRG.
+
+        Grid index mapping table from BZGrid to GRgrid.
+        shape=(len(addresses), ), dtype='int_'.
 
         Equivalent to
             get_grid_point_from_address(
@@ -271,22 +285,42 @@ class BZGrid(object):
 
     @property
     def grg2bzg(self):
-        """Transform grid point indices from GRG to BZG."""
+        """Transform grid point indices from GRG to BZG.
+
+        Grid index mapping table from GRgrid to BZGrid. Unique one
+        of translationally equivalent grid points in BZGrid is chosen.
+        shape=(prod(D_diag), ), dtype='int_'.
+
+        """
         return self._grg2bzg
 
     @property
     def microzone_lattice(self):
-        """Basis vectors of microzone."""
+        """Basis vectors of microzone.
+
+        Basis vectors of microzone of GR-grid.
+        shape=(3, 3), dtype='double', order='C'.
+
+        """
         return self._microzone_lattice
 
     @property
     def store_dense_gp_map(self):
-        """Return gp_map type."""
+        """Return gp_map type.
+
+        See the detail in the docstring of `_relocate_BZ_grid_address`.
+
+        """
         return self._store_dense_gp_map
 
     @property
     def rotations(self):
-        """Return rotations."""
+        """Return rotation matrices for grid points.
+
+        Rotation matrices for GR-grid addresses (g) defined as g'=Rg.
+        shape=(rotations, 3, 3), dtype='int_', order='C'.
+
+        """
         return self._rotations
 
     @property
@@ -296,7 +330,13 @@ class BZGrid(object):
 
     @property
     def reciprocal_operations(self):
-        """Return reciprocal rotations."""
+        """Return reciprocal rotations.
+
+        Reciprocal space rotation matrices in fractional coordinates defined as
+        q'=Rq.
+        shape=(rotations, 3, 3), dtype='int_', order='C'.
+
+        """
         return self._reciprocal_operations
 
     @property

@@ -34,6 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
+from phonopy.units import VaspToTHz
 from phonopy.structure.cells import sparse_to_dense_svecs
 
 
@@ -44,10 +45,31 @@ def run_phonon_solver_c(dm,
                         grid_points,
                         grid_address,
                         QDinv,
-                        frequency_conversion_factor,
-                        nac_q_direction,  # in reduced coordinates
-                        lapack_zheev_uplo):
-    """Bulid and solve dynamical matrices on grid in C-API."""
+                        frequency_conversion_factor=VaspToTHz,
+                        nac_q_direction=None,  # in reduced coordinates
+                        lapack_zheev_uplo='L'):
+    """Bulid and solve dynamical matrices on grid in C-API.
+
+    dm : DynamicalMatrix
+        DynamicalMatrix instance.
+    frequencies, eigenvectors, phonon_done :
+        See Interaction.get_phonons().
+    grid_points : ndarray
+        Grid point indices.
+        shape=(grid_points, ), dtype='int_'
+    grid_address : ndarray
+        See BZGrid.addresses.
+    QDinv : ndarray
+        See BZGrid.QDinv.
+    frequency_conversion_factor : float, optional
+        Frequency convertion factor that is multiplied with
+        sqrt or eigenvalue of dynamical matrix. Default is VaspToTHz.
+    nac_q_direction : array_like, optional
+        See Interaction.nac_q_direction. Default is None.
+    lapack_zheev_uplo : str, optional
+        'U' or 'L' for lapack zheev solver. Default is 'L'.
+
+    """
     import phono3py._phononmod as phononmod
 
     (svecs,
@@ -58,12 +80,6 @@ def run_phonon_solver_c(dm,
      born,
      nac_factor,
      dielectric) = _extract_params(dm)
-
-    if dm.primitive.store_dense_svecs:
-        _svecs = svecs
-        _multi = multi
-    else:
-        _svecs, _multi = sparse_to_dense_svecs(svecs, multi)
 
     if dm.is_nac() and dm.nac_method == 'gonze':
         gonze_nac_dataset = dm.Gonze_nac_dataset
@@ -85,6 +101,9 @@ def run_phonon_solver_c(dm,
 
     assert grid_points.dtype == 'int_'
     assert grid_points.flags.c_contiguous
+    assert QDinv.dtype == 'double'
+    assert QDinv.flags.c_contiguous
+    assert lapack_zheev_uplo in ('L', 'U')
 
     fc_p2s, fc_s2p = _get_fc_elements_mapping(dm, fc)
     phononmod.phonons_at_gridpoints(
@@ -93,10 +112,10 @@ def run_phonon_solver_c(dm,
         phonon_done,
         grid_points,
         grid_address,
-        np.array(QDinv, dtype='double', order='C'),
+        QDinv,
         fc,
-        _svecs,
-        _multi,
+        svecs,
+        multi,
         positions,
         masses,
         fc_p2s,
@@ -137,7 +156,13 @@ def run_phonon_solver_py(grid_point,
 
 
 def _extract_params(dm):
-    svecs, multiplicity = dm.primitive.get_smallest_vectors()
+    svecs, multi = dm.primitive.get_smallest_vectors()
+    if dm.primitive.store_dense_svecs:
+        _svecs = svecs
+        _multi = multi
+    else:
+        _svecs, _multi = sparse_to_dense_svecs(svecs, multi)
+
     masses = np.array(dm.primitive.masses, dtype='double')
     rec_lattice = np.array(np.linalg.inv(dm.primitive.cell),
                            dtype='double', order='C')
@@ -151,8 +176,8 @@ def _extract_params(dm):
         nac_factor = 0
         dielectric = None
 
-    return (svecs,
-            multiplicity,
+    return (_svecs,
+            _multi,
             masses,
             rec_lattice,
             positions,

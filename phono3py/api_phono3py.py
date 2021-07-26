@@ -1262,7 +1262,7 @@ class Phono3py(object):
             is_mesh_symmetry=self._is_mesh_symmetry,
             symmetrize_fc3q=_symmetrize_fc3q,
             lapack_zheev_uplo=_lapack_zheev_uplo)
-        self._interaction.set_nac_q_direction(nac_q_direction=nac_q_direction)
+        self._interaction.nac_q_direction = nac_q_direction
         self._init_dynamical_matrix()
 
     def set_phph_interaction(self,
