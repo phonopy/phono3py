@@ -49,8 +49,7 @@ def test_interaction_RTA_AlN(aln_lda):
 
 def _get_irt(ph3, mesh):
     ph3.mesh_numbers = mesh
-    itr = Interaction(ph3.supercell,
-                      ph3.primitive,
+    itr = Interaction(ph3.primitive,
                       ph3.grid,
                       ph3.primitive_symmetry,
                       ph3.fc3,

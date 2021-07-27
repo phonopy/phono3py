@@ -34,13 +34,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import warnings
+from typing import Union
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
-from phonopy.structure.cells import sparse_to_dense_svecs
+from phonopy.structure.cells import Primitive, sparse_to_dense_svecs
+from phonopy.structure.symmetry import Symmetry
 from phonopy.units import VaspToTHz, Hbar, EV, Angstrom, THz, AMU
 from phonopy.structure.cells import compute_all_sg_permutations
 from phono3py.phonon.grid import (
-    get_ir_grid_points, get_grid_points_by_rotations)
+    get_ir_grid_points, get_grid_points_by_rotations, BZGrid)
 from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
 from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
 from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
@@ -59,13 +61,30 @@ class Interaction(object):
     2) set_grid_point
     3) run
 
+    Attributes
+    ----------
+    interaction_strength
+    mesh_numbers
+    is_mesh_symmetry
+    fc3
+    dynamical_matrix
+    primitive
+    primitive_symmetry
+    bz_grid
+    band_indices
+    nac_params
+    nac_q_direction
+    zero_value_positions
+    frequency_factor_to_THz
+    lapack_zheev_uplo
+    cutoff_frequency
+
     """
 
     def __init__(self,
-                 supercell,
-                 primitive,
-                 bz_grid,
-                 primitive_symmetry,
+                 primitive: Primitive,
+                 bz_grid: BZGrid,
+                 primitive_symmetry: Symmetry,
                  fc3=None,
                  band_indices=None,
                  constant_averaged_interaction=None,
@@ -77,7 +96,6 @@ class Interaction(object):
                  cutoff_frequency=None,
                  lapack_zheev_uplo='L'):
         """Init method."""
-        self._supercell = supercell
         self._primitive = primitive
         self._bz_grid = bz_grid
         self._primitive_symmetry = primitive_symmetry
@@ -244,18 +262,6 @@ class Interaction(object):
     def primitive_symmetry(self):
         """Return Symmetry class instance of primitive cell."""
         return self._primitive_symmetry
-
-    @property
-    def supercell(self):
-        """Return Supercell class instance."""
-        return self._supercell
-
-    def get_supercell(self):
-        """Return Supercell class instance."""
-        warnings.warn("Use attribute, Interaction.supercell "
-                      "instead of Interaction.get_supercell().",
-                      DeprecationWarning)
-        return self.supercell
 
     def get_triplets_at_q(self):
         """Return grid point triplets information."""
@@ -762,7 +768,6 @@ class Interaction(object):
 
     def _run_py(self):
         r2r = RealToReciprocal(self._fc3,
-                               self._supercell,
                                self._primitive,
                                self.mesh_numbers,
                                symprec=self._symprec)

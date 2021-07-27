@@ -64,7 +64,7 @@ def get_thermal_conductivity_LBTE(
         solve_collective_phonon=False,
         is_reducible_collision_matrix=False,
         is_kappa_star=True,
-        gv_delta_q=1e-4,  # for group velocity
+        gv_delta_q=None,
         is_full_pp=False,
         pinv_cutoff=1.0e-8,
         pinv_solver=0,  # default: dsyev in lapacke
@@ -791,17 +791,13 @@ class Conductivity_LBTE(Conductivity):
                  log_level=0):
         """Init method."""
         self._pp = None
+        self._gv_obj = None
         self._temperatures = None
         self._sigmas = None
         self._sigma_cutoff = None
         self._is_kappa_star = None
-        self._gv_delta_q = None
         self._is_full_pp = None
         self._log_level = None
-        self._primitive = None
-        self._dm = None
-        self._frequency_factor_to_THz = None
-        self._cutoff_frequency = None
         self._boundary_mfp = None
 
         self._point_operations = None
@@ -809,7 +805,6 @@ class Conductivity_LBTE(Conductivity):
 
         self._grid_points = None
         self._grid_weights = None
-        self._bz_grid = None
         self._ir_grid_points = None
         self._ir_grid_weights = None
 
@@ -919,7 +914,7 @@ class Conductivity_LBTE(Conductivity):
 
     def get_frequencies_all(self):
         """Return phonon frequencies on GR-grid."""
-        return self._frequencies[self._bz_grid.grg2bzg]
+        return self._frequencies[self._pp.bz_grid.grg2bzg]
 
     def get_kappa_RTA(self):
         """Return RTA lattice thermal conductivity."""
@@ -953,7 +948,7 @@ class Conductivity_LBTE(Conductivity):
             self._set_collision_matrix_at_sigmas(i)
 
         if self._is_reducible_collision_matrix:
-            i_data = self._bz_grid.bzg2grg[gp]
+            i_data = self._pp.bz_grid.bzg2grg[gp]
         else:
             i_data = i
         self._set_harmonic_properties(i, i_data)
@@ -969,7 +964,7 @@ class Conductivity_LBTE(Conductivity):
     def _allocate_values(self):
         """Allocate arrays."""
         num_band0 = len(self._pp.band_indices)
-        num_band = len(self._primitive) * 3
+        num_band = len(self._pp.primitive) * 3
         num_temp = len(self._temperatures)
 
         if self._is_reducible_collision_matrix:
@@ -1060,7 +1055,7 @@ class Conductivity_LBTE(Conductivity):
         for i, ir_gp in enumerate(self._ir_grid_points):
             self._rot_grid_points[i] = get_grid_points_by_rotations(
                 ir_gp,
-                self._bz_grid)
+                self._pp.bz_grid)
         self._collision = CollisionMatrix(
             self._pp,
             rotations_cartesian=self._rotations_cartesian,
@@ -1137,7 +1132,7 @@ class Conductivity_LBTE(Conductivity):
                 self._collision.run()
                 if self._all_grid_points:
                     if self._is_reducible_collision_matrix:
-                        i_data = self._bz_grid.bzg2grg[self._grid_points[i]]
+                        i_data = self._pp.bz_grid.bzg2grg[self._grid_points[i]]
                     else:
                         i_data = i
                 else:
@@ -1159,11 +1154,12 @@ class Conductivity_LBTE(Conductivity):
                 # Ir-grid points and rot_grid_points in generalized regular
                 # grid
                 ir_gr_grid_points = np.array(
-                    self._bz_grid.bzg2grg[self._ir_grid_points], dtype='int_')
+                    self._pp.bz_grid.bzg2grg[self._ir_grid_points],
+                    dtype='int_')
                 for i in range(num_mesh_points):
-                    rot_grid_points[:, i] = self._bz_grid.bzg2grg[
-                        get_grid_points_by_rotations(self._bz_grid.grg2bzg[i],
-                                                     self._bz_grid)]
+                    rot_grid_points[:, i] = self._pp.bz_grid.bzg2grg[
+                        get_grid_points_by_rotations(
+                            self._pp.bz_grid.grg2bzg[i], self._pp.bz_grid)]
                 self._expand_collisions(ir_gr_grid_points, rot_grid_points)
                 self._expand_local_values(ir_gr_grid_points, rot_grid_points)
             self._combine_reducible_collisions()
@@ -1221,7 +1217,7 @@ class Conductivity_LBTE(Conductivity):
 
     def _combine_collisions(self):
         """Include diagonal elements into collision matrix."""
-        num_band = len(self._primitive) * 3
+        num_band = len(self._pp.primitive) * 3
         for j, k in list(np.ndindex(
                 (len(self._sigmas), len(self._temperatures)))):
             for i, ir_gp in enumerate(self._ir_grid_points):
@@ -1237,7 +1233,7 @@ class Conductivity_LBTE(Conductivity):
 
     def _combine_reducible_collisions(self):
         """Include diagonal elements into collision matrix."""
-        num_band = len(self._primitive) * 3
+        num_band = len(self._pp.primitive) * 3
         num_mesh_points = np.prod(self._pp.mesh_numbers)
 
         for j, k in list(
@@ -1391,7 +1387,7 @@ class Conductivity_LBTE(Conductivity):
                         bi_set.append(j)
 
                 if self._is_reducible_collision_matrix:
-                    i_data = self._bz_grid.bzg2grg[gp]
+                    i_data = self._pp.bz_grid.bzg2grg[gp]
                     sum_col = (col_mat[:, :, i_data, bi_set, :, :].sum(axis=2)
                                / len(bi_set))
                     for j in bi_set:
@@ -1412,7 +1408,7 @@ class Conductivity_LBTE(Conductivity):
                     if j in dset:
                         bi_set.append(j)
                 if self._is_reducible_collision_matrix:
-                    i_data = self._bz_grid.bzg2grg[gp]
+                    i_data = self._pp.bz_grid.bzg2grg[gp]
                     sum_col = (col_mat[:, :, :, :, i_data, bi_set].sum(axis=4)
                                / len(bi_set))
                     for j in bi_set:
@@ -1430,15 +1426,15 @@ class Conductivity_LBTE(Conductivity):
 
     def _get_X(self, i_temp, weights, gv):
         """Calculate X in Chaput's paper."""
-        num_band = len(self._primitive) * 3
+        num_band = len(self._pp.primitive) * 3
         X = gv.copy()
         if self._is_reducible_collision_matrix:
-            freqs = self._frequencies[self._bz_grid.grg2bzg]
+            freqs = self._frequencies[self._pp.bz_grid.grg2bzg]
         else:
             freqs = self._frequencies[self._ir_grid_points]
 
         t = self._temperatures[i_temp]
-        sinh = np.where(freqs > self._cutoff_frequency,
+        sinh = np.where(freqs > self._pp.cutoff_frequency,
                         np.sinh(freqs * THzToEv / (2 * Kb * t)),
                         -1.0)
         inv_sinh = np.where(sinh > 0, 1.0 / sinh, 0)
@@ -1457,7 +1453,7 @@ class Conductivity_LBTE(Conductivity):
     def _get_Y(self, i_sigma, i_temp, weights, X):
         r"""Calculate Y = (\Omega^-1, X)."""
         solver = _select_solver(self._pinv_solver)
-        num_band = len(self._primitive) * 3
+        num_band = len(self._pp.primitive) * 3
 
         if self._is_reducible_collision_matrix:
             num_grid_points = np.prod(self._pp.mesh_numbers)
@@ -1520,7 +1516,7 @@ class Conductivity_LBTE(Conductivity):
         Therefore Y is divided by 2.
 
         """
-        num_band = len(self._primitive) * 3
+        num_band = len(self._pp.primitive) * 3
         self._f_vectors[:] = ((Y / 2).reshape(num_grid_points, num_band * 3).T
                               / weights).T.reshape(self._f_vectors.shape)
 
@@ -1630,7 +1626,7 @@ class Conductivity_LBTE(Conductivity):
 
         """
         N = self._num_sampling_grid_points
-        num_band = len(self._primitive) * 3
+        num_band = len(self._pp.primitive) * 3
         X = self._get_X(i_temp, weights, self._gv)
         Y = np.zeros_like(X)
         num_ir_grid_points = len(self._ir_grid_points)
@@ -1639,7 +1635,7 @@ class Conductivity_LBTE(Conductivity):
             g = self._get_main_diagonal(i, i_sigma, i_temp)
             frequencies = self._frequencies[gp]
             for j, f in enumerate(frequencies):
-                if f > self._cutoff_frequency:
+                if f > self._pp.cutoff_frequency:
                     i_mode = i * num_band + j
                     old_settings = np.seterr(all='raise')
                     try:
@@ -1673,7 +1669,7 @@ class Conductivity_LBTE(Conductivity):
 
         """
         N = self._num_sampling_grid_points
-        num_band = len(self._primitive) * 3
+        num_band = len(self._pp.primitive) * 3
         X = self._get_X(i_temp, weights, self._gv)
         Y = np.zeros_like(X)
 
@@ -1685,7 +1681,7 @@ class Conductivity_LBTE(Conductivity):
         for gp in range(num_mesh_points):
             frequencies = self._frequencies[gp]
             for j, f in enumerate(frequencies):
-                if f > self._cutoff_frequency:
+                if f > self._pp.cutoff_frequency:
                     i_mode = gp * num_band + j
                     Y[i_mode, :] = X[i_mode, :] / v_diag[i_mode]
         # Putting self._rotations_cartesian is to symmetrize kappa.
@@ -1716,7 +1712,7 @@ class Conductivity_LBTE(Conductivity):
         The first parameter, mode_kappa, is overwritten.
 
         """
-        num_band = len(self._primitive) * 3
+        num_band = len(self._pp.primitive) * 3
         for i, (v_gp, f_gp) in enumerate(
                 zip(X.reshape(num_grid_points, num_band, 3),
                     Y.reshape(num_grid_points, num_band, 3))):
@@ -1724,7 +1720,7 @@ class Conductivity_LBTE(Conductivity):
             for j, (v, f) in enumerate(zip(v_gp, f_gp)):
                 # Do not consider three lowest modes at Gamma-point
                 # It is assumed that there are no imaginary modes.
-                if (self._bz_grid.addresses[i] == 0).all() and j < 3:
+                if (self._pp.bz_grid.addresses[i] == 0).all() and j < 3:
                     continue
 
                 if rotations_cartesian is None:
@@ -1753,7 +1749,7 @@ class Conductivity_LBTE(Conductivity):
         """
         X = self._get_X(i_temp, weights, self._gv).ravel()
         num_ir_grid_points = len(self._ir_grid_points)
-        num_band = len(self._primitive) * 3
+        num_band = len(self._pp.primitive) * 3
         size = num_ir_grid_points * num_band * 3
         v = self._collision_matrix[i_sigma, i_temp].reshape(size, size)
         solver = _select_solver(self._pinv_solver)
@@ -1823,7 +1819,7 @@ class Conductivity_LBTE(Conductivity):
         gp = self._grid_points[i]
         frequencies = self._frequencies[gp]
         if self._is_reducible_collision_matrix:
-            gv = self._gv[self._bz_grid.bzg2grg[gp]]
+            gv = self._gv[self._pp.bz_grid.bzg2grg[gp]]
         else:
             gv = self._gv[i]
         if self._is_full_pp:
@@ -1832,10 +1828,10 @@ class Conductivity_LBTE(Conductivity):
         else:
             text = "Frequency     group velocity (x, y, z)     |gv|"
 
-        if self._gv_delta_q is None:
+        if self._gv_obj.q_length is None:
             pass
         else:
-            text += "  (dq=%3.1e)" % self._gv_delta_q
+            text += "  (dq=%3.1e)" % self._gv_obj.q_length
         print(text)
         if self._is_full_pp:
             for f, v, pp in zip(frequencies, gv, ave_pp):
@@ -1849,7 +1845,7 @@ class Conductivity_LBTE(Conductivity):
         sys.stdout.flush()
 
     def _py_symmetrize_collision_matrix(self):
-        num_band = self._primitive.get_number_of_atoms() * 3
+        num_band = len(self._pp.primitive) * 3
         num_ir_grid_points = len(self._ir_grid_points)
         for i in range(num_ir_grid_points):
             for j in range(num_band):
@@ -1867,7 +1863,7 @@ class Conductivity_LBTE(Conductivity):
         self._collision_matrix[:, :, ll, m, n, i, j, k] = sym_val
 
     def _py_symmetrize_collision_matrix_no_kappa_stars(self):
-        num_band = self._primitive.get_number_of_atoms() * 3
+        num_band = len(self._pp.primitive) * 3
         num_ir_grid_points = len(self._ir_grid_points)
         for i in range(num_ir_grid_points):
             for j in range(num_band):

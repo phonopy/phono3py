@@ -59,7 +59,7 @@ def get_thermal_conductivity_RTA(
         use_ave_pp=False,
         gamma_unit_conversion=None,
         is_kappa_star=True,
-        gv_delta_q=1e-4,
+        gv_delta_q=None,
         is_full_pp=False,
         write_gamma=False,
         read_gamma=False,
@@ -494,20 +494,16 @@ class Conductivity_RTA(Conductivity):
                  log_level=0):
         """Init method."""
         self._pp = None
+        self._gv_obj = None
         self._temperatures = None
         self._sigmas = None
         self._sigma_cutoff = None
         self._is_kappa_star = None
-        self._gv_delta_q = None
         self._is_full_pp = None
         self._is_N_U = is_N_U
         self._is_gamma_detail = is_gamma_detail
         self._is_frequency_shift_by_bubble = is_frequency_shift_by_bubble
         self._log_level = None
-        self._primitive = None
-        self._dm = None
-        self._frequency_factor_to_THz = None
-        self._cutoff_frequency = None
         self._boundary_mfp = None
 
         self._point_operations = None
@@ -515,7 +511,6 @@ class Conductivity_RTA(Conductivity):
 
         self._grid_points = None
         self._grid_weights = None
-        self._bz_grid = None
 
         self._read_gamma = False
         self._read_gamma_iso = False
@@ -567,7 +562,7 @@ class Conductivity_RTA(Conductivity):
 
     def set_kappa_at_sigmas(self):
         """Calculate kappa from ph-ph interaction results."""
-        num_band = len(self._primitive) * 3
+        num_band = len(self._pp.primitive) * 3
         for i, grid_point in enumerate(self._grid_points):
             cv = self._cv[:, i, :]
             gp = self._grid_points[i]
@@ -578,7 +573,7 @@ class Conductivity_RTA(Conductivity):
                 for k in range(len(self._temperatures)):
                     g_sum = self._get_main_diagonal(i, j, k)
                     for ll in range(num_band):
-                        if frequencies[ll] < self._cutoff_frequency:
+                        if frequencies[ll] < self._pp.cutoff_frequency:
                             self._num_ignored_phonon_modes[j, k] += 1
                             continue
 
@@ -780,8 +775,8 @@ class Conductivity_RTA(Conductivity):
         """Calculate gamma without storing ph-ph interaction strength.
 
         `svecs` and `multi` below must not be simply replaced by
-        `self._primitive.get_smallest_vectors()` because they must be in dense
-        format as always so in Interaction class instance.
+        `self._pp.primitive.get_smallest_vectors()` because they must be in
+        dense format as always so in Interaction class instance.
         `p2s`, `s2p`, and `masses` have to be also given from Interaction
         class instance.
 
@@ -797,7 +792,7 @@ class Conductivity_RTA(Conductivity):
         symmetrize_fc3_q = 0
 
         if None in self._sigmas:
-            thm = TetrahedronMethod(self._bz_grid.microzone_lattice)
+            thm = TetrahedronMethod(self._pp.bz_grid.microzone_lattice)
 
         # It is assumed that self._sigmas = [None].
         for j, sigma in enumerate(self._sigmas):
@@ -814,17 +809,18 @@ class Conductivity_RTA(Conductivity):
             if sigma is None:
                 phono3c.pp_collision(
                     collisions,
-                    np.array(np.dot(thm.get_tetrahedra(), self._bz_grid.P.T),
-                             dtype='int_', order='C'),
+                    np.array(
+                        np.dot(thm.get_tetrahedra(), self._pp.bz_grid.P.T),
+                        dtype='int_', order='C'),
                     self._frequencies,
                     self._eigenvectors,
                     triplets_at_q,
                     weights_at_q,
-                    self._bz_grid.addresses,
-                    self._bz_grid.gp_map,
-                    self._bz_grid.store_dense_gp_map * 1 + 1,
-                    self._bz_grid.D_diag,
-                    self._bz_grid.Q,
+                    self._pp.bz_grid.addresses,
+                    self._pp.bz_grid.gp_map,
+                    self._pp.bz_grid.store_dense_gp_map * 1 + 1,
+                    self._pp.bz_grid.D_diag,
+                    self._pp.bz_grid.Q,
                     fc3,
                     svecs,
                     multi,
@@ -835,7 +831,7 @@ class Conductivity_RTA(Conductivity):
                     self._temperatures,
                     self._is_N_U * 1,
                     symmetrize_fc3_q,
-                    self._cutoff_frequency)
+                    self._pp.cutoff_frequency)
             else:
                 if self._sigma_cutoff is None:
                     sigma_cutoff = -1
@@ -848,9 +844,9 @@ class Conductivity_RTA(Conductivity):
                                                 self._eigenvectors,
                                                 triplets_at_q,
                                                 weights_at_q,
-                                                self._bz_grid.addresses,
-                                                self._bz_grid.D_diag,
-                                                self._bz_grid.Q,
+                                                self._pp.bz_grid.addresses,
+                                                self._pp.bz_grid.D_diag,
+                                                self._pp.bz_grid.Q,
                                                 fc3,
                                                 svecs,
                                                 multi,
@@ -861,7 +857,7 @@ class Conductivity_RTA(Conductivity):
                                                 self._temperatures,
                                                 self._is_N_U * 1,
                                                 symmetrize_fc3_q,
-                                                self._cutoff_frequency)
+                                                self._pp.cutoff_frequency)
             col_unit_conv = self._collision.get_unit_conversion_factor()
             pp_unit_conv = self._pp.get_unit_conversion_factor()
             if self._is_N_U:
@@ -913,7 +909,7 @@ class Conductivity_RTA(Conductivity):
                       (f, v[0], v[1], v[2], np.linalg.norm(v)))
 
     def _show_log_values_on_kstar(self, frequencies, gv, ave_pp, gp, q):
-        rotation_map = get_grid_points_by_rotations(gp, self._bz_grid)
+        rotation_map = get_grid_points_by_rotations(gp, self._pp.bz_grid)
         for i, j in enumerate(np.unique(rotation_map)):
             for k, (rot, rot_c) in enumerate(zip(
                     self._point_operations, self._rotations_cartesian)):
@@ -941,8 +937,8 @@ class Conductivity_RTA(Conductivity):
             text = "Frequency     group velocity (x, y, z)     |gv|       Pqj"
         else:
             text = "Frequency     group velocity (x, y, z)     |gv|"
-        if self._gv_delta_q is None:
+        if self._gv_obj.q_length is None:
             pass
         else:
-            text += "  (dq=%3.1e)" % self._gv_delta_q
+            text += "  (dq=%3.1e)" % self._gv_obj.q_length
         print(text)

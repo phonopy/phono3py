@@ -90,7 +90,93 @@ def write_pp(conductivity,
                      compression=compression)
 
 
-class Conductivity(object):
+class ConductivityBase:
+    """Base class of Conductivity classes."""
+
+    def __init__(self,
+                 interaction,
+                 grid_points=None,
+                 is_kappa_star=True,
+                 gv_delta_q=None):
+        """Init method.
+
+        interaction : Interaction
+            Interaction class instance.
+        grid_points : array_like or None, optional
+            Grid point indices. When None, ir-grid points are searched
+            internally. Default is None.
+            shape=(grid_points, ), dtype='int_'.
+        is_kappa_star : bool, optional
+            When True, reciprocal space symmetry is used to calculate
+            lattice thermal conductivity. This calculation is peformed
+            iterating over specific grid points. With `is_kappa_star=True`
+            and `grid_points=None`, ir-grid points are used for the iteration.
+            Default is True.
+        gv_delta_q : float, optional
+            See phonopy's GroupVelocity class. Default is None.
+
+        """
+        self._pp = interaction
+        self._is_kappa_star = is_kappa_star
+
+        self._rotations_cartesian = None
+        self._point_operations = None
+        self._set_point_operations()
+
+        self._grid_points = None
+        self._grid_weights = None
+        self._ir_grid_points = None
+        self._ir_grid_weights = None
+        self._set_grid_properties(grid_points)
+
+        self._qpoints = np.array(
+            np.dot(self._pp.bz_grid.addresses[self._grid_points],
+                   self._pp.bz_grid.QDinv.T), dtype='double', order='C')
+
+        self._gv_obj = GroupVelocity(
+            self._pp.dynamical_matrix,
+            q_length=gv_delta_q,
+            symmetry=self._pp.primitive_symmetry,
+            frequency_factor_to_THz=self._pp.frequency_factor_to_THz)
+
+    def _set_point_operations(self):
+        if not self._is_kappa_star:
+            self._point_operations = np.array(
+                [np.eye(3, dtype='int_')], dtype='int_', order='C')
+        else:
+            self._point_operations = np.array(
+                self._pp.bz_grid.reciprocal_operations,
+                dtype='int_', order='C')
+        rec_lat = np.linalg.inv(self._pp.primitive.cell)
+        self._rotations_cartesian = np.array(
+            [similarity_transformation(rec_lat, r)
+             for r in self._point_operations], dtype='double', order='C')
+
+    def _set_grid_properties(self, grid_points):
+        if grid_points is not None:  # Specify grid points
+            self._grid_points = grid_points
+            (self._ir_grid_points,
+             self._ir_grid_weights) = self._get_ir_grid_points()
+        elif not self._is_kappa_star:  # All grid points
+            self._grid_points = self._pp.bz_grid.grg2bzg
+            self._grid_weights = np.ones(len(self._grid_points), dtype='int_')
+            self._ir_grid_points = self._grid_points
+            self._ir_grid_weights = self._grid_weights
+        else:  # Automatic sampling
+            self._grid_points, self._grid_weights = self._get_ir_grid_points()
+            self._ir_grid_points = self._grid_points
+            self._ir_grid_weights = self._grid_weights
+
+    def _get_ir_grid_points(self):
+        """Find irreducible grid points."""
+        ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(
+            self._pp.bz_grid)
+        ir_grid_points = np.array(
+            self._pp.bz_grid.grg2bzg[ir_grid_points], dtype='int_')
+        return ir_grid_points, ir_grid_weights
+
+
+class Conductivity(ConductivityBase):
     """Thermal conductivity base class."""
 
     def __init__(self,
@@ -107,44 +193,36 @@ class Conductivity(object):
                  is_full_pp=False,
                  log_level=0):
         """Init method."""
+        self._pp = None
+        self._is_kappa_star = None
+        self._grid_points = None
+        self._grid_weights = None
+        self._ir_grid_points = None
+        self._ir_grid_weights = None
+        self._qpoints = None
+        self._point_operations = None
+        self._gv_obj = None
+
+        super().__init__(interaction,
+                         grid_points=grid_points,
+                         is_kappa_star=is_kappa_star,
+                         gv_delta_q=gv_delta_q)
+
+        self._is_full_pp = is_full_pp
+        self._log_level = log_level
+
+        self._grid_point_count = 0
         if sigmas is None:
             self._sigmas = []
         else:
             self._sigmas = sigmas
         self._sigma_cutoff = sigma_cutoff
-        self._pp = interaction
-        self._is_full_pp = is_full_pp
         self._collision = None  # has to be set derived class
         if temperatures is None:
             self._temperatures = None
         else:
             self._temperatures = np.array(temperatures, dtype='double')
-        self._is_kappa_star = is_kappa_star
-        self._gv_delta_q = gv_delta_q
-        self._log_level = log_level
-        self._primitive = self._pp.primitive
-        self._dm = self._pp.dynamical_matrix
-        self._frequency_factor_to_THz = self._pp.frequency_factor_to_THz
-        self._cutoff_frequency = self._pp.cutoff_frequency
         self._boundary_mfp = boundary_mfp
-
-        if not self._is_kappa_star:
-            self._point_operations = np.array([np.eye(3, dtype='int_')],
-                                              dtype='int_', order='C')
-        else:
-            self._point_operations = np.array(
-                self._pp.bz_grid.reciprocal_operations,
-                dtype='int_', order='C')
-        rec_lat = np.linalg.inv(self._primitive.cell)
-        self._rotations_cartesian = np.array(
-            [similarity_transformation(rec_lat, r)
-             for r in self._point_operations], dtype='double', order='C')
-
-        self._grid_points = None
-        self._grid_weights = None
-        self._ir_grid_points = None
-        self._ir_grid_weights = None
-        self._bz_grid = self._pp.bz_grid
 
         self._read_gamma = False
         self._read_gamma_iso = False
@@ -152,7 +230,6 @@ class Conductivity(object):
         self._kappa = None
         self._mode_kappa = None
 
-        self._frequencies = None
         self._cv = None
         self._gv = None
         self._gv_sum2 = None
@@ -160,8 +237,15 @@ class Conductivity(object):
         self._gamma_iso = None
         self._num_sampling_grid_points = 0
 
-        volume = self._primitive.volume
+        volume = self._pp.primitive.volume
         self._conversion_factor = unit_to_WmK / volume
+
+        self._pp.nac_q_direction = None
+        (self._frequencies,
+         self._eigenvectors,
+         self._phonon_done) = self._pp.get_phonons()
+        if (self._phonon_done == 0).any():
+            self._pp.run_phonon_solver()
 
         self._isotope = None
         self._mass_variances = None
@@ -170,32 +254,6 @@ class Conductivity(object):
             self._is_isotope = True
         if self._is_isotope:
             self._set_isotope(mass_variances)
-
-        self._grid_point_count = None
-        self._set_grid_properties(grid_points)
-
-        if (self._dm.is_nac() and
-            self._dm.nac_method == 'gonze' and
-            self._gv_delta_q is None):  # noqa E129
-            self._gv_delta_q = 1e-5
-            if self._log_level:
-                msg = "Group velocity calculation:\n"
-                text = ("Analytical derivative of dynamical matrix is not "
-                        "implemented for NAC by Gonze et al. Instead "
-                        "numerical derivative of it is used with dq=1e-5 "
-                        "for group velocity calculation.")
-                msg += textwrap.fill(text,
-                                     initial_indent="  ",
-                                     subsequent_indent="  ",
-                                     width=70)
-                print(msg)
-        self._gv_obj = GroupVelocity(
-            self._dm,
-            q_length=self._gv_delta_q,
-            symmetry=self._pp.primitive_symmetry,
-            frequency_factor_to_THz=self._frequency_factor_to_THz)
-        # gv_delta_q may be changed.
-        self._gv_delta_q = self._gv_obj.get_q_length()
 
     def __iter__(self):
         """Calculate mode kappa at each grid point."""
@@ -506,36 +564,8 @@ class Conductivity(object):
         """Must be implementated in the inherited class."""
         raise NotImplementedError()
 
-    def _set_grid_properties(self, grid_points):
-        self._pp.nac_q_direction = None
-
-        if grid_points is not None:  # Specify grid points
-            self._grid_points = grid_points
-            (self._ir_grid_points,
-             self._ir_grid_weights) = self._get_ir_grid_points()
-        elif not self._is_kappa_star:  # All grid points
-            self._grid_points = self._bz_grid.grg2bzg
-            self._grid_weights = np.ones(len(self._grid_points), dtype='int_')
-            self._ir_grid_points = self._grid_points
-            self._ir_grid_weights = self._grid_weights
-        else:  # Automatic sampling
-            self._grid_points, self._grid_weights = self._get_ir_grid_points()
-            self._ir_grid_points = self._grid_points
-            self._ir_grid_weights = self._grid_weights
-
-        self._qpoints = np.array(
-            np.dot(self._bz_grid.addresses[self._grid_points],
-                   self._bz_grid.QDinv.T), dtype='double', order='C')
-        self._grid_point_count = 0
-        (self._frequencies,
-         self._eigenvectors,
-         phonon_done) = self._pp.get_phonons()
-        if (phonon_done == 0).any():
-            self._pp.run_phonon_solver()
-
     def _get_gamma_isotope_at_sigmas(self, i):
         gamma_iso = []
-        pp_freqs, pp_eigvecs, pp_phonon_done = self._pp.get_phonons()
 
         for j, sigma in enumerate(self._sigmas):
             if self._log_level:
@@ -547,24 +577,16 @@ class Conductivity(object):
                 print(text)
 
             self._isotope.sigma = sigma
-            self._isotope.set_phonons(pp_freqs,
-                                      pp_eigvecs,
-                                      pp_phonon_done,
-                                      dm=self._dm)
+            self._isotope.set_phonons(self._frequencies,
+                                      self._eigenvectors,
+                                      self._phonon_done,
+                                      dm=self._pp.dynamical_matrix)
             gp = self._grid_points[i]
             self._isotope.set_grid_point(gp)
             self._isotope.run()
             gamma_iso.append(self._isotope.gamma)
 
         return np.array(gamma_iso, dtype='double', order='C')
-
-    def _get_ir_grid_points(self):
-        """Find irreducible grid points."""
-        ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(self._bz_grid)
-        ir_grid_points = np.array(
-            self._bz_grid.grg2bzg[ir_grid_points], dtype='int_')
-
-        return ir_grid_points, ir_grid_weights
 
     def _set_isotope(self, mass_variances):
         if mass_variances is True:
@@ -573,12 +595,12 @@ class Conductivity(object):
             mv = mass_variances
         self._isotope = Isotope(
             self._pp.mesh_numbers,
-            self._primitive,
+            self._pp.primitive,
             mass_variances=mv,
-            bz_grid=self._bz_grid,
-            frequency_factor_to_THz=self._frequency_factor_to_THz,
+            bz_grid=self._pp.bz_grid,
+            frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
             symprec=self._pp.primitive_symmetry.tolerance,
-            cutoff_frequency=self._cutoff_frequency,
+            cutoff_frequency=self._pp.cutoff_frequency,
             lapack_zheev_uplo=self._pp.lapack_zheev_uplo)
         self._mass_variances = self._isotope.mass_variances
 
@@ -588,7 +610,7 @@ class Conductivity(object):
         freqs = self._frequencies[grid_point][self._pp.band_indices]
         self._cv[:, i_data, :] = self._get_cv(freqs)
         self._gv_obj.run([self._qpoints[i_irgp], ])
-        gv = self._gv_obj.get_group_velocity()[0, self._pp.band_indices, :]
+        gv = self._gv_obj.group_velocities[0, self._pp.band_indices, :]
         self._gv[i_data] = gv
 
     def _get_cv(self, freqs):
@@ -597,7 +619,7 @@ class Conductivity(object):
         # Otherwise just set 0.
         for i, f in enumerate(freqs):
             finite_t = (self._temperatures > f / 100)
-            if f > self._cutoff_frequency:
+            if f > self._pp.cutoff_frequency:
                 cv[:, i] = np.where(
                     finite_t, get_mode_cv(
                         np.where(finite_t, self._temperatures, 10000),
@@ -622,11 +644,11 @@ class Conductivity(object):
         if self._is_kappa_star:
             rotation_map = get_grid_points_by_rotations(
                 self._grid_points[i_irgp],
-                self._bz_grid)
+                self._pp.bz_grid)
         else:
             rotation_map = get_grid_points_by_rotations(
                 self._grid_points[i_irgp],
-                self._bz_grid,
+                self._pp.bz_grid,
                 reciprocal_rotations=self._point_operations)
 
         gv = self._gv[i_data]
@@ -662,24 +684,10 @@ class Conductivity(object):
             main_diagonal += self._gamma_iso[j, i]
         if self._boundary_mfp is not None:
             main_diagonal += self._get_boundary_scattering(i)
-
-        # num_band = len(self._primitive) * 3
-        # if self._boundary_mfp is not None:
-        #     for l in range(num_band):
-        #         # Acoustic modes at Gamma are avoided.
-        #         if i == 0 and l < 3:
-        #             continue
-        #         gv_norm = np.linalg.norm(self._gv[i, l])
-        #         mean_free_path = (gv_norm * Angstrom * 1e6 /
-        #                           (4 * np.pi * main_diagonal[l]))
-        #         if mean_free_path > self._boundary_mfp:
-        #             main_diagonal[l] = (
-        #                 gv_norm / (4 * np.pi * self._boundary_mfp))
-
         return main_diagonal
 
     def _get_boundary_scattering(self, i):
-        num_band = len(self._primitive) * 3
+        num_band = len(self._pp.primitive) * 3
         g_boundary = np.zeros(num_band, dtype='double')
         for ll in range(num_band):
             g_boundary[ll] = (np.linalg.norm(self._gv[i, ll]) * Angstrom * 1e6

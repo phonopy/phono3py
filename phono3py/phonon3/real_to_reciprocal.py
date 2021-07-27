@@ -42,13 +42,11 @@ class RealToReciprocal(object):
 
     def __init__(self,
                  fc3,
-                 supercell,
                  primitive,
                  mesh,
                  symprec=1e-5):
         """Init method."""
         self._fc3 = fc3
-        self._supercell = supercell
         self._primitive = primitive
         self._mesh = mesh
         self._symprec = symprec
@@ -92,7 +90,7 @@ class RealToReciprocal(object):
             self._fc3_reciprocal[i] *= prephase
 
     def _real_to_reciprocal_elements(self, patom_indices):
-        num_satom = len(self._supercell)
+        num_satom = len(self._s2p_map)
         pi = patom_indices
         i = self._p2s_map[pi[0]]
         dtype = "c%d" % (np.dtype('double').itemsize * 2)

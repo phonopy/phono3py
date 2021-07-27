@@ -1249,7 +1249,6 @@ class Phono3py(object):
             _lapack_zheev_uplo = self._lapack_zheev_uplo
 
         self._interaction = Interaction(
-            self._supercell,
             self._primitive,
             self._bz_grid,
             self._primitive_symmetry,
