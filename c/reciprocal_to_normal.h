@@ -37,22 +37,20 @@
 
 #include "lapack_wrapper.h"
 
-void reciprocal_to_normal_squared
-(double *fc3_normal_squared,
- const long (*g_pos)[4],
- const long num_g_pos,
- const lapack_complex_double *fc3_reciprocal,
- const double *freqs0,
- const double *freqs1,
- const double *freqs2,
- const lapack_complex_double *eigvecs0,
- const lapack_complex_double *eigvecs1,
- const lapack_complex_double *eigvecs2,
- const double *masses,
- const long *band_indices,
- const long num_band0,
- const long num_band,
- const double cutoff_frequency,
- const long openmp_at_bands);
+void reciprocal_to_normal_squared(double *fc3_normal_squared,
+                                  const long (*g_pos)[4],
+                                  const long num_g_pos,
+                                  const lapack_complex_double *fc3_reciprocal,
+                                  const double *freqs0,
+                                  const double *freqs1,
+                                  const double *freqs2,
+                                  const lapack_complex_double *eigvecs0,
+                                  const lapack_complex_double *eigvecs1,
+                                  const lapack_complex_double *eigvecs2,
+                                  const double *masses,
+                                  const long *band_indices,
+                                  const long num_band,
+                                  const double cutoff_frequency,
+                                  const long openmp_at_bands);
 
 #endif

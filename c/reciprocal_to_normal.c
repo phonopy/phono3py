@@ -42,59 +42,80 @@
 #include <time.h>
 #endif
 
-static lapack_complex_double fc3_sum_in_reciprocal_to_normal
-(const long bi0,
- const long bi1,
- const long bi2,
- const lapack_complex_double *eigvecs0,
- const lapack_complex_double *eigvecs1,
- const lapack_complex_double *eigvecs2,
- const lapack_complex_double *fc3_reciprocal,
- const double *masses,
- const long num_atom);
+static double get_fc3_sum(const long bi0,
+                          const long bi1,
+                          const long bi2,
+                          const double *freqs0,
+                          const double *freqs1,
+                          const double *freqs2,
+                          const lapack_complex_double *e0,
+                          const lapack_complex_double *e1,
+                          const lapack_complex_double *e2,
+                          const lapack_complex_double *fc3_reciprocal,
+                          const double *inv_sqrt_masses,
+                          const long num_atom,
+                          const long num_band,
+                          const double cutoff_frequency);
 
-static double get_fc3_sum
-(const long j,
- const long k,
- const long bi,
- const double *freqs0,
- const double *freqs1,
- const double *freqs2,
- const lapack_complex_double *eigvecs0,
- const lapack_complex_double *eigvecs1,
- const lapack_complex_double *eigvecs2,
- const lapack_complex_double *fc3_reciprocal,
- const double *masses,
- const long num_atom,
- const double cutoff_frequency);
+static double fc3_sum_in_reciprocal_to_normal(const lapack_complex_double *e0,
+                                              const lapack_complex_double *e1,
+                                              const lapack_complex_double *e2,
+                                              const lapack_complex_double *fc3_reciprocal,
+                                              const double *inv_sqrt_masses,
+                                              const long num_atom,
+                                              const long num_band);
 
-void reciprocal_to_normal_squared
-(double *fc3_normal_squared,
- const long (*g_pos)[4],
- const long num_g_pos,
- const lapack_complex_double *fc3_reciprocal,
- const double *freqs0,
- const double *freqs1,
- const double *freqs2,
- const lapack_complex_double *eigvecs0,
- const lapack_complex_double *eigvecs1,
- const lapack_complex_double *eigvecs2,
- const double *masses,
- const long *band_indices,
- const long num_band0,
- const long num_band,
- const double cutoff_frequency,
- const long openmp_at_bands)
+void reciprocal_to_normal_squared(double *fc3_normal_squared,
+                                  const long (*g_pos)[4],
+                                  const long num_g_pos,
+                                  const lapack_complex_double *fc3_reciprocal,
+                                  const double *freqs0,
+                                  const double *freqs1,
+                                  const double *freqs2,
+                                  const lapack_complex_double *eigvecs0,
+                                  const lapack_complex_double *eigvecs1,
+                                  const lapack_complex_double *eigvecs2,
+                                  const double *masses,
+                                  const long *band_indices,
+                                  const long num_band,
+                                  const double cutoff_frequency,
+                                  const long openmp_at_bands)
 {
-  long i, num_atom;
+  long i, j, num_atom;
+  double *inv_sqrt_masses;
+  lapack_complex_double *e0, *e1, *e2;
+
+  num_atom = num_band / 3;
+
+  /* Transpose eigenvectors for the better data alignment in memory. */
+  e0 = (lapack_complex_double *)
+      malloc(sizeof(lapack_complex_double) * num_band * num_band);
+  e1 = (lapack_complex_double *)
+      malloc(sizeof(lapack_complex_double) * num_band * num_band);
+  e2 = (lapack_complex_double *)
+      malloc(sizeof(lapack_complex_double) * num_band * num_band);
+
+  for (i = 0; i < num_band; i++)
+  {
+    for (j = 0; j < num_band; j++)
+    {
+      e0[j * num_band + i] = eigvecs0[i * num_band + j];
+      e1[j * num_band + i] = eigvecs1[i * num_band + j];
+      e2[j * num_band + i] = eigvecs2[i * num_band + j];
+    }
+  }
+
+  inv_sqrt_masses = (double *)malloc(sizeof(double) * num_atom);
+  for (i = 0; i < num_atom; i++)
+  {
+    inv_sqrt_masses[i] = 1.0 / sqrt(masses[i]);
+  }
 
 #ifdef MEASURE_R2N
   double loopTotalCPUTime, loopTotalWallTime;
   time_t loopStartWallTime;
   clock_t loopStartCPUTime;
 #endif
-
-  num_atom = num_band / 3;
 
 #ifdef MEASURE_R2N
   loopStartWallTime = time(NULL);
@@ -104,20 +125,23 @@ void reciprocal_to_normal_squared
 #ifdef PHPYOPENMP
 #pragma omp parallel for if (openmp_at_bands)
 #endif
-  for (i = 0; i < num_g_pos; i++) {
-    if (freqs0[band_indices[g_pos[i][0]]] > cutoff_frequency) {
-      fc3_normal_squared[g_pos[i][3]] = get_fc3_sum(g_pos[i][1],
+  for (i = 0; i < num_g_pos; i++)
+  {
+    if (freqs0[band_indices[g_pos[i][0]]] > cutoff_frequency)
+    {
+      fc3_normal_squared[g_pos[i][3]] = get_fc3_sum(band_indices[g_pos[i][0]],
+                                                    g_pos[i][1],
                                                     g_pos[i][2],
-                                                    band_indices[g_pos[i][0]],
                                                     freqs0,
                                                     freqs1,
                                                     freqs2,
-                                                    eigvecs0,
-                                                    eigvecs1,
-                                                    eigvecs2,
+                                                    e0,
+                                                    e1,
+                                                    e2,
                                                     fc3_reciprocal,
-                                                    masses,
+                                                    inv_sqrt_masses,
                                                     num_atom,
+                                                    num_band,
                                                     cutoff_frequency);
     }
   }
@@ -128,90 +152,93 @@ void reciprocal_to_normal_squared
   printf("  %1.3fs (%1.3fs CPU)\n", loopTotalWallTime, loopTotalCPUTime);
 #endif
 
+  free(inv_sqrt_masses);
+  inv_sqrt_masses = NULL;
+  free(e0);
+  e0 = NULL;
+  free(e1);
+  e1 = NULL;
+  free(e2);
+  e2 = NULL;
 }
 
-static double get_fc3_sum
-(const long j,
- const long k,
- const long bi,
- const double *freqs0,
- const double *freqs1,
- const double *freqs2,
- const lapack_complex_double *eigvecs0,
- const lapack_complex_double *eigvecs1,
- const lapack_complex_double *eigvecs2,
- const lapack_complex_double *fc3_reciprocal,
- const double *masses,
- const long num_atom,
- const double cutoff_frequency)
+static double get_fc3_sum(const long bi0,
+                          const long bi1,
+                          const long bi2,
+                          const double *freqs0,
+                          const double *freqs1,
+                          const double *freqs2,
+                          const lapack_complex_double *e0,
+                          const lapack_complex_double *e1,
+                          const lapack_complex_double *e2,
+                          const lapack_complex_double *fc3_reciprocal,
+                          const double *inv_sqrt_masses,
+                          const long num_atom,
+                          const long num_band,
+                          const double cutoff_frequency)
 {
-  double fff, sum_real, sum_imag;
-  lapack_complex_double fc3_sum;
+  double fff;
 
-  if (freqs1[j] > cutoff_frequency && freqs2[k] > cutoff_frequency) {
-    fff = freqs0[bi] * freqs1[j] * freqs2[k];
-    fc3_sum = fc3_sum_in_reciprocal_to_normal
-      (bi, j, k,
-       eigvecs0, eigvecs1, eigvecs2,
-       fc3_reciprocal,
-       masses,
-       num_atom);
-    sum_real = lapack_complex_double_real(fc3_sum);
-    sum_imag = lapack_complex_double_imag(fc3_sum);
-    return (sum_real * sum_real + sum_imag * sum_imag) / fff;
-  } else {
+  if (freqs1[bi1] > cutoff_frequency && freqs2[bi2] > cutoff_frequency)
+  {
+    fff = freqs0[bi0] * freqs1[bi1] * freqs2[bi2];
+    return fc3_sum_in_reciprocal_to_normal(e0 + bi0 * num_band,
+                                           e1 + bi1 * num_band,
+                                           e2 + bi2 * num_band,
+                                           fc3_reciprocal,
+                                           inv_sqrt_masses,
+                                           num_atom,
+                                           num_band) /
+           fff;
+  }
+  else
+  {
     return 0;
   }
 }
 
-static lapack_complex_double fc3_sum_in_reciprocal_to_normal
-(const long bi0,
- const long bi1,
- const long bi2,
- const lapack_complex_double *eigvecs0,
- const lapack_complex_double *eigvecs1,
- const lapack_complex_double *eigvecs2,
- const lapack_complex_double *fc3_reciprocal,
- const double *masses,
- const long num_atom)
+static double fc3_sum_in_reciprocal_to_normal(const lapack_complex_double *e0,
+                                              const lapack_complex_double *e1,
+                                              const lapack_complex_double *e2,
+                                              const lapack_complex_double *fc3_reciprocal,
+                                              const double *inv_sqrt_masses,
+                                              const long num_atom,
+                                              const long num_band)
 {
-  long baseIndex, index_l, index_lm, i, j, k, l, m, n;
-  double sum_real, sum_imag, mmm, mass_l, mass_lm;
+  long index_l, index_lm, index_lmn, i, j, k, l, m, n;
+  double sum_real, sum_imag, mass_lm, mass_lmn;
   lapack_complex_double eig_prod, eig_prod1;
 
   sum_real = 0;
   sum_imag = 0;
 
-  for (l = 0; l < num_atom; l++) {
-    mass_l = masses[l];
+  for (l = 0; l < num_atom; l++)
+  {
     index_l = l * num_atom * num_atom * 27;
-
-    for (m = 0; m < num_atom; m++) {
-      mass_lm = mass_l * masses[m];
-      index_lm = index_l + m * num_atom * 27;
-
-      for (i = 0; i < 3; i++) {
-        for (j = 0; j < 3; j++) {
-          eig_prod1 = phonoc_complex_prod
-            (eigvecs0[(l * 3 + i) * num_atom * 3 + bi0],
-             eigvecs1[(m * 3 + j) * num_atom * 3 + bi1]);
-
-          for (n = 0; n < num_atom; n++) {
-            mmm = 1.0 / sqrt(mass_lm * masses[n]);
-            baseIndex = index_lm + n * 27 + i * 9 + j * 3;
-
-            for (k = 0; k < 3; k++) {
-              eig_prod = phonoc_complex_prod
-                (eig_prod1, eigvecs2[(n * 3 + k) * num_atom * 3 + bi2]);
-              eig_prod = phonoc_complex_prod
-                (eig_prod, fc3_reciprocal[baseIndex + k]);
-              sum_real += lapack_complex_double_real(eig_prod) * mmm;
-              sum_imag += lapack_complex_double_imag(eig_prod) * mmm;
+    for (i = 0; i < 3; i++)
+    {
+      for (m = 0; m < num_atom; m++)
+      {
+        mass_lm = inv_sqrt_masses[l] * inv_sqrt_masses[m];
+        index_lm = index_l + m * num_atom * 27;
+        for (j = 0; j < 3; j++)
+        {
+          eig_prod1 = phonoc_complex_prod(e0[l * 3 + i], e1[m * 3 + j]);
+          for (n = 0; n < num_atom; n++)
+          {
+            mass_lmn = mass_lm * inv_sqrt_masses[n];
+            index_lmn = index_lm + n * 27 + i * 9 + j * 3;
+            for (k = 0; k < 3; k++)
+            {
+              eig_prod = phonoc_complex_prod(eig_prod1, e2[n * 3 + k]);
+              eig_prod = phonoc_complex_prod(eig_prod, fc3_reciprocal[index_lmn + k]);
+              sum_real += lapack_complex_double_real(eig_prod) * mass_lmn;
+              sum_imag += lapack_complex_double_imag(eig_prod) * mass_lmn;
             }
           }
         }
       }
     }
   }
-  return lapack_make_complex_double(sum_real, sum_imag);
+  return (sum_real * sum_real + sum_imag * sum_imag);
 }
