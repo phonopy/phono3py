@@ -128,6 +128,9 @@ void reciprocal_to_normal_squared(double *fc3_normal_squared,
     }
   }
 
+  free(inv_sqrt_masses);
+  inv_sqrt_masses = NULL;
+
 #ifdef MEASURE_R2N
   double loopTotalCPUTime,
       loopTotalWallTime;
@@ -169,8 +172,6 @@ void reciprocal_to_normal_squared(double *fc3_normal_squared,
   printf("  %1.3fs (%1.3fs CPU)\n", loopTotalWallTime, loopTotalCPUTime);
 #endif
 
-  free(inv_sqrt_masses);
-  inv_sqrt_masses = NULL;
   free(e0);
   e0 = NULL;
   free(e1);
@@ -219,7 +220,7 @@ static double fc3_sum_in_reciprocal_to_normal(const lapack_complex_double *e0,
 {
   long index_l, index_lm, index_lmn, i, j, k, l, m, n;
   double sum_real, sum_imag;
-  lapack_complex_double eig_prod;
+  lapack_complex_double e_01, e_012, e_012_fc3;
 
   sum_real = 0;
   sum_imag = 0;
@@ -234,16 +235,16 @@ static double fc3_sum_in_reciprocal_to_normal(const lapack_complex_double *e0,
         index_lm = index_l + m * num_atom * 27;
         for (j = 0; j < 3; j++)
         {
-          eig_prod = phonoc_complex_prod(e0[l * 3 + i], e1[m * 3 + j]);
+          e_01 = phonoc_complex_prod(e0[l * 3 + i], e1[m * 3 + j]);
           for (n = 0; n < num_atom; n++)
           {
             index_lmn = index_lm + n * 27 + i * 9 + j * 3;
             for (k = 0; k < 3; k++)
             {
-              eig_prod = phonoc_complex_prod(eig_prod, e2[n * 3 + k]);
-              eig_prod = phonoc_complex_prod(eig_prod, fc3_reciprocal[index_lmn + k]);
-              sum_real += lapack_complex_double_real(eig_prod);
-              sum_imag += lapack_complex_double_imag(eig_prod);
+              e_012 = phonoc_complex_prod(e_01, e2[n * 3 + k]);
+              e_012_fc3 = phonoc_complex_prod(e_012, fc3_reciprocal[index_lmn + k]);
+              sum_real += lapack_complex_double_real(e_012_fc3);
+              sum_imag += lapack_complex_double_imag(e_012_fc3);
             }
           }
         }
