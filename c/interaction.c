@@ -312,14 +312,11 @@ static void real_to_normal(double *fc3_normal_squared,
                            const long num_triplets,
                            const long openmp_at_bands)
 {
-  long num_patom;
   lapack_complex_double *fc3_reciprocal;
-
-  num_patom = num_band / 3;
 
   fc3_reciprocal =
       (lapack_complex_double *)malloc(sizeof(lapack_complex_double) *
-                                      num_patom * num_patom * num_patom * 27);
+                                      num_band * num_band * num_band);
   r2r_real_to_reciprocal(fc3_reciprocal,
                          q_vecs,
                          fc3,
