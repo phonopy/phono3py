@@ -608,30 +608,30 @@ a mode contribution to the lattice thermal conductivity is given by</p>
 \mathbf{v}_\lambda \tau_\lambda^{\mathrm{SMRT}}.
 \]</div>
 <p>For example, <span class="math notranslate nohighlight">\(\kappa_{\lambda,{xx}}\)</span> is calculated by:</p>
-<div class="highlight-badh notranslate"><div class="highlight"><pre><span></span>In [1]: import h5py
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>In <span class="o">[</span><span class="m">1</span><span class="o">]</span>: import h5py
 
-In [2]: f = h5py.File(&quot;kappa-m111111.hdf5&quot;)
+In <span class="o">[</span><span class="m">2</span><span class="o">]</span>: <span class="nv">f</span> <span class="o">=</span> h5py.File<span class="o">(</span><span class="s2">&quot;kappa-m111111.hdf5&quot;</span><span class="o">)</span>
 
-In [3]: kappa_unit_conversion = f[&#39;kappa_unit_conversion&#39;][()]
+In <span class="o">[</span><span class="m">3</span><span class="o">]</span>: <span class="nv">kappa_unit_conversion</span> <span class="o">=</span> f<span class="o">[</span><span class="s1">&#39;kappa_unit_conversion&#39;</span><span class="o">][()]</span>
 
-In [4]: weight = f[&#39;weight&#39;][:]
+In <span class="o">[</span><span class="m">4</span><span class="o">]</span>: <span class="nv">weight</span> <span class="o">=</span> f<span class="o">[</span><span class="s1">&#39;weight&#39;</span><span class="o">][</span>:<span class="o">]</span>
 
-In [5]: heat_capacity = f[&#39;heat_capacity&#39;][:]
+In <span class="o">[</span><span class="m">5</span><span class="o">]</span>: <span class="nv">heat_capacity</span> <span class="o">=</span> f<span class="o">[</span><span class="s1">&#39;heat_capacity&#39;</span><span class="o">][</span>:<span class="o">]</span>
 
-In [6]: gv_by_gv = f[&#39;gv_by_gv&#39;][:]
+In <span class="o">[</span><span class="m">6</span><span class="o">]</span>: <span class="nv">gv_by_gv</span> <span class="o">=</span> f<span class="o">[</span><span class="s1">&#39;gv_by_gv&#39;</span><span class="o">][</span>:<span class="o">]</span>
 
-In [7]: gamma = f[&#39;gamma&#39;][:]
+In <span class="o">[</span><span class="m">7</span><span class="o">]</span>: <span class="nv">gamma</span> <span class="o">=</span> f<span class="o">[</span><span class="s1">&#39;gamma&#39;</span><span class="o">][</span>:<span class="o">]</span>
 
-In [8]: kappa_unit_conversion * heat_capacity[30, 2, 0] * gv_by_gv[2, 0] / (2 * gamma[30, 2, 0])
+In <span class="o">[</span><span class="m">8</span><span class="o">]</span>: kappa_unit_conversion * heat_capacity<span class="o">[</span><span class="m">30</span>, <span class="m">2</span>, <span class="m">0</span><span class="o">]</span> * gv_by_gv<span class="o">[</span><span class="m">2</span>, <span class="m">0</span><span class="o">]</span> / <span class="o">(</span><span class="m">2</span> * gamma<span class="o">[</span><span class="m">30</span>, <span class="m">2</span>, <span class="m">0</span><span class="o">])</span>
 
-Out[8]:
-array([  1.02050241e+03,   1.02050241e+03,   1.02050241e+03,
-         4.40486382e-15,   0.00000000e+00,  -4.40486382e-15])
+Out<span class="o">[</span><span class="m">8</span><span class="o">]</span>:
+array<span class="o">([</span>  <span class="m">1</span>.02050241e+03,   <span class="m">1</span>.02050241e+03,   <span class="m">1</span>.02050241e+03,
+         <span class="m">4</span>.40486382e-15,   <span class="m">0</span>.00000000e+00,  -4.40486382e-15<span class="o">])</span>
 
-In [9]: f[&#39;mode_kappa&#39;][30, 2, 0]
-Out[9]:
-array([  1.02050201e+03,   1.02050201e+03,   1.02050201e+03,
-         4.40486209e-15,   0.00000000e+00,  -4.40486209e-15])
+In <span class="o">[</span><span class="m">9</span><span class="o">]</span>: f<span class="o">[</span><span class="s1">&#39;mode_kappa&#39;</span><span class="o">][</span><span class="m">30</span>, <span class="m">2</span>, <span class="m">0</span><span class="o">]</span>
+Out<span class="o">[</span><span class="m">9</span><span class="o">]</span>:
+array<span class="o">([</span>  <span class="m">1</span>.02050201e+03,   <span class="m">1</span>.02050201e+03,   <span class="m">1</span>.02050201e+03,
+         <span class="m">4</span>.40486209e-15,   <span class="m">0</span>.00000000e+00,  -4.40486209e-15<span class="o">])</span>
 </pre></div>
 </div>
 </div>

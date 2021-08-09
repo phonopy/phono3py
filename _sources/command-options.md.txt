@@ -1,4 +1,5 @@
 (command_options)=
+
 # Command options / Setting tags
 
 Phono3py is operated with command options or with a configuration file
@@ -54,7 +55,6 @@ This specifies input unit cell filename.
 
 ## Calculator interface
 
-
 ### `--qe` (`CALCULATOR = QE`)
 
 Quantum espresso (pw) interface is invoked.
@@ -90,6 +90,7 @@ to be specified except for VASP (default) case.
 ```
 
 (cf3_file_option)=
+
 ### `--cf3-file` (command option only)
 
 This is used to create `FORCES_FC3` from a text file containing a
@@ -116,6 +117,7 @@ The order of the file names is important. This option may be useful
 to be used together with `--cutoff-pair` option.
 
 (cf2_option)=
+
 ### `--cf2` (command option only)
 
 This is used to create `FORCES_FC2` similarly to `--cf3`
@@ -129,6 +131,7 @@ with `--dim-fc2` option.
 ```
 
 (cfz_option)=
+
 ### `--cfz` (command option only)
 
 This is used to create `FORCES_FC3` and `FORCES_FC2` subtracting
@@ -148,6 +151,7 @@ forces". Sometimes quality of force constants is improved in this way.
 ```
 
 (fs2f2_option)=
+
 ### `--fs2f2` or `--force-sets-to-forces-fc2` (command option only)
 
 `FORCES_FC2` is created from phonopy's `FORCE_SETS` file.
@@ -158,6 +162,7 @@ Necessary yaml lines for `phono3py_disp.yaml` is displayed as text.
 ```
 
 (cfs_option)=
+
 ### `--cfs` or `--create-force-sets` (command option only)
 
 Phonopy's `FORCE_SETS` is created from
@@ -178,6 +183,7 @@ instead of `FORCES_FC3` and `phono3py_disp.yaml`.
 ## Supercell and primitive cell
 
 (dim_option)=
+
 ### `--dim` (`DIM`)
 
 Supercell dimension is specified. See the
@@ -186,6 +192,7 @@ When a proper `phono3py_disp.yaml` exists in the current directory,
 this is unnecessary to be specified.
 
 (dim_fc2_option)=
+
 ### `--dim-fc2` (`DIM_FC2`)
 
 Supercell dimension for 2nd order force constants (for harmonic
@@ -231,6 +238,7 @@ usual phono3py run without `--dim-fc2` option.
 ```
 
 (pa_option)=
+
 ### `--pa`, `--primitive-axes` (`PRIMITIVE_AXES`)
 
 Transformation matrix from a non-primitive cell to the primitive
@@ -242,6 +250,7 @@ this is unnecessary to be specified.
 ## Displacement creation
 
 (create_displacements_option)=
+
 ### `-d` (`CREATE_DISPLACEMENTS = .TRUE.`)
 
 Supercell with displacements are created. Using with `--amplitude`
@@ -252,9 +261,10 @@ structure is not a primitive cell, e.g., `--pa="F"` if the input
 unit cell has F-centring.
 
 (amplitude_option)=
+
 ### `--amplitude` (`DISPLACEMENT_DISTANCE`)
 
-Atomic displacement distance is specified.  This
+Atomic displacement distance is specified. This
 value may be increased for the weak interaction systems and descreased
 when the force calculator is numerically very accurate.
 
@@ -264,6 +274,7 @@ The default value depends on calculator. See
 ## Force constants
 
 (compact_fc_option)=
+
 ### `--cfc` or `--compact-fc` (`COMPACT_FC = .TRUE.`)
 
 When creating force constants from `FORCES_FC3` and/or
@@ -273,7 +284,7 @@ fc2 and `(num_patom, num_satom, num_satom)` for fc3, where
 `num_patom` and `num_satom` are the numbers of atoms in primtive
 cell and supercell. In the full size force constants case,
 `num_patom` is replaced by `num_satom`. Therefore if the supercell
-dimension is large, this reduction of data size becomes large.  If the
+dimension is large, this reduction of data size becomes large. If the
 input crystal structure has centring {ref}`--pa <pa_option>` is
 necessary to have smallest data size. In this case, `--pa` option
 has to be specified on reading. Otherwise phono3py can recognize if
@@ -287,6 +298,7 @@ employs.
 ```
 
 (symmetrization_option)=
+
 ### `--sym-fc` (`FC_SYMMETRY = .TRUE.`)
 
 Second- and third-order force constants are symmetrized. The index
@@ -302,6 +314,7 @@ independently applied by `--sym-fc2` (`SYMMETRIZE_FC2 = .TRUE.`)
 and `--sym-fc3r` (`SYMMETRIZE_FC3 = .TRUE.`), , respectively.
 
 (cf3_option)=
+
 ### `--cutoff-fc3` or `--cutoff-fc3-distance` (`CUTOFF_FC3_DISTANCE`)
 
 This option is **not** used to reduce number of supercells with
@@ -315,6 +328,7 @@ reduce the supercell size and the second choice is using
 `--cutoff-pair` option.
 
 (cutoff_pair_option)=
+
 ### `--cutoff-pair` or `--cutoff-pair-distance` (`CUTOFF_PAIR_DISTANCE`)
 
 This option is only used together with `-d` option.
@@ -336,6 +350,7 @@ Gamma-centered, this works in the same way as written here,
 https://phonopy.github.io/phonopy/setting-tags.html#mesh-mp-or-mesh-numbers.
 
 (gp_option)=
+
 ### `--gp` (`GRID_POINTS`)
 
 Grid points are specified by their unique indices, e.g., for selecting
@@ -357,6 +372,7 @@ where `--gp="0 1 2 3 4 5"` can be also written
 for the same purpose.
 
 (ga_option)=
+
 ### `--ga` (`GRID_ADDRESSES`)
 
 This is used to specify grid points like `--gp` option but in their
@@ -370,23 +386,26 @@ as given by `--gp` option, and the values given by `--ga` option
 will not be shown in log files.
 
 (bi_option)=
+
 ### `--bi` (`BAND_INDICES`)
 
-Band indices are specified. The output file name will be, e.g.,
-`gammas-mxxx-gxx(-sx)-bx.dat` where `bxbx...` shows the band
-indices used to be averaged. The calculated values at indices
+Band indices are specified. The calculated values at indices
 separated by space are averaged, and those separated by comma are
-separately calculated.
+separately calculated. The output file name will be, e.g.,
+`gammas-mxxx-gxx(-sx)-bx.dat` where `bxbx...` shows the band
+indices where the values are calcualted and summed and averaged over those
+bands.
 
 ```bash
 % phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" -c POSCAR-unitcell --nac --gp="34" --bi="4 5, 6"
 ```
 
-This may be also useful to distribute the computational demand
+This option may be also useful to distribute the computational demand
 such like that the unit cell is large and the calculation of
 phonon-phonon interaction is heavy.
 
 (wgp_option)=
+
 ### `--wgp` (command option only)
 
 Irreducible grid point indices and related information are written
@@ -406,6 +425,7 @@ sampling mesh numbers for respective reciprocal axes.
 ```
 
 (stp_option)=
+
 ### `--stp` (command option only)
 
 Numbers of q-point triplets to be calculated for irreducible grid
@@ -420,6 +440,7 @@ points are shown by using with `--gp` or `--ga` option.
 ## Brillouin zone integration
 
 (thm_option)=
+
 ### `--thm` (`TETRAHEDRON = .TRUE.`)
 
 Tetrahedron method is used for calculation of imaginary part of self
@@ -428,6 +449,7 @@ specify this unless both results by tetrahedron method and
 smearing method in one time execution are expected.
 
 (sigma_option)=
+
 ### `--sigma` (`SIGMA`)
 
 $\sigma$ value of Gaussian function for smearing when
@@ -439,6 +461,7 @@ numerical values. This is used when we want to test several
 $\sigma$ values simultaneously.
 
 (sigma_cutoff_option)=
+
 ### `--sigma-cutoff` (`SIGMA_CUTOFF_WIDTH`)
 
 The tails of the Gaussian functions that are used to replace delta
@@ -451,13 +474,14 @@ phonon-phonon interaction strength becomes much faster in exchange for
 it.
 
 (full_pp_option)=
+
 ### `--full-pp` (`FULL_PP = .TRUE.`)
 
 For thermal conductivity calculation using the linear tetrahedron
 method (from version 1.10.5) and smearing method with
 `--simga-cutoff` (from version 1.12.3), only necessary elements
-(i.e., that have non-zero delta functions) of phonon-phonon interaction strength,
-$\bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2$, is calculated
+(i.e., that have non-zero delta functions) of phonon-phonon interaction
+strength, $\bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2$, is calculated
 due to delta functions in calculation of
 $\Gamma_\lambda(\omega)$,
 
@@ -475,8 +499,7 @@ $$
 
 But using this option, full elements of phonon-phonon interaction
 strength are calculated and averaged phonon-phonon interaction
-strength ($P_{\mathbf{q}j}$, see {ref}`--ave-pp
-<ave_pp_option>`) is also given and stored.
+strength ($P_{\mathbf{q}j}$, see {ref}`--ave-pp <ave_pp_option>`) is also given and stored.
 
 ## Method to solve BTE
 
@@ -510,7 +533,7 @@ documented at {ref}`direct_solution`.
 Phonon-isotope scattering is calculated based on the formula by
 Shin-ichiro Tamura, Phys. Rev. B, **27**, 858 (1983). Mass variance
 parameters are read from database of the natural abundance data for
-elements, which refers Laeter *et al.*, Pure Appl. Chem., **75**, 683
+elements, which refers Laeter _et al._, Pure Appl. Chem., **75**, 683
 (2003).
 
 ```bash
@@ -521,8 +544,8 @@ elements, which refers Laeter *et al.*, Pure Appl. Chem., **75**, 683
 
 Mass variance parameters are specified by this option to include
 phonon-isotope scattering effect in the same way as `--isotope`
-option. For example of GaN, this may be set like `--mv="1.97e-4
-1.97e-4 0 0"`. The number of elements has to correspond to the number
+option. For example of GaN, this may be set like `--mv="1.97e-4 1.97e-4 0 0"`.
+The number of elements has to correspond to the number
 of atoms in the primitive cell.
 
 Isotope effect to thermal conductivity may be checked first running
@@ -552,6 +575,7 @@ metre, is just used to avoid divergence of phonon lifetime and the
 contribution to the thermal conducitivity is considered negligible.
 
 (ave_pp_option)=
+
 ### `--ave-pp` (`USE_AVE_PP = .TRUE.`)
 
 Averaged phonon-phonon interaction strength ($P_{\mathbf{q}j}=P_\lambda$)
@@ -612,6 +636,7 @@ to input. The physical unit of the value is $\text{eV}^2$.
 ```
 
 (normal_umklapp_option)=
+
 ### `--nu` (`N_U = .TRUE.`)
 
 Integration over q-point triplets for the calculation of
@@ -668,6 +693,7 @@ Out[6]: (101, 56, 6)
 ## Temperature
 
 (ts_option)=
+
 ### `--ts` (`TEMPERATURES`): Temperatures
 
 Specific temperatures are specified by `--ts`.
@@ -689,6 +715,7 @@ http://phonopy.github.io/phonopy/setting-tags.html#tprop-tmin-tmax-tstep.
 ## Non-analytical term correction
 
 (nac_option)=
+
 ### `--nac` (`NAC = .TRUE.`)
 
 Non-analytical term correction for harmonic phonons. Like as phonopy,
@@ -703,24 +730,151 @@ at $\mathbf{q}\rightarrow \mathbf{0}$. See the detail
 at http://phonopy.github.io/phonopy/setting-tags.html#q-direction.
 
 (write_gamma_option)=
-## Imaginary part of self energy
+
+## Imaginary and real parts of self energy
+
+Phonon self-energy of bubble diagram is written as,
+
+$$
+\Sigma_\lambda(\omega) = \Delta_\lambda(\omega) - i \Gamma_\lambda(\omega).
+$$
+
+The imaginary part and real part are written as
+
+$$
+\begin{align*}
+ \Gamma_\lambda(\omega) = \frac{18\pi}{\hbar^2}
+ \sum_{\lambda_1 \lambda_2}
+ \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2 &
+ \left\{(n_{\lambda_1}+ n_{\lambda_2}+1)
+ \left[ \delta(\omega-\omega_{\lambda_1}-\omega_{\lambda_2})
+ - \delta(\omega-\omega_{\lambda_1}-\omega_{\lambda_2}) \right] \right.
+ \\
+ & + (n_{\lambda_1}-n_{\lambda_2})
+ \left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2})
+ - \left. \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
+ \right]\right\},
+ \end{align*}
+$$
+
+and
+
+$$
+\begin{align*}
+\Delta_\lambda(\omega) = \frac{18\pi}{\hbar^2}
+ \sum_{\lambda_1 \lambda_2}
+ \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2 &
+ \left\{
+ \left[ \frac{(n_{\lambda_1}+ n_{\lambda_2}+1)}{
+ (\omega-\omega_{\lambda_1}-\omega_{\lambda_2})_\mathrm{p}}
+ - \frac{(n_{\lambda_1}+ n_{\lambda_2}+1)}{
+ (\omega+\omega_{\lambda_1}+\omega_{\lambda_2})_\mathrm{p}}
+ \right]
+ \right. \\
+  & + \left[
+ \frac{(n_{\lambda_1}-n_{\lambda_2})}{(\omega +
+ \omega_{\lambda_1} - \omega_{\lambda_2})_\mathrm{p}}
+ - \left. \frac{(n_{\lambda_1}-n_{\lambda_2})}{(\omega -
+ \omega_{\lambda_1} + \omega_{\lambda_2})_\mathrm{p}}
+ \right]\right\},
+\end{align*}
+$$
+
+respectively. In the above formulae, angular frequency $\omega$ is used,
+but in the calculation results, ordinal frequency $\nu$ is used. Be careful
+about $2\pi$ treatment.
 
 (ise_option)=
+
 ### `--ise` (`IMAG_SELF_ENERGY = .TRUE.`)
 
 Imaginary part of self energy $\Gamma_\lambda(\omega)$ is
-calculated with respect to $\omega$. The output is written to
-`gammas-mxxx-gx(-sx)-tx-bx.dat` in THz (without $2\pi$)
-with respect to frequency in THz (without $2\pi$). Frequency sampling
-points can be specified by {ref}`freq_sampling_option`.
+calculated with respect to frequency $\omega$, where $\omega$ is sampled
+following {ref}`freq_sampling_option`. The output of $\Gamma_\lambda(\omega)$
+is written to `gammas-mxxx-gx(-sx)-tx-bx.dat` in THz (without $2\pi$)
+with respect to samplied frequency points of $\omega$ in THz (without $2\pi$).
 
 ```bash
 % phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" -c POSCAR-unitcell --nac --q-direction="1 0 0" --gp=0 --ise --bi="4 5, 6"
 ```
 
+(rse_option)=
+
+### `--rse` (`REAL_SELF_ENERGY = .TRUE.`)
+
+Real part of self energy $\Delta_\lambda(\omega)$ is
+calculated with respect to frequency $\omega$, where $\omega$ is sampled
+following {ref}`freq_sampling_option`. With this option, only smearing
+approach is provide, for which values given by `--sigma` option are
+used to approximate the principal
+value as $\varepsilon$ in the following equation:
+
+$$
+\mathcal{P} \int^{\omega_\text{min}}_{\omega_\text{max}}
+\frac{f(\omega)}{\omega} dx
+\sim
+\lim_{\varepsilon \rightarrow 0} \int^{\omega_\text{min}}_{\omega_\text{max}}
+\frac{\omega}{\omega^2 + \varepsilon^2} f(\omega) dx
+$$
+
+where $\mathcal{P}$ denotes the Cauchy principal value.
+The output of $\Delta_\lambda(\omega)$
+is written to `deltas-mxxx-gx-sx-tx-bx.dat` in THz (without $2\pi$)
+with respect to samplied frequency points of $\omega$ in THz (without $2\pi$).
+
+```bash
+% phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" -c POSCAR-unitcell --nac --q-direction="1 0 0" --gp=0 --rse --sigma="0.1" --bi="4 5, 6"
+```
+
+## Spectral function
+
+Phonon spectral function of bubble diagram is written as
+
+$$
+A_\lambda(\omega) = \frac{1}{\pi} \frac{4\Omega^2_\lambda
+ \Gamma_\lambda(\omega)}
+ {\left[\omega^2 - \Omega^2_\lambda -
+ 2\Omega_\lambda \Delta_\lambda(\omega) \right]^2
+ + \left[ 2\Omega_\lambda
+ \Gamma_\lambda(\omega) \right]^2},
+$$
+
+where $A_\lambda(\omega)$ is defined to be normalized as
+
+$$
+ \int_0^\infty \frac{d\omega}{2\pi} A_\lambda(\omega) = 1.
+$$
+
+### `--spf` (`SPECTRAL_FUNCTION = .TRUE.`)
+
+Spectral function of self energy $A_\lambda(\omega)$ is
+calculated with respect to frequency $\omega$, where $\omega$ is sampled
+following {ref}`freq_sampling_option`. First, imaginary part of self-energy is calculated
+and then the real part is calculatd using the Kramers–Kronig relation.
+The output of $A_\lambda(\omega)$
+is written to `spectral-mxxx-gx(-sx)-tx-bx.dat` in THz (without $2\pi$)
+with respect to samplied frequency points of $\omega$ in THz (without $2\pi$),
+and `spectral-mxxx-gx.hdf5`.
+
+```bash
+% phono3py --fc3 --fc2 --dim="2 2 2" --mesh="16 16 16" -c POSCAR-unitcell --nac --q-direction="1 0 0" --gp=0 --spf
+```
+
+```{note}
+When `--bi` option is unspecified, spectral functions of all bands are
+calculated and the sum divided by the number of bands is stored in
+`spectral-mxxx-gx(-sx)-tx-bx.dat`, i.e.,
+$(\sum_j A_{\mathbf{q}j}) / N_\text{b}$, where $N_\text{b}$ is the
+number of bands and $\lambda \equiv (\mathbf{q},j)$ is the phonon mode.
+The spectral function of each band is written in the hdf5
+file, where $A_{\mathrm{q}j}$ is normalied as given above, i.e., numerical
+sum of stored value for each band should become roughly 1.
+```
+
 ## Joint density of states
 
 (jdos_option)=
+
 ### `--jdos` (`JOINT_DOS = .TRUE.`)
 
 Two classes of joint density of states (JDOS) are calculated. The
@@ -733,14 +887,16 @@ The first column is the frequency, and the second and third columns
 are the values given as follows, respectively,
 
 $$
-&D_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
+\begin{align}
+& D_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
 \sum_{\lambda',\lambda''} \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'')
 \left[\delta(\omega+\omega_{\lambda'}-\omega_{\lambda''}) +
 \delta(\omega-\omega_{\lambda'}+\omega_{\lambda''}) \right], \\
-&D_2^{(2)}(\mathbf{q}, \omega) = \frac{1}{N}
+& D_2^{(2)}(\mathbf{q}, \omega) = \frac{1}{N}
 \sum_{\lambda',\lambda''}
 \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'') \delta(\omega-\omega_{\lambda'}
 -\omega_{\lambda''}).
+\end{align}
 $$
 
 ```bash
@@ -756,15 +912,17 @@ first column is the frequency, and the second and third columns are
 the values given as follows, respectively,
 
 $$
-&N_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
+\begin{align}
+& N_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
 \sum_{\lambda'\lambda''} \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'')
 (n_{\lambda'} - n_{\lambda''}) [ \delta( \omega + \omega_{\lambda'} -
 \omega_{\lambda''}) - \delta( \omega - \omega_{\lambda'} +
 \omega_{\lambda''})], \\
-&N_2^{(2)}(\mathbf{q}, \omega) = \frac{1}{N}
+& N_2^{(2)}(\mathbf{q}, \omega) = \frac{1}{N}
 \sum_{\lambda'\lambda''} \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'')
 (n_{\lambda'}+ n_{\lambda''}+1) \delta( \omega - \omega_{\lambda'} -
 \omega_{\lambda''}).
+\end{align}
 $$
 
 ```bash
@@ -780,11 +938,13 @@ This is an example of `Si-PBEsol`.
 ## Sampling frequency for distribution functions
 
 (freq_sampling_option)=
+
 ### `--num-freq-points`, `--freq-pitch` (`NUM_FREQUENCY_POINTS`)
 
-For spectrum like calculations of imaginary part of self energy and
-JDOS, number of sampling frequency points is controlled by
-`--num-freq-points` or `--freq-pitch`.
+For spectrum-like calculations of imaginary part of self energy, spectral
+function, and JDOS, number or interval of uniform sampling frequency points is
+controlled by `--num-freq-points` or `--freq-pitch`. Both are unspecified,
+default value of `--num-freq-points` of 200 is used.
 
 ## Mode-Gruneisen parameter from 3rd order force constants
 
@@ -818,17 +978,18 @@ Read 3rd order force constants from `fc3.hdf5`.
 
 Imaginary parts of self energy at harmonic phonon frequencies
 $\Gamma_\lambda(\omega_\lambda)$ are written into file in hdf5
-format.  The result is written into `kappa-mxxx-gx(-sx-sdx).hdf5` or
+format. The result is written into `kappa-mxxx-gx(-sx-sdx).hdf5` or
 `kappa-mxxx-gx-bx(-sx-sdx).hdf5` with `--bi` option. With
 `--sigma` and `--sigma-cutoff` options, `-sx` and `--sdx` are
 inserted, respectively, in front of `.hdf5`.
 
 (read_gamma_option)=
+
 ### `--read-gamma` (`READ_GAMMA = .TRUE.`)
 
 Imaginary parts of self energy at harmonic phonon frequencies
 $\Gamma_\lambda(\omega_\lambda)$
-are read from `kappa` file in hdf5 format.  Initially the usual
+are read from `kappa` file in hdf5 format. Initially the usual
 result file of `kappa-mxxx(-sx-sdx).hdf5` is searched. Unless it is
 found, it tries to read `kappa` file for each grid point,
 `kappa-mxxx-gx(-sx-sdx).hdf5`. Then, similarly,
@@ -836,6 +997,7 @@ found, it tries to read `kappa` file for each grid point,
 `kappa-mxxx-gx-bx(-sx-sdx).hdf5` files for band indices are searched.
 
 (write_detailed_gamma_option)=
+
 ### `--write-gamma-detail` (`WRITE_GAMMA_DETAIL = .TRUE.`)
 
 Each q-point triplet contribution to imaginary part of self energy is
@@ -906,11 +1068,11 @@ np.dot(weight, contrib_tp) # is one
 ```
 
 (write_phonon_option)=
+
 ### `--write-phonon` (`WRITE_PHONON = .TRUE.`)
 
 Phonon frequencies, eigenvectors, and grid point addresses are stored
-in `phonon-mxxx.hdf5` file. {ref}`--pa <pa_option>` and {ref}`--nac
-<nac_option>` may be required depending on calculation setting.
+in `phonon-mxxx.hdf5` file. {ref}`--pa <pa_option>` and {ref}`--nac <nac_option>` may be required depending on calculation setting.
 
 ```bash
 % phono3py --fc2 --dim="2 2 2" --pa="F" --mesh="11 11 11" -c POSCAR-unitcell --nac --write-phoonon
@@ -952,7 +1114,8 @@ vectors. This is convenient to categorize phonon triplets into Umklapp
 and Normal scatterings based on the Brillouin zone.
 
 (read_phonon_option)=
-### `--read-phonon`  (`READ_PHONON = .TRUE.`)
+
+### `--read-phonon` (`READ_PHONON = .TRUE.`)
 
 Phonon frequencies, eigenvectors, and grid point addresses are read
 from `phonon-mxxx.hdf5` file and the calculation is continued using
@@ -967,6 +1130,7 @@ may be required depending on calculation setting.
 ```
 
 (write_read_pp_option)=
+
 ### `--write-pp` (`WRITE_PP = .TRUE.`) and `--read-pp` (`READ_PP = .TRUE.`)
 
 Phonon-phonon (ph-ph) intraction strengths are written to and read
@@ -990,6 +1154,7 @@ than usual RTA calculation.
 ```
 
 (hdf5_compression_option)=
+
 ### `--hdf5-compression` (command option only)
 
 Most of phono3py HDF5 output file is compressed by default with the
@@ -1000,6 +1165,7 @@ documentation
 (http://docs.h5py.org/en/stable/high/dataset.html#filter-pipeline).
 
 (output_filename_option)=
+
 ### `-o` (command option only)
 
 This modifies default output file names to write.
@@ -1018,6 +1184,7 @@ This rule is applied to
 - `gamma_detail-xxx.hdf5` (write only)
 
 (input_filename_option)=
+
 ### `-i` (command option only)
 
 This modifies default input file names to read.

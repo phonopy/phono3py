@@ -1092,8 +1092,8 @@
   </ul>
  </li>
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#imaginary-part-of-self-energy">
-   Imaginary part of self energy
+  <a class="reference internal nav-link" href="#imaginary-and-real-parts-of-self-energy">
+   Imaginary and real parts of self energy
   </a>
   <ul class="nav section-nav flex-column">
    <li class="toc-h3 nav-item toc-entry">
@@ -1107,6 +1107,57 @@
      <code class="docutils literal notranslate">
       <span class="pre">
        IMAG_SELF_ENERGY
+      </span>
+      <span class="pre">
+       =
+      </span>
+      <span class="pre">
+       .TRUE.
+      </span>
+     </code>
+     )
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#rse-real-self-energy-true">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       --rse
+      </span>
+     </code>
+     (
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       REAL_SELF_ENERGY
+      </span>
+      <span class="pre">
+       =
+      </span>
+      <span class="pre">
+       .TRUE.
+      </span>
+     </code>
+     )
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#spectral-function">
+   Spectral function
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#spf-spectral-function-true">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       --spf
+      </span>
+     </code>
+     (
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       SPECTRAL_FUNCTION
       </span>
       <span class="pre">
        =
@@ -1581,40 +1632,46 @@ as follow:</p>
 <li><p><a class="reference internal" href="#q-direction-q-direction" id="id53"><code class="docutils literal notranslate"><span class="pre">--q-direction</span></code> (<code class="docutils literal notranslate"><span class="pre">Q_DIRECTION</span></code>)</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#imaginary-part-of-self-energy" id="id54">Imaginary part of self energy</a></p>
+<li><p><a class="reference internal" href="#imaginary-and-real-parts-of-self-energy" id="id54">Imaginary and real parts of self energy</a></p>
 <ul>
 <li><p><a class="reference internal" href="#ise-imag-self-energy-true" id="id55"><code class="docutils literal notranslate"><span class="pre">--ise</span></code> (<code class="docutils literal notranslate"><span class="pre">IMAG_SELF_ENERGY</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
+<li><p><a class="reference internal" href="#rse-real-self-energy-true" id="id56"><code class="docutils literal notranslate"><span class="pre">--rse</span></code> (<code class="docutils literal notranslate"><span class="pre">REAL_SELF_ENERGY</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#joint-density-of-states" id="id56">Joint density of states</a></p>
+<li><p><a class="reference internal" href="#spectral-function" id="id57">Spectral function</a></p>
 <ul>
-<li><p><a class="reference internal" href="#jdos-joint-dos-true" id="id57"><code class="docutils literal notranslate"><span class="pre">--jdos</span></code> (<code class="docutils literal notranslate"><span class="pre">JOINT_DOS</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
+<li><p><a class="reference internal" href="#spf-spectral-function-true" id="id58"><code class="docutils literal notranslate"><span class="pre">--spf</span></code> (<code class="docutils literal notranslate"><span class="pre">SPECTRAL_FUNCTION</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#sampling-frequency-for-distribution-functions" id="id58">Sampling frequency for distribution functions</a></p>
+<li><p><a class="reference internal" href="#joint-density-of-states" id="id59">Joint density of states</a></p>
 <ul>
-<li><p><a class="reference internal" href="#num-freq-points-freq-pitch-num-frequency-points" id="id59"><code class="docutils literal notranslate"><span class="pre">--num-freq-points</span></code>, <code class="docutils literal notranslate"><span class="pre">--freq-pitch</span></code> (<code class="docutils literal notranslate"><span class="pre">NUM_FREQUENCY_POINTS</span></code>)</a></p></li>
+<li><p><a class="reference internal" href="#jdos-joint-dos-true" id="id60"><code class="docutils literal notranslate"><span class="pre">--jdos</span></code> (<code class="docutils literal notranslate"><span class="pre">JOINT_DOS</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#mode-gruneisen-parameter-from-3rd-order-force-constants" id="id60">Mode-Gruneisen parameter from 3rd order force constants</a></p>
+<li><p><a class="reference internal" href="#sampling-frequency-for-distribution-functions" id="id61">Sampling frequency for distribution functions</a></p>
 <ul>
-<li><p><a class="reference internal" href="#gruneisen-gruneisen-true" id="id61"><code class="docutils literal notranslate"><span class="pre">--gruneisen</span></code> (<code class="docutils literal notranslate"><span class="pre">GRUNEISEN</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
+<li><p><a class="reference internal" href="#num-freq-points-freq-pitch-num-frequency-points" id="id62"><code class="docutils literal notranslate"><span class="pre">--num-freq-points</span></code>, <code class="docutils literal notranslate"><span class="pre">--freq-pitch</span></code> (<code class="docutils literal notranslate"><span class="pre">NUM_FREQUENCY_POINTS</span></code>)</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#file-i-o" id="id62">File I/O</a></p>
+<li><p><a class="reference internal" href="#mode-gruneisen-parameter-from-3rd-order-force-constants" id="id63">Mode-Gruneisen parameter from 3rd order force constants</a></p>
 <ul>
-<li><p><a class="reference internal" href="#fc2-read-fc2-true" id="id63"><code class="docutils literal notranslate"><span class="pre">--fc2</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_FC2</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
-<li><p><a class="reference internal" href="#fc3-read-fc3-true" id="id64"><code class="docutils literal notranslate"><span class="pre">--fc3</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_FC3</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
-<li><p><a class="reference internal" href="#write-gamma-write-gamma-true" id="id65"><code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_GAMMA</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
-<li><p><a class="reference internal" href="#read-gamma-read-gamma-true" id="id66"><code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_GAMMA</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
-<li><p><a class="reference internal" href="#write-gamma-detail-write-gamma-detail-true" id="id67"><code class="docutils literal notranslate"><span class="pre">--write-gamma-detail</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_GAMMA_DETAIL</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
-<li><p><a class="reference internal" href="#write-phonon-write-phonon-true" id="id68"><code class="docutils literal notranslate"><span class="pre">--write-phonon</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_PHONON</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
-<li><p><a class="reference internal" href="#read-phonon-read-phonon-true" id="id69"><code class="docutils literal notranslate"><span class="pre">--read-phonon</span></code>  (<code class="docutils literal notranslate"><span class="pre">READ_PHONON</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
-<li><p><a class="reference internal" href="#write-pp-write-pp-true-and-read-pp-read-pp-true" id="id70"><code class="docutils literal notranslate"><span class="pre">--write-pp</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_PP</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>) and <code class="docutils literal notranslate"><span class="pre">--read-pp</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_PP</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
-<li><p><a class="reference internal" href="#hdf5-compression-command-option-only" id="id71"><code class="docutils literal notranslate"><span class="pre">--hdf5-compression</span></code> (command option only)</a></p></li>
-<li><p><a class="reference internal" href="#o-command-option-only" id="id72"><code class="docutils literal notranslate"><span class="pre">-o</span></code> (command option only)</a></p></li>
-<li><p><a class="reference internal" href="#i-command-option-only" id="id73"><code class="docutils literal notranslate"><span class="pre">-i</span></code> (command option only)</a></p></li>
-<li><p><a class="reference internal" href="#io-command-option-only" id="id74"><code class="docutils literal notranslate"><span class="pre">--io</span></code> (command option only)</a></p></li>
+<li><p><a class="reference internal" href="#gruneisen-gruneisen-true" id="id64"><code class="docutils literal notranslate"><span class="pre">--gruneisen</span></code> (<code class="docutils literal notranslate"><span class="pre">GRUNEISEN</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#file-i-o" id="id65">File I/O</a></p>
+<ul>
+<li><p><a class="reference internal" href="#fc2-read-fc2-true" id="id66"><code class="docutils literal notranslate"><span class="pre">--fc2</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_FC2</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
+<li><p><a class="reference internal" href="#fc3-read-fc3-true" id="id67"><code class="docutils literal notranslate"><span class="pre">--fc3</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_FC3</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
+<li><p><a class="reference internal" href="#write-gamma-write-gamma-true" id="id68"><code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_GAMMA</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
+<li><p><a class="reference internal" href="#read-gamma-read-gamma-true" id="id69"><code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_GAMMA</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
+<li><p><a class="reference internal" href="#write-gamma-detail-write-gamma-detail-true" id="id70"><code class="docutils literal notranslate"><span class="pre">--write-gamma-detail</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_GAMMA_DETAIL</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
+<li><p><a class="reference internal" href="#write-phonon-write-phonon-true" id="id71"><code class="docutils literal notranslate"><span class="pre">--write-phonon</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_PHONON</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
+<li><p><a class="reference internal" href="#read-phonon-read-phonon-true" id="id72"><code class="docutils literal notranslate"><span class="pre">--read-phonon</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_PHONON</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
+<li><p><a class="reference internal" href="#write-pp-write-pp-true-and-read-pp-read-pp-true" id="id73"><code class="docutils literal notranslate"><span class="pre">--write-pp</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_PP</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>) and <code class="docutils literal notranslate"><span class="pre">--read-pp</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_PP</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a></p></li>
+<li><p><a class="reference internal" href="#hdf5-compression-command-option-only" id="id74"><code class="docutils literal notranslate"><span class="pre">--hdf5-compression</span></code> (command option only)</a></p></li>
+<li><p><a class="reference internal" href="#o-command-option-only" id="id75"><code class="docutils literal notranslate"><span class="pre">-o</span></code> (command option only)</a></p></li>
+<li><p><a class="reference internal" href="#i-command-option-only" id="id76"><code class="docutils literal notranslate"><span class="pre">-i</span></code> (command option only)</a></p></li>
+<li><p><a class="reference internal" href="#io-command-option-only" id="id77"><code class="docutils literal notranslate"><span class="pre">--io</span></code> (command option only)</a></p></li>
 </ul>
 </li>
 </ul>
@@ -1802,7 +1859,7 @@ unit cell has F-centring.</p>
 </div>
 <div class="section" id="amplitude-displacement-distance">
 <span id="amplitude-option"></span><h3><a class="toc-backref" href="#id20"><code class="docutils literal notranslate"><span class="pre">--amplitude</span></code> (<code class="docutils literal notranslate"><span class="pre">DISPLACEMENT_DISTANCE</span></code>)</a><a class="headerlink" href="#amplitude-displacement-distance" title="Permalink to this headline">¶</a></h3>
-<p>Atomic displacement distance is specified.  This
+<p>Atomic displacement distance is specified. This
 value may be increased for the weak interaction systems and descreased
 when the force calculator is numerically very accurate.</p>
 <p>The default value depends on calculator. See
@@ -1820,7 +1877,7 @@ fc2 and <code class="docutils literal notranslate"><span class="pre">(num_patom,
 <code class="docutils literal notranslate"><span class="pre">num_patom</span></code> and <code class="docutils literal notranslate"><span class="pre">num_satom</span></code> are the numbers of atoms in primtive
 cell and supercell. In the full size force constants case,
 <code class="docutils literal notranslate"><span class="pre">num_patom</span></code> is replaced by <code class="docutils literal notranslate"><span class="pre">num_satom</span></code>. Therefore if the supercell
-dimension is large, this reduction of data size becomes large.  If the
+dimension is large, this reduction of data size becomes large. If the
 input crystal structure has centring <a class="reference internal" href="#pa-option"><span class="std std-ref">–pa</span></a> is
 necessary to have smallest data size. In this case, <code class="docutils literal notranslate"><span class="pre">--pa</span></code> option
 has to be specified on reading. Otherwise phono3py can recognize if
@@ -1907,15 +1964,16 @@ will not be shown in log files.</p>
 </div>
 <div class="section" id="bi-band-indices">
 <span id="bi-option"></span><h3><a class="toc-backref" href="#id30"><code class="docutils literal notranslate"><span class="pre">--bi</span></code> (<code class="docutils literal notranslate"><span class="pre">BAND_INDICES</span></code>)</a><a class="headerlink" href="#bi-band-indices" title="Permalink to this headline">¶</a></h3>
-<p>Band indices are specified. The output file name will be, e.g.,
-<code class="docutils literal notranslate"><span class="pre">gammas-mxxx-gxx(-sx)-bx.dat</span></code> where <code class="docutils literal notranslate"><span class="pre">bxbx...</span></code> shows the band
-indices used to be averaged. The calculated values at indices
+<p>Band indices are specified. The calculated values at indices
 separated by space are averaged, and those separated by comma are
-separately calculated.</p>
+separately calculated. The output file name will be, e.g.,
+<code class="docutils literal notranslate"><span class="pre">gammas-mxxx-gxx(-sx)-bx.dat</span></code> where <code class="docutils literal notranslate"><span class="pre">bxbx...</span></code> shows the band
+indices where the values are calcualted and summed and averaged over those
+bands.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --fc3 --fc2 --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --mesh<span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span> -c POSCAR-unitcell --nac --gp<span class="o">=</span><span class="s2">&quot;34&quot;</span> --bi<span class="o">=</span><span class="s2">&quot;4 5, 6&quot;</span>
 </pre></div>
 </div>
-<p>This may be also useful to distribute the computational demand
+<p>This option may be also useful to distribute the computational demand
 such like that the unit cell is large and the calculation of
 phonon-phonon interaction is heavy.</p>
 </div>
@@ -1980,8 +2038,8 @@ it.</p>
 <p>For thermal conductivity calculation using the linear tetrahedron
 method (from version 1.10.5) and smearing method with
 <code class="docutils literal notranslate"><span class="pre">--simga-cutoff</span></code> (from version 1.12.3), only necessary elements
-(i.e., that have non-zero delta functions) of phonon-phonon interaction strength,
-<span class="math notranslate nohighlight">\(\bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2\)</span>, is calculated
+(i.e., that have non-zero delta functions) of phonon-phonon interaction
+strength, <span class="math notranslate nohighlight">\(\bigl|\Phi_{-\lambda\lambda'\lambda''}\bigl|^2\)</span>, is calculated
 due to delta functions in calculation of
 <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega)\)</span>,</p>
 <div class="math notranslate nohighlight">
@@ -1998,7 +2056,7 @@ due to delta functions in calculation of
 \]</div>
 <p>But using this option, full elements of phonon-phonon interaction
 strength are calculated and averaged phonon-phonon interaction
-strength (<span class="math notranslate nohighlight">\(P_{\mathbf{q}j}\)</span>, see {ref}<code class="docutils literal notranslate"><span class="pre">--ave-pp</span> <span class="pre">&lt;ave_pp_option&gt;</span></code>) is also given and stored.</p>
+strength (<span class="math notranslate nohighlight">\(P_{\mathbf{q}j}\)</span>, see <a class="reference internal" href="#ave-pp-option"><span class="std std-ref">–ave-pp</span></a>) is also given and stored.</p>
 </div>
 </div>
 <div class="section" id="method-to-solve-bte">
@@ -2043,7 +2101,8 @@ elements, which refers Laeter <em>et al.</em>, Pure Appl. Chem., <strong>75</str
 <h3><a class="toc-backref" href="#id43"><code class="docutils literal notranslate"><span class="pre">--mass-variances</span></code> or <code class="docutils literal notranslate"><span class="pre">--mv</span></code> (<code class="docutils literal notranslate"><span class="pre">MASS_VARIANCES</span></code>)</a><a class="headerlink" href="#mass-variances-or-mv-mass-variances" title="Permalink to this headline">¶</a></h3>
 <p>Mass variance parameters are specified by this option to include
 phonon-isotope scattering effect in the same way as <code class="docutils literal notranslate"><span class="pre">--isotope</span></code>
-option. For example of GaN, this may be set like <code class="docutils literal notranslate"><span class="pre">--mv=&quot;1.97e-4</span> <span class="pre">1.97e-4</span> <span class="pre">0</span> <span class="pre">0&quot;</span></code>. The number of elements has to correspond to the number
+option. For example of GaN, this may be set like <code class="docutils literal notranslate"><span class="pre">--mv=&quot;1.97e-4</span> <span class="pre">1.97e-4</span> <span class="pre">0</span> <span class="pre">0&quot;</span></code>.
+The number of elements has to correspond to the number
 of atoms in the primitive cell.</p>
 <p>Isotope effect to thermal conductivity may be checked first running
 without isotope calculation:</p>
@@ -2205,24 +2264,138 @@ at <span class="math notranslate nohighlight">\(\mathbf{q}\rightarrow \mathbf{0}
 at <a class="reference external" href="http://phonopy.github.io/phonopy/setting-tags.html#q-direction">http://phonopy.github.io/phonopy/setting-tags.html#q-direction</a>.</p>
 </div>
 </div>
-<div class="section" id="imaginary-part-of-self-energy">
-<span id="write-gamma-option"></span><h2><a class="toc-backref" href="#id54">Imaginary part of self energy</a><a class="headerlink" href="#imaginary-part-of-self-energy" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="imaginary-and-real-parts-of-self-energy">
+<span id="write-gamma-option"></span><h2><a class="toc-backref" href="#id54">Imaginary and real parts of self energy</a><a class="headerlink" href="#imaginary-and-real-parts-of-self-energy" title="Permalink to this headline">¶</a></h2>
+<p>Phonon self-energy of bubble diagram is written as,</p>
+<div class="math notranslate nohighlight">
+\[
+\Sigma_\lambda(\omega) = \Delta_\lambda(\omega) - i \Gamma_\lambda(\omega).
+\]</div>
+<p>The imaginary part and real part are written as</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\begin{align*}
+ \Gamma_\lambda(\omega) = \frac{18\pi}{\hbar^2}
+ \sum_{\lambda_1 \lambda_2}
+ \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2 &amp;
+ \left\{(n_{\lambda_1}+ n_{\lambda_2}+1)
+ \left[ \delta(\omega-\omega_{\lambda_1}-\omega_{\lambda_2})
+ - \delta(\omega-\omega_{\lambda_1}-\omega_{\lambda_2}) \right] \right.
+ \\
+ &amp; + (n_{\lambda_1}-n_{\lambda_2})
+ \left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2})
+ - \left. \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
+ \right]\right\},
+ \end{align*}
+\end{split}\]</div>
+<p>and</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}
+\begin{align*}
+\Delta_\lambda(\omega) = \frac{18\pi}{\hbar^2}
+ \sum_{\lambda_1 \lambda_2}
+ \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2 &amp;
+ \left\{
+ \left[ \frac{(n_{\lambda_1}+ n_{\lambda_2}+1)}{
+ (\omega-\omega_{\lambda_1}-\omega_{\lambda_2})_\mathrm{p}}
+ - \frac{(n_{\lambda_1}+ n_{\lambda_2}+1)}{
+ (\omega+\omega_{\lambda_1}+\omega_{\lambda_2})_\mathrm{p}}
+ \right]
+ \right. \\
+  &amp; + \left[
+ \frac{(n_{\lambda_1}-n_{\lambda_2})}{(\omega +
+ \omega_{\lambda_1} - \omega_{\lambda_2})_\mathrm{p}}
+ - \left. \frac{(n_{\lambda_1}-n_{\lambda_2})}{(\omega -
+ \omega_{\lambda_1} + \omega_{\lambda_2})_\mathrm{p}}
+ \right]\right\},
+\end{align*}
+\end{split}\]</div>
+<p>respectively. In the above formulae, angular frequency <span class="math notranslate nohighlight">\(\omega\)</span> is used,
+but in the calculation results, ordinal frequency <span class="math notranslate nohighlight">\(\nu\)</span> is used. Be careful
+about <span class="math notranslate nohighlight">\(2\pi\)</span> treatment.</p>
 <div class="section" id="ise-imag-self-energy-true">
 <span id="ise-option"></span><h3><a class="toc-backref" href="#id55"><code class="docutils literal notranslate"><span class="pre">--ise</span></code> (<code class="docutils literal notranslate"><span class="pre">IMAG_SELF_ENERGY</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#ise-imag-self-energy-true" title="Permalink to this headline">¶</a></h3>
 <p>Imaginary part of self energy <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega)\)</span> is
-calculated with respect to <span class="math notranslate nohighlight">\(\omega\)</span>. The output is written to
-<code class="docutils literal notranslate"><span class="pre">gammas-mxxx-gx(-sx)-tx-bx.dat</span></code> in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>)
-with respect to frequency in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>). Frequency sampling
-points can be specified by <a class="reference internal" href="#freq-sampling-option"><span class="std std-ref">--num-freq-points, --freq-pitch (NUM_FREQUENCY_POINTS)</span></a>.</p>
+calculated with respect to frequency <span class="math notranslate nohighlight">\(\omega\)</span>, where <span class="math notranslate nohighlight">\(\omega\)</span> is sampled
+following <a class="reference internal" href="#freq-sampling-option"><span class="std std-ref">--num-freq-points, --freq-pitch (NUM_FREQUENCY_POINTS)</span></a>. The output of <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega)\)</span>
+is written to <code class="docutils literal notranslate"><span class="pre">gammas-mxxx-gx(-sx)-tx-bx.dat</span></code> in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>)
+with respect to samplied frequency points of <span class="math notranslate nohighlight">\(\omega\)</span> in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>).</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --fc3 --fc2 --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --mesh<span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span> -c POSCAR-unitcell --nac --q-direction<span class="o">=</span><span class="s2">&quot;1 0 0&quot;</span> --gp<span class="o">=</span><span class="m">0</span> --ise --bi<span class="o">=</span><span class="s2">&quot;4 5, 6&quot;</span>
 </pre></div>
 </div>
 </div>
+<div class="section" id="rse-real-self-energy-true">
+<span id="rse-option"></span><h3><a class="toc-backref" href="#id56"><code class="docutils literal notranslate"><span class="pre">--rse</span></code> (<code class="docutils literal notranslate"><span class="pre">REAL_SELF_ENERGY</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#rse-real-self-energy-true" title="Permalink to this headline">¶</a></h3>
+<p>Real part of self energy <span class="math notranslate nohighlight">\(\Delta_\lambda(\omega)\)</span> is
+calculated with respect to frequency <span class="math notranslate nohighlight">\(\omega\)</span>, where <span class="math notranslate nohighlight">\(\omega\)</span> is sampled
+following <a class="reference internal" href="#freq-sampling-option"><span class="std std-ref">--num-freq-points, --freq-pitch (NUM_FREQUENCY_POINTS)</span></a>. With this option, only smearing
+approach is provide, for which values given by <code class="docutils literal notranslate"><span class="pre">--sigma</span></code> option are
+used to approximate the principal
+value as <span class="math notranslate nohighlight">\(\varepsilon\)</span> in the following equation:</p>
+<div class="math notranslate nohighlight">
+\[
+\mathcal{P} \int^{\omega_\text{min}}_{\omega_\text{max}}
+\frac{f(\omega)}{\omega} dx
+\sim
+\lim_{\varepsilon \rightarrow 0} \int^{\omega_\text{min}}_{\omega_\text{max}}
+\frac{\omega}{\omega^2 + \varepsilon^2} f(\omega) dx
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathcal{P}\)</span> denotes the Cauchy principal value.
+The output of <span class="math notranslate nohighlight">\(\Delta_\lambda(\omega)\)</span>
+is written to <code class="docutils literal notranslate"><span class="pre">deltas-mxxx-gx-sx-tx-bx.dat</span></code> in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>)
+with respect to samplied frequency points of <span class="math notranslate nohighlight">\(\omega\)</span> in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --fc3 --fc2 --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --mesh<span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span> -c POSCAR-unitcell --nac --q-direction<span class="o">=</span><span class="s2">&quot;1 0 0&quot;</span> --gp<span class="o">=</span><span class="m">0</span> --rse --sigma<span class="o">=</span><span class="s2">&quot;0.1&quot;</span> --bi<span class="o">=</span><span class="s2">&quot;4 5, 6&quot;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="spectral-function">
+<h2><a class="toc-backref" href="#id57">Spectral function</a><a class="headerlink" href="#spectral-function" title="Permalink to this headline">¶</a></h2>
+<p>Phonon spectral function of bubble diagram is written as</p>
+<div class="math notranslate nohighlight">
+\[
+A_\lambda(\omega) = \frac{1}{\pi} \frac{4\Omega^2_\lambda
+ \Gamma_\lambda(\omega)}
+ {\left[\omega^2 - \Omega^2_\lambda -
+ 2\Omega_\lambda \Delta_\lambda(\omega) \right]^2
+ + \left[ 2\Omega_\lambda
+ \Gamma_\lambda(\omega) \right]^2},
+\]</div>
+<p>where <span class="math notranslate nohighlight">\(A_\lambda(\omega)\)</span> is defined to be normalized as</p>
+<div class="math notranslate nohighlight">
+\[
+ \int_0^\infty \frac{d\omega}{2\pi} A_\lambda(\omega) = 1.
+\]</div>
+<div class="section" id="spf-spectral-function-true">
+<h3><a class="toc-backref" href="#id58"><code class="docutils literal notranslate"><span class="pre">--spf</span></code> (<code class="docutils literal notranslate"><span class="pre">SPECTRAL_FUNCTION</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#spf-spectral-function-true" title="Permalink to this headline">¶</a></h3>
+<p>Spectral function of self energy <span class="math notranslate nohighlight">\(A_\lambda(\omega)\)</span> is
+calculated with respect to frequency <span class="math notranslate nohighlight">\(\omega\)</span>, where <span class="math notranslate nohighlight">\(\omega\)</span> is sampled
+following <a class="reference internal" href="#freq-sampling-option"><span class="std std-ref">--num-freq-points, --freq-pitch (NUM_FREQUENCY_POINTS)</span></a>. First, imaginary part of self-energy is calculated
+and then the real part is calculatd using the Kramers–Kronig relation.
+The output of <span class="math notranslate nohighlight">\(A_\lambda(\omega)\)</span>
+is written to <code class="docutils literal notranslate"><span class="pre">spectral-mxxx-gx(-sx)-tx-bx.dat</span></code> in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>)
+with respect to samplied frequency points of <span class="math notranslate nohighlight">\(\omega\)</span> in THz (without <span class="math notranslate nohighlight">\(2\pi\)</span>),
+and <code class="docutils literal notranslate"><span class="pre">spectral-mxxx-gx.hdf5</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --fc3 --fc2 --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --mesh<span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span> -c POSCAR-unitcell --nac --q-direction<span class="o">=</span><span class="s2">&quot;1 0 0&quot;</span> --gp<span class="o">=</span><span class="m">0</span> --spf
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">--bi</span></code> option is unspecified, spectral functions of all bands are
+calculated and the sum divided by the number of bands is stored in
+<code class="docutils literal notranslate"><span class="pre">spectral-mxxx-gx(-sx)-tx-bx.dat</span></code>, i.e.,
+<span class="math notranslate nohighlight">\((\sum_j A_{\mathbf{q}j}) / N_\text{b}\)</span>, where <span class="math notranslate nohighlight">\(N_\text{b}\)</span> is the
+number of bands and <span class="math notranslate nohighlight">\(\lambda \equiv (\mathbf{q},j)\)</span> is the phonon mode.
+The spectral function of each band is written in the hdf5
+file, where <span class="math notranslate nohighlight">\(A_{\mathrm{q}j}\)</span> is normalied as given above, i.e., numerical
+sum of stored value for each band should become roughly 1.</p>
+</div>
+</div>
 </div>
 <div class="section" id="joint-density-of-states">
-<h2><a class="toc-backref" href="#id56">Joint density of states</a><a class="headerlink" href="#joint-density-of-states" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id59">Joint density of states</a><a class="headerlink" href="#joint-density-of-states" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="jdos-joint-dos-true">
-<span id="jdos-option"></span><h3><a class="toc-backref" href="#id57"><code class="docutils literal notranslate"><span class="pre">--jdos</span></code> (<code class="docutils literal notranslate"><span class="pre">JOINT_DOS</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#jdos-joint-dos-true" title="Permalink to this headline">¶</a></h3>
+<span id="jdos-option"></span><h3><a class="toc-backref" href="#id60"><code class="docutils literal notranslate"><span class="pre">--jdos</span></code> (<code class="docutils literal notranslate"><span class="pre">JOINT_DOS</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#jdos-joint-dos-true" title="Permalink to this headline">¶</a></h3>
 <p>Two classes of joint density of states (JDOS) are calculated. The
 result is written into <code class="docutils literal notranslate"><span class="pre">jdos-mxxx-gx(-sx-sdx).dat</span></code> in
 <span class="math notranslate nohighlight">\(\text{THz}^{-1}\)</span> (without <span class="math notranslate nohighlight">\((2\pi)^{-1}\)</span>) with
@@ -2232,14 +2405,16 @@ points can be specified by <a class="reference internal" href="#freq-sampling-op
 are the values given as follows, respectively,</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}
-&amp;D_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
+\begin{align}
+&amp; D_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
 \sum_{\lambda',\lambda''} \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'')
 \left[\delta(\omega+\omega_{\lambda'}-\omega_{\lambda''}) +
 \delta(\omega-\omega_{\lambda'}+\omega_{\lambda''}) \right], \\
-&amp;D_2^{(2)}(\mathbf{q}, \omega) = \frac{1}{N}
+&amp; D_2^{(2)}(\mathbf{q}, \omega) = \frac{1}{N}
 \sum_{\lambda',\lambda''}
 \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'') \delta(\omega-\omega_{\lambda'}
 -\omega_{\lambda''}).
+\end{align}
 \end{split}\]</div>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --fc2 --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --pa<span class="o">=</span><span class="s2">&quot;F&quot;</span> -c POSCAR-unitcell --mesh<span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span> --jdos --ga<span class="o">=</span><span class="s2">&quot;0 0 0  8 8 8&quot;</span>
 </pre></div>
@@ -2253,15 +2428,17 @@ first column is the frequency, and the second and third columns are
 the values given as follows, respectively,</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}
-&amp;N_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
+\begin{align}
+&amp; N_2^{(1)}(\mathbf{q}, \omega) = \frac{1}{N}
 \sum_{\lambda'\lambda''} \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'')
 (n_{\lambda'} - n_{\lambda''}) [ \delta( \omega + \omega_{\lambda'} -
 \omega_{\lambda''}) - \delta( \omega - \omega_{\lambda'} +
 \omega_{\lambda''})], \\
-&amp;N_2^{(2)}(\mathbf{q}, \omega) = \frac{1}{N}
+&amp; N_2^{(2)}(\mathbf{q}, \omega) = \frac{1}{N}
 \sum_{\lambda'\lambda''} \Delta(-\mathbf{q}+\mathbf{q}'+\mathbf{q}'')
 (n_{\lambda'}+ n_{\lambda''}+1) \delta( \omega - \omega_{\lambda'} -
 \omega_{\lambda''}).
+\end{align}
 \end{split}\]</div>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --fc2 --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --pa<span class="o">=</span><span class="s2">&quot;F&quot;</span> -c POSCAR-unitcell --mesh<span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span> --jdos --ga<span class="o">=</span><span class="s2">&quot;0 0 0  8 8 8&quot;</span> --ts<span class="o">=</span><span class="m">300</span>
 </pre></div>
@@ -2271,18 +2448,19 @@ the values given as follows, respectively,</p>
 </div>
 </div>
 <div class="section" id="sampling-frequency-for-distribution-functions">
-<h2><a class="toc-backref" href="#id58">Sampling frequency for distribution functions</a><a class="headerlink" href="#sampling-frequency-for-distribution-functions" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id61">Sampling frequency for distribution functions</a><a class="headerlink" href="#sampling-frequency-for-distribution-functions" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="num-freq-points-freq-pitch-num-frequency-points">
-<span id="freq-sampling-option"></span><h3><a class="toc-backref" href="#id59"><code class="docutils literal notranslate"><span class="pre">--num-freq-points</span></code>, <code class="docutils literal notranslate"><span class="pre">--freq-pitch</span></code> (<code class="docutils literal notranslate"><span class="pre">NUM_FREQUENCY_POINTS</span></code>)</a><a class="headerlink" href="#num-freq-points-freq-pitch-num-frequency-points" title="Permalink to this headline">¶</a></h3>
-<p>For spectrum like calculations of imaginary part of self energy and
-JDOS, number of sampling frequency points is controlled by
-<code class="docutils literal notranslate"><span class="pre">--num-freq-points</span></code> or <code class="docutils literal notranslate"><span class="pre">--freq-pitch</span></code>.</p>
+<span id="freq-sampling-option"></span><h3><a class="toc-backref" href="#id62"><code class="docutils literal notranslate"><span class="pre">--num-freq-points</span></code>, <code class="docutils literal notranslate"><span class="pre">--freq-pitch</span></code> (<code class="docutils literal notranslate"><span class="pre">NUM_FREQUENCY_POINTS</span></code>)</a><a class="headerlink" href="#num-freq-points-freq-pitch-num-frequency-points" title="Permalink to this headline">¶</a></h3>
+<p>For spectrum-like calculations of imaginary part of self energy, spectral
+function, and JDOS, number or interval of uniform sampling frequency points is
+controlled by <code class="docutils literal notranslate"><span class="pre">--num-freq-points</span></code> or <code class="docutils literal notranslate"><span class="pre">--freq-pitch</span></code>. Both are unspecified,
+default value of <code class="docutils literal notranslate"><span class="pre">--num-freq-points</span></code> of 200 is used.</p>
 </div>
 </div>
 <div class="section" id="mode-gruneisen-parameter-from-3rd-order-force-constants">
-<h2><a class="toc-backref" href="#id60">Mode-Gruneisen parameter from 3rd order force constants</a><a class="headerlink" href="#mode-gruneisen-parameter-from-3rd-order-force-constants" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id63">Mode-Gruneisen parameter from 3rd order force constants</a><a class="headerlink" href="#mode-gruneisen-parameter-from-3rd-order-force-constants" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="gruneisen-gruneisen-true">
-<h3><a class="toc-backref" href="#id61"><code class="docutils literal notranslate"><span class="pre">--gruneisen</span></code> (<code class="docutils literal notranslate"><span class="pre">GRUNEISEN</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#gruneisen-gruneisen-true" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id64"><code class="docutils literal notranslate"><span class="pre">--gruneisen</span></code> (<code class="docutils literal notranslate"><span class="pre">GRUNEISEN</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#gruneisen-gruneisen-true" title="Permalink to this headline">¶</a></h3>
 <p>Mode-Gruneisen-parameters are calculated from fc3.</p>
 <p>Mesh sampling mode:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --fc3 --fc2 --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> -v --mesh<span class="o">=</span><span class="s2">&quot;16 16 16&quot;</span> -c POSCAR-unitcell --nac --gruneisen
@@ -2295,29 +2473,29 @@ JDOS, number of sampling frequency points is controlled by
 </div>
 </div>
 <div class="section" id="file-i-o">
-<h2><a class="toc-backref" href="#id62">File I/O</a><a class="headerlink" href="#file-i-o" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id65">File I/O</a><a class="headerlink" href="#file-i-o" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="fc2-read-fc2-true">
-<h3><a class="toc-backref" href="#id63"><code class="docutils literal notranslate"><span class="pre">--fc2</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_FC2</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#fc2-read-fc2-true" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id66"><code class="docutils literal notranslate"><span class="pre">--fc2</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_FC2</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#fc2-read-fc2-true" title="Permalink to this headline">¶</a></h3>
 <p>Read 2nd order force constants from <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code>.</p>
 </div>
 <div class="section" id="fc3-read-fc3-true">
-<h3><a class="toc-backref" href="#id64"><code class="docutils literal notranslate"><span class="pre">--fc3</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_FC3</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#fc3-read-fc3-true" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id67"><code class="docutils literal notranslate"><span class="pre">--fc3</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_FC3</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#fc3-read-fc3-true" title="Permalink to this headline">¶</a></h3>
 <p>Read 3rd order force constants from <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code>.</p>
 </div>
 <div class="section" id="write-gamma-write-gamma-true">
-<h3><a class="toc-backref" href="#id65"><code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_GAMMA</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#write-gamma-write-gamma-true" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id68"><code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_GAMMA</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#write-gamma-write-gamma-true" title="Permalink to this headline">¶</a></h3>
 <p>Imaginary parts of self energy at harmonic phonon frequencies
 <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega_\lambda)\)</span> are written into file in hdf5
-format.  The result is written into <code class="docutils literal notranslate"><span class="pre">kappa-mxxx-gx(-sx-sdx).hdf5</span></code> or
+format. The result is written into <code class="docutils literal notranslate"><span class="pre">kappa-mxxx-gx(-sx-sdx).hdf5</span></code> or
 <code class="docutils literal notranslate"><span class="pre">kappa-mxxx-gx-bx(-sx-sdx).hdf5</span></code> with <code class="docutils literal notranslate"><span class="pre">--bi</span></code> option. With
 <code class="docutils literal notranslate"><span class="pre">--sigma</span></code> and <code class="docutils literal notranslate"><span class="pre">--sigma-cutoff</span></code> options, <code class="docutils literal notranslate"><span class="pre">-sx</span></code> and <code class="docutils literal notranslate"><span class="pre">--sdx</span></code> are
 inserted, respectively, in front of <code class="docutils literal notranslate"><span class="pre">.hdf5</span></code>.</p>
 </div>
 <div class="section" id="read-gamma-read-gamma-true">
-<span id="read-gamma-option"></span><h3><a class="toc-backref" href="#id66"><code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_GAMMA</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#read-gamma-read-gamma-true" title="Permalink to this headline">¶</a></h3>
+<span id="read-gamma-option"></span><h3><a class="toc-backref" href="#id69"><code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_GAMMA</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#read-gamma-read-gamma-true" title="Permalink to this headline">¶</a></h3>
 <p>Imaginary parts of self energy at harmonic phonon frequencies
 <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega_\lambda)\)</span>
-are read from <code class="docutils literal notranslate"><span class="pre">kappa</span></code> file in hdf5 format.  Initially the usual
+are read from <code class="docutils literal notranslate"><span class="pre">kappa</span></code> file in hdf5 format. Initially the usual
 result file of <code class="docutils literal notranslate"><span class="pre">kappa-mxxx(-sx-sdx).hdf5</span></code> is searched. Unless it is
 found, it tries to read <code class="docutils literal notranslate"><span class="pre">kappa</span></code> file for each grid point,
 <code class="docutils literal notranslate"><span class="pre">kappa-mxxx-gx(-sx-sdx).hdf5</span></code>. Then, similarly,
@@ -2325,7 +2503,7 @@ found, it tries to read <code class="docutils literal notranslate"><span class="
 <code class="docutils literal notranslate"><span class="pre">kappa-mxxx-gx-bx(-sx-sdx).hdf5</span></code> files for band indices are searched.</p>
 </div>
 <div class="section" id="write-gamma-detail-write-gamma-detail-true">
-<span id="write-detailed-gamma-option"></span><h3><a class="toc-backref" href="#id67"><code class="docutils literal notranslate"><span class="pre">--write-gamma-detail</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_GAMMA_DETAIL</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#write-gamma-detail-write-gamma-detail-true" title="Permalink to this headline">¶</a></h3>
+<span id="write-detailed-gamma-option"></span><h3><a class="toc-backref" href="#id70"><code class="docutils literal notranslate"><span class="pre">--write-gamma-detail</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_GAMMA_DETAIL</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#write-gamma-detail-write-gamma-detail-true" title="Permalink to this headline">¶</a></h3>
 <p>Each q-point triplet contribution to imaginary part of self energy is
 written into <code class="docutils literal notranslate"><span class="pre">gamma_detail-mxxx-gx(-sx-sdx).hdf5</span></code> file. Be careful
 that this is large data.</p>
@@ -2406,9 +2584,9 @@ phonon triplets of three phonon scatterings are obtained by</p>
 </div>
 </div>
 <div class="section" id="write-phonon-write-phonon-true">
-<span id="write-phonon-option"></span><h3><a class="toc-backref" href="#id68"><code class="docutils literal notranslate"><span class="pre">--write-phonon</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_PHONON</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#write-phonon-write-phonon-true" title="Permalink to this headline">¶</a></h3>
+<span id="write-phonon-option"></span><h3><a class="toc-backref" href="#id71"><code class="docutils literal notranslate"><span class="pre">--write-phonon</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_PHONON</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#write-phonon-write-phonon-true" title="Permalink to this headline">¶</a></h3>
 <p>Phonon frequencies, eigenvectors, and grid point addresses are stored
-in <code class="docutils literal notranslate"><span class="pre">phonon-mxxx.hdf5</span></code> file. <a class="reference internal" href="#pa-option"><span class="std std-ref">–pa</span></a> and {ref}<code class="docutils literal notranslate"><span class="pre">--nac</span> <span class="pre">&lt;nac_option&gt;</span></code> may be required depending on calculation setting.</p>
+in <code class="docutils literal notranslate"><span class="pre">phonon-mxxx.hdf5</span></code> file. <a class="reference internal" href="#pa-option"><span class="std std-ref">–pa</span></a> and <a class="reference internal" href="#nac-option"><span class="std std-ref">–nac</span></a> may be required depending on calculation setting.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --fc2 --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --pa<span class="o">=</span><span class="s2">&quot;F&quot;</span> --mesh<span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> -c POSCAR-unitcell --nac --write-phoonon
 </pre></div>
 </div>
@@ -2446,7 +2624,7 @@ vectors. This is convenient to categorize phonon triplets into Umklapp
 and Normal scatterings based on the Brillouin zone.</p>
 </div>
 <div class="section" id="read-phonon-read-phonon-true">
-<span id="read-phonon-option"></span><h3><a class="toc-backref" href="#id69"><code class="docutils literal notranslate"><span class="pre">--read-phonon</span></code>  (<code class="docutils literal notranslate"><span class="pre">READ_PHONON</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#read-phonon-read-phonon-true" title="Permalink to this headline">¶</a></h3>
+<span id="read-phonon-option"></span><h3><a class="toc-backref" href="#id72"><code class="docutils literal notranslate"><span class="pre">--read-phonon</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_PHONON</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#read-phonon-read-phonon-true" title="Permalink to this headline">¶</a></h3>
 <p>Phonon frequencies, eigenvectors, and grid point addresses are read
 from <code class="docutils literal notranslate"><span class="pre">phonon-mxxx.hdf5</span></code> file and the calculation is continued using
 these phonon values. This is useful when we want to use fixed phonon
@@ -2459,7 +2637,7 @@ may be required depending on calculation setting.</p>
 </div>
 </div>
 <div class="section" id="write-pp-write-pp-true-and-read-pp-read-pp-true">
-<span id="write-read-pp-option"></span><h3><a class="toc-backref" href="#id70"><code class="docutils literal notranslate"><span class="pre">--write-pp</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_PP</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>) and <code class="docutils literal notranslate"><span class="pre">--read-pp</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_PP</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#write-pp-write-pp-true-and-read-pp-read-pp-true" title="Permalink to this headline">¶</a></h3>
+<span id="write-read-pp-option"></span><h3><a class="toc-backref" href="#id73"><code class="docutils literal notranslate"><span class="pre">--write-pp</span></code> (<code class="docutils literal notranslate"><span class="pre">WRITE_PP</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>) and <code class="docutils literal notranslate"><span class="pre">--read-pp</span></code> (<code class="docutils literal notranslate"><span class="pre">READ_PP</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>)</a><a class="headerlink" href="#write-pp-write-pp-true-and-read-pp-read-pp-true" title="Permalink to this headline">¶</a></h3>
 <p>Phonon-phonon (ph-ph) intraction strengths are written to and read
 from <code class="docutils literal notranslate"><span class="pre">pp-mxxx-gx.hdf5</span></code>. This works only in the calculation of
 lattice thermal conductivity, i.e., usable only with <code class="docutils literal notranslate"><span class="pre">--br</span></code> or
@@ -2479,7 +2657,7 @@ than usual RTA calculation.</p>
 </div>
 </div>
 <div class="section" id="hdf5-compression-command-option-only">
-<span id="hdf5-compression-option"></span><h3><a class="toc-backref" href="#id71"><code class="docutils literal notranslate"><span class="pre">--hdf5-compression</span></code> (command option only)</a><a class="headerlink" href="#hdf5-compression-command-option-only" title="Permalink to this headline">¶</a></h3>
+<span id="hdf5-compression-option"></span><h3><a class="toc-backref" href="#id74"><code class="docutils literal notranslate"><span class="pre">--hdf5-compression</span></code> (command option only)</a><a class="headerlink" href="#hdf5-compression-command-option-only" title="Permalink to this headline">¶</a></h3>
 <p>Most of phono3py HDF5 output file is compressed by default with the
 <code class="docutils literal notranslate"><span class="pre">gzip</span></code> compression filter. To avoid compression,
 <code class="docutils literal notranslate"><span class="pre">--hdf5-compression=None</span></code> has to be set. Other filters (<code class="docutils literal notranslate"><span class="pre">lzf</span></code> or
@@ -2488,7 +2666,7 @@ documentation
 (<a class="reference external" href="http://docs.h5py.org/en/stable/high/dataset.html#filter-pipeline">http://docs.h5py.org/en/stable/high/dataset.html#filter-pipeline</a>).</p>
 </div>
 <div class="section" id="o-command-option-only">
-<span id="output-filename-option"></span><h3><a class="toc-backref" href="#id72"><code class="docutils literal notranslate"><span class="pre">-o</span></code> (command option only)</a><a class="headerlink" href="#o-command-option-only" title="Permalink to this headline">¶</a></h3>
+<span id="output-filename-option"></span><h3><a class="toc-backref" href="#id75"><code class="docutils literal notranslate"><span class="pre">-o</span></code> (command option only)</a><a class="headerlink" href="#o-command-option-only" title="Permalink to this headline">¶</a></h3>
 <p>This modifies default output file names to write.</p>
 <p>Using this option, output file names are slightly modified. For example,
 with <code class="docutils literal notranslate"><span class="pre">-o</span> <span class="pre">iso</span></code>, a file name <code class="docutils literal notranslate"><span class="pre">kappa-m191919.hdf5</span></code> is changed
@@ -2504,7 +2682,7 @@ to <code class="docutils literal notranslate"><span class="pre">kappa-m191919.is
 </ul>
 </div>
 <div class="section" id="i-command-option-only">
-<span id="input-filename-option"></span><h3><a class="toc-backref" href="#id73"><code class="docutils literal notranslate"><span class="pre">-i</span></code> (command option only)</a><a class="headerlink" href="#i-command-option-only" title="Permalink to this headline">¶</a></h3>
+<span id="input-filename-option"></span><h3><a class="toc-backref" href="#id76"><code class="docutils literal notranslate"><span class="pre">-i</span></code> (command option only)</a><a class="headerlink" href="#i-command-option-only" title="Permalink to this headline">¶</a></h3>
 <p>This modifies default input file names to read.</p>
 <p>Using this option, input file names are slightly modified. For example,
 specifying <code class="docutils literal notranslate"><span class="pre">-i</span> <span class="pre">iso</span> <span class="pre">--fc3</span></code>, a file name <code class="docutils literal notranslate"><span class="pre">fc3.iso.hdf5</span></code> is read
@@ -2519,7 +2697,7 @@ instead of <code class="docutils literal notranslate"><span class="pre">fc3.hdf5
 </ul>
 </div>
 <div class="section" id="io-command-option-only">
-<h3><a class="toc-backref" href="#id74"><code class="docutils literal notranslate"><span class="pre">--io</span></code> (command option only)</a><a class="headerlink" href="#io-command-option-only" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id77"><code class="docutils literal notranslate"><span class="pre">--io</span></code> (command option only)</a><a class="headerlink" href="#io-command-option-only" title="Permalink to this headline">¶</a></h3>
 <p>This modifies default input and output file names.</p>
 <p>This is equivalent to setting <code class="docutils literal notranslate"><span class="pre">-i</span></code> and <code class="docutils literal notranslate"><span class="pre">-o</span></code> simultaneously.</p>
 </div>
