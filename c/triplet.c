@@ -99,24 +99,24 @@ void tpl_get_integration_weight(double *iw,
 #ifdef PHPYOPENMP
 #pragma omp parallel for if (openmp_per_triplets)
 #endif
-  for (i = 0; i < num_triplets; i++) {
+  for (i = 0; i < num_triplets; i++)
+  {
     tpi_get_integration_weight(iw + i * num_band_prod,
                                iw_zero + i * num_band_prod,
-                               frequency_points,  /* f0 */
+                               frequency_points, /* f0 */
                                num_band0,
                                tp_relative_grid_address,
                                triplets[i],
                                num_triplets,
                                bzgrid,
-                               frequencies1,  /* f1 */
+                               frequencies1, /* f1 */
                                num_band1,
-                               frequencies2,  /* f2 */
+                               frequencies2, /* f2 */
                                num_band2,
                                tp_type,
                                openmp_per_bands);
   }
 }
-
 
 void tpl_get_integration_weight_with_sigma(double *iw,
                                            char *iw_zero,
@@ -140,35 +140,38 @@ void tpl_get_integration_weight_with_sigma(double *iw,
 #ifdef PHPYOPENMP
 #pragma omp parallel for
 #endif
-  for (i = 0; i < num_triplets; i++) {
+  for (i = 0; i < num_triplets; i++)
+  {
     tpi_get_integration_weight_with_sigma(
-      iw + i * num_band_prod,
-      iw_zero + i * num_band_prod,
-      sigma,
-      cutoff,
-      frequency_points,
-      num_band0,
-      triplets[i],
-      const_adrs_shift,
-      frequencies,
-      num_band,
-      tp_type,
-      0);
+        iw + i * num_band_prod,
+        iw_zero + i * num_band_prod,
+        sigma,
+        cutoff,
+        frequency_points,
+        num_band0,
+        triplets[i],
+        const_adrs_shift,
+        frequencies,
+        num_band,
+        tp_type,
+        0);
   }
 }
-
 
 long tpl_is_N(const long triplet[3], const long (*bz_grid_addresses)[3])
 {
   long i, j, sum_q, is_N;
 
   is_N = 1;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     sum_q = 0;
-    for (j = 0; j < 3; j++) { /* 1st, 2nd, 3rd triplet */
+    for (j = 0; j < 3; j++)
+    { /* 1st, 2nd, 3rd triplet */
       sum_q += bz_grid_addresses[triplet[j]][i];
     }
-    if (sum_q) {
+    if (sum_q)
+    {
       is_N = 0;
       break;
     }
@@ -177,28 +180,33 @@ long tpl_is_N(const long triplet[3], const long (*bz_grid_addresses)[3])
 }
 
 void tpl_set_relative_grid_address(
-  long tp_relative_grid_address[2][24][4][3],
-  const long relative_grid_address[24][4][3],
-  const long tp_type)
+    long tp_relative_grid_address[2][24][4][3],
+    const long relative_grid_address[24][4][3],
+    const long tp_type)
 {
   long i, j, k, l;
   long signs[2];
 
   signs[0] = 1;
   signs[1] = 1;
-  if ((tp_type == 2) || (tp_type == 3)) {
+  if ((tp_type == 2) || (tp_type == 3))
+  {
     /* q1+q2+q3=G */
     /* To set q2+1, q3-1 is needed to keep G */
     signs[1] = -1;
   }
   /* tp_type == 4, q+k_i-k_f=G */
 
-  for (i = 0; i < 2; i++) {
-    for (j = 0; j < 24; j++) {
-      for (k = 0; k < 4; k++) {
-        for (l = 0; l < 3; l++) {
+  for (i = 0; i < 2; i++)
+  {
+    for (j = 0; j < 24; j++)
+    {
+      for (k = 0; k < 4; k++)
+      {
+        for (l = 0; l < 3; l++)
+        {
           tp_relative_grid_address[i][j][k][l] =
-            relative_grid_address[j][k][l] * signs[i];
+              relative_grid_address[j][k][l] * signs[i];
         }
       }
     }

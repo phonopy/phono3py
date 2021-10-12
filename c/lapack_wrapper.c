@@ -34,20 +34,21 @@
 
 #include "lapack_wrapper.h"
 
-#define min(a,b) ((a)>(b)?(b):(a))
+#define min(a, b) ((a) > (b) ? (b) : (a))
 
 #ifdef MKL_LAPACKE
-MKL_Complex16 lapack_make_complex_double( double re, double im ) {
+MKL_Complex16 lapack_make_complex_double(double re, double im)
+{
   MKL_Complex16 z;
   z.real = re;
   z.imag = im;
   return z;
 }
 #ifndef LAPACKE_malloc
-#define LAPACKE_malloc( size ) malloc( size )
+#define LAPACKE_malloc(size) malloc(size)
 #endif
 #ifndef LAPACKE_free
-#define LAPACKE_free( p )      free( p )
+#define LAPACKE_free(p) free(p)
 #endif
 #endif
 
@@ -57,7 +58,7 @@ int phonopy_zheev(double *w,
                   const char uplo)
 {
   lapack_int info;
-  info = LAPACKE_zheev(LAPACK_ROW_MAJOR,'V', uplo,
+  info = LAPACKE_zheev(LAPACK_ROW_MAJOR, 'V', uplo,
                        (lapack_int)n, a, (lapack_int)n, w);
   return (int)info;
 }
@@ -72,13 +73,14 @@ int phonopy_pinv(double *data_out,
   lapack_int info;
   double *s, *a, *u, *vt, *superb;
 
-  a = (double*)malloc(sizeof(double) * m * n);
-  s = (double*)malloc(sizeof(double) * min(m,n));
-  u = (double*)malloc(sizeof(double) * m * m);
-  vt = (double*)malloc(sizeof(double) * n * n);
-  superb = (double*)malloc(sizeof(double) * (min(m,n) - 1));
+  a = (double *)malloc(sizeof(double) * m * n);
+  s = (double *)malloc(sizeof(double) * min(m, n));
+  u = (double *)malloc(sizeof(double) * m * m);
+  vt = (double *)malloc(sizeof(double) * n * n);
+  superb = (double *)malloc(sizeof(double) * (min(m, n) - 1));
 
-  for (i = 0; i < m * n; i++) {
+  for (i = 0; i < m * n; i++)
+  {
     a[i] = data_in[i];
   }
 
@@ -96,14 +98,19 @@ int phonopy_pinv(double *data_out,
                         (lapack_int)n,
                         superb);
 
-  for (i = 0; i < n * m; i++) {
+  for (i = 0; i < n * m; i++)
+  {
     data_out[i] = 0;
   }
 
-  for (i = 0; i < m; i++) {
-    for (j = 0; j < n; j++) {
-      for (k = 0; k < min(m,n); k++) {
-        if (s[k] > cutoff) {
+  for (i = 0; i < m; i++)
+  {
+    for (j = 0; j < n; j++)
+    {
+      for (k = 0; k < min(m, n); k++)
+      {
+        if (s[k] > cutoff)
+        {
           data_out[j * m + i] += u[i * m + k] / s[k] * vt[k * n + j];
         }
       }
@@ -133,7 +140,8 @@ void phonopy_pinv_mt(double *data_out,
 #ifdef PHPYOPENMP
 #pragma omp parallel for
 #endif
-  for (i = 0; i < num_thread; i++) {
+  for (i = 0; i < num_thread; i++)
+  {
     info_out[i] = phonopy_pinv(data_out + i * max_row_num * column_num,
                                data_in + i * max_row_num * column_num,
                                row_nums[i],
@@ -151,8 +159,8 @@ int phonopy_dsyev(double *data,
 
   lapack_int liwork;
   long lwork;
-  lapack_int* iwork;
-  double* work;
+  lapack_int *iwork;
+  double *work;
   lapack_int iwork_query;
   double work_query;
 
@@ -162,7 +170,8 @@ int phonopy_dsyev(double *data,
   iwork = NULL;
   work = NULL;
 
-  switch (algorithm) {
+  switch (algorithm)
+  {
   case 0: /* dsyev */
     info = LAPACKE_dsyev(LAPACK_COL_MAJOR,
                          'V',
@@ -187,11 +196,12 @@ int phonopy_dsyev(double *data,
     liwork = iwork_query;
     lwork = (long)work_query;
     /* printf("liwork %d, lwork %ld\n", liwork, lwork); */
-    if ((iwork = (lapack_int*)LAPACKE_malloc(sizeof(lapack_int) * liwork))
-        == NULL) {
+    if ((iwork = (lapack_int *)LAPACKE_malloc(sizeof(lapack_int) * liwork)) == NULL)
+    {
       goto end;
     };
-    if ((work = (double*)LAPACKE_malloc(sizeof(double) * lwork)) == NULL) {
+    if ((work = (double *)LAPACKE_malloc(sizeof(double) * lwork)) == NULL)
+    {
       goto end;
     }
 
@@ -208,11 +218,13 @@ int phonopy_dsyev(double *data,
                                liwork);
 
   end:
-    if (iwork) {
+    if (iwork)
+    {
       LAPACKE_free(iwork);
       iwork = NULL;
     }
-    if (work) {
+    if (work)
+    {
       LAPACKE_free(work);
       work = NULL;
     }
@@ -230,16 +242,14 @@ int phonopy_dsyev(double *data,
   return (int)info;
 }
 
-
 lapack_complex_double
 phonoc_complex_prod(const lapack_complex_double a,
                     const lapack_complex_double b)
 {
   lapack_complex_double c;
-  c = lapack_make_complex_double
-    (lapack_complex_double_real(a) * lapack_complex_double_real(b) -
-     lapack_complex_double_imag(a) * lapack_complex_double_imag(b),
-     lapack_complex_double_imag(a) * lapack_complex_double_real(b) +
-     lapack_complex_double_real(a) * lapack_complex_double_imag(b));
+  c = lapack_make_complex_double(lapack_complex_double_real(a) * lapack_complex_double_real(b) -
+                                     lapack_complex_double_imag(a) * lapack_complex_double_imag(b),
+                                 lapack_complex_double_imag(a) * lapack_complex_double_real(b) +
+                                     lapack_complex_double_real(a) * lapack_complex_double_imag(b));
   return c;
 }

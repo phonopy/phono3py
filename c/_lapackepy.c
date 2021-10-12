@@ -38,57 +38,59 @@
 #include <numpy/arrayobject.h>
 #include "lapack_wrapper.h"
 
-static PyObject * py_phonopy_pinv(PyObject *self, PyObject *args);
-static PyObject * py_phonopy_zheev(PyObject *self, PyObject *args);
+static PyObject *py_phonopy_pinv(PyObject *self, PyObject *args);
+static PyObject *py_phonopy_zheev(PyObject *self, PyObject *args);
 
-struct module_state {
+struct module_state
+{
   PyObject *error;
 };
 
 #if PY_MAJOR_VERSION >= 3
-#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#define GETSTATE(m) ((struct module_state *)PyModule_GetState(m))
 #else
 #define GETSTATE(m) (&_state)
 static struct module_state _state;
 #endif
 
 static PyObject *
-error_out(PyObject *m) {
+error_out(PyObject *m)
+{
   struct module_state *st = GETSTATE(m);
   PyErr_SetString(st->error, "something bad happened");
   return NULL;
 }
 
 static PyMethodDef _lapackepy_methods[] = {
-  {"error_out", (PyCFunction)error_out, METH_NOARGS, NULL},
-  {"pinv", py_phonopy_pinv, METH_VARARGS, "Pseudo-inverse using Lapack dgesvd"},
-  {"zheev", py_phonopy_zheev, METH_VARARGS, "Lapack zheev wrapper"},
-  {NULL, NULL, 0, NULL}
-};
+    {"error_out", (PyCFunction)error_out, METH_NOARGS, NULL},
+    {"pinv", py_phonopy_pinv, METH_VARARGS, "Pseudo-inverse using Lapack dgesvd"},
+    {"zheev", py_phonopy_zheev, METH_VARARGS, "Lapack zheev wrapper"},
+    {NULL, NULL, 0, NULL}};
 
 #if PY_MAJOR_VERSION >= 3
 
-static int _lapackepy_traverse(PyObject *m, visitproc visit, void *arg) {
+static int _lapackepy_traverse(PyObject *m, visitproc visit, void *arg)
+{
   Py_VISIT(GETSTATE(m)->error);
   return 0;
 }
 
-static int _lapackepy_clear(PyObject *m) {
+static int _lapackepy_clear(PyObject *m)
+{
   Py_CLEAR(GETSTATE(m)->error);
   return 0;
 }
 
 static struct PyModuleDef moduledef = {
-  PyModuleDef_HEAD_INIT,
-  "_lapackepy",
-  NULL,
-  sizeof(struct module_state),
-  _lapackepy_methods,
-  NULL,
-  _lapackepy_traverse,
-  _lapackepy_clear,
-  NULL
-};
+    PyModuleDef_HEAD_INIT,
+    "_lapackepy",
+    NULL,
+    sizeof(struct module_state),
+    _lapackepy_methods,
+    NULL,
+    _lapackepy_traverse,
+    _lapackepy_clear,
+    NULL};
 
 #define INITERROR return NULL
 
@@ -98,8 +100,7 @@ PyInit__lapackepy(void)
 #else
 #define INITERROR return
 
-  void
-  init_lapackepy(void)
+void init_lapackepy(void)
 #endif
 {
 #if PY_MAJOR_VERSION >= 3
@@ -114,7 +115,8 @@ PyInit__lapackepy(void)
   st = GETSTATE(module);
 
   st->error = PyErr_NewException("_lapackepy.Error", NULL, NULL);
-  if (st->error == NULL) {
+  if (st->error == NULL)
+  {
     Py_DECREF(module);
     INITERROR;
   }
@@ -124,10 +126,10 @@ PyInit__lapackepy(void)
 #endif
 }
 
-static PyObject * py_phonopy_zheev(PyObject *self, PyObject *args)
+static PyObject *py_phonopy_zheev(PyObject *self, PyObject *args)
 {
-  PyArrayObject* dynamical_matrix;
-  PyArrayObject* eigenvalues;
+  PyArrayObject *dynamical_matrix;
+  PyArrayObject *eigenvalues;
 
   int dimension;
   npy_cdouble *dynmat;
@@ -137,36 +139,39 @@ static PyObject * py_phonopy_zheev(PyObject *self, PyObject *args)
 
   if (!PyArg_ParseTuple(args, "OO",
                         &dynamical_matrix,
-                        &eigenvalues)) {
+                        &eigenvalues))
+  {
     return NULL;
   }
 
   dimension = (int)PyArray_DIMS(dynamical_matrix)[0];
-  dynmat = (npy_cdouble*)PyArray_DATA(dynamical_matrix);
-  eigvals = (double*)PyArray_DATA(eigenvalues);
+  dynmat = (npy_cdouble *)PyArray_DATA(dynamical_matrix);
+  eigvals = (double *)PyArray_DATA(eigenvalues);
 
-  a = (lapack_complex_double*) malloc(sizeof(lapack_complex_double) *
+  a = (lapack_complex_double *)malloc(sizeof(lapack_complex_double) *
                                       dimension * dimension);
-  for (i = 0; i < dimension * dimension; i++) {
+  for (i = 0; i < dimension * dimension; i++)
+  {
     a[i] = lapack_make_complex_double(dynmat[i].real, dynmat[i].imag);
   }
 
   info = phonopy_zheev(eigvals, a, dimension, 'L');
 
-  for (i = 0; i < dimension * dimension; i++) {
+  for (i = 0; i < dimension * dimension; i++)
+  {
     dynmat[i].real = lapack_complex_double_real(a[i]);
     dynmat[i].imag = lapack_complex_double_imag(a[i]);
   }
 
   free(a);
 
-  return PyLong_FromLong((long) info);
+  return PyLong_FromLong((long)info);
 }
 
-static PyObject * py_phonopy_pinv(PyObject *self, PyObject *args)
+static PyObject *py_phonopy_pinv(PyObject *self, PyObject *args)
 {
-  PyArrayObject* data_in_py;
-  PyArrayObject* data_out_py;
+  PyArrayObject *data_in_py;
+  PyArrayObject *data_out_py;
   double cutoff;
 
   int m;
@@ -178,16 +183,17 @@ static PyObject * py_phonopy_pinv(PyObject *self, PyObject *args)
   if (!PyArg_ParseTuple(args, "OOd",
                         &data_out_py,
                         &data_in_py,
-                        &cutoff)) {
+                        &cutoff))
+  {
     return NULL;
   }
 
   m = (int)PyArray_DIMS(data_in_py)[0];
   n = (int)PyArray_DIMS(data_in_py)[1];
-  data_in = (double*)PyArray_DATA(data_in_py);
-  data_out = (double*)PyArray_DATA(data_out_py);
+  data_in = (double *)PyArray_DATA(data_in_py);
+  data_out = (double *)PyArray_DATA(data_out_py);
 
   info = phonopy_pinv(data_out, data_in, m, n, cutoff);
 
-  return PyLong_FromLong((long) info);
+  return PyLong_FromLong((long)info);
 }

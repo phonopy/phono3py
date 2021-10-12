@@ -105,23 +105,23 @@ void col_get_collision_matrix(double *collision_matrix,
   num_band = fc3_normal_squared->dims[2];
 
   get_collision_matrix(
-    collision_matrix,
-    fc3_normal_squared->data,
-    num_band0,
-    num_band,
-    frequencies,
-    triplets,
-    triplets_map,
-    num_gp,
-    map_q,
-    rot_grid_points,
-    num_ir_gp,
-    num_rot,
-    rotations_cartesian,
-    g + 2 * num_triplets * num_band0 * num_band * num_band,
-    temperature,
-    unit_conversion_factor,
-    cutoff_frequency);
+      collision_matrix,
+      fc3_normal_squared->data,
+      num_band0,
+      num_band,
+      frequencies,
+      triplets,
+      triplets_map,
+      num_gp,
+      map_q,
+      rot_grid_points,
+      num_ir_gp,
+      num_rot,
+      rotations_cartesian,
+      g + 2 * num_triplets * num_band0 * num_band * num_band,
+      temperature,
+      unit_conversion_factor,
+      cutoff_frequency);
 }
 
 void col_get_reducible_collision_matrix(double *collision_matrix,
@@ -143,19 +143,19 @@ void col_get_reducible_collision_matrix(double *collision_matrix,
   num_band = fc3_normal_squared->dims[2];
 
   get_reducible_collision_matrix(
-    collision_matrix,
-    fc3_normal_squared->data,
-    num_band0,
-    num_band,
-    frequencies,
-    triplets,
-    triplets_map,
-    num_gp,
-    map_q,
-    g + 2 * num_triplets * num_band0 * num_band * num_band,
-    temperature,
-    unit_conversion_factor,
-    cutoff_frequency);
+      collision_matrix,
+      fc3_normal_squared->data,
+      num_band0,
+      num_band,
+      frequencies,
+      triplets,
+      triplets_map,
+      num_gp,
+      map_q,
+      g + 2 * num_triplets * num_band0 * num_band * num_band,
+      temperature,
+      unit_conversion_factor,
+      cutoff_frequency);
 }
 
 static void get_collision_matrix(double *collision_matrix,
@@ -186,9 +186,11 @@ static void get_collision_matrix(double *collision_matrix,
 #ifdef PHPYOPENMP
 #pragma omp parallel for private(j, k, l, m, n, ti, r_gp, collision, inv_sinh)
 #endif
-  for (i = 0; i < num_ir_gp; i++) {
-    inv_sinh = (double*)malloc(sizeof(double) * num_band);
-    for (j = 0; j < num_rot; j++) {
+  for (i = 0; i < num_ir_gp; i++)
+  {
+    inv_sinh = (double *)malloc(sizeof(double) * num_band);
+    for (j = 0; j < num_rot; j++)
+    {
       r_gp = rot_grid_points[i * num_rot + j];
       ti = gp2tp_map[triplets_map[r_gp]];
       get_inv_sinh(inv_sinh,
@@ -201,25 +203,30 @@ static void get_collision_matrix(double *collision_matrix,
                    num_band,
                    cutoff_frequency);
 
-      for (k = 0; k < num_band0; k++) {
-        for (l = 0; l < num_band; l++) {
+      for (k = 0; k < num_band0; k++)
+      {
+        for (l = 0; l < num_band; l++)
+        {
           collision = 0;
-          for (m = 0; m < num_band; m++) {
+          for (m = 0; m < num_band; m++)
+          {
             collision +=
-              fc3_normal_squared[ti * num_band0 * num_band * num_band +
-                                 k * num_band * num_band +
-                                 l * num_band + m] *
-              g[ti * num_band0 * num_band * num_band +
-                k * num_band * num_band +
-                l * num_band + m] *
-              inv_sinh[m] * unit_conversion_factor;
+                fc3_normal_squared[ti * num_band0 * num_band * num_band +
+                                   k * num_band * num_band +
+                                   l * num_band + m] *
+                g[ti * num_band0 * num_band * num_band +
+                  k * num_band * num_band +
+                  l * num_band + m] *
+                inv_sinh[m] * unit_conversion_factor;
           }
-          for (m = 0; m < 3; m++) {
-            for (n = 0; n < 3; n++) {
+          for (m = 0; m < 3; m++)
+          {
+            for (n = 0; n < 3; n++)
+            {
               collision_matrix[k * 3 * num_ir_gp * num_band * 3 +
                                m * num_ir_gp * num_band * 3 +
                                i * num_band * 3 + l * 3 + n] +=
-                collision * rotations_cartesian[j * 9 + m * 3 + n];
+                  collision * rotations_cartesian[j * 9 + m * 3 + n];
             }
           }
         }
@@ -258,8 +265,9 @@ get_reducible_collision_matrix(double *collision_matrix,
 #ifdef PHPYOPENMP
 #pragma omp parallel for private(j, k, l, ti, collision, inv_sinh)
 #endif
-  for (i = 0; i < num_gp; i++) {
-    inv_sinh = (double*)malloc(sizeof(double) * num_band);
+  for (i = 0; i < num_gp; i++)
+  {
+    inv_sinh = (double *)malloc(sizeof(double) * num_band);
     ti = gp2tp_map[triplets_map[i]];
     get_inv_sinh(inv_sinh,
                  i,
@@ -271,18 +279,21 @@ get_reducible_collision_matrix(double *collision_matrix,
                  num_band,
                  cutoff_frequency);
 
-    for (j = 0; j < num_band0; j++) {
-      for (k = 0; k < num_band; k++) {
+    for (j = 0; j < num_band0; j++)
+    {
+      for (k = 0; k < num_band; k++)
+      {
         collision = 0;
-        for (l = 0; l < num_band; l++) {
+        for (l = 0; l < num_band; l++)
+        {
           collision +=
-            fc3_normal_squared[ti * num_band0 * num_band * num_band +
-                               j * num_band * num_band +
-                               k * num_band + l] *
-            g[ti * num_band0 * num_band * num_band +
-              j * num_band * num_band +
-              k * num_band + l] *
-            inv_sinh[l] * unit_conversion_factor;
+              fc3_normal_squared[ti * num_band0 * num_band * num_band +
+                                 j * num_band * num_band +
+                                 k * num_band + l] *
+              g[ti * num_band0 * num_band * num_band +
+                j * num_band * num_band +
+                k * num_band + l] *
+              inv_sinh[l] * unit_conversion_factor;
         }
         collision_matrix[j * num_gp * num_band + i * num_band + k] += collision;
       }
@@ -312,17 +323,24 @@ static void get_inv_sinh(double *inv_sinh,
   /* This assumes the algorithm of get_ir_triplets_at_q_perm_q1q2, */
   /* where defined triplets_map[gp] == triplets_map[map_q[gp]]. */
   /* If triplets_map[map_q[gp]] != map_q[gp], q1 and q2 are permuted. */
-  if (triplets_map[gp] == map_q[gp]) {
+  if (triplets_map[gp] == map_q[gp])
+  {
     gp2 = triplet[2];
-  } else {
+  }
+  else
+  {
     gp2 = triplet[1];
   }
 
-  for (i = 0; i < num_band; i++) {
+  for (i = 0; i < num_band; i++)
+  {
     f = frequencies[gp2 * num_band + i];
-    if (f > cutoff_frequency) {
+    if (f > cutoff_frequency)
+    {
       inv_sinh[i] = phonoc_inv_sinh_occupation(f, temperature);
-    } else {
+    }
+    else
+    {
       inv_sinh[i] = 0;
     }
   }
@@ -337,13 +355,17 @@ static long *create_gp2tp_map(const long *triplets_map,
   long i, num_ir;
   long *gp2tp_map;
 
-  gp2tp_map = (long*)malloc(sizeof(long) * num_gp);
+  gp2tp_map = (long *)malloc(sizeof(long) * num_gp);
   num_ir = 0;
-  for (i = 0; i < num_gp; i++) {
-    if (triplets_map[i] == i) {
+  for (i = 0; i < num_gp; i++)
+  {
+    if (triplets_map[i] == i)
+    {
       gp2tp_map[i] = num_ir;
       num_ir++;
-    } else { /* This should not be used. */
+    }
+    else
+    { /* This should not be used. */
       gp2tp_map[i] = -1;
     }
   }

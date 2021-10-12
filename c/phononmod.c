@@ -45,7 +45,7 @@ void phmod_get_phonons_at_gridpoints(double *frequencies,
                                      const long (*grid_address)[3],
                                      const double QDinv[3][3],
                                      const double *fc2,
-                                     const double(*svecs_fc2)[3],
+                                     const double (*svecs_fc2)[3],
                                      const long (*multi_fc2)[2],
                                      const double (*positions_fc2)[3],
                                      const long num_patom,
@@ -60,12 +60,13 @@ void phmod_get_phonons_at_gridpoints(double *frequencies,
                                      const double *q_direction, /* pointer */
                                      const double nac_factor,
                                      const double *dd_q0,
-                                     const double(*G_list)[3],
+                                     const double (*G_list)[3],
                                      const long num_G_points,
                                      const double lambda,
                                      const char uplo)
 {
-  if (!dd_q0) {
+  if (!dd_q0)
+  {
     phn_get_phonons_at_gridpoints(frequencies,
                                   eigenvectors,
                                   phonon_done,
@@ -89,7 +90,9 @@ void phmod_get_phonons_at_gridpoints(double *frequencies,
                                   q_direction,
                                   nac_factor,
                                   uplo);
-  } else {
+  }
+  else
+  {
     phn_get_gonze_phonons_at_gridpoints(frequencies,
                                         eigenvectors,
                                         phonon_done,

@@ -53,7 +53,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 long ph3py_get_interaction(Darray *fc3_normal_squared,
                            const char *g_zero,
                            const Darray *frequencies,
@@ -78,16 +77,19 @@ long ph3py_get_interaction(Darray *fc3_normal_squared,
   ConstBZGrid *bzgrid;
   long i, j;
 
-  if ((bzgrid = (ConstBZGrid*) malloc(sizeof(ConstBZGrid))) == NULL) {
+  if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL)
+  {
     warning_print("Memory could not be allocated.");
     return 0;
   }
 
   bzgrid->addresses = bz_grid_addresses;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     bzgrid->D_diag[i] = D_diag[i];
     bzgrid->PS[i] = 0;
-    for (j = 0; j < 3; j++) {
+    for (j = 0; j < 3; j++)
+    {
       bzgrid->Q[i][j] = Q[i][j];
     }
   }
@@ -116,7 +118,6 @@ long ph3py_get_interaction(Darray *fc3_normal_squared,
   return 1;
 }
 
-
 long ph3py_get_pp_collision(double *imag_self_energy,
                             const long relative_grid_address[24][4][3], /* thm */
                             const double *frequencies,
@@ -125,7 +126,7 @@ long ph3py_get_pp_collision(double *imag_self_energy,
                             const long num_triplets,
                             const long *triplet_weights,
                             const long (*bz_grid_addresses)[3], /* thm */
-                            const long *bz_map, /* thm */
+                            const long *bz_map,                 /* thm */
                             const long bz_grid_type,
                             const long D_diag[3],
                             const long Q[3][3],
@@ -146,7 +147,8 @@ long ph3py_get_pp_collision(double *imag_self_energy,
   ConstBZGrid *bzgrid;
   long i, j;
 
-  if ((bzgrid = (ConstBZGrid*) malloc(sizeof(ConstBZGrid))) == NULL) {
+  if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL)
+  {
     warning_print("Memory could not be allocated.");
     return 0;
   }
@@ -154,10 +156,12 @@ long ph3py_get_pp_collision(double *imag_self_energy,
   bzgrid->addresses = bz_grid_addresses;
   bzgrid->gp_map = bz_map;
   bzgrid->type = bz_grid_type;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     bzgrid->D_diag[i] = D_diag[i];
     bzgrid->PS[i] = 0;
-    for (j = 0; j < 3; j++) {
+    for (j = 0; j < 3; j++)
+    {
       bzgrid->Q[i][j] = Q[i][j];
     }
   }
@@ -190,46 +194,48 @@ long ph3py_get_pp_collision(double *imag_self_energy,
   return 1;
 }
 
-
 long ph3py_get_pp_collision_with_sigma(
-  double *imag_self_energy,
-  const double sigma,
-  const double sigma_cutoff,
-  const double *frequencies,
-  const lapack_complex_double *eigenvectors,
-  const long (*triplets)[3],
-  const long num_triplets,
-  const long *triplet_weights,
-  const long (*bz_grid_addresses)[3],
-  const long D_diag[3],
-  const long Q[3][3],
-  const double *fc3,
-  const long is_compact_fc3,
-  const double (*svecs)[3],
-  const long multi_dims[2],
-  const long (*multiplicity)[2],
-  const double *masses,
-  const long *p2s_map,
-  const long *s2p_map,
-  const Larray *band_indices,
-  const Darray *temperatures,
-  const long is_NU,
-  const long symmetrize_fc3_q,
-  const double cutoff_frequency)
+    double *imag_self_energy,
+    const double sigma,
+    const double sigma_cutoff,
+    const double *frequencies,
+    const lapack_complex_double *eigenvectors,
+    const long (*triplets)[3],
+    const long num_triplets,
+    const long *triplet_weights,
+    const long (*bz_grid_addresses)[3],
+    const long D_diag[3],
+    const long Q[3][3],
+    const double *fc3,
+    const long is_compact_fc3,
+    const double (*svecs)[3],
+    const long multi_dims[2],
+    const long (*multiplicity)[2],
+    const double *masses,
+    const long *p2s_map,
+    const long *s2p_map,
+    const Larray *band_indices,
+    const Darray *temperatures,
+    const long is_NU,
+    const long symmetrize_fc3_q,
+    const double cutoff_frequency)
 {
   ConstBZGrid *bzgrid;
   long i, j;
 
-  if ((bzgrid = (ConstBZGrid*) malloc(sizeof(ConstBZGrid))) == NULL) {
+  if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL)
+  {
     warning_print("Memory could not be allocated.");
     return 0;
   }
 
   bzgrid->addresses = bz_grid_addresses;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     bzgrid->D_diag[i] = D_diag[i];
     bzgrid->PS[i] = 0;
-    for (j = 0; j < 3; j++) {
+    for (j = 0; j < 3; j++)
+    {
       bzgrid->Q[i][j] = Q[i][j];
     }
   }
@@ -263,19 +269,18 @@ long ph3py_get_pp_collision_with_sigma(
   return 1;
 }
 
-
 void ph3py_get_imag_self_energy_at_bands_with_g(
-  double *imag_self_energy,
-  const Darray *fc3_normal_squared,
-  const double *frequencies,
-  const long (*triplets)[3],
-  const long *triplet_weights,
-  const double *g,
-  const char *g_zero,
-  const double temperature,
-  const double cutoff_frequency,
-  const long num_frequency_points,
-  const long frequency_point_index)
+    double *imag_self_energy,
+    const Darray *fc3_normal_squared,
+    const double *frequencies,
+    const long (*triplets)[3],
+    const long *triplet_weights,
+    const double *g,
+    const char *g_zero,
+    const double temperature,
+    const double cutoff_frequency,
+    const long num_frequency_points,
+    const long frequency_point_index)
 {
   ise_get_imag_self_energy_at_bands_with_g(imag_self_energy,
                                            fc3_normal_squared,
@@ -290,20 +295,19 @@ void ph3py_get_imag_self_energy_at_bands_with_g(
                                            frequency_point_index);
 }
 
-
 void ph3py_get_detailed_imag_self_energy_at_bands_with_g(
-  double *detailed_imag_self_energy,
-  double *imag_self_energy_N,
-  double *imag_self_energy_U,
-  const Darray *fc3_normal_squared,
-  const double *frequencies,
-  const long (*triplets)[3],
-  const long *triplet_weights,
-  const long (*bz_grid_addresses)[3],
-  const double *g,
-  const char *g_zero,
-  const double temperature,
-  const double cutoff_frequency)
+    double *detailed_imag_self_energy,
+    double *imag_self_energy_N,
+    double *imag_self_energy_U,
+    const Darray *fc3_normal_squared,
+    const double *frequencies,
+    const long (*triplets)[3],
+    const long *triplet_weights,
+    const long (*bz_grid_addresses)[3],
+    const double *g,
+    const char *g_zero,
+    const double temperature,
+    const double cutoff_frequency)
 {
   ise_get_detailed_imag_self_energy_at_bands_with_g(detailed_imag_self_energy,
                                                     imag_self_energy_N,
@@ -318,7 +322,6 @@ void ph3py_get_detailed_imag_self_energy_at_bands_with_g(
                                                     temperature,
                                                     cutoff_frequency);
 }
-
 
 void ph3py_get_real_self_energy_at_bands(double *real_self_energy,
                                          const Darray *fc3_normal_squared,
@@ -343,19 +346,18 @@ void ph3py_get_real_self_energy_at_bands(double *real_self_energy,
                                     cutoff_frequency);
 }
 
-
 void ph3py_get_real_self_energy_at_frequency_point(
-  double *real_self_energy,
-  const double frequency_point,
-  const Darray *fc3_normal_squared,
-  const long *band_indices,
-  const double *frequencies,
-  const long (*triplets)[3],
-  const long *triplet_weights,
-  const double epsilon,
-  const double temperature,
-  const double unit_conversion_factor,
-  const double cutoff_frequency)
+    double *real_self_energy,
+    const double frequency_point,
+    const Darray *fc3_normal_squared,
+    const long *band_indices,
+    const double *frequencies,
+    const long (*triplets)[3],
+    const long *triplet_weights,
+    const double epsilon,
+    const double temperature,
+    const double unit_conversion_factor,
+    const double cutoff_frequency)
 {
   rse_get_real_self_energy_at_frequency_point(real_self_energy,
                                               frequency_point,
@@ -369,7 +371,6 @@ void ph3py_get_real_self_energy_at_frequency_point(
                                               unit_conversion_factor,
                                               cutoff_frequency);
 }
-
 
 void ph3py_get_collision_matrix(double *collision_matrix,
                                 const Darray *fc3_normal_squared,
@@ -404,7 +405,6 @@ void ph3py_get_collision_matrix(double *collision_matrix,
                            cutoff_frequency);
 }
 
-
 void ph3py_get_reducible_collision_matrix(double *collision_matrix,
                                           const Darray *fc3_normal_squared,
                                           const double *frequencies,
@@ -430,19 +430,18 @@ void ph3py_get_reducible_collision_matrix(double *collision_matrix,
                                      cutoff_frequency);
 }
 
-
 void ph3py_get_isotope_scattering_strength(
-  double *gamma,
-  const long grid_point,
-  const double *mass_variances,
-  const double *frequencies,
-  const lapack_complex_double *eigenvectors,
-  const long num_grid_points,
-  const long *band_indices,
-  const long num_band,
-  const long num_band0,
-  const double sigma,
-  const double cutoff_frequency)
+    double *gamma,
+    const long grid_point,
+    const double *mass_variances,
+    const double *frequencies,
+    const lapack_complex_double *eigenvectors,
+    const long num_grid_points,
+    const long *band_indices,
+    const long num_band,
+    const long num_band0,
+    const double sigma,
+    const double cutoff_frequency)
 {
   iso_get_isotope_scattering_strength(gamma,
                                       grid_point,
@@ -457,21 +456,19 @@ void ph3py_get_isotope_scattering_strength(
                                       cutoff_frequency);
 }
 
-
-void ph3py_get_thm_isotope_scattering_strength
-(double *gamma,
- const long grid_point,
- const long *ir_grid_points,
- const long *weights,
- const double *mass_variances,
- const double *frequencies,
- const lapack_complex_double *eigenvectors,
- const long num_ir_grid_points,
- const long *band_indices,
- const long num_band,
- const long num_band0,
- const double *integration_weights,
- const double cutoff_frequency)
+void ph3py_get_thm_isotope_scattering_strength(double *gamma,
+                                               const long grid_point,
+                                               const long *ir_grid_points,
+                                               const long *weights,
+                                               const double *mass_variances,
+                                               const double *frequencies,
+                                               const lapack_complex_double *eigenvectors,
+                                               const long num_ir_grid_points,
+                                               const long *band_indices,
+                                               const long num_band,
+                                               const long num_band0,
+                                               const double *integration_weights,
+                                               const double cutoff_frequency)
 {
   iso_get_thm_isotope_scattering_strength(gamma,
                                           grid_point,
@@ -503,7 +500,6 @@ void ph3py_distribute_fc3(double *fc3,
                      rot_cart);
 }
 
-
 void ph3py_rotate_delta_fc2(double (*fc3)[3][3][3],
                             const double (*delta_fc2s)[3][3],
                             const double *inv_U,
@@ -523,14 +519,12 @@ void ph3py_rotate_delta_fc2(double (*fc3)[3][3][3],
                        num_disp);
 }
 
-
 void ph3py_get_permutation_symmetry_fc3(double *fc3, const long num_atom)
 {
   fc3_set_permutation_symmetry_fc3(fc3, num_atom);
 }
 
-
-void ph3py_get_permutation_symmetry_compact_fc3(double * fc3,
+void ph3py_get_permutation_symmetry_compact_fc3(double *fc3,
                                                 const long p2s[],
                                                 const long s2pp[],
                                                 const long nsym_list[],
@@ -547,7 +541,7 @@ void ph3py_get_permutation_symmetry_compact_fc3(double * fc3,
                                            n_patom);
 }
 
-void ph3py_transpose_compact_fc3(double * fc3,
+void ph3py_transpose_compact_fc3(double *fc3,
                                  const long p2s[],
                                  const long s2pp[],
                                  const long nsym_list[],
@@ -565,7 +559,6 @@ void ph3py_transpose_compact_fc3(double * fc3,
                             n_patom,
                             t_type);
 }
-
 
 long ph3py_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                              long *map_q,
@@ -586,7 +579,6 @@ long ph3py_get_triplets_reciprocal_mesh_at_q(long *map_triplets,
                                                swappable);
 }
 
-
 long ph3py_get_BZ_triplets_at_q(long (*triplets)[3],
                                 const long grid_point,
                                 const long (*bz_grid_addresses)[3],
@@ -600,7 +592,8 @@ long ph3py_get_BZ_triplets_at_q(long (*triplets)[3],
   ConstBZGrid *bzgrid;
   long i, j, num_ir;
 
-  if ((bzgrid = (ConstBZGrid*) malloc(sizeof(ConstBZGrid))) == NULL) {
+  if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL)
+  {
     warning_print("Memory could not be allocated.");
     return 0;
   }
@@ -608,10 +601,12 @@ long ph3py_get_BZ_triplets_at_q(long (*triplets)[3],
   bzgrid->addresses = bz_grid_addresses;
   bzgrid->gp_map = bz_map;
   bzgrid->type = bz_grid_type;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     bzgrid->D_diag[i] = D_diag[i];
     bzgrid->PS[i] = 0;
-    for (j = 0; j < 3; j++) {
+    for (j = 0; j < 3; j++)
+    {
       bzgrid->Q[i][j] = Q[i][j];
     }
   }
@@ -652,7 +647,8 @@ long ph3py_get_integration_weight(double *iw,
   ConstBZGrid *bzgrid;
   long i;
 
-  if ((bzgrid = (ConstBZGrid*) malloc(sizeof(ConstBZGrid))) == NULL) {
+  if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL)
+  {
     warning_print("Memory could not be allocated.");
     return 0;
   }
@@ -660,7 +656,8 @@ long ph3py_get_integration_weight(double *iw,
   bzgrid->addresses = bz_grid_addresses;
   bzgrid->gp_map = bz_map;
   bzgrid->type = bz_grid_type;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     bzgrid->D_diag[i] = D_diag[i];
   }
 
@@ -710,7 +707,6 @@ void ph3py_get_integration_weight_with_sigma(double *iw,
                                         tp_type);
 }
 
-
 /* From single address to grid index */
 long ph3py_get_grid_index_from_address(const long address[3],
                                        const long D_diag[3])
@@ -718,13 +714,11 @@ long ph3py_get_grid_index_from_address(const long address[3],
   return grg_get_grid_index(address, D_diag);
 }
 
-
 void ph3py_get_gr_grid_addresses(long gr_grid_addresses[][3],
                                  const long D_diag[3])
 {
   grg_get_all_grid_addresses(gr_grid_addresses, D_diag);
 }
-
 
 long ph3py_get_reciprocal_rotations(long rec_rotations[48][3][3],
                                     const long (*rotations)[3][3],
@@ -737,7 +731,6 @@ long ph3py_get_reciprocal_rotations(long rec_rotations[48][3][3],
                                         is_time_reversal,
                                         1);
 }
-
 
 /* Rotation matrices with respect to reciprocal basis vectors are
  * transformed to those for GRGrid. This set of the rotations are
@@ -775,8 +768,10 @@ long ph3py_get_ir_grid_map(long *ir_grid_map,
   grg_get_ir_grid_map(ir_grid_map, grg_rotations, num_rot, D_diag, PS);
 
   num_ir = 0;
-  for (i = 0; i < D_diag[0] * D_diag[1] * D_diag[2]; i ++) {
-    if (ir_grid_map[i] == i) {
+  for (i = 0; i < D_diag[0] * D_diag[1] * D_diag[2]; i++)
+  {
+    if (ir_grid_map[i] == i)
+    {
       num_ir++;
     }
   }
@@ -796,7 +791,8 @@ long ph3py_get_bz_grid_addresses(long (*bz_grid_addresses)[3],
   BZGrid *bzgrid;
   long i, j, size;
 
-  if ((bzgrid = (BZGrid*) malloc(sizeof(BZGrid))) == NULL) {
+  if ((bzgrid = (BZGrid *)malloc(sizeof(BZGrid))) == NULL)
+  {
     warning_print("Memory could not be allocated.");
     return 0;
   }
@@ -805,18 +801,23 @@ long ph3py_get_bz_grid_addresses(long (*bz_grid_addresses)[3],
   bzgrid->gp_map = bz_map;
   bzgrid->bzg2grg = bzg2grg;
   bzgrid->type = type;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     bzgrid->D_diag[i] = D_diag[i];
     bzgrid->PS[i] = PS[i];
-    for (j = 0; j < 3; j++) {
+    for (j = 0; j < 3; j++)
+    {
       bzgrid->Q[i][j] = Q[i][j];
       bzgrid->reclat[i][j] = rec_lattice[i][j];
     }
   }
 
-  if (bzg_get_bz_grid_addresses(bzgrid)) {
+  if (bzg_get_bz_grid_addresses(bzgrid))
+  {
     size = bzgrid->size;
-  } else {
+  }
+  else
+  {
     size = 0;
   }
 
@@ -837,7 +838,8 @@ long ph3py_rotate_bz_grid_index(const long bz_grid_index,
   ConstBZGrid *bzgrid;
   long i, rot_bz_gp;
 
-  if ((bzgrid = (ConstBZGrid*) malloc(sizeof(ConstBZGrid))) == NULL) {
+  if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL)
+  {
     warning_print("Memory could not be allocated.");
     return 0;
   }
@@ -845,7 +847,8 @@ long ph3py_rotate_bz_grid_index(const long bz_grid_index,
   bzgrid->addresses = bz_grid_addresses;
   bzgrid->gp_map = bz_map;
   bzgrid->type = bz_grid_type;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     bzgrid->D_diag[i] = D_diag[i];
     bzgrid->PS[i] = 0;
   }
@@ -858,7 +861,6 @@ long ph3py_rotate_bz_grid_index(const long bz_grid_index,
   return rot_bz_gp;
 }
 
-
 void ph3py_symmetrize_collision_matrix(double *collision_matrix,
                                        const long num_column,
                                        const long num_temp,
@@ -867,18 +869,23 @@ void ph3py_symmetrize_collision_matrix(double *collision_matrix,
   double val;
   long i, j, k, l, adrs_shift;
 
-  for (i = 0; i < num_sigma; i++) {
-    for (j = 0; j < num_temp; j++) {
+  for (i = 0; i < num_sigma; i++)
+  {
+    for (j = 0; j < num_temp; j++)
+    {
       adrs_shift = (i * num_column * num_column * num_temp +
                     j * num_column * num_column);
       /* show_colmat_info(py_collision_matrix, i, j, adrs_shift); */
 #ifdef PHPYOPENMP
 #pragma omp parallel for schedule(guided) private(l, val)
 #endif
-      for (k = 0; k < num_column; k++) {
-        for (l = k + 1; l < num_column; l++) {
+      for (k = 0; k < num_column; k++)
+      {
+        for (l = k + 1; l < num_column; l++)
+        {
           val = (collision_matrix[adrs_shift + k * num_column + l] +
-                 collision_matrix[adrs_shift + l * num_column + k]) / 2;
+                 collision_matrix[adrs_shift + l * num_column + k]) /
+                2;
           collision_matrix[adrs_shift + k * num_column + l] = val;
           collision_matrix[adrs_shift + l * num_column + k] = val;
         }
@@ -886,7 +893,6 @@ void ph3py_symmetrize_collision_matrix(double *collision_matrix,
     }
   }
 }
-
 
 void ph3py_expand_collision_matrix(double *collision_matrix,
                                    const long *rot_grid_points,
@@ -904,7 +910,7 @@ void ph3py_expand_collision_matrix(double *collision_matrix,
   long *multi;
   double *colmat_copy;
 
-  multi = (long*)malloc(sizeof(long) * num_ir_gp);
+  multi = (long *)malloc(sizeof(long) * num_ir_gp);
   colmat_copy = NULL;
 
   num_column = num_grid_points * num_band;
@@ -913,40 +919,49 @@ void ph3py_expand_collision_matrix(double *collision_matrix,
 #ifdef PHPYOPENMP
 #pragma omp parallel for schedule(guided) private(j, ir_gp)
 #endif
-  for (i = 0; i < num_ir_gp; i++) {
+  for (i = 0; i < num_ir_gp; i++)
+  {
     ir_gp = ir_grid_points[i];
     multi[i] = 0;
-    for (j = 0; j < num_rot; j++) {
-      if (rot_grid_points[j * num_grid_points + ir_gp] == ir_gp) {
+    for (j = 0; j < num_rot; j++)
+    {
+      if (rot_grid_points[j * num_grid_points + ir_gp] == ir_gp)
+      {
         multi[i]++;
       }
     }
   }
 
-  for (i = 0; i < num_sigma; i++) {
-    for (j = 0; j < num_temp; j++) {
+  for (i = 0; i < num_sigma; i++)
+  {
+    for (j = 0; j < num_temp; j++)
+    {
       adrs_shift = (i * num_column * num_column * num_temp +
                     j * num_column * num_column);
 #ifdef PHPYOPENMP
 #pragma omp parallel for private(ir_gp, adrs_shift_plus, colmat_copy, l, gp_r, m, n, p)
 #endif
-      for (k = 0; k < num_ir_gp; k++) {
+      for (k = 0; k < num_ir_gp; k++)
+      {
         ir_gp = ir_grid_points[k];
         adrs_shift_plus = adrs_shift + ir_gp * num_bgb;
-        colmat_copy = (double*)malloc(sizeof(double) * num_bgb);
-        for (l = 0; l < num_bgb; l++) {
+        colmat_copy = (double *)malloc(sizeof(double) * num_bgb);
+        for (l = 0; l < num_bgb; l++)
+        {
           colmat_copy[l] = collision_matrix[adrs_shift_plus + l] / multi[k];
           collision_matrix[adrs_shift_plus + l] = 0;
         }
-        for (l = 0; l < num_rot; l++) {
+        for (l = 0; l < num_rot; l++)
+        {
           gp_r = rot_grid_points[l * num_grid_points + ir_gp];
-          for (m = 0; m < num_band; m++) {
-            for (n = 0; n < num_grid_points; n++) {
-              for (p = 0; p < num_band; p++) {
-                collision_matrix[
-                  adrs_shift + gp_r * num_bgb + m * num_grid_points * num_band
-                  + rot_grid_points[l * num_grid_points + n] * num_band + p] +=
-                  colmat_copy[m * num_grid_points * num_band + n * num_band + p];
+          for (m = 0; m < num_band; m++)
+          {
+            for (n = 0; n < num_grid_points; n++)
+            {
+              for (p = 0; p < num_band; p++)
+              {
+                collision_matrix[adrs_shift + gp_r * num_bgb + m * num_grid_points * num_band + rot_grid_points[l * num_grid_points + n] * num_band + p] +=
+                    colmat_copy[m * num_grid_points * num_band + n * num_band + p];
               }
             }
           }
@@ -979,7 +994,8 @@ long ph3py_get_neighboring_gird_points(long *relative_grid_points,
   long i;
   ConstBZGrid *bzgrid;
 
-  if ((bzgrid = (ConstBZGrid*) malloc(sizeof(ConstBZGrid))) == NULL) {
+  if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL)
+  {
     warning_print("Memory could not be allocated.");
     return 0;
   }
@@ -987,20 +1003,21 @@ long ph3py_get_neighboring_gird_points(long *relative_grid_points,
   bzgrid->addresses = bz_grid_addresses;
   bzgrid->gp_map = bz_map;
   bzgrid->type = bz_grid_type;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     bzgrid->D_diag[i] = D_diag[i];
   }
 
 #ifdef PHPYOPENMP
 #pragma omp parallel for
 #endif
-  for (i = 0; i < num_grid_points; i++) {
-    tpi_get_neighboring_grid_points
-      (relative_grid_points + i * num_relative_grid_address,
-       grid_points[i],
-       relative_grid_address,
-       num_relative_grid_address,
-       bzgrid);
+  for (i = 0; i < num_grid_points; i++)
+  {
+    tpi_get_neighboring_grid_points(relative_grid_points + i * num_relative_grid_address,
+                                    grid_points[i],
+                                    relative_grid_address,
+                                    num_relative_grid_address,
+                                    bzgrid);
   }
 
   free(bzgrid);
@@ -1009,34 +1026,34 @@ long ph3py_get_neighboring_gird_points(long *relative_grid_points,
   return 1;
 }
 
-
 /* thm_get_integration_weight at multiple grid points for using openmp
  *
  * relative_grid_addresses are given as P multipled with those from dataset,
  * i.e.,
  *     np.dot(relative_grid_addresses, P.T) */
 long ph3py_get_thm_integration_weights_at_grid_points(
-  double *iw,
-  const double *frequency_points,
-  const long num_frequency_points,
-  const long num_band,
-  const long num_gp,
-  const long (*relative_grid_address)[4][3],
-  const long D_diag[3],
-  const long *grid_points,
-  const long (*bz_grid_addresses)[3],
-  const long *bz_map,
-  const long bz_grid_type,
-  const double *frequencies,
-  const long *gp2irgp_map,
-  const char function)
+    double *iw,
+    const double *frequency_points,
+    const long num_frequency_points,
+    const long num_band,
+    const long num_gp,
+    const long (*relative_grid_address)[4][3],
+    const long D_diag[3],
+    const long *grid_points,
+    const long (*bz_grid_addresses)[3],
+    const long *bz_map,
+    const long bz_grid_type,
+    const double *frequencies,
+    const long *gp2irgp_map,
+    const char function)
 {
   long i, j, k, bi;
   long vertices[24][4];
   double freq_vertices[24][4];
   ConstBZGrid *bzgrid;
 
-  if ((bzgrid = (ConstBZGrid*) malloc(sizeof(ConstBZGrid))) == NULL) {
+  if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL)
+  {
     warning_print("Memory could not be allocated.");
     return 0;
   }
@@ -1044,31 +1061,37 @@ long ph3py_get_thm_integration_weights_at_grid_points(
   bzgrid->addresses = bz_grid_addresses;
   bzgrid->gp_map = bz_map;
   bzgrid->type = bz_grid_type;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     bzgrid->D_diag[i] = D_diag[i];
   }
 
 #ifdef PHPYOPENMP
 #pragma omp parallel for private(j, k, bi, vertices, freq_vertices)
 #endif
-  for (i = 0; i < num_gp; i++) {
-    for (j = 0; j < 24; j++) {
+  for (i = 0; i < num_gp; i++)
+  {
+    for (j = 0; j < 24; j++)
+    {
       tpi_get_neighboring_grid_points(vertices[j],
                                       grid_points[i],
                                       relative_grid_address[j],
                                       4,
                                       bzgrid);
     }
-    for (bi = 0; bi < num_band; bi++) {
-      for (j = 0; j < 24; j++) {
-        for (k = 0; k < 4; k++) {
-          freq_vertices[j][k] = frequencies[
-            gp2irgp_map[vertices[j][k]] * num_band + bi];
+    for (bi = 0; bi < num_band; bi++)
+    {
+      for (j = 0; j < 24; j++)
+      {
+        for (k = 0; k < 4; k++)
+        {
+          freq_vertices[j][k] = frequencies[gp2irgp_map[vertices[j][k]] * num_band + bi];
         }
       }
-      for (j = 0; j < num_frequency_points; j++) {
+      for (j = 0; j < num_frequency_points; j++)
+      {
         iw[i * num_frequency_points * num_band + j * num_band + bi] =
-          thm_get_integration_weight(frequency_points[j], freq_vertices, function);
+            thm_get_integration_weight(frequency_points[j], freq_vertices, function);
       }
     }
   }

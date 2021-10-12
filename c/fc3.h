@@ -50,14 +50,14 @@ void fc3_rotate_delta_fc2(double (*fc3)[3][3][3],
                           const long num_site_sym,
                           const long num_disp);
 void fc3_set_permutation_symmetry_fc3(double *fc3, const long num_atom);
-void fc3_set_permutation_symmetry_compact_fc3(double * fc3,
+void fc3_set_permutation_symmetry_compact_fc3(double *fc3,
                                               const long p2s[],
                                               const long s2pp[],
                                               const long nsym_list[],
                                               const long perms[],
                                               const long n_satom,
                                               const long n_patom);
-void fc3_transpose_compact_fc3(double * fc3,
+void fc3_transpose_compact_fc3(double *fc3,
                                const long p2s[],
                                const long s2pp[],
                                const long nsym_list[],

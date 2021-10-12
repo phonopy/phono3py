@@ -35,7 +35,8 @@
 #ifndef __bzgrid_H__
 #define __bzgrid_H__
 
-typedef struct {
+typedef struct
+{
   long size;
   long (*mat)[3][3];
 } RotMats;
@@ -67,7 +68,8 @@ typedef struct {
  *     shape=(3, 3)
  * type : long
  *     1 or 2. */
-typedef struct {
+typedef struct
+{
   long size;
   long D_diag[3];
   long Q[3][3];
@@ -79,7 +81,8 @@ typedef struct {
   long type;
 } BZGrid;
 
-typedef struct {
+typedef struct
+{
   long size;
   long D_diag[3];
   long Q[3][3];
@@ -91,14 +94,13 @@ typedef struct {
   long type;
 } ConstBZGrid;
 
-
 long bzg_rotate_grid_index(const long grid_index,
                            const long rotation[3][3],
                            const ConstBZGrid *bzgrid);
 long bzg_get_bz_grid_addresses(BZGrid *bzgrid);
 double bzg_get_tolerance_for_BZ_reduction(const BZGrid *bzgrid);
-RotMats * bzg_alloc_RotMats(const long size);
-void bzg_free_RotMats(RotMats * rotmats);
+RotMats *bzg_alloc_RotMats(const long size);
+void bzg_free_RotMats(RotMats *rotmats);
 void bzg_multiply_matrix_vector_ld3(double v[3],
                                     const long a[3][3],
                                     const double b[3]);

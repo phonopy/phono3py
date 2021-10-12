@@ -47,8 +47,8 @@ long dym_get_dynamical_matrix_at_q(double *dynamical_matrix,
                                    const long *p2s_map,
                                    const double (*charge_sum)[3][3],
                                    const long with_openmp);
-void dym_get_recip_dipole_dipole(double *dd, /* [natom, 3, natom, 3, (real,imag)] */
-                                 const double *dd_q0, /* [natom, 3, 3, (real,imag)] */
+void dym_get_recip_dipole_dipole(double *dd,                /* [natom, 3, natom, 3, (real,imag)] */
+                                 const double *dd_q0,       /* [natom, 3, 3, (real,imag)] */
                                  const double (*G_list)[3], /* [num_G, 3] */
                                  const long num_G,
                                  const long num_patom,
@@ -57,10 +57,10 @@ void dym_get_recip_dipole_dipole(double *dd, /* [natom, 3, natom, 3, (real,imag)
                                  const double (*born)[3][3],
                                  const double dielectric[3][3],
                                  const double (*pos)[3], /* [num_patom, 3] */
-                                 const double factor, /* 4pi/V*unit-conv */
+                                 const double factor,    /* 4pi/V*unit-conv */
                                  const double lambda,
                                  const double tolerance);
-void dym_get_recip_dipole_dipole_q0(double *dd_q0, /* [natom, 3, 3, (real,imag)] */
+void dym_get_recip_dipole_dipole_q0(double *dd_q0,             /* [natom, 3, 3, (real,imag)] */
                                     const double (*G_list)[3], /* [num_G, 3] */
                                     const long num_G,
                                     const long num_patom,

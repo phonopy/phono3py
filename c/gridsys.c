@@ -50,14 +50,12 @@ void gridsys_get_all_grid_addresses(long (*gr_grid_addresses)[3],
   grg_get_all_grid_addresses(gr_grid_addresses, D_diag);
 }
 
-
 void gridsys_get_double_grid_address(long address_double[3],
                                      const long address[3],
                                      const long PS[3])
 {
   grg_get_double_grid_address(address_double, address, PS);
 }
-
 
 void gridsys_get_grid_address_from_index(long address[3],
                                          const long grid_index,
@@ -66,7 +64,6 @@ void gridsys_get_grid_address_from_index(long address[3],
   grg_get_grid_address_from_index(address, grid_index, D_diag);
 }
 
-
 long gridsys_get_double_grid_index(const long address_double[3],
                                    const long D_diag[3],
                                    const long PS[3])
@@ -74,14 +71,12 @@ long gridsys_get_double_grid_index(const long address_double[3],
   return grg_get_double_grid_index(address_double, D_diag, PS);
 }
 
-
 /* From single address to grid index */
 long gridsys_get_grid_index_from_address(const long address[3],
                                          const long D_diag[3])
 {
   return grg_get_grid_index(address, D_diag);
 }
-
 
 long gridsys_rotate_grid_index(const long grid_index,
                                const long rotation[3][3],
@@ -103,7 +98,6 @@ long gridsys_get_reciprocal_point_group(long rec_rotations[48][3][3],
                                         1);
 }
 
-
 long gridsys_get_snf3x3(long D_diag[3],
                         long P[3][3],
                         long Q[3][3],
@@ -111,7 +105,6 @@ long gridsys_get_snf3x3(long D_diag[3],
 {
   return grg_get_snf3x3(D_diag, P, Q, A);
 }
-
 
 /* Rotation matrices with respect to reciprocal basis vectors are
  * transformed to those for GRGrid. This set of the rotations are
@@ -131,14 +124,12 @@ long gridsys_transform_rotations(long (*transformed_rots)[3][3],
   return succeeded;
 }
 
-
 double gridsys_get_thm_integration_weight(const double omega,
                                           const double tetrahedra_omegas[24][4],
                                           const char function)
 {
   return thm_get_integration_weight(omega, tetrahedra_omegas, function);
 }
-
 
 /* Get one dataset of relative grid address used for tetrahedron */
 /* method. rec_lattice is used to choose the one. */
@@ -149,7 +140,6 @@ void gridsys_get_thm_relative_grid_address(long relative_grid_addresses[24][4][3
   thm_get_relative_grid_address(relative_grid_addresses, rec_lattice);
 }
 
-
 /* The rotations are those after proper transformation in GRGrid. */
 void gridsys_get_ir_grid_map(long *ir_grid_map,
                              const long (*rotations)[3][3],
@@ -159,7 +149,6 @@ void gridsys_get_ir_grid_map(long *ir_grid_map,
 {
   grg_get_ir_grid_map(ir_grid_map, rotations, num_rot, D_diag, PS);
 }
-
 
 /* Find shortest grid points from Gamma considering periodicity of */
 /* reciprocal lattice. See the details in docstring of BZGrid. */
@@ -196,7 +185,8 @@ long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3],
   BZGrid *bzgrid;
   long i, j, size;
 
-  if ((bzgrid = (BZGrid*) malloc(sizeof(BZGrid))) == NULL) {
+  if ((bzgrid = (BZGrid *)malloc(sizeof(BZGrid))) == NULL)
+  {
     warning_print("Memory could not be allocated.");
     return 0;
   }
@@ -205,18 +195,23 @@ long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3],
   bzgrid->gp_map = bz_map;
   bzgrid->bzg2grg = bzg2grg;
   bzgrid->type = type;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     bzgrid->D_diag[i] = D_diag[i];
     bzgrid->PS[i] = PS[i];
-    for (j = 0; j < 3; j++) {
+    for (j = 0; j < 3; j++)
+    {
       bzgrid->Q[i][j] = Q[i][j];
       bzgrid->reclat[i][j] = rec_lattice[i][j];
     }
   }
 
-  if (bzg_get_bz_grid_addresses(bzgrid)) {
+  if (bzg_get_bz_grid_addresses(bzgrid))
+  {
     size = bzgrid->size;
-  } else {
+  }
+  else
+  {
     size = 0;
   }
 
@@ -225,7 +220,6 @@ long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3],
 
   return size;
 }
-
 
 long gridsys_get_triplets_at_q(long *map_triplets,
                                long *map_q,
@@ -246,7 +240,6 @@ long gridsys_get_triplets_at_q(long *map_triplets,
                                                swappable);
 }
 
-
 long gridsys_get_BZ_triplets_at_q(long (*triplets)[3],
                                   const long grid_point,
                                   const long (*bz_grid_addresses)[3],
@@ -260,7 +253,8 @@ long gridsys_get_BZ_triplets_at_q(long (*triplets)[3],
   ConstBZGrid *bzgrid;
   long i, j, num_ir;
 
-  if ((bzgrid = (ConstBZGrid*) malloc(sizeof(ConstBZGrid))) == NULL) {
+  if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL)
+  {
     warning_print("Memory could not be allocated.");
     return 0;
   }
@@ -268,10 +262,12 @@ long gridsys_get_BZ_triplets_at_q(long (*triplets)[3],
   bzgrid->addresses = bz_grid_addresses;
   bzgrid->gp_map = bz_map;
   bzgrid->type = bz_grid_type;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     bzgrid->D_diag[i] = D_diag[i];
     bzgrid->PS[i] = 0;
-    for (j = 0; j < 3; j++) {
+    for (j = 0; j < 3; j++)
+    {
       bzgrid->Q[i][j] = Q[i][j];
     }
   }
@@ -312,7 +308,8 @@ long gridsys_get_integration_weight(double *iw,
   ConstBZGrid *bzgrid;
   long i;
 
-  if ((bzgrid = (ConstBZGrid*) malloc(sizeof(ConstBZGrid))) == NULL) {
+  if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL)
+  {
     warning_print("Memory could not be allocated.");
     return 0;
   }
@@ -320,7 +317,8 @@ long gridsys_get_integration_weight(double *iw,
   bzgrid->addresses = bz_grid_addresses;
   bzgrid->gp_map = bz_map;
   bzgrid->type = bz_grid_type;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     bzgrid->D_diag[i] = D_diag[i];
   }
 

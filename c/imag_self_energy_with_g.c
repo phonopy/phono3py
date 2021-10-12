@@ -98,7 +98,7 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
 {
   long i, j, num_triplets, num_band0, num_band, num_band_prod;
   long num_g_pos, g_index_dims, g_index_shift;
-  long (*g_pos)[4];
+  long(*g_pos)[4];
   double *ise;
   long at_a_frequency_point;
 
@@ -109,14 +109,17 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
   num_band0 = fc3_normal_squared->dims[1];
   num_band = fc3_normal_squared->dims[2];
   num_band_prod = num_band0 * num_band * num_band;
-  ise = (double*)malloc(sizeof(double) * num_triplets * num_band0);
+  ise = (double *)malloc(sizeof(double) * num_triplets * num_band0);
 
-  if (frequency_point_index < 0) {
+  if (frequency_point_index < 0)
+  {
     /* frequency_points == frequencies at bands */
     at_a_frequency_point = 0;
     g_index_dims = num_band_prod;
     g_index_shift = 0;
-  } else {
+  }
+  else
+  {
     /* At an arbitrary frequency point. */
     at_a_frequency_point = 1;
     g_index_dims = num_frequency_points * num_band * num_band;
@@ -126,19 +129,23 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
 #ifdef PHPYOPENMP
 #pragma omp parallel for private(num_g_pos, j, g_pos)
 #endif
-  for (i = 0; i < num_triplets; i++) {
+  for (i = 0; i < num_triplets; i++)
+  {
     g_pos = (long(*)[4])malloc(sizeof(long[4]) * num_band_prod);
     /* ise_set_g_pos only works for the case of frquency points at */
     /* bands. For frequency sampling mode, g_zero is assumed all */
     /* with the array shape of (num_triplets, num_band0, num_band, */
     /* num_band). */
-    if (at_a_frequency_point) {
+    if (at_a_frequency_point)
+    {
       num_g_pos = ise_set_g_pos_frequency_point(
-        g_pos,
-        num_band0,
-        num_band,
-        g_zero + i * g_index_dims + g_index_shift);
-    } else {
+          g_pos,
+          num_band0,
+          num_band,
+          g_zero + i * g_index_dims + g_index_shift);
+    }
+    else
+    {
       num_g_pos = ise_set_g_pos(g_pos,
                                 num_band0,
                                 num_band,
@@ -146,33 +153,36 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
     }
 
     ise_imag_self_energy_at_triplet(
-      ise + i * num_band0,
-      num_band0,
-      num_band,
-      fc3_normal_squared->data + i * num_band_prod,
-      frequencies,
-      triplets[i],
-      triplet_weights[i],
-      g + i * g_index_dims + g_index_shift,
-      g + (i + num_triplets) * g_index_dims + g_index_shift,
-      g_pos,
-      num_g_pos,
-      &temperature,
-      1,
-      cutoff_frequency,
-      0,
-      at_a_frequency_point);
+        ise + i * num_band0,
+        num_band0,
+        num_band,
+        fc3_normal_squared->data + i * num_band_prod,
+        frequencies,
+        triplets[i],
+        triplet_weights[i],
+        g + i * g_index_dims + g_index_shift,
+        g + (i + num_triplets) * g_index_dims + g_index_shift,
+        g_pos,
+        num_g_pos,
+        &temperature,
+        1,
+        cutoff_frequency,
+        0,
+        at_a_frequency_point);
 
     free(g_pos);
     g_pos = NULL;
   }
 
-  for (i = 0; i < num_band0; i++) {
+  for (i = 0; i < num_band0; i++)
+  {
     imag_self_energy[i] = 0;
   }
 
-  for (i = 0; i < num_triplets; i++) {
-    for (j = 0; j < num_band0; j++) {
+  for (i = 0; i < num_triplets; i++)
+  {
+    for (j = 0; j < num_band0; j++)
+    {
       imag_self_energy[j] += ise[i * num_band0 + j];
     }
   }
@@ -181,19 +191,18 @@ void ise_get_imag_self_energy_at_bands_with_g(double *imag_self_energy,
   ise = NULL;
 }
 
-void ise_get_detailed_imag_self_energy_at_bands_with_g
-(double *detailed_imag_self_energy,
- double *imag_self_energy_N,
- double *imag_self_energy_U,
- const Darray *fc3_normal_squared,
- const double *frequencies,
- const long (*triplets)[3],
- const long *triplet_weights,
- const long (*bz_grid_addresses)[3],
- const double *g,
- const char *g_zero,
- const double temperature,
- const double cutoff_frequency)
+void ise_get_detailed_imag_self_energy_at_bands_with_g(double *detailed_imag_self_energy,
+                                                       double *imag_self_energy_N,
+                                                       double *imag_self_energy_U,
+                                                       const Darray *fc3_normal_squared,
+                                                       const double *frequencies,
+                                                       const long (*triplets)[3],
+                                                       const long *triplet_weights,
+                                                       const long (*bz_grid_addresses)[3],
+                                                       const double *g,
+                                                       const char *g_zero,
+                                                       const double temperature,
+                                                       const double cutoff_frequency)
 {
   double *ise;
   long i, j, num_triplets, num_band0, num_band, num_band_prod;
@@ -207,46 +216,52 @@ void ise_get_detailed_imag_self_energy_at_bands_with_g
   num_band0 = fc3_normal_squared->dims[1];
   num_band = fc3_normal_squared->dims[2];
   num_band_prod = num_band0 * num_band * num_band;
-  ise = (double*)malloc(sizeof(double) * num_triplets * num_band0);
+  ise = (double *)malloc(sizeof(double) * num_triplets * num_band0);
 
   /* detailed_imag_self_energy has the same shape as fc3_normal_squared. */
 
 #ifdef PHPYOPENMP
 #pragma omp parallel for
 #endif
-  for (i = 0; i < num_triplets; i++) {
-    detailed_imag_self_energy_at_triplet
-      (detailed_imag_self_energy + i * num_band_prod,
-       ise + i * num_band0,
-       num_band0,
-       num_band,
-       fc3_normal_squared->data + i * num_band_prod,
-       frequencies,
-       triplets[i],
-       g + i * num_band_prod,
-       g + (i + num_triplets) * num_band_prod,
-       g_zero + i * num_band_prod,
-       &temperature,
-       1,
-       cutoff_frequency);
+  for (i = 0; i < num_triplets; i++)
+  {
+    detailed_imag_self_energy_at_triplet(detailed_imag_self_energy + i * num_band_prod,
+                                         ise + i * num_band0,
+                                         num_band0,
+                                         num_band,
+                                         fc3_normal_squared->data + i * num_band_prod,
+                                         frequencies,
+                                         triplets[i],
+                                         g + i * num_band_prod,
+                                         g + (i + num_triplets) * num_band_prod,
+                                         g_zero + i * num_band_prod,
+                                         &temperature,
+                                         1,
+                                         cutoff_frequency);
   }
 
-  is_N = (long*)malloc(sizeof(long) * num_triplets);
-  for (i = 0; i < num_triplets; i++) {
+  is_N = (long *)malloc(sizeof(long) * num_triplets);
+  for (i = 0; i < num_triplets; i++)
+  {
     is_N[i] = tpl_is_N(triplets[i], bz_grid_addresses);
   }
 
-  for (i = 0; i < num_band0; i++) {
+  for (i = 0; i < num_band0; i++)
+  {
     N = 0;
     U = 0;
-/* #ifdef PHPYOPENMP */
-/* #pragma omp parallel for private(ise_tmp) reduction(+:N,U) */
-/* #endif */
-    for (j = 0; j < num_triplets; j++) {
+    /* #ifdef PHPYOPENMP */
+    /* #pragma omp parallel for private(ise_tmp) reduction(+:N,U) */
+    /* #endif */
+    for (j = 0; j < num_triplets; j++)
+    {
       ise_tmp = ise[j * num_band0 + i] * triplet_weights[j];
-      if (is_N[j]) {
+      if (is_N[j])
+      {
         N += ise_tmp;
-      } else {
+      }
+      else
+      {
         U += ise_tmp;
       }
     }
@@ -281,9 +296,10 @@ void ise_imag_self_energy_at_triplet(double *imag_self_energy,
   double *n1, *n2;
   long g_pos_3;
 
-  n1 = (double*)malloc(sizeof(double) * num_temps * num_band);
-  n2 = (double*)malloc(sizeof(double) * num_temps * num_band);
-  for (i = 0; i < num_temps; i++) {
+  n1 = (double *)malloc(sizeof(double) * num_temps * num_band);
+  n2 = (double *)malloc(sizeof(double) * num_temps * num_band);
+  for (i = 0; i < num_temps; i++)
+  {
     set_occupations(n1 + i * num_band,
                     n2 + i * num_band,
                     num_band,
@@ -293,36 +309,50 @@ void ise_imag_self_energy_at_triplet(double *imag_self_energy,
                     cutoff_frequency);
   }
 
-  for (i = 0; i < num_band0 * num_temps; i++) {
+  for (i = 0; i < num_band0 * num_temps; i++)
+  {
     imag_self_energy[i] = 0;
   }
 
-/* Do not use OpenMP here!! */
-/* g_pos[i][0] takes value 0 <= x < num_band0 only, */
-/* which causes race condition. */
-  for (i = 0; i < num_g_pos; i++) {
-    if (at_a_frequency_point) {
+  /* Do not use OpenMP here!! */
+  /* g_pos[i][0] takes value 0 <= x < num_band0 only, */
+  /* which causes race condition. */
+  for (i = 0; i < num_g_pos; i++)
+  {
+    if (at_a_frequency_point)
+    {
       /* At an arbitrary frequency point */
       g_pos_3 = g_pos[i][3] % (num_band * num_band);
-    } else {
+    }
+    else
+    {
       /* frequency_points == frequencies at bands */
       g_pos_3 = g_pos[i][3];
     }
-    for (j = 0; j < num_temps; j++) {
+    for (j = 0; j < num_temps; j++)
+    {
       if (n1[j * num_band + g_pos[i][1]] < 0 ||
-          n2[j * num_band + g_pos[i][2]] < 0) {
+          n2[j * num_band + g_pos[i][2]] < 0)
+      {
         ;
-      } else {
-        if (temperatures[j] > 0) {
+      }
+      else
+      {
+        if (temperatures[j] > 0)
+        {
           imag_self_energy[j * num_band0 + g_pos[i][0]] +=
-            ((n1[j * num_band + g_pos[i][1]] +
-              n2[j * num_band + g_pos[i][2]] + 1) * g1[g_pos_3] +
-             (n1[j * num_band + g_pos[i][1]] -
-              n2[j * num_band + g_pos[i][2]]) * g2_3[g_pos_3]) *
-            fc3_normal_squared[g_pos[i][3]] * triplet_weight;
-        } else {
+              ((n1[j * num_band + g_pos[i][1]] +
+                n2[j * num_band + g_pos[i][2]] + 1) *
+                   g1[g_pos_3] +
+               (n1[j * num_band + g_pos[i][1]] -
+                n2[j * num_band + g_pos[i][2]]) *
+                   g2_3[g_pos_3]) *
+              fc3_normal_squared[g_pos[i][3]] * triplet_weight;
+        }
+        else
+        {
           imag_self_energy[j * num_band0 + g_pos[i][0]] +=
-            g1[g_pos_3] * fc3_normal_squared[g_pos[i][3]] * triplet_weight;
+              g1[g_pos_3] * fc3_normal_squared[g_pos[i][3]] * triplet_weight;
         }
       }
     }
@@ -343,10 +373,14 @@ long ise_set_g_pos(long (*g_pos)[4],
 
   num_g_pos = 0;
   jkl = 0;
-  for (j = 0; j < num_band0; j++) {
-    for (k = 0; k < num_band; k++) {
-      for (l = 0; l < num_band; l++) {
-        if (!g_zero[jkl]) {
+  for (j = 0; j < num_band0; j++)
+  {
+    for (k = 0; k < num_band; k++)
+    {
+      for (l = 0; l < num_band; l++)
+      {
+        if (!g_zero[jkl])
+        {
           g_pos[num_g_pos][0] = j;
           g_pos[num_g_pos][1] = k;
           g_pos[num_g_pos][2] = l;
@@ -369,11 +403,15 @@ static long ise_set_g_pos_frequency_point(long (*g_pos)[4],
 
   num_g_pos = 0;
   jkl = 0;
-  for (j = 0; j < num_band0; j++) {
+  for (j = 0; j < num_band0; j++)
+  {
     kl = 0;
-    for (k = 0; k < num_band; k++) {
-      for (l = 0; l < num_band; l++) {
-        if (!g_zero[kl]) {
+    for (k = 0; k < num_band; k++)
+    {
+      for (l = 0; l < num_band; l++)
+      {
+        if (!g_zero[kl])
+        {
           g_pos[num_g_pos][0] = j;
           g_pos[num_g_pos][1] = k;
           g_pos[num_g_pos][2] = l;
@@ -409,10 +447,11 @@ detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
   n1 = NULL;
   n2 = NULL;
 
-  n1 = (double*)malloc(sizeof(double) * num_band);
-  n2 = (double*)malloc(sizeof(double) * num_band);
+  n1 = (double *)malloc(sizeof(double) * num_band);
+  n2 = (double *)malloc(sizeof(double) * num_band);
 
-  for (i = 0; i < num_temps; i++) {
+  for (i = 0; i < num_temps; i++)
+  {
     set_occupations(n1,
                     n2,
                     num_band,
@@ -421,29 +460,31 @@ detailed_imag_self_energy_at_triplet(double *detailed_imag_self_energy,
                     frequencies,
                     cutoff_frequency);
 
-    for (j = 0; j < num_band0; j++) {
+    for (j = 0; j < num_band0; j++)
+    {
       adrs_shift = j * num_band * num_band;
-      if (temperatures[i] > 0) {
+      if (temperatures[i] > 0)
+      {
         imag_self_energy[i * num_band0 + j] =
-          collect_detailed_imag_self_energy
-          (detailed_imag_self_energy + adrs_shift,
-           num_band,
-           fc3_normal_squared + adrs_shift,
-           n1,
-           n2,
-           g1 + adrs_shift,
-           g2_3 + adrs_shift,
-           g_zero + adrs_shift);
-      } else {
+            collect_detailed_imag_self_energy(detailed_imag_self_energy + adrs_shift,
+                                              num_band,
+                                              fc3_normal_squared + adrs_shift,
+                                              n1,
+                                              n2,
+                                              g1 + adrs_shift,
+                                              g2_3 + adrs_shift,
+                                              g_zero + adrs_shift);
+      }
+      else
+      {
         imag_self_energy[i * num_band0 + j] =
-          collect_detailed_imag_self_energy_0K
-          (detailed_imag_self_energy + adrs_shift,
-           num_band,
-           fc3_normal_squared + adrs_shift,
-           n1,
-           n2,
-           g1 + adrs_shift,
-           g_zero + adrs_shift);
+            collect_detailed_imag_self_energy_0K(detailed_imag_self_energy + adrs_shift,
+                                                 num_band,
+                                                 fc3_normal_squared + adrs_shift,
+                                                 n1,
+                                                 n2,
+                                                 g1 + adrs_shift,
+                                                 g_zero + adrs_shift);
       }
     }
   }
@@ -468,12 +509,19 @@ collect_detailed_imag_self_energy(double *imag_self_energy,
   double sum_g;
 
   sum_g = 0;
-  for (ij = 0; ij < num_band * num_band; ij++) {
+  for (ij = 0; ij < num_band * num_band; ij++)
+  {
     imag_self_energy[ij] = 0;
-    if (g_zero[ij]) {continue;}
+    if (g_zero[ij])
+    {
+      continue;
+    }
     i = ij / num_band;
     j = ij % num_band;
-    if (n1[i] < 0 || n2[j] < 0) {continue;}
+    if (n1[i] < 0 || n2[j] < 0)
+    {
+      continue;
+    }
     imag_self_energy[ij] = (((n1[i] + n2[j] + 1) * g1[ij] +
                              (n1[i] - n2[j]) * g2_3[ij]) *
                             fc3_normal_squared[ij]);
@@ -496,12 +544,19 @@ collect_detailed_imag_self_energy_0K(double *imag_self_energy,
   double sum_g;
 
   sum_g = 0;
-  for (ij = 0; ij < num_band * num_band; ij++) {
+  for (ij = 0; ij < num_band * num_band; ij++)
+  {
     imag_self_energy[ij] = 0;
-    if (g_zero[ij]) {continue;}
+    if (g_zero[ij])
+    {
+      continue;
+    }
     i = ij / num_band;
     j = ij % num_band;
-    if (n1[i] < 0 || n2[j] < 0) {continue;}
+    if (n1[i] < 0 || n2[j] < 0)
+    {
+      continue;
+    }
     imag_self_energy[ij] = g1[ij] * fc3_normal_squared[ij];
     sum_g += imag_self_energy[ij];
   }
@@ -520,17 +575,24 @@ static void set_occupations(double *n1,
   long j;
   double f1, f2;
 
-  for (j = 0; j < num_band; j++) {
+  for (j = 0; j < num_band; j++)
+  {
     f1 = frequencies[triplet[1] * num_band + j];
     f2 = frequencies[triplet[2] * num_band + j];
-    if (f1 > cutoff_frequency) {
+    if (f1 > cutoff_frequency)
+    {
       n1[j] = phonoc_bose_einstein(f1, temperature);
-    } else {
+    }
+    else
+    {
       n1[j] = -1;
     }
-    if (f2 > cutoff_frequency) {
+    if (f2 > cutoff_frequency)
+    {
       n2[j] = phonoc_bose_einstein(f2, temperature);
-    } else {
+    }
+    else
+    {
       n2[j] = -1;
     }
   }

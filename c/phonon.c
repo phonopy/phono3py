@@ -50,7 +50,7 @@ static void get_undone_phonons(double *frequencies,
                                const long (*grid_address)[3],
                                const double QDinv[3][3],
                                const double *fc2,
-                               const double(*svecs_fc2)[3],
+                               const double (*svecs_fc2)[3],
                                const long (*multi_fc2)[2],
                                const long num_patom,
                                const long num_satom,
@@ -71,7 +71,7 @@ static void get_gonze_undone_phonons(double *frequencies,
                                      const long (*grid_address)[3],
                                      const double QDinv[3][3],
                                      const double *fc2,
-                                     const double(*svecs_fc2)[3],
+                                     const double (*svecs_fc2)[3],
                                      const long (*multi_fc2)[2],
                                      const double (*positions)[3],
                                      const long num_patom,
@@ -86,7 +86,7 @@ static void get_gonze_undone_phonons(double *frequencies,
                                      const double *q_direction,
                                      const double nac_factor,
                                      const double *dd_q0,
-                                     const double(*G_list)[3],
+                                     const double (*G_list)[3],
                                      const long num_G_points,
                                      const double lambda,
                                      const char uplo);
@@ -99,7 +99,7 @@ static void get_phonons(lapack_complex_double *eigvecs,
                         const long (*multi)[2],
                         const long num_patom,
                         const long num_satom,
-                        const double(*svecs)[3],
+                        const double (*svecs)[3],
                         const long is_nac,
                         const double (*born)[3][3],
                         const double dielectric[3][3],
@@ -117,7 +117,7 @@ static void get_gonze_phonons(lapack_complex_double *eigvecs,
                               const double (*positions)[3],
                               const long num_patom,
                               const long num_satom,
-                              const double(*svecs)[3],
+                              const double (*svecs)[3],
                               const long is_nac,
                               const double (*born)[3][3],
                               const double dielectric[3][3],
@@ -125,7 +125,7 @@ static void get_gonze_phonons(lapack_complex_double *eigvecs,
                               const double *q_direction,
                               const double nac_factor,
                               const double *dd_q0,
-                              const double(*G_list)[3],
+                              const double (*G_list)[3],
                               const long num_G_points,
                               const double lambda);
 static void
@@ -138,7 +138,7 @@ get_dynamical_matrix(lapack_complex_double *dynmat,
                      const long (*multi)[2],
                      const long num_patom,
                      const long num_satom,
-                     const double(*svecs)[3],
+                     const double (*svecs)[3],
                      const long is_nac,
                      const double (*born)[3][3], /* Wang NAC unless NULL */
                      const double dielectric[3][3],
@@ -159,35 +159,34 @@ static long needs_nac(const double (*born)[3][3],
                       const long gp,
                       const double *q_direction);
 
-void
-phn_get_phonons_at_gridpoints(double *frequencies,
-                              lapack_complex_double *eigenvectors,
-                              char *phonon_done,
-                              const long num_phonons,
-                              const long *grid_points,
-                              const long num_grid_points,
-                              const long (*grid_address)[3],
-                              const double QDinv[3][3],
-                              const double *fc2,
-                              const double(*svecs_fc2)[3],
-                              const long (*multi_fc2)[2],
-                              const long num_patom,
-                              const long num_satom,
-                              const double *masses_fc2,
-                              const long *p2s_fc2,
-                              const long *s2p_fc2,
-                              const double unit_conversion_factor,
-                              const double (*born)[3][3],
-                              const double dielectric[3][3],
-                              const double reciprocal_lattice[3][3],
-                              const double *q_direction, /* must be pointer */
-                              const double nac_factor,
-                              const char uplo)
+void phn_get_phonons_at_gridpoints(double *frequencies,
+                                   lapack_complex_double *eigenvectors,
+                                   char *phonon_done,
+                                   const long num_phonons,
+                                   const long *grid_points,
+                                   const long num_grid_points,
+                                   const long (*grid_address)[3],
+                                   const double QDinv[3][3],
+                                   const double *fc2,
+                                   const double (*svecs_fc2)[3],
+                                   const long (*multi_fc2)[2],
+                                   const long num_patom,
+                                   const long num_satom,
+                                   const double *masses_fc2,
+                                   const long *p2s_fc2,
+                                   const long *s2p_fc2,
+                                   const double unit_conversion_factor,
+                                   const double (*born)[3][3],
+                                   const double dielectric[3][3],
+                                   const double reciprocal_lattice[3][3],
+                                   const double *q_direction, /* must be pointer */
+                                   const double nac_factor,
+                                   const char uplo)
 {
   long num_undone;
   long *undone;
 
-  undone = (long*)malloc(sizeof(long) * num_phonons);
+  undone = (long *)malloc(sizeof(long) * num_phonons);
   num_undone = collect_undone_grid_points(undone,
                                           phonon_done,
                                           num_grid_points,
@@ -219,40 +218,39 @@ phn_get_phonons_at_gridpoints(double *frequencies,
   undone = NULL;
 }
 
-void
-phn_get_gonze_phonons_at_gridpoints(double *frequencies,
-                                    lapack_complex_double *eigenvectors,
-                                    char *phonon_done,
-                                    const long num_phonons,
-                                    const long *grid_points,
-                                    const long num_grid_points,
-                                    const long (*grid_address)[3],
-                                    const double QDinv[3][3],
-                                    const double *fc2,
-                                    const double(*svecs_fc2)[3],
-                                    const long (*multi_fc2)[2],
-                                    const double (*positions)[3],
-                                    const long num_patom,
-                                    const long num_satom,
-                                    const double *masses_fc2,
-                                    const long *p2s_fc2,
-                                    const long *s2p_fc2,
-                                    const double unit_conversion_factor,
-                                    const double (*born)[3][3],
-                                    const double dielectric[3][3],
-                                    const double reciprocal_lattice[3][3],
-                                    const double *q_direction, /* pointer */
-                                    const double nac_factor,
-                                    const double *dd_q0,
-                                    const double(*G_list)[3],
-                                    const long num_G_points,
-                                    const double lambda,
-                                    const char uplo)
+void phn_get_gonze_phonons_at_gridpoints(double *frequencies,
+                                         lapack_complex_double *eigenvectors,
+                                         char *phonon_done,
+                                         const long num_phonons,
+                                         const long *grid_points,
+                                         const long num_grid_points,
+                                         const long (*grid_address)[3],
+                                         const double QDinv[3][3],
+                                         const double *fc2,
+                                         const double (*svecs_fc2)[3],
+                                         const long (*multi_fc2)[2],
+                                         const double (*positions)[3],
+                                         const long num_patom,
+                                         const long num_satom,
+                                         const double *masses_fc2,
+                                         const long *p2s_fc2,
+                                         const long *s2p_fc2,
+                                         const double unit_conversion_factor,
+                                         const double (*born)[3][3],
+                                         const double dielectric[3][3],
+                                         const double reciprocal_lattice[3][3],
+                                         const double *q_direction, /* pointer */
+                                         const double nac_factor,
+                                         const double *dd_q0,
+                                         const double (*G_list)[3],
+                                         const long num_G_points,
+                                         const double lambda,
+                                         const char uplo)
 {
   long num_undone;
   long *undone;
 
-  undone = (long*)malloc(sizeof(long) * num_phonons);
+  undone = (long *)malloc(sizeof(long) * num_phonons);
   num_undone = collect_undone_grid_points(undone,
                                           phonon_done,
                                           num_grid_points,
@@ -297,9 +295,11 @@ static long collect_undone_grid_points(long *undone,
   long i, gp, num_undone;
 
   num_undone = 0;
-  for (i = 0; i < num_grid_points; i++) {
+  for (i = 0; i < num_grid_points; i++)
+  {
     gp = grid_points[i];
-    if (phonon_done[gp] == 0) {
+    if (phonon_done[gp] == 0)
+    {
       undone[num_undone] = gp;
       num_undone++;
       phonon_done[gp] = 1;
@@ -316,7 +316,7 @@ static void get_undone_phonons(double *frequencies,
                                const long (*grid_address)[3],
                                const double QDinv[3][3],
                                const double *fc2,
-                               const double(*svecs_fc2)[3],
+                               const double (*svecs_fc2)[3],
                                const long (*multi_fc2)[2],
                                const long num_patom,
                                const long num_satom,
@@ -341,12 +341,12 @@ static void get_undone_phonons(double *frequencies,
 #ifdef PHPYOPENMP
 #pragma omp parallel for private(j, q, gp, is_nac)
 #endif
-  for (i = 0; i < num_undone_grid_points; i++) {
+  for (i = 0; i < num_undone_grid_points; i++)
+  {
     gp = undone_grid_points[i];
-    for (j = 0; j < 3; j++) {
-      q[j] = QDinv[j][0] * grid_address[gp][0]
-        + QDinv[j][1] * grid_address[gp][1]
-        + QDinv[j][2] * grid_address[gp][2];
+    for (j = 0; j < 3; j++)
+    {
+      q[j] = QDinv[j][0] * grid_address[gp][0] + QDinv[j][1] * grid_address[gp][1] + QDinv[j][2] * grid_address[gp][2];
     }
 
     is_nac = needs_nac(born, grid_address, gp, q_direction);
@@ -375,7 +375,8 @@ static void get_undone_phonons(double *frequencies,
 #pragma omp parallel for private(j, gp, freqs_tmp, info)
 #endif
 #endif
-  for (i = 0; i < num_undone_grid_points; i++) {
+  for (i = 0; i < num_undone_grid_points; i++)
+  {
     gp = undone_grid_points[i];
     freqs_tmp = frequencies + num_band * gp;
     /* Store eigenvalues in freqs array. */
@@ -386,9 +387,10 @@ static void get_undone_phonons(double *frequencies,
                          uplo);
 
     /* Sqrt of eigenvalues are re-stored in freqs array.*/
-    for (j = 0; j < num_band; j++) {
+    for (j = 0; j < num_band; j++)
+    {
       freqs_tmp[j] = sqrt(fabs(freqs_tmp[j])) *
-        ((freqs_tmp[j] > 0) - (freqs_tmp[j] < 0)) * unit_conversion_factor;
+                     ((freqs_tmp[j] > 0) - (freqs_tmp[j] < 0)) * unit_conversion_factor;
     }
   }
 }
@@ -400,7 +402,7 @@ static void get_gonze_undone_phonons(double *frequencies,
                                      const long (*grid_address)[3],
                                      const double QDinv[3][3],
                                      const double *fc2,
-                                     const double(*svecs_fc2)[3],
+                                     const double (*svecs_fc2)[3],
                                      const long (*multi_fc2)[2],
                                      const double (*positions)[3],
                                      const long num_patom,
@@ -415,7 +417,7 @@ static void get_gonze_undone_phonons(double *frequencies,
                                      const double *q_direction,
                                      const double nac_factor,
                                      const double *dd_q0,
-                                     const double(*G_list)[3],
+                                     const double (*G_list)[3],
                                      const long num_G_points,
                                      const double lambda,
                                      const char uplo)
@@ -430,12 +432,12 @@ static void get_gonze_undone_phonons(double *frequencies,
 #ifdef PHPYOPENMP
 #pragma omp parallel for private(j, q, gp, is_nac)
 #endif
-  for (i = 0; i < num_undone_grid_points; i++) {
+  for (i = 0; i < num_undone_grid_points; i++)
+  {
     gp = undone_grid_points[i];
-    for (j = 0; j < 3; j++) {
-      q[j] = QDinv[j][0] * grid_address[gp][0]
-        + QDinv[j][1] * grid_address[gp][1]
-        + QDinv[j][2] * grid_address[gp][2];
+    for (j = 0; j < 3; j++)
+    {
+      q[j] = QDinv[j][0] * grid_address[gp][0] + QDinv[j][1] * grid_address[gp][1] + QDinv[j][2] * grid_address[gp][2];
     }
     is_nac = needs_nac(born, grid_address, gp, q_direction);
     get_gonze_phonons(eigenvectors + num_band * num_band * gp,
@@ -461,14 +463,14 @@ static void get_gonze_undone_phonons(double *frequencies,
                       lambda);
   }
 
-
 /* To avoid multithreaded BLAS in OpenMP loop */
 #ifdef PHPYOPENMP
 #ifndef MULTITHREADED_BLAS
 #pragma omp parallel for private(j, gp, freqs_tmp, info)
 #endif
 #endif
-  for (i = 0; i < num_undone_grid_points; i++) {
+  for (i = 0; i < num_undone_grid_points; i++)
+  {
     gp = undone_grid_points[i];
     /* Store eigenvalues in freqs array. */
     /* Eigenvectors are overwritten on eigvecs array. */
@@ -479,9 +481,10 @@ static void get_gonze_undone_phonons(double *frequencies,
                          uplo);
 
     /* Sqrt of eigenvalues are re-stored in freqs array.*/
-    for (j = 0; j < num_band; j++) {
+    for (j = 0; j < num_band; j++)
+    {
       freqs_tmp[j] = sqrt(fabs(freqs_tmp[j])) *
-        ((freqs_tmp[j] > 0) - (freqs_tmp[j] < 0)) * unit_conversion_factor;
+                     ((freqs_tmp[j] > 0) - (freqs_tmp[j] < 0)) * unit_conversion_factor;
     }
   }
 }
@@ -495,7 +498,7 @@ static void get_phonons(lapack_complex_double *eigvecs,
                         const long (*multi)[2],
                         const long num_patom,
                         const long num_satom,
-                        const double(*svecs)[3],
+                        const double (*svecs)[3],
                         const long is_nac,
                         const double (*born)[3][3],
                         const double dielectric[3][3],
@@ -533,7 +536,7 @@ static void get_gonze_phonons(lapack_complex_double *eigvecs,
                               const double (*positions)[3],
                               const long num_patom,
                               const long num_satom,
-                              const double(*svecs)[3],
+                              const double (*svecs)[3],
                               const long is_nac,
                               const double (*born)[3][3],
                               const double dielectric[3][3],
@@ -541,7 +544,7 @@ static void get_gonze_phonons(lapack_complex_double *eigvecs,
                               const double *q_direction,
                               const double nac_factor,
                               const double *dd_q0,
-                              const double(*G_list)[3],
+                              const double (*G_list)[3],
                               const long num_G_points,
                               const double lambda)
 {
@@ -555,7 +558,7 @@ static void get_gonze_phonons(lapack_complex_double *eigvecs,
   q_dir_cart = NULL;
   num_band = num_patom * 3;
 
-  dym_get_dynamical_matrix_at_q((double*)eigvecs,
+  dym_get_dynamical_matrix_at_q((double *)eigvecs,
                                 num_patom,
                                 num_satom,
                                 fc2,
@@ -568,26 +571,31 @@ static void get_gonze_phonons(lapack_complex_double *eigvecs,
                                 NULL,
                                 0);
 
-  dd = (lapack_complex_double*)
-    malloc(sizeof(lapack_complex_double) * num_band * num_band);
-  for (i = 0; i < 3; i++) {
+  dd = (lapack_complex_double *)
+      malloc(sizeof(lapack_complex_double) * num_band * num_band);
+  for (i = 0; i < 3; i++)
+  {
     q_cart[i] = 0;
-    for (j = 0; j < 3; j++) {
+    for (j = 0; j < 3; j++)
+    {
       q_cart[i] += reciprocal_lattice[i][j] * q[j];
     }
   }
 
-  if (q_direction) {
-    q_dir_cart = (double*)malloc(sizeof(double) * 3);
-    for (i = 0; i < 3; i++) {
+  if (q_direction)
+  {
+    q_dir_cart = (double *)malloc(sizeof(double) * 3);
+    for (i = 0; i < 3; i++)
+    {
       q_dir_cart[i] = 0;
-      for (j = 0; j < 3; j++) {
+      for (j = 0; j < 3; j++)
+      {
         q_dir_cart[i] += reciprocal_lattice[i][j] * q_direction[j];
       }
     }
   }
 
-  dym_get_recip_dipole_dipole((double*)dd,
+  dym_get_recip_dipole_dipole((double *)dd,
                               dd_q0,
                               G_list,
                               num_G_points,
@@ -601,22 +609,27 @@ static void get_gonze_phonons(lapack_complex_double *eigvecs,
                               lambda,
                               1e-5);
 
-  if (q_direction) {
+  if (q_direction)
+  {
     free(q_dir_cart);
     q_dir_cart = NULL;
   }
 
-  for (i = 0; i < num_patom; i++) {
-    for (j = 0; j < num_patom; j++) {
+  for (i = 0; i < num_patom; i++)
+  {
+    for (j = 0; j < num_patom; j++)
+    {
       mm = sqrt(masses[i] * masses[j]);
-      for (k = 0; k < 3; k++) {
-        for (l = 0; l < 3; l++) {
+      for (k = 0; k < 3; k++)
+      {
+        for (l = 0; l < 3; l++)
+        {
           adrs = i * num_patom * 9 + k * num_patom * 3 + j * 3 + l;
           eigvecs[adrs] = lapack_make_complex_double(
-            lapack_complex_double_real(eigvecs[adrs]) +
-            lapack_complex_double_real(dd[adrs]) / mm,
-            lapack_complex_double_imag(eigvecs[adrs]) +
-            lapack_complex_double_imag(dd[adrs]) / mm);
+              lapack_complex_double_real(eigvecs[adrs]) +
+                  lapack_complex_double_real(dd[adrs]) / mm,
+              lapack_complex_double_imag(eigvecs[adrs]) +
+                  lapack_complex_double_imag(dd[adrs]) / mm);
         }
       }
     }
@@ -636,7 +649,7 @@ get_dynamical_matrix(lapack_complex_double *dynmat,
                      const long (*multi)[2],
                      const long num_patom,
                      const long num_satom,
-                     const double(*svecs)[3],
+                     const double (*svecs)[3],
                      const long is_nac,
                      const double (*born)[3][3], /* Wang NAC unless NULL */
                      const double dielectric[3][3],
@@ -644,13 +657,14 @@ get_dynamical_matrix(lapack_complex_double *dynmat,
                      const double *q_direction,
                      const double nac_factor)
 {
-  double (*charge_sum)[3][3];
+  double(*charge_sum)[3][3];
 
   charge_sum = NULL;
 
-  if (is_nac) {
+  if (is_nac)
+  {
     charge_sum = (double(*)[3][3])
-      malloc(sizeof(double[3][3]) * num_patom * num_patom * 9);
+        malloc(sizeof(double[3][3]) * num_patom * num_patom * 9);
     get_charge_sum(charge_sum,
                    num_patom,
                    num_satom,
@@ -662,7 +676,7 @@ get_dynamical_matrix(lapack_complex_double *dynmat,
                    nac_factor);
   }
 
-  dym_get_dynamical_matrix_at_q((double*)dynmat,
+  dym_get_dynamical_matrix_at_q((double *)dynmat,
                                 num_patom,
                                 num_satom,
                                 fc2,
@@ -674,7 +688,8 @@ get_dynamical_matrix(lapack_complex_double *dynmat,
                                 p2s,
                                 charge_sum,
                                 0);
-  if (is_nac) {
+  if (is_nac)
+  {
     free(charge_sum);
     charge_sum = NULL;
   }
@@ -694,26 +709,35 @@ static void get_charge_sum(double (*charge_sum)[3][3],
   double inv_dielectric_factor, dielectric_factor, tmp_val;
   double q_cart[3];
 
-  if (q_direction) {
-    for (i = 0; i < 3; i++) {
+  if (q_direction)
+  {
+    for (i = 0; i < 3; i++)
+    {
       q_cart[i] = 0.0;
-      for (j = 0; j < 3; j++) {
+      for (j = 0; j < 3; j++)
+      {
         q_cart[i] += reciprocal_lattice[i][j] * q_direction[j];
       }
     }
-  } else {
-    for (i = 0; i < 3; i++) {
+  }
+  else
+  {
+    for (i = 0; i < 3; i++)
+    {
       q_cart[i] = 0.0;
-      for (j = 0; j < 3; j++) {
+      for (j = 0; j < 3; j++)
+      {
         q_cart[i] += reciprocal_lattice[i][j] * q[j];
       }
     }
   }
 
   inv_dielectric_factor = 0.0;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     tmp_val = 0.0;
-    for (j = 0; j < 3; j++) {
+    for (j = 0; j < 3; j++)
+    {
       tmp_val += dielectric[i][j] * q_cart[j];
     }
     inv_dielectric_factor += tmp_val * q_cart[i];
@@ -721,7 +745,7 @@ static void get_charge_sum(double (*charge_sum)[3][3],
   /* N = num_satom / num_patom = number of prim-cell in supercell */
   /* N is used for Wang's method. */
   dielectric_factor = nac_factor /
-    inv_dielectric_factor / num_satom * num_patom;
+                      inv_dielectric_factor / num_satom * num_patom;
   dym_get_charge_sum(charge_sum,
                      num_patom,
                      dielectric_factor,
@@ -736,16 +760,22 @@ static long needs_nac(const double (*born)[3][3],
 {
   long is_nac;
 
-  if (born) {
+  if (born)
+  {
     if (grid_address[gp][0] == 0 &&
         grid_address[gp][1] == 0 &&
         grid_address[gp][2] == 0 &&
-        q_direction == NULL) {
+        q_direction == NULL)
+    {
       is_nac = 0;
-    } else {
+    }
+    else
+    {
       is_nac = 1;
     }
-  } else {
+  }
+  else
+  {
     is_nac = 0;
   }
 

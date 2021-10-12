@@ -38,7 +38,6 @@ static void matmul(long m[3][3],
                    SNF3x3CONST long b[3][3]);
 static long det(SNF3x3CONST long m[3][3]);
 
-
 /* static void test_set_A(long A[3][3]);
  * static void test_show_A(SNF3x3CONST long A[3][3]);
  * static void test_extended_gcd(void);
@@ -57,9 +56,12 @@ int snf3x3(long A[3][3], long P[3][3], long Q[3][3])
   int i;
   initialize_PQ(P, Q);
 
-  for (i = 0; i < 100; i++) {
-    if (first(A, P, Q)) {
-      if (second(A, P, Q)) {
+  for (i = 0; i < 100; i++)
+  {
+    if (first(A, P, Q))
+    {
+      if (second(A, P, Q))
+      {
         finalize(A, P, Q);
         transpose(Q);
         goto succeeded;
@@ -76,12 +78,17 @@ static void initialize_PQ(long P[3][3], long Q[3][3])
 {
   int i, j;
 
-  for (i = 0; i < 3; i++) {
-    for (j = 0; j < 3; j++) {
-      if (i == j) {
+  for (i = 0; i < 3; i++)
+  {
+    for (j = 0; j < 3; j++)
+    {
+      if (i == j)
+      {
         P[i][j] = 1;
         Q[i][j] = 1;
-      } else {
+      }
+      else
+      {
         P[i][j] = 0;
         Q[i][j] = 0;
       }
@@ -96,14 +103,16 @@ static int first(long A[3][3], long P[3][3], long Q[3][3])
   first_one_loop(A, P, Q);
 
   /* rows and columns are all zero except for the pivot */
-  if ((A[1][0] == 0) && (A[2][0] == 0)) {
+  if ((A[1][0] == 0) && (A[2][0] == 0))
+  {
     return 1;
   }
 
   /* columns of the pivot are assumed zero because of first_one_loop. */
   /* rows of the pivot are non-zero, but divisible by the pivot. */
   /* first_finalize makes the rows be zero. */
-  if ((A[1][0] % A[0][0] == 0) && (A[2][0] % A[0][0] == 0)) {
+  if ((A[1][0] % A[0][0] == 0) && (A[2][0] % A[0][0] == 0))
+  {
     first_finalize(L, A);
     matmul(A, L, A);
     matmul(P, L, P);
@@ -126,28 +135,31 @@ static void first_column(long A[3][3], long P[3][3])
   long L[3][3];
 
   i = search_first_pivot(A);
-  if (i > 0) {
+  if (i > 0)
+  {
     swap_rows(L, 0, i);
     matmul(A, L, A);
     matmul(P, L, P);
   }
-  if (i < 0) {
+  if (i < 0)
+  {
     goto err;
   }
 
-  if (A[1][0] != 0) {
+  if (A[1][0] != 0)
+  {
     zero_first_column(L, 1, A);
     matmul(A, L, A);
     matmul(P, L, P);
   }
-  if (A[2][0] != 0) {
+  if (A[2][0] != 0)
+  {
     zero_first_column(L, 2, A);
     matmul(A, L, A);
     matmul(P, L, P);
   }
 
-err:
-  ;
+err:;
 }
 
 static void zero_first_column(long L[3][3], const int j,
@@ -163,8 +175,10 @@ static int search_first_pivot(SNF3x3CONST long A[3][3])
 {
   int i;
 
-  for (i = 0; i < 3; i++) {
-    if (A[i][0] != 0) {
+  for (i = 0; i < 3; i++)
+  {
+    if (A[i][0] != 0)
+    {
       return i;
     }
   }
@@ -190,11 +204,13 @@ static int second(long A[3][3], long P[3][3], long Q[3][3])
 
   second_one_loop(A, P, Q);
 
-  if (A[2][1] == 0) {
+  if (A[2][1] == 0)
+  {
     return 1;
   }
 
-  if (A[2][1] % A[1][1] == 0) {
+  if (A[2][1] % A[1][1] == 0)
+  {
     second_finalize(L, A);
     matmul(A, L, A);
     matmul(P, L, P);
@@ -216,13 +232,15 @@ static void second_column(long A[3][3], long P[3][3])
 {
   long L[3][3];
 
-  if ((A[1][1] == 0) && (A[2][1] != 0)) {
+  if ((A[1][1] == 0) && (A[2][1] != 0))
+  {
     swap_rows(L, 1, 2);
     matmul(A, L, A);
     matmul(P, L, P);
   }
 
-  if (A[2][1] != 0) {
+  if (A[2][1] != 0)
+  {
     zero_second_column(L, A);
     matmul(A, L, A);
     matmul(P, L, P);
@@ -265,13 +283,16 @@ static void finalize(long A[3][3], long P[3][3], long Q[3][3])
 
 static void finalize_sort(long A[3][3], long P[3][3], long Q[3][3])
 {
-  if (A[0][0] > A[1][1]) {
+  if (A[0][0] > A[1][1])
+  {
     swap_diag_elems(A, P, Q, 0, 1);
   }
-  if (A[1][1] > A[2][2]) {
+  if (A[1][1] > A[2][2])
+  {
     swap_diag_elems(A, P, Q, 1, 2);
   }
-  if (A[0][0] > A[1][1]) {
+  if (A[0][0] > A[1][1])
+  {
     swap_diag_elems(A, P, Q, 0, 1);
   }
 }
@@ -280,7 +301,8 @@ static void finalize_disturb(long A[3][3], long Q[3][3], const int i, const int 
 {
   long L[3][3];
 
-  if (A[j][j] % A[i][i] != 0) {
+  if (A[j][j] % A[i][i] != 0)
+  {
     transpose(A);
     disturb_rows(L, i, j);
     matmul(A, L, A);
@@ -325,8 +347,10 @@ static void make_diagA_positive(long A[3][3], long P[3][3])
   int i;
   long L[3][3];
 
-  for (i = 0; i < 3; i++) {
-    if (A[i][i] < 0) {
+  for (i = 0; i < 3; i++)
+  {
+    if (A[i][i] < 0)
+    {
       flip_sign_row(L, i);
       matmul(A, L, A);
       matmul(P, L, P);
@@ -338,9 +362,12 @@ static void flip_PQ(long P[3][3], long Q[3][3])
 {
   int i, j;
 
-  if (det(P) < 0) {
-    for (i = 0; i < 3; i++) {
-      for (j = 0; j < 3; j++) {
+  if (det(P) < 0)
+  {
+    for (i = 0; i < 3; i++)
+    {
+      for (j = 0; j < 3; j++)
+      {
         P[i][j] *= -1;
         Q[i][j] *= -1;
       }
@@ -393,16 +420,18 @@ static void extended_gcd(long retvals[3], const long a, const long b)
   int i;
   long vals[6];
 
-  vals[0] = a;  /* r0 */
-  vals[1] = b;  /* r1 */
-  vals[2] = 1;  /* s0 */
-  vals[3] = 0;  /* s1 */
-  vals[4] = 0;  /* t0 */
-  vals[5] = 1;  /* t1 */
+  vals[0] = a; /* r0 */
+  vals[1] = b; /* r1 */
+  vals[2] = 1; /* s0 */
+  vals[3] = 0; /* s1 */
+  vals[4] = 0; /* t0 */
+  vals[5] = 1; /* t1 */
 
-  for (i = 0; i < 1000; i++) {
+  for (i = 0; i < 1000; i++)
+  {
     extended_gcd_step(vals);
-    if (vals[1] == 0) {
+    if (vals[1] == 0)
+    {
       break;
     }
   }
@@ -420,12 +449,15 @@ static void extended_gcd_step(long vals[6])
 
   q = vals[0] / vals[1];
   r2 = vals[0] % vals[1];
-  if (r2 < 0) {
-    if (vals[1] > 0) {
+  if (r2 < 0)
+  {
+    if (vals[1] > 0)
+    {
       r2 += vals[1];
       q -= 1;
     }
-    if (vals[1] < 0) {
+    if (vals[1] < 0)
+    {
       r2 -= vals[1];
       q += 1;
     }
@@ -462,8 +494,10 @@ static void transpose(long m[3][3])
   long tmp;
   int i, j;
 
-  for (i = 0; i < 3; i++) {
-    for (j = i; j < 3; j++) {
+  for (i = 0; i < 3; i++)
+  {
+    for (j = i; j < 3; j++)
+    {
       tmp = m[i][j];
       m[i][j] = m[j][i];
       m[j][i] = tmp;
@@ -478,14 +512,18 @@ static void matmul(long m[3][3],
   int i, j;
   long c[3][3];
 
-  for (i = 0; i < 3; i++) {
-    for (j = 0; j < 3; j++) {
+  for (i = 0; i < 3; i++)
+  {
+    for (j = 0; j < 3; j++)
+    {
       c[i][j] = a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j];
     }
   }
 
-  for (i = 0; i < 3; i++) {
-    for (j = 0; j < 3; j++) {
+  for (i = 0; i < 3; i++)
+  {
+    for (j = 0; j < 3; j++)
+    {
       m[i][j] = c[i][j];
     }
   }
@@ -493,11 +531,8 @@ static void matmul(long m[3][3],
 
 static long det(SNF3x3CONST long m[3][3])
 {
-  return m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
-    + m[0][1] * (m[1][2] * m[2][0] - m[1][0] * m[2][2])
-    + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+  return m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) + m[0][1] * (m[1][2] * m[2][0] - m[1][0] * m[2][2]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
 }
-
 
 /* int main()
  * {

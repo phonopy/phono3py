@@ -39,7 +39,7 @@
 
 #ifdef THMWARNING
 #include <stdio.h>
-#define warning_print(...) fprintf(stderr,__VA_ARGS__)
+#define warning_print(...) fprintf(stderr, __VA_ARGS__)
 #else
 #define warning_print(...)
 #endif
@@ -63,117 +63,596 @@
 /*  6: c + b      2, 4, 7     */
 /*  7: c + a + b  3, 5, 6     */
 
-
-static long main_diagonals[4][3] = {{ 1, 1, 1},  /* 0-7 */
+static long main_diagonals[4][3] = {{1, 1, 1},   /* 0-7 */
                                     {-1, 1, 1},  /* 1-6 */
-                                    { 1,-1, 1},  /* 2-5 */
-                                    { 1, 1,-1}}; /* 3-4 */
+                                    {1, -1, 1},  /* 2-5 */
+                                    {1, 1, -1}}; /* 3-4 */
 
 static long db_relative_grid_address[4][24][4][3] = {
-  {
-    { { 0,  0,  0}, { 1,  0,  0}, { 1,  1,  0}, { 1,  1,  1}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 1,  0,  1}, { 1,  1,  1}, },
-    { { 0,  0,  0}, { 0,  1,  0}, { 1,  1,  0}, { 1,  1,  1}, },
-    { { 0,  0,  0}, { 0,  1,  0}, { 0,  1,  1}, { 1,  1,  1}, },
-    { { 0,  0,  0}, { 0,  0,  1}, { 1,  0,  1}, { 1,  1,  1}, },
-    { { 0,  0,  0}, { 0,  0,  1}, { 0,  1,  1}, { 1,  1,  1}, },
-    { { 0,  0,  0}, { 0,  1,  0}, { 0,  1,  1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, { 0,  0,  1}, { 0,  1,  1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 1,  0,  1}, { 0, -1,  0}, },
-    { { 0,  0,  0}, { 0,  0,  1}, { 1,  0,  1}, { 0, -1,  0}, },
-    { { 0,  0,  0}, { 0,  0,  1}, {-1, -1,  0}, { 0, -1,  0}, },
-    { { 0,  0,  0}, { 0,  0,  1}, {-1, -1,  0}, {-1,  0,  0}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 1,  1,  0}, { 0,  0, -1}, },
-    { { 0,  0,  0}, { 0,  1,  0}, { 1,  1,  0}, { 0,  0, -1}, },
-    { { 0,  0,  0}, { 0,  1,  0}, {-1,  0, -1}, { 0,  0, -1}, },
-    { { 0,  0,  0}, { 0,  1,  0}, {-1,  0, -1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 0, -1, -1}, { 0,  0, -1}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 0, -1, -1}, { 0, -1,  0}, },
-    { { 0,  0,  0}, {-1, -1, -1}, { 0, -1, -1}, { 0,  0, -1}, },
-    { { 0,  0,  0}, {-1, -1, -1}, { 0, -1, -1}, { 0, -1,  0}, },
-    { { 0,  0,  0}, {-1, -1, -1}, {-1,  0, -1}, { 0,  0, -1}, },
-    { { 0,  0,  0}, {-1, -1, -1}, {-1,  0, -1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, {-1, -1, -1}, {-1, -1,  0}, { 0, -1,  0}, },
-    { { 0,  0,  0}, {-1, -1, -1}, {-1, -1,  0}, {-1,  0,  0}, },
-  },
-  {
-    { { 0,  0,  0}, { 1,  0,  0}, { 0,  1,  0}, { 0,  1,  1}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 0,  0,  1}, { 0,  1,  1}, },
-    { { 0,  0,  0}, {-1,  1,  0}, {-1,  1,  1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, {-1,  0,  1}, {-1,  1,  1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, {-1,  1,  0}, { 0,  1,  0}, {-1,  1,  1}, },
-    { { 0,  0,  0}, { 0,  1,  0}, {-1,  1,  1}, { 0,  1,  1}, },
-    { { 0,  0,  0}, {-1,  0,  1}, { 0,  0,  1}, {-1,  1,  1}, },
-    { { 0,  0,  0}, { 0,  0,  1}, {-1,  1,  1}, { 0,  1,  1}, },
-    { { 0,  0,  0}, { 0,  0,  1}, { 0, -1,  0}, { 1, -1,  0}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 0,  0,  1}, { 1, -1,  0}, },
-    { { 0,  0,  0}, {-1,  0,  1}, { 0, -1,  0}, {-1,  0,  0}, },
-    { { 0,  0,  0}, {-1,  0,  1}, { 0,  0,  1}, { 0, -1,  0}, },
-    { { 0,  0,  0}, { 0,  1,  0}, { 0,  0, -1}, { 1,  0, -1}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 0,  1,  0}, { 1,  0, -1}, },
-    { { 0,  0,  0}, {-1,  1,  0}, { 0,  0, -1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, {-1,  1,  0}, { 0,  1,  0}, { 0,  0, -1}, },
-    { { 0,  0,  0}, { 0, -1, -1}, { 1, -1, -1}, { 0,  0, -1}, },
-    { { 0,  0,  0}, { 0, -1, -1}, { 1, -1, -1}, { 0, -1,  0}, },
-    { { 0,  0,  0}, { 1, -1, -1}, { 0,  0, -1}, { 1,  0, -1}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 1, -1, -1}, { 1,  0, -1}, },
-    { { 0,  0,  0}, { 1, -1, -1}, { 0, -1,  0}, { 1, -1,  0}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 1, -1, -1}, { 1, -1,  0}, },
-    { { 0,  0,  0}, { 0, -1, -1}, { 0,  0, -1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, { 0, -1, -1}, { 0, -1,  0}, {-1,  0,  0}, },
-  },
-  {
-    { { 0,  0,  0}, { 1,  0,  0}, { 0,  1,  0}, { 1,  0,  1}, },
-    { { 0,  0,  0}, { 0,  1,  0}, { 0,  0,  1}, { 1,  0,  1}, },
-    { { 0,  0,  0}, {-1,  1,  0}, { 0,  0,  1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, {-1,  1,  0}, { 0,  1,  0}, { 0,  0,  1}, },
-    { { 0,  0,  0}, { 1, -1,  1}, { 0, -1,  0}, { 1, -1,  0}, },
-    { { 0,  0,  0}, { 0, -1,  1}, { 1, -1,  1}, { 0, -1,  0}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 1, -1,  1}, { 1, -1,  0}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 1, -1,  1}, { 1,  0,  1}, },
-    { { 0,  0,  0}, { 0, -1,  1}, { 1, -1,  1}, { 0,  0,  1}, },
-    { { 0,  0,  0}, { 1, -1,  1}, { 0,  0,  1}, { 1,  0,  1}, },
-    { { 0,  0,  0}, { 0, -1,  1}, { 0, -1,  0}, {-1,  0,  0}, },
-    { { 0,  0,  0}, { 0, -1,  1}, { 0,  0,  1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 0,  0, -1}, { 0,  1, -1}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 0,  1,  0}, { 0,  1, -1}, },
-    { { 0,  0,  0}, {-1,  0, -1}, { 0,  0, -1}, {-1,  1, -1}, },
-    { { 0,  0,  0}, {-1,  0, -1}, {-1,  1, -1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, { 0,  0, -1}, {-1,  1, -1}, { 0,  1, -1}, },
-    { { 0,  0,  0}, { 0,  1,  0}, {-1,  1, -1}, { 0,  1, -1}, },
-    { { 0,  0,  0}, {-1,  1,  0}, {-1,  1, -1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, {-1,  1,  0}, { 0,  1,  0}, {-1,  1, -1}, },
-    { { 0,  0,  0}, { 0,  0, -1}, { 0, -1,  0}, { 1, -1,  0}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 0,  0, -1}, { 1, -1,  0}, },
-    { { 0,  0,  0}, {-1,  0, -1}, { 0,  0, -1}, { 0, -1,  0}, },
-    { { 0,  0,  0}, {-1,  0, -1}, { 0, -1,  0}, {-1,  0,  0}, },
-  },
-  {
-    { { 0,  0,  0}, { 1,  0,  0}, { 1,  1,  0}, { 0,  0,  1}, },
-    { { 0,  0,  0}, { 0,  1,  0}, { 1,  1,  0}, { 0,  0,  1}, },
-    { { 0,  0,  0}, { 0,  1,  0}, {-1,  0,  1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, { 0,  1,  0}, {-1,  0,  1}, { 0,  0,  1}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 0, -1,  1}, { 0, -1,  0}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 0, -1,  1}, { 0,  0,  1}, },
-    { { 0,  0,  0}, {-1, -1,  1}, {-1, -1,  0}, { 0, -1,  0}, },
-    { { 0,  0,  0}, {-1, -1,  1}, {-1, -1,  0}, {-1,  0,  0}, },
-    { { 0,  0,  0}, {-1, -1,  1}, { 0, -1,  1}, { 0, -1,  0}, },
-    { { 0,  0,  0}, {-1, -1,  1}, {-1,  0,  1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, {-1, -1,  1}, { 0, -1,  1}, { 0,  0,  1}, },
-    { { 0,  0,  0}, {-1, -1,  1}, {-1,  0,  1}, { 0,  0,  1}, },
-    { { 0,  0,  0}, { 0,  0, -1}, { 1,  0, -1}, { 1,  1, -1}, },
-    { { 0,  0,  0}, { 0,  0, -1}, { 0,  1, -1}, { 1,  1, -1}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 1,  0, -1}, { 1,  1, -1}, },
-    { { 0,  0,  0}, { 0,  1,  0}, { 0,  1, -1}, { 1,  1, -1}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 1,  1,  0}, { 1,  1, -1}, },
-    { { 0,  0,  0}, { 0,  1,  0}, { 1,  1,  0}, { 1,  1, -1}, },
-    { { 0,  0,  0}, { 0,  0, -1}, { 0,  1, -1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, { 0,  1,  0}, { 0,  1, -1}, {-1,  0,  0}, },
-    { { 0,  0,  0}, { 0,  0, -1}, { 1,  0, -1}, { 0, -1,  0}, },
-    { { 0,  0,  0}, { 1,  0,  0}, { 1,  0, -1}, { 0, -1,  0}, },
-    { { 0,  0,  0}, { 0,  0, -1}, {-1, -1,  0}, { 0, -1,  0}, },
-    { { 0,  0,  0}, { 0,  0, -1}, {-1, -1,  0}, {-1,  0,  0}, },
-  },
+    {
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {1, 1, 0},
+            {1, 1, 1},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {1, 0, 1},
+            {1, 1, 1},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {1, 1, 0},
+            {1, 1, 1},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {0, 1, 1},
+            {1, 1, 1},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, 1},
+            {1, 0, 1},
+            {1, 1, 1},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, 1},
+            {0, 1, 1},
+            {1, 1, 1},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {0, 1, 1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, 1},
+            {0, 1, 1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {1, 0, 1},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, 1},
+            {1, 0, 1},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, 1},
+            {-1, -1, 0},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, 1},
+            {-1, -1, 0},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {1, 1, 0},
+            {0, 0, -1},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {1, 1, 0},
+            {0, 0, -1},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {-1, 0, -1},
+            {0, 0, -1},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {-1, 0, -1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {0, -1, -1},
+            {0, 0, -1},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {0, -1, -1},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, -1, -1},
+            {0, -1, -1},
+            {0, 0, -1},
+        },
+        {
+            {0, 0, 0},
+            {-1, -1, -1},
+            {0, -1, -1},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, -1, -1},
+            {-1, 0, -1},
+            {0, 0, -1},
+        },
+        {
+            {0, 0, 0},
+            {-1, -1, -1},
+            {-1, 0, -1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, -1, -1},
+            {-1, -1, 0},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, -1, -1},
+            {-1, -1, 0},
+            {-1, 0, 0},
+        },
+    },
+    {
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {0, 1, 0},
+            {0, 1, 1},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {0, 0, 1},
+            {0, 1, 1},
+        },
+        {
+            {0, 0, 0},
+            {-1, 1, 0},
+            {-1, 1, 1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, 0, 1},
+            {-1, 1, 1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, 1, 0},
+            {0, 1, 0},
+            {-1, 1, 1},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {-1, 1, 1},
+            {0, 1, 1},
+        },
+        {
+            {0, 0, 0},
+            {-1, 0, 1},
+            {0, 0, 1},
+            {-1, 1, 1},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, 1},
+            {-1, 1, 1},
+            {0, 1, 1},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, 1},
+            {0, -1, 0},
+            {1, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {0, 0, 1},
+            {1, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, 0, 1},
+            {0, -1, 0},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, 0, 1},
+            {0, 0, 1},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {0, 0, -1},
+            {1, 0, -1},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {0, 1, 0},
+            {1, 0, -1},
+        },
+        {
+            {0, 0, 0},
+            {-1, 1, 0},
+            {0, 0, -1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, 1, 0},
+            {0, 1, 0},
+            {0, 0, -1},
+        },
+        {
+            {0, 0, 0},
+            {0, -1, -1},
+            {1, -1, -1},
+            {0, 0, -1},
+        },
+        {
+            {0, 0, 0},
+            {0, -1, -1},
+            {1, -1, -1},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {1, -1, -1},
+            {0, 0, -1},
+            {1, 0, -1},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {1, -1, -1},
+            {1, 0, -1},
+        },
+        {
+            {0, 0, 0},
+            {1, -1, -1},
+            {0, -1, 0},
+            {1, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {1, -1, -1},
+            {1, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {0, -1, -1},
+            {0, 0, -1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {0, -1, -1},
+            {0, -1, 0},
+            {-1, 0, 0},
+        },
+    },
+    {
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {0, 1, 0},
+            {1, 0, 1},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {0, 0, 1},
+            {1, 0, 1},
+        },
+        {
+            {0, 0, 0},
+            {-1, 1, 0},
+            {0, 0, 1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, 1, 0},
+            {0, 1, 0},
+            {0, 0, 1},
+        },
+        {
+            {0, 0, 0},
+            {1, -1, 1},
+            {0, -1, 0},
+            {1, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {0, -1, 1},
+            {1, -1, 1},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {1, -1, 1},
+            {1, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {1, -1, 1},
+            {1, 0, 1},
+        },
+        {
+            {0, 0, 0},
+            {0, -1, 1},
+            {1, -1, 1},
+            {0, 0, 1},
+        },
+        {
+            {0, 0, 0},
+            {1, -1, 1},
+            {0, 0, 1},
+            {1, 0, 1},
+        },
+        {
+            {0, 0, 0},
+            {0, -1, 1},
+            {0, -1, 0},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {0, -1, 1},
+            {0, 0, 1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {0, 0, -1},
+            {0, 1, -1},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {0, 1, 0},
+            {0, 1, -1},
+        },
+        {
+            {0, 0, 0},
+            {-1, 0, -1},
+            {0, 0, -1},
+            {-1, 1, -1},
+        },
+        {
+            {0, 0, 0},
+            {-1, 0, -1},
+            {-1, 1, -1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, -1},
+            {-1, 1, -1},
+            {0, 1, -1},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {-1, 1, -1},
+            {0, 1, -1},
+        },
+        {
+            {0, 0, 0},
+            {-1, 1, 0},
+            {-1, 1, -1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, 1, 0},
+            {0, 1, 0},
+            {-1, 1, -1},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, -1},
+            {0, -1, 0},
+            {1, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {0, 0, -1},
+            {1, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, 0, -1},
+            {0, 0, -1},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, 0, -1},
+            {0, -1, 0},
+            {-1, 0, 0},
+        },
+    },
+    {
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {1, 1, 0},
+            {0, 0, 1},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {1, 1, 0},
+            {0, 0, 1},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {-1, 0, 1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {-1, 0, 1},
+            {0, 0, 1},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {0, -1, 1},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {0, -1, 1},
+            {0, 0, 1},
+        },
+        {
+            {0, 0, 0},
+            {-1, -1, 1},
+            {-1, -1, 0},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, -1, 1},
+            {-1, -1, 0},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, -1, 1},
+            {0, -1, 1},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, -1, 1},
+            {-1, 0, 1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {-1, -1, 1},
+            {0, -1, 1},
+            {0, 0, 1},
+        },
+        {
+            {0, 0, 0},
+            {-1, -1, 1},
+            {-1, 0, 1},
+            {0, 0, 1},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, -1},
+            {1, 0, -1},
+            {1, 1, -1},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, -1},
+            {0, 1, -1},
+            {1, 1, -1},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {1, 0, -1},
+            {1, 1, -1},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {0, 1, -1},
+            {1, 1, -1},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {1, 1, 0},
+            {1, 1, -1},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {1, 1, 0},
+            {1, 1, -1},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, -1},
+            {0, 1, -1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {0, 1, 0},
+            {0, 1, -1},
+            {-1, 0, 0},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, -1},
+            {1, 0, -1},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {1, 0, 0},
+            {1, 0, -1},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, -1},
+            {-1, -1, 0},
+            {0, -1, 0},
+        },
+        {
+            {0, 0, 0},
+            {0, 0, -1},
+            {-1, -1, 0},
+            {-1, 0, 0},
+        },
+    },
 };
 
 static double
@@ -279,7 +758,6 @@ static double _I_33(const double omega,
                     const double vertices_omegas[4]);
 static double _I_4(void);
 
-
 void thm_get_relative_grid_address(long relative_grid_address[24][4][3],
                                    const double rec_lattice[3][3])
 {
@@ -287,11 +765,14 @@ void thm_get_relative_grid_address(long relative_grid_address[24][4][3],
 
   main_diag_index = get_main_diagonal(rec_lattice);
 
-  for (i = 0; i < 24; i++) {
-    for (j = 0; j < 4; j++) {
-      for (k = 0; k < 3; k++) {
+  for (i = 0; i < 24; i++)
+  {
+    for (j = 0; j < 4; j++)
+    {
+      for (k = 0; k < 3; k++)
+      {
         relative_grid_address[i][j][k] =
-          db_relative_grid_address[main_diag_index][i][j][k];
+            db_relative_grid_address[main_diag_index][i][j][k];
       }
     }
   }
@@ -301,12 +782,16 @@ void thm_get_all_relative_grid_address(long relative_grid_address[4][24][4][3])
 {
   long i, j, k, main_diag_index;
 
-  for (main_diag_index = 0; main_diag_index < 4; main_diag_index++) {
-    for (i = 0; i < 24; i++) {
-      for (j = 0; j < 4; j++) {
-        for (k = 0; k < 3; k++) {
+  for (main_diag_index = 0; main_diag_index < 4; main_diag_index++)
+  {
+    for (i = 0; i < 24; i++)
+    {
+      for (j = 0; j < 4; j++)
+      {
+        for (k = 0; k < 3; k++)
+        {
           relative_grid_address[main_diag_index][i][j][k] =
-            db_relative_grid_address[main_diag_index][i][j][k];
+              db_relative_grid_address[main_diag_index][i][j][k];
         }
       }
     }
@@ -317,11 +802,14 @@ double thm_get_integration_weight(const double omega,
                                   const double tetrahedra_omegas[24][4],
                                   const char function)
 {
-  if (function == 'I') {
+  if (function == 'I')
+  {
     return get_integration_weight(omega,
                                   tetrahedra_omegas,
                                   _g, _I);
-  } else {
+  }
+  else
+  {
     return get_integration_weight(omega,
                                   tetrahedra_omegas,
                                   _n, _J);
@@ -336,20 +824,27 @@ long thm_in_tetrahedra(const double f0, const double freq_vertices[24][4])
   fmin = freq_vertices[0][0];
   fmax = freq_vertices[0][0];
 
-  for (i = 0; i < 24; i++) {
-    for (j = 0; j < 4; j++) {
-      if (fmin > freq_vertices[i][j]) {
+  for (i = 0; i < 24; i++)
+  {
+    for (j = 0; j < 4; j++)
+    {
+      if (fmin > freq_vertices[i][j])
+      {
         fmin = freq_vertices[i][j];
       }
-      if (fmax < freq_vertices[i][j]) {
+      if (fmax < freq_vertices[i][j])
+      {
         fmax = freq_vertices[i][j];
       }
     }
   }
 
-  if (fmin > f0 || fmax < f0) {
+  if (fmin > f0 || fmax < f0)
+  {
     return 0;
-  } else {
+  }
+  else
+  {
     return 1;
   }
 }
@@ -370,24 +865,39 @@ get_integration_weight(const double omega,
   double v[4];
 
   sum = 0;
-  for (i = 0; i < 24; i++) {
-    for (j = 0; j < 4; j++) {
+  for (i = 0; i < 24; i++)
+  {
+    for (j = 0; j < 4; j++)
+    {
       v[j] = tetrahedra_omegas[i][j];
     }
     ci = sort_omegas(v);
-    if (omega < v[0]) {
+    if (omega < v[0])
+    {
       sum += IJ(0, ci, omega, v) * gn(0, omega, v);
-    } else {
-      if (v[0] < omega && omega < v[1]) {
+    }
+    else
+    {
+      if (v[0] < omega && omega < v[1])
+      {
         sum += IJ(1, ci, omega, v) * gn(1, omega, v);
-      } else {
-        if (v[1] < omega && omega < v[2]) {
+      }
+      else
+      {
+        if (v[1] < omega && omega < v[2])
+        {
           sum += IJ(2, ci, omega, v) * gn(2, omega, v);
-        } else {
-          if (v[2] < omega && omega < v[3]) {
+        }
+        else
+        {
+          if (v[2] < omega && omega < v[3])
+          {
             sum += IJ(3, ci, omega, v) * gn(3, omega, v);
-          } else {
-            if (v[3] < omega) {
+          }
+          else
+          {
+            if (v[3] < omega)
+            {
               sum += IJ(4, ci, omega, v) * gn(4, omega, v);
             }
           }
@@ -405,63 +915,85 @@ static long sort_omegas(double v[4])
 
   i = 0;
 
-  if (v[0] > v[1]) {
+  if (v[0] > v[1])
+  {
     w[0] = v[1];
     w[1] = v[0];
     i = 1;
-  } else {
+  }
+  else
+  {
     w[0] = v[0];
     w[1] = v[1];
   }
 
-  if (v[2] > v[3]) {
+  if (v[2] > v[3])
+  {
     w[2] = v[3];
     w[3] = v[2];
-  } else {
+  }
+  else
+  {
     w[2] = v[2];
     w[3] = v[3];
   }
 
-  if (w[0] > w[2]) {
+  if (w[0] > w[2])
+  {
     v[0] = w[2];
     v[1] = w[0];
-    if (i == 0) {
+    if (i == 0)
+    {
       i = 4;
     }
-  } else {
+  }
+  else
+  {
     v[0] = w[0];
     v[1] = w[2];
   }
 
-  if (w[1] > w[3]) {
+  if (w[1] > w[3])
+  {
     v[3] = w[1];
     v[2] = w[3];
-    if (i == 1) {
+    if (i == 1)
+    {
       i = 3;
     }
-  } else {
+  }
+  else
+  {
     v[3] = w[3];
     v[2] = w[1];
-    if (i == 1) {
+    if (i == 1)
+    {
       i = 5;
     }
   }
 
-  if (v[1] > v[2]) {
+  if (v[1] > v[2])
+  {
     w[1] = v[1];
     v[1] = v[2];
     v[2] = w[1];
-    if (i == 4) {
+    if (i == 4)
+    {
       i = 2;
     }
-    if (i == 5) {
+    if (i == 5)
+    {
       i = 1;
     }
-  } else {
-    if (i == 4) {
+  }
+  else
+  {
+    if (i == 4)
+    {
       i = 1;
     }
-    if (i == 5) {
+    if (i == 5)
+    {
       i = 2;
     }
   }
@@ -477,10 +1009,12 @@ static long get_main_diagonal(const double rec_lattice[3][3])
   shortest = 0;
   multiply_matrix_vector_dl3(main_diag, rec_lattice, main_diagonals[0]);
   min_length = norm_squared_d3(main_diag);
-  for (i = 1; i < 4; i++) {
+  for (i = 1; i < 4; i++)
+  {
     multiply_matrix_vector_dl3(main_diag, rec_lattice, main_diagonals[i]);
     length = norm_squared_d3(main_diag);
-    if (min_length > length) {
+    if (min_length > length)
+    {
       min_length = length;
       shortest = i;
     }
@@ -500,11 +1034,13 @@ static void multiply_matrix_vector_dl3(double v[3],
   long i;
   double c[3];
 
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     c[i] = a[i][0] * b[0] + a[i][1] * b[1] + a[i][2] * b[2];
   }
 
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     v[i] = c[i];
   }
 }
@@ -523,11 +1059,13 @@ static double _J(const long i,
                  const double omega,
                  const double vertices_omegas[4])
 {
-  switch (i) {
+  switch (i)
+  {
   case 0:
     return _J_0();
   case 1:
-    switch (ci) {
+    switch (ci)
+    {
     case 0:
       return _J_10(omega, vertices_omegas);
     case 1:
@@ -538,7 +1076,8 @@ static double _J(const long i,
       return _J_13(omega, vertices_omegas);
     }
   case 2:
-    switch (ci) {
+    switch (ci)
+    {
     case 0:
       return _J_20(omega, vertices_omegas);
     case 1:
@@ -549,7 +1088,8 @@ static double _J(const long i,
       return _J_23(omega, vertices_omegas);
     }
   case 3:
-    switch (ci) {
+    switch (ci)
+    {
     case 0:
       return _J_30(omega, vertices_omegas);
     case 1:
@@ -571,17 +1111,18 @@ static double _J(const long i,
   return 0;
 }
 
-
 static double _I(const long i,
                  const long ci,
                  const double omega,
                  const double vertices_omegas[4])
 {
-  switch (i) {
+  switch (i)
+  {
   case 0:
     return _I_0();
   case 1:
-    switch (ci) {
+    switch (ci)
+    {
     case 0:
       return _I_10(omega, vertices_omegas);
     case 1:
@@ -592,7 +1133,8 @@ static double _I(const long i,
       return _I_13(omega, vertices_omegas);
     }
   case 2:
-    switch (ci) {
+    switch (ci)
+    {
     case 0:
       return _I_20(omega, vertices_omegas);
     case 1:
@@ -603,7 +1145,8 @@ static double _I(const long i,
       return _I_23(omega, vertices_omegas);
     }
   case 3:
-    switch (ci) {
+    switch (ci)
+    {
     case 0:
       return _I_30(omega, vertices_omegas);
     case 1:
@@ -629,7 +1172,8 @@ static double _n(const long i,
                  const double omega,
                  const double vertices_omegas[4])
 {
-  switch (i) {
+  switch (i)
+  {
   case 0:
     return _n_0();
   case 1:
@@ -654,7 +1198,8 @@ static double _g(const long i,
                  const double omega,
                  const double vertices_omegas[4])
 {
-  switch (i) {
+  switch (i)
+  {
   case 0:
     return _g_0();
   case 1:
@@ -695,13 +1240,13 @@ static double _n_2(const double omega,
                    const double vertices_omegas[4])
 {
   return (_f(3, 1, omega, vertices_omegas) *
-          _f(2, 1, omega, vertices_omegas) +
+              _f(2, 1, omega, vertices_omegas) +
           _f(3, 0, omega, vertices_omegas) *
-          _f(1, 3, omega, vertices_omegas) *
-          _f(2, 1, omega, vertices_omegas) +
+              _f(1, 3, omega, vertices_omegas) *
+              _f(2, 1, omega, vertices_omegas) +
           _f(3, 0, omega, vertices_omegas) *
-          _f(2, 0, omega, vertices_omegas) *
-          _f(1, 2, omega, vertices_omegas));
+              _f(2, 0, omega, vertices_omegas) *
+              _f(1, 2, omega, vertices_omegas));
 }
 
 /* omega2 < omega < omega3 */
@@ -710,8 +1255,8 @@ static double _n_3(const double omega,
 {
   return (1.0 -
           _f(0, 3, omega, vertices_omegas) *
-          _f(1, 3, omega, vertices_omegas) *
-          _f(2, 3, omega, vertices_omegas));
+              _f(1, 3, omega, vertices_omegas) *
+              _f(2, 3, omega, vertices_omegas));
 }
 
 /* omega4 < omega */
@@ -743,9 +1288,9 @@ static double _g_2(const double omega,
   return (3 /
           (vertices_omegas[3] - vertices_omegas[0]) *
           (_f(1, 2, omega, vertices_omegas) *
-           _f(2, 0, omega, vertices_omegas) +
+               _f(2, 0, omega, vertices_omegas) +
            _f(2, 1, omega, vertices_omegas) *
-           _f(1, 3, omega, vertices_omegas)));
+               _f(1, 3, omega, vertices_omegas)));
 }
 
 /* omega3 < omega < omega4 */
@@ -775,7 +1320,8 @@ static double _J_10(const double omega,
   return (1.0 +
           _f(0, 1, omega, vertices_omegas) +
           _f(0, 2, omega, vertices_omegas) +
-          _f(0, 3, omega, vertices_omegas)) / 4;
+          _f(0, 3, omega, vertices_omegas)) /
+         4;
 }
 
 static double _J_11(const double omega,
@@ -800,71 +1346,75 @@ static double _J_20(const double omega,
                     const double vertices_omegas[4])
 {
   return (_f(3, 1, omega, vertices_omegas) *
-          _f(2, 1, omega, vertices_omegas) +
+              _f(2, 1, omega, vertices_omegas) +
           _f(3, 0, omega, vertices_omegas) *
-          _f(1, 3, omega, vertices_omegas) *
-          _f(2, 1, omega, vertices_omegas) *
-          (1.0 +
-           _f(0, 3, omega, vertices_omegas)) +
+              _f(1, 3, omega, vertices_omegas) *
+              _f(2, 1, omega, vertices_omegas) *
+              (1.0 +
+               _f(0, 3, omega, vertices_omegas)) +
           _f(3, 0, omega, vertices_omegas) *
-          _f(2, 0, omega, vertices_omegas) *
-          _f(1, 2, omega, vertices_omegas) *
-          (1.0 +
-           _f(0, 3, omega, vertices_omegas) +
-           _f(0, 2, omega, vertices_omegas))) / 4 / _n_2(omega, vertices_omegas);
+              _f(2, 0, omega, vertices_omegas) *
+              _f(1, 2, omega, vertices_omegas) *
+              (1.0 +
+               _f(0, 3, omega, vertices_omegas) +
+               _f(0, 2, omega, vertices_omegas))) /
+         4 / _n_2(omega, vertices_omegas);
 }
 
 static double _J_21(const double omega,
                     const double vertices_omegas[4])
 {
   return (_f(3, 1, omega, vertices_omegas) *
-          _f(2, 1, omega, vertices_omegas) *
-          (1.0 +
-           _f(1, 3, omega, vertices_omegas) +
-           _f(1, 2, omega, vertices_omegas)) +
+              _f(2, 1, omega, vertices_omegas) *
+              (1.0 +
+               _f(1, 3, omega, vertices_omegas) +
+               _f(1, 2, omega, vertices_omegas)) +
           _f(3, 0, omega, vertices_omegas) *
-          _f(1, 3, omega, vertices_omegas) *
-          _f(2, 1, omega, vertices_omegas) *
-          (_f(1, 3, omega, vertices_omegas) +
-           _f(1, 2, omega, vertices_omegas)) +
+              _f(1, 3, omega, vertices_omegas) *
+              _f(2, 1, omega, vertices_omegas) *
+              (_f(1, 3, omega, vertices_omegas) +
+               _f(1, 2, omega, vertices_omegas)) +
           _f(3, 0, omega, vertices_omegas) *
-          _f(2, 0, omega, vertices_omegas) *
-          _f(1, 2, omega, vertices_omegas) *
-          _f(1, 2, omega, vertices_omegas)) / 4 / _n_2(omega, vertices_omegas);
+              _f(2, 0, omega, vertices_omegas) *
+              _f(1, 2, omega, vertices_omegas) *
+              _f(1, 2, omega, vertices_omegas)) /
+         4 / _n_2(omega, vertices_omegas);
 }
 
 static double _J_22(const double omega,
                     const double vertices_omegas[4])
 {
   return (_f(3, 1, omega, vertices_omegas) *
-          _f(2, 1, omega, vertices_omegas) *
-          _f(2, 1, omega, vertices_omegas) +
+              _f(2, 1, omega, vertices_omegas) *
+              _f(2, 1, omega, vertices_omegas) +
           _f(3, 0, omega, vertices_omegas) *
-          _f(1, 3, omega, vertices_omegas) *
-          _f(2, 1, omega, vertices_omegas) *
-          _f(2, 1, omega, vertices_omegas) +
+              _f(1, 3, omega, vertices_omegas) *
+              _f(2, 1, omega, vertices_omegas) *
+              _f(2, 1, omega, vertices_omegas) +
           _f(3, 0, omega, vertices_omegas) *
-          _f(2, 0, omega, vertices_omegas) *
-          _f(1, 2, omega, vertices_omegas) *
-          (_f(2, 1, omega, vertices_omegas) +
-           _f(2, 0, omega, vertices_omegas))) / 4 / _n_2(omega, vertices_omegas);
+              _f(2, 0, omega, vertices_omegas) *
+              _f(1, 2, omega, vertices_omegas) *
+              (_f(2, 1, omega, vertices_omegas) +
+               _f(2, 0, omega, vertices_omegas))) /
+         4 / _n_2(omega, vertices_omegas);
 }
 
 static double _J_23(const double omega,
                     const double vertices_omegas[4])
 {
   return (_f(3, 1, omega, vertices_omegas) *
-          _f(2, 1, omega, vertices_omegas) *
-          _f(3, 1, omega, vertices_omegas) +
+              _f(2, 1, omega, vertices_omegas) *
+              _f(3, 1, omega, vertices_omegas) +
           _f(3, 0, omega, vertices_omegas) *
-          _f(1, 3, omega, vertices_omegas) *
-          _f(2, 1, omega, vertices_omegas) *
-          (_f(3, 1, omega, vertices_omegas) +
-           _f(3, 0, omega, vertices_omegas)) +
+              _f(1, 3, omega, vertices_omegas) *
+              _f(2, 1, omega, vertices_omegas) *
+              (_f(3, 1, omega, vertices_omegas) +
+               _f(3, 0, omega, vertices_omegas)) +
           _f(3, 0, omega, vertices_omegas) *
-          _f(2, 0, omega, vertices_omegas) *
-          _f(1, 2, omega, vertices_omegas) *
-          _f(3, 0, omega, vertices_omegas)) / 4 / _n_2(omega, vertices_omegas);
+              _f(2, 0, omega, vertices_omegas) *
+              _f(1, 2, omega, vertices_omegas) *
+              _f(3, 0, omega, vertices_omegas)) /
+         4 / _n_2(omega, vertices_omegas);
 }
 
 static double _J_30(const double omega,
@@ -872,9 +1422,10 @@ static double _J_30(const double omega,
 {
   return (1.0 -
           _f(0, 3, omega, vertices_omegas) *
-          _f(0, 3, omega, vertices_omegas) *
-          _f(1, 3, omega, vertices_omegas) *
-          _f(2, 3, omega, vertices_omegas)) / 4 / _n_3(omega, vertices_omegas);
+              _f(0, 3, omega, vertices_omegas) *
+              _f(1, 3, omega, vertices_omegas) *
+              _f(2, 3, omega, vertices_omegas)) /
+         4 / _n_3(omega, vertices_omegas);
 }
 
 static double _J_31(const double omega,
@@ -882,9 +1433,10 @@ static double _J_31(const double omega,
 {
   return (1.0 -
           _f(0, 3, omega, vertices_omegas) *
-          _f(1, 3, omega, vertices_omegas) *
-          _f(1, 3, omega, vertices_omegas) *
-          _f(2, 3, omega, vertices_omegas)) / 4 / _n_3(omega, vertices_omegas);
+              _f(1, 3, omega, vertices_omegas) *
+              _f(1, 3, omega, vertices_omegas) *
+              _f(2, 3, omega, vertices_omegas)) /
+         4 / _n_3(omega, vertices_omegas);
 }
 
 static double _J_32(const double omega,
@@ -892,9 +1444,10 @@ static double _J_32(const double omega,
 {
   return (1.0 -
           _f(0, 3, omega, vertices_omegas) *
-          _f(1, 3, omega, vertices_omegas) *
-          _f(2, 3, omega, vertices_omegas) *
-          _f(2, 3, omega, vertices_omegas)) / 4 / _n_3(omega, vertices_omegas);
+              _f(1, 3, omega, vertices_omegas) *
+              _f(2, 3, omega, vertices_omegas) *
+              _f(2, 3, omega, vertices_omegas)) /
+         4 / _n_3(omega, vertices_omegas);
 }
 
 static double _J_33(const double omega,
@@ -902,12 +1455,13 @@ static double _J_33(const double omega,
 {
   return (1.0 -
           _f(0, 3, omega, vertices_omegas) *
-          _f(1, 3, omega, vertices_omegas) *
-          _f(2, 3, omega, vertices_omegas) *
-          (1.0 +
-           _f(3, 0, omega, vertices_omegas) +
-           _f(3, 1, omega, vertices_omegas) +
-           _f(3, 2, omega, vertices_omegas))) / 4 / _n_3(omega, vertices_omegas);
+              _f(1, 3, omega, vertices_omegas) *
+              _f(2, 3, omega, vertices_omegas) *
+              (1.0 +
+               _f(3, 0, omega, vertices_omegas) +
+               _f(3, 1, omega, vertices_omegas) +
+               _f(3, 2, omega, vertices_omegas))) /
+         4 / _n_3(omega, vertices_omegas);
 }
 
 static double _J_4(void)
@@ -925,7 +1479,8 @@ static double _I_10(const double omega,
 {
   return (_f(0, 1, omega, vertices_omegas) +
           _f(0, 2, omega, vertices_omegas) +
-          _f(0, 3, omega, vertices_omegas)) / 3;
+          _f(0, 3, omega, vertices_omegas)) /
+         3;
 }
 
 static double _I_11(const double omega,
@@ -951,12 +1506,13 @@ static double _I_20(const double omega,
 {
   return (_f(0, 3, omega, vertices_omegas) +
           _f(0, 2, omega, vertices_omegas) *
-          _f(2, 0, omega, vertices_omegas) *
-          _f(1, 2, omega, vertices_omegas) /
-          (_f(1, 2, omega, vertices_omegas) *
-           _f(2, 0, omega, vertices_omegas) +
-           _f(2, 1, omega, vertices_omegas) *
-           _f(1, 3, omega, vertices_omegas))) / 3;
+              _f(2, 0, omega, vertices_omegas) *
+              _f(1, 2, omega, vertices_omegas) /
+              (_f(1, 2, omega, vertices_omegas) *
+                   _f(2, 0, omega, vertices_omegas) +
+               _f(2, 1, omega, vertices_omegas) *
+                   _f(1, 3, omega, vertices_omegas))) /
+         3;
 }
 
 static double _I_21(const double omega,
@@ -964,12 +1520,13 @@ static double _I_21(const double omega,
 {
   return (_f(1, 2, omega, vertices_omegas) +
           _f(1, 3, omega, vertices_omegas) *
-          _f(1, 3, omega, vertices_omegas) *
-          _f(2, 1, omega, vertices_omegas) /
-          (_f(1, 2, omega, vertices_omegas) *
-           _f(2, 0, omega, vertices_omegas) +
-           _f(2, 1, omega, vertices_omegas) *
-           _f(1, 3, omega, vertices_omegas))) / 3;
+              _f(1, 3, omega, vertices_omegas) *
+              _f(2, 1, omega, vertices_omegas) /
+              (_f(1, 2, omega, vertices_omegas) *
+                   _f(2, 0, omega, vertices_omegas) +
+               _f(2, 1, omega, vertices_omegas) *
+                   _f(1, 3, omega, vertices_omegas))) /
+         3;
 }
 
 static double _I_22(const double omega,
@@ -977,12 +1534,13 @@ static double _I_22(const double omega,
 {
   return (_f(2, 1, omega, vertices_omegas) +
           _f(2, 0, omega, vertices_omegas) *
-          _f(2, 0, omega, vertices_omegas) *
-          _f(1, 2, omega, vertices_omegas) /
-          (_f(1, 2, omega, vertices_omegas) *
-           _f(2, 0, omega, vertices_omegas) +
-           _f(2, 1, omega, vertices_omegas) *
-           _f(1, 3, omega, vertices_omegas))) / 3;
+              _f(2, 0, omega, vertices_omegas) *
+              _f(1, 2, omega, vertices_omegas) /
+              (_f(1, 2, omega, vertices_omegas) *
+                   _f(2, 0, omega, vertices_omegas) +
+               _f(2, 1, omega, vertices_omegas) *
+                   _f(1, 3, omega, vertices_omegas))) /
+         3;
 }
 
 static double _I_23(const double omega,
@@ -990,12 +1548,13 @@ static double _I_23(const double omega,
 {
   return (_f(3, 0, omega, vertices_omegas) +
           _f(3, 1, omega, vertices_omegas) *
-          _f(1, 3, omega, vertices_omegas) *
-          _f(2, 1, omega, vertices_omegas) /
-          (_f(1, 2, omega, vertices_omegas) *
-           _f(2, 0, omega, vertices_omegas) +
-           _f(2, 1, omega, vertices_omegas) *
-           _f(1, 3, omega, vertices_omegas))) / 3;
+              _f(1, 3, omega, vertices_omegas) *
+              _f(2, 1, omega, vertices_omegas) /
+              (_f(1, 2, omega, vertices_omegas) *
+                   _f(2, 0, omega, vertices_omegas) +
+               _f(2, 1, omega, vertices_omegas) *
+                   _f(1, 3, omega, vertices_omegas))) /
+         3;
 }
 
 static double _I_30(const double omega,
@@ -1021,7 +1580,8 @@ static double _I_33(const double omega,
 {
   return (_f(3, 0, omega, vertices_omegas) +
           _f(3, 1, omega, vertices_omegas) +
-          _f(3, 2, omega, vertices_omegas)) / 3;
+          _f(3, 2, omega, vertices_omegas)) /
+         3;
 }
 
 static double _I_4(void)

@@ -68,7 +68,6 @@ static void get_ir_grid_map(long *ir_grid_map,
                             const long D_diag[3],
                             const long PS[3]);
 
-
 long grg_get_snf3x3(long D_diag[3],
                     long P[3][3],
                     long Q[3][3],
@@ -79,18 +78,22 @@ long grg_get_snf3x3(long D_diag[3],
 
   succeeded = 0;
 
-  if (lagmat_get_determinant_l3(A) == 0) {
+  if (lagmat_get_determinant_l3(A) == 0)
+  {
     goto err;
   }
 
-  for (i = 0; i < 3; i++) {
-    for (j = 0; j < 3; j++) {
+  for (i = 0; i < 3; i++)
+  {
+    for (j = 0; j < 3; j++)
+    {
       D[i][j] = A[i][j];
     }
   }
 
   succeeded = snf3x3(D, P, Q);
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     D_diag[i] = D[i][i];
   }
 
@@ -122,16 +125,20 @@ long grg_transform_rotations(long (*transformed_rots)[3][3],
   /* 2. Compute D(Q^-1)RQ */
   /* 3. Compute D(Q^-1)RQ(D^-1) */
   lagmat_cast_matrix_3l_to_3d(Q_double, Q);
-  for (i = 0; i < num_rot; i++) {
+  for (i = 0; i < num_rot; i++)
+  {
     lagmat_get_similar_matrix_ld3(r, rotations[i], Q_double, 0);
-    for (j = 0; j < 3; j++) {
-      for (k = 0; k < 3; k++) {
+    for (j = 0; j < 3; j++)
+    {
+      for (k = 0; k < 3; k++)
+      {
         r[j][k] *= D_diag[j];
         r[j][k] /= D_diag[k];
       }
     }
     lagmat_cast_matrix_3d_to_3l(transformed_rots[i], r);
-    if (!lagmat_check_identity_matrix_ld3(transformed_rots[i], r, IDENTITY_TOL)) {
+    if (!lagmat_check_identity_matrix_ld3(transformed_rots[i], r, IDENTITY_TOL))
+    {
       return 0;
     }
   }
@@ -218,7 +225,6 @@ void grg_get_grid_address_from_index(long address[3],
   get_grid_address_from_index(address, grid_index, D_diag);
 }
 
-
 /* ---------------------------*/
 /* Rotate grid point by index */
 /* ---------------------------*/
@@ -263,49 +269,59 @@ long grg_get_reciprocal_point_group(long rec_rotations[48][3][3],
 {
   long i, j, num_rot_ret, inv_exist;
   const long inversion[3][3] = {
-    {-1, 0, 0 },
-    { 0,-1, 0 },
-    { 0, 0,-1 }
-  };
+      {-1, 0, 0},
+      {0, -1, 0},
+      {0, 0, -1}};
 
   /* Collect unique rotations */
   num_rot_ret = 0;
-  for (i = 0; i < num_rot; i++) {
-    for (j = 0; j < num_rot_ret; j++) {
-      if (lagmat_check_identity_matrix_l3(rotations[i], rec_rotations[j])) {
+  for (i = 0; i < num_rot; i++)
+  {
+    for (j = 0; j < num_rot_ret; j++)
+    {
+      if (lagmat_check_identity_matrix_l3(rotations[i], rec_rotations[j]))
+      {
         goto escape;
       }
     }
-    if (num_rot_ret == 48) {
+    if (num_rot_ret == 48)
+    {
       goto err;
     }
     lagmat_copy_matrix_l3(rec_rotations[num_rot_ret], rotations[i]);
     num_rot_ret++;
-  escape:
-    ;
+  escape:;
   }
 
-  if (is_transpose) {
-    for (i = 0; i < num_rot_ret; i++) {
+  if (is_transpose)
+  {
+    for (i = 0; i < num_rot_ret; i++)
+    {
       lagmat_transpose_matrix_l3(rec_rotations[i], rec_rotations[i]);
     }
   }
 
-  if (is_time_reversal) {
+  if (is_time_reversal)
+  {
     inv_exist = 0;
-    for (i = 0; i < num_rot_ret; i++) {
-      if (lagmat_check_identity_matrix_l3(inversion, rec_rotations[i])) {
+    for (i = 0; i < num_rot_ret; i++)
+    {
+      if (lagmat_check_identity_matrix_l3(inversion, rec_rotations[i]))
+      {
         inv_exist = 1;
         break;
       }
     }
 
-    if (!inv_exist) {
-      if (num_rot_ret > 24) {
+    if (!inv_exist)
+    {
+      if (num_rot_ret > 24)
+      {
         goto err;
       }
 
-      for (i = 0; i < num_rot_ret; i++) {
+      for (i = 0; i < num_rot_ret; i++)
+      {
         lagmat_multiply_matrix_l3(rec_rotations[num_rot_ret + i],
                                   inversion, rec_rotations[i]);
       }
@@ -318,16 +334,15 @@ err:
   return 0;
 }
 
-
 static void reduce_grid_address(long address[3], const long D_diag[3])
 {
   long i;
 
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     address[i] = lagmat_modulo_l(address[i], D_diag[i]);
   }
 }
-
 
 static long get_double_grid_index(const long address_double[3],
                                   const long D_diag[3],
@@ -348,11 +363,9 @@ static long get_grid_index_from_address(const long address[3],
                                         const long D_diag[3])
 {
 #ifndef GRID_ORDER_XYZ
-  return (address[2] * D_diag[0] * D_diag[1]
-          + address[1] * D_diag[0] + address[0]);
+  return (address[2] * D_diag[0] * D_diag[1] + address[1] * D_diag[0] + address[0]);
 #else
-  return (address[0] * D_diag[1] * D_diag[2]
-          + address[1] * D_diag[2] + address[2]);
+  return (address[0] * D_diag[1] * D_diag[2] + address[1] * D_diag[2] + address[2]);
 #endif
 }
 
@@ -362,11 +375,14 @@ static void get_all_grid_addresses(long grid_address[][3],
   long i, j, k, grid_index;
   long address[3];
 
-  for (i = 0; i < D_diag[0]; i++) {
+  for (i = 0; i < D_diag[0]; i++)
+  {
     address[0] = i;
-    for (j = 0; j < D_diag[1]; j++) {
+    for (j = 0; j < D_diag[1]; j++)
+    {
       address[1] = j;
-      for (k = 0; k < D_diag[2]; k++) {
+      for (k = 0; k < D_diag[2]; k++)
+      {
         address[2] = k;
         grid_index = get_grid_index_from_address(address, D_diag);
         lagmat_copy_vector_l3(grid_address[grid_index], address);
@@ -403,7 +419,8 @@ static void get_grid_address(long address[3],
 {
   long i;
 
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     address[i] = (address_double[i] - PS[i]) / 2;
   }
 }
@@ -416,7 +433,8 @@ static void get_double_grid_address(long address_double[3],
 {
   long i;
 
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < 3; i++)
+  {
     address_double[i] = address[i] * 2 + PS[i];
   }
 }
@@ -448,23 +466,27 @@ static void get_ir_grid_map(long *ir_grid_map,
 
   num_gp = D_diag[0] * D_diag[1] * D_diag[2];
 
-  for (gp = 0; gp < num_gp; gp++) {
+  for (gp = 0; gp < num_gp; gp++)
+  {
     ir_grid_map[gp] = num_gp;
   }
 
   /* Do not simply multithreaded this for-loop. */
   /* This algorithm contains race condition in different gp's. */
-  for (gp = 0; gp < num_gp; gp++) {
-    for (i = 0; i < num_rot; i++) {
+  for (gp = 0; gp < num_gp; gp++)
+  {
+    for (i = 0; i < num_rot; i++)
+    {
       r_gp = rotate_grid_index(gp, rotations[i], D_diag, PS);
-      if (r_gp < gp) {
+      if (r_gp < gp)
+      {
         ir_grid_map[gp] = ir_grid_map[r_gp];
         break;
       }
     }
-    if (ir_grid_map[gp] == num_gp) {
+    if (ir_grid_map[gp] == num_gp)
+    {
       ir_grid_map[gp] = gp;
     }
   }
-
 }

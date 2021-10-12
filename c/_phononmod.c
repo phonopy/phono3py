@@ -37,59 +37,60 @@
 #include "lapack_wrapper.h"
 #include "phononmod.h"
 
+static PyObject *py_get_phonons_at_gridpoints(PyObject *self, PyObject *args);
 
-static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args);
-
-struct module_state {
+struct module_state
+{
   PyObject *error;
 };
 
 #if PY_MAJOR_VERSION >= 3
-#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#define GETSTATE(m) ((struct module_state *)PyModule_GetState(m))
 #else
 #define GETSTATE(m) (&_state)
 static struct module_state _state;
 #endif
 
 static PyObject *
-error_out(PyObject *m) {
+error_out(PyObject *m)
+{
   struct module_state *st = GETSTATE(m);
   PyErr_SetString(st->error, "something bad happened");
   return NULL;
 }
 
 static PyMethodDef _phononmod_methods[] = {
-  {"error_out", (PyCFunction)error_out, METH_NOARGS, NULL},
-   {"phonons_at_gridpoints",
-    py_get_phonons_at_gridpoints,
-    METH_VARARGS,
-   "Set phonons at grid points"},
-  {NULL, NULL, 0, NULL}
-};
+    {"error_out", (PyCFunction)error_out, METH_NOARGS, NULL},
+    {"phonons_at_gridpoints",
+     py_get_phonons_at_gridpoints,
+     METH_VARARGS,
+     "Set phonons at grid points"},
+    {NULL, NULL, 0, NULL}};
 
 #if PY_MAJOR_VERSION >= 3
 
-static int _phononmod_traverse(PyObject *m, visitproc visit, void *arg) {
+static int _phononmod_traverse(PyObject *m, visitproc visit, void *arg)
+{
   Py_VISIT(GETSTATE(m)->error);
   return 0;
 }
 
-static int _phononmod_clear(PyObject *m) {
+static int _phononmod_clear(PyObject *m)
+{
   Py_CLEAR(GETSTATE(m)->error);
   return 0;
 }
 
 static struct PyModuleDef moduledef = {
-  PyModuleDef_HEAD_INIT,
-  "_phononmod",
-  NULL,
-  sizeof(struct module_state),
-  _phononmod_methods,
-  NULL,
-  _phononmod_traverse,
-  _phononmod_clear,
-  NULL
-};
+    PyModuleDef_HEAD_INIT,
+    "_phononmod",
+    NULL,
+    sizeof(struct module_state),
+    _phononmod_methods,
+    NULL,
+    _phononmod_traverse,
+    _phononmod_clear,
+    NULL};
 
 #define INITERROR return NULL
 
@@ -99,8 +100,7 @@ PyInit__phononmod(void)
 #else
 #define INITERROR return
 
-  void
-  init_phononmod(void)
+void init_phononmod(void)
 #endif
 {
 #if PY_MAJOR_VERSION >= 3
@@ -115,7 +115,8 @@ PyInit__phononmod(void)
   st = GETSTATE(module);
 
   st->error = PyErr_NewException("_phononmod.Error", NULL, NULL);
-  if (st->error == NULL) {
+  if (st->error == NULL)
+  {
     Py_DECREF(module);
     INITERROR;
   }
@@ -125,51 +126,51 @@ PyInit__phononmod(void)
 #endif
 }
 
-static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
+static PyObject *py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
 {
-  PyArrayObject* py_frequencies;
-  PyArrayObject* py_eigenvectors;
-  PyArrayObject* py_phonon_done;
-  PyArrayObject* py_grid_points;
-  PyArrayObject* py_grid_address;
-  PyArrayObject* py_QDinv;
-  PyArrayObject* py_shortest_vectors_fc2;
-  PyArrayObject* py_multiplicity_fc2;
-  PyArrayObject* py_positions_fc2;
-  PyArrayObject* py_fc2;
-  PyArrayObject* py_masses_fc2;
-  PyArrayObject* py_p2s_map_fc2;
-  PyArrayObject* py_s2p_map_fc2;
-  PyArrayObject* py_reciprocal_lattice;
-  PyArrayObject* py_born_effective_charge;
-  PyArrayObject* py_q_direction;
-  PyArrayObject* py_dielectric_constant;
-  PyArrayObject* py_dd_q0;
-  PyArrayObject* py_G_list;
+  PyArrayObject *py_frequencies;
+  PyArrayObject *py_eigenvectors;
+  PyArrayObject *py_phonon_done;
+  PyArrayObject *py_grid_points;
+  PyArrayObject *py_grid_address;
+  PyArrayObject *py_QDinv;
+  PyArrayObject *py_shortest_vectors_fc2;
+  PyArrayObject *py_multiplicity_fc2;
+  PyArrayObject *py_positions_fc2;
+  PyArrayObject *py_fc2;
+  PyArrayObject *py_masses_fc2;
+  PyArrayObject *py_p2s_map_fc2;
+  PyArrayObject *py_s2p_map_fc2;
+  PyArrayObject *py_reciprocal_lattice;
+  PyArrayObject *py_born_effective_charge;
+  PyArrayObject *py_q_direction;
+  PyArrayObject *py_dielectric_constant;
+  PyArrayObject *py_dd_q0;
+  PyArrayObject *py_G_list;
   double nac_factor;
   double unit_conversion_factor;
   double lambda;
-  char* uplo;
+  char *uplo;
 
-  double (*born)[3][3];
-  double (*dielectric)[3];
+  double(*born)[3][3];
+  double(*dielectric)[3];
   double *q_dir;
-  double* freqs;
-  lapack_complex_double* eigvecs;
-  char* phonon_done;
-  long* grid_points;
-  long (*grid_address)[3];
-  double (*QDinv)[3];
-  double* fc2;
+  double *freqs;
+  lapack_complex_double *eigvecs;
+  char *phonon_done;
+  long *grid_points;
+  long(*grid_address)[3];
+  double(*QDinv)[3];
+  double *fc2;
   double(*svecs_fc2)[3];
-  long (*multi_fc2)[2];
-  double (*positions_fc2)[3];
-  double* masses_fc2;
-  long* p2s_fc2;
-  long* s2p_fc2;
-  double (*rec_lat)[3];
-  double * dd_q0;
-  double (*G_list)[3];
+  long(*multi_fc2)[2];
+  double(*positions_fc2)[3];
+  double *masses_fc2;
+  long *p2s_fc2;
+  long *s2p_fc2;
+  double(*rec_lat)[3];
+  double *dd_q0;
+  double(*G_list)[3];
   long num_patom, num_satom, num_phonons, num_grid_points, num_G_points;
 
   if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOdOOOOdOOds",
@@ -195,62 +196,82 @@ static PyObject * py_get_phonons_at_gridpoints(PyObject *self, PyObject *args)
                         &py_dd_q0,
                         &py_G_list,
                         &lambda,
-                        &uplo)) {
+                        &uplo))
+  {
     return NULL;
   }
 
-  freqs = (double*)PyArray_DATA(py_frequencies);
-  eigvecs = (lapack_complex_double*)PyArray_DATA(py_eigenvectors);
-  phonon_done = (char*)PyArray_DATA(py_phonon_done);
-  grid_points = (long*)PyArray_DATA(py_grid_points);
+  freqs = (double *)PyArray_DATA(py_frequencies);
+  eigvecs = (lapack_complex_double *)PyArray_DATA(py_eigenvectors);
+  phonon_done = (char *)PyArray_DATA(py_phonon_done);
+  grid_points = (long *)PyArray_DATA(py_grid_points);
   grid_address = (long(*)[3])PyArray_DATA(py_grid_address);
   QDinv = (double(*)[3])PyArray_DATA(py_QDinv);
-  fc2 = (double*)PyArray_DATA(py_fc2);
+  fc2 = (double *)PyArray_DATA(py_fc2);
   svecs_fc2 = (double(*)[3])PyArray_DATA(py_shortest_vectors_fc2);
   multi_fc2 = (long(*)[2])PyArray_DATA(py_multiplicity_fc2);
-  masses_fc2 = (double*)PyArray_DATA(py_masses_fc2);
-  p2s_fc2 = (long*)PyArray_DATA(py_p2s_map_fc2);
-  s2p_fc2 = (long*)PyArray_DATA(py_s2p_map_fc2);
+  masses_fc2 = (double *)PyArray_DATA(py_masses_fc2);
+  p2s_fc2 = (long *)PyArray_DATA(py_p2s_map_fc2);
+  s2p_fc2 = (long *)PyArray_DATA(py_s2p_map_fc2);
   rec_lat = (double(*)[3])PyArray_DATA(py_reciprocal_lattice);
   num_patom = (long)PyArray_DIMS(py_multiplicity_fc2)[1];
   num_satom = (long)PyArray_DIMS(py_multiplicity_fc2)[0];
   num_phonons = (long)PyArray_DIMS(py_frequencies)[0];
   num_grid_points = (long)PyArray_DIMS(py_grid_points)[0];
-  if ((PyObject*)py_born_effective_charge == Py_None) {
+  if ((PyObject *)py_born_effective_charge == Py_None)
+  {
     born = NULL;
-  } else {
+  }
+  else
+  {
     born = (double(*)[3][3])PyArray_DATA(py_born_effective_charge);
   }
-  if ((PyObject*)py_dielectric_constant == Py_None) {
+  if ((PyObject *)py_dielectric_constant == Py_None)
+  {
     dielectric = NULL;
-  } else {
+  }
+  else
+  {
     dielectric = (double(*)[3])PyArray_DATA(py_dielectric_constant);
   }
-  if ((PyObject*)py_q_direction == Py_None) {
+  if ((PyObject *)py_q_direction == Py_None)
+  {
     q_dir = NULL;
-  } else {
-    q_dir = (double*)PyArray_DATA(py_q_direction);
+  }
+  else
+  {
+    q_dir = (double *)PyArray_DATA(py_q_direction);
     if (fabs(q_dir[0]) < 1e-10 &&
         fabs(q_dir[1]) < 1e-10 &&
-        fabs(q_dir[2]) < 1e-10) {
+        fabs(q_dir[2]) < 1e-10)
+    {
       q_dir = NULL;
     }
   }
-  if ((PyObject*)py_dd_q0 == Py_None) {
+  if ((PyObject *)py_dd_q0 == Py_None)
+  {
     dd_q0 = NULL;
-  } else {
-    dd_q0 = (double*)PyArray_DATA(py_dd_q0);
   }
-  if ((PyObject*)py_G_list == Py_None) {
+  else
+  {
+    dd_q0 = (double *)PyArray_DATA(py_dd_q0);
+  }
+  if ((PyObject *)py_G_list == Py_None)
+  {
     G_list = NULL;
     num_G_points = 0;
-  } else {
+  }
+  else
+  {
     G_list = (double(*)[3])PyArray_DATA(py_G_list);
     num_G_points = (long)PyArray_DIMS(py_G_list)[0];
   }
-  if ((PyObject*)py_positions_fc2 == Py_None) {
+  if ((PyObject *)py_positions_fc2 == Py_None)
+  {
     positions_fc2 = NULL;
-  } else {
+  }
+  else
+  {
     positions_fc2 = (double(*)[3])PyArray_DATA(py_positions_fc2);
   }
 
