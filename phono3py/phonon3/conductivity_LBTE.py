@@ -38,57 +38,62 @@ import time
 import warnings
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
-from phono3py.phonon3.conductivity import (Conductivity, all_bands_exist,
-                                           unit_to_WmK)
+from phono3py.phonon3.conductivity import Conductivity, all_bands_exist, unit_to_WmK
 from phono3py.phonon3.conductivity import write_pp as _write_pp
 from phono3py.phonon3.collision_matrix import CollisionMatrix
 from phono3py.phonon.grid import get_grid_points_by_rotations
-from phono3py.file_IO import (write_kappa_to_hdf5,
-                              write_collision_to_hdf5,
-                              read_collision_from_hdf5,
-                              write_collision_eigenvalues_to_hdf5,
-                              write_unitary_matrix_to_hdf5,
-                              read_pp_from_hdf5)
+from phono3py.file_IO import (
+    write_kappa_to_hdf5,
+    write_collision_to_hdf5,
+    read_collision_from_hdf5,
+    write_collision_eigenvalues_to_hdf5,
+    write_unitary_matrix_to_hdf5,
+    read_pp_from_hdf5,
+)
 from phonopy.units import THzToEv, Kb
 
 
 def get_thermal_conductivity_LBTE(
-        interaction,
-        temperatures=None,
-        sigmas=None,
-        sigma_cutoff=None,
-        is_isotope=False,
-        mass_variances=None,
-        grid_points=None,
-        boundary_mfp=None,  # in micrometre
-        solve_collective_phonon=False,
-        is_reducible_collision_matrix=False,
-        is_kappa_star=True,
-        gv_delta_q=None,
-        is_full_pp=False,
-        pinv_cutoff=1.0e-8,
-        pinv_solver=0,  # default: dsyev in lapacke
-        write_collision=False,
-        read_collision=False,
-        write_kappa=False,
-        write_pp=False,
-        read_pp=False,
-        write_LBTE_solution=False,
-        compression="gzip",
-        input_filename=None,
-        output_filename=None,
-        log_level=0):
+    interaction,
+    temperatures=None,
+    sigmas=None,
+    sigma_cutoff=None,
+    is_isotope=False,
+    mass_variances=None,
+    grid_points=None,
+    boundary_mfp=None,  # in micrometre
+    solve_collective_phonon=False,
+    is_reducible_collision_matrix=False,
+    is_kappa_star=True,
+    gv_delta_q=None,
+    is_full_pp=False,
+    pinv_cutoff=1.0e-8,
+    pinv_solver=0,  # default: dsyev in lapacke
+    write_collision=False,
+    read_collision=False,
+    write_kappa=False,
+    write_pp=False,
+    read_pp=False,
+    write_LBTE_solution=False,
+    compression="gzip",
+    input_filename=None,
+    output_filename=None,
+    log_level=0,
+):
     """Calculate lattice thermal conductivity by direct solution."""
     if temperatures is None:
-        _temperatures = [300, ]
+        _temperatures = [
+            300,
+        ]
     else:
         _temperatures = temperatures
     if sigmas is None:
         sigmas = []
     if log_level:
         print("-" * 19 + " Lattice thermal conducitivity (LBTE) " + "-" * 19)
-        print("Cutoff frequency of pseudo inversion of collision matrix: %s" %
-              pinv_cutoff)
+        print(
+            "Cutoff frequency of pseudo inversion of collision matrix: %s" % pinv_cutoff
+        )
 
     if read_collision:
         temps = None
@@ -113,7 +118,8 @@ def get_thermal_conductivity_LBTE(
         pp_filename=input_filename,
         pinv_cutoff=pinv_cutoff,
         pinv_solver=pinv_solver,
-        log_level=log_level)
+        log_level=log_level,
+    )
 
     if read_collision:
         read_from = _set_collision_from_file(
@@ -122,7 +128,8 @@ def get_thermal_conductivity_LBTE(
             indices=read_collision,
             is_reducible_collision_matrix=is_reducible_collision_matrix,
             filename=input_filename,
-            log_level=log_level)
+            log_level=log_level,
+        )
         if not read_from:
             print("Reading collision failed.")
             return False
@@ -137,11 +144,9 @@ def get_thermal_conductivity_LBTE(
 
     for i in lbte:
         if write_pp:
-            _write_pp(lbte,
-                      interaction,
-                      i,
-                      filename=output_filename,
-                      compression=compression)
+            _write_pp(
+                lbte, interaction, i, filename=output_filename, compression=compression
+            )
 
         if write_collision:
             _write_collision(
@@ -150,17 +155,19 @@ def get_thermal_conductivity_LBTE(
                 i=i,
                 is_reducible_collision_matrix=is_reducible_collision_matrix,
                 is_one_gp_colmat=(grid_points is not None),
-                filename=output_filename)
+                filename=output_filename,
+            )
 
         lbte.delete_gp_collision_and_pp()
 
     # Write full collision matrix
     if write_LBTE_solution:
-        if ((read_collision and
-             all_bands_exist(interaction) and
-             read_from == "grid_points" and
-             grid_points is None) or
-            (not read_collision)):  # noqa E129
+        if (
+            read_collision
+            and all_bands_exist(interaction)
+            and read_from == "grid_points"
+            and grid_points is None
+        ) or (not read_collision):
             _write_collision(lbte, interaction, filename=output_filename)
 
     if grid_points is None and all_bands_exist(interaction):
@@ -174,17 +181,20 @@ def get_thermal_conductivity_LBTE(
                 pinv_solver=pinv_solver,
                 compression=compression,
                 filename=output_filename,
-                log_level=log_level)
+                log_level=log_level,
+            )
 
     return lbte
 
 
-def _write_collision(lbte,
-                     interaction,
-                     i=None,
-                     is_reducible_collision_matrix=False,
-                     is_one_gp_colmat=False,
-                     filename=None):
+def _write_collision(
+    lbte,
+    interaction,
+    i=None,
+    is_reducible_collision_matrix=False,
+    is_one_gp_colmat=False,
+    filename=None,
+):
     grid_points = lbte.get_grid_points()
     temperatures = lbte.temperatures
     sigmas = lbte.get_sigmas()
@@ -218,7 +228,8 @@ def _write_collision(lbte,
                     grid_point=gp,
                     sigma=sigma,
                     sigma_cutoff=sigma_cutoff,
-                    filename=filename)
+                    filename=filename,
+                )
         else:
             for j, sigma in enumerate(sigmas):
                 for k, bi in enumerate(interaction.band_indices):
@@ -236,31 +247,36 @@ def _write_collision(lbte,
                         band_index=bi,
                         sigma=sigma,
                         sigma_cutoff=sigma_cutoff,
-                        filename=filename)
+                        filename=filename,
+                    )
     else:
         for j, sigma in enumerate(sigmas):
             if gamma_isotope is not None:
                 gamma_isotope_at_sigma = gamma_isotope[j]
             else:
                 gamma_isotope_at_sigma = None
-            write_collision_to_hdf5(temperatures,
-                                    mesh,
-                                    gamma=gamma[j],
-                                    gamma_isotope=gamma_isotope_at_sigma,
-                                    collision_matrix=collision_matrix[j],
-                                    sigma=sigma,
-                                    sigma_cutoff=sigma_cutoff,
-                                    filename=filename)
+            write_collision_to_hdf5(
+                temperatures,
+                mesh,
+                gamma=gamma[j],
+                gamma_isotope=gamma_isotope_at_sigma,
+                collision_matrix=collision_matrix[j],
+                sigma=sigma,
+                sigma_cutoff=sigma_cutoff,
+                filename=filename,
+            )
 
 
-def _write_kappa(lbte,
-                 volume,
-                 is_reducible_collision_matrix=False,
-                 write_LBTE_solution=False,
-                 pinv_solver=None,
-                 compression="gzip",
-                 filename=None,
-                 log_level=0):
+def _write_kappa(
+    lbte,
+    volume,
+    is_reducible_collision_matrix=False,
+    write_LBTE_solution=False,
+    pinv_solver=None,
+    compression="gzip",
+    filename=None,
+    log_level=0,
+):
     temperatures = lbte.temperatures
     sigmas = lbte.sigmas
     sigma_cutoff = lbte.sigma_cutoff_width
@@ -295,38 +311,42 @@ def _write_kappa(lbte,
             gamma_isotope_at_sigma = gamma_isotope[i]
         else:
             gamma_isotope_at_sigma = None
-        write_kappa_to_hdf5(temperatures,
-                            mesh,
-                            frequency=frequencies,
-                            group_velocity=gv,
-                            gv_by_gv=gv_by_gv,
-                            mean_free_path=mfp[i],
-                            heat_capacity=mode_cv,
-                            kappa=kappa[i],
-                            mode_kappa=mode_kappa[i],
-                            kappa_RTA=kappa_RTA[i],
-                            mode_kappa_RTA=mode_kappa_RTA[i],
-                            f_vector=f_vector,
-                            gamma=gamma[i],
-                            gamma_isotope=gamma_isotope_at_sigma,
-                            averaged_pp_interaction=ave_pp,
-                            qpoint=qpoints,
-                            weight=weights,
-                            sigma=sigma,
-                            sigma_cutoff=sigma_cutoff,
-                            kappa_unit_conversion=unit_to_WmK / volume,
-                            compression=compression,
-                            filename=filename,
-                            verbose=log_level)
+        write_kappa_to_hdf5(
+            temperatures,
+            mesh,
+            frequency=frequencies,
+            group_velocity=gv,
+            gv_by_gv=gv_by_gv,
+            mean_free_path=mfp[i],
+            heat_capacity=mode_cv,
+            kappa=kappa[i],
+            mode_kappa=mode_kappa[i],
+            kappa_RTA=kappa_RTA[i],
+            mode_kappa_RTA=mode_kappa_RTA[i],
+            f_vector=f_vector,
+            gamma=gamma[i],
+            gamma_isotope=gamma_isotope_at_sigma,
+            averaged_pp_interaction=ave_pp,
+            qpoint=qpoints,
+            weight=weights,
+            sigma=sigma,
+            sigma_cutoff=sigma_cutoff,
+            kappa_unit_conversion=unit_to_WmK / volume,
+            compression=compression,
+            filename=filename,
+            verbose=log_level,
+        )
 
         if coleigs is not None:
-            write_collision_eigenvalues_to_hdf5(temperatures,
-                                                mesh,
-                                                coleigs[i],
-                                                sigma=sigma,
-                                                sigma_cutoff=sigma_cutoff,
-                                                filename=filename,
-                                                verbose=log_level)
+            write_collision_eigenvalues_to_hdf5(
+                temperatures,
+                mesh,
+                coleigs[i],
+                sigma=sigma,
+                sigma_cutoff=sigma_cutoff,
+                filename=filename,
+                verbose=log_level,
+            )
 
             if write_LBTE_solution:
                 if pinv_solver is not None:
@@ -340,15 +360,18 @@ def _write_kappa(lbte,
                             sigma_cutoff=sigma_cutoff,
                             solver=solver,
                             filename=filename,
-                            verbose=log_level)
+                            verbose=log_level,
+                        )
 
 
-def _set_collision_from_file(lbte,
-                             bz_grid,
-                             indices='all',
-                             is_reducible_collision_matrix=False,
-                             filename=None,
-                             log_level=0):
+def _set_collision_from_file(
+    lbte,
+    bz_grid,
+    indices="all",
+    is_reducible_collision_matrix=False,
+    filename=None,
+    log_level=0,
+):
     sigmas = lbte.get_sigmas()
     sigma_cutoff = lbte.get_sigma_cutoff_width()
     mesh = lbte.mesh_numbers
@@ -362,96 +385,105 @@ def _set_collision_from_file(lbte,
     read_from = None
 
     if log_level:
-        print("---------------------- Reading collision data from file "
-              "----------------------")
+        print(
+            "---------------------- Reading collision data from file "
+            "----------------------"
+        )
         sys.stdout.flush()
 
     for j, sigma in enumerate(sigmas):
-        collisions = read_collision_from_hdf5(mesh,
-                                              indices=indices,
-                                              sigma=sigma,
-                                              sigma_cutoff=sigma_cutoff,
-                                              filename=filename,
-                                              verbose=(log_level > 0))
+        collisions = read_collision_from_hdf5(
+            mesh,
+            indices=indices,
+            sigma=sigma,
+            sigma_cutoff=sigma_cutoff,
+            filename=filename,
+            verbose=(log_level > 0),
+        )
         if log_level:
             sys.stdout.flush()
 
         if collisions:
-            (colmat_at_sigma,
-             gamma_at_sigma,
-             temperatures) = collisions
+            (colmat_at_sigma, gamma_at_sigma, temperatures) = collisions
 
             if len(sigmas) == 1:
                 collision_matrix = colmat_at_sigma
-                gamma = np.zeros((1,) + gamma_at_sigma.shape,
-                                 dtype='double', order='C')
+                gamma = np.zeros((1,) + gamma_at_sigma.shape, dtype="double", order="C")
                 gamma[0] = gamma_at_sigma
             else:
                 collision_matrix.append(colmat_at_sigma)
                 gamma.append(gamma_at_sigma)
             read_from = "full_matrix"
         else:
-            vals = _allocate_collision(True,
-                                       mesh,
-                                       sigma,
-                                       sigma_cutoff,
-                                       grid_points,
-                                       indices,
-                                       is_reducible_collision_matrix,
-                                       filename)
+            vals = _allocate_collision(
+                True,
+                mesh,
+                sigma,
+                sigma_cutoff,
+                grid_points,
+                indices,
+                is_reducible_collision_matrix,
+                filename,
+            )
             if vals:
                 colmat_at_sigma, gamma_at_sigma, temperatures = vals
             else:
                 if log_level:
-                    print("Collision at grid point %d doesn't exist." %
-                          grid_points[0])
-                vals = _allocate_collision(False,
-                                           mesh,
-                                           sigma,
-                                           sigma_cutoff,
-                                           grid_points,
-                                           indices,
-                                           is_reducible_collision_matrix,
-                                           filename)
+                    print("Collision at grid point %d doesn't exist." % grid_points[0])
+                vals = _allocate_collision(
+                    False,
+                    mesh,
+                    sigma,
+                    sigma_cutoff,
+                    grid_points,
+                    indices,
+                    is_reducible_collision_matrix,
+                    filename,
+                )
                 if vals:
                     colmat_at_sigma, gamma_at_sigma, temperatures = vals
                 else:
                     if log_level:
-                        print("Collision at (grid point %d, band index %d) "
-                              "doesn't exist." % (grid_points[0], 1))
+                        print(
+                            "Collision at (grid point %d, band index %d) "
+                            "doesn't exist." % (grid_points[0], 1)
+                        )
                     return False
 
             for i, gp in enumerate(grid_points):
-                if not _collect_collision_gp(colmat_at_sigma,
-                                             gamma_at_sigma,
-                                             temperatures,
-                                             mesh,
-                                             sigma,
-                                             sigma_cutoff,
-                                             i,
-                                             gp,
-                                             bz_grid.bzg2grg,
-                                             indices,
-                                             is_reducible_collision_matrix,
-                                             filename,
-                                             log_level):
+                if not _collect_collision_gp(
+                    colmat_at_sigma,
+                    gamma_at_sigma,
+                    temperatures,
+                    mesh,
+                    sigma,
+                    sigma_cutoff,
+                    i,
+                    gp,
+                    bz_grid.bzg2grg,
+                    indices,
+                    is_reducible_collision_matrix,
+                    filename,
+                    log_level,
+                ):
                     num_band = colmat_at_sigma.shape[3]
                     for j in range(num_band):
                         if not _collect_collision_band(
-                                colmat_at_sigma,
-                                gamma_at_sigma,
-                                temperatures,
-                                mesh,
-                                sigma,
-                                sigma_cutoff,
-                                i,
-                                gp,
-                                bz_grid.bzg2grg,
-                                j,
-                                indices,
-                                is_reducible_collision_matrix,
-                                filename,
-                                log_level):
+                            colmat_at_sigma,
+                            gamma_at_sigma,
+                            temperatures,
+                            mesh,
+                            sigma,
+                            sigma_cutoff,
+                            i,
+                            gp,
+                            bz_grid.bzg2grg,
+                            j,
+                            indices,
+                            is_reducible_collision_matrix,
+                            filename,
+                            log_level,
+                        ):
                             return False
 
             if len(sigmas) == 1:
@@ -463,10 +495,9 @@ def _set_collision_from_file(lbte,
             read_from = "grid_points"
 
     if len(sigmas) > 1:
-        temperatures = np.array(temperatures, dtype='double', order='C')
-        gamma = np.array(gamma, dtype='double', order='C')
-        collision_matrix = np.array(collision_matrix,
-                                    dtype='double', order='C')
+        temperatures = np.array(temperatures, dtype="double", order="C")
+        gamma = np.array(gamma, dtype="double", order="C")
+        collision_matrix = np.array(collision_matrix, dtype="double", order="C")
 
     lbte.set_gamma(gamma)
     lbte.set_collision_matrix(collision_matrix)
@@ -478,32 +509,38 @@ def _set_collision_from_file(lbte,
     return read_from
 
 
-def _allocate_collision(for_gps,
-                        mesh,
-                        sigma,
-                        sigma_cutoff,
-                        grid_points,
-                        indices,
-                        is_reducible_collision_matrix,
-                        filename):
+def _allocate_collision(
+    for_gps,
+    mesh,
+    sigma,
+    sigma_cutoff,
+    grid_points,
+    indices,
+    is_reducible_collision_matrix,
+    filename,
+):
     num_mesh_points = np.prod(mesh)
     if for_gps:
-        collision = read_collision_from_hdf5(mesh,
-                                             indices=indices,
-                                             grid_point=grid_points[0],
-                                             sigma=sigma,
-                                             sigma_cutoff=sigma_cutoff,
-                                             filename=filename,
-                                             verbose=False)
+        collision = read_collision_from_hdf5(
+            mesh,
+            indices=indices,
+            grid_point=grid_points[0],
+            sigma=sigma,
+            sigma_cutoff=sigma_cutoff,
+            filename=filename,
+            verbose=False,
+        )
     else:
-        collision = read_collision_from_hdf5(mesh,
-                                             indices=indices,
-                                             grid_point=grid_points[0],
-                                             band_index=0,
-                                             sigma=sigma,
-                                             sigma_cutoff=sigma_cutoff,
-                                             filename=filename,
-                                             verbose=False)
+        collision = read_collision_from_hdf5(
+            mesh,
+            indices=indices,
+            grid_point=grid_points[0],
+            band_index=0,
+            sigma=sigma,
+            sigma_cutoff=sigma_cutoff,
+            filename=filename,
+            verbose=False,
+        )
     if collision is None:
         return False
 
@@ -514,44 +551,46 @@ def _allocate_collision(for_gps,
         else:
             num_band = collision[0].shape[3]  # for bands (s,T,irgp,b)
         gamma_at_sigma = np.zeros(
-            (1, num_temp, num_mesh_points, num_band),
-            dtype='double', order='C')
+            (1, num_temp, num_mesh_points, num_band), dtype="double", order="C"
+        )
         colmat_at_sigma = np.zeros(
-            (1, num_temp,
-             num_mesh_points, num_band,
-             num_mesh_points, num_band),
-            dtype='double', order='C')
+            (1, num_temp, num_mesh_points, num_band, num_mesh_points, num_band),
+            dtype="double",
+            order="C",
+        )
     else:
         if for_gps:
             num_band = collision[0].shape[5]  # for gps (s,T,b0,3,irgp,b,3)
         else:
             num_band = collision[0].shape[4]  # for bands (s,T,3,irgp,b,3)
         gamma_at_sigma = np.zeros(
-            (1, num_temp, len(grid_points), num_band),
-            dtype='double', order='C')
+            (1, num_temp, len(grid_points), num_band), dtype="double", order="C"
+        )
         colmat_at_sigma = np.zeros(
-            (1, num_temp,
-             len(grid_points), num_band, 3,
-             len(grid_points), num_band, 3),
-            dtype='double', order='C')
-    temperatures = np.zeros(num_temp, dtype='double', order='C')
+            (1, num_temp, len(grid_points), num_band, 3, len(grid_points), num_band, 3),
+            dtype="double",
+            order="C",
+        )
+    temperatures = np.zeros(num_temp, dtype="double", order="C")
 
     return colmat_at_sigma, gamma_at_sigma, temperatures
 
 
-def _collect_collision_gp(colmat_at_sigma,
-                          gamma_at_sigma,
-                          temperatures,
-                          mesh,
-                          sigma,
-                          sigma_cutoff,
-                          i,
-                          gp,
-                          bzg2grg,
-                          indices,
-                          is_reducible_collision_matrix,
-                          filename,
-                          log_level):
+def _collect_collision_gp(
+    colmat_at_sigma,
+    gamma_at_sigma,
+    temperatures,
+    mesh,
+    sigma,
+    sigma_cutoff,
+    i,
+    gp,
+    bzg2grg,
+    indices,
+    is_reducible_collision_matrix,
+    filename,
+    log_level,
+):
     collision_gp = read_collision_from_hdf5(
         mesh,
         indices=indices,
@@ -559,16 +598,15 @@ def _collect_collision_gp(colmat_at_sigma,
         sigma=sigma,
         sigma_cutoff=sigma_cutoff,
         filename=filename,
-        verbose=(log_level > 0))
+        verbose=(log_level > 0),
+    )
     if log_level:
         sys.stdout.flush()
 
     if not collision_gp:
         return False
 
-    (colmat_at_gp,
-     gamma_at_gp,
-     temperatures_at_gp) = collision_gp
+    (colmat_at_gp, gamma_at_gp, temperatures_at_gp) = collision_gp
     if is_reducible_collision_matrix:
         igp = bzg2grg[gp]
     else:
@@ -580,20 +618,22 @@ def _collect_collision_gp(colmat_at_sigma,
     return True
 
 
-def _collect_collision_band(colmat_at_sigma,
-                            gamma_at_sigma,
-                            temperatures,
-                            mesh,
-                            sigma,
-                            sigma_cutoff,
-                            i,
-                            gp,
-                            bzg2grg,
-                            j,
-                            indices,
-                            is_reducible_collision_matrix,
-                            filename,
-                            log_level):
+def _collect_collision_band(
+    colmat_at_sigma,
+    gamma_at_sigma,
+    temperatures,
+    mesh,
+    sigma,
+    sigma_cutoff,
+    i,
+    gp,
+    bzg2grg,
+    j,
+    indices,
+    is_reducible_collision_matrix,
+    filename,
+    log_level,
+):
     collision_band = read_collision_from_hdf5(
         mesh,
         indices=indices,
@@ -602,16 +642,15 @@ def _collect_collision_band(colmat_at_sigma,
         sigma=sigma,
         sigma_cutoff=sigma_cutoff,
         filename=filename,
-        verbose=(log_level > 0))
+        verbose=(log_level > 0),
+    )
     if log_level:
         sys.stdout.flush()
 
     if collision_band is False:
         return False
 
-    (colmat_at_band,
-     gamma_at_band,
-     temperatures_at_band) = collision_band
+    (colmat_at_band, gamma_at_band, temperatures_at_band) = collision_band
     if is_reducible_collision_matrix:
         igp = bzg2grg[gp]
     else:
@@ -626,6 +665,7 @@ def _collect_collision_band(colmat_at_sigma,
 def _select_solver(pinv_solver):
     try:
         import phono3py._phono3py as phono3c
+
         default_solver = phono3c.default_colmat_solver()
     except ImportError:
         print("Phono3py C-routine is not compiled correctly.")
@@ -637,7 +677,7 @@ def _select_solver(pinv_solver):
     if solver == 0:  # default solver
         if default_solver in (4, 5, 6):
             try:
-                import scipy.linalg
+                import scipy.linalg  # noqa F401
             except ImportError:
                 solver = 1
             else:
@@ -650,11 +690,9 @@ def _select_solver(pinv_solver):
     return solver
 
 
-def diagonalize_collision_matrix(collision_matrices,
-                                 i_sigma=None,
-                                 i_temp=None,
-                                 pinv_solver=0,
-                                 log_level=0):
+def diagonalize_collision_matrix(
+    collision_matrices, i_sigma=None, i_temp=None, pinv_solver=0, log_level=0
+):
     """Diagonalize collision matrices.
 
     Note
@@ -713,11 +751,12 @@ def diagonalize_collision_matrix(collision_matrices,
     # [2] dsyevd: faster than dsyev and largest memory usage
     if solver in [1, 2]:
         if log_level:
-            routine = ['dsyev', 'dsyevd'][solver - 1]
+            routine = ["dsyev", "dsyevd"][solver - 1]
             sys.stdout.write("Diagonalizing by lapacke %s... " % routine)
             sys.stdout.flush()
         import phono3py._phono3py as phono3c
-        w = np.zeros(size, dtype='double')
+
+        w = np.zeros(size, dtype="double")
         if i_sigma is None:
             _i_sigma = 0
         else:
@@ -726,38 +765,31 @@ def diagonalize_collision_matrix(collision_matrices,
             _i_temp = 0
         else:
             _i_temp = i_temp
-        phono3c.diagonalize_collision_matrix(collision_matrices,
-                                             w,
-                                             _i_sigma,
-                                             _i_temp,
-                                             0.0,
-                                             (solver + 1) % 2,
-                                             0)  # only diagonalization
+        phono3c.diagonalize_collision_matrix(
+            collision_matrices, w, _i_sigma, _i_temp, 0.0, (solver + 1) % 2, 0
+        )  # only diagonalization
     elif solver == 3:  # np.linalg.eigh depends on dsyevd.
         if log_level:
             sys.stdout.write("Diagonalizing by np.linalg.eigh... ")
             sys.stdout.flush()
-        col_mat = collision_matrices[i_sigma, i_temp].reshape(
-            size, size)
+        col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
         w, col_mat[:] = np.linalg.eigh(col_mat)
 
     elif solver == 4:  # fully scipy dsyev
         if log_level:
-            sys.stdout.write("Diagonalizing by "
-                             "scipy.linalg.lapack.dsyev... ")
+            sys.stdout.write("Diagonalizing by " "scipy.linalg.lapack.dsyev... ")
             sys.stdout.flush()
         import scipy.linalg
-        col_mat = collision_matrices[i_sigma, i_temp].reshape(
-            size, size)
+
+        col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
         w, _, info = scipy.linalg.lapack.dsyev(col_mat.T, overwrite_a=1)
     elif solver == 5:  # fully scipy dsyevd
         if log_level:
-            sys.stdout.write("Diagonalizing by "
-                             "scipy.linalg.lapack.dsyevd... ")
+            sys.stdout.write("Diagonalizing by " "scipy.linalg.lapack.dsyevd... ")
             sys.stdout.flush()
         import scipy.linalg
-        col_mat = collision_matrices[i_sigma, i_temp].reshape(
-            size, size)
+
+        col_mat = collision_matrices[i_sigma, i_temp].reshape(size, size)
         w, _, info = scipy.linalg.lapack.dsyevd(col_mat.T, overwrite_a=1)
 
     if log_level:
@@ -770,25 +802,27 @@ def diagonalize_collision_matrix(collision_matrices,
 class Conductivity_LBTE(Conductivity):
     """Lattice thermal conductivity calculation by direct solution."""
 
-    def __init__(self,
-                 interaction,
-                 grid_points=None,
-                 temperatures=None,
-                 sigmas=None,
-                 sigma_cutoff=None,
-                 is_isotope=False,
-                 mass_variances=None,
-                 boundary_mfp=None,  # in micrometre
-                 solve_collective_phonon=False,
-                 is_reducible_collision_matrix=False,
-                 is_kappa_star=True,
-                 gv_delta_q=None,  # finite difference for group veolocity
-                 is_full_pp=False,
-                 read_pp=False,
-                 pp_filename=None,
-                 pinv_cutoff=1.0e-8,
-                 pinv_solver=0,
-                 log_level=0):
+    def __init__(
+        self,
+        interaction,
+        grid_points=None,
+        temperatures=None,
+        sigmas=None,
+        sigma_cutoff=None,
+        is_isotope=False,
+        mass_variances=None,
+        boundary_mfp=None,  # in micrometre
+        solve_collective_phonon=False,
+        is_reducible_collision_matrix=False,
+        is_kappa_star=True,
+        gv_delta_q=None,  # finite difference for group veolocity
+        is_full_pp=False,
+        read_pp=False,
+        pp_filename=None,
+        pinv_cutoff=1.0e-8,
+        pinv_solver=0,
+        log_level=0,
+    ):
         """Init method."""
         self._pp = None
         self._gv_obj = None
@@ -835,19 +869,21 @@ class Conductivity_LBTE(Conductivity):
 
         self._collision_eigenvalues = None
 
-        Conductivity.__init__(self,
-                              interaction,
-                              grid_points=grid_points,
-                              temperatures=temperatures,
-                              sigmas=sigmas,
-                              sigma_cutoff=sigma_cutoff,
-                              is_isotope=is_isotope,
-                              mass_variances=mass_variances,
-                              boundary_mfp=boundary_mfp,
-                              is_kappa_star=is_kappa_star,
-                              gv_delta_q=gv_delta_q,
-                              is_full_pp=is_full_pp,
-                              log_level=log_level)
+        Conductivity.__init__(
+            self,
+            interaction,
+            grid_points=grid_points,
+            temperatures=temperatures,
+            sigmas=sigmas,
+            sigma_cutoff=sigma_cutoff,
+            is_isotope=is_isotope,
+            mass_variances=mass_variances,
+            boundary_mfp=boundary_mfp,
+            is_kappa_star=is_kappa_star,
+            gv_delta_q=gv_delta_q,
+            is_full_pp=is_full_pp,
+            log_level=log_level,
+        )
 
         self._is_reducible_collision_matrix = is_reducible_collision_matrix
         self._solve_collective_phonon = solve_collective_phonon
@@ -872,6 +908,7 @@ class Conductivity_LBTE(Conductivity):
         if len(self._grid_points) != len(self._ir_grid_points):
             print("Collision matrix is not well created.")
             import sys
+
             sys.exit(1)
         else:
             weights = self._prepare_collision_matrix()
@@ -892,16 +929,20 @@ class Conductivity_LBTE(Conductivity):
 
     def get_collision_matrix(self):
         """Return collision matrix."""
-        warnings.warn("Use attribute, Conductivity_LBTE.collision_matrix "
-                      "instead of Conductivity_LBTE.get_collision_matrix().",
-                      DeprecationWarning)
+        warnings.warn(
+            "Use attribute, Conductivity_LBTE.collision_matrix "
+            "instead of Conductivity_LBTE.get_collision_matrix().",
+            DeprecationWarning,
+        )
         return self.collision_matrix
 
     def set_collision_matrix(self, collision_matrix):
         """Set collision matrix."""
-        warnings.warn("Use attribute, Conductivity_LBTE.collision_matrix "
-                      "instead of Conductivity_LBTE.set_collision_matrix().",
-                      DeprecationWarning)
+        warnings.warn(
+            "Use attribute, Conductivity_LBTE.collision_matrix "
+            "instead of Conductivity_LBTE.set_collision_matrix().",
+            DeprecationWarning,
+        )
         self.collision_matrix = collision_matrix
 
     def get_collision_eigenvalues(self):
@@ -942,8 +983,7 @@ class Conductivity_LBTE(Conductivity):
             self._collision.set_grid_point(gp)
 
             if self._log_level:
-                print("Number of triplets: %d" %
-                      len(self._pp.get_triplets_at_q()[0]))
+                print("Number of triplets: %d" % len(self._pp.get_triplets_at_q()[0]))
 
             self._set_collision_matrix_at_sigmas(i)
 
@@ -968,54 +1008,57 @@ class Conductivity_LBTE(Conductivity):
         num_temp = len(self._temperatures)
 
         if self._is_reducible_collision_matrix:
-            self._allocate_reducible_colmat_values(
-                num_temp, num_band0, num_band)
+            self._allocate_reducible_colmat_values(num_temp, num_band0, num_band)
         else:
             self._allocate_ir_colmat_values(num_temp, num_band0, num_band)
 
     def _allocate_local_values(self, num_temp, num_band0, num_grid_points):
         """Allocate grid point local arrays."""
-        self._kappa = np.zeros((len(self._sigmas), num_temp, 6),
-                               dtype='double', order='C')
-        self._kappa_RTA = np.zeros((len(self._sigmas), num_temp, 6),
-                                   dtype='double', order='C')
-        self._gv = np.zeros((num_grid_points, num_band0, 3),
-                            dtype='double', order='C')
-        self._f_vectors = np.zeros((num_grid_points, num_band0, 3),
-                                   dtype='double', order='C')
-        self._gv_sum2 = np.zeros((num_grid_points, num_band0, 6),
-                                 dtype='double', order='C')
-        self._mfp = np.zeros((len(self._sigmas),
-                              num_temp,
-                              num_grid_points,
-                              num_band0,
-                              3), dtype='double', order='C')
-        self._cv = np.zeros((num_temp, num_grid_points, num_band0),
-                            dtype='double', order='C')
+        self._kappa = np.zeros(
+            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
+        )
+        self._kappa_RTA = np.zeros(
+            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
+        )
+        self._gv = np.zeros((num_grid_points, num_band0, 3), dtype="double", order="C")
+        self._f_vectors = np.zeros(
+            (num_grid_points, num_band0, 3), dtype="double", order="C"
+        )
+        self._gv_sum2 = np.zeros(
+            (num_grid_points, num_band0, 6), dtype="double", order="C"
+        )
+        self._mfp = np.zeros(
+            (len(self._sigmas), num_temp, num_grid_points, num_band0, 3),
+            dtype="double",
+            order="C",
+        )
+        self._cv = np.zeros(
+            (num_temp, num_grid_points, num_band0), dtype="double", order="C"
+        )
         if self._is_full_pp:
             self._averaged_pp_interaction = np.zeros(
-                (num_grid_points, num_band0), dtype='double', order='C')
+                (num_grid_points, num_band0), dtype="double", order="C"
+            )
 
         if self._gamma is None:
-            self._gamma = np.zeros((len(self._sigmas),
-                                    num_temp,
-                                    num_grid_points,
-                                    num_band0), dtype='double', order='C')
+            self._gamma = np.zeros(
+                (len(self._sigmas), num_temp, num_grid_points, num_band0),
+                dtype="double",
+                order="C",
+            )
         if self._isotope is not None:
-            self._gamma_iso = np.zeros((len(self._sigmas),
-                                        num_grid_points,
-                                        num_band0), dtype='double', order='C')
+            self._gamma_iso = np.zeros(
+                (len(self._sigmas), num_grid_points, num_band0),
+                dtype="double",
+                order="C",
+            )
 
-        self._mode_kappa = np.zeros((len(self._sigmas),
-                                     num_temp,
-                                     num_grid_points,
-                                     num_band0,
-                                     6), dtype='double')
-        self._mode_kappa_RTA = np.zeros((len(self._sigmas),
-                                         num_temp,
-                                         num_grid_points,
-                                         num_band0,
-                                         6), dtype='double')
+        self._mode_kappa = np.zeros(
+            (len(self._sigmas), num_temp, num_grid_points, num_band0, 6), dtype="double"
+        )
+        self._mode_kappa_RTA = np.zeros(
+            (len(self._sigmas), num_temp, num_grid_points, num_band0, 6), dtype="double"
+        )
 
     def _allocate_reducible_colmat_values(self, num_temp, num_band0, num_band):
         """Allocate arrays for reducilble collision matrix."""
@@ -1026,19 +1069,27 @@ class Conductivity_LBTE(Conductivity):
             num_stored_grid_points = 1
         self._allocate_local_values(num_temp, num_band0, num_mesh_points)
         self._collision = CollisionMatrix(
-            self._pp,
-            is_reducible_collision_matrix=True,
-            log_level=self._log_level)
+            self._pp, is_reducible_collision_matrix=True, log_level=self._log_level
+        )
         if self._collision_matrix is None:
             self._collision_matrix = np.empty(
-                (len(self._sigmas), num_temp,
-                 num_stored_grid_points, num_band0,
-                 num_mesh_points, num_band),
-                dtype='double', order='C')
+                (
+                    len(self._sigmas),
+                    num_temp,
+                    num_stored_grid_points,
+                    num_band0,
+                    num_mesh_points,
+                    num_band,
+                ),
+                dtype="double",
+                order="C",
+            )
             self._collision_matrix[:] = 0
         self._collision_eigenvalues = np.zeros(
             (len(self._sigmas), num_temp, num_mesh_points * num_band),
-            dtype='double', order='C')
+            dtype="double",
+            order="C",
+        )
 
     def _allocate_ir_colmat_values(self, num_temp, num_band0, num_band):
         """Allocate arrays for ir collision matrix."""
@@ -1051,30 +1102,40 @@ class Conductivity_LBTE(Conductivity):
 
         self._allocate_local_values(num_temp, num_band0, num_grid_points)
         self._rot_grid_points = np.zeros(
-            (num_ir_grid_points, len(self._point_operations)), dtype='int_')
+            (num_ir_grid_points, len(self._point_operations)), dtype="int_"
+        )
         for i, ir_gp in enumerate(self._ir_grid_points):
             self._rot_grid_points[i] = get_grid_points_by_rotations(
-                ir_gp,
-                self._pp.bz_grid)
+                ir_gp, self._pp.bz_grid
+            )
         self._collision = CollisionMatrix(
             self._pp,
             rotations_cartesian=self._rotations_cartesian,
             num_ir_grid_points=num_ir_grid_points,
             rot_grid_points=self._rot_grid_points,
-            log_level=self._log_level)
+            log_level=self._log_level,
+        )
         if self._collision_matrix is None:
             self._collision_matrix = np.empty(
-                (len(self._sigmas),
-                 num_temp,
-                 num_stored_grid_points, num_band0, 3,
-                 num_ir_grid_points, num_band, 3),
-                dtype='double', order='C')
+                (
+                    len(self._sigmas),
+                    num_temp,
+                    num_stored_grid_points,
+                    num_band0,
+                    3,
+                    num_ir_grid_points,
+                    num_band,
+                    3,
+                ),
+                dtype="double",
+                order="C",
+            )
             self._collision_matrix[:] = 0
         self._collision_eigenvalues = np.zeros(
-            (len(self._sigmas),
-             num_temp,
-             num_ir_grid_points * num_band * 3),
-            dtype='double', order='C')
+            (len(self._sigmas), num_temp, num_ir_grid_points * num_band * 3),
+            dtype="double",
+            order="C",
+        )
 
     def _set_collision_matrix_at_sigmas(self, i):
         """Calculate collision matrices at grid point.
@@ -1106,12 +1167,15 @@ class Conductivity_LBTE(Conductivity):
                     sigma=sigma,
                     sigma_cutoff=self._sigma_cutoff,
                     filename=self._pp_filename,
-                    verbose=(self._log_level > 0))
+                    verbose=(self._log_level > 0),
+                )
                 _, g_zero = self._collision.get_integration_weights()
                 if self._log_level:
                     if len(self._sigmas) > 1:
-                        print("Multiple sigmas or mixing smearing and "
-                              "tetrahedron method is not supported.")
+                        print(
+                            "Multiple sigmas or mixing smearing and "
+                            "tetrahedron method is not supported."
+                        )
                 if _g_zero is not None and (_g_zero != g_zero).any():
                     raise ValueError("Inconsistency found in g_zero.")
                 self._collision.set_interaction_strength(pp)
@@ -1124,8 +1188,7 @@ class Conductivity_LBTE(Conductivity):
                 self._collision.run_interaction(is_full_pp=self._is_full_pp)
 
             if self._is_full_pp and j == 0:
-                self._averaged_pp_interaction[i] = (
-                    self._pp.get_averaged_interaction())
+                self._averaged_pp_interaction[i] = self._pp.get_averaged_interaction()
 
             for k, t in enumerate(self._temperatures):
                 self._collision.set_temperature(t)
@@ -1137,10 +1200,10 @@ class Conductivity_LBTE(Conductivity):
                         i_data = i
                 else:
                     i_data = 0
-                self._gamma[j, k, i_data] = (
-                    self._collision.get_imag_self_energy())
-                self._collision_matrix[j, k, i_data] = (
-                   self._collision.get_collision_matrix())
+                self._gamma[j, k, i_data] = self._collision.get_imag_self_energy()
+                self._collision_matrix[
+                    j, k, i_data
+                ] = self._collision.get_collision_matrix()
 
     def _prepare_collision_matrix(self):
         """Prepare collision matrix to be solved."""
@@ -1149,21 +1212,22 @@ class Conductivity_LBTE(Conductivity):
                 self._average_collision_matrix_by_degeneracy()
                 num_mesh_points = np.prod(self._pp.mesh_numbers)
                 num_rot = len(self._point_operations)
-                rot_grid_points = np.zeros(
-                    (num_rot, num_mesh_points), dtype='int_')
+                rot_grid_points = np.zeros((num_rot, num_mesh_points), dtype="int_")
                 # Ir-grid points and rot_grid_points in generalized regular
                 # grid
                 ir_gr_grid_points = np.array(
-                    self._pp.bz_grid.bzg2grg[self._ir_grid_points],
-                    dtype='int_')
+                    self._pp.bz_grid.bzg2grg[self._ir_grid_points], dtype="int_"
+                )
                 for i in range(num_mesh_points):
                     rot_grid_points[:, i] = self._pp.bz_grid.bzg2grg[
                         get_grid_points_by_rotations(
-                            self._pp.bz_grid.grg2bzg[i], self._pp.bz_grid)]
+                            self._pp.bz_grid.grg2bzg[i], self._pp.bz_grid
+                        )
+                    ]
                 self._expand_collisions(ir_gr_grid_points, rot_grid_points)
                 self._expand_local_values(ir_gr_grid_points, rot_grid_points)
             self._combine_reducible_collisions()
-            weights = np.ones(np.prod(self._pp.mesh_numbers), dtype='int_')
+            weights = np.ones(np.prod(self._pp.mesh_numbers), dtype="int_")
             self._symmetrize_collision_matrix()
         else:
             self._combine_collisions()
@@ -1197,52 +1261,56 @@ class Conductivity_LBTE(Conductivity):
                         i_sigma=j,
                         i_temp=k,
                         pinv_solver=self._pinv_solver,
-                        log_level=self._log_level)
+                        log_level=self._log_level,
+                    )
                     self._collision_eigenvalues[j, k] = w
 
                     self._set_kappa(j, k, weights)
 
                     if self._log_level:
-                        print(("#%6s       " + " %-10s" * 6) %
-                              ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy"))
-                        print(("%7.1f " + " %10.3f" * 6) %
-                              ((t,) + tuple(self._kappa[j, k])))
-                        print((" %6s " + " %10.3f" * 6) %
-                              (("(RTA)",) + tuple(self._kappa_RTA[j, k])))
+                        print(
+                            ("#%6s       " + " %-10s" * 6)
+                            % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+                        )
+                        print(
+                            ("%7.1f " + " %10.3f" * 6)
+                            % ((t,) + tuple(self._kappa[j, k]))
+                        )
+                        print(
+                            (" %6s " + " %10.3f" * 6)
+                            % (("(RTA)",) + tuple(self._kappa_RTA[j, k]))
+                        )
                         print("-" * 76)
                         sys.stdout.flush()
 
         if self._log_level:
-            print('')
+            print("")
 
     def _combine_collisions(self):
         """Include diagonal elements into collision matrix."""
         num_band = len(self._pp.primitive) * 3
-        for j, k in list(np.ndindex(
-                (len(self._sigmas), len(self._temperatures)))):
+        for j, k in list(np.ndindex((len(self._sigmas), len(self._temperatures)))):
             for i, ir_gp in enumerate(self._ir_grid_points):
-                for r, r_gp in zip(
-                        self._rotations_cartesian, self._rot_grid_points[i]):
+                for r, r_gp in zip(self._rotations_cartesian, self._rot_grid_points[i]):
                     if ir_gp != r_gp:
                         continue
 
                     main_diagonal = self._get_main_diagonal(i, j, k)
                     for ll in range(num_band):
-                        self._collision_matrix[
-                            j, k, i, ll, :, i, ll, :] += main_diagonal[ll] * r
+                        self._collision_matrix[j, k, i, ll, :, i, ll, :] += (
+                            main_diagonal[ll] * r
+                        )
 
     def _combine_reducible_collisions(self):
         """Include diagonal elements into collision matrix."""
         num_band = len(self._pp.primitive) * 3
         num_mesh_points = np.prod(self._pp.mesh_numbers)
 
-        for j, k in list(
-                np.ndindex((len(self._sigmas), len(self._temperatures)))):
+        for j, k in list(np.ndindex((len(self._sigmas), len(self._temperatures)))):
             for i in range(num_mesh_points):
                 main_diagonal = self._get_main_diagonal(i, j, k)
                 for ll in range(num_band):
-                    self._collision_matrix[
-                        j, k, i, ll, i, ll] += main_diagonal[ll]
+                    self._collision_matrix[j, k, i, ll, i, ll] += main_diagonal[ll]
 
     def _expand_collisions(self, ir_gr_grid_points, rot_grid_points):
         """Fill elements of full collision matrix by symmetry."""
@@ -1253,9 +1321,10 @@ class Conductivity_LBTE(Conductivity):
 
         try:
             import phono3py._phono3py as phono3c
-            phono3c.expand_collision_matrix(self._collision_matrix,
-                                            ir_gr_grid_points,
-                                            rot_grid_points)
+
+            phono3c.expand_collision_matrix(
+                self._collision_matrix, ir_gr_grid_points, rot_grid_points
+            )
         except ImportError:
             print("Phono3py C-routine is not compiled correctly.")
             num_mesh_points = np.prod(self._pp.mesh_numbers)
@@ -1269,8 +1338,7 @@ class Conductivity_LBTE(Conductivity):
                     gp_r = rot_grid_points[j, ir_gp]
                     for k in range(num_mesh_points):
                         gp_c = rot_grid_points[j, k]
-                        colmat[:, :, gp_r, :, gp_c, :] += (
-                            colmat_irgp[:, :, :, k, :])
+                        colmat[:, :, gp_r, :, gp_c, :] += colmat_irgp[:, :, :, k, :]
 
         if self._log_level:
             print("[%.3fs]" % (time.time() - start))
@@ -1321,8 +1389,9 @@ class Conductivity_LBTE(Conductivity):
 
             sym_broken = False
             for gp in np.unique(r_gps):
-                if (len(np.where(r_gps == gp)[0]) !=
-                    self._rot_grid_points.shape[1] // len(np.unique(r_gps))):  # noqa E129
+                if len(np.where(r_gps == gp)[0]) != self._rot_grid_points.shape[
+                    1
+                ] // len(np.unique(r_gps)):
                     sym_broken = True
 
             if sym_broken:
@@ -1341,15 +1410,14 @@ class Conductivity_LBTE(Conductivity):
 
         try:
             import phono3py._phono3py as phono3c
+
             if self._log_level:
-                sys.stdout.write("- Making collision matrix symmetric "
-                                 "(built-in) ")
+                sys.stdout.write("- Making collision matrix symmetric " "(built-in) ")
                 sys.stdout.flush()
             phono3c.symmetrize_collision_matrix(self._collision_matrix)
         except ImportError:
             if self._log_level:
-                sys.stdout.write("- Making collision matrix symmetric "
-                                 "(numpy) ")
+                sys.stdout.write("- Making collision matrix symmetric " "(numpy) ")
                 sys.stdout.flush()
 
             if self._is_reducible_collision_matrix:
@@ -1372,8 +1440,9 @@ class Conductivity_LBTE(Conductivity):
 
         # Average matrix elements belonging to degenerate bands
         if self._log_level:
-            sys.stdout.write("- Averaging collision matrix elements "
-                             "by phonon degeneracy ")
+            sys.stdout.write(
+                "- Averaging collision matrix elements " "by phonon degeneracy "
+            )
             sys.stdout.flush()
 
         col_mat = self._collision_matrix
@@ -1388,14 +1457,15 @@ class Conductivity_LBTE(Conductivity):
 
                 if self._is_reducible_collision_matrix:
                     i_data = self._pp.bz_grid.bzg2grg[gp]
-                    sum_col = (col_mat[:, :, i_data, bi_set, :, :].sum(axis=2)
-                               / len(bi_set))
+                    sum_col = col_mat[:, :, i_data, bi_set, :, :].sum(axis=2) / len(
+                        bi_set
+                    )
                     for j in bi_set:
                         col_mat[:, :, i_data, j, :, :] = sum_col
                 else:
-                    sum_col = (
-                        col_mat[:, :, i, bi_set, :, :, :, :].sum(axis=2) /
-                        len(bi_set))
+                    sum_col = col_mat[:, :, i, bi_set, :, :, :, :].sum(axis=2) / len(
+                        bi_set
+                    )
                     for j in bi_set:
                         col_mat[:, :, i, j, :, :, :, :] = sum_col
 
@@ -1409,14 +1479,15 @@ class Conductivity_LBTE(Conductivity):
                         bi_set.append(j)
                 if self._is_reducible_collision_matrix:
                     i_data = self._pp.bz_grid.bzg2grg[gp]
-                    sum_col = (col_mat[:, :, :, :, i_data, bi_set].sum(axis=4)
-                               / len(bi_set))
+                    sum_col = col_mat[:, :, :, :, i_data, bi_set].sum(axis=4) / len(
+                        bi_set
+                    )
                     for j in bi_set:
                         col_mat[:, :, :, :, i_data, j] = sum_col
                 else:
-                    sum_col = (
-                        col_mat[:, :, :, :, :, i, bi_set, :].sum(axis=5) /
-                        len(bi_set))
+                    sum_col = col_mat[:, :, :, :, :, i, bi_set, :].sum(axis=5) / len(
+                        bi_set
+                    )
                     for j in bi_set:
                         col_mat[:, :, :, :, :, i, j, :] = sum_col
 
@@ -1434,9 +1505,11 @@ class Conductivity_LBTE(Conductivity):
             freqs = self._frequencies[self._ir_grid_points]
 
         t = self._temperatures[i_temp]
-        sinh = np.where(freqs > self._pp.cutoff_frequency,
-                        np.sinh(freqs * THzToEv / (2 * Kb * t)),
-                        -1.0)
+        sinh = np.where(
+            freqs > self._pp.cutoff_frequency,
+            np.sinh(freqs * THzToEv / (2 * Kb * t)),
+            -1.0,
+        )
         inv_sinh = np.where(sinh > 0, 1.0 / sinh, 0)
         freqs_sinh = freqs * THzToEv * inv_sinh / (4 * Kb * t ** 2)
 
@@ -1470,8 +1543,10 @@ class Conductivity_LBTE(Conductivity):
 
         if solver in [0, 1, 2, 3, 4, 5]:
             if self._log_level:
-                sys.stdout.write("Calculating pseudo-inv with cutoff=%-.1e "
-                                 "(np.dot) " % self._pinv_cutoff)
+                sys.stdout.write(
+                    "Calculating pseudo-inv with cutoff=%-.1e "
+                    "(np.dot) " % self._pinv_cutoff
+                )
                 sys.stdout.flush()
 
             e = self._get_eigvals_pinv(i_sigma, i_temp)
@@ -1484,18 +1559,18 @@ class Conductivity_LBTE(Conductivity):
                 Y = np.dot(v, e * np.dot(v.T, X.ravel())).reshape(-1, 3)
         else:  # solver=6 This is slower as far as tested.
             import phono3py._phono3py as phono3c
+
             if self._log_level:
-                sys.stdout.write("Calculating pseudo-inv with cutoff=%-.1e "
-                                 "(built-in) " % self._pinv_cutoff)
+                sys.stdout.write(
+                    "Calculating pseudo-inv with cutoff=%-.1e "
+                    "(built-in) " % self._pinv_cutoff
+                )
                 sys.stdout.flush()
 
             w = self._collision_eigenvalues[i_sigma, i_temp]
-            phono3c.pinv_from_eigensolution(self._collision_matrix,
-                                            w,
-                                            i_sigma,
-                                            i_temp,
-                                            self._pinv_cutoff,
-                                            0)
+            phono3c.pinv_from_eigensolution(
+                self._collision_matrix, w, i_sigma, i_temp, self._pinv_cutoff, 0
+            )
             if self._is_reducible_collision_matrix:
                 Y = np.dot(v, X)
             else:
@@ -1517,8 +1592,9 @@ class Conductivity_LBTE(Conductivity):
 
         """
         num_band = len(self._pp.primitive) * 3
-        self._f_vectors[:] = ((Y / 2).reshape(num_grid_points, num_band * 3).T
-                              / weights).T.reshape(self._f_vectors.shape)
+        self._f_vectors[:] = (
+            (Y / 2).reshape(num_grid_points, num_band * 3).T / weights
+        ).T.reshape(self._f_vectors.shape)
 
     def _get_eigvals_pinv(self, i_sigma, i_temp):
         """Return inverse eigenvalues of eigenvalues > epsilon."""
@@ -1535,7 +1611,7 @@ class Conductivity_LBTE(Conductivity):
         None is returned if I is zero matrix.
 
         """
-        r_sum = np.zeros((3, 3), dtype='double', order='C')
+        r_sum = np.zeros((3, 3), dtype="double", order="C")
         for r in self._rotations_cartesian:
             for i in range(3):
                 for j in range(3):
@@ -1549,9 +1625,9 @@ class Conductivity_LBTE(Conductivity):
 
         # Same as np.kron(np.eye(size), r_sum), but writen as below
         # to be sure the values in memory C-congiguous with 'double'.
-        I_mat = np.zeros((3 * size, 3 * size), dtype='double', order='C')
+        I_mat = np.zeros((3 * size, 3 * size), dtype="double", order="C")
         for i in range(size):
-            I_mat[(i * 3):((i + 1) * 3), (i * 3):((i + 1) * 3)] = r_sum
+            I_mat[(i * 3) : ((i + 1) * 3), (i * 3) : ((i + 1) * 3)] = r_sum
 
         return I_mat
 
@@ -1576,13 +1652,15 @@ class Conductivity_LBTE(Conductivity):
             num_ir_grid_points = len(self._ir_grid_points)
             Y = self._get_Y(i_sigma, i_temp, weights, X)
             self._set_mean_free_path(i_sigma, i_temp, weights, Y)
-            self._set_mode_kappa(self._mode_kappa,
-                                 X,
-                                 Y,
-                                 num_ir_grid_points,
-                                 self._rotations_cartesian,
-                                 i_sigma,
-                                 i_temp)
+            self._set_mode_kappa(
+                self._mode_kappa,
+                X,
+                Y,
+                num_ir_grid_points,
+                self._rotations_cartesian,
+                i_sigma,
+                i_temp,
+            )
             # self._set_mode_kappa_from_mfp(weights,
             #                               num_ir_grid_points,
             #                               self._rotations_cartesian,
@@ -1590,7 +1668,8 @@ class Conductivity_LBTE(Conductivity):
             #                               i_temp)
 
         self._kappa[i_sigma, i_temp] = (
-            self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N)
+            self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
+        )
 
     def _set_kappa_reducible_colmat(self, i_sigma, i_temp, weights):
         """Calculate direct solution thermal conductivity of full colmat."""
@@ -1601,16 +1680,19 @@ class Conductivity_LBTE(Conductivity):
         self._set_mean_free_path(i_sigma, i_temp, weights, Y)
         # Putting self._rotations_cartesian is to symmetrize kappa.
         # None can be put instead for watching pure information.
-        self._set_mode_kappa(self._mode_kappa,
-                             X,
-                             Y,
-                             num_mesh_points,
-                             self._rotations_cartesian,
-                             i_sigma,
-                             i_temp)
+        self._set_mode_kappa(
+            self._mode_kappa,
+            X,
+            Y,
+            num_mesh_points,
+            self._rotations_cartesian,
+            i_sigma,
+            i_temp,
+        )
         self._mode_kappa[i_sigma, i_temp] /= len(self._rotations_cartesian)
         self._kappa[i_sigma, i_temp] = (
-            self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N)
+            self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
+        )
 
     def _set_kappa_RTA(self, i_sigma, i_temp, weights):
         """Calculate RTA thermal conductivity with either ir or full colmat."""
@@ -1630,35 +1712,39 @@ class Conductivity_LBTE(Conductivity):
         X = self._get_X(i_temp, weights, self._gv)
         Y = np.zeros_like(X)
         num_ir_grid_points = len(self._ir_grid_points)
-        size = num_ir_grid_points * num_band * 3
         for i, gp in enumerate(self._ir_grid_points):
             g = self._get_main_diagonal(i, i_sigma, i_temp)
             frequencies = self._frequencies[gp]
             for j, f in enumerate(frequencies):
                 if f > self._pp.cutoff_frequency:
                     i_mode = i * num_band + j
-                    old_settings = np.seterr(all='raise')
+                    old_settings = np.seterr(all="raise")
                     try:
                         Y[i_mode, :] = X[i_mode, :] / g[j]
                     except Exception:
                         print("=" * 26 + " Warning " + "=" * 26)
-                        print(" Unexpected physical condition of ph-ph "
-                              "interaction calculation was found.")
-                        print(" g[j]=%f at gp=%d, band=%d, freq=%f" %
-                              (g[j], gp, j + 1, f))
+                        print(
+                            " Unexpected physical condition of ph-ph "
+                            "interaction calculation was found."
+                        )
+                        print(
+                            " g[j]=%f at gp=%d, band=%d, freq=%f" % (g[j], gp, j + 1, f)
+                        )
                         print("=" * 61)
                     np.seterr(**old_settings)
 
-        self._set_mode_kappa(self._mode_kappa_RTA,
-                             X,
-                             Y,
-                             num_ir_grid_points,
-                             self._rotations_cartesian,
-                             i_sigma,
-                             i_temp)
+        self._set_mode_kappa(
+            self._mode_kappa_RTA,
+            X,
+            Y,
+            num_ir_grid_points,
+            self._rotations_cartesian,
+            i_sigma,
+            i_temp,
+        )
         self._kappa_RTA[i_sigma, i_temp] = (
-            self._mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) /
-            N)
+            self._mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
+        )
 
     def _set_kappa_RTA_reducible_colmat(self, i_sigma, i_temp, weights):
         """Calculate RTA thermal conductivity.
@@ -1676,7 +1762,8 @@ class Conductivity_LBTE(Conductivity):
         num_mesh_points = np.prod(self._pp.mesh_numbers)
         size = num_mesh_points * num_band
         v_diag = np.diagonal(
-            self._collision_matrix[i_sigma, i_temp].reshape(size, size))
+            self._collision_matrix[i_sigma, i_temp].reshape(size, size)
+        )
 
         for gp in range(num_mesh_points):
             frequencies = self._frequencies[gp]
@@ -1686,27 +1773,24 @@ class Conductivity_LBTE(Conductivity):
                     Y[i_mode, :] = X[i_mode, :] / v_diag[i_mode]
         # Putting self._rotations_cartesian is to symmetrize kappa.
         # None can be put instead for watching pure information.
-        self._set_mode_kappa(self._mode_kappa_RTA,
-                             X,
-                             Y,
-                             num_mesh_points,
-                             self._rotations_cartesian,
-                             i_sigma,
-                             i_temp)
+        self._set_mode_kappa(
+            self._mode_kappa_RTA,
+            X,
+            Y,
+            num_mesh_points,
+            self._rotations_cartesian,
+            i_sigma,
+            i_temp,
+        )
         g = len(self._rotations_cartesian)
         self._mode_kappa_RTA[i_sigma, i_temp] /= g
         self._kappa_RTA[i_sigma, i_temp] = (
-            self._mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) /
-            N)
+            self._mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
+        )
 
-    def _set_mode_kappa(self,
-                        mode_kappa,
-                        X,
-                        Y,
-                        num_grid_points,
-                        rotations_cartesian,
-                        i_sigma,
-                        i_temp):
+    def _set_mode_kappa(
+        self, mode_kappa, X, Y, num_grid_points, rotations_cartesian, i_sigma, i_temp
+    ):
         """Calculate mode thermal conductivity.
 
         The first parameter, mode_kappa, is overwritten.
@@ -1714,8 +1798,11 @@ class Conductivity_LBTE(Conductivity):
         """
         num_band = len(self._pp.primitive) * 3
         for i, (v_gp, f_gp) in enumerate(
-                zip(X.reshape(num_grid_points, num_band, 3),
-                    Y.reshape(num_grid_points, num_band, 3))):
+            zip(
+                X.reshape(num_grid_points, num_band, 3),
+                Y.reshape(num_grid_points, num_band, 3),
+            )
+        ):
 
             for j, (v, f) in enumerate(zip(v_gp, f_gp)):
                 # Do not consider three lowest modes at Gamma-point
@@ -1726,12 +1813,13 @@ class Conductivity_LBTE(Conductivity):
                 if rotations_cartesian is None:
                     sum_k = np.outer(v, f)
                 else:
-                    sum_k = np.zeros((3, 3), dtype='double')
+                    sum_k = np.zeros((3, 3), dtype="double")
                     for r in rotations_cartesian:
                         sum_k += np.outer(np.dot(r, v), np.dot(r, f))
                 sum_k = sum_k + sum_k.T
                 for k, vxf in enumerate(
-                        ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))):
+                    ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))
+                ):
                     mode_kappa[i_sigma, i_temp, i, j, k] = sum_k[vxf]
 
         t = self._temperatures[i_temp]
@@ -1758,7 +1846,7 @@ class Conductivity_LBTE(Conductivity):
         e = self._get_eigvals_pinv(i_sigma, i_temp)
         t = self._temperatures[i_temp]
 
-        omega_inv = np.empty(v.shape, dtype='double', order='C')
+        omega_inv = np.empty(v.shape, dtype="double", order="C")
         np.dot(v, (e * v).T, out=omega_inv)
         Y = np.dot(omega_inv, X)
         self._set_f_vectors(Y, num_ir_grid_points, weights)
@@ -1771,9 +1859,9 @@ class Conductivity_LBTE(Conductivity):
                 # vals = (X ** 2 * np.diag(mat)).reshape(-1, 3).sum(axis=1)
                 # vals = vals.reshape(num_ir_grid_points, num_band)
                 # self._mode_kappa[i_sigma, i_temp, :, :, i] = vals
-                w = diagonalize_collision_matrix(mat,
-                                                 pinv_solver=self._pinv_solver,
-                                                 log_level=self._log_level)
+                w = diagonalize_collision_matrix(
+                    mat, pinv_solver=self._pinv_solver, log_level=self._log_level
+                )
                 if solver in [1, 2, 4, 5]:
                     mat = mat.T
                 spectra = np.dot(mat.T, X) ** 2 * w
@@ -1785,24 +1873,22 @@ class Conductivity_LBTE(Conductivity):
         factor = self._conversion_factor * Kb * t ** 2
         self._mode_kappa[i_sigma, i_temp] *= factor
 
-    def _set_mode_kappa_from_mfp(self,
-                                 weights,
-                                 num_grid_points,
-                                 rotations_cartesian,
-                                 i_sigma,
-                                 i_temp):
+    def _set_mode_kappa_from_mfp(
+        self, weights, num_grid_points, rotations_cartesian, i_sigma, i_temp
+    ):
         for i, (v_gp, mfp_gp, cv_gp) in enumerate(
-                zip(self._gv, self._mfp[i_sigma, i_temp], self._cv[i_temp])):
+            zip(self._gv, self._mfp[i_sigma, i_temp], self._cv[i_temp])
+        ):
             for j, (v, mfp, cv) in enumerate(zip(v_gp, mfp_gp, cv_gp)):
-                sum_k = np.zeros((3, 3), dtype='double')
+                sum_k = np.zeros((3, 3), dtype="double")
                 for r in rotations_cartesian:
                     sum_k += np.outer(np.dot(r, v), np.dot(r, mfp))
-                sum_k = ((sum_k + sum_k.T) / 2 * cv * weights[i] ** 2
-                         * 2 * np.pi)
+                sum_k = (sum_k + sum_k.T) / 2 * cv * weights[i] ** 2 * 2 * np.pi
                 for k, vxf in enumerate(
-                        ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))):
+                    ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))
+                ):
                     self._mode_kappa[i_sigma, i_temp, i, j, k] = sum_k[vxf]
-        self._mode_kappa *= - self._conversion_factor
+        self._mode_kappa *= -self._conversion_factor
 
     def _set_mean_free_path(self, i_sigma, i_temp, weights, Y):
         t = self._temperatures[i_temp]
@@ -1813,7 +1899,8 @@ class Conductivity_LBTE(Conductivity):
                 if cv < 1e-10:
                     continue
                 self._mfp[i_sigma, i_temp, i, j] = (
-                    - 2 * t * np.sqrt(Kb / cv) * f / (2 * np.pi))
+                    -2 * t * np.sqrt(Kb / cv) * f / (2 * np.pi)
+                )
 
     def _show_log(self, i):
         gp = self._grid_points[i]
@@ -1835,12 +1922,16 @@ class Conductivity_LBTE(Conductivity):
         print(text)
         if self._is_full_pp:
             for f, v, pp in zip(frequencies, gv, ave_pp):
-                print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e" %
-                      (f, v[0], v[1], v[2], np.linalg.norm(v), pp))
+                print(
+                    "%8.3f   (%8.3f %8.3f %8.3f) %8.3f %11.3e"
+                    % (f, v[0], v[1], v[2], np.linalg.norm(v), pp)
+                )
         else:
             for f, v in zip(frequencies, gv):
-                print("%8.3f   (%8.3f %8.3f %8.3f) %8.3f" %
-                      (f, v[0], v[1], v[2], np.linalg.norm(v)))
+                print(
+                    "%8.3f   (%8.3f %8.3f %8.3f) %8.3f"
+                    % (f, v[0], v[1], v[2], np.linalg.norm(v))
+                )
 
         sys.stdout.flush()
 
@@ -1853,12 +1944,13 @@ class Conductivity_LBTE(Conductivity):
                     for ll in range(num_ir_grid_points):
                         for m in range(num_band):
                             for n in range(3):
-                                self._py_set_symmetrized_element(
-                                    i, j, k, ll, m, n)
+                                self._py_set_symmetrized_element(i, j, k, ll, m, n)
 
     def _py_set_symmetrized_element(self, i, j, k, ll, m, n):
-        sym_val = (self._collision_matrix[:, :, i, j, k, ll, m, n] +
-                   self._collision_matrix[:, :, ll, m, n, i, j, k]) / 2
+        sym_val = (
+            self._collision_matrix[:, :, i, j, k, ll, m, n]
+            + self._collision_matrix[:, :, ll, m, n, i, j, k]
+        ) / 2
         self._collision_matrix[:, :, i, j, k, ll, m, n] = sym_val
         self._collision_matrix[:, :, ll, m, n, i, j, k] = sym_val
 
@@ -1869,11 +1961,12 @@ class Conductivity_LBTE(Conductivity):
             for j in range(num_band):
                 for k in range(num_ir_grid_points):
                     for ll in range(num_band):
-                        self._py_set_symmetrized_element_no_kappa_stars(
-                            i, j, k, ll)
+                        self._py_set_symmetrized_element_no_kappa_stars(i, j, k, ll)
 
     def _py_set_symmetrized_element_no_kappa_stars(self, i, j, k, ll):
-        sym_val = (self._collision_matrix[:, :, i, j, k, ll] +
-                   self._collision_matrix[:, :, k, ll, i, j]) / 2
+        sym_val = (
+            self._collision_matrix[:, :, i, j, k, ll]
+            + self._collision_matrix[:, :, k, ll, i, j]
+        ) / 2
         self._collision_matrix[:, :, i, j, k, ll] = sym_val
         self._collision_matrix[:, :, k, ll, i, j] = sym_val
