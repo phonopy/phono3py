@@ -38,16 +38,18 @@ from phonopy.units import VaspToTHz
 from phonopy.structure.cells import sparse_to_dense_svecs
 
 
-def run_phonon_solver_c(dm,
-                        frequencies,
-                        eigenvectors,
-                        phonon_done,
-                        grid_points,
-                        grid_address,
-                        QDinv,
-                        frequency_conversion_factor=VaspToTHz,
-                        nac_q_direction=None,  # in reduced coordinates
-                        lapack_zheev_uplo='L'):
+def run_phonon_solver_c(
+    dm,
+    frequencies,
+    eigenvectors,
+    phonon_done,
+    grid_points,
+    grid_address,
+    QDinv,
+    frequency_conversion_factor=VaspToTHz,
+    nac_q_direction=None,  # in reduced coordinates
+    lapack_zheev_uplo="L",
+):
     """Bulid and solve dynamical matrices on grid in C-API.
 
     dm : DynamicalMatrix
@@ -72,25 +74,29 @@ def run_phonon_solver_c(dm,
     """
     import phono3py._phononmod as phononmod
 
-    (svecs,
-     multi,
-     masses,
-     rec_lattice,  # column vectors
-     positions,
-     born,
-     nac_factor,
-     dielectric) = _extract_params(dm)
+    (
+        svecs,
+        multi,
+        masses,
+        rec_lattice,  # column vectors
+        positions,
+        born,
+        nac_factor,
+        dielectric,
+    ) = _extract_params(dm)
 
-    if dm.is_nac() and dm.nac_method == 'gonze':
+    if dm.is_nac() and dm.nac_method == "gonze":
         gonze_nac_dataset = dm.Gonze_nac_dataset
         if gonze_nac_dataset[0] is None:
             dm.make_Gonze_nac_dataset()
             gonze_nac_dataset = dm.Gonze_nac_dataset
-        (gonze_fc,  # fc where the dipole-diple contribution is removed.
-         dd_q0,     # second term of dipole-dipole expression.
-         G_cutoff,  # Cutoff radius in reciprocal space. This will not be used.
-         G_list,    # List of G points where d-d interactions are integrated.
-         Lambda) = gonze_nac_dataset  # Convergence parameter
+        (
+            gonze_fc,  # fc where the dipole-diple contribution is removed.
+            dd_q0,  # second term of dipole-dipole expression.
+            G_cutoff,  # Cutoff radius in reciprocal space. This will not be used.
+            G_list,  # List of G points where d-d interactions are integrated.
+            Lambda,
+        ) = gonze_nac_dataset  # Convergence parameter
         fc = gonze_fc
     else:
         positions = None
@@ -99,11 +105,11 @@ def run_phonon_solver_c(dm,
         Lambda = 0
         fc = dm.force_constants
 
-    assert grid_points.dtype == 'int_'
+    assert grid_points.dtype == "int_"
     assert grid_points.flags.c_contiguous
-    assert QDinv.dtype == 'double'
+    assert QDinv.dtype == "double"
     assert QDinv.flags.c_contiguous
-    assert lapack_zheev_uplo in ('L', 'U')
+    assert lapack_zheev_uplo in ("L", "U")
 
     fc_p2s, fc_s2p = _get_fc_elements_mapping(dm, fc)
     phononmod.phonons_at_gridpoints(
@@ -129,18 +135,21 @@ def run_phonon_solver_c(dm,
         dd_q0,
         G_list,
         Lambda,
-        lapack_zheev_uplo)
+        lapack_zheev_uplo,
+    )
 
 
-def run_phonon_solver_py(grid_point,
-                         phonon_done,
-                         frequencies,
-                         eigenvectors,
-                         grid_address,
-                         QDinv,
-                         dynamical_matrix,
-                         frequency_conversion_factor,
-                         lapack_zheev_uplo):
+def run_phonon_solver_py(
+    grid_point,
+    phonon_done,
+    frequencies,
+    eigenvectors,
+    grid_address,
+    QDinv,
+    dynamical_matrix,
+    frequency_conversion_factor,
+    lapack_zheev_uplo,
+):
     """Bulid and solve dynamical matrices on grid in python."""
     gp = grid_point
     if phonon_done[gp] == 0:
@@ -150,8 +159,9 @@ def run_phonon_solver_py(grid_point,
         dm = dynamical_matrix.dynamical_matrix
         eigvals, eigvecs = np.linalg.eigh(dm, UPLO=lapack_zheev_uplo)
         eigvals = eigvals.real
-        frequencies[gp] = (np.sqrt(np.abs(eigvals)) * np.sign(eigvals)
-                           * frequency_conversion_factor)
+        frequencies[gp] = (
+            np.sqrt(np.abs(eigvals)) * np.sign(eigvals) * frequency_conversion_factor
+        )
         eigenvectors[gp] = eigvecs
 
 
@@ -163,10 +173,9 @@ def _extract_params(dm):
     else:
         _svecs, _multi = sparse_to_dense_svecs(svecs, multi)
 
-    masses = np.array(dm.primitive.masses, dtype='double')
-    rec_lattice = np.array(np.linalg.inv(dm.primitive.cell),
-                           dtype='double', order='C')
-    positions = np.array(dm.primitive.positions, dtype='double', order='C')
+    masses = np.array(dm.primitive.masses, dtype="double")
+    rec_lattice = np.array(np.linalg.inv(dm.primitive.cell), dtype="double", order="C")
+    positions = np.array(dm.primitive.positions, dtype="double", order="C")
     if dm.is_nac():
         born = dm.born
         nac_factor = dm.nac_factor
@@ -176,14 +185,16 @@ def _extract_params(dm):
         nac_factor = 0
         dielectric = None
 
-    return (_svecs,
-            _multi,
-            masses,
-            rec_lattice,
-            positions,
-            born,
-            nac_factor,
-            dielectric)
+    return (
+        _svecs,
+        _multi,
+        masses,
+        rec_lattice,
+        positions,
+        born,
+        nac_factor,
+        dielectric,
+    )
 
 
 def _get_fc_elements_mapping(dm, fc):
@@ -195,9 +206,10 @@ def _get_fc_elements_mapping(dm, fc):
     else:  # compact fc
         primitive = dm.primitive
         p2p_map = primitive.p2p_map
-        s2pp_map = np.array([p2p_map[s2p_map[i]] for i in range(len(s2p_map))],
-                            dtype='intc')
-        fc_p2s = np.arange(len(p2s_map), dtype='intc')
+        s2pp_map = np.array(
+            [p2p_map[s2p_map[i]] for i in range(len(s2p_map))], dtype="intc"
+        )
+        fc_p2s = np.arange(len(p2s_map), dtype="intc")
         fc_s2p = s2pp_map
 
-    return np.array(fc_p2s, dtype='int_'), np.array(fc_s2p, dtype='int_')
+    return np.array(fc_p2s, dtype="int_"), np.array(fc_s2p, dtype="int_")

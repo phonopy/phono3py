@@ -36,8 +36,10 @@
 import numpy as np
 from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.structure.cells import (
-    get_primitive_matrix_by_centring, estimate_supercell_matrix,
-    get_reduced_bases)
+    get_primitive_matrix_by_centring,
+    estimate_supercell_matrix,
+    get_reduced_bases,
+)
 from phonopy.structure.grid_points import length2mesh, extract_ir_grid_points
 
 
@@ -115,15 +117,17 @@ class BZGrid(object):
 
     """
 
-    def __init__(self,
-                 mesh,
-                 reciprocal_lattice=None,
-                 lattice=None,
-                 symmetry_dataset=None,
-                 is_shift=None,
-                 is_time_reversal=True,
-                 use_grg=False,
-                 store_dense_gp_map=True):
+    def __init__(
+        self,
+        mesh,
+        reciprocal_lattice=None,
+        lattice=None,
+        symmetry_dataset=None,
+        is_shift=None,
+        is_time_reversal=True,
+        use_grg=False,
+        store_dense_gp_map=True,
+    ):
         """Init method.
 
         mesh : array_like or float
@@ -153,10 +157,11 @@ class BZGrid(object):
 
         """
         if symmetry_dataset is None:
-            identity = np.eye(3, dtype='int_', order='C')
+            identity = np.eye(3, dtype="int_", order="C")
             self._symmetry_dataset = {
-                'rotations': identity.reshape(1, 3, 3),
-                'translations': np.array([[0, 0, 0]], dtype='double')}
+                "rotations": identity.reshape(1, 3, 3),
+                "translations": np.array([[0, 0, 0]], dtype="double"),
+            }
         else:
             self._symmetry_dataset = symmetry_dataset
         self._is_shift = is_shift
@@ -166,9 +171,9 @@ class BZGrid(object):
         self._addresses = None
         self._gp_map = None
         self._grid_matrix = None
-        self._D_diag = np.ones(3, dtype='int_')
-        self._Q = np.eye(3, dtype='int_', order='C')
-        self._P = np.eye(3, dtype='int_', order='C')
+        self._D_diag = np.ones(3, dtype="int_")
+        self._Q = np.eye(3, dtype="int_", order="C")
+        self._P = np.eye(3, dtype="int_", order="C")
         self._QDinv = None
         self._microzone_lattice = None
         self._rotations = None
@@ -176,14 +181,16 @@ class BZGrid(object):
 
         if reciprocal_lattice is not None:
             self._reciprocal_lattice = np.array(
-                reciprocal_lattice, dtype='double', order='C')
+                reciprocal_lattice, dtype="double", order="C"
+            )
             self._lattice = np.array(
-                np.linalg.inv(reciprocal_lattice), dtype='double', order='C')
+                np.linalg.inv(reciprocal_lattice), dtype="double", order="C"
+            )
         if lattice is not None:
-            self._lattice = np.array(
-                lattice, dtype='double', order='C')
+            self._lattice = np.array(lattice, dtype="double", order="C")
             self._reciprocal_lattice = np.array(
-                np.linalg.inv(lattice), dtype='double', order='C')
+                np.linalg.inv(lattice), dtype="double", order="C"
+            )
 
         self._generate_grid(mesh)
 
@@ -232,9 +239,9 @@ class BZGrid(object):
     def PS(self):
         """Integer shift vectors of GRGrid."""
         if self._is_shift is None:
-            return np.zeros(3, dtype='int_')
+            return np.zeros(3, dtype="int_")
         else:
-            return np.array(np.dot(self.P, self._is_shift), dtype='int_')
+            return np.array(np.dot(self.P, self._is_shift), dtype="int_")
 
     @property
     def grid_matrix(self):
@@ -366,33 +373,33 @@ class BZGrid(object):
         try:
             len(addresses[0])
         except TypeError:
-            return int(self._grg2bzg[get_grid_point_from_address(
-                addresses, self._D_diag)])
+            return int(
+                self._grg2bzg[get_grid_point_from_address(addresses, self._D_diag)]
+            )
 
-        gps = [get_grid_point_from_address(adrs, self._D_diag)
-               for adrs in addresses]
-        return np.array(self._grg2bzg[gps], dtype='int_')
+        gps = [get_grid_point_from_address(adrs, self._D_diag) for adrs in addresses]
+        return np.array(self._grg2bzg[gps], dtype="int_")
 
     def _set_bz_grid(self):
         """Generate BZ grid addresses and grid point mapping table."""
-        (self._addresses,
-         self._gp_map,
-         self._bzg2grg) = _relocate_BZ_grid_address(
-             self._D_diag,
-             self._Q,
-             self._reciprocal_lattice,  # column vectors
-             is_shift=self._is_shift,
-             store_dense_gp_map=self._store_dense_gp_map)
+        (self._addresses, self._gp_map, self._bzg2grg) = _relocate_BZ_grid_address(
+            self._D_diag,
+            self._Q,
+            self._reciprocal_lattice,  # column vectors
+            is_shift=self._is_shift,
+            store_dense_gp_map=self._store_dense_gp_map,
+        )
         if self._store_dense_gp_map:
             self._grg2bzg = self._gp_map[:-1]
         else:
-            self._grg2bzg = np.arange(
-                np.prod(self._D_diag), dtype='int_')
+            self._grg2bzg = np.arange(np.prod(self._D_diag), dtype="int_")
 
-        self._QDinv = np.array(self.Q * (1 / self.D_diag.astype('double')),
-                               dtype='double', order='C')
+        self._QDinv = np.array(
+            self.Q * (1 / self.D_diag.astype("double")), dtype="double", order="C"
+        )
         self._microzone_lattice = np.dot(
-            self._reciprocal_lattice, np.dot(self._QDinv, self._P))
+            self._reciprocal_lattice, np.dot(self._QDinv, self._P)
+        )
 
     def _generate_grid(self, mesh, force_SNF=False):
         self._set_mesh_numbers(mesh, force_SNF=force_SNF)
@@ -402,24 +409,30 @@ class BZGrid(object):
     def _set_mesh_numbers(self, mesh, force_SNF=False):
         """Set mesh numbers from array or float value.
 
-        Three case:
+        Four cases:
         1) Three integers are given.
             Use these numbers as regular grid.
         2) One number is given with no symmetry provided.
-            Regular grid is computed from this value.
-        3) One number is given and use_grg=True.
+            Regular grid is computed from this value. Grid is generated so that
+            distances in reciprocal space between neighboring grid points become
+            similar.
+        3) One number is given and use_grg=False.
             Regular grid is computed from this value and point group symmetry.
+            Grid is generated so that distances in reciprocal space between
+            neighboring grid points become similar.
         4) One number is given with symmetry provided and use_grg=True.
             Generalized regular grid is generated. However if the grid
             generating matrix is a diagonal matrix, use it as the D matrix
             of SNF and P and Q are set as identity matrices. Otherwise
-            D, P, Q matrices are computed using SNF.
+            D, P, Q matrices are computed using SNF. Grid is generated so that
+            basis vectors of supercell in direct space corresponding to this grid
+            have similar lengths.
 
         """
         try:
             num_values = len(mesh)
             if num_values == 3:
-                self._D_diag = np.array(mesh, dtype='int_')
+                self._D_diag = np.array(mesh, dtype="int_")
         except TypeError:
             length = float(mesh)
             if self._use_grg:
@@ -436,32 +449,30 @@ class BZGrid(object):
 
         """
         sym_dataset = self._symmetry_dataset
-        tmat = sym_dataset['transformation_matrix']
-        centring = sym_dataset['international'][0]
+        tmat = sym_dataset["transformation_matrix"]
+        centring = sym_dataset["international"][0]
         pmat = get_primitive_matrix_by_centring(centring)
         conv_lat = np.dot(np.linalg.inv(tmat).T, self._lattice)
         num_cells = int(np.prod(length2mesh(length, conv_lat)))
-        max_num_atoms = num_cells * len(sym_dataset['std_types'])
+        max_num_atoms = num_cells * len(sym_dataset["std_types"])
         conv_mesh_numbers = estimate_supercell_matrix(
-            sym_dataset,
-            max_num_atoms=max_num_atoms,
-            max_iter=200)
+            sym_dataset, max_num_atoms=max_num_atoms, max_iter=200
+        )
         inv_pmat = np.linalg.inv(pmat)
         inv_pmat_int = np.rint(inv_pmat).astype(int)
         assert (np.abs(inv_pmat - inv_pmat_int) < 1e-5).all()
         # transpose in reciprocal space
         self._grid_matrix = np.array(
-            (inv_pmat_int * conv_mesh_numbers).T, dtype='int_', order='C')
+            (inv_pmat_int * conv_mesh_numbers).T, dtype="int_", order="C"
+        )
         # If grid_matrix is a diagonal matrix, use it as D matrix.
         gm_diag = np.diagonal(self._grid_matrix)
         if (np.diag(gm_diag) == self._grid_matrix).all() and not force_SNF:
-            self._D_diag = np.array(gm_diag, dtype='int_')
+            self._D_diag = np.array(gm_diag, dtype="int_")
         else:
             import phono3py._phono3py as phono3c
-            if not phono3c.snf3x3(self._D_diag,
-                                  self._P,
-                                  self._Q,
-                                  self._grid_matrix):
+
+            if not phono3c.snf3x3(self._D_diag, self._P, self._Q, self._grid_matrix):
                 msg = "SNF3x3 failed."
                 raise RuntimeError(msg)
 
@@ -473,23 +484,30 @@ class BZGrid(object):
         """
         import phono3py._phono3py as phono3c
 
-        direct_rotations = np.array(self._symmetry_dataset['rotations'],
-                                    dtype='int_', order='C')
-        rec_rotations = np.zeros((48, 3, 3), dtype='int_', order='C')
-        num_rec_rot = phono3c.reciprocal_rotations(rec_rotations,
-                                                   direct_rotations,
-                                                   self._is_time_reversal)
-        self._reciprocal_operations = np.array(rec_rotations[:num_rec_rot],
-                                               dtype='int_', order='C')
+        direct_rotations = np.array(
+            self._symmetry_dataset["rotations"], dtype="int_", order="C"
+        )
+        rec_rotations = np.zeros((48, 3, 3), dtype="int_", order="C")
+        num_rec_rot = phono3c.reciprocal_rotations(
+            rec_rotations, direct_rotations, self._is_time_reversal
+        )
+        self._reciprocal_operations = np.array(
+            rec_rotations[:num_rec_rot], dtype="int_", order="C"
+        )
         self._rotations_cartesian = np.array(
-            [similarity_transformation(self._reciprocal_lattice, r)
-             for r in self._reciprocal_operations], dtype='double', order='C')
-        self._rotations = np.zeros(self._reciprocal_operations.shape,
-                                   dtype='int_', order='C')
-        if not phono3c.transform_rotations(self._rotations,
-                                           self._reciprocal_operations,
-                                           self._D_diag,
-                                           self._Q):
+            [
+                similarity_transformation(self._reciprocal_lattice, r)
+                for r in self._reciprocal_operations
+            ],
+            dtype="double",
+            order="C",
+        )
+        self._rotations = np.zeros(
+            self._reciprocal_operations.shape, dtype="int_", order="C"
+        )
+        if not phono3c.transform_rotations(
+            self._rotations, self._reciprocal_operations, self._D_diag, self._Q
+        ):
             msg = "Grid symmetry is broken. Use generalized regular grid."
             raise RuntimeError(msg)
 
@@ -499,9 +517,11 @@ def get_grid_point_from_address_py(address, mesh):
     # X runs first in XYZ
     # (*In spglib, Z first is possible with MACRO setting.)
     m = mesh
-    return (address[0] % m[0] +
-            (address[1] % m[1]) * m[0] +
-            (address[2] % m[2]) * m[0] * m[1])
+    return (
+        address[0] % m[0]
+        + (address[1] % m[1]) * m[0]
+        + (address[2] % m[2]) * m[0] * m[1]
+    )
 
 
 def get_grid_point_from_address(address, D_diag):
@@ -531,13 +551,13 @@ def get_grid_point_from_address(address, D_diag):
     """
     import phono3py._phono3py as phono3c
 
-    adrs_array = np.array(address, dtype='int_', order='C')
-    mesh_array = np.array(D_diag, dtype='int_')
+    adrs_array = np.array(address, dtype="int_", order="C")
+    mesh_array = np.array(D_diag, dtype="int_")
 
     if adrs_array.ndim == 1:
         return phono3c.grid_index_from_address(adrs_array, mesh_array)
 
-    gps = np.zeros(adrs_array.shape[0], dtype='int_')
+    gps = np.zeros(adrs_array.shape[0], dtype="int_")
     for i, adrs in enumerate(adrs_array):
         gps[i] = phono3c.grid_index_from_address(adrs, mesh_array)
     return gps
@@ -564,20 +584,15 @@ def get_ir_grid_points(bz_grid):
         shape=(prod(D_diag), ), dtype='int_'
 
     """
-    ir_grid_map = _get_ir_grid_map(
-        bz_grid.D_diag,
-        bz_grid.rotations,
-        PS=bz_grid.PS)
-    (ir_grid_points,
-     ir_grid_weights) = extract_ir_grid_points(ir_grid_map)
+    ir_grid_map = _get_ir_grid_map(bz_grid.D_diag, bz_grid.rotations, PS=bz_grid.PS)
+    (ir_grid_points, ir_grid_weights) = extract_ir_grid_points(ir_grid_map)
 
     return ir_grid_points, ir_grid_weights, ir_grid_map
 
 
-def get_grid_points_by_rotations(bz_gp,
-                                 bz_grid,
-                                 reciprocal_rotations=None,
-                                 with_surface=False):
+def get_grid_points_by_rotations(
+    bz_gp, bz_grid, reciprocal_rotations=None, with_surface=False
+):
     """Return BZ-grid point indices rotated from a BZ-grid point index.
 
     Parameters
@@ -622,9 +637,9 @@ def _get_grid_points_by_rotations(bz_gp, bz_grid, rotations):
     return bz_grid.grg2bzg[grgps]
 
 
-def _get_grid_points_by_bz_rotations(bz_gp, bz_grid, rotations, lang='C'):
+def _get_grid_points_by_bz_rotations(bz_gp, bz_grid, rotations, lang="C"):
     """Grid point rotations with surface treatment."""
-    if lang == 'C':
+    if lang == "C":
         return _get_grid_points_by_bz_rotations_c(bz_gp, bz_grid, rotations)
     else:
         return _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid, rotations)
@@ -633,7 +648,7 @@ def _get_grid_points_by_bz_rotations(bz_gp, bz_grid, rotations, lang='C'):
 def _get_grid_points_by_bz_rotations_c(bz_gp, bz_grid, rotations):
     import phono3py._phono3py as phono3c
 
-    bzgps = np.zeros(len(rotations), dtype='int_')
+    bzgps = np.zeros(len(rotations), dtype="int_")
     for i, r in enumerate(rotations):
         bzgps[i] = phono3c.rotate_bz_grid_index(
             bz_gp,
@@ -642,7 +657,8 @@ def _get_grid_points_by_bz_rotations_c(bz_gp, bz_grid, rotations):
             bz_grid.gp_map,
             bz_grid.D_diag,
             bz_grid.PS,
-            bz_grid.store_dense_gp_map * 1 + 1)
+            bz_grid.store_dense_gp_map * 1 + 1,
+        )
     return bzgps
 
 
@@ -656,12 +672,15 @@ def _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid, rotations):
     """
     rot_adrs = np.dot(rotations, bz_grid.addresses[bz_gp])
     grgps = get_grid_point_from_address(rot_adrs, bz_grid.D_diag)
-    bzgps = np.zeros(len(grgps), dtype='int_')
+    bzgps = np.zeros(len(grgps), dtype="int_")
     if bz_grid.store_dense_gp_map:
         for i, (gp, adrs) in enumerate(zip(grgps, rot_adrs)):
             indices = np.where(
-                (bz_grid.addresses[bz_grid.gp_map[gp]:bz_grid.gp_map[gp + 1]]
-                 == adrs).all(axis=1))[0]
+                (
+                    bz_grid.addresses[bz_grid.gp_map[gp] : bz_grid.gp_map[gp + 1]]
+                    == adrs
+                ).all(axis=1)
+            )[0]
             if len(indices) == 0:
                 msg = "with_surface did not work properly."
                 raise RuntimeError(msg)
@@ -670,9 +689,12 @@ def _get_grid_points_by_bz_rotations_py(bz_gp, bz_grid, rotations):
         num_grgp = np.prod(bz_grid.D_diag)
         num_bzgp = num_grgp * 8
         for i, (gp, adrs) in enumerate(zip(grgps, rot_adrs)):
-            gps = (np.arange(
-                bz_grid.gp_map[num_bzgp + gp],
-                bz_grid.gp_map[num_bzgp + gp + 1]) + num_grgp).tolist()
+            gps = (
+                np.arange(
+                    bz_grid.gp_map[num_bzgp + gp], bz_grid.gp_map[num_bzgp + gp + 1]
+                )
+                + num_grgp
+            ).tolist()
             gps.insert(0, gp)
             indices = np.where((bz_grid.addresses[gps] == adrs).all(axis=1))[0]
             if len(indices) == 0:
@@ -702,17 +724,18 @@ def _get_grid_address(D_diag):
     """
     import phono3py._phono3py as phono3c
 
-    gr_grid_addresses = np.zeros((np.prod(D_diag), 3), dtype='int_')
-    phono3c.gr_grid_addresses(gr_grid_addresses,
-                              np.array(D_diag, dtype='int_'))
+    gr_grid_addresses = np.zeros((np.prod(D_diag), 3), dtype="int_")
+    phono3c.gr_grid_addresses(gr_grid_addresses, np.array(D_diag, dtype="int_"))
     return gr_grid_addresses
 
 
-def _relocate_BZ_grid_address(D_diag,
-                              Q,
-                              reciprocal_lattice,  # column vectors
-                              is_shift=None,
-                              store_dense_gp_map=False):
+def _relocate_BZ_grid_address(
+    D_diag,
+    Q,
+    reciprocal_lattice,  # column vectors
+    is_shift=None,
+    store_dense_gp_map=False,
+):
     """Grid addresses are relocated to be inside first Brillouin zone.
 
     Number of ir-grid-points inside Brillouin zone is returned.
@@ -771,43 +794,42 @@ def _relocate_BZ_grid_address(D_diag,
     import phono3py._phono3py as phono3c
 
     if is_shift is None:
-        _is_shift = np.zeros(3, dtype='int_')
+        _is_shift = np.zeros(3, dtype="int_")
     else:
-        _is_shift = np.array(is_shift, dtype='int_')
-    bz_grid_addresses = np.zeros((np.prod(np.add(D_diag, 1)), 3),
-                                 dtype='int_', order='C')
-    bzg2grg = np.zeros(len(bz_grid_addresses), dtype='int_')
+        _is_shift = np.array(is_shift, dtype="int_")
+    bz_grid_addresses = np.zeros(
+        (np.prod(np.add(D_diag, 1)), 3), dtype="int_", order="C"
+    )
+    bzg2grg = np.zeros(len(bz_grid_addresses), dtype="int_")
 
     if store_dense_gp_map:
-        bz_map = np.zeros(np.prod(D_diag) + 1, dtype='int_')
+        bz_map = np.zeros(np.prod(D_diag) + 1, dtype="int_")
     else:
-        bz_map = np.zeros(np.prod(D_diag) * 9 + 1, dtype='int_')
+        bz_map = np.zeros(np.prod(D_diag) * 9 + 1, dtype="int_")
 
-    reclat_T = np.array(reciprocal_lattice.T, dtype='double', order='C')
+    reclat_T = np.array(reciprocal_lattice.T, dtype="double", order="C")
     reduced_basis = get_reduced_bases(reclat_T)
     tmat_inv = np.dot(np.linalg.inv(reduced_basis.T), reclat_T.T)
-    tmat_inv_int = np.rint(tmat_inv).astype('int_')
+    tmat_inv_int = np.rint(tmat_inv).astype("int_")
     assert (np.abs(tmat_inv - tmat_inv_int) < 1e-5).all()
 
     num_gp = phono3c.bz_grid_addresses(
         bz_grid_addresses,
         bz_map,
         bzg2grg,
-        np.array(D_diag, dtype='int_'),
-        np.array(np.dot(tmat_inv_int, Q), dtype='int_', order='C'),
+        np.array(D_diag, dtype="int_"),
+        np.array(np.dot(tmat_inv_int, Q), dtype="int_", order="C"),
         _is_shift,
-        np.array(reduced_basis.T, dtype='double', order='C'),
-        store_dense_gp_map * 1 + 1)
+        np.array(reduced_basis.T, dtype="double", order="C"),
+        store_dense_gp_map * 1 + 1,
+    )
 
-    bz_grid_addresses = np.array(bz_grid_addresses[:num_gp],
-                                 dtype='int_', order='C')
-    bzg2grg = np.array(bzg2grg[:num_gp], dtype='int_')
+    bz_grid_addresses = np.array(bz_grid_addresses[:num_gp], dtype="int_", order="C")
+    bzg2grg = np.array(bzg2grg[:num_gp], dtype="int_")
     return bz_grid_addresses, bz_map, bzg2grg
 
 
-def _get_ir_grid_map(D_diag,
-                     grg_rotations,
-                     PS=None):
+def _get_ir_grid_map(D_diag, grg_rotations, PS=None):
     """Irreducible k-points are searched.
 
     Parameters
@@ -834,17 +856,18 @@ def _get_ir_grid_map(D_diag,
     """
     import phono3py._phono3py as phono3c
 
-    ir_grid_map = np.zeros(np.prod(D_diag), dtype='int_')
+    ir_grid_map = np.zeros(np.prod(D_diag), dtype="int_")
     if PS is None:
-        _PS = np.zeros(3, dtype='int_')
+        _PS = np.zeros(3, dtype="int_")
     else:
-        _PS = np.array(PS, dtype='int_')
+        _PS = np.array(PS, dtype="int_")
 
     num_ir = phono3c.ir_grid_map(
         ir_grid_map,
-        np.array(D_diag, dtype='int_'),
+        np.array(D_diag, dtype="int_"),
         _PS,
-        np.array(grg_rotations, dtype='int_', order='C'))
+        np.array(grg_rotations, dtype="int_", order="C"),
+    )
 
     if num_ir > 0:
         return ir_grid_map
