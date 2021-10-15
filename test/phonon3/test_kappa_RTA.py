@@ -23,21 +23,25 @@ aln_lda_kappa_RTA_with_sigmas = [213.820000, 213.820000, 224.800121, 0, 0, 0]
 
 
 def test_kappa_RTA_si(si_pbesol):
+    """Test RTA by Si."""
     kappa = _get_kappa(si_pbesol, [9, 9, 9]).ravel()
     np.testing.assert_allclose(si_pbesol_kappa_RTA, kappa, atol=0.5)
 
 
 def test_kappa_RTA_si_full_pp(si_pbesol):
+    """Test RTA with full-pp by Si."""
     kappa = _get_kappa(si_pbesol, [9, 9, 9], is_full_pp=True).ravel()
     np.testing.assert_allclose(si_pbesol_kappa_RTA, kappa, atol=0.5)
 
 
 def test_kappa_RTA_si_iso(si_pbesol):
+    """Test RTA with isotope scattering by Si."""
     kappa = _get_kappa(si_pbesol, [9, 9, 9], is_isotope=True).ravel()
     np.testing.assert_allclose(si_pbesol_kappa_RTA_iso, kappa, atol=0.5)
 
 
 def test_kappa_RTA_si_with_sigma(si_pbesol):
+    """Test RTA with smearing method by Si."""
     si_pbesol.sigmas = [
         0.1,
     ]
@@ -47,6 +51,7 @@ def test_kappa_RTA_si_with_sigma(si_pbesol):
 
 
 def test_kappa_RTA_si_with_sigma_full_pp(si_pbesol):
+    """Test RTA with smearing method and full-pp by Si."""
     si_pbesol.sigmas = [
         0.1,
     ]
@@ -57,6 +62,7 @@ def test_kappa_RTA_si_with_sigma_full_pp(si_pbesol):
 
 
 def test_kappa_RTA_si_with_sigma_iso(si_pbesol):
+    """Test RTA with smearing method and isotope scattering by Si."""
     si_pbesol.sigmas = [
         0.1,
     ]
@@ -66,11 +72,13 @@ def test_kappa_RTA_si_with_sigma_iso(si_pbesol):
 
 
 def test_kappa_RTA_si_compact_fc(si_pbesol_compact_fc):
+    """Test RTA with compact-fc by Si."""
     kappa = _get_kappa(si_pbesol_compact_fc, [9, 9, 9]).ravel()
     np.testing.assert_allclose(si_pbesol_kappa_RTA, kappa, atol=0.5)
 
 
 def test_kappa_RTA_si_nosym(si_pbesol, si_pbesol_nosym):
+    """Test RTA without considering symmetry by Si."""
     si_pbesol_nosym.fc2 = si_pbesol.fc2
     si_pbesol_nosym.fc3 = si_pbesol.fc3
     kappa = _get_kappa(si_pbesol_nosym, [4, 4, 4]).reshape(-1, 3).sum(axis=1)
@@ -79,6 +87,7 @@ def test_kappa_RTA_si_nosym(si_pbesol, si_pbesol_nosym):
 
 
 def test_kappa_RTA_si_nomeshsym(si_pbesol, si_pbesol_nomeshsym):
+    """Test RTA without considering mesh symmetry by Si."""
     si_pbesol_nomeshsym.fc2 = si_pbesol.fc2
     si_pbesol_nomeshsym.fc3 = si_pbesol.fc3
     kappa = _get_kappa(si_pbesol_nomeshsym, [4, 4, 4]).ravel()
@@ -87,6 +96,7 @@ def test_kappa_RTA_si_nomeshsym(si_pbesol, si_pbesol_nomeshsym):
 
 
 def test_kappa_RTA_si_N_U(si_pbesol):
+    """Test RTA with N and U scatterings by Si."""
     ph3 = si_pbesol
     mesh = [4, 4, 4]
     is_N_U = True
@@ -210,11 +220,13 @@ def test_kappa_RTA_si_N_U(si_pbesol):
 
 
 def test_kappa_RTA_nacl(nacl_pbe):
+    """Test RTA by NaCl."""
     kappa = _get_kappa(nacl_pbe, [9, 9, 9]).ravel()
     np.testing.assert_allclose(nacl_pbe_kappa_RTA, kappa, atol=0.5)
 
 
 def test_kappa_RTA_nacl_with_sigma(nacl_pbe):
+    """Test RTA with smearing method by NaCl."""
     nacl_pbe.sigmas = [
         0.1,
     ]
@@ -226,11 +238,13 @@ def test_kappa_RTA_nacl_with_sigma(nacl_pbe):
 
 
 def test_kappa_RTA_aln(aln_lda):
+    """Test RTA by AlN."""
     kappa = _get_kappa(aln_lda, [7, 7, 5]).ravel()
     np.testing.assert_allclose(aln_lda_kappa_RTA, kappa, atol=0.5)
 
 
 def test_kappa_RTA_aln_with_sigma(aln_lda):
+    """Test RTA with smearing method by AlN."""
     aln_lda.sigmas = [
         0.1,
     ]

@@ -180,7 +180,7 @@ class Isotope(object):
 
     @property
     def bz_grid(self):
-        """Return BZ grid."""
+        """Return BZgrid class instance."""
         return self._bz_grid
 
     @property

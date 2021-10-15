@@ -270,7 +270,6 @@ class DispCorrMatrixMesh:
             shape=(grid_point, band, band), dtype='double', order='C'
 
         """
-
         condition = frequencies > self._cutoff_frequency
         _freqs = np.where(condition, frequencies, 1)
         _a = mode_length(_freqs, T)
@@ -348,7 +347,6 @@ class SecondOrderFC(object):
             Phonons are ignored if they have frequencies less than this value.
 
         """
-
         assert displacements.shape == forces.shape
         shape = displacements.shape
         u = np.array(displacements.reshape(shape[0], -1), dtype="double", order="C")
@@ -483,7 +481,7 @@ class ThirdOrderFC(object):
 
     @property
     def forces(self):
-        """Return input forces"""
+        """Return input forces."""
         return self._forces
 
     @property

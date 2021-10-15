@@ -1,3 +1,4 @@
+"""API for isotope scattering."""
 # Copyright (C) 2019 Atsushi Togo
 # All rights reserved.
 #
@@ -37,7 +38,9 @@ from phonopy.units import VaspToTHz
 from phono3py.other.isotope import Isotope
 
 
-class Phono3pyIsotope(object):
+class Phono3pyIsotope:
+    """Class to calculate isotope scattering."""
+
     def __init__(
         self,
         mesh,
@@ -51,6 +54,7 @@ class Phono3pyIsotope(object):
         cutoff_frequency=None,
         lapack_zheev_uplo="L",
     ):
+        """Init method."""
         if sigmas is None:
             self._sigmas = [
                 None,
@@ -72,13 +76,16 @@ class Phono3pyIsotope(object):
 
     @property
     def dynamical_matrix(self):
+        """Return dynamical matrix class instance."""
         return self._iso.dynamical_matrix
 
     @property
     def grid(self):
+        """Return BZGrid class instance."""
         return self._iso.bz_grid
 
     def run(self, grid_points):
+        """Calculate isotope scattering."""
         gamma = np.zeros(
             (len(self._sigmas), len(grid_points), len(self._iso.band_indices)),
             dtype="double",
@@ -121,6 +128,7 @@ class Phono3pyIsotope(object):
         frequency_scale_factor=None,
         decimals=None,
     ):
+        """Initialize dynamical matrix."""
         self._primitive = primitive
         self._iso.init_dynamical_matrix(
             fc2,
@@ -132,8 +140,10 @@ class Phono3pyIsotope(object):
         )
 
     def set_sigma(self, sigma):
+        """Set sigma. None means tetrahedron method."""
         self._iso.set_sigma(sigma)
 
     @property
     def gamma(self):
+        """Return calculated isotope scattering."""
         return self._gamma

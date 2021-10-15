@@ -1,3 +1,4 @@
+"""Show and write triplets information."""
 # Copyright (C) 2015 Atsushi Togo
 # All rights reserved.
 #
@@ -49,6 +50,7 @@ def write_grid_points(
     compression="gzip",
     filename=None,
 ):
+    """Write grid points into files."""
     ir_grid_points, ir_grid_weights = _get_ir_grid_points(
         bz_grid, is_kappa_star=is_kappa_star
     )
@@ -101,6 +103,7 @@ def write_grid_points(
 def show_num_triplets(
     primitive, bz_grid, band_indices=None, grid_points=None, is_kappa_star=True
 ):
+    """Show numbers of triplets at grid points."""
     tp_nums = _TripletsNumbers(bz_grid, is_kappa_star=is_kappa_star)
     num_band = len(primitive) * 3
     if band_indices is None:

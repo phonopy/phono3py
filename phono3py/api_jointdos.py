@@ -1,3 +1,4 @@
+"""API for joint-density-of-states calculation."""
 # Copyright (C) 2019 Atsushi Togo
 # All rights reserved.
 #
@@ -41,7 +42,9 @@ from phono3py.phonon.grid import BZGrid
 from phono3py.file_IO import write_joint_dos
 
 
-class Phono3pyJointDos(object):
+class Phono3pyJointDos:
+    """Class to calculate joint-density-of-states."""
+
     def __init__(
         self,
         supercell,
@@ -63,6 +66,7 @@ class Phono3pyJointDos(object):
         output_filename=None,
         log_level=0,
     ):
+        """Init method."""
         if sigmas is None:
             self._sigmas = [None]
         else:
@@ -104,9 +108,11 @@ class Phono3pyJointDos(object):
 
     @property
     def grid(self):
+        """Return BZGrid class instance."""
         return self._bz_grid
 
     def run(self, grid_points, write_jdos=False):
+        """Calculate joint-density-of-states."""
         if self._log_level:
             print(
                 "--------------------------------- Joint DOS "
@@ -151,14 +157,17 @@ class Phono3pyJointDos(object):
 
     @property
     def dynamical_matrix(self):
+        """Return DynamicalMatrix class instance."""
         return self._jdos.dynamical_matrix
 
     @property
     def frequency_points(self):
+        """Return frequency points."""
         return self._jdos.frequency_points
 
     @property
     def joint_dos(self):
+        """Return calculated joint-density-of-states."""
         return self._jdos.joint_dos
 
     def _write(self, gp, sigma=None):

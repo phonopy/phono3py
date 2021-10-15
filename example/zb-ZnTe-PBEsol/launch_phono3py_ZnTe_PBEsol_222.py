@@ -12,6 +12,7 @@ Dict = DataFactory("dict")
 
 
 def get_settings(cutoff_energy, is_nac=False):
+    """Set up parameters."""
     unitcell_str = """  Zn Te
    1.0
      6.0653118499999996    0.0000000000000000    0.0000000000000000
@@ -99,6 +100,7 @@ Direct
 
 
 def launch_phono3py(cutoff_energy=350, is_nac=False):
+    """Launch calculation."""
     structure, forces_config, nac_config, phonon_settings = get_settings(
         cutoff_energy, is_nac
     )

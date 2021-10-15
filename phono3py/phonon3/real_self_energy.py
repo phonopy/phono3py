@@ -1,3 +1,4 @@
+"""Calculate real-part of self-energy of bubble diagram."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -57,7 +58,7 @@ def get_real_self_energy(
     output_filename=None,
     log_level=0,
 ):
-    """Real part of self energy at frequency points
+    """Real part of self energy at frequency points.
 
     Band indices to be calculated at are kept in Interaction instance.
 
@@ -115,7 +116,6 @@ def get_real_self_energy(
                                 band_indices, frequency_points)
 
     """
-
     if epsilons is None:
         _epsilons = [
             None,
@@ -250,6 +250,7 @@ def write_real_self_energy(
     is_mesh_symmetry=True,
     log_level=0,
 ):
+    """Write real-part of self-energies into files."""
     if epsilons is None:
         _epsilons = [
             RealSelfEnergy.default_epsilon,
@@ -282,11 +283,8 @@ def write_real_self_energy(
                         )
 
 
-class RealSelfEnergy(object):
-
-    default_epsilon = 0.05
-
-    """
+class RealSelfEnergy:
+    """Class to calculate real-part of self-energy of bubble diagram.
 
     About the parameter epsilon
     ---------------------------
@@ -305,10 +303,12 @@ class RealSelfEnergy(object):
 
     """
 
+    default_epsilon = 0.05
+
     def __init__(
         self, interaction, grid_point=None, temperature=None, epsilon=None, lang="C"
     ):
-        """
+        """Init method.
 
         Parameters
         ----------
@@ -323,7 +323,6 @@ class RealSelfEnergy(object):
             Parameter explained above. The unit is consisered as THz.
 
         """
-
         self._pp = interaction
         self.epsilon = epsilon
         if temperature is None:
@@ -348,6 +347,7 @@ class RealSelfEnergy(object):
         self._unit_conversion = 18 / (Hbar * EV) ** 2 / (2 * np.pi * THz) ** 2 * EV ** 2
 
     def run(self):
+        """Calculate real-part of self-energies."""
         if self._pp_strength is None:
             self.run_interaction()
 
@@ -362,6 +362,7 @@ class RealSelfEnergy(object):
             self._run_with_frequency_points()
 
     def run_interaction(self):
+        """Calculate ph-ph interaction strength."""
         self._pp.run(lang=self._lang)
         self._pp_strength = self._pp.interaction_strength
         (self._frequencies, self._eigenvectors) = self._pp.get_phonons()[:2]
@@ -370,6 +371,7 @@ class RealSelfEnergy(object):
 
     @property
     def real_self_energy(self):
+        """Return calculated real-part of self-energies."""
         if self._cutoff_frequency is None:
             return self._real_self_energies
         else:  # Averaging frequency shifts by degenerate bands
@@ -395,6 +397,7 @@ class RealSelfEnergy(object):
 
     @property
     def grid_point(self):
+        """Setter and getter of a grid point."""
         return self._grid_point
 
     @grid_point.setter
@@ -409,6 +412,11 @@ class RealSelfEnergy(object):
 
     @property
     def epsilon(self):
+        """Setter and getter of epsilon.
+
+        See the detail about epsilon at docstring of this class.
+
+        """
         return self._epsilon
 
     @epsilon.setter
@@ -420,6 +428,7 @@ class RealSelfEnergy(object):
 
     @property
     def temperature(self):
+        """Setter and getter of a temperature point."""
         return self._temperature
 
     @temperature.setter
@@ -431,6 +440,7 @@ class RealSelfEnergy(object):
 
     @property
     def frequency_points(self):
+        """Setter and getter of frequency points."""
         return self._frequency_points
 
     @frequency_points.setter
@@ -590,16 +600,17 @@ class RealSelfEnergy(object):
 
 
 def imag_to_real(im_part, frequency_points):
+    """Calculate real-part of self-energy from the imaginary-part."""
     i2r = ImagToReal(im_part, frequency_points)
     i2r.run()
     return i2r.re_part, i2r.frequency_points
 
 
 class ImagToReal(object):
-    """Calculate real part of self-energy using Kramers-Kronig relation"""
+    """Calculate real part of self-energy using Kramers-Kronig relation."""
 
     def __init__(self, im_part, frequency_points, diagram="bubble"):
-        """
+        """Init method.
 
         Parameters
         ----------
@@ -615,7 +626,6 @@ class ImagToReal(object):
             Only bubble diagram is implemented currently.
 
         """
-
         if diagram == "bubble":
             (
                 self._im_part,
@@ -630,13 +640,16 @@ class ImagToReal(object):
 
     @property
     def re_part(self):
+        """Return real part."""
         return self._re_part
 
     @property
     def frequency_points(self):
+        """Return frequency points."""
         return self._frequency_points
 
     def run(self, method="pick_one"):
+        """Calculate real part."""
         if method == "pick_one":
             self._re_part, self._frequency_points = self._pick_one()
         elif method == "half_shift":
@@ -645,6 +658,7 @@ class ImagToReal(object):
             raise RuntimeError("No method is found.")
 
     def _pick_one(self):
+        """Calculate real-part with same frequency points excluding one point."""
         re_part = []
         fpoints = []
         coef = self._df / np.pi
@@ -661,6 +675,7 @@ class ImagToReal(object):
         return (np.array(re_part, dtype="double"), np.array(fpoints, dtype="double"))
 
     def _half_shift(self):
+        """Calculate real-part with half-shifted frequency points."""
         re_part = []
         fpoints = []
         coef = self._df / np.pi

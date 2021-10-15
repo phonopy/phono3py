@@ -1,3 +1,4 @@
+"""Utilities of calculator interfaces."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -55,6 +56,7 @@ calculator_info = {
 
 
 def get_default_displacement_distance(interface_mode):
+    """Return default displacement distances for calculators."""
     if interface_mode in ("qe", "abinit", "turbomole"):
         displacement_distance = 0.06
     elif interface_mode == "crystal":
@@ -65,6 +67,7 @@ def get_default_displacement_distance(interface_mode):
 
 
 def get_additional_info_to_write_supercells(interface_mode, supercell_matrix):
+    """Return additional information to write supercells for calculators."""
     additional_info = {}
     if interface_mode == "crystal":
         additional_info["template_file"] = "TEMPLATE3"
@@ -75,6 +78,7 @@ def get_additional_info_to_write_supercells(interface_mode, supercell_matrix):
 def get_additional_info_to_write_fc2_supercells(
     interface_mode, phonon_supercell_matrix
 ):
+    """Return additional information to write fc2-supercells for calculators."""
     additional_info = {}
     if interface_mode == "qe":
         additional_info["pre_filename"] = "supercell_fc2"

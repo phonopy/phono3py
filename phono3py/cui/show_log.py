@@ -1,3 +1,4 @@
+"""Utilities to show various logs for main CUI script."""
 # Copyright (C) 2015 Atsushi Togo
 # All rights reserved.
 #
@@ -40,6 +41,7 @@ from phonopy.structure.cells import print_cell
 def show_general_settings(
     settings, run_mode, phono3py, cell_filename, input_filename, output_filename
 ):
+    """Show general setting information."""
     is_primitive_axes_auto = (
         type(phono3py.primitive_matrix) is str and phono3py.primitive_matrix == "auto"
     )
@@ -84,6 +86,7 @@ def show_general_settings(
 
 
 def show_phono3py_cells(phono3py, settings):
+    """Show crystal structures."""
     symmetry = phono3py.symmetry
     primitive = phono3py.primitive
     supercell = phono3py.supercell
@@ -104,6 +107,7 @@ def show_phono3py_cells(phono3py, settings):
 
 
 def show_phono3py_force_constants_settings(settings):
+    """Show force constants settings."""
     read_fc3 = settings.read_fc3
     read_fc2 = settings.read_fc2
     symmetrize_fc3r = settings.is_symmetrize_fc3_r or settings.fc_symmetry
@@ -138,6 +142,7 @@ def show_phono3py_force_constants_settings(settings):
 
 
 def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
+    """Show general calculation settings."""
     sigmas = updated_settings["sigmas"]
     temperatures = updated_settings["temperatures"]
     temperature_points = updated_settings["temperature_points"]
@@ -227,6 +232,7 @@ def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
 
 
 def show_grid_points(grid_points):
+    """Show grid point list."""
     text = "Grid point to be calculated: "
     if len(grid_points) > 8:
         for i, gp in enumerate(grid_points):

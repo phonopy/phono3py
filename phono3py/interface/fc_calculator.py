@@ -1,3 +1,4 @@
+"""Interfaces for force constants calculators."""
 # Copyright (C) 2019 Atsushi Togo
 # All rights reserved.
 #
@@ -83,7 +84,6 @@ def get_fc3(
         for supercell.
 
     """
-
     if fc_calculator == "alm":
         from phono3py.interface.alm import get_fc3
 

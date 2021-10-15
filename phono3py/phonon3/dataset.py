@@ -1,3 +1,4 @@
+"""Parse displacement dataset."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -36,7 +37,7 @@ import numpy as np
 
 
 def get_displacements_and_forces_fc3(disp_dataset):
-    """Returns displacements and forces from disp_dataset
+    """Return displacements and forces from disp_dataset.
 
     Note
     ----
@@ -59,7 +60,6 @@ def get_displacements_and_forces_fc3(disp_dataset):
         None is returned when forces don't exist.
 
     """
-
     if "first_atoms" in disp_dataset:
         natom = disp_dataset["natom"]
         ndisp = len(disp_dataset["first_atoms"])

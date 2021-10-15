@@ -1,3 +1,4 @@
+"""Calculate spectral function due to bubble diagram."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -61,7 +62,7 @@ def run_spectral_function(
     output_filename=None,
     log_level=0,
 ):
-    """Spectral function of self energy at frequency points
+    """Spectral function of self energy at frequency points.
 
     Band indices to be calculated at are kept in Interaction instance.
 
@@ -112,7 +113,6 @@ def run_spectral_function(
         spf.half_linewidths, spf.shifts have the same shape as above.
 
     """
-
     spf = SpectralFunction(
         interaction,
         grid_points,
@@ -169,7 +169,7 @@ def run_spectral_function(
 
 
 class SpectralFunction(object):
-    """Calculate spectral function"""
+    """Calculate spectral function due to bubble diagram."""
 
     def __init__(
         self,
@@ -183,6 +183,7 @@ class SpectralFunction(object):
         temperatures=None,
         log_level=0,
     ):
+        """Init method."""
         self._interaction = interaction
         self._grid_points = grid_points
         self._frequency_points_in = frequency_points
@@ -205,18 +206,18 @@ class SpectralFunction(object):
         self._gp_index = None
 
     def run(self):
+        """Calculate spectral function over grid points."""
         for gp_index in self:
             pass
 
     def __iter__(self):
+        """Initialize iterator."""
         self._prepare()
 
         return self
 
-    def next(self):
-        return self.__next__()
-
     def __next__(self):
+        """Calculate at next grid point."""
         if self._gp_index >= len(self._grid_points):
             if self._log_level:
                 print("-" * 74)
@@ -248,26 +249,32 @@ class SpectralFunction(object):
 
     @property
     def spectral_functions(self):
+        """Return calculated spectral functions."""
         return self._spectral_functions
 
     @property
     def shifts(self):
+        """Return real part of self energies."""
         return self._deltas
 
     @property
     def half_linewidths(self):
+        """Return imaginary part of self energies."""
         return self._gammas
 
     @property
     def frequency_points(self):
+        """Return frequency points."""
         return self._frequency_points
 
     @property
     def grid_points(self):
+        """Return grid points."""
         return self._grid_points
 
     @property
     def sigmas(self):
+        """Return sigmas."""
         return self._sigmas
 
     def _prepare(self):
@@ -317,7 +324,7 @@ class SpectralFunction(object):
         assert (np.abs(self._frequency_points - fpoints) < 1e-8).all()
 
     def _run_spectral_function(self, i, grid_point, sigma_i):
-        """Compute spectral functions from self-energies
+        """Compute spectral functions from self-energies.
 
         Note
         ----
@@ -332,7 +339,6 @@ class SpectralFunction(object):
         approximately 1 for each phonon mode.
 
         """
-
         if self._log_level:
             print("* Spectral function")
         frequencies = self._interaction.get_phonons()[0]

@@ -1,3 +1,4 @@
+"""Tests for joint-density-of-states."""
 import numpy as np
 from phono3py.api_jointdos import Phono3pyJointDos
 
@@ -164,6 +165,7 @@ nacl_jdos_12_at_300K = [
 
 
 def test_jdos_si(si_pbesol):
+    """Test joint-DOS by Si."""
     si_pbesol.mesh_numbers = [9, 9, 9]
     jdos = Phono3pyJointDos(
         si_pbesol.phonon_supercell,
@@ -183,6 +185,7 @@ def test_jdos_si(si_pbesol):
 
 
 def test_jdso_si_nomeshsym(si_pbesol):
+    """Test joint-DOS without considering mesh symmetry by Si."""
     si_pbesol.mesh_numbers = [9, 9, 9]
     jdos = Phono3pyJointDos(
         si_pbesol.phonon_supercell,
@@ -203,6 +206,7 @@ def test_jdso_si_nomeshsym(si_pbesol):
 
 
 def test_jdos_nacl(nacl_pbe):
+    """Test joint-DOS by NaCl."""
     nacl_pbe.mesh_numbers = [9, 9, 9]
     jdos = Phono3pyJointDos(
         nacl_pbe.phonon_supercell,
@@ -223,6 +227,7 @@ def test_jdos_nacl(nacl_pbe):
 
 
 def test_jdos_nacl_gamma(nacl_pbe):
+    """Test joint-DOS at Gamma-point by NaCl."""
     nacl_pbe.mesh_numbers = [9, 9, 9]
     jdos = Phono3pyJointDos(
         nacl_pbe.phonon_supercell,
@@ -244,6 +249,7 @@ def test_jdos_nacl_gamma(nacl_pbe):
 
 
 def test_jdos_nacl_at_300K(nacl_pbe):
+    """Test joint-DOS at 300K by NaCl."""
     nacl_pbe.mesh_numbers = [9, 9, 9]
     jdos = Phono3pyJointDos(
         nacl_pbe.phonon_supercell,

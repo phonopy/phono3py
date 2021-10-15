@@ -1,3 +1,4 @@
+"""Tests for grids."""
 import numpy as np
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phono3py.phonon.grid import (
@@ -11,13 +12,12 @@ from phono3py.phonon.grid import (
 
 
 def test_get_grid_point_from_address(agno2_cell):
-    """
+    """Test for get_grid_point_from_address.
 
     Compare get_grid_point_from_address from spglib and that
     written in python with mesh numbers.
 
     """
-
     mesh = (10, 10, 10)
 
     for address in list(np.ndindex(mesh)):
@@ -28,8 +28,7 @@ def test_get_grid_point_from_address(agno2_cell):
 
 
 def test_BZGrid(si_pbesol_111):
-    """Basis test of BZGrid type1 and type2"""
-
+    """Tests of BZGrid type1 and type2."""
     lat = si_pbesol_111.primitive.cell
     reclat = np.linalg.inv(lat)
     mesh = [4, 4, 4]
@@ -118,13 +117,12 @@ def test_BZGrid(si_pbesol_111):
 
 
 def test_BZGrid_bzg2grg(si_pbesol_111):
-    """BZGrid to GRGrid
+    """Test of mapping of BZGrid to GRGrid.
 
     This mapping table is stored in BZGrid, but also determined by
     get_grid_point_from_address. This test checks the consistency.
 
     """
-
     lat = si_pbesol_111.primitive.cell
     mesh = [4, 4, 4]
     bzgrid1 = BZGrid(mesh, lattice=lat, store_dense_gp_map=False)
@@ -141,7 +139,7 @@ def test_BZGrid_bzg2grg(si_pbesol_111):
 
 
 def test_BZGrid_SNF(si_pbesol_111):
-    """SNF in BZGrid"""
+    """Test of SNF in BZGrid."""
     lat = si_pbesol_111.primitive.cell
     mesh = 10
     bzgrid1 = BZGrid(
