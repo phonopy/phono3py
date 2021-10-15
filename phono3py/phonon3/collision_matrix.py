@@ -52,8 +52,6 @@ class CollisionMatrix(ImagSelfEnergy):
         rotations_cartesian=None,
         num_ir_grid_points=None,
         rot_grid_points=None,
-        temperature=None,
-        sigma=None,
         is_reducible_collision_matrix=False,
         log_level=0,
         lang="C",
@@ -80,9 +78,7 @@ class CollisionMatrix(ImagSelfEnergy):
         self._unit_conversion = None
         self._log_level = log_level
 
-        ImagSelfEnergy.__init__(
-            self, interaction, temperature=temperature, sigma=sigma, lang=lang
-        )
+        ImagSelfEnergy.__init__(self, interaction, lang=lang)
 
         self._is_reducible_collision_matrix = is_reducible_collision_matrix
         self._is_collision_matrix = True

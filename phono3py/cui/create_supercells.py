@@ -1,3 +1,4 @@
+"""Utilities of main CUI script."""
 # Copyright (C) 2015 Atsushi Togo
 # All rights reserved.
 #
@@ -37,56 +38,59 @@ from phono3py.file_IO import write_disp_fc3_yaml, write_disp_fc2_yaml
 from phono3py.interface.calculator import (
     get_additional_info_to_write_fc2_supercells,
     get_additional_info_to_write_supercells,
-    get_default_displacement_distance)
+    get_default_displacement_distance,
+)
 from phonopy.interface.calculator import write_supercells_with_displacements
 
 
-def create_phono3py_supercells(cell_info,
-                               settings,
-                               symprec,
-                               output_filename=None,
-                               interface_mode='vasp',
-                               log_level=1):
-    """create displacements and supercells
+def create_phono3py_supercells(
+    cell_info,
+    settings,
+    symprec,
+    output_filename=None,
+    interface_mode="vasp",
+    log_level=1,
+):
+    """Create displacements and supercells.
 
     Distance unit used is that for the calculator interface.
     The default unit is Angstron.
 
     """
-
-    optional_structure_info = cell_info['optional_structure_info']
+    optional_structure_info = cell_info["optional_structure_info"]
 
     if settings.displacement_distance is None:
         distance = get_default_displacement_distance(interface_mode)
     else:
         distance = settings.displacement_distance
     phono3py = Phono3py(
-        cell_info['unitcell'],
-        cell_info['supercell_matrix'],
-        primitive_matrix=cell_info['primitive_matrix'],
-        phonon_supercell_matrix=cell_info['phonon_supercell_matrix'],
+        cell_info["unitcell"],
+        cell_info["supercell_matrix"],
+        primitive_matrix=cell_info["primitive_matrix"],
+        phonon_supercell_matrix=cell_info["phonon_supercell_matrix"],
         is_symmetry=settings.is_symmetry,
         symprec=symprec,
-        calculator=interface_mode)
+        calculator=interface_mode,
+    )
     phono3py.generate_displacements(
         distance=distance,
         cutoff_pair_distance=settings.cutoff_pair_distance,
         is_plusminus=settings.is_plusminus_displacement,
-        is_diagonal=settings.is_diagonal_displacement)
+        is_diagonal=settings.is_diagonal_displacement,
+    )
 
     if log_level:
-        print('')
-        print("Unit cell was read from \"%s\"." %
-              optional_structure_info[0])
+        print("")
+        print('Unit cell was read from "%s".' % optional_structure_info[0])
         print("Displacement distance: %s" % distance)
 
     if output_filename is None:
-        filename = 'disp_fc3.yaml'
+        filename = "disp_fc3.yaml"
     else:
-        filename = 'disp_fc3.' + output_filename + '.yaml'
-    num_disps, num_disp_files = write_disp_fc3_yaml(phono3py.dataset,
-                                                    phono3py.supercell,
-                                                    filename=filename)
+        filename = "disp_fc3." + output_filename + ".yaml"
+    num_disps, num_disp_files = write_disp_fc3_yaml(
+        phono3py.dataset, phono3py.supercell, filename=filename
+    )
     ids = []
     disp_cells = []
     for i, cell in enumerate(phono3py.supercells_with_displacements):
@@ -95,41 +99,46 @@ def create_phono3py_supercells(cell_info,
             disp_cells.append(cell)
 
     additional_info = get_additional_info_to_write_supercells(
-        interface_mode, phono3py.supercell_matrix)
-    write_supercells_with_displacements(interface_mode,
-                                        phono3py.supercell,
-                                        disp_cells,
-                                        optional_structure_info,
-                                        displacement_ids=ids,
-                                        zfill_width=5,
-                                        additional_info=additional_info)
+        interface_mode, phono3py.supercell_matrix
+    )
+    write_supercells_with_displacements(
+        interface_mode,
+        phono3py.supercell,
+        disp_cells,
+        optional_structure_info,
+        displacement_ids=ids,
+        zfill_width=5,
+        additional_info=additional_info,
+    )
 
     if log_level:
         print("Number of displacements: %d" % num_disps)
         if settings.cutoff_pair_distance is not None:
-            print("Cutoff distance for displacements: %s" %
-                  settings.cutoff_pair_distance)
-            print("Number of displacement supercell files created: %d" %
-                  num_disp_files)
+            print(
+                "Cutoff distance for displacements: %s" % settings.cutoff_pair_distance
+            )
+            print("Number of displacement supercell files created: %d" % num_disp_files)
 
     if phono3py.phonon_supercell_matrix is not None:
         if output_filename is None:
-            filename = 'disp_fc2.yaml'
+            filename = "disp_fc2.yaml"
         else:
-            filename = 'disp_fc2.' + output_filename + '.yaml'
+            filename = "disp_fc2." + output_filename + ".yaml"
 
-        num_disps = write_disp_fc2_yaml(phono3py.phonon_dataset,
-                                        phono3py.phonon_supercell,
-                                        filename=filename)
+        num_disps = write_disp_fc2_yaml(
+            phono3py.phonon_dataset, phono3py.phonon_supercell, filename=filename
+        )
         additional_info = get_additional_info_to_write_fc2_supercells(
-            interface_mode, phono3py.phonon_supercell_matrix)
+            interface_mode, phono3py.phonon_supercell_matrix
+        )
         write_supercells_with_displacements(
             interface_mode,
             phono3py.supercell,
             phono3py.phonon_supercells_with_displacements,
             optional_structure_info,
             zfill_width=5,
-            additional_info=additional_info)
+            additional_info=additional_info,
+        )
 
         if log_level:
             print("Number of displacements for special fc2: %d" % num_disps)

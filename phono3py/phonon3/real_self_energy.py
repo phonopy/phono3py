@@ -38,21 +38,25 @@ from phonopy.units import Hbar, EV, THz
 from phonopy.phonon.degeneracy import degenerate_sets
 from phono3py.phonon.func import bose_einstein
 from phono3py.file_IO import (
-    write_real_self_energy_at_grid_point, write_real_self_energy_to_hdf5)
+    write_real_self_energy_at_grid_point,
+    write_real_self_energy_to_hdf5,
+)
 from phono3py.phonon3.imag_self_energy import get_frequency_points
 
 
-def get_real_self_energy(interaction,
-                         grid_points,
-                         temperatures,
-                         epsilons=None,
-                         frequency_points=None,
-                         frequency_step=None,
-                         num_frequency_points=None,
-                         frequency_points_at_bands=False,
-                         write_hdf5=True,
-                         output_filename=None,
-                         log_level=0):
+def get_real_self_energy(
+    interaction,
+    grid_points,
+    temperatures,
+    epsilons=None,
+    frequency_points=None,
+    frequency_step=None,
+    num_frequency_points=None,
+    frequency_points_at_bands=False,
+    write_hdf5=True,
+    output_filename=None,
+    log_level=0,
+):
     """Real part of self energy at frequency points
 
     Band indices to be calculated at are kept in Interaction instance.
@@ -113,11 +117,13 @@ def get_real_self_energy(interaction,
     """
 
     if epsilons is None:
-        _epsilons = [None, ]
+        _epsilons = [
+            None,
+        ]
     else:
         _epsilons = epsilons
 
-    _temperatures = np.array(temperatures, dtype='double')
+    _temperatures = np.array(temperatures, dtype="double")
 
     if (interaction.get_phonons()[2] == 0).any():
         if log_level:
@@ -132,20 +138,30 @@ def get_real_self_energy(interaction,
 
     if frequency_points_at_bands:
         _frequency_points = None
-        all_deltas = np.zeros((len(_epsilons), len(_temperatures),
-                               len(grid_points), len(band_indices)),
-                              dtype='double', order='C')
+        all_deltas = np.zeros(
+            (len(_epsilons), len(_temperatures), len(grid_points), len(band_indices)),
+            dtype="double",
+            order="C",
+        )
     else:
         _frequency_points = get_frequency_points(
             max_phonon_freq=max_phonon_freq,
             sigmas=epsilons,
             frequency_points=frequency_points,
             frequency_step=frequency_step,
-            num_frequency_points=num_frequency_points)
-        all_deltas = np.zeros((len(_epsilons), len(_temperatures),
-                               len(grid_points), len(band_indices),
-                               len(_frequency_points)),
-                              dtype='double', order='C')
+            num_frequency_points=num_frequency_points,
+        )
+        all_deltas = np.zeros(
+            (
+                len(_epsilons),
+                len(_temperatures),
+                len(grid_points),
+                len(band_indices),
+                len(_frequency_points),
+            ),
+            dtype="double",
+            order="C",
+        )
         fst.frequency_points = _frequency_points
 
     for j, gp in enumerate(grid_points):
@@ -153,14 +169,17 @@ def get_real_self_energy(interaction,
         if log_level:
             weights = interaction.get_triplets_at_q()[1]
             if len(grid_points) > 1:
-                print("------------------- Real part of self energy -o- (%d/%d) "
-                      "-------------------" % (j + 1, len(grid_points)))
+                print(
+                    "------------------- Real part of self energy -o- (%d/%d) "
+                    "-------------------" % (j + 1, len(grid_points))
+                )
             else:
-                print("----------------------- Real part of self energy -o- "
-                      "-----------------------")
+                print(
+                    "----------------------- Real part of self energy -o- "
+                    "-----------------------"
+                )
             print("Grid point: %d" % gp)
-            print("Number of ir-triplets: %d / %d"
-                  % (len(weights), weights.sum()))
+            print("Number of ir-triplets: %d / %d" % (len(weights), weights.sum()))
 
         fst.run_interaction()
         frequencies = interaction.get_phonons()[0][gp]
@@ -168,8 +187,7 @@ def get_real_self_energy(interaction,
         if log_level:
             bz_grid = interaction.bz_grid
             qpoint = np.dot(bz_grid.QDinv, bz_grid.addresses[gp])
-            print("Phonon frequencies at (%4.2f, %4.2f, %4.2f):"
-                  % tuple(qpoint))
+            print("Phonon frequencies at (%4.2f, %4.2f, %4.2f):" % tuple(qpoint))
             for bi, freq in enumerate(frequencies):
                 print("%3d  %f" % (bi + 1, freq))
             sys.stdout.flush()
@@ -210,28 +228,32 @@ def get_real_self_energy(interaction,
                     fst.epsilon,
                     frequency_points=_frequency_points,
                     frequencies=frequencies,
-                    filename=output_filename)
+                    filename=output_filename,
+                )
 
                 if log_level:
-                    print("Real part of self energies were stored in \"%s\"."
-                          % filename)
+                    print('Real part of self energies were stored in "%s".' % filename)
                     sys.stdout.flush()
 
     return _frequency_points, all_deltas
 
 
-def write_real_self_energy(real_self_energy,
-                           mesh,
-                           grid_points,
-                           band_indices,
-                           frequency_points,
-                           temperatures,
-                           epsilons,
-                           output_filename=None,
-                           is_mesh_symmetry=True,
-                           log_level=0):
+def write_real_self_energy(
+    real_self_energy,
+    mesh,
+    grid_points,
+    band_indices,
+    frequency_points,
+    temperatures,
+    epsilons,
+    output_filename=None,
+    is_mesh_symmetry=True,
+    log_level=0,
+):
     if epsilons is None:
-        _epsilons = [RealSelfEnergy.default_epsilon, ]
+        _epsilons = [
+            RealSelfEnergy.default_epsilon,
+        ]
     else:
         _epsilons = epsilons
 
@@ -246,15 +268,18 @@ def write_real_self_energy(real_self_energy,
                         gp,
                         bi,
                         frequency_points,
-                        rse[pos:(pos + len(bi))].sum(axis=0) / len(bi),
+                        rse[pos : (pos + len(bi))].sum(axis=0) / len(bi),
                         mesh,
                         epsilon,
                         t,
                         filename=output_filename,
-                        is_mesh_symmetry=is_mesh_symmetry)
+                        is_mesh_symmetry=is_mesh_symmetry,
+                    )
                     if log_level:
-                        print("Real parts of self-energies were "
-                              "written to \"%s\"." % filename)
+                        print(
+                            "Real parts of self-energies were "
+                            'written to "%s".' % filename
+                        )
 
 
 class RealSelfEnergy(object):
@@ -280,12 +305,9 @@ class RealSelfEnergy(object):
 
     """
 
-    def __init__(self,
-                 interaction,
-                 grid_point=None,
-                 temperature=None,
-                 epsilon=None,
-                 lang='C'):
+    def __init__(
+        self, interaction, grid_point=None, temperature=None, epsilon=None, lang="C"
+    ):
         """
 
         Parameters
@@ -323,9 +345,7 @@ class RealSelfEnergy(object):
         self._real_self_energies = None
 
         # Unit to THz of Delta
-        self._unit_conversion = (18 / (Hbar * EV) ** 2
-                                 / (2 * np.pi * THz) ** 2
-                                 * EV ** 2)
+        self._unit_conversion = 18 / (Hbar * EV) ** 2 / (2 * np.pi * THz) ** 2 * EV ** 2
 
     def run(self):
         if self._pp_strength is None:
@@ -333,20 +353,19 @@ class RealSelfEnergy(object):
 
         num_band0 = len(self._pp.band_indices)
         if self._frequency_points is None:
-            self._real_self_energies = np.zeros(num_band0, dtype='double')
+            self._real_self_energies = np.zeros(num_band0, dtype="double")
             self._run_with_band_indices()
         else:
             self._real_self_energies = np.zeros(
-                (len(self._frequency_points), num_band0), dtype='double')
+                (len(self._frequency_points), num_band0), dtype="double"
+            )
             self._run_with_frequency_points()
 
     def run_interaction(self):
         self._pp.run(lang=self._lang)
         self._pp_strength = self._pp.interaction_strength
-        (self._frequencies,
-         self._eigenvectors) = self._pp.get_phonons()[:2]
-        (self._triplets_at_q,
-         self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
+        (self._frequencies, self._eigenvectors) = self._pp.get_phonons()[:2]
+        (self._triplets_at_q, self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
         self._band_indices = self._pp.band_indices
 
     @property
@@ -365,13 +384,13 @@ class RealSelfEnergy(object):
                 if len(bi_set) > 0:
                     for i in bi_set:
                         if self._frequency_points is None:
-                            shifts[i] = (
-                                self._real_self_energies[bi_set].sum()
-                                / len(bi_set))
+                            shifts[i] = self._real_self_energies[bi_set].sum() / len(
+                                bi_set
+                            )
                         else:
-                            shifts[:, i] = (
-                                self._real_self_energies[:, bi_set].sum(axis=1)
-                                / len(bi_set))
+                            shifts[:, i] = self._real_self_energies[:, bi_set].sum(
+                                axis=1
+                            ) / len(bi_set)
             return shifts
 
     @property
@@ -385,8 +404,7 @@ class RealSelfEnergy(object):
         else:
             self._pp.set_grid_point(grid_point)
             self._pp_strength = None
-            (self._triplets_at_q,
-             self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
+            (self._triplets_at_q, self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
             self._grid_point = self._triplets_at_q[0, 0]
 
     @property
@@ -417,58 +435,60 @@ class RealSelfEnergy(object):
 
     @frequency_points.setter
     def frequency_points(self, frequency_points):
-        self._frequency_points = np.array(frequency_points, dtype='double')
+        self._frequency_points = np.array(frequency_points, dtype="double")
 
     def _run_with_band_indices(self):
-        if self._lang == 'C':
+        if self._lang == "C":
             self._run_c_with_band_indices()
         else:
             self._run_py_with_band_indices()
 
     def _run_with_frequency_points(self):
-        if self._lang == 'C':
+        if self._lang == "C":
             self._run_c_with_frequency_points()
         else:
             self._run_py_with_frequency_points()
 
     def _run_c_with_band_indices(self):
         import phono3py._phono3py as phono3c
-        phono3c.real_self_energy_at_bands(self._real_self_energies,
-                                          self._pp_strength,
-                                          self._triplets_at_q,
-                                          self._weights_at_q,
-                                          self._frequencies,
-                                          self._band_indices,
-                                          self._temperature,
-                                          self._epsilon,
-                                          self._unit_conversion,
-                                          self._cutoff_frequency)
+
+        phono3c.real_self_energy_at_bands(
+            self._real_self_energies,
+            self._pp_strength,
+            self._triplets_at_q,
+            self._weights_at_q,
+            self._frequencies,
+            self._band_indices,
+            self._temperature,
+            self._epsilon,
+            self._unit_conversion,
+            self._cutoff_frequency,
+        )
 
     def _run_py_with_band_indices(self):
         for i, (triplet, w, interaction) in enumerate(
-            zip(self._triplets_at_q,
-                self._weights_at_q,
-                self._pp_strength)):
+            zip(self._triplets_at_q, self._weights_at_q, self._pp_strength)
+        ):
 
             freqs = self._frequencies[triplet]
             for j, bi in enumerate(self._band_indices):
                 fpoint = freqs[0, bi]
                 if self._temperature > 0:
-                    self._real_self_energies[j] += (
-                        self._real_self_energies_at_bands(
-                            j, fpoint, freqs, interaction, w))
+                    self._real_self_energies[j] += self._real_self_energies_at_bands(
+                        j, fpoint, freqs, interaction, w
+                    )
                 else:
-                    self._real_self_energies[j] += (
-                        self._real_self_energies_at_bands_0K(
-                            j, fpoint, freqs, interaction, w))
+                    self._real_self_energies[j] += self._real_self_energies_at_bands_0K(
+                        j, fpoint, freqs, interaction, w
+                    )
 
         self._real_self_energies *= self._unit_conversion
 
     def _run_c_with_frequency_points(self):
         import phono3py._phono3py as phono3c
+
         for i, fpoint in enumerate(self._frequency_points):
-            shifts = np.zeros(self._real_self_energies.shape[1],
-                              dtype='double')
+            shifts = np.zeros(self._real_self_energies.shape[1], dtype="double")
             phono3c.real_self_energy_at_frequency_point(
                 shifts,
                 fpoint,
@@ -480,31 +500,34 @@ class RealSelfEnergy(object):
                 self._temperature,
                 self._epsilon,
                 self._unit_conversion,
-                self._cutoff_frequency)
+                self._cutoff_frequency,
+            )
             self._real_self_energies[i][:] = shifts
 
     def _run_py_with_frequency_points(self):
         for k, fpoint in enumerate(self._frequency_points):
             for i, (triplet, w, interaction) in enumerate(
-                zip(self._triplets_at_q,
-                    self._weights_at_q,
-                    self._pp_strength)):
+                zip(self._triplets_at_q, self._weights_at_q, self._pp_strength)
+            ):
 
                 freqs = self._frequencies[triplet]
                 for j, bi in enumerate(self._band_indices):
                     if self._temperature > 0:
-                        self._real_self_energies[k, j] += (
-                            self._real_self_energies_at_bands(
-                                j, fpoint, freqs, interaction, w))
+                        self._real_self_energies[
+                            k, j
+                        ] += self._real_self_energies_at_bands(
+                            j, fpoint, freqs, interaction, w
+                        )
                     else:
-                        self._real_self_energies[k, j] += (
-                            self._real_self_energies_at_bands_0K(
-                                j, fpoint, freqs, interaction, w))
+                        self._real_self_energies[
+                            k, j
+                        ] += self._real_self_energies_at_bands_0K(
+                            j, fpoint, freqs, interaction, w
+                        )
 
         self._real_self_energies *= self._unit_conversion
 
-    def _real_self_energies_at_bands(self, i, fpoint, freqs,
-                                     interaction, weight):
+    def _real_self_energies_at_bands(self, i, fpoint, freqs, interaction, weight):
         if fpoint < self._cutoff_frequency:
             return 0
 
@@ -513,8 +536,10 @@ class RealSelfEnergy(object):
             if fpoint < self._cutoff_frequency:
                 continue
 
-            if (freqs[1, j] > self._cutoff_frequency and
-                freqs[2, k] > self._cutoff_frequency):
+            if (
+                freqs[1, j] > self._cutoff_frequency
+                and freqs[2, k] > self._cutoff_frequency
+            ):
                 d = 0.0
                 n2 = bose_einstein(freqs[1, j], self._temperature)
                 n3 = bose_einstein(freqs[2, k], self._temperature)
@@ -539,15 +564,16 @@ class RealSelfEnergy(object):
                 sum_d += d * interaction[i, j, k] * weight
         return sum_d
 
-    def _real_self_energies_at_bands_0K(self, i, fpoint, freqs,
-                                        interaction, weight):
+    def _real_self_energies_at_bands_0K(self, i, fpoint, freqs, interaction, weight):
         if fpoint < self._cutoff_frequency:
             return 0
 
         sum_d = 0
         for (j, k) in list(np.ndindex(interaction.shape[1:])):
-            if (freqs[1, j] > self._cutoff_frequency and
-                freqs[2, k] > self._cutoff_frequency):
+            if (
+                freqs[1, j] > self._cutoff_frequency
+                and freqs[2, k] > self._cutoff_frequency
+            ):
                 d = 0.0
                 f1 = fpoint + freqs[1, j] + freqs[2, k]
                 f2 = fpoint - freqs[1, j] - freqs[2, k]
@@ -572,10 +598,7 @@ def imag_to_real(im_part, frequency_points):
 class ImagToReal(object):
     """Calculate real part of self-energy using Kramers-Kronig relation"""
 
-    def __init__(self,
-                 im_part,
-                 frequency_points,
-                 diagram='bubble'):
+    def __init__(self, im_part, frequency_points, diagram="bubble"):
         """
 
         Parameters
@@ -593,10 +616,12 @@ class ImagToReal(object):
 
         """
 
-        if diagram == 'bubble':
-            (self._im_part,
-             self._all_frequency_points,
-             self._df) = self._expand_bubble_im_part(im_part, frequency_points)
+        if diagram == "bubble":
+            (
+                self._im_part,
+                self._all_frequency_points,
+                self._df,
+            ) = self._expand_bubble_im_part(im_part, frequency_points)
         else:
             raise RuntimeError("Only daigram='bubble' is implemented.")
 
@@ -611,10 +636,10 @@ class ImagToReal(object):
     def frequency_points(self):
         return self._frequency_points
 
-    def run(self, method='pick_one'):
-        if method == 'pick_one':
+    def run(self, method="pick_one"):
+        if method == "pick_one":
             self._re_part, self._frequency_points = self._pick_one()
-        elif method == 'half_shift':
+        elif method == "half_shift":
             self._re_part, self._frequency_points = self._half_shift()
         else:
             raise RuntimeError("No method is found.")
@@ -633,8 +658,7 @@ class ImagToReal(object):
             val = ((self._im_part / freqs).sum() - im_part_at_i) * coef
             re_part.append(val)
             fpoints.append(fpoint)
-        return (np.array(re_part, dtype='double'),
-                np.array(fpoints, dtype='double'))
+        return (np.array(re_part, dtype="double"), np.array(fpoints, dtype="double"))
 
     def _half_shift(self):
         re_part = []
@@ -649,24 +673,20 @@ class ImagToReal(object):
             val = (self._im_part / freqs).sum() * coef
             re_part.append(val)
             fpoints.append(fpoint)
-        return (np.array(re_part, dtype='double'),
-                np.array(fpoints, dtype='double'))
+        return (np.array(re_part, dtype="double"), np.array(fpoints, dtype="double"))
 
     def _expand_bubble_im_part(self, im_part, frequency_points):
         if (np.abs(frequency_points[0]) > 1e-8).any():
-            raise RuntimeError(
-                "The first element of frequency_points is not zero.")
+            raise RuntimeError("The first element of frequency_points is not zero.")
 
         all_df = np.subtract(frequency_points[1:], frequency_points[:-1])
         df = np.mean(all_df)
         if (np.abs(all_df - df) > 1e-6).any():
             print(all_df)
-            raise RuntimeError(
-                "Frequency interval of frequency_points is not uniform.")
+            raise RuntimeError("Frequency interval of frequency_points is not uniform.")
 
         # im_part is inverted at omega < 0.
         _im_part = np.hstack([-im_part[::-1], im_part[1:]])
-        _frequency_points = np.hstack([-frequency_points[::-1],
-                                       frequency_points[1:]])
+        _frequency_points = np.hstack([-frequency_points[::-1], frequency_points[1:]])
 
         return _im_part, _frequency_points, df

@@ -34,4 +34,3 @@ for the CRYSTAL interface, so the -c crystal.o parameter is not needed
 
    Add --isotope for isotope scattering
    Check the effect of --nac for polar systems
-

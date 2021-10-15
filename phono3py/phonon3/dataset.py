@@ -60,35 +60,37 @@ def get_displacements_and_forces_fc3(disp_dataset):
 
     """
 
-    if 'first_atoms' in disp_dataset:
-        natom = disp_dataset['natom']
-        ndisp = len(disp_dataset['first_atoms'])
-        for disp1 in disp_dataset['first_atoms']:
-            ndisp += len(disp1['second_atoms'])
-        displacements = np.zeros((ndisp, natom, 3), dtype='double', order='C')
+    if "first_atoms" in disp_dataset:
+        natom = disp_dataset["natom"]
+        ndisp = len(disp_dataset["first_atoms"])
+        for disp1 in disp_dataset["first_atoms"]:
+            ndisp += len(disp1["second_atoms"])
+        displacements = np.zeros((ndisp, natom, 3), dtype="double", order="C")
         forces = np.zeros_like(displacements)
         indices = []
         count = 0
-        for disp1 in disp_dataset['first_atoms']:
+        for disp1 in disp_dataset["first_atoms"]:
             indices.append(count)
-            displacements[count, disp1['number']] = disp1['displacement']
-            forces[count] = disp1['forces']
+            displacements[count, disp1["number"]] = disp1["displacement"]
+            forces[count] = disp1["forces"]
             count += 1
 
-        for disp1 in disp_dataset['first_atoms']:
-            for disp2 in disp1['second_atoms']:
-                if 'included' in disp2:
-                    if disp2['included']:
+        for disp1 in disp_dataset["first_atoms"]:
+            for disp2 in disp1["second_atoms"]:
+                if "included" in disp2:
+                    if disp2["included"]:
                         indices.append(count)
                 else:
                     indices.append(count)
-                displacements[count, disp1['number']] = disp1['displacement']
-                displacements[count, disp2['number']] = disp2['displacement']
-                forces[count] = disp2['forces']
+                displacements[count, disp1["number"]] = disp1["displacement"]
+                displacements[count, disp2["number"]] = disp2["displacement"]
+                forces[count] = disp2["forces"]
                 count += 1
-        return (np.array(displacements[indices], dtype='double', order='C'),
-                np.array(forces[indices], dtype='double', order='C'))
-    elif 'forces' in disp_dataset and 'displacements' in disp_dataset:
-        return disp_dataset['displacements'], disp_dataset['forces']
+        return (
+            np.array(displacements[indices], dtype="double", order="C"),
+            np.array(forces[indices], dtype="double", order="C"),
+        )
+    elif "forces" in disp_dataset and "displacements" in disp_dataset:
+        return disp_dataset["displacements"], disp_dataset["forces"]
     else:
         raise RuntimeError("disp_dataset doesn't contain correct information.")

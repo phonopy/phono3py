@@ -38,31 +38,37 @@ from phono3py.other.isotope import Isotope
 
 
 class Phono3pyIsotope(object):
-    def __init__(self,
-                 mesh,
-                 primitive,
-                 mass_variances=None,  # length of list is num_atom.
-                 band_indices=None,
-                 sigmas=None,
-                 frequency_factor_to_THz=VaspToTHz,
-                 store_dense_gp_map=False,
-                 symprec=1e-5,
-                 cutoff_frequency=None,
-                 lapack_zheev_uplo='L'):
+    def __init__(
+        self,
+        mesh,
+        primitive,
+        mass_variances=None,  # length of list is num_atom.
+        band_indices=None,
+        sigmas=None,
+        frequency_factor_to_THz=VaspToTHz,
+        store_dense_gp_map=False,
+        symprec=1e-5,
+        cutoff_frequency=None,
+        lapack_zheev_uplo="L",
+    ):
         if sigmas is None:
-            self._sigmas = [None, ]
+            self._sigmas = [
+                None,
+            ]
         else:
             self._sigmas = sigmas
         self._mesh_numbers = mesh
-        self._iso = Isotope(mesh,
-                            primitive,
-                            mass_variances=mass_variances,
-                            band_indices=band_indices,
-                            frequency_factor_to_THz=frequency_factor_to_THz,
-                            store_dense_gp_map=store_dense_gp_map,
-                            symprec=symprec,
-                            cutoff_frequency=cutoff_frequency,
-                            lapack_zheev_uplo=lapack_zheev_uplo)
+        self._iso = Isotope(
+            mesh,
+            primitive,
+            mass_variances=mass_variances,
+            band_indices=band_indices,
+            frequency_factor_to_THz=frequency_factor_to_THz,
+            store_dense_gp_map=store_dense_gp_map,
+            symprec=symprec,
+            cutoff_frequency=cutoff_frequency,
+            lapack_zheev_uplo=lapack_zheev_uplo,
+        )
 
     @property
     def dynamical_matrix(self):
@@ -75,7 +81,8 @@ class Phono3pyIsotope(object):
     def run(self, grid_points):
         gamma = np.zeros(
             (len(self._sigmas), len(grid_points), len(self._iso.band_indices)),
-            dtype='double')
+            dtype="double",
+        )
 
         for j, gp in enumerate(grid_points):
             self._iso.set_grid_point(gp)
@@ -83,7 +90,7 @@ class Phono3pyIsotope(object):
             print("--------------- Isotope scattering ---------------")
             print("Grid point: %d" % gp)
             adrs = self._iso.bz_grid.addresses[gp]
-            q = adrs.astype('double') / self._mesh_numbers
+            q = adrs.astype("double") / self._mesh_numbers
             print("q-point: %s" % q)
 
             if self._sigmas:
@@ -96,7 +103,7 @@ class Phono3pyIsotope(object):
                     self._iso.run()
                     gamma[i, j] = self._iso.gamma
                     frequencies = self._iso.get_phonons()[0]
-                    print('')
+                    print("")
                     print("Phonon-isotope scattering rate in THz (1/4pi-tau)")
                     print(" Frequency     Rate")
                     for g, f in zip(self._iso.gamma, frequencies[gp]):
@@ -105,13 +112,15 @@ class Phono3pyIsotope(object):
                 print("sigma or tetrahedron method has to be set.")
         self._gamma = gamma
 
-    def init_dynamical_matrix(self,
-                              fc2,
-                              supercell,
-                              primitive,
-                              nac_params=None,
-                              frequency_scale_factor=None,
-                              decimals=None):
+    def init_dynamical_matrix(
+        self,
+        fc2,
+        supercell,
+        primitive,
+        nac_params=None,
+        frequency_scale_factor=None,
+        decimals=None,
+    ):
         self._primitive = primitive
         self._iso.init_dynamical_matrix(
             fc2,
@@ -119,7 +128,8 @@ class Phono3pyIsotope(object):
             primitive,
             nac_params=nac_params,
             frequency_scale_factor=frequency_scale_factor,
-            decimals=decimals)
+            decimals=decimals,
+        )
 
     def set_sigma(self, sigma):
         self._iso.set_sigma(sigma)

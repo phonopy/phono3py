@@ -42,25 +42,27 @@ from phono3py.file_IO import write_joint_dos
 
 
 class Phono3pyJointDos(object):
-    def __init__(self,
-                 supercell,
-                 primitive,
-                 fc2,
-                 mesh=None,
-                 nac_params=None,
-                 nac_q_direction=None,
-                 sigmas=None,
-                 cutoff_frequency=1e-4,
-                 frequency_step=None,
-                 num_frequency_points=None,
-                 temperatures=None,
-                 frequency_factor_to_THz=VaspToTHz,
-                 frequency_scale_factor=None,
-                 is_mesh_symmetry=True,
-                 store_dense_gp_map=False,
-                 symprec=1e-5,
-                 output_filename=None,
-                 log_level=0):
+    def __init__(
+        self,
+        supercell,
+        primitive,
+        fc2,
+        mesh=None,
+        nac_params=None,
+        nac_q_direction=None,
+        sigmas=None,
+        cutoff_frequency=1e-4,
+        frequency_step=None,
+        num_frequency_points=None,
+        temperatures=None,
+        frequency_factor_to_THz=VaspToTHz,
+        frequency_scale_factor=None,
+        is_mesh_symmetry=True,
+        store_dense_gp_map=False,
+        symprec=1e-5,
+        output_filename=None,
+        log_level=0,
+    ):
         if sigmas is None:
             self._sigmas = [None]
         else:
@@ -71,10 +73,12 @@ class Phono3pyJointDos(object):
         self._log_level = log_level
 
         symmetry = Symmetry(primitive, symprec)
-        self._bz_grid = BZGrid(mesh,
-                               lattice=primitive.cell,
-                               symmetry_dataset=symmetry.dataset,
-                               store_dense_gp_map=store_dense_gp_map)
+        self._bz_grid = BZGrid(
+            mesh,
+            lattice=primitive.cell,
+            symmetry_dataset=symmetry.dataset,
+            store_dense_gp_map=store_dense_gp_map,
+        )
 
         self._jdos = JointDos(
             primitive,
@@ -93,7 +97,8 @@ class Phono3pyJointDos(object):
             store_dense_gp_map=store_dense_gp_map,
             symprec=symprec,
             filename=output_filename,
-            log_level=self._log_level)
+            log_level=self._log_level,
+        )
 
         self._joint_dos = None
 
@@ -103,8 +108,10 @@ class Phono3pyJointDos(object):
 
     def run(self, grid_points, write_jdos=False):
         if self._log_level:
-            print("--------------------------------- Joint DOS "
-                  "---------------------------------")
+            print(
+                "--------------------------------- Joint DOS "
+                "---------------------------------"
+            )
             print("Sampling mesh: [ %d %d %d ]" % tuple(self._bz_grid.D_diag))
 
         for i, gp in enumerate(grid_points):
@@ -112,10 +119,11 @@ class Phono3pyJointDos(object):
 
             if self._log_level:
                 weights = self._jdos.get_triplets_at_q()[1]
-                print("======================= "
-                      "Grid point %d (%d/%d) "
-                      "======================="
-                      % (gp, i + 1, len(grid_points)))
+                print(
+                    "======================= "
+                    "Grid point %d (%d/%d) "
+                    "=======================" % (gp, i + 1, len(grid_points))
+                )
                 adrs = self._jdos.bz_grid.addresses[gp]
                 q = np.dot(adrs, self._bz_grid.QDinv.T)
                 print("q-point: (%5.2f %5.2f %5.2f)" % tuple(q))
@@ -125,8 +133,7 @@ class Phono3pyJointDos(object):
                     print("%8.3f" % f)
 
             if not self._sigmas:
-                raise RuntimeError(
-                    "sigma or tetrahedron method has to be set.")
+                raise RuntimeError("sigma or tetrahedron method has to be set.")
 
             for sigma in self._sigmas:
                 if self._log_level:
@@ -140,7 +147,7 @@ class Phono3pyJointDos(object):
                 if write_jdos:
                     filename = self._write(gp, sigma=sigma)
                     if self._log_level:
-                        print("JDOS is written into \"%s\"." % filename)
+                        print('JDOS is written into "%s".' % filename)
 
     @property
     def dynamical_matrix(self):
@@ -155,11 +162,13 @@ class Phono3pyJointDos(object):
         return self._jdos.joint_dos
 
     def _write(self, gp, sigma=None):
-        return write_joint_dos(gp,
-                               self._bz_grid.D_diag,
-                               self._jdos.frequency_points,
-                               self._jdos.joint_dos,
-                               sigma=sigma,
-                               temperatures=self._temperatures,
-                               filename=self._filename,
-                               is_mesh_symmetry=self._is_mesh_symmetry)
+        return write_joint_dos(
+            gp,
+            self._bz_grid.D_diag,
+            self._jdos.frequency_points,
+            self._jdos.joint_dos,
+            sigma=sigma,
+            temperatures=self._temperatures,
+            filename=self._filename,
+            is_mesh_symmetry=self._is_mesh_symmetry,
+        )

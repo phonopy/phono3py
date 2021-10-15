@@ -33,14 +33,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-def get_fc3(supercell,
-            primitive,
-            displacements,
-            forces,
-            fc_calculator=None,
-            fc_calculator_options=None,
-            is_compact_fc=False,
-            log_level=0):
+def get_fc3(
+    supercell,
+    primitive,
+    displacements,
+    forces,
+    fc_calculator=None,
+    fc_calculator_options=None,
+    is_compact_fc=False,
+    log_level=0,
+):
     """Supercell 2nd order force constants (fc2) are calculated.
 
     The expected shape of supercell fc3 to be returned is
@@ -82,16 +84,18 @@ def get_fc3(supercell,
 
     """
 
-    if fc_calculator == 'alm':
+    if fc_calculator == "alm":
         from phono3py.interface.alm import get_fc3
-        return get_fc3(supercell,
-                       primitive,
-                       displacements,
-                       forces,
-                       options=fc_calculator_options,
-                       is_compact_fc=is_compact_fc,
-                       log_level=log_level)
+
+        return get_fc3(
+            supercell,
+            primitive,
+            displacements,
+            forces,
+            options=fc_calculator_options,
+            is_compact_fc=is_compact_fc,
+            log_level=log_level,
+        )
     else:
-        msg = ("Force constants calculator of %s was not found ."
-               % fc_calculator)
+        msg = "Force constants calculator of %s was not found ." % fc_calculator
         raise RuntimeError(msg)

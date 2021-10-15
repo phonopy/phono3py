@@ -2123,7 +2123,6 @@ class Phono3py(object):
         boundary_mfp=None,  # in micrometre
         solve_collective_phonon=False,
         use_ave_pp=False,
-        gamma_unit_conversion=None,
         is_reducible_collision_matrix=False,
         is_kappa_star=True,
         gv_delta_q=None,  # for group velocity
@@ -2179,10 +2178,6 @@ class Phono3py(object):
             strength is used to calculate phonon lifetime. This does not
             reduce computational demand, but may be used to model thermal
             conductivity for analyze the calculation results.
-        gamma_unit_conversion : float, optional, default is None
-            RTA only (`is_LBTE=False`). Unit conversion factor when calculating
-            inversion phonon lifetime. This option should not be used
-            by users.
         is_reducible_collision_matrix : bool, optional, default is False
             Direct solution only (`is_LBTE=True`). This is an experimental
             option. With True, full collision matrix is created and solved.
@@ -2330,7 +2325,6 @@ class Phono3py(object):
                 grid_points=grid_points,
                 boundary_mfp=boundary_mfp,
                 use_ave_pp=use_ave_pp,
-                gamma_unit_conversion=gamma_unit_conversion,
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
                 is_full_pp=is_full_pp,
