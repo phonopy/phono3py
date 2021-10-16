@@ -41,21 +41,23 @@ from phonopy.structure.grid_points import get_qpoints
 from phonopy.structure.cells import sparse_to_dense_svecs
 
 
-def run_gruneisen_parameters(fc2,
-                             fc3,
-                             supercell,
-                             primitive,
-                             band_paths,
-                             mesh,
-                             rotations,
-                             qpoints,
-                             nac_params=None,
-                             nac_q_direction=None,
-                             ion_clamped=False,
-                             factor=None,
-                             symprec=1e-5,
-                             output_filename=None,
-                             log_level=1):
+def run_gruneisen_parameters(
+    fc2,
+    fc3,
+    supercell,
+    primitive,
+    band_paths,
+    mesh,
+    rotations,
+    qpoints,
+    nac_params=None,
+    nac_q_direction=None,
+    ion_clamped=False,
+    factor=None,
+    symprec=1e-5,
+    output_filename=None,
+    log_level=1,
+):
     """Run mode Grueneisen parameter calculation.
 
     The results is written into files.
@@ -68,32 +70,34 @@ def run_gruneisen_parameters(fc2,
         elif band_paths is not None:
             print("Paths in reciprocal reduced coordinates:")
             for path in band_paths:
-                print("[%5.2f %5.2f %5.2f] --> [%5.2f %5.2f %5.2f]" %
-                      (tuple(path[0]) + tuple(path[-1])))
+                print(
+                    "[%5.2f %5.2f %5.2f] --> [%5.2f %5.2f %5.2f]"
+                    % (tuple(path[0]) + tuple(path[-1]))
+                )
         if ion_clamped:
             print("To be calculated with ion clamped.")
 
         sys.stdout.flush()
 
-    gruneisen = Gruneisen(fc2,
-                          fc3,
-                          supercell,
-                          primitive,
-                          nac_params=nac_params,
-                          nac_q_direction=nac_q_direction,
-                          ion_clamped=ion_clamped,
-                          factor=factor,
-                          symprec=symprec)
+    gruneisen = Gruneisen(
+        fc2,
+        fc3,
+        supercell,
+        primitive,
+        nac_params=nac_params,
+        nac_q_direction=nac_q_direction,
+        ion_clamped=ion_clamped,
+        factor=factor,
+        symprec=symprec,
+    )
 
     if log_level > 0:
         dm = gruneisen.dynamical_matrix
-        if (dm.is_nac() and dm.nac_method == 'gonze'):
+        if dm.is_nac() and dm.nac_method == "gonze":
             dm.show_Gonze_nac_message()
 
     if mesh is not None:
-        gruneisen.set_sampling_mesh(mesh,
-                                    rotations=rotations,
-                                    is_gamma_center=True)
+        gruneisen.set_sampling_mesh(mesh, rotations=rotations, is_gamma_center=True)
         filename_ext = ".hdf5"
     elif band_paths is not None:
         gruneisen.set_band_structure(band_paths)
@@ -105,29 +109,30 @@ def run_gruneisen_parameters(fc2,
     gruneisen.run()
 
     if output_filename is None:
-        filename = 'gruneisen'
+        filename = "gruneisen"
     else:
-        filename = 'gruneisen.' + output_filename
+        filename = "gruneisen." + output_filename
     gruneisen.write(filename=filename)
 
     if log_level:
-        print("Gruneisen parameters are written in %s" %
-              (filename + filename_ext))
+        print("Gruneisen parameters are written in %s" % (filename + filename_ext))
 
 
 class Gruneisen(object):
     """Calculat mode Grueneisen parameters from fc3."""
 
-    def __init__(self,
-                 fc2,
-                 fc3,
-                 supercell,
-                 primitive,
-                 nac_params=None,
-                 nac_q_direction=None,
-                 ion_clamped=False,
-                 factor=VaspToTHz,
-                 symprec=1e-5):
+    def __init__(
+        self,
+        fc2,
+        fc3,
+        supercell,
+        primitive,
+        nac_params=None,
+        nac_q_direction=None,
+        ion_clamped=False,
+        factor=VaspToTHz,
+        symprec=1e-5,
+    ):
         """Init method."""
         self._fc2 = fc2
         self._fc3 = fc3
@@ -136,11 +141,13 @@ class Gruneisen(object):
         self._ion_clamped = ion_clamped
         self._factor = factor
         self._symprec = symprec
-        self._dm = get_dynamical_matrix(self._fc2,
-                                        self._scell,
-                                        self._pcell,
-                                        nac_params=nac_params,
-                                        symprec=self._symprec)
+        self._dm = get_dynamical_matrix(
+            self._fc2,
+            self._scell,
+            self._pcell,
+            nac_params=nac_params,
+            symprec=self._symprec,
+        )
         self._nac_q_direction = nac_q_direction
 
         svecs, multi = self._pcell.get_smallest_vectors()
@@ -168,14 +175,18 @@ class Gruneisen(object):
 
     def run(self):
         """Run mode Grueneisen parameter calculation."""
-        if self._run_mode == 'band':
-            (self._gruneisen_parameters,
-             self._frequencies) = self._calculate_band_paths()
-        elif self._run_mode == 'qpoints' or self._run_mode == 'mesh':
-            (self._gruneisen_parameters,
-             self._frequencies) = self._calculate_at_qpoints(self._qpoints)
+        if self._run_mode == "band":
+            (
+                self._gruneisen_parameters,
+                self._frequencies,
+            ) = self._calculate_band_paths()
+        elif self._run_mode == "qpoints" or self._run_mode == "mesh":
+            (
+                self._gruneisen_parameters,
+                self._frequencies,
+            ) = self._calculate_at_qpoints(self._qpoints)
         else:
-            sys.stderr.write('Q-points are not specified.\n')
+            sys.stderr.write("Q-points are not specified.\n")
 
     @property
     def dynamical_matrix(self):
@@ -188,60 +199,58 @@ class Gruneisen(object):
 
     def set_qpoints(self, qpoints):
         """Set q-points."""
-        self._run_mode = 'qpoints'
+        self._run_mode = "qpoints"
         self._qpoints = qpoints
 
-    def set_sampling_mesh(self,
-                          mesh,
-                          rotations=None,
-                          shift=None,
-                          is_gamma_center=False):
+    def set_sampling_mesh(
+        self, mesh, rotations=None, shift=None, is_gamma_center=False
+    ):
         """Set sampling mesh."""
-        self._run_mode = 'mesh'
-        self._mesh = np.array(mesh, dtype='intc')
+        self._run_mode = "mesh"
+        self._mesh = np.array(mesh, dtype="intc")
         self._qpoints, self._weights = get_qpoints(
             self._mesh,
             np.linalg.inv(self._pcell.cell),
             q_mesh_shift=shift,
             is_gamma_center=is_gamma_center,
-            rotations=rotations)
+            rotations=rotations,
+        )
 
     def set_band_structure(self, paths):
         """Set band structure paths."""
-        self._run_mode = 'band'
+        self._run_mode = "band"
         self._band_paths = paths
         rec_lattice = np.linalg.inv(self._pcell.get_cell())
         self._band_distances = []
         for path in paths:
-            distances_at_path = [0.]
+            distances_at_path = [0.0]
             for i in range(len(path) - 1):
-                distances_at_path.append(np.linalg.norm(
-                        np.dot(rec_lattice, path[i + 1] - path[i])) +
-                                         distances_at_path[-1])
+                distances_at_path.append(
+                    np.linalg.norm(np.dot(rec_lattice, path[i + 1] - path[i]))
+                    + distances_at_path[-1]
+                )
             self._band_distances.append(distances_at_path)
 
     def write(self, filename="gruneisen"):
         """Write result in a file."""
         if self._gruneisen_parameters is not None:
-            if self._run_mode == 'band':
+            if self._run_mode == "band":
                 self._write_band_yaml(filename + ".yaml")
-            elif self._run_mode == 'qpoints':
+            elif self._run_mode == "qpoints":
                 self._write_mesh_yaml(filename + ".yaml")
-            elif self._run_mode == 'mesh':
+            elif self._run_mode == "mesh":
                 self._write_mesh_hdf5(filename + ".hdf5")
 
     def _write_mesh_yaml(self, filename):
-        with open(filename, 'w') as f:
-            if self._run_mode == 'mesh':
+        with open(filename, "w") as f:
+            if self._run_mode == "mesh":
                 f.write("mesh: [ %5d, %5d, %5d ]\n" % tuple(self._mesh))
             f.write("nqpoint: %d\n" % len(self._qpoints))
             f.write("phonon:\n")
             for i, (q, g_at_q, freqs_at_q) in enumerate(
-                zip(self._qpoints,
-                    self._gruneisen_parameters,
-                    self._frequencies)):
-                f.write("- q-position: [ %10.7f, %10.7f, %10.7f ]\n"
-                        % tuple(q))
+                zip(self._qpoints, self._gruneisen_parameters, self._frequencies)
+            ):
+                f.write("- q-position: [ %10.7f, %10.7f, %10.7f ]\n" % tuple(q))
                 if self._weights is not None:
                     f.write("  multiplicity: %d\n" % self._weights[i])
                 f.write("  band:\n")
@@ -251,22 +260,23 @@ class Gruneisen(object):
                     f.write("    gruneisen: %15.10f\n" % (g.trace() / 3))
                     f.write("    gruneisen_tensor:\n")
                     for g_xyz in g:
-                        f.write("    - [ %10.7f, %10.7f, %10.7f ]\n" %
-                                tuple(g_xyz))
+                        f.write("    - [ %10.7f, %10.7f, %10.7f ]\n" % tuple(g_xyz))
 
     def _write_band_yaml(self, filename):
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             f.write("path:\n\n")
-            for path, distances, gs, fs in zip(self._band_paths,
-                                               self._band_distances,
-                                               self._gruneisen_parameters,
-                                               self._frequencies):
+            for path, distances, gs, fs in zip(
+                self._band_paths,
+                self._band_distances,
+                self._gruneisen_parameters,
+                self._frequencies,
+            ):
                 f.write("- nqpoint: %d\n" % len(path))
                 f.write("  phonon:\n")
                 for i, (q, d, g_at_q, freqs_at_q) in enumerate(
-                    zip(path, distances, gs, fs)):  # noqa E125
-                    f.write("  - q-position: [ %10.7f, %10.7f, %10.7f ]\n"
-                            % tuple(q))
+                    zip(path, distances, gs, fs)
+                ):  # noqa E125
+                    f.write("  - q-position: [ %10.7f, %10.7f, %10.7f ]\n" % tuple(q))
                     f.write("    distance: %10.7f\n" % d)
                     f.write("    band:\n")
                     for j, (g, freq) in enumerate(zip(g_at_q, freqs_at_q)):
@@ -275,8 +285,9 @@ class Gruneisen(object):
                         f.write("      gruneisen: %15.10f\n" % (g.trace() / 3))
                         f.write("      gruneisen_tensor:\n")
                         for g_xyz in g:
-                            f.write("      - [ %10.7f, %10.7f, %10.7f ]\n" %
-                                    tuple(g_xyz))
+                            f.write(
+                                "      - [ %10.7f, %10.7f, %10.7f ]\n" % tuple(g_xyz)
+                            )
                     f.write("\n")
 
     def _write_mesh_hdf5(self, filename="gruneisen.hdf5"):
@@ -285,16 +296,17 @@ class Gruneisen(object):
         g = self._gruneisen_parameters
         gruneisen = np.array(
             (g[:, :, 0, 0] + g[:, :, 1, 1] + g[:, :, 2, 2]) / 3,
-            dtype='double', order='C')
+            dtype="double",
+            order="C",
+        )
 
-        with h5py.File(filename, 'w') as w:
-            w.create_dataset('mesh', data=self._mesh)
-            w.create_dataset('gruneisen', data=gruneisen)
-            w.create_dataset('gruneisen_tensor',
-                             data=self._gruneisen_parameters)
-            w.create_dataset('weight', data=self._weights)
-            w.create_dataset('frequency', data=self._frequencies)
-            w.create_dataset('qpoint', data=self._qpoints)
+        with h5py.File(filename, "w") as w:
+            w.create_dataset("mesh", data=self._mesh)
+            w.create_dataset("gruneisen", data=gruneisen)
+            w.create_dataset("gruneisen_tensor", data=self._gruneisen_parameters)
+            w.create_dataset("weight", data=self._weights)
+            w.create_dataset("frequency", data=self._frequencies)
+            w.create_dataset("qpoint", data=self._qpoints)
 
     def _calculate_at_qpoints(self, qpoints):
         gruneisen_parameters = []
@@ -302,7 +314,7 @@ class Gruneisen(object):
         for i, q in enumerate(qpoints):
             if self._dm.is_nac():
                 if (np.abs(q) < 1e-5).all():  # If q is almost at Gamma
-                    if self._run_mode == 'band':
+                    if self._run_mode == "band":
                         # Direction estimated from neighboring point
                         if i > 0:
                             q_dir = qpoints[i] - qpoints[i - 1]
@@ -310,29 +322,28 @@ class Gruneisen(object):
                             q_dir = qpoints[i + 1] - qpoints[i]
                         else:
                             q_dir = None
-                        g, omega2 = self._get_gruneisen_tensor(
-                            q, nac_q_direction=q_dir)
+                        g, omega2 = self._get_gruneisen_tensor(q, nac_q_direction=q_dir)
                     else:  # Specified q-vector
                         g, omega2 = self._get_gruneisen_tensor(
-                            q, nac_q_direction=self._nac_q_direction)
+                            q, nac_q_direction=self._nac_q_direction
+                        )
                 else:  # If q is away from Gamma-point, then q-vector
-                    g, omega2 = self._get_gruneisen_tensor(
-                        q, nac_q_direction=q)
+                    g, omega2 = self._get_gruneisen_tensor(q, nac_q_direction=q)
             else:  # Without NAC
                 g, omega2 = self._get_gruneisen_tensor(q)
             gruneisen_parameters.append(g)
-            frequencies.append(
-                np.sqrt(abs(omega2)) * np.sign(omega2) * self._factor)
+            frequencies.append(np.sqrt(abs(omega2)) * np.sign(omega2) * self._factor)
 
-        return (np.array(gruneisen_parameters, dtype='double', order='C'),
-                np.array(frequencies, dtype='double', order='C'))
+        return (
+            np.array(gruneisen_parameters, dtype="double", order="C"),
+            np.array(frequencies, dtype="double", order="C"),
+        )
 
     def _calculate_band_paths(self):
         gruneisen_parameters = []
         frequencies = []
         for path in self._band_paths:
-            (gruneisen_at_path,
-             frequencies_at_path) = self._calculate_at_qpoints(path)
+            (gruneisen_at_path, frequencies_at_path) = self._calculate_at_qpoints(path)
             gruneisen_parameters.append(gruneisen_at_path)
             frequencies.append(frequencies_at_path)
 
@@ -355,9 +366,11 @@ class Gruneisen(object):
                 for j in range(3):
                     for nu in range(num_atom_prim):
                         for pi in range(num_atom_prim):
-                            g[s] += (w[nu * 3 + i, s].conjugate() *
-                                     dDdu[nu, pi, i, j] * w[pi * 3 + j, s]
-                                     ).real
+                            g[s] += (
+                                w[nu * 3 + i, s].conjugate()
+                                * dDdu[nu, pi, i, j]
+                                * w[pi * 3 + j, s]
+                            ).real
 
             g[s] *= -1.0 / 2 / omega2[s]
 
@@ -365,13 +378,11 @@ class Gruneisen(object):
 
     def _get_dDdu(self, q):
         num_atom_prim = len(self._pcell)
-        num_atom_super = len(self._scell)
         p2s = self._pcell.p2s_map
         s2p = self._pcell.s2p_map
         m = self._pcell.masses
         dPhidu = self._dPhidu
-        dDdu = np.zeros((num_atom_prim, num_atom_prim, 3, 3, 3, 3),
-                        dtype=complex)
+        dDdu = np.zeros((num_atom_prim, num_atom_prim, 3, 3, 3, 3), dtype=complex)
 
         for nu in range(num_atom_prim):
             for pi, p in enumerate(p2s):
@@ -380,9 +391,14 @@ class Gruneisen(object):
                         continue
                     adrs = self._multi[Ppi, nu][1]
                     multi = self._multi[Ppi, nu][0]
-                    phase = np.exp(2j * np.pi * np.dot(
-                            self._svecs[adrs:(adrs + multi), :], q)
-                                   ).sum() / multi
+                    phase = (
+                        np.exp(
+                            2j
+                            * np.pi
+                            * np.dot(self._svecs[adrs : (adrs + multi), :], q)
+                        ).sum()
+                        / multi
+                    )
                     dDdu[nu, pi] += phase * dPhidu[nu, Ppi]
                 dDdu[nu, pi] /= np.sqrt(m[nu] * m[pi])
 
@@ -393,8 +409,7 @@ class Gruneisen(object):
         num_atom_prim = len(self._pcell)
         num_atom_super = len(self._scell)
         p2s = self._pcell.p2s_map
-        dPhidu = np.zeros((num_atom_prim, num_atom_super, 3, 3, 3, 3),
-                          dtype=float)
+        dPhidu = np.zeros((num_atom_prim, num_atom_super, 3, 3, 3, 3), dtype=float)
 
         for nu in range(num_atom_prim):
             Y = self._get_Y(nu)
@@ -405,20 +420,18 @@ class Gruneisen(object):
                             for ll in range(3):
                                 for m in range(3):
                                     dPhidu[nu, pi, i, j, k, ll] = (
-                                        fc3[p2s[nu], pi, :, i, j, :] *
-                                        Y[:, :, k, ll]).sum()
+                                        fc3[p2s[nu], pi, :, i, j, :] * Y[:, :, k, ll]
+                                    ).sum()
                                     # Symmetrization?
                                     # (Y[:,:,k,l] + Y[:,:,l,k]) / 2).sum()
 
         return dPhidu
 
     def _get_Y(self, nu):
-        P = self._fc2
         X = self._X
         lat = self._pcell.cell
         num_atom_super = len(self._scell)
         R = self._get_R(num_atom_super, nu, lat)
-        p2s = self._pcell.p2s_map
         s2p = self._pcell.s2p_map
         p2p = self._pcell.p2p_map
 
@@ -447,8 +460,9 @@ class Gruneisen(object):
                     for j in range(3):
                         for k in range(3):
                             for ll in range(3):
-                                X[mu, i, j, k] -= G[mu, nu, i, ll] * \
-                                    np.dot(P[p2s[nu], :, ll, j], R[:, k])
+                                X[mu, i, j, k] -= G[mu, nu, i, ll] * np.dot(
+                                    P[p2s[nu], :, ll, j], R[:, k]
+                                )
 
         return X
 
@@ -457,8 +471,9 @@ class Gruneisen(object):
         for Npi in range(num_atom_super):
             adrs = self._multi[Npi, nu][1]
             multi = self._multi[Npi, nu][0]
-            R.append(np.dot(self._svecs[adrs:(adrs + multi), :].sum(axis=0) /
-                            multi, lat))
+            R.append(
+                np.dot(self._svecs[adrs : (adrs + multi), :].sum(axis=0) / multi, lat)
+            )
         return np.array(R)
 
     def _get_Gamma(self):
@@ -475,7 +490,10 @@ class Gruneisen(object):
                         # Eigenvectors are real.
                         # 3: means optical modes
                         G[pi, mu, k, i] = (
-                            1.0 / np.sqrt(m[pi] * m[mu]) *
-                            (vecs[pi * 3 + k, 3:] * vecs[mu * 3 + i, 3:] /
-                             vals[3:]).sum())
+                            1.0
+                            / np.sqrt(m[pi] * m[mu])
+                            * (
+                                vecs[pi * 3 + k, 3:] * vecs[mu * 3 + i, 3:] / vals[3:]
+                            ).sum()
+                        )
         return G

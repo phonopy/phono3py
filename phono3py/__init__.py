@@ -1,3 +1,4 @@
+"""Shortcuts to important classes, methods, and variables."""
 # Copyright (C) 2019 Atsushi Togo
 # All rights reserved.
 #
@@ -32,8 +33,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from phono3py.version import __version__
-from phono3py.api_phono3py import Phono3py
-from phono3py.api_jointdos import Phono3pyJointDos
-from phono3py.api_isotope import Phono3pyIsotope
-from phono3py.cui.load import load
+from phono3py.version import __version__  # noqa F401
+from phono3py.api_phono3py import Phono3py  # noqa F401
+from phono3py.api_jointdos import Phono3pyJointDos  # noqa F401
+from phono3py.api_isotope import Phono3pyIsotope  # noqa F401
+from phono3py.cui.load import load  # noqa F401

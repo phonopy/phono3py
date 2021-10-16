@@ -1,8 +1,10 @@
+"""Tests for fc3."""
 import numpy as np
 from phono3py.phonon3.fc3 import cutoff_fc3_by_zero
 
 
 def test_cutoff_fc3(nacl_pbe_cutoff_fc3, nacl_pbe):
+    """Test for cutoff pair option."""
     fc3_cut = nacl_pbe_cutoff_fc3.fc3
     fc3 = nacl_pbe.fc3
     abs_delta = np.abs(fc3_cut - fc3).sum()
@@ -10,6 +12,7 @@ def test_cutoff_fc3(nacl_pbe_cutoff_fc3, nacl_pbe):
 
 
 def test_cutoff_fc3_zero(nacl_pbe):
+    """Test for abrupt cut of fc3 by distance."""
     ph = nacl_pbe
     fc3 = ph.fc3.copy()
     cutoff_fc3_by_zero(fc3, ph.supercell, 5)

@@ -3,23 +3,64 @@ import numpy as np
 from phono3py.phonon3.real_self_energy import ImagToReal
 
 si_pbesol_Delta = [
-    [-0.0057666, -0.0057666, -0.01639729, -0.14809965,
-     -0.15091765, -0.15091765],
-    [-0.02078728, -0.02102094, -0.06573269, -0.11432603,
-     -0.1366966, -0.14371315]]
+    [-0.0057666, -0.0057666, -0.01639729, -0.14809965, -0.15091765, -0.15091765],
+    [-0.02078728, -0.02102094, -0.06573269, -0.11432603, -0.1366966, -0.14371315],
+]
 
-si_pbesol_Delta_fps = [[-0.00576660, -0.00594616, -0.00840087, -0.00960344,
-                        -0.00576660, -0.00594616, -0.00840087, -0.00960344,
-                        -0.01493508, -0.01639729, -0.01997820, -0.02070427,
-                        -0.15511645, -0.14747203, -0.14809966, -0.14230763,
-                        -0.15674925, -0.15684992, -0.15983868, -0.15091767,
-                        -0.15674925, -0.15684992, -0.15983868, -0.15091767],
-                       [-0.01990306, -0.02077094, -0.01798066, -0.01935581,
-                        -0.02158076, -0.02190634, -0.02195633, -0.01882258,
-                        -0.05740055, -0.05240406, -0.06252644, -0.05651015,
-                        -0.13072273, -0.11929265, -0.13472599, -0.13105120,
-                        -0.15191900, -0.14202698, -0.14371246, -0.14168892,
-                        -0.14760248, -0.13907618, -0.14275290, -0.14100562]]
+si_pbesol_Delta_fps = [
+    [
+        -0.00576660,
+        -0.00594616,
+        -0.00840087,
+        -0.00960344,
+        -0.00576660,
+        -0.00594616,
+        -0.00840087,
+        -0.00960344,
+        -0.01493508,
+        -0.01639729,
+        -0.01997820,
+        -0.02070427,
+        -0.15511645,
+        -0.14747203,
+        -0.14809966,
+        -0.14230763,
+        -0.15674925,
+        -0.15684992,
+        -0.15983868,
+        -0.15091767,
+        -0.15674925,
+        -0.15684992,
+        -0.15983868,
+        -0.15091767,
+    ],
+    [
+        -0.01990306,
+        -0.02077094,
+        -0.01798066,
+        -0.01935581,
+        -0.02158076,
+        -0.02190634,
+        -0.02195633,
+        -0.01882258,
+        -0.05740055,
+        -0.05240406,
+        -0.06252644,
+        -0.05651015,
+        -0.13072273,
+        -0.11929265,
+        -0.13472599,
+        -0.13105120,
+        -0.15191900,
+        -0.14202698,
+        -0.14371246,
+        -0.14168892,
+        -0.14760248,
+        -0.13907618,
+        -0.14275290,
+        -0.14100562,
+    ],
+]
 
 # imag-self-energy Si-PBEsol 50x50x50 gp=5, bi=4, 101 points, 300K
 im_part = [
@@ -123,7 +164,8 @@ im_part = [
     [29.7714552, 0.2258269, 29.7714552, 0.6147208, 29.9249163, 0.6117702],
     [30.0783775, 0.1397870, 30.0783775, 0.5578788, 30.2318386, 0.5591731],
     [30.3852997, 0.0468188, 30.3852997, 0.4941608, 30.5387608, 0.4706733],
-    [30.6922219, 0.0000000, 30.6922219, 0.4173657, 30.8456830, 0.3821416]]
+    [30.6922219, 0.0000000, 30.6922219, 0.4173657, 30.8456830, 0.3821416],
+]
 
 
 def test_real_self_energy_with_band_indices(si_pbesol):
@@ -136,9 +178,12 @@ def test_real_self_energy_with_band_indices(si_pbesol):
     si_pbesol.init_phph_interaction()
     _, delta = si_pbesol.run_real_self_energy(
         si_pbesol.grid.grg2bzg[[1, 103]],
-        [300, ],
+        [
+            300,
+        ],
         write_hdf5=False,
-        frequency_points_at_bands=True)
+        frequency_points_at_bands=True,
+    )
     np.testing.assert_allclose(si_pbesol_Delta, delta[0, 0, :], atol=0.01)
 
 
@@ -153,16 +198,21 @@ def test_real_self_energy_with_frequency_points(si_pbesol):
     frequency_points = [1.469947, 3.085309, 14.997187, 15.129080]
     fps, delta = si_pbesol.run_real_self_energy(
         si_pbesol.grid.grg2bzg[[1, 103]],
-        [300, ],
+        [
+            300,
+        ],
         frequency_points=frequency_points,
         write_hdf5=False,
-        frequency_points_at_bands=False)
+        frequency_points_at_bands=False,
+    )
 
     np.testing.assert_allclose(frequency_points, fps, atol=1e-5)
     np.testing.assert_allclose(
-        si_pbesol_Delta_fps[0], delta[0, 0, 0].ravel(), atol=0.01)
+        si_pbesol_Delta_fps[0], delta[0, 0, 0].ravel(), atol=0.01
+    )
     np.testing.assert_allclose(
-        si_pbesol_Delta_fps[1], delta[0, 0, 1].ravel(), atol=0.01)
+        si_pbesol_Delta_fps[1], delta[0, 0, 1].ravel(), atol=0.01
+    )
 
     # for b in delta[0, 0, 0]:
     #     print("".join("%.8f, " % s for s in b))
@@ -177,7 +227,7 @@ def test_ImagToReal():
     i2r.run()
     pick_one_vals = -1 * i2r.re_part  # -1 to make it freq-shift
     pick_one_freqs = i2r.frequency_points
-    i2r.run(method='half_shift')
+    i2r.run(method="half_shift")
     half_shift_vals = -1 * i2r.re_part  # -1 to make it freq-shift
     half_shift_freqs = i2r.frequency_points
     # for f, im, f1, re1, f2, re2, in zip(

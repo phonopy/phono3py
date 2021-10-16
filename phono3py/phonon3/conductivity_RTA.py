@@ -59,7 +59,6 @@ def get_thermal_conductivity_RTA(
     is_isotope=False,
     boundary_mfp=None,  # in micrometre
     use_ave_pp=False,
-    gamma_unit_conversion=None,
     is_kappa_star=True,
     gv_delta_q=None,
     is_full_pp=False,
@@ -96,7 +95,6 @@ def get_thermal_conductivity_RTA(
         mass_variances=mass_variances,
         boundary_mfp=boundary_mfp,
         use_ave_pp=use_ave_pp,
-        gamma_unit_conversion=gamma_unit_conversion,
         is_kappa_star=is_kappa_star,
         gv_delta_q=gv_delta_q,
         is_full_pp=is_full_pp,
@@ -508,7 +506,6 @@ class Conductivity_RTA(Conductivity):
         mass_variances=None,
         boundary_mfp=None,  # in micrometre
         use_ave_pp=False,
-        gamma_unit_conversion=None,
         is_kappa_star=True,
         gv_delta_q=None,
         is_full_pp=False,
@@ -552,7 +549,6 @@ class Conductivity_RTA(Conductivity):
         self._gamma_N = None
         self._gamma_U = None
         self._gamma_detail_at_q = None
-        self._gamma_unit_conversion = gamma_unit_conversion
         self._use_ave_pp = use_ave_pp
         self._use_const_ave_pp = None
         self._averaged_pp_interaction = None
@@ -733,9 +729,7 @@ class Conductivity_RTA(Conductivity):
             (len(self._sigmas), num_temp), order="C", dtype="intc"
         )
         self._collision = ImagSelfEnergy(
-            self._pp,
-            with_detail=(self._is_gamma_detail or self._is_N_U),
-            unit_conversion=self._gamma_unit_conversion,
+            self._pp, with_detail=(self._is_gamma_detail or self._is_N_U)
         )
 
     def _set_gamma_at_sigmas(self, i):

@@ -1,3 +1,4 @@
+"""Utilities to show various logs for main CUI script."""
 # Copyright (C) 2015 Atsushi Togo
 # All rights reserved.
 #
@@ -37,14 +38,13 @@ import numpy as np
 from phonopy.structure.cells import print_cell
 
 
-def show_general_settings(settings,
-                          run_mode,
-                          phono3py,
-                          cell_filename,
-                          input_filename,
-                          output_filename):
-    is_primitive_axes_auto = (type(phono3py.primitive_matrix) is str and
-                              phono3py.primitive_matrix == 'auto')
+def show_general_settings(
+    settings, run_mode, phono3py, cell_filename, input_filename, output_filename
+):
+    """Show general setting information."""
+    is_primitive_axes_auto = (
+        type(phono3py.primitive_matrix) is str and phono3py.primitive_matrix == "auto"
+    )
     primitive_matrix = phono3py.primitive_matrix
     supercell_matrix = phono3py.supercell_matrix
     phonon_supercell_matrix = phono3py.phonon_supercell_matrix
@@ -60,7 +60,7 @@ def show_general_settings(settings,
 
     if phono3py.calculator:
         print("Calculator interface: %s" % phono3py.calculator)
-    print("Crystal structure was read from \"%s\"." % cell_filename)
+    print('Crystal structure was read from "%s".' % cell_filename)
 
     if (np.diag(np.diag(supercell_matrix)) - supercell_matrix).any():
         print("Supercell matrix (dim):")
@@ -69,14 +69,12 @@ def show_general_settings(settings,
     else:
         print("Supercell (dim): %s" % np.diag(supercell_matrix))
     if phonon_supercell_matrix is not None:
-        if (np.diag(np.diag(phonon_supercell_matrix))
-            - phonon_supercell_matrix).any():
+        if (np.diag(np.diag(phonon_supercell_matrix)) - phonon_supercell_matrix).any():
             print("Phonon supercell matrix (dim-fc2):")
             for v in phonon_supercell_matrix:
                 print("  %s" % v)
         else:
-            print("Phonon supercell (dim-fc2): %s"
-                  % np.diag(phonon_supercell_matrix))
+            print("Phonon supercell (dim-fc2): %s" % np.diag(phonon_supercell_matrix))
     if is_primitive_axes_auto:
         print("Primitive matrix (Auto):")
         for v in primitive_matrix:
@@ -88,6 +86,7 @@ def show_general_settings(settings,
 
 
 def show_phono3py_cells(phono3py, settings):
+    """Show crystal structures."""
     symmetry = phono3py.symmetry
     primitive = phono3py.primitive
     supercell = phono3py.supercell
@@ -108,56 +107,63 @@ def show_phono3py_cells(phono3py, settings):
 
 
 def show_phono3py_force_constants_settings(settings):
+    """Show force constants settings."""
     read_fc3 = settings.read_fc3
     read_fc2 = settings.read_fc2
-    symmetrize_fc3r = (settings.is_symmetrize_fc3_r or
-                       settings.fc_symmetry)
+    symmetrize_fc3r = settings.is_symmetrize_fc3_r or settings.fc_symmetry
     symmetrize_fc3q = settings.is_symmetrize_fc3_q
-    symmetrize_fc2 = (settings.is_symmetrize_fc2 or
-                      settings.fc_symmetry)
+    symmetrize_fc2 = settings.is_symmetrize_fc2 or settings.fc_symmetry
 
     print("-" * 29 + " Force constants " + "-" * 30)
-    if settings.fc_calculator == 'alm' and not read_fc2:
+    if settings.fc_calculator == "alm" and not read_fc2:
         print("Use ALM for getting fc2 (simultaneous fit to fc2 and fc3)")
     else:
-        print("Imposing translational and index exchange symmetry to fc2: %s" %
-              symmetrize_fc2)
+        print(
+            "Imposing translational and index exchange symmetry to fc2: %s"
+            % symmetrize_fc2
+        )
 
     if settings.is_isotope or settings.is_joint_dos:
         pass
-    elif settings.fc_calculator == 'alm' and not read_fc3:
+    elif settings.fc_calculator == "alm" and not read_fc3:
         print("Use ALM for getting fc3")
     else:
-        print("Imposing translational and index exchange symmetry to fc3: "
-              "%s" % symmetrize_fc3r)
-        print(("Imposing symmetry of index exchange to fc3 in reciprocal "
-               "space: %s") % symmetrize_fc3q)
+        print(
+            "Imposing translational and index exchange symmetry to fc3: "
+            "%s" % symmetrize_fc3r
+        )
+        print(
+            ("Imposing symmetry of index exchange to fc3 in reciprocal " "space: %s")
+            % symmetrize_fc3q
+        )
 
     if settings.cutoff_fc3_distance is not None:
         print("FC3 cutoff distance: %s" % settings.cutoff_fc3_distance)
 
 
 def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
-    sigmas = updated_settings['sigmas']
-    temperatures = updated_settings['temperatures']
-    temperature_points = updated_settings['temperature_points']
-    cutoff_frequency = updated_settings['cutoff_frequency']
-    frequency_factor_to_THz = updated_settings['frequency_factor_to_THz']
-    frequency_scale_factor = updated_settings['frequency_scale_factor']
-    frequency_step = updated_settings['frequency_step']
-    num_frequency_points = updated_settings['num_frequency_points']
+    """Show general calculation settings."""
+    sigmas = updated_settings["sigmas"]
+    temperatures = updated_settings["temperatures"]
+    temperature_points = updated_settings["temperature_points"]
+    cutoff_frequency = updated_settings["cutoff_frequency"]
+    frequency_factor_to_THz = updated_settings["frequency_factor_to_THz"]
+    frequency_scale_factor = updated_settings["frequency_scale_factor"]
+    frequency_step = updated_settings["frequency_step"]
+    num_frequency_points = updated_settings["num_frequency_points"]
 
     print("-" * 27 + " Calculation settings " + "-" * 27)
     if settings.is_nac:
         print("Non-analytical term correction (NAC): %s" % settings.is_nac)
         if phono3py.nac_params:
-            print("NAC unit conversion factor: %9.5f"
-                  % phono3py.nac_params['factor'])
+            print("NAC unit conversion factor: %9.5f" % phono3py.nac_params["factor"])
         if settings.nac_q_direction is not None:
             print("NAC q-direction: %s" % settings.nac_q_direction)
     if settings.band_indices is not None and not settings.is_bterta:
-        print(("Band indices: [" + " %s" * len(settings.band_indices) + " ]") %
-              tuple([np.array(bi) + 1 for bi in settings.band_indices]))
+        print(
+            ("Band indices: [" + " %s" * len(settings.band_indices) + " ]")
+            % tuple([np.array(bi) + 1 for bi in settings.band_indices])
+        )
     if sigmas:
         text = "BZ integration: "
         for i, sigma in enumerate(sigmas):
@@ -183,52 +189,50 @@ def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
             text = (" %.1f " * len(temperatures)) % tuple(temperatures)
         print("Temperature: " + text)
     elif temperature_points is not None:
-        print(("Temperatures:" + " %.1f " * len(temperature_points))
-              % tuple(temperature_points))
+        print(
+            ("Temperatures:" + " %.1f " * len(temperature_points))
+            % tuple(temperature_points)
+        )
         if settings.scattering_event_class is not None:
-            print("Scattering event class: %s"
-                  % settings.scattering_event_class)
+            print("Scattering event class: %s" % settings.scattering_event_class)
 
     if cutoff_frequency:
         print("Cutoff frequency: %s" % cutoff_frequency)
 
-    if (settings.use_ave_pp and
-        (settings.is_bterta or settings.is_lbte)):
+    if settings.use_ave_pp and (settings.is_bterta or settings.is_lbte):
         print("Use averaged ph-ph interaction")
 
     const_ave_pp = settings.constant_averaged_pp_interaction
-    if (const_ave_pp is not None and
-        (settings.is_bterta or settings.is_lbte)):
+    if const_ave_pp is not None and (settings.is_bterta or settings.is_lbte):
         print("Constant ph-ph interaction: %6.3e" % const_ave_pp)
 
-    print("Frequency conversion factor to THz: %9.5f" %
-          frequency_factor_to_THz)
+    print("Frequency conversion factor to THz: %9.5f" % frequency_factor_to_THz)
     if frequency_scale_factor is not None:
         print("Frequency scale factor: %8.5f" % frequency_scale_factor)
 
-    if (settings.is_joint_dos or
-        settings.is_imag_self_energy or
-        settings.is_real_self_energy or
-        settings.is_spectral_function):
+    if (
+        settings.is_joint_dos
+        or settings.is_imag_self_energy
+        or settings.is_real_self_energy
+        or settings.is_spectral_function
+    ):
         if frequency_step is not None:
             print("Frequency step for spectrum: %s" % frequency_step)
         if num_frequency_points is not None:
-            print("Number of frequency sampling points: %d" %
-                  num_frequency_points)
+            print("Number of frequency sampling points: %d" % num_frequency_points)
 
     if settings.mesh_numbers is not None:
         try:
             if len(settings.mesh_numbers) == 3:
-                print("Mesh sampling: [ %d %d %d ]" %
-                      tuple(settings.mesh_numbers))
+                print("Mesh sampling: [ %d %d %d ]" % tuple(settings.mesh_numbers))
         except TypeError:
-            print("Length for sampling mesh generation: %.2f" %
-                  settings.mesh_numbers)
+            print("Length for sampling mesh generation: %.2f" % settings.mesh_numbers)
 
     sys.stdout.flush()
 
 
 def show_grid_points(grid_points):
+    """Show grid point list."""
     text = "Grid point to be calculated: "
     if len(grid_points) > 8:
         for i, gp in enumerate(grid_points):
