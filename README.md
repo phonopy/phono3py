@@ -36,6 +36,12 @@ phono3py repository.
   "python.formatting.provider": "black",
   ```
 
+- Use of pre-commit (https://pre-commit.com/) is encouraged.
+  - Installed by `pip install pre-commit`, `conda install pre_commit` or see
+    https://pre-commit.com/#install.
+  - pre-commit hook is installed by `pre-commit install`.
+  - pre-commit hook is run by `pre-commit run --all-files`.
+
 ## Documentation
 
 Phono3py user documentation is written using python sphinx. The source files are
