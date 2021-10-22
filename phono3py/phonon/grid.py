@@ -43,7 +43,7 @@ from phonopy.structure.cells import (
 from phonopy.structure.grid_points import length2mesh, extract_ir_grid_points
 
 
-class BZGrid(object):
+class BZGrid:
     """Data structure of BZ grid.
 
     GR-grid and BZ-grid

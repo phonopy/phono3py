@@ -2533,6 +2533,7 @@ class Phono3py(object):
             mesh,
             lattice=self._primitive.cell,
             symmetry_dataset=self._primitive_symmetry.dataset,
+            is_time_reversal=self._is_symmetry,
             use_grg=self._use_grg,
             store_dense_gp_map=self._store_dense_gp_map,
         )

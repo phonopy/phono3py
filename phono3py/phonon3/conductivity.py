@@ -145,11 +145,21 @@ class ConductivityBase:
         return ir_grid_points, ir_grid_weights
 
     def _get_qpoint_from_gp_index(self, i_gps):
+        """Return q-point(s) in reduced coordinates of grid point(s).
+
+        Parameters
+        ----------
+        i_gps : int or ndarray
+            BZ-grid index (int) or indices (ndarray).
+
+        """
         return np.dot(self._pp.bz_grid.addresses[i_gps], self._pp.bz_grid.QDinv.T)
 
 
 class Conductivity(ConductivityBase):
     """Thermal conductivity base class."""
+
+    _average_gv_over_kstar = False
 
     def __init__(
         self,
@@ -647,22 +657,25 @@ class Conductivity(ConductivityBase):
     def _set_gv(self, i_irgp, i_data):
         """Set group velocity."""
         irgp = self._grid_points[i_irgp]
-        if self._is_kappa_star:
+        if self._average_gv_over_kstar and len(self._point_operations) > 1:
             gps_rotated = get_grid_points_by_rotations(
                 irgp, self._pp.bz_grid, with_surface=True
             )
+            assert len(gps_rotated) == len(self._point_operations)
+
+            unique_gps = np.unique(gps_rotated)
+            gvs = {}
+            for bz_gp in unique_gps.tolist():  # To conver to int type.
+                self._gv_obj.run([self._get_qpoint_from_gp_index(bz_gp)])
+                gvs[bz_gp] = self._gv_obj.group_velocities[0, self._pp.band_indices, :]
+            gv = np.zeros_like(gvs[irgp])
+            for bz_gp, r in zip(gps_rotated, self._rotations_cartesian):
+                gv += np.dot(gvs[bz_gp], r)  # = dot(r_inv, gv)
+            self._gv[i_data] = gv / len(self._point_operations)
         else:
-            gps_rotated = get_grid_points_by_rotations(
-                irgp,
-                self._pp.bz_grid,
-                reciprocal_rotations=self._point_operations,
-            )
-        unique_gps = np.unique(gps_rotated)
-        gvs = {}
-        for bz_gp in unique_gps:
-            self._gv_obj.run([self._get_qpoint_from_gp_index(bz_gp)])
-            gvs[bz_gp] = self._gv_obj.group_velocities[0, self._pp.band_indices, :]
-        self._gv[i_data] = gvs[irgp]
+            self._gv_obj.run([self._get_qpoint_from_gp_index(irgp)])
+            gv = self._gv_obj.group_velocities[0, self._pp.band_indices, :]
+            self._gv[i_data] = gv
 
     def _set_gv_by_gv(self, i_irgp, i_data):
         """Outer product of group velocities.
