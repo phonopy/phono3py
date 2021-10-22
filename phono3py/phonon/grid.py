@@ -324,7 +324,9 @@ class BZGrid(object):
     def rotations(self):
         """Return rotation matrices for grid points.
 
-        Rotation matrices for GR-grid addresses (g) defined as g'=Rg.
+        Rotation matrices for GR-grid addresses (g) defined as g'=Rg. This can
+        be different from ``reciprocal_operations`` when GR-grid is used because
+        grid addresses are defined on an oblique lattice.
         shape=(rotations, 3, 3), dtype='int_', order='C'.
 
         """
@@ -591,7 +593,7 @@ def get_ir_grid_points(bz_grid):
 
 
 def get_grid_points_by_rotations(
-    bz_gp, bz_grid, reciprocal_rotations=None, with_surface=False
+    bz_gp, bz_grid: BZGrid, reciprocal_rotations=None, with_surface=False
 ):
     """Return BZ-grid point indices rotated from a BZ-grid point index.
 

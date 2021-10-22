@@ -67,7 +67,7 @@ class ConductivityBase:
         interaction : Interaction
             Interaction class instance.
         grid_points : array_like or None, optional
-            Grid point indices. When None, ir-grid points are searched
+            Grid point indices in BZgrid. When None, ir-grid points are searched
             internally. Default is None.
             shape=(grid_points, ), dtype='int_'.
         is_kappa_star : bool, optional
@@ -94,9 +94,7 @@ class ConductivityBase:
         self._set_grid_properties(grid_points)
 
         self._qpoints = np.array(
-            np.dot(
-                self._pp.bz_grid.addresses[self._grid_points], self._pp.bz_grid.QDinv.T
-            ),
+            self._get_qpoint_from_gp_index(self._grid_points),
             dtype="double",
             order="C",
         )
@@ -145,6 +143,9 @@ class ConductivityBase:
             self._pp.bz_grid.grg2bzg[ir_grid_points], dtype="int_"
         )
         return ir_grid_points, ir_grid_weights
+
+    def _get_qpoint_from_gp_index(self, i_gps):
+        return np.dot(self._pp.bz_grid.addresses[i_gps], self._pp.bz_grid.QDinv.T)
 
 
 class Conductivity(ConductivityBase):
@@ -624,20 +625,10 @@ class Conductivity(ConductivityBase):
         )
         self._mass_variances = self._isotope.mass_variances
 
-    def _set_harmonic_properties(self, i_irgp, i_data):
-        """Set group velocity and mode heat capacity."""
+    def _set_cv(self, i_irgp, i_data):
+        """Set mode heat capacity."""
         grid_point = self._grid_points[i_irgp]
         freqs = self._frequencies[grid_point][self._pp.band_indices]
-        self._cv[:, i_data, :] = self._get_cv(freqs)
-        self._gv_obj.run(
-            [
-                self._qpoints[i_irgp],
-            ]
-        )
-        gv = self._gv_obj.group_velocities[0, self._pp.band_indices, :]
-        self._gv[i_data] = gv
-
-    def _get_cv(self, freqs):
         cv = np.zeros((len(self._temperatures), len(freqs)), dtype="double")
         # T/freq has to be large enough to avoid divergence.
         # Otherwise just set 0.
@@ -651,7 +642,27 @@ class Conductivity(ConductivityBase):
                     ),
                     0,
                 )
-        return cv
+        self._cv[:, i_data, :] = cv
+
+    def _set_gv(self, i_irgp, i_data):
+        """Set group velocity."""
+        irgp = self._grid_points[i_irgp]
+        if self._is_kappa_star:
+            gps_rotated = get_grid_points_by_rotations(
+                irgp, self._pp.bz_grid, with_surface=True
+            )
+        else:
+            gps_rotated = get_grid_points_by_rotations(
+                irgp,
+                self._pp.bz_grid,
+                reciprocal_rotations=self._point_operations,
+            )
+        unique_gps = np.unique(gps_rotated)
+        gvs = {}
+        for bz_gp in unique_gps:
+            self._gv_obj.run([self._get_qpoint_from_gp_index(bz_gp)])
+            gvs[bz_gp] = self._gv_obj.group_velocities[0, self._pp.band_indices, :]
+        self._gv[i_data] = gvs[irgp]
 
     def _set_gv_by_gv(self, i_irgp, i_data):
         """Outer product of group velocities.
@@ -714,26 +725,26 @@ class Conductivity(ConductivityBase):
             main_diagonal += self._get_boundary_scattering(i)
         return main_diagonal
 
-    def _get_boundary_scattering(self, i):
+    def _get_boundary_scattering(self, i_gp):
         num_band = len(self._pp.primitive) * 3
         g_boundary = np.zeros(num_band, dtype="double")
         for ll in range(num_band):
             g_boundary[ll] = (
-                np.linalg.norm(self._gv[i, ll])
+                np.linalg.norm(self._gv[i_gp, ll])
                 * Angstrom
                 * 1e6
                 / (4 * np.pi * self._boundary_mfp)
             )
         return g_boundary
 
-    def _show_log_header(self, i):
+    def _show_log_header(self, i_gp):
         if self._log_level:
-            gp = self._grid_points[i]
+            gp = self._grid_points[i_gp]
             print(
                 "======================= Grid point %d (%d/%d) "
-                "=======================" % (gp, i + 1, len(self._grid_points))
+                "=======================" % (gp, i_gp + 1, len(self._grid_points))
             )
-            print("q-point: (%5.2f %5.2f %5.2f)" % tuple(self._qpoints[i]))
+            print("q-point: (%5.2f %5.2f %5.2f)" % tuple(self._qpoints[i_gp]))
             if self._boundary_mfp is not None:
                 if self._boundary_mfp > 1000:
                     print(

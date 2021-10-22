@@ -283,7 +283,14 @@ class Interaction:
         return self._primitive_symmetry
 
     def get_triplets_at_q(self):
-        """Return grid point triplets information."""
+        """Return grid point triplets information.
+
+        triplets_at_q is in BZ-grid.
+        triplets_map_at_q is in GR-grid.
+        ir_map_at_q is in GR-grid.
+        See details at ``get_triplets_at_q``.
+
+        """
         return (
             self._triplets_at_q,
             self._weights_at_q,

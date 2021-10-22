@@ -36,6 +36,7 @@
 import numpy as np
 from phonopy.units import THzToEv, Kb
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
+from phono3py.phonon3.interaction import Interaction
 
 
 class CollisionMatrix(ImagSelfEnergy):
@@ -48,7 +49,7 @@ class CollisionMatrix(ImagSelfEnergy):
 
     def __init__(
         self,
-        interaction,
+        interaction: Interaction,
         rotations_cartesian=None,
         num_ir_grid_points=None,
         rot_grid_points=None,
@@ -57,7 +58,8 @@ class CollisionMatrix(ImagSelfEnergy):
         lang="C",
     ):
         """Init method."""
-        self._pp = None
+        self._pp: Interaction
+        self._is_collision_matrix: bool
         self._sigma = None
         self._frequency_points = None
         self._temperature = None
@@ -74,11 +76,10 @@ class CollisionMatrix(ImagSelfEnergy):
         self._unit_conversion = None
         self._cutoff_frequency = None
         self._g = None
-        self._is_collision_matrix = None
         self._unit_conversion = None
         self._log_level = log_level
 
-        ImagSelfEnergy.__init__(self, interaction, lang=lang)
+        super().__init__(interaction, lang=lang)
 
         self._is_reducible_collision_matrix = is_reducible_collision_matrix
         self._is_collision_matrix = True

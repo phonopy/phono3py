@@ -210,16 +210,17 @@ class Conductivity_RTA(Conductivity):
         self._averaged_pp_interaction = ave_pp
 
     def _run_at_grid_point(self):
-        i = self._grid_point_count
-        self._show_log_header(i)
-        grid_point = self._grid_points[i]
-        self._set_harmonic_properties(i, i)
-        self._set_gv_by_gv(i, i)
+        i_gp = self._grid_point_count
+        self._show_log_header(i_gp)
+        grid_point = self._grid_points[i_gp]
+        self._set_cv(i_gp, i_gp)
+        self._set_gv(i_gp, i_gp)
+        self._set_gv_by_gv(i_gp, i_gp)
 
         if self._read_gamma:
             if self._use_ave_pp:
                 self._collision.set_grid_point(grid_point)
-                self._set_gamma_at_sigmas(i)
+                self._set_gamma_at_sigmas(i_gp)
         else:
             self._collision.set_grid_point(grid_point)
             num_triplets = len(self._pp.get_triplets_at_q()[0])
@@ -234,16 +235,16 @@ class Conductivity_RTA(Conductivity):
                 or self._use_const_ave_pp
                 or self._is_gamma_detail
             ):
-                self._set_gamma_at_sigmas(i)
+                self._set_gamma_at_sigmas(i_gp)
             else:  # can save memory space
-                self._set_gamma_at_sigmas_lowmem(i)
+                self._set_gamma_at_sigmas_lowmem(i_gp)
 
         if self._isotope is not None and not self._read_gamma_iso:
-            gamma_iso = self._get_gamma_isotope_at_sigmas(i)
-            self._gamma_iso[:, i, :] = gamma_iso[:, self._pp.band_indices]
+            gamma_iso = self._get_gamma_isotope_at_sigmas(i_gp)
+            self._gamma_iso[:, i_gp, :] = gamma_iso[:, self._pp.band_indices]
 
         if self._log_level:
-            self._show_log(self._qpoints[i], i)
+            self._show_log(self._qpoints[i_gp], i_gp)
 
     def _allocate_values(self):
         num_band0 = len(self._pp.band_indices)
