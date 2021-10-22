@@ -50,13 +50,20 @@ from phono3py.phonon3.displacement_fc3 import (
     get_bond_symmetry,
     get_smallest_vector_of_atom_pair,
 )
-from phonopy.structure.cells import compute_all_sg_permutations
+from phonopy.structure.atoms import PhonopyAtoms
+from phonopy.structure.cells import compute_all_sg_permutations, Primitive
+from phonopy.structure.symmetry import Symmetry
 
 logger = logging.getLogger(__name__)
 
 
 def get_fc3(
-    supercell, primitive, disp_dataset, symmetry, is_compact_fc=False, verbose=False
+    supercell: PhonopyAtoms,
+    primitive: Primitive,
+    disp_dataset,
+    symmetry: Symmetry,
+    is_compact_fc=False,
+    verbose=False,
 ):
     """Calculate fc3."""
     # fc2 has to be full matrix to compute delta-fc2
@@ -75,7 +82,7 @@ def get_fc3(
         print("Expanding fc3.")
 
     first_disp_atoms = np.unique([x["number"] for x in disp_dataset["first_atoms"]])
-    rotations = symmetry.get_symmetry_operations()["rotations"]
+    rotations = symmetry.symmetry_operations["rotations"]
     lattice = supercell.cell.T
     permutations = symmetry.atomic_permutations
 
@@ -698,14 +705,16 @@ def _third_rank_tensor_rotation_elem(rot, tensor, ll, m, n):
     return sum_elems
 
 
-def _get_fc3_done(supercell, disp_dataset, symmetry, array_shape):
+def _get_fc3_done(
+    supercell: PhonopyAtoms, disp_dataset, symmetry: Symmetry, array_shape
+):
     num_atom = len(supercell)
     fc3_done = np.zeros(array_shape, dtype="byte")
     symprec = symmetry.tolerance
     lattice = supercell.cell.T
     positions = supercell.scaled_positions
-    rotations = symmetry.get_symmetry_operations()["rotations"]
-    translations = symmetry.get_symmetry_operations()["translations"]
+    rotations = symmetry.symmetry_operations["rotations"]
+    translations = symmetry.symmetry_operations["translations"]
 
     atom_mapping = []
     for rot, trans in zip(rotations, translations):
@@ -719,7 +728,7 @@ def _get_fc3_done(supercell, disp_dataset, symmetry, array_shape):
         first_atom_num = dataset_first_atom["number"]
         site_symmetry = symmetry.get_site_symmetry(first_atom_num)
         direction = np.dot(
-            dataset_first_atom["displacement"], np.linalg.inv(supercell.get_cell())
+            dataset_first_atom["displacement"], np.linalg.inv(supercell.cell)
         )
         reduced_site_sym = get_reduced_site_symmetry(site_symmetry, direction, symprec)
         least_second_atom_nums = []

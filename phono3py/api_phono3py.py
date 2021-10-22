@@ -2375,8 +2375,8 @@ class Phono3py(object):
         self._primitive_symmetry = Symmetry(
             self._primitive, self._symprec, self._is_symmetry
         )
-        if len(self._symmetry.get_pointgroup_operations()) != len(
-            self._primitive_symmetry.get_pointgroup_operations()
+        if len(self._symmetry.pointgroup_operations) != len(
+            self._primitive_symmetry.pointgroup_operations
         ):  # noqa E129
             print(
                 "Warning: point group symmetries of supercell and primitive"

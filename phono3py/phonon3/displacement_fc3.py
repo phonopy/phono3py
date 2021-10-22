@@ -40,11 +40,16 @@ from phonopy.harmonic.displacement import (
     get_displacement,
     is_minus_displacement,
 )
+from phonopy.structure.atoms import PhonopyAtoms
+from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.cells import get_smallest_vectors
 
 
 def direction_to_displacement(
-    direction_dataset, displacement_distance, supercell, cutoff_distance=None
+    direction_dataset,
+    displacement_distance,
+    supercell: PhonopyAtoms,
+    cutoff_distance=None,
 ):
     """Convert displacement directions to those in Cartesian coordinates.
 
@@ -125,7 +130,7 @@ def direction_to_displacement(
 
 
 def get_third_order_displacements(
-    cell, symmetry, is_plusminus="auto", is_diagonal=False
+    cell: PhonopyAtoms, symmetry: Symmetry, is_plusminus="auto", is_diagonal=False
 ):
     """Create dispalcement dataset.
 
@@ -277,11 +282,11 @@ def get_least_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
 
 
 def get_smallest_vector_of_atom_pair(
-    atom_number_supercell, atom_number_primitive, supercell, symprec
+    atom_number_supercell, atom_number_primitive, supercell: PhonopyAtoms, symprec
 ):
     """Return smallest vectors of an atom pair in supercell."""
     s_pos = supercell.scaled_positions
-    svecs, multi = get_smallest_vectors(
+    svecs, _ = get_smallest_vectors(
         supercell.cell,
         [s_pos[atom_number_supercell]],
         [s_pos[atom_number_primitive]],

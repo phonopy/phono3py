@@ -51,7 +51,7 @@ from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
 from phono3py.phonon3.triplets import get_triplets_at_q, get_nosym_triplets_at_q
 
 
-class Interaction(object):
+class Interaction:
     """Calculate ph-ph interaction and phonons on grid.
 
     This class instance is the heart of phono3py calculation.

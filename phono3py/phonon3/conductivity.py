@@ -35,6 +35,7 @@
 
 import warnings
 import textwrap
+from typing import Optional, List
 import numpy as np
 from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.harmonic.force_constants import similarity_transformation
@@ -42,6 +43,7 @@ from phonopy.phonon.thermal_properties import mode_cv as get_mode_cv
 from phonopy.units import THzToEv, EV, THz, Angstrom
 from phono3py.file_IO import write_pp_to_hdf5
 from phono3py.phonon3.triplets import get_all_triplets
+from phono3py.phonon3.interaction import Interaction
 from phono3py.other.isotope import Isotope
 from phono3py.phonon.grid import get_ir_grid_points, get_grid_points_by_rotations
 
@@ -50,49 +52,15 @@ unit_to_WmK = (
 )  # 2pi comes from definition of lifetime.
 
 
-def all_bands_exist(interaction):
-    """Return if all bands are selected or not."""
-    band_indices = interaction.band_indices
-    num_band = len(interaction.primitive) * 3
-    if len(band_indices) == num_band:
-        if (band_indices - np.arange(num_band) == 0).all():
-            return True
-    return False
-
-
-def write_pp(conductivity, pp, i, filename=None, compression="gzip"):
-    """Write ph-ph interaction strength in hdf5 file."""
-    grid_point = conductivity.grid_points[i]
-    sigmas = conductivity.sigmas
-    sigma_cutoff = conductivity.sigma_cutoff_width
-    mesh = conductivity.mesh_numbers
-    triplets, weights, _, _ = pp.get_triplets_at_q()
-    all_triplets = get_all_triplets(grid_point, pp.bz_grid)
-
-    if len(sigmas) > 1:
-        print("Multiple smearing parameters were given. The last one in ")
-        print("ph-ph interaction calculations was written in the file.")
-
-    write_pp_to_hdf5(
-        mesh,
-        pp=pp.interaction_strength,
-        g_zero=pp.zero_value_positions,
-        grid_point=grid_point,
-        triplet=triplets,
-        weight=weights,
-        triplet_all=all_triplets,
-        sigma=sigmas[-1],
-        sigma_cutoff=sigma_cutoff,
-        filename=filename,
-        compression=compression,
-    )
-
-
 class ConductivityBase:
     """Base class of Conductivity classes."""
 
     def __init__(
-        self, interaction, grid_points=None, is_kappa_star=True, gv_delta_q=None
+        self,
+        interaction: Interaction,
+        grid_points=None,
+        is_kappa_star=True,
+        gv_delta_q=None,
     ):
         """Init method.
 
@@ -112,7 +80,7 @@ class ConductivityBase:
             See phonopy's GroupVelocity class. Default is None.
 
         """
-        self._pp = interaction
+        self._pp: Interaction = interaction
         self._is_kappa_star = is_kappa_star
 
         self._rotations_cartesian = None
@@ -184,10 +152,10 @@ class Conductivity(ConductivityBase):
 
     def __init__(
         self,
-        interaction,
+        interaction: Interaction,
         grid_points=None,
         temperatures=None,
-        sigmas=None,
+        sigmas: Optional[List] = None,
         sigma_cutoff=None,
         is_isotope=False,
         mass_variances=None,
@@ -198,15 +166,15 @@ class Conductivity(ConductivityBase):
         log_level=0,
     ):
         """Init method."""
-        self._pp = None
+        self._pp: Interaction
+        self._qpoints: np.ndarray
+        self._gv_obj: GroupVelocity
         self._is_kappa_star = None
         self._grid_points = None
         self._grid_weights = None
         self._ir_grid_points = None
         self._ir_grid_weights = None
-        self._qpoints = None
         self._point_operations = None
-        self._gv_obj = None
 
         super().__init__(
             interaction,
@@ -218,7 +186,8 @@ class Conductivity(ConductivityBase):
         self._is_full_pp = is_full_pp
         self._log_level = log_level
 
-        self._grid_point_count = 0
+        self._grid_point_count: int = 0
+        self._sigmas: Optional[List]
         if sigmas is None:
             self._sigmas = []
         else:
@@ -784,3 +753,47 @@ class Conductivity(ConductivityBase):
                     )
                     % tuple(self._mass_variances)
                 )
+
+
+def all_bands_exist(interaction: Interaction):
+    """Return if all bands are selected or not."""
+    band_indices = interaction.band_indices
+    num_band = len(interaction.primitive) * 3
+    if len(band_indices) == num_band:
+        if (band_indices - np.arange(num_band) == 0).all():
+            return True
+    return False
+
+
+def write_pp(
+    conductivity: Conductivity,
+    pp: Interaction,
+    i,
+    filename=None,
+    compression="gzip",
+):
+    """Write ph-ph interaction strength in hdf5 file."""
+    grid_point = conductivity.grid_points[i]
+    sigmas = conductivity.sigmas
+    sigma_cutoff = conductivity.sigma_cutoff_width
+    mesh = conductivity.mesh_numbers
+    triplets, weights, _, _ = pp.get_triplets_at_q()
+    all_triplets = get_all_triplets(grid_point, pp.bz_grid)
+
+    if len(sigmas) > 1:
+        print("Multiple smearing parameters were given. The last one in ")
+        print("ph-ph interaction calculations was written in the file.")
+
+    write_pp_to_hdf5(
+        mesh,
+        pp=pp.interaction_strength,
+        g_zero=pp.zero_value_positions,
+        grid_point=grid_point,
+        triplet=triplets,
+        weight=weights,
+        triplet_all=all_triplets,
+        sigma=sigmas[-1],
+        sigma_cutoff=sigma_cutoff,
+        filename=filename,
+        compression=compression,
+    )
