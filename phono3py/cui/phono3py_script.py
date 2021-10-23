@@ -920,6 +920,9 @@ def init_phph_interaction(
             print("  [ %d %d %d ]" % tuple(bz_grid.grid_matrix[1]))
             print("  [ %d %d %d ]" % tuple(bz_grid.grid_matrix[2]))
 
+        if settings.is_symmetrize_fc3_q:
+            print("Permutation symmetry of ph-ph interaction strengths: True")
+
     ave_pp = settings.constant_averaged_pp_interaction
     phono3py.init_phph_interaction(
         nac_q_direction=settings.nac_q_direction,
