@@ -1,5 +1,6 @@
 """Test spectral_function.py."""
 import numpy as np
+
 from phono3py.phonon3.spectral_function import SpectralFunction
 
 shifts = [

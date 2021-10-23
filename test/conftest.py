@@ -1,10 +1,11 @@
 """Pytest conftest.py."""
 import os
-import pytest
+
 import phonopy
-import phono3py
+import pytest
 from phonopy.interface.phonopy_yaml import read_cell_yaml
 
+import phono3py
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 store_dense_gp_map = True

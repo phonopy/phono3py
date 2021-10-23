@@ -1,8 +1,9 @@
 """Example to run thermal conductivity of Si."""
 import numpy as np
 from phonopy.interface.vasp import read_vasp
-from phono3py import Phono3py
+
 import phono3py
+from phono3py import Phono3py
 
 
 def run_thermal_conductivity():

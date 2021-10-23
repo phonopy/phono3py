@@ -1,5 +1,6 @@
 """Test for kaccum.py."""
 import numpy as np
+
 from phono3py.cui.kaccum import KappaDOS, _get_mfp
 from phono3py.phonon.grid import get_ir_grid_points
 

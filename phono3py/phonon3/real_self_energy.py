@@ -34,15 +34,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+
 import numpy as np
-from phonopy.units import Hbar, EV, THz
 from phonopy.phonon.degeneracy import degenerate_sets
-from phono3py.phonon.func import bose_einstein
+from phonopy.units import EV, Hbar, THz
+
 from phono3py.file_IO import (
     write_real_self_energy_at_grid_point,
     write_real_self_energy_to_hdf5,
 )
 from phono3py.phonon3.imag_self_energy import get_frequency_points
+from phono3py.phonon.func import bose_einstein
 
 
 def get_real_self_energy(

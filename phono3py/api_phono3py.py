@@ -34,59 +34,61 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import warnings
+
 import numpy as np
-from phonopy.structure.symmetry import Symmetry
-from phonopy.structure.cells import (
-    get_supercell,
-    get_primitive,
-    guess_primitive_matrix,
-    shape_supercell_matrix,
-    get_primitive_matrix,
-)
-from phonopy.structure.atoms import PhonopyAtoms
-from phonopy.structure.dataset import get_displacements_and_forces
-from phonopy.units import VaspToTHz
-from phonopy.harmonic.force_constants import (
-    symmetrize_force_constants,
-    symmetrize_compact_force_constants,
-    set_translational_invariance,
-    set_permutation_symmetry,
+from phonopy.harmonic.displacement import (
+    directions_to_displacement_dataset,
+    get_least_displacements,
 )
 from phonopy.harmonic.force_constants import get_fc2 as get_phonopy_fc2
-from phonopy.interface.fc_calculator import get_fc2
-from phonopy.harmonic.displacement import (
-    get_least_displacements,
-    directions_to_displacement_dataset,
+from phonopy.harmonic.force_constants import (
+    set_permutation_symmetry,
+    set_translational_invariance,
+    symmetrize_compact_force_constants,
+    symmetrize_force_constants,
 )
-from phono3py.version import __version__
+from phonopy.interface.fc_calculator import get_fc2
+from phonopy.structure.atoms import PhonopyAtoms
+from phonopy.structure.cells import (
+    get_primitive,
+    get_primitive_matrix,
+    get_supercell,
+    guess_primitive_matrix,
+    shape_supercell_matrix,
+)
+from phonopy.structure.dataset import get_displacements_and_forces
+from phonopy.structure.symmetry import Symmetry
+from phonopy.units import VaspToTHz
+
+from phono3py.interface.fc_calculator import get_fc3
+from phono3py.interface.phono3py_yaml import Phono3pyYaml
+from phono3py.phonon3.conductivity_LBTE import get_thermal_conductivity_LBTE
+from phono3py.phonon3.conductivity_RTA import get_thermal_conductivity_RTA
+from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
+from phono3py.phonon3.displacement_fc3 import (
+    direction_to_displacement,
+    get_third_order_displacements,
+)
+from phono3py.phonon3.fc3 import cutoff_fc3_by_zero
+from phono3py.phonon3.fc3 import get_fc3 as get_phono3py_fc3
+from phono3py.phonon3.fc3 import (
+    set_permutation_symmetry_compact_fc3,
+    set_permutation_symmetry_fc3,
+    set_translational_invariance_compact_fc3,
+    set_translational_invariance_fc3,
+)
 from phono3py.phonon3.imag_self_energy import (
     get_imag_self_energy,
     write_imag_self_energy,
 )
+from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.real_self_energy import (
     get_real_self_energy,
     write_real_self_energy,
 )
 from phono3py.phonon3.spectral_function import run_spectral_function
-from phono3py.phonon3.interaction import Interaction
-from phono3py.phonon3.conductivity_RTA import get_thermal_conductivity_RTA
-from phono3py.phonon3.conductivity_LBTE import get_thermal_conductivity_LBTE
-from phono3py.phonon3.displacement_fc3 import (
-    get_third_order_displacements,
-    direction_to_displacement,
-)
-from phono3py.phonon3.fc3 import (
-    set_permutation_symmetry_fc3,
-    set_permutation_symmetry_compact_fc3,
-    set_translational_invariance_fc3,
-    set_translational_invariance_compact_fc3,
-    cutoff_fc3_by_zero,
-)
-from phono3py.phonon3.fc3 import get_fc3 as get_phono3py_fc3
 from phono3py.phonon.grid import BZGrid
-from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
-from phono3py.interface.phono3py_yaml import Phono3pyYaml
-from phono3py.interface.fc_calculator import get_fc3
+from phono3py.version import __version__
 
 
 class Phono3py(object):

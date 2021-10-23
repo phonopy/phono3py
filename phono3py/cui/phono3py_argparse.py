@@ -34,6 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+
 from phonopy.cui.phonopy_argparse import fix_deprecated_option_names
 
 
@@ -41,7 +42,9 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
     """Return ArgumentParser instance."""
     deprecated = fix_deprecated_option_names(sys.argv)
     import argparse
+
     from phonopy.interface.calculator import add_arguments_of_calculators
+
     from phono3py.interface.calculator import calculator_info
 
     parser = argparse.ArgumentParser(description="Phono3py command-line-tool")
@@ -679,13 +682,13 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             default=False,
             help="Symmetrize fc3 in real space by index exchange",
         )
-        parser.add_argument(
-            "--sym-fc3q",
-            dest="is_symmetrize_fc3_q",
-            action="store_true",
-            default=False,
-            help="Symmetrize fc3 in reciprocal space by index exchange",
-        )
+    parser.add_argument(
+        "--sym-fc3q",
+        dest="is_symmetrize_fc3_q",
+        action="store_true",
+        default=False,
+        help="Symmetrize fc3 in reciprocal space by index exchange",
+    )
     parser.add_argument(
         "--thm",
         "--tetrahedron-method",

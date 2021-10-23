@@ -34,20 +34,22 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import warnings
+
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
+from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
+from phonopy.structure.atoms import isotope_data
 from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
-from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
 from phonopy.units import VaspToTHz
-from phonopy.structure.atoms import isotope_data
+
 from phono3py.other.tetrahedron_method import (
     get_integration_weights,
     get_unique_grid_points,
 )
-from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
-from phono3py.phonon.grid import BZGrid
 from phono3py.phonon.func import gaussian
+from phono3py.phonon.grid import BZGrid
+from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
 
 
 def get_mass_variances(primitive):

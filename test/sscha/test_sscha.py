@@ -1,14 +1,15 @@
 """Tests for SSCHA routines."""
-import pytest
 import numpy as np
+import pytest
+from phonopy.phonon.qpoints import QpointsPhonon
+from phonopy.phonon.random_displacements import RandomDisplacements
+
 from phono3py.sscha.sscha import (
     DispCorrMatrix,
     DispCorrMatrixMesh,
     SupercellPhonon,
     ThirdOrderFC,
 )
-from phonopy.phonon.qpoints import QpointsPhonon
-from phonopy.phonon.random_displacements import RandomDisplacements
 
 try:
     ModuleNotFoundError

@@ -34,12 +34,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.units import VaspToTHz
 from phonopy.structure.symmetry import Symmetry
-from phono3py.phonon3.joint_dos import JointDos
-from phono3py.phonon.grid import BZGrid
+from phonopy.units import VaspToTHz
 
 from phono3py.file_IO import write_joint_dos
+from phono3py.phonon3.joint_dos import JointDos
+from phono3py.phonon.grid import BZGrid
 
 
 class Phono3pyJointDos:

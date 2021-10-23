@@ -34,7 +34,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phono3py.file_IO import write_ir_grid_points, write_grid_address_to_hdf5
+
+from phono3py.file_IO import write_grid_address_to_hdf5, write_ir_grid_points
 from phono3py.phonon3.triplets import get_triplets_at_q
 from phono3py.phonon.grid import get_ir_grid_points
 

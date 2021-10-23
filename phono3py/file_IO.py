@@ -35,13 +35,15 @@
 
 import os
 import warnings
-import numpy as np
+
 import h5py
+import numpy as np
+from phonopy.cui.load_helper import read_force_constants_from_hdf5
 
 # This import is deactivated for a while.
 # from phonopy.file_IO import write_force_constants_to_hdf5
 from phonopy.file_IO import check_force_constants_indices, get_cell_from_disp_yaml
-from phonopy.cui.load_helper import read_force_constants_from_hdf5
+
 from phono3py.version import __version__
 
 

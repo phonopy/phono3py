@@ -35,6 +35,7 @@
 
 import numpy as np
 from phonopy.units import VaspToTHz
+
 from phono3py.other.isotope import Isotope
 
 

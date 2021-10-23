@@ -1,6 +1,7 @@
 """Test Interaction class."""
-import pytest
 import numpy as np
+import pytest
+
 from phono3py.phonon3.interaction import Interaction
 
 itr_RTA_Si = [

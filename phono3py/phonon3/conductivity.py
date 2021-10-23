@@ -33,19 +33,21 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import warnings
 import textwrap
-from typing import Optional, List
+import warnings
+from typing import List, Optional
+
 import numpy as np
-from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.harmonic.force_constants import similarity_transformation
+from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.phonon.thermal_properties import mode_cv as get_mode_cv
-from phonopy.units import THzToEv, EV, THz, Angstrom
+from phonopy.units import EV, Angstrom, THz, THzToEv
+
 from phono3py.file_IO import write_pp_to_hdf5
-from phono3py.phonon3.triplets import get_all_triplets
-from phono3py.phonon3.interaction import Interaction
 from phono3py.other.isotope import Isotope
-from phono3py.phonon.grid import get_ir_grid_points, get_grid_points_by_rotations
+from phono3py.phonon3.interaction import Interaction
+from phono3py.phonon3.triplets import get_all_triplets
+from phono3py.phonon.grid import get_grid_points_by_rotations, get_ir_grid_points
 
 unit_to_WmK = (
     (THz * Angstrom) ** 2 / (Angstrom ** 3) * EV / THz / (2 * np.pi)

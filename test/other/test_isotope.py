@@ -1,5 +1,6 @@
 """Tests for isotope scatterings."""
 import numpy as np
+
 from phono3py import Phono3pyIsotope
 
 si_pbesol_iso = [

@@ -1,13 +1,14 @@
 """Tests for grids."""
 import numpy as np
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
+
 from phono3py.phonon.grid import (
-    get_grid_point_from_address,
-    get_grid_point_from_address_py,
     BZGrid,
-    _get_grid_points_by_rotations,
     _get_grid_points_by_bz_rotations_c,
     _get_grid_points_by_bz_rotations_py,
+    _get_grid_points_by_rotations,
+    get_grid_point_from_address,
+    get_grid_point_from_address_py,
 )
 
 

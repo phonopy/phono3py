@@ -34,7 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.cui.settings import Settings, ConfParser, fracval
+from phonopy.cui.settings import ConfParser, Settings, fracval
 
 
 class Phono3pySettings(Settings):

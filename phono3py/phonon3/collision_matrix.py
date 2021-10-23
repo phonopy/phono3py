@@ -34,7 +34,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.units import THzToEv, Kb
+from phonopy.units import Kb, THzToEv
+
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
 from phono3py.phonon3.interaction import Interaction
 

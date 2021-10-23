@@ -35,14 +35,14 @@
 
 import numpy as np
 from phonopy.harmonic.displacement import (
-    get_least_displacements,
     directions_axis,
     get_displacement,
+    get_least_displacements,
     is_minus_displacement,
 )
 from phonopy.structure.atoms import PhonopyAtoms
-from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.cells import get_smallest_vectors
+from phonopy.structure.symmetry import Symmetry
 
 
 def direction_to_displacement(

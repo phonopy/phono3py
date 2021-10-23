@@ -34,8 +34,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+
 import numpy as np
 from phonopy.structure.cells import print_cell
+
+from phono3py.cui.settings import Phono3pySettings
 
 
 def show_general_settings(
@@ -106,12 +109,11 @@ def show_phono3py_cells(phono3py, settings):
     print("-" * 76)
 
 
-def show_phono3py_force_constants_settings(settings):
+def show_phono3py_force_constants_settings(settings: Phono3pySettings):
     """Show force constants settings."""
     read_fc3 = settings.read_fc3
     read_fc2 = settings.read_fc2
     symmetrize_fc3r = settings.is_symmetrize_fc3_r or settings.fc_symmetry
-    symmetrize_fc3q = settings.is_symmetrize_fc3_q
     symmetrize_fc2 = settings.is_symmetrize_fc2 or settings.fc_symmetry
 
     print("-" * 29 + " Force constants " + "-" * 30)
@@ -131,10 +133,6 @@ def show_phono3py_force_constants_settings(settings):
         print(
             "Imposing translational and index exchange symmetry to fc3: "
             "%s" % symmetrize_fc3r
-        )
-        print(
-            ("Imposing symmetry of index exchange to fc3 in reciprocal " "space: %s")
-            % symmetrize_fc3q
         )
 
     if settings.cutoff_fc3_distance is not None:

@@ -35,16 +35,18 @@
 
 import sys
 from typing import List, Optional
+
 import numpy as np
-from phonopy.units import Hbar, EV, THz
 from phonopy.phonon.degeneracy import degenerate_sets
-from phono3py.phonon3.interaction import Interaction
-from phono3py.phonon3.triplets import get_triplets_integration_weights
-from phono3py.phonon.func import bose_einstein
+from phonopy.units import EV, Hbar, THz
+
 from phono3py.file_IO import (
     write_gamma_detail_to_hdf5,
     write_imag_self_energy_at_grid_point,
 )
+from phono3py.phonon3.interaction import Interaction
+from phono3py.phonon3.triplets import get_triplets_integration_weights
+from phono3py.phonon.func import bose_einstein
 
 
 def get_imag_self_energy(

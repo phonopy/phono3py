@@ -36,11 +36,11 @@
 import numpy as np
 from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.structure.cells import (
-    get_primitive_matrix_by_centring,
     estimate_supercell_matrix,
+    get_primitive_matrix_by_centring,
     get_reduced_bases,
 )
-from phonopy.structure.grid_points import length2mesh, extract_ir_grid_points
+from phonopy.structure.grid_points import extract_ir_grid_points, length2mesh
 
 
 class BZGrid:

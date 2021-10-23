@@ -1,10 +1,10 @@
 """Launch script of ZnTe AiiDA calculation using aiida-phononpy."""
-from phonopy.interface.vasp import read_vasp_from_strings
-from aiida.manage.configuration import load_profile
-from aiida.orm import Float, Bool, Str
-from aiida.plugins import DataFactory, WorkflowFactory
 from aiida.engine import submit
+from aiida.manage.configuration import load_profile
+from aiida.orm import Bool, Float, Str
+from aiida.plugins import DataFactory, WorkflowFactory
 from aiida_phonopy.common.utils import phonopy_atoms_to_structure
+from phonopy.interface.vasp import read_vasp_from_strings
 
 load_profile()
 

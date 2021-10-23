@@ -37,23 +37,25 @@ import sys
 import time
 import warnings
 from typing import List
+
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.phonon.group_velocity import GroupVelocity
+from phonopy.units import Kb, THzToEv
+
+from phono3py.file_IO import (
+    read_collision_from_hdf5,
+    read_pp_from_hdf5,
+    write_collision_eigenvalues_to_hdf5,
+    write_collision_to_hdf5,
+    write_kappa_to_hdf5,
+    write_unitary_matrix_to_hdf5,
+)
+from phono3py.phonon3.collision_matrix import CollisionMatrix
 from phono3py.phonon3.conductivity import Conductivity, all_bands_exist, unit_to_WmK
 from phono3py.phonon3.conductivity import write_pp as _write_pp
 from phono3py.phonon3.interaction import Interaction
-from phono3py.phonon3.collision_matrix import CollisionMatrix
 from phono3py.phonon.grid import get_grid_points_by_rotations
-from phono3py.file_IO import (
-    write_kappa_to_hdf5,
-    write_collision_to_hdf5,
-    read_collision_from_hdf5,
-    write_collision_eigenvalues_to_hdf5,
-    write_unitary_matrix_to_hdf5,
-    read_pp_from_hdf5,
-)
-from phonopy.units import THzToEv, Kb
 
 
 class Conductivity_LBTE(Conductivity):

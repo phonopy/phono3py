@@ -1,5 +1,6 @@
 """Test for real_self_energy.py."""
 import numpy as np
+
 from phono3py.phonon3.real_self_energy import ImagToReal
 
 si_pbesol_Delta = [

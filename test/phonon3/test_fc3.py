@@ -1,5 +1,6 @@
 """Tests for fc3."""
 import numpy as np
+
 from phono3py.phonon3.fc3 import cutoff_fc3_by_zero
 
 

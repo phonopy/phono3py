@@ -34,7 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.units import THzToEv, Kb, Hbar, EV, Angstrom, THz, AMU
+from phonopy.units import AMU, EV, Angstrom, Hbar, Kb, THz, THzToEv
 
 
 def gaussian(x, sigma):

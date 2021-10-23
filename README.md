@@ -34,6 +34,13 @@ phono3py repository.
   "python.linting.pycodestyleEnabled": false,
   "python.linting.pydocstyleEnabled": true,
   "python.formatting.provider": "black",
+  "python.formatting.blackArgs": ["--line-length=88"],
+  "python.sortImports.args": ["--profile", "black"],
+  "[python]": {
+      "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    },
+  }
   ```
 
 - Use of pre-commit (https://pre-commit.com/) is encouraged.

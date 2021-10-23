@@ -33,26 +33,28 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 import logging
+import sys
+
 import numpy as np
 from phonopy.harmonic.force_constants import (
-    get_fc2,
-    similarity_transformation,
     distribute_force_constants,
-    solve_force_constants,
-    get_rotated_displacement,
-    get_positions_sent_by_rot_inv,
+    get_fc2,
     get_nsym_list_and_s2pp,
-)
-from phono3py.phonon3.displacement_fc3 import (
-    get_reduced_site_symmetry,
-    get_bond_symmetry,
-    get_smallest_vector_of_atom_pair,
+    get_positions_sent_by_rot_inv,
+    get_rotated_displacement,
+    similarity_transformation,
+    solve_force_constants,
 )
 from phonopy.structure.atoms import PhonopyAtoms
-from phonopy.structure.cells import compute_all_sg_permutations, Primitive
+from phonopy.structure.cells import Primitive, compute_all_sg_permutations
 from phonopy.structure.symmetry import Symmetry
+
+from phono3py.phonon3.displacement_fc3 import (
+    get_bond_symmetry,
+    get_reduced_site_symmetry,
+    get_smallest_vector_of_atom_pair,
+)
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,8 @@
 """Tests of displacements.py."""
-import phono3py
 import numpy as np
-from phono3py.phonon3.displacement_fc3 import get_smallest_vector_of_atom_pair
 
+import phono3py
+from phono3py.phonon3.displacement_fc3 import get_smallest_vector_of_atom_pair
 
 distances_NaCl = [
     0.0000000,

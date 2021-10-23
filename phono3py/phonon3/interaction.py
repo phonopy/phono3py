@@ -34,21 +34,26 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import warnings
+
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
-from phonopy.structure.cells import Primitive, sparse_to_dense_svecs
-from phonopy.structure.symmetry import Symmetry
-from phonopy.units import VaspToTHz, Hbar, EV, Angstrom, THz, AMU
-from phonopy.structure.cells import compute_all_sg_permutations
-from phono3py.phonon.grid import (
-    get_ir_grid_points,
-    get_grid_points_by_rotations,
-    BZGrid,
+from phonopy.structure.cells import (
+    Primitive,
+    compute_all_sg_permutations,
+    sparse_to_dense_svecs,
 )
-from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
+from phonopy.structure.symmetry import Symmetry
+from phonopy.units import AMU, EV, Angstrom, Hbar, THz, VaspToTHz
+
 from phono3py.phonon3.real_to_reciprocal import RealToReciprocal
 from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
-from phono3py.phonon3.triplets import get_triplets_at_q, get_nosym_triplets_at_q
+from phono3py.phonon3.triplets import get_nosym_triplets_at_q, get_triplets_at_q
+from phono3py.phonon.grid import (
+    BZGrid,
+    get_grid_points_by_rotations,
+    get_ir_grid_points,
+)
+from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
 
 
 class Interaction:

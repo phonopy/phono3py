@@ -34,8 +34,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.units import VaspToTHz
 from phonopy.structure.cells import sparse_to_dense_svecs
+from phonopy.units import VaspToTHz
 
 
 def run_phonon_solver_c(

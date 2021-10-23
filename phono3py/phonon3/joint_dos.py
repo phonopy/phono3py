@@ -33,24 +33,25 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import warnings
 import sys
+import warnings
+
 import numpy as np
-from phonopy.units import VaspToTHz
+from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
 from phonopy.structure.cells import Primitive
-from phonopy.harmonic.dynamical_matrix import DynamicalMatrix
+from phonopy.structure.tetrahedron_method import TetrahedronMethod
+from phonopy.units import VaspToTHz
+
+from phono3py.phonon3.imag_self_energy import get_frequency_points
 from phono3py.phonon3.triplets import (
-    get_triplets_at_q,
     get_nosym_triplets_at_q,
     get_tetrahedra_vertices,
+    get_triplets_at_q,
     get_triplets_integration_weights,
 )
-from phono3py.phonon.solver import run_phonon_solver_c
 from phono3py.phonon.func import bose_einstein
 from phono3py.phonon.grid import BZGrid
-from phono3py.phonon3.imag_self_energy import get_frequency_points
-from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
-from phonopy.structure.tetrahedron_method import TetrahedronMethod
+from phono3py.phonon.solver import run_phonon_solver_c
 
 
 class JointDos(object):

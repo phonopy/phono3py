@@ -1,17 +1,18 @@
 """Phono3py setup.py."""
 import os
-import sys
-import numpy
 import platform
+import sys
 import sysconfig
 
+import numpy
+
 try:
-    from setuptools import setup, Extension
+    from setuptools import Extension, setup
 
     use_setuptools = True
     print("setuptools is used.")
 except ImportError:
-    from distutils.core import setup, Extension
+    from distutils.core import Extension, setup
 
     use_setuptools = False
     print("distutils is used.")
@@ -114,10 +115,8 @@ elif os.path.isfile("libopenblas.py"):
     # Example of libopenblas.py
     # extra_link_args_lapacke += ['-lopenblas']
 
-    from libopenblas import (
-        extra_link_args_lapacke as obl_extra_link_args_lapacke,
-        include_dirs_lapacke as obl_include_dirs_lapacke,
-    )
+    from libopenblas import extra_link_args_lapacke as obl_extra_link_args_lapacke
+    from libopenblas import include_dirs_lapacke as obl_include_dirs_lapacke
 
     extra_link_args_lapacke = obl_extra_link_args_lapacke
     include_dirs_lapacke = obl_include_dirs_lapacke

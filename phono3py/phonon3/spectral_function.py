@@ -34,17 +34,19 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+
 import numpy as np
-from phono3py.phonon3.imag_self_energy import (
-    run_ise_at_frequency_points_batch,
-    get_frequency_points,
-    ImagSelfEnergy,
-)
-from phono3py.phonon3.real_self_energy import imag_to_real
+
 from phono3py.file_IO import (
     write_spectral_function_at_grid_point,
     write_spectral_function_to_hdf5,
 )
+from phono3py.phonon3.imag_self_energy import (
+    ImagSelfEnergy,
+    get_frequency_points,
+    run_ise_at_frequency_points_batch,
+)
+from phono3py.phonon3.real_self_energy import imag_to_real
 
 
 def run_spectral_function(

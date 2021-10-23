@@ -1,5 +1,6 @@
 """Tests for joint-density-of-states."""
 import numpy as np
+
 from phono3py.api_jointdos import Phono3pyJointDos
 
 si_freq_points = [

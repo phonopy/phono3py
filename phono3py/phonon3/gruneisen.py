@@ -34,11 +34,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
-from phonopy.units import VaspToTHz
-from phonopy.structure.grid_points import get_qpoints
 from phonopy.structure.cells import sparse_to_dense_svecs
+from phonopy.structure.grid_points import get_qpoints
+from phonopy.units import VaspToTHz
 
 
 def run_gruneisen_parameters(

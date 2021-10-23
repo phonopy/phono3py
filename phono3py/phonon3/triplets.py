@@ -35,6 +35,7 @@
 
 import numpy as np
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
+
 from phono3py.phonon.func import gaussian
 
 

@@ -33,8 +33,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from phonopy.interface.phonopy_yaml import PhonopyYaml
 import numpy as np
+from phonopy.interface.phonopy_yaml import PhonopyYaml
 
 
 class Phono3pyYaml(PhonopyYaml):

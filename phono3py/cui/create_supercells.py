@@ -33,14 +33,15 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from phonopy.interface.calculator import write_supercells_with_displacements
+
 from phono3py import Phono3py
-from phono3py.file_IO import write_disp_fc3_yaml, write_disp_fc2_yaml
+from phono3py.file_IO import write_disp_fc2_yaml, write_disp_fc3_yaml
 from phono3py.interface.calculator import (
     get_additional_info_to_write_fc2_supercells,
     get_additional_info_to_write_supercells,
     get_default_displacement_distance,
 )
-from phonopy.interface.calculator import write_supercells_with_displacements
 
 
 def create_phono3py_supercells(

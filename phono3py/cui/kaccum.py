@@ -1,16 +1,21 @@
 """Phono3py kaccum command line script."""
-import sys
 import argparse
-import numpy as np
+import sys
+
 import h5py
+import numpy as np
 from phonopy.cui.settings import fracval
-from phonopy.structure.cells import get_primitive
-from phonopy.structure.symmetry import Symmetry
 from phonopy.interface.calculator import read_crystal_structure
 from phonopy.phonon.dos import NormalDistribution
-from phonopy.structure.cells import get_primitive_matrix, guess_primitive_matrix
-from phono3py.phonon.grid import BZGrid, get_ir_grid_points
+from phonopy.structure.cells import (
+    get_primitive,
+    get_primitive_matrix,
+    guess_primitive_matrix,
+)
+from phonopy.structure.symmetry import Symmetry
+
 from phono3py.other.tetrahedron_method import get_integration_weights
+from phono3py.phonon.grid import BZGrid, get_ir_grid_points
 
 epsilon = 1.0e-8
 

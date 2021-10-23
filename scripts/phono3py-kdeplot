@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-import numpy as np
-import h5py
-import sys
-import os
-from scipy import stats
 import argparse
+import os
+import sys
+
+import h5py
+import numpy as np
+from scipy import stats
 
 epsilon = 1.0e-8
 

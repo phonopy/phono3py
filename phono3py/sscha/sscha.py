@@ -42,8 +42,9 @@ Formulae implemented are based on these papers:
 """
 
 import numpy as np
-from phonopy.units import VaspToTHz
 from phonopy.harmonic.dynmat_to_fc import DynmatToForceConstants
+from phonopy.units import VaspToTHz
+
 from phono3py.phonon.func import mode_length
 
 
