@@ -170,7 +170,7 @@ def run_spectral_function(
     return spf
 
 
-class SpectralFunction(object):
+class SpectralFunction:
     """Calculate spectral function due to bubble diagram."""
 
     def __init__(

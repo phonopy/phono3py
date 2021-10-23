@@ -129,7 +129,7 @@ def show_num_triplets(
         )
 
 
-class _TripletsNumbers(object):
+class _TripletsNumbers:
     def __init__(self, bz_grid, is_kappa_star=True):
         self._bz_grid = bz_grid
         (

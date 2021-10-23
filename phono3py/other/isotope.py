@@ -66,7 +66,7 @@ def get_mass_variances(primitive):
     return np.array(mass_variances, dtype="double")
 
 
-class Isotope(object):
+class Isotope:
     """Isotope scattering calculation class."""
 
     def __init__(

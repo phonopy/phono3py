@@ -305,7 +305,7 @@ class DispCorrMatrixMesh:
         return self._psi_matrix
 
 
-class SecondOrderFC(object):
+class SecondOrderFC:
     r"""SSCHA second order force constants by ensemble average.
 
     This class is made just for the test of the ensemble average in
@@ -415,7 +415,7 @@ class SecondOrderFC(object):
         )
 
 
-class ThirdOrderFC(object):
+class ThirdOrderFC:
     r"""SSCHA third order force constants.
 
     Eq. 45a in Ref.1 (See top docstring of this file)

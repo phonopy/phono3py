@@ -91,7 +91,7 @@ from phono3py.phonon.grid import BZGrid
 from phono3py.version import __version__
 
 
-class Phono3py(object):
+class Phono3py:
     """Phono3py main class.
 
     Attributes

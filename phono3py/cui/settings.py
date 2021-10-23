@@ -104,7 +104,7 @@ class Phono3pySettings(Settings):
         self._v comes from the parent class.
 
         """
-        Settings.__init__(self)
+        super().__init__()
         self._v.update(Phono3pySettings._default.copy())
         if default is not None:
             self._v.update(default)
@@ -330,13 +330,13 @@ class Phono3pyConfParser(ConfParser):
         self._settings = Phono3pySettings(default=default_settings)
         confs = {}
         if filename is not None:
-            ConfParser.__init__(self, filename=filename)
+            super().__init__(filename=filename)
             self.read_file()  # store .conf file setting in self._confs
             self._parse_conf()
             self._set_settings()
             confs.update(self._confs)
         if args is not None:
-            ConfParser.__init__(self, args=args)
+            super().__init__(args=args)
             self._read_options()
             self._parse_conf()
             self._set_settings()

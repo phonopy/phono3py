@@ -54,7 +54,7 @@ from phono3py.phonon.grid import BZGrid
 from phono3py.phonon.solver import run_phonon_solver_c
 
 
-class JointDos(object):
+class JointDos:
     """Calculate joint-density-of-states."""
 
     def __init__(

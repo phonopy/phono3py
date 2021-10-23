@@ -608,7 +608,7 @@ def imag_to_real(im_part, frequency_points):
     return i2r.re_part, i2r.frequency_points
 
 
-class ImagToReal(object):
+class ImagToReal:
     """Calculate real part of self-energy using Kramers-Kronig relation."""
 
     def __init__(self, im_part, frequency_points, diagram="bubble"):

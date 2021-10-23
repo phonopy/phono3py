@@ -37,7 +37,7 @@ import numpy as np
 from phonopy.structure.cells import sparse_to_dense_svecs
 
 
-class RealToReciprocal(object):
+class RealToReciprocal:
     """Transform fc3 in real space to reciprocal space."""
 
     def __init__(self, fc3, primitive, mesh, symprec=1e-5):

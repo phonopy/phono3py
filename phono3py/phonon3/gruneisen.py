@@ -119,7 +119,7 @@ def run_gruneisen_parameters(
         print("Gruneisen parameters are written in %s" % (filename + filename_ext))
 
 
-class Gruneisen(object):
+class Gruneisen:
     """Calculat mode Grueneisen parameters from fc3."""
 
     def __init__(

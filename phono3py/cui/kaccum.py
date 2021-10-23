@@ -20,7 +20,7 @@ from phono3py.phonon.grid import BZGrid, get_ir_grid_points
 epsilon = 1.0e-8
 
 
-class KappaDOS(object):
+class KappaDOS:
     """Class to calculate thermal conductivity spectram."""
 
     def __init__(
@@ -112,7 +112,7 @@ class KappaDOS(object):
         return bzgp2irgp_map
 
 
-class GammaDOSsmearing(object):
+class GammaDOSsmearing:
     """Class to calculate Gamma spectram by smearing method."""
 
     def __init__(

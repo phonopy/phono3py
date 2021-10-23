@@ -104,7 +104,7 @@ class Phono3pyYaml(PhonopyYaml):
 
         self._yaml = None
 
-        super(Phono3pyYaml, self).__init__(
+        super().__init__(
             configuration=configuration,
             calculator=calculator,
             physical_units=physical_units,
