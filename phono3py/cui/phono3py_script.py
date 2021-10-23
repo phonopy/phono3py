@@ -382,9 +382,7 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
             force_sets = get_force_sets(
                 interface_mode,
                 num_atoms,
-                num_disps,
                 force_filenames,
-                disp_filename=disp_filename,
                 verbose=(log_level > 0),
             )
 
@@ -394,7 +392,6 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
             force_set_zero = get_force_sets(
                 interface_mode,
                 num_atoms,
-                1,
                 [
                     force_filename,
                 ],
@@ -447,9 +444,7 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
         force_sets = get_force_sets(
             interface_mode,
             num_atoms,
-            num_disps,
             force_filenames,
-            disp_filename,
             verbose=(log_level > 0),
         )
 
@@ -459,7 +454,6 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
             force_set_zero = get_force_sets(
                 interface_mode,
                 num_atoms,
-                1,
                 [
                     force_filename,
                 ],
