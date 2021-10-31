@@ -486,7 +486,6 @@ class Interaction:
 
     def set_grid_point(self, grid_point, store_triplets_map=False):
         """Set grid point and prepare grid point triplets."""
-        reciprocal_lattice = np.linalg.inv(self._primitive.cell)
         if not self._is_mesh_symmetry:
             (
                 triplets_at_q,
@@ -534,6 +533,7 @@ class Interaction:
                         is_time_reversal=False,
                     )
 
+        reciprocal_lattice = np.linalg.inv(self._primitive.cell)
         for triplet in triplets_at_q:
             sum_q = (self._bz_grid.addresses[triplet]).sum(axis=0)
             if (sum_q % self.mesh_numbers != 0).any():

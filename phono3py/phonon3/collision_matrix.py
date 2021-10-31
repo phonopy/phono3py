@@ -134,7 +134,6 @@ class CollisionMatrix(ImagSelfEnergy):
             self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
 
     def _run_collision_matrix(self):
-        self._run_with_band_indices()
         if self._temperature > 0:
             if self._lang == "C":
                 if self._is_reducible_collision_matrix:
@@ -185,22 +184,17 @@ class CollisionMatrix(ImagSelfEnergy):
         num_band0 = self._pp_strength.shape[1]
         num_band = self._pp_strength.shape[2]
         gp2tp_map = self._get_gp2tp_map()
-
         for i in range(self._num_ir_grid_points):
             r_gps = self._rot_grid_points[i]
             for r, r_gp in zip(self._rotations_cartesian, r_gps):
                 ti = gp2tp_map[self._triplets_map_at_q[r_gp]]
                 inv_sinh = self._get_inv_sinh(r_gp, gp2tp_map)
-
-                for j in range(num_band0):
-                    for k in range(num_band):
-                        collision = (
-                            self._pp_strength[ti, j, k]
-                            * inv_sinh
-                            * self._g[2, ti, j, k]
-                        ).sum()
-                        collision *= self._unit_conversion
-                        self._collision_matrix[j, :, i, k, :] += collision * r
+                for j, k in list(np.ndindex((num_band0, num_band))):
+                    collision = (
+                        self._pp_strength[ti, j, k] * inv_sinh * self._g[2, ti, j, k]
+                    ).sum()
+                    collision *= self._unit_conversion
+                    self._collision_matrix[j, :, i, k, :] += collision * r
 
     def _run_py_reducible_collision_matrix(self):
         num_mesh_points = np.prod(self._pp.mesh_numbers)

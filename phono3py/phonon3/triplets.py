@@ -37,11 +37,12 @@ import numpy as np
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
 from phono3py.phonon.func import gaussian
+from phono3py.phonon.grid import BZGrid
 
 
 def get_triplets_at_q(
     grid_point,
-    bz_grid,
+    bz_grid: BZGrid,
     reciprocal_rotations=None,
     is_time_reversal=True,
     swappable=True,
@@ -123,7 +124,7 @@ def get_all_triplets(grid_point, bz_grid):
     return triplets_at_q
 
 
-def get_nosym_triplets_at_q(grid_point, bz_grid):
+def get_nosym_triplets_at_q(grid_point, bz_grid: BZGrid):
     """Return triplets information without imposing mesh symmetry.
 
     See the docstring of get_triplets_at_q.
@@ -299,12 +300,16 @@ def _get_triplets_reciprocal_mesh_at_q(
     return map_triplets, map_q
 
 
-def _get_BZ_triplets_at_q(grid_point, bz_grid, map_triplets):
+def _get_BZ_triplets_at_q(grid_point, bz_grid: BZGrid, map_triplets):
     """Grid point triplets are searched considering BZ surface.
 
     Looking for q+q'+q''=G with smallest |G|. In this condition,
     a pair in (q, q', q'') can be translationally equivalent points.
-    This is treated an auxiliary grid system (bz_grid).
+    This is treated on BZ-grid.
+
+    Note
+    ----
+    Symmetry information of triplets is encoded in ``map_triplets``.
 
     Parameters
     ----------
@@ -340,7 +345,6 @@ def _get_BZ_triplets_at_q(grid_point, bz_grid, map_triplets):
         weights[g] += 1
     ir_weights = np.extract(weights > 0, weights)
     triplets = -np.ones((len(ir_weights), 3), dtype="int_")
-    Q = np.eye(3, dtype="int_", order="C")
     num_ir_ret = phono3c.BZ_triplets_at_q(
         triplets,
         grid_point,
@@ -348,7 +352,7 @@ def _get_BZ_triplets_at_q(grid_point, bz_grid, map_triplets):
         bz_grid.gp_map,
         map_triplets,
         np.array(bz_grid.D_diag, dtype="int_"),
-        Q,
+        bz_grid.Q,
         bz_grid.store_dense_gp_map * 1 + 1,
     )
 

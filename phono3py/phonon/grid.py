@@ -126,6 +126,7 @@ class BZGrid:
         is_shift=None,
         is_time_reversal=True,
         use_grg=False,
+        force_SNF=False,
         store_dense_gp_map=True,
     ):
         """Init method.
@@ -151,6 +152,9 @@ class BZGrid:
             Default is True.
         use_grg : bool, optional
             Use generalized regular grid. Default is False.
+        force_SNF : bool, optional
+            Enforce Smith normal form even when grid lattice of GR-grid is the same as
+            the traditional grid lattice. Default is False.
         store_dense_gp_map : bool, optional
             See the detail in the docstring of `_relocate_BZ_grid_address`.
             Default is True.
@@ -192,7 +196,7 @@ class BZGrid:
                 np.linalg.inv(lattice), dtype="double", order="C"
             )
 
-        self._generate_grid(mesh)
+        self._generate_grid(mesh, force_SNF=force_SNF)
 
     @property
     def D_diag(self):
@@ -437,7 +441,7 @@ class BZGrid:
                 self._D_diag = np.array(mesh, dtype="int_")
         except TypeError:
             length = float(mesh)
-            if self._use_grg:
+            if self._use_grg and "international" in self._symmetry_dataset:
                 self._set_SNF(length, force_SNF=force_SNF)
             else:
                 self._D_diag = length2mesh(length, self._lattice)

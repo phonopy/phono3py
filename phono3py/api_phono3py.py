@@ -2530,13 +2530,13 @@ class Phono3py:
     def _set_mesh_numbers(self, mesh):
         # initialization related to mesh
         self._interaction = None
-
         self._bz_grid = BZGrid(
             mesh,
             lattice=self._primitive.cell,
             symmetry_dataset=self._primitive_symmetry.dataset,
             is_time_reversal=self._is_symmetry,
             use_grg=self._use_grg,
+            force_SNF=False,
             store_dense_gp_map=self._store_dense_gp_map,
         )
 
