@@ -53,7 +53,7 @@ from phono3py.phonon3.triplets import get_all_triplets
 from phono3py.phonon.grid import get_grid_points_by_rotations
 
 
-class Conductivity_RTA(Conductivity):
+class ConductivityRTA(Conductivity):
     """Lattice thermal conductivity calculation with RTA."""
 
     def __init__(
@@ -609,7 +609,7 @@ def get_thermal_conductivity_RTA(
             "-------------------- Lattice thermal conducitivity (RTA) "
             "--------------------"
         )
-    br = Conductivity_RTA(
+    br = ConductivityRTA(
         interaction,
         grid_points=grid_points,
         temperatures=_temperatures,

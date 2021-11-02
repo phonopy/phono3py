@@ -264,10 +264,6 @@ class Conductivity(ConductivityBase):
             self._grid_point_count += 1
             return self._grid_point_count - 1
 
-    def next(self):
-        """For backward compatibility."""
-        return self.__next__()
-
     @property
     def mesh_numbers(self):
         """Return mesh numbers of GR-grid."""

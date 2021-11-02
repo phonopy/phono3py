@@ -181,55 +181,129 @@ class CollisionMatrix(ImagSelfEnergy):
         )
 
     def _run_py_collision_matrix(self):
+        r"""Sum over rotations, and q-points and bands for third phonons.
+
+        \Omega' = \sum_R' R' \Omega_{kp,R'k'p'}
+
+        pp_strength.shape = (num_triplets, num_band0, num_band, num_band)
+
+        """
         num_band0 = self._pp_strength.shape[1]
         num_band = self._pp_strength.shape[2]
-        gp2tp_map = self._get_gp2tp_map()
+        gp2tp, tp2s, swapped = self._get_gp2tp_map()
         for i in range(self._num_ir_grid_points):
             r_gps = self._rot_grid_points[i]
             for r, r_gp in zip(self._rotations_cartesian, r_gps):
-                ti = gp2tp_map[self._triplets_map_at_q[r_gp]]
-                inv_sinh = self._get_inv_sinh(r_gp, gp2tp_map)
-                for j, k in list(np.ndindex((num_band0, num_band))):
-                    collision = (
-                        self._pp_strength[ti, j, k] * inv_sinh * self._g[2, ti, j, k]
-                    ).sum()
+                inv_sinh = self._get_inv_sinh(tp2s[r_gp])
+                ti = gp2tp[r_gp]
+                for j, k in np.ndindex((num_band0, num_band)):
+                    if swapped[r_gp]:
+                        collision = (
+                            self._pp_strength[ti, j, :, k]
+                            * inv_sinh
+                            * self._g[2, ti, j, :, k]
+                        ).sum()
+                    else:
+                        collision = (
+                            self._pp_strength[ti, j, k]
+                            * inv_sinh
+                            * self._g[2, ti, j, k]
+                        ).sum()
                     collision *= self._unit_conversion
                     self._collision_matrix[j, :, i, k, :] += collision * r
 
     def _run_py_reducible_collision_matrix(self):
+        r"""Sum over q-points and bands of third phonons.
+
+        This corresponds to the second term of right hand side of
+        \Omega_{q0p0, q1p1} in Chaput's paper.
+
+        pp_strength.shape = (num_triplets, num_band0, num_band, num_band)
+
+        """
         num_mesh_points = np.prod(self._pp.mesh_numbers)
         num_band0 = self._pp_strength.shape[1]
         num_band = self._pp_strength.shape[2]
-        gp2tp_map = self._get_gp2tp_map()
-
-        for i in range(num_mesh_points):
-            ti = gp2tp_map[self._triplets_map_at_q[i]]
-            inv_sinh = self._get_inv_sinh(i, gp2tp_map)
-            for j, k in list(np.ndindex((num_band0, num_band))):
-                collision = (
-                    self._pp_strength[ti, j, k] * inv_sinh * self._g[2, ti, j, k]
-                ).sum()
+        gp2tp, tp2s, swapped = self._get_gp2tp_map()
+        for gp1 in range(num_mesh_points):
+            inv_sinh = self._get_inv_sinh(tp2s[gp1])
+            ti = gp2tp[gp1]
+            for j, k in np.ndindex((num_band0, num_band)):
+                if swapped[gp1]:
+                    collision = (
+                        self._pp_strength[ti, j, :, k]
+                        * inv_sinh
+                        * self._g[2, ti, j, :, k]
+                    ).sum()
+                else:
+                    collision = (
+                        self._pp_strength[ti, j, k] * inv_sinh * self._g[2, ti, j, k]
+                    ).sum()
                 collision *= self._unit_conversion
-                self._collision_matrix[j, i, k] += collision
+                self._collision_matrix[j, gp1, k] += collision
 
     def _get_gp2tp_map(self):
-        gp2tp_map = {}
-        count = 0
-        for i, j in enumerate(self._triplets_map_at_q):
-            if i == j:
-                gp2tp_map[i] = count
-                count += 1
+        """Return mapping table from grid point index to triplet index.
 
-        return gp2tp_map
+        triplets_map_at_q contains index mapping of q1 in (q0, q1, q2) to
+        independet q1 under q0+q1+q2=G with a fixed q0.
 
-    def _get_inv_sinh(self, gp, gp2tp_map):
-        ti = gp2tp_map[self._triplets_map_at_q[gp]]
-        tp = self._triplets_at_q[ti]
-        if self._triplets_map_at_q[gp] == self._ir_map_at_q[gp]:
-            gp2 = tp[2]
-        else:
-            gp2 = tp[1]
-        freqs = self._frequencies[gp2]
+        Note
+        ----
+        map_q[gp1] <= gp1.:
+            Symmetry relation of grid poi nts with a stabilizer q0.
+        map_triplets[gp1] <= gp1 :
+            map_q[gp1] == gp1 : map_q[gp2] if map_q[gp2] < gp1 otherwise gp1.
+            map_q[gp1] != gp1 : map_triplets[map_q[gp1]]
+
+
+
+        As a rule
+        1. map_triplets[gp1] == gp1 : [gp0, gp1, gp2]
+        2. map_triplets[gp1] != gp1 : [gp0, map_q[gp2], gp1'],
+                                      map_triplets[gp1] == map_q[gp2]
+
+        """
+        map_triplets = self._triplets_map_at_q
+        map_q = self._ir_map_at_q
+        gp2tp = -np.ones(len(map_triplets), dtype="int_")
+        tp2s = -np.ones(len(map_triplets), dtype="int_")
+        swapped = np.zeros(len(map_triplets), dtype="bytes")
+        num_tps = 0
+
+        bzg2grg = self._pp.bz_grid.bzg2grg
+
+        for gp1, tp_gp1 in enumerate(map_triplets):
+            if map_q[gp1] == gp1:
+                if gp1 == tp_gp1:
+                    gp2tp[gp1] = num_tps
+                    tp2s[gp1] = self._triplets_at_q[num_tps][2]
+                    assert bzg2grg[self._triplets_at_q[num_tps][1]] == gp1
+                    num_tps += 1
+                else:  # q1 <--> q2 swap if swappable.
+                    gp2tp[gp1] = gp2tp[tp_gp1]
+                    tp2s[gp1] = self._triplets_at_q[gp2tp[gp1]][1]
+                    swapped[gp1] = 1
+                    assert map_q[bzg2grg[self._triplets_at_q[gp2tp[gp1]][2]]] == gp1
+            else:  # q1 is not in ir-q1s.
+                gp2tp[gp1] = gp2tp[map_q[gp1]]
+                tp2s[gp1] = tp2s[map_q[gp1]]
+                swapped[gp1] = swapped[map_q[gp1]]
+
+            # Alternative implementation of tp2s
+            # grg2bzg = self._pp.bz_grid.grg2bzg
+            # addresses = self._pp.bz_grid.addresses
+            # q0 = addresses[self._triplets_at_q[0][0]]
+            # q1 = addresses[grg2bzg[gp1]]
+            # q2 = -q0 - q1
+            # gp2 = get_grid_point_from_address(q2, self._pp.bz_grid.D_diag)
+            # tp2s[gp1] = self._pp.bz_grid.grg2bzg[gp2]
+
+        return gp2tp, tp2s, swapped
+
+    def _get_inv_sinh(self, gp):
+        """Return sinh term for bands at a q-point."""
+        freqs = self._frequencies[gp]
         sinh = np.where(
             freqs > self._cutoff_frequency,
             np.sinh(freqs * THzToEv / (2 * Kb * self._temperature)),

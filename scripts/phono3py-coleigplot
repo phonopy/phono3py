@@ -62,7 +62,7 @@ def plot_one_file(ax, args):
 
 def plot_more(ax, coleigs, temperatures, args):
     t_index = get_t_index(temperatures[0], args)
-    y = [v[t_index] for v in coleigs]
+    y = [np.abs(v[t_index]) for v in coleigs]
     ax.semilogy(np.transpose(y), ".", markersize=5)
     ax.set_xlim(0, len(y[0]))
 

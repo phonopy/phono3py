@@ -351,9 +351,9 @@ def _get_constrained_fc2(
                             'forces': []}, ...]
 
     """
-    lattice = supercell.get_cell().T
-    positions = supercell.get_scaled_positions()
-    num_atom = supercell.get_number_of_atoms()
+    lattice = supercell.cell.T
+    positions = supercell.scaled_positions
+    num_atom = len(supercell)
 
     fc2 = np.zeros((num_atom, num_atom, 3, 3), dtype="double")
     atom_list = np.unique([x["number"] for x in dataset_second_atoms])
@@ -427,14 +427,14 @@ def _solve_fc3(
                 print("    [%2d %2d %2d]\n" % tuple(v[2]))
                 sys.stdout.flush()
 
-    lattice = supercell.get_cell().T
+    lattice = supercell.cell.T
     site_sym_cart = np.array(
         [similarity_transformation(lattice, sym) for sym in site_symmetry],
         dtype="double",
         order="C",
     )
-    num_atom = supercell.get_number_of_atoms()
-    positions = supercell.get_scaled_positions()
+    num_atom = len(supercell)
+    positions = supercell.scaled_positions
     pos_center = positions[first_atom_num].copy()
     positions -= pos_center
 
@@ -655,7 +655,7 @@ def _get_fc3_least_atoms(
             else:
                 direction = np.dot(
                     dataset_first_atom["displacement"],
-                    np.linalg.inv(supercell.get_cell()),
+                    np.linalg.inv(supercell.cell),
                 )
                 reduced_site_sym = get_reduced_site_symmetry(
                     site_symmetry, direction, symprec

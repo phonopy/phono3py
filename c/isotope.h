@@ -37,28 +37,16 @@
 
 #include "lapack_wrapper.h"
 
-void iso_get_isotope_scattering_strength(double *gamma,
-                                         const long grid_point,
-                                         const double *mass_variances,
-                                         const double *frequencies,
-                                         const lapack_complex_double *eigenvectors,
-                                         const long num_grid_points,
-                                         const long *band_indices,
-                                         const long num_band,
-                                         const long num_band0,
-                                         const double sigma,
-                                         const double cutoff_frequency);
-void iso_get_thm_isotope_scattering_strength(double *gamma,
-                                             const long grid_point,
-                                             const long *ir_grid_points,
-                                             const long *weights,
-                                             const double *mass_variances,
-                                             const double *frequencies,
-                                             const lapack_complex_double *eigenvectors,
-                                             const long num_grid_points,
-                                             const long *band_indices,
-                                             const long num_band,
-                                             const long num_band0,
-                                             const double *integration_weights,
-                                             const double cutoff_frequency);
+void iso_get_isotope_scattering_strength(
+    double *gamma, const long grid_point, const double *mass_variances,
+    const double *frequencies, const lapack_complex_double *eigenvectors,
+    const long num_grid_points, const long *band_indices, const long num_band,
+    const long num_band0, const double sigma, const double cutoff_frequency);
+void iso_get_thm_isotope_scattering_strength(
+    double *gamma, const long grid_point, const long *ir_grid_points,
+    const long *weights, const double *mass_variances,
+    const double *frequencies, const lapack_complex_double *eigenvectors,
+    const long num_grid_points, const long *band_indices, const long num_band,
+    const long num_band0, const double *integration_weights,
+    const double cutoff_frequency);
 #endif

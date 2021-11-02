@@ -39,49 +39,26 @@
 #include "lapack_wrapper.h"
 #include "phonoc_array.h"
 
-void ppc_get_pp_collision(double *imag_self_energy,
-                          const long relative_grid_address[24][4][3], /* thm */
-                          const double *frequencies,
-                          const lapack_complex_double *eigenvectors,
-                          const long (*triplets)[3],
-                          const long num_triplets,
-                          const long *triplet_weights,
-                          const ConstBZGrid *bzgrid,
-                          const double *fc3,
-                          const long is_compact_fc3,
-                          const double (*svecs)[3],
-                          const long multi_dims[2],
-                          const long (*multiplicity)[2],
-                          const double *masses,
-                          const long *p2s_map,
-                          const long *s2p_map,
-                          const Larray *band_indices,
-                          const Darray *temperatures,
-                          const long is_NU,
-                          const long symmetrize_fc3_q,
-                          const double cutoff_frequency);
+void ppc_get_pp_collision(
+    double *imag_self_energy,
+    const long relative_grid_address[24][4][3], /* thm */
+    const double *frequencies, const lapack_complex_double *eigenvectors,
+    const long (*triplets)[3], const long num_triplets,
+    const long *triplet_weights, const ConstBZGrid *bzgrid, const double *fc3,
+    const long is_compact_fc3, const double (*svecs)[3],
+    const long multi_dims[2], const long (*multiplicity)[2],
+    const double *masses, const long *p2s_map, const long *s2p_map,
+    const Larray *band_indices, const Darray *temperatures, const long is_NU,
+    const long symmetrize_fc3_q, const double cutoff_frequency);
 void ppc_get_pp_collision_with_sigma(
-  double *imag_self_energy,
-  const double sigma,
-  const double sigma_cutoff,
-  const double *frequencies,
-  const lapack_complex_double *eigenvectors,
-  const long (*triplets)[3],
-  const long num_triplets,
-  const long *triplet_weights,
-  const ConstBZGrid *bzgrid,
-  const double *fc3,
-  const long is_compact_fc3,
-  const double (*svecs)[3],
-  const long multi_dims[2],
-  const long (*multiplicity)[2],
-  const double *masses,
-  const long *p2s_map,
-  const long *s2p_map,
-  const Larray *band_indices,
-  const Darray *temperatures,
-  const long is_NU,
-  const long symmetrize_fc3_q,
-  const double cutoff_frequency);
+    double *imag_self_energy, const double sigma, const double sigma_cutoff,
+    const double *frequencies, const lapack_complex_double *eigenvectors,
+    const long (*triplets)[3], const long num_triplets,
+    const long *triplet_weights, const ConstBZGrid *bzgrid, const double *fc3,
+    const long is_compact_fc3, const double (*svecs)[3],
+    const long multi_dims[2], const long (*multiplicity)[2],
+    const double *masses, const long *p2s_map, const long *s2p_map,
+    const Larray *band_indices, const Darray *temperatures, const long is_NU,
+    const long symmetrize_fc3_q, const double cutoff_frequency);
 
 #endif

@@ -35,17 +35,13 @@
 #ifndef __real_to_reciprocal_H__
 #define __real_to_reciprocal_H__
 
-#include "phonoc_array.h"
 #include "lapack_wrapper.h"
+#include "phonoc_array.h"
 
 void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
-                            const double q_vecs[3][3],
-                            const double *fc3,
-                            const long is_compact_fc3,
-                            const double (*svecs)[3],
+                            const double q_vecs[3][3], const double *fc3,
+                            const long is_compact_fc3, const double (*svecs)[3],
                             const long multi_dims[2],
-                            const long (*multiplicity)[2],
-                            const long *p2s_map,
-                            const long *s2p_map,
-                            const long openmp_at_bands);
+                            const long (*multiplicity)[2], const long *p2s_map,
+                            const long *s2p_map, const long openmp_at_bands);
 #endif

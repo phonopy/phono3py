@@ -131,8 +131,8 @@ def get_nosym_triplets_at_q(grid_point, bz_grid: BZGrid):
 
     """
     map_triplets = np.arange(np.prod(bz_grid.D_diag), dtype="int_")
+    map_q = np.arange(np.prod(bz_grid.D_diag), dtype="int_")
     triplets_at_q, weights = _get_BZ_triplets_at_q(grid_point, bz_grid, map_triplets)
-    map_q = map_triplets.copy()
 
     return triplets_at_q, weights, map_triplets, map_q
 
