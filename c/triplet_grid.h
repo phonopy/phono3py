@@ -37,18 +37,15 @@
 #ifndef __triplet_grid_H__
 #define __triplet_grid_H__
 
+#include "bzgrid.h"
 #include "lagrid.h"
 
-long tpk_get_ir_triplets_at_q(long *map_triplets,
-                              long *map_q,
-                              const long grid_point,
-                              const long D_diag[3],
+long tpk_get_ir_triplets_at_q(long *map_triplets, long *map_q,
+                              const long grid_point, const long D_diag[3],
                               const long is_time_reversal,
                               const long (*rec_rotations_in)[3][3],
-                              const long num_rot,
-                              const long swappable);
-long tpk_get_BZ_triplets_at_q(long (*triplets)[3],
-                              const long grid_point,
+                              const long num_rot, const long swappable);
+long tpk_get_BZ_triplets_at_q(long (*triplets)[3], const long grid_point,
                               const ConstBZGrid *bzgrid,
                               const long *map_triplets);
 

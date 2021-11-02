@@ -608,15 +608,16 @@ def get_grid_points_by_rotations(
     bz_grid : BZGrid
         Data structure to represent BZ grid.
     reciprocal_rotations : array_like or None, optional
-        Rotation matrices {R} with respect to reciprocal basis vectors.
-        Defined by q'=Rq.
+        Rotation matrices {R} with respect to basis vectors of GR-grid.
+        Defined by g'=Rg, where g is the grid point address represented by
+        three integers in BZ-grid.
         dtype='int_', shape=(rotations, 3, 3)
     with_surface : Bool, optional
         This parameter affects to how to treat grid points on BZ surface.
         When False, rotated BZ surface points are moved to representative
         ones among translationally equivalent points to hold one-to-one
         correspondence to GR grid points. With True, BZ grid point indices
-         having the rotated grid addresses are returned. Default is False.
+        having the rotated grid addresses are returned. Default is False.
 
     Returns
     -------

@@ -297,8 +297,8 @@ def get_smallest_vector_of_atom_pair(
 
 
 def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
-    lattice = cell.get_cell().T
-    positions = cell.get_scaled_positions()
+    lattice = cell.cell.T
+    positions = cell.scaled_positions
     center = positions[atom_index]
 
     # orbits[num_atoms, num_site_sym]
