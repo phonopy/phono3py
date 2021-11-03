@@ -12,14 +12,45 @@ def test_get_triplets_at_q_type1(si_pbesol_111):
     grid_point = 1
     mesh = [4, 4, 4]
 
-    bz_grid = BZGrid(mesh,
-                     lattice=pcell.cell,
-                     symmetry_dataset=psym.dataset,
-                     store_dense_gp_map=False)
+    bz_grid = BZGrid(
+        mesh,
+        lattice=pcell.cell,
+        symmetry_dataset=psym.dataset,
+        store_dense_gp_map=False,
+    )
     triplets, weights = get_triplets_at_q(grid_point, bz_grid)[:2]
-    triplets_ref = [1, 0, 3, 1, 1, 2, 1, 4, 15, 1,
-                    5, 14, 1, 6, 13, 1, 7, 12, 1, 65,
-                    11, 1, 9, 10, 1, 24, 59, 1, 26, 88]
+    triplets_ref = [
+        1,
+        0,
+        3,
+        1,
+        1,
+        2,
+        1,
+        4,
+        15,
+        1,
+        5,
+        14,
+        1,
+        6,
+        13,
+        1,
+        7,
+        12,
+        1,
+        65,
+        11,
+        1,
+        9,
+        10,
+        1,
+        24,
+        59,
+        1,
+        26,
+        88,
+    ]
     weights_ref = [2, 2, 6, 6, 6, 6, 6, 6, 12, 12]
     # print("".join(["%d, " % i for i in triplets.ravel()]))
     # print("".join(["%d, " % i for i in weights]))
@@ -36,14 +67,43 @@ def test_get_triplets_at_q_type2(si_pbesol_111):
     grid_point = 1
     mesh = [4, 4, 4]
 
-    bz_grid = BZGrid(mesh,
-                     lattice=pcell.cell,
-                     symmetry_dataset=psym.dataset,
-                     store_dense_gp_map=True)
+    bz_grid = BZGrid(
+        mesh, lattice=pcell.cell, symmetry_dataset=psym.dataset, store_dense_gp_map=True
+    )
     triplets, weights = get_triplets_at_q(grid_point, bz_grid)[:2]
 
-    triplets_ref = [1, 0, 4, 1, 1, 2, 1, 5, 18, 1, 6, 17, 1, 7, 16, 1,
-                    8, 15, 1, 10, 14, 1, 11, 12, 1, 27, 84, 1, 29, 82]
+    triplets_ref = [
+        1,
+        0,
+        4,
+        1,
+        1,
+        2,
+        1,
+        5,
+        18,
+        1,
+        6,
+        17,
+        1,
+        7,
+        16,
+        1,
+        8,
+        15,
+        1,
+        10,
+        14,
+        1,
+        11,
+        12,
+        1,
+        27,
+        84,
+        1,
+        29,
+        82,
+    ]
     weights_ref = [2, 2, 6, 6, 6, 6, 6, 6, 12, 12]
 
     _show_triplets_info(mesh, bz_grid, triplets, np.linalg.inv(pcell.cell))
@@ -54,8 +114,9 @@ def test_get_triplets_at_q_type2(si_pbesol_111):
     np.testing.assert_equal(weights, weights_ref)
 
 
-def _show_triplets_info(mesh: list, bz_grid: BZGrid, triplets: np.ndarray,
-                        reclat: np.ndarray) -> None:
+def _show_triplets_info(
+    mesh: list, bz_grid: BZGrid, triplets: np.ndarray, reclat: np.ndarray
+) -> None:
     """Show triplets details in grid type-1 and 2."""
     shift = np.prod(mesh)
     double_shift = np.prod(mesh) * 8
@@ -69,12 +130,18 @@ def _show_triplets_info(mesh: list, bz_grid: BZGrid, triplets: np.ndarray,
                 adrs.append(bz_grid.addresses[bzgp + j].tolist())
         else:
             bzgp = i
-            multi = (bz_grid.gp_map[double_shift + i + 1]
-                     - bz_grid.gp_map[double_shift + i] + 1)
+            multi = (
+                bz_grid.gp_map[double_shift + i + 1]
+                - bz_grid.gp_map[double_shift + i]
+                + 1
+            )
             adrs.append(bz_grid.addresses[bzgp].tolist())
             for j in range(multi - 1):
-                adrs.append(bz_grid.addresses[
-                    shift + bz_grid.gp_map[double_shift + i] + j].tolist())
+                adrs.append(
+                    bz_grid.addresses[
+                        shift + bz_grid.gp_map[double_shift + i] + j
+                    ].tolist()
+                )
         print(bzgp, adrs, multi)
 
     for tp in triplets:
@@ -85,10 +152,10 @@ def _show_triplets_info(mesh: list, bz_grid: BZGrid, triplets: np.ndarray,
                 multis.append(bz_grid.gp_map[gp + 1] - bz_grid.gp_map[gp])
             else:
                 shift = np.prod(mesh) * 8
-                multis.append(bz_grid.gp_map[shift + gp + 1]
-                              - bz_grid.gp_map[shift + gp] + 1)
+                multis.append(
+                    bz_grid.gp_map[shift + gp + 1] - bz_grid.gp_map[shift + gp] + 1
+                )
         bztp = bz_grid.addresses[tp]
         gadrs = bz_grid.addresses[tp].sum(axis=0) / mesh
         d = np.sqrt(np.linalg.norm(np.dot(reclat, gadrs)))
-        print(tp, "[", bztp[0], bztp[1], bztp[2], "]", multis,
-              bztp.sum(axis=0), d)
+        print(tp, "[", bztp[0], bztp[1], bztp[2], "]", multis, bztp.sum(axis=0), d)

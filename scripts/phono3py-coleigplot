@@ -1,44 +1,31 @@
 #!/usr/bin/env python
 
+import argparse
 import os
 import sys
+
 import h5py
 import numpy as np
-import argparse
 
 epsilon = 1.0e-8
 
 
 def get_options():
     # Arg-parser
-    parser = argparse.ArgumentParser(
-        description="Plot collision matrix eigenvalues")
+    parser = argparse.ArgumentParser(description="Plot collision matrix eigenvalues")
     parser.add_argument(
-        '--temperature', type=float, default=300.0, dest='temperature',
-        help='Temperature to output data at')
-    parser.add_argument('filenames', nargs='*')
+        "--temperature",
+        type=float,
+        default=300.0,
+        dest="temperature",
+        help="Temperature to output data at",
+    )
+    parser.add_argument("filenames", nargs="*")
     args = parser.parse_args()
     return args
 
 
-def main(args):
-    filename = args.filenames[0]
-    if os.path.isfile(filename):
-        with h5py.File(filename, 'r') as f:
-            coleigs = f['collision_eigenvalues'][:]
-            temperatures = f['temperature'][:]
-    else:
-        print("File %s doens't exist." % filename)
-        sys.exit(1)
-
-    import matplotlib.pyplot as plt
-
-    fig, ax = plt.subplots()
-    ax.xaxis.set_ticks_position('bottom')
-    ax.yaxis.set_ticks_position('left')
-    ax.xaxis.set_tick_params(which='both', direction='in')
-    ax.yaxis.set_tick_params(which='both', direction='in')
-
+def get_t_index(temperatures, args):
     if len(temperatures) > 29:
         t_index = 30
     else:
@@ -47,15 +34,69 @@ def main(args):
         if np.abs(t - args.temperature) < epsilon:
             t_index = i
             break
+    return t_index
 
+
+def plot_one(ax, coleigs, temperatures, args):
+    t_index = get_t_index(temperatures, args)
     coleigs_p = coleigs[t_index].copy()
     coleigs_n = coleigs[t_index].copy()
     coleigs_p[coleigs_p < 0] = np.nan
     coleigs_n[coleigs_n >= 0] = np.nan
-
-    ax.semilogy(coleigs_p, 'b.', markersize=1)
-    ax.semilogy(-coleigs_n, 'r.', markersize=1)
+    ax.semilogy(coleigs_p, "b.", markersize=1)
+    ax.semilogy(-coleigs_n, "r.", markersize=1)
     ax.set_xlim(0, len(coleigs_p))
+
+
+def plot_one_file(ax, args):
+    filename = args.filenames[0]
+    if os.path.isfile(filename):
+        with h5py.File(filename, "r") as f:
+            coleigs = f["collision_eigenvalues"][:]
+            temperatures = f["temperature"][:]
+        plot_one(ax, coleigs, temperatures, args)
+    else:
+        print("File %s doens't exist." % filename)
+        sys.exit(1)
+
+
+def plot_more(ax, coleigs, temperatures, args):
+    t_index = get_t_index(temperatures[0], args)
+    y = [np.abs(v[t_index]) for v in coleigs]
+    ax.semilogy(np.transpose(y), ".", markersize=5)
+    ax.set_xlim(0, len(y[0]))
+
+
+def plot_more_files(ax, args):
+    temperatures = []
+    coleigs = []
+    for filename in args.filenames:
+        if os.path.isfile(filename):
+            with h5py.File(filename, "r") as f:
+                coleigs.append(f["collision_eigenvalues"][:])
+                temperatures.append(f["temperature"][:])
+        else:
+            print("File %s doens't exist." % filename)
+            sys.exit(1)
+    plot_more(ax, coleigs, temperatures, args)
+
+
+def main(args: argparse.Namespace):
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    ax.xaxis.set_ticks_position("bottom")
+    ax.yaxis.set_ticks_position("left")
+    ax.xaxis.set_tick_params(which="both", direction="in")
+    ax.yaxis.set_tick_params(which="both", direction="in")
+
+    if len(args.filenames) == 1:
+        plot_one_file(ax, args)
+    else:
+        plot_more_files(ax, args)
+
+    # for filename in args.filenames:
+
     plt.show()
 
 

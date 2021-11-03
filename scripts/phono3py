@@ -36,8 +36,10 @@
 
 from phono3py.cui.phono3py_script import main
 
-if __name__ == '__main__':
-    argparse_control = {'fc_symmetry': False,
-                        'is_nac': False,
-                        'load_phono3py_yaml': False}
+if __name__ == "__main__":
+    argparse_control = {
+        "fc_symmetry": False,
+        "is_nac": False,
+        "load_phono3py_yaml": False,
+    }
     main(**argparse_control)

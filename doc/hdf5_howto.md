@@ -279,7 +279,7 @@ $$
 
 For example, $\kappa_{\lambda,{xx}}$ is calculated by:
 
-```badh
+```bash
 In [1]: import h5py
 
 In [2]: f = h5py.File("kappa-m111111.hdf5")

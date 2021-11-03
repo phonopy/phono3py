@@ -32,405 +32,250 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
+#include "interaction.h"
+
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "bzgrid.h"
-#include "interaction.h"
 #include "imag_self_energy_with_g.h"
+#include "lapack_wrapper.h"
 #include "phonoc_array.h"
 #include "real_to_reciprocal.h"
 #include "reciprocal_to_normal.h"
-#include "lapack_wrapper.h"
 
-static const long index_exchange[6][3] = {{0, 1, 2},
-                                          {2, 0, 1},
-                                          {1, 2, 0},
-                                          {2, 1, 0},
-                                          {0, 2, 1},
-                                          {1, 0, 2}};
-static void real_to_normal(double *fc3_normal_squared,
-                           const long (*g_pos)[4],
-                           const long num_g_pos,
-                           const double *freqs0,
-                           const double *freqs1,
-                           const double *freqs2,
-                           const lapack_complex_double *eigvecs0,
-                           const lapack_complex_double *eigvecs1,
-                           const lapack_complex_double *eigvecs2,
-                           const double *fc3,
-                           const long is_compact_fc3,
-                           const double q_vecs[3][3], /* q0, q1, q2 */
-                           const double (*svecs)[3],
-                           const long multi_dims[2],
-                           const long (*multiplicity)[2],
-                           const double *masses,
-                           const long *p2s_map,
-                           const long *s2p_map,
-                           const long *band_indices,
-                           const long num_band0,
-                           const long num_band,
-                           const double cutoff_frequency,
-                           const long triplet_index,
-                           const long num_triplets,
-                           const long openmp_at_bands);
-static void real_to_normal_sym_q(double *fc3_normal_squared,
-                                 const long (*g_pos)[4],
-                                 const long num_g_pos,
-                                 double * const freqs[3],
-                                 lapack_complex_double * const eigvecs[3],
-                                 const double *fc3,
-                                 const long is_compact_fc3,
-                                 const double q_vecs[3][3], /* q0, q1, q2 */
-                                 const double (*svecs)[3],
-                                 const long multi_dims[2],
-                                 const long (*multiplicity)[2],
-                                 const double *masses,
-                                 const long *p2s_map,
-                                 const long *s2p_map,
-                                 const long *band_indices,
-                                 const long num_band0,
-                                 const long num_band,
-                                 const double cutoff_frequency,
-                                 const long triplet_index,
-                                 const long num_triplets,
-                                 const long openmp_at_bands);
+static const long index_exchange[6][3] = {{0, 1, 2}, {2, 0, 1}, {1, 2, 0},
+                                          {2, 1, 0}, {0, 2, 1}, {1, 0, 2}};
+static void real_to_normal(
+    double *fc3_normal_squared, const long (*g_pos)[4], const long num_g_pos,
+    const double *freqs0, const double *freqs1, const double *freqs2,
+    const lapack_complex_double *eigvecs0,
+    const lapack_complex_double *eigvecs1,
+    const lapack_complex_double *eigvecs2, const double *fc3,
+    const long is_compact_fc3, const double q_vecs[3][3], /* q0, q1, q2 */
+    const double (*svecs)[3], const long multi_dims[2],
+    const long (*multiplicity)[2], const double *masses, const long *p2s_map,
+    const long *s2p_map, const long *band_indices, const long num_band,
+    const double cutoff_frequency, const long triplet_index,
+    const long num_triplets, const long openmp_at_bands);
+static void real_to_normal_sym_q(
+    double *fc3_normal_squared, const long (*g_pos)[4], const long num_g_pos,
+    double *const freqs[3], lapack_complex_double *const eigvecs[3],
+    const double *fc3, const long is_compact_fc3,
+    const double q_vecs[3][3], /* q0, q1, q2 */
+    const double (*svecs)[3], const long multi_dims[2],
+    const long (*multiplicity)[2], const double *masses, const long *p2s_map,
+    const long *s2p_map, const long *band_indices, const long num_band0,
+    const long num_band, const double cutoff_frequency,
+    const long triplet_index, const long num_triplets,
+    const long openmp_at_bands);
 
 /* fc3_normal_squared[num_triplets, num_band0, num_band, num_band] */
-void itr_get_interaction(Darray *fc3_normal_squared,
-                         const char *g_zero,
+void itr_get_interaction(Darray *fc3_normal_squared, const char *g_zero,
                          const Darray *frequencies,
                          const lapack_complex_double *eigenvectors,
-                         const long (*triplets)[3],
-                         const long num_triplets,
-                         const ConstBZGrid *bzgrid,
-                         const double *fc3,
-                         const long is_compact_fc3,
-                         const double (*svecs)[3],
+                         const long (*triplets)[3], const long num_triplets,
+                         const ConstBZGrid *bzgrid, const double *fc3,
+                         const long is_compact_fc3, const double (*svecs)[3],
                          const long multi_dims[2],
-                         const long (*multiplicity)[2],
-                         const double *masses,
-                         const long *p2s_map,
-                         const long *s2p_map,
-                         const long *band_indices,
-                         const long symmetrize_fc3_q,
-                         const double cutoff_frequency)
-{
-  long openmp_per_triplets;
-  long (*g_pos)[4];
-  long i;
-  long num_band, num_band0, num_band_prod, num_g_pos;
+                         const long (*multiplicity)[2], const double *masses,
+                         const long *p2s_map, const long *s2p_map,
+                         const long *band_indices, const long symmetrize_fc3_q,
+                         const double cutoff_frequency) {
+    long openmp_per_triplets;
+    long(*g_pos)[4];
+    long i;
+    long num_band, num_band0, num_band_prod, num_g_pos;
 
-  g_pos = NULL;
+    g_pos = NULL;
 
-  num_band0 = fc3_normal_squared->dims[1];
-  num_band = frequencies->dims[1];
-  num_band_prod = num_band0 * num_band * num_band;
+    num_band0 = fc3_normal_squared->dims[1];
+    num_band = frequencies->dims[1];
+    num_band_prod = num_band0 * num_band * num_band;
 
-  if (num_triplets > num_band) {
-    openmp_per_triplets = 1;
-  } else {
-    openmp_per_triplets = 0;
-  }
+    if (num_triplets > num_band) {
+        openmp_per_triplets = 1;
+    } else {
+        openmp_per_triplets = 0;
+    }
 
 #ifdef PHPYOPENMP
-#pragma omp parallel for schedule(guided) private(num_g_pos, g_pos) if (openmp_per_triplets)
+#pragma omp parallel for schedule(guided) private( \
+    num_g_pos, g_pos) if (openmp_per_triplets)
 #endif
-  for (i = 0; i < num_triplets; i++) {
-    g_pos = (long(*)[4])malloc(sizeof(long[4]) * num_band_prod);
-    num_g_pos = ise_set_g_pos(g_pos,
-                              num_band0,
-                              num_band,
-                              g_zero + i * num_band_prod);
+    for (i = 0; i < num_triplets; i++) {
+        g_pos = (long(*)[4])malloc(sizeof(long[4]) * num_band_prod);
+        num_g_pos = ise_set_g_pos(g_pos, num_band0, num_band,
+                                  g_zero + i * num_band_prod);
 
-    itr_get_interaction_at_triplet(
-      fc3_normal_squared->data + i * num_band_prod,
-      num_band0,
-      num_band,
-      g_pos,
-      num_g_pos,
-      frequencies->data,
-      eigenvectors,
-      triplets[i],
-      bzgrid,
-      fc3,
-      is_compact_fc3,
-      svecs,
-      multi_dims,
-      multiplicity,
-      masses,
-      p2s_map,
-      s2p_map,
-      band_indices,
-      symmetrize_fc3_q,
-      cutoff_frequency,
-      i,
-      num_triplets,
-      1 - openmp_per_triplets);
+        itr_get_interaction_at_triplet(
+            fc3_normal_squared->data + i * num_band_prod, num_band0, num_band,
+            g_pos, num_g_pos, frequencies->data, eigenvectors, triplets[i],
+            bzgrid, fc3, is_compact_fc3, svecs, multi_dims, multiplicity,
+            masses, p2s_map, s2p_map, band_indices, symmetrize_fc3_q,
+            cutoff_frequency, i, num_triplets, 1 - openmp_per_triplets);
 
-    free(g_pos);
-    g_pos = NULL;
-  }
+        free(g_pos);
+        g_pos = NULL;
+    }
 }
 
-void itr_get_interaction_at_triplet(double *fc3_normal_squared,
-                                    const long num_band0,
-                                    const long num_band,
-                                    const long (*g_pos)[4],
-                                    const long num_g_pos,
-                                    const double *frequencies,
-                                    const lapack_complex_double *eigenvectors,
-                                    const long triplet[3],
-                                    const ConstBZGrid *bzgrid,
-                                    const double *fc3,
-                                    const long is_compact_fc3,
-                                    const double (*svecs)[3],
-                                    const long multi_dims[2],
-                                    const long (*multiplicity)[2],
-                                    const double *masses,
-                                    const long *p2s_map,
-                                    const long *s2p_map,
-                                    const long *band_indices,
-                                    const long symmetrize_fc3_q,
-                                    const double cutoff_frequency,
-                                    const long triplet_index, /* only for print */
-                                    const long num_triplets, /* only for print */
-                                    const long openmp_at_bands)
-{
-  long j, k;
-  double *freqs[3];
-  lapack_complex_double *eigvecs[3];
-  double q_vecs[3][3];
+void itr_get_interaction_at_triplet(
+    double *fc3_normal_squared, const long num_band0, const long num_band,
+    const long (*g_pos)[4], const long num_g_pos, const double *frequencies,
+    const lapack_complex_double *eigenvectors, const long triplet[3],
+    const ConstBZGrid *bzgrid, const double *fc3, const long is_compact_fc3,
+    const double (*svecs)[3], const long multi_dims[2],
+    const long (*multiplicity)[2], const double *masses, const long *p2s_map,
+    const long *s2p_map, const long *band_indices, const long symmetrize_fc3_q,
+    const double cutoff_frequency,
+    const long triplet_index, /* only for print */
+    const long num_triplets,  /* only for print */
+    const long openmp_at_bands) {
+    long j, k;
+    double *freqs[3];
+    lapack_complex_double *eigvecs[3];
+    double q_vecs[3][3];
 
-  for (j = 0; j < 3; j++) {
-    for (k = 0; k < 3; k++) {
-      q_vecs[j][k] = ((double)bzgrid->addresses[triplet[j]][k]) / bzgrid->D_diag[k];
+    for (j = 0; j < 3; j++) {
+        for (k = 0; k < 3; k++) {
+            q_vecs[j][k] =
+                ((double)bzgrid->addresses[triplet[j]][k]) / bzgrid->D_diag[k];
+        }
+        bzg_multiply_matrix_vector_ld3(q_vecs[j], bzgrid->Q, q_vecs[j]);
     }
-    bzg_multiply_matrix_vector_ld3(q_vecs[j], bzgrid->Q, q_vecs[j]);
-  }
 
-  if (symmetrize_fc3_q) {
-    for (j = 0; j < 3; j++) {
-      freqs[j] = (double*)malloc(sizeof(double) * num_band);
-      eigvecs[j] = (lapack_complex_double*)
-        malloc(sizeof(lapack_complex_double) * num_band * num_band);
-      for (k = 0; k < num_band; k++) {
-        freqs[j][k] = frequencies[triplet[j] * num_band + k];
-      }
-      for (k = 0; k < num_band * num_band; k++) {
-        eigvecs[j][k] = eigenvectors[triplet[j] * num_band * num_band + k];
-      }
+    if (symmetrize_fc3_q) {
+        for (j = 0; j < 3; j++) {
+            freqs[j] = (double *)malloc(sizeof(double) * num_band);
+            eigvecs[j] = (lapack_complex_double *)malloc(
+                sizeof(lapack_complex_double) * num_band * num_band);
+            for (k = 0; k < num_band; k++) {
+                freqs[j][k] = frequencies[triplet[j] * num_band + k];
+            }
+            for (k = 0; k < num_band * num_band; k++) {
+                eigvecs[j][k] =
+                    eigenvectors[triplet[j] * num_band * num_band + k];
+            }
+        }
+        real_to_normal_sym_q(
+            fc3_normal_squared, g_pos, num_g_pos, freqs, eigvecs, fc3,
+            is_compact_fc3, q_vecs, /* q0, q1, q2 */
+            svecs, multi_dims, multiplicity, masses, p2s_map, s2p_map,
+            band_indices, num_band0, num_band, cutoff_frequency, triplet_index,
+            num_triplets, openmp_at_bands);
+        for (j = 0; j < 3; j++) {
+            free(freqs[j]);
+            freqs[j] = NULL;
+            free(eigvecs[j]);
+            eigvecs[j] = NULL;
+        }
+    } else {
+        real_to_normal(fc3_normal_squared, g_pos, num_g_pos,
+                       frequencies + triplet[0] * num_band,
+                       frequencies + triplet[1] * num_band,
+                       frequencies + triplet[2] * num_band,
+                       eigenvectors + triplet[0] * num_band * num_band,
+                       eigenvectors + triplet[1] * num_band * num_band,
+                       eigenvectors + triplet[2] * num_band * num_band, fc3,
+                       is_compact_fc3, q_vecs, /* q0, q1, q2 */
+                       svecs, multi_dims, multiplicity, masses, p2s_map,
+                       s2p_map, band_indices, num_band, cutoff_frequency,
+                       triplet_index, num_triplets, openmp_at_bands);
     }
-    real_to_normal_sym_q(fc3_normal_squared,
-                         g_pos,
-                         num_g_pos,
-                         freqs,
-                         eigvecs,
-                         fc3,
-                         is_compact_fc3,
-                         q_vecs, /* q0, q1, q2 */
-                         svecs,
-                         multi_dims,
-                         multiplicity,
-                         masses,
-                         p2s_map,
-                         s2p_map,
-                         band_indices,
-                         num_band0,
-                         num_band,
-                         cutoff_frequency,
-                         triplet_index,
-                         num_triplets,
-                         openmp_at_bands);
-    for (j = 0; j < 3; j++) {
-      free(freqs[j]);
-      freqs[j] = NULL;
-      free(eigvecs[j]);
-      eigvecs[j] = NULL;
-    }
-  } else {
-    real_to_normal(fc3_normal_squared,
-                   g_pos,
-                   num_g_pos,
-                   frequencies + triplet[0] * num_band,
-                   frequencies + triplet[1] * num_band,
-                   frequencies + triplet[2] * num_band,
-                   eigenvectors + triplet[0] * num_band * num_band,
-                   eigenvectors + triplet[1] * num_band * num_band,
-                   eigenvectors + triplet[2] * num_band * num_band,
-                   fc3,
-                   is_compact_fc3,
-                   q_vecs, /* q0, q1, q2 */
-                   svecs,
-                   multi_dims,
-                   multiplicity,
-                   masses,
-                   p2s_map,
-                   s2p_map,
-                   band_indices,
-                   num_band0,
-                   num_band,
-                   cutoff_frequency,
-                   triplet_index,
-                   num_triplets,
-                   openmp_at_bands);
-  }
 }
 
-static void real_to_normal(double *fc3_normal_squared,
-                           const long (*g_pos)[4],
-                           const long num_g_pos,
-                           const double *freqs0,
-                           const double *freqs1,
-                           const double *freqs2,
-                           const lapack_complex_double *eigvecs0,
-                           const lapack_complex_double *eigvecs1,
-                           const lapack_complex_double *eigvecs2,
-                           const double *fc3,
-                           const long is_compact_fc3,
-                           const double q_vecs[3][3], /* q0, q1, q2 */
-                           const double (*svecs)[3],
-                           const long multi_dims[2],
-                           const long (*multiplicity)[2],
-                           const double *masses,
-                           const long *p2s_map,
-                           const long *s2p_map,
-                           const long *band_indices,
-                           const long num_band0,
-                           const long num_band,
-                           const double cutoff_frequency,
-                           const long triplet_index,
-                           const long num_triplets,
-                           const long openmp_at_bands)
-{
-  long num_patom;
-  lapack_complex_double *fc3_reciprocal;
+static void real_to_normal(
+    double *fc3_normal_squared, const long (*g_pos)[4], const long num_g_pos,
+    const double *freqs0, const double *freqs1, const double *freqs2,
+    const lapack_complex_double *eigvecs0,
+    const lapack_complex_double *eigvecs1,
+    const lapack_complex_double *eigvecs2, const double *fc3,
+    const long is_compact_fc3, const double q_vecs[3][3], /* q0, q1, q2 */
+    const double (*svecs)[3], const long multi_dims[2],
+    const long (*multiplicity)[2], const double *masses, const long *p2s_map,
+    const long *s2p_map, const long *band_indices, const long num_band,
+    const double cutoff_frequency, const long triplet_index,
+    const long num_triplets, const long openmp_at_bands) {
+    lapack_complex_double *fc3_reciprocal;
 
-  num_patom = num_band / 3;
-
-  fc3_reciprocal =
-    (lapack_complex_double*)malloc(sizeof(lapack_complex_double) *
-                                   num_patom * num_patom * num_patom * 27);
-  r2r_real_to_reciprocal(fc3_reciprocal,
-                         q_vecs,
-                         fc3,
-                         is_compact_fc3,
-                         svecs,
-                         multi_dims,
-                         multiplicity,
-                         p2s_map,
-                         s2p_map,
-                         openmp_at_bands);
+    fc3_reciprocal = (lapack_complex_double *)malloc(
+        sizeof(lapack_complex_double) * num_band * num_band * num_band);
+    r2r_real_to_reciprocal(fc3_reciprocal, q_vecs, fc3, is_compact_fc3, svecs,
+                           multi_dims, multiplicity, p2s_map, s2p_map,
+                           openmp_at_bands);
 
 #ifdef MEASURE_R2N
-  if (openmp_at_bands && num_triplets > 0) {
-    printf("At triplet %d/%d (# of bands=%d):\n",
-           triplet_index, num_triplets, num_band0);
-  }
+    if (openmp_at_bands && num_triplets > 0) {
+        printf("At triplet %d/%d (# of bands=%d):\n", triplet_index,
+               num_triplets, num_band0);
+    }
 #endif
-  reciprocal_to_normal_squared(fc3_normal_squared,
-                               g_pos,
-                               num_g_pos,
-                               fc3_reciprocal,
-                               freqs0,
-                               freqs1,
-                               freqs2,
-                               eigvecs0,
-                               eigvecs1,
-                               eigvecs2,
-                               masses,
-                               band_indices,
-                               num_band0,
-                               num_band,
-                               cutoff_frequency,
-                               openmp_at_bands);
+    reciprocal_to_normal_squared(
+        fc3_normal_squared, g_pos, num_g_pos, fc3_reciprocal, freqs0, freqs1,
+        freqs2, eigvecs0, eigvecs1, eigvecs2, masses, band_indices, num_band,
+        cutoff_frequency, openmp_at_bands);
 
-  free(fc3_reciprocal);
-  fc3_reciprocal = NULL;
+    free(fc3_reciprocal);
+    fc3_reciprocal = NULL;
 }
 
-static void real_to_normal_sym_q(double *fc3_normal_squared,
-                                 const long (*g_pos)[4],
-                                 const long num_g_pos,
-                                 double * const freqs[3],
-                                 lapack_complex_double * const eigvecs[3],
-                                 const double *fc3,
-                                 const long is_compact_fc3,
-                                 const double q_vecs[3][3], /* q0, q1, q2 */
-                                 const double (*svecs)[3],
-                                 const long multi_dims[2],
-                                 const long (*multiplicity)[2],
-                                 const double *masses,
-                                 const long *p2s_map,
-                                 const long *s2p_map,
-                                 const long *band_indices,
-                                 const long num_band0,
-                                 const long num_band,
-                                 const double cutoff_frequency,
-                                 const long triplet_index,
-                                 const long num_triplets,
-                                 const long openmp_at_bands)
-{
-  long i, j, k, l;
-  long band_ex[3];
-  double q_vecs_ex[3][3];
-  double *fc3_normal_squared_ex;
+static void real_to_normal_sym_q(
+    double *fc3_normal_squared, const long (*g_pos)[4], const long num_g_pos,
+    double *const freqs[3], lapack_complex_double *const eigvecs[3],
+    const double *fc3, const long is_compact_fc3,
+    const double q_vecs[3][3], /* q0, q1, q2 */
+    const double (*svecs)[3], const long multi_dims[2],
+    const long (*multiplicity)[2], const double *masses, const long *p2s_map,
+    const long *s2p_map, const long *band_indices, const long num_band0,
+    const long num_band, const double cutoff_frequency,
+    const long triplet_index, const long num_triplets,
+    const long openmp_at_bands) {
+    long i, j, k, l;
+    long band_ex[3];
+    double q_vecs_ex[3][3];
+    double *fc3_normal_squared_ex;
 
-  fc3_normal_squared_ex =
-    (double*)malloc(sizeof(double) * num_band * num_band * num_band);
+    fc3_normal_squared_ex =
+        (double *)malloc(sizeof(double) * num_band * num_band * num_band);
 
-  for (i = 0; i < num_band0 * num_band * num_band; i++) {
-    fc3_normal_squared[i] = 0;
-  }
-
-  for (i = 0; i < 6; i++) {
-    for (j = 0; j < 3; j ++) {
-      for (k = 0; k < 3; k ++) {
-        q_vecs_ex[j][k] = q_vecs[index_exchange[i][j]][k];
-      }
+    for (i = 0; i < num_band0 * num_band * num_band; i++) {
+        fc3_normal_squared[i] = 0;
     }
-    real_to_normal(fc3_normal_squared_ex,
-                   g_pos,
-                   num_g_pos,
-                   freqs[index_exchange[i][0]],
-                   freqs[index_exchange[i][1]],
-                   freqs[index_exchange[i][2]],
-                   eigvecs[index_exchange[i][0]],
-                   eigvecs[index_exchange[i][1]],
-                   eigvecs[index_exchange[i][2]],
-                   fc3,
-                   is_compact_fc3,
-                   q_vecs_ex, /* q0, q1, q2 */
-                   svecs,
-                   multi_dims,
-                   multiplicity,
-                   masses,
-                   p2s_map,
-                   s2p_map,
-                   band_indices,
-                   num_band,
-                   num_band,
-                   cutoff_frequency,
-                   triplet_index,
-                   num_triplets,
-                   openmp_at_bands);
-    for (j = 0; j < num_band0; j++) {
-      for (k = 0; k < num_band; k++) {
-        for (l = 0; l < num_band; l++) {
-          band_ex[0] = band_indices[j];
-          band_ex[1] = k;
-          band_ex[2] = l;
-          fc3_normal_squared[j * num_band * num_band +
-                             k * num_band +
-                             l] +=
-            fc3_normal_squared_ex[band_ex[index_exchange[i][0]] *
-                                  num_band * num_band +
-                                  band_ex[index_exchange[i][1]] * num_band +
-                                  band_ex[index_exchange[i][2]]] / 6;
+
+    for (i = 0; i < 6; i++) {
+        for (j = 0; j < 3; j++) {
+            for (k = 0; k < 3; k++) {
+                q_vecs_ex[j][k] = q_vecs[index_exchange[i][j]][k];
+            }
         }
-      }
+        real_to_normal(
+            fc3_normal_squared_ex, g_pos, num_g_pos,
+            freqs[index_exchange[i][0]], freqs[index_exchange[i][1]],
+            freqs[index_exchange[i][2]], eigvecs[index_exchange[i][0]],
+            eigvecs[index_exchange[i][1]], eigvecs[index_exchange[i][2]], fc3,
+            is_compact_fc3, q_vecs_ex, /* q0, q1, q2 */
+            svecs, multi_dims, multiplicity, masses, p2s_map, s2p_map,
+            band_indices, num_band, cutoff_frequency, triplet_index,
+            num_triplets, openmp_at_bands);
+        for (j = 0; j < num_band0; j++) {
+            for (k = 0; k < num_band; k++) {
+                for (l = 0; l < num_band; l++) {
+                    band_ex[0] = band_indices[j];
+                    band_ex[1] = k;
+                    band_ex[2] = l;
+                    fc3_normal_squared[j * num_band * num_band + k * num_band +
+                                       l] +=
+                        fc3_normal_squared_ex[band_ex[index_exchange[i][0]] *
+                                                  num_band * num_band +
+                                              band_ex[index_exchange[i][1]] *
+                                                  num_band +
+                                              band_ex[index_exchange[i][2]]] /
+                        6;
+                }
+            }
+        }
     }
-  }
 
-  free(fc3_normal_squared_ex);
-
+    free(fc3_normal_squared_ex);
 }

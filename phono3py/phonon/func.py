@@ -1,3 +1,4 @@
+"""Mathematical functions."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -33,15 +34,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.units import THzToEv, Kb, Hbar, EV, Angstrom, THz, AMU
+from phonopy.units import AMU, EV, Angstrom, Hbar, Kb, THz, THzToEv
 
 
 def gaussian(x, sigma):
-    return 1.0 / np.sqrt(2 * np.pi) / sigma * np.exp(-x**2 / 2 / sigma**2)
+    """Return normal distribution."""
+    return 1.0 / np.sqrt(2 * np.pi) / sigma * np.exp(-(x ** 2) / 2 / sigma ** 2)
 
 
 def bose_einstein(x, T):
-    """Returns Bose-Einstein distribution
+    """Return Bose-Einstein distribution.
 
     Note
     ----
@@ -63,7 +65,7 @@ def bose_einstein(x, T):
 
 
 def mode_length(x, T):
-    """Returns mode length
+    """Return mode length.
 
     sqrt((0.5 + n) hbar / omega)
 
@@ -87,9 +89,8 @@ def mode_length(x, T):
     Values in [sqrt(AMU) * Angstrom]
 
     """
-
     #####################################
-    old_settings = np.seterr(all='raise')
+    old_settings = np.seterr(all="raise")
     #####################################
 
     n = bose_einstein(x, T)

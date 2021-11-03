@@ -41,7 +41,7 @@ k_zz=219.1. The shape of phonon band structure is important to
 fullfill energy and momentum conservations.
 
 Use of larger supercell of fc2 may change the shape of phonon band structure.
-To see it, first regenerate phono3py_disp.yaml with --dim-fc2 option, 
+To see it, first regenerate phono3py_disp.yaml with --dim-fc2 option,
 
 % phono3py --dim="3 3 2" --dim-fc2="5 5 3" -c POSCAR-unitcell -d
 

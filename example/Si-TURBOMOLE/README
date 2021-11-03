@@ -6,7 +6,7 @@ so the -c control parameter is not needed
 1) Create displaced supercells
    2x2x2 conventional cell for 3rd order FC
    3x3x3 conventional cell for 2nd order FC
-   
+
    phono3py  --turbomole --dim="2 2 2" --dim-fc2="3 3 3" -d
 
    Complete TURBOMOLE inputs can be prepared manually
@@ -32,4 +32,3 @@ so the -c control parameter is not needed
 
    --br ->  Relaxation time approximation
    With 20x20x20 mesh, the lattice thermal conductivity at 300 K is 142 W m^-1 K^-1.
-

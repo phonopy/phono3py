@@ -32,7 +32,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-"""SSCHA calculation
+"""SSCHA calculation.
 
 Formulae implemented are based on these papers:
 
@@ -42,13 +42,14 @@ Formulae implemented are based on these papers:
 """
 
 import numpy as np
-from phonopy.units import VaspToTHz
 from phonopy.harmonic.dynmat_to_fc import DynmatToForceConstants
+from phonopy.units import VaspToTHz
+
 from phono3py.phonon.func import mode_length
 
 
-class SupercellPhonon(object):
-    """Supercell phonon class
+class SupercellPhonon:
+    """Supercell phonon class.
 
     Dynamical matrix is created for supercell atoms and solved in real.
     All phonons at commensurate points are folded to those at Gamma point.
@@ -75,11 +76,8 @@ class SupercellPhonon(object):
 
     """
 
-    def __init__(self,
-                 supercell,
-                 force_constants,
-                 frequency_factor_to_THz=VaspToTHz):
-        """
+    def __init__(self, supercell, force_constants, frequency_factor_to_THz=VaspToTHz):
+        """Init method.
 
         Parameters
         ----------
@@ -92,47 +90,53 @@ class SupercellPhonon(object):
             Frequency conversion factor to THz.
 
         """
-
         self._supercell = supercell
         N = len(supercell)
-        _fc2 = np.array(np.transpose(force_constants, axes=[0, 2, 1, 3]),
-                        dtype='double', order='C')
+        _fc2 = np.array(
+            np.transpose(force_constants, axes=[0, 2, 1, 3]), dtype="double", order="C"
+        )
         _fc2 = _fc2.reshape((3 * N, 3 * N))
-        _fc2 = np.array(_fc2, dtype='double', order='C')
+        _fc2 = np.array(_fc2, dtype="double", order="C")
         inv_sqrt_masses = 1.0 / np.repeat(np.sqrt(supercell.masses), 3)
-        dynmat = np.array(inv_sqrt_masses * (inv_sqrt_masses * _fc2).T,
-                          dtype='double', order='C')
+        dynmat = np.array(
+            inv_sqrt_masses * (inv_sqrt_masses * _fc2).T, dtype="double", order="C"
+        )
         eigvals, eigvecs = np.linalg.eigh(dynmat)
         freqs = np.sqrt(np.abs(eigvals)) * np.sign(eigvals)
         freqs *= frequency_factor_to_THz
-        self._eigenvalues = np.array(eigvals, dtype='double', order='C')
-        self._eigenvectors = np.array(eigvecs, dtype='double', order='C')
-        self._frequencies = np.array(freqs, dtype='double', order='C')
+        self._eigenvalues = np.array(eigvals, dtype="double", order="C")
+        self._eigenvectors = np.array(eigvecs, dtype="double", order="C")
+        self._frequencies = np.array(freqs, dtype="double", order="C")
         self._force_constants = _fc2
 
     @property
     def eigenvalues(self):
+        """Return eigenvalues."""
         return self._eigenvalues
 
     @property
     def eigenvectors(self):
+        """Return eigenvectors."""
         return self._eigenvectors
 
     @property
     def frequencies(self):
+        """Return frequencies."""
         return self._frequencies
 
     @property
     def force_constants(self):
+        """Return harmonic force cosntants."""
         return self._force_constants
 
     @property
     def supercell(self):
+        """Return supercell."""
         return self._supercell
 
 
-class DispCorrMatrix(object):
-    """Calculate displacement correlation matrix <u_a u_b>
+class DispCorrMatrix:
+    """Calculate displacement correlation matrix from supercell phonon.
 
     Attributes
     ----------
@@ -150,10 +154,8 @@ class DispCorrMatrix(object):
 
     """
 
-    def __init__(self,
-                 supercell_phonon,
-                 cutoff_frequency=1e-5):
-        """
+    def __init__(self, supercell_phonon, cutoff_frequency=1e-5):
+        """Init method.
 
         Parameters
         ----------
@@ -164,7 +166,6 @@ class DispCorrMatrix(object):
             Phonons are ignored if they have frequencies less than this value.
 
         """
-
         self._supercell_phonon = supercell_phonon
         self._cutoff_frequency = cutoff_frequency
         self._psi_matrix = None
@@ -172,12 +173,13 @@ class DispCorrMatrix(object):
         self._determinant = None
 
     def run(self, T):
+        """Calculate displacement correlation matrix from supercell phonon."""
         freqs = self._supercell_phonon.frequencies
         eigvecs = self._supercell_phonon.eigenvectors
-        sqrt_masses = np.repeat(
-            np.sqrt(self._supercell_phonon.supercell.masses), 3)
+        sqrt_masses = np.repeat(np.sqrt(self._supercell_phonon.supercell.masses), 3)
         inv_sqrt_masses = np.repeat(
-            1.0 / np.sqrt(self._supercell_phonon.supercell.masses), 3)
+            1.0 / np.sqrt(self._supercell_phonon.supercell.masses), 3
+        )
 
         # ignore zero and imaginary frequency modes
         condition = freqs > self._cutoff_frequency
@@ -188,35 +190,39 @@ class DispCorrMatrix(object):
 
         matrix = np.dot(a2 * eigvecs, eigvecs.T)
         self._psi_matrix = np.array(
-            inv_sqrt_masses * (inv_sqrt_masses * matrix).T,
-            dtype='double', order='C')
+            inv_sqrt_masses * (inv_sqrt_masses * matrix).T, dtype="double", order="C"
+        )
 
         matrix = np.dot(a2_inv * eigvecs, eigvecs.T)
         self._upsilon_matrix = np.array(
-            sqrt_masses * (sqrt_masses * matrix).T,
-            dtype='double', order='C')
+            sqrt_masses * (sqrt_masses * matrix).T, dtype="double", order="C"
+        )
 
         self._determinant = np.prod(2 * np.pi * np.extract(condition, a2))
 
     @property
     def upsilon_matrix(self):
+        """Return Upsilon matrix."""
         return self._upsilon_matrix
 
     @property
     def psi_matrix(self):
+        """Return Psi matrix."""
         return self._psi_matrix
 
     @property
     def supercell_phonon(self):
+        """Return SupercellPhonon class instance."""
         return self._supercell_phonon
 
     @property
     def determinant(self):
+        """Return determinant."""
         return self._determinant
 
 
-class DispCorrMatrixMesh(object):
-    """Calculate upsilon and psi matrix
+class DispCorrMatrixMesh:
+    """Calculate upsilon and psi matrix from normal phonon.
 
     This calculation is similar to the transformation from
     dynamical matrices to force constants. Instead of creating
@@ -238,12 +244,9 @@ class DispCorrMatrixMesh(object):
 
     """
 
-    def __init__(self,
-                 primitive,
-                 supercell,
-                 cutoff_frequency=1e-5):
-        self._d2f = DynmatToForceConstants(
-            primitive, supercell, is_full_fc=True)
+    def __init__(self, primitive, supercell, cutoff_frequency=1e-5):
+        """Init method."""
+        self._d2f = DynmatToForceConstants(primitive, supercell, is_full_fc=True)
         self._masses = supercell.masses
         self._cutoff_frequency = cutoff_frequency
 
@@ -252,10 +255,11 @@ class DispCorrMatrixMesh(object):
 
     @property
     def commensurate_points(self):
+        """Return commensurate points."""
         return self._d2f.commensurate_points
 
     def run(self, frequencies, eigenvectors, T):
-        """
+        """Calculate displacement correlation matrix from normal phonon results.
 
         Parameters
         ----------
@@ -267,7 +271,6 @@ class DispCorrMatrixMesh(object):
             shape=(grid_point, band, band), dtype='double', order='C'
 
         """
-
         condition = frequencies > self._cutoff_frequency
         _freqs = np.where(condition, frequencies, 1)
         _a = mode_length(_freqs, T)
@@ -280,7 +283,7 @@ class DispCorrMatrixMesh(object):
         self._d2f.run()
         matrix = self._d2f.force_constants
         matrix = np.transpose(matrix, axes=[0, 2, 1, 3]).reshape(shape)
-        self._upsilon_matrix = np.array(matrix, dtype='double', order='C')
+        self._upsilon_matrix = np.array(matrix, dtype="double", order="C")
 
         self._d2f.create_dynamical_matrices(a2, eigenvectors)
         self._d2f.run()
@@ -289,19 +292,21 @@ class DispCorrMatrixMesh(object):
             for j, m_j in enumerate(self._masses):
                 matrix[i, j] /= m_i * m_j
         matrix = np.transpose(matrix, axes=[0, 2, 1, 3]).reshape(shape)
-        self._psi_matrix = np.array(matrix, dtype='double', order='C')
+        self._psi_matrix = np.array(matrix, dtype="double", order="C")
 
     @property
     def upsilon_matrix(self):
+        """Return Upsilon matrix."""
         return self._upsilon_matrix
 
     @property
     def psi_matrix(self):
+        """Return Psi matrix."""
         return self._psi_matrix
 
 
-class SecondOrderFC(object):
-    r"""SSCHA second order force constants by ensemble average
+class SecondOrderFC:
+    r"""SSCHA second order force constants by ensemble average.
 
     This class is made just for the test of the ensemble average in
     Ref. 1, and will not be used for usual fc2 calculation.
@@ -320,13 +325,15 @@ class SecondOrderFC(object):
 
     """
 
-    def __init__(self,
-                 displacements,
-                 forces,
-                 supercell_phonon,
-                 cutoff_frequency=1e-5,
-                 log_level=0):
-        """
+    def __init__(
+        self,
+        displacements,
+        forces,
+        supercell_phonon,
+        cutoff_frequency=1e-5,
+        log_level=0,
+    ):
+        """Init method.
 
         Parameters
         ----------
@@ -341,35 +348,34 @@ class SecondOrderFC(object):
             Phonons are ignored if they have frequencies less than this value.
 
         """
-
-        assert (displacements.shape == forces.shape)
+        assert displacements.shape == forces.shape
         shape = displacements.shape
-        u = np.array(displacements.reshape(shape[0], -1),
-                     dtype='double', order='C')
-        f = np.array(forces.reshape(shape[0], -1),
-                     dtype='double', order='C')
+        u = np.array(displacements.reshape(shape[0], -1), dtype="double", order="C")
+        f = np.array(forces.reshape(shape[0], -1), dtype="double", order="C")
         self._displacements = u
         self._forces = f
-        self._uu = DispCorrMatrix(
-            supercell_phonon, cutoff_frequency=cutoff_frequency)
+        self._uu = DispCorrMatrix(supercell_phonon, cutoff_frequency=cutoff_frequency)
         self._force_constants = supercell_phonon.force_constants
         self._cutoff_frequency = cutoff_frequency
         self._log_level = log_level
 
     @property
     def displacements(self):
+        """Return input displacements."""
         return self._displacements
 
     @property
     def forces(self):
+        """Return input forces."""
         return self._forces
 
     @property
     def fc2(self):
+        """Return fc2 calculated stochastically."""
         return self._fc2
 
     def run(self, T=300.0):
-        """Calculate fc2 stochastically
+        """Calculate fc2 stochastically.
 
         As displacement correlation matrix <u_a u_b>^-1, two choices exist.
 
@@ -385,7 +391,6 @@ class SecondOrderFC(object):
         condition.
 
         """
-
         u = self._displacements
         f = self._forces
         Y = np.linalg.pinv(np.dot(u.T, u) / u.shape[0])
@@ -401,15 +406,17 @@ class SecondOrderFC(object):
             # print("drift forces:",
             #       self._forces.sum(axis=0) / self._forces.shape[0])
 
-        fc2 = - np.dot(u_inv.T, f) / f.shape[0]
+        fc2 = -np.dot(u_inv.T, f) / f.shape[0]
         N = Y.shape[0] // 3
         self._fc2 = np.array(
             np.transpose(fc2.reshape(N, 3, N, 3), axes=[0, 2, 1, 3]),
-            dtype='double', order='C')
+            dtype="double",
+            order="C",
+        )
 
 
-class ThirdOrderFC(object):
-    r"""SSCHA third order force constants
+class ThirdOrderFC:
+    r"""SSCHA third order force constants.
 
     Eq. 45a in Ref.1 (See top docstring of this file)
 
@@ -431,13 +438,15 @@ class ThirdOrderFC(object):
 
     """
 
-    def __init__(self,
-                 displacements,
-                 forces,
-                 supercell_phonon,
-                 cutoff_frequency=1e-5,
-                 log_level=0):
-        """
+    def __init__(
+        self,
+        displacements,
+        forces,
+        supercell_phonon,
+        cutoff_frequency=1e-5,
+        log_level=0,
+    ):
+        """Init method.
 
         Parameters
         ----------
@@ -451,17 +460,13 @@ class ThirdOrderFC(object):
             Phonons are ignored if they have frequencies less than this value.
 
         """
-
-        assert (displacements.shape == forces.shape)
+        assert displacements.shape == forces.shape
         shape = displacements.shape
-        u = np.array(displacements.reshape(shape[0], -1),
-                     dtype='double', order='C')
-        f = np.array(forces.reshape(shape[0], -1),
-                     dtype='double', order='C')
+        u = np.array(displacements.reshape(shape[0], -1), dtype="double", order="C")
+        f = np.array(forces.reshape(shape[0], -1), dtype="double", order="C")
         self._displacements = u
         self._forces = f
-        self._uu = DispCorrMatrix(
-            supercell_phonon, cutoff_frequency=cutoff_frequency)
+        self._uu = DispCorrMatrix(supercell_phonon, cutoff_frequency=cutoff_frequency)
         self._force_constants = supercell_phonon.force_constants
         self._cutoff_frequency = cutoff_frequency
         self._log_level = log_level
@@ -472,21 +477,26 @@ class ThirdOrderFC(object):
 
     @property
     def displacements(self):
+        """Return input displacements."""
         return self._displacements
 
     @property
     def forces(self):
+        """Return input forces."""
         return self._forces
 
     @property
     def fc3(self):
+        """Return fc3 calculated stochastically."""
         return self._fc3
 
     @property
     def ff(self):
+        """Return force matrix."""
         return self._fmat
 
     def run(self, T=300.0):
+        """Calculate fc3 stochastically."""
         if self._fmat is None:
             self._fmat = self._run_fmat()
 
@@ -494,8 +504,8 @@ class ThirdOrderFC(object):
         N = fc3.shape[0] // 3
         fc3 = fc3.reshape((N, 3, N, 3, N, 3))
         self._fc3 = np.array(
-            np.transpose(fc3, axes=[0, 2, 4, 1, 3, 5]),
-            dtype='double', order='C')
+            np.transpose(fc3, axes=[0, 2, 4, 1, 3, 5]), dtype="double", order="C"
+        )
 
     def _run_fmat(self):
         f = self._forces
@@ -521,4 +531,4 @@ class ThirdOrderFC(object):
             print("rms forces:", np.sqrt((self._forces ** 2).sum() / N))
             print("rms f:", np.sqrt((f ** 2).sum() / N))
 
-        return - np.einsum('li,lj,lk->ijk', u_inv, u_inv, f) / f.shape[0]
+        return -np.einsum("li,lj,lk->ijk", u_inv, u_inv, f) / f.shape[0]
