@@ -37,18 +37,12 @@ import numpy as np
 from phonopy.structure.cells import sparse_to_dense_svecs
 
 
-class RealToReciprocal(object):
+class RealToReciprocal:
     """Transform fc3 in real space to reciprocal space."""
 
-    def __init__(self,
-                 fc3,
-                 supercell,
-                 primitive,
-                 mesh,
-                 symprec=1e-5):
+    def __init__(self, fc3, primitive, mesh, symprec=1e-5):
         """Init method."""
         self._fc3 = fc3
-        self._supercell = supercell
         self._primitive = primitive
         self._mesh = mesh
         self._symprec = symprec
@@ -68,9 +62,10 @@ class RealToReciprocal(object):
         """Run at each triplet of q-vectors."""
         self._triplet = triplet
         num_patom = len(self._primitive)
-        dtype = "c%d" % (np.dtype('double').itemsize * 2)
+        dtype = "c%d" % (np.dtype("double").itemsize * 2)
         self._fc3_reciprocal = np.zeros(
-            (num_patom, num_patom, num_patom, 3, 3, 3), dtype=dtype)
+            (num_patom, num_patom, num_patom, 3, 3, 3), dtype=dtype
+        )
         self._real_to_reciprocal()
 
     def get_fc3_reciprocal(self):
@@ -80,22 +75,24 @@ class RealToReciprocal(object):
     def _real_to_reciprocal(self):
         num_patom = len(self._primitive)
         sum_triplets = np.where(
-            np.all(self._triplet != 0, axis=0), self._triplet.sum(axis=0), 0)
-        sum_q = sum_triplets.astype('double') / self._mesh
+            np.all(self._triplet != 0, axis=0), self._triplet.sum(axis=0), 0
+        )
+        sum_q = sum_triplets.astype("double") / self._mesh
         for i in range(num_patom):
             for j in range(num_patom):
                 for k in range(num_patom):
-                    self._fc3_reciprocal[
-                        i, j, k] = self._real_to_reciprocal_elements((i, j, k))
+                    self._fc3_reciprocal[i, j, k] = self._real_to_reciprocal_elements(
+                        (i, j, k)
+                    )
 
             prephase = self._get_prephase(sum_q, i)
             self._fc3_reciprocal[i] *= prephase
 
     def _real_to_reciprocal_elements(self, patom_indices):
-        num_satom = len(self._supercell)
+        num_satom = len(self._s2p_map)
         pi = patom_indices
         i = self._p2s_map[pi[0]]
-        dtype = "c%d" % (np.dtype('double').itemsize * 2)
+        dtype = "c%d" % (np.dtype("double").itemsize * 2)
         fc3_reciprocal = np.zeros((3, 3, 3), dtype=dtype)
         for j in range(num_satom):
             if self._s2p_map[j] != self._p2s_map[pi[1]]:
@@ -114,12 +111,17 @@ class RealToReciprocal(object):
     def _get_phase(self, satom_indices, patom0_index):
         si = satom_indices
         p0 = patom0_index
-        phase = 1+0j
+        phase = 1 + 0j
         for i in (0, 1):
             svecs_adrs = self._multi[si[i], p0, 1]
             multi = self._multi[si[i], p0, 0]
-            vs = self._svecs[svecs_adrs:(svecs_adrs + multi)]
-            phase *= (np.exp(2j * np.pi * np.dot(
-                vs, self._triplet[i + 1].astype('double') /
-                self._mesh)).sum() / multi)
+            vs = self._svecs[svecs_adrs : (svecs_adrs + multi)]
+            phase *= (
+                np.exp(
+                    2j
+                    * np.pi
+                    * np.dot(vs, self._triplet[i + 1].astype("double") / self._mesh)
+                ).sum()
+                / multi
+            )
         return phase

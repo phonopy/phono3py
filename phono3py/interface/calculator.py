@@ -1,3 +1,4 @@
+"""Utilities of calculator interfaces."""
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -34,35 +35,31 @@
 
 
 calculator_info = {
-    'abinit': {'option': {'name': "--abinit",
-                          'help': "Invoke Abinit mode"}},
+    "abinit": {"option": {"name": "--abinit", "help": "Invoke Abinit mode"}},
     # 'aims': {'option': {'name': "--aims",
     #                     'help': "Invoke FHI-aims mode"}},
     # 'cp2k': {'option': {'name': "--cp2k",
     #                     'help': "Invoke CP2K mode"}},
-    'crystal': {'option': {'name': "--crystal",
-                           'help': "Invoke CRYSTAL mode"}},
+    "crystal": {"option": {"name": "--crystal", "help": "Invoke CRYSTAL mode"}},
     # 'dftbp': {'option': {'name': "--dftb+",
     #                      'help': "Invoke dftb+ mode"}},
     # 'elk': {'option': {'name': "--elk",
     #                    'help': "Invoke elk mode"}},
-    'qe': {'option': {'name': "--qe",
-                      'help': "Invoke Quantum espresso (QE) mode"}},
+    "qe": {"option": {"name": "--qe", "help": "Invoke Quantum espresso (QE) mode"}},
     # 'siesta': {'option': {'name': "--siesta",
     #                       'help': "Invoke Siesta mode"}},
-    'turbomole': {'option': {'name': "--turbomole",
-                             'help': "Invoke TURBOMOLE mode"}},
-    'vasp': {'option': {'name': "--vasp",
-                        'help': "Invoke Vasp mode"}},
+    "turbomole": {"option": {"name": "--turbomole", "help": "Invoke TURBOMOLE mode"}},
+    "vasp": {"option": {"name": "--vasp", "help": "Invoke Vasp mode"}},
     # 'wien2k': {'option': {'name': "--wien2k",
     #                       'help': "Invoke Wien2k mode"}},
 }
 
 
 def get_default_displacement_distance(interface_mode):
-    if interface_mode in ('qe', 'abinit', 'turbomole'):
+    """Return default displacement distances for calculators."""
+    if interface_mode in ("qe", "abinit", "turbomole"):
         displacement_distance = 0.06
-    elif interface_mode == 'crystal':
+    elif interface_mode == "crystal":
         displacement_distance = 0.03
     else:
         displacement_distance = 0.03
@@ -70,26 +67,29 @@ def get_default_displacement_distance(interface_mode):
 
 
 def get_additional_info_to_write_supercells(interface_mode, supercell_matrix):
+    """Return additional information to write supercells for calculators."""
     additional_info = {}
-    if interface_mode == 'crystal':
-        additional_info['template_file'] = "TEMPLATE3"
-        additional_info['supercell_matrix'] = supercell_matrix
+    if interface_mode == "crystal":
+        additional_info["template_file"] = "TEMPLATE3"
+        additional_info["supercell_matrix"] = supercell_matrix
     return additional_info
 
 
-def get_additional_info_to_write_fc2_supercells(interface_mode,
-                                                phonon_supercell_matrix):
+def get_additional_info_to_write_fc2_supercells(
+    interface_mode, phonon_supercell_matrix
+):
+    """Return additional information to write fc2-supercells for calculators."""
     additional_info = {}
-    if interface_mode == 'qe':
-        additional_info['pre_filename'] = "supercell_fc2"
-    elif interface_mode == 'crystal':
-        additional_info['template_file'] = "TEMPLATE"
-        additional_info['pre_filename'] = "supercell_fc2"
-        additional_info['supercell_matrix'] = phonon_supercell_matrix
-    elif interface_mode == 'abinit':
-        additional_info['pre_filename'] = "supercell_fc2"
-    elif interface_mode == 'turbomole':
-        additional_info['pre_filename'] = "supercell_fc2"
+    if interface_mode == "qe":
+        additional_info["pre_filename"] = "supercell_fc2"
+    elif interface_mode == "crystal":
+        additional_info["template_file"] = "TEMPLATE"
+        additional_info["pre_filename"] = "supercell_fc2"
+        additional_info["supercell_matrix"] = phonon_supercell_matrix
+    elif interface_mode == "abinit":
+        additional_info["pre_filename"] = "supercell_fc2"
+    elif interface_mode == "turbomole":
+        additional_info["pre_filename"] = "supercell_fc2"
     else:
-        additional_info['pre_filename'] = "POSCAR_FC2"
+        additional_info["pre_filename"] = "POSCAR_FC2"
     return additional_info

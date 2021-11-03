@@ -34,16 +34,23 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.harmonic.displacement import (get_least_displacements,
-                                           directions_axis, get_displacement,
-                                           is_minus_displacement)
+from phonopy.harmonic.displacement import (
+    directions_axis,
+    get_displacement,
+    get_least_displacements,
+    is_minus_displacement,
+)
+from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import get_smallest_vectors
+from phonopy.structure.symmetry import Symmetry
 
 
-def direction_to_displacement(direction_dataset,
-                              displacement_distance,
-                              supercell,
-                              cutoff_distance=None):
+def direction_to_displacement(
+    direction_dataset,
+    displacement_distance,
+    supercell: PhonopyAtoms,
+    cutoff_distance=None,
+):
     """Convert displacement directions to those in Cartesian coordinates.
 
     Parameters
@@ -75,52 +82,56 @@ def direction_to_displacement(direction_dataset,
 
     lattice = supercell.cell.T
     new_dataset = {}
-    new_dataset['natom'] = len(supercell)
+    new_dataset["natom"] = len(supercell)
 
     if duplicates:
-        new_dataset['duplicates'] = duplicates
+        new_dataset["duplicates"] = duplicates
 
     if cutoff_distance is not None:
-        new_dataset['cutoff_distance'] = cutoff_distance
+        new_dataset["cutoff_distance"] = cutoff_distance
     new_first_atoms = []
     for i, first_atoms in enumerate(direction_dataset):
-        atom1 = first_atoms['number']
-        direction1 = first_atoms['direction']
+        atom1 = first_atoms["number"]
+        direction1 = first_atoms["direction"]
         disp_cart1 = np.dot(direction1, lattice.T)
         disp_cart1 *= displacement_distance / np.linalg.norm(disp_cart1)
         new_second_atoms = []
-        for second_atom in first_atoms['second_atoms']:
-            atom2 = second_atom['number']
-            pair_distance = second_atom['distance']
-            included = (cutoff_distance is None or
-                        pair_distance < cutoff_distance)
-            for direction2 in second_atom['directions']:
+        for second_atom in first_atoms["second_atoms"]:
+            atom2 = second_atom["number"]
+            pair_distance = second_atom["distance"]
+            included = cutoff_distance is None or pair_distance < cutoff_distance
+            for direction2 in second_atom["directions"]:
                 disp_cart2 = np.dot(direction2, lattice.T)
                 norm = np.linalg.norm(disp_cart2)
                 disp_cart2 *= displacement_distance / norm
-                disp2_dict = {'id': d3_count,
-                              'number': atom2,
-                              'direction': direction2,
-                              'displacement': disp_cart2,
-                              'pair_distance': pair_distance}
+                disp2_dict = {
+                    "id": d3_count,
+                    "number": atom2,
+                    "direction": direction2,
+                    "displacement": disp_cart2,
+                    "pair_distance": pair_distance,
+                }
                 if cutoff_distance is not None:
-                    disp2_dict['included'] = included
+                    disp2_dict["included"] = included
                 new_second_atoms.append(disp2_dict)
                 d3_count += 1
-        new_first_atoms.append({'number': atom1,
-                                'direction': direction1,
-                                'displacement': disp_cart1,
-                                'id': (i + 1),
-                                'second_atoms': new_second_atoms})
-    new_dataset['first_atoms'] = new_first_atoms
+        new_first_atoms.append(
+            {
+                "number": atom1,
+                "direction": direction1,
+                "displacement": disp_cart1,
+                "id": (i + 1),
+                "second_atoms": new_second_atoms,
+            }
+        )
+    new_dataset["first_atoms"] = new_first_atoms
 
     return new_dataset
 
 
-def get_third_order_displacements(cell,
-                                  symmetry,
-                                  is_plusminus='auto',
-                                  is_diagonal=False):
+def get_third_order_displacements(
+    cell: PhonopyAtoms, symmetry: Symmetry, is_plusminus="auto", is_diagonal=False
+):
     """Create dispalcement dataset.
 
     Note
@@ -163,9 +174,9 @@ def get_third_order_displacements(cell,
     # using respective site symmetries of the original crystal.
     # 'is_diagonal=False' below is made intentionally to expect
     # better accuracy.
-    disps_first = get_least_displacements(symmetry,
-                                          is_plusminus=is_plusminus,
-                                          is_diagonal=False)
+    disps_first = get_least_displacements(
+        symmetry, is_plusminus=is_plusminus, is_diagonal=False
+    )
 
     symprec = symmetry.tolerance
 
@@ -175,57 +186,37 @@ def get_third_order_displacements(cell,
         disp1 = disp[1:4]
         site_sym = symmetry.get_site_symmetry(atom1)
 
-        dds_atom1 = {'number': atom1,
-                     'direction': disp1,
-                     'second_atoms': []}
+        dds_atom1 = {"number": atom1, "direction": disp1, "second_atoms": []}
 
         # Reduced site symmetry at the first atom with respect to
         # the displacement of the first atoms.
         reduced_site_sym = get_reduced_site_symmetry(site_sym, disp1, symprec)
         # Searching orbits (second atoms) with respect to
         # the first atom and its reduced site symmetry.
-        second_atoms = get_least_orbits(atom1,
-                                        cell,
-                                        reduced_site_sym,
-                                        symprec)
+        second_atoms = get_least_orbits(atom1, cell, reduced_site_sym, symprec)
 
         for atom2 in second_atoms:
-            dds_atom2 = _get_next_displacements(atom1,
-                                                atom2,
-                                                reduced_site_sym,
-                                                lattice,
-                                                positions,
-                                                symprec,
-                                                is_diagonal)
+            dds_atom2 = _get_next_displacements(
+                atom1, atom2, reduced_site_sym, lattice, positions, symprec, is_diagonal
+            )
 
-            min_vec = get_smallest_vector_of_atom_pair(atom1,
-                                                       atom2,
-                                                       cell,
-                                                       symprec)
+            min_vec = get_smallest_vector_of_atom_pair(atom1, atom2, cell, symprec)
             min_distance = np.linalg.norm(np.dot(lattice, min_vec))
-            dds_atom2['distance'] = min_distance
-            dds_atom1['second_atoms'].append(dds_atom2)
+            dds_atom2["distance"] = min_distance
+            dds_atom1["second_atoms"].append(dds_atom2)
         dds.append(dds_atom1)
 
     return dds
 
 
-def _get_next_displacements(atom1,
-                            atom2,
-                            reduced_site_sym,
-                            lattice,
-                            positions,
-                            symprec,
-                            is_diagonal):
+def _get_next_displacements(
+    atom1, atom2, reduced_site_sym, lattice, positions, symprec, is_diagonal
+):
     """Find displacements of second atom."""
     # Bond symmetry between first and second atoms.
     reduced_bond_sym = get_bond_symmetry(
-        reduced_site_sym,
-        lattice,
-        positions,
-        atom1,
-        atom2,
-        symprec)
+        reduced_site_sym, lattice, positions, atom1, atom2, symprec
+    )
 
     # Since displacement of first atom breaks translation
     # symmetry, the crystal symmetry is reduced to point
@@ -237,11 +228,11 @@ def _get_next_displacements(atom1,
         disps_second = get_displacement(reduced_bond_sym)
     else:
         disps_second = get_displacement(reduced_bond_sym, directions_axis)
-    dds_atom2 = {'number': atom2, 'directions': []}
+    dds_atom2 = {"number": atom2, "directions": []}
     for disp2 in disps_second:
-        dds_atom2['directions'].append(list(disp2))
+        dds_atom2["directions"].append(list(disp2))
         if is_minus_displacement(disp2, reduced_bond_sym):
-            dds_atom2['directions'].append(list(-disp2))
+            dds_atom2["directions"].append(list(-disp2))
 
     return dds_atom2
 
@@ -252,15 +243,12 @@ def get_reduced_site_symmetry(site_sym, direction, symprec=1e-5):
     for rot in site_sym:
         if (abs(direction - np.dot(direction, rot.T)) < symprec).all():
             reduced_site_sym.append(rot)
-    return np.array(reduced_site_sym, dtype='intc')
+    return np.array(reduced_site_sym, dtype="intc")
 
 
-def get_bond_symmetry(site_symmetry,
-                      lattice,
-                      positions,
-                      atom_center,
-                      atom_disp,
-                      symprec=1e-5):
+def get_bond_symmetry(
+    site_symmetry, lattice, positions, atom_center, atom_disp, symprec=1e-5
+):
     """Return bond symmetry.
 
     Bond symmetry is the symmetry operations that keep the symmetry
@@ -270,8 +258,7 @@ def get_bond_symmetry(site_symmetry,
     bond_sym = []
     pos = positions
     for rot in site_symmetry:
-        rot_pos = (np.dot(pos[atom_disp] - pos[atom_center], rot.T) +
-                   pos[atom_center])
+        rot_pos = np.dot(pos[atom_disp] - pos[atom_center], rot.T) + pos[atom_center]
         diff = pos[atom_disp] - rot_pos
         diff -= np.rint(diff)
         dist = np.linalg.norm(np.dot(lattice, diff))
@@ -294,23 +281,24 @@ def get_least_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
     return np.unique(mapping)
 
 
-def get_smallest_vector_of_atom_pair(atom_number_supercell,
-                                     atom_number_primitive,
-                                     supercell,
-                                     symprec):
+def get_smallest_vector_of_atom_pair(
+    atom_number_supercell, atom_number_primitive, supercell: PhonopyAtoms, symprec
+):
     """Return smallest vectors of an atom pair in supercell."""
     s_pos = supercell.scaled_positions
-    svecs, multi = get_smallest_vectors(supercell.cell,
-                                        [s_pos[atom_number_supercell]],
-                                        [s_pos[atom_number_primitive]],
-                                        store_dense_svecs=True,
-                                        symprec=symprec)
+    svecs, _ = get_smallest_vectors(
+        supercell.cell,
+        [s_pos[atom_number_supercell]],
+        [s_pos[atom_number_primitive]],
+        store_dense_svecs=True,
+        symprec=symprec,
+    )
     return svecs[0]
 
 
 def _get_orbits(atom_index, cell, site_symmetry, symprec=1e-5):
-    lattice = cell.get_cell().T
-    positions = cell.get_scaled_positions()
+    lattice = cell.cell.T
+    positions = cell.scaled_positions
     center = positions[atom_index]
 
     # orbits[num_atoms, num_site_sym]
@@ -347,43 +335,47 @@ def _find_duplicates(direction_dataset):
     # This id is stamped in direction_to_displacement by the sequence of
     # the loops. Therefore the same system of the loops should be used here.
     for direction1 in direction_dataset:
-        n1 = direction1['number']
-        d1 = direction1['direction']
-        for directions2 in direction1['second_atoms']:
-            n2 = directions2['number']
+        n1 = direction1["number"]
+        d1 = direction1["direction"]
+        for directions2 in direction1["second_atoms"]:
+            n2 = directions2["number"]
             if (n1, n2) not in direction_sets:
                 direction_sets[(n1, n2)] = []
                 pair_idx[(n1, n2)] = []
-            for i, d2 in enumerate(directions2['directions']):
+            for i, d2 in enumerate(directions2["directions"]):
                 direction_sets[(n1, n2)].append(d1 + d2)
                 pair_idx[(n1, n2)].append(idx + i)
-            idx += len(directions2['directions'])
+            idx += len(directions2["directions"])
 
     duplucates = []
     done = []
     for i, direction1 in enumerate(direction_dataset):
-        n1 = direction1['number']
-        for directions2 in direction1['second_atoms']:
-            n2 = directions2['number']
-            if (n2 > n1 and (n2, n1) not in done and
-                (n2, n1) in direction_sets):  # noqa E129
+        n1 = direction1["number"]
+        for directions2 in direction1["second_atoms"]:
+            n2 = directions2["number"]
+            if (
+                n2 > n1 and (n2, n1) not in done and (n2, n1) in direction_sets
+            ):  # noqa E129
                 done.append((n2, n1))
                 duplucates += _compare(
-                    n1, n2,
-                    direction_sets[(n1, n2)], direction_sets[(n2, n1)],
-                    pair_idx[(n1, n2)], pair_idx[(n2, n1)])
+                    n1,
+                    n2,
+                    direction_sets[(n1, n2)],
+                    direction_sets[(n2, n1)],
+                    pair_idx[(n1, n2)],
+                    pair_idx[(n2, n1)],
+                )
 
     done = []
     for i, direction1 in enumerate(direction_dataset):
-        n1 = direction1['number']
-        for directions2 in direction1['second_atoms']:
-            n2 = directions2['number']
+        n1 = direction1["number"]
+        for directions2 in direction1["second_atoms"]:
+            n2 = directions2["number"]
             if n1 == n2 and n1 not in done:
                 done.append(n1)
                 duplucates += _compare_opposite(
-                    n1,
-                    direction_sets[(n1, n1)],
-                    pair_idx[(n1, n1)])
+                    n1, direction_sets[(n1, n1)], pair_idx[(n1, n1)]
+                )
 
     return duplucates
 

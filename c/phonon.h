@@ -38,57 +38,27 @@
 #include "dynmat.h"
 #include "lapack_wrapper.h"
 
-void
-phn_get_phonons_at_gridpoints(double *frequencies,
-                              lapack_complex_double *eigenvectors,
-                              char *phonon_done,
-                              const long num_phonons,
-                              const long *grid_points,
-                              const long num_grid_points,
-                              const long (*grid_address)[3],
-                              const double QDinv[3][3],
-                              const double *fc2,
-                              const double(*svecs_fc2)[3],
-                              const long (*multi_fc2)[2],
-                              const long num_patom,
-                              const long num_satom,
-                              const double *masses_fc2,
-                              const long *p2s_fc2,
-                              const long *s2p_fc2,
-                              const double unit_conversion_factor,
-                              const double (*born)[3][3],
-                              const double dielectric[3][3],
-                              const double reciprocal_lattice[3][3],
-                              const double *q_direction, /* must be pointer */
-                              const double nac_factor,
-                              const char uplo);
-void
-phn_get_gonze_phonons_at_gridpoints(double *frequencies,
-                                    lapack_complex_double *eigenvectors,
-                                    char *phonon_done,
-                                    const long num_phonons,
-                                    const long *grid_points,
-                                    const long num_grid_points,
-                                    const long (*grid_address)[3],
-                                    const double QDinv[3][3],
-                                    const double *fc2,
-                                    const double(*svecs_fc2)[3],
-                                    const long (*multi_fc2)[2],
-                                    const double (*positions)[3],
-                                    const long num_patom,
-                                    const long num_satom,
-                                    const double *masses_fc2,
-                                    const long *p2s_fc2,
-                                    const long *s2p_fc2,
-                                    const double unit_conversion_factor,
-                                    const double (*born)[3][3],
-                                    const double dielectric[3][3],
-                                    const double reciprocal_lattice[3][3],
-                                    const double *q_direction, /* pointer */
-                                    const double nac_factor,
-                                    const double *dd_q0,
-                                    const double(*G_list)[3],
-                                    const long num_G_points,
-                                    const double lambda,
-                                    const char uplo);
+void phn_get_phonons_at_gridpoints(
+    double *frequencies, lapack_complex_double *eigenvectors, char *phonon_done,
+    const long num_phonons, const long *grid_points, const long num_grid_points,
+    const long (*grid_address)[3], const double QDinv[3][3], const double *fc2,
+    const double (*svecs_fc2)[3], const long (*multi_fc2)[2],
+    const long num_patom, const long num_satom, const double *masses_fc2,
+    const long *p2s_fc2, const long *s2p_fc2,
+    const double unit_conversion_factor, const double (*born)[3][3],
+    const double dielectric[3][3], const double reciprocal_lattice[3][3],
+    const double *q_direction, /* must be pointer */
+    const double nac_factor, const char uplo);
+void phn_get_gonze_phonons_at_gridpoints(
+    double *frequencies, lapack_complex_double *eigenvectors, char *phonon_done,
+    const long num_phonons, const long *grid_points, const long num_grid_points,
+    const long (*grid_address)[3], const double QDinv[3][3], const double *fc2,
+    const double (*svecs_fc2)[3], const long (*multi_fc2)[2],
+    const double (*positions)[3], const long num_patom, const long num_satom,
+    const double *masses_fc2, const long *p2s_fc2, const long *s2p_fc2,
+    const double unit_conversion_factor, const double (*born)[3][3],
+    const double dielectric[3][3], const double reciprocal_lattice[3][3],
+    const double *q_direction, /* pointer */
+    const double nac_factor, const double *dd_q0, const double (*G_list)[3],
+    const long num_G_points, const double lambda, const char uplo);
 #endif

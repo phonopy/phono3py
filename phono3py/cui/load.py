@@ -34,47 +34,51 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import os
+import typing
+
 import numpy as np
-from phono3py import Phono3py
-from phono3py.interface.phono3py_yaml import Phono3pyYaml
-from phono3py.cui.create_force_constants import parse_forces, forces_in_dataset
-from phono3py.file_IO import read_fc3_from_hdf5, read_fc2_from_hdf5
-from phono3py.phonon3.fc3 import show_drift_fc3
+import phonopy.cui.load_helper as load_helper
 from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_default_physical_units
-import phonopy.cui.load_helper as load_helper
+
+from phono3py import Phono3py
+from phono3py.cui.create_force_constants import forces_in_dataset, parse_forces
+from phono3py.file_IO import read_fc2_from_hdf5, read_fc3_from_hdf5
+from phono3py.interface.phono3py_yaml import Phono3pyYaml
+from phono3py.phonon3.fc3 import show_drift_fc3
 
 
-def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
-         supercell_matrix=None,
-         primitive_matrix=None,
-         phonon_supercell_matrix=None,
-         mesh=None,
-         is_nac=True,
-         calculator=None,
-         unitcell=None,
-         supercell=None,
-         nac_params=None,
-         unitcell_filename=None,
-         supercell_filename=None,
-         born_filename=None,
-         forces_fc3_filename=None,
-         forces_fc2_filename=None,
-         fc3_filename=None,
-         fc2_filename=None,
-         fc_calculator=None,
-         fc_calculator_options=None,
-         factor=None,
-         produce_fc=True,
-         is_symmetry=True,
-         symmetrize_fc=True,
-         is_mesh_symmetry=True,
-         is_compact_fc=False,
-         use_grg=False,
-         store_dense_gp_map=True,
-         store_dense_svecs=True,
-         symprec=1e-5,
-         log_level=0):
+def load(
+    phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
+    supercell_matrix=None,
+    primitive_matrix=None,
+    phonon_supercell_matrix=None,
+    is_nac=True,
+    calculator=None,
+    unitcell=None,
+    supercell=None,
+    nac_params=None,
+    unitcell_filename=None,
+    supercell_filename=None,
+    born_filename=None,
+    forces_fc3_filename=None,
+    forces_fc2_filename=None,
+    fc3_filename=None,
+    fc2_filename=None,
+    fc_calculator=None,
+    fc_calculator_options=None,
+    factor=None,
+    produce_fc=True,
+    is_symmetry=True,
+    symmetrize_fc=True,
+    is_mesh_symmetry=True,
+    is_compact_fc=False,
+    use_grg=False,
+    store_dense_gp_map=True,
+    store_dense_svecs=True,
+    symprec=1e-5,
+    log_level=0,
+):
     """Create Phono3py instance from parameters and/or input files.
 
     "phono3py_yaml"-like file is parsed unless crystal structure information
@@ -245,10 +249,12 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         Verbosity control. Default is 0.
 
     """
-    if (supercell is not None or
-        supercell_filename is not None or
-        unitcell is not None or
-        unitcell_filename is not None):  # noqa E129
+    if (
+        supercell is not None
+        or supercell_filename is not None
+        or unitcell is not None
+        or unitcell_filename is not None
+    ):  # noqa E129
         cell, smat, pmat = load_helper.get_cell_settings(
             supercell_matrix=supercell_matrix,
             primitive_matrix=primitive_matrix,
@@ -257,11 +263,14 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
             unitcell_filename=unitcell_filename,
             supercell_filename=supercell_filename,
             calculator=calculator,
-            symprec=symprec)
+            symprec=symprec,
+        )
         if phonon_supercell_matrix is not None:
             if unitcell is None and unitcell_filename is None:
-                msg = ("phonon_supercell_matrix can be used only when "
-                       "unitcell or unitcell_filename is given.")
+                msg = (
+                    "phonon_supercell_matrix can be used only when "
+                    "unitcell or unitcell_filename is given."
+                )
                 raise RuntimeError(msg)
             ph_smat = phonon_supercell_matrix
         else:
@@ -275,9 +284,9 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         smat = ph3py_yaml.supercell_matrix
         ph_smat = ph3py_yaml.phonon_supercell_matrix
         if smat is None:
-            smat = np.eye(3, dtype='intc', order='C')
-        if primitive_matrix == 'auto':
-            pmat = 'auto'
+            smat = np.eye(3, dtype="intc", order="C")
+        if primitive_matrix == "auto":
+            pmat = "auto"
         else:
             pmat = ph3py_yaml.primitive_matrix
 
@@ -291,22 +300,24 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
     # units keywords: factor, nac_factor, distance_to_A
     physical_units = get_default_physical_units(calculator)
     if factor is None:
-        _factor = physical_units['factor']
+        _factor = physical_units["factor"]
     else:
         _factor = factor
-    ph3py = Phono3py(cell,
-                     smat,
-                     primitive_matrix=pmat,
-                     phonon_supercell_matrix=ph_smat,
-                     frequency_factor_to_THz=_factor,
-                     symprec=symprec,
-                     is_symmetry=is_symmetry,
-                     is_mesh_symmetry=is_mesh_symmetry,
-                     use_grg=use_grg,
-                     store_dense_gp_map=store_dense_gp_map,
-                     store_dense_svecs=store_dense_svecs,
-                     calculator=calculator,
-                     log_level=log_level)
+    ph3py = Phono3py(
+        cell,
+        smat,
+        primitive_matrix=pmat,
+        phonon_supercell_matrix=ph_smat,
+        frequency_factor_to_THz=_factor,
+        symprec=symprec,
+        is_symmetry=is_symmetry,
+        is_mesh_symmetry=is_mesh_symmetry,
+        use_grg=use_grg,
+        store_dense_gp_map=store_dense_gp_map,
+        store_dense_svecs=store_dense_svecs,
+        calculator=calculator,
+        log_level=log_level,
+    )
 
     # NAC params
     if born_filename is not None or _nac_params is not None or is_nac:
@@ -315,12 +326,13 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
             _nac_params,
             born_filename,
             is_nac,
-            physical_units['nac_factor'],
-            log_level=log_level)
+            physical_units["nac_factor"],
+            log_level=log_level,
+        )
 
     set_dataset_and_force_constants(
         ph3py,
-        ph3py_yaml=ph3py_yaml,
+        ph3py_yaml,
         fc3_filename=fc3_filename,
         fc2_filename=fc2_filename,
         forces_fc3_filename=forces_fc3_filename,
@@ -330,56 +342,60 @@ def load(phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
         produce_fc=produce_fc,
         symmetrize_fc=symmetrize_fc,
         is_compact_fc=is_compact_fc,
-        log_level=log_level)
+        log_level=log_level,
+    )
 
     return ph3py
 
 
 def set_dataset_and_force_constants(
-        ph3py,
-        ph3py_yaml=None,
-        fc3_filename=None,
-        fc2_filename=None,
-        forces_fc3_filename=None,
-        forces_fc2_filename=None,
-        fc_calculator=None,
-        fc_calculator_options=None,
-        produce_fc=True,
-        symmetrize_fc=True,
-        is_compact_fc=False,
-        cutoff_pair_distance=None,
-        log_level=0):
+    ph3py: Phono3py,
+    ph3py_yaml: typing.Union[Phono3pyYaml, None] = None,
+    fc3_filename=None,
+    fc2_filename=None,
+    forces_fc3_filename=None,
+    forces_fc2_filename=None,
+    fc_calculator=None,
+    fc_calculator_options=None,
+    produce_fc=True,
+    symmetrize_fc=True,
+    is_compact_fc=False,
+    cutoff_pair_distance=None,
+    log_level=0,
+):
     """Set displacements, forces, and create force constants."""
-    read_fc = {'fc2': False, 'fc3': False}
+    read_fc = {"fc2": False, "fc3": False}
     p2s_map = ph3py.primitive.p2s_map
     if fc3_filename is not None:
         fc3 = read_fc3_from_hdf5(filename=fc3_filename, p2s_map=p2s_map)
         ph3py.fc3 = fc3
-        read_fc['fc3'] = True
+        read_fc["fc3"] = True
         if log_level:
-            print("fc3 was read from \"%s\"." % fc3_filename)
+            print('fc3 was read from "%s".' % fc3_filename)
     elif forces_fc3_filename is not None:
         if type(forces_fc3_filename) is str:
             force_filename = forces_fc3_filename
             disp_filename = None
         else:
             force_filename, disp_filename = forces_fc3_filename
-        _set_forces_fc3(ph3py,
-                        ph3py_yaml,
-                        force_filename,
-                        disp_filename,
-                        produce_fc,
-                        symmetrize_fc,
-                        is_compact_fc,
-                        fc_calculator,
-                        fc_calculator_options,
-                        cutoff_pair_distance,
-                        log_level)
+        _set_forces_fc3(
+            ph3py,
+            ph3py_yaml,
+            force_filename,
+            disp_filename,
+            produce_fc,
+            symmetrize_fc,
+            is_compact_fc,
+            fc_calculator,
+            fc_calculator_options,
+            cutoff_pair_distance,
+            log_level,
+        )
     elif os.path.isfile("fc3.hdf5"):
         ph3py.fc3 = read_fc3_from_hdf5(filename="fc3.hdf5", p2s_map=p2s_map)
-        read_fc['fc3'] = True
+        read_fc["fc3"] = True
         if log_level:
-            print("fc3 was read from \"fc3.hdf5\".")
+            print('fc3 was read from "fc3.hdf5".')
     elif os.path.isfile("FORCES_FC3"):
         disp_filename = None
         if os.path.isfile("disp_fc3.yaml"):
@@ -387,31 +403,37 @@ def set_dataset_and_force_constants(
                 disp_filename = "disp_fc3.yaml"
             elif ph3py_yaml.dataset is None:
                 disp_filename = "disp_fc3.yaml"
-        _set_forces_fc3(ph3py,
-                        ph3py_yaml,
-                        "FORCES_FC3",
-                        disp_filename,
-                        produce_fc,
-                        symmetrize_fc,
-                        is_compact_fc,
-                        fc_calculator,
-                        fc_calculator_options,
-                        cutoff_pair_distance,
-                        log_level)
-    elif (ph3py_yaml is not None and
-          ph3py_yaml.dataset is not None and
-          forces_in_dataset(ph3py_yaml.dataset)):
-        _set_forces_fc3(ph3py,
-                        ph3py_yaml,
-                        None,
-                        None,
-                        produce_fc,
-                        symmetrize_fc,
-                        is_compact_fc,
-                        fc_calculator,
-                        fc_calculator_options,
-                        cutoff_pair_distance,
-                        log_level)
+        _set_forces_fc3(
+            ph3py,
+            ph3py_yaml,
+            "FORCES_FC3",
+            disp_filename,
+            produce_fc,
+            symmetrize_fc,
+            is_compact_fc,
+            fc_calculator,
+            fc_calculator_options,
+            cutoff_pair_distance,
+            log_level,
+        )
+    elif (
+        ph3py_yaml is not None
+        and ph3py_yaml.dataset is not None
+        and forces_in_dataset(ph3py_yaml.dataset)
+    ):
+        _set_forces_fc3(
+            ph3py,
+            ph3py_yaml,
+            None,
+            None,
+            produce_fc,
+            symmetrize_fc,
+            is_compact_fc,
+            fc_calculator,
+            fc_calculator_options,
+            cutoff_pair_distance,
+            log_level,
+        )
 
     if log_level and ph3py.fc3 is not None:
         show_drift_fc3(ph3py.fc3, primitive=ph3py.primitive)
@@ -419,31 +441,33 @@ def set_dataset_and_force_constants(
     if fc2_filename is not None:
         fc2 = read_fc2_from_hdf5(filename=fc2_filename, p2s_map=p2s_map)
         ph3py.fc2 = fc2
-        read_fc['fc2'] = True
+        read_fc["fc2"] = True
         if log_level:
-            print("fc2 was read from \"%s\"." % fc2_filename)
+            print('fc2 was read from "%s".' % fc2_filename)
     elif forces_fc2_filename is not None:
         if type(forces_fc2_filename) is str:
             force_filename = forces_fc2_filename
             disp_filename = None
         else:
             force_filename, disp_filename = forces_fc2_filename
-        _set_forces_fc2(ph3py,
-                        ph3py_yaml,
-                        force_filename,
-                        disp_filename,
-                        produce_fc,
-                        symmetrize_fc,
-                        is_compact_fc,
-                        fc_calculator,
-                        fc_calculator_options,
-                        "phonon_fc2",
-                        log_level)
+        _set_forces_fc2(
+            ph3py,
+            ph3py_yaml,
+            force_filename,
+            disp_filename,
+            produce_fc,
+            symmetrize_fc,
+            is_compact_fc,
+            fc_calculator,
+            fc_calculator_options,
+            "phonon_fc2",
+            log_level,
+        )
     elif os.path.isfile("fc2.hdf5"):
         ph3py.fc2 = read_fc2_from_hdf5(filename="fc2.hdf5", p2s_map=p2s_map)
-        read_fc['fc2'] = True
+        read_fc["fc2"] = True
         if log_level:
-            print("fc2 was read from \"fc2.hdf5\".")
+            print('fc2 was read from "fc2.hdf5".')
     elif os.path.isfile("FORCES_FC2"):
         disp_filename = None
         if os.path.isfile("disp_fc2.yaml"):
@@ -451,54 +475,69 @@ def set_dataset_and_force_constants(
                 disp_filename = "disp_fc2.yaml"
             elif ph3py_yaml.phonon_dataset is None:
                 disp_filename = "disp_fc2.yaml"
-        if disp_filename is None and ph3py_yaml.phonon_dataset is None:
-            msg = ("\"FORCES_FC2\" was found. "
-                   "But displacement dataset was not found.")
+        if (
+            disp_filename is None
+            and ph3py_yaml is not None
+            and ph3py_yaml.phonon_dataset is None
+        ):
+            msg = '"FORCES_FC2" was found. ' "But displacement dataset was not found."
             raise RuntimeError(msg)
-        _set_forces_fc2(ph3py,
-                        ph3py_yaml,
-                        "FORCES_FC2",
-                        disp_filename,
-                        produce_fc,
-                        symmetrize_fc,
-                        is_compact_fc,
-                        fc_calculator,
-                        fc_calculator_options,
-                        "phonon_fc2",
-                        log_level)
-    elif (ph3py.phonon_supercell_matrix is None and
-          fc_calculator == 'alm' and
-          ph3py.fc2 is not None):
+        _set_forces_fc2(
+            ph3py,
+            ph3py_yaml,
+            "FORCES_FC2",
+            disp_filename,
+            produce_fc,
+            symmetrize_fc,
+            is_compact_fc,
+            fc_calculator,
+            fc_calculator_options,
+            "phonon_fc2",
+            log_level,
+        )
+    elif (
+        ph3py.phonon_supercell_matrix is None
+        and fc_calculator == "alm"
+        and ph3py.fc2 is not None
+    ):
         if log_level:
             print("fc2 that was fit simultaneously with fc3 by ALM is used.")
-    elif (ph3py_yaml is not None and
-          ph3py_yaml.phonon_dataset is not None and
-          forces_in_dataset(ph3py_yaml.phonon_dataset)):
-        _set_forces_fc2(ph3py,
-                        ph3py_yaml,
-                        None,
-                        None,
-                        produce_fc,
-                        symmetrize_fc,
-                        is_compact_fc,
-                        fc_calculator,
-                        fc_calculator_options,
-                        "phonon_fc2",
-                        log_level)
-    elif (ph3py_yaml is not None and
-          ph3py_yaml.dataset is not None and
-          forces_in_dataset(ph3py_yaml.dataset)):
-        _set_forces_fc2(ph3py,
-                        ph3py_yaml,
-                        None,
-                        None,
-                        produce_fc,
-                        symmetrize_fc,
-                        is_compact_fc,
-                        fc_calculator,
-                        fc_calculator_options,
-                        "fc2",
-                        log_level)
+    elif (
+        ph3py_yaml is not None
+        and ph3py_yaml.phonon_dataset is not None
+        and forces_in_dataset(ph3py_yaml.phonon_dataset)
+    ):
+        _set_forces_fc2(
+            ph3py,
+            ph3py_yaml,
+            None,
+            None,
+            produce_fc,
+            symmetrize_fc,
+            is_compact_fc,
+            fc_calculator,
+            fc_calculator_options,
+            "phonon_fc2",
+            log_level,
+        )
+    elif (
+        ph3py_yaml is not None
+        and ph3py_yaml.dataset is not None
+        and forces_in_dataset(ph3py_yaml.dataset)
+    ):
+        _set_forces_fc2(
+            ph3py,
+            ph3py_yaml,
+            None,
+            None,
+            produce_fc,
+            symmetrize_fc,
+            is_compact_fc,
+            fc_calculator,
+            fc_calculator_options,
+            "fc2",
+            log_level,
+        )
     elif os.path.isfile("FORCES_FC3"):
         # suppose fc3.hdf5 is read but fc2.hdf5 doesn't exist.
         disp_filename = None
@@ -507,86 +546,99 @@ def set_dataset_and_force_constants(
                 disp_filename = "disp_fc3.yaml"
             elif ph3py_yaml.dataset is None:
                 disp_filename = "disp_fc3.yaml"
-        _set_forces_fc2(ph3py,
-                        ph3py_yaml,
-                        "FORCES_FC3",
-                        disp_filename,
-                        produce_fc,
-                        symmetrize_fc,
-                        is_compact_fc,
-                        fc_calculator,
-                        fc_calculator_options,
-                        "fc2",
-                        log_level)
+        _set_forces_fc2(
+            ph3py,
+            ph3py_yaml,
+            "FORCES_FC3",
+            disp_filename,
+            produce_fc,
+            symmetrize_fc,
+            is_compact_fc,
+            fc_calculator,
+            fc_calculator_options,
+            "fc2",
+            log_level,
+        )
     if log_level and ph3py.fc2 is not None:
-        show_drift_force_constants(ph3py.fc2,
-                                   primitive=ph3py.phonon_primitive,
-                                   name='fc2')
+        show_drift_force_constants(
+            ph3py.fc2, primitive=ph3py.phonon_primitive, name="fc2"
+        )
 
     # Cases that dataset is in phono3py.yaml but not forces.
     if ph3py.dataset is None:
-        if (ph3py_yaml is not None and ph3py_yaml.dataset is not None):
+        if ph3py_yaml is not None and ph3py_yaml.dataset is not None:
             ph3py.dataset = ph3py_yaml.dataset
-        if (ph3py_yaml is not None and ph3py_yaml.phonon_dataset is not None):
+        if ph3py_yaml is not None and ph3py_yaml.phonon_dataset is not None:
             ph3py.phonon_dataset = ph3py_yaml.phonon_dataset
 
     return read_fc
 
 
-def _set_forces_fc3(ph3py,
-                    ph3py_yaml,
-                    force_filename,
-                    disp_filename,
-                    produce_fc,
-                    symmetrize_fc,
-                    is_compact_fc,
-                    fc_calculator,
-                    fc_calculator_options,
-                    cutoff_pair_distance,
-                    log_level):
+def _set_forces_fc3(
+    ph3py: Phono3py,
+    ph3py_yaml: typing.Union[Phono3pyYaml, None],
+    force_filename,
+    disp_filename,
+    produce_fc,
+    symmetrize_fc,
+    is_compact_fc,
+    fc_calculator,
+    fc_calculator_options,
+    cutoff_pair_distance,
+    log_level,
+):
     ph3py.dataset = parse_forces(
         ph3py,
         ph3py_yaml=ph3py_yaml,
         cutoff_pair_distance=cutoff_pair_distance,
         force_filename=force_filename,
         disp_filename=disp_filename,
-        fc_type='fc3',
-        log_level=log_level)
+        fc_type="fc3",
+        log_level=log_level,
+    )
     if produce_fc:
-        ph3py.produce_fc3(symmetrize_fc3r=symmetrize_fc,
-                          is_compact_fc=is_compact_fc,
-                          fc_calculator=fc_calculator,
-                          fc_calculator_options=fc_calculator_options)
+        ph3py.produce_fc3(
+            symmetrize_fc3r=symmetrize_fc,
+            is_compact_fc=is_compact_fc,
+            fc_calculator=fc_calculator,
+            fc_calculator_options=fc_calculator_options,
+        )
         if log_level and symmetrize_fc:
             print("fc3 was symmetrized.")
 
 
-def _set_forces_fc2(ph3py,
-                    ph3py_yaml,
-                    force_filename,
-                    disp_filename,
-                    produce_fc,
-                    symmetrize_fc,
-                    is_compact_fc,
-                    fc_calculator,
-                    fc_calculator_options,
-                    fc_type,
-                    log_level):
-    dataset = parse_forces(ph3py,
-                           ph3py_yaml=ph3py_yaml,
-                           force_filename=force_filename,
-                           disp_filename=disp_filename,
-                           fc_type=fc_type,
-                           log_level=log_level)
-    if fc_type == 'phonon_fc2':
+def _set_forces_fc2(
+    ph3py: Phono3py,
+    ph3py_yaml: typing.Union[Phono3pyYaml, None],
+    force_filename,
+    disp_filename,
+    produce_fc,
+    symmetrize_fc,
+    is_compact_fc,
+    fc_calculator,
+    fc_calculator_options,
+    fc_type,
+    log_level,
+):
+    dataset = parse_forces(
+        ph3py,
+        ph3py_yaml=ph3py_yaml,
+        force_filename=force_filename,
+        disp_filename=disp_filename,
+        fc_type=fc_type,
+        log_level=log_level,
+    )
+    if fc_type == "phonon_fc2":
         ph3py.phonon_dataset = dataset
     else:
         ph3py.dataset = dataset
 
     if produce_fc:
-        ph3py.produce_fc2(symmetrize_fc2=symmetrize_fc,
-                          is_compact_fc=is_compact_fc,
-                          fc_calculator=fc_calculator,
-                          fc_calculator_options=fc_calculator_options)
+        ph3py.produce_fc2(
+            symmetrize_fc2=symmetrize_fc,
+            is_compact_fc=is_compact_fc,
+            fc_calculator=fc_calculator,
+            fc_calculator_options=fc_calculator_options,
+        )
         if log_level and symmetrize_fc:
             print("fc2 was symmetrized.")

@@ -58,16 +58,20 @@ def get_unique_grid_points(grid_points, bz_grid):
 
     """
     import phono3py._phono3py as phono3c
-    if _check_ndarray_state(grid_points, 'int_'):
+
+    if _check_ndarray_state(grid_points, "int_"):
         _grid_points = grid_points
     else:
-        _grid_points = np.array(grid_points, dtype='int_')
+        _grid_points = np.array(grid_points, dtype="int_")
     thm = TetrahedronMethod(bz_grid.microzone_lattice)
     unique_vertices = np.array(
         np.dot(thm.get_unique_tetrahedra_vertices(), bz_grid.P.T),
-        dtype='int_', order='C')
+        dtype="int_",
+        order="C",
+    )
     neighboring_grid_points = np.zeros(
-        len(unique_vertices) * len(_grid_points), dtype='int_')
+        len(unique_vertices) * len(_grid_points), dtype="int_"
+    )
     phono3c.neighboring_grid_points(
         neighboring_grid_points,
         _grid_points,
@@ -75,18 +79,20 @@ def get_unique_grid_points(grid_points, bz_grid):
         bz_grid.D_diag,
         bz_grid.addresses,
         bz_grid.gp_map,
-        bz_grid.store_dense_gp_map * 1 + 1)
-    unique_grid_points = np.array(np.unique(neighboring_grid_points),
-                                  dtype='int_')
+        bz_grid.store_dense_gp_map * 1 + 1,
+    )
+    unique_grid_points = np.array(np.unique(neighboring_grid_points), dtype="int_")
     return unique_grid_points
 
 
-def get_integration_weights(sampling_points,
-                            grid_values,
-                            bz_grid,
-                            grid_points=None,
-                            bzgp2irgp_map=None,
-                            function='I'):
+def get_integration_weights(
+    sampling_points,
+    grid_values,
+    bz_grid,
+    grid_points=None,
+    bzgp2irgp_map=None,
+    function="I",
+):
     """Return tetrahedron method integration weights.
 
     Parameters
@@ -118,39 +124,39 @@ def get_integration_weights(sampling_points,
 
     """
     import phono3py._phono3py as phono3c
+
     thm = TetrahedronMethod(bz_grid.microzone_lattice)
 
     if grid_points is None:
         _grid_points = bz_grid.grg2bzg
-    elif _check_ndarray_state(grid_points, 'int_'):
+    elif _check_ndarray_state(grid_points, "int_"):
         _grid_points = grid_points
     else:
-        _grid_points = np.array(grid_points, dtype='int_')
-    if _check_ndarray_state(grid_values, 'double'):
+        _grid_points = np.array(grid_points, dtype="int_")
+    if _check_ndarray_state(grid_values, "double"):
         _grid_values = grid_values
     else:
-        _grid_values = np.array(grid_values, dtype='double', order='C')
-    if _check_ndarray_state(sampling_points, 'double'):
+        _grid_values = np.array(grid_values, dtype="double", order="C")
+    if _check_ndarray_state(sampling_points, "double"):
         _sampling_points = sampling_points
     else:
-        _sampling_points = np.array(sampling_points, dtype='double')
+        _sampling_points = np.array(sampling_points, dtype="double")
     if bzgp2irgp_map is None:
-        _bzgp2irgp_map = np.arange(len(grid_values), dtype='int_')
-    elif _check_ndarray_state(bzgp2irgp_map, 'int_'):
+        _bzgp2irgp_map = np.arange(len(grid_values), dtype="int_")
+    elif _check_ndarray_state(bzgp2irgp_map, "int_"):
         _bzgp2irgp_map = bzgp2irgp_map
     else:
-        _bzgp2irgp_map = np.array(bzgp2irgp_map, dtype='int_')
+        _bzgp2irgp_map = np.array(bzgp2irgp_map, dtype="int_")
 
     num_grid_points = len(_grid_points)
     num_band = _grid_values.shape[1]
     integration_weights = np.zeros(
-        (num_grid_points, len(_sampling_points), num_band),
-        dtype='double', order='C')
+        (num_grid_points, len(_sampling_points), num_band), dtype="double", order="C"
+    )
     phono3c.integration_weights_at_grid_points(
         integration_weights,
         _sampling_points,
-        np.array(np.dot(thm.get_tetrahedra(), bz_grid.P.T),
-                 dtype='int_', order='C'),
+        np.array(np.dot(thm.get_tetrahedra(), bz_grid.P.T), dtype="int_", order="C"),
         bz_grid.D_diag,
         _grid_points,
         _grid_values,
@@ -158,11 +164,11 @@ def get_integration_weights(sampling_points,
         bz_grid.gp_map,
         _bzgp2irgp_map,
         bz_grid.store_dense_gp_map * 1 + 1,
-        function)
+        function,
+    )
     return integration_weights
 
 
 def _check_ndarray_state(array, dtype):
     """Check contiguousness and dtype."""
-    return (array.dtype == dtype and
-            array.flags.c_contiguous)
+    return array.dtype == dtype and array.flags.c_contiguous

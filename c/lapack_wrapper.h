@@ -45,30 +45,18 @@ MKL_Complex16 lapack_make_complex_double(double re, double im);
 #include <lapacke.h>
 #endif
 
-int phonopy_zheev(double *w,
-                  lapack_complex_double *a,
-                  const int n,
+int phonopy_zheev(double *w, lapack_complex_double *a, const int n,
                   const char uplo);
-int phonopy_pinv(double *data_out,
-                 const double *data_in,
-                 const int m,
-                 const int n,
-                 const double cutoff);
-void phonopy_pinv_mt(double *data_out,
-                     int *info_out,
-                     const double *data_in,
-                     const int num_thread,
-                     const int *row_nums,
-                     const int max_row_num,
-                     const int column_num,
+int phonopy_pinv(double *data_out, const double *data_in, const int m,
+                 const int n, const double cutoff);
+void phonopy_pinv_mt(double *data_out, int *info_out, const double *data_in,
+                     const int num_thread, const int *row_nums,
+                     const int max_row_num, const int column_num,
                      const double cutoff);
-int phonopy_dsyev(double *data,
-                  double *eigvals,
-                  const int size,
+int phonopy_dsyev(double *data, double *eigvals, const int size,
                   const int algorithm);
 
-lapack_complex_double
-phonoc_complex_prod(const lapack_complex_double a,
-                    const lapack_complex_double b);
+lapack_complex_double phonoc_complex_prod(const lapack_complex_double a,
+                                          const lapack_complex_double b);
 
 #endif

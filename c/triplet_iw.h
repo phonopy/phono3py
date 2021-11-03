@@ -35,38 +35,24 @@
 #ifndef __triplet_iw_H__
 #define __triplet_iw_H__
 
-void
-tpi_get_integration_weight(double *iw,
-                           char *iw_zero,
-                           const double *frequency_points,
-                           const long num_band0,
-                           const long tp_relative_grid_address[2][24][4][3],
-                           const long triplets[3],
-                           const long num_triplets,
-                           const ConstBZGrid *bzgrid,
-                           const double *frequencies1,
-                           const long num_band1,
-                           const double *frequencies2,
-                           const long num_band2,
-                           const long tp_type,
-                           const long openmp_per_bands);
-void tpi_get_integration_weight_with_sigma(double *iw,
-                                           char *iw_zero,
-                                           const double sigma,
-                                           const double cutoff,
-                                           const double *frequency_points,
-                                           const long num_band0,
-                                           const long triplet[3],
-                                           const long const_adrs_shift,
-                                           const double *frequencies,
-                                           const long num_band,
-                                           const long tp_type,
-                                           const long openmp_per_bands);
-void
-tpi_get_neighboring_grid_points(long *neighboring_grid_points,
-                                const long grid_point,
-                                const long (*relative_grid_address)[3],
-                                const long num_relative_grid_address,
-                                const ConstBZGrid *bzgrid);
+#include "bzgrid.h"
+
+void tpi_get_integration_weight(
+    double *iw, char *iw_zero, const double *frequency_points,
+    const long num_band0, const long tp_relative_grid_address[2][24][4][3],
+    const long triplets[3], const long num_triplets, const ConstBZGrid *bzgrid,
+    const double *frequencies1, const long num_band1,
+    const double *frequencies2, const long num_band2, const long tp_type,
+    const long openmp_per_bands);
+void tpi_get_integration_weight_with_sigma(
+    double *iw, char *iw_zero, const double sigma, const double cutoff,
+    const double *frequency_points, const long num_band0, const long triplet[3],
+    const long const_adrs_shift, const double *frequencies, const long num_band,
+    const long tp_type, const long openmp_per_bands);
+void tpi_get_neighboring_grid_points(long *neighboring_grid_points,
+                                     const long grid_point,
+                                     const long (*relative_grid_address)[3],
+                                     const long num_relative_grid_address,
+                                     const ConstBZGrid *bzgrid);
 
 #endif

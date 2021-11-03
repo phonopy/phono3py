@@ -34,48 +34,64 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import warnings
+
 import numpy as np
-from phonopy.structure.symmetry import Symmetry
-from phonopy.structure.cells import (
-    get_supercell, get_primitive, guess_primitive_matrix,
-    shape_supercell_matrix, get_primitive_matrix)
-from phonopy.structure.atoms import PhonopyAtoms
-from phonopy.structure.dataset import get_displacements_and_forces
-from phonopy.units import VaspToTHz
-from phonopy.harmonic.force_constants import (
-    symmetrize_force_constants,
-    symmetrize_compact_force_constants,
-    set_translational_invariance,
-    set_permutation_symmetry)
-from phonopy.harmonic.force_constants import get_fc2 as get_phonopy_fc2
-from phonopy.interface.fc_calculator import get_fc2
 from phonopy.harmonic.displacement import (
-    get_least_displacements, directions_to_displacement_dataset)
-from phono3py.version import __version__
-from phono3py.phonon3.imag_self_energy import (get_imag_self_energy,
-                                               write_imag_self_energy)
-from phono3py.phonon3.real_self_energy import (
-    get_real_self_energy, write_real_self_energy)
-from phono3py.phonon3.spectral_function import run_spectral_function
-from phono3py.phonon3.interaction import Interaction
-from phono3py.phonon3.conductivity_RTA import get_thermal_conductivity_RTA
-from phono3py.phonon3.conductivity_LBTE import get_thermal_conductivity_LBTE
-from phono3py.phonon3.displacement_fc3 import (get_third_order_displacements,
-                                               direction_to_displacement)
-from phono3py.phonon3.fc3 import (
-    set_permutation_symmetry_fc3,
-    set_permutation_symmetry_compact_fc3,
-    set_translational_invariance_fc3,
-    set_translational_invariance_compact_fc3,
-    cutoff_fc3_by_zero)
-from phono3py.phonon3.fc3 import get_fc3 as get_phono3py_fc3
-from phono3py.phonon.grid import BZGrid
-from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
-from phono3py.interface.phono3py_yaml import Phono3pyYaml
+    directions_to_displacement_dataset,
+    get_least_displacements,
+)
+from phonopy.harmonic.force_constants import get_fc2 as get_phonopy_fc2
+from phonopy.harmonic.force_constants import (
+    set_permutation_symmetry,
+    set_translational_invariance,
+    symmetrize_compact_force_constants,
+    symmetrize_force_constants,
+)
+from phonopy.interface.fc_calculator import get_fc2
+from phonopy.structure.atoms import PhonopyAtoms
+from phonopy.structure.cells import (
+    get_primitive,
+    get_primitive_matrix,
+    get_supercell,
+    guess_primitive_matrix,
+    shape_supercell_matrix,
+)
+from phonopy.structure.dataset import get_displacements_and_forces
+from phonopy.structure.symmetry import Symmetry
+from phonopy.units import VaspToTHz
+
 from phono3py.interface.fc_calculator import get_fc3
+from phono3py.interface.phono3py_yaml import Phono3pyYaml
+from phono3py.phonon3.conductivity_LBTE import get_thermal_conductivity_LBTE
+from phono3py.phonon3.conductivity_RTA import get_thermal_conductivity_RTA
+from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
+from phono3py.phonon3.displacement_fc3 import (
+    direction_to_displacement,
+    get_third_order_displacements,
+)
+from phono3py.phonon3.fc3 import cutoff_fc3_by_zero
+from phono3py.phonon3.fc3 import get_fc3 as get_phono3py_fc3
+from phono3py.phonon3.fc3 import (
+    set_permutation_symmetry_compact_fc3,
+    set_permutation_symmetry_fc3,
+    set_translational_invariance_compact_fc3,
+    set_translational_invariance_fc3,
+)
+from phono3py.phonon3.imag_self_energy import (
+    get_imag_self_energy,
+    write_imag_self_energy,
+)
+from phono3py.phonon3.interaction import Interaction
+from phono3py.phonon3.real_self_energy import (
+    get_real_self_energy,
+    write_real_self_energy,
+)
+from phono3py.phonon3.spectral_function import run_spectral_function
+from phono3py.phonon.grid import BZGrid
+from phono3py.version import __version__
 
 
-class Phono3py(object):
+class Phono3py:
     """Phono3py main class.
 
     Attributes
@@ -116,27 +132,29 @@ class Phono3py(object):
 
     """
 
-    def __init__(self,
-                 unitcell,
-                 supercell_matrix,
-                 primitive_matrix=None,
-                 phonon_supercell_matrix=None,
-                 masses=None,
-                 band_indices=None,
-                 sigmas=None,
-                 sigma_cutoff=None,
-                 cutoff_frequency=1e-4,
-                 frequency_factor_to_THz=VaspToTHz,
-                 is_symmetry=True,
-                 is_mesh_symmetry=True,
-                 use_grg=False,
-                 symmetrize_fc3q=None,
-                 store_dense_gp_map=True,
-                 store_dense_svecs=True,
-                 symprec=1e-5,
-                 calculator=None,
-                 log_level=0,
-                 lapack_zheev_uplo=None):
+    def __init__(
+        self,
+        unitcell,
+        supercell_matrix,
+        primitive_matrix=None,
+        phonon_supercell_matrix=None,
+        masses=None,
+        band_indices=None,
+        sigmas=None,
+        sigma_cutoff=None,
+        cutoff_frequency=1e-4,
+        frequency_factor_to_THz=VaspToTHz,
+        is_symmetry=True,
+        is_mesh_symmetry=True,
+        use_grg=False,
+        symmetrize_fc3q=None,
+        store_dense_gp_map=True,
+        store_dense_svecs=True,
+        symprec=1e-5,
+        calculator=None,
+        log_level=0,
+        lapack_zheev_uplo=None,
+    ):
         """Init method.
 
         Parameters
@@ -224,7 +242,8 @@ class Phono3py(object):
         self._nac_params = None
         if phonon_supercell_matrix is not None:
             self._phonon_supercell_matrix = shape_supercell_matrix(
-                phonon_supercell_matrix)
+                phonon_supercell_matrix
+            )
         else:
             self._phonon_supercell_matrix = None
         self._supercell = None
@@ -236,7 +255,9 @@ class Phono3py(object):
         self._build_phonon_supercell()
         self._build_phonon_primitive_cell()
 
-        self._sigmas = [None, ]
+        self._sigmas = [
+            None,
+        ]
         self._sigma_cutoff = None
 
         # Grid
@@ -282,36 +303,43 @@ class Phono3py(object):
         self._set_band_indices()
 
         if masses is not None:
-            warnings.warn("Phono3py init parameter of masses is deprecated. "
-                          "Use Phono3py.masses attribute instead.",
-                          DeprecationWarning)
+            warnings.warn(
+                "Phono3py init parameter of masses is deprecated. "
+                "Use Phono3py.masses attribute instead.",
+                DeprecationWarning,
+            )
             self.masses = masses
 
         if band_indices is not None:
             warnings.warn(
                 "Phono3py init parameter of band_indices is deprecated. "
                 "Use Phono3py.band_indices attribute instead.",
-                DeprecationWarning)
+                DeprecationWarning,
+            )
             self.band_indices = band_indices
 
         if sigmas is not None:
-            warnings.warn("Phono3py init parameter of sigmas is deprecated. "
-                          "Use Phono3py.sigmas attribute instead.",
-                          DeprecationWarning)
+            warnings.warn(
+                "Phono3py init parameter of sigmas is deprecated. "
+                "Use Phono3py.sigmas attribute instead.",
+                DeprecationWarning,
+            )
             self.sigmas = sigmas
 
         if sigma_cutoff is not None:
             warnings.warn(
                 "Phono3py init parameter of sigma_cutoff is deprecated. "
                 "Use Phono3py.sigma_cutoff attribute instead.",
-                DeprecationWarning)
+                DeprecationWarning,
+            )
             self.sigma_cutoff = sigma_cutoff
 
         if symmetrize_fc3q is not None:
             warnings.warn(
                 "Phono3py init parameter of symmetrize_fc3q is deprecated. "
                 "Set this at Phono3py.init_phph_interaction().",
-                DeprecationWarning)
+                DeprecationWarning,
+            )
             self._symmetrize_fc3q = symmetrize_fc3q
         else:
             self._symmetrize_fc3q = None
@@ -320,7 +348,8 @@ class Phono3py(object):
             warnings.warn(
                 "Phono3py init parameter of lapack_zheev_uplo is deprecated. "
                 "Set this at Phono3py.init_phph_interaction().",
-                DeprecationWarning)
+                DeprecationWarning,
+            )
             self._lapack_zheev_uplo = lapack_zheev_uplo
         else:
             self._lapack_zheev_uplo = None
@@ -337,9 +366,11 @@ class Phono3py(object):
 
     def get_version(self):
         """Return phono3py release version number."""
-        warnings.warn("Phono3py.get_version() is deprecated."
-                      "Use Phono3py.version attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_version() is deprecated."
+            "Use Phono3py.version attribute instead.",
+            DeprecationWarning,
+        )
         return self.version
 
     @property
@@ -371,16 +402,18 @@ class Phono3py(object):
 
     def get_fc3(self):
         """Return third order force constants (fc3)."""
-        warnings.warn("Phono3py.get_fc3() is deprecated."
-                      "Use Phono3py.fc3 attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_fc3() is deprecated." "Use Phono3py.fc3 attribute instead.",
+            DeprecationWarning,
+        )
         return self.fc3
 
     def set_fc3(self, fc3):
         """Set fc3."""
-        warnings.warn("Phono3py.set_fc3() is deprecated."
-                      "Use Phono3py.fc3 attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.set_fc3() is deprecated." "Use Phono3py.fc3 attribute instead.",
+            DeprecationWarning,
+        )
         self.fc3 = fc3
 
     @property
@@ -402,16 +435,18 @@ class Phono3py(object):
 
     def get_fc2(self):
         """Return second order force constants (fc2)."""
-        warnings.warn("Phono3py.get_fc2() is deprecated."
-                      "Use Phono3py.fc2 attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_fc2() is deprecated." "Use Phono3py.fc2 attribute instead.",
+            DeprecationWarning,
+        )
         return self.fc2
 
     def set_fc2(self, fc2):
         """Set fc2."""
-        warnings.warn("Phono3py.set_fc2() is deprecated."
-                      "Use Phono3py.fc2 attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.set_fc2() is deprecated." "Use Phono3py.fc2 attribute instead.",
+            DeprecationWarning,
+        )
         self.fc2 = fc2
 
     @property
@@ -434,9 +469,13 @@ class Phono3py(object):
     @sigmas.setter
     def sigmas(self, sigmas):
         if sigmas is None:
-            self._sigmas = [None, ]
+            self._sigmas = [
+                None,
+            ]
         elif isinstance(sigmas, float) or isinstance(sigmas, int):
-            self._sigmas = [float(sigmas), ]
+            self._sigmas = [
+                float(sigmas),
+            ]
         else:
             self._sigmas = []
             for s in sigmas:
@@ -487,16 +526,20 @@ class Phono3py(object):
 
     def get_nac_params(self):
         """Return NAC parameters."""
-        warnings.warn("Phono3py.get_nac_params() is deprecated."
-                      "Use Phono3py.nac_params attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_nac_params() is deprecated."
+            "Use Phono3py.nac_params attribute instead.",
+            DeprecationWarning,
+        )
         return self.nac_params
 
     def set_nac_params(self, nac_params):
         """Set NAC parameters."""
-        warnings.warn("Phono3py.set_nac_params() is deprecated."
-                      "Use Phono3py.nac_params attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.set_nac_params() is deprecated."
+            "Use Phono3py.nac_params attribute instead.",
+            DeprecationWarning,
+        )
         self.nac_params = nac_params
 
     @property
@@ -524,9 +567,11 @@ class Phono3py(object):
 
     def get_primitive(self):
         """Return primitive cell."""
-        warnings.warn("Phono3py.get_primitive() is deprecated."
-                      "Use Phono3py.primitive attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_primitive() is deprecated."
+            "Use Phono3py.primitive attribute instead.",
+            DeprecationWarning,
+        )
         return self.primitive
 
     @property
@@ -541,9 +586,11 @@ class Phono3py(object):
 
     def get_unitcell(self):
         """Return Unit cell."""
-        warnings.warn("Phono3py.get_unitcell() is deprecated."
-                      "Use Phono3py.unitcell attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_unitcell() is deprecated."
+            "Use Phono3py.unitcell attribute instead.",
+            DeprecationWarning,
+        )
         return self.unitcell
 
     @property
@@ -558,9 +605,11 @@ class Phono3py(object):
 
     def get_supercell(self):
         """Return supercell."""
-        warnings.warn("Phono3py.get_supercell() is deprecated."
-                      "Use Phono3py.supercell attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_supercell() is deprecated."
+            "Use Phono3py.supercell attribute instead.",
+            DeprecationWarning,
+        )
         return self.supercell
 
     @property
@@ -575,9 +624,11 @@ class Phono3py(object):
 
     def get_phonon_supercell(self):
         """Return supercell for fc2."""
-        warnings.warn("Phono3py.get_phonon_supercell() is deprecated."
-                      "Use Phono3py.phonon_supercell attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_phonon_supercell() is deprecated."
+            "Use Phono3py.phonon_supercell attribute instead.",
+            DeprecationWarning,
+        )
         return self.phonon_supercell
 
     @property
@@ -594,9 +645,11 @@ class Phono3py(object):
 
     def get_phonon_primitive(self):
         """Return primitive cell for fc2."""
-        warnings.warn("Phono3py.get_phonon_primitive() is deprecated."
-                      "Use Phono3py.phonon_primitive attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_phonon_primitive() is deprecated."
+            "Use Phono3py.phonon_primitive attribute instead.",
+            DeprecationWarning,
+        )
         return self.phonon_primitive
 
     @property
@@ -611,9 +664,11 @@ class Phono3py(object):
 
     def get_symmetry(self):
         """Return symmetry of supercell."""
-        warnings.warn("Phono3py.get_symmetry() is deprecated."
-                      "Use Phono3py.symmetry attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_symmetry() is deprecated."
+            "Use Phono3py.symmetry attribute instead.",
+            DeprecationWarning,
+        )
         return self.symmetry
 
     @property
@@ -628,9 +683,11 @@ class Phono3py(object):
 
     def get_primitive_symmetry(self):
         """Return symmetry of primitive cell."""
-        warnings.warn("Phono3py.get_primitive_symmetry() is deprecated."
-                      "Use Phono3py.primitive_symmetry attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_primitive_symmetry() is deprecated."
+            "Use Phono3py.primitive_symmetry attribute instead.",
+            DeprecationWarning,
+        )
         return self.primitive_symmetry
 
     @property
@@ -648,7 +705,8 @@ class Phono3py(object):
         warnings.warn(
             "Phono3py.get_phonon_supercell_symmetry() is deprecated."
             "Use Phono3py.phonon_supercell_symmetry attribute instead.",
-            DeprecationWarning)
+            DeprecationWarning,
+        )
         return self.phonon_supercell_symmetry
 
     @property
@@ -664,9 +722,11 @@ class Phono3py(object):
 
     def get_supercell_matrix(self):
         """Return transformation matrix to supercell cell from unit cell."""
-        warnings.warn("Phono3py.get_supercell_matrix() is deprecated."
-                      "Use Phono3py.supercell_matrix attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_supercell_matrix() is deprecated."
+            "Use Phono3py.supercell_matrix attribute instead.",
+            DeprecationWarning,
+        )
         return self.supercell_matrix
 
     @property
@@ -685,7 +745,8 @@ class Phono3py(object):
         warnings.warn(
             "Phono3py.get_phonon_supercell_matrix() is deprecated."
             "Use Phono3py.phonon_supercell_matrix attribute instead.",
-            DeprecationWarning)
+            DeprecationWarning,
+        )
         return self.phonon_supercell_matrix
 
     @property
@@ -701,9 +762,11 @@ class Phono3py(object):
 
     def get_primitive_matrix(self):
         """Return transformation matrix to primitive cell from unit cell."""
-        warnings.warn("Phono3py.get_primitive_matrix() is deprecated."
-                      "Use Phono3py.primitive_matrix attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_primitive_matrix() is deprecated."
+            "Use Phono3py.primitive_matrix attribute instead.",
+            DeprecationWarning,
+        )
         return self.primitive_matrix
 
     @property
@@ -720,9 +783,11 @@ class Phono3py(object):
 
     def set_displacement_dataset(self, dataset):
         """Set displacement-force dataset."""
-        warnings.warn("Phono3py.set_displacement_dataset() is deprecated."
-                      "Use Phono3py.dataset attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.set_displacement_dataset() is deprecated."
+            "Use Phono3py.dataset attribute instead.",
+            DeprecationWarning,
+        )
         self._dataset = dataset
 
     @property
@@ -772,16 +837,19 @@ class Phono3py(object):
     @property
     def displacement_dataset(self):
         """Return displacement-force dataset."""
-        warnings.warn("Phono3py.displacement_dataset is deprecated."
-                      "Use Phono3py.dataset.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.displacement_dataset is deprecated." "Use Phono3py.dataset.",
+            DeprecationWarning,
+        )
         return self.dataset
 
     def get_displacement_dataset(self):
         """Return displacement-force dataset."""
-        warnings.warn("Phono3py.get_displacement_dataset() is deprecated."
-                      "Use Phono3py.dataset.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_displacement_dataset() is deprecated."
+            "Use Phono3py.dataset.",
+            DeprecationWarning,
+        )
         return self.displacement_dataset
 
     @property
@@ -815,9 +883,11 @@ class Phono3py(object):
     @property
     def phonon_displacement_dataset(self):
         """Return phonon dispalcement-force dataset."""
-        warnings.warn("Phono3py.phonon_displacement_dataset is deprecated."
-                      "Use Phono3py.phonon_dataset.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.phonon_displacement_dataset is deprecated."
+            "Use Phono3py.phonon_dataset.",
+            DeprecationWarning,
+        )
         return self._phonon_dataset
 
     def get_phonon_displacement_dataset(self):
@@ -825,7 +895,8 @@ class Phono3py(object):
         warnings.warn(
             "Phono3py.get_phonon_displacement_dataset() is deprecated."
             "Use Phono3py.phonon_dataset.",
-            DeprecationWarning)
+            DeprecationWarning,
+        )
         return self.phonon_displacement_dataset
 
     @property
@@ -845,19 +916,20 @@ class Phono3py(object):
 
     def set_band_indices(self, band_indices):
         """Set band indices."""
-        warnings.warn("Phono3py.set_band_indices() is deprecated."
-                      "Use Phono3py.band_indices attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.set_band_indices() is deprecated."
+            "Use Phono3py.band_indices attribute instead.",
+            DeprecationWarning,
+        )
         self.band_indices = band_indices
 
     def _set_band_indices(self, band_indices=None):
         if band_indices is None:
             num_band = len(self._primitive) * 3
-            self._band_indices = [np.arange(num_band, dtype='int_')]
+            self._band_indices = [np.arange(num_band, dtype="int_")]
         else:
             self._band_indices = band_indices
-        self._band_indices_flatten = np.hstack(
-            self._band_indices).astype('int_')
+        self._band_indices_flatten = np.hstack(self._band_indices).astype("int_")
 
     @property
     def masses(self):
@@ -878,8 +950,7 @@ class Phono3py(object):
         self._unitcell.masses = u_masses
         self._phonon_primitive.masses = p_masses
         p2p_map = self._phonon_primitive.p2p_map
-        s_masses = p_masses[
-            [p2p_map[x] for x in self._phonon_primitive.s2p_map]]
+        s_masses = p_masses[[p2p_map[x] for x in self._phonon_primitive.s2p_map]]
         self._phonon_supercell.masses = s_masses
 
     @property
@@ -900,7 +971,8 @@ class Phono3py(object):
         warnings.warn(
             "Phono3py.get_supercells_with_displacements() is deprecated."
             "Use Phono3py.supercells_with_displacements attribute instead.",
-            DeprecationWarning)
+            DeprecationWarning,
+        )
         return self.supercells_with_displacements
 
     @property
@@ -914,10 +986,11 @@ class Phono3py(object):
         """
         if self._phonon_supercells_with_displacements is None:
             if self._phonon_dataset is not None:
-                self._phonon_supercells_with_displacements = \
-                  self._build_phonon_supercells_with_displacements(
-                      self._phonon_supercell,
-                      self._phonon_dataset)
+                self._phonon_supercells_with_displacements = (
+                    self._build_phonon_supercells_with_displacements(
+                        self._phonon_supercell, self._phonon_dataset
+                    )
+                )
         return self._phonon_supercells_with_displacements
 
     def get_phonon_supercells_with_displacements(self):
@@ -926,7 +999,8 @@ class Phono3py(object):
             "Phono3py.get_phonon_supercells_with_displacements() "
             "is deprecated. Use Phono3py.phonon_supercells_with_displacements "
             "attribute instead.",
-            DeprecationWarning)
+            DeprecationWarning,
+        )
         return self.phonon_supercells_with_displacements
 
     @property
@@ -948,9 +1022,11 @@ class Phono3py(object):
 
     def get_thermal_conductivity(self):
         """Return thermal conductivity class instance."""
-        warnings.warn("Phono3py.get_thermal_conductivity() is deprecated."
-                      "Use Phono3py.thermal_conductivity attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_thermal_conductivity() is deprecated."
+            "Use Phono3py.thermal_conductivity attribute instead.",
+            DeprecationWarning,
+        )
         return self.thermal_conductivity
 
     @property
@@ -974,23 +1050,25 @@ class Phono3py(object):
         """
         dataset = self._dataset
 
-        if 'first_atoms' in dataset:
-            num_scells = len(dataset['first_atoms'])
-            for disp1 in dataset['first_atoms']:
-                num_scells += len(disp1['second_atoms'])
+        if "first_atoms" in dataset:
+            num_scells = len(dataset["first_atoms"])
+            for disp1 in dataset["first_atoms"]:
+                num_scells += len(disp1["second_atoms"])
             displacements = np.zeros(
                 (num_scells, self._supercell.get_number_of_atoms(), 3),
-                dtype='double', order='C')
+                dtype="double",
+                order="C",
+            )
             i = 0
-            for disp1 in dataset['first_atoms']:
-                displacements[i, disp1['number']] = disp1['displacement']
+            for disp1 in dataset["first_atoms"]:
+                displacements[i, disp1["number"]] = disp1["displacement"]
                 i += 1
-            for disp1 in dataset['first_atoms']:
-                for disp2 in disp1['second_atoms']:
-                    displacements[i, disp2['number']] = disp2['displacement']
+            for disp1 in dataset["first_atoms"]:
+                for disp2 in disp1["second_atoms"]:
+                    displacements[i, disp2["number"]] = disp2["displacement"]
                     i += 1
-        elif 'forces' in dataset or 'displacements' in dataset:
-            displacements = dataset['displacements']
+        elif "forces" in dataset or "displacements" in dataset:
+            displacements = dataset["displacements"]
         else:
             raise RuntimeError("displacement dataset has wrong format.")
 
@@ -999,15 +1077,15 @@ class Phono3py(object):
     @displacements.setter
     def displacements(self, displacements):
         dataset = self._dataset
-        disps = np.array(displacements, dtype='double', order='C')
+        disps = np.array(displacements, dtype="double", order="C")
         natom = self._supercell.get_number_of_atoms()
-        if (disps.ndim != 3 or disps.shape[1:] != (natom, 3)):
+        if disps.ndim != 3 or disps.shape[1:] != (natom, 3):
             raise RuntimeError("Array shape of displacements is incorrect.")
 
-        if 'first_atoms' in dataset:
-            dataset = {'displacements': disps}
-        elif 'displacements' in dataset or 'forces' in dataset:
-            dataset['displacements'] = disps
+        if "first_atoms" in dataset:
+            dataset = {"displacements": disps}
+        elif "displacements" in dataset or "forces" in dataset:
+            dataset["displacements"] = disps
 
     @property
     def forces(self):
@@ -1025,22 +1103,24 @@ class Phono3py(object):
 
         """
         dataset = self._dataset
-        if 'forces' in dataset:
-            return dataset['forces']
-        elif 'first_atoms' in dataset:
-            num_scells = len(dataset['first_atoms'])
-            for disp1 in dataset['first_atoms']:
-                num_scells += len(disp1['second_atoms'])
+        if "forces" in dataset:
+            return dataset["forces"]
+        elif "first_atoms" in dataset:
+            num_scells = len(dataset["first_atoms"])
+            for disp1 in dataset["first_atoms"]:
+                num_scells += len(disp1["second_atoms"])
             forces = np.zeros(
                 (num_scells, self._supercell.get_number_of_atoms(), 3),
-                dtype='double', order='C')
+                dtype="double",
+                order="C",
+            )
             i = 0
-            for disp1 in dataset['first_atoms']:
-                forces[i] = disp1['forces']
+            for disp1 in dataset["first_atoms"]:
+                forces[i] = disp1["forces"]
                 i += 1
-            for disp1 in dataset['first_atoms']:
-                for disp2 in disp1['second_atoms']:
-                    forces[i] = disp2['forces']
+            for disp1 in dataset["first_atoms"]:
+                for disp2 in disp1["second_atoms"]:
+                    forces[i] = disp2["forces"]
                     i += 1
             return forces
         else:
@@ -1048,19 +1128,19 @@ class Phono3py(object):
 
     @forces.setter
     def forces(self, forces_fc3):
-        forces = np.array(forces_fc3, dtype='double', order='C')
+        forces = np.array(forces_fc3, dtype="double", order="C")
         dataset = self._dataset
-        if 'first_atoms' in dataset:
+        if "first_atoms" in dataset:
             i = 0
-            for disp1 in dataset['first_atoms']:
-                disp1['forces'] = forces[i]
+            for disp1 in dataset["first_atoms"]:
+                disp1["forces"] = forces[i]
                 i += 1
-            for disp1 in dataset['first_atoms']:
-                for disp2 in disp1['second_atoms']:
-                    disp2['forces'] = forces[i]
+            for disp1 in dataset["first_atoms"]:
+                for disp2 in disp1["second_atoms"]:
+                    disp2["forces"] = forces[i]
                     i += 1
-        elif 'displacements' in dataset or 'forces' in dataset:
-            dataset['forces'] = forces
+        elif "displacements" in dataset or "forces" in dataset:
+            dataset["forces"] = forces
 
     @property
     def phonon_displacements(self):
@@ -1083,15 +1163,14 @@ class Phono3py(object):
             raise RuntimeError("phonon_displacement_dataset does not exist.")
 
         dataset = self._phonon_dataset
-        if 'first_atoms' in dataset:
-            num_scells = len(dataset['first_atoms'])
+        if "first_atoms" in dataset:
+            num_scells = len(dataset["first_atoms"])
             natom = self._phonon_supercell.get_number_of_atoms()
-            displacements = np.zeros(
-                (num_scells, natom, 3), dtype='double', order='C')
-            for i, disp1 in enumerate(dataset['first_atoms']):
-                displacements[i, disp1['number']] = disp1['displacement']
-        elif 'forces' in dataset or 'displacements' in dataset:
-            displacements = dataset['displacements']
+            displacements = np.zeros((num_scells, natom, 3), dtype="double", order="C")
+            for i, disp1 in enumerate(dataset["first_atoms"]):
+                displacements[i, disp1["number"]] = disp1["displacement"]
+        elif "forces" in dataset or "displacements" in dataset:
+            displacements = dataset["displacements"]
         else:
             raise RuntimeError("displacement dataset has wrong format.")
 
@@ -1103,15 +1182,15 @@ class Phono3py(object):
             raise RuntimeError("phonon_displacement_dataset does not exist.")
 
         dataset = self._phonon_dataset
-        disps = np.array(displacements, dtype='double', order='C')
+        disps = np.array(displacements, dtype="double", order="C")
         natom = self._phonon_supercell.get_number_of_atoms()
-        if (disps.ndim != 3 or disps.shape[1:] != (natom, 3)):
+        if disps.ndim != 3 or disps.shape[1:] != (natom, 3):
             raise RuntimeError("Array shape of displacements is incorrect.")
 
-        if 'first_atoms' in dataset:
-            dataset = {'displacements': disps}
-        elif 'displacements' in dataset or 'forces' in dataset:
-            dataset['displacements'] = disps
+        if "first_atoms" in dataset:
+            dataset = {"displacements": disps}
+        elif "displacements" in dataset or "forces" in dataset:
+            dataset["displacements"] = disps
 
     @property
     def phonon_forces(self):
@@ -1133,15 +1212,17 @@ class Phono3py(object):
             raise RuntimeError("phonon_displacement_dataset does not exist.")
 
         dataset = self._phonon_dataset
-        if 'forces' in dataset:
-            return dataset['forces']
-        elif 'first_atoms' in dataset:
-            num_scells = len(dataset['first_atoms'])
+        if "forces" in dataset:
+            return dataset["forces"]
+        elif "first_atoms" in dataset:
+            num_scells = len(dataset["first_atoms"])
             forces = np.zeros(
                 (num_scells, self._phonon_supercell.get_number_of_atoms(), 3),
-                dtype='double', order='C')
-            for i, disp1 in enumerate(dataset['first_atoms']):
-                forces[i] = disp1['forces']
+                dtype="double",
+                order="C",
+            )
+            for i, disp1 in enumerate(dataset["first_atoms"]):
+                forces[i] = disp1["forces"]
             return forces
         else:
             raise RuntimeError("displacement dataset has wrong format.")
@@ -1151,15 +1232,15 @@ class Phono3py(object):
         if self._phonon_dataset is None:
             raise RuntimeError("phonon_displacement_dataset does not exist.")
 
-        forces = np.array(forces_fc2, dtype='double', order='C')
+        forces = np.array(forces_fc2, dtype="double", order="C")
         dataset = self._phonon_dataset
-        if 'first_atoms' in dataset:
+        if "first_atoms" in dataset:
             i = 0
-            for i, disp1 in enumerate(dataset['first_atoms']):
-                disp1['forces'] = forces[i]
+            for i, disp1 in enumerate(dataset["first_atoms"]):
+                disp1["forces"] = forces[i]
                 i += 1
-        elif 'displacements' in dataset or 'forces' in dataset:
-            dataset['forces'] = forces
+        elif "displacements" in dataset or "forces" in dataset:
+            dataset["forces"] = forces
 
     @property
     def phph_interaction(self):
@@ -1168,9 +1249,11 @@ class Phono3py(object):
 
     def get_phph_interaction(self):
         """Return Interaction instance."""
-        warnings.warn("Phono3py.get_phph_interaction() is deprecated."
-                      "Use Phono3py.phph_interaction attribute instead.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.get_phph_interaction() is deprecated."
+            "Use Phono3py.phph_interaction attribute instead.",
+            DeprecationWarning,
+        )
         return self.phph_interaction
 
     @property
@@ -1188,12 +1271,14 @@ class Phono3py(object):
         """
         return self._bz_grid
 
-    def init_phph_interaction(self,
-                              nac_q_direction=None,
-                              constant_averaged_interaction=None,
-                              frequency_scale_factor=None,
-                              symmetrize_fc3q=False,
-                              lapack_zheev_uplo='L'):
+    def init_phph_interaction(
+        self,
+        nac_q_direction=None,
+        constant_averaged_interaction=None,
+        frequency_scale_factor=None,
+        symmetrize_fc3q=False,
+        lapack_zheev_uplo="L",
+    ):
         """Initialize ph-ph interaction calculation.
 
         This method creates an instance of Interaction class, which
@@ -1249,7 +1334,6 @@ class Phono3py(object):
             _lapack_zheev_uplo = self._lapack_zheev_uplo
 
         self._interaction = Interaction(
-            self._supercell,
             self._primitive,
             self._bz_grid,
             self._primitive_symmetry,
@@ -1261,16 +1345,19 @@ class Phono3py(object):
             cutoff_frequency=self._cutoff_frequency,
             is_mesh_symmetry=self._is_mesh_symmetry,
             symmetrize_fc3q=_symmetrize_fc3q,
-            lapack_zheev_uplo=_lapack_zheev_uplo)
-        self._interaction.set_nac_q_direction(nac_q_direction=nac_q_direction)
+            lapack_zheev_uplo=_lapack_zheev_uplo,
+        )
+        self._interaction.nac_q_direction = nac_q_direction
         self._init_dynamical_matrix()
 
-    def set_phph_interaction(self,
-                             nac_params=None,
-                             nac_q_direction=None,
-                             constant_averaged_interaction=None,
-                             frequency_scale_factor=None,
-                             solve_dynamical_matrices=True):
+    def set_phph_interaction(
+        self,
+        nac_params=None,
+        nac_q_direction=None,
+        constant_averaged_interaction=None,
+        frequency_scale_factor=None,
+        solve_dynamical_matrices=True,
+    ):
         """Initialize ph-ph interaction calculation.
 
         This method is deprecated at v2.0. Phono3py.init_phph_interaction
@@ -1293,20 +1380,23 @@ class Phono3py(object):
                 shape=(3, 3), dtype='double', order='C'
 
         """
-        msg = ("Phono3py.init_phph_interaction is deprecated at v2.0. "
-               "Use Phono3py.prepare_interaction instead.")
+        msg = (
+            "Phono3py.init_phph_interaction is deprecated at v2.0. "
+            "Use Phono3py.prepare_interaction instead."
+        )
         warnings.warn(msg, DeprecationWarning)
 
         if nac_params is not None:
             self._nac_params = nac_params
-            msg = ("nac_params will be set by Phono3py.nac_params attributes.")
+            msg = "nac_params will be set by Phono3py.nac_params attributes."
             warnings.warn(msg, DeprecationWarning)
 
         self.init_phph_interaction(
             nac_q_direction=nac_q_direction,
             constant_averaged_interaction=constant_averaged_interaction,
             frequency_scale_factor=frequency_scale_factor,
-            solve_dynamical_matrices=solve_dynamical_matrices)
+            solve_dynamical_matrices=solve_dynamical_matrices,
+        )
 
     def set_phonon_data(self, frequencies, eigenvectors, grid_address):
         """Set phonon frequencies and eigenvectors in Interaction instance.
@@ -1334,8 +1424,7 @@ class Phono3py(object):
 
         """
         if self._interaction is not None:
-            self._interaction.set_phonon_data(
-                frequencies, eigenvectors, grid_address)
+            self._interaction.set_phonon_data(frequencies, eigenvectors, grid_address)
 
     def get_phonon_data(self):
         """Get phonon frequencies and eigenvectors in Interaction instance.
@@ -1357,8 +1446,10 @@ class Phono3py(object):
             freqs, eigvecs, _ = self._interaction.get_phonons()
             return freqs, eigvecs, self._interaction.bz_grid.addresses
         else:
-            msg = ("Phono3py.init_phph_interaction has to be called "
-                   "before running this method.")
+            msg = (
+                "Phono3py.init_phph_interaction has to be called "
+                "before running this method."
+            )
             raise RuntimeError(msg)
 
     def run_phonon_solver(self, grid_points=None):
@@ -1380,15 +1471,19 @@ class Phono3py(object):
         if self._interaction is not None:
             self._interaction.run_phonon_solver(grid_points=grid_points)
         else:
-            msg = ("Phono3py.init_phph_interaction has to be called "
-                   "before running this method.")
+            msg = (
+                "Phono3py.init_phph_interaction has to be called "
+                "before running this method."
+            )
             raise RuntimeError(msg)
 
-    def generate_displacements(self,
-                               distance=0.03,
-                               cutoff_pair_distance=None,
-                               is_plusminus='auto',
-                               is_diagonal=True):
+    def generate_displacements(
+        self,
+        distance=0.03,
+        cutoff_pair_distance=None,
+        is_plusminus="auto",
+        is_diagonal=True,
+    ):
         """Generate displacement dataset in supercell for fc3.
 
         This systematically generates single and pair atomic displacements
@@ -1436,22 +1531,23 @@ class Phono3py(object):
             self._supercell,
             self._symmetry,
             is_plusminus=is_plusminus,
-            is_diagonal=is_diagonal)
+            is_diagonal=is_diagonal,
+        )
         self._dataset = direction_to_displacement(
             direction_dataset,
             distance,
             self._supercell,
-            cutoff_distance=cutoff_pair_distance)
+            cutoff_distance=cutoff_pair_distance,
+        )
 
         if self._phonon_supercell_matrix is not None:
-            self.generate_fc2_displacements(distance=distance,
-                                            is_plusminus=is_plusminus,
-                                            is_diagonal=False)
+            self.generate_fc2_displacements(
+                distance=distance, is_plusminus=is_plusminus, is_diagonal=False
+            )
 
-    def generate_fc2_displacements(self,
-                                   distance=0.03,
-                                   is_plusminus='auto',
-                                   is_diagonal=False):
+    def generate_fc2_displacements(
+        self, distance=0.03, is_plusminus="auto", is_diagonal=False
+    ):
         """Generate displacement dataset in phonon supercell for fc2.
 
         This systematically generates single atomic displacements
@@ -1482,28 +1578,31 @@ class Phono3py(object):
 
         """
         if self._phonon_supercell_matrix is None:
-            msg = ("phonon_supercell_matrix is not set. "
-                   "This method is used to generate displacements to "
-                   "calculate phonon_fc2.")
+            msg = (
+                "phonon_supercell_matrix is not set. "
+                "This method is used to generate displacements to "
+                "calculate phonon_fc2."
+            )
             raise RuntimeError(msg)
 
         phonon_displacement_directions = get_least_displacements(
             self._phonon_supercell_symmetry,
             is_plusminus=is_plusminus,
-            is_diagonal=is_diagonal)
+            is_diagonal=is_diagonal,
+        )
         self._phonon_dataset = directions_to_displacement_dataset(
-            phonon_displacement_directions,
-            distance,
-            self._phonon_supercell)
+            phonon_displacement_directions, distance, self._phonon_supercell
+        )
 
-    def produce_fc3(self,
-                    forces_fc3=None,
-                    displacement_dataset=None,
-                    cutoff_distance=None,  # set fc3 zero
-                    symmetrize_fc3r=False,
-                    is_compact_fc=False,
-                    fc_calculator=None,
-                    fc_calculator_options=None):
+    def produce_fc3(
+        self,
+        forces_fc3=None,
+        displacement_dataset=None,
+        symmetrize_fc3r=False,
+        is_compact_fc=False,
+        fc_calculator=None,
+        fc_calculator_options=None,
+    ):
         """Calculate fc3 from displacements and forces.
 
         Parameters
@@ -1512,9 +1611,6 @@ class Phono3py(object):
             Dummy argument. Deprecated at v2.0.
         displacement_dataset : dict
             See docstring of Phono3py.dataset. Deprecated at v2.0.
-        cutoff_distance : float
-            After creating force constants, fc elements where any pair
-            distance in atom triplets larger than cutoff_distance are set zero.
         symmetrize_fc3r : bool
             Only for type 1 displacement_dataset, translational and
             permutation symmetries are applied after creating fc3. This
@@ -1537,45 +1633,48 @@ class Phono3py(object):
         if displacement_dataset is None:
             disp_dataset = self._dataset
         else:
-            msg = ("Displacement dataset has to set by Phono3py.dataset.")
+            msg = "Displacement dataset has to set by Phono3py.dataset."
             warnings.warn(msg, DeprecationWarning)
             disp_dataset = displacement_dataset
 
         if forces_fc3 is not None:
             self.forces = forces_fc3
-            msg = ("Forces have to be set by Phono3py.forces or via "
-                   "Phono3py.dataset.")
+            msg = "Forces have to be set by Phono3py.forces or via " "Phono3py.dataset."
             warnings.warn(msg, DeprecationWarning)
 
         if fc_calculator is not None:
             disps, forces = get_displacements_and_forces_fc3(disp_dataset)
-            fc2, fc3 = get_fc3(self._supercell,
-                               self._primitive,
-                               disps,
-                               forces,
-                               fc_calculator=fc_calculator,
-                               fc_calculator_options=fc_calculator_options,
-                               is_compact_fc=is_compact_fc,
-                               log_level=self._log_level)
+            fc2, fc3 = get_fc3(
+                self._supercell,
+                self._primitive,
+                disps,
+                forces,
+                fc_calculator=fc_calculator,
+                fc_calculator_options=fc_calculator_options,
+                is_compact_fc=is_compact_fc,
+                log_level=self._log_level,
+            )
         else:
-            if 'displacements' in disp_dataset:
-                msg = ("fc_calculator has to be set to produce force "
-                       "constans from this dataset.")
+            if "displacements" in disp_dataset:
+                msg = (
+                    "fc_calculator has to be set to produce force "
+                    "constans from this dataset."
+                )
                 raise RuntimeError(msg)
-            fc2, fc3 = get_phono3py_fc3(self._supercell,
-                                        self._primitive,
-                                        disp_dataset,
-                                        self._symmetry,
-                                        is_compact_fc=is_compact_fc,
-                                        verbose=self._log_level)
+            fc2, fc3 = get_phono3py_fc3(
+                self._supercell,
+                self._primitive,
+                disp_dataset,
+                self._symmetry,
+                is_compact_fc=is_compact_fc,
+                verbose=self._log_level,
+            )
             if symmetrize_fc3r:
                 if is_compact_fc:
-                    set_translational_invariance_compact_fc3(
-                        fc3, self._primitive)
+                    set_translational_invariance_compact_fc3(fc3, self._primitive)
                     set_permutation_symmetry_compact_fc3(fc3, self._primitive)
                     if self._fc2 is None:
-                        symmetrize_compact_force_constants(fc2,
-                                                           self._primitive)
+                        symmetrize_compact_force_constants(fc2, self._primitive)
                 else:
                     set_translational_invariance_fc3(fc3)
                     set_permutation_symmetry_fc3(fc3)
@@ -1589,13 +1688,15 @@ class Phono3py(object):
         if self._fc2 is None:
             self._fc2 = fc2
 
-    def produce_fc2(self,
-                    forces_fc2=None,
-                    displacement_dataset=None,
-                    symmetrize_fc2=False,
-                    is_compact_fc=False,
-                    fc_calculator=None,
-                    fc_calculator_options=None):
+    def produce_fc2(
+        self,
+        forces_fc2=None,
+        displacement_dataset=None,
+        symmetrize_fc2=False,
+        is_compact_fc=False,
+        fc_calculator=None,
+        fc_calculator_options=None,
+    ):
         """Calculate fc2 from displacements and forces.
 
         Parameters
@@ -1630,14 +1731,17 @@ class Phono3py(object):
                 disp_dataset = self._phonon_dataset
         else:
             disp_dataset = displacement_dataset
-            msg = ("Displacement dataset for fc2 has to set by "
-                   "Phono3py.phonon_dataset.")
+            msg = (
+                "Displacement dataset for fc2 has to set by " "Phono3py.phonon_dataset."
+            )
             warnings.warn(msg, DeprecationWarning)
 
         if forces_fc2 is not None:
             self.phonon_forces = forces_fc2
-            msg = ("Forces for fc2 have to be set by Phono3py.phonon_forces "
-                   "or via Phono3py.phonon_dataset.")
+            msg = (
+                "Forces for fc2 have to be set by Phono3py.phonon_forces "
+                "or via Phono3py.phonon_dataset."
+            )
             warnings.warn(msg, DeprecationWarning)
 
         if is_compact_fc:
@@ -1647,40 +1751,52 @@ class Phono3py(object):
 
         if fc_calculator is not None:
             disps, forces = get_displacements_and_forces(disp_dataset)
-            self._fc2 = get_fc2(self._phonon_supercell,
-                                self._phonon_primitive,
-                                disps,
-                                forces,
-                                fc_calculator=fc_calculator,
-                                fc_calculator_options=fc_calculator_options,
-                                atom_list=p2s_map,
-                                log_level=self._log_level)
+            self._fc2 = get_fc2(
+                self._phonon_supercell,
+                self._phonon_primitive,
+                disps,
+                forces,
+                fc_calculator=fc_calculator,
+                fc_calculator_options=fc_calculator_options,
+                atom_list=p2s_map,
+                log_level=self._log_level,
+            )
         else:
-            if 'displacements' in disp_dataset:
-                msg = ("fc_calculator has to be set to produce force "
-                       "constans from this dataset for fc2.")
+            if "displacements" in disp_dataset:
+                msg = (
+                    "fc_calculator has to be set to produce force "
+                    "constans from this dataset for fc2."
+                )
                 raise RuntimeError(msg)
-            self._fc2 = get_phonopy_fc2(self._phonon_supercell,
-                                        self._phonon_supercell_symmetry,
-                                        disp_dataset,
-                                        atom_list=p2s_map)
+            self._fc2 = get_phonopy_fc2(
+                self._phonon_supercell,
+                self._phonon_supercell_symmetry,
+                disp_dataset,
+                atom_list=p2s_map,
+            )
             if symmetrize_fc2:
                 if is_compact_fc:
                     symmetrize_compact_force_constants(
-                        self._fc2, self._phonon_primitive)
+                        self._fc2, self._phonon_primitive
+                    )
                 else:
                     symmetrize_force_constants(self._fc2)
 
     def cutoff_fc3_by_zero(self, cutoff_distance, fc3=None):
-        """Set zero to fc3 elements out of cutoff distance."""
+        """Set zero to fc3 elements out of cutoff distance.
+
+        cutoff_distance : float
+            After creating force constants, fc elements where any pair
+            distance in atom triplets larger than cutoff_distance are set zero.
+
+        """
         if fc3 is None:
             _fc3 = self._fc3
         else:
             _fc3 = fc3
-        cutoff_fc3_by_zero(_fc3,  # overwritten
-                           self._supercell,
-                           cutoff_distance,
-                           self._symprec)
+        cutoff_fc3_by_zero(
+            _fc3, self._supercell, cutoff_distance, self._symprec  # overwritten
+        )
 
     def set_permutation_symmetry(self):
         """Enforce permutation symmetry to fc2 and fc3."""
@@ -1701,18 +1817,20 @@ class Phono3py(object):
         if self._fc3 is not None:
             set_translational_invariance_fc3(self._fc3)
 
-    def run_imag_self_energy(self,
-                             grid_points,
-                             temperatures,
-                             frequency_points=None,
-                             frequency_step=None,
-                             num_frequency_points=None,
-                             frequency_points_at_bands=False,
-                             scattering_event_class=None,
-                             write_txt=False,
-                             write_gamma_detail=False,
-                             keep_gamma_detail=False,
-                             output_filename=None):
+    def run_imag_self_energy(
+        self,
+        grid_points,
+        temperatures,
+        frequency_points=None,
+        frequency_step=None,
+        num_frequency_points=None,
+        frequency_points_at_bands=False,
+        scattering_event_class=None,
+        write_txt=False,
+        write_gamma_detail=False,
+        keep_gamma_detail=False,
+        output_filename=None,
+    ):
         """Calculate imaginary part of self-energy of bubble diagram (Gamma).
 
         Pi = Delta - i Gamma.
@@ -1759,12 +1877,16 @@ class Phono3py(object):
 
         """
         if self._interaction is None:
-            msg = ("Phono3py.init_phph_interaction has to be called "
-                   "before running this method.")
+            msg = (
+                "Phono3py.init_phph_interaction has to be called "
+                "before running this method."
+            )
             raise RuntimeError(msg)
 
         if temperatures is None:
-            self._temperatures = [300.0, ]
+            self._temperatures = [
+                300.0,
+            ]
         else:
             self._temperatures = temperatures
         self._grid_points = grid_points
@@ -1782,11 +1904,10 @@ class Phono3py(object):
             write_gamma_detail=write_gamma_detail,
             return_gamma_detail=keep_gamma_detail,
             output_filename=output_filename,
-            log_level=self._log_level)
+            log_level=self._log_level,
+        )
         if keep_gamma_detail:
-            (self._frequency_points,
-             self._gammas,
-             self._detailed_gammas) = vals
+            (self._frequency_points, self._gammas, self._detailed_gammas) = vals
         else:
             self._frequency_points, self._gammas = vals
 
@@ -1797,9 +1918,11 @@ class Phono3py(object):
 
     def write_imag_self_energy(self, filename=None):
         """Write imaginary part of self energy to a file."""
-        warnings.warn("Phono3py.write_imag_self_energy is deprecated."
-                      "Use Phono3py.run_imag_self_energy with write_txt=True.",
-                      DeprecationWarning)
+        warnings.warn(
+            "Phono3py.write_imag_self_energy is deprecated."
+            "Use Phono3py.run_imag_self_energy with write_txt=True.",
+            DeprecationWarning,
+        )
         self._write_imag_self_energy(output_filename=filename)
 
     def _write_imag_self_energy(self, output_filename=None):
@@ -1814,20 +1937,22 @@ class Phono3py(object):
             scattering_event_class=self._scattering_event_class,
             output_filename=output_filename,
             is_mesh_symmetry=self._is_mesh_symmetry,
-            log_level=self._log_level)
+            log_level=self._log_level,
+        )
 
     def run_real_self_energy(
-            self,
-            grid_points,
-            temperatures,
-            frequency_points_at_bands=False,
-            frequency_points=None,
-            frequency_step=None,
-            num_frequency_points=None,
-            epsilons=None,
-            write_txt=False,
-            write_hdf5=False,
-            output_filename=None):
+        self,
+        grid_points,
+        temperatures,
+        frequency_points_at_bands=False,
+        frequency_points=None,
+        frequency_step=None,
+        num_frequency_points=None,
+        epsilons=None,
+        write_txt=False,
+        write_hdf5=False,
+        output_filename=None,
+    ):
         """Calculate real-part of self-energy of bubble diagram (Delta).
 
         Pi = Delta - i Gamma.
@@ -1872,8 +1997,10 @@ class Phono3py(object):
 
         """
         if self._interaction is None:
-            msg = ("Phono3py.init_phph_interaction has to be called "
-                   "before running this method.")
+            msg = (
+                "Phono3py.init_phph_interaction has to be called "
+                "before running this method."
+            )
             raise RuntimeError(msg)
 
         if epsilons is not None:
@@ -1898,7 +2025,8 @@ class Phono3py(object):
             frequency_points_at_bands=frequency_points_at_bands,
             write_hdf5=write_hdf5,
             output_filename=output_filename,
-            log_level=self._log_level)
+            log_level=self._log_level,
+        )
 
         if write_txt:
             write_real_self_energy(
@@ -1911,21 +2039,23 @@ class Phono3py(object):
                 _epsilons,
                 output_filename=output_filename,
                 is_mesh_symmetry=self._is_mesh_symmetry,
-                log_level=self._log_level)
+                log_level=self._log_level,
+            )
 
         return frequency_points, deltas
 
     def run_spectral_function(
-            self,
-            grid_points,
-            temperatures,
-            frequency_points=None,
-            frequency_step=None,
-            num_frequency_points=None,
-            num_points_in_batch=None,
-            write_txt=False,
-            write_hdf5=False,
-            output_filename=None):
+        self,
+        grid_points,
+        temperatures,
+        frequency_points=None,
+        frequency_step=None,
+        num_frequency_points=None,
+        num_points_in_batch=None,
+        write_txt=False,
+        write_hdf5=False,
+        output_filename=None,
+    ):
         """Frequency shift from lowest order diagram is calculated.
 
         Parameters
@@ -1964,8 +2094,10 @@ class Phono3py(object):
 
         """
         if self._interaction is None:
-            msg = ("Phono3py.init_phph_interaction has to be called "
-                   "before running this method.")
+            msg = (
+                "Phono3py.init_phph_interaction has to be called "
+                "before running this method."
+            )
             raise RuntimeError(msg)
 
         self._spectral_function = run_spectral_function(
@@ -1980,38 +2112,39 @@ class Phono3py(object):
             band_indices=self._band_indices,
             write_txt=write_txt,
             write_hdf5=write_hdf5,
-            log_level=self._log_level)
+            log_level=self._log_level,
+        )
 
     def run_thermal_conductivity(
-            self,
-            is_LBTE=False,
-            temperatures=None,
-            is_isotope=False,
-            mass_variances=None,
-            grid_points=None,
-            boundary_mfp=None,  # in micrometre
-            solve_collective_phonon=False,
-            use_ave_pp=False,
-            gamma_unit_conversion=None,
-            is_reducible_collision_matrix=False,
-            is_kappa_star=True,
-            gv_delta_q=None,  # for group velocity
-            is_full_pp=False,
-            pinv_cutoff=1.0e-8,  # for pseudo-inversion of collision matrix
-            pinv_solver=0,  # solver of pseudo-inversion of collision matrix
-            write_gamma=False,
-            read_gamma=False,
-            is_N_U=False,
-            write_kappa=False,
-            write_gamma_detail=False,
-            write_collision=False,
-            read_collision=False,
-            write_pp=False,
-            read_pp=False,
-            write_LBTE_solution=False,
-            compression="gzip",
-            input_filename=None,
-            output_filename=None):
+        self,
+        is_LBTE=False,
+        temperatures=None,
+        is_isotope=False,
+        mass_variances=None,
+        grid_points=None,
+        boundary_mfp=None,  # in micrometre
+        solve_collective_phonon=False,
+        use_ave_pp=False,
+        is_reducible_collision_matrix=False,
+        is_kappa_star=True,
+        gv_delta_q=None,  # for group velocity
+        is_full_pp=False,
+        pinv_cutoff=1.0e-8,  # for pseudo-inversion of collision matrix
+        pinv_solver=0,  # solver of pseudo-inversion of collision matrix
+        write_gamma=False,
+        read_gamma=False,
+        is_N_U=False,
+        write_kappa=False,
+        write_gamma_detail=False,
+        write_collision=False,
+        read_collision=False,
+        write_pp=False,
+        read_pp=False,
+        write_LBTE_solution=False,
+        compression="gzip",
+        input_filename=None,
+        output_filename=None,
+    ):
         """Run thermal conductivity calculation.
 
         Parameters
@@ -2047,10 +2180,6 @@ class Phono3py(object):
             strength is used to calculate phonon lifetime. This does not
             reduce computational demand, but may be used to model thermal
             conductivity for analyze the calculation results.
-        gamma_unit_conversion : float, optional, default is None
-            RTA only (`is_LBTE=False`). Unit conversion factor when calculating
-            inversion phonon lifetime. This option should not be used
-            by users.
         is_reducible_collision_matrix : bool, optional, default is False
             Direct solution only (`is_LBTE=True`). This is an experimental
             option. With True, full collision matrix is created and solved.
@@ -2143,13 +2272,17 @@ class Phono3py(object):
 
         """
         if self._interaction is None:
-            msg = ("Phono3py.init_phph_interaction has to be called "
-                   "before running this method.")
+            msg = (
+                "Phono3py.init_phph_interaction has to be called "
+                "before running this method."
+            )
             raise RuntimeError(msg)
 
         if is_LBTE:
             if temperatures is None:
-                _temperatures = [300, ]
+                _temperatures = [
+                    300,
+                ]
             else:
                 _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_LBTE(
@@ -2177,10 +2310,11 @@ class Phono3py(object):
                 compression=compression,
                 input_filename=input_filename,
                 output_filename=output_filename,
-                log_level=self._log_level)
+                log_level=self._log_level,
+            )
         else:
             if temperatures is None:
-                _temperatures = np.arange(0, 1001, 10, dtype='double')
+                _temperatures = np.arange(0, 1001, 10, dtype="double")
             else:
                 _temperatures = temperatures
             self._thermal_conductivity = get_thermal_conductivity_RTA(
@@ -2193,7 +2327,6 @@ class Phono3py(object):
                 grid_points=grid_points,
                 boundary_mfp=boundary_mfp,
                 use_ave_pp=use_ave_pp,
-                gamma_unit_conversion=gamma_unit_conversion,
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
                 is_full_pp=is_full_pp,
@@ -2207,11 +2340,10 @@ class Phono3py(object):
                 compression=compression,
                 input_filename=input_filename,
                 output_filename=output_filename,
-                log_level=self._log_level)
+                log_level=self._log_level,
+            )
 
-    def save(self,
-             filename="phono3py_params.yaml",
-             settings=None):
+    def save(self, filename="phono3py_params.yaml", settings=None):
         """Save parameters in Phono3py instants into file.
 
         Parameters
@@ -2232,38 +2364,39 @@ class Phono3py(object):
         """
         ph3py_yaml = Phono3pyYaml(settings=settings)
         ph3py_yaml.set_phonon_info(self)
-        with open(filename, 'w') as w:
+        with open(filename, "w") as w:
             w.write(str(ph3py_yaml))
 
     ###################
     # private methods #
     ###################
     def _search_symmetry(self):
-        self._symmetry = Symmetry(self._supercell,
-                                  self._symprec,
-                                  self._is_symmetry)
+        self._symmetry = Symmetry(self._supercell, self._symprec, self._is_symmetry)
 
     def _search_primitive_symmetry(self):
-        self._primitive_symmetry = Symmetry(self._primitive,
-                                            self._symprec,
-                                            self._is_symmetry)
-        if (len(self._symmetry.get_pointgroup_operations()) !=
-            len(self._primitive_symmetry.get_pointgroup_operations())):  # noqa E129
-            print("Warning: point group symmetries of supercell and primitive"
-                  "cell are different.")
+        self._primitive_symmetry = Symmetry(
+            self._primitive, self._symprec, self._is_symmetry
+        )
+        if len(self._symmetry.pointgroup_operations) != len(
+            self._primitive_symmetry.pointgroup_operations
+        ):  # noqa E129
+            print(
+                "Warning: point group symmetries of supercell and primitive"
+                "cell are different."
+            )
 
     def _search_phonon_supercell_symmetry(self):
         if self._phonon_supercell_matrix is None:
             self._phonon_supercell_symmetry = self._symmetry
         else:
-            self._phonon_supercell_symmetry = Symmetry(self._phonon_supercell,
-                                                       self._symprec,
-                                                       self._is_symmetry)
+            self._phonon_supercell_symmetry = Symmetry(
+                self._phonon_supercell, self._symprec, self._is_symmetry
+            )
 
     def _build_supercell(self):
-        self._supercell = get_supercell(self._unitcell,
-                                        self._supercell_matrix,
-                                        self._symprec)
+        self._supercell = get_supercell(
+            self._unitcell, self._supercell_matrix, self._symprec
+        )
 
     def _build_primitive_cell(self):
         """Create primitive cell.
@@ -2277,7 +2410,8 @@ class Phono3py(object):
 
         """
         self._primitive = self._get_primitive_cell(
-            self._supercell, self._supercell_matrix, self._primitive_matrix)
+            self._supercell, self._supercell_matrix, self._primitive_matrix
+        )
 
     def _build_phonon_supercell(self):
         """Create phonon supercell for fc2.
@@ -2293,7 +2427,8 @@ class Phono3py(object):
             self._phonon_supercell = self._supercell
         else:
             self._phonon_supercell = get_supercell(
-                self._unitcell, self._phonon_supercell_matrix, self._symprec)
+                self._unitcell, self._phonon_supercell_matrix, self._symprec
+            )
 
     def _build_phonon_primitive_cell(self):
         if self._phonon_supercell_matrix is None:
@@ -2302,32 +2437,38 @@ class Phono3py(object):
             self._phonon_primitive = self._get_primitive_cell(
                 self._phonon_supercell,
                 self._phonon_supercell_matrix,
-                self._primitive_matrix)
-            if (self._primitive is not None and
-                (self._primitive.numbers !=
-                 self._phonon_primitive.numbers).any()):
+                self._primitive_matrix,
+            )
+            if (
+                self._primitive is not None
+                and (self._primitive.numbers != self._phonon_primitive.numbers).any()
+            ):
                 print(" Primitive cells for fc2 and fc3 can be different.")
                 raise RuntimeError
 
-    def _build_phonon_supercells_with_displacements(self,
-                                                    supercell,
-                                                    displacement_dataset):
+    def _build_phonon_supercells_with_displacements(
+        self, supercell, displacement_dataset
+    ):
         supercells = []
         magmoms = supercell.magnetic_moments
         masses = supercell.masses
         numbers = supercell.numbers
         lattice = supercell.cell
 
-        for disp1 in displacement_dataset['first_atoms']:
-            disp_cart1 = disp1['displacement']
+        for disp1 in displacement_dataset["first_atoms"]:
+            disp_cart1 = disp1["displacement"]
             positions = supercell.get_positions()
-            positions[disp1['number']] += disp_cart1
-            supercells.append(PhonopyAtoms(numbers=numbers,
-                                           masses=masses,
-                                           magmoms=magmoms,
-                                           positions=positions,
-                                           cell=lattice,
-                                           pbc=True))
+            positions[disp1["number"]] += disp_cart1
+            supercells.append(
+                PhonopyAtoms(
+                    numbers=numbers,
+                    masses=masses,
+                    magmoms=magmoms,
+                    positions=positions,
+                    cell=lattice,
+                    pbc=True,
+                )
+            )
 
         return supercells
 
@@ -2339,49 +2480,50 @@ class Phono3py(object):
         lattice = self._supercell.cell
 
         supercells = self._build_phonon_supercells_with_displacements(
-            self._supercell,
-            self._dataset)
+            self._supercell, self._dataset
+        )
 
-        for disp1 in self._dataset['first_atoms']:
-            disp_cart1 = disp1['displacement']
-            for disp2 in disp1['second_atoms']:
-                if 'included' in disp2:
-                    included = disp2['included']
+        for disp1 in self._dataset["first_atoms"]:
+            disp_cart1 = disp1["displacement"]
+            for disp2 in disp1["second_atoms"]:
+                if "included" in disp2:
+                    included = disp2["included"]
                 else:
                     included = True
                 if included:
                     positions = self._supercell.get_positions()
-                    positions[disp1['number']] += disp_cart1
-                    positions[disp2['number']] += disp2['displacement']
-                    supercells.append(PhonopyAtoms(numbers=numbers,
-                                                   masses=masses,
-                                                   magmoms=magmoms,
-                                                   positions=positions,
-                                                   cell=lattice,
-                                                   pbc=True))
+                    positions[disp1["number"]] += disp_cart1
+                    positions[disp2["number"]] += disp2["displacement"]
+                    supercells.append(
+                        PhonopyAtoms(
+                            numbers=numbers,
+                            masses=masses,
+                            magmoms=magmoms,
+                            positions=positions,
+                            cell=lattice,
+                            pbc=True,
+                        )
+                    )
                 else:
                     supercells.append(None)
 
         self._supercells_with_displacements = supercells
 
-    def _get_primitive_cell(self,
-                            supercell,
-                            supercell_matrix,
-                            primitive_matrix):
+    def _get_primitive_cell(self, supercell, supercell_matrix, primitive_matrix):
         inv_supercell_matrix = np.linalg.inv(supercell_matrix)
         if primitive_matrix is None:
             t_mat = inv_supercell_matrix
         else:
             t_mat = np.dot(inv_supercell_matrix, primitive_matrix)
 
-        return get_primitive(supercell, t_mat, self._symprec,
-                             store_dense_svecs=self._store_dense_svecs)
+        return get_primitive(
+            supercell, t_mat, self._symprec, store_dense_svecs=self._store_dense_svecs
+        )
 
     def _determine_primitive_matrix(self, primitive_matrix):
         pmat = get_primitive_matrix(primitive_matrix, symprec=self._symprec)
-        if isinstance(pmat, str) and pmat == 'auto':
-            return guess_primitive_matrix(self._unitcell,
-                                          symprec=self._symprec)
+        if isinstance(pmat, str) and pmat == "auto":
+            return guess_primitive_matrix(self._unitcell, symprec=self._symprec)
         else:
             return pmat
 
@@ -2393,8 +2535,11 @@ class Phono3py(object):
             mesh,
             lattice=self._primitive.cell,
             symmetry_dataset=self._primitive_symmetry.dataset,
+            is_time_reversal=self._is_symmetry,
             use_grg=self._use_grg,
-            store_dense_gp_map=self._store_dense_gp_map)
+            force_SNF=False,
+            store_dense_gp_map=self._store_dense_gp_map,
+        )
 
     def _init_dynamical_matrix(self):
         if self._interaction is not None:
@@ -2403,4 +2548,5 @@ class Phono3py(object):
                 self._phonon_supercell,
                 self._phonon_primitive,
                 nac_params=self._nac_params,
-                solve_dynamical_matrices=False)
+                solve_dynamical_matrices=False,
+            )
