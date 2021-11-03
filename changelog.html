@@ -4,8 +4,9 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Change Log &#8212; Phono3py v.2.0.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Change Log &#8212; Phono3py v.2.1.0</title>
     
   <link href="_static/css/theme.css" rel="stylesheet" />
   <link href="_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
@@ -22,18 +23,18 @@
       
 
     
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="_static/sphinx-book-theme.acff12b8f9c144ce68a297486a2fa670.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.acff12b8f9c144ce68a297486a2fa670.css" />
     
   <link rel="preload" as="script" href="_static/js/index.1c5a1a01449ed65a7b51.js">
 
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"processClass": "tex2jax_process|mathjax_process|math|output_area"}})</script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="How to cite phono3py" href="citation.html" />
@@ -56,7 +57,7 @@
     <a class="navbar-brand text-wrap" href="index.html">
       
       
-      <h1 class="site-logo" id="site-title">Phono3py v.2.0.0</h1>
+      <h1 class="site-logo" id="site-title">Phono3py v.2.1.0</h1>
       
     </a>
 </div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
@@ -233,6 +234,11 @@
             </div>
             <nav id="bd-toc-nav">
                 <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#nov-3-2021-version-2-1-0">
+   Nov-3-2021: Version 2.1.0
+  </a>
+ </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#jul-22-2021-version-2-0-0">
    Jul-22-2021: Version 2.0.0
@@ -474,504 +480,488 @@
         
               <div>
                 
-  <div class="tex2jax_ignore mathjax_ignore section" id="change-log">
+  <section class="tex2jax_ignore mathjax_ignore" id="change-log">
 <span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="jul-22-2021-version-2-0-0">
+<section id="nov-3-2021-version-2-1-0">
+<h2>Nov-3-2021: Version 2.1.0<a class="headerlink" href="#nov-3-2021-version-2-1-0" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Fix of a critical bung in the direct solution. See the detail as commit log of
+<a class="reference external" href="https://github.com/phonopy/phono3py/commit/54d4ddab6f3fbf9435bdfe8b27757be1d5c4ebf6">54d4ddab</a>.</p></li>
+<li><p>Aiming modernizing phono3py code, required python version and package versions
+were changed to</p>
+<ul>
+<li><p>Python &gt;= 3.6</p></li>
+<li><p>numpy &gt;= 1.11</p></li>
+<li><p>matplotlib &gt;= 2.0</p></li>
+</ul>
+</li>
+<li><p>For developers, flake8, black, pydocstyle, and isort were introduced. See
+<code class="docutils literal notranslate"><span class="pre">REAEME.md</span></code> and <code class="docutils literal notranslate"><span class="pre">.pre-commit-config.yaml</span></code>.</p></li>
+</ul>
+</section>
+<section id="jul-22-2021-version-2-0-0">
 <h2>Jul-22-2021: Version 2.0.0<a class="headerlink" href="#jul-22-2021-version-2-0-0" title="Permalink to this headline">¶</a></h2>
 <p>This is a major version release. There are some backword-incompatible changes.</p>
 <ol class="simple">
-<li><p>Grid point indexing system to address grid points of q-points
-is changed.</p></li>
-<li><p>Array data types of most of the integer arrays are changed to
-<code class="docutils literal notranslate"><span class="pre">dtype='int_'</span></code> from <code class="docutils literal notranslate"><span class="pre">dtype='intc'</span></code>.</p></li>
+<li><p>Grid point indexing system to address grid points of q-points is changed.</p></li>
+<li><p>Array data types of most of the integer arrays are changed to <code class="docutils literal notranslate"><span class="pre">dtype='int_'</span></code>
+from <code class="docutils literal notranslate"><span class="pre">dtype='intc'</span></code>.</p></li>
 <li><p>Python 3.5 or later is required.</p></li>
 </ol>
-<p>To emulate the version 1.x behaviour in <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command,
-try <code class="docutils literal notranslate"><span class="pre">--v1</span></code> option. To emurate the version 1.x behaviour in API,
-specify <code class="docutils literal notranslate"><span class="pre">store_dense_gp_map=False</span></code>
-and <code class="docutils literal notranslate"><span class="pre">store_dense_svecs=False</span></code> in instatiation of <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class
-or phon3py loader.</p>
-</div>
-<div class="section" id="mar-17-2021-version-1-22-3">
+<p>To emulate the version 1.x behaviour in <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command, try <code class="docutils literal notranslate"><span class="pre">--v1</span></code> option.
+To emurate the version 1.x behaviour in API, specify <code class="docutils literal notranslate"><span class="pre">store_dense_gp_map=False</span></code>
+and <code class="docutils literal notranslate"><span class="pre">store_dense_svecs=False</span></code> in instatiation of <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class or phon3py
+loader.</p>
+</section>
+<section id="mar-17-2021-version-1-22-3">
 <h2>Mar-17-2021: Version 1.22.3<a class="headerlink" href="#mar-17-2021-version-1-22-3" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Fix <code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code> option to work.</p></li>
 </ul>
-</div>
-<div class="section" id="feb-21-2021-version-1-22-2">
+</section>
+<section id="feb-21-2021-version-1-22-2">
 <h2>Feb-21-2021: Version 1.22.2<a class="headerlink" href="#feb-21-2021-version-1-22-2" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Fix PyPI source distribution package</p></li>
 </ul>
-</div>
-<div class="section" id="feb-21-2021-version-1-22-1">
+</section>
+<section id="feb-21-2021-version-1-22-1">
 <h2>Feb-21-2021: Version 1.22.1<a class="headerlink" href="#feb-21-2021-version-1-22-1" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command didn’t work. This was fixed.</p></li>
 <li><p>Fix behaviour when specifying <code class="docutils literal notranslate"><span class="pre">--thm</span></code> and <code class="docutils literal notranslate"><span class="pre">--sigma</span></code> simultaneously.</p></li>
 </ul>
-</div>
-<div class="section" id="jan-29-2021-version-1-22-0">
+</section>
+<section id="jan-29-2021-version-1-22-0">
 <h2>Jan-29-2021: Version 1.22.0<a class="headerlink" href="#jan-29-2021-version-1-22-0" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Maintenance release to follow phonopy v2.9.0.</p></li>
 </ul>
-</div>
-<div class="section" id="sep-30-2020-version-1-21-0">
+</section>
+<section id="sep-30-2020-version-1-21-0">
 <h2>Sep-30-2020: Version 1.21.0<a class="headerlink" href="#sep-30-2020-version-1-21-0" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Maintenance release to follow the change of phonopy at v2.8.1</p></li>
-<li><p>Improvements of phono3py loader (<code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code>), <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code>
-command, API, and <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>.</p></li>
-<li><p>Harmonic phonon calculation on mesh was multithreaded. This is
-effective when using very dense mesh with non-analytical term
-correction (probably rare case).</p></li>
-<li><p>Real and imaginary parts of self energy and spectral function of
-bubble diagram at API level</p></li>
+<li><p>Improvements of phono3py loader (<code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code>), <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> command,
+API, and <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>.</p></li>
+<li><p>Harmonic phonon calculation on mesh was multithreaded. This is effective when
+using very dense mesh with non-analytical term correction (probably rare
+case).</p></li>
+<li><p>Real and imaginary parts of self energy and spectral function of bubble
+diagram at API level</p></li>
 </ul>
-</div>
-<div class="section" id="mar-3-2020-version-1-20-0">
+</section>
+<section id="mar-3-2020-version-1-20-0">
 <h2>Mar-3-2020: Version 1.20.0<a class="headerlink" href="#mar-3-2020-version-1-20-0" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is made when creating displacements in
-addition to <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> and
-<code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code>. <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> will be used instead of
-<code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code> in the future major release
-(v2.0).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is made when creating displacements in addition to
+<code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code>. <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> will be used instead
+of <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">disp_fc2.yaml</span></code> in the future major release (v2.0).</p></li>
 </ul>
-</div>
-<div class="section" id="mar-3-2020-version-1-19-1">
+</section>
+<section id="mar-3-2020-version-1-19-1">
 <h2>Mar-3-2020: Version 1.19.1<a class="headerlink" href="#mar-3-2020-version-1-19-1" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Release for pypi and conda (atztogo channel) packagings</p></li>
 </ul>
-</div>
-<div class="section" id="mar-2-2020-version-1-19-0">
+</section>
+<section id="mar-2-2020-version-1-19-0">
 <h2>Mar-2-2020: Version 1.19.0<a class="headerlink" href="#mar-2-2020-version-1-19-0" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Improvements of phono3py loader and API.</p></li>
-<li><p>Improvement of interfaces to calculators. Now it is expected to be
-much easier to implement calculator interface if it exists in
-phonopy.</p></li>
+<li><p>Improvement of interfaces to calculators. Now it is expected to be much easier
+to implement calculator interface if it exists in phonopy.</p></li>
 <li><p>Fixed dependency to phonopy v2.6.0.</p></li>
 </ul>
-</div>
-<div class="section" id="dec-22-2019-version-1-18-2">
+</section>
+<section id="dec-22-2019-version-1-18-2">
 <h2>Dec-22-2019: Version 1.18.2<a class="headerlink" href="#dec-22-2019-version-1-18-2" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Initial version of phono3py loader (<code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code>) was
-implemented. See docstring of <code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code>.</p></li>
+<li><p>Initial version of phono3py loader (<code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code>) was implemented. See
+docstring of <code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code>.</p></li>
 </ul>
-</div>
-<div class="section" id="oct-17-2019-version-1-18-1">
+</section>
+<section id="oct-17-2019-version-1-18-1">
 <h2>Oct-17-2019: Version 1.18.1<a class="headerlink" href="#oct-17-2019-version-1-18-1" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Fix of phono3py-kaccum to follow the latest phonopy.</p></li>
 </ul>
-</div>
-<div class="section" id="oct-9-2019-version-1-18-0">
+</section>
+<section id="oct-9-2019-version-1-18-0">
 <h2>Oct-9-2019: Version 1.18.0<a class="headerlink" href="#oct-9-2019-version-1-18-0" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Maintenance release</p></li>
 </ul>
-</div>
-<div class="section" id="apr-18-2019-version-1-17-0">
+</section>
+<section id="apr-18-2019-version-1-17-0">
 <h2>Apr-18-2019: Version 1.17.0<a class="headerlink" href="#apr-18-2019-version-1-17-0" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--cfz</span></code> option was made to subtract residual forces. See
-<a class="reference internal" href="command-options.html#cfz-option"><span class="std std-ref">--cfz (command option only)</span></a>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> was made to override the cutoff pair distance
-written in <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> when using on calculating force
-constants. This is useful when checking cutoff distance
-dependency. So the use case of having fully computed <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code>
-is assumed.</p></li>
-<li><p>TURBOMOLE interface is provided by Antti Karttunen
-(<code class="docutils literal notranslate"><span class="pre">--turbomole</span></code>).</p></li>
-<li><p>Compatibility of <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">force_constants.hdf5</span></code> was
-improved for all calculators to store physical unit information in
-the hdf5 file. See <a class="reference internal" href="tips.html#file-format-compatibility"><span class="std std-ref">File format compatibility with phonopy</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--cfz</span></code> option was made to subtract residual forces. See <a class="reference internal" href="command-options.html#cfz-option"><span class="std std-ref">--cfz (command option only)</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> was made to override the cutoff pair distance written in
+<code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> when using on calculating force constants. This is useful when
+checking cutoff distance dependency. So the use case of having fully computed
+<code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> is assumed.</p></li>
+<li><p>TURBOMOLE interface is provided by Antti Karttunen (<code class="docutils literal notranslate"><span class="pre">--turbomole</span></code>).</p></li>
+<li><p>Compatibility of <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">force_constants.hdf5</span></code> was improved for all
+calculators to store physical unit information in the hdf5 file. See
+<a class="reference internal" href="tips.html#file-format-compatibility"><span class="std std-ref">File format compatibility with phonopy</span></a>.</p></li>
 </ul>
-</div>
-<div class="section" id="mar-24-2019-version-1-16-0">
+</section>
+<section id="mar-24-2019-version-1-16-0">
 <h2>Mar-24-2019: Version 1.16.0<a class="headerlink" href="#mar-24-2019-version-1-16-0" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Bug fixes and catching up the updates of phonopy.</p></li>
-<li><p>Most of hdf5 output files are compressed by <code class="docutils literal notranslate"><span class="pre">gzip</span></code> as
-default. This compression can be set off, see
-<a class="reference internal" href="command-options.html#hdf5-compression-option"><span class="std std-ref">--hdf5-compression (command option only)</span></a>.</p></li>
-<li><p>(Experimental) <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command accepts <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type
-file as an input crystal structure by <code class="docutils literal notranslate"><span class="pre">-c</span></code> option. When <code class="docutils literal notranslate"><span class="pre">DIM</span></code>
-and any structure file are not given, <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>
-(primary) or <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> (secondary) is searched in the current
-directory. Then <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file is used as the input.
-By this, semi-automatic phono3py mode is invocked, which acts as</p>
+<li><p>Most of hdf5 output files are compressed by <code class="docutils literal notranslate"><span class="pre">gzip</span></code> as default. This
+compression can be set off, see <a class="reference internal" href="command-options.html#hdf5-compression-option"><span class="std std-ref">--hdf5-compression (command option only)</span></a>.</p></li>
+<li><p>(Experimental) <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command accepts <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file as an
+input crystal structure by <code class="docutils literal notranslate"><span class="pre">-c</span></code> option. When <code class="docutils literal notranslate"><span class="pre">DIM</span></code> and any structure file are
+not given, <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> (primary) or <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> (secondary) is
+searched in the current directory. Then <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file is used as
+the input. By this, semi-automatic phono3py mode is invocked, which acts as</p>
 <ol class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">supercell_matrix</span></code> corresponding to <code class="docutils literal notranslate"><span class="pre">DIM</span></code> in the
-<code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file is used if it exists.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">phonon_supercell_matrix</span></code>  corresponding to <code class="docutils literal notranslate"><span class="pre">DIM_FC2</span></code> in the
-<code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file is used if it exists.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">primitive_matrix</span></code> in the <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file
-is used if it exists. Otherwise, set <code class="docutils literal notranslate"><span class="pre">PRIMITIVE_AXES</span> <span class="pre">=</span> <span class="pre">AUTO</span></code>
-when <code class="docutils literal notranslate"><span class="pre">PRIMITIVE_AXES</span></code> is not given.</p></li>
-<li><p>NAC params are read (<code class="docutils literal notranslate"><span class="pre">NAC</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>) if NAC params are
-contained (primary) in the <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file or if
-<code class="docutils literal notranslate"><span class="pre">BORN</span></code> file exists in the current directory (secondary).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">supercell_matrix</span></code> corresponding to <code class="docutils literal notranslate"><span class="pre">DIM</span></code> in the <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file
+is used if it exists.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">phonon_supercell_matrix</span></code> corresponding to <code class="docutils literal notranslate"><span class="pre">DIM_FC2</span></code> in the <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code>
+type file is used if it exists.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">primitive_matrix</span></code> in the <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file is used if it exists.
+Otherwise, set <code class="docutils literal notranslate"><span class="pre">PRIMITIVE_AXES</span> <span class="pre">=</span> <span class="pre">AUTO</span></code> when <code class="docutils literal notranslate"><span class="pre">PRIMITIVE_AXES</span></code> is not given.</p></li>
+<li><p>NAC params are read (<code class="docutils literal notranslate"><span class="pre">NAC</span> <span class="pre">=</span> <span class="pre">.TRUE.</span></code>) if NAC params are contained (primary)
+in the <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file or if <code class="docutils literal notranslate"><span class="pre">BORN</span></code> file exists in the current
+directory (secondary).</p></li>
 </ol>
 </li>
 </ul>
-</div>
-<div class="section" id="nov-22-2018-version-1-14-3">
+</section>
+<section id="nov-22-2018-version-1-14-3">
 <h2>Nov-22-2018: version 1.14.3<a class="headerlink" href="#nov-22-2018-version-1-14-3" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Update to work with phonopy v1.14.2.</p></li>
-<li><p>Ph-ph interaction can be read (<code class="docutils literal notranslate"><span class="pre">--read-pp</span></code>) and write
-(<code class="docutils literal notranslate"><span class="pre">--write-pp</span></code>) in RTA thermal conductivity calculation, too. Mind
-that the data stored are different with and without
-<code class="docutils literal notranslate"><span class="pre">--full-pp</span></code>. Wihtout <code class="docutils literal notranslate"><span class="pre">--full-pp</span></code> the data are stored in
-complicated way to save data side, so it is not considered readable
-by usual users.</p></li>
+<li><p>Ph-ph interaction can be read (<code class="docutils literal notranslate"><span class="pre">--read-pp</span></code>) and write (<code class="docutils literal notranslate"><span class="pre">--write-pp</span></code>) in RTA
+thermal conductivity calculation, too. Mind that the data stored are different
+with and without <code class="docutils literal notranslate"><span class="pre">--full-pp</span></code>. Wihtout <code class="docutils literal notranslate"><span class="pre">--full-pp</span></code> the data are stored in
+complicated way to save data side, so it is not considered readable by usual
+users.</p></li>
 </ul>
-</div>
-<div class="section" id="june-20-2018-version-1-13-3">
+</section>
+<section id="june-20-2018-version-1-13-3">
 <h2>June-20-2018: version 1.13.3<a class="headerlink" href="#june-20-2018-version-1-13-3" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--lw</span></code> (linewidth) option was removed. Use <code class="docutils literal notranslate"><span class="pre">--br</span></code> option and
-find 2*gamma values as linewidths in <code class="docutils literal notranslate"><span class="pre">kappa-xxx.hdf5</span></code> file.</p></li>
-<li><p>Documentation of <code class="docutils literal notranslate"><span class="pre">--lbte</span></code> option is available at
-<a class="reference internal" href="direct-solution.html#direct-solution"><span class="std std-ref">Direct solution of linearized phonon Boltzmann equation</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--lw</span></code> (linewidth) option was removed. Use <code class="docutils literal notranslate"><span class="pre">--br</span></code> option and find 2*gamma
+values as linewidths in <code class="docutils literal notranslate"><span class="pre">kappa-xxx.hdf5</span></code> file.</p></li>
+<li><p>Documentation of <code class="docutils literal notranslate"><span class="pre">--lbte</span></code> option is available at <a class="reference internal" href="direct-solution.html#direct-solution"><span class="std std-ref">Direct solution of linearized phonon Boltzmann equation</span></a>.</p></li>
 <li><p>This version is dependent on phonopy&gt;=1.13.2.</p></li>
 </ul>
-</div>
-<div class="section" id="may-17-2018-version-1-13-1">
+</section>
+<section id="may-17-2018-version-1-13-1">
 <h2>May-17-2018: version 1.13.1<a class="headerlink" href="#may-17-2018-version-1-13-1" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Compact force constants are implemented (See <a class="reference internal" href="command-options.html#compact-fc-option"><span class="std std-ref">--cfc or --compact-fc (COMPACT_FC = .TRUE.)</span></a>).</p></li>
 </ul>
-</div>
-<div class="section" id="mar-16-2018-version-1-12-9">
+</section>
+<section id="mar-16-2018-version-1-12-9">
 <h2>Mar-16-2018: version 1.12.9<a class="headerlink" href="#mar-16-2018-version-1-12-9" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Definition of <code class="docutils literal notranslate"><span class="pre">mode_kappa</span></code> values in output hdf5 file is
-changed. Previously they were divided by number of grid points, but
-now not. Therefore users who compute <code class="docutils literal notranslate"><span class="pre">kappa</span></code> from <code class="docutils literal notranslate"><span class="pre">mode_kappa</span></code>
-need to be careful about this change. This does not affect to
-<code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code> results.</p></li>
+<li><p>Definition of <code class="docutils literal notranslate"><span class="pre">mode_kappa</span></code> values in output hdf5 file is changed. Previously
+they were divided by number of grid points, but now not. Therefore users who
+compute <code class="docutils literal notranslate"><span class="pre">kappa</span></code> from <code class="docutils literal notranslate"><span class="pre">mode_kappa</span></code> need to be careful about this change. This
+does not affect to <code class="docutils literal notranslate"><span class="pre">phono3py-kaccum</span></code> results.</p></li>
 </ul>
-</div>
-<div class="section" id="feb-1-2018-version-1-12-7">
+</section>
+<section id="feb-1-2018-version-1-12-7">
 <h2>Feb-1-2018: version 1.12.7<a class="headerlink" href="#feb-1-2018-version-1-12-7" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--tsym</span></code> option is removed. Now with <code class="docutils literal notranslate"><span class="pre">--sym-fc3r</span></code> and
-<code class="docutils literal notranslate"><span class="pre">--sym-fc2</span></code> options,
+<li><p><code class="docutils literal notranslate"><span class="pre">--tsym</span></code> option is removed. Now with <code class="docutils literal notranslate"><span class="pre">--sym-fc3r</span></code> and <code class="docutils literal notranslate"><span class="pre">--sym-fc2</span></code> options,
 translational invariance symmetry is also applied.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--sym-fc</span></code> option is added. This is just an alias to specify both
-<code class="docutils literal notranslate"><span class="pre">--sym-fc3r</span></code> and <code class="docutils literal notranslate"><span class="pre">--sym-fc2</span></code> together.</p></li>
-<li><p>Documentation on <code class="docutils literal notranslate"><span class="pre">--write-phonon</span></code> and <code class="docutils literal notranslate"><span class="pre">--read-phonon</span></code> options is
-written. These options are used to save harmonic phonon infromation
-on strage.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--sym-fc</span></code> option is added. This is just an alias to specify both <code class="docutils literal notranslate"><span class="pre">--sym-fc3r</span></code>
+and <code class="docutils literal notranslate"><span class="pre">--sym-fc2</span></code> together.</p></li>
+<li><p>Documentation on <code class="docutils literal notranslate"><span class="pre">--write-phonon</span></code> and <code class="docutils literal notranslate"><span class="pre">--read-phonon</span></code> options is written.
+These options are used to save harmonic phonon infromation on strage.</p></li>
 </ul>
-</div>
-<div class="section" id="nov-22-2017-version-1-12-5">
+</section>
+<section id="nov-22-2017-version-1-12-5">
 <h2>Nov-22-2017: version 1.12.5<a class="headerlink" href="#nov-22-2017-version-1-12-5" title="Permalink to this headline">¶</a></h2>
 <ul>
-<li><p>Bug fix of RTA thermal conductivity. This bug exists from version
-1.10.11.18 (git e40cd059). This bug exhibits when all the following
-conditions are met:</p>
+<li><p>Bug fix of RTA thermal conductivity. This bug exists from version 1.10.11.18
+(git e40cd059). This bug exhibits when all the following conditions are met:</p>
 <ol class="simple">
 <li><p>RTA thermal conductivity calculation.</p></li>
 <li><p>Tetrahedron method for Brillouin zone integration is used.</p></li>
 <li><p>Number of triplets is smaller than number of bands at each grid point.</p></li>
 <li><p>Without using <code class="docutils literal notranslate"><span class="pre">--full-pp</span></code>.</p></li>
 </ol>
-<p>(3) happens when the primitive cell is relatively large. Number of
-triplets can be shown using <code class="docutils literal notranslate"><span class="pre">--stp</span></code> option. A race condition of
-OpenMP multithreading is the source of the bug. Therefore, if it
-occurs, the same calculation comes up with the different thermal
-conductivity value in every run time, for whcih it behaves like
-randomly.</p>
+<p>(3) happens when the primitive cell is relatively large. Number of triplets
+can be shown using <code class="docutils literal notranslate"><span class="pre">--stp</span></code> option. A race condition of OpenMP multithreading
+is the source of the bug. Therefore, if it occurs, the same calculation comes
+up with the different thermal conductivity value in every run time, for whcih
+it behaves like randomly.</p>
 </li>
-<li><p>RTA thermal conductivity with smearing method (<code class="docutils literal notranslate"><span class="pre">--sigma</span></code>) is made
-to run with smaller memory consumption as similar as tetrahedron
-method (<code class="docutils literal notranslate"><span class="pre">--thm</span></code>).</p></li>
+<li><p>RTA thermal conductivity with smearing method (<code class="docutils literal notranslate"><span class="pre">--sigma</span></code>) is made to run with
+smaller memory consumption as similar as tetrahedron method (<code class="docutils literal notranslate"><span class="pre">--thm</span></code>).</p></li>
 </ul>
-</div>
-<div class="section" id="nov-17-2017-version-1-12-3">
+</section>
+<section id="nov-17-2017-version-1-12-3">
 <h2>Nov-17-2017: version 1.12.3<a class="headerlink" href="#nov-17-2017-version-1-12-3" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Command option parser of the phonopy tools is replaced from
-<code class="docutils literal notranslate"><span class="pre">optparse</span></code> to <code class="docutils literal notranslate"><span class="pre">argparse</span></code>.</p></li>
+<li><p>Command option parser of the phonopy tools is replaced from <code class="docutils literal notranslate"><span class="pre">optparse</span></code> to
+<code class="docutils literal notranslate"><span class="pre">argparse</span></code>.</p></li>
 <li><p>The filenames used with these options were the positional arguments
-previously. Now they are the command-line arguments, i.e., filenames
-have to be put just after the option name like <code class="docutils literal notranslate"><span class="pre">-f</span> <span class="pre">vasprun.xml-001</span> <span class="pre">vasprun.xml-002</span> <span class="pre">...</span></code>.</p></li>
-<li><p>The names of auxiliary tools (<code class="docutils literal notranslate"><span class="pre">kdeplot</span></code> and <code class="docutils literal notranslate"><span class="pre">kaccum</span></code>) are
-changed, for which the prefix phono3py- is added to the old names to
-avoid accidental conflict with other script names already existing
-under bin directory.</p></li>
+previously. Now they are the command-line arguments, i.e., filenames have to
+be put just after the option name like
+<code class="docutils literal notranslate"><span class="pre">-f</span> <span class="pre">vasprun.xml-001</span> <span class="pre">vasprun.xml-002</span> <span class="pre">...</span></code>.</p></li>
+<li><p>The names of auxiliary tools (<code class="docutils literal notranslate"><span class="pre">kdeplot</span></code> and <code class="docutils literal notranslate"><span class="pre">kaccum</span></code>) are changed, for which
+the prefix phono3py- is added to the old names to avoid accidental conflict
+with other script names already existing under bin directory.</p></li>
 <li><p><a class="reference internal" href="command-options.html#sigma-cutoff-option"><span class="std std-ref">--sigma-cutoff (SIGMA_CUTOFF_WIDTH)</span></a> option was created.</p></li>
 </ul>
-</div>
-<div class="section" id="jun-18-2017-version-1-11-13">
+</section>
+<section id="jun-18-2017-version-1-11-13">
 <h2>Jun-18-2017: version 1.11.13<a class="headerlink" href="#jun-18-2017-version-1-11-13" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p><a class="reference internal" href="command-options.html#normal-umklapp-option"><span class="std std-ref">--nu (N_U = .TRUE.)</span></a> option was made.</p></li>
 <li><p>Many minor updates: fixing bugs, improving usabilities.</p></li>
 <li><p>Improve of <a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kaccum"><span class="std std-ref">phono3py-kaccum</span></a> and <a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kdeplot"><span class="std std-ref">phono3py-kdeplot</span></a>.</p></li>
 </ul>
-</div>
-<div class="section" id="mar-31-2017-version-1-11-11">
+</section>
+<section id="mar-31-2017-version-1-11-11">
 <h2>Mar-31-2017: version 1.11.11<a class="headerlink" href="#mar-31-2017-version-1-11-11" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Abinit code interface is implemented and now under the testing.</p></li>
-<li><p>Reduction of memory usage in RTA thermal conductivity
-calculation. This is especially effective for larger unit cell
-case. Currently combinations with –full_pp, –write_gamma_detail,
-and –simga(smearing method) are not supported for this. Performance
-tuning is under going. In some case, computation can be slower than
-the previous versions.</p></li>
+<li><p>Reduction of memory usage in RTA thermal conductivity calculation. This is
+especially effective for larger unit cell case. Currently combinations with
+–full_pp, –write_gamma_detail, and –simga(smearing method) are not
+supported for this. Performance tuning is under going. In some case,
+computation can be slower than the previous versions.</p></li>
 </ul>
-</div>
-<div class="section" id="feb-9-2017-version-1-11-9">
+</section>
+<section id="feb-9-2017-version-1-11-9">
 <h2>Feb-9-2017: version 1.11.9<a class="headerlink" href="#feb-9-2017-version-1-11-9" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>This version works coupled with phonopy-1.11.8 or later.</p></li>
 <li><p>CRYSTAL code interface is implemented by Antti J. Karttunen.</p></li>
 </ul>
-</div>
-<div class="section" id="dec-14-2016-version-1-11-7">
+</section>
+<section id="dec-14-2016-version-1-11-7">
 <h2>Dec-14-2016: version 1.11.7<a class="headerlink" href="#dec-14-2016-version-1-11-7" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>This is a maintenance release. This version must be used with
-phonopy-1.11.6 or later.</p></li>
+<li><p>This is a maintenance release. This version must be used with phonopy-1.11.6
+or later.</p></li>
 </ul>
-</div>
-<div class="section" id="nov-27-2016-version-1-11-5">
+</section>
+<section id="nov-27-2016-version-1-11-5">
 <h2>Nov-27-2016: version 1.11.5<a class="headerlink" href="#nov-27-2016-version-1-11-5" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">gaccum</span></code> is merged to <code class="docutils literal notranslate"><span class="pre">kaccum</span></code>. <code class="docutils literal notranslate"><span class="pre">gaccum</span></code> is removed. See
 <a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kaccum"><span class="std std-ref">phono3py-kaccum</span></a>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">kdeplot</span></code> is added. See <a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kdeplot"><span class="std std-ref">phono3py-kdeplot</span></a>.</p></li>
 </ul>
-</div>
-<div class="section" id="apr-24-2016-version-1-10-9">
+</section>
+<section id="apr-24-2016-version-1-10-9">
 <h2>Apr-24-2016: version 1.10.9<a class="headerlink" href="#apr-24-2016-version-1-10-9" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Failure of writing <code class="docutils literal notranslate"><span class="pre">kappa-mxxx-gx.hdf5</span></code> was fixed.</p></li>
 </ul>
-</div>
-<div class="section" id="apr-16-2016-version-1-10-7">
+</section>
+<section id="apr-16-2016-version-1-10-7">
 <h2>Apr-16-2016: version 1.10.7<a class="headerlink" href="#apr-16-2016-version-1-10-7" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>API example is prepared and it is found in <code class="docutils literal notranslate"><span class="pre">Si</span></code> example. No
-doucment yet.</p></li>
+<li><p>API example is prepared and it is found in <code class="docutils literal notranslate"><span class="pre">Si</span></code> example. No doucment yet.</p></li>
 <li><p>Si pwscf example was placed in <code class="docutils literal notranslate"><span class="pre">example-phono3py</span></code> directory.</p></li>
 <li><p>User interface bug fix.</p></li>
 </ul>
-</div>
-<div class="section" id="mar-15-2016-version-1-10-5">
+</section>
+<section id="mar-15-2016-version-1-10-5">
 <h2>Mar-15-2016: version 1.10.5<a class="headerlink" href="#mar-15-2016-version-1-10-5" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Numbering way of phono3py version was just changed (No big updates
-were made against previous version.) The number is given based on
-the phonopy version. For example, the harmonic part of
-phono3py-1.10.5 is based on the code close to phonopy-1.10.4.</p></li>
+<li><p>Numbering way of phono3py version was just changed (No big updates were made
+against previous version.) The number is given based on the phonopy version.
+For example, the harmonic part of phono3py-1.10.5 is based on the code close
+to phonopy-1.10.4.</p></li>
 <li><p>Python3 support</p></li>
-<li><p>For the RTA thermal conductivity calculation mode with using the
-linear tetrahedron method, only necessary part of phonon-phonon
-interaction strengh among phonons. This improves lifetime
-calculation performance, but as the drawback, averaged ph-ph
-interaction strength can not be given. See <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full-pp (FULL_PP = .TRUE.)</span></a>.</p></li>
+<li><p>For the RTA thermal conductivity calculation mode with using the linear
+tetrahedron method, only necessary part of phonon-phonon interaction strengh
+among phonons. This improves lifetime calculation performance, but as the
+drawback, averaged ph-ph interaction strength can not be given. See
+<a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full-pp (FULL_PP = .TRUE.)</span></a>.</p></li>
 <li><p>Pwscf interface (<a class="reference internal" href="interfaces.html#calculator-interfaces"><span class="std std-ref">Interfaces to calculators</span></a>)</p></li>
 </ul>
-</div>
-<div class="section" id="oct-10-2015-version-0-9-14">
+</section>
+<section id="oct-10-2015-version-0-9-14">
 <h2>Oct-10-2015: version 0.9.14<a class="headerlink" href="#oct-10-2015-version-0-9-14" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Computational performance tuning for phonon-phonon interaction
-strength calculation was made by Jonathan Skelton. Depending on
-systems, but 10-20% performance improvement may be possible.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--stp</span></code> option is created to show numbers of q-point triplets to
-be calculated. See <a class="reference internal" href="command-options.html#command-options"><span class="std std-ref">Command options / Setting tags</span></a>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--write_gamma</span></code> and <code class="docutils literal notranslate"><span class="pre">--read_gamma</span></code> support using with <code class="docutils literal notranslate"><span class="pre">--bi</span></code>
-option. Therefore a thermal conductivity calculation can be
-distributed over band index, too. This may be useful for the system
-whose unit cell is large.</p></li>
+<li><p>Computational performance tuning for phonon-phonon interaction strength
+calculation was made by Jonathan Skelton. Depending on systems, but 10-20%
+performance improvement may be possible.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--stp</span></code> option is created to show numbers of q-point triplets to be
+calculated. See <a class="reference internal" href="command-options.html#command-options"><span class="std std-ref">Command options / Setting tags</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--write_gamma</span></code> and <code class="docutils literal notranslate"><span class="pre">--read_gamma</span></code> support using with <code class="docutils literal notranslate"><span class="pre">--bi</span></code> option. Therefore
+a thermal conductivity calculation can be distributed over band index, too.
+This may be useful for the system whose unit cell is large.</p></li>
 </ul>
-</div>
-<div class="section" id="sep-26-2015-version-0-9-13">
+</section>
+<section id="sep-26-2015-version-0-9-13">
 <h2>Sep-26-2015: version 0.9.13<a class="headerlink" href="#sep-26-2015-version-0-9-13" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Changed so that <code class="docutils literal notranslate"><span class="pre">--wgp</span></code> option writes <code class="docutils literal notranslate"><span class="pre">grid_address-mxxx.hdf5</span></code>
-instead of <code class="docutils literal notranslate"><span class="pre">grid_address-mxxx.dat</span></code>.</p></li>
+<li><p>Changed so that <code class="docutils literal notranslate"><span class="pre">--wgp</span></code> option writes <code class="docutils literal notranslate"><span class="pre">grid_address-mxxx.hdf5</span></code> instead of
+<code class="docutils literal notranslate"><span class="pre">grid_address-mxxx.dat</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--write_detailed_gamma</span></code> is implemented. See <a class="reference internal" href="command-options.html#command-options"><span class="std std-ref">Command options / Setting tags</span></a>.</p></li>
-<li><p>When running without setting <code class="docutils literal notranslate"><span class="pre">--thm</span></code> and <code class="docutils literal notranslate"><span class="pre">--sigma</span></code> options,
-linear tetrahedron method corresponding to <code class="docutils literal notranslate"><span class="pre">--thm</span></code> is used as the
-default behavior.</p></li>
+<li><p>When running without setting <code class="docutils literal notranslate"><span class="pre">--thm</span></code> and <code class="docutils literal notranslate"><span class="pre">--sigma</span></code> options, linear tetrahedron
+method corresponding to <code class="docutils literal notranslate"><span class="pre">--thm</span></code> is used as the default behavior.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--ise</span></code> options is created.</p></li>
 </ul>
-</div>
-<div class="section" id="aug-12-2015-version-0-9-12">
+</section>
+<section id="aug-12-2015-version-0-9-12">
 <h2>Aug-12-2015: version 0.9.12<a class="headerlink" href="#aug-12-2015-version-0-9-12" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Spglib update to version 1.8.2.1.</p></li>
 <li><p>Improve computational performance of <code class="docutils literal notranslate"><span class="pre">kaccum</span></code> and <code class="docutils literal notranslate"><span class="pre">gaccum</span></code>.</p></li>
 </ul>
-</div>
-<div class="section" id="jun-18-2015-version-0-9-10-1">
+</section>
+<section id="jun-18-2015-version-0-9-10-1">
 <h2>Jun-18-2015: version 0.9.10.1<a class="headerlink" href="#jun-18-2015-version-0-9-10-1" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Bug fix of <code class="docutils literal notranslate"><span class="pre">gcaccum</span></code></p></li>
 </ul>
-</div>
-<div class="section" id="jun-17-2015-version-0-9-10">
+</section>
+<section id="jun-17-2015-version-0-9-10">
 <h2>Jun-17-2015: version 0.9.10<a class="headerlink" href="#jun-17-2015-version-0-9-10" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Fix bug in <code class="docutils literal notranslate"><span class="pre">kaccum</span></code>. When using with <code class="docutils literal notranslate"><span class="pre">--pa</span></code> option, irreducible
-q-points were incorrectly indexed.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">gaccum</span></code> is implemented. <code class="docutils literal notranslate"><span class="pre">gaccum</span></code> is very similar to <code class="docutils literal notranslate"><span class="pre">kaccum</span></code>,
-but for <span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega_\lambda)\)</span>.</p></li>
+<li><p>Fix bug in <code class="docutils literal notranslate"><span class="pre">kaccum</span></code>. When using with <code class="docutils literal notranslate"><span class="pre">--pa</span></code> option, irreducible q-points were
+incorrectly indexed.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gaccum</span></code> is implemented. <code class="docutils literal notranslate"><span class="pre">gaccum</span></code> is very similar to <code class="docutils literal notranslate"><span class="pre">kaccum</span></code>, but for
+<span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega_\lambda)\)</span>.</p></li>
 <li><p>spglib update.</p></li>
 </ul>
-</div>
-<div class="section" id="changes-in-version-0-9-7">
+</section>
+<section id="changes-in-version-0-9-7">
 <h2>Changes in version 0.9.7<a class="headerlink" href="#changes-in-version-0-9-7" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>The definition of MSPP is modified so as to be averaged ph-ph
-interaction defined as <span class="math notranslate nohighlight">\(P_{\mathbf{q}j}\)</span> in the arXiv
-manuscript. The key in the kappa hdf5 file is changed from <code class="docutils literal notranslate"><span class="pre">mspp</span></code>
-to <code class="docutils literal notranslate"><span class="pre">ave_pp</span></code>. The physical unit of <span class="math notranslate nohighlight">\(P_{\mathbf{q}j}\)</span> is set
-to <span class="math notranslate nohighlight">\(\text{eV}^2\)</span>.</p></li>
+<li><p>The definition of MSPP is modified so as to be averaged ph-ph interaction
+defined as <span class="math notranslate nohighlight">\(P_{\mathbf{q}j}\)</span> in the arXiv manuscript. The key in the kappa
+hdf5 file is changed from <code class="docutils literal notranslate"><span class="pre">mspp</span></code> to <code class="docutils literal notranslate"><span class="pre">ave_pp</span></code>. The physical unit of
+<span class="math notranslate nohighlight">\(P_{\mathbf{q}j}\)</span> is set to <span class="math notranslate nohighlight">\(\text{eV}^2\)</span>.</p></li>
 </ul>
-</div>
-<div class="section" id="changes-in-version-0-9-6">
+</section>
+<section id="changes-in-version-0-9-6">
 <h2>Changes in version 0.9.6<a class="headerlink" href="#changes-in-version-0-9-6" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Silicon example is put in <code class="docutils literal notranslate"><span class="pre">example-phono3py</span></code> directory.</p></li>
-<li><p>Accumulated lattice thermal conductivity is calculated by <code class="docutils literal notranslate"><span class="pre">kaccum</span></code>
-script.</p></li>
+<li><p>Accumulated lattice thermal conductivity is calculated by <code class="docutils literal notranslate"><span class="pre">kaccum</span></code> script.</p></li>
 <li><p>JDOS output format was changed.</p></li>
 </ul>
-</div>
-<div class="section" id="changes-in-version-0-9-5">
+</section>
+<section id="changes-in-version-0-9-5">
 <h2>Changes in version 0.9.5<a class="headerlink" href="#changes-in-version-0-9-5" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>In <code class="docutils literal notranslate"><span class="pre">kappa-xxx.hdf5</span></code> file, <code class="docutils literal notranslate"><span class="pre">heat_capacity</span></code> format was changed
-from <code class="docutils literal notranslate"><span class="pre">(irreducible</span> <span class="pre">q-point,</span> <span class="pre">temperature,</span> <span class="pre">phonon</span> <span class="pre">band)</span></code> to
-<code class="docutils literal notranslate"><span class="pre">(temperature,</span> <span class="pre">irreducible</span> <span class="pre">q-point,</span> <span class="pre">phonon</span> <span class="pre">band)</span></code>. For <code class="docutils literal notranslate"><span class="pre">gamma</span></code>,
-previous document was wrong in the array shape. It is
+<li><p>In <code class="docutils literal notranslate"><span class="pre">kappa-xxx.hdf5</span></code> file, <code class="docutils literal notranslate"><span class="pre">heat_capacity</span></code> format was changed from
+<code class="docutils literal notranslate"><span class="pre">(irreducible</span> <span class="pre">q-point,</span> <span class="pre">temperature,</span> <span class="pre">phonon</span> <span class="pre">band)</span></code> to
+<code class="docutils literal notranslate"><span class="pre">(temperature,</span> <span class="pre">irreducible</span> <span class="pre">q-point,</span> <span class="pre">phonon</span> <span class="pre">band)</span></code>. For <code class="docutils literal notranslate"><span class="pre">gamma</span></code>, previous
+document was wrong in the array shape. It is
 <code class="docutils literal notranslate"><span class="pre">(temperature,</span> <span class="pre">irreducible</span> <span class="pre">q-point,</span> <span class="pre">phonon</span> <span class="pre">band)</span></code></p></li>
 </ul>
-</div>
-<div class="section" id="changes-in-version-0-9-4">
+</section>
+<section id="changes-in-version-0-9-4">
 <h2>Changes in version 0.9.4<a class="headerlink" href="#changes-in-version-0-9-4" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>The option of <code class="docutils literal notranslate"><span class="pre">--cutoff_mfp</span></code> is renamed to <code class="docutils literal notranslate"><span class="pre">--boundary_mfp</span></code> and
-now it’s on the document.</p></li>
-<li><p>Detailed contribution of <code class="docutils literal notranslate"><span class="pre">kappa</span></code> at each <strong>q</strong>-point and phonon
-mode is output to .hdf5 with the keyword <code class="docutils literal notranslate"><span class="pre">mode_kappa</span></code>.</p></li>
+<li><p>The option of <code class="docutils literal notranslate"><span class="pre">--cutoff_mfp</span></code> is renamed to <code class="docutils literal notranslate"><span class="pre">--boundary_mfp</span></code> and now it’s on
+the document.</p></li>
+<li><p>Detailed contribution of <code class="docutils literal notranslate"><span class="pre">kappa</span></code> at each <strong>q</strong>-point and phonon mode is output
+to .hdf5 with the keyword <code class="docutils literal notranslate"><span class="pre">mode_kappa</span></code>.</p></li>
 </ul>
-</div>
-<div class="section" id="changes-in-version-0-8-11">
+</section>
+<section id="changes-in-version-0-8-11">
 <h2>Changes in version 0.8.11<a class="headerlink" href="#changes-in-version-0-8-11" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>A new option of <code class="docutils literal notranslate"><span class="pre">--cutoff_mfp</span></code> for including effective boundary
-mean free path.</p></li>
+<li><p>A new option of <code class="docutils literal notranslate"><span class="pre">--cutoff_mfp</span></code> for including effective boundary mean free
+path.</p></li>
 <li><p>The option name <code class="docutils literal notranslate"><span class="pre">--cutfc3</span></code> is changed to <code class="docutils literal notranslate"><span class="pre">--cutoff_fc3</span></code>.</p></li>
 <li><p>The option name <code class="docutils literal notranslate"><span class="pre">--cutpair</span></code> is changed to <code class="docutils literal notranslate"><span class="pre">--cutoff_pair</span></code>.</p></li>
 <li><p>A new option <code class="docutils literal notranslate"><span class="pre">--ga</span></code> is created.</p></li>
 <li><p>Fix spectrum plot of joint dos and imaginary part of self energy</p></li>
 </ul>
-</div>
-<div class="section" id="changes-in-version-0-8-10">
+</section>
+<section id="changes-in-version-0-8-10">
 <h2>Changes in version 0.8.10<a class="headerlink" href="#changes-in-version-0-8-10" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Different supercell size of fc2 from fc3 can be specified using
-<code class="docutils literal notranslate"><span class="pre">--dim_fc2</span></code> option.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--isotope</span></code> option is implemented. This is used instead of
-<code class="docutils literal notranslate"><span class="pre">--mass_variances</span></code> option without specifying the values. Mass
-variance parameters are read from database.</p></li>
+<li><p>Different supercell size of fc2 from fc3 can be specified using <code class="docutils literal notranslate"><span class="pre">--dim_fc2</span></code>
+option.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--isotope</span></code> option is implemented. This is used instead of <code class="docutils literal notranslate"><span class="pre">--mass_variances</span></code>
+option without specifying the values. Mass variance parameters are read from
+database.</p></li>
 </ul>
-</div>
-<div class="section" id="changes-in-version-0-8-2">
+</section>
+<section id="changes-in-version-0-8-2">
 <h2>Changes in version 0.8.2<a class="headerlink" href="#changes-in-version-0-8-2" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Phono3py python interface is rewritten and a lot of changes are
-introduced.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">FORCES_SECOND</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_THIRD</span></code> are no more used. Instead just
-one file of <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> is used. Now <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> is generated
-by <code class="docutils literal notranslate"><span class="pre">--cf3</span></code> option and the backward compatibility is simple: <code class="docutils literal notranslate"><span class="pre">cat</span> <span class="pre">FORCES_SECOND</span> <span class="pre">FORCES_THIRD</span> <span class="pre">&gt;</span> <span class="pre">FORCES_FC3</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--multiple_sigmas</span></code> is removed. The same behavior is achieved by
-<code class="docutils literal notranslate"><span class="pre">--sigma</span></code>.</p></li>
+<li><p>Phono3py python interface is rewritten and a lot of changes are introduced.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FORCES_SECOND</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_THIRD</span></code> are no more used. Instead just one file of
+<code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> is used. Now <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> is generated by <code class="docutils literal notranslate"><span class="pre">--cf3</span></code> option and the
+backward compatibility is simple:
+<code class="docutils literal notranslate"><span class="pre">cat</span> <span class="pre">FORCES_SECOND</span> <span class="pre">FORCES_THIRD</span> <span class="pre">&gt;</span> <span class="pre">FORCES_FC3</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--multiple_sigmas</span></code> is removed. The same behavior is achieved by <code class="docutils literal notranslate"><span class="pre">--sigma</span></code>.</p></li>
 </ul>
-</div>
-<div class="section" id="changes-in-version-0-8-0">
+</section>
+<section id="changes-in-version-0-8-0">
 <h2>Changes in version 0.8.0<a class="headerlink" href="#changes-in-version-0-8-0" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">--q_direction</span></code> didn’t work. Fix it.</p></li>
-<li><p>Implementation of tetrahedron method whcih is activated by
-<code class="docutils literal notranslate"><span class="pre">--thm</span></code>.</p></li>
+<li><p>Implementation of tetrahedron method whcih is activated by <code class="docutils literal notranslate"><span class="pre">--thm</span></code>.</p></li>
 <li><p>Grid addresses are written out by <code class="docutils literal notranslate"><span class="pre">--wgp</span></code> option.</p></li>
 </ul>
-</div>
-<div class="section" id="changes-in-version-0-7-6">
+</section>
+<section id="changes-in-version-0-7-6">
 <h2>Changes in version 0.7.6<a class="headerlink" href="#changes-in-version-0-7-6" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>Cut-off distance for fc3 is implemented. This is activated by
-<code class="docutils literal notranslate"><span class="pre">--cutfc3</span></code> option. FC3 elements where any atomic pair has larger
-distance than cut-off distance are set zero.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--cutpair</span></code> works only when creating displacements. The cut-off
-pair distance is written into <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> and FC3 is created
-from <code class="docutils literal notranslate"><span class="pre">FORCES_THIRD</span></code> with this information. Usually sets of pair
-displacements are more redundant than that needed for creating fc3
-if index permutation symmetry is considered. Therefore using index
-permutation symmetry, some elements of fc3 can be recovered even if
-some of supercell force calculations are missing. In paticular, all
-pair distances among triplet atoms are larger than cutoff pair
-distance, any fc3 elements are not recovered, i.e., the element will
-be zero.</p></li>
+<li><p>Cut-off distance for fc3 is implemented. This is activated by <code class="docutils literal notranslate"><span class="pre">--cutfc3</span></code>
+option. FC3 elements where any atomic pair has larger distance than cut-off
+distance are set zero.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--cutpair</span></code> works only when creating displacements. The cut-off pair distance
+is written into <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code> and FC3 is created from <code class="docutils literal notranslate"><span class="pre">FORCES_THIRD</span></code> with
+this information. Usually sets of pair displacements are more redundant than
+that needed for creating fc3 if index permutation symmetry is considered.
+Therefore using index permutation symmetry, some elements of fc3 can be
+recovered even if some of supercell force calculations are missing. In
+paticular, all pair distances among triplet atoms are larger than cutoff pair
+distance, any fc3 elements are not recovered, i.e., the element will be zero.</p></li>
 </ul>
-</div>
-<div class="section" id="changes-in-version-0-7-2">
+</section>
+<section id="changes-in-version-0-7-2">
 <h2>Changes in version 0.7.2<a class="headerlink" href="#changes-in-version-0-7-2" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Default displacement distance is changed to 0.03.</p></li>
 <li><p>Files names of displacement supercells now have 5 digits numbering,
 <code class="docutils literal notranslate"><span class="pre">POSCAR-xxxxx</span></code>.</p></li>
-<li><p>Cutoff distance between pair displacements is implemented. This is
-triggered by <code class="docutils literal notranslate"><span class="pre">--cutpair</span></code> option. This option works only for
-calculating atomic forces in supercells with configurations of pairs
-of displacements.</p></li>
+<li><p>Cutoff distance between pair displacements is implemented. This is triggered
+by <code class="docutils literal notranslate"><span class="pre">--cutpair</span></code> option. This option works only for calculating atomic forces in
+supercells with configurations of pairs of displacements.</p></li>
 </ul>
-</div>
-<div class="section" id="changes-in-version-0-7-1">
+</section>
+<section id="changes-in-version-0-7-1">
 <h2>Changes in version 0.7.1<a class="headerlink" href="#changes-in-version-0-7-1" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>It is changed to sampling q-points in Brillouin zone. Previously
-q-points are sampled in reciprocal primitive lattice. Usually this
-change affects very little to the result.</p></li>
-<li><p>q-points of phonon triplets are more carefully sampled when a
-q-point is on Brillouin zone boundary. Usually this
-change affects very little to the result.</p></li>
+<li><p>It is changed to sampling q-points in Brillouin zone. Previously q-points are
+sampled in reciprocal primitive lattice. Usually this change affects very
+little to the result.</p></li>
+<li><p>q-points of phonon triplets are more carefully sampled when a q-point is on
+Brillouin zone boundary. Usually this change affects very little to the
+result.</p></li>
 <li><p>Isotope effect to thermal conductivity is included.</p></li>
 </ul>
-</div>
-<div class="section" id="changes-in-version-0-6-0">
+</section>
+<section id="changes-in-version-0-6-0">
 <h2>Changes in version 0.6.0<a class="headerlink" href="#changes-in-version-0-6-0" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">disp.yaml</span></code> is renamed to <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code>. Old calculations with
-<code class="docutils literal notranslate"><span class="pre">disp.yaml</span></code> can be used without any problem just by changing the
-file name.</p></li>
-<li><p>Group velocity is calculated from analytical derivative of dynamical
-matrix.</p></li>
-<li><p>Group velocities at degenerate phonon modes are better handled.
-This improves the accuracy of group velocity and thus for thermal
-conductivity.</p></li>
-<li><p>Re-implementation of third-order force constants calculation from
-supercell forces, which makes the calculation much faster</p></li>
-<li><p>When any phonon of triplets can be on the Brillouin zone boundary, i.e.,
-when a mesh number is an even number, it is more carefully treated.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">disp.yaml</span></code> is renamed to <code class="docutils literal notranslate"><span class="pre">disp_fc3.yaml</span></code>. Old calculations with <code class="docutils literal notranslate"><span class="pre">disp.yaml</span></code>
+can be used without any problem just by changing the file name.</p></li>
+<li><p>Group velocity is calculated from analytical derivative of dynamical matrix.</p></li>
+<li><p>Group velocities at degenerate phonon modes are better handled. This improves
+the accuracy of group velocity and thus for thermal conductivity.</p></li>
+<li><p>Re-implementation of third-order force constants calculation from supercell
+forces, which makes the calculation much faster</p></li>
+<li><p>When any phonon of triplets can be on the Brillouin zone boundary, i.e., when
+a mesh number is an even number, it is more carefully treated.</p></li>
 </ul>
-</div>
-</div>
+</section>
+</section>
 
 
               </div>
