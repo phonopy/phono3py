@@ -330,6 +330,3 @@ Using `--pinv-solver=[number]`, one of the following solver is chosen:
    LAPACKE is not integrated.
 5. Scipy's `dsyevd`: Similar to solver (2), this solver should be used
    carefully.
-
-The solver choices other than `--pinv-solver=1` and `--pinv-solver=4` are
-dangerous and not recommend. They exist just for the tests.
