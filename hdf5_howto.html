@@ -4,8 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>How to read the results stored in hdf5 files &#8212; Phono3py v.2.1.0</title>
     
   <link href="_static/css/theme.css" rel="stylesheet" />
@@ -23,18 +22,18 @@
       
 
     
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.acff12b8f9c144ce68a297486a2fa670.css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" type="text/css" />
     
   <link rel="preload" as="script" href="_static/js/index.1c5a1a01449ed65a7b51.js">
 
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"processClass": "tex2jax_process|mathjax_process|math|output_area"}})</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Auxiliary tools" href="auxiliary-tools.html" />
@@ -58,13 +57,14 @@
     <a class="navbar-brand text-wrap" href="index.html">
       
       
+      
       <h1 class="site-logo" id="site-title">Phono3py v.2.1.0</h1>
       
     </a>
 </div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
   <i class="icon fas fa-search"></i>
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item active">
         <ul class="current nav bd-sidenav">
  <li class="toctree-l1">
@@ -233,7 +233,7 @@
             <div class="tocsection onthispage pt-5 pb-3">
                 <i class="fas fa-list"></i> Contents
             </div>
-            <nav id="bd-toc-nav">
+            <nav id="bd-toc-nav" aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#how-to-use-hdf5-python-library">
@@ -339,7 +339,7 @@
         
               <div>
                 
-  <section class="tex2jax_ignore mathjax_ignore" id="how-to-read-the-results-stored-in-hdf5-files">
+  <div class="tex2jax_ignore mathjax_ignore section" id="how-to-read-the-results-stored-in-hdf5-files">
 <span id="hdf5-howto"></span><h1>How to read the results stored in hdf5 files<a class="headerlink" href="#how-to-read-the-results-stored-in-hdf5-files" title="Permalink to this headline">¶</a></h1>
 <div class="contents local topic" id="contents">
 <ul class="simple">
@@ -365,7 +365,7 @@
 <li><p><a class="reference internal" href="#how-to-know-grid-point-index-number-corresponding-to-grid-address" id="id17">How to know grid point index number corresponding to grid address</a></p></li>
 </ul>
 </div>
-<section id="how-to-use-hdf5-python-library">
+<div class="section" id="how-to-use-hdf5-python-library">
 <h2><a class="toc-backref" href="#id1">How to use HDF5 python library</a><a class="headerlink" href="#how-to-use-hdf5-python-library" title="Permalink to this headline">¶</a></h2>
 <p>It is assumed that <code class="docutils literal notranslate"><span class="pre">python-h5py</span></code> is installed on the computer you
 interactively use. In the following, how to see the contents of
@@ -448,8 +448,8 @@ In <span class="o">[</span><span class="m">11</span><span class="o">]</span>: <s
 In <span class="o">[</span><span class="m">12</span><span class="o">]</span>: <span class="nv">lifetime</span> <span class="o">=</span> np.where<span class="o">(</span>g &gt; <span class="m">0</span>, <span class="m">1</span>.0 / <span class="o">(</span><span class="m">2</span> * <span class="m">2</span> * np.pi * g<span class="o">)</span>, <span class="m">0</span><span class="o">)</span>
 </pre></div>
 </div>
-</section>
-<section id="details-of-kappa-hdf5-file">
+</div>
+<div class="section" id="details-of-kappa-hdf5-file">
 <span id="kappa-hdf5-file"></span><h2><a class="toc-backref" href="#id2">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a><a class="headerlink" href="#details-of-kappa-hdf5-file" title="Permalink to this headline">¶</a></h2>
 <p>Files name, e.g. <code class="docutils literal notranslate"><span class="pre">kappa-m323220.hdf5</span></code>, is determined by some
 specific options. <code class="docutils literal notranslate"><span class="pre">mxxx</span></code>, show the numbers of sampling
@@ -461,19 +461,19 @@ example <code class="docutils literal notranslate"><span class="pre">-o</span> <
 memorize the option <code class="docutils literal notranslate"><span class="pre">--nac</span></code> was used.</p>
 <p>Currently <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file (not for the specific grid points)
 contains the properties shown below.</p>
-<section id="mesh">
+<div class="section" id="mesh">
 <h3><a class="toc-backref" href="#id3">mesh</a><a class="headerlink" href="#mesh" title="Permalink to this headline">¶</a></h3>
 <p>(Versions 1.10.11 or later)</p>
 <p>The numbers of mesh points for reciprocal space sampling along
 reciprocal axes, <span class="math notranslate nohighlight">\(a^*, b^*, c^*\)</span>.</p>
-</section>
-<section id="frequency">
+</div>
+<div class="section" id="frequency">
 <h3><a class="toc-backref" href="#id4">frequency</a><a class="headerlink" href="#frequency" title="Permalink to this headline">¶</a></h3>
 <p>Phonon frequencies. The physical unit is THz, where THz
 is in the ordinal frequency not the angular frequency.</p>
 <p>The array shape is (irreducible q-point, phonon band).</p>
-</section>
-<section id="gamma">
+</div>
+<div class="section" id="gamma">
 <span id="kappa-hdf5-file-gamma"></span><h3><a class="toc-backref" href="#id5">gamma</a><a class="headerlink" href="#gamma" title="Permalink to this headline">¶</a></h3>
 <p>Imaginary part of self energy. The physical unit is THz, where THz
 is in the ordinal frequency not the angular frequency.</p>
@@ -498,21 +498,21 @@ In <span class="o">[</span><span class="m">10</span><span class="o">]</span>: <s
 In <span class="o">[</span><span class="m">11</span><span class="o">]</span>: <span class="nv">lifetime</span> <span class="o">=</span> np.where<span class="o">(</span>g &gt; <span class="m">0</span>, <span class="m">1</span>.0 / <span class="o">(</span><span class="m">2</span> * <span class="m">2</span> * np.pi * g<span class="o">)</span>, <span class="m">0</span><span class="o">)</span>
 </pre></div>
 </div>
-</section>
-<section id="gamma-isotope">
+</div>
+<div class="section" id="gamma-isotope">
 <h3><a class="toc-backref" href="#id6">gamma_isotope</a><a class="headerlink" href="#gamma-isotope" title="Permalink to this headline">¶</a></h3>
 <p>Isotope scattering of <span class="math notranslate nohighlight">\(1/2\tau^\mathrm{iso}_\lambda\)</span>.
 The physical unit is same as that of gamma.</p>
 <p>The array shape is same as that of frequency.</p>
-</section>
-<section id="group-velocity">
+</div>
+<div class="section" id="group-velocity">
 <h3><a class="toc-backref" href="#id7">group_velocity</a><a class="headerlink" href="#group-velocity" title="Permalink to this headline">¶</a></h3>
 <p>Phonon group velocity, <span class="math notranslate nohighlight">\(\nabla_\mathbf{q}\omega_\lambda\)</span>. The
 physical unit is <span class="math notranslate nohighlight">\(\text{THz}\cdot\text{Angstrom}\)</span>, where THz
 is in the ordinal frequency not the angular frequency.</p>
 <p>The array shape is (irreducible q-point, phonon band, 3 = Cartesian coordinates).</p>
-</section>
-<section id="heat-capacity">
+</div>
+<div class="section" id="heat-capacity">
 <h3><a class="toc-backref" href="#id8">heat_capacity</a><a class="headerlink" href="#heat-capacity" title="Permalink to this headline">¶</a></h3>
 <p>Mode-heat-capacity defined by</p>
 <div class="math notranslate nohighlight">
@@ -524,13 +524,13 @@ T)}{[\exp(\hbar\omega_\lambda/k_\mathrm{B} T)-1]^2}.
 \]</div>
 <p>The physical unit is eV/K.</p>
 <p>The array shape is (temperature, irreducible q-point, phonon band).</p>
-</section>
-<section id="kappa">
+</div>
+<div class="section" id="kappa">
 <span id="output-kappa"></span><h3><a class="toc-backref" href="#id9">kappa</a><a class="headerlink" href="#kappa" title="Permalink to this headline">¶</a></h3>
 <p>Thermal conductivity tensor. The physical unit is W/m-K.</p>
 <p>The array shape is (temperature, 6 = (xx, yy, zz, yz, xz, xy)).</p>
-</section>
-<section id="mode-kappa">
+</div>
+<div class="section" id="mode-kappa">
 <span id="output-mode-kappa"></span><h3><a class="toc-backref" href="#id10">mode-kappa</a><a class="headerlink" href="#mode-kappa" title="Permalink to this headline">¶</a></h3>
 <p>Thermal conductivity tensors at k-stars (<span class="math notranslate nohighlight">\({}^*\mathbf{k}\)</span>):</p>
 <div class="math notranslate nohighlight">
@@ -551,8 +551,8 @@ equivalent q-points by crystallographic point group and time reversal
 symmetry.</p>
 <p>The array shape is (temperature, irreducible q-point, phonon band, 6 =
 (xx, yy, zz, yz, xz, xy)).</p>
-</section>
-<section id="gv-by-gv">
+</div>
+<div class="section" id="gv-by-gv">
 <h3><a class="toc-backref" href="#id11">gv_by_gv</a><a class="headerlink" href="#gv-by-gv" title="Permalink to this headline">¶</a></h3>
 <p>Outer products of group velocities for k-stars
 (<span class="math notranslate nohighlight">\({}^*\mathbf{k}\)</span>) for each irreducible q-point and phonon band
@@ -567,24 +567,24 @@ symmetry.</p>
 ordinal frequency not the angular frequency.</p>
 <p>The array shape is (irreducible q-point, phonon band, 6 = (xx, yy, zz,
 yz, xz, xy)).</p>
-</section>
-<section id="q-point">
+</div>
+<div class="section" id="q-point">
 <h3><a class="toc-backref" href="#id12">q-point</a><a class="headerlink" href="#q-point" title="Permalink to this headline">¶</a></h3>
 <p>Irreducible q-points in reduced coordinates.</p>
 <p>The array shape is (irreducible q-point, 3 = reduced
 coordinates in reciprocal space).</p>
-</section>
-<section id="temperature">
+</div>
+<div class="section" id="temperature">
 <h3><a class="toc-backref" href="#id13">temperature</a><a class="headerlink" href="#temperature" title="Permalink to this headline">¶</a></h3>
 <p>Temperatures where thermal conductivities are calculated. The physical
 unit is K.</p>
-</section>
-<section id="weight">
+</div>
+<div class="section" id="weight">
 <h3><a class="toc-backref" href="#id14">weight</a><a class="headerlink" href="#weight" title="Permalink to this headline">¶</a></h3>
 <p>Weights corresponding to irreducible q-points. Sum of weights equals to
 the number of mesh grid points.</p>
-</section>
-<section id="ave-pp">
+</div>
+<div class="section" id="ave-pp">
 <h3><a class="toc-backref" href="#id15">ave_pp</a><a class="headerlink" href="#ave-pp" title="Permalink to this headline">¶</a></h3>
 <p>Averaged phonon-phonon interaction in <span class="math notranslate nohighlight">\(\text{eV}^2,
 \)</span>P_{\mathbf{q}j}$:</p>
@@ -596,8 +596,8 @@ P_{\mathbf{q}j} = \frac{1}{(3n_\mathrm{a})^2} \sum_{\lambda'\lambda''}
 <p>This is not going to be calculated in the RTA thermal coductivity
 calculation mode by default. To calculate this, <code class="docutils literal notranslate"><span class="pre">--full_pp</span></code> option
 has to be specified (see <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full-pp (FULL_PP = .TRUE.)</span></a>).</p>
-</section>
-<section id="kappa-unit-conversion">
+</div>
+<div class="section" id="kappa-unit-conversion">
 <h3><a class="toc-backref" href="#id16">kappa_unit_conversion</a><a class="headerlink" href="#kappa-unit-conversion" title="Permalink to this headline">¶</a></h3>
 <p>This is used to convert the physical unit of lattice thermal
 conductivity made of <code class="docutils literal notranslate"><span class="pre">heat_capacity</span></code>, <code class="docutils literal notranslate"><span class="pre">group_velocity</span></code>, and
@@ -635,9 +635,9 @@ array<span class="o">([</span>  <span class="m">1</span>.02050201e+03,   <span c
          <span class="m">4</span>.40486209e-15,   <span class="m">0</span>.00000000e+00,  -4.40486209e-15<span class="o">])</span>
 </pre></div>
 </div>
-</section>
-</section>
-<section id="how-to-know-grid-point-index-number-corresponding-to-grid-address">
+</div>
+</div>
+<div class="section" id="how-to-know-grid-point-index-number-corresponding-to-grid-address">
 <h2><a class="toc-backref" href="#id17">How to know grid point index number corresponding to grid address</a><a class="headerlink" href="#how-to-know-grid-point-index-number-corresponding-to-grid-address" title="Permalink to this headline">¶</a></h2>
 <p>Runngin with <code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code>, hdf5 files are written out with file names
 such as <code class="docutils literal notranslate"><span class="pre">kappa-m202020-g4448.hdf5</span></code>. You may want to know the grid point
@@ -663,23 +663,43 @@ In <span class="o">[</span><span class="m">7</span><span class="o">]</span>: ph3
 Out<span class="o">[</span><span class="m">7</span><span class="o">]</span>: <span class="m">4200</span>
 </pre></div>
 </div>
-</section>
-</section>
+</div>
+</div>
 
 
               </div>
               
         
-        <div class='prev-next-bottom'>
             
-    <a class='left-prev' id="prev-link" href="output-files.html" title="previous page">Output files</a>
-    <a class='right-next' id="next-link" href="auxiliary-tools.html" title="next page">Auxiliary tools</a>
 
-        </div>
+
+
+<div class='prev-next-bottom'>
+    
+    <div id="prev">
+        <a class="left-prev" href="output-files.html" title="previous page">
+            <i class="prevnext-label fas fa-angle-left"></i>
+            <div class="prevnext-info">
+                <p class="prevnext-label">previous</p>
+                <p class="prevnext-title">Output files</p>
+            </div>
+        </a>
+    </div>
+     <div id="next">
+        <a class="right-next" href="auxiliary-tools.html" title="next page">
+            <div class="prevnext-info">
+                <p class="prevnext-label">next</p>
+                <p class="prevnext-title">Auxiliary tools</p>
+            </div>
+            <i class="prevnext-label fas fa-angle-right"></i>
+        </a>
+     </div>
+
+</div>
         
         </div>
     </div>
-    <footer class="footer mt-5 mt-md-0">
+    <footer class="footer">
     <div class="container">
       <p>
         

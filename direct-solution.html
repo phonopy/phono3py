@@ -4,8 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Direct solution of linearized phonon Boltzmann equation &#8212; Phono3py v.2.1.0</title>
     
   <link href="_static/css/theme.css" rel="stylesheet" />
@@ -23,18 +22,18 @@
       
 
     
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.acff12b8f9c144ce68a297486a2fa670.css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" type="text/css" />
     
   <link rel="preload" as="script" href="_static/js/index.1c5a1a01449ed65a7b51.js">
 
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"processClass": "tex2jax_process|mathjax_process|math|output_area"}})</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Workload distribution" href="workload-distribution.html" />
@@ -58,13 +57,14 @@
     <a class="navbar-brand text-wrap" href="index.html">
       
       
+      
       <h1 class="site-logo" id="site-title">Phono3py v.2.1.0</h1>
       
     </a>
 </div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
   <i class="icon fas fa-search"></i>
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item active">
         <ul class="current nav bd-sidenav">
  <li class="toctree-l1">
@@ -233,7 +233,7 @@
             <div class="tocsection onthispage pt-5 pb-3">
                 <i class="fas fa-list"></i> Contents
             </div>
-            <nav id="bd-toc-nav">
+            <nav id="bd-toc-nav" aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#how-to-use">
@@ -312,7 +312,7 @@
         
               <div>
                 
-  <section class="tex2jax_ignore mathjax_ignore" id="direct-solution-of-linearized-phonon-boltzmann-equation">
+  <div class="tex2jax_ignore mathjax_ignore section" id="direct-solution-of-linearized-phonon-boltzmann-equation">
 <span id="direct-solution"></span><h1>Direct solution of linearized phonon Boltzmann equation<a class="headerlink" href="#direct-solution-of-linearized-phonon-boltzmann-equation" title="Permalink to this headline">¶</a></h1>
 <p>This page explains how to use the direct solution of LBTE by
 <a class="reference external" href="https://doi.org/10.1103/PhysRevLett.110.265506">L. Chaput, Phys. Rev. Lett. 110, 265506 (2013)</a>
@@ -337,7 +337,7 @@
 <li><p><a class="reference internal" href="#solver-choice-for-diagonalization" id="id10">Solver choice for diagonalization</a></p></li>
 </ul>
 </div>
-<section id="how-to-use">
+<div class="section" id="how-to-use">
 <h2><a class="toc-backref" href="#id1">How to use</a><a class="headerlink" href="#how-to-use" title="Permalink to this headline">¶</a></h2>
 <p>As written in the following sections, this calculation requires large memory
 space. When running multiple temperature points, simply the memory space needed
@@ -364,8 +364,8 @@ Eigenvalues of collision matrix were written into <span class="s2">&quot;coleigs
 ...
 </pre></div>
 </div>
-</section>
-<section id="memory-usage">
+</div>
+<div class="section" id="memory-usage">
 <h2><a class="toc-backref" href="#id2">Memory usage</a><a class="headerlink" href="#memory-usage" title="Permalink to this headline">¶</a></h2>
 <p>The direct solution of LBTE needs diagonalization of a large collision matrix,
 which requires large memory space. This is the largest limitation of using this
@@ -403,8 +403,8 @@ interaction strengths is shown such as</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py-load --mesh <span class="m">40</span> <span class="m">40</span> <span class="m">40</span> --lbte --stp
 </pre></div>
 </div>
-</section>
-<section id="work-load-distribution">
+</div>
+<div class="section" id="work-load-distribution">
 <h2><a class="toc-backref" href="#id3">Work load distribution</a><a class="headerlink" href="#work-load-distribution" title="Permalink to this headline">¶</a></h2>
 <p>The other difficulty compared with RTA is the workload distribution. Currently
 there are two ways to distribute the calculation: (1) Collision matrix is
@@ -416,7 +416,7 @@ points and optionally band indices. The data computed on each computing node are
 stored in an hdf5 file. Increasing the calculation size, e.g., larger mesh
 numbers or larger number of atoms in the primitive cell, large files are
 created.</p>
-<section id="distribution-of-collision-matrix">
+<div class="section" id="distribution-of-collision-matrix">
 <span id="distribution-colmat"></span><h3><a class="toc-backref" href="#id4">Distribution of collision matrix</a><a class="headerlink" href="#distribution-of-collision-matrix" title="Permalink to this headline">¶</a></h3>
 <p>A full collision matrix is divided into pieces at grid points of irreducible
 part of Brillouin zone. Each piece is calculated independently from the other
@@ -468,8 +468,8 @@ collision matrix calculation (see also <a class="reference internal" href="workl
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">--read-collision</span> <span class="pre">0</span></code> indicates to read the first result in the list of
 temperatures by <code class="docutils literal notranslate"><span class="pre">--ts</span></code> option, i.e., 300K in this case.</p>
-</section>
-<section id="distribution-of-phonon-phonon-interaction-strengths">
+</div>
+<div class="section" id="distribution-of-phonon-phonon-interaction-strengths">
 <h3><a class="toc-backref" href="#id5">Distribution of phonon-phonon interaction strengths</a><a class="headerlink" href="#distribution-of-phonon-phonon-interaction-strengths" title="Permalink to this headline">¶</a></h3>
 <p>The distribution of pieces of collision matrix is straightforward and is
 recommended to use if the number of temperature points is small. However
@@ -524,9 +524,9 @@ compute collision matrix and lattice thermal conductivity at a temperature by</p
 </div>
 <p>This last command is repeated at different temperatures to obtain the properties
 at multiple temperatures.</p>
-</section>
-</section>
-<section id="cutoff-parameter-of-pseudo-inversion">
+</div>
+</div>
+<div class="section" id="cutoff-parameter-of-pseudo-inversion">
 <span id="diagonzalization-solver"></span><h2><a class="toc-backref" href="#id6">Cutoff parameter of pseudo inversion</a><a class="headerlink" href="#cutoff-parameter-of-pseudo-inversion" title="Permalink to this headline">¶</a></h2>
 <p>To achieve a pseudo inversion, a cutoff parameter is used to find null space,
 i.e., to select the nearly zero eigenvalues. The default cutoff value is <code class="docutils literal notranslate"><span class="pre">1e-8</span></code>,
@@ -543,10 +543,9 @@ symmetrized or non-symmetrized). The eigenvalues are plotted using
 </div>
 <p>It is assumed that only one set of eigenvalues at a temperature point is
 contained.</p>
-<figure class="align-default" id="coleigplot">
+<div class="figure align-default" id="coleigplot">
 <a class="reference internal image-reference" href="_images/Si-coleigplot.png"><img alt="_images/Si-coleigplot.png" src="_images/Si-coleigplot.png" style="width: 50%;" /></a>
-<figcaption>
-<p><span class="caption-text">Eigenvalues are plotted in log scale (Si-PBEsol exmaple with
+<p class="caption"><span class="caption-text">Eigenvalues are plotted in log scale (Si-PBEsol exmaple with
 15x15x15 mesh). The number in x-axis is just the index where each
 eigenvalue is stored. Normally the eigenvalues are stored ascending
 order. The bule points show the positive values, and
@@ -556,16 +555,15 @@ can see the gap between <span class="math notranslate nohighlight">\(10^{-4}\)</
 is a good sign. The values whose absolute values are smaller than
 <span class="math notranslate nohighlight">\(10^{-8}\)</span> are treated as 0 and those solutions are considered
 as null spaces.</span><a class="headerlink" href="#coleigplot" title="Permalink to this image">¶</a></p>
-</figcaption>
-</figure>
-</section>
-<section id="installation-of-diagonalization-solvers-with-multithreaded-blas">
+</div>
+</div>
+<div class="section" id="installation-of-diagonalization-solvers-with-multithreaded-blas">
 <h2><a class="toc-backref" href="#id7">Installation of diagonalization solvers with multithreaded BLAS</a><a class="headerlink" href="#installation-of-diagonalization-solvers-with-multithreaded-blas" title="Permalink to this headline">¶</a></h2>
 <p>Multithreaded BLAS is recommended to use for the calculation of the direct
 solution of LBTE since the diagonalization of the collision matrix is
 computationally demanding. A few examples of how to install multithreded BLAS
 libraries are presented below.</p>
-<section id="mkl-linked-scipy">
+<div class="section" id="mkl-linked-scipy">
 <h3><a class="toc-backref" href="#id8">MKL linked scipy</a><a class="headerlink" href="#mkl-linked-scipy" title="Permalink to this headline">¶</a></h3>
 <p>Scipy (also numpy) has an interface to LAPACK dsyev
 (<code class="docutils literal notranslate"><span class="pre">scipy.linalg.lapack.dsyev</span></code>). An MKL LAPACK linked scipy (also numpy) gives
@@ -573,28 +571,28 @@ very good computing performance and is easily obtained using the anaconda
 package manager. In this choice, usual installation of LAPACKE is necessary for
 running <code class="docutils literal notranslate"><span class="pre">dgesvd</span></code> and <code class="docutils literal notranslate"><span class="pre">zheev</span></code>. When using anaconda, installing OpenBLAS is the
 easiest way to do. See <a class="reference internal" href="install.html#install-openblas-lapacke"><span class="std std-ref">OpenBLAS provided by conda (with multithread BLAS)</span></a></p>
-</section>
-<section id="openblas-or-mkl-via-lapacke">
+</div>
+<div class="section" id="openblas-or-mkl-via-lapacke">
 <h3><a class="toc-backref" href="#id9">OpenBLAS or MKL via LAPACKE</a><a class="headerlink" href="#openblas-or-mkl-via-lapacke" title="Permalink to this headline">¶</a></h3>
 <p>Using LAPACKE via python C-API is implemented. By this, phono3py can use LAPACK
 dsyev. This uses smaller memory space than using MKL linked scipy. Practically
 there are two choices, OpenBLAS and MKL. For MKL, proper installatin of the MKL
 package is necessary. The MKL library installed obtained from anaconda can not
 be used.</p>
-<section id="openblas">
+<div class="section" id="openblas">
 <h4>OpenBLAS<a class="headerlink" href="#openblas" title="Permalink to this headline">¶</a></h4>
 <p>Use of OpenBLAS is an easy choice if the anaconda package is used. See
 <a class="reference internal" href="install.html#install-openblas-lapacke"><span class="std std-ref">OpenBLAS provided by conda (with multithread BLAS)</span></a>.</p>
-</section>
-<section id="mkl">
+</div>
+<div class="section" id="mkl">
 <h4>MKL<a class="headerlink" href="#mkl" title="Permalink to this headline">¶</a></h4>
 <p>The BLAS multithread performance may be better in that in MKL. Using MKL-LAPACK
 via MKL-LAPACKE via python C-API is also implemented if the link is succeeded.
 See <a class="reference internal" href="install.html#install-mkl-lapacke"><span class="std std-ref">MKL LAPACKE (with multithread BLAS)</span></a>.</p>
-</section>
-</section>
-</section>
-<section id="solver-choice-for-diagonalization">
+</div>
+</div>
+</div>
+<div class="section" id="solver-choice-for-diagonalization">
 <h2><a class="toc-backref" href="#id10">Solver choice for diagonalization</a><a class="headerlink" href="#solver-choice-for-diagonalization" title="Permalink to this headline">¶</a></h2>
 <p>For larger systems, diagonalization of collision matrix takes longest time and
 requires large memory space. Phono3py relies on LAPACK for the diagonalization
@@ -623,23 +621,43 @@ carefully.</p></li>
 </ol>
 <p>The solver choices other than <code class="docutils literal notranslate"><span class="pre">--pinv-solver=1</span></code> and <code class="docutils literal notranslate"><span class="pre">--pinv-solver=4</span></code> are
 dangerous and not recommend. They exist just for the tests.</p>
-</section>
-</section>
+</div>
+</div>
 
 
               </div>
               
         
-        <div class='prev-next-bottom'>
             
-    <a class='left-prev' id="prev-link" href="auxiliary-tools.html" title="previous page">Auxiliary tools</a>
-    <a class='right-next' id="next-link" href="workload-distribution.html" title="next page">Workload distribution</a>
 
-        </div>
+
+
+<div class='prev-next-bottom'>
+    
+    <div id="prev">
+        <a class="left-prev" href="auxiliary-tools.html" title="previous page">
+            <i class="prevnext-label fas fa-angle-left"></i>
+            <div class="prevnext-info">
+                <p class="prevnext-label">previous</p>
+                <p class="prevnext-title">Auxiliary tools</p>
+            </div>
+        </a>
+    </div>
+     <div id="next">
+        <a class="right-next" href="workload-distribution.html" title="next page">
+            <div class="prevnext-info">
+                <p class="prevnext-label">next</p>
+                <p class="prevnext-title">Workload distribution</p>
+            </div>
+            <i class="prevnext-label fas fa-angle-right"></i>
+        </a>
+     </div>
+
+</div>
         
         </div>
     </div>
-    <footer class="footer mt-5 mt-md-0">
+    <footer class="footer">
     <div class="container">
       <p>
         

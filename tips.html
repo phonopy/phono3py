@@ -4,8 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tips &#8212; Phono3py v.2.1.0</title>
     
   <link href="_static/css/theme.css" rel="stylesheet" />
@@ -23,18 +22,18 @@
       
 
     
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.acff12b8f9c144ce68a297486a2fa670.css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" type="text/css" />
     
   <link rel="preload" as="script" href="_static/js/index.1c5a1a01449ed65a7b51.js">
 
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"processClass": "tex2jax_process|mathjax_process|math|output_area"}})</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="How to cite phono3py" href="citation.html" />
@@ -58,13 +57,14 @@
     <a class="navbar-brand text-wrap" href="index.html">
       
       
+      
       <h1 class="site-logo" id="site-title">Phono3py v.2.1.0</h1>
       
     </a>
 </div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
   <i class="icon fas fa-search"></i>
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item active">
         <ul class="current nav bd-sidenav">
  <li class="toctree-l1">
@@ -233,7 +233,7 @@
             <div class="tocsection onthispage pt-5 pb-3">
                 <i class="fas fa-list"></i> Contents
             </div>
-            <nav id="bd-toc-nav">
+            <nav id="bd-toc-nav" aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#brillouin-zone-summation">
@@ -273,7 +273,7 @@
         
               <div>
                 
-  <section class="tex2jax_ignore mathjax_ignore" id="tips">
+  <div class="tex2jax_ignore mathjax_ignore section" id="tips">
 <span id="id1"></span><h1>Tips<a class="headerlink" href="#tips" title="Permalink to this headline">¶</a></h1>
 <div class="contents local topic" id="contents">
 <ul class="simple">
@@ -287,7 +287,7 @@
 <li><p><a class="reference internal" href="#file-format-compatibility-with-phonopy" id="id6">File format compatibility with phonopy</a></p></li>
 </ul>
 </div>
-<section id="brillouin-zone-summation">
+<div class="section" id="brillouin-zone-summation">
 <span id="brillouinzone-sum"></span><h2><a class="toc-backref" href="#id2">Brillouin zone summation</a><a class="headerlink" href="#brillouin-zone-summation" title="Permalink to this headline">¶</a></h2>
 <p>Brillouin zone (BZ) summations appear at different two points in
 phonon lifetime calculation. First it is used for the Fourier
@@ -328,8 +328,8 @@ parameter strongly depends on materials. For Si example, a
 points) and 0.1 THz smearing value for reciprocal of the volume of an
 atom may be a good starting choice. The tetrahedron method requires no
 such parameter as the smearing width.</p>
-</section>
-<section id="importance-of-numerical-quality-of-force-constants">
+</div>
+<div class="section" id="importance-of-numerical-quality-of-force-constants">
 <h2><a class="toc-backref" href="#id3">Importance of numerical quality of force constants</a><a class="headerlink" href="#importance-of-numerical-quality-of-force-constants" title="Permalink to this headline">¶</a></h2>
 <p>Third-order force constants (fc3) are much weaker to numerical noise
 of a force calculator than second-order force constants
@@ -348,7 +348,7 @@ theory and method to the practical usage is required to obtain
 good results of lattice thermal conductivity calculation.</p>
 <p>In the following, a few things that may be good to know are
 presented.</p>
-<section id="a-practical-way-to-check-lattice-thermal-conductivity-result">
+<div class="section" id="a-practical-way-to-check-lattice-thermal-conductivity-result">
 <h3><a class="toc-backref" href="#id4">A practical way to check lattice thermal conductivity result</a><a class="headerlink" href="#a-practical-way-to-check-lattice-thermal-conductivity-result" title="Permalink to this headline">¶</a></h3>
 <p>Some feeling whether our calculation result is OK or not may be
 obtained by comparing lattice thermal conductivities calculated with
@@ -357,17 +357,17 @@ than twice different, it is better to re-consider about the force
 calculation. In the case of DFT calculations, the choice of input
 settings such as k-point sampling mesh, plane-wave energy cutoff, and
 exchange-correlational potential, etc, should be reconsidered.</p>
-</section>
-<section id="displacement-distance-of-atoms">
+</div>
+<div class="section" id="displacement-distance-of-atoms">
 <h3><a class="toc-backref" href="#id5">Displacement distance of atoms</a><a class="headerlink" href="#displacement-distance-of-atoms" title="Permalink to this headline">¶</a></h3>
 <p>The phono3py default displacement distance is 0.03
 <span class="math notranslate nohighlight">\(\text{Angstrom}\)</span>. In some cases, accurate result may not be obtained
 due to the numerical noise of the force calculator. Usually increasing
 the displacement distance by the <a class="reference internal" href="command-options.html#amplitude-option"><span class="std std-ref">amplitude option</span></a> reduces the numerical noise, but as its drawback
 higher order anharmonicity is involved (renormalized) into fc3 and fc2.</p>
-</section>
-</section>
-<section id="file-format-compatibility-with-phonopy">
+</div>
+</div>
+<div class="section" id="file-format-compatibility-with-phonopy">
 <span id="file-format-compatibility"></span><h2><a class="toc-backref" href="#id6">File format compatibility with phonopy</a><a class="headerlink" href="#file-format-compatibility-with-phonopy" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code> are not
@@ -381,23 +381,43 @@ renamed to <code class="docutils literal notranslate"><span class="pre">force_co
 phonopy and phono3py, depending on the physical unit of force
 constants of calculators, the direct compatibility is not guranteed.</p></li>
 </ul>
-</section>
-</section>
+</div>
+</div>
 
 
               </div>
               
         
-        <div class='prev-next-bottom'>
             
-    <a class='left-prev' id="prev-link" href="external-tools.html" title="previous page">External tools</a>
-    <a class='right-next' id="next-link" href="citation.html" title="next page">How to cite phono3py</a>
 
-        </div>
+
+
+<div class='prev-next-bottom'>
+    
+    <div id="prev">
+        <a class="left-prev" href="external-tools.html" title="previous page">
+            <i class="prevnext-label fas fa-angle-left"></i>
+            <div class="prevnext-info">
+                <p class="prevnext-label">previous</p>
+                <p class="prevnext-title">External tools</p>
+            </div>
+        </a>
+    </div>
+     <div id="next">
+        <a class="right-next" href="citation.html" title="next page">
+            <div class="prevnext-info">
+                <p class="prevnext-label">next</p>
+                <p class="prevnext-title">How to cite phono3py</p>
+            </div>
+            <i class="prevnext-label fas fa-angle-right"></i>
+        </a>
+     </div>
+
+</div>
         
         </div>
     </div>
-    <footer class="footer mt-5 mt-md-0">
+    <footer class="footer">
     <div class="container">
       <p>
         
