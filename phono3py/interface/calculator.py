@@ -76,20 +76,20 @@ def get_additional_info_to_write_supercells(interface_mode, supercell_matrix):
 
 
 def get_additional_info_to_write_fc2_supercells(
-    interface_mode, phonon_supercell_matrix
+    interface_mode, phonon_supercell_matrix, suffix: str = "fc2"
 ):
     """Return additional information to write fc2-supercells for calculators."""
     additional_info = {}
     if interface_mode == "qe":
-        additional_info["pre_filename"] = "supercell_fc2"
+        additional_info["pre_filename"] = "supercell_%s" % suffix
     elif interface_mode == "crystal":
         additional_info["template_file"] = "TEMPLATE"
-        additional_info["pre_filename"] = "supercell_fc2"
+        additional_info["pre_filename"] = "supercell_%s" % suffix
         additional_info["supercell_matrix"] = phonon_supercell_matrix
     elif interface_mode == "abinit":
-        additional_info["pre_filename"] = "supercell_fc2"
+        additional_info["pre_filename"] = "supercell_%s" % suffix
     elif interface_mode == "turbomole":
-        additional_info["pre_filename"] = "supercell_fc2"
+        additional_info["pre_filename"] = "supercell_%s" % suffix
     else:
-        additional_info["pre_filename"] = "POSCAR_FC2"
+        additional_info["pre_filename"] = "POSCAR_%s" % suffix.upper()
     return additional_info
