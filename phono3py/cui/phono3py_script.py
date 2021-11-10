@@ -110,7 +110,11 @@ def print_phono3py():
 
 
 def finalize_phono3py(
-    phono3py, confs, log_level, displacements_mode=False, filename="phono3py.yaml"
+    phono3py: Phono3py,
+    confs,
+    log_level,
+    displacements_mode=False,
+    filename="phono3py.yaml",
 ):
     """Write phono3py.yaml and then exit.
 
