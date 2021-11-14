@@ -134,7 +134,7 @@ class Phono3py:
 
     def __init__(
         self,
-        unitcell,
+        unitcell: PhonopyAtoms,
         supercell_matrix,
         primitive_matrix=None,
         phonon_supercell_matrix=None,
@@ -2447,7 +2447,7 @@ class Phono3py:
                 raise RuntimeError
 
     def _build_phonon_supercells_with_displacements(
-        self, supercell, displacement_dataset
+        self, supercell: PhonopyAtoms, displacement_dataset
     ):
         supercells = []
         magmoms = supercell.magnetic_moments

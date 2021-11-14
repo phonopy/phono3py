@@ -38,6 +38,7 @@ import sys
 import numpy as np
 from phonopy.structure.cells import print_cell
 
+from phono3py import Phono3py
 from phono3py.cui.settings import Phono3pySettings
 
 
@@ -88,15 +89,13 @@ def show_general_settings(
             print("  %s" % v)
 
 
-def show_phono3py_cells(phono3py, settings):
+def show_phono3py_cells(phono3py: Phono3py, settings):
     """Show crystal structures."""
-    symmetry = phono3py.symmetry
     primitive = phono3py.primitive
     supercell = phono3py.supercell
     phonon_primitive = phono3py.phonon_primitive
     phonon_supercell = phono3py.phonon_supercell
 
-    print("Spacegroup: %s" % symmetry.get_international_table())
     print("-" * 30 + " primitive cell " + "-" * 30)
     print_cell(primitive)
     print("-" * 32 + " supercell " + "-" * 33)

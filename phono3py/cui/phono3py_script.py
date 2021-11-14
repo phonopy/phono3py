@@ -47,6 +47,7 @@ from phonopy.cui.phonopy_script import (
     print_error,
     print_error_message,
     print_version,
+    set_magnetic_moments,
     store_nac_params,
 )
 from phonopy.file_IO import is_file_phonopy_yaml, parse_FORCE_SETS, write_FORCE_SETS
@@ -502,8 +503,6 @@ def get_cell_info(settings, cell_filename, symprec, log_level):
         cell_filename=cell_filename,
         chemical_symbols=settings.chemical_symbols,
         phonopy_yaml_cls=Phono3pyYaml,
-        symprec=symprec,
-        return_dict=True,
     )
     if type(cell_info) is str:
         print_error_message(cell_info)
@@ -511,12 +510,10 @@ def get_cell_info(settings, cell_filename, symprec, log_level):
             print_error()
         sys.exit(1)
 
-    # cell_info keys
-    # ('unitcell', 'supercell_matrix', 'primitive_matrix',
-    #  'optional_structure_info', 'interface_mode', 'phonopy_yaml')
+    set_magnetic_moments(cell_info, settings, log_level)
 
     cell_info["phonon_supercell_matrix"] = settings.phonon_supercell_matrix
-    ph3py_yaml = cell_info["phonopy_yaml"]
+    ph3py_yaml: Phono3pyYaml = cell_info["phonopy_yaml"]
     if cell_info["phonon_supercell_matrix"] is None and ph3py_yaml:
         ph_smat = ph3py_yaml.phonon_supercell_matrix
         cell_info["phonon_supercell_matrix"] = ph_smat
@@ -1078,10 +1075,17 @@ def main(**argparse_control):
             output_filename,
         )
 
+        if phono3py.supercell.magnetic_moments is None:
+            print("Spacegroup: %s" % phono3py.symmetry.get_international_table())
+        else:
+            print(
+                "Number of symmetry operations in supercell: %d"
+                % len(phono3py.symmetry.symmetry_operations["rotations"])
+            )
+
     if log_level > 1:
         show_phono3py_cells(phono3py, settings)
     else:
-        print("Spacegroup: %s" % phono3py.symmetry.get_international_table())
         print(
             "Use -v option to watch primitive cell, unit cell, "
             "and supercell structures."
