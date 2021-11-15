@@ -973,7 +973,8 @@ def init_phph_interaction(
 def main(**argparse_control):
     """Phono3py main part of command line interface."""
     # import warnings
-    # warnings.simplefilter('error')
+
+    # warnings.simplefilter("error")
     load_phono3py_yaml = argparse_control.get("load_phono3py_yaml", False)
 
     args, log_level = start_phono3py(**argparse_control)
@@ -1042,6 +1043,14 @@ def main(**argparse_control):
             log_level=log_level,
         )
 
+        if phono3py.supercell.magnetic_moments is None:
+            print("Spacegroup: %s" % phono3py.symmetry.get_international_table())
+        else:
+            print(
+                "Number of symmetry operations in supercell: %d"
+                % len(phono3py.symmetry.symmetry_operations["rotations"])
+            )
+
         finalize_phono3py(
             phono3py,
             confs,
@@ -1085,7 +1094,7 @@ def main(**argparse_control):
 
     if log_level > 1:
         show_phono3py_cells(phono3py, settings)
-    else:
+    elif log_level:
         print(
             "Use -v option to watch primitive cell, unit cell, "
             "and supercell structures."

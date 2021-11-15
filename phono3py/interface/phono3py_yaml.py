@@ -286,7 +286,9 @@ class Phono3pyYaml(PhonopyYaml):
         )
         return lines
 
-    def _displacements_yaml_lines_type1(self, dataset, with_forces=False):
+    def _displacements_yaml_lines_type1(
+        self, dataset, with_forces=False, key="displacements"
+    ):
         """Get YAML lines for type1 phonon_dataset and dataset.
 
         This method override PhonopyYaml._displacements_yaml_lines_type1.

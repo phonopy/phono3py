@@ -2457,16 +2457,15 @@ class Phono3py:
 
         for disp1 in displacement_dataset["first_atoms"]:
             disp_cart1 = disp1["displacement"]
-            positions = supercell.get_positions()
+            positions = supercell.positions
             positions[disp1["number"]] += disp_cart1
             supercells.append(
                 PhonopyAtoms(
                     numbers=numbers,
                     masses=masses,
-                    magmoms=magmoms,
+                    magnetic_moments=magmoms,
                     positions=positions,
                     cell=lattice,
-                    pbc=True,
                 )
             )
 
@@ -2491,17 +2490,16 @@ class Phono3py:
                 else:
                     included = True
                 if included:
-                    positions = self._supercell.get_positions()
+                    positions = self._supercell.positions
                     positions[disp1["number"]] += disp_cart1
                     positions[disp2["number"]] += disp2["displacement"]
                     supercells.append(
                         PhonopyAtoms(
                             numbers=numbers,
                             masses=masses,
-                            magmoms=magmoms,
+                            magnetic_moments=magmoms,
                             positions=positions,
                             cell=lattice,
-                            pbc=True,
                         )
                     )
                 else:
