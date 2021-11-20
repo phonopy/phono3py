@@ -498,7 +498,7 @@ def get_input_output_filenames_from_args(args):
     return input_filename, output_filename
 
 
-def get_cell_info(settings, cell_filename, symprec, log_level):
+def get_cell_info(settings, cell_filename, log_level):
     """Return calculator interface and crystal structure information."""
     cell_info = collect_cell_info(
         supercell_matrix=settings.supercell_matrix,
@@ -508,8 +508,8 @@ def get_cell_info(settings, cell_filename, symprec, log_level):
         chemical_symbols=settings.chemical_symbols,
         phonopy_yaml_cls=Phono3pyYaml,
     )
-    if type(cell_info) is str:
-        print_error_message(cell_info)
+    if "error_message" in cell_info:
+        print_error_message(cell_info["error_message"])
         if log_level > 0:
             print_error()
         sys.exit(1)
@@ -1026,7 +1026,7 @@ def main(**argparse_control):
     else:
         symprec = settings.symmetry_tolerance
 
-    cell_info = get_cell_info(settings, cell_filename, symprec, log_level)
+    cell_info = get_cell_info(settings, cell_filename, log_level)
     unitcell_filename = cell_info["optional_structure_info"][0]
     interface_mode = cell_info["interface_mode"]
     # ph3py_yaml = cell_info['phonopy_yaml']
