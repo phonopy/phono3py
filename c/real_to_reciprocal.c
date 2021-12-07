@@ -138,7 +138,7 @@ static void real_to_reciprocal_openmp(
     for (i = 0; i < num_patom; i++) {
         pre_phase_factor = get_pre_phase_factor(i, q_vecs, svecs, multi_dims,
                                                 multiplicity, p2s_map);
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for private(j, k, l, m, n, fc3_rec_elem)
 #endif
         for (jk = 0; jk < num_patom * num_patom; jk++) {

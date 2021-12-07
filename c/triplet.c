@@ -72,7 +72,7 @@ void tpl_get_integration_weight(
                                   relative_grid_address, tp_type);
     num_band_prod = num_band0 * num_band1 * num_band2;
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for if (openmp_per_triplets)
 #endif
     for (i = 0; i < num_triplets; i++) {
@@ -98,7 +98,7 @@ void tpl_get_integration_weight_with_sigma(
     num_band_prod = num_band0 * num_band * num_band;
     const_adrs_shift = num_triplets * num_band0 * num_band * num_band;
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for (i = 0; i < num_triplets; i++) {

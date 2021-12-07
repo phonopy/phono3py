@@ -106,7 +106,7 @@ void ppc_get_pp_collision(
     tpl_set_relative_grid_address(tp_relative_grid_address,
                                   relative_grid_address, 2);
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for schedule(guided) private( \
     g, g_zero) if (openmp_per_triplets)
 #endif
@@ -186,7 +186,7 @@ void ppc_get_pp_collision_with_sigma(
 
     cutoff = sigma * sigma_cutoff;
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for schedule(guided) private( \
     g, g_zero) if (openmp_per_triplets)
 #endif
