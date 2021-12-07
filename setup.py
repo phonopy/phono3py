@@ -4,32 +4,34 @@ import platform
 import sys
 import sysconfig
 
+import numpy
+
 # Never use distutils, it is deprecated
 import setuptools
-
-import numpy
 
 git_num = None
 
 # Retrieve the default flags from the numpy installation
 # This also means one can override this with a site.cfg
 # configuration file
-from numpy.distutils.system_info import system_info, get_info, lapack_info, dict_append
+from numpy.distutils.system_info import dict_append, get_info, lapack_info, system_info
 
 # use flags defined in numpy
-all_info_d = get_info('ALL')
-lapack_info_d = get_info('lapack_opt')
+all_info_d = get_info("ALL")
+lapack_info_d = get_info("lapack_opt")
+
 
 class phono3py_info(system_info):
-    # This enables one 
+    # This enables one
     section = "phono3py"
 
     def calc_info(self):
-        """ Read in *all* options in the [phono3py] section of site.cfg """
+        """Read in *all* options in the [phono3py] section of site.cfg"""
         info = self.calc_libraries_info()
         dict_append(info, **self.calc_extra_info())
         dict_append(info, include_dirs=self.get_include_dirs())
         self.set_info(**info)
+
 
 # Define compilation flags
 extra_compile_args = ""
@@ -71,7 +73,7 @@ if with_threaded_blas:
 
 # Create the dictionary for compiling the codes
 dict_append(opts, **all_info_d)
-dict_append(opts, include_dirs=['c'])
+dict_append(opts, include_dirs=["c"])
 dict_append(opts, define_macros=macros)
 # Add numpy's headers
 include_dirs = numpy.get_include()
@@ -109,10 +111,9 @@ sources_phono3py = [
     "c/triplet_grid.c",
     "c/triplet_iw.c",
 ]
-extensions.append(setuptools.Extension(
-    "phono3py._phono3py",
-    sources=sources_phono3py,
-    **opts))
+extensions.append(
+    setuptools.Extension("phono3py._phono3py", sources=sources_phono3py, **opts)
+)
 
 
 sources_phononmod = [
@@ -122,16 +123,14 @@ sources_phononmod = [
     "c/phonon.c",
     "c/phononmod.c",
 ]
-extensions.append(setuptools.Extension(
-    "phono3py._phononmod",
-    sources=sources_phononmod,
-    **opts))
+extensions.append(
+    setuptools.Extension("phono3py._phononmod", sources=sources_phononmod, **opts)
+)
 
 sources_lapackepy = ["c/_lapackepy.c", "c/lapack_wrapper.c"]
-extensions.append(setuptools.Extension(
-    "phono3py._lapackepy",
-    sources=sources_lapackepy,
-    **opts))
+extensions.append(
+    setuptools.Extension("phono3py._lapackepy", sources=sources_lapackepy, **opts)
+)
 
 packages_phono3py = [
     "phono3py",
@@ -202,5 +201,5 @@ if __name__ == "__main__":
         ],
         provides=["phono3py"],
         scripts=scripts_phono3py,
-        ext_modules=extensions
+        ext_modules=extensions,
     )
