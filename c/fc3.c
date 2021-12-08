@@ -124,7 +124,7 @@ void fc3_set_permutation_symmetry_fc3(double *fc3, const long num_atom) {
     double fc3_elem[27];
     long i, j, k;
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for private(j, k, fc3_elem)
 #endif
     for (i = 0; i < num_atom; i++) {

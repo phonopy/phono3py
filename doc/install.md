@@ -56,6 +56,19 @@ Ubuntu linux, it is installed by:
    % sudo apt-get install libgomp1
 ```
 
+
+Users mays customize flags and additional libraries by adding a `site.cfg`
+that conforms to numpy stile distutils (`numpy.distutils.site.cfg` file).
+A basic example to add include directories and openmp flags would be:
+
+```
+[phono3py]
+include_dirs = /opt/lapack/include
+extra_compile_args = -fopenmp
+extra_link_args = -fopenmp
+```
+
+
 (install_lapacke)=
 ### Installation of LAPACKE
 

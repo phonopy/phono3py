@@ -114,7 +114,7 @@ void reciprocal_to_normal_squared(
     loopStartCPUTime = clock();
 #endif
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for if (openmp_at_bands)
 #endif
     for (i = 0; i < num_g_pos; i++) {

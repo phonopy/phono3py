@@ -96,7 +96,7 @@ void tpi_get_integration_weight(
         max_i = 1;
     }
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for private(j, b1, b2, adrs_shift, g, \
                                  freq_vertices) if (openmp_per_bands)
 #endif
@@ -136,7 +136,7 @@ void tpi_get_integration_weight_with_sigma(
     long j, b12, b1, b2, adrs_shift;
     double f0, f1, f2, g0, g1, g2;
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for private(j, b1, b2, f0, f1, f2, g0, g1, g2, \
                                  adrs_shift) if (openmp_per_bands)
 #endif

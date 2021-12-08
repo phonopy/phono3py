@@ -195,7 +195,7 @@ static void get_undone_phonons(
 
     num_band = num_patom * 3;
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for private(j, q, gp, is_nac)
 #endif
     for (i = 0; i < num_undone_grid_points; i++) {
@@ -214,7 +214,7 @@ static void get_undone_phonons(
     }
 
 /* To avoid multithreaded BLAS in OpenMP loop */
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #ifndef MULTITHREADED_BLAS
 #pragma omp parallel for private(j, gp, freqs_tmp, info)
 #endif
@@ -255,7 +255,7 @@ static void get_gonze_undone_phonons(
 
     num_band = num_patom * 3;
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for private(j, q, gp, is_nac)
 #endif
     for (i = 0; i < num_undone_grid_points; i++) {
@@ -274,7 +274,7 @@ static void get_gonze_undone_phonons(
     }
 
 /* To avoid multithreaded BLAS in OpenMP loop */
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #ifndef MULTITHREADED_BLAS
 #pragma omp parallel for private(j, gp, freqs_tmp, info)
 #endif

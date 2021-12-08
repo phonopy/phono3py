@@ -1729,7 +1729,7 @@ static PyObject *py_get_default_colmat_solver(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-#ifdef MKL_LAPACKE
+#if defined(MKL_LAPACKE) || defined(SCIPY_MKL_H)
     return PyLong_FromLong((long)1);
 #else
     return PyLong_FromLong((long)4);
@@ -1749,7 +1749,7 @@ static void pinv_from_eigensolution(double *data, const double *eigvals,
 
     tmp_data = (double *)malloc(sizeof(double) * size * size);
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for (i = 0; i < size * size; i++) {
@@ -1770,7 +1770,7 @@ static void pinv_from_eigensolution(double *data, const double *eigvals,
         }
     }
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for private(ib, j, k, i_s, j_s, sum)
 #endif
     for (i = 0; i < size / 2; i++) {
