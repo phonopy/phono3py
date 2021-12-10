@@ -1,20 +1,15 @@
 """Phono3py setup.py."""
 import os
-import platform
-import sys
-import sysconfig
 
 import numpy
-
-# Never use distutils, it is deprecated
 import setuptools
-
-git_num = None
 
 # Retrieve the default flags from the numpy installation
 # This also means one can override this with a site.cfg
 # configuration file
-from numpy.distutils.system_info import dict_append, get_info, lapack_info, system_info
+from numpy.distutils.system_info import dict_append, get_info, system_info
+
+git_num = None
 
 # use flags defined in numpy
 all_info_d = get_info("ALL")
@@ -22,38 +17,47 @@ lapack_info_d = get_info("lapack_opt")
 
 
 class phono3py_info(system_info):
-    # This enables one
+    """See system_info in numpy."""
+
     section = "phono3py"
 
     def calc_info(self):
-        """Read in *all* options in the [phono3py] section of site.cfg"""
+        """Read in *all* options in the [phono3py] section of site.cfg."""
         info = self.calc_libraries_info()
         dict_append(info, **self.calc_extra_info())
         dict_append(info, include_dirs=self.get_include_dirs())
         self.set_info(**info)
 
 
+def get_openmp_library(with_mkl=False):
+    """Return openmp library."""
+    cc = None
+    lib_omp = None
+    if "CC" in os.environ:
+        if "clang" in os.environ["CC"]:
+            cc = "clang"
+            if not with_mkl:
+                lib_omp = "-lomp"
+            # lib_omp = '-liomp5'
+        if "gcc" in os.environ["CC"] or "gnu-cc" in os.environ["CC"]:
+            cc = "gcc"
+    if cc == "gcc" or cc is None:
+        lib_omp = "-lgomp"
+    return lib_omp
+
+
 # Define compilation flags
-extra_compile_args = ""
-extra_link_args = extra_compile_args
+extra_compile_args = []
+extra_link_args = []
 macros = []
 
 # in numpy>=1.16.0, silence build warnings about deprecated API usage
 macros.append(("NPY_NO_DEPRECATED_API", "0"))
 
-
-with_threaded_blas = False
-if "--with-threaded-blas" in sys.argv:
-    del sys.argv["--with-threaded-blas"]
-    with_threaded_blas = True
-
+# Default multithread options
+# with_threaded_blas = True expects using multithreaded BLAS.
+with_threaded_blas = True
 with_mkl = False
-if "--with-mkl" in sys.argv:
-    del sys.argv["--with-mkl"]
-    with_mkl = True
-    # MKL generally uses multi-threaded blas
-    with_threaded_blas = True
-
 
 # define options
 # these are the basic definitions for all extensions
@@ -70,6 +74,9 @@ if with_mkl:
 if with_threaded_blas:
     macros.append(("MULTITHREADED_BLAS", None))
 
+# OpenMP
+extra_link_args.append(get_openmp_library(with_mkl=with_mkl))
+extra_compile_args.append("-fopenmp")
 
 # Create the dictionary for compiling the codes
 dict_append(opts, **all_info_d)
@@ -83,6 +90,11 @@ if include_dirs is not None:
 # Add any phono3py manual flags from here
 add_opts = phono3py_info().get_info()
 dict_append(opts, **add_opts)
+
+if extra_link_args:
+    dict_append(opts, extra_link_args=extra_link_args)
+if extra_compile_args:
+    dict_append(opts, extra_compile_args=extra_compile_args)
 
 # Different extensions
 extensions = []
@@ -179,7 +191,7 @@ if __name__ == "__main__":
 
     version = ".".join(["%s" % n for n in version_nums[:3]])
     if len(version_nums) > 3:
-        version += "-%d" % version_nums[3]
+        version += "-%s" % version_nums[3]
 
     setuptools.setup(
         name="phono3py",
