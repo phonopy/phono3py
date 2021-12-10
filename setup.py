@@ -1,20 +1,15 @@
 """Phono3py setup.py."""
 import os
-import platform
-import sys
-import sysconfig
 
 import numpy
-
-# Never use distutils, it is deprecated
 import setuptools
-
-git_num = None
 
 # Retrieve the default flags from the numpy installation
 # This also means one can override this with a site.cfg
 # configuration file
-from numpy.distutils.system_info import dict_append, get_info, lapack_info, system_info
+from numpy.distutils.system_info import dict_append, get_info, system_info
+
+git_num = None
 
 # use flags defined in numpy
 all_info_d = get_info("ALL")
@@ -22,11 +17,12 @@ lapack_info_d = get_info("lapack_opt")
 
 
 class phono3py_info(system_info):
-    # This enables one
+    """See system_info in numpy."""
+
     section = "phono3py"
 
     def calc_info(self):
-        """Read in *all* options in the [phono3py] section of site.cfg"""
+        """Read in *all* options in the [phono3py] section of site.cfg."""
         info = self.calc_libraries_info()
         dict_append(info, **self.calc_extra_info())
         dict_append(info, include_dirs=self.get_include_dirs())
@@ -41,19 +37,8 @@ macros = []
 # in numpy>=1.16.0, silence build warnings about deprecated API usage
 macros.append(("NPY_NO_DEPRECATED_API", "0"))
 
-
 with_threaded_blas = False
-if "--with-threaded-blas" in sys.argv:
-    del sys.argv["--with-threaded-blas"]
-    with_threaded_blas = True
-
 with_mkl = False
-if "--with-mkl" in sys.argv:
-    del sys.argv["--with-mkl"]
-    with_mkl = True
-    # MKL generally uses multi-threaded blas
-    with_threaded_blas = True
-
 
 # define options
 # these are the basic definitions for all extensions
@@ -69,7 +54,6 @@ if with_mkl:
 
 if with_threaded_blas:
     macros.append(("MULTITHREADED_BLAS", None))
-
 
 # Create the dictionary for compiling the codes
 dict_append(opts, **all_info_d)
@@ -179,7 +163,7 @@ if __name__ == "__main__":
 
     version = ".".join(["%s" % n for n in version_nums[:3]])
     if len(version_nums) > 3:
-        version += "-%d" % version_nums[3]
+        version += "-%s" % version_nums[3]
 
     setuptools.setup(
         name="phono3py",
