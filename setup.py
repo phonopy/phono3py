@@ -29,9 +29,6 @@ class phono3py_info(system_info):
         self.set_info(**info)
 
 
-# Define compilation flags
-extra_compile_args = ""
-extra_link_args = extra_compile_args
 macros = []
 
 # in numpy>=1.16.0, silence build warnings about deprecated API usage
