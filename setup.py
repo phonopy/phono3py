@@ -29,34 +29,15 @@ class phono3py_info(system_info):
         self.set_info(**info)
 
 
-def get_openmp_library(with_mkl=False):
-    """Return openmp library."""
-    cc = None
-    lib_omp = None
-    if "CC" in os.environ:
-        if "clang" in os.environ["CC"]:
-            cc = "clang"
-            if not with_mkl:
-                lib_omp = "-lomp"
-            # lib_omp = '-liomp5'
-        if "gcc" in os.environ["CC"] or "gnu-cc" in os.environ["CC"]:
-            cc = "gcc"
-    if cc == "gcc" or cc is None:
-        lib_omp = "-lgomp"
-    return lib_omp
-
-
 # Define compilation flags
-extra_compile_args = []
-extra_link_args = []
+extra_compile_args = ""
+extra_link_args = extra_compile_args
 macros = []
 
 # in numpy>=1.16.0, silence build warnings about deprecated API usage
 macros.append(("NPY_NO_DEPRECATED_API", "0"))
 
-# Default multithread options
-# with_threaded_blas = True expects using multithreaded BLAS.
-with_threaded_blas = True
+with_threaded_blas = False
 with_mkl = False
 
 # define options
@@ -74,10 +55,6 @@ if with_mkl:
 if with_threaded_blas:
     macros.append(("MULTITHREADED_BLAS", None))
 
-# OpenMP
-extra_link_args.append(get_openmp_library(with_mkl=with_mkl))
-extra_compile_args.append("-fopenmp")
-
 # Create the dictionary for compiling the codes
 dict_append(opts, **all_info_d)
 dict_append(opts, include_dirs=["c"])
@@ -90,11 +67,6 @@ if include_dirs is not None:
 # Add any phono3py manual flags from here
 add_opts = phono3py_info().get_info()
 dict_append(opts, **add_opts)
-
-if extra_link_args:
-    dict_append(opts, extra_link_args=extra_link_args)
-if extra_compile_args:
-    dict_append(opts, extra_compile_args=extra_compile_args)
 
 # Different extensions
 extensions = []
