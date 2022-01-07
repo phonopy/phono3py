@@ -34,6 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+import time
 
 import numpy as np
 from phonopy.cui.collect_cell_info import collect_cell_info
@@ -99,6 +100,8 @@ from phono3py.version import __version__
 
 # AA is created at http://www.network-science.de/ascii/.
 def print_phono3py():
+    global start_time 
+    start_time = time.time()
     """Show phono3py logo."""
     print(
         r"""        _                      _____
@@ -157,7 +160,7 @@ def finalize_phono3py(
             print('Displacement dataset was written in "%s".' % filename)
         else:
             print('Summary of calculation was written in "%s".' % filename)
-        print_end()
+        print_end(time.time()-start_time)
     sys.exit(0)
 
 
@@ -272,7 +275,7 @@ def create_FORCES_FC2_from_FORCE_SETS_then_exit(log_level):
     print("\n".join(displacements_yaml_lines_type1(disp_dataset)))
 
     if log_level:
-        print_end()
+        print_end(time.time()-start_time)
     sys.exit(0)
 
 
@@ -305,14 +308,14 @@ def create_FORCE_SETS_from_FORCES_FCx_then_exit(phonon_smat, input_filename, log
 
         if log_level:
             print("FORCE_SETS has been created.")
-            print_end()
+            print_end(time.time()-start_time)
     else:
         if log_level:
             print(
                 "The file format of %s is already readable by phonopy."
                 % forces_filename
             )
-            print_end()
+            print_end(time.time()-start_time)
     sys.exit(0)
 
 
@@ -416,7 +419,7 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
             if log_level:
                 print("")
                 print("%s has been created." % "FORCES_FC3")
-                print_end()
+                print_end(time.time()-start_time)
             sys.exit(0)
         else:
             if log_level:
@@ -478,7 +481,7 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
             if log_level:
                 print("")
                 print("%s has been created." % "FORCES_FC2")
-                print_end()
+                print_end(time.time()-start_time)
             sys.exit(0)
         else:
             if log_level:
@@ -812,7 +815,7 @@ def run_gruneisen_then_exit(phono3py, settings, output_filename, log_level):
     )
 
     if log_level:
-        print_end()
+        print_end(time.time()-start_time)
     sys.exit(0)
 
 
@@ -850,7 +853,7 @@ def run_jdos_then_exit(
     joint_dos.run(grid_points, write_jdos=True)
 
     if log_level:
-        print_end()
+        print_end(time.time()-start_time)
     sys.exit(0)
 
 
@@ -889,7 +892,7 @@ def run_isotope_then_exit(phono3py, settings, updated_settings, log_level):
     iso.run(grid_points)
 
     if log_level:
-        print_end()
+        print_end(time.time()-start_time)
     sys.exit(0)
 
 
@@ -1155,7 +1158,7 @@ def main(**argparse_control):
         )
 
         if log_level:
-            print_end()
+            print_end(time.time()-start_time)
         sys.exit(0)
 
     ################################################################
@@ -1173,7 +1176,7 @@ def main(**argparse_control):
         )
 
         if log_level:
-            print_end()
+            print_end(time.time()-start_time)
         sys.exit(0)
 
     ##################################
@@ -1239,7 +1242,7 @@ def main(**argparse_control):
                 in_database = False
         if not in_database:
             if log_level:
-                print_end()
+                print_end(time.time()-start_time)
             sys.exit(0)
 
     #########################################

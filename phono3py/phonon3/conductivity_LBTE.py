@@ -85,7 +85,7 @@ class ConductivityLBTE(Conductivity):
     ):
         """Init method."""
         self._pp: Interaction
-        self._gv_obj: GroupVelocity
+        self._gv_operator_obj: VelocityOperator
         self._sigmas: List
         self._grid_point_count: int
         self._temperatures = None
@@ -104,10 +104,15 @@ class ConductivityLBTE(Conductivity):
         self._ir_grid_points = None
         self._ir_grid_weights = None
 
-        self._kappa = None
-        self._mode_kappa = None
-        self._kappa_RTA = None
-        self._mode_kappa_RTA = None
+        self._kappa_TOT_exact = None
+        self._kappa_TOT_RTA = None
+
+        self._kappa_P_exact = None
+        self._mode_kappa_P_exact = None
+        self._kappa_P_RTA = None
+        self._mode_kappa_P_RTA = None
+        self._kappa_C = None
+        self._mode_kappa_C = None
 
         self._read_gamma = False
         self._read_gamma_iso = False
@@ -115,8 +120,10 @@ class ConductivityLBTE(Conductivity):
         self._frequencies = None
         self._cv = None
         self._gv = None
+        self._gv_operator = None        
         self._f_vectors = None
         self._gv_sum2 = None
+        self._gv_operator_sum2 = None
         self._mfp = None
         self._gamma = None
         self._gamma_iso = None
@@ -221,13 +228,17 @@ class ConductivityLBTE(Conductivity):
         """Return phonon frequencies on GR-grid."""
         return self._frequencies[self._pp.bz_grid.grg2bzg]
 
-    def get_kappa_RTA(self):
+    def get_kappa_P_RTA(self):
         """Return RTA lattice thermal conductivity."""
-        return self._kappa_RTA
+        return self._kappa_P_RTA
 
-    def get_mode_kappa_RTA(self):
+    def get_mode_kappa_P_RTA(self):
         """Return RTA mode lattice thermal conductivities."""
-        return self._mode_kappa_RTA
+        return self._mode_kappa_P_RTA
+
+    def get_mode_kappa_C(self):
+        """Return RTA mode lattice thermal conductivities."""
+        return self._mode_kappa_C
 
     def delete_gp_collision_and_pp(self):
         """Deallocate large arrays."""
@@ -255,9 +266,10 @@ class ConductivityLBTE(Conductivity):
             i_data = self._pp.bz_grid.bzg2grg[gp]
         else:
             i_data = i_gp
+        
         self._set_cv(i_gp, i_data)
-        self._set_gv(i_gp, i_data)
-        self._set_gv_by_gv(i_gp, i_data)
+        self._set_gv_op(i_gp, i_data)
+        self._set_gv_by_gv_operator(i_gp, i_data)
         if self._isotope is not None:
             gamma_iso = self._get_gamma_isotope_at_sigmas(i_gp)
             band_indices = self._pp.band_indices
@@ -279,19 +291,45 @@ class ConductivityLBTE(Conductivity):
 
     def _allocate_local_values(self, num_temp, num_band0, num_grid_points):
         """Allocate grid point local arrays."""
+        nat3=self._pp._primitive.get_number_of_atoms() * 3
         self._kappa = np.zeros(
             (len(self._sigmas), num_temp, 6), dtype="double", order="C"
         )
-        self._kappa_RTA = np.zeros(
+
+        self._kappa_TOT_RTA = np.zeros(
             (len(self._sigmas), num_temp, 6), dtype="double", order="C"
         )
+
+        self._kappa_TOT_exact = np.zeros(
+            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
+        )
+
+        self._kappa_P_exact = np.zeros(
+            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
+        )
+
+        self._kappa_P_RTA = np.zeros(
+            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
+        )
+
+        self._kappa_C = np.zeros(
+            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
+        )        
+
         self._gv = np.zeros((num_grid_points, num_band0, 3), dtype="double", order="C")
+
+        self._gv_operator = np.zeros((num_grid_points, num_band0,nat3, 3),order='C', dtype='complex')
+
         self._f_vectors = np.zeros(
             (num_grid_points, num_band0, 3), dtype="double", order="C"
         )
         self._gv_sum2 = np.zeros(
             (num_grid_points, num_band0, 6), dtype="double", order="C"
         )
+
+        self._gv_operator_sum2 = np.zeros((num_grid_points, num_band0, nat3, 6), order='C', dtype='complex')          
+
+
         self._mfp = np.zeros(
             (len(self._sigmas), num_temp, num_grid_points, num_band0, 3),
             dtype="double",
@@ -318,12 +356,20 @@ class ConductivityLBTE(Conductivity):
                 order="C",
             )
 
-        self._mode_kappa = np.zeros(
+        self._mode_kappa_P_exact = np.zeros(
             (len(self._sigmas), num_temp, num_grid_points, num_band0, 6), dtype="double"
         )
-        self._mode_kappa_RTA = np.zeros(
+        self._mode_kappa_P_RTA = np.zeros(
             (len(self._sigmas), num_temp, num_grid_points, num_band0, 6), dtype="double"
         )
+
+        self._mode_kappa_C = np.zeros((len(self._sigmas),
+                                     num_temp,
+                                     num_grid_points,
+                                     num_band0,
+                                     nat3, # one more index because we have off-diagonal terms (second index not parallelized)
+                                     6),
+                                    order='C', dtype='complex')
 
     def _allocate_reducible_colmat_values(self, num_temp, num_band0, num_band):
         """Allocate arrays for reducilble collision matrix."""
@@ -529,7 +575,7 @@ class ConductivityLBTE(Conductivity):
 
             for k, t in enumerate(self._temperatures):
                 if t > 0:
-                    self._set_kappa_RTA(j, k, weights)
+                    self._set_kappa_P_RTA(j, k, weights)
 
                     w = diagonalize_collision_matrix(
                         self._collision_matrix,
@@ -545,15 +591,24 @@ class ConductivityLBTE(Conductivity):
                     if self._log_level:
                         print(
                             ("#%6s       " + " %-10s" * 6)
-                            % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+                            % ("         \t\t  T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
                         )
                         print(
-                            ("%7.1f " + " %10.3f" * 6)
-                            % ((t,) + tuple(self._kappa[j, k]))
+                            'K_P_exact\t\t'+("%7.1f " + " %10.3f" * 6)
+                            % ((t,) + tuple(self._kappa_P_exact[j, k]))
                         )
                         print(
-                            (" %6s " + " %10.3f" * 6)
-                            % (("(RTA)",) + tuple(self._kappa_RTA[j, k]))
+                            '(K_P_RTA)\t\t'+("%7.1f " + " %10.3f" * 6)
+                            % ((t,) +  tuple(self._kappa_P_RTA[j, k]))
+                        )                        
+                        print(
+                            'K_C      \t\t'+("%7.1f " + " %10.3f" * 6)
+                            % ((t,) + tuple(self._kappa_C[j, k].real))
+                        )
+                        print(' ')
+                        print(
+                            'K_TOT=K_P_exact+K_C\t'+("%7.1f " + " %10.3f" * 6)
+                            % ((t,) + tuple(self._kappa_C[j, k]+self._kappa_P_exact[j, k]))
                         )
                         print("-" * 76)
                         sys.stdout.flush()
@@ -935,7 +990,7 @@ class ConductivityLBTE(Conductivity):
             Y = self._get_Y(i_sigma, i_temp, weights, X)
             self._set_mean_free_path(i_sigma, i_temp, weights, Y)
             self._set_mode_kappa(
-                self._mode_kappa,
+                self._mode_kappa_P_exact,
                 X,
                 Y,
                 num_ir_grid_points,
@@ -949,8 +1004,8 @@ class ConductivityLBTE(Conductivity):
             #                               i_sigma,
             #                               i_temp)
 
-        self._kappa[i_sigma, i_temp] = (
-            self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
+        self._kappa_P_exact[i_sigma, i_temp] = (
+            self._mode_kappa_P_exact[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
         )
 
     def _set_kappa_reducible_colmat(self, i_sigma, i_temp, weights):
@@ -963,7 +1018,7 @@ class ConductivityLBTE(Conductivity):
         # Putting self._rotations_cartesian is to symmetrize kappa.
         # None can be put instead for watching pure information.
         self._set_mode_kappa(
-            self._mode_kappa,
+            self._mode_kappa_P_exact,
             X,
             Y,
             num_mesh_points,
@@ -971,19 +1026,23 @@ class ConductivityLBTE(Conductivity):
             i_sigma,
             i_temp,
         )
-        self._mode_kappa[i_sigma, i_temp] /= len(self._rotations_cartesian)
-        self._kappa[i_sigma, i_temp] = (
-            self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
+        self._mode_kappa_P_exact[i_sigma, i_temp] /= len(self._rotations_cartesian)
+        self._kappa_P_exact[i_sigma, i_temp] = (
+            self._mode_kappa_P_exact[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
         )
 
-    def _set_kappa_RTA(self, i_sigma, i_temp, weights):
+    def _set_kappa_P_RTA(self, i_sigma, i_temp, weights):
         """Calculate RTA thermal conductivity with either ir or full colmat."""
         if self._is_reducible_collision_matrix:
-            self._set_kappa_RTA_reducible_colmat(i_sigma, i_temp, weights)
+            self._set_kappa_P_RTA_reducible_colmat(i_sigma, i_temp, weights)
+            print(
+                  " WARNING: Coherences conductivity not implemented for is_reducible_collision_matrix=True "        
+            )
         else:
-            self._set_kappa_RTA_ir_colmat(i_sigma, i_temp, weights)
+            self._set_kappa_P_RTA_ir_colmat(i_sigma, i_temp, weights)
+            self._set_kappa_C_ir_colmat(i_sigma, i_temp)
 
-    def _set_kappa_RTA_ir_colmat(self, i_sigma, i_temp, weights):
+    def _set_kappa_P_RTA_ir_colmat(self, i_sigma, i_temp, weights):
         """Calculate RTA thermal conductivity.
 
         This RTA is supposed to be the same as conductivity_RTA.
@@ -1016,7 +1075,7 @@ class ConductivityLBTE(Conductivity):
                     np.seterr(**old_settings)
 
         self._set_mode_kappa(
-            self._mode_kappa_RTA,
+            self._mode_kappa_P_RTA,
             X,
             Y,
             num_ir_grid_points,
@@ -1024,11 +1083,46 @@ class ConductivityLBTE(Conductivity):
             i_sigma,
             i_temp,
         )
-        self._kappa_RTA[i_sigma, i_temp] = (
-            self._mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
+        self._kappa_P_RTA[i_sigma, i_temp] = (
+            self._mode_kappa_P_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
         )
 
-    def _set_kappa_RTA_reducible_colmat(self, i_sigma, i_temp, weights):
+
+    def _set_kappa_C_ir_colmat(self, i_sigma, i_temp):
+        """Calculate coherence term of the thermal conductivity.
+
+        """
+        N = self._num_sampling_grid_points
+        num_band = len(self._pp.primitive) * 3
+        num_ir_grid_points = len(self._ir_grid_points)
+        for i, gp in enumerate(self._ir_grid_points):
+            #linewidths at qpoint i, sigma i_sigma, and temperature i_temp
+            g = self._get_main_diagonal(i, i_sigma, i_temp)*2. #linewidth (FWHM)
+            frequencies = self._frequencies[gp]
+            cv = self._cv[i_temp, i, :]
+            for s1 in range(num_band):
+                for s2 in range(num_band):
+                    hbar_omega_eV_s1=frequencies[s1]*THzToEv #hbar*omega=h*nu in eV  
+                    hbar_omega_eV_s2=frequencies[s2]*THzToEv #hbar*omega=h*nu in eV   
+                    if (((frequencies[s1] > self._pp.cutoff_frequency) and (frequencies[s2] > self._pp.cutoff_frequency))
+                        and np.abs(frequencies[s1]-frequencies[s2])>1e-4 ): #frequencies must be non-degenerate to contribute to k_C, otherwise they contribute to k_P
+                        hbar_gamma_eV_s1=g[s1]*THzToEv 
+                        hbar_gamma_eV_s2=g[s2]*THzToEv
+                        lorentzian_divided_by_hbar= ((0.5*(hbar_gamma_eV_s1+ hbar_gamma_eV_s2))/
+                                       ((hbar_omega_eV_s1-hbar_omega_eV_s2)**2 + 0.25*((hbar_gamma_eV_s1+ hbar_gamma_eV_s2)**2) )) 
+                        #
+                        prefactor=(0.25 * (hbar_omega_eV_s1+hbar_omega_eV_s2) *
+                                          (cv[s1]/hbar_omega_eV_s1 + cv[s2]/hbar_omega_eV_s2))                        
+                        self._mode_kappa_C[i_sigma, i_temp, i, s1, s2] = (
+                                        (self._gv_operator_sum2[i, s1, s2]) * prefactor *
+                                        lorentzian_divided_by_hbar * self._conversion_factor_WTE)                    
+
+        self._kappa_C[i_sigma, i_temp] = (
+            self._mode_kappa_C[i_sigma, i_temp].sum(axis=0).sum(axis=0).sum(axis=0) / N
+        )
+
+
+    def _set_kappa_P_RTA_reducible_colmat(self, i_sigma, i_temp, weights):
         """Calculate RTA thermal conductivity.
 
         This RTA is not equivalent to conductivity_RTA.
@@ -1055,7 +1149,7 @@ class ConductivityLBTE(Conductivity):
         # Putting self._rotations_cartesian is to symmetrize kappa.
         # None can be put instead for watching pure information.
         self._set_mode_kappa(
-            self._mode_kappa_RTA,
+            self._mode_kappa_P_RTA,
             X,
             Y,
             num_mesh_points,
@@ -1064,9 +1158,9 @@ class ConductivityLBTE(Conductivity):
             i_temp,
         )
         g = len(self._rotations_cartesian)
-        self._mode_kappa_RTA[i_sigma, i_temp] /= g
-        self._kappa_RTA[i_sigma, i_temp] = (
-            self._mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
+        self._mode_kappa_P_RTA[i_sigma, i_temp] /= g
+        self._kappa_P_RTA[i_sigma, i_temp] = (
+            self._mode_kappa_P_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
         )
 
     def _set_mode_kappa(
@@ -1110,7 +1204,7 @@ class ConductivityLBTE(Conductivity):
                     mode_kappa[i_sigma, i_temp, i, j, k] = sum_k[vxf]
 
         t = self._temperatures[i_temp]
-        mode_kappa[i_sigma, i_temp] *= self._conversion_factor * Kb * t ** 2
+        mode_kappa[i_sigma, i_temp] *= self._conversion_factor * Kb * t ** 2  
 
     def _set_mode_kappa_Chaput(self, i_sigma, i_temp, weights):
         """Calculate mode kappa by the way in Laurent Chaput's PRL paper.
@@ -1137,12 +1231,12 @@ class ConductivityLBTE(Conductivity):
         elems = ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))
         for i, vxf in enumerate(elems):
             mat = self._get_I(vxf[0], vxf[1], num_ir_grid_points * num_band)
-            self._mode_kappa[i_sigma, i_temp, :, :, i] = 0
+            self._mode_kappa_P_exact[i_sigma, i_temp, :, :, i] = 0
             if mat is not None:
                 np.dot(mat, omega_inv, out=mat)
                 # vals = (X ** 2 * np.diag(mat)).reshape(-1, 3).sum(axis=1)
                 # vals = vals.reshape(num_ir_grid_points, num_band)
-                # self._mode_kappa[i_sigma, i_temp, :, :, i] = vals
+                # self._mode_kappa_P_exact[i_sigma, i_temp, :, :, i] = vals
                 w = diagonalize_collision_matrix(
                     mat, pinv_solver=self._pinv_solver, log_level=self._log_level
                 )
@@ -1152,10 +1246,10 @@ class ConductivityLBTE(Conductivity):
                 for s, eigvec in zip(spectra, mat.T):
                     vals = s * (eigvec ** 2).reshape(-1, 3).sum(axis=1)
                     vals = vals.reshape(num_ir_grid_points, num_band)
-                    self._mode_kappa[i_sigma, i_temp, :, :, i] += vals
+                    self._mode_kappa_P_exact[i_sigma, i_temp, :, :, i] += vals
 
         factor = self._conversion_factor * Kb * t ** 2
-        self._mode_kappa[i_sigma, i_temp] *= factor
+        self._mode_kappa_P_exact[i_sigma, i_temp] *= factor
 
     def _set_mode_kappa_from_mfp(
         self, weights, num_grid_points, rotations_cartesian, i_sigma, i_temp
@@ -1199,10 +1293,10 @@ class ConductivityLBTE(Conductivity):
         else:
             text = "Frequency     group velocity (x, y, z)     |gv|"
 
-        if self._gv_obj.q_length is None:
+        if self._gv_operator_obj.q_length is None:
             pass
         else:
-            text += "  (dq=%3.1e)" % self._gv_obj.q_length
+            text += "  (dq=%3.1e)" % self._gv_operator_obj.q_length
         print(text)
         if self._is_full_pp:
             for f, v, pp in zip(frequencies, gv, ave_pp):
@@ -1490,16 +1584,18 @@ def _write_kappa(
     frequencies = lbte.frequencies
     ave_pp = lbte.averaged_pp_interaction
     qpoints = lbte.qpoints
-    kappa = lbte.kappa
-    kappa_RTA = lbte.get_kappa_RTA()
+    kappa_P_exact = lbte.kappa_P_exact
+    kappa_P_RTA = lbte.kappa_P_RTA
+    kappa_C = lbte.kappa_C
     gamma = lbte.gamma
     gamma_isotope = lbte.gamma_isotope
     gv = lbte.group_velocities
     f_vector = lbte.get_f_vectors()
-    gv_by_gv = lbte.gv_by_gv
+    #gv_by_gv = lbte.gv_by_gv
     mode_cv = lbte.mode_heat_capacities
-    mode_kappa = lbte.mode_kappa
-    mode_kappa_RTA = lbte.get_mode_kappa_RTA()
+    mode_kappa_P_exact = lbte.mode_kappa_P_exact
+    mode_kappa_P_RTA = lbte.kappa_P_RTA
+    mode_kappa_C = lbte.kappa_C
     mfp = lbte.get_mean_free_path()
 
     coleigs = lbte.get_collision_eigenvalues()
@@ -1521,13 +1617,16 @@ def _write_kappa(
             mesh,
             frequency=frequencies,
             group_velocity=gv,
-            gv_by_gv=gv_by_gv,
             mean_free_path=mfp[i],
             heat_capacity=mode_cv,
-            kappa=kappa[i],
-            mode_kappa=mode_kappa[i],
-            kappa_RTA=kappa_RTA[i],
-            mode_kappa_RTA=mode_kappa_RTA[i],
+            kappa_P_exact=kappa_P_exact[i],
+            kappa_P_RTA=kappa_P_RTA[i],
+            kappa_C=kappa_C[i],
+            kappa_TOT_exact=kappa_P_exact[i]+kappa_C[i],
+            kappa_TOT_RTA=kappa_P_RTA[i]+kappa_C[i],
+            mode_kappa_P_exact=mode_kappa_P_exact[i],
+            mode_kappa_P_RTA=mode_kappa_P_RTA[i],
+            mode_kappa_C=mode_kappa_C[i],            
             f_vector=f_vector,
             gamma=gamma[i],
             gamma_isotope=gamma_isotope_at_sigma,
