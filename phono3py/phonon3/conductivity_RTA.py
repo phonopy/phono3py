@@ -38,7 +38,8 @@ import sys
 import numpy as np
 from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
-from phonopy.units import EV, THz, Angstrom, Hbar, THzToEv, THzToCm
+from phonopy.units import EV, Angstrom, Hbar, THz, THzToCm, THzToEv
+
 from phono3py.file_IO import (
     read_gamma_from_hdf5,
     read_pp_from_hdf5,
@@ -195,8 +196,8 @@ class ConductivityRTA(Conductivity):
         self._kappa = self._mode_kappa.sum(axis=2).sum(axis=2) / N
 
     def set_kappa_WTE_at_sigmas(self):
-        """Calculate the Wigner thermal conductivity, k_P + k_C 
-            using the scattering operator in the RTA approximation"""        
+        """Calculate the Wigner thermal conductivity, k_P + k_C
+        using the scattering operator in the RTA approximation"""
         num_band = len(self._pp.primitive) * 3
         for i, grid_point in enumerate(self._grid_points):
             cv = self._cv[:, i, :]
@@ -205,45 +206,73 @@ class ConductivityRTA(Conductivity):
             # Kappa
             for j in range(len(self._sigmas)):
                 for k in range(len(self._temperatures)):
-                    g_sum = self._get_main_diagonal(i, j, k) #phonon HWHM: q-point, sigma, temperature
+                    g_sum = self._get_main_diagonal(
+                        i, j, k
+                    )  # phonon HWHM: q-point, sigma, temperature
                     for s1 in range(num_band):
                         for s2 in range(num_band):
-                            hbar_omega_eV_s1=frequencies[s1]*THzToEv #hbar*omega=h*nu in eV  
-                            hbar_omega_eV_s2=frequencies[s2]*THzToEv #hbar*omega=h*nu in eV                             
-                            if ((frequencies[s1] > self._pp.cutoff_frequency) and (frequencies[s2] > self._pp.cutoff_frequency) ):  
-                                hbar_gamma_eV_s1=2.0*g_sum[s1]*THzToEv
-                                hbar_gamma_eV_s2=2.0*g_sum[s2]*THzToEv                                      
-                                #               
-                                lorentzian_divided_by_hbar= ((0.5*(hbar_gamma_eV_s1+ hbar_gamma_eV_s2))/
-                                       ((hbar_omega_eV_s1-hbar_omega_eV_s2)**2 + 0.25*((hbar_gamma_eV_s1+ hbar_gamma_eV_s2)**2) )) 
+                            hbar_omega_eV_s1 = (
+                                frequencies[s1] * THzToEv
+                            )  # hbar*omega=h*nu in eV
+                            hbar_omega_eV_s2 = (
+                                frequencies[s2] * THzToEv
+                            )  # hbar*omega=h*nu in eV
+                            if (frequencies[s1] > self._pp.cutoff_frequency) and (
+                                frequencies[s2] > self._pp.cutoff_frequency
+                            ):
+                                hbar_gamma_eV_s1 = 2.0 * g_sum[s1] * THzToEv
+                                hbar_gamma_eV_s2 = 2.0 * g_sum[s2] * THzToEv
                                 #
-                                prefactor=(0.25 * (hbar_omega_eV_s1+hbar_omega_eV_s2) *
-                                          (cv[k, s1]/hbar_omega_eV_s1 + cv[k, s2]/hbar_omega_eV_s2))
-                                if (np.abs(frequencies[s1]-frequencies[s2])<1e-4):
-                                    #degenerate or diagonal s1=s2 modes contribution determine k_P
-                                    contribution=((self._gv_operator_sum2[i, s1, s2]) * prefactor *
-                                                   lorentzian_divided_by_hbar * self._conversion_factor_WTE).real
+                                lorentzian_divided_by_hbar = (
+                                    0.5 * (hbar_gamma_eV_s1 + hbar_gamma_eV_s2)
+                                ) / (
+                                    (hbar_omega_eV_s1 - hbar_omega_eV_s2) ** 2
+                                    + 0.25
+                                    * ((hbar_gamma_eV_s1 + hbar_gamma_eV_s2) ** 2)
+                                )
+                                #
+                                prefactor = (
+                                    0.25
+                                    * (hbar_omega_eV_s1 + hbar_omega_eV_s2)
+                                    * (
+                                        cv[k, s1] / hbar_omega_eV_s1
+                                        + cv[k, s2] / hbar_omega_eV_s2
+                                    )
+                                )
+                                if np.abs(frequencies[s1] - frequencies[s2]) < 1e-4:
+                                    # degenerate or diagonal s1=s2 modes contribution determine k_P
+                                    contribution = (
+                                        (self._gv_operator_sum2[i, s1, s2])
+                                        * prefactor
+                                        * lorentzian_divided_by_hbar
+                                        * self._conversion_factor_WTE
+                                    ).real
                                     #
-                                    self._mode_kappa_P_RTA[j, k, i, s1] +=  0.5*contribution  
-                                    self._mode_kappa_P_RTA[j, k, i, s2] +=  0.5*contribution
-                                    # prefactor 0.5 arises from the fact that degenerate modes have the same specific heat, 
-                                    # hence they give the same contribution to the populations conductivity  
+                                    self._mode_kappa_P_RTA[j, k, i, s1] += (
+                                        0.5 * contribution
+                                    )
+                                    self._mode_kappa_P_RTA[j, k, i, s2] += (
+                                        0.5 * contribution
+                                    )
+                                    # prefactor 0.5 arises from the fact that degenerate modes have the same specific heat,
+                                    # hence they give the same contribution to the populations conductivity
                                 else:
                                     self._mode_kappa_C[j, k, i, s1, s2] += (
-                                        (self._gv_operator_sum2[i, s1, s2]) * prefactor *
-                                        lorentzian_divided_by_hbar * self._conversion_factor_WTE).real
+                                        (self._gv_operator_sum2[i, s1, s2])
+                                        * prefactor
+                                        * lorentzian_divided_by_hbar
+                                        * self._conversion_factor_WTE
+                                    ).real
 
-                            elif (s1 == s2):
+                            elif s1 == s2:
                                 self._num_ignored_phonon_modes[j, k] += 1
 
-
-
         N = self._num_sampling_grid_points
-        self._kappa_P_RTA = self._mode_kappa_P_RTA.sum(axis=2).sum(axis=2) / N 
+        self._kappa_P_RTA = self._mode_kappa_P_RTA.sum(axis=2).sum(axis=2) / N
         #
-        self._kappa_C = (self._mode_kappa_C.sum(axis=2).sum(axis=2).sum(axis=2) / N)
+        self._kappa_C = self._mode_kappa_C.sum(axis=2).sum(axis=2).sum(axis=2) / N
         #
-        self._kappa_TOT_RTA =  self._kappa_P_RTA + self._kappa_C 
+        self._kappa_TOT_RTA = self._kappa_P_RTA + self._kappa_C
 
     def get_gamma_N_U(self):
         """Return N and U parts of gamma."""
@@ -271,10 +300,10 @@ class ConductivityRTA(Conductivity):
         self._show_log_header(i_gp)
         grid_point = self._grid_points[i_gp]
         self._set_cv(i_gp, i_gp)
-        #self._set_gv(i_gp, i_gp)
-        #self._set_gv_op(i_gp, i_gp)
+        # self._set_gv(i_gp, i_gp)
+        # self._set_gv_op(i_gp, i_gp)
         self._set_gv_operator(i_gp, i_gp)
-        #self._set_gv_by_gv(i_gp, i_gp)
+        # self._set_gv_by_gv(i_gp, i_gp)
         self._set_gv_by_gv_operator(i_gp, i_gp)
 
         if self._read_gamma:
@@ -308,7 +337,7 @@ class ConductivityRTA(Conductivity):
 
     def _allocate_values(self):
         num_band0 = len(self._pp.band_indices)
-        nat3=len(self._pp.primitive) * 3
+        nat3 = len(self._pp.primitive) * 3
         num_grid_points = len(self._grid_points)
         num_temp = len(self._temperatures)
         self._kappa_TOT_RTA = np.zeros(
@@ -321,20 +350,24 @@ class ConductivityRTA(Conductivity):
             (len(self._sigmas), num_temp, 6), order="C", dtype="double"
         )
 
-        self._mode_kappa_P_RTA = np.zeros((len(self._sigmas),
-                                     num_temp,
-                                     num_grid_points,
-                                     num_band0,
-                                     6),
-                                    order='C', dtype='double')
+        self._mode_kappa_P_RTA = np.zeros(
+            (len(self._sigmas), num_temp, num_grid_points, num_band0, 6),
+            order="C",
+            dtype="double",
+        )
 
-        self._mode_kappa_C = np.zeros((len(self._sigmas),
-                                     num_temp,
-                                     num_grid_points,
-                                     num_band0,
-                                     nat3, # one more index because we have off-diagonal terms (second index not parallelized)
-                                     6),
-                                    order='C', dtype='double')
+        self._mode_kappa_C = np.zeros(
+            (
+                len(self._sigmas),
+                num_temp,
+                num_grid_points,
+                num_band0,
+                nat3,  # one more index because we have off-diagonal terms (second index not parallelized)
+                6,
+            ),
+            order="C",
+            dtype="double",
+        )
 
         if not self._read_gamma:
             self._gamma = np.zeros(
@@ -346,11 +379,15 @@ class ConductivityRTA(Conductivity):
                 self._gamma_N = np.zeros_like(self._gamma)
                 self._gamma_U = np.zeros_like(self._gamma)
         self._gv = np.zeros((num_grid_points, num_band0, 3), order="C", dtype="double")
-        self._gv_operator = np.zeros((num_grid_points, num_band0,nat3, 3),order='C', dtype='complex')
+        self._gv_operator = np.zeros(
+            (num_grid_points, num_band0, nat3, 3), order="C", dtype="complex"
+        )
         self._gv_sum2 = np.zeros(
             (num_grid_points, num_band0, 6), order="C", dtype="double"
         )
-        self._gv_operator_sum2 = np.zeros((num_grid_points, num_band0, nat3, 6), order='C', dtype='complex')          
+        self._gv_operator_sum2 = np.zeros(
+            (num_grid_points, num_band0, nat3, 6), order="C", dtype="complex"
+        )
         self._cv = np.zeros(
             (num_temp, num_grid_points, num_band0), order="C", dtype="double"
         )
@@ -903,7 +940,7 @@ def _show_kappa(br, log_level):
     sigmas = br.sigmas
     kappa_TOT_RTA = br.kappa_TOT_RTA
     kappa_P_RTA = br.kappa_P_RTA
-    kappa_C = br.kappa_C    
+    kappa_C = br.kappa_C
     num_ignored_phonon_modes = br.get_number_of_ignored_phonon_modes()
     num_band = br.frequencies.shape[1]
     num_phonon_modes = br.get_number_of_sampling_grid_points() * num_band
@@ -915,35 +952,57 @@ def _show_kappa(br, log_level):
             text += "with tetrahedron method -----------"
         print(text)
         if log_level > 1:
-            print(("#%6s       " + " %-10s" * 6 + "#ipm") %
-                  ("      \t   T(K)", "xx", "yy", "zz", "yz", "xz", "xy"))
+            print(
+                ("#%6s       " + " %-10s" * 6 + "#ipm")
+                % ("      \t   T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+            )
             for j, (t, k) in enumerate(zip(temperatures, kappa_P_RTA[i])):
-                print('K_P\t'+("%7.1f" + " %10.3f" * 6 + " %d/%d") %
-                      ((t,) + tuple(k) +
-                       (num_ignored_phonon_modes[i, j], num_phonon_modes)))
-            print(' ')                                               
+                print(
+                    "K_P\t"
+                    + ("%7.1f" + " %10.3f" * 6 + " %d/%d")
+                    % (
+                        (t,)
+                        + tuple(k)
+                        + (num_ignored_phonon_modes[i, j], num_phonon_modes)
+                    )
+                )
+            print(" ")
             for j, (t, k) in enumerate(zip(temperatures, kappa_C[i])):
-                print('K_C\t'+("%7.1f" + " %10.3f" * 6 + " %d/%d") %
-                      ((t,) + tuple(k) +
-                       (num_ignored_phonon_modes[i, j], num_phonon_modes)))     
-            print(' ')           
+                print(
+                    "K_C\t"
+                    + ("%7.1f" + " %10.3f" * 6 + " %d/%d")
+                    % (
+                        (t,)
+                        + tuple(k)
+                        + (num_ignored_phonon_modes[i, j], num_phonon_modes)
+                    )
+                )
+            print(" ")
             for j, (t, k) in enumerate(zip(temperatures, kappa_TOT_RTA[i])):
-                print('K_T\t'+("%7.1f" + " %10.3f" * 6 + " %d/%d") %
-                      ((t,) + tuple(k) +
-                       (num_ignored_phonon_modes[i, j], num_phonon_modes)))
+                print(
+                    "K_T\t"
+                    + ("%7.1f" + " %10.3f" * 6 + " %d/%d")
+                    % (
+                        (t,)
+                        + tuple(k)
+                        + (num_ignored_phonon_modes[i, j], num_phonon_modes)
+                    )
+                )
         else:
-            print(("#%6s       " + " %-10s" * 6) %
-                  ("      \t   T(K)", "xx", "yy", "zz", "yz", "xz", "xy"))
+            print(
+                ("#%6s       " + " %-10s" * 6)
+                % ("      \t   T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+            )
             if kappa_P_RTA is not None:
                 for j, (t, k) in enumerate(zip(temperatures, kappa_P_RTA[i])):
-                    print('K_P\t'+ ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
-                print(' ')                       
+                    print("K_P\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
+                print(" ")
                 for j, (t, k) in enumerate(zip(temperatures, kappa_C[i])):
-                    print('K_C\t'+("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))      
-            print(' ')             
+                    print("K_C\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
+            print(" ")
             for j, (t, k) in enumerate(zip(temperatures, kappa_TOT_RTA[i])):
-                print('K_T\t'+("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))        
-        print('')
+                print("K_T\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
+        print("")
 
 
 def _write_kappa(br, volume, compression="gzip", filename=None, log_level=0):
@@ -955,8 +1014,8 @@ def _write_kappa(br, volume, compression="gzip", filename=None, log_level=0):
     gamma_N, gamma_U = br.get_gamma_N_U()
     mesh = br.mesh_numbers
     frequencies = br.frequencies
-    #gv = br.group_velocities
-    #gv_by_gv = br.gv_by_gv
+    # gv = br.group_velocities
+    # gv_by_gv = br.gv_by_gv
     velocity_operator = br.velocity_operator
     mode_cv = br.mode_heat_capacities
     ave_pp = br.averaged_pp_interaction
@@ -987,7 +1046,7 @@ def _write_kappa(br, volume, compression="gzip", filename=None, log_level=0):
             mesh,
             frequency=frequencies,
             # uncomment the line below to write the velocity operator, it can occupy a lot of space
-            #velocity_operator=velocity_operator,
+            # velocity_operator=velocity_operator,
             heat_capacity=mode_cv,
             kappa_TOT_RTA=kappa_TOT_RTA[i],
             kappa_P_RTA=kappa_P_RTA[i],
