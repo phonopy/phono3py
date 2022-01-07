@@ -132,6 +132,28 @@ def si_pbesol_111(request):
 
 
 @pytest.fixture(scope="session")
+def si_pbesol_111_alm(request):
+    """Return Phono3py instance of Si 1x1x1.
+
+    * with symmetry
+    * full fc
+    * use alm if available on test side
+
+    """
+    pytest.importorskip("alm")
+
+    yaml_filename = os.path.join(current_dir, "phono3py_params_Si111.yaml")
+    enable_v2 = request.config.getoption("--v1")
+    return phono3py.load(
+        yaml_filename,
+        store_dense_gp_map=enable_v2,
+        store_dense_svecs=enable_v2,
+        fc_calculator="alm",
+        log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
 def si_pbesol_iterha_111():
     """Return Phono3py instance of Si 1x1x1.
 
