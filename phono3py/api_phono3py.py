@@ -1488,6 +1488,8 @@ class Phono3py:
 
         This systematically generates single and pair atomic displacements
         in supercells to calculate fc3 considering crystal symmetry.
+        When this method is called, existing cache of supercells with
+        displacements for fc3 are removed.
 
         For fc3, two atoms are displaced for each configuration
         considering crystal symmetry. The first displacement is chosen
@@ -1504,7 +1506,8 @@ class Phono3py:
         When phonon_supercell_matrix is not given, fc2 is also
         computed from the same set of the displacements for fc3 and
         respective supercell forces. When phonon_supercell_matrix is
-        set, the displacements in phonon_supercell are generated.
+        set, the displacements in phonon_supercell are generated unless
+        those already exist.
 
         Parameters
         ----------
@@ -1539,8 +1542,9 @@ class Phono3py:
             self._supercell,
             cutoff_distance=cutoff_pair_distance,
         )
+        self._supercells_with_displacements = None
 
-        if self._phonon_supercell_matrix is not None:
+        if self._phonon_supercell_matrix is not None and self._phonon_dataset is None:
             self.generate_fc2_displacements(
                 distance=distance, is_plusminus=is_plusminus, is_diagonal=False
             )
@@ -1552,7 +1556,8 @@ class Phono3py:
 
         This systematically generates single atomic displacements
         in supercells to calculate phonon_fc2 considering crystal symmetry.
-
+        When this method is called, existing cache of supercells with
+        displacements for fc2 are removed.
 
         Note
         ----
@@ -1593,6 +1598,7 @@ class Phono3py:
         self._phonon_dataset = directions_to_displacement_dataset(
             phonon_displacement_directions, distance, self._phonon_supercell
         )
+        self._phonon_supercells_with_displacements = None
 
     def produce_fc3(
         self,
