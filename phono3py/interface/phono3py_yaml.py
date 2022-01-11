@@ -152,8 +152,15 @@ class Phono3pyYaml(PhonopyYaml):
 
         This method override PhonopyYaml._parse_dataset.
 
+        key="phonon_displacements" at v2.2 or later.
+        key="displacements" at older version than v2.2.
+
         """
-        self.phonon_dataset = self._get_dataset(self.phonon_supercell)
+        self.phonon_dataset = self._get_dataset(
+            self.phonon_supercell, key="phonon_displacements"
+        )
+        if self.phonon_dataset is None:  # key="displacements"
+            self.phonon_dataset = self._get_dataset(self.phonon_supercell)
 
     def _parse_fc3_dataset(self):
         """Parse force dataset for fc3.
@@ -161,6 +168,9 @@ class Phono3pyYaml(PhonopyYaml):
         'duplicates' can be either dict (<v1.21) or list in phono3py.yaml.
         From v1.21, it was changed to list of list because
         dict with a key of int type is not allowed in JSON.
+
+        "displacements" gives type-II fc3 dataset at v2.2 or later, although
+        it gave phonon-dataset at versions older than v2.2.
 
         """
         dataset = None
@@ -178,6 +188,10 @@ class Phono3pyYaml(PhonopyYaml):
             if "duplicated_supercell_ids" in info_yaml:
                 dataset["duplicates"] = info_yaml["duplicated_supercell_ids"]
         self.dataset = dataset
+
+        # This case should work only for v2.2 or later.
+        if self.dataset is None and "displacements" in self._yaml:
+            self.dataset = self._get_dataset(self.supercell)
 
     def _parse_forces_fc3_type1(self, natom):
         dataset = {"natom": natom, "first_atoms": []}
@@ -284,7 +298,7 @@ class Phono3pyYaml(PhonopyYaml):
         lines = []
         if self.phonon_supercell_matrix is not None:
             lines += self._displacements_yaml_lines_2types(
-                self.phonon_dataset, with_forces=with_forces, key=key
+                self.phonon_dataset, with_forces=with_forces, key=f"phonon_{key}"
             )
         lines += self._displacements_yaml_lines_2types(
             self.dataset, with_forces=with_forces, key=key
