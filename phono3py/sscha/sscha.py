@@ -45,7 +45,31 @@ import numpy as np
 from phonopy.harmonic.dynmat_to_fc import DynmatToForceConstants
 from phonopy.units import VaspToTHz
 
-from phono3py.phonon.func import mode_length
+from phono3py.phonon.func import sigma_squared
+
+
+def get_sscha_matrices(supercell, force_constants, cutoff_frequency=None):
+    """Return instance of DispCorrMatrix.
+
+    This can be used to compute probability distribution of supercell displacements
+    as follows. Suppose `disp` is sets of displacements of supercells and the shape is
+    `disp.shape == (n_snapshots, n_satom, 3)`.
+
+    ```python
+    uu = get_sscha_matrices(supercell, force_constants)
+    uu.run(temperature)
+    dmat = disp.reshape(n_snapshots, 3 * n_satom)
+    vals = [
+        -np.dot(dmat[i], np.dot(dmat, uu.upsilon_matrix)[i] / 2)
+        for i in range(n_snapshots)
+    ]
+    prob = uu.prefactor * np.ext(vals)
+    ```
+
+    """
+    sc_ph = SupercellPhonon(supercell, force_constants)
+    uu = DispCorrMatrix(sc_ph, cutoff_frequency=cutoff_frequency)
+    return uu
 
 
 class SupercellPhonon:
@@ -154,7 +178,7 @@ class DispCorrMatrix:
 
     """
 
-    def __init__(self, supercell_phonon, cutoff_frequency=1e-5):
+    def __init__(self, supercell_phonon, cutoff_frequency=None):
         """Init method.
 
         Parameters
@@ -162,18 +186,27 @@ class DispCorrMatrix:
         supercell_phonon : SupercellPhonon
             Supercell phonon object. Phonons at Gamma point, where
             eigenvectors are not complex type but real type.
-        cutoff_frequency : float
+        cutoff_frequency : float, optional
             Phonons are ignored if they have frequencies less than this value.
+            None sets 1e-5.
 
         """
         self._supercell_phonon = supercell_phonon
-        self._cutoff_frequency = cutoff_frequency
+        if cutoff_frequency is None:
+            self._cutoff_frequency = 1e-5
+        else:
+            self._cutoff_frequency = cutoff_frequency
         self._psi_matrix = None
         self._upsilon_matrix = None
         self._determinant = None
 
     def run(self, T):
-        """Calculate displacement correlation matrix from supercell phonon."""
+        """Calculate displacement correlation matrix from supercell phonon.
+
+        N doesn't appear in the computation explicitly because N=1, i.e.,
+        the factor is included in supercell eigenvectors.
+
+        """
         freqs = self._supercell_phonon.frequencies
         eigvecs = self._supercell_phonon.eigenvectors
         sqrt_masses = np.repeat(np.sqrt(self._supercell_phonon.supercell.masses), 3)
@@ -184,9 +217,9 @@ class DispCorrMatrix:
         # ignore zero and imaginary frequency modes
         condition = freqs > self._cutoff_frequency
         _freqs = np.where(condition, freqs, 1)
-        _a = mode_length(_freqs, T)
-        a2 = np.where(condition, _a ** 2, 0)
-        a2_inv = np.where(condition, 1 / _a ** 2, 0)
+        _a2 = sigma_squared(_freqs, T)
+        a2 = np.where(condition, _a2, 0)
+        a2_inv = np.where(condition, 1 / _a2, 0)
 
         matrix = np.dot(a2 * eigvecs, eigvecs.T)
         self._psi_matrix = np.array(
@@ -198,7 +231,7 @@ class DispCorrMatrix:
             sqrt_masses * (sqrt_masses * matrix).T, dtype="double", order="C"
         )
 
-        self._determinant = np.prod(2 * np.pi * np.extract(condition, a2))
+        self._prefactor = np.sqrt(1 / np.prod(2 * np.pi * np.extract(condition, a2)))
 
     @property
     def upsilon_matrix(self):
@@ -216,9 +249,9 @@ class DispCorrMatrix:
         return self._supercell_phonon
 
     @property
-    def determinant(self):
-        """Return determinant."""
-        return self._determinant
+    def prefactor(self):
+        """Return prefactor of probability distribution."""
+        return self._prefactor
 
 
 class DispCorrMatrixMesh:
@@ -273,9 +306,9 @@ class DispCorrMatrixMesh:
         """
         condition = frequencies > self._cutoff_frequency
         _freqs = np.where(condition, frequencies, 1)
-        _a = mode_length(_freqs, T)
-        a2 = np.where(condition, _a ** 2, 0)
-        a2_inv = np.where(condition, 1 / _a ** 2, 0)
+        _a2 = sigma_squared(_freqs, T)
+        a2 = np.where(condition, _a2, 0)
+        a2_inv = np.where(condition, 1 / _a2, 0)
         N = len(self._masses)
         shape = (N * 3, N * 3)
 
