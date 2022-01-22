@@ -59,11 +59,8 @@ def get_sscha_matrices(supercell, force_constants, cutoff_frequency=None):
     uu = get_sscha_matrices(supercell, force_constants)
     uu.run(temperature)
     dmat = disp.reshape(n_snapshots, 3 * n_satom)
-    vals = [
-        -np.dot(dmat[i], np.dot(dmat, uu.upsilon_matrix)[i] / 2)
-        for i in range(n_snapshots)
-    ]
-    prob = uu.prefactor * np.ext(vals)
+    vals = -(dmat * np.dot(dmat, uu.upsilon_matrix)).sum(axis=1) / 2
+    prob = uu.prefactor * np.exp(vals)
     ```
 
     """

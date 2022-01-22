@@ -232,16 +232,13 @@ def test_get_sscha_matrices(si_pbesol_111):
 
     ph3 = si_pbesol_111
     uu = get_sscha_matrices(ph3.supercell, ph3.fc2)
-    # rd = RandomDisplacements(ph3.supercell, ph3.primitive, ph3.fc2)
+    # _rd = RandomDisplacements(ph3.supercell, ph3.primitive, ph3.fc2)
     for temp, prob_ref, rd in zip((300, 400), (prob_300, prob_400), (rd_300, rd_400)):
         uu.run(temp)
-        # rd.run(temp, number_of_snapshots=n_snapshots)
-        # dmat = rd.u.reshape(n_snapshots, -1)
+        # _rd.run(temp, number_of_snapshots=n_snapshots)
+        # dmat = _rd.u.reshape(n_snapshots, -1)
         dmat = np.reshape(rd, (n_snapshots, -1))
-        vals = [
-            -np.dot(dmat[i], np.dot(dmat, uu.upsilon_matrix)[i] / 2)
-            for i in range(n_snapshots)
-        ]
+        vals = -(dmat * np.dot(dmat, uu.upsilon_matrix)).sum(axis=1) / 2
         prob = uu.prefactor * np.exp(vals)
         inv_sqrt_masses = np.repeat(1.0 / np.sqrt(ph3.supercell.masses), 3)
         umat = inv_sqrt_masses * (inv_sqrt_masses * uu.upsilon_matrix).T
