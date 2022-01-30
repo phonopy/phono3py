@@ -1,64 +1,121 @@
 """Test for Conductivity_RTA.py."""
 import numpy as np
 
-#first list is k_P, second list is k_C
-si_pbesol_kappa_P_RTA=[108.723,108.723,108.723,0.000,0.000,0.000]            #old value 107.991
-si_pbesol_kappa_C=[0.167,0.167,0.167,0.000,0.000,0.000]
+# first list is k_P, second list is k_C
+si_pbesol_kappa_P_RTA = [
+    108.723,
+    108.723,
+    108.723,
+    0.000,
+    0.000,
+    0.000,
+]  # old value 107.991
+si_pbesol_kappa_C = [0.167, 0.167, 0.167, 0.000, 0.000, 0.000]
 
-si_pbesol_kappa_P_RTA_iso=[97.494, 97.494, 97.494,0.000,0.000,0.000]         #old value 96.92419
-si_pbesol_kappa_C_iso=[0.177,0.177,0.177,0.000,0.000,0.000]
+si_pbesol_kappa_P_RTA_iso = [
+    97.494,
+    97.494,
+    97.494,
+    0.000,
+    0.000,
+    0.000,
+]  # old value 96.92419
+si_pbesol_kappa_C_iso = [0.177, 0.177, 0.177, 0.000, 0.000, 0.000]
 
-si_pbesol_kappa_P_RTA_with_sigmas=[110.534  ,  110.534 ,   110.534, 0, 0, 0] #old value 109.6985
-si_pbesol_kappa_C_with_sigmas=[0.163,0.163,0.163,0.000,0.000,0.000]
+si_pbesol_kappa_P_RTA_with_sigmas = [
+    110.534,
+    110.534,
+    110.534,
+    0,
+    0,
+    0,
+]  # old value 109.6985
+si_pbesol_kappa_C_with_sigmas = [0.163, 0.163, 0.163, 0.000, 0.000, 0.000]
 
-si_pbesol_kappa_P_RTA_with_sigmas_iso=[97.268, 97.268, 97.268, 0, 0, 0]      #old value 96.03248
-si_pbesol_kappa_C_with_sigmas_iso=[0.179,0.179,0.179,0.000,0.000,0.000]
+si_pbesol_kappa_P_RTA_with_sigmas_iso = [
+    97.268,
+    97.268,
+    97.268,
+    0,
+    0,
+    0,
+]  # old value 96.03248
+si_pbesol_kappa_C_with_sigmas_iso = [0.179, 0.179, 0.179, 0.000, 0.000, 0.000]
 
 si_pbesol_kappa_P_RTA_si_nosym = [
-    39.325 ,    # old value 38.242347
-    39.323 ,    # old value 38.700219
-    39.496 ,    # old value 39.198018
-    -0.004 ,    # old value  0.3216,
-    0.020  ,    # old value  0.207731,
-    0.018  ,    # old value  0.283,
+    39.325,  # old value 38.242347
+    39.323,  # old value 38.700219
+    39.496,  # old value 39.198018
+    -0.004,  # old value  0.3216,
+    0.020,  # old value  0.207731,
+    0.018,  # old value  0.283,
 ]
 
-si_pbesol_kappa_C_si_nosym = [0.009,0.009,0.009,0.000,0.000,0.000]
+si_pbesol_kappa_C_si_nosym = [0.009, 0.009, 0.009, 0.000, 0.000, 0.000]
 
-si_pbesol_kappa_P_RTA_si_nomeshsym = [39.411, 39.411, 39.411, 0, 0, 0]         # old value 38.90918
-si_pbesol_kappa_C_si_nomeshsym = [0.009,0.009,0.009,0.000,0.000,0.000]
+si_pbesol_kappa_P_RTA_si_nomeshsym = [
+    39.411,
+    39.411,
+    39.411,
+    0,
+    0,
+    0,
+]  # old value 38.90918
+si_pbesol_kappa_C_si_nomeshsym = [0.009, 0.009, 0.009, 0.000, 0.000, 0.000]
 
-nacl_pbe_kappa_P_RTA = [7.753,7.753,7.753,0.000,0.000,0.000]                   # old value 7.72798252
-nacl_pbe_kappa_C     = [0.081,0.081,0.081,0.000,0.000,0.000]    
+nacl_pbe_kappa_P_RTA = [
+    7.753,
+    7.753,
+    7.753,
+    0.000,
+    0.000,
+    0.000,
+]  # old value 7.72798252
+nacl_pbe_kappa_C = [0.081, 0.081, 0.081, 0.000, 0.000, 0.000]
 
-nacl_pbe_kappa_RTA_with_sigma = [7.742,7.742,7.742,0,0,0]                      # old value 7.71913708
-nacl_pbe_kappa_C_with_sigma   = [0.081,0.081,0.081,0.000,0.000,0.000]    
+nacl_pbe_kappa_RTA_with_sigma = [7.742, 7.742, 7.742, 0, 0, 0]  # old value 7.71913708
+nacl_pbe_kappa_C_with_sigma = [0.081, 0.081, 0.081, 0.000, 0.000, 0.000]
 
-aln_lda_kappa_P_RTA = [203.304, 203.304, 213.003, 0, 0, 0]                     # old value [203.304059, 203.304059, 213.003125, 0, 0, 0]
-aln_lda_kappa_C     = [0.084,0.084,0.037, 0, 0, 0]
+aln_lda_kappa_P_RTA = [
+    203.304,
+    203.304,
+    213.003,
+    0,
+    0,
+    0,
+]  # old value [203.304059, 203.304059, 213.003125, 0, 0, 0]
+aln_lda_kappa_C = [0.084, 0.084, 0.037, 0, 0, 0]
 
-aln_lda_kappa_P_RTA_with_sigmas = [213.820000, 213.820000, 224.800000, 0, 0, 0] # old value [213.820000, 213.820000, 224.800121, 0, 0, 0]
-aln_lda_kappa_C_with_sigmas    = [0.084,0.084,0.036, 0, 0, 0]
+aln_lda_kappa_P_RTA_with_sigmas = [
+    213.820000,
+    213.820000,
+    224.800000,
+    0,
+    0,
+    0,
+]  # old value [213.820000, 213.820000, 224.800121, 0, 0, 0]
+aln_lda_kappa_C_with_sigmas = [0.084, 0.084, 0.036, 0, 0, 0]
+
 
 def test_kappa_RTA_si(si_pbesol):
     """Test RTA by Si."""
-    kappa_P_RTA,kappa_C = _get_kappa_RTA(si_pbesol, [9, 9, 9])
-    np.testing.assert_allclose(si_pbesol_kappa_P_RTA, kappa_P_RTA, atol=0.5)  
-    np.testing.assert_allclose(si_pbesol_kappa_C, kappa_C, atol=0.02)  
+    kappa_P_RTA, kappa_C = _get_kappa_RTA(si_pbesol, [9, 9, 9])
+    np.testing.assert_allclose(si_pbesol_kappa_P_RTA, kappa_P_RTA, atol=0.5)
+    np.testing.assert_allclose(si_pbesol_kappa_C, kappa_C, atol=0.02)
 
 
 def test_kappa_RTA_si_full_pp(si_pbesol):
     """Test RTA with full-pp by Si."""
-    kappa_P_RTA, kappa_C= _get_kappa_RTA(si_pbesol, [9, 9, 9],is_full_pp=True)
-    np.testing.assert_allclose(si_pbesol_kappa_P_RTA, kappa_P_RTA, atol=0.5)  
-    np.testing.assert_allclose(si_pbesol_kappa_C, kappa_C, atol=0.02)   
+    kappa_P_RTA, kappa_C = _get_kappa_RTA(si_pbesol, [9, 9, 9], is_full_pp=True)
+    np.testing.assert_allclose(si_pbesol_kappa_P_RTA, kappa_P_RTA, atol=0.5)
+    np.testing.assert_allclose(si_pbesol_kappa_C, kappa_C, atol=0.02)
 
 
 def test_kappa_RTA_si_iso(si_pbesol):
     """Test RTA with isotope scattering by Si."""
-    kappa_P_RTA, kappa_C= _get_kappa_RTA(si_pbesol, [9, 9, 9], is_isotope=True)
-    np.testing.assert_allclose(si_pbesol_kappa_P_RTA_iso, kappa_P_RTA, atol=0.5)  
-    np.testing.assert_allclose(si_pbesol_kappa_C_iso, kappa_C, atol=0.02)  
+    kappa_P_RTA, kappa_C = _get_kappa_RTA(si_pbesol, [9, 9, 9], is_isotope=True)
+    np.testing.assert_allclose(si_pbesol_kappa_P_RTA_iso, kappa_P_RTA, atol=0.5)
+    np.testing.assert_allclose(si_pbesol_kappa_C_iso, kappa_C, atol=0.02)
 
 
 def test_kappa_RTA_si_with_sigma(si_pbesol):
@@ -66,9 +123,9 @@ def test_kappa_RTA_si_with_sigma(si_pbesol):
     si_pbesol.sigmas = [
         0.1,
     ]
-    kappa_P_RTA, kappa_C= _get_kappa_RTA(si_pbesol, [9, 9, 9])
+    kappa_P_RTA, kappa_C = _get_kappa_RTA(si_pbesol, [9, 9, 9])
     np.testing.assert_allclose(si_pbesol_kappa_P_RTA_with_sigmas, kappa_P_RTA, atol=0.5)
-    np.testing.assert_allclose(si_pbesol_kappa_C_with_sigmas, kappa_C, atol=0.02)    
+    np.testing.assert_allclose(si_pbesol_kappa_C_with_sigmas, kappa_C, atol=0.02)
     si_pbesol.sigmas = None
 
 
@@ -77,9 +134,9 @@ def test_kappa_RTA_si_with_sigma_full_pp(si_pbesol):
     si_pbesol.sigmas = [
         0.1,
     ]
-    kappa_P_RTA, kappa_C= _get_kappa_RTA(si_pbesol, [9, 9, 9], is_full_pp=True)
+    kappa_P_RTA, kappa_C = _get_kappa_RTA(si_pbesol, [9, 9, 9], is_full_pp=True)
     np.testing.assert_allclose(si_pbesol_kappa_P_RTA_with_sigmas, kappa_P_RTA, atol=0.5)
-    np.testing.assert_allclose(si_pbesol_kappa_C_with_sigmas, kappa_C, atol=0.02)  
+    np.testing.assert_allclose(si_pbesol_kappa_C_with_sigmas, kappa_C, atol=0.02)
     si_pbesol.sigmas = None
 
 
@@ -89,8 +146,10 @@ def test_kappa_RTA_si_with_sigma_iso(si_pbesol):
         0.1,
     ]
     kappa_P_RTA, kappa_C = _get_kappa_RTA(si_pbesol, [9, 9, 9], is_isotope=True)
-    np.testing.assert_allclose(si_pbesol_kappa_P_RTA_with_sigmas_iso, kappa_P_RTA, atol=0.5)
-    np.testing.assert_allclose(si_pbesol_kappa_C_with_sigmas_iso, kappa_C, atol=0.02)      
+    np.testing.assert_allclose(
+        si_pbesol_kappa_P_RTA_with_sigmas_iso, kappa_P_RTA, atol=0.5
+    )
+    np.testing.assert_allclose(si_pbesol_kappa_C_with_sigmas_iso, kappa_C, atol=0.02)
     si_pbesol.sigmas = None
 
 
@@ -98,28 +157,32 @@ def test_kappa_RTA_si_compact_fc(si_pbesol_compact_fc):
     """Test RTA with compact-fc by Si."""
     kappa_P_RTA, kappa_C = _get_kappa_RTA(si_pbesol_compact_fc, [9, 9, 9])
     np.testing.assert_allclose(si_pbesol_kappa_P_RTA, kappa_P_RTA, atol=0.5)
-    np.testing.assert_allclose(si_pbesol_kappa_C, kappa_C, atol=0.02) 
+    np.testing.assert_allclose(si_pbesol_kappa_C, kappa_C, atol=0.02)
 
 
 def test_kappa_RTA_si_nosym(si_pbesol, si_pbesol_nosym):
     """Test RTA without considering symmetry by Si."""
     si_pbesol_nosym.fc2 = si_pbesol.fc2
     si_pbesol_nosym.fc3 = si_pbesol.fc3
-    kappa_P_RTA,kappa_C = _get_kappa_RTA(si_pbesol_nosym, [4, 4, 4])
-    kappa_P_RTA_r=kappa_P_RTA.reshape(-1,3).sum(axis=1)
-    kappa_C_r=kappa_C.reshape(-1,3).sum(axis=1)
+    kappa_P_RTA, kappa_C = _get_kappa_RTA(si_pbesol_nosym, [4, 4, 4])
+    kappa_P_RTA_r = kappa_P_RTA.reshape(-1, 3).sum(axis=1)
+    kappa_C_r = kappa_C.reshape(-1, 3).sum(axis=1)
     kappa_P_ref = np.reshape(si_pbesol_kappa_P_RTA_si_nosym, (-1, 3)).sum(axis=1)
     kappa_C_ref = np.reshape(si_pbesol_kappa_C_si_nosym, (-1, 3)).sum(axis=1)
     np.testing.assert_allclose(kappa_P_ref / 3, kappa_P_RTA_r / 3, atol=0.5)
     np.testing.assert_allclose(kappa_C_ref / 3, kappa_C_r / 3, atol=0.02)
+
 
 def test_kappa_RTA_si_nomeshsym(si_pbesol, si_pbesol_nomeshsym):
     """Test RTA without considering mesh symmetry by Si."""
     si_pbesol_nomeshsym.fc2 = si_pbesol.fc2
     si_pbesol_nomeshsym.fc3 = si_pbesol.fc3
     kappa_P_RTA, kappa_C = _get_kappa_RTA(si_pbesol_nomeshsym, [4, 4, 4])
-    np.testing.assert_allclose(si_pbesol_kappa_P_RTA_si_nomeshsym, kappa_P_RTA, atol=0.5)
+    np.testing.assert_allclose(
+        si_pbesol_kappa_P_RTA_si_nomeshsym, kappa_P_RTA, atol=0.5
+    )
     np.testing.assert_allclose(si_pbesol_kappa_C_si_nomeshsym, kappa_C, atol=0.02)
+
 
 def test_kappa_RTA_si_N_U(si_pbesol):
     """Test RTA with N and U scatterings by Si."""
@@ -264,11 +327,13 @@ def test_kappa_RTA_nacl_with_sigma(nacl_pbe):
     nacl_pbe.sigmas = None
     nacl_pbe.sigma_cutoff = None
 
+
 def test_kappa_RTA_aln(aln_lda):
     """Test RTA by AlN."""
     kappa_P_RTA, kappa_C = _get_kappa_RTA(aln_lda, [7, 7, 5])
     np.testing.assert_allclose(aln_lda_kappa_P_RTA, kappa_P_RTA, atol=0.5)
     np.testing.assert_allclose(aln_lda_kappa_C, kappa_C, atol=0.02)
+
 
 def test_kappa_RTA_aln_with_sigma(aln_lda):
     """Test RTA with smearing method by AlN."""
@@ -276,7 +341,7 @@ def test_kappa_RTA_aln_with_sigma(aln_lda):
         0.1,
     ]
     aln_lda.sigma_cutoff = 3
-    kappa_P_RTA,kappa_C = _get_kappa_RTA(aln_lda, [7, 7, 5])
+    kappa_P_RTA, kappa_C = _get_kappa_RTA(aln_lda, [7, 7, 5])
     np.testing.assert_allclose(aln_lda_kappa_P_RTA_with_sigmas, kappa_P_RTA, atol=0.5)
     np.testing.assert_allclose(aln_lda_kappa_C_with_sigmas, kappa_C, atol=0.02)
     aln_lda.sigmas = None
@@ -293,4 +358,7 @@ def _get_kappa_RTA(ph3, mesh, is_isotope=False, is_full_pp=False):
         is_isotope=is_isotope,
         is_full_pp=is_full_pp,
     )
-    return ph3.thermal_conductivity.kappa_P_RTA.ravel(),ph3.thermal_conductivity.kappa_C.ravel()
+    return (
+        ph3.thermal_conductivity.kappa_P_RTA.ravel(),
+        ph3.thermal_conductivity.kappa_C.ravel(),
+    )
