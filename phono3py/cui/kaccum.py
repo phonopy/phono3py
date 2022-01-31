@@ -221,7 +221,7 @@ def _run_prop_dos(
 def _get_mfp(g, gv):
     """Calculate mean free path from inverse lifetime and group velocity."""
     g = np.where(g > 0, g, -1)
-    gv_norm = np.sqrt((gv ** 2).sum(axis=2))
+    gv_norm = np.sqrt((gv**2).sum(axis=2))
     mean_freepath = np.where(g > 0, gv_norm / (2 * 2 * np.pi * g), 0)
     return mean_freepath
 
@@ -550,7 +550,7 @@ def main():
         if args.mfp:
             if "mean_free_path" in f_kappa:
                 mfp = f_kappa["mean_free_path"][:]
-                mean_freepath = np.sqrt((mfp ** 2).sum(axis=3))
+                mean_freepath = np.sqrt((mfp**2).sum(axis=3))
             else:
                 mean_freepath = _get_mfp(
                     f_kappa["gamma"][:], f_kappa["group_velocity"][:]

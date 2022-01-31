@@ -789,7 +789,7 @@ class ConductivityLBTE(Conductivity):
             -1.0,
         )
         inv_sinh = np.where(sinh > 0, 1.0 / sinh, 0)
-        freqs_sinh = freqs * THzToEv * inv_sinh / (4 * Kb * t ** 2)
+        freqs_sinh = freqs * THzToEv * inv_sinh / (4 * Kb * t**2)
 
         for i, f in enumerate(freqs_sinh):
             X[i] *= weights[i]
@@ -1110,7 +1110,7 @@ class ConductivityLBTE(Conductivity):
                     mode_kappa[i_sigma, i_temp, i, j, k] = sum_k[vxf]
 
         t = self._temperatures[i_temp]
-        mode_kappa[i_sigma, i_temp] *= self._conversion_factor * Kb * t ** 2
+        mode_kappa[i_sigma, i_temp] *= self._conversion_factor * Kb * t**2
 
     def _set_mode_kappa_Chaput(self, i_sigma, i_temp, weights):
         """Calculate mode kappa by the way in Laurent Chaput's PRL paper.
@@ -1150,11 +1150,11 @@ class ConductivityLBTE(Conductivity):
                     mat = mat.T
                 spectra = np.dot(mat.T, X) ** 2 * w
                 for s, eigvec in zip(spectra, mat.T):
-                    vals = s * (eigvec ** 2).reshape(-1, 3).sum(axis=1)
+                    vals = s * (eigvec**2).reshape(-1, 3).sum(axis=1)
                     vals = vals.reshape(num_ir_grid_points, num_band)
                     self._mode_kappa[i_sigma, i_temp, :, :, i] += vals
 
-        factor = self._conversion_factor * Kb * t ** 2
+        factor = self._conversion_factor * Kb * t**2
         self._mode_kappa[i_sigma, i_temp] *= factor
 
     def _set_mode_kappa_from_mfp(

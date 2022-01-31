@@ -346,7 +346,7 @@ class RealSelfEnergy:
         self._real_self_energies = None
 
         # Unit to THz of Delta
-        self._unit_conversion = 18 / (Hbar * EV) ** 2 / (2 * np.pi * THz) ** 2 * EV ** 2
+        self._unit_conversion = 18 / (Hbar * EV) ** 2 / (2 * np.pi * THz) ** 2 * EV**2
 
     def run(self):
         """Calculate real-part of self-energies."""
@@ -568,10 +568,10 @@ class RealSelfEnergy:
                 #     d -= (n2 - n3) / f3
                 # if abs(f4) > self._epsilon:
                 #     d += (n2 - n3) / f4
-                d -= (n2 + n3 + 1) * f1 / (f1 ** 2 + self._epsilon ** 2)
-                d += (n2 + n3 + 1) * f2 / (f2 ** 2 + self._epsilon ** 2)
-                d -= (n2 - n3) * f3 / (f3 ** 2 + self._epsilon ** 2)
-                d += (n2 - n3) * f4 / (f4 ** 2 + self._epsilon ** 2)
+                d -= (n2 + n3 + 1) * f1 / (f1**2 + self._epsilon**2)
+                d += (n2 + n3 + 1) * f2 / (f2**2 + self._epsilon**2)
+                d -= (n2 - n3) * f3 / (f3**2 + self._epsilon**2)
+                d += (n2 - n3) * f4 / (f4**2 + self._epsilon**2)
 
                 sum_d += d * interaction[i, j, k] * weight
         return sum_d
@@ -594,8 +594,8 @@ class RealSelfEnergy:
                 #     d -= 1.0 / f1
                 # if abs(f2) > self._epsilon:
                 #     d += 1.0 / f2
-                d -= 1.0 * f1 / (f1 ** 2 + self._epsilon ** 2)
-                d += 1.0 * f2 / (f2 ** 2 + self._epsilon ** 2)
+                d -= 1.0 * f1 / (f1**2 + self._epsilon**2)
+                d += 1.0 * f2 / (f2**2 + self._epsilon**2)
 
                 sum_d += d * interaction[i, j, k] * weight
         return sum_d

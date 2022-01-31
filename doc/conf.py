@@ -41,8 +41,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"phono3py"
-copyright = u"2015, Atsushi Togo"
+project = "phono3py"
+copyright = "2015, Atsushi Togo"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -230,7 +230,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual])
 # .
 latex_documents = [
-    ("index", "phono3py.tex", u"phono3py manual", u"Atsushi Togo", "manual"),
+    ("index", "phono3py.tex", "phono3py manual", "Atsushi Togo", "manual"),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -258,7 +258,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("index", "phono3py", u"phono3py Documentation", [u"Atsushi Togo"], 1)]
+man_pages = [("index", "phono3py", "phono3py Documentation", ["Atsushi Togo"], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -273,8 +273,8 @@ texinfo_documents = [
     (
         "index",
         "phono3py",
-        u"phono3py Documentation",
-        u"Atsushi Togo",
+        "phono3py Documentation",
+        "Atsushi Togo",
         "phono3py",
         "One line description of project.",
         "Miscellaneous",

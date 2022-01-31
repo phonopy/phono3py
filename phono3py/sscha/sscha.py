@@ -185,8 +185,8 @@ class DispCorrMatrix:
         condition = freqs > self._cutoff_frequency
         _freqs = np.where(condition, freqs, 1)
         _a = mode_length(_freqs, T)
-        a2 = np.where(condition, _a ** 2, 0)
-        a2_inv = np.where(condition, 1 / _a ** 2, 0)
+        a2 = np.where(condition, _a**2, 0)
+        a2_inv = np.where(condition, 1 / _a**2, 0)
 
         matrix = np.dot(a2 * eigvecs, eigvecs.T)
         self._psi_matrix = np.array(
@@ -274,8 +274,8 @@ class DispCorrMatrixMesh:
         condition = frequencies > self._cutoff_frequency
         _freqs = np.where(condition, frequencies, 1)
         _a = mode_length(_freqs, T)
-        a2 = np.where(condition, _a ** 2, 0)
-        a2_inv = np.where(condition, 1 / _a ** 2, 0)
+        a2 = np.where(condition, _a**2, 0)
+        a2_inv = np.where(condition, 1 / _a**2, 0)
         N = len(self._masses)
         shape = (N * 3, N * 3)
 
@@ -400,9 +400,9 @@ class SecondOrderFC:
             nelems = np.prod(u.shape)
             # print("sum u_inv:", u_inv.sum(axis=0) / u.shape[0])
             print("sum all u_inv:", u_inv.sum() / nelems)
-            print("rms u_inv:", np.sqrt((u_inv ** 2).sum() / nelems))
-            print("rms u:", np.sqrt((u ** 2).sum() / nelems))
-            print("rms forces:", np.sqrt((self._forces ** 2).sum() / nelems))
+            print("rms u_inv:", np.sqrt((u_inv**2).sum() / nelems))
+            print("rms u:", np.sqrt((u**2).sum() / nelems))
+            print("rms forces:", np.sqrt((self._forces**2).sum() / nelems))
             # print("drift forces:",
             #       self._forces.sum(axis=0) / self._forces.shape[0])
 
@@ -526,9 +526,9 @@ class ThirdOrderFC:
 
         if self._log_level:
             N = np.prod(u.shape)
-            print("rms u_inv:", np.sqrt((u_inv ** 2).sum() / N))
-            print("rms u:", np.sqrt((u ** 2).sum() / N))
-            print("rms forces:", np.sqrt((self._forces ** 2).sum() / N))
-            print("rms f:", np.sqrt((f ** 2).sum() / N))
+            print("rms u_inv:", np.sqrt((u_inv**2).sum() / N))
+            print("rms u:", np.sqrt((u**2).sum() / N))
+            print("rms forces:", np.sqrt((self._forces**2).sum() / N))
+            print("rms f:", np.sqrt((f**2).sum() / N))
 
         return -np.einsum("li,lj,lk->ijk", u_inv, u_inv, f) / f.shape[0]
