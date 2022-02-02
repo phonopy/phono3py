@@ -64,10 +64,10 @@ def bose_einstein(x, T):
     return 1.0 / (np.exp(THzToEv * x / (Kb * T)) - 1)
 
 
-def mode_length(x, T):
+def sigma_squared(x, T):
     """Return mode length.
 
-    sqrt((0.5 + n) hbar / omega)
+    sigma^2 = (0.5 + n) hbar / omega
 
     Note
     ----
@@ -86,7 +86,7 @@ def mode_length(x, T):
 
     Returns
     -------
-    Values in [sqrt(AMU) * Angstrom]
+    Values in [AMU * Angstrom^2]
 
     """
     #####################################
@@ -94,11 +94,11 @@ def mode_length(x, T):
     #####################################
 
     n = bose_einstein(x, T)
-    # factor=1.0053644502352863
-    factor = np.sqrt(Hbar * EV / (2 * np.pi * THz) / AMU) / Angstrom
+    # factor=1.0107576777968994
+    factor = Hbar * EV / (2 * np.pi * THz) / AMU / Angstrom ** 2
 
     #########################
     np.seterr(**old_settings)
     #########################
 
-    return np.sqrt((0.5 + n) / x) * factor
+    return (0.5 + n) / x * factor
