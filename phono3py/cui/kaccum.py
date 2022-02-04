@@ -4,6 +4,7 @@ import sys
 
 import h5py
 import numpy as np
+from phonopy.cui.collect_cell_info import collect_cell_info
 from phonopy.cui.settings import fracval
 from phonopy.interface.calculator import read_crystal_structure
 from phonopy.phonon.dos import NormalDistribution
@@ -14,6 +15,7 @@ from phonopy.structure.cells import (
 )
 from phonopy.structure.symmetry import Symmetry
 
+from phono3py.interface.phono3py_yaml import Phono3pyYaml
 from phono3py.other.tetrahedron_method import get_integration_weights
 from phono3py.phonon.grid import BZGrid, get_ir_grid_points
 
@@ -306,6 +308,16 @@ def _read_files(args):
     return cell, f
 
 
+def _read_files_by_collect_cell_info(cell_filename, interface_mode):
+    cell_info = collect_cell_info(
+        interface_mode=interface_mode,
+        cell_filename=cell_filename,
+        supercell_matrix=np.eye(3, dtype=int),
+        phonopy_yaml_cls=Phono3pyYaml,
+    )
+    return cell_info
+
+
 def _get_mode_property(args, f_kappa):
     """Read property data from hdf5 file object."""
     if args.pqj:
@@ -469,14 +481,59 @@ def _analyze_primitive_matrix_option(args, unitcell=None):
 
 
 def main():
-    """Calculate kappa spectrum."""
+    """Calculate kappa spectrum.
+
+    Usage
+    -----
+    If `phono3py_disp.yaml` or `phono3py.yaml` exists in current directory,
+    ```
+    % phono3py-kaccum kappa-m111111.hdf5
+    ```
+
+    Old style usage
+    ---------------
+    ```
+    % phono3py-kaccum --pa="F" -c POSCAR-unitcell kappa-m111111.hdf5 |tee kaccum.dat
+    ```
+
+    Plot by gnuplot
+    ---------------
+    ```
+    % gnuplot
+    ...
+    gnuplot> p "kaccum.dat" i 30 u 1:2 w l, "kaccum.dat" i 30 u 1:8 w l
+    ```
+
+    With phono3py.yaml type file as crystal structure, primitive matrix is
+    unnecessary to set.
+
+    """
     args = _get_parser()
-    cell, f_kappa = _read_files(args)
+    primitive = None
+    if len(args.filenames) > 1:  # deprecated
+        cell, f_kappa = _read_files(args)
+        primitive_matrix = _analyze_primitive_matrix_option(args, unitcell=cell)
+    else:
+        interface_mode = _get_calculator(args)
+        cell_info = _read_files_by_collect_cell_info(args.cell_filename, interface_mode)
+        cell = cell_info["unitcell"]
+        phpy_yaml = cell_info.get("phonopy_yaml", None)
+        if phpy_yaml is not None:
+            primitive = cell_info["phonopy_yaml"].primitive
+            if primitive is None:
+                primitive = cell
+        else:
+            primitive_matrix = _analyze_primitive_matrix_option(args, unitcell=cell)
+        f_kappa = h5py.File(args.filenames[0], "r")
+    if primitive is None:
+        if primitive_matrix is None:
+            primitive = cell
+        else:
+            primitive = get_primitive(cell, primitive_matrix)
+
     mesh = np.array(f_kappa["mesh"][:], dtype="int_")
     temperatures = f_kappa["temperature"][:]
     ir_weights = f_kappa["weight"][:]
-    primitive_matrix = _analyze_primitive_matrix_option(args, unitcell=cell)
-    primitive = get_primitive(cell, primitive_matrix)
     primitive_symmetry = Symmetry(primitive)
     bz_grid = BZGrid(
         mesh,
