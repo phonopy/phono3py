@@ -147,6 +147,7 @@ class Phono3py:
         is_symmetry=True,
         is_mesh_symmetry=True,
         use_grg=False,
+        SNF_coordinates="reciprocal",
         symmetrize_fc3q=None,
         store_dense_gp_map=True,
         store_dense_svecs=True,
@@ -203,6 +204,10 @@ class Phono3py:
             Default is True.
         use_grg : bool, optional
             Use generalized regular grid when True. Default is False.
+        SNF_coordinates : str, optional
+            `reciprocal` or `direct`.
+            Space of coordinates to generate grid generating matrix either in direct
+            or reciprocal space. The default is `reciprocal`.
         symmetrize_fc3q : Deprecated.
             See Phono3py.init_phph_interaction().
         store_dense_gp_map : bool, optional
@@ -228,6 +233,7 @@ class Phono3py:
         self._is_symmetry = is_symmetry
         self._is_mesh_symmetry = is_mesh_symmetry
         self._use_grg = use_grg
+        self._SNF_coordinates = SNF_coordinates
         self._store_dense_gp_map = store_dense_gp_map
         self._store_dense_svecs = store_dense_svecs
         self._cutoff_frequency = cutoff_frequency
@@ -2542,6 +2548,7 @@ class Phono3py:
             is_time_reversal=self._is_symmetry,
             use_grg=self._use_grg,
             force_SNF=False,
+            SNF_coordinates=self._SNF_coordinates,
             store_dense_gp_map=self._store_dense_gp_map,
         )
 

@@ -727,35 +727,82 @@ def _test_BZGrid_SNF(bzgrid):
     np.testing.assert_equal(ref_rots, bzgrid.rotations.ravel())
 
 
+def test_BZGrid_SNF_hexagonal(aln_lda):
+    """Test of SNF in BZGrid."""
+    lat = aln_lda.primitive.cell
+    mesh = 20
+    bzgrid = BZGrid(
+        mesh,
+        lattice=lat,
+        symmetry_dataset=aln_lda.primitive_symmetry.dataset,
+    )
+    np.testing.assert_equal(bzgrid.D_diag, [7, 7, 4])
+
+    bzgrid = BZGrid(
+        mesh,
+        lattice=lat,
+        symmetry_dataset=aln_lda.primitive_symmetry.dataset,
+        use_grg=True,
+    )
+    np.testing.assert_equal(bzgrid.D_diag, [7, 7, 4])
+
+    bzgrid = BZGrid(
+        mesh,
+        lattice=lat,
+        symmetry_dataset=aln_lda.primitive_symmetry.dataset,
+        use_grg=True,
+        force_SNF=True,
+    )
+    np.testing.assert_equal(bzgrid.D_diag, [1, 7, 28])
+
+    bzgrid = BZGrid(
+        mesh,
+        lattice=lat,
+        symmetry_dataset=aln_lda.primitive_symmetry.dataset,
+        use_grg=True,
+        force_SNF=True,
+        SNF_coordinates="direct",
+    )
+    np.testing.assert_equal(bzgrid.D_diag, [1, 6, 30])
+
+
 def test_SNF_tetrahedra_relative_grid(aln_lda):
-    """Check if relative grid q-points agree with points around microzone.
+    """Test relative grid addresses under GR-grid.
 
-    Compare between microzone and primitive lattices in
-    reciprocal Cartesian coordinates.
-
-    Hexagonal AlN is used as the test. Generalized regular grid
-    with force_SNF=True gives [2, 8, 24] mesh.
+    Under GR-grid, grid point addressing becomes different from ordinal uniform
+    grid. But P and Q matrices can be used to map betweewn these grid systems.
+    In this test, the agreement is checked by representing them in Cartesian
+    coordinates.
 
     """
-    aln_lda._use_grg = True
-    aln_lda.mesh_numbers = 25
-    bz_grid = aln_lda.grid
-    plat = np.linalg.inv(aln_lda.primitive.cell)
-    mlat = bz_grid.microzone_lattice
-    bz_grid._generate_grid(25, force_SNF=True)
-    thm = TetrahedronMethod(mlat)
-    snf_tetrahedra = np.dot(thm.get_tetrahedra(), bz_grid.P.T)
+    lat = aln_lda.primitive.cell
+    mesh = 25
 
-    np.testing.assert_equal(bz_grid.D_diag, [2, 8, 24])
-
-    for mtet, ptet in zip(thm.get_tetrahedra(), snf_tetrahedra):
-        np.testing.assert_allclose(
-            np.dot(mtet, mlat.T),
-            np.dot(np.dot(ptet, bz_grid.QDinv.T), plat.T),
-            atol=1e-8,
+    for snf_coordinates, d_diag in zip(
+        ("direct", "reciprocal"), ([2, 8, 24], [1, 9, 45])
+    ):
+        bzgrid = BZGrid(
+            mesh,
+            lattice=lat,
+            symmetry_dataset=aln_lda.primitive_symmetry.dataset,
+            use_grg=True,
+            force_SNF=True,
+            SNF_coordinates=snf_coordinates,
         )
-        # print(np.dot(mtet, mlat.T))
-        # print(np.dot(np.dot(ptet, bz_grid.QDinv.T), plat.T))
+
+        np.testing.assert_equal(bzgrid.D_diag, d_diag)
+
+        plat = np.linalg.inv(aln_lda.primitive.cell)
+        mlat = bzgrid.microzone_lattice
+        thm = TetrahedronMethod(mlat)
+        snf_tetrahedra = np.dot(thm.get_tetrahedra(), bzgrid.P.T)
+
+        for mtet, ptet in zip(thm.get_tetrahedra(), snf_tetrahedra):
+            np.testing.assert_allclose(
+                np.dot(mtet, mlat.T),
+                np.dot(np.dot(ptet, bzgrid.QDinv.T), plat.T),
+                atol=1e-8,
+            )
 
 
 def test_get_grid_points_by_bz_rotations(si_pbesol_111):
