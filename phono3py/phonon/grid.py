@@ -309,7 +309,7 @@ class BZGrid:
     def microzone_lattice(self):
         """Basis vectors of microzone.
 
-        Basis vectors of microzone of GR-grid.
+        Basis vectors of microzone of GR-grid in column vectors.
         shape=(3, 3), dtype='double', order='C'.
 
         """
