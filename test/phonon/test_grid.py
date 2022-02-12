@@ -1,5 +1,6 @@
 """Tests for grids."""
 import numpy as np
+import pytest
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
 from phono3py.phonon.grid import (
@@ -764,6 +765,25 @@ def test_BZGrid_SNF_hexagonal(aln_lda):
         SNF_coordinates="direct",
     )
     np.testing.assert_equal(bzgrid.D_diag, [1, 6, 30])
+
+
+def test_BZGrid_SNF_nonprimitive(si_pbesol_111):
+    """Test of SNF in BZGrid."""
+    lat = si_pbesol_111.supercell.cell
+    mesh = 20
+    with pytest.warns(
+        RuntimeWarning, match="Non primitive cell input. Unable to use GR-grid."
+    ):
+        bzgrid = BZGrid(
+            mesh,
+            lattice=lat,
+            symmetry_dataset=si_pbesol_111.symmetry.dataset,
+            use_grg=True,
+        )
+    np.testing.assert_equal(bzgrid.D_diag, [4, 4, 4])
+    identity = np.eye(3, dtype=int)
+    np.testing.assert_equal(bzgrid.P, identity)
+    np.testing.assert_equal(bzgrid.Q, identity)
 
 
 def test_SNF_tetrahedra_relative_grid(aln_lda):
