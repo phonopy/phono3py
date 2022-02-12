@@ -37,7 +37,11 @@ import warnings
 
 import numpy as np
 from phonopy.harmonic.force_constants import similarity_transformation
-from phonopy.structure.cells import estimate_supercell_matrix, get_reduced_bases
+from phonopy.structure.cells import (
+    estimate_supercell_matrix,
+    get_reduced_bases,
+    is_primitive_cell,
+)
 from phonopy.structure.grid_points import extract_ir_grid_points, length2mesh
 
 
@@ -440,7 +444,7 @@ class BZGrid:
             fall_back = True
             if use_grg:
                 if "international" in self._symmetry_dataset:
-                    if self._is_primitive_cell():
+                    if is_primitive_cell(self._symmetry_dataset["rotations"]):
                         self._set_SNF(
                             length, force_SNF=force_SNF, coordinates=coordinates
                         )
@@ -452,17 +456,6 @@ class BZGrid:
                         )
             if fall_back:
                 self._D_diag = length2mesh(length, self._lattice)
-
-    def _is_primitive_cell(self):
-        num_identity = 0
-        identity = np.eye(3, dtype="intc")
-        for r in self._symmetry_dataset["rotations"]:
-            if (r == identity).all():
-                num_identity += 1
-                if num_identity > 1:
-                    return False
-        else:
-            return True
 
     def _set_SNF(self, length, force_SNF=False, coordinates="reciprocal"):
         """Calculate Smith normal form.
