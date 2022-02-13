@@ -4,6 +4,22 @@ import os
 import numpy
 import setuptools
 
+# Ensure that 'site.cfg' exists.
+if not os.path.exists("site.cfg"):
+    msg_list = [
+        '"site.cfg" file is needed to run setup.py.',
+        "See about installation at https://phonopy.github.io/phono3py/install.html.",
+        "A minimum setting of site.cfg to build with openmp support is:",
+        "# ------------------------------",
+        "[phono3py]",
+        "extra_compile_args = -fopenmp",
+        "# ------------------------------",
+        "Please create an emply site.cfg (no-openmp support) to run setup.py",
+        "unless any custom setting is needed, although this is considered unusual.",
+    ]
+
+    raise FileNotFoundError("\n".join(msg_list))
+
 # Retrieve the default flags from the numpy installation
 # This also means one can override this with a site.cfg
 # configuration file
@@ -178,7 +194,7 @@ if __name__ == "__main__":
             "matplotlib>=2.2.2",
             "h5py",
             "spglib",
-            "phonopy>=2.12,<2.13",
+            "phonopy>=2.13,<2.14",
         ],
         provides=["phono3py"],
         scripts=scripts_phono3py,
