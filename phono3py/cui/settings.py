@@ -653,7 +653,9 @@ class Phono3pyConfParser(ConfParser):
                 elif len(matrix) == 3:
                     matrix = np.diag(matrix)
                 else:
-                    self.setting_error("Number of elements of dim2 has to be 3 or 9.")
+                    self.setting_error(
+                        "Number of elements of dim-fc2 has to be 3 or 9."
+                    )
 
                 if matrix.shape == (3, 3):
                     if np.linalg.det(matrix) < 1:

@@ -99,7 +99,7 @@ void itr_get_interaction(Darray *fc3_normal_squared, const char *g_zero,
         openmp_per_triplets = 0;
     }
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for schedule(guided) private( \
     num_g_pos, g_pos) if (openmp_per_triplets)
 #endif

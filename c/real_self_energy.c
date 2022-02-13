@@ -118,7 +118,7 @@ static double get_real_self_energy_at_band(
     num_band = fc3_normal_squared->dims[2];
 
     shift = 0;
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for private(gp1, gp2) reduction(+ : shift)
 #endif
     for (i = 0; i < num_triplets; i++) {

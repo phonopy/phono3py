@@ -220,28 +220,29 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             "force constants"
         ),
     )
-    parser.add_argument(
-        "-d",
-        "--disp",
-        dest="is_displacement",
-        action="store_true",
-        default=False,
-        help="As first stage, get least displacements",
-    )
-    parser.add_argument(
-        "--dim",
-        nargs="+",
-        dest="supercell_dimension",
-        default=None,
-        help="Supercell dimension",
-    )
-    parser.add_argument(
-        "--dim-fc2",
-        nargs="+",
-        dest="phonon_supercell_dimension",
-        default=None,
-        help="Supercell dimension for extra fc2",
-    )
+    if not load_phono3py_yaml:
+        parser.add_argument(
+            "-d",
+            "--disp",
+            dest="is_displacement",
+            action="store_true",
+            default=False,
+            help="As first stage, get least displacements",
+        )
+        parser.add_argument(
+            "--dim",
+            nargs="+",
+            dest="supercell_dimension",
+            default=None,
+            help="Supercell dimension",
+        )
+        parser.add_argument(
+            "--dim-fc2",
+            nargs="+",
+            dest="phonon_supercell_dimension",
+            default=None,
+            help="Supercell dimension for extra fc2",
+        )
     parser.add_argument(
         "--emulate-v1",
         dest="emulate_v1",
@@ -425,6 +426,9 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
     )
     parser.add_argument(
         "--mass", nargs="+", dest="masses", default=None, help="Same as MASS tag"
+    )
+    parser.add_argument(
+        "--magmom", nargs="+", dest="magmoms", default=None, help="Same as MAGMOM tag"
     )
     parser.add_argument(
         "--mesh", nargs="+", dest="mesh_numbers", default=None, help="Mesh numbers"

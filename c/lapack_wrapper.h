@@ -35,7 +35,7 @@
 #ifndef __lapack_wrapper_H__
 #define __lapack_wrapper_H__
 
-#ifdef MKL_LAPACKE
+#if defined(MKL_LAPACKE) || defined(SCIPY_MKL_H)
 #include <mkl.h>
 #define lapack_complex_double MKL_Complex16
 #define lapack_complex_double_real(z) ((z).real)

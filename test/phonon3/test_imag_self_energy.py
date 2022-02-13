@@ -772,7 +772,7 @@ def test_imag_self_energy_at_bands(si_pbesol):
             ],
             frequency_points_at_bands=True,
         )
-        np.testing.assert_allclose(_gammas.ravel(), gammas_ref[i], atol=1e-2)
+        np.testing.assert_allclose(_gammas.ravel(), gammas_ref[i], rtol=0, atol=1e-2)
 
 
 def test_imag_self_energy_at_bands_detailed(si_pbesol):
@@ -888,10 +888,14 @@ def test_imag_self_energy_at_bands_detailed(si_pbesol):
     gammas_103 = np.dot(
         weights_103, _detailed_gammas[1][0, 0].sum(axis=-1).sum(axis=-1)
     )
-    np.testing.assert_allclose(gammas_1[:2].sum(), gammas_1_ref[:2].sum(), atol=1e-2)
-    np.testing.assert_allclose(gammas_1[-2:].sum(), gammas_1_ref[-2:].sum(), atol=1e-2)
-    np.testing.assert_allclose(gammas_1[2:4], gammas_1_ref[2:4], atol=1e-2)
-    np.testing.assert_allclose(gammas_103, gammas_103_ref, atol=1e-2)
+    np.testing.assert_allclose(
+        gammas_1[:2].sum(), gammas_1_ref[:2].sum(), rtol=0, atol=1e-2
+    )
+    np.testing.assert_allclose(
+        gammas_1[-2:].sum(), gammas_1_ref[-2:].sum(), rtol=0, atol=1e-2
+    )
+    np.testing.assert_allclose(gammas_1[2:4], gammas_1_ref[2:4], rtol=0, atol=1e-2)
+    np.testing.assert_allclose(gammas_103, gammas_103_ref, rtol=0, atol=1e-2)
 
 
 def test_imag_self_energy_npoints(si_pbesol):
@@ -909,8 +913,10 @@ def test_imag_self_energy_npoints(si_pbesol):
         ],
         num_frequency_points=10,
     )
-    np.testing.assert_allclose(gammas, np.swapaxes(_gammas, -1, -2).ravel(), atol=1e-2)
-    np.testing.assert_allclose(freq_points, _fpoints.ravel(), atol=1e-5)
+    np.testing.assert_allclose(
+        gammas, np.swapaxes(_gammas, -1, -2).ravel(), rtol=0, atol=1e-2
+    )
+    np.testing.assert_allclose(freq_points, _fpoints.ravel(), rtol=0, atol=1e-5)
 
 
 def test_imag_self_energy_npoints_with_sigma(si_pbesol):
@@ -936,9 +942,9 @@ def test_imag_self_energy_npoints_with_sigma(si_pbesol):
     #     print("".join(["%.8f, " % g for g in _g_line]))
     # print("".join(["%.8f, " % f for f in _fpoints]))
     np.testing.assert_allclose(
-        gammas_sigma, np.swapaxes(_gammas, -1, -2).ravel(), atol=1e-2
+        gammas_sigma, np.swapaxes(_gammas, -1, -2).ravel(), rtol=0, atol=1e-2
     )
-    np.testing.assert_allclose(freq_points_sigma, _fpoints.ravel(), atol=1e-5)
+    np.testing.assert_allclose(freq_points_sigma, _fpoints.ravel(), rtol=0, atol=1e-5)
     si_pbesol.sigmas = None
 
 
@@ -957,8 +963,10 @@ def test_imag_self_energy_freq_points(si_pbesol):
         ],
         frequency_points=freq_points,
     )
-    np.testing.assert_allclose(gammas, np.swapaxes(_gammas, -1, -2).ravel(), atol=1e-2)
-    np.testing.assert_allclose(freq_points, _fpoints.ravel(), atol=1e-5)
+    np.testing.assert_allclose(
+        gammas, np.swapaxes(_gammas, -1, -2).ravel(), rtol=0, atol=1e-2
+    )
+    np.testing.assert_allclose(freq_points, _fpoints.ravel(), rtol=0, atol=1e-5)
 
 
 def test_imag_self_energy_detailed(si_pbesol):
@@ -983,7 +991,10 @@ def test_imag_self_energy_detailed(si_pbesol):
         keep_gamma_detail=True,
     )
     np.testing.assert_allclose(
-        detailed_gamma, _detailed_gammas[0][0, 0].sum(axis=(1, 2, 3, 4)), atol=1e-2
+        detailed_gamma,
+        _detailed_gammas[0][0, 0].sum(axis=(1, 2, 3, 4)),
+        rtol=0,
+        atol=1e-2,
     )
 
 
@@ -1007,7 +1018,7 @@ def test_imag_self_energy_scat_class1(si_pbesol):
     # for line in si_pbesol.gammas.reshape(-1, 6):
     #     print(("%10.8f, " * 6) % tuple(line))
     np.testing.assert_allclose(
-        gammas_class1, np.swapaxes(_gammas, -1, -2).ravel(), atol=1e-2
+        gammas_class1, np.swapaxes(_gammas, -1, -2).ravel(), rtol=0, atol=1e-2
     )
 
 
@@ -1031,7 +1042,7 @@ def test_imag_self_energy_scat_class2(si_pbesol):
     # for line in si_pbesol.gammas.reshape(-1, 6):
     #     print(("%10.8f, " * 6) % tuple(line))
     np.testing.assert_allclose(
-        gammas_class2, np.swapaxes(_gammas, -1, -2).ravel(), atol=1e-2
+        gammas_class2, np.swapaxes(_gammas, -1, -2).ravel(), rtol=0, atol=1e-2
     )
 
 
@@ -1054,9 +1065,9 @@ def test_imag_self_energy_nacl_npoints(nacl_pbe):
     #     print(("%10.8f, " * 6) % tuple(line))
     # print(_fpoints.ravel())
     np.testing.assert_allclose(
-        gammas_nacl, np.swapaxes(_gammas, -1, -2).ravel(), atol=1e-2
+        gammas_nacl, np.swapaxes(_gammas, -1, -2).ravel(), rtol=0, atol=2e-2
     )
-    np.testing.assert_allclose(freq_points_nacl, _fpoints.ravel(), atol=1e-5)
+    np.testing.assert_allclose(freq_points_nacl, _fpoints.ravel(), rtol=0, atol=1e-5)
 
 
 def test_imag_self_energy_nacl_nac_npoints(nacl_pbe):
@@ -1083,6 +1094,8 @@ def test_imag_self_energy_nacl_nac_npoints(nacl_pbe):
     #     print(("%10.8f, " * 6) % tuple(line))
     # print(_fpoints.ravel())
     np.testing.assert_allclose(
-        gammas_nacl_nac, np.swapaxes(_gammas, -1, -2).ravel(), atol=1e-2
+        gammas_nacl_nac, np.swapaxes(_gammas, -1, -2).ravel(), rtol=0, atol=1e-2
     )
-    np.testing.assert_allclose(freq_points_nacl_nac, _fpoints.ravel(), atol=1e-5)
+    np.testing.assert_allclose(
+        freq_points_nacl_nac, _fpoints.ravel(), rtol=0, atol=1e-5
+    )

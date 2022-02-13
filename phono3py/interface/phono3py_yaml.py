@@ -33,8 +33,13 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 from phonopy.interface.phonopy_yaml import PhonopyYaml
+
+if TYPE_CHECKING:
+    from phono3py import Phono3py
 
 
 class Phono3pyYaml(PhonopyYaml):
@@ -111,9 +116,9 @@ class Phono3pyYaml(PhonopyYaml):
             settings=settings,
         )
 
-    def set_phonon_info(self, phono3py):
+    def set_phonon_info(self, phono3py: "Phono3py"):
         """Store data in phono3py instance in this instance."""
-        super(Phono3pyYaml, self).set_phonon_info(phono3py)
+        super().set_phonon_info(phono3py)
         self.phonon_supercell_matrix = phono3py.phonon_supercell_matrix
         self.phonon_dataset = phono3py.phonon_dataset
         self.phonon_primitive = phono3py.phonon_primitive
@@ -121,7 +126,7 @@ class Phono3pyYaml(PhonopyYaml):
 
     def parse(self):
         """Yaml dict is parsed. See docstring of this class."""
-        super(Phono3pyYaml, self).parse()
+        super().parse()
         self._parse_fc3_dataset()
 
     def _parse_all_cells(self):
@@ -130,7 +135,7 @@ class Phono3pyYaml(PhonopyYaml):
         This method override PhonopyYaml._parse_all_cells.
 
         """
-        super(Phono3pyYaml, self)._parse_all_cells()
+        super()._parse_all_cells()
         if "phonon_primitive_cell" in self._yaml:
             self.phonon_primitive = self._parse_cell(
                 self._yaml["phonon_primitive_cell"]
@@ -147,8 +152,15 @@ class Phono3pyYaml(PhonopyYaml):
 
         This method override PhonopyYaml._parse_dataset.
 
+        key="phonon_displacements" at v2.2 or later.
+        key="displacements" at older version than v2.2.
+
         """
-        self.phonon_dataset = self._get_dataset(self.phonon_supercell)
+        self.phonon_dataset = self._get_dataset(
+            self.phonon_supercell, key="phonon_displacements"
+        )
+        if self.phonon_dataset is None:  # key="displacements"
+            self.phonon_dataset = self._get_dataset(self.phonon_supercell)
 
     def _parse_fc3_dataset(self):
         """Parse force dataset for fc3.
@@ -156,6 +168,9 @@ class Phono3pyYaml(PhonopyYaml):
         'duplicates' can be either dict (<v1.21) or list in phono3py.yaml.
         From v1.21, it was changed to list of list because
         dict with a key of int type is not allowed in JSON.
+
+        "displacements" gives type-II fc3 dataset at v2.2 or later, although
+        it gave phonon-dataset at versions older than v2.2.
 
         """
         dataset = None
@@ -173,6 +188,10 @@ class Phono3pyYaml(PhonopyYaml):
             if "duplicated_supercell_ids" in info_yaml:
                 dataset["duplicates"] = info_yaml["duplicated_supercell_ids"]
         self.dataset = dataset
+
+        # This case should work only for v2.2 or later.
+        if self.dataset is None and "displacements" in self._yaml:
+            self.dataset = self._get_dataset(self.supercell)
 
     def _parse_forces_fc3_type1(self, natom):
         dataset = {"natom": natom, "first_atoms": []}
@@ -228,7 +247,7 @@ class Phono3pyYaml(PhonopyYaml):
         This method override PhonopyYaml._cell_info_yaml_lines.
 
         """
-        lines = super(Phono3pyYaml, self)._cell_info_yaml_lines()
+        lines = super()._cell_info_yaml_lines()
         lines += self._supercell_matrix_yaml_lines(
             self.phonon_supercell_matrix, "phonon_supercell_matrix"
         )
@@ -268,7 +287,7 @@ class Phono3pyYaml(PhonopyYaml):
         else:
             return self._nac_yaml_lines_given_symbols(self.primitive.symbols)
 
-    def _displacements_yaml_lines(self, with_forces=False):
+    def _displacements_yaml_lines(self, with_forces=False, key="displacements"):
         """Get YAML lines for phonon_dataset and dataset.
 
         This method override PhonopyYaml._displacements_yaml_lines.
@@ -279,14 +298,16 @@ class Phono3pyYaml(PhonopyYaml):
         lines = []
         if self.phonon_supercell_matrix is not None:
             lines += self._displacements_yaml_lines_2types(
-                self.phonon_dataset, with_forces=with_forces
+                self.phonon_dataset, with_forces=with_forces, key=f"phonon_{key}"
             )
         lines += self._displacements_yaml_lines_2types(
-            self.dataset, with_forces=with_forces
+            self.dataset, with_forces=with_forces, key=key
         )
         return lines
 
-    def _displacements_yaml_lines_type1(self, dataset, with_forces=False):
+    def _displacements_yaml_lines_type1(
+        self, dataset, with_forces=False, key="displacements"
+    ):
         """Get YAML lines for type1 phonon_dataset and dataset.
 
         This method override PhonopyYaml._displacements_yaml_lines_type1.
@@ -294,17 +315,17 @@ class Phono3pyYaml(PhonopyYaml):
         Phono3pyYaml._displacements_yaml_lines_type1.
 
         """
-        return displacements_yaml_lines_type1(dataset, with_forces=with_forces)
+        return displacements_yaml_lines_type1(dataset, with_forces=with_forces, key=key)
 
 
-def displacements_yaml_lines_type1(dataset, with_forces=False):
+def displacements_yaml_lines_type1(dataset, with_forces=False, key="displacements"):
     """Get YAML lines for type1 phonon_dataset and dataset."""
     id_offset = len(dataset["first_atoms"])
 
     if "second_atoms" in dataset["first_atoms"][0]:
         lines = ["displacement_pairs:"]
     else:
-        lines = ["displacements:"]
+        lines = ["%s:" % key]
     for i, d in enumerate(dataset["first_atoms"]):
         lines.append("- atom: %4d" % (d["number"] + 1))
         lines.append("  displacement:")
