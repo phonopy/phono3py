@@ -31,6 +31,8 @@ jobs:
     - name: Set up phono3py
       run: |
         export CONDA_PREFIX=$CONDA
+        echo "[phono3py]" > site.cfg
+        echo "extra_compile_args = -fopenmp" >> site.cfg
         python setup.py build
         pip install -e .
     - name: Test with pytest
