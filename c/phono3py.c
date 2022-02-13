@@ -531,7 +531,7 @@ void ph3py_symmetrize_collision_matrix(double *collision_matrix,
             adrs_shift = (i * num_column * num_column * num_temp +
                           j * num_column * num_column);
             /* show_colmat_info(py_collision_matrix, i, j, adrs_shift); */
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for schedule(guided) private(l, val)
 #endif
             for (k = 0; k < num_column; k++) {
@@ -567,7 +567,7 @@ void ph3py_expand_collision_matrix(double *collision_matrix,
     num_column = num_grid_points * num_band;
     num_bgb = num_band * num_grid_points * num_band;
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for schedule(guided) private(j, ir_gp)
 #endif
     for (i = 0; i < num_ir_gp; i++) {
@@ -584,7 +584,7 @@ void ph3py_expand_collision_matrix(double *collision_matrix,
         for (j = 0; j < num_temp; j++) {
             adrs_shift = (i * num_column * num_column * num_temp +
                           j * num_column * num_column);
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for private(ir_gp, adrs_shift_plus, colmat_copy, l, gp_r, \
                                  m, n, p)
 #endif
@@ -650,7 +650,7 @@ long ph3py_get_neighboring_gird_points(
         bzgrid->D_diag[i] = D_diag[i];
     }
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for (i = 0; i < num_grid_points; i++) {
@@ -695,7 +695,7 @@ long ph3py_get_thm_integration_weights_at_grid_points(
         bzgrid->D_diag[i] = D_diag[i];
     }
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for private(j, k, bi, vertices, freq_vertices)
 #endif
     for (i = 0; i < num_gp; i++) {

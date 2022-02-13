@@ -35,7 +35,7 @@
 #ifndef __phono3py_H__
 #define __phono3py_H__
 
-#ifdef MKL_LAPACKE
+#if defined(MKL_LAPACKE) || defined(SCIPY_MKL_H)
 #include <mkl.h>
 #else
 #include <lapacke.h>

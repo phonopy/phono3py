@@ -51,11 +51,17 @@ def create_phono3py_supercells(
     output_filename=None,
     interface_mode="vasp",
     log_level=1,
+    write_disp_yaml=False,
 ):
     """Create displacements and supercells.
 
     Distance unit used is that for the calculator interface.
     The default unit is Angstron.
+
+    Parameters
+    ----------
+    write_disp_yaml : bool
+        Write old-style files of disp_fc3.yaml and disp_fc2.yaml. Default is False.
 
     """
     optional_structure_info = cell_info["optional_structure_info"]
@@ -85,13 +91,16 @@ def create_phono3py_supercells(
         print('Unit cell was read from "%s".' % optional_structure_info[0])
         print("Displacement distance: %s" % distance)
 
-    if output_filename is None:
-        filename = "disp_fc3.yaml"
-    else:
-        filename = "disp_fc3." + output_filename + ".yaml"
-    num_disps, num_disp_files = write_disp_fc3_yaml(
-        phono3py.dataset, phono3py.supercell, filename=filename
-    )
+    if write_disp_yaml:
+
+        if output_filename is None:
+            filename = "disp_fc3.yaml"
+        else:
+            filename = "disp_fc3." + output_filename + ".yaml"
+        num_disps, num_disp_files = write_disp_fc3_yaml(
+            phono3py.dataset, phono3py.supercell, filename=filename
+        )
+
     ids = []
     disp_cells = []
     for i, cell in enumerate(phono3py.supercells_with_displacements):
@@ -113,6 +122,8 @@ def create_phono3py_supercells(
     )
 
     if log_level:
+        num_disps = len(phono3py.supercells_with_displacements)
+        num_disp_files = len(disp_cells)
         print("Number of displacements: %d" % num_disps)
         if settings.cutoff_pair_distance is not None:
             print(
@@ -121,14 +132,16 @@ def create_phono3py_supercells(
             print("Number of displacement supercell files created: %d" % num_disp_files)
 
     if phono3py.phonon_supercell_matrix is not None:
-        if output_filename is None:
-            filename = "disp_fc2.yaml"
-        else:
-            filename = "disp_fc2." + output_filename + ".yaml"
 
-        num_disps = write_disp_fc2_yaml(
-            phono3py.phonon_dataset, phono3py.phonon_supercell, filename=filename
-        )
+        if write_disp_yaml:
+            if output_filename is None:
+                filename = "disp_fc2.yaml"
+            else:
+                filename = "disp_fc2." + output_filename + ".yaml"
+            num_disps = write_disp_fc2_yaml(
+                phono3py.phonon_dataset, phono3py.phonon_supercell, filename=filename
+            )
+
         additional_info = get_additional_info_to_write_fc2_supercells(
             interface_mode, phono3py.phonon_supercell_matrix
         )

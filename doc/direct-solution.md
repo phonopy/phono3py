@@ -320,14 +320,13 @@ Using `--pinv-solver=[number]`, one of the following solver is chosen:
    is the default solver when MKL LAPACKE is integrated or scipy is not
    installed.
 2. Lapacke `dsyevd`: Larger memory consumption than `dsyev`, but faster. This is
-   not as stable as `dsyev` but is useful for solving collision matrix with
-   dense mesh sampling. So this solver has to be used carefully.
-3. Numpy's `dsyevd` (`linalg.eigh`). This is not recommended because sometimes a
-   wrong result is obtained.
+   not considered as stable as `dsyev` but can be significantly faster than
+   `dsyev` for solving large collision matrix. It is recommended to compare the
+   result with that by `dsyev` solver using smaller collision matrix (e.g.,
+   sparser sampling mesh) before starting solving large collision matrix.
+3. Numpy's `dsyevd` (`linalg.eigh`). Similar to solver (2), this solver should
+   be used carefully.
 4. Scipy's `dsyev`: This is the default solver when scipy is installed and MKL
    LAPACKE is not integrated.
 5. Scipy's `dsyevd`: Similar to solver (2), this solver should be used
    carefully.
-
-The solver choices other than `--pinv-solver=1` and `--pinv-solver=4` are
-dangerous and not recommend. They exist just for the tests.

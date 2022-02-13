@@ -134,7 +134,7 @@ class Phono3py:
 
     def __init__(
         self,
-        unitcell,
+        unitcell: PhonopyAtoms,
         supercell_matrix,
         primitive_matrix=None,
         phonon_supercell_matrix=None,
@@ -147,6 +147,7 @@ class Phono3py:
         is_symmetry=True,
         is_mesh_symmetry=True,
         use_grg=False,
+        SNF_coordinates="reciprocal",
         symmetrize_fc3q=None,
         store_dense_gp_map=True,
         store_dense_svecs=True,
@@ -203,6 +204,10 @@ class Phono3py:
             Default is True.
         use_grg : bool, optional
             Use generalized regular grid when True. Default is False.
+        SNF_coordinates : str, optional
+            `reciprocal` or `direct`.
+            Space of coordinates to generate grid generating matrix either in direct
+            or reciprocal space. The default is `reciprocal`.
         symmetrize_fc3q : Deprecated.
             See Phono3py.init_phph_interaction().
         store_dense_gp_map : bool, optional
@@ -228,6 +233,7 @@ class Phono3py:
         self._is_symmetry = is_symmetry
         self._is_mesh_symmetry = is_mesh_symmetry
         self._use_grg = use_grg
+        self._SNF_coordinates = SNF_coordinates
         self._store_dense_gp_map = store_dense_gp_map
         self._store_dense_svecs = store_dense_svecs
         self._cutoff_frequency = cutoff_frequency
@@ -1488,6 +1494,8 @@ class Phono3py:
 
         This systematically generates single and pair atomic displacements
         in supercells to calculate fc3 considering crystal symmetry.
+        When this method is called, existing cache of supercells with
+        displacements for fc3 are removed.
 
         For fc3, two atoms are displaced for each configuration
         considering crystal symmetry. The first displacement is chosen
@@ -1504,7 +1512,8 @@ class Phono3py:
         When phonon_supercell_matrix is not given, fc2 is also
         computed from the same set of the displacements for fc3 and
         respective supercell forces. When phonon_supercell_matrix is
-        set, the displacements in phonon_supercell are generated.
+        set, the displacements in phonon_supercell are generated unless
+        those already exist.
 
         Parameters
         ----------
@@ -1539,8 +1548,9 @@ class Phono3py:
             self._supercell,
             cutoff_distance=cutoff_pair_distance,
         )
+        self._supercells_with_displacements = None
 
-        if self._phonon_supercell_matrix is not None:
+        if self._phonon_supercell_matrix is not None and self._phonon_dataset is None:
             self.generate_fc2_displacements(
                 distance=distance, is_plusminus=is_plusminus, is_diagonal=False
             )
@@ -1552,7 +1562,8 @@ class Phono3py:
 
         This systematically generates single atomic displacements
         in supercells to calculate phonon_fc2 considering crystal symmetry.
-
+        When this method is called, existing cache of supercells with
+        displacements for fc2 are removed.
 
         Note
         ----
@@ -1593,6 +1604,7 @@ class Phono3py:
         self._phonon_dataset = directions_to_displacement_dataset(
             phonon_displacement_directions, distance, self._phonon_supercell
         )
+        self._phonon_supercells_with_displacements = None
 
     def produce_fc3(
         self,
@@ -2447,7 +2459,7 @@ class Phono3py:
                 raise RuntimeError
 
     def _build_phonon_supercells_with_displacements(
-        self, supercell, displacement_dataset
+        self, supercell: PhonopyAtoms, displacement_dataset
     ):
         supercells = []
         magmoms = supercell.magnetic_moments
@@ -2457,16 +2469,15 @@ class Phono3py:
 
         for disp1 in displacement_dataset["first_atoms"]:
             disp_cart1 = disp1["displacement"]
-            positions = supercell.get_positions()
+            positions = supercell.positions
             positions[disp1["number"]] += disp_cart1
             supercells.append(
                 PhonopyAtoms(
                     numbers=numbers,
                     masses=masses,
-                    magmoms=magmoms,
+                    magnetic_moments=magmoms,
                     positions=positions,
                     cell=lattice,
-                    pbc=True,
                 )
             )
 
@@ -2491,17 +2502,16 @@ class Phono3py:
                 else:
                     included = True
                 if included:
-                    positions = self._supercell.get_positions()
+                    positions = self._supercell.positions
                     positions[disp1["number"]] += disp_cart1
                     positions[disp2["number"]] += disp2["displacement"]
                     supercells.append(
                         PhonopyAtoms(
                             numbers=numbers,
                             masses=masses,
-                            magmoms=magmoms,
+                            magnetic_moments=magmoms,
                             positions=positions,
                             cell=lattice,
-                            pbc=True,
                         )
                     )
                 else:
@@ -2538,6 +2548,7 @@ class Phono3py:
             is_time_reversal=self._is_symmetry,
             use_grg=self._use_grg,
             force_SNF=False,
+            SNF_coordinates=self._SNF_coordinates,
             store_dense_gp_map=self._store_dense_gp_map,
         )
 

@@ -36,7 +36,7 @@
 
 #define min(a, b) ((a) > (b) ? (b) : (a))
 
-#ifdef MKL_LAPACKE
+#if defined(MKL_LAPACKE) || defined(SCIPY_MKL_H)
 MKL_Complex16 lapack_make_complex_double(double re, double im) {
     MKL_Complex16 z;
     z.real = re;
@@ -108,7 +108,7 @@ void phonopy_pinv_mt(double *data_out, int *info_out, const double *data_in,
                      const double cutoff) {
     int i;
 
-#ifdef PHPYOPENMP
+#ifdef _OPENMP
 #pragma omp parallel for
 #endif
     for (i = 0; i < num_thread; i++) {

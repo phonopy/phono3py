@@ -1,260 +1,90 @@
 """Phono3py setup.py."""
 import os
-import platform
-import sys
-import sysconfig
 
 import numpy
+import setuptools
 
-try:
-    from setuptools import Extension, setup
-
-    use_setuptools = True
-    print("setuptools is used.")
-except ImportError:
-    from distutils.core import Extension, setup
-
-    use_setuptools = False
-    print("distutils is used.")
-
-try:
-    from setuptools_scm import get_version
-except ImportError:
-    git_num = None
-
-if "setuptools_scm" in sys.modules.keys():
-    try:
-        git_ver = get_version()
-        git_num = int(git_ver.split(".")[3].split("+")[0].replace("dev", ""))
-    except Exception:
-        git_num = None
-
-include_dirs_numpy = [numpy.get_include()]
-extra_link_args = []
-# Workaround Python issue 21121
-config_var = sysconfig.get_config_var("CFLAGS")
-if (
-    config_var is not None and "-Werror=declaration-after-statement" in config_var
-):  # noqa E129
-    os.environ["CFLAGS"] = config_var.replace("-Werror=declaration-after-statement", "")
-
-extra_compile_args = [
-    "-fopenmp",
-]
-include_dirs = [
-    "c",
-] + include_dirs_numpy
-define_macros = []
-
-if use_setuptools:
-    extra_compile_args += [
-        "-DPHPYOPENMP",
-    ]
-else:
-    define_macros += [
-        ("PHPYOPENMP", None),
+# Ensure that 'site.cfg' exists.
+if not os.path.exists("site.cfg"):
+    msg_list = [
+        '"site.cfg" file is needed to run setup.py.',
+        "See about installation at https://phonopy.github.io/phono3py/install.html.",
+        "A minimum setting of site.cfg to build with openmp support is:",
+        "# ------------------------------",
+        "[phono3py]",
+        "extra_compile_args = -fopenmp",
+        "# ------------------------------",
+        "Please create an emply site.cfg (no-openmp support) to run setup.py",
+        "unless any custom setting is needed, although this is considered unusual.",
     ]
 
+    raise FileNotFoundError("\n".join(msg_list))
 
-use_mkl = False
-include_dirs_lapacke = []
-extra_link_args_lapacke = []
-# C macro definitions:
-# - MULTITHREADED_BLAS
-#   This deactivates OpenMP multithread harmonic phonon calculation,
-#   since inside each phonon calculation, zheev is called.
-#   When using multithread BLAS, this macro has to be set and
-#   by this all phonons on q-points should be calculated in series.
-# - MKL_LAPACKE:
-#   This sets definitions and functions needed when using MKL lapacke.
-#   Phono3py complex values are handled based on those provided by Netlib
-#   lapacke. However MKL lapacke doesn't provide some macros and functions
-#   that provided Netlib. This macro defines those used in phono3py among them.
-if os.path.isfile("setup_mkl.py"):
-    # This supposes that MKL multithread BLAS is used.
-    # This is invoked when setup_mkl.py exists on the current directory.
+# Retrieve the default flags from the numpy installation
+# This also means one can override this with a site.cfg
+# configuration file
+from numpy.distutils.system_info import dict_append, get_info, system_info
 
-    print("MKL LAPACKE is to be used.")
-    print("Use of icc is assumed (CC='icc').")
+git_num = None
 
-    from setup_mkl import mkl_extra_link_args_lapacke, mkl_include_dirs_lapacke
+# use flags defined in numpy
+all_info_d = get_info("ALL")
+lapack_info_d = get_info("lapack_opt")
 
-    # Examples of setup_mkl.py
-    # For 2015
-    # intel_root = "/opt/intel/composer_xe_2015.7.235"
-    # mkl_root = "%s/mkl" % intel_root
-    # compiler_root = "%s/compiler" % intel_root
-    #
-    # For 2016
-    # intel_root = "/opt/intel/parallel_studio_xe_2016"
-    # mkl_root = "%s/mkl" % intel_root
-    # compiler_root = "%s" % intel_root
-    #
-    # For both
-    # mkl_extra_link_args_lapacke = ['-L%s/lib/intel64' % mkl_root,
-    #                                '-lmkl_rt']
-    # mkl_extra_link_args_lapacke += ['-L%s/lib/intel64' % compiler_root,
-    #                                 '-lsvml',
-    #                                 '-liomp5',
-    #                                 '-limf',
-    #                                 '-lpthread']
-    # mkl_include_dirs_lapacke = ["%s/include" % mkl_root]
 
-    use_mkl = True
-    extra_link_args_lapacke = mkl_extra_link_args_lapacke
-    include_dirs_lapacke = mkl_include_dirs_lapacke
+class phono3py_info(system_info):
+    """See system_info in numpy."""
 
-    if use_setuptools:
-        extra_compile_args += ["-DMKL_LAPACKE", "-DMULTITHREADED_BLAS"]
-    else:
-        define_macros += [("MKL_LAPACKE", None), ("MULTITHREADED_BLAS", None)]
-elif os.path.isfile("libopenblas.py"):
-    # This supposes that multithread openBLAS is used.
-    # This is invoked when libopenblas.py exists on the current directory.
+    section = "phono3py"
 
-    # Example of libopenblas.py
-    # extra_link_args_lapacke += ['-lopenblas']
+    def calc_info(self):
+        """Read in *all* options in the [phono3py] section of site.cfg."""
+        info = self.calc_libraries_info()
+        dict_append(info, **self.calc_extra_info())
+        dict_append(info, include_dirs=self.get_include_dirs())
+        self.set_info(**info)
 
-    from libopenblas import extra_link_args_lapacke as obl_extra_link_args_lapacke
-    from libopenblas import include_dirs_lapacke as obl_include_dirs_lapacke
 
-    extra_link_args_lapacke = obl_extra_link_args_lapacke
-    include_dirs_lapacke = obl_include_dirs_lapacke
+macros = []
 
-    if use_setuptools:
-        extra_compile_args += ["-DMULTITHREADED_BLAS"]
-    else:
-        define_macros += [("MULTITHREADED_BLAS", None)]
-elif platform.system() == "Darwin" and os.path.isfile("/opt/local/lib/libopenblas.a"):
-    # This supposes lapacke with single-thread openBLAS provided by MacPort is
-    # used.
-    # % sudo port install gcc6
-    # % sudo port select --set gcc mp-gcc
-    # % sudo port install OpenBLAS +gcc6
-    extra_link_args_lapacke = ["/opt/local/lib/libopenblas.a"]
-    include_dirs_lapacke = ["/opt/local/include"]
-elif "CONDA_PREFIX" in os.environ and (
-    os.path.isfile(os.path.join(os.environ["CONDA_PREFIX"], "lib", "liblapacke.dylib"))
-    or os.path.isfile(os.path.join(os.environ["CONDA_PREFIX"], "lib", "liblapacke.so"))
-):
-    # This is for the system prepared with conda openblas.
-    extra_link_args_lapacke = ["-llapacke"]
-    include_dirs_lapacke = [
-        os.path.join(os.environ["CONDA_PREFIX"], "include"),
-    ]
-    if os.path.isfile(os.path.join(os.environ["CONDA_PREFIX"], "include", "mkl.h")):
-        use_mkl = True
-        if use_setuptools:
-            extra_compile_args += ["-DMKL_LAPACKE", "-DMULTITHREADED_BLAS"]
-        else:
-            define_macros += [("MKL_LAPACKE", None), ("MULTITHREADED_BLAS", None)]
-    else:
-        if use_setuptools:
-            extra_compile_args += ["-DMULTITHREADED_BLAS"]
-        else:
-            define_macros += [("MULTITHREADED_BLAS", None)]
-elif (
-    "CONDA_PREFIX" in os.environ
-    and (
-        os.path.isfile(
-            os.path.join(os.environ["CONDA_PREFIX"], "lib", "libmkl_rt.dylib")
-        )
-        or os.path.isfile(
-            os.path.join(os.environ["CONDA_PREFIX"], "lib", "libmkl_rt.so")
-        )
-    )
-    and (
-        os.path.isfile(
-            os.path.join(os.environ["CONDA_PREFIX"], "include", "mkl_lapacke.h")
-        )
-    )
-):
-    include_dirs_lapacke = [
-        os.path.join(os.environ["CONDA_PREFIX"], "include"),
-    ]
-    extra_link_args_lapacke = ["-lmkl_rt"]
-    if use_setuptools:
-        extra_compile_args += ["-DMKL_LAPACKE", "-DMULTITHREADED_BLAS"]
-    else:
-        define_macros += [("MKL_LAPACKE", None), ("MULTITHREADED_BLAS", None)]
-elif os.path.isfile("/usr/lib/liblapacke.so"):
-    # This supposes that lapacke with single-thread BLAS is installed on
-    # system.
-    extra_link_args_lapacke = ["-llapacke", "-llapack", "-lblas"]
-    include_dirs_lapacke = []
-else:
-    # Here is the default lapacke linkage setting.
-    # Please modify according to your system environment.
-    # Without using multithreaded BLAS, DMULTITHREADED_BLAS is better to be
-    # removed to activate OpenMP multithreading harmonic phonon calculation,
-    # but this is not mandatory.
-    #
-    # The below supposes that lapacke with multithread openblas is used.
-    # Even if using single-thread BLAS and deactivating OpenMP
-    # multithreading for harmonic phonon calculation, the total performance
-    # decrease is considered marginal.
-    #
-    # For conda: Try installing with dynamic link library of openblas by
-    # % conda install numpy scipy h5py pyyaml matplotlib openblas libgfortran
-    extra_link_args_lapacke = ["-lopenblas", "-lgfortran"]
-    if "CONDA_PREFIX" in os.environ:
-        include_dirs_lapacke = [
-            os.path.join(os.environ["CONDA_PREFIX"], "include"),
-        ]
-    if use_setuptools:
-        extra_compile_args += ["-DMULTITHREADED_BLAS"]
-    else:
-        define_macros += [("MULTITHREADED_BLAS", None)]
+# in numpy>=1.16.0, silence build warnings about deprecated API usage
+macros.append(("NPY_NO_DEPRECATED_API", "0"))
 
-cc = None
-lib_omp = None
-if "CC" in os.environ:
-    if "clang" in os.environ["CC"]:
-        cc = "clang"
-        if not use_mkl:
-            lib_omp = "-lomp"
-        # lib_omp = '-liomp5'
-    if "gcc" in os.environ["CC"] or "gnu-cc" in os.environ["CC"]:
-        cc = "gcc"
-if cc == "gcc" or cc is None:
-    lib_omp = "-lgomp"
+with_threaded_blas = False
+with_mkl = False
 
-    if "CC" in os.environ and "gcc-" in os.environ["CC"]:
-        # For macOS & homebrew gcc:
-        # Using conda's gcc is more recommended though. Suppose using
-        # homebrew gcc whereas conda is used as general environment.
-        # This is to avoid linking conda libgomp that is incompatible
-        # with homebrew gcc.
-        try:
-            v = int(os.environ["CC"].split("-")[1])
-        except ValueError:
-            pass
-        else:
-            ary = [
-                os.sep,
-                "usr",
-                "local",
-                "opt",
-                "gcc@%d" % v,
-                "lib",
-                "gcc",
-                "%d" % v,
-                "libgomp.a",
-            ]
-            libgomp_a = os.path.join(*ary)
-            if os.path.isfile(libgomp_a):
-                lib_omp = libgomp_a
+# define options
+# these are the basic definitions for all extensions
+opts = lapack_info_d.copy()
+if "mkl" in opts.get("libraries", ""):
+    with_mkl = True
 
-if lib_omp:
-    extra_link_args.append(lib_omp)
+if with_mkl:
+    with_threaded_blas = True
+    # generally this should not be needed since the numpy distutils
+    # finding of MKL creates the SCIPY_MKL_H flag
+    macros.append(("MKL_LAPACKE", None))
 
-# Uncomment below to measure reciprocal_to_normal_squared_openmp performance
-# define_macros += [('MEASURE_R2N', None)]
+if with_threaded_blas:
+    macros.append(("MULTITHREADED_BLAS", None))
 
-extra_link_args += extra_link_args_lapacke
-include_dirs += include_dirs_lapacke
+# Create the dictionary for compiling the codes
+dict_append(opts, **all_info_d)
+dict_append(opts, include_dirs=["c"])
+dict_append(opts, define_macros=macros)
+# Add numpy's headers
+include_dirs = numpy.get_include()
+if include_dirs is not None:
+    dict_append(opts, include_dirs=[include_dirs])
 
-print("extra_link_args", extra_link_args)
+# Add any phono3py manual flags from here
+add_opts = phono3py_info().get_info()
+dict_append(opts, **add_opts)
+
+# Different extensions
+extensions = []
+
+# Define the modules
 sources_phono3py = [
     "c/_phono3py.c",
     "c/bzgrid.c",
@@ -278,14 +108,10 @@ sources_phono3py = [
     "c/triplet_grid.c",
     "c/triplet_iw.c",
 ]
-extension_phono3py = Extension(
-    "phono3py._phono3py",
-    include_dirs=include_dirs,
-    extra_compile_args=extra_compile_args,
-    extra_link_args=extra_link_args,
-    define_macros=define_macros,
-    sources=sources_phono3py,
+extensions.append(
+    setuptools.Extension("phono3py._phono3py", sources=sources_phono3py, **opts)
 )
+
 
 sources_phononmod = [
     "c/_phononmod.c",
@@ -294,21 +120,13 @@ sources_phononmod = [
     "c/phonon.c",
     "c/phononmod.c",
 ]
-extension_phononmod = Extension(
-    "phono3py._phononmod",
-    include_dirs=include_dirs,
-    extra_compile_args=extra_compile_args,
-    extra_link_args=extra_link_args,
-    sources=sources_phononmod,
+extensions.append(
+    setuptools.Extension("phono3py._phononmod", sources=sources_phononmod, **opts)
 )
 
 sources_lapackepy = ["c/_lapackepy.c", "c/lapack_wrapper.c"]
-extension_lapackepy = Extension(
-    "phono3py._lapackepy",
-    extra_compile_args=extra_compile_args,
-    extra_link_args=extra_link_args,
-    include_dirs=include_dirs,
-    sources=sources_lapackepy,
+extensions.append(
+    setuptools.Extension("phono3py._lapackepy", sources=sources_lapackepy, **opts)
 )
 
 packages_phono3py = [
@@ -327,10 +145,6 @@ scripts_phono3py = [
     "scripts/phono3py-kdeplot",
     "scripts/phono3py-coleigplot",
 ]
-
-########################
-# _lapackepy extension #
-########################
 
 if __name__ == "__main__":
     version_nums = [None, None, None]
@@ -362,50 +176,27 @@ if __name__ == "__main__":
 
     version = ".".join(["%s" % n for n in version_nums[:3]])
     if len(version_nums) > 3:
-        version += "-%d" % version_nums[3]
+        version += "-%s" % version_nums[3]
 
-    if use_setuptools:
-        setup(
-            name="phono3py",
-            version=version,
-            description="This is the phono3py module.",
-            author="Atsushi Togo",
-            author_email="atz.togo@gmail.com",
-            url="http://phonopy.github.io/phono3py/",
-            packages=packages_phono3py,
-            python_requires=">=3.6",
-            install_requires=[
-                "numpy>=1.11.0",
-                "scipy",
-                "PyYAML",
-                "matplotlib>=2.0.0",
-                "h5py",
-                "spglib",
-                "phonopy>=2.12,<2.13",
-            ],
-            provides=["phono3py"],
-            scripts=scripts_phono3py,
-            ext_modules=[extension_phono3py, extension_lapackepy, extension_phononmod],
-        )
-    else:
-        setup(
-            name="phono3py",
-            version=version,
-            description="This is the phono3py module.",
-            author="Atsushi Togo",
-            author_email="atz.togo@gmail.com",
-            url="http://phonopy.github.io/phono3py/",
-            packages=packages_phono3py,
-            requires=[
-                "numpy",
-                "scipy",
-                "PyYAML",
-                "matplotlib",
-                "h5py",
-                "phonopy",
-                "spglib",
-            ],
-            provides=["phono3py"],
-            scripts=scripts_phono3py,
-            ext_modules=[extension_phono3py, extension_lapackepy, extension_phononmod],
-        )
+    setuptools.setup(
+        name="phono3py",
+        version=version,
+        description="This is the phono3py module.",
+        author="Atsushi Togo",
+        author_email="atz.togo@gmail.com",
+        url="http://phonopy.github.io/phono3py/",
+        packages=packages_phono3py,
+        python_requires=">=3.7",
+        install_requires=[
+            "numpy>=1.15.0",
+            "scipy",
+            "PyYAML",
+            "matplotlib>=2.2.2",
+            "h5py",
+            "spglib",
+            "phonopy>=2.13,<2.14",
+        ],
+        provides=["phono3py"],
+        scripts=scripts_phono3py,
+        ext_modules=extensions,
+    )

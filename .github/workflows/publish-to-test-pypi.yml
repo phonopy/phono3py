@@ -24,6 +24,7 @@ jobs:
         ./get_nanoversion.sh
         cat __nanoversion__.txt
         pip install numpy setuptools-scm
+        echo "[phono3py]" > site.cfg
         python setup.py sdist
     - name: Publish package to TestPyPI
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/rc')

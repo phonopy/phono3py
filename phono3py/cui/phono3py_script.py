@@ -47,6 +47,7 @@ from phonopy.cui.phonopy_script import (
     print_error,
     print_error_message,
     print_version,
+    set_magnetic_moments,
     store_nac_params,
 )
 from phonopy.file_IO import is_file_phonopy_yaml, parse_FORCE_SETS, write_FORCE_SETS
@@ -110,7 +111,11 @@ def print_phono3py():
 
 
 def finalize_phono3py(
-    phono3py, confs, log_level, displacements_mode=False, filename="phono3py.yaml"
+    phono3py: Phono3py,
+    confs,
+    log_level,
+    displacements_mode=False,
+    filename="phono3py.yaml",
 ):
     """Write phono3py.yaml and then exit.
 
@@ -493,7 +498,7 @@ def get_input_output_filenames_from_args(args):
     return input_filename, output_filename
 
 
-def get_cell_info(settings, cell_filename, symprec, log_level):
+def get_cell_info(settings, cell_filename, log_level):
     """Return calculator interface and crystal structure information."""
     cell_info = collect_cell_info(
         supercell_matrix=settings.supercell_matrix,
@@ -502,21 +507,17 @@ def get_cell_info(settings, cell_filename, symprec, log_level):
         cell_filename=cell_filename,
         chemical_symbols=settings.chemical_symbols,
         phonopy_yaml_cls=Phono3pyYaml,
-        symprec=symprec,
-        return_dict=True,
     )
-    if type(cell_info) is str:
-        print_error_message(cell_info)
+    if "error_message" in cell_info:
+        print_error_message(cell_info["error_message"])
         if log_level > 0:
             print_error()
         sys.exit(1)
 
-    # cell_info keys
-    # ('unitcell', 'supercell_matrix', 'primitive_matrix',
-    #  'optional_structure_info', 'interface_mode', 'phonopy_yaml')
+    set_magnetic_moments(cell_info, settings, log_level)
 
     cell_info["phonon_supercell_matrix"] = settings.phonon_supercell_matrix
-    ph3py_yaml = cell_info["phonopy_yaml"]
+    ph3py_yaml: Phono3pyYaml = cell_info["phonopy_yaml"]
     if cell_info["phonon_supercell_matrix"] is None and ph3py_yaml:
         ph_smat = ph3py_yaml.phonon_supercell_matrix
         cell_info["phonon_supercell_matrix"] = ph_smat
@@ -976,7 +977,8 @@ def init_phph_interaction(
 def main(**argparse_control):
     """Phono3py main part of command line interface."""
     # import warnings
-    # warnings.simplefilter('error')
+
+    # warnings.simplefilter("error")
     load_phono3py_yaml = argparse_control.get("load_phono3py_yaml", False)
 
     args, log_level = start_phono3py(**argparse_control)
@@ -1024,7 +1026,7 @@ def main(**argparse_control):
     else:
         symprec = settings.symmetry_tolerance
 
-    cell_info = get_cell_info(settings, cell_filename, symprec, log_level)
+    cell_info = get_cell_info(settings, cell_filename, log_level)
     unitcell_filename = cell_info["optional_structure_info"][0]
     interface_mode = cell_info["interface_mode"]
     # ph3py_yaml = cell_info['phonopy_yaml']
@@ -1044,6 +1046,14 @@ def main(**argparse_control):
             interface_mode=interface_mode,
             log_level=log_level,
         )
+
+        if phono3py.supercell.magnetic_moments is None:
+            print("Spacegroup: %s" % phono3py.symmetry.get_international_table())
+        else:
+            print(
+                "Number of symmetry operations in supercell: %d"
+                % len(phono3py.symmetry.symmetry_operations["rotations"])
+            )
 
         finalize_phono3py(
             phono3py,
@@ -1078,10 +1088,17 @@ def main(**argparse_control):
             output_filename,
         )
 
+        if phono3py.supercell.magnetic_moments is None:
+            print("Spacegroup: %s" % phono3py.symmetry.get_international_table())
+        else:
+            print(
+                "Number of symmetry operations in supercell: %d"
+                % len(phono3py.symmetry.symmetry_operations["rotations"])
+            )
+
     if log_level > 1:
         show_phono3py_cells(phono3py, settings)
-    else:
-        print("Spacegroup: %s" % phono3py.symmetry.get_international_table())
+    elif log_level:
         print(
             "Use -v option to watch primitive cell, unit cell, "
             "and supercell structures."
