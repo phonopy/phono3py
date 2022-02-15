@@ -1,5 +1,6 @@
 """Test for Conductivity_RTA.py."""
 import numpy as np
+
 from phono3py import Phono3py
 
 si_pbesol_kappa_RTA = [107.991, 107.991, 107.991, 0, 0, 0]

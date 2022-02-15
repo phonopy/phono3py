@@ -44,8 +44,8 @@ from phono3py.file_IO import (
     write_real_self_energy_to_hdf5,
 )
 from phono3py.phonon3.imag_self_energy import get_frequency_points
-from phono3py.phonon.func import bose_einstein
 from phono3py.phonon3.interaction import Interaction
+from phono3py.phonon.func import bose_einstein
 
 
 def get_real_self_energy(

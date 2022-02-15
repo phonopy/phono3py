@@ -34,8 +34,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
-
 from typing import Optional
+
 import numpy as np
 from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
@@ -51,7 +51,7 @@ from phono3py.phonon3.conductivity import write_pp as _write_pp
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import get_all_triplets
-from phono3py.phonon.grid import _get_ir_grid_map, get_grid_points_by_rotations
+from phono3py.phonon.grid import get_grid_points_by_rotations
 
 
 class ConductivityRTA(Conductivity):
