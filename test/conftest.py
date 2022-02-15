@@ -49,6 +49,28 @@ def si_pbesol(request):
 
 
 @pytest.fixture(scope="session")
+def si_pbesol_grg(request):
+    """Return Phono3py instance of Si 2x2x2.
+
+    * with symmetry
+    * full fc
+    * GR-grid
+
+    """
+    yaml_filename = os.path.join(current_dir, "phono3py_si_pbesol.yaml")
+    forces_fc3_filename = os.path.join(current_dir, "FORCES_FC3_si_pbesol")
+    enable_v2 = request.config.getoption("--v1")
+    return phono3py.load(
+        yaml_filename,
+        forces_fc3_filename=forces_fc3_filename,
+        store_dense_gp_map=enable_v2,
+        store_dense_svecs=enable_v2,
+        use_grg=True,
+        log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
 def si_pbesol_nosym(request):
     """Return Phono3py instance of Si 2x2x2.
 

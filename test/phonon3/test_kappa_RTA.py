@@ -1,6 +1,8 @@
 """Test for Conductivity_RTA.py."""
 import numpy as np
 
+from phono3py import Phono3py
+
 si_pbesol_kappa_RTA = [107.991, 107.991, 107.991, 0, 0, 0]
 si_pbesol_kappa_RTA_with_sigmas = [109.6985, 109.6985, 109.6985, 0, 0, 0]
 si_pbesol_kappa_RTA_iso = [96.92419, 96.92419, 96.92419, 0, 0, 0]
@@ -13,7 +15,8 @@ si_pbesol_kappa_RTA_si_nosym = [
     0.207731,
     0.283,
 ]
-si_pbesol_kappa_RTA_si_nomeshsym = [38.90918, 38.90918, 38.90918, 0, 0, 0]
+si_pbesol_kappa_RTA_si_nomeshsym = [81.31304, 81.31304, 81.31304, 0, 0, 0]
+si_pbesol_kappa_RTA_grg = [93.99526, 93.99526, 93.99526, 0, 0, 0]
 nacl_pbe_kappa_RTA = [7.72798252, 7.72798252, 7.72798252, 0, 0, 0]
 nacl_pbe_kappa_RTA_with_sigma = [7.71913708, 7.71913708, 7.71913708, 0, 0, 0]
 
@@ -86,13 +89,42 @@ def test_kappa_RTA_si_nosym(si_pbesol, si_pbesol_nosym):
     np.testing.assert_allclose(kappa_ref / 3, kappa / 3, atol=0.5)
 
 
-def test_kappa_RTA_si_nomeshsym(si_pbesol, si_pbesol_nomeshsym):
+def test_kappa_RTA_si_nomeshsym(si_pbesol: Phono3py, si_pbesol_nomeshsym: Phono3py):
     """Test RTA without considering mesh symmetry by Si."""
     si_pbesol_nomeshsym.fc2 = si_pbesol.fc2
     si_pbesol_nomeshsym.fc3 = si_pbesol.fc3
-    kappa = _get_kappa(si_pbesol_nomeshsym, [4, 4, 4]).ravel()
+    kappa = _get_kappa(si_pbesol_nomeshsym, [7, 7, 7]).ravel()
     kappa_ref = si_pbesol_kappa_RTA_si_nomeshsym
     np.testing.assert_allclose(kappa_ref, kappa, atol=0.5)
+
+
+def test_kappa_RTA_si_grg(si_pbesol_grg: Phono3py):
+    """Test RTA by Si with GR-grid."""
+    mesh = 20
+    ph3 = si_pbesol_grg
+    ph3.mesh_numbers = mesh
+    ph3.init_phph_interaction()
+    ph3.run_thermal_conductivity(
+        temperatures=[
+            300,
+        ],
+    )
+    kappa = ph3.thermal_conductivity.kappa.ravel()
+    np.testing.assert_equal(
+        ph3.thermal_conductivity.bz_grid.grid_matrix,
+        [[-4, 4, 4], [4, -4, 4], [4, 4, -4]],
+    )
+    np.testing.assert_equal(
+        ph3.grid.grid_matrix,
+        [[-4, 4, 4], [4, -4, 4], [4, 4, -4]],
+    )
+    A = ph3.grid.grid_matrix
+    D_diag = ph3.grid.D_diag
+    P = ph3.grid.P
+    Q = ph3.grid.Q
+    np.testing.assert_equal(np.dot(P, np.dot(A, Q)), np.diag(D_diag))
+
+    np.testing.assert_allclose(si_pbesol_kappa_RTA_grg, kappa, atol=0.5)
 
 
 def test_kappa_RTA_si_N_U(si_pbesol):

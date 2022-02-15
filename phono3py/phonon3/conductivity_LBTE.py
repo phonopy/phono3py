@@ -1486,6 +1486,7 @@ def _write_kappa(
     sigmas = lbte.sigmas
     sigma_cutoff = lbte.sigma_cutoff_width
     mesh = lbte.mesh_numbers
+    bz_grid = lbte.bz_grid
     weights = lbte.grid_weights
     frequencies = lbte.frequencies
     ave_pp = lbte.averaged_pp_interaction
@@ -1519,6 +1520,7 @@ def _write_kappa(
         write_kappa_to_hdf5(
             temperatures,
             mesh,
+            bz_grid=bz_grid,
             frequency=frequencies,
             group_velocity=gv,
             gv_by_gv=gv_by_gv,
