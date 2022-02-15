@@ -35,6 +35,7 @@
 
 import sys
 
+from typing import Optional
 import numpy as np
 from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
@@ -50,7 +51,7 @@ from phono3py.phonon3.conductivity import write_pp as _write_pp
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import get_all_triplets
-from phono3py.phonon.grid import get_grid_points_by_rotations
+from phono3py.phonon.grid import _get_ir_grid_map, get_grid_points_by_rotations
 
 
 class ConductivityRTA(Conductivity):
@@ -676,15 +677,21 @@ def get_thermal_conductivity_RTA(
 
 
 def _write_gamma_detail(
-    br, interaction, i, compression="gzip", filename=None, verbose=True
+    br: ConductivityRTA,
+    interaction: Interaction,
+    i: int,
+    compression: str = "gzip",
+    filename: Optional[str] = None,
+    verbose: bool = True,
 ):
     gamma_detail = br.get_gamma_detail_at_q()
-    temperatures = br.get_temperatures()
-    mesh = br.get_mesh_numbers()
-    grid_points = br.get_grid_points()
+    temperatures = br.temperatures
+    mesh = br.mesh_numbers
+    bz_grid = br.bz_grid
+    grid_points = br.grid_points
     gp = grid_points[i]
-    sigmas = br.get_sigmas()
-    sigma_cutoff = br.get_sigma_cutoff_width()
+    sigmas = br.sigmas
+    sigma_cutoff = br.sigma_cutoff_width
     triplets, weights, _, _ = interaction.get_triplets_at_q()
     all_triplets = get_all_triplets(gp, interaction.bz_grid)
 
@@ -693,6 +700,7 @@ def _write_gamma_detail(
             write_gamma_detail_to_hdf5(
                 temperatures,
                 mesh,
+                bz_grid=bz_grid,
                 gamma_detail=gamma_detail,
                 grid_point=gp,
                 triplet=triplets,
@@ -710,6 +718,7 @@ def _write_gamma_detail(
                 write_gamma_detail_to_hdf5(
                     temperatures,
                     mesh,
+                    bz_grid=bz_grid,
                     gamma_detail=gamma_detail[:, :, k, :, :],
                     grid_point=gp,
                     triplet=triplets,
@@ -723,7 +732,14 @@ def _write_gamma_detail(
                 )
 
 
-def _write_gamma(br, interaction, i, compression="gzip", filename=None, verbose=True):
+def _write_gamma(
+    br: ConductivityRTA,
+    interaction: Interaction,
+    i: int,
+    compression: str = "gzip",
+    filename: Optional[str] = None,
+    verbose: bool = True,
+):
     """Write mode kappa related properties into a hdf5 file."""
     grid_points = br.grid_points
     group_velocities = br.group_velocities
@@ -731,6 +747,7 @@ def _write_gamma(br, interaction, i, compression="gzip", filename=None, verbose=
     mode_heat_capacities = br.mode_heat_capacities
     ave_pp = br.averaged_pp_interaction
     mesh = br.mesh_numbers
+    bz_grid = br.bz_grid
     temperatures = br.temperatures
     gamma = br.gamma
     gamma_isotope = br.gamma_isotope
@@ -763,6 +780,7 @@ def _write_gamma(br, interaction, i, compression="gzip", filename=None, verbose=
             write_kappa_to_hdf5(
                 temperatures,
                 mesh,
+                bz_grid=bz_grid,
                 frequency=frequencies,
                 group_velocity=group_velocities[i],
                 gv_by_gv=gv_by_gv[i],
@@ -803,6 +821,7 @@ def _write_gamma(br, interaction, i, compression="gzip", filename=None, verbose=
                 write_kappa_to_hdf5(
                     temperatures,
                     mesh,
+                    bz_grid=bz_grid,
                     frequency=frequencies,
                     group_velocity=group_velocities[i, k],
                     gv_by_gv=gv_by_gv[i, k],
@@ -861,7 +880,13 @@ def _show_kappa(br, log_level):
         print("")
 
 
-def _write_kappa(br, volume, compression="gzip", filename=None, log_level=0):
+def _write_kappa(
+    br: ConductivityRTA,
+    volume: float,
+    compression: str = "gzip",
+    filename: Optional[str] = None,
+    log_level: int = 0,
+):
     temperatures = br.temperatures
     sigmas = br.sigmas
     sigma_cutoff = br.sigma_cutoff_width
@@ -869,6 +894,7 @@ def _write_kappa(br, volume, compression="gzip", filename=None, log_level=0):
     gamma_isotope = br.gamma_isotope
     gamma_N, gamma_U = br.get_gamma_N_U()
     mesh = br.mesh_numbers
+    bz_grid = br.bz_grid
     frequencies = br.frequencies
     gv = br.group_velocities
     gv_by_gv = br.gv_by_gv
@@ -897,6 +923,7 @@ def _write_kappa(br, volume, compression="gzip", filename=None, log_level=0):
         write_kappa_to_hdf5(
             temperatures,
             mesh,
+            bz_grid=bz_grid,
             frequency=frequencies,
             group_velocity=gv,
             gv_by_gv=gv_by_gv,

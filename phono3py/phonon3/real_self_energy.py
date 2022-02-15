@@ -45,10 +45,11 @@ from phono3py.file_IO import (
 )
 from phono3py.phonon3.imag_self_energy import get_frequency_points
 from phono3py.phonon.func import bose_einstein
+from phono3py.phonon3.interaction import Interaction
 
 
 def get_real_self_energy(
-    interaction,
+    interaction: Interaction,
     grid_points,
     temperatures,
     epsilons=None,
@@ -134,6 +135,7 @@ def get_real_self_energy(
 
     fst = RealSelfEnergy(interaction)
     mesh = interaction.mesh_numbers
+    bz_grid = interaction.bz_grid
     frequencies = interaction.get_phonons()[0]
     max_phonon_freq = np.amax(frequencies)
     band_indices = interaction.band_indices
@@ -228,6 +230,7 @@ def get_real_self_energy(
                     all_deltas[i, :, j],
                     mesh,
                     fst.epsilon,
+                    bz_grid=bz_grid,
                     frequency_points=_frequency_points,
                     frequencies=frequencies,
                     filename=output_filename,

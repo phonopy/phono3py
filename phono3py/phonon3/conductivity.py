@@ -279,6 +279,11 @@ class Conductivity(ConductivityBase):
         return self.mesh_numbers
 
     @property
+    def bz_grid(self):
+        """Return GR-grid."""
+        return self._pp.bz_grid
+
+    @property
     def mode_heat_capacities(self):
         """Return mode heat capacity at constant volume at grid points.
 

@@ -260,7 +260,7 @@ def _get_imag_self_energy_at_gp(
     _num_frequency_points,
     scattering_event_class,
     num_points_in_batch,
-    interaction,
+    interaction: Interaction,
     ise,
     write_gamma_detail,
     return_gamma_detail,
@@ -270,6 +270,7 @@ def _get_imag_self_energy_at_gp(
     num_band0 = len(interaction.band_indices)
     frequencies = interaction.get_phonons()[0]
     mesh = interaction.mesh_numbers
+    bz_grid = interaction.bz_grid
 
     if write_gamma_detail or return_gamma_detail:
         triplets, weights, _, _ = interaction.get_triplets_at_q()
@@ -329,6 +330,7 @@ def _get_imag_self_energy_at_gp(
             full_filename = write_gamma_detail_to_hdf5(
                 temperatures,
                 mesh,
+                bz_grid=bz_grid,
                 gamma_detail=detailed_gamma_at_gp[j],
                 grid_point=gp,
                 triplet=triplets,
