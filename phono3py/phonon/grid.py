@@ -267,6 +267,7 @@ class BZGrid:
         """Grid generating matrix to be represented by SNF.
 
         Grid generating matrix used for SNF.
+        When SNF is used, ndarray, otherwise None.
         shape=(3, 3), dtype='int_', order='C'.
 
         """
@@ -465,18 +466,20 @@ class BZGrid:
         information is used.
 
         """
-        self._grid_matrix = self._get_grid_matrix(length, coordinates=coordinates)
+        grid_matrix = self._get_grid_matrix(length, coordinates=coordinates)
 
         # If grid_matrix is a diagonal matrix, use it as D matrix.
-        gm_diag = np.diagonal(self._grid_matrix)
-        if (np.diag(gm_diag) == self._grid_matrix).all() and not force_SNF:
+        gm_diag = np.diagonal(grid_matrix)
+        if (np.diag(gm_diag) == grid_matrix).all() and not force_SNF:
             self._D_diag = np.array(gm_diag, dtype="int_")
         else:
             import phono3py._phono3py as phono3c
 
-            if not phono3c.snf3x3(self._D_diag, self._P, self._Q, self._grid_matrix):
+            if not phono3c.snf3x3(self._D_diag, self._P, self._Q, grid_matrix):
                 msg = "SNF3x3 failed."
                 raise RuntimeError(msg)
+
+            self._grid_matrix = grid_matrix
 
     def _get_grid_matrix(self, length: float, coordinates: str = "reciprocal"):
         """Return grid matrix.

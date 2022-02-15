@@ -894,7 +894,12 @@ def run_isotope_then_exit(phono3py, settings, updated_settings, log_level):
 
 
 def init_phph_interaction(
-    phono3py, settings, updated_settings, input_filename, output_filename, log_level
+    phono3py: Phono3py,
+    settings,
+    updated_settings,
+    input_filename,
+    output_filename,
+    log_level,
 ):
     """Initialize ph-ph interaction and phonons on grid."""
     if log_level:
@@ -902,10 +907,8 @@ def init_phph_interaction(
         sys.stdout.flush()
     phono3py.mesh_numbers = settings.mesh_numbers
     bz_grid = phono3py.grid
-    identity = np.eye(3, dtype="int_")
-    not_grg = (bz_grid.P == identity).all() and (bz_grid.Q == identity).all()
     if log_level:
-        if not_grg:
+        if bz_grid.grid_matrix is None:
             print("[ %d %d %d ]" % tuple(phono3py.mesh_numbers))
         else:
             print("")
