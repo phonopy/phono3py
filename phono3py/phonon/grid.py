@@ -866,9 +866,7 @@ def _relocate_BZ_grid_address(
         _is_shift = np.zeros(3, dtype="int_")
     else:
         _is_shift = np.array(is_shift, dtype="int_")
-    bz_grid_addresses = np.zeros(
-        (np.prod(np.add(D_diag, 1)), 3), dtype="int_", order="C"
-    )
+    bz_grid_addresses = np.zeros((np.prod(D_diag) * 8, 3), dtype="int_", order="C")
     bzg2grg = np.zeros(len(bz_grid_addresses), dtype="int_")
 
     if store_dense_gp_map:
