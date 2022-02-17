@@ -78,14 +78,14 @@ class Isotope:
         sigma=None,
         bz_grid=None,
         frequency_factor_to_THz=VaspToTHz,
-        store_dense_gp_map=False,
+        use_grg=False,
+        store_dense_gp_map=True,
         symprec=1e-5,
         cutoff_frequency=None,
         lapack_zheev_uplo="L",
     ):
         """Init method."""
-        self._mesh = np.array(mesh, dtype="int_")
-
+        self._mesh = mesh
         if mass_variances is None:
             self._mass_variances = get_mass_variances(primitive)
         else:
@@ -122,6 +122,7 @@ class Isotope:
                 self._mesh,
                 lattice=self._primitive.cell,
                 symmetry_dataset=primitive_symmetry.dataset,
+                use_grg=use_grg,
                 store_dense_gp_map=store_dense_gp_map,
             )
 

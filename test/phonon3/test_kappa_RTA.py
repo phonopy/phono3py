@@ -17,6 +17,8 @@ si_pbesol_kappa_RTA_si_nosym = [
 ]
 si_pbesol_kappa_RTA_si_nomeshsym = [81.31304, 81.31304, 81.31304, 0, 0, 0]
 si_pbesol_kappa_RTA_grg = [93.99526, 93.99526, 93.99526, 0, 0, 0]
+si_pbesol_kappa_RTA_grg_iso = [103.2607, 103.2607, 103.2607, 0, 0, 0]
+si_pbesol_kappa_RTA_grg_sigma_iso = [107.9677, 107.9677, 107.9677, 0, 0, 0]
 nacl_pbe_kappa_RTA = [7.72798252, 7.72798252, 7.72798252, 0, 0, 0]
 nacl_pbe_kappa_RTA_with_sigma = [7.71913708, 7.71913708, 7.71913708, 0, 0, 0]
 
@@ -125,6 +127,43 @@ def test_kappa_RTA_si_grg(si_pbesol_grg: Phono3py):
     np.testing.assert_equal(np.dot(P, np.dot(A, Q)), np.diag(D_diag))
 
     np.testing.assert_allclose(si_pbesol_kappa_RTA_grg, kappa, atol=0.5)
+
+
+def test_kappa_RTA_si_grg_iso(si_pbesol_grg: Phono3py):
+    """Test RTA with isotope scattering by Si with GR-grid.."""
+    mesh = 30
+    ph3 = si_pbesol_grg
+    ph3.mesh_numbers = mesh
+    ph3.init_phph_interaction()
+    ph3.run_thermal_conductivity(
+        temperatures=[
+            300,
+        ],
+        is_isotope=True,
+    )
+    kappa = ph3.thermal_conductivity.kappa.ravel()
+    np.testing.assert_allclose(si_pbesol_kappa_RTA_grg_iso, kappa, atol=0.5)
+    np.testing.assert_equal(ph3.grid.grid_matrix, [[-6, 6, 6], [6, -6, 6], [6, 6, -6]])
+
+
+def test_kappa_RTA_si_grg_sigma_iso(si_pbesol_grg: Phono3py):
+    """Test RTA with isotope scattering by Si with GR-grid.."""
+    mesh = 30
+    ph3 = si_pbesol_grg
+    ph3.sigmas = [
+        0.1,
+    ]
+    ph3.mesh_numbers = mesh
+    ph3.init_phph_interaction()
+    ph3.run_thermal_conductivity(
+        temperatures=[
+            300,
+        ],
+        is_isotope=True,
+    )
+    kappa = ph3.thermal_conductivity.kappa.ravel()
+    np.testing.assert_allclose(si_pbesol_kappa_RTA_grg_sigma_iso, kappa, atol=0.5)
+    ph3.sigmas = None
 
 
 def test_kappa_RTA_si_N_U(si_pbesol):
