@@ -288,12 +288,17 @@ class Isotope:
         )
 
     def _set_integration_weights_py(self):
+        if self._bz_grid.store_dense_gp_map:
+            raise NotImplementedError("Only for type-I bz_map.")
+        if self._bz_grid.grid_matrix is not None:
+            raise NotImplementedError("Generalized regular grid is not supported.")
         thm = TetrahedronMethod(self._bz_grid.microzone_lattice)
         num_grid_points = len(self._grid_points)
         num_band = len(self._primitive) * 3
         self._integration_weights = np.zeros(
             (num_grid_points, len(self._band_indices), num_band), dtype="double"
         )
+
         for i, gp in enumerate(self._grid_points):
             tfreqs = get_tetrahedra_frequencies(
                 gp,

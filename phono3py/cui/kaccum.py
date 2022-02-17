@@ -29,7 +29,7 @@ class KappaDOS:
         self,
         mode_kappa,
         frequencies,
-        bz_grid,
+        bz_grid: BZGrid,
         ir_grid_points,
         ir_grid_map=None,
         frequency_points=None,
@@ -80,7 +80,7 @@ class KappaDOS:
                 self._frequency_points,
                 frequencies,
                 bz_grid,
-                grid_points=ir_grid_points,
+                grid_points=np.array(bz_grid.grg2bzg[ir_grid_points], dtype="int_"),
                 bzgp2irgp_map=bzgp2irgp_map,
                 function=function,
             )
@@ -257,7 +257,7 @@ def _run_mfp_dos(
     return kdos, sampling_points
 
 
-def _get_grid_symmetry(bz_grid, weights, qpoints):
+def _get_grid_symmetry(bz_grid: BZGrid, weights, qpoints):
     (ir_grid_points, weights_for_check, ir_grid_map) = get_ir_grid_points(bz_grid)
 
     try:
@@ -268,7 +268,8 @@ def _get_grid_symmetry(bz_grid, weights, qpoints):
         print("*******************************")
         raise
 
-    addresses = bz_grid.addresses[ir_grid_points]
+    np.testing.assert_array_equal(ir_grid_points, np.unique(ir_grid_map))
+    addresses = bz_grid.addresses[bz_grid.grg2bzg[ir_grid_points]]
     D_diag = bz_grid.D_diag.astype("double")
     qpoints_for_check = np.dot(addresses / D_diag, bz_grid.Q.T)
     diff_q = qpoints - qpoints_for_check
@@ -531,7 +532,10 @@ def main():
         else:
             primitive = get_primitive(cell, primitive_matrix)
 
-    mesh = np.array(f_kappa["mesh"][:], dtype="int_")
+    if "grid_matrix" in f_kappa:
+        mesh = np.array(f_kappa["grid_matrix"][:], dtype="int_")
+    else:
+        mesh = np.array(f_kappa["mesh"][:], dtype="int_")
     temperatures = f_kappa["temperature"][:]
     ir_weights = f_kappa["weight"][:]
     primitive_symmetry = Symmetry(primitive)
@@ -539,7 +543,7 @@ def main():
         mesh,
         lattice=primitive.cell,
         symmetry_dataset=primitive_symmetry.dataset,
-        store_dense_gp_map=False,
+        store_dense_gp_map=True,
     )
     if args.no_kappa_stars or (ir_weights == 1).all():
         ir_grid_points = np.arange(np.prod(mesh), dtype="int_")
@@ -565,13 +569,12 @@ def main():
         or args.tau
         or args.gv_norm
         or args.dos
-    ):  # noqa E129
-
+    ):
         mode_prop = _get_mode_property(args, f_kappa)
 
         if args.temperature is not None and not (
             args.gv_norm or args.pqj or args.gruneisen or args.dos
-        ):  # noqa E129
+        ):
             temperatures, mode_prop = _set_T_target(
                 temperatures, mode_prop, args.temperature
             )
