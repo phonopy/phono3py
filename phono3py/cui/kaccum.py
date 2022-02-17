@@ -45,7 +45,7 @@ class KappaDOS:
             shape=(ir_grid_points, num_band), dtype='double'
         bz_grid : BZGrid
         ir_grid_points : ndarray
-            Ir-grid point indices in GR-grid.
+            Ir-grid point indices in BZ-grid.
             shape=(ir_grid_points, ), dtype='int_'
         ir_grid_map : ndarray, optional, default=None
             Mapping table to ir-grid point indices in GR-grid.
@@ -80,7 +80,7 @@ class KappaDOS:
                 self._frequency_points,
                 frequencies,
                 bz_grid,
-                grid_points=np.array(bz_grid.grg2bzg[ir_grid_points], dtype="int_"),
+                grid_points=ir_grid_points,
                 bzgp2irgp_map=bzgp2irgp_map,
                 function=function,
             )
@@ -204,7 +204,12 @@ def _set_T_target(temperatures, mode_prop, T_target, mean_freepath=None):
 
 
 def _run_prop_dos(
-    frequencies, mode_prop, ir_grid_map, ir_grid_points, num_sampling_points, bz_grid
+    frequencies,
+    mode_prop,
+    ir_grid_map,
+    ir_grid_points,
+    num_sampling_points,
+    bz_grid: BZGrid,
 ):
     """Run DOS-like calculation."""
     kappa_dos = KappaDOS(
@@ -258,6 +263,18 @@ def _run_mfp_dos(
 
 
 def _get_grid_symmetry(bz_grid: BZGrid, weights, qpoints):
+    """Return ir-grid point information.
+
+    Returns
+    -------
+    ir_grid_points : ndarray
+        Ir-grid point indices in BZ-grid.
+        shape=(ir_grid_points, ), dtype='int_'
+    ir_grid_map : ndarray, optional, default=None
+        Mapping table to ir-grid point indices in GR-grid.
+        None gives `np.arange(len(frequencies), 'int_')`.
+
+    """
     (ir_grid_points, weights_for_check, ir_grid_map) = get_ir_grid_points(bz_grid)
 
     try:
@@ -268,8 +285,8 @@ def _get_grid_symmetry(bz_grid: BZGrid, weights, qpoints):
         print("*******************************")
         raise
 
-    np.testing.assert_array_equal(ir_grid_points, np.unique(ir_grid_map))
-    addresses = bz_grid.addresses[bz_grid.grg2bzg[ir_grid_points]]
+    ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="int_")
+    addresses = bz_grid.addresses[ir_grid_points]
     D_diag = bz_grid.D_diag.astype("double")
     qpoints_for_check = np.dot(addresses / D_diag, bz_grid.Q.T)
     diff_q = qpoints - qpoints_for_check
@@ -546,7 +563,7 @@ def main():
         store_dense_gp_map=True,
     )
     if args.no_kappa_stars or (ir_weights == 1).all():
-        ir_grid_points = np.arange(np.prod(mesh), dtype="int_")
+        ir_grid_points = bz_grid.grg2bzg
         ir_grid_map = np.arange(np.prod(mesh), dtype="int_")
     else:
         ir_grid_points, ir_grid_map = _get_grid_symmetry(
