@@ -43,6 +43,10 @@ si_pbesol_grg_iso = [
     [0.000141, 0.000161, 0.000599, 0.001332, 0.017676, 0.012157],
     [0.000227, 0.00039, 0.000187, 0.001136, 0.01043, 0.01381],
 ]
+si_pbesol_grg_iso_sigma = [
+    [0.000129, 0.000154, 0.000677, 0.001306, 0.011859, 0.010465],
+    [0.000227, 0.000395, 0.000181, 0.001216, 0.010474, 0.012425],
+]
 
 
 def test_Phono3pyIsotope(si_pbesol):
@@ -87,7 +91,7 @@ def test_Phono3pyIsotope_with_sigma(si_pbesol):
 
 
 def test_Phono3pyIsotope_grg(si_pbesol_grg):
-    """Phono3pyIsotope with tetrahedron method."""
+    """Phono3pyIsotope with tetrahedron method and GR-grid."""
     ph3 = si_pbesol_grg
     iso = Phono3pyIsotope(
         80,
@@ -106,3 +110,28 @@ def test_Phono3pyIsotope_grg(si_pbesol_grg):
         iso.grid.grid_matrix, [[-15, 15, 15], [15, -15, 15], [15, 15, -15]]
     )
     np.testing.assert_allclose(si_pbesol_grg_iso, iso.gamma[0], atol=3e-4)
+
+
+def test_Phono3pyIsotope_grg_with_sigma(si_pbesol_grg):
+    """Phono3pyIsotope with smearing method and GR-grid."""
+    ph3 = si_pbesol_grg
+    iso = Phono3pyIsotope(
+        80,
+        ph3.phonon_primitive,
+        sigmas=[
+            0.1,
+        ],
+        symprec=ph3.symmetry.tolerance,
+        use_grg=True,
+    )
+    iso.init_dynamical_matrix(
+        ph3.fc2,
+        ph3.phonon_supercell,
+        ph3.phonon_primitive,
+        nac_params=ph3.nac_params,
+    )
+    iso.run([23, 103])
+    np.testing.assert_equal(
+        iso.grid.grid_matrix, [[-15, 15, 15], [15, -15, 15], [15, 15, -15]]
+    )
+    np.testing.assert_allclose(si_pbesol_grg_iso_sigma, iso.gamma[0], atol=3e-4)
