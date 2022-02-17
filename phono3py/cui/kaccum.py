@@ -29,7 +29,7 @@ class KappaDOS:
         self,
         mode_kappa,
         frequencies,
-        bz_grid,
+        bz_grid: BZGrid,
         ir_grid_points,
         ir_grid_map=None,
         frequency_points=None,
@@ -45,7 +45,7 @@ class KappaDOS:
             shape=(ir_grid_points, num_band), dtype='double'
         bz_grid : BZGrid
         ir_grid_points : ndarray
-            Ir-grid point indices in GR-grid.
+            Ir-grid point indices in BZ-grid.
             shape=(ir_grid_points, ), dtype='int_'
         ir_grid_map : ndarray, optional, default=None
             Mapping table to ir-grid point indices in GR-grid.
@@ -204,7 +204,12 @@ def _set_T_target(temperatures, mode_prop, T_target, mean_freepath=None):
 
 
 def _run_prop_dos(
-    frequencies, mode_prop, ir_grid_map, ir_grid_points, num_sampling_points, bz_grid
+    frequencies,
+    mode_prop,
+    ir_grid_map,
+    ir_grid_points,
+    num_sampling_points,
+    bz_grid: BZGrid,
 ):
     """Run DOS-like calculation."""
     kappa_dos = KappaDOS(
@@ -257,7 +262,19 @@ def _run_mfp_dos(
     return kdos, sampling_points
 
 
-def _get_grid_symmetry(bz_grid, weights, qpoints):
+def _get_grid_symmetry(bz_grid: BZGrid, weights, qpoints):
+    """Return ir-grid point information.
+
+    Returns
+    -------
+    ir_grid_points : ndarray
+        Ir-grid point indices in BZ-grid.
+        shape=(ir_grid_points, ), dtype='int_'
+    ir_grid_map : ndarray, optional, default=None
+        Mapping table to ir-grid point indices in GR-grid.
+        None gives `np.arange(len(frequencies), 'int_')`.
+
+    """
     (ir_grid_points, weights_for_check, ir_grid_map) = get_ir_grid_points(bz_grid)
 
     try:
@@ -268,6 +285,7 @@ def _get_grid_symmetry(bz_grid, weights, qpoints):
         print("*******************************")
         raise
 
+    ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="int_")
     addresses = bz_grid.addresses[ir_grid_points]
     D_diag = bz_grid.D_diag.astype("double")
     qpoints_for_check = np.dot(addresses / D_diag, bz_grid.Q.T)
@@ -531,7 +549,10 @@ def main():
         else:
             primitive = get_primitive(cell, primitive_matrix)
 
-    mesh = np.array(f_kappa["mesh"][:], dtype="int_")
+    if "grid_matrix" in f_kappa:
+        mesh = np.array(f_kappa["grid_matrix"][:], dtype="int_")
+    else:
+        mesh = np.array(f_kappa["mesh"][:], dtype="int_")
     temperatures = f_kappa["temperature"][:]
     ir_weights = f_kappa["weight"][:]
     primitive_symmetry = Symmetry(primitive)
@@ -539,10 +560,10 @@ def main():
         mesh,
         lattice=primitive.cell,
         symmetry_dataset=primitive_symmetry.dataset,
-        store_dense_gp_map=False,
+        store_dense_gp_map=True,
     )
     if args.no_kappa_stars or (ir_weights == 1).all():
-        ir_grid_points = np.arange(np.prod(mesh), dtype="int_")
+        ir_grid_points = bz_grid.grg2bzg
         ir_grid_map = np.arange(np.prod(mesh), dtype="int_")
     else:
         ir_grid_points, ir_grid_map = _get_grid_symmetry(
@@ -565,13 +586,12 @@ def main():
         or args.tau
         or args.gv_norm
         or args.dos
-    ):  # noqa E129
-
+    ):
         mode_prop = _get_mode_property(args, f_kappa)
 
         if args.temperature is not None and not (
             args.gv_norm or args.pqj or args.gruneisen or args.dos
-        ):  # noqa E129
+        ):
             temperatures, mode_prop = _set_T_target(
                 temperatures, mode_prop, args.temperature
             )

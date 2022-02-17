@@ -436,18 +436,25 @@ class BZGrid:
             have similar lengths.
 
         """
-        try:
-            num_values = len(mesh)
-            if num_values == 3:
-                self._D_diag = np.array(mesh, dtype="int_")
-        except TypeError:
-            length = float(mesh)
+        num_values = len(np.ravel(mesh))
+        if num_values == 1 or num_values == 9:
+            if num_values == 1:
+                length = float(mesh)
+                grid_matrix = None
+                _use_grg = use_grg
+            else:
+                length = None
+                grid_matrix = mesh
+                _use_grg = True
             fall_back = True
-            if use_grg:
+            if _use_grg:
                 if "international" in self._symmetry_dataset:
                     if is_primitive_cell(self._symmetry_dataset["rotations"]):
                         self._set_SNF(
-                            length, force_SNF=force_SNF, coordinates=coordinates
+                            length=length,
+                            grid_matrix=grid_matrix,
+                            force_SNF=force_SNF,
+                            coordinates=coordinates,
                         )
                         fall_back = False
                     else:
@@ -457,8 +464,12 @@ class BZGrid:
                         )
             if fall_back:
                 self._D_diag = length2mesh(length, self._lattice)
+        elif num_values == 3:
+            self._D_diag = np.array(mesh, dtype="int_")
 
-    def _set_SNF(self, length, force_SNF=False, coordinates="reciprocal"):
+    def _set_SNF(
+        self, length=None, grid_matrix=None, force_SNF=False, coordinates="reciprocal"
+    ):
         """Calculate Smith normal form.
 
         Microzone is defined as the regular grid of a conventional
@@ -466,20 +477,23 @@ class BZGrid:
         information is used.
 
         """
-        grid_matrix = self._get_grid_matrix(length, coordinates=coordinates)
+        if length is not None:
+            _grid_matrix = self._get_grid_matrix(length, coordinates=coordinates)
+        elif grid_matrix is not None:
+            _grid_matrix = np.array(grid_matrix, dtype="int_", order="C")
 
         # If grid_matrix is a diagonal matrix, use it as D matrix.
-        gm_diag = np.diagonal(grid_matrix)
-        if (np.diag(gm_diag) == grid_matrix).all() and not force_SNF:
+        gm_diag = np.diagonal(_grid_matrix)
+        if (np.diag(gm_diag) == _grid_matrix).all() and not force_SNF:
             self._D_diag = np.array(gm_diag, dtype="int_")
         else:
             import phono3py._phono3py as phono3c
 
-            if not phono3c.snf3x3(self._D_diag, self._P, self._Q, grid_matrix):
+            if not phono3c.snf3x3(self._D_diag, self._P, self._Q, _grid_matrix):
                 msg = "SNF3x3 failed."
                 raise RuntimeError(msg)
 
-            self._grid_matrix = grid_matrix
+            self._grid_matrix = _grid_matrix
 
     def _get_grid_matrix(self, length: float, coordinates: str = "reciprocal"):
         """Return grid matrix.
