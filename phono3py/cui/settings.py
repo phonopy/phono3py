@@ -51,6 +51,7 @@ class Phono3pySettings(Settings):
         "cutoff_pair_distance": None,
         "grid_addresses": None,
         "grid_points": None,
+        "grid_matrix": None,
         "ion_clamped": False,
         "is_bterta": False,
         "is_compact_fc": False,
@@ -148,6 +149,10 @@ class Phono3pySettings(Settings):
     def set_grid_points(self, val):
         """Set grid_points."""
         self._v["grid_points"] = val
+
+    # def set_grid_matrix(self, val):
+    #     """Set grid_matrix."""
+    #     self._v["grid_matrix"] = val
 
     def set_ion_clamped(self, val):
         """Set ion_clamped."""
@@ -390,6 +395,10 @@ class Phono3pyConfParser(ConfParser):
         if "grid_points" in self._args:
             if self._args.grid_points is not None:
                 self._confs["grid_points"] = " ".join(self._args.grid_points)
+
+        if "grid_matrix" in self._args:
+            if self._args.grid_matrix is not None:
+                self._confs["grid_matrix"] = " ".join(self._args.grid_matrix)
 
         if "ion_clamped" in self._args:
             if self._args.ion_clamped:
@@ -681,6 +690,13 @@ class Phono3pyConfParser(ConfParser):
                 vals = [int(x) for x in confs["grid_points"].replace(",", " ").split()]
                 self.set_parameter("grid_points", vals)
 
+            if conf_key == "grid_matrix":
+                vals = [int(x) for x in confs["grid_matrix"].replace(",", " ").split()]
+                if len(vals) == 9:
+                    self.set_parameter("grid_matrix", np.reshape(vals, (3, 3)))
+                else:
+                    self.setting_error("Grid matrix are incorrectly set.")
+
             if conf_key == "lapack_zheev_uplo":
                 self.set_parameter(
                     "lapack_zheev_uplo", confs["lapack_zheev_uplo"].upper()
@@ -764,6 +780,10 @@ class Phono3pyConfParser(ConfParser):
         # Grid points
         if "grid_points" in params:
             self._settings.set_grid_points(params["grid_points"])
+
+        # Grid matrix
+        if "grid_matrix" in params:
+            self._settings.set_mesh_numbers(params["grid_matrix"])
 
         # Atoms are clamped under applied strain in Gruneisen parameter
         # calculation.

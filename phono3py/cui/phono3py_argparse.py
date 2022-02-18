@@ -338,6 +338,14 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         help="Fixed grid addresses where anharmonic properties are calculated",
     )
     parser.add_argument(
+        "--gm",
+        "--grid-matrix",
+        nargs="+",
+        dest="grid_matrix",
+        default=None,
+        help="Grid generating matrix for generalized regular grid",
+    )
+    parser.add_argument(
         "--gp",
         "--grid-points",
         nargs="+",

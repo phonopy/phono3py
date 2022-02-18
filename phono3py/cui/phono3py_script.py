@@ -770,7 +770,7 @@ def run_gruneisen_then_exit(phono3py, settings, output_filename, log_level):
         settings.mesh_numbers is None
         and settings.band_paths is None
         and settings.qpoints is None
-    ):  # noqa E129
+    ):
         print("An option of --mesh, --band, or --qpoints has to be specified.")
         if log_level:
             print_error()
