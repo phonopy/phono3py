@@ -490,7 +490,7 @@ class GridMatrix:
         self,
         mesh,
         lattice,
-        symmetry_dataset: Optional[dict],
+        symmetry_dataset: Optional[dict] = None,
         use_grg: bool = True,
         force_SNF: bool = False,
         SNF_coordinates: str = "reciprocal",
@@ -1019,7 +1019,7 @@ def _relocate_BZ_grid_address(
 
 
 def _get_ir_grid_map(D_diag, grg_rotations, PS=None):
-    """Irreducible k-points are searched.
+    """Return mapping to irreducible grid points in GR-grid.
 
     Parameters
     ----------
@@ -1038,8 +1038,7 @@ def _get_ir_grid_map(D_diag, grg_rotations, PS=None):
     Returns
     -------
     ir_grid_map : ndarray
-        Grid point mapping table to ir-gird-points in gereralized
-        regular grid.
+        Grid point mapping from all indices to ir-gird-point indices in GR-grid.
         dtype='int_', shape=(prod(mesh),)
 
     """
