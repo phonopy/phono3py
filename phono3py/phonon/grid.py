@@ -34,6 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import warnings
+from typing import Optional
 
 import numpy as np
 from phonopy.harmonic.force_constants import similarity_transformation
@@ -131,13 +132,13 @@ class BZGrid:
         mesh,
         reciprocal_lattice=None,
         lattice=None,
-        symmetry_dataset=None,
+        symmetry_dataset: Optional[dict] = None,
         is_shift=None,
-        is_time_reversal=True,
-        use_grg=False,
-        force_SNF=False,
-        SNF_coordinates="reciprocal",
-        store_dense_gp_map=True,
+        is_time_reversal: bool = True,
+        use_grg: bool = False,
+        force_SNF: bool = False,
+        SNF_coordinates: str = "reciprocal",
+        store_dense_gp_map: bool = True,
     ):
         """Init method.
 
@@ -150,7 +151,7 @@ class BZGrid:
         lattice : array_like
             Direct primitive basis vectors given as row vectors
             shape=(3, 3), dtype='double', order='C'
-        symmetry_dataset : dict
+        symmetry_dataset : dict, optional
             Symmetry dataset (Symmetry.dataset) searched for the primitive cell
             corresponding to ``reciprocal_lattice`` or ``lattice``.
         is_shift : array_like or None, optional
@@ -174,14 +175,7 @@ class BZGrid:
             Default is True.
 
         """
-        if symmetry_dataset is None:
-            identity = np.eye(3, dtype="int_", order="C")
-            self._symmetry_dataset = {
-                "rotations": identity.reshape(1, 3, 3),
-                "translations": np.array([[0, 0, 0]], dtype="double"),
-            }
-        else:
-            self._symmetry_dataset = symmetry_dataset
+        self._symmetry_dataset = symmetry_dataset
         self._is_shift = is_shift
         self._is_time_reversal = is_time_reversal
         self._store_dense_gp_map = store_dense_gp_map
@@ -405,18 +399,18 @@ class BZGrid:
     def _generate_grid(
         self, mesh, use_grg=False, force_SNF=False, SNF_coordinates="reciprocal"
     ):
-        gm_generator = GridMatrixGenerator(
+        gm = GridMatrix(
             mesh,
             self._lattice,
-            self._symmetry_dataset,
+            symmetry_dataset=self._symmetry_dataset,
             use_grg=use_grg,
             force_SNF=force_SNF,
             SNF_coordinates=SNF_coordinates,
         )
-        self._grid_matrix = gm_generator.grid_matrix
-        self._D_diag = gm_generator.D_diag
-        self._P = gm_generator.P
-        self._Q = gm_generator.Q
+        self._grid_matrix = gm.grid_matrix
+        self._D_diag = gm.D_diag
+        self._P = gm.P
+        self._Q = gm.Q
         self._set_bz_grid()
         self._set_rotations()
 
@@ -449,9 +443,12 @@ class BZGrid:
         """
         import phono3py._phono3py as phono3c
 
-        direct_rotations = np.array(
-            self._symmetry_dataset["rotations"], dtype="int_", order="C"
-        )
+        if self._symmetry_dataset is None:
+            direct_rotations = np.eye(3, dtype="int_", order="C").reshape(1, 3, 3)
+        else:
+            direct_rotations = np.array(
+                self._symmetry_dataset["rotations"], dtype="int_", order="C"
+            )
         rec_rotations = np.zeros((48, 3, 3), dtype="int_", order="C")
         num_rec_rot = phono3c.reciprocal_rotations(
             rec_rotations, direct_rotations, self._is_time_reversal
@@ -477,8 +474,8 @@ class BZGrid:
             raise RuntimeError(msg)
 
 
-class GridMatrixGenerator:
-    """Class to generate uniform grid in reciprocal space.
+class GridMatrix:
+    """Class to generate regular grid in reciprocal space.
 
     Attributes
     ----------
@@ -493,7 +490,7 @@ class GridMatrixGenerator:
         self,
         mesh,
         lattice,
-        symmetry_dataset: dict,
+        symmetry_dataset: Optional[dict],
         use_grg: bool = True,
         force_SNF: bool = False,
         SNF_coordinates: str = "reciprocal",
@@ -502,13 +499,17 @@ class GridMatrixGenerator:
 
         mesh : array_like or float
             Mesh numbers or length.
-            shape=(3,), dtype='int_'
+            With float number, either conventional or generalized regular grid is
+            computed depending on the given flags (`use_grg`, `force_SNF`).
+            Given ndarry with
+                shape=(3,), dtype='int_': conventional regular grid
+                shape=(3, 3), dtype='int_': generalized regular grid
         lattice : array_like
             Primitive basis vectors in direct space given as row vectors.
             shape=(3, 3), dtype='double', order='C'
-        symmetry_dataset : dict
-            Symmetry dataset of spglib (Symmetry.dataset) searched for the primitive
-            cell corresponding to `lattice`.
+        symmetry_dataset : dict, optional
+            Symmetry dataset of spglib (Symmetry.dataset) of primitive cell
+            that has `lattice`. Default is None.
         use_grg : bool, optional
             Use generalized regular grid. Default is False.
         force_SNF : bool, optional
