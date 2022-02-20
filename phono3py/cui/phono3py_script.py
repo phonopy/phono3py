@@ -89,7 +89,7 @@ from phono3py.interface.phono3py_yaml import (
     displacements_yaml_lines_type1,
 )
 from phono3py.phonon3.gruneisen import run_gruneisen_parameters
-from phono3py.phonon.grid import get_grid_point_from_address
+from phono3py.phonon.grid import get_grid_point_from_address, get_ir_grid_points
 from phono3py.version import __version__
 
 # import logging
@@ -942,11 +942,16 @@ def init_phph_interaction(
 
     if settings.write_phonon:
         freqs, eigvecs, grid_address = phono3py.get_phonon_data()
+        ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bz_grid)
+        ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="int_")
         filename = write_phonon_to_hdf5(
             freqs,
             eigvecs,
             grid_address,
             phono3py.mesh_numbers,
+            bz_grid=bz_grid,
+            ir_grid_points=ir_grid_points,
+            ir_grid_weights=ir_grid_weights,
             compression=settings.hdf5_compression,
             filename=output_filename,
         )

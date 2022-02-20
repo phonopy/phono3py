@@ -1417,6 +1417,8 @@ def write_phonon_to_hdf5(
     grid_address,
     mesh,
     bz_grid=None,
+    ir_grid_points=None,
+    ir_grid_weights=None,
     compression="gzip",
     filename=None,
 ):
@@ -1434,6 +1436,14 @@ def write_phonon_to_hdf5(
         w.create_dataset("grid_address", data=grid_address, compression=compression)
         w.create_dataset("frequency", data=frequency, compression=compression)
         w.create_dataset("eigenvector", data=eigenvector, compression=compression)
+        if ir_grid_points is not None:
+            w.create_dataset(
+                "ir_grid_points", data=ir_grid_points, compression=compression
+            )
+        if ir_grid_weights is not None:
+            w.create_dataset(
+                "ir_grid_weights", data=ir_grid_weights, compression=compression
+            )
         return full_filename
 
     return None
