@@ -66,7 +66,7 @@ def _set_T_target(temperatures, mode_prop, T_target, mean_freepath=None):
                 return temperatures, mode_prop
 
 
-def _get_ir_grid_info(bz_grid: BZGrid, weights, qpoints):
+def _get_ir_grid_info(bz_grid: BZGrid, weights, qpoints=None, ir_grid_points=None):
     """Return ir-grid point information.
 
     Parameters
@@ -89,30 +89,40 @@ def _get_ir_grid_info(bz_grid: BZGrid, weights, qpoints):
         Mapping table to ir-grid point indices in GR-grid.
 
     """
-    (ir_grid_points, weights_ref, ir_grid_map) = get_ir_grid_points(bz_grid)
-    ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="int_")
+    (ir_grid_points_ref, weights_ref, ir_grid_map) = get_ir_grid_points(bz_grid)
+    ir_grid_points_ref = np.array(bz_grid.grg2bzg[ir_grid_points_ref], dtype="int_")
 
-    _assert_grid_in_hdf5(weights, qpoints, weights_ref, ir_grid_points, bz_grid)
+    _assert_grid_in_hdf5(
+        weights, qpoints, ir_grid_points, weights_ref, ir_grid_points_ref, bz_grid
+    )
 
-    return ir_grid_points, ir_grid_map
+    return ir_grid_points_ref, ir_grid_map
 
 
 def _assert_grid_in_hdf5(
-    weights, qpoints, weights_for_check, ir_grid_points, bz_grid: BZGrid
+    weights,
+    qpoints,
+    ir_grid_points,
+    weights_for_check,
+    ir_grid_points_ref,
+    bz_grid: BZGrid,
 ):
     try:
-        np.testing.assert_array_equal(weights, weights_for_check)
+        np.testing.assert_equal(weights, weights_for_check)
     except AssertionError:
         print("*******************************")
         print("** Might forget --pa option? **")
         print("*******************************")
         raise
 
-    addresses = bz_grid.addresses[ir_grid_points]
-    D_diag = bz_grid.D_diag.astype("double")
-    qpoints_for_check = np.dot(addresses / D_diag, bz_grid.Q.T)
-    diff_q = qpoints - qpoints_for_check
-    np.testing.assert_almost_equal(diff_q, np.rint(diff_q))
+    if ir_grid_points is not None:
+        np.testing.assert_equal(ir_grid_points, ir_grid_points_ref)
+    if qpoints is not None:
+        addresses = bz_grid.addresses[ir_grid_points_ref]
+        D_diag = bz_grid.D_diag.astype("double")
+        qpoints_for_check = np.dot(addresses / D_diag, bz_grid.Q.T)
+        diff_q = qpoints - qpoints_for_check
+        np.testing.assert_almost_equal(diff_q, np.rint(diff_q))
 
 
 def _get_calculator(args):
@@ -279,11 +289,10 @@ def _get_parser():
         help="Invoke TURBOMOLE mode",
     )
     parser.add_argument(
-        "--noks",
-        "--no-kappa-stars",
-        dest="no_kappa_stars",
+        "--no-gridsym",
+        dest="no_gridsym",
         action="store_true",
-        help="Deactivate summation of partial kappa at q-stars",
+        help="Grid symmetry is unused for phonon-xxx.hdf5 inputs.",
     )
     parser.add_argument("filenames", nargs="*")
     args = parser.parse_args()
@@ -373,8 +382,23 @@ def main():
         mesh = np.array(f_kappa["grid_matrix"][:], dtype="int_")
     else:
         mesh = np.array(f_kappa["mesh"][:], dtype="int_")
-    temperatures = f_kappa["temperature"][:]
-    ir_weights = f_kappa["weight"][:]
+    if "temperature" in f_kappa:
+        temperatures = f_kappa["temperature"][:]
+    else:
+        temperatures = np.zeros(1, dtype="double")
+    if "weight" in f_kappa:
+        frequencies = f_kappa["frequency"][:]
+        ir_weights = f_kappa["weight"][:]
+        ir_grid_points = None
+        qpoints = f_kappa["qpoint"][:]
+    elif "ir_grid_weights" in f_kappa and not args.no_gridsym:
+        ir_weights = f_kappa["ir_grid_weights"][:]
+        ir_grid_points = f_kappa["ir_grid_points"][:]
+        qpoints = None
+        frequencies = np.array(f_kappa["frequency"][ir_grid_points], dtype="double")
+    else:
+        frequencies = f_kappa["frequency"][:]
+        ir_weights = np.ones(len(frequencies), dtype="int_")
     primitive_symmetry = Symmetry(primitive)
     bz_grid = BZGrid(
         mesh,
@@ -382,14 +406,16 @@ def main():
         symmetry_dataset=primitive_symmetry.dataset,
         store_dense_gp_map=True,
     )
-    if args.no_kappa_stars or (ir_weights == 1).all():
+    if args.no_gridsym or (ir_weights == 1).all():
         ir_grid_points = bz_grid.grg2bzg
-        ir_grid_map = np.arange(np.prod(mesh), dtype="int_")
+        ir_grid_map = None
     else:
         ir_grid_points, ir_grid_map = _get_ir_grid_info(
-            bz_grid, ir_weights, f_kappa["qpoint"][:]
+            bz_grid,
+            ir_weights,
+            qpoints=qpoints,
+            ir_grid_points=ir_grid_points,
         )
-    frequencies = f_kappa["frequency"][:]
     conditions = frequencies > 0
     if np.logical_not(conditions).sum() > 3:
         sys.stderr.write(
