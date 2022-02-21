@@ -352,7 +352,7 @@ class Isotope:
                         ti_sum += ti_sum_band * self._integration_weights[i, bi, j]
                     else:
                         ti_sum += ti_sum_band * gaussian(f0 - f, self._sigma)
-            t_inv.append(np.pi / 2 / np.prod(self._bz_grid.D_diag) * f0 ** 2 * ti_sum)
+            t_inv.append(np.pi / 2 / np.prod(self._bz_grid.D_diag) * f0**2 * ti_sum)
 
         self._gamma = np.array(t_inv, dtype="double") / 2
 
