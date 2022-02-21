@@ -60,6 +60,7 @@ class Phono3pyJointDos:
         temperatures=None,
         frequency_factor_to_THz=VaspToTHz,
         frequency_scale_factor=None,
+        use_grg=False,
         is_mesh_symmetry=True,
         store_dense_gp_map=False,
         symprec=1e-5,
@@ -81,6 +82,7 @@ class Phono3pyJointDos:
             mesh,
             lattice=primitive.cell,
             symmetry_dataset=symmetry.dataset,
+            use_grg=use_grg,
             store_dense_gp_map=store_dense_gp_map,
         )
 

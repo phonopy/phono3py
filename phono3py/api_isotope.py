@@ -63,7 +63,6 @@ class Phono3pyIsotope:
             ]
         else:
             self._sigmas = sigmas
-        self._mesh_numbers = mesh
         self._iso = Isotope(
             mesh,
             primitive,
@@ -100,7 +99,9 @@ class Phono3pyIsotope:
             print("--------------- Isotope scattering ---------------")
             print("Grid point: %d" % gp)
             adrs = self._iso.bz_grid.addresses[gp]
-            q = adrs.astype("double") / self._mesh_numbers
+            bz_grid = self._iso.bz_grid
+            print(bz_grid.D_diag)
+            q = np.dot(adrs.astype("double") / bz_grid.D_diag, bz_grid.Q.T)
             print("q-point: %s" % q)
 
             if self._sigmas:
