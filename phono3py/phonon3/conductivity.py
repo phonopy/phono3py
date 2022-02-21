@@ -50,7 +50,7 @@ from phono3py.phonon3.triplets import get_all_triplets
 from phono3py.phonon.grid import get_grid_points_by_rotations, get_ir_grid_points
 
 unit_to_WmK = (
-    (THz * Angstrom) ** 2 / (Angstrom ** 3) * EV / THz / (2 * np.pi)
+    (THz * Angstrom) ** 2 / (Angstrom**3) * EV / THz / (2 * np.pi)
 )  # 2pi comes from definition of lifetime.
 
 

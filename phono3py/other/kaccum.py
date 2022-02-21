@@ -227,6 +227,6 @@ def run_mfp_dos(
 def get_mfp(g, gv):
     """Calculate mean free path from inverse lifetime and group velocity."""
     g = np.where(g > 0, g, -1)
-    gv_norm = np.sqrt((gv ** 2).sum(axis=2))
+    gv_norm = np.sqrt((gv**2).sum(axis=2))
     mean_freepath = np.where(g > 0, gv_norm / (2 * 2 * np.pi * g), 0)
     return mean_freepath

@@ -87,7 +87,7 @@ def write_grid_points(
         )
         size = (num_ir_gp * num_band * 3) ** 2 * 8 / 1.0e9
         print("- Full collision matrix at each temp and sigma: %.2f Gb" % size)
-        size = num_gp * (num_band ** 2 * 16 + num_band * 8 + 1) / 1.0e9
+        size = num_gp * (num_band**2 * 16 + num_band * 8 + 1) / 1.0e9
         print("- Phonons: %.2f Gb" % size)
         size = num_gp * 5 * 4 / 1.0e9
         print("- Grid point information: %.2f Gb" % size)
@@ -122,7 +122,7 @@ def show_num_triplets(
     for gp in _grid_points:
         num_triplets = tp_nums.get_number_of_triplets(gp)
         q = np.dot(bz_grid.addresses[gp], bz_grid.QDinv.T)
-        size = num_triplets * num_band0 * num_band ** 2 * 8 / 1e6
+        size = num_triplets * num_band0 * num_band**2 * 8 / 1e6
         print(
             "  %5d     (%5.2f %5.2f %5.2f)  %8d              %d Mb"
             % (gp, q[0], q[1], q[2], num_triplets, size)

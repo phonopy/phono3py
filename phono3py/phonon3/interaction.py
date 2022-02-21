@@ -124,12 +124,12 @@ class Interaction:
                 (Hbar * EV) ** 3
                 / 36
                 / 8
-                * EV ** 2
-                / Angstrom ** 6
+                * EV**2
+                / Angstrom**6
                 / (2 * np.pi * THz) ** 3
-                / AMU ** 3
+                / AMU**3
                 / num_grid
-                / EV ** 2
+                / EV**2
             )
         else:
             self._unit_conversion = unit_conversion
@@ -797,7 +797,7 @@ class Interaction:
             self._fc3 = np.array(fc3, dtype="double", order="C")
         else:
             self._fc3 = np.array(
-                fc3 * self._frequency_scale_factor ** 2, dtype="double", order="C"
+                fc3 * self._frequency_scale_factor**2, dtype="double", order="C"
             )
 
     def _set_band_indices(self, band_indices):

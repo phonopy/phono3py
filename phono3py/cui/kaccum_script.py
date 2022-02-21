@@ -450,7 +450,7 @@ def main():
         if args.mfp:
             if "mean_free_path" in f_kappa:
                 mfp = f_kappa["mean_free_path"][:]
-                mean_freepath = np.sqrt((mfp ** 2).sum(axis=3))
+                mean_freepath = np.sqrt((mfp**2).sum(axis=3))
             else:
                 mean_freepath = get_mfp(
                     f_kappa["gamma"][:], f_kappa["group_velocity"][:]

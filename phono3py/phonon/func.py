@@ -39,7 +39,7 @@ from phonopy.units import AMU, EV, Angstrom, Hbar, Kb, THz, THzToEv
 
 def gaussian(x, sigma):
     """Return normal distribution."""
-    return 1.0 / np.sqrt(2 * np.pi) / sigma * np.exp(-(x ** 2) / 2 / sigma ** 2)
+    return 1.0 / np.sqrt(2 * np.pi) / sigma * np.exp(-(x**2) / 2 / sigma**2)
 
 
 def bose_einstein(x, T):
@@ -95,7 +95,7 @@ def sigma_squared(x, T):
 
     n = bose_einstein(x, T)
     # factor=1.0107576777968994
-    factor = Hbar * EV / (2 * np.pi * THz) / AMU / Angstrom ** 2
+    factor = Hbar * EV / (2 * np.pi * THz) / AMU / Angstrom**2
 
     #########################
     np.seterr(**old_settings)
