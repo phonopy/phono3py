@@ -901,6 +901,7 @@ def _write_kappa(
     mode_cv = br.mode_heat_capacities
     ave_pp = br.averaged_pp_interaction
     qpoints = br.qpoints
+    grid_points = br.grid_points
     weights = br.grid_weights
     kappa = br.kappa
     mode_kappa = br.mode_kappa
@@ -936,6 +937,7 @@ def _write_kappa(
             gamma_U=gamma_U_at_sigma,
             averaged_pp_interaction=ave_pp,
             qpoint=qpoints,
+            grid_point=grid_points,
             weight=weights,
             sigma=sigma,
             sigma_cutoff=sigma_cutoff,
