@@ -36,6 +36,7 @@
 
 #include "tetrahedron_method.h"
 
+#include <math.h>
 #include <stddef.h>
 
 #ifdef THMWARNING
@@ -44,6 +45,8 @@
 #else
 #define warning_print(...)
 #endif
+
+#define EPSILON 1e-15
 
 /*      6-------7             */
 /*     /|      /|             */
@@ -926,8 +929,12 @@ static void multiply_matrix_vector_dl3(double v[3], const double a[3][3],
 
 static double _f(const long n, const long m, const double omega,
                  const double vertices_omegas[4]) {
-    return ((omega - vertices_omegas[m]) /
-            (vertices_omegas[n] - vertices_omegas[m]));
+    double delta;
+    delta = vertices_omegas[n] - vertices_omegas[m];
+    if (fabs(delta) < EPSILON) {
+        return 0;
+    }
+    return ((omega - vertices_omegas[m]) / delta);
 }
 
 static double _J(const long i, const long ci, const double omega,
@@ -1277,51 +1284,59 @@ static double _I_13(const double omega, const double vertices_omegas[4]) {
 }
 
 static double _I_20(const double omega, const double vertices_omegas[4]) {
+    double f12_20, g;
+    f12_20 =
+        _f(1, 2, omega, vertices_omegas) * _f(2, 0, omega, vertices_omegas);
+    g = (f12_20 +
+         _f(2, 1, omega, vertices_omegas) * _f(1, 3, omega, vertices_omegas)) *
+        3;
+    if (g < EPSILON) {
+        return 0;
+    }
     return (_f(0, 3, omega, vertices_omegas) +
-            _f(0, 2, omega, vertices_omegas) *
-                _f(2, 0, omega, vertices_omegas) *
-                _f(1, 2, omega, vertices_omegas) /
-                (_f(1, 2, omega, vertices_omegas) *
-                     _f(2, 0, omega, vertices_omegas) +
-                 _f(2, 1, omega, vertices_omegas) *
-                     _f(1, 3, omega, vertices_omegas))) /
-           3;
+            _f(0, 2, omega, vertices_omegas) * f12_20 / g);
 }
 
 static double _I_21(const double omega, const double vertices_omegas[4]) {
+    double f13_21, g;
+    f13_21 =
+        _f(1, 3, omega, vertices_omegas) * _f(2, 1, omega, vertices_omegas);
+    g = (_f(1, 2, omega, vertices_omegas) * _f(2, 0, omega, vertices_omegas) +
+         f13_21) *
+        3;
+    if (g < EPSILON) {
+        return 0;
+    }
     return (_f(1, 2, omega, vertices_omegas) +
-            _f(1, 3, omega, vertices_omegas) *
-                _f(1, 3, omega, vertices_omegas) *
-                _f(2, 1, omega, vertices_omegas) /
-                (_f(1, 2, omega, vertices_omegas) *
-                     _f(2, 0, omega, vertices_omegas) +
-                 _f(2, 1, omega, vertices_omegas) *
-                     _f(1, 3, omega, vertices_omegas))) /
-           3;
+            _f(1, 3, omega, vertices_omegas) * f13_21 / g);
 }
 
 static double _I_22(const double omega, const double vertices_omegas[4]) {
+    double f12_20, g;
+    f12_20 =
+        _f(1, 2, omega, vertices_omegas) * _f(2, 0, omega, vertices_omegas);
+    g = (f12_20 +
+         _f(2, 1, omega, vertices_omegas) * _f(1, 3, omega, vertices_omegas)) *
+        3;
+    if (g < EPSILON) {
+        return 0;
+    }
     return (_f(2, 1, omega, vertices_omegas) +
-            _f(2, 0, omega, vertices_omegas) *
-                _f(2, 0, omega, vertices_omegas) *
-                _f(1, 2, omega, vertices_omegas) /
-                (_f(1, 2, omega, vertices_omegas) *
-                     _f(2, 0, omega, vertices_omegas) +
-                 _f(2, 1, omega, vertices_omegas) *
-                     _f(1, 3, omega, vertices_omegas))) /
-           3;
+            _f(2, 0, omega, vertices_omegas) * f12_20 / g);
 }
 
 static double _I_23(const double omega, const double vertices_omegas[4]) {
+    double f13_21, g;
+    f13_21 =
+        _f(1, 3, omega, vertices_omegas) * _f(2, 1, omega, vertices_omegas);
+    g = (_f(1, 2, omega, vertices_omegas) * _f(2, 0, omega, vertices_omegas) +
+         f13_21) *
+        3;
+    if (g < EPSILON) {
+        return 0;
+    }
     return (_f(3, 0, omega, vertices_omegas) +
-            _f(3, 1, omega, vertices_omegas) *
-                _f(1, 3, omega, vertices_omegas) *
-                _f(2, 1, omega, vertices_omegas) /
-                (_f(1, 2, omega, vertices_omegas) *
-                     _f(2, 0, omega, vertices_omegas) +
-                 _f(2, 1, omega, vertices_omegas) *
-                     _f(1, 3, omega, vertices_omegas))) /
-           3;
+            _f(3, 1, omega, vertices_omegas) * f13_21 / g);
 }
 
 static double _I_30(const double omega, const double vertices_omegas[4]) {
