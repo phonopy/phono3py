@@ -1487,6 +1487,7 @@ def _write_kappa(
     sigma_cutoff = lbte.sigma_cutoff_width
     mesh = lbte.mesh_numbers
     bz_grid = lbte.bz_grid
+    grid_points = lbte.grid_points
     weights = lbte.grid_weights
     frequencies = lbte.frequencies
     ave_pp = lbte.averaged_pp_interaction
@@ -1535,6 +1536,7 @@ def _write_kappa(
             gamma_isotope=gamma_isotope_at_sigma,
             averaged_pp_interaction=ave_pp,
             qpoint=qpoints,
+            grid_point=grid_points,
             weight=weights,
             sigma=sigma,
             sigma_cutoff=sigma_cutoff,

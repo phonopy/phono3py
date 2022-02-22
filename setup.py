@@ -50,6 +50,9 @@ macros = []
 # in numpy>=1.16.0, silence build warnings about deprecated API usage
 macros.append(("NPY_NO_DEPRECATED_API", "0"))
 
+# Avoid divergence in tetrahedron method by ensuring denominator > 1e-10.
+# macros.append(("THM_EPSILON", "1e-10"))
+
 with_threaded_blas = False
 with_mkl = False
 

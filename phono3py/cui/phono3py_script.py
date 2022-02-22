@@ -89,7 +89,7 @@ from phono3py.interface.phono3py_yaml import (
     displacements_yaml_lines_type1,
 )
 from phono3py.phonon3.gruneisen import run_gruneisen_parameters
-from phono3py.phonon.grid import get_grid_point_from_address
+from phono3py.phonon.grid import get_grid_point_from_address, get_ir_grid_points
 from phono3py.version import __version__
 
 # import logging
@@ -834,8 +834,9 @@ def run_jdos_then_exit(
         temperatures=updated_settings["temperature_points"],
         frequency_factor_to_THz=updated_settings["frequency_factor_to_THz"],
         frequency_scale_factor=updated_settings["frequency_scale_factor"],
+        use_grg=settings.use_grg,
         is_mesh_symmetry=settings.is_mesh_symmetry,
-        store_dense_gp_map=settings.store_dense_gp_map,
+        store_dense_gp_map=(not settings.emulate_v1),
         symprec=phono3py.symmetry.tolerance,
         output_filename=output_filename,
         log_level=log_level,
@@ -862,13 +863,14 @@ def run_isotope_then_exit(phono3py, settings, updated_settings, log_level):
     else:
         band_indices = None
     iso = Phono3pyIsotope(
-        phono3py.mesh_numbers,
+        settings.mesh_numbers,
         phono3py.phonon_primitive,
         mass_variances=mass_variances,
         band_indices=band_indices,
         sigmas=updated_settings["sigmas"],
         frequency_factor_to_THz=updated_settings["frequency_factor_to_THz"],
-        store_dense_gp_map=settings.store_dense_gp_map,
+        use_grg=settings.use_grg,
+        store_dense_gp_map=(not settings.emulate_v1),
         symprec=phono3py.symmetry.tolerance,
         cutoff_frequency=settings.cutoff_frequency,
         lapack_zheev_uplo=settings.lapack_zheev_uplo,
@@ -942,11 +944,16 @@ def init_phph_interaction(
 
     if settings.write_phonon:
         freqs, eigvecs, grid_address = phono3py.get_phonon_data()
+        ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bz_grid)
+        ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="int_")
         filename = write_phonon_to_hdf5(
             freqs,
             eigvecs,
             grid_address,
             phono3py.mesh_numbers,
+            bz_grid=bz_grid,
+            ir_grid_points=ir_grid_points,
+            ir_grid_weights=ir_grid_weights,
             compression=settings.hdf5_compression,
             filename=output_filename,
         )

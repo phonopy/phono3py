@@ -1018,7 +1018,11 @@ def write_kappa_to_hdf5(
             else:
                 text += "Thermal conductivity related properties "
             if grid_point is not None:
-                text += "at gp-%d " % grid_point
+                try:
+                    gp_text = "at gp-%d " % grid_point
+                    text += gp_text
+                except TypeError:
+                    pass
                 if band_index is not None:
                     text += "and band_index-%d\n" % (band_index + 1)
             if sigma is not None:
@@ -1417,6 +1421,8 @@ def write_phonon_to_hdf5(
     grid_address,
     mesh,
     bz_grid=None,
+    ir_grid_points=None,
+    ir_grid_weights=None,
     compression="gzip",
     filename=None,
 ):
@@ -1434,6 +1440,14 @@ def write_phonon_to_hdf5(
         w.create_dataset("grid_address", data=grid_address, compression=compression)
         w.create_dataset("frequency", data=frequency, compression=compression)
         w.create_dataset("eigenvector", data=eigenvector, compression=compression)
+        if ir_grid_points is not None:
+            w.create_dataset(
+                "ir_grid_points", data=ir_grid_points, compression=compression
+            )
+        if ir_grid_weights is not None:
+            w.create_dataset(
+                "ir_grid_weights", data=ir_grid_weights, compression=compression
+            )
         return full_filename
 
     return None
@@ -1667,8 +1681,11 @@ def _get_filename_suffix(
 ):
     """Return filename suffix corresponding to parameters."""
     suffix = "-m%d%d%d" % tuple(mesh)
-    if grid_point is not None:
-        suffix += "-g%d" % grid_point
+    try:
+        gp_suffix = "-g%d" % grid_point
+        suffix += gp_suffix
+    except TypeError:
+        pass
     if band_indices is not None:
         suffix += "-"
         for bi in band_indices:
