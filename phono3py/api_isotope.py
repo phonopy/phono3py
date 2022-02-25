@@ -86,12 +86,28 @@ class Phono3pyIsotope:
         """Return BZGrid class instance."""
         return self._iso.bz_grid
 
+    @property
+    def gamma(self):
+        """Return calculated isotope scattering."""
+        return self._gamma
+
+    @property
+    def frequencies(self):
+        """Return phonon frequencies at grid points."""
+        return self._iso.get_phonons()[0][self._grid_points]
+
+    @property
+    def grid_points(self):
+        """Return grid points in BZ-grid."""
+        return self._grid_points
+
     def run(self, grid_points):
         """Calculate isotope scattering."""
         gamma = np.zeros(
             (len(self._sigmas), len(grid_points), len(self._iso.band_indices)),
             dtype="double",
         )
+        self._grid_points = np.array(grid_points, dtype="int_")
 
         for j, gp in enumerate(grid_points):
             self._iso.set_grid_point(gp)
@@ -146,8 +162,3 @@ class Phono3pyIsotope:
     def set_sigma(self, sigma):
         """Set sigma. None means tetrahedron method."""
         self._iso.set_sigma(sigma)
-
-    @property
-    def gamma(self):
-        """Return calculated isotope scattering."""
-        return self._gamma
