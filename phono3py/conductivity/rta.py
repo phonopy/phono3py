@@ -55,9 +55,9 @@ from phono3py.phonon.grid import get_grid_points_by_rotations
 
 
 class ConductivityRTABase(ConductivityBase):
-    """Base class of ConductivityRTA.
+    """Base class of ConductivityRTA*.
 
-    This is for general RTA classes.
+    This is a base class for RTA classes.
 
     """
 
@@ -551,26 +551,6 @@ class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
             log_level=log_level,
         )
 
-    def _allocate_values(self):
-        super()._allocate_values()
-
-        num_band0 = len(self._pp.band_indices)
-        num_grid_points = len(self._grid_points)
-        num_temp = len(self._temperatures)
-
-        self._gv = np.zeros((num_grid_points, num_band0, 3), order="C", dtype="double")
-        self._gv_sum2 = np.zeros(
-            (num_grid_points, num_band0, 6), order="C", dtype="double"
-        )
-        self._kappa = np.zeros(
-            (len(self._sigmas), num_temp, 6), order="C", dtype="double"
-        )
-        self._mode_kappa = np.zeros(
-            (len(self._sigmas), num_temp, num_grid_points, num_band0, 6),
-            order="C",
-            dtype="double",
-        )
-
     def set_kappa_at_sigmas(self):
         """Calculate kappa from ph-ph interaction results."""
         num_band = len(self._pp.primitive) * 3
@@ -614,6 +594,26 @@ class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
 
         N = self._num_sampling_grid_points
         self._kappa = self._mode_kappa.sum(axis=2).sum(axis=2) / N
+
+    def _allocate_values(self):
+        super()._allocate_values()
+
+        num_band0 = len(self._pp.band_indices)
+        num_grid_points = len(self._grid_points)
+        num_temp = len(self._temperatures)
+
+        self._gv = np.zeros((num_grid_points, num_band0, 3), order="C", dtype="double")
+        self._gv_sum2 = np.zeros(
+            (num_grid_points, num_band0, 6), order="C", dtype="double"
+        )
+        self._kappa = np.zeros(
+            (len(self._sigmas), num_temp, 6), order="C", dtype="double"
+        )
+        self._mode_kappa = np.zeros(
+            (len(self._sigmas), num_temp, num_grid_points, num_band0, 6),
+            order="C",
+            dtype="double",
+        )
 
 
 class ConductivityWignerRTA(ConductivityVelocityOperatorMixIn, ConductivityRTABase):
@@ -684,46 +684,6 @@ class ConductivityWignerRTA(ConductivityVelocityOperatorMixIn, ConductivityRTABa
             * Hbar  # ----> transform lorentzian_div_hbar from eV^-1 to s
             / (volume * Angstrom**3)
         )  # ----> unit cell volume
-
-    @property
-    def kappa_TOT_exact(self):
-        """Return kappa."""
-        return self._kappa_TOT_exact
-
-    @property
-    def kappa_TOT_RTA(self):
-        """Return kappa."""
-        return self._kappa_TOT_RTA
-
-    @property
-    def kappa_P_exact(self):
-        """Return kappa."""
-        return self._kappa_P_exact
-
-    @property
-    def kappa_P_RTA(self):
-        """Return kappa."""
-        return self._kappa_P_RTA
-
-    @property
-    def kappa_C(self):
-        """Return kappa."""
-        return self._kappa_C
-
-    @property
-    def mode_kappa_P_exact(self):
-        """Return mode_kappa."""
-        return self._mode_kappa_P_exact
-
-    @property
-    def mode_kappa_P_RTA(self):
-        """Return mode_kappa."""
-        return self._mode_kappa_P_RTA
-
-    @property
-    def mode_kappa_C(self):
-        """Return mode_kappa."""
-        return self._mode_kappa_C
 
     def set_kappa_at_sigmas(self):
         """Calculate the Wigner thermal conductivity.

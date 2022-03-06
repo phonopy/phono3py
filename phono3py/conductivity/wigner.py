@@ -46,6 +46,46 @@ class ConductivityVelocityOperatorMixIn:
     """Thermal conductivity mix-in for velocity operator."""
 
     @property
+    def kappa_TOT_exact(self):
+        """Return kappa."""
+        return self._kappa_TOT_exact
+
+    @property
+    def kappa_TOT_RTA(self):
+        """Return kappa."""
+        return self._kappa_TOT_RTA
+
+    @property
+    def kappa_P_exact(self):
+        """Return kappa."""
+        return self._kappa_P_exact
+
+    @property
+    def kappa_P_RTA(self):
+        """Return kappa."""
+        return self._kappa_P_RTA
+
+    @property
+    def kappa_C(self):
+        """Return kappa."""
+        return self._kappa_C
+
+    @property
+    def mode_kappa_P_exact(self):
+        """Return mode_kappa."""
+        return self._mode_kappa_P_exact
+
+    @property
+    def mode_kappa_P_RTA(self):
+        """Return mode_kappa."""
+        return self._mode_kappa_P_RTA
+
+    @property
+    def mode_kappa_C(self):
+        """Return mode_kappa."""
+        return self._mode_kappa_C
+
+    @property
     def velocity_operator(self):
         """Return velocity operator at grid points.
 

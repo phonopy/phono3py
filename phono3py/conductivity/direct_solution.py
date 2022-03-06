@@ -57,8 +57,12 @@ from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon.grid import get_grid_points_by_rotations
 
 
-class ConductivityLBTE(ConductivityMixIn, ConductivityBase):
-    """Lattice thermal conductivity calculation by direct solution."""
+class ConductivityLBTEBase(ConductivityBase):
+    """Base class of ConductivityLBTE*.
+
+    This is a base class for direct-solution classes.
+
+    """
 
     def __init__(
         self,
@@ -122,21 +126,6 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityBase):
         if self._temperatures is not None:
             self._allocate_values()
 
-    def set_kappa_at_sigmas(self):
-        """Calculate lattice thermal conductivity from collision matrix.
-
-        This method is called after all elements of collision matrix are filled.
-
-        """
-        if len(self._grid_points) != len(self._ir_grid_points):
-            print("Collision matrix is not well created.")
-            import sys
-
-            sys.exit(1)
-        else:
-            weights = self._prepare_collision_matrix()
-            self._set_kappa_at_sigmas(weights)
-
     def get_f_vectors(self):
         """Return f vectors."""
         return self._f_vectors
@@ -180,14 +169,6 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityBase):
         """Return phonon frequencies on GR-grid."""
         return self._frequencies[self._pp.bz_grid.grg2bzg]
 
-    def get_kappa_RTA(self):
-        """Return RTA lattice thermal conductivity."""
-        return self._kappa_RTA
-
-    def get_mode_kappa_RTA(self):
-        """Return RTA mode lattice thermal conductivities."""
-        return self._mode_kappa_RTA
-
     def delete_gp_collision_and_pp(self):
         """Deallocate large arrays."""
         self._collision.delete_integration_weights()
@@ -223,6 +204,78 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityBase):
 
         if self._log_level:
             self._show_log(i_gp)
+
+
+class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
+    """Lattice thermal conductivity calculation by direct solution."""
+
+    def __init__(
+        self,
+        interaction: Interaction,
+        grid_points=None,
+        temperatures=None,
+        sigmas=None,
+        sigma_cutoff=None,
+        is_isotope=False,
+        mass_variances=None,
+        boundary_mfp=None,  # in micrometre
+        solve_collective_phonon=False,
+        is_reducible_collision_matrix=False,
+        is_kappa_star=True,
+        gv_delta_q=None,
+        is_full_pp=False,
+        read_pp=False,
+        pp_filename=None,
+        pinv_cutoff=1.0e-8,
+        pinv_solver=0,
+        log_level=0,
+        lang="C",
+    ):
+        """Init method."""
+        super().__init__(
+            interaction,
+            grid_points=grid_points,
+            temperatures=temperatures,
+            sigmas=sigmas,
+            sigma_cutoff=sigma_cutoff,
+            is_isotope=is_isotope,
+            mass_variances=mass_variances,
+            boundary_mfp=boundary_mfp,
+            solve_collective_phonon=solve_collective_phonon,
+            is_reducible_collision_matrix=is_reducible_collision_matrix,
+            is_kappa_star=is_kappa_star,
+            gv_delta_q=gv_delta_q,
+            is_full_pp=is_full_pp,
+            read_pp=read_pp,
+            pp_filename=pp_filename,
+            pinv_cutoff=pinv_cutoff,
+            pinv_solver=pinv_solver,
+            log_level=log_level,
+            lang=lang,
+        )
+
+    def set_kappa_at_sigmas(self):
+        """Calculate lattice thermal conductivity from collision matrix.
+
+        This method is called after all elements of collision matrix are filled.
+
+        """
+        if len(self._grid_points) != len(self._ir_grid_points):
+            print("Collision matrix is not well created.")
+            import sys
+
+            sys.exit(1)
+        else:
+            weights = self._prepare_collision_matrix()
+            self._set_kappa_at_sigmas(weights)
+
+    def get_kappa_RTA(self):
+        """Return RTA lattice thermal conductivity."""
+        return self._kappa_RTA
+
+    def get_mode_kappa_RTA(self):
+        """Return RTA mode lattice thermal conductivities."""
+        return self._mode_kappa_RTA
 
     def _allocate_values(self):
         """Allocate arrays."""
