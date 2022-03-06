@@ -38,19 +38,19 @@ from typing import TYPE_CHECKING, Optional, Union
 
 import numpy as np
 
+from phono3py.conductivity.base import unit_to_WmK
 from phono3py.file_IO import (
     read_gamma_from_hdf5,
     write_gamma_detail_to_hdf5,
     write_kappa_to_hdf5,
     write_pp_to_hdf5,
 )
-from phono3py.phonon3.conductivity import unit_to_WmK
 from phono3py.phonon3.triplets import get_all_triplets
 
 if TYPE_CHECKING:
-    from phono3py.phonon3.conductivity_RTA import ConductivityRTA
-    from phono3py.phonon3.conductivity import ConductivityBase
-    from phono3py.phonon3.conductivity_Wigner import ConductivityWignerRTA
+    from phono3py.conductivity.rta import ConductivityRTA
+    from phono3py.conductivity.base import ConductivityBase
+    from phono3py.conductivity.wigner import ConductivityWignerRTA
 
 from phono3py.phonon3.interaction import Interaction
 

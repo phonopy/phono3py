@@ -134,6 +134,7 @@ extensions.append(
 
 packages_phono3py = [
     "phono3py",
+    "phono3py.conductivity",
     "phono3py.cui",
     "phono3py.interface",
     "phono3py.other",

@@ -60,10 +60,10 @@ from phonopy.structure.dataset import get_displacements_and_forces
 from phonopy.structure.symmetry import Symmetry
 from phonopy.units import VaspToTHz
 
+from phono3py.conductivity.direct_solution import get_thermal_conductivity_LBTE
+from phono3py.conductivity.rta import get_thermal_conductivity_RTA
 from phono3py.interface.fc_calculator import get_fc3
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
-from phono3py.phonon3.conductivity_LBTE import get_thermal_conductivity_LBTE
-from phono3py.phonon3.conductivity_RTA import get_thermal_conductivity_RTA
 from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
 from phono3py.phonon3.displacement_fc3 import (
     direction_to_displacement,

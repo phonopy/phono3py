@@ -41,6 +41,9 @@ import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.units import Kb, THzToEv
 
+from phono3py.conductivity.base import ConductivityBase, ConductivityMixIn, unit_to_WmK
+from phono3py.conductivity.utils import all_bands_exist
+from phono3py.conductivity.utils import write_pp as write_phph
 from phono3py.file_IO import (
     read_collision_from_hdf5,
     read_pp_from_hdf5,
@@ -50,13 +53,6 @@ from phono3py.file_IO import (
     write_unitary_matrix_to_hdf5,
 )
 from phono3py.phonon3.collision_matrix import CollisionMatrix
-from phono3py.phonon3.conductivity import (
-    ConductivityBase,
-    ConductivityMixIn,
-    unit_to_WmK,
-)
-from phono3py.phonon3.conductivity_utils import all_bands_exist
-from phono3py.phonon3.conductivity_utils import write_pp as write_phph
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon.grid import get_grid_points_by_rotations
 

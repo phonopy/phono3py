@@ -39,16 +39,16 @@ import numpy as np
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.units import EV, Angstrom, Hbar, THz, THzToEv
 
-from phono3py.file_IO import read_pp_from_hdf5
-from phono3py.phonon3.conductivity import ConductivityBase, ConductivityMixIn
-from phono3py.phonon3.conductivity_utils import (
+from phono3py.conductivity.base import ConductivityBase, ConductivityMixIn
+from phono3py.conductivity.utils import (
     ConductivityRTAWriter,
     ShowCalcProgress,
     _set_gamma_from_file,
     all_bands_exist,
 )
-from phono3py.phonon3.conductivity_utils import write_pp as write_phph
-from phono3py.phonon3.conductivity_Wigner import ConductivityVelocityOperatorMixIn
+from phono3py.conductivity.utils import write_pp as write_phph
+from phono3py.conductivity.wigner import ConductivityVelocityOperatorMixIn
+from phono3py.file_IO import read_pp_from_hdf5
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon.grid import get_grid_points_by_rotations
@@ -890,7 +890,6 @@ def get_thermal_conductivity_RTA(
     else:
         _temperatures = temperatures
 
-    conductivity_type = "Wigner"
     if conductivity_type == "Wigner":
         conductivity_RTA_class = ConductivityWignerRTA
     else:
