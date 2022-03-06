@@ -907,10 +907,19 @@ def write_kappa_to_hdf5(
     frequency=None,
     group_velocity=None,
     gv_by_gv=None,
+    velocity_operator=None,
     mean_free_path=None,
     heat_capacity=None,
     kappa=None,
     mode_kappa=None,
+    kappa_P_exact=None,
+    kappa_P_RTA=None,
+    kappa_C=None,
+    kappa_TOT_exact=None,
+    kappa_TOT_RTA=None,
+    mode_kappa_P_exact=None,  # k_P from the exact solution of the LBTE
+    mode_kappa_P_RTA=None,  # k_P in the RTA calculated in the LBTE
+    mode_kappa_C=None,
     kappa_RTA=None,  # RTA calculated in LBTE
     mode_kappa_RTA=None,  # RTA calculated in LBTE
     f_vector=None,
@@ -963,6 +972,10 @@ def write_kappa_to_hdf5(
             )
         if gv_by_gv is not None:
             w.create_dataset("gv_by_gv", data=gv_by_gv)
+        if velocity_operator is not None:
+            w.create_dataset(
+                "velocity_operator", data=velocity_operator, compression=compression
+            )
         # if mean_free_path is not None:
         #     w.create_dataset('mean_free_path', data=mean_free_path,
         #                      compression=compression)
@@ -980,6 +993,26 @@ def write_kappa_to_hdf5(
             w.create_dataset(
                 "mode_kappa_RTA", data=mode_kappa_RTA, compression=compression
             )
+        if kappa_P_exact is not None:
+            w.create_dataset("kappa_P_exact", data=kappa_P_exact)
+        if kappa_P_RTA is not None:
+            w.create_dataset("kappa_P_RTA", data=kappa_P_RTA)
+        if kappa_C is not None:
+            w.create_dataset("kappa_C", data=kappa_C)
+        if kappa_TOT_exact is not None:
+            w.create_dataset("kappa_TOT_exact", data=kappa_TOT_exact)
+        if kappa_TOT_RTA is not None:
+            w.create_dataset("kappa_TOT_RTA", data=kappa_TOT_RTA)
+        if mode_kappa_P_exact is not None:
+            w.create_dataset(
+                "mode_kappa_P_exact", data=mode_kappa_P_exact, compression=compression
+            )
+        if mode_kappa_P_RTA is not None:
+            w.create_dataset(
+                "mode_kappa_P_RTA", data=mode_kappa_P_RTA, compression=compression
+            )
+        if mode_kappa_C is not None:
+            w.create_dataset("mode_kappa_C", data=mode_kappa_C, compression=compression)
         if f_vector is not None:
             w.create_dataset("f_vector", data=f_vector, compression=compression)
         if gamma is not None:
@@ -1012,11 +1045,7 @@ def write_kappa_to_hdf5(
             w.create_dataset("kappa_unit_conversion", data=kappa_unit_conversion)
 
         if verbose:
-            text = ""
-            if kappa is not None:
-                text += "Thermal conductivity and related properties "
-            else:
-                text += "Thermal conductivity related properties "
+            text = "Thermal conductivity related properties "
             if grid_point is not None:
                 try:
                     gp_text = "at gp-%d " % grid_point

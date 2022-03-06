@@ -36,11 +36,9 @@
 import sys
 import time
 import warnings
-from typing import List
 
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
-from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.units import Kb, THzToEv
 
 from phono3py.file_IO import (
@@ -52,13 +50,18 @@ from phono3py.file_IO import (
     write_unitary_matrix_to_hdf5,
 )
 from phono3py.phonon3.collision_matrix import CollisionMatrix
-from phono3py.phonon3.conductivity import Conductivity, all_bands_exist, unit_to_WmK
-from phono3py.phonon3.conductivity import write_pp as _write_pp
+from phono3py.phonon3.conductivity import (
+    ConductivityBase,
+    ConductivityMixIn,
+    unit_to_WmK,
+)
+from phono3py.phonon3.conductivity_utils import all_bands_exist
+from phono3py.phonon3.conductivity_utils import write_pp as write_phph
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon.grid import get_grid_points_by_rotations
 
 
-class ConductivityLBTE(Conductivity):
+class ConductivityLBTE(ConductivityMixIn, ConductivityBase):
     """Lattice thermal conductivity calculation by direct solution."""
 
     def __init__(
@@ -84,52 +87,6 @@ class ConductivityLBTE(Conductivity):
         lang="C",
     ):
         """Init method."""
-        self._pp: Interaction
-        self._gv_obj: GroupVelocity
-        self._sigmas: List
-        self._grid_point_count: int
-        self._temperatures = None
-        self._sigma_cutoff = None
-        self._is_kappa_star = None
-        self._is_full_pp = None
-        self._log_level = None
-        self._lang = lang
-        self._boundary_mfp = None
-
-        self._point_operations = None
-        self._rotations_cartesian = None
-
-        self._grid_points = None
-        self._grid_weights = None
-        self._ir_grid_points = None
-        self._ir_grid_weights = None
-
-        self._kappa = None
-        self._mode_kappa = None
-        self._kappa_RTA = None
-        self._mode_kappa_RTA = None
-
-        self._read_gamma = False
-        self._read_gamma_iso = False
-
-        self._frequencies = None
-        self._cv = None
-        self._gv = None
-        self._f_vectors = None
-        self._gv_sum2 = None
-        self._mfp = None
-        self._gamma = None
-        self._gamma_iso = None
-        self._averaged_pp_interaction = None
-
-        self._conversion_factor = None
-
-        self._is_isotope = None
-        self._isotope = None
-        self._mass_variances = None
-
-        self._collision_eigenvalues = None
-
         super().__init__(
             interaction,
             grid_points=grid_points,
@@ -140,11 +97,17 @@ class ConductivityLBTE(Conductivity):
             mass_variances=mass_variances,
             boundary_mfp=boundary_mfp,
             is_kappa_star=is_kappa_star,
-            gv_delta_q=gv_delta_q,
             is_full_pp=is_full_pp,
             log_level=log_level,
         )
 
+        self._init_velocity(gv_delta_q)
+
+        self._lang = lang
+        self._f_vectors = None
+        self._mfp = None
+        self._averaged_pp_interaction = None
+        self._collision_eigenvalues = None
         self._is_reducible_collision_matrix = is_reducible_collision_matrix
         self._solve_collective_phonon = solve_collective_phonon
         # if not self._is_kappa_star:
@@ -255,9 +218,8 @@ class ConductivityLBTE(Conductivity):
             i_data = self._pp.bz_grid.bzg2grg[gp]
         else:
             i_data = i_gp
+        self._set_velocities(i_gp, i_data)
         self._set_cv(i_gp, i_data)
-        self._set_gv(i_gp, i_data)
-        self._set_gv_by_gv(i_gp, i_data)
         if self._isotope is not None:
             gamma_iso = self._get_gamma_isotope_at_sigmas(i_gp)
             band_indices = self._pp.band_indices
@@ -1199,10 +1161,10 @@ class ConductivityLBTE(Conductivity):
         else:
             text = "Frequency     group velocity (x, y, z)     |gv|"
 
-        if self._gv_obj.q_length is None:
+        if self._velocity_obj.q_length is None:
             pass
         else:
-            text += "  (dq=%3.1e)" % self._gv_obj.q_length
+            text += "  (dq=%3.1e)" % self._velocity_obj.q_length
         print(text)
         if self._is_full_pp:
             for f, v, pp in zip(frequencies, gv, ave_pp):
@@ -1348,7 +1310,7 @@ def get_thermal_conductivity_LBTE(
     # This computes pieces of collision matrix sequentially.
     for i in lbte:
         if write_pp:
-            _write_pp(
+            write_phph(
                 lbte, interaction, i, filename=output_filename, compression=compression
             )
 

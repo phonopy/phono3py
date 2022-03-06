@@ -43,10 +43,8 @@ from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.phonon.thermal_properties import mode_cv as get_mode_cv
 from phonopy.units import EV, Angstrom, THz, THzToEv
 
-from phono3py.file_IO import write_pp_to_hdf5
 from phono3py.other.isotope import Isotope
 from phono3py.phonon3.interaction import Interaction
-from phono3py.phonon3.triplets import get_all_triplets
 from phono3py.phonon.grid import get_grid_points_by_rotations, get_ir_grid_points
 
 unit_to_WmK = (
@@ -56,110 +54,6 @@ unit_to_WmK = (
 
 class ConductivityBase:
     """Base class of Conductivity classes."""
-
-    def __init__(
-        self,
-        interaction: Interaction,
-        grid_points=None,
-        is_kappa_star=True,
-        gv_delta_q=None,
-    ):
-        """Init method.
-
-        interaction : Interaction
-            Interaction class instance.
-        grid_points : array_like or None, optional
-            Grid point indices in BZgrid. When None, ir-grid points are searched
-            internally. Default is None.
-            shape=(grid_points, ), dtype='int_'.
-        is_kappa_star : bool, optional
-            When True, reciprocal space symmetry is used to calculate
-            lattice thermal conductivity. This calculation is peformed
-            iterating over specific grid points. With `is_kappa_star=True`
-            and `grid_points=None`, ir-grid points are used for the iteration.
-            Default is True.
-        gv_delta_q : float, optional
-            See phonopy's GroupVelocity class. Default is None.
-
-        """
-        self._pp: Interaction = interaction
-        self._is_kappa_star = is_kappa_star
-
-        self._rotations_cartesian = None
-        self._point_operations = None
-        self._set_point_operations()
-
-        self._grid_points = None
-        self._grid_weights = None
-        self._ir_grid_points = None
-        self._ir_grid_weights = None
-        self._set_grid_properties(grid_points)
-
-        self._qpoints = np.array(
-            self._get_qpoint_from_gp_index(self._grid_points),
-            dtype="double",
-            order="C",
-        )
-
-        self._gv_obj = GroupVelocity(
-            self._pp.dynamical_matrix,
-            q_length=gv_delta_q,
-            symmetry=self._pp.primitive_symmetry,
-            frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
-        )
-
-    def _set_point_operations(self):
-        if not self._is_kappa_star:
-            self._point_operations = np.array(
-                [np.eye(3, dtype="int_")], dtype="int_", order="C"
-            )
-        else:
-            self._point_operations = np.array(
-                self._pp.bz_grid.reciprocal_operations, dtype="int_", order="C"
-            )
-        rec_lat = np.linalg.inv(self._pp.primitive.cell)
-        self._rotations_cartesian = np.array(
-            [similarity_transformation(rec_lat, r) for r in self._point_operations],
-            dtype="double",
-            order="C",
-        )
-
-    def _set_grid_properties(self, grid_points):
-        if grid_points is not None:  # Specify grid points
-            self._grid_points = grid_points
-            (self._ir_grid_points, self._ir_grid_weights) = self._get_ir_grid_points()
-        elif not self._is_kappa_star:  # All grid points
-            self._grid_points = self._pp.bz_grid.grg2bzg
-            self._grid_weights = np.ones(len(self._grid_points), dtype="int_")
-            self._ir_grid_points = self._grid_points
-            self._ir_grid_weights = self._grid_weights
-        else:  # Automatic sampling
-            self._grid_points, self._grid_weights = self._get_ir_grid_points()
-            self._ir_grid_points = self._grid_points
-            self._ir_grid_weights = self._grid_weights
-
-    def _get_ir_grid_points(self):
-        """Find irreducible grid points."""
-        ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(self._pp.bz_grid)
-        ir_grid_points = np.array(
-            self._pp.bz_grid.grg2bzg[ir_grid_points], dtype="int_"
-        )
-        return ir_grid_points, ir_grid_weights
-
-    def _get_qpoint_from_gp_index(self, i_gps):
-        """Return q-point(s) in reduced coordinates of grid point(s).
-
-        Parameters
-        ----------
-        i_gps : int or ndarray
-            BZ-grid index (int) or indices (ndarray).
-
-        """
-        return np.dot(self._pp.bz_grid.addresses[i_gps], self._pp.bz_grid.QDinv.T)
-
-
-class Conductivity(ConductivityBase):
-    """Thermal conductivity base class."""
 
     _average_gv_over_kstar = False
 
@@ -172,34 +66,80 @@ class Conductivity(ConductivityBase):
         sigma_cutoff=None,
         is_isotope=False,
         mass_variances=None,
-        boundary_mfp=None,  # in micrometre
+        boundary_mfp=None,
         is_kappa_star=True,
-        gv_delta_q=None,  # finite difference for group veolocity
+        gv_delta_q=None,
         is_full_pp=False,
         log_level=0,
     ):
-        """Init method."""
-        self._pp: Interaction
-        self._qpoints: np.ndarray
-        self._gv_obj: GroupVelocity
-        self._is_kappa_star = None
+        """Init method.
+
+        interaction : Interaction
+            Interaction class instance.
+        grid_points : array_like or None, optional
+            Grid point indices in BZgrid. When None, ir-grid points are searched
+            internally. Default is None.
+            shape=(grid_points, ), dtype='int_'.
+        temperatures : array_like, optional, default is None
+            Temperatures at which thermal conductivity is calculated.
+            shape=(temperature_points, ), dtype='double'.
+        sigmas : array_like, optional, default is None
+            The float values are given as the standard deviations of Gaussian
+            function. If None is given as an element of this list, linear
+            tetrahedron method is used instead of smearing method.
+        sigma_cutoff : float, optional, default is None
+            This is given as a multiple of the standard deviation. For example,
+            if this value is 5, the tail of the Gaussian function is cut at 5 sigma.
+        is_isotope : bool, optional, default is False
+            With or without isotope scattering.
+        mass_variances : array_like, optional, default is None
+            Mass variances for isotope scattering calculation. When None,
+            the values stored in phono3py are used with `is_isotope=True`.
+            shape(atoms_in_primitive, ), dtype='double'.
+        boundary_mfp : float, optiona, default is None
+            Mean free path in micrometre to calculate simple boundary
+            scattering contribution to thermal conductivity.
+            None gives 1 metre, which is supposed negligible contribution,
+            but this value is used to avoid divergence of phonon lifetime.
+        is_kappa_star : bool, optional
+            When True, reciprocal space symmetry is used to calculate
+            lattice thermal conductivity. This calculation is peformed
+            iterating over specific grid points. With `is_kappa_star=True`
+            and `grid_points=None`, ir-grid points are used for the iteration.
+            Default is True.
+        gv_delta_q : float, optional, default is None,  # for group velocity
+            With non-analytical correction, group velocity is calculated
+            by central finite difference method. This value gives the distance
+            in both directions in 1/Angstrom. The default value will be 1e-5.
+        is_full_pp : bool, optional, default is False
+            With True, full elements of phonon-phonon interaction strength
+            are computed. However with tetrahedron method, part of them are
+            known to be zero and unnecessary to calculation. With False,
+            those elements are not calculated, by which considerable
+            improve of efficiency is expected.
+            With smearing method, even if this is set False, full elements
+            are computed unless `sigma_cutoff` is specified.
+        log_level : int, optional
+            Verbosity control. Default is 0.
+
+        """
+        self._pp: Interaction = interaction
+        self._is_kappa_star = is_kappa_star
+        self._is_full_pp = is_full_pp
+        self._log_level = log_level
+
+        self._rotations_cartesian = None
+        self._point_operations = None
+        self._set_point_operations()
+
+        self._grid_point_count: int = 0
         self._grid_points = None
         self._grid_weights = None
         self._ir_grid_points = None
         self._ir_grid_weights = None
-        self._point_operations = None
+        self._num_sampling_grid_points = 0
+        self._set_grid_properties(grid_points)
 
-        super().__init__(
-            interaction,
-            grid_points=grid_points,
-            is_kappa_star=is_kappa_star,
-            gv_delta_q=gv_delta_q,
-        )
-
-        self._is_full_pp = is_full_pp
-        self._log_level = log_level
-
-        self._grid_point_count: int = 0
         self._sigmas: Optional[List]
         if sigmas is None:
             self._sigmas = []
@@ -213,21 +153,11 @@ class Conductivity(ConductivityBase):
             self._temperatures = np.array(temperatures, dtype="double")
         self._boundary_mfp = boundary_mfp
 
-        self._read_gamma = False
-        self._read_gamma_iso = False
-
-        self._kappa = None
-        self._mode_kappa = None
-
-        self._cv = None
-        self._gv = None
-        self._gv_sum2 = None
-        self._gamma = None
-        self._gamma_iso = None
-        self._num_sampling_grid_points = 0
-
-        volume = self._pp.primitive.volume
-        self._conversion_factor = unit_to_WmK / volume
+        self._qpoints = np.array(
+            self._get_qpoint_from_gp_index(self._grid_points),
+            dtype="double",
+            order="C",
+        )
 
         self._pp.nac_q_direction = None
         (
@@ -245,6 +175,18 @@ class Conductivity(ConductivityBase):
             self._is_isotope = True
         if self._is_isotope:
             self._set_isotope(mass_variances)
+
+        self._read_gamma = False
+        self._read_gamma_iso = False
+
+        self._cv = None
+        self._gamma = None
+        self._gamma_iso = None
+
+        volume = self._pp.primitive.volume
+        self._conversion_factor = unit_to_WmK / volume
+
+        self._init_velocity(gv_delta_q)
 
     def __iter__(self):
         """Calculate mode kappa at each grid point."""
@@ -304,42 +246,6 @@ class Conductivity(ConductivityBase):
             DeprecationWarning,
         )
         return self.mode_heat_capacities
-
-    @property
-    def group_velocities(self):
-        """Return group velocities at grid points.
-
-        Grid points are those at mode kappa are calculated.
-
-        """
-        return self._gv
-
-    def get_group_velocities(self):
-        """Return group velocities at grid points.
-
-        Grid points are those at mode kappa are calculated.
-
-        """
-        warnings.warn(
-            "Use attribute, Conductivity.group_velocities "
-            "instead of Conductivity.get_group_velocities().",
-            DeprecationWarning,
-        )
-        return self.group_velocities
-
-    @property
-    def gv_by_gv(self):
-        """Return gv_by_gv at grid points where mode kappa are calculated."""
-        return self._gv_sum2
-
-    def get_gv_by_gv(self):
-        """Return gv_by_gv at grid points where mode kappa are calculated."""
-        warnings.warn(
-            "Use attribute, Conductivity.gv_by_gv "
-            "instead of Conductivity.get_gv_by_gv().",
-            DeprecationWarning,
-        )
-        return self.gv_by_gv
 
     @property
     def frequencies(self):
@@ -496,33 +402,6 @@ class Conductivity(ConductivityBase):
         self.gamma_isotope = gamma_iso
 
     @property
-    def kappa(self):
-        """Return kappa."""
-        return self._kappa
-
-    def get_kappa(self):
-        """Return kappa."""
-        warnings.warn(
-            "Use attribute, Conductivity.kappa " "instead of Conductivity.get_kappa().",
-            DeprecationWarning,
-        )
-        return self.kappa
-
-    @property
-    def mode_kappa(self):
-        """Return mode_kappa."""
-        return self._mode_kappa
-
-    def get_mode_kappa(self):
-        """Return mode_kappa."""
-        warnings.warn(
-            "Use attribute, Conductivity.mode_kappa "
-            "instead of Conductivity.get_mode_kappa().",
-            DeprecationWarning,
-        )
-        return self.mode_kappa
-
-    @property
     def sigmas(self):
         """Return sigmas."""
         return self._sigmas
@@ -587,6 +466,36 @@ class Conductivity(ConductivityBase):
         """
         return self._num_sampling_grid_points
 
+    def _set_point_operations(self):
+        if not self._is_kappa_star:
+            self._point_operations = np.array(
+                [np.eye(3, dtype="int_")], dtype="int_", order="C"
+            )
+        else:
+            self._point_operations = np.array(
+                self._pp.bz_grid.reciprocal_operations, dtype="int_", order="C"
+            )
+        rec_lat = np.linalg.inv(self._pp.primitive.cell)
+        self._rotations_cartesian = np.array(
+            [similarity_transformation(rec_lat, r) for r in self._point_operations],
+            dtype="double",
+            order="C",
+        )
+
+    def _set_grid_properties(self, grid_points):
+        if grid_points is not None:  # Specify grid points
+            self._grid_points = grid_points
+            (self._ir_grid_points, self._ir_grid_weights) = self._get_ir_grid_points()
+        elif not self._is_kappa_star:  # All grid points
+            self._grid_points = self._pp.bz_grid.grg2bzg
+            self._grid_weights = np.ones(len(self._grid_points), dtype="int_")
+            self._ir_grid_points = self._grid_points
+            self._ir_grid_weights = self._grid_weights
+        else:  # Automatic sampling
+            self._grid_points, self._grid_weights = self._get_ir_grid_points()
+            self._ir_grid_points = self._grid_points
+            self._ir_grid_weights = self._grid_weights
+
     def _run_at_grid_point(self):
         """Must be implementated in the inherited class."""
         raise NotImplementedError()
@@ -594,6 +503,32 @@ class Conductivity(ConductivityBase):
     def _allocate_values(self):
         """Must be implementated in the inherited class."""
         raise NotImplementedError()
+
+    def _set_velocities(self, i_gp, i_data):
+        """Must be implementated in the inherited class."""
+        raise NotImplementedError()
+
+    def _init_velocity(self, gv_delta_q):
+        raise NotImplementedError()
+
+    def _get_ir_grid_points(self):
+        """Find irreducible grid points."""
+        ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(self._pp.bz_grid)
+        ir_grid_points = np.array(
+            self._pp.bz_grid.grg2bzg[ir_grid_points], dtype="int_"
+        )
+        return ir_grid_points, ir_grid_weights
+
+    def _get_qpoint_from_gp_index(self, i_gps):
+        """Return q-point(s) in reduced coordinates of grid point(s).
+
+        Parameters
+        ----------
+        i_gps : int or ndarray
+            BZ-grid index (int) or indices (ndarray).
+
+        """
+        return np.dot(self._pp.bz_grid.addresses[i_gps], self._pp.bz_grid.QDinv.T)
 
     def _get_gamma_isotope_at_sigmas(self, i):
         gamma_iso = []
@@ -622,14 +557,10 @@ class Conductivity(ConductivityBase):
         return np.array(gamma_iso, dtype="double", order="C")
 
     def _set_isotope(self, mass_variances):
-        if mass_variances is True:
-            mv = None
-        else:
-            mv = mass_variances
         self._isotope = Isotope(
             self._pp.mesh_numbers,
             self._pp.primitive,
-            mass_variances=mv,
+            mass_variances=mass_variances,
             bz_grid=self._pp.bz_grid,
             frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
             symprec=self._pp.primitive_symmetry.tolerance,
@@ -657,6 +588,139 @@ class Conductivity(ConductivityBase):
                 )
         self._cv[:, i_data, :] = cv
 
+    def _get_main_diagonal(self, i, j, k):
+        main_diagonal = self._gamma[j, k, i].copy()
+        if self._gamma_iso is not None:
+            main_diagonal += self._gamma_iso[j, i]
+        if self._boundary_mfp is not None:
+            main_diagonal += self._get_boundary_scattering(i)
+        return main_diagonal
+
+    def _get_boundary_scattering(self, i_gp):
+        num_band = len(self._pp.primitive) * 3
+        g_boundary = np.zeros(num_band, dtype="double")
+        try:
+            gv = self._gv
+        except AttributeError:
+            print("(_get_boundary_scattering) _gv has to be implemented.")
+            return g_boundary
+
+        for ll in range(num_band):
+            g_boundary[ll] = (
+                np.linalg.norm(gv[i_gp, ll])
+                * Angstrom
+                * 1e6
+                / (4 * np.pi * self._boundary_mfp)
+            )
+        return g_boundary
+
+    def _show_log_header(self, i_gp):
+        if self._log_level:
+            gp = self._grid_points[i_gp]
+            print(
+                "======================= Grid point %d (%d/%d) "
+                "=======================" % (gp, i_gp + 1, len(self._grid_points))
+            )
+            print("q-point: (%5.2f %5.2f %5.2f)" % tuple(self._qpoints[i_gp]))
+            if self._boundary_mfp is not None:
+                if self._boundary_mfp > 1000:
+                    print(
+                        "Boundary mean free path (millimetre): %.3f"
+                        % (self._boundary_mfp / 1000.0)
+                    )
+                else:
+                    print(
+                        "Boundary mean free path (micrometre): %.5f"
+                        % self._boundary_mfp
+                    )
+            if self._is_isotope:
+                print(
+                    (
+                        "Mass variance parameters: "
+                        + "%5.2e " * len(self._mass_variances)
+                    )
+                    % tuple(self._mass_variances)
+                )
+
+
+class ConductivityMixIn:
+    """Thermal conductivity mix-in."""
+
+    @property
+    def kappa(self):
+        """Return kappa."""
+        return self._kappa
+
+    def get_kappa(self):
+        """Return kappa."""
+        warnings.warn(
+            "Use attribute, Conductivity.kappa " "instead of Conductivity.get_kappa().",
+            DeprecationWarning,
+        )
+        return self.kappa
+
+    @property
+    def mode_kappa(self):
+        """Return mode_kappa."""
+        return self._mode_kappa
+
+    def get_mode_kappa(self):
+        """Return mode_kappa."""
+        warnings.warn(
+            "Use attribute, Conductivity.mode_kappa "
+            "instead of Conductivity.get_mode_kappa().",
+            DeprecationWarning,
+        )
+        return self.mode_kappa
+
+    @property
+    def group_velocities(self):
+        """Return group velocities at grid points.
+
+        Grid points are those at mode kappa are calculated.
+
+        """
+        return self._gv
+
+    def get_group_velocities(self):
+        """Return group velocities at grid points.
+
+        Grid points are those at mode kappa are calculated.
+
+        """
+        warnings.warn(
+            "Use attribute, Conductivity.group_velocities "
+            "instead of Conductivity.get_group_velocities().",
+            DeprecationWarning,
+        )
+        return self.group_velocities
+
+    @property
+    def gv_by_gv(self):
+        """Return gv_by_gv at grid points where mode kappa are calculated."""
+        return self._gv_sum2
+
+    def get_gv_by_gv(self):
+        """Return gv_by_gv at grid points where mode kappa are calculated."""
+        warnings.warn(
+            "Use attribute, Conductivity.gv_by_gv "
+            "instead of Conductivity.get_gv_by_gv().",
+            DeprecationWarning,
+        )
+        return self.gv_by_gv
+
+    def _init_velocity(self, gv_delta_q):
+        self._velocity_obj = GroupVelocity(
+            self._pp.dynamical_matrix,
+            q_length=gv_delta_q,
+            symmetry=self._pp.primitive_symmetry,
+            frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
+        )
+
+    def _set_velocities(self, i_gp, i_data):
+        self._set_gv(i_gp, i_data)
+        self._set_gv_by_gv(i_gp, i_data)
+
     def _set_gv(self, i_irgp, i_data):
         """Set group velocity."""
         irgp = self._grid_points[i_irgp]
@@ -669,15 +733,17 @@ class Conductivity(ConductivityBase):
             unique_gps = np.unique(gps_rotated)
             gvs = {}
             for bz_gp in unique_gps.tolist():  # To conver to int type.
-                self._gv_obj.run([self._get_qpoint_from_gp_index(bz_gp)])
-                gvs[bz_gp] = self._gv_obj.group_velocities[0, self._pp.band_indices, :]
+                self._velocity_obj.run([self._get_qpoint_from_gp_index(bz_gp)])
+                gvs[bz_gp] = self._velocity_obj.group_velocities[
+                    0, self._pp.band_indices, :
+                ]
             gv = np.zeros_like(gvs[irgp])
             for bz_gp, r in zip(gps_rotated, self._rotations_cartesian):
                 gv += np.dot(gvs[bz_gp], r)  # = dot(r_inv, gv)
             self._gv[i_data] = gv / len(self._point_operations)
         else:
-            self._gv_obj.run([self._get_qpoint_from_gp_index(irgp)])
-            gv = self._gv_obj.group_velocities[0, self._pp.band_indices, :]
+            self._velocity_obj.run([self._get_qpoint_from_gp_index(irgp)])
+            gv = self._velocity_obj.group_velocities[0, self._pp.band_indices, :]
             self._gv[i_data] = gv
 
     def _set_gv_by_gv(self, i_irgp, i_data):
@@ -732,95 +798,3 @@ class Conductivity(ConductivityBase):
                     print("*" * 67)
 
         return gv_by_gv, order_kstar
-
-    def _get_main_diagonal(self, i, j, k):
-        main_diagonal = self._gamma[j, k, i].copy()
-        if self._gamma_iso is not None:
-            main_diagonal += self._gamma_iso[j, i]
-        if self._boundary_mfp is not None:
-            main_diagonal += self._get_boundary_scattering(i)
-        return main_diagonal
-
-    def _get_boundary_scattering(self, i_gp):
-        num_band = len(self._pp.primitive) * 3
-        g_boundary = np.zeros(num_band, dtype="double")
-        for ll in range(num_band):
-            g_boundary[ll] = (
-                np.linalg.norm(self._gv[i_gp, ll])
-                * Angstrom
-                * 1e6
-                / (4 * np.pi * self._boundary_mfp)
-            )
-        return g_boundary
-
-    def _show_log_header(self, i_gp):
-        if self._log_level:
-            gp = self._grid_points[i_gp]
-            print(
-                "======================= Grid point %d (%d/%d) "
-                "=======================" % (gp, i_gp + 1, len(self._grid_points))
-            )
-            print("q-point: (%5.2f %5.2f %5.2f)" % tuple(self._qpoints[i_gp]))
-            if self._boundary_mfp is not None:
-                if self._boundary_mfp > 1000:
-                    print(
-                        "Boundary mean free path (millimetre): %.3f"
-                        % (self._boundary_mfp / 1000.0)
-                    )
-                else:
-                    print(
-                        "Boundary mean free path (micrometre): %.5f"
-                        % self._boundary_mfp
-                    )
-            if self._is_isotope:
-                print(
-                    (
-                        "Mass variance parameters: "
-                        + "%5.2e " * len(self._mass_variances)
-                    )
-                    % tuple(self._mass_variances)
-                )
-
-
-def all_bands_exist(interaction: Interaction):
-    """Return if all bands are selected or not."""
-    band_indices = interaction.band_indices
-    num_band = len(interaction.primitive) * 3
-    if len(band_indices) == num_band:
-        if (band_indices - np.arange(num_band) == 0).all():
-            return True
-    return False
-
-
-def write_pp(
-    conductivity: Conductivity,
-    pp: Interaction,
-    i,
-    filename=None,
-    compression="gzip",
-):
-    """Write ph-ph interaction strength in hdf5 file."""
-    grid_point = conductivity.grid_points[i]
-    sigmas = conductivity.sigmas
-    sigma_cutoff = conductivity.sigma_cutoff_width
-    mesh = conductivity.mesh_numbers
-    triplets, weights, _, _ = pp.get_triplets_at_q()
-    all_triplets = get_all_triplets(grid_point, pp.bz_grid)
-
-    if len(sigmas) > 1:
-        print("Multiple smearing parameters were given. The last one in ")
-        print("ph-ph interaction calculations was written in the file.")
-
-    write_pp_to_hdf5(
-        mesh,
-        pp=pp.interaction_strength,
-        g_zero=pp.zero_value_positions,
-        grid_point=grid_point,
-        triplet=triplets,
-        weight=weights,
-        triplet_all=all_triplets,
-        sigma=sigmas[-1],
-        sigma_cutoff=sigma_cutoff,
-        filename=filename,
-        compression=compression,
-    )

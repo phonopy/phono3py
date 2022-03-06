@@ -2146,6 +2146,7 @@ class Phono3py:
         write_gamma=False,
         read_gamma=False,
         is_N_U=False,
+        conductivity_type=None,
         write_kappa=False,
         write_gamma_detail=False,
         write_collision=False,
@@ -2171,7 +2172,7 @@ class Phono3py:
                 `is_LBTE=True` gives temperatures=[300, ].
         is_isotope : bool, optional, default is False
             With or without isotope scattering.
-        mass_variances : array_like, optiona, default is None
+        mass_variances : array_like, optional, default is None
             Mass variances for isotope scattering calculation. When None,
             the values stored in phono3py are used with `is_isotope=True`.
             shape(atoms_in_primitive, ), dtype='double'.
@@ -2342,9 +2343,10 @@ class Phono3py:
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
                 is_full_pp=is_full_pp,
+                is_N_U=is_N_U,
+                conductivity_type=conductivity_type,
                 write_gamma=write_gamma,
                 read_gamma=read_gamma,
-                is_N_U=is_N_U,
                 write_kappa=write_kappa,
                 write_pp=write_pp,
                 read_pp=read_pp,
