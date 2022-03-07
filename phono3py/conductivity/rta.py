@@ -37,17 +37,20 @@ import sys
 
 import numpy as np
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
-from phonopy.units import EV, Angstrom, Hbar, THz, THzToEv
+from phonopy.units import THzToEv
 
 from phono3py.conductivity.base import ConductivityBase, ConductivityMixIn
 from phono3py.conductivity.utils import (
     ConductivityRTAWriter,
     ShowCalcProgress,
-    _set_gamma_from_file,
     all_bands_exist,
+    set_gamma_from_file,
 )
 from phono3py.conductivity.utils import write_pp as write_phph
-from phono3py.conductivity.wigner import ConductivityVelocityOperatorMixIn
+from phono3py.conductivity.wigner import (
+    ConductivityVelocityOperatorMixIn,
+    get_conversion_factor_WTE,
+)
 from phono3py.file_IO import read_pp_from_hdf5
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
 from phono3py.phonon3.interaction import Interaction
@@ -157,6 +160,8 @@ class ConductivityRTABase(ConductivityBase):
             if self._is_gamma_detail or self._is_N_U:
                 self._gamma_N = np.zeros_like(self._gamma)
                 self._gamma_U = np.zeros_like(self._gamma)
+
+        self._gv = np.zeros((num_grid_points, num_band0, 3), order="C", dtype="double")
         self._cv = np.zeros(
             (num_temp, num_grid_points, num_band0), order="C", dtype="double"
         )
@@ -427,11 +432,7 @@ class ConductivityRTABase(ConductivityBase):
     def _show_log(self, q, i):
         gp = self._grid_points[i]
         frequencies = self._frequencies[gp][self._pp.band_indices]
-        try:
-            gv = self._gv[i]
-        except AttributeError:
-            print("(_show_log) _gv has to be implemented.")
-            return
+        gv = self._gv[i]
 
         if self._averaged_pp_interaction is not None:
             ave_pp = self._averaged_pp_interaction[i]
@@ -526,7 +527,6 @@ class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
         """Init method."""
         self._kappa = None
         self._mode_kappa = None
-        self._gv = None
         self._gv_sum2 = None
 
         super().__init__(
@@ -602,7 +602,6 @@ class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
         num_grid_points = len(self._grid_points)
         num_temp = len(self._temperatures)
 
-        self._gv = np.zeros((num_grid_points, num_band0, 3), order="C", dtype="double")
         self._gv_sum2 = np.zeros(
             (num_grid_points, num_band0, 6), order="C", dtype="double"
         )
@@ -642,13 +641,9 @@ class ConductivityWignerRTA(ConductivityVelocityOperatorMixIn, ConductivityRTABa
         log_level=0,
     ):
         """Init method."""
-        self._kappa_TOT_exact = None
         self._kappa_TOT_RTA = None
-
-        self._kappa_P_exact = None
         self._kappa_P_RTA = None
         self._kappa_C = None
-        self._mode_kappa_P_exact = None
         self._mode_kappa_P_RTA = None
         self._mode_kappa_C = None
 
@@ -676,14 +671,9 @@ class ConductivityWignerRTA(ConductivityVelocityOperatorMixIn, ConductivityRTABa
             is_frequency_shift_by_bubble=is_frequency_shift_by_bubble,
             log_level=log_level,
         )
-
-        volume = self._pp.primitive.volume
-        self._conversion_factor_WTE = (
-            (THz * Angstrom) ** 2  # ----> group velocity
-            * EV  # ----> specific heat is in eV/
-            * Hbar  # ----> transform lorentzian_div_hbar from eV^-1 to s
-            / (volume * Angstrom**3)
-        )  # ----> unit cell volume
+        self._conversion_factor_WTE = get_conversion_factor_WTE(
+            self._pp.primitive.volume
+        )
 
     def set_kappa_at_sigmas(self):
         """Calculate the Wigner thermal conductivity.
@@ -850,7 +840,7 @@ def get_thermal_conductivity_RTA(
     else:
         _temperatures = temperatures
 
-    if conductivity_type == "Wigner":
+    if conductivity_type == "wigner":
         conductivity_RTA_class = ConductivityWignerRTA
     else:
         conductivity_RTA_class = ConductivityRTA
@@ -883,7 +873,7 @@ def get_thermal_conductivity_RTA(
     )
 
     if read_gamma:
-        if not _set_gamma_from_file(br, filename=input_filename):
+        if not set_gamma_from_file(br, filename=input_filename):
             print("Reading collisions failed.")
             return False
 
@@ -914,7 +904,7 @@ def get_thermal_conductivity_RTA(
     if grid_points is None and all_bands_exist(interaction):
         br.set_kappa_at_sigmas()
         if log_level:
-            if conductivity_type == "Wigner":
+            if conductivity_type == "wigner":
                 ShowCalcProgress.kappa_Wigner_RTA(br, log_level)
             else:
                 ShowCalcProgress.kappa_RTA(br, log_level)

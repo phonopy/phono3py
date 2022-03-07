@@ -34,23 +34,31 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+import sys
 from typing import TYPE_CHECKING, Optional, Union
 
 import numpy as np
 
 from phono3py.conductivity.base import unit_to_WmK
 from phono3py.file_IO import (
+    read_collision_from_hdf5,
     read_gamma_from_hdf5,
+    write_collision_eigenvalues_to_hdf5,
+    write_collision_to_hdf5,
     write_gamma_detail_to_hdf5,
     write_kappa_to_hdf5,
     write_pp_to_hdf5,
+    write_unitary_matrix_to_hdf5,
 )
 from phono3py.phonon3.triplets import get_all_triplets
 
 if TYPE_CHECKING:
-    from phono3py.conductivity.rta import ConductivityRTA
+    from phono3py.conductivity.rta import ConductivityRTA, ConductivityWignerRTA
+    from phono3py.conductivity.direct_solution import (
+        ConductivityLBTE,
+        ConductivityWignerLBTE,
+    )
     from phono3py.conductivity.base import ConductivityBase
-    from phono3py.conductivity.wigner import ConductivityWignerRTA
 
 from phono3py.phonon3.interaction import Interaction
 
@@ -69,11 +77,18 @@ class ConductivityRTAWriter:
     ):
         """Write mode kappa related properties into a hdf5 file."""
         grid_points = br.grid_points
-        group_velocities = br.group_velocities
         try:
-            gv_by_gv = br.gv_by_gv
+            group_velocities_i = br.group_velocities[i]
         except AttributeError:
-            gv_by_gv = None
+            group_velocities_i = None
+        try:
+            velocity_operator_i = br.velocity_operator[i]
+        except AttributeError:
+            velocity_operator_i = None
+        try:
+            gv_by_gv_i = br.gv_by_gv[i]
+        except AttributeError:
+            gv_by_gv_i = None
         mode_heat_capacities = br.mode_heat_capacities
         ave_pp = br.averaged_pp_interaction
         mesh = br.mesh_numbers
@@ -94,10 +109,10 @@ class ConductivityRTAWriter:
                 ave_pp_i = ave_pp[i]
             frequencies = interaction.get_phonons()[0][gp]
             for j, sigma in enumerate(sigmas):
-                if gamma_isotope is not None:
-                    gamma_isotope_at_sigma = gamma_isotope[j, i]
-                else:
+                if gamma_isotope is None:
                     gamma_isotope_at_sigma = None
+                else:
+                    gamma_isotope_at_sigma = gamma_isotope[j, i]
                 if gamma_N is None:
                     gamma_N_at_sigma = None
                 else:
@@ -112,8 +127,9 @@ class ConductivityRTAWriter:
                     mesh,
                     bz_grid=bz_grid,
                     frequency=frequencies,
-                    group_velocity=group_velocities[i],
-                    gv_by_gv=gv_by_gv[i],
+                    group_velocity=group_velocities_i,
+                    gv_by_gv=gv_by_gv_i,
+                    velocity_operator=velocity_operator_i,
                     heat_capacity=mode_heat_capacities[:, i],
                     gamma=gamma[j, :, i],
                     gamma_isotope=gamma_isotope_at_sigma,
@@ -131,6 +147,18 @@ class ConductivityRTAWriter:
         else:
             for j, sigma in enumerate(sigmas):
                 for k, bi in enumerate(interaction.band_indices):
+                    if group_velocities_i is None:
+                        group_velocities_ik = None
+                    else:
+                        group_velocities_ik = group_velocities_i[k]
+                    if velocity_operator_i is None:
+                        velocity_operator_ik = None
+                    else:
+                        velocity_operator_ik = velocity_operator_i[k]
+                    if gv_by_gv_i is None:
+                        gv_by_gv_ik = None
+                    else:
+                        gv_by_gv_ik = gv_by_gv_i[k]
                     if ave_pp is None:
                         ave_pp_ik = None
                     else:
@@ -153,8 +181,9 @@ class ConductivityRTAWriter:
                         mesh,
                         bz_grid=bz_grid,
                         frequency=frequencies,
-                        group_velocity=group_velocities[i, k],
-                        gv_by_gv=gv_by_gv[i, k],
+                        group_velocity=group_velocities_ik,
+                        gv_by_gv=gv_by_gv_ik,
+                        velocity_operator=velocity_operator_ik,
                         heat_capacity=mode_heat_capacities[:, i, k],
                         gamma=gamma[j, :, i, k],
                         gamma_isotope=gamma_isotope_at_sigma,
@@ -206,6 +235,26 @@ class ConductivityRTAWriter:
             gv_by_gv = br.gv_by_gv
         except AttributeError:
             gv_by_gv = None
+        try:
+            kappa_TOT_RTA = br.kappa_TOT_RTA
+        except AttributeError:
+            kappa_TOT_RTA = None
+        try:
+            kappa_P_RTA = br.kappa_P_RTA
+        except AttributeError:
+            kappa_P_RTA = None
+        try:
+            kappa_C = br.kappa_C
+        except AttributeError:
+            kappa_C = None
+        try:
+            mode_kappa_P_RTA = br.mode_kappa_P_RTA
+        except AttributeError:
+            mode_kappa_P_RTA = None
+        try:
+            mode_kappa_C = br.mode_kappa_C
+        except AttributeError:
+            mode_kappa_C = None
 
         mode_cv = br.mode_heat_capacities
         ave_pp = br.averaged_pp_interaction
@@ -222,6 +271,26 @@ class ConductivityRTAWriter:
                 mode_kappa_at_sigma = None
             else:
                 mode_kappa_at_sigma = mode_kappa[i]
+            if kappa_TOT_RTA is None:
+                kappa_TOT_RTA_at_sigma = None
+            else:
+                kappa_TOT_RTA_at_sigma = kappa_TOT_RTA[i]
+            if kappa_P_RTA is None:
+                kappa_P_RTA_at_sigma = None
+            else:
+                kappa_P_RTA_at_sigma = kappa_P_RTA[i]
+            if kappa_C is None:
+                kappa_C_at_sigma = None
+            else:
+                kappa_C_at_sigma = kappa_C[i]
+            if mode_kappa_P_RTA is None:
+                mode_kappa_P_RTA_at_sigma = None
+            else:
+                mode_kappa_P_RTA_at_sigma = mode_kappa_P_RTA[i]
+            if mode_kappa_C is None:
+                mode_kappa_C_at_sigma = None
+            else:
+                mode_kappa_C_at_sigma = mode_kappa_C[i]
             if gamma_isotope is not None:
                 gamma_isotope_at_sigma = gamma_isotope[i]
             else:
@@ -245,6 +314,11 @@ class ConductivityRTAWriter:
                 heat_capacity=mode_cv,
                 kappa=kappa_at_sigma,
                 mode_kappa=mode_kappa_at_sigma,
+                kappa_TOT_RTA=kappa_TOT_RTA_at_sigma,
+                kappa_P_RTA=kappa_P_RTA_at_sigma,
+                kappa_C=kappa_C_at_sigma,
+                mode_kappa_P_RTA=mode_kappa_P_RTA_at_sigma,
+                mode_kappa_C=mode_kappa_C_at_sigma,
                 gamma=gamma[i],
                 gamma_isotope=gamma_isotope_at_sigma,
                 gamma_N=gamma_N_at_sigma,
@@ -319,7 +393,322 @@ class ConductivityRTAWriter:
                     )
 
 
-def _set_gamma_from_file(br, filename=None, verbose=True):
+class ConductivityLBTEWriter:
+    """Collection of result writers."""
+
+    @staticmethod
+    def write_collision(
+        lbte: Union["ConductivityLBTE", "ConductivityWignerLBTE"],
+        interaction: Interaction,
+        i=None,
+        is_reducible_collision_matrix=False,
+        is_one_gp_colmat=False,
+        filename=None,
+    ):
+        """Write collision matrix into hdf5 file."""
+        grid_points = lbte.grid_points
+        temperatures = lbte.temperatures
+        sigmas = lbte.sigmas
+        sigma_cutoff = lbte.sigma_cutoff_width
+        gamma = lbte.gamma
+        gamma_isotope = lbte.gamma_isotope
+        collision_matrix = lbte.collision_matrix
+        mesh = lbte.mesh_numbers
+
+        if i is not None:
+            gp = grid_points[i]
+            if is_one_gp_colmat:
+                igp = 0
+            else:
+                if is_reducible_collision_matrix:
+                    igp = interaction.bz_grid.bzg2grg[gp]
+                else:
+                    igp = i
+            if all_bands_exist(interaction):
+                for j, sigma in enumerate(sigmas):
+                    if gamma_isotope is not None:
+                        gamma_isotope_at_sigma = gamma_isotope[j, igp]
+                    else:
+                        gamma_isotope_at_sigma = None
+                    write_collision_to_hdf5(
+                        temperatures,
+                        mesh,
+                        gamma=gamma[j, :, igp],
+                        gamma_isotope=gamma_isotope_at_sigma,
+                        collision_matrix=collision_matrix[j, :, igp],
+                        grid_point=gp,
+                        sigma=sigma,
+                        sigma_cutoff=sigma_cutoff,
+                        filename=filename,
+                    )
+            else:
+                for j, sigma in enumerate(sigmas):
+                    for k, bi in enumerate(interaction.band_indices):
+                        if gamma_isotope is not None:
+                            gamma_isotope_at_sigma = gamma_isotope[j, igp, k]
+                        else:
+                            gamma_isotope_at_sigma = None
+                        write_collision_to_hdf5(
+                            temperatures,
+                            mesh,
+                            gamma=gamma[j, :, igp, k],
+                            gamma_isotope=gamma_isotope_at_sigma,
+                            collision_matrix=collision_matrix[j, :, igp, k],
+                            grid_point=gp,
+                            band_index=bi,
+                            sigma=sigma,
+                            sigma_cutoff=sigma_cutoff,
+                            filename=filename,
+                        )
+        else:
+            for j, sigma in enumerate(sigmas):
+                if gamma_isotope is not None:
+                    gamma_isotope_at_sigma = gamma_isotope[j]
+                else:
+                    gamma_isotope_at_sigma = None
+                write_collision_to_hdf5(
+                    temperatures,
+                    mesh,
+                    gamma=gamma[j],
+                    gamma_isotope=gamma_isotope_at_sigma,
+                    collision_matrix=collision_matrix[j],
+                    sigma=sigma,
+                    sigma_cutoff=sigma_cutoff,
+                    filename=filename,
+                )
+
+    @staticmethod
+    def write_kappa(
+        lbte: Union["ConductivityLBTE", "ConductivityWignerLBTE"],
+        volume,
+        is_reducible_collision_matrix=False,
+        write_LBTE_solution=False,
+        pinv_solver=None,
+        compression="gzip",
+        filename=None,
+        log_level=0,
+    ):
+        """Write kappa related properties into a hdf5 file."""
+        try:
+            kappa = lbte.kappa
+        except AttributeError:
+            kappa = None
+        try:
+            mode_kappa = lbte.mode_kappa
+        except AttributeError:
+            mode_kappa = None
+        try:
+            kappa_RTA = lbte.kappa_RTA
+        except AttributeError:
+            kappa_RTA = None
+        try:
+            mode_kappa_RTA = lbte.mode_kappa_RTA
+        except AttributeError:
+            mode_kappa_RTA = None
+        try:
+            gv = lbte.group_velocities
+        except AttributeError:
+            gv = None
+        try:
+            gv_by_gv = lbte.gv_by_gv
+        except AttributeError:
+            gv_by_gv = None
+        try:
+            kappa_P_exact = lbte.kappa_P_exact
+        except AttributeError:
+            kappa_P_exact = None
+        try:
+            kappa_P_RTA = lbte.kappa_P_RTA
+        except AttributeError:
+            kappa_P_RTA = None
+        try:
+            kappa_C = lbte.kappa_C
+        except AttributeError:
+            kappa_C = None
+        try:
+            mode_kappa_P_exact = lbte.mode_kappa_P_exact
+        except AttributeError:
+            mode_kappa_P_exact = None
+        try:
+            mode_kappa_P_RTA = lbte.mode_kappa_P_RTA
+        except AttributeError:
+            mode_kappa_P_RTA = None
+        try:
+            mode_kappa_C = lbte.mode_kappa_C
+        except AttributeError:
+            mode_kappa_C = None
+
+        temperatures = lbte.temperatures
+        sigmas = lbte.sigmas
+        sigma_cutoff = lbte.sigma_cutoff_width
+        mesh = lbte.mesh_numbers
+        bz_grid = lbte.bz_grid
+        grid_points = lbte.grid_points
+        weights = lbte.grid_weights
+        frequencies = lbte.frequencies
+        ave_pp = lbte.averaged_pp_interaction
+        qpoints = lbte.qpoints
+        gamma = lbte.gamma
+        gamma_isotope = lbte.gamma_isotope
+        f_vector = lbte.get_f_vectors()
+        mode_cv = lbte.mode_heat_capacities
+        mfp = lbte.get_mean_free_path()
+
+        coleigs = lbte.get_collision_eigenvalues()
+        # After kappa calculation, the variable is overwritten by unitary matrix
+        unitary_matrix = lbte.collision_matrix
+
+        if is_reducible_collision_matrix:
+            frequencies = lbte.get_frequencies_all()
+        else:
+            frequencies = lbte.frequencies
+
+        for i, sigma in enumerate(sigmas):
+            if kappa is None:
+                kappa_at_sigma = None
+            else:
+                kappa_at_sigma = kappa[i]
+            if mode_kappa is None:
+                mode_kappa_at_sigma = None
+            else:
+                mode_kappa_at_sigma = mode_kappa[i]
+            if kappa_RTA is None:
+                kappa_RTA_at_sigma = None
+            else:
+                kappa_RTA_at_sigma = kappa_RTA[i]
+            if mode_kappa_RTA is None:
+                mode_kappa_RTA_at_sigma = None
+            else:
+                mode_kappa_RTA_at_sigma = mode_kappa_RTA[i]
+            if kappa_P_exact is None:
+                kappa_P_exact_at_sigma = None
+            else:
+                kappa_P_exact_at_sigma = kappa_P_exact[i]
+            if kappa_P_RTA is None:
+                kappa_P_RTA_at_sigma = None
+            else:
+                kappa_P_RTA_at_sigma = kappa_P_RTA[i]
+            if kappa_C is None:
+                kappa_C_at_sigma = None
+            else:
+                kappa_C_at_sigma = kappa_C[i]
+            if kappa_P_exact_at_sigma is None or kappa_C_at_sigma is None:
+                kappa_TOT_exact_at_sigma = None
+            else:
+                kappa_TOT_exact_at_sigma = kappa_P_exact_at_sigma + kappa_C_at_sigma
+            if kappa_P_RTA_at_sigma is None or kappa_C_at_sigma is None:
+                kappa_TOT_RTA_at_sigma = None
+            else:
+                kappa_TOT_RTA_at_sigma = kappa_P_RTA_at_sigma + kappa_C_at_sigma
+            if mode_kappa_P_exact is None:
+                mode_kappa_P_exact_at_sigma = None
+            else:
+                mode_kappa_P_exact_at_sigma = mode_kappa_P_exact[i]
+            if mode_kappa_P_RTA is None:
+                mode_kappa_P_RTA_at_sigma = None
+            else:
+                mode_kappa_P_RTA_at_sigma = mode_kappa_P_RTA[i]
+            if mode_kappa_C is None:
+                mode_kappa_C_at_sigma = None
+            else:
+                mode_kappa_C_at_sigma = mode_kappa_C[i]
+            if gamma_isotope is None:
+                gamma_isotope_at_sigma = None
+            else:
+                gamma_isotope_at_sigma = gamma_isotope[i]
+            write_kappa_to_hdf5(
+                temperatures,
+                mesh,
+                bz_grid=bz_grid,
+                frequency=frequencies,
+                group_velocity=gv,
+                gv_by_gv=gv_by_gv,
+                mean_free_path=mfp[i],
+                heat_capacity=mode_cv,
+                kappa=kappa_at_sigma,
+                mode_kappa=mode_kappa_at_sigma,
+                kappa_RTA=kappa_RTA_at_sigma,
+                mode_kappa_RTA=mode_kappa_RTA_at_sigma,
+                kappa_P_exact=kappa_P_exact_at_sigma,
+                kappa_P_RTA=kappa_P_RTA_at_sigma,
+                kappa_C=kappa_C_at_sigma,
+                kappa_TOT_exact=kappa_TOT_exact_at_sigma,
+                kappa_TOT_RTA=kappa_TOT_RTA_at_sigma,
+                mode_kappa_P_exact=mode_kappa_P_exact_at_sigma,
+                mode_kappa_P_RTA=mode_kappa_P_RTA_at_sigma,
+                mode_kappa_C=mode_kappa_C_at_sigma,
+                f_vector=f_vector,
+                gamma=gamma[i],
+                gamma_isotope=gamma_isotope_at_sigma,
+                averaged_pp_interaction=ave_pp,
+                qpoint=qpoints,
+                grid_point=grid_points,
+                weight=weights,
+                sigma=sigma,
+                sigma_cutoff=sigma_cutoff,
+                kappa_unit_conversion=unit_to_WmK / volume,
+                compression=compression,
+                filename=filename,
+                verbose=log_level,
+            )
+
+            if coleigs is not None:
+                write_collision_eigenvalues_to_hdf5(
+                    temperatures,
+                    mesh,
+                    coleigs[i],
+                    sigma=sigma,
+                    sigma_cutoff=sigma_cutoff,
+                    filename=filename,
+                    verbose=log_level,
+                )
+
+                if write_LBTE_solution:
+                    if pinv_solver is not None:
+                        solver = select_colmat_solver(pinv_solver)
+                        if solver in [1, 2, 3, 4, 5]:
+                            write_unitary_matrix_to_hdf5(
+                                temperatures,
+                                mesh,
+                                unitary_matrix=unitary_matrix,
+                                sigma=sigma,
+                                sigma_cutoff=sigma_cutoff,
+                                solver=solver,
+                                filename=filename,
+                                verbose=log_level,
+                            )
+
+
+def select_colmat_solver(pinv_solver):
+    """Return collision matrix solver id."""
+    try:
+        import phono3py._phono3py as phono3c
+
+        default_solver = phono3c.default_colmat_solver()
+    except ImportError:
+        print("Phono3py C-routine is not compiled correctly.")
+        default_solver = 4
+
+    solver_numbers = (1, 2, 3, 4, 5, 6)
+
+    solver = pinv_solver
+    if solver == 0:  # default solver
+        if default_solver in (4, 5, 6):
+            try:
+                import scipy.linalg  # noqa F401
+            except ImportError:
+                solver = 1
+            else:
+                solver = default_solver
+        else:
+            solver = default_solver
+    elif solver not in solver_numbers:
+        solver = default_solver
+
+    return solver
+
+
+def set_gamma_from_file(br, filename=None, verbose=True):
     """Read kappa-*.hdf5 files for thermal conductivity calculation."""
     sigmas = br.get_sigmas()
     sigma_cutoff = br.get_sigma_cutoff_width()
@@ -420,7 +809,7 @@ class ShowCalcProgress:
     """Show calculation progress."""
 
     @staticmethod
-    def kappa_RTA(br, log_level):
+    def kappa_RTA(br: "ConductivityRTA", log_level):
         """Show RTA calculation progess."""
         temperatures = br.temperatures
         sigmas = br.sigmas
@@ -459,7 +848,7 @@ class ShowCalcProgress:
             print("")
 
     @staticmethod
-    def kappa_Wigner_RTA(br, log_level):
+    def kappa_Wigner_RTA(br: "ConductivityWignerRTA", log_level):
         """Show Wigner-RTA calculation progess."""
         temperatures = br.temperatures
         sigmas = br.sigmas
@@ -572,3 +961,302 @@ def write_pp(
         filename=filename,
         compression=compression,
     )
+
+
+def set_collision_from_file(
+    lbte,
+    bz_grid,
+    indices="all",
+    is_reducible_collision_matrix=False,
+    filename=None,
+    log_level=0,
+):
+    """Set collision matrix from that read from files."""
+    sigmas = lbte.get_sigmas()
+    sigma_cutoff = lbte.get_sigma_cutoff_width()
+    mesh = lbte.mesh_numbers
+    grid_points = lbte.get_grid_points()
+    indices = indices
+
+    if len(sigmas) > 1:
+        gamma = []
+        collision_matrix = []
+
+    read_from = None
+
+    if log_level:
+        print(
+            "---------------------- Reading collision data from file "
+            "----------------------"
+        )
+        sys.stdout.flush()
+
+    for j, sigma in enumerate(sigmas):
+        collisions = read_collision_from_hdf5(
+            mesh,
+            indices=indices,
+            sigma=sigma,
+            sigma_cutoff=sigma_cutoff,
+            filename=filename,
+            verbose=(log_level > 0),
+        )
+        if log_level:
+            sys.stdout.flush()
+
+        if collisions:
+            (colmat_at_sigma, gamma_at_sigma, temperatures) = collisions
+
+            if len(sigmas) == 1:
+                collision_matrix = colmat_at_sigma
+                gamma = np.zeros((1,) + gamma_at_sigma.shape, dtype="double", order="C")
+                gamma[0] = gamma_at_sigma
+            else:
+                collision_matrix.append(colmat_at_sigma)
+                gamma.append(gamma_at_sigma)
+            read_from = "full_matrix"
+        else:
+            vals = _allocate_collision(
+                True,
+                mesh,
+                sigma,
+                sigma_cutoff,
+                grid_points,
+                indices,
+                is_reducible_collision_matrix,
+                filename,
+            )
+            if vals:
+                colmat_at_sigma, gamma_at_sigma, temperatures = vals
+            else:
+                if log_level:
+                    print("Collision at grid point %d doesn't exist." % grid_points[0])
+                vals = _allocate_collision(
+                    False,
+                    mesh,
+                    sigma,
+                    sigma_cutoff,
+                    grid_points,
+                    indices,
+                    is_reducible_collision_matrix,
+                    filename,
+                )
+                if vals:
+                    colmat_at_sigma, gamma_at_sigma, temperatures = vals
+                else:
+                    if log_level:
+                        print(
+                            "Collision at (grid point %d, band index %d) "
+                            "doesn't exist." % (grid_points[0], 1)
+                        )
+                    return False
+
+            for i, gp in enumerate(grid_points):
+                if not _collect_collision_gp(
+                    colmat_at_sigma,
+                    gamma_at_sigma,
+                    temperatures,
+                    mesh,
+                    sigma,
+                    sigma_cutoff,
+                    i,
+                    gp,
+                    bz_grid.bzg2grg,
+                    indices,
+                    is_reducible_collision_matrix,
+                    filename,
+                    log_level,
+                ):
+                    num_band = colmat_at_sigma.shape[3]
+                    for j in range(num_band):
+                        if not _collect_collision_band(
+                            colmat_at_sigma,
+                            gamma_at_sigma,
+                            temperatures,
+                            mesh,
+                            sigma,
+                            sigma_cutoff,
+                            i,
+                            gp,
+                            bz_grid.bzg2grg,
+                            j,
+                            indices,
+                            is_reducible_collision_matrix,
+                            filename,
+                            log_level,
+                        ):
+                            return False
+
+            if len(sigmas) == 1:
+                gamma = gamma_at_sigma
+                collision_matrix = colmat_at_sigma
+            else:
+                gamma.append(gamma_at_sigma[0])
+                collision_matrix.append(colmat_at_sigma[0])
+            read_from = "grid_points"
+
+    if len(sigmas) > 1:
+        temperatures = np.array(temperatures, dtype="double", order="C")
+        gamma = np.array(gamma, dtype="double", order="C")
+        collision_matrix = np.array(collision_matrix, dtype="double", order="C")
+
+    lbte.set_gamma(gamma)
+    lbte.set_collision_matrix(collision_matrix)
+    # lbte.set_temperatures invokes allocation of arrays. So this must
+    # be called after setting collision_matrix for saving memory
+    # space.
+    lbte.set_temperatures(temperatures)
+
+    return read_from
+
+
+def _allocate_collision(
+    for_gps,
+    mesh,
+    sigma,
+    sigma_cutoff,
+    grid_points,
+    indices,
+    is_reducible_collision_matrix,
+    filename,
+):
+    num_mesh_points = np.prod(mesh)
+    if for_gps:
+        collision = read_collision_from_hdf5(
+            mesh,
+            indices=indices,
+            grid_point=grid_points[0],
+            sigma=sigma,
+            sigma_cutoff=sigma_cutoff,
+            filename=filename,
+            verbose=False,
+        )
+    else:
+        collision = read_collision_from_hdf5(
+            mesh,
+            indices=indices,
+            grid_point=grid_points[0],
+            band_index=0,
+            sigma=sigma,
+            sigma_cutoff=sigma_cutoff,
+            filename=filename,
+            verbose=False,
+        )
+    if collision is None:
+        return False
+
+    num_temp = len(collision[2])  # This is to treat indices="all".
+    if is_reducible_collision_matrix:
+        if for_gps:
+            num_band = collision[0].shape[4]  # for gps (s,T,b,irgp,b)
+        else:
+            num_band = collision[0].shape[3]  # for bands (s,T,irgp,b)
+        gamma_at_sigma = np.zeros(
+            (1, num_temp, num_mesh_points, num_band), dtype="double", order="C"
+        )
+        colmat_at_sigma = np.zeros(
+            (1, num_temp, num_mesh_points, num_band, num_mesh_points, num_band),
+            dtype="double",
+            order="C",
+        )
+    else:
+        if for_gps:
+            num_band = collision[0].shape[5]  # for gps (s,T,b0,3,irgp,b,3)
+        else:
+            num_band = collision[0].shape[4]  # for bands (s,T,3,irgp,b,3)
+        gamma_at_sigma = np.zeros(
+            (1, num_temp, len(grid_points), num_band), dtype="double", order="C"
+        )
+        colmat_at_sigma = np.zeros(
+            (1, num_temp, len(grid_points), num_band, 3, len(grid_points), num_band, 3),
+            dtype="double",
+            order="C",
+        )
+    temperatures = np.zeros(num_temp, dtype="double", order="C")
+
+    return colmat_at_sigma, gamma_at_sigma, temperatures
+
+
+def _collect_collision_gp(
+    colmat_at_sigma,
+    gamma_at_sigma,
+    temperatures,
+    mesh,
+    sigma,
+    sigma_cutoff,
+    i,
+    gp,
+    bzg2grg,
+    indices,
+    is_reducible_collision_matrix,
+    filename,
+    log_level,
+):
+    collision_gp = read_collision_from_hdf5(
+        mesh,
+        indices=indices,
+        grid_point=gp,
+        sigma=sigma,
+        sigma_cutoff=sigma_cutoff,
+        filename=filename,
+        verbose=(log_level > 0),
+    )
+    if log_level:
+        sys.stdout.flush()
+
+    if not collision_gp:
+        return False
+
+    (colmat_at_gp, gamma_at_gp, temperatures_at_gp) = collision_gp
+    if is_reducible_collision_matrix:
+        igp = bzg2grg[gp]
+    else:
+        igp = i
+    gamma_at_sigma[0, :, igp] = gamma_at_gp
+    colmat_at_sigma[0, :, igp] = colmat_at_gp[0]
+    temperatures[:] = temperatures_at_gp
+
+    return True
+
+
+def _collect_collision_band(
+    colmat_at_sigma,
+    gamma_at_sigma,
+    temperatures,
+    mesh,
+    sigma,
+    sigma_cutoff,
+    i,
+    gp,
+    bzg2grg,
+    j,
+    indices,
+    is_reducible_collision_matrix,
+    filename,
+    log_level,
+):
+    collision_band = read_collision_from_hdf5(
+        mesh,
+        indices=indices,
+        grid_point=gp,
+        band_index=j,
+        sigma=sigma,
+        sigma_cutoff=sigma_cutoff,
+        filename=filename,
+        verbose=(log_level > 0),
+    )
+    if log_level:
+        sys.stdout.flush()
+
+    if collision_band is False:
+        return False
+
+    (colmat_at_band, gamma_at_band, temperatures_at_band) = collision_band
+    if is_reducible_collision_matrix:
+        igp = bzg2grg[gp]
+    else:
+        igp = i
+    gamma_at_sigma[0, :, igp, j] = gamma_at_band
+    colmat_at_sigma[0, :, igp, j] = colmat_at_band[0]
+    temperatures[:] = temperatures_at_band
+
+    return True

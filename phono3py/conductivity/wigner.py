@@ -37,6 +37,7 @@ import textwrap
 
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
+from phonopy.units import EV, Angstrom, Hbar, THz
 
 from phono3py.phonon.grid import get_grid_points_by_rotations
 from phono3py.phonon.velocity_operator import VelocityOperator
@@ -137,12 +138,22 @@ class ConductivityVelocityOperatorMixIn:
         self._set_gv_by_gv_operator(i_gp, i_data)
 
     def _set_gv_operator(self, i_irgp, i_data):
-        """Set velocity operator."""
+        """Set velocity operator.
+
+        Note
+        ----
+        self._gv is implemented by Togo without understanding well.
+
+        """
         irgp = self._grid_points[i_irgp]
         self._velocity_obj.run([self._get_qpoint_from_gp_index(irgp)])
         gv_operator = self._velocity_obj.velocity_operators[0, :, :, :]
         #
         self._gv_operator[i_data] = gv_operator[self._pp.get_band_indices(), :, :]
+        self._gv[i_data] = [
+            self._gv_operator[i_data, bi, i].real
+            for i, bi in enumerate(self._pp.band_indices)
+        ]
 
     def _set_gv_by_gv_operator(self, i_irgp, i_data):
         """Outer product of group velocities.
@@ -228,3 +239,13 @@ class ConductivityVelocityOperatorMixIn:
                     print("*" * 67)
 
         return gv_by_gv_operator, order_kstar
+
+
+def get_conversion_factor_WTE(volume):
+    """Return conversion factor of thermal conductivity."""
+    return (
+        (THz * Angstrom) ** 2  # ----> group velocity
+        * EV  # ----> specific heat is in eV/
+        * Hbar  # ----> transform lorentzian_div_hbar from eV^-1 to s
+        / (volume * Angstrom**3)
+    )  # ----> unit cell volume

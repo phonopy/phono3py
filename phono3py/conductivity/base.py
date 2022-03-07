@@ -179,6 +179,7 @@ class ConductivityBase:
         self._read_gamma = False
         self._read_gamma_iso = False
 
+        self._gv = None
         self._cv = None
         self._gamma = None
         self._gamma_iso = None

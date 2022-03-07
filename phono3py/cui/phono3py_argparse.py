@@ -758,6 +758,13 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         ),
     )
     parser.add_argument(
+        "--wigner",
+        dest="is_wigner_kappa",
+        action="store_true",
+        default=False,
+        help="Choose Wigner lattice thermal conductivity.",
+    )
+    parser.add_argument(
         "--write-collision",
         dest="write_collision",
         action="store_true",
