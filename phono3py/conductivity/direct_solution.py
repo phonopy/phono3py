@@ -1333,7 +1333,13 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
 
 
 class ConductivityWignerLBTE(ConductivityVelocityOperatorMixIn, ConductivityLBTEBase):
-    """Class of Wigner lattice thermal conductivity under direct-solution."""
+    """Class of Wigner lattice thermal conductivity under direct-solution.
+
+    Authors
+    -------
+    Michele Simoncelli
+
+    """
 
     def __init__(
         self,

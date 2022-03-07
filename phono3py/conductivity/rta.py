@@ -616,7 +616,13 @@ class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
 
 
 class ConductivityWignerRTA(ConductivityVelocityOperatorMixIn, ConductivityRTABase):
-    """Class of Wigner lattice thermal conductivity under RTA."""
+    """Class of Wigner lattice thermal conductivity under RTA.
+
+    Authors
+    -------
+    Michele Simoncelli
+
+    """
 
     def __init__(
         self,

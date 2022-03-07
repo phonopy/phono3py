@@ -1,5 +1,5 @@
 """Wigner thermal conductivity base class."""
-# Copyright (C) 2022 Atsushi Togo
+# Copyright (C) 2022 Michele Simoncelli
 # All rights reserved.
 #
 # This file is part of phono3py.
