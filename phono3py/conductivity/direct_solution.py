@@ -44,6 +44,7 @@ from phonopy.units import Kb, THzToEv
 from phono3py.conductivity.base import ConductivityBase, ConductivityMixIn, unit_to_WmK
 from phono3py.conductivity.utils import all_bands_exist
 from phono3py.conductivity.utils import write_pp as write_phph
+from phono3py.conductivity.wigner import ConductivityVelocityOperatorMixIn
 from phono3py.file_IO import (
     read_collision_from_hdf5,
     read_pp_from_hdf5,
@@ -104,8 +105,6 @@ class ConductivityLBTEBase(ConductivityBase):
         self._init_velocity(gv_delta_q)
 
         self._lang = lang
-        self._f_vectors = None
-        self._mfp = None
         self._averaged_pp_interaction = None
         self._collision_eigenvalues = None
         self._is_reducible_collision_matrix = is_reducible_collision_matrix
@@ -125,10 +124,6 @@ class ConductivityLBTEBase(ConductivityBase):
 
         if self._temperatures is not None:
             self._allocate_values()
-
-    def get_f_vectors(self):
-        """Return f vectors."""
-        return self._f_vectors
 
     @property
     def collision_matrix(self):
@@ -161,10 +156,6 @@ class ConductivityLBTEBase(ConductivityBase):
         """Return eigenvalues of collision matrix."""
         return self._collision_eigenvalues
 
-    def get_mean_free_path(self):
-        """Return mean free path."""
-        return self._mfp
-
     def get_frequencies_all(self):
         """Return phonon frequencies on GR-grid."""
         return self._frequencies[self._pp.bz_grid.grg2bzg]
@@ -173,6 +164,117 @@ class ConductivityLBTEBase(ConductivityBase):
         """Deallocate large arrays."""
         self._collision.delete_integration_weights()
         self._pp.delete_interaction_strength()
+
+    def set_kappa_at_sigmas(self):
+        """Calculate lattice thermal conductivity from collision matrix.
+
+        This method is called after all elements of collision matrix are filled.
+
+        """
+        if len(self._grid_points) != len(self._ir_grid_points):
+            print("Collision matrix is not well created.")
+            import sys
+
+            sys.exit(1)
+        else:
+            weights = self._prepare_collision_matrix()
+            self._set_kappa_at_sigmas(weights)
+
+    def _set_kappa(self, i_sigma, i_temp, weights):
+        raise NotImplementedError
+
+    def _set_kappa_at_sigmas(weights):
+        raise NotImplementedError
+
+    def _set_kappa_ir_colmat(self, kappa, mode_kappa, i_sigma, i_temp, weights):
+        """Calculate direct solution thermal conductivity of ir colmat.
+
+        kappa and mode_kappa are overwritten.
+
+        """
+        N = self._num_sampling_grid_points
+        if self._solve_collective_phonon:
+            self._set_mode_kappa_Chaput(i_sigma, i_temp, weights)
+        else:
+            X = self._get_X(i_temp, weights)
+            num_ir_grid_points = len(self._ir_grid_points)
+            Y = self._get_Y(i_sigma, i_temp, weights, X)
+            self._set_mean_free_path(i_sigma, i_temp, weights, Y)
+            self._set_mode_kappa(
+                mode_kappa,
+                X,
+                Y,
+                num_ir_grid_points,
+                self._rotations_cartesian,
+                i_sigma,
+                i_temp,
+            )
+            # self._set_mode_kappa_from_mfp(weights,
+            #                               num_ir_grid_points,
+            #                               self._rotations_cartesian,
+            #                               i_sigma,
+            #                               i_temp)
+
+        kappa[i_sigma, i_temp] = mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
+
+    def _set_kappa_reducible_colmat(self, kappa, mode_kappa, i_sigma, i_temp, weights):
+        """Calculate direct solution thermal conductivity of full colmat.
+
+        kappa and mode_kappa are overwritten.
+
+        """
+        N = self._num_sampling_grid_points
+        X = self._get_X(i_temp, weights)
+        num_mesh_points = np.prod(self._pp.mesh_numbers)
+        Y = self._get_Y(i_sigma, i_temp, weights, X)
+        self._set_mean_free_path(i_sigma, i_temp, weights, Y)
+        # Putting self._rotations_cartesian is to symmetrize kappa.
+        # None can be put instead for watching pure information.
+        self._set_mode_kappa(
+            mode_kappa,
+            X,
+            Y,
+            num_mesh_points,
+            self._rotations_cartesian,
+            i_sigma,
+            i_temp,
+        )
+        mode_kappa[i_sigma, i_temp] /= len(self._rotations_cartesian)
+        kappa[i_sigma, i_temp] = mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
+
+    def _allocate_values(self):
+        """Allocate arrays."""
+        num_band0 = len(self._pp.band_indices)
+        num_band = len(self._pp.primitive) * 3
+        num_temp = len(self._temperatures)
+
+        if self._is_reducible_collision_matrix:
+            self._allocate_reducible_colmat_values(num_temp, num_band0, num_band)
+        else:
+            self._allocate_ir_colmat_values(num_temp, num_band0, num_band)
+
+    def _allocate_local_values(self, num_temp, num_band0, num_grid_points):
+        """Allocate grid point local arrays."""
+        self._cv = np.zeros(
+            (num_temp, num_grid_points, num_band0), dtype="double", order="C"
+        )
+        if self._is_full_pp:
+            self._averaged_pp_interaction = np.zeros(
+                (num_grid_points, num_band0), dtype="double", order="C"
+            )
+
+        if self._gamma is None:
+            self._gamma = np.zeros(
+                (len(self._sigmas), num_temp, num_grid_points, num_band0),
+                dtype="double",
+                order="C",
+            )
+        if self._isotope is not None:
+            self._gamma_iso = np.zeros(
+                (len(self._sigmas), num_grid_points, num_band0),
+                dtype="double",
+                order="C",
+            )
 
     def _run_at_grid_point(self):
         """Calculate properties at a grid point."""
@@ -204,137 +306,6 @@ class ConductivityLBTEBase(ConductivityBase):
 
         if self._log_level:
             self._show_log(i_gp)
-
-
-class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
-    """Lattice thermal conductivity calculation by direct solution."""
-
-    def __init__(
-        self,
-        interaction: Interaction,
-        grid_points=None,
-        temperatures=None,
-        sigmas=None,
-        sigma_cutoff=None,
-        is_isotope=False,
-        mass_variances=None,
-        boundary_mfp=None,  # in micrometre
-        solve_collective_phonon=False,
-        is_reducible_collision_matrix=False,
-        is_kappa_star=True,
-        gv_delta_q=None,
-        is_full_pp=False,
-        read_pp=False,
-        pp_filename=None,
-        pinv_cutoff=1.0e-8,
-        pinv_solver=0,
-        log_level=0,
-        lang="C",
-    ):
-        """Init method."""
-        super().__init__(
-            interaction,
-            grid_points=grid_points,
-            temperatures=temperatures,
-            sigmas=sigmas,
-            sigma_cutoff=sigma_cutoff,
-            is_isotope=is_isotope,
-            mass_variances=mass_variances,
-            boundary_mfp=boundary_mfp,
-            solve_collective_phonon=solve_collective_phonon,
-            is_reducible_collision_matrix=is_reducible_collision_matrix,
-            is_kappa_star=is_kappa_star,
-            gv_delta_q=gv_delta_q,
-            is_full_pp=is_full_pp,
-            read_pp=read_pp,
-            pp_filename=pp_filename,
-            pinv_cutoff=pinv_cutoff,
-            pinv_solver=pinv_solver,
-            log_level=log_level,
-            lang=lang,
-        )
-
-    def set_kappa_at_sigmas(self):
-        """Calculate lattice thermal conductivity from collision matrix.
-
-        This method is called after all elements of collision matrix are filled.
-
-        """
-        if len(self._grid_points) != len(self._ir_grid_points):
-            print("Collision matrix is not well created.")
-            import sys
-
-            sys.exit(1)
-        else:
-            weights = self._prepare_collision_matrix()
-            self._set_kappa_at_sigmas(weights)
-
-    def get_kappa_RTA(self):
-        """Return RTA lattice thermal conductivity."""
-        return self._kappa_RTA
-
-    def get_mode_kappa_RTA(self):
-        """Return RTA mode lattice thermal conductivities."""
-        return self._mode_kappa_RTA
-
-    def _allocate_values(self):
-        """Allocate arrays."""
-        num_band0 = len(self._pp.band_indices)
-        num_band = len(self._pp.primitive) * 3
-        num_temp = len(self._temperatures)
-
-        if self._is_reducible_collision_matrix:
-            self._allocate_reducible_colmat_values(num_temp, num_band0, num_band)
-        else:
-            self._allocate_ir_colmat_values(num_temp, num_band0, num_band)
-
-    def _allocate_local_values(self, num_temp, num_band0, num_grid_points):
-        """Allocate grid point local arrays."""
-        self._kappa = np.zeros(
-            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
-        )
-        self._kappa_RTA = np.zeros(
-            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
-        )
-        self._gv = np.zeros((num_grid_points, num_band0, 3), dtype="double", order="C")
-        self._f_vectors = np.zeros(
-            (num_grid_points, num_band0, 3), dtype="double", order="C"
-        )
-        self._gv_sum2 = np.zeros(
-            (num_grid_points, num_band0, 6), dtype="double", order="C"
-        )
-        self._mfp = np.zeros(
-            (len(self._sigmas), num_temp, num_grid_points, num_band0, 3),
-            dtype="double",
-            order="C",
-        )
-        self._cv = np.zeros(
-            (num_temp, num_grid_points, num_band0), dtype="double", order="C"
-        )
-        if self._is_full_pp:
-            self._averaged_pp_interaction = np.zeros(
-                (num_grid_points, num_band0), dtype="double", order="C"
-            )
-
-        if self._gamma is None:
-            self._gamma = np.zeros(
-                (len(self._sigmas), num_temp, num_grid_points, num_band0),
-                dtype="double",
-                order="C",
-            )
-        if self._isotope is not None:
-            self._gamma_iso = np.zeros(
-                (len(self._sigmas), num_grid_points, num_band0),
-                dtype="double",
-                order="C",
-            )
-
-        self._mode_kappa = np.zeros(
-            (len(self._sigmas), num_temp, num_grid_points, num_band0, 6), dtype="double"
-        )
-        self._mode_kappa_RTA = np.zeros(
-            (len(self._sigmas), num_temp, num_grid_points, num_band0, 6), dtype="double"
-        )
 
     def _allocate_reducible_colmat_values(self, num_temp, num_band0, num_band):
         """Allocate arrays for reducilble collision matrix."""
@@ -525,52 +496,6 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
             for j, w_j in enumerate(weights):
                 self._collision_matrix[:, :, i, :, :, j, :, :] *= w_i * w_j
         return weights
-
-    def _set_kappa_at_sigmas(self, weights):
-        """Calculate thermal conductivity from collision matrix."""
-        for j, sigma in enumerate(self._sigmas):
-            if self._log_level:
-                text = "----------- Thermal conductivity (W/m-k) "
-                if sigma:
-                    text += "for sigma=%s -----------" % sigma
-                else:
-                    text += "with tetrahedron method -----------"
-                print(text)
-                sys.stdout.flush()
-
-            for k, t in enumerate(self._temperatures):
-                if t > 0:
-                    self._set_kappa_RTA(j, k, weights)
-
-                    w = diagonalize_collision_matrix(
-                        self._collision_matrix,
-                        i_sigma=j,
-                        i_temp=k,
-                        pinv_solver=self._pinv_solver,
-                        log_level=self._log_level,
-                    )
-                    self._collision_eigenvalues[j, k] = w
-
-                    self._set_kappa(j, k, weights)
-
-                    if self._log_level:
-                        print(
-                            ("#%6s       " + " %-10s" * 6)
-                            % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
-                        )
-                        print(
-                            ("%7.1f " + " %10.3f" * 6)
-                            % ((t,) + tuple(self._kappa[j, k]))
-                        )
-                        print(
-                            (" %6s " + " %10.3f" * 6)
-                            % (("(RTA)",) + tuple(self._kappa_RTA[j, k]))
-                        )
-                        print("-" * 76)
-                        sys.stdout.flush()
-
-        if self._log_level:
-            print("")
 
     def _combine_collisions(self):
         """Include diagonal elements into collision matrix."""
@@ -924,77 +849,18 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
 
         return I_mat
 
-    def _set_kappa(self, i_sigma, i_temp, weights):
-        """Calculate direct solution thermal conductivity.
-
-        Either ir or full colmat.
-
-        """
-        if self._is_reducible_collision_matrix:
-            self._set_kappa_reducible_colmat(i_sigma, i_temp, weights)
-        else:
-            self._set_kappa_ir_colmat(i_sigma, i_temp, weights)
-
-    def _set_kappa_ir_colmat(self, i_sigma, i_temp, weights):
-        """Calculate direct solution thermal conductivity of ir colmat."""
-        N = self._num_sampling_grid_points
-        if self._solve_collective_phonon:
-            self._set_mode_kappa_Chaput(i_sigma, i_temp, weights)
-        else:
-            X = self._get_X(i_temp, weights)
-            num_ir_grid_points = len(self._ir_grid_points)
-            Y = self._get_Y(i_sigma, i_temp, weights, X)
-            self._set_mean_free_path(i_sigma, i_temp, weights, Y)
-            self._set_mode_kappa(
-                self._mode_kappa,
-                X,
-                Y,
-                num_ir_grid_points,
-                self._rotations_cartesian,
-                i_sigma,
-                i_temp,
-            )
-            # self._set_mode_kappa_from_mfp(weights,
-            #                               num_ir_grid_points,
-            #                               self._rotations_cartesian,
-            #                               i_sigma,
-            #                               i_temp)
-
-        self._kappa[i_sigma, i_temp] = (
-            self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
-        )
-
-    def _set_kappa_reducible_colmat(self, i_sigma, i_temp, weights):
-        """Calculate direct solution thermal conductivity of full colmat."""
-        N = self._num_sampling_grid_points
-        X = self._get_X(i_temp, weights)
-        num_mesh_points = np.prod(self._pp.mesh_numbers)
-        Y = self._get_Y(i_sigma, i_temp, weights, X)
-        self._set_mean_free_path(i_sigma, i_temp, weights, Y)
-        # Putting self._rotations_cartesian is to symmetrize kappa.
-        # None can be put instead for watching pure information.
-        self._set_mode_kappa(
-            self._mode_kappa,
-            X,
-            Y,
-            num_mesh_points,
-            self._rotations_cartesian,
-            i_sigma,
-            i_temp,
-        )
-        self._mode_kappa[i_sigma, i_temp] /= len(self._rotations_cartesian)
-        self._kappa[i_sigma, i_temp] = (
-            self._mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
-        )
-
     def _set_kappa_RTA(self, i_sigma, i_temp, weights):
+        raise NotImplementedError
+
         """Calculate RTA thermal conductivity with either ir or full colmat."""
         if self._is_reducible_collision_matrix:
             self._set_kappa_RTA_reducible_colmat(i_sigma, i_temp, weights)
         else:
             self._set_kappa_RTA_ir_colmat(i_sigma, i_temp, weights)
 
-    def _set_kappa_RTA_ir_colmat(self, i_sigma, i_temp, weights):
+    def _set_kappa_RTA_ir_colmat(
+        self, kappa_RTA, mode_kappa_RTA, i_sigma, i_temp, weights
+    ):
         """Calculate RTA thermal conductivity.
 
         This RTA is supposed to be the same as conductivity_RTA.
@@ -1027,7 +893,7 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
                     np.seterr(**old_settings)
 
         self._set_mode_kappa(
-            self._mode_kappa_RTA,
+            mode_kappa_RTA,
             X,
             Y,
             num_ir_grid_points,
@@ -1035,15 +901,19 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
             i_sigma,
             i_temp,
         )
-        self._kappa_RTA[i_sigma, i_temp] = (
-            self._mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
+        kappa_RTA[i_sigma, i_temp] = (
+            mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
         )
 
-    def _set_kappa_RTA_reducible_colmat(self, i_sigma, i_temp, weights):
+    def _set_kappa_RTA_reducible_colmat(
+        self, kappa_RTA, mode_kappa_RTA, i_sigma, i_temp, weights
+    ):
         """Calculate RTA thermal conductivity.
 
         This RTA is not equivalent to conductivity_RTA.
         The lifetime is defined from the diagonal part of collision matrix.
+
+        `kappa` and `mode_kappa` are overwritten.
 
         """
         N = self._num_sampling_grid_points
@@ -1066,7 +936,7 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
         # Putting self._rotations_cartesian is to symmetrize kappa.
         # None can be put instead for watching pure information.
         self._set_mode_kappa(
-            self._mode_kappa_RTA,
+            mode_kappa_RTA,
             X,
             Y,
             num_mesh_points,
@@ -1075,9 +945,9 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
             i_temp,
         )
         g = len(self._rotations_cartesian)
-        self._mode_kappa_RTA[i_sigma, i_temp] /= g
-        self._kappa_RTA[i_sigma, i_temp] = (
-            self._mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
+        mode_kappa_RTA[i_sigma, i_temp] /= g
+        kappa_RTA[i_sigma, i_temp] = (
+            mode_kappa_RTA[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
         )
 
     def _set_mode_kappa(
@@ -1265,6 +1135,486 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
         ) / 2
         self._collision_matrix[:, :, i, j, k, ll] = sym_val
         self._collision_matrix[:, :, k, ll, i, j] = sym_val
+
+
+class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
+    """Lattice thermal conductivity calculation by direct solution."""
+
+    def __init__(
+        self,
+        interaction: Interaction,
+        grid_points=None,
+        temperatures=None,
+        sigmas=None,
+        sigma_cutoff=None,
+        is_isotope=False,
+        mass_variances=None,
+        boundary_mfp=None,
+        solve_collective_phonon=False,
+        is_reducible_collision_matrix=False,
+        is_kappa_star=True,
+        gv_delta_q=None,
+        is_full_pp=False,
+        read_pp=False,
+        pp_filename=None,
+        pinv_cutoff=1.0e-8,
+        pinv_solver=0,
+        log_level=0,
+        lang="C",
+    ):
+        """Init method."""
+        self._kappa = None
+        self._kappa_RTA = None
+        self._mode_kappa = None
+        self._mode_kappa_RTA = None
+        self._gv = None
+        self._gv_sum2 = None
+        self._f_vectors = None
+        self._mfp = None
+
+        super().__init__(
+            interaction,
+            grid_points=grid_points,
+            temperatures=temperatures,
+            sigmas=sigmas,
+            sigma_cutoff=sigma_cutoff,
+            is_isotope=is_isotope,
+            mass_variances=mass_variances,
+            boundary_mfp=boundary_mfp,
+            solve_collective_phonon=solve_collective_phonon,
+            is_reducible_collision_matrix=is_reducible_collision_matrix,
+            is_kappa_star=is_kappa_star,
+            gv_delta_q=gv_delta_q,
+            is_full_pp=is_full_pp,
+            read_pp=read_pp,
+            pp_filename=pp_filename,
+            pinv_cutoff=pinv_cutoff,
+            pinv_solver=pinv_solver,
+            log_level=log_level,
+            lang=lang,
+        )
+
+    def get_kappa_RTA(self):
+        """Return RTA lattice thermal conductivity."""
+        return self._kappa_RTA
+
+    def get_mode_kappa_RTA(self):
+        """Return RTA mode lattice thermal conductivities."""
+        return self._mode_kappa_RTA
+
+    def get_f_vectors(self):
+        """Return f vectors."""
+        return self._f_vectors
+
+    def get_mean_free_path(self):
+        """Return mean free path."""
+        return self._mfp
+
+    def _allocate_local_values(self, num_temp, num_band0, num_grid_points):
+        """Allocate grid point local arrays."""
+        super()._allocate_local_values(num_temp, num_band0, num_grid_points)
+
+        self._kappa = np.zeros(
+            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
+        )
+        self._kappa_RTA = np.zeros(
+            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
+        )
+        self._gv = np.zeros((num_grid_points, num_band0, 3), dtype="double", order="C")
+        self._f_vectors = np.zeros(
+            (num_grid_points, num_band0, 3), dtype="double", order="C"
+        )
+        self._gv_sum2 = np.zeros(
+            (num_grid_points, num_band0, 6), dtype="double", order="C"
+        )
+        self._mfp = np.zeros(
+            (len(self._sigmas), num_temp, num_grid_points, num_band0, 3),
+            dtype="double",
+            order="C",
+        )
+        self._mode_kappa = np.zeros(
+            (len(self._sigmas), num_temp, num_grid_points, num_band0, 6), dtype="double"
+        )
+        self._mode_kappa_RTA = np.zeros(
+            (len(self._sigmas), num_temp, num_grid_points, num_band0, 6), dtype="double"
+        )
+
+    def _set_kappa_at_sigmas(self, weights):
+        """Calculate thermal conductivity from collision matrix."""
+        for j, sigma in enumerate(self._sigmas):
+            if self._log_level:
+                text = "----------- Thermal conductivity (W/m-k) "
+                if sigma:
+                    text += "for sigma=%s -----------" % sigma
+                else:
+                    text += "with tetrahedron method -----------"
+                print(text)
+                sys.stdout.flush()
+
+            for k, t in enumerate(self._temperatures):
+                if t > 0:
+                    self._set_kappa_RTA(j, k, weights)
+
+                    w = diagonalize_collision_matrix(
+                        self._collision_matrix,
+                        i_sigma=j,
+                        i_temp=k,
+                        pinv_solver=self._pinv_solver,
+                        log_level=self._log_level,
+                    )
+                    self._collision_eigenvalues[j, k] = w
+
+                    self._set_kappa(j, k, weights)
+
+                    if self._log_level:
+                        print(
+                            ("#%6s       " + " %-10s" * 6)
+                            % ("T(K)", "xx", "yy", "zz", "yz", "xz", "xy")
+                        )
+                        print(
+                            ("%7.1f " + " %10.3f" * 6)
+                            % ((t,) + tuple(self._kappa[j, k]))
+                        )
+                        print(
+                            (" %6s " + " %10.3f" * 6)
+                            % (("(RTA)",) + tuple(self._kappa_RTA[j, k]))
+                        )
+                        print("-" * 76)
+                        sys.stdout.flush()
+
+        if self._log_level:
+            print("")
+
+    def _set_kappa(self, i_sigma, i_temp, weights):
+        if self._is_reducible_collision_matrix:
+            self._set_kappa_reducible_colmat(
+                self._kappa, self._mode_kappa, i_sigma, i_temp, weights
+            )
+        else:
+            self._set_kappa_ir_colmat(
+                self._kappa, self._mode_kappa, i_sigma, i_temp, weights
+            )
+
+    def _set_kappa_RTA(self, i_sigma, i_temp, weights):
+        if self._is_reducible_collision_matrix:
+            self._set_kappa_RTA_reducible_colmat(
+                self._kappa_RTA, self._mode_kappa_RTA, i_sigma, i_temp, weights
+            )
+        else:
+            self._set_kappa_RTA_ir_colmat(
+                self._kappa_RTA, self._mode_kappa_RTA, i_sigma, i_temp, weights
+            )
+
+
+class ConductivityWignerLBTE(ConductivityVelocityOperatorMixIn, ConductivityLBTEBase):
+    """Class of Wigner lattice thermal conductivity under direct-solution."""
+
+    def __init__(
+        self,
+        interaction: Interaction,
+        grid_points=None,
+        temperatures=None,
+        sigmas=None,
+        sigma_cutoff=None,
+        is_isotope=False,
+        mass_variances=None,
+        boundary_mfp=None,
+        solve_collective_phonon=False,
+        is_reducible_collision_matrix=False,
+        is_kappa_star=True,
+        gv_delta_q=None,
+        is_full_pp=False,
+        read_pp=False,
+        pp_filename=None,
+        pinv_cutoff=1.0e-8,
+        pinv_solver=0,
+        log_level=0,
+        lang="C",
+    ):
+        """Init method."""
+        self._kappa_TOT_exact = None
+        self._kappa_TOT_RTA = None
+        self._kappa_P_exact = None
+        self._mode_kappa_P_exact = None
+        self._kappa_P_RTA = None
+        self._mode_kappa_P_RTA = None
+        self._kappa_C = None
+        self._mode_kappa_C = None
+        self._gv_operator = None
+        self._gv_operator_sum2 = None
+
+        super().__init__(
+            interaction,
+            grid_points=grid_points,
+            temperatures=temperatures,
+            sigmas=sigmas,
+            sigma_cutoff=sigma_cutoff,
+            is_isotope=is_isotope,
+            mass_variances=mass_variances,
+            boundary_mfp=boundary_mfp,
+            solve_collective_phonon=solve_collective_phonon,
+            is_reducible_collision_matrix=is_reducible_collision_matrix,
+            is_kappa_star=is_kappa_star,
+            gv_delta_q=gv_delta_q,
+            is_full_pp=is_full_pp,
+            read_pp=read_pp,
+            pp_filename=pp_filename,
+            pinv_cutoff=pinv_cutoff,
+            pinv_solver=pinv_solver,
+            log_level=log_level,
+            lang=lang,
+        )
+
+    def get_kappa_P_RTA(self):
+        """Return RTA lattice thermal conductivity."""
+        return self._kappa_P_RTA
+
+    def get_mode_kappa_P_RTA(self):
+        """Return RTA mode lattice thermal conductivities."""
+        return self._mode_kappa_P_RTA
+
+    def get_mode_kappa_C(self):
+        """Return RTA mode lattice thermal conductivities."""
+        return self._mode_kappa_C
+
+    def _allocate_local_values(self, num_temp, num_band0, num_grid_points):
+        """Allocate grid point local arrays."""
+        super()._allocate_local_values(num_temp, num_band0, num_grid_points)
+
+        nat3 = len(self._pp.primitive) * 3
+        self._kappa_TOT_RTA = np.zeros(
+            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
+        )
+        self._kappa_TOT_exact = np.zeros(
+            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
+        )
+        self._kappa_P_exact = np.zeros(
+            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
+        )
+        self._kappa_P_RTA = np.zeros(
+            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
+        )
+        self._kappa_C = np.zeros(
+            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
+        )
+        self._mode_kappa_P_exact = np.zeros(
+            (len(self._sigmas), num_temp, num_grid_points, num_band0, 6), dtype="double"
+        )
+        self._mode_kappa_P_RTA = np.zeros(
+            (len(self._sigmas), num_temp, num_grid_points, num_band0, 6), dtype="double"
+        )
+
+        complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
+        self._gv_operator = np.zeros(
+            (num_grid_points, num_band0, nat3, 3), order="C", dtype=complex_dtype
+        )
+        self._gv_operator_sum2 = np.zeros(
+            (num_grid_points, num_band0, nat3, 6), order="C", dtype=complex_dtype
+        )
+        # one more index because we have off-diagonal terms (second index not
+        # parallelized)
+        self._mode_kappa_C = np.zeros(
+            (
+                len(self._sigmas),
+                num_temp,
+                num_grid_points,
+                num_band0,
+                nat3,
+                6,
+            ),
+            order="C",
+            dtype=complex_dtype,
+        )
+
+    def _set_kappa_at_sigmas(self, weights):
+        """Calculate thermal conductivity from collision matrix."""
+        for j, sigma in enumerate(self._sigmas):
+            if self._log_level:
+                text = "----------- Thermal conductivity (W/m-k) "
+                if sigma:
+                    text += "for sigma=%s -----------" % sigma
+                else:
+                    text += "with tetrahedron method -----------"
+                print(text)
+                sys.stdout.flush()
+
+            for k, t in enumerate(self._temperatures):
+                if t > 0:
+                    self._set_kappa_P_RTA(j, k, weights)
+
+                    w = diagonalize_collision_matrix(
+                        self._collision_matrix,
+                        i_sigma=j,
+                        i_temp=k,
+                        pinv_solver=self._pinv_solver,
+                        log_level=self._log_level,
+                    )
+                    self._collision_eigenvalues[j, k] = w
+
+                    self._set_kappa(j, k, weights)
+
+                    if self._log_level:
+                        print(
+                            ("#%6s       " + " %-10s" * 6)
+                            % (
+                                "         \t\t  T(K)",
+                                "xx",
+                                "yy",
+                                "zz",
+                                "yz",
+                                "xz",
+                                "xy",
+                            )
+                        )
+                        print(
+                            "K_P_exact\t\t"
+                            + ("%7.1f " + " %10.3f" * 6)
+                            % ((t,) + tuple(self._kappa_P_exact[j, k]))
+                        )
+                        print(
+                            "(K_P_RTA)\t\t"
+                            + ("%7.1f " + " %10.3f" * 6)
+                            % ((t,) + tuple(self._kappa_P_RTA[j, k]))
+                        )
+                        print(
+                            "K_C      \t\t"
+                            + ("%7.1f " + " %10.3f" * 6)
+                            % ((t,) + tuple(self._kappa_C[j, k].real))
+                        )
+                        print(" ")
+                        print(
+                            "K_TOT=K_P_exact+K_C\t"
+                            + ("%7.1f " + " %10.3f" * 6)
+                            % (
+                                (t,)
+                                + tuple(self._kappa_C[j, k] + self._kappa_P_exact[j, k])
+                            )
+                        )
+                        print("-" * 76)
+                        sys.stdout.flush()
+
+        if self._log_level:
+            print("")
+
+    def _set_kappa_ir_colmat(self, i_sigma, i_temp, weights):
+        """Calculate direct solution thermal conductivity of ir colmat."""
+        N = self._num_sampling_grid_points
+        if self._solve_collective_phonon:
+            self._set_mode_kappa_Chaput(i_sigma, i_temp, weights)
+        else:
+            X = self._get_X(i_temp, weights)
+            num_ir_grid_points = len(self._ir_grid_points)
+            Y = self._get_Y(i_sigma, i_temp, weights, X)
+            self._set_mean_free_path(i_sigma, i_temp, weights, Y)
+            self._set_mode_kappa(
+                self._mode_kappa_P_exact,
+                X,
+                Y,
+                num_ir_grid_points,
+                self._rotations_cartesian,
+                i_sigma,
+                i_temp,
+            )
+        self._kappa_P_exact[i_sigma, i_temp] = (
+            self._mode_kappa_P_exact[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
+        )
+
+    def _set_kappa_reducible_colmat(self, i_sigma, i_temp, weights):
+        """Calculate direct solution thermal conductivity of full colmat."""
+        N = self._num_sampling_grid_points
+        X = self._get_X(i_temp, weights)
+        num_mesh_points = np.prod(self._pp.mesh_numbers)
+        Y = self._get_Y(i_sigma, i_temp, weights, X)
+        self._set_mean_free_path(i_sigma, i_temp, weights, Y)
+        # Putting self._rotations_cartesian is to symmetrize kappa.
+        # None can be put instead for watching pure information.
+        self._set_mode_kappa(
+            self._mode_kappa_P_exact,
+            X,
+            Y,
+            num_mesh_points,
+            self._rotations_cartesian,
+            i_sigma,
+            i_temp,
+        )
+        self._mode_kappa_P_exact[i_sigma, i_temp] /= len(self._rotations_cartesian)
+        self._kappa_P_exact[i_sigma, i_temp] = (
+            self._mode_kappa_P_exact[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
+        )
+
+    def _set_kappa(self, i_sigma, i_temp, weights):
+        if self._is_reducible_collision_matrix:
+            self._set_kappa_reducible_colmat(
+                self._kappa_P_exact, self._mode_kappa_P_exact, i_sigma, i_temp, weights
+            )
+        else:
+            self._set_kappa_ir_colmat(
+                self._kappa_P_exact, self._mode_kappa_P_exact, i_sigma, i_temp, weights
+            )
+
+    def _set_kappa_RTA(self, i_sigma, i_temp, weights):
+        if self._is_reducible_collision_matrix:
+            self._set_kappa_RTA_reducible_colmat(
+                self._kappa_P_RTA, self._mode_kappa_P_RTA, i_sigma, i_temp, weights
+            )
+            print(
+                " WARNING: Coherences conductivity not implemented for "
+                "is_reducible_collision_matrix=True "
+            )
+        else:
+            self._set_kappa_RTA_ir_colmat(
+                self._kappa_P_RTA, self._mode_kappa_P_RTA, i_sigma, i_temp, weights
+            )
+            self._set_kappa_C_ir_colmat(i_sigma, i_temp)
+
+    def _set_kappa_C_ir_colmat(self, i_sigma, i_temp):
+        """Calculate coherence term of the thermal conductivity."""
+        N = self._num_sampling_grid_points
+        num_band = len(self._pp.primitive) * 3
+        # num_ir_grid_points = len(self._ir_grid_points)
+        for i, gp in enumerate(self._ir_grid_points):
+            # linewidths at qpoint i, sigma i_sigma, and temperature i_temp
+            g = self._get_main_diagonal(i, i_sigma, i_temp) * 2.0  # linewidth (FWHM)
+            frequencies = self._frequencies[gp]
+            cv = self._cv[i_temp, i, :]
+            for s1 in range(num_band):
+                for s2 in range(num_band):
+                    hbar_omega_eV_s1 = (
+                        frequencies[s1] * THzToEv
+                    )  # hbar*omega=h*nu in eV
+                    hbar_omega_eV_s2 = (
+                        frequencies[s2] * THzToEv
+                    )  # hbar*omega=h*nu in eV
+                    if (
+                        (frequencies[s1] > self._pp.cutoff_frequency)
+                        and (frequencies[s2] > self._pp.cutoff_frequency)
+                    ) and np.abs(frequencies[s1] - frequencies[s2]) > 1e-4:
+                        # frequencies must be non-degenerate to contribute to k_C,
+                        # otherwise they contribute to k_P
+                        hbar_gamma_eV_s1 = g[s1] * THzToEv
+                        hbar_gamma_eV_s2 = g[s2] * THzToEv
+                        lorentzian_divided_by_hbar = (
+                            0.5 * (hbar_gamma_eV_s1 + hbar_gamma_eV_s2)
+                        ) / (
+                            (hbar_omega_eV_s1 - hbar_omega_eV_s2) ** 2
+                            + 0.25 * ((hbar_gamma_eV_s1 + hbar_gamma_eV_s2) ** 2)
+                        )
+                        #
+                        prefactor = (
+                            0.25
+                            * (hbar_omega_eV_s1 + hbar_omega_eV_s2)
+                            * (cv[s1] / hbar_omega_eV_s1 + cv[s2] / hbar_omega_eV_s2)
+                        )
+                        self._mode_kappa_C[i_sigma, i_temp, i, s1, s2] = (
+                            (self._gv_operator_sum2[i, s1, s2])
+                            * prefactor
+                            * lorentzian_divided_by_hbar
+                            * self._conversion_factor_WTE
+                        )
+
+        self._kappa_C[i_sigma, i_temp] = (
+            self._mode_kappa_C[i_sigma, i_temp].sum(axis=0).sum(axis=0).sum(axis=0) / N
+        )
 
 
 def get_thermal_conductivity_LBTE(

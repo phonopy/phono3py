@@ -186,6 +186,7 @@ class ConductivityBase:
         volume = self._pp.primitive.volume
         self._conversion_factor = unit_to_WmK / volume
 
+        self._velocity_obj = None
         self._init_velocity(gv_delta_q)
 
     def __iter__(self):
