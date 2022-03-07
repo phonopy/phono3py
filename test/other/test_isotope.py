@@ -109,7 +109,7 @@ def test_Phono3pyIsotope_grg(si_pbesol_grg):
     np.testing.assert_equal(
         iso.grid.grid_matrix, [[-15, 15, 15], [15, -15, 15], [15, 15, -15]]
     )
-    np.testing.assert_allclose(si_pbesol_grg_iso, iso.gamma[0], atol=1e-3)
+    np.testing.assert_allclose(si_pbesol_grg_iso, iso.gamma[0], atol=2e-3)
 
 
 def test_Phono3pyIsotope_grg_with_sigma(si_pbesol_grg):

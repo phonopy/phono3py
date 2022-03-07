@@ -60,10 +60,10 @@ from phonopy.structure.dataset import get_displacements_and_forces
 from phonopy.structure.symmetry import Symmetry
 from phonopy.units import VaspToTHz
 
+from phono3py.conductivity.direct_solution import get_thermal_conductivity_LBTE
+from phono3py.conductivity.rta import get_thermal_conductivity_RTA
 from phono3py.interface.fc_calculator import get_fc3
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
-from phono3py.phonon3.conductivity_LBTE import get_thermal_conductivity_LBTE
-from phono3py.phonon3.conductivity_RTA import get_thermal_conductivity_RTA
 from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
 from phono3py.phonon3.displacement_fc3 import (
     direction_to_displacement,
@@ -2146,6 +2146,7 @@ class Phono3py:
         write_gamma=False,
         read_gamma=False,
         is_N_U=False,
+        conductivity_type=None,
         write_kappa=False,
         write_gamma_detail=False,
         write_collision=False,
@@ -2171,7 +2172,7 @@ class Phono3py:
                 `is_LBTE=True` gives temperatures=[300, ].
         is_isotope : bool, optional, default is False
             With or without isotope scattering.
-        mass_variances : array_like, optiona, default is None
+        mass_variances : array_like, optional, default is None
             Mass variances for isotope scattering calculation. When None,
             the values stored in phono3py are used with `is_isotope=True`.
             shape(atoms_in_primitive, ), dtype='double'.
@@ -2244,6 +2245,8 @@ class Phono3py:
             RTA only (`is_LBTE=False`). With True, categorization of normal
             and Umklapp scattering is made and imaginary parts of self energy
             for them are separated.
+        conductivity_type : str, optional
+            "wigner" or None. Default is None.
         write_kappa : bool, optional, default is False
             With True, thermal conductivity and related properties are
             written into a file. With multiple `sigmas`, respective files
@@ -2311,6 +2314,7 @@ class Phono3py:
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
                 is_full_pp=is_full_pp,
+                conductivity_type=conductivity_type,
                 pinv_cutoff=pinv_cutoff,
                 pinv_solver=pinv_solver,
                 write_collision=write_collision,
@@ -2342,9 +2346,10 @@ class Phono3py:
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
                 is_full_pp=is_full_pp,
+                is_N_U=is_N_U,
+                conductivity_type=conductivity_type,
                 write_gamma=write_gamma,
                 read_gamma=read_gamma,
-                is_N_U=is_N_U,
                 write_kappa=write_kappa,
                 write_pp=write_pp,
                 read_pp=read_pp,

@@ -43,6 +43,7 @@ class Phono3pySettings(Settings):
     _default = {
         # In micrometre. The default value is just set to avoid divergence.
         "boundary_mfp": 1.0e6,
+        "conductivity_type": None,
         "constant_averaged_pp_interaction": None,
         "create_forces_fc2": None,
         "create_forces_fc3": None,
@@ -113,6 +114,10 @@ class Phono3pySettings(Settings):
     def set_boundary_mfp(self, val):
         """Set boundary_mfp."""
         self._v["boundary_mfp"] = val
+
+    def set_conductivity_type(self, val):
+        """Set conductivity_type."""
+        self._v["conductivity_type"] = val
 
     def set_constant_averaged_pp_interaction(self, val):
         """Set constant_averaged_pp_interaction."""
@@ -476,6 +481,10 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_tetrahedron_method:
                 self._confs["tetrahedron"] = ".true."
 
+        if "is_wigner_kappa" in self._args:
+            if self._args.is_wigner_kappa:
+                self._confs["conductivity_type"] = "wigner"
+
         if "lapack_zheev_uplo" in self._args:
             if self._args.lapack_zheev_uplo is not None:
                 self._confs["lapack_zheev_uplo"] = self._args.lapack_zheev_uplo
@@ -629,6 +638,7 @@ class Phono3pyConfParser(ConfParser):
             # float
             if conf_key in (
                 "boundary_mfp",
+                "const_ave_pp",
                 "cutoff_fc3_distance",
                 "cutoff_pair_distance",
                 "max_freepath",
@@ -639,8 +649,16 @@ class Phono3pyConfParser(ConfParser):
                 self.set_parameter(conf_key, float(confs[conf_key]))
 
             # int
-            if conf_key in ("pinv_solver", "num_points_in_batch"):
+            if conf_key in (
+                "pinv_solver",
+                "num_points_in_batch",
+                "scattering_event_class",
+            ):
                 self.set_parameter(conf_key, int(confs[conf_key]))
+
+            # string
+            if conf_key in ("conductivity_type", "create_forces_fc3_file"):
+                self.set_parameter(conf_key, confs[conf_key])
 
             # specials
             if conf_key in ("create_forces_fc2", "create_forces_fc3"):
@@ -649,11 +667,6 @@ class Phono3pyConfParser(ConfParser):
                 else:
                     fnames = confs[conf_key]
                 self.set_parameter(conf_key, fnames)
-
-            if conf_key == "create_forces_fc3_file":
-                self.set_parameter(
-                    "create_forces_fc3_file", confs["create_forces_fc3_file"]
-                )
 
             if conf_key == "dim_fc2":
                 matrix = [int(x) for x in confs["dim_fc2"].split()]
@@ -673,9 +686,6 @@ class Phono3pyConfParser(ConfParser):
                         )
                     else:
                         self.set_parameter("dim_fc2", matrix)
-
-            if conf_key in ("constant_averaged_pp_interaction" "const_ave_pp"):
-                self.set_parameter("const_ave_pp", float(confs["const_ave_pp"]))
 
             if conf_key == "grid_addresses":
                 vals = [
@@ -716,11 +726,6 @@ class Phono3pyConfParser(ConfParser):
                     vals = [int(x) for x in confs["read_collision"].split()]
                     self.set_parameter("read_collision", vals)
 
-            if conf_key == "scattering_event_class":
-                self.set_parameter(
-                    "scattering_event_class", int(confs["scattering_event_class"])
-                )
-
     def _set_settings(self):
         self.set_settings()
         params = self._parameters
@@ -736,6 +741,10 @@ class Phono3pyConfParser(ConfParser):
         # Calculate thermal conductivity in BTE-RTA
         if "bterta" in params:
             self._settings.set_is_bterta(params["bterta"])
+
+        # Choice of thermal conductivity type
+        if "conductivity_type" in params:
+            self._settings.set_conductivity_type(params["conductivity_type"])
 
         # Solve collective phonons
         if "collective_phonon" in params:

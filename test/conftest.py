@@ -3,6 +3,7 @@ import os
 
 import phonopy
 import pytest
+from phonopy import Phonopy
 from phonopy.interface.phonopy_yaml import read_cell_yaml
 
 import phono3py
@@ -252,4 +253,20 @@ def aln_lda(request):
         store_dense_gp_map=enable_v2,
         store_dense_svecs=enable_v2,
         log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
+def ph_nacl() -> Phonopy:
+    """Return Phonopy class instance of NaCl 2x2x2."""
+    yaml_filename = os.path.join(current_dir, "phonopy_disp_NaCl.yaml")
+    force_sets_filename = os.path.join(current_dir, "FORCE_SETS_NaCl")
+    born_filename = os.path.join(current_dir, "BORN_NaCl")
+    return phonopy.load(
+        yaml_filename,
+        force_sets_filename=force_sets_filename,
+        born_filename=born_filename,
+        is_compact_fc=False,
+        log_level=1,
+        produce_fc=True,
     )
