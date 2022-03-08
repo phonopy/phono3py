@@ -113,15 +113,12 @@ class ConductivityVelocityOperatorMixIn:
         self._set_gv_by_gv_operator(i_gp, i_data)
 
     def _set_gv_operator(self, i_irgp, i_data):
-        """Set velocity operator.
-
-
-        """
+        """Set velocity operator."""
         irgp = self._grid_points[i_irgp]
         self._velocity_obj.run([self._get_qpoint_from_gp_index(irgp)])
         gv_operator = self._velocity_obj.velocity_operators[0, :, :, :]
         #
-        
+
         deg_sets = degenerate_sets(self._frequencies[irgp])
         # group velocities in the degenerate subspace are obtained diagonalizing the
         # velocity operator in the subspace of degeneracy.
