@@ -169,7 +169,7 @@ def test_kappa_RTA_si_nosym(si_pbesol, si_pbesol_nosym):
     kappa_C_r = kappa_C.reshape(-1, 3).sum(axis=1)
     kappa_P_ref = np.reshape(si_pbesol_kappa_P_RTA_si_nosym, (-1, 3)).sum(axis=1)
     kappa_C_ref = np.reshape(si_pbesol_kappa_C_si_nosym, (-1, 3)).sum(axis=1)
-    np.testing.assert_allclose(kappa_P_ref / 3, kappa_P_RTA_r / 3, atol=0.5)
+    np.testing.assert_allclose(kappa_P_ref / 3, kappa_P_RTA_r / 3, atol=0.8)
     np.testing.assert_allclose(kappa_C_ref / 3, kappa_C_r / 3, atol=0.02)
 
 

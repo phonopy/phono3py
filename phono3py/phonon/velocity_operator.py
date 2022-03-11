@@ -195,6 +195,7 @@ class VelocityOperator(GroupVelocity):
         # this is a diagonal matrix containing the frequencies on the diagonal
         # we take the element-wise sqrt of a diagonal matrix, in eigenmodes basis
         omega_matrix = np.sqrt(np.matmul(eigvecs.T.conj(), np.matmul(dm, eigvecs)))
+        omega_matrix = np.diag(np.diag(omega_matrix))
         # now we go back to the Cartesian basis
         sqrt_dm = np.matmul(eigvecs, np.matmul(omega_matrix, eigvecs.T.conj()))
         #
