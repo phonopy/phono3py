@@ -1,6 +1,5 @@
-"""Tests for group velocity calculation."""
+"""Tests for velocity operator calculation."""
 import numpy as np
-import pytest
 from phonopy import Phonopy
 from phonopy.units import THzToCm, VaspToTHz
 
@@ -219,9 +218,6 @@ def test_gv_operator_nacl(ph_nacl: Phonopy):
         )
 
 
-@pytest.mark.skip(
-    reason="This test requires to place the file test_velocity_operator.py in /phonopy/test/phonon/test_velocity_operator.py. In this folder it returns E       fixture 'ph_si' not found"
-)
 def test_gv_operator_si(ph_si: Phonopy):
     """Test of VelocityOperator for Si."""
     gv_operator_square_modulus_ref = {}
