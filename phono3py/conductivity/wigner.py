@@ -108,11 +108,18 @@ class ConductivityVelocityOperatorMixIn:
             frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
         )
 
-    def _set_gv_op(self, i_irgp, i_data):
-        """Set group velocity."""
+    def _set_velocities(self, i_gp, i_data):
+        self._set_gv_operator(i_gp, i_data)
+        self._set_gv_by_gv_operator(i_gp, i_data)
+
+    def _set_gv_operator(self, i_irgp, i_data):
+        """Set velocity operator."""
         irgp = self._grid_points[i_irgp]
         self._velocity_obj.run([self._get_qpoint_from_gp_index(irgp)])
         gv_operator = self._velocity_obj.velocity_operators[0, :, :, :]
+        self._gv_operator[i_data] = gv_operator[self._pp.get_band_indices(), :, :]
+        #
+        gv = np.einsum("iij->ij", gv_operator).real
         deg_sets = degenerate_sets(self._frequencies[irgp])
         # group velocities in the degenerate subspace are obtained diagonalizing the
         # velocity operator in the subspace of degeneracy.
@@ -124,36 +131,10 @@ class ConductivityVelocityOperatorMixIn:
                         pos : pos + len(deg), pos : pos + len(deg), id_dir
                     ]
                     eigvals_deg = np.linalg.eigvalsh(matrix_deg)
-                    gv_operator[
-                        pos : pos + len(deg), pos : pos + len(deg), id_dir
-                    ] = np.diag(eigvals_deg)
+                    gv[pos : pos + len(deg), id_dir] = eigvals_deg
                 pos += len(deg)
         #
-        self._gv_operator[i_data] = gv_operator[self._pp.get_band_indices(), :, :]
-        gv = np.einsum("iij->ij", gv_operator).real
         self._gv[i_data] = gv[self._pp.get_band_indices(), :]
-
-    def _set_velocities(self, i_gp, i_data):
-        self._set_gv_operator(i_gp, i_data)
-        self._set_gv_by_gv_operator(i_gp, i_data)
-
-    def _set_gv_operator(self, i_irgp, i_data):
-        """Set velocity operator.
-
-        Note
-        ----
-        self._gv is implemented by Togo without understanding well.
-
-        """
-        irgp = self._grid_points[i_irgp]
-        self._velocity_obj.run([self._get_qpoint_from_gp_index(irgp)])
-        gv_operator = self._velocity_obj.velocity_operators[0, :, :, :]
-        #
-        self._gv_operator[i_data] = gv_operator[self._pp.get_band_indices(), :, :]
-        self._gv[i_data] = [
-            self._gv_operator[i_data, bi, i].real
-            for i, bi in enumerate(self._pp.band_indices)
-        ]
 
     def _set_gv_by_gv_operator(self, i_irgp, i_data):
         """Outer product of group velocities.
