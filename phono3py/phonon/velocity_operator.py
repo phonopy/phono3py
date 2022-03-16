@@ -129,9 +129,8 @@ class VelocityOperator(GroupVelocity):
         return self._velocity_operators
 
     def _calculate_velocity_operator_at_q(self, q):
-
-        self._dynmat.set_dynamical_matrix(q)
-        dm = self._dynmat.get_dynamical_matrix()
+        self._dynmat.run(q)
+        dm = self._dynmat.dynamical_matrix
         eigvals, eigvecs = np.linalg.eigh(dm)
         eigvals = eigvals.real
         freqs = np.sqrt(abs(eigvals)) * np.sign(eigvals) * self._factor
@@ -212,22 +211,22 @@ class VelocityOperator(GroupVelocity):
             and (self._dynmat.nac_method == "gonze")
             and flag_gamma
         ):
-            dynmat.set_dynamical_matrix(
+            dynmat.run(
                 q - delta_q, q_direction=(q - delta_q) / np.linalg.norm(q - delta_q)
             )
-            dm1 = dynmat.get_dynamical_matrix()
+            dm1 = dynmat.dynamical_matrix
             sqrt_dm1 = self._sqrt_dynamical_matrix(flag_gamma, dm1)
-            dynmat.set_dynamical_matrix(
+            dynmat.run(
                 q + delta_q, q_direction=(q + delta_q) / np.linalg.norm(q + delta_q)
             )
-            dm2 = dynmat.get_dynamical_matrix()
+            dm2 = dynmat.dynamical_matrix
             sqrt_dm2 = self._sqrt_dynamical_matrix(flag_gamma, dm2)
         else:
-            dynmat.set_dynamical_matrix(q - delta_q)
-            dm1 = dynmat.get_dynamical_matrix()
+            dynmat.run(q - delta_q)
+            dm1 = dynmat.dynamical_matrix
             sqrt_dm1 = self._sqrt_dynamical_matrix(flag_gamma, dm1)
-            dynmat.set_dynamical_matrix(q + delta_q)
-            dm2 = dynmat.get_dynamical_matrix()
+            dynmat.run(q + delta_q)
+            dm2 = dynmat.dynamical_matrix
             sqrt_dm2 = self._sqrt_dynamical_matrix(flag_gamma, dm2)
         #
         #

@@ -34,6 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+from abc import abstractmethod
 
 import numpy as np
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
@@ -143,6 +144,7 @@ class ConductivityRTABase(ConductivityBase):
         """Set averaged ph-ph interaction."""
         self._averaged_pp_interaction = ave_pp
 
+    @abstractmethod
     def set_kappa_at_sigmas(self):
         """Must be implementated in the inherited class."""
         raise NotImplementedError()

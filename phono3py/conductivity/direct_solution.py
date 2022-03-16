@@ -36,6 +36,7 @@
 import sys
 import time
 import warnings
+from abc import abstractmethod
 
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
@@ -200,9 +201,11 @@ class ConductivityLBTEBase(ConductivityBase):
             weights = self._prepare_collision_matrix()
             self._set_kappa_at_sigmas(weights)
 
+    @abstractmethod
     def _set_kappa(self, i_sigma, i_temp, weights):
         raise NotImplementedError
 
+    @abstractmethod
     def _set_kappa_at_sigmas(weights):
         raise NotImplementedError
 
@@ -877,6 +880,7 @@ class ConductivityLBTEBase(ConductivityBase):
 
         return I_mat
 
+    @abstractmethod
     def _set_kappa_RTA(self, i_sigma, i_temp, weights):
         raise NotImplementedError
 

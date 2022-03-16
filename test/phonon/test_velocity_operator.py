@@ -188,8 +188,8 @@ def test_gv_operator_nacl(ph_nacl: Phonopy):
     )
 
     # we chose an 'ugly' q-point because we want to avoid degeneracies.
-    ph_nacl.dynamical_matrix.set_dynamical_matrix([[0.1, 0.22, 0.33]])
-    dm = ph_nacl.dynamical_matrix.get_dynamical_matrix()
+    ph_nacl.dynamical_matrix.run([[0.1, 0.22, 0.33]])
+    dm = ph_nacl.dynamical_matrix.dynamical_matrix
     eigvals, eigvecs = np.linalg.eigh(dm)
 
     np.testing.assert_allclose(
@@ -400,8 +400,8 @@ def test_gv_operator_si(ph_si: Phonopy):
         ph_si.dynamical_matrix, symmetry=ph_si.primitive_symmetry
     )
 
-    ph_si.dynamical_matrix.set_dynamical_matrix([[0.1, 0.22, 0.33]])
-    dm = ph_si.dynamical_matrix.get_dynamical_matrix()
+    ph_si.dynamical_matrix.run([[0.1, 0.22, 0.33]])
+    dm = ph_si.dynamical_matrix.dynamical_matrix
     eigvals, eigvecs = np.linalg.eigh(dm)
 
     np.testing.assert_allclose(

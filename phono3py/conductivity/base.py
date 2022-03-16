@@ -35,6 +35,7 @@
 
 import textwrap
 import warnings
+from abc import ABC, abstractmethod
 from typing import List, Optional
 
 import numpy as np
@@ -52,7 +53,7 @@ unit_to_WmK = (
 )  # 2pi comes from definition of lifetime.
 
 
-class ConductivityBase:
+class ConductivityBase(ABC):
     """Base class of Conductivity classes."""
 
     _average_gv_over_kstar = False
@@ -498,18 +499,22 @@ class ConductivityBase:
             self._ir_grid_points = self._grid_points
             self._ir_grid_weights = self._grid_weights
 
+    @abstractmethod
     def _run_at_grid_point(self):
         """Must be implementated in the inherited class."""
         raise NotImplementedError()
 
+    @abstractmethod
     def _allocate_values(self):
         """Must be implementated in the inherited class."""
         raise NotImplementedError()
 
+    @abstractmethod
     def _set_velocities(self, i_gp, i_data):
         """Must be implementated in the inherited class."""
         raise NotImplementedError()
 
+    @abstractmethod
     def _init_velocity(self, gv_delta_q):
         raise NotImplementedError()
 
