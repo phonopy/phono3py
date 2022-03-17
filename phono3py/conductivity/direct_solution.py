@@ -1595,7 +1595,7 @@ class ConductivityWignerLBTE(ConductivityVelocityOperatorMixIn, ConductivityLBTE
 
         self._kappa_C[i_sigma, i_temp] = (
             self._mode_kappa_C[i_sigma, i_temp].sum(axis=0).sum(axis=0).sum(axis=0) / N
-        )
+        ).real
 
 
 def get_thermal_conductivity_LBTE(
