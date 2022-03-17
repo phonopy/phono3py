@@ -682,11 +682,28 @@ class GridMatrix:
         tmat = sym_dataset["transformation_matrix"]
         conv_lat = np.dot(np.linalg.inv(tmat).T, self._lattice)
 
+        # tmat and conv_lat are overwritten when nicer abc are found.
+        for r in sym_dataset["rotations"]:
+            r_s = similarity_transformation(tmat, r)
+            if np.allclose(
+                np.dot(conv_lat.T, r_s), sym_dataset["std_lattice"].T, atol=1e-5
+            ) or np.allclose(
+                -np.dot(conv_lat.T, r_s), sym_dataset["std_lattice"].T, atol=1e-5
+            ):
+                conv_lat = sym_dataset["std_lattice"]
+                tmat = np.dot(self._lattice, np.linalg.inv(conv_lat)).T
+                break
+
         if coordinates == "direct":
             num_cells = int(np.prod(length2mesh(length, conv_lat)))
             max_num_atoms = num_cells * len(sym_dataset["std_types"])
+            _sym_dataset = {
+                "number": sym_dataset["number"],
+                "std_types": sym_dataset["std_types"],
+                "std_lattice": conv_lat,
+            }
             conv_mesh_numbers = estimate_supercell_matrix(
-                sym_dataset, max_num_atoms=max_num_atoms, max_iter=200
+                _sym_dataset, max_num_atoms=max_num_atoms, max_iter=200
             )
         elif coordinates == "reciprocal":
             conv_mesh_numbers = length2mesh(length, conv_lat)
