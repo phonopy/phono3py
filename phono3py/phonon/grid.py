@@ -682,7 +682,12 @@ class GridMatrix:
         tmat = sym_dataset["transformation_matrix"]
         conv_lat = np.dot(np.linalg.inv(tmat).T, self._lattice)
 
-        if self._can_use_std_lattice(conv_lat, tmat):
+        if can_use_std_lattice(
+            conv_lat,
+            tmat,
+            sym_dataset["std_lattice"],
+            sym_dataset["rotations"],
+        ):
             conv_lat = sym_dataset["std_lattice"]
             tmat = np.dot(self._lattice, np.linalg.inv(conv_lat)).T
 
@@ -705,23 +710,24 @@ class GridMatrix:
         )
         return grid_matrix
 
-    def _can_use_std_lattice(self, conv_lat, tmat):
-        """Inspect if std_lattice can be used as conv_lat.
 
-        r_s is the rotation matrix of conv_lat.
-        Return if conv_lat rotated by det(r_s)*r_s and std_lattice are equivalent.
-        det(r_s) is necessary to make improper rotation to proper rotation.
+def can_use_std_lattice(conv_lat, tmat, std_lattice, rotations, symprec=1e-5):
+    """Inspect if std_lattice can be used as conv_lat.
 
-        """
-        for r in self._symmetry_dataset["rotations"]:
-            r_s = similarity_transformation(tmat, r)
-            if np.allclose(
-                np.linalg.det(r_s) * np.dot(conv_lat.T, r_s),
-                self._symmetry_dataset["std_lattice"].T,
-                atol=1e-5,
-            ):
-                return True
-        return False
+    r_s is the rotation matrix of conv_lat.
+    Return if conv_lat rotated by det(r_s)*r_s and std_lattice are equivalent.
+    det(r_s) is necessary to make improper rotation to proper rotation.
+
+    """
+    for r in rotations:
+        r_s = similarity_transformation(tmat, r)
+        if np.allclose(
+            np.linalg.det(r_s) * np.dot(np.transpose(conv_lat), r_s),
+            np.transpose(std_lattice),
+            atol=symprec,
+        ):
+            return True
+    return False
 
 
 def get_grid_point_from_address_py(address, mesh):
