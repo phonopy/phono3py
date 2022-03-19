@@ -4,28 +4,23 @@ digraph phonopy {
   "Phono3py (FC)" [shape = box, style = filled];
   "Phono3py (LTC)" [shape = box, style = filled];
   "Supercell + displacements" [shape = box];
-  "Supercell & displacements generation" [shape = box];
   "Force calc." [shape = octagon];
   "Force-constants calc." [shape = octagon];
 
   subgraph ph3force {
   "Unit cell" -> "Phono3py (force-sets)";
   "Supercell matrix" -> "Phono3py (force-sets)";
-  "Phono3py (force-sets)" -> "Supercell & displacements generation";
-  "Supercell & displacements generation" -> "Displacements dataset";
-  "Supercell & displacements generation" -> "Supercell";
-  "Supercell & displacements generation"
-  "Supercell" -> "Supercell + displacements";
-  "Displacements dataset" -> "Supercell + displacements";
-  "Supercell + displacements" -> "Supercells with displacements";
-  "Supercells with displacements" -> "Force calc.";
+  "Phono3py (force-sets)" -> "Supercell";
+  "Phono3py (force-sets)" -> "Displacement dataset";
+  "Supercell" -> "Force calc.";
+  "Displacement dataset" -> "Force calc.";
   "Force calc." -> "Supercell-force sets";
   }
 
   subgraph ph3fc {
   "Unit cell" -> "Phono3py (FC)";
   "Supercell matrix" -> "Phono3py (FC)";
-  "Displacements dataset" -> "Phono3py (FC)";
+  "Displacement dataset" -> "Phono3py (FC)";
   "Supercell-force sets" -> "Phono3py (FC)";
   "Phono3py (FC)" -> "Force-constants calc.";
   "Force-constants calc." -> "Force constants (fc2, fc3)";

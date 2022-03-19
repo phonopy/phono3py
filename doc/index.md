@@ -45,7 +45,7 @@ workflow
 examples
 Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE) <interfaces>
 command-options
-output-files
+input-output-files
 hdf5_howto
 auxiliary-tools
 direct-solution
