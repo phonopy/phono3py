@@ -265,40 +265,33 @@ $10^{-8}$ are treated as 0 and those solutions are considered
 as null spaces.
 ```
 
-## Installation of diagonalization solvers with multithreaded BLAS
+## Diagonalization solver interfaces
 
 Multithreaded BLAS is recommended to use for the calculation of the direct
-solution of LBTE since the diagonalization of the collision matrix is
-computationally demanding. A few examples of how to install multithreded BLAS
-libraries are presented below.
+solution of LBTE because the diagonalization of the collision matrix is
+computationally highly demanding. The diagonalization in Phono3py relies on
+LAPACK via BLAS library. There are choices of the BLAS libraries. OpenBLAS and
+MKL are considered most popular choices. For non-INTEL (or AMD) systems such as
+ARM64, MKL can not be used. How to choose the BLAS library in installation via
+conda-forge is written {ref}`here<install_an_example>`.
 
-### MKL linked scipy
+Phono3py has two different interfaces to the LAPACK library. One is via scipy
+(or numpy), and the other is via LAPACKE as shown below. How to switch between
+interfaces is described in the
+{ref}`next section<direct_solution_solver_choice>`.
 
-Scipy (also numpy) has an interface to LAPACK dsyev
-(`scipy.linalg.lapack.dsyev`). An MKL LAPACK linked scipy (also numpy) gives
-very good computing performance and is easily obtained using the anaconda
-package manager. In this choice, usual installation of LAPACKE is necessary for
-running `dgesvd` and `zheev`. When using anaconda, installing OpenBLAS is the
-easiest way to do. See {ref}`install_openblas_lapacke`
+### OpenBLAS or MKL linked scipy and numpy
+
+Scipy and numpy have interfaces to LAPACK `dsyevd`, and scipy also has the
+interface to `dsyev`. OpenBLAS and MKL linked scipy and numpy are provided by
+conda-forge.
 
 ### OpenBLAS or MKL via LAPACKE
 
-Using LAPACKE via python C-API is implemented. By this, phono3py can use LAPACK
-dsyev. This uses smaller memory space than using MKL linked scipy. Practically
-there are two choices, OpenBLAS and MKL. For MKL, proper installatin of the MKL
-package is necessary. The MKL library installed obtained from anaconda can not
-be used.
+LAPACK `dsyev` and `dsyevd` can be accessed via LAPACKE in the phono3py's C
+language implementation through the python C-API.
 
-#### OpenBLAS
-
-Use of OpenBLAS is an easy choice if the anaconda package is used. See
-{ref}`install_openblas_lapacke`.
-
-#### MKL
-
-The BLAS multithread performance may be better in that in MKL. Using MKL-LAPACK
-via MKL-LAPACKE via python C-API is also implemented if the link is succeeded.
-See {ref}`install_mkl_lapacke`.
+(direct_solution_solver_choice)=
 
 ## Solver choice for diagonalization
 

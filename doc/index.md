@@ -41,6 +41,7 @@ Papers that may introduce phono3py:
 ```{toctree}
 :maxdepth: 1
 install
+workflow
 examples
 Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE) <interfaces>
 command-options
@@ -51,6 +52,7 @@ direct-solution
 workload-distribution
 cutoff-pair
 external-tools
+phono3py-api
 tips
 citation
 changelog
