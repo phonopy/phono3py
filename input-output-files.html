@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Output files &#8212; Phono3py v.2.1.0</title>
+    <title>Input / Output files &#8212; Phono3py v.2.2.0</title>
     
   <link href="_static/css/theme.css" rel="stylesheet">
   <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
@@ -23,7 +23,7 @@
 
     
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
     
   <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
 
@@ -31,9 +31,9 @@
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
-    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="How to read the results stored in hdf5 files" href="hdf5_howto.html" />
@@ -54,14 +54,19 @@
     <div class="container-xl">
       <div class="row">
           
-<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
     
         <div class="navbar-brand-box">
     <a class="navbar-brand text-wrap" href="index.html">
       
       
       
-      <h1 class="site-logo" id="site-title">Phono3py v.2.1.0</h1>
+      <h1 class="site-logo" id="site-title">Phono3py v.2.2.0</h1>
       
     </a>
 </div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
@@ -73,6 +78,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="install.html">
    Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="workflow.html">
+   Workflow
   </a>
  </li>
  <li class="toctree-l1">
@@ -119,7 +129,7 @@
  </li>
  <li class="toctree-l1 current active">
   <a class="current reference internal" href="#">
-   Output files
+   Input / Output files
   </a>
  </li>
  <li class="toctree-l1">
@@ -153,6 +163,11 @@
   </a>
  </li>
  <li class="toctree-l1">
+  <a class="reference internal" href="phono3py-api.html">
+   Phono3py API
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="tips.html">
    Tips
   </a>
@@ -183,22 +198,22 @@
 
 
           
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
 <main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
     
     <div class="topbar container-xl fixed-top">
     <div class="topbar-contents row">
         <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
         <div class="col pl-md-4 topbar-main">
-            
-            <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
-                data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
-                aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
-                title="Toggle navigation" data-toggle="tooltip" data-placement="left">
-                <i class="fas fa-bars"></i>
-                <i class="fas fa-arrow-left"></i>
-                <i class="fas fa-arrow-up"></i>
-            </button>
-            
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
             
 <div class="dropdown-buttons-trigger">
     <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
@@ -208,12 +223,12 @@
         <!-- ipynb file if we had a myst markdown file -->
         
         <!-- Download raw file -->
-        <a class="dropdown-buttons" href="_sources/output-files.md.txt"><button type="button"
+        <a class="dropdown-buttons" href="_sources/input-output-files.md.txt"><button type="button"
                 class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
                 data-placement="left">.md</button></a>
         <!-- Download PDF via print -->
         <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
-            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
     </div>
 </div>
 
@@ -231,7 +246,7 @@
         </div>
 
         <!-- Table of contents -->
-        <div class="d-none d-md-block col-md-2 bd-toc show">
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
             
             <div class="tocsection onthispage pt-5 pb-3">
                 <i class="fas fa-list"></i> Contents
@@ -366,11 +381,149 @@
 </div>
     <div id="main-content" class="row">
         <div class="col-12 col-md-9 pl-md-3 pr-md-0">
-        
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Input / Output files</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#intermediate-text-files">
+   Intermediate text files
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#phono3py-disp-yaml">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       phono3py_disp.yaml
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#forces-fc3">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       FORCES_FC3
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#forces-fc2">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       FORCES_FC2
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#hdf5-files">
+   HDF5 files
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#kappa-hdf5">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       kappa-*.hdf5
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#fc3-hdf5">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       fc3.hdf5
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#fc2-hdf5">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       fc2.hdf5
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#gamma-hdf5">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       gamma-*.hdf5
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#gamma-detail-hdf5">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       gamma_detail-*.hdf5
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#simple-text-file">
+   Simple text file
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#gammas-dat">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       gammas-*.dat
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#jdos-dat">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       jdos-*.dat
+      </span>
+     </code>
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#linewidth-dat">
+     <code class="docutils literal notranslate">
+      <span class="pre">
+       linewidth-*.dat
+      </span>
+     </code>
+    </a>
+   </li>
+  </ul>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
               <div>
                 
-  <div class="tex2jax_ignore mathjax_ignore section" id="output-files">
-<span id="id1"></span><h1>Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h1>
+  <div class="tex2jax_ignore mathjax_ignore section" id="input-output-files">
+<span id="id1"></span><h1>Input / Output files<a class="headerlink" href="#input-output-files" title="Permalink to this headline">¶</a></h1>
 <div class="contents local topic" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#intermediate-text-files" id="id2">Intermediate text files</a></p>
@@ -398,26 +551,69 @@
 </li>
 </ul>
 </div>
-<p>The calculation results are written into files. Mostly the data are
-stored in HDF5 format, therefore how to read the data
-from HDF5 files is also shown.</p>
+<p>The calculation results are written into files. Mostly the data are stored in
+HDF5 format, therefore how to read the data from HDF5 files is also shown.</p>
 <div class="section" id="intermediate-text-files">
 <h2><a class="toc-backref" href="#id2">Intermediate text files</a><a class="headerlink" href="#intermediate-text-files" title="Permalink to this headline">¶</a></h2>
-<p>The following files are not compatible with phonopy. But phonopy’s
-<code class="docutils literal notranslate"><span class="pre">FORCE_SETS</span></code> file can be created using phono3py command options from
-the following files. See the detail at <a class="reference internal" href="tips.html#file-format-compatibility"><span class="std std-ref">File format compatibility with phonopy</span></a>.</p>
+<p>The following files are not compatible with phonopy. But phonopy’s <code class="docutils literal notranslate"><span class="pre">FORCE_SETS</span></code>
+file can be created using phono3py command options from the following files. See
+the detail at <a class="reference internal" href="tips.html#file-format-compatibility"><span class="std std-ref">File format compatibility with phonopy</span></a>.</p>
 <div class="section" id="phono3py-disp-yaml">
 <h3><a class="toc-backref" href="#id3"><code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a><a class="headerlink" href="#phono3py-disp-yaml" title="Permalink to this headline">¶</a></h3>
 <p>This is created with <code class="docutils literal notranslate"><span class="pre">-d</span></code> option. See <a class="reference internal" href="command-options.html#create-displacements-option"><span class="std std-ref">-d (CREATE_DISPLACEMENTS = .TRUE.)</span></a>.</p>
+<p>This file contains displacement dataset and crystal structure information.</p>
 </div>
 <div class="section" id="forces-fc3">
-<h3><a class="toc-backref" href="#id4"><code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a><a class="headerlink" href="#forces-fc3" title="Permalink to this headline">¶</a></h3>
-<p>This is created with <code class="docutils literal notranslate"><span class="pre">--cf3</span></code> option. See <a class="reference internal" href="command-options.html#cf3-option"><span class="std std-ref">--cutoff-fc3 or --cutoff-fc3-distance (CUTOFF_FC3_DISTANCE)</span></a>.</p>
+<span id="input-output-files-forces-fc3"></span><h3><a class="toc-backref" href="#id4"><code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a><a class="headerlink" href="#forces-fc3" title="Permalink to this headline">¶</a></h3>
+<p>This is created with <code class="docutils literal notranslate"><span class="pre">--cf3</span></code> option. See <a class="reference internal" href="command-options.html#cf3-option"><span class="std std-ref">--cf3 (command option only)</span></a>.</p>
+<p>This file has a simple format like</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># File: 1</span>
+<span class="c1"># 1       0.0300000000000000   0.0000000000000000   0.0000000000000000</span>
+  <span class="o">-</span><span class="mf">0.6458483000</span>    <span class="mf">0.0223064300</span>   <span class="o">-</span><span class="mf">0.0143299700</span>
+   <span class="mf">0.0793497000</span>    <span class="mf">0.0088413200</span>   <span class="o">-</span><span class="mf">0.0052766800</span>
+   <span class="mf">0.0768176500</span>   <span class="o">-</span><span class="mf">0.0095501600</span>    <span class="mf">0.0057262300</span>
+  <span class="o">-</span><span class="mf">0.0016552800</span>   <span class="o">-</span><span class="mf">0.0366684600</span>   <span class="o">-</span><span class="mf">0.0059480700</span>
+  <span class="o">-</span><span class="mf">0.0023432300</span>    <span class="mf">0.0373490000</span>    <span class="mf">0.0059468600</span>
+   <span class="mf">0.0143901800</span>    <span class="mf">0.0000959800</span>   <span class="o">-</span><span class="mf">0.0001100900</span>
+  <span class="o">-</span><span class="mf">0.0019487200</span>   <span class="o">-</span><span class="mf">0.0553591300</span>   <span class="o">-</span><span class="mf">0.0113649500</span>
+   <span class="mf">0.0143732700</span>   <span class="o">-</span><span class="mf">0.0000614400</span>    <span class="mf">0.0000502600</span>
+  <span class="o">-</span><span class="mf">0.0020311400</span>    <span class="mf">0.0554678300</span>    <span class="mf">0.0115355100</span>
+<span class="o">...</span>
+<span class="c1"># File: 1254</span>
+<span class="c1"># 37      0.0000000000000000   0.0000000000000000  -0.0300000000000000</span>
+<span class="c1"># 68      0.0000000000000000   0.0000000000000000  -0.0300000000000000</span>
+  <span class="o">-</span><span class="mf">0.0008300600</span>   <span class="o">-</span><span class="mf">0.0004792400</span>    <span class="mf">0.0515596200</span>
+  <span class="o">-</span><span class="mf">0.0133197900</span>   <span class="o">-</span><span class="mf">0.0078480800</span>    <span class="mf">0.0298334900</span>
+   <span class="mf">0.0141518600</span>   <span class="o">-</span><span class="mf">0.0105405200</span>    <span class="mf">0.0106313000</span>
+   <span class="mf">0.0153762500</span>   <span class="o">-</span><span class="mf">0.0072671600</span>    <span class="mf">0.0112864200</span>
+  <span class="o">-</span><span class="mf">0.0134565300</span>   <span class="o">-</span><span class="mf">0.0076112400</span>    <span class="mf">0.0298334900</span>
+  <span class="o">-</span><span class="mf">0.0019180000</span>   <span class="o">-</span><span class="mf">0.0011073600</span>    <span class="mf">0.0272454300</span>
+   <span class="mf">0.0013945800</span>    <span class="mf">0.0169498000</span>    <span class="mf">0.0112864200</span>
+   <span class="mf">0.0006578200</span>    <span class="mf">0.0003797900</span>    <span class="mf">0.0085617600</span>
+  <span class="o">-</span><span class="mf">0.0020524300</span>    <span class="mf">0.0175261300</span>    <span class="mf">0.0106313000</span>
+   <span class="mf">0.0019515200</span>    <span class="mf">0.0011267100</span>   <span class="o">-</span><span class="mf">0.2083651200</span>
+   <span class="mf">0.0148675800</span>   <span class="o">-</span><span class="mf">0.0516285500</span>   <span class="o">-</span><span class="mf">0.0924200600</span>
+  <span class="o">-</span><span class="mf">0.0168043800</span>    <span class="mf">0.0074232400</span>   <span class="o">-</span><span class="mf">0.0122506300</span>
+  <span class="o">-</span><span class="mf">0.0128831200</span>    <span class="mf">0.0114004400</span>   <span class="o">-</span><span class="mf">0.0110906700</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>This file contains supercell forces. Lines starting with <code class="docutils literal notranslate"><span class="pre">#</span></code> is ignored when
+parsing. Each line gives forces of at atom in Cartesian coordinates. All forces
+of atoms in each supercell are written in the same order as the atoms in the
+supercell. All forces of all supercells are concatenated. If force sets are
+stored in a numpy array (<code class="docutils literal notranslate"><span class="pre">forces</span></code>) of the shape of
+<code class="docutils literal notranslate"><span class="pre">(num_supercells,</span> <span class="pre">num_atoms_in_supercell,</span> <span class="pre">3)</span></code>, this file is generated using
+numpy as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="s2">&quot;FORCES_FC3&quot;</span><span class="p">,</span> <span class="n">forces</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="forces-fc2">
 <h3><a class="toc-backref" href="#id5"><code class="docutils literal notranslate"><span class="pre">FORCES_FC2</span></code></a><a class="headerlink" href="#forces-fc2" title="Permalink to this headline">¶</a></h3>
 <p>This is created with <code class="docutils literal notranslate"><span class="pre">--cf2</span></code> option. See <a class="reference internal" href="command-options.html#cf2-option"><span class="std std-ref">--cf2 (command option only)</span></a> and
 <a class="reference internal" href="command-options.html#dim-fc2-option"><span class="std std-ref">--dim-fc2 (DIM_FC2)</span></a>.</p>
+<p>The file format of this file is similar to that of <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code>.</p>
 </div>
 </div>
 <div class="section" id="hdf5-files">
@@ -430,26 +626,25 @@ the following files. See the detail at <a class="reference internal" href="tips.
 <span id="fc3-hdf5-file"></span><h3><a class="toc-backref" href="#id8"><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code></a><a class="headerlink" href="#fc3-hdf5" title="Permalink to this headline">¶</a></h3>
 <p>Third order force constants (in real space) are stored in
 <span class="math notranslate nohighlight">\(\mathrm{eV}/\text{Angstrom}^3\)</span>.</p>
-<p>In phono3py, this is stored in the numpy array <code class="docutils literal notranslate"><span class="pre">dtype='double'</span></code> and
-<code class="docutils literal notranslate"><span class="pre">order='C'</span></code> in the shape of:</p>
+<p>In phono3py, this is stored in the numpy array <code class="docutils literal notranslate"><span class="pre">dtype='double'</span></code> and <code class="docutils literal notranslate"><span class="pre">order='C'</span></code>
+in the shape of:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">num_atom</span><span class="p">,</span> <span class="n">num_atom</span><span class="p">,</span> <span class="n">num_atom</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>against <span class="math notranslate nohighlight">\(\Phi_{\alpha\beta\gamma}(l\kappa, l'\kappa',
-l''\kappa'')\)</span>. The first three <code class="docutils literal notranslate"><span class="pre">num_atom</span></code> are the atom indices in supercell
-corresponding to <span class="math notranslate nohighlight">\(l\kappa\)</span>, <span class="math notranslate nohighlight">\(l'\kappa'\)</span>,
-<span class="math notranslate nohighlight">\(l''\kappa''\)</span>, respectively. The last three elements are the Cartesian
-coordinates corresponding to <span class="math notranslate nohighlight">\(\alpha\)</span>, <span class="math notranslate nohighlight">\(\beta\)</span>,
-<span class="math notranslate nohighlight">\(\gamma\)</span>, respectively.</p>
-<p>If you want to import a supercell structure and its fc3, you may
-suffer from matching its atom index between the supercell and an
-expected unit cell. This may be easily dealt with by letting phono3py
-see your supercell as the unit cell (e.g., <code class="docutils literal notranslate"><span class="pre">POSCAR</span></code>,
-<code class="docutils literal notranslate"><span class="pre">unitcell.in</span></code>, etc) and find the unit (primitive) cell using
-<a class="reference internal" href="command-options.html#pa-option"><span class="std std-ref">–pa option</span></a>. For example, let us assume your
-supercell is the 2x2x2 multiples of your unit cell that has no
-centring, then your <code class="docutils literal notranslate"><span class="pre">--pa</span></code> setting will be <code class="docutils literal notranslate"><span class="pre">1/2</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">1/2</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">1/2</span> <span class="pre">0</span></code>. If your unit cell is a conventional unit cell and has a centring,
-e.g., the face centring,</p>
+l''\kappa'')\)</span>. The first
+three <code class="docutils literal notranslate"><span class="pre">num_atom</span></code> are the atom indices in supercell corresponding to <span class="math notranslate nohighlight">\(l\kappa\)</span>,
+<span class="math notranslate nohighlight">\(l'\kappa'\)</span>, <span class="math notranslate nohighlight">\(l''\kappa''\)</span>, respectively. The last three elements are the
+Cartesian coordinates corresponding to <span class="math notranslate nohighlight">\(\alpha\)</span>, <span class="math notranslate nohighlight">\(\beta\)</span>, <span class="math notranslate nohighlight">\(\gamma\)</span>,
+respectively.</p>
+<p>If you want to import a supercell structure and its fc3, you may suffer from
+matching its atom index between the supercell and an expected unit cell. This
+may be easily dealt with by letting phono3py see your supercell as the unit cell
+(e.g., <code class="docutils literal notranslate"><span class="pre">POSCAR</span></code>, <code class="docutils literal notranslate"><span class="pre">unitcell.in</span></code>, etc) and find the unit (primitive) cell using
+<a class="reference internal" href="command-options.html#pa-option"><span class="std std-ref">–pa option</span></a>. For example, let us assume your supercell is the
+2x2x2 multiples of your unit cell that has no centring, then your <code class="docutils literal notranslate"><span class="pre">--pa</span></code> setting
+will be <code class="docutils literal notranslate"><span class="pre">1/2</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">1/2</span> <span class="pre">0</span> <span class="pre">0</span> <span class="pre">1/2</span> <span class="pre">0</span></code>. If your unit cell is a conventional unit cell
+and has a centring, e.g., the face centring,</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}
 (\mathbf{a}_\text{p}, \mathbf{b}_\text{p}, \mathbf{c}_\text{p}) =
@@ -471,30 +666,29 @@ e.g., the face centring,</p>
 \frac{{1}}{4} &amp; \frac{{1}}{4} &amp; 0
 \end{pmatrix}.
 \end{split}\]</div>
-<p>So what you have to set is <code class="docutils literal notranslate"><span class="pre">--pa=&quot;0</span> <span class="pre">1/4</span> <span class="pre">1/4</span>&#160; <span class="pre">1/4</span> <span class="pre">0</span> <span class="pre">1/4</span>&#160; <span class="pre">1/4</span> <span class="pre">1/4</span> <span class="pre">0&quot;</span></code>.</p>
+<p>So what you have to set is <code class="docutils literal notranslate"><span class="pre">--pa=&quot;0</span> <span class="pre">1/4</span> <span class="pre">1/4</span> <span class="pre">1/4</span> <span class="pre">0</span> <span class="pre">1/4</span> <span class="pre">1/4</span> <span class="pre">1/4</span> <span class="pre">0&quot;</span></code>.</p>
 </div>
 <div class="section" id="fc2-hdf5">
 <span id="fc2-hdf5-file"></span><h3><a class="toc-backref" href="#id9"><code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code></a><a class="headerlink" href="#fc2-hdf5" title="Permalink to this headline">¶</a></h3>
-<p>Second order force constants are stored in
-<span class="math notranslate nohighlight">\(\mathrm{eV}/\text{Angstrom}^2\)</span>.</p>
-<p>In phono3py, this is stored in the numpy array <code class="docutils literal notranslate"><span class="pre">dtype='double'</span></code> and
-<code class="docutils literal notranslate"><span class="pre">order='C'</span></code> in the shape of:</p>
+<p>Second order force constants are stored in <span class="math notranslate nohighlight">\(\mathrm{eV}/\text{Angstrom}^2\)</span>.</p>
+<p>In phono3py, this is stored in the numpy array <code class="docutils literal notranslate"><span class="pre">dtype='double'</span></code> and <code class="docutils literal notranslate"><span class="pre">order='C'</span></code>
+in the shape of:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">num_atom</span><span class="p">,</span> <span class="n">num_atom</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>against <span class="math notranslate nohighlight">\(\Phi_{\alpha\beta}(l\kappa, l'\kappa')\)</span>. More detail is
-similar to the case for <a class="reference internal" href="#fc3-hdf5-file"><span class="std std-ref">fc3.hdf5</span></a>.</p>
+<p>against <span class="math notranslate nohighlight">\(\Phi_{\alpha\beta}(l\kappa, l'\kappa')\)</span>. More detail is similar to the
+case for <a class="reference internal" href="#fc3-hdf5-file"><span class="std std-ref">fc3.hdf5</span></a>.</p>
 </div>
 <div class="section" id="gamma-hdf5">
 <h3><a class="toc-backref" href="#id10"><code class="docutils literal notranslate"><span class="pre">gamma-*.hdf5</span></code></a><a class="headerlink" href="#gamma-hdf5" title="Permalink to this headline">¶</a></h3>
 <p>Imaginary parts of self energies at harmonic phonon frequencies
-(<span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega_\lambda)\)</span> = half linewidths) are stored in
-THz. See <a class="reference internal" href="command-options.html#write-gamma-option"><span class="std std-ref">Imaginary and real parts of self energy</span></a>.</p>
+(<span class="math notranslate nohighlight">\(\Gamma_\lambda(\omega_\lambda)\)</span> = half linewidths) are stored in THz. See
+<a class="reference internal" href="command-options.html#write-gamma-option"><span class="std std-ref">--write-gamma (WRITE_GAMMA = .TRUE.)</span></a>.</p>
 </div>
 <div class="section" id="gamma-detail-hdf5">
 <h3><a class="toc-backref" href="#id11"><code class="docutils literal notranslate"><span class="pre">gamma_detail-*.hdf5</span></code></a><a class="headerlink" href="#gamma-detail-hdf5" title="Permalink to this headline">¶</a></h3>
-<p>Q-point triplet contributions to imaginary parts of self energies at
-phonon frequencies (half linewidths) are stored in THz.  See
+<p>Q-point triplet contributions to imaginary parts of self energies at phonon
+frequencies (half linewidths) are stored in THz. See
 <a class="reference internal" href="command-options.html#write-detailed-gamma-option"><span class="std std-ref">--write-gamma-detail (WRITE_GAMMA_DETAIL = .TRUE.)</span></a>.</p>
 </div>
 </div>
@@ -507,7 +701,7 @@ phonon frequencies (half linewidths) are stored in THz.  See
 </div>
 <div class="section" id="jdos-dat">
 <h3><a class="toc-backref" href="#id14"><code class="docutils literal notranslate"><span class="pre">jdos-*.dat</span></code></a><a class="headerlink" href="#jdos-dat" title="Permalink to this headline">¶</a></h3>
-<p>Joint densities of states are stored in Thz. See <a class="reference internal" href="command-options.html#jdos-option"><span class="std std-ref">--jdos (JOINT_DOS = .TRUE.)</span></a>.</p>
+<p>Joint densities of states are stored in Thz. See <a class="reference internal" href="command-options.html#jdos-option"><span class="std std-ref">Joint density of states (JDOS) and weighted-JDOS</span></a>.</p>
 </div>
 <div class="section" id="linewidth-dat">
 <h3><a class="toc-backref" href="#id15"><code class="docutils literal notranslate"><span class="pre">linewidth-*.dat</span></code></a><a class="headerlink" href="#linewidth-dat" title="Permalink to this headline">¶</a></h3>
@@ -518,8 +712,8 @@ phonon frequencies (half linewidths) are stored in THz.  See
 
               </div>
               
-        
-            <!-- Previous / next buttons -->
+            
+                <!-- Previous / next buttons -->
 <div class='prev-next-area'> 
     <a class='left-prev' id="prev-link" href="command-options.html" title="previous page">
         <i class="fas fa-angle-left"></i>
@@ -536,17 +730,15 @@ phonon frequencies (half linewidths) are stored in THz.  See
     <i class="fas fa-angle-right"></i>
     </a>
 </div>
-        
+            
         </div>
     </div>
     <footer class="footer">
-    <div class="container">
-      <p>
-        
-            &copy; Copyright 2015, Atsushi Togo.<br/>
-      </p>
-    </div>
-  </footer>
+  <p>
+    
+        &copy; Copyright 2015, Atsushi Togo.<br/>
+  </p>
+</footer>
 </main>
 
 

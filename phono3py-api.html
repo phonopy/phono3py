@@ -1,0 +1,948 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Phono3py API &#8212; Phono3py v.2.2.0</title>
+    
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+
+    
+  <link rel="stylesheet"
+    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+
+    
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Tips" href="tips.html" />
+    <link rel="prev" title="External tools" href="external-tools.html" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="docsearch:language" content="None">
+    
+
+    <!-- Google Analytics -->
+    
+  </head>
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+    
+    <div class="container-fluid" id="banner"></div>
+
+    
+
+    <div class="container-xl">
+      <div class="row">
+          
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
+    <a class="navbar-brand text-wrap" href="index.html">
+      
+      
+      
+      <h1 class="site-logo" id="site-title">Phono3py v.2.2.0</h1>
+      
+    </a>
+</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
+  <i class="icon fas fa-search"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
+</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item active">
+        <ul class="current nav bd-sidenav">
+ <li class="toctree-l1">
+  <a class="reference internal" href="install.html">
+   Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="workflow.html">
+   Workflow
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="examples.html">
+   Examples
+  </a>
+ </li>
+ <li class="toctree-l1 has-children">
+  <a class="reference internal" href="interfaces.html">
+   Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)
+  </a>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <label for="toctree-checkbox-1">
+   <i class="fas fa-chevron-down">
+   </i>
+  </label>
+  <ul>
+   <li class="toctree-l2">
+    <a class="reference internal" href="vasp.html">
+     VASP &amp; phono3py calculation
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="qe.html">
+     Quantum ESPRESSO (pw) &amp; phono3py calculation
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="crystal.html">
+     CRYSTAL &amp; phono3py calculation
+    </a>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="turbomole.html">
+     TURBOMOLE &amp; phono3py calculation
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="command-options.html">
+   Command options / Setting tags
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="input-output-files.html">
+   Input / Output files
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="hdf5_howto.html">
+   How to read the results stored in hdf5 files
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="auxiliary-tools.html">
+   Auxiliary tools
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="direct-solution.html">
+   Direct solution of linearized phonon Boltzmann equation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="workload-distribution.html">
+   Workload distribution
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="cutoff-pair.html">
+   Force constants calculation with cutoff pair-distance
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="external-tools.html">
+   External tools
+  </a>
+ </li>
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
+   Phono3py API
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="tips.html">
+   Tips
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="citation.html">
+   How to cite phono3py
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="changelog.html">
+   Change Log
+  </a>
+ </li>
+</ul>
+
+    </div>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
+            
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="_sources/phono3py-api.md.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.md</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
+        </div>
+
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#crystal-structure">
+   Crystal structure
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#phono3py-class">
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     Phono3py
+    </span>
+   </code>
+   class
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#displacement-dataset-generation">
+   Displacement dataset generation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#supercell-force-calculation">
+   Supercell force calculation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#force-constants-calculation">
+   Force constants calculation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#non-analytical-term-correction-parameters">
+   Non-analytical term correction parameters
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#regular-grid-for-q-point-sampling">
+   Regular grid for
+   <strong>
+    q
+   </strong>
+   -point sampling
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#three-integer-values">
+     Three integer values
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#one-value">
+     One value
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#x3-integer-matrix-experimental">
+     3x3 integer matrix (experimental)
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#phonon-phonon-interaction-calculation">
+   Phonon-phonon interaction calculation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#lattice-thermal-conductivity-calculation">
+   Lattice thermal conductivity calculation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs">
+   Use of different supercell dimensions for 2nd and 3rd order FCs
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#phono3py-load">
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     phono3py.load
+    </span>
+   </code>
+  </a>
+ </li>
+</ul>
+
+            </nav>
+        </div>
+    </div>
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Phono3py API</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#crystal-structure">
+   Crystal structure
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#phono3py-class">
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     Phono3py
+    </span>
+   </code>
+   class
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#displacement-dataset-generation">
+   Displacement dataset generation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#supercell-force-calculation">
+   Supercell force calculation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#force-constants-calculation">
+   Force constants calculation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#non-analytical-term-correction-parameters">
+   Non-analytical term correction parameters
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#regular-grid-for-q-point-sampling">
+   Regular grid for
+   <strong>
+    q
+   </strong>
+   -point sampling
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#three-integer-values">
+     Three integer values
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#one-value">
+     One value
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#x3-integer-matrix-experimental">
+     3x3 integer matrix (experimental)
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#phonon-phonon-interaction-calculation">
+   Phonon-phonon interaction calculation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#lattice-thermal-conductivity-calculation">
+   Lattice thermal conductivity calculation
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs">
+   Use of different supercell dimensions for 2nd and 3rd order FCs
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#phono3py-load">
+   <code class="docutils literal notranslate">
+    <span class="pre">
+     phono3py.load
+    </span>
+   </code>
+  </a>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
+              <div>
+                
+  <div class="tex2jax_ignore mathjax_ignore section" id="phono3py-api">
+<span id="id1"></span><h1>Phono3py API<a class="headerlink" href="#phono3py-api" title="Permalink to this headline">¶</a></h1>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><p><a class="reference internal" href="#crystal-structure" id="id2">Crystal structure</a></p></li>
+<li><p><a class="reference internal" href="#phono3py-class" id="id3"><code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class</a></p></li>
+<li><p><a class="reference internal" href="#displacement-dataset-generation" id="id4">Displacement dataset generation</a></p></li>
+<li><p><a class="reference internal" href="#supercell-force-calculation" id="id5">Supercell force calculation</a></p></li>
+<li><p><a class="reference internal" href="#force-constants-calculation" id="id6">Force constants calculation</a></p></li>
+<li><p><a class="reference internal" href="#non-analytical-term-correction-parameters" id="id7">Non-analytical term correction parameters</a></p></li>
+<li><p><a class="reference internal" href="#regular-grid-for-q-point-sampling" id="id8">Regular grid for <strong>q</strong>-point sampling</a></p>
+<ul>
+<li><p><a class="reference internal" href="#three-integer-values" id="id9">Three integer values</a></p></li>
+<li><p><a class="reference internal" href="#one-value" id="id10">One value</a></p></li>
+<li><p><a class="reference internal" href="#x3-integer-matrix-experimental" id="id11">3x3 integer matrix (experimental)</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#phonon-phonon-interaction-calculation" id="id12">Phonon-phonon interaction calculation</a></p></li>
+<li><p><a class="reference internal" href="#lattice-thermal-conductivity-calculation" id="id13">Lattice thermal conductivity calculation</a></p></li>
+<li><p><a class="reference internal" href="#use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs" id="id14">Use of different supercell dimensions for 2nd and 3rd order FCs</a></p></li>
+<li><p><a class="reference internal" href="#phono3py-load" id="id15"><code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code></a></p></li>
+</ul>
+</div>
+<p>How to use phono3py API is described below along with snippets that work with
+<a class="reference external" href="https://github.com/phonopy/phono3py/tree/develop/example/AlN-LDA"><code class="docutils literal notranslate"><span class="pre">AlN-LDA</span></code> example</a>.</p>
+<div class="section" id="crystal-structure">
+<h2><a class="toc-backref" href="#id2">Crystal structure</a><a class="headerlink" href="#crystal-structure" title="Permalink to this headline">¶</a></h2>
+<p>Crystal structures in phono3py are usually <code class="docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code> class instances. When
+we want to obtain the <code class="docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code> class instances from a file written in a
+force-calculator format, the <code class="docutils literal notranslate"><span class="pre">read_crystal_structure</span></code> function in phonopy may be
+used, e.g., in the AlN-LDA example,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">phonopy.interface.calculator</span> <span class="kn">import</span> <span class="n">read_crystal_structure</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">unitcell</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">read_crystal_structure</span><span class="p">(</span><span class="s2">&quot;POSCAR-unitcell&quot;</span><span class="p">,</span> <span class="n">interface_mode</span><span class="o">=</span><span class="s1">&#39;vasp&#39;</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="nb">print</span><span class="p">(</span><span class="n">unitcell</span><span class="p">)</span>
+<span class="n">lattice</span><span class="p">:</span>
+<span class="o">-</span> <span class="p">[</span>     <span class="mf">3.110999999491908</span><span class="p">,</span>     <span class="mf">0.000000000000000</span><span class="p">,</span>     <span class="mf">0.000000000000000</span> <span class="p">]</span> <span class="c1"># a</span>
+<span class="o">-</span> <span class="p">[</span>    <span class="o">-</span><span class="mf">1.555499999745954</span><span class="p">,</span>     <span class="mf">2.694205030733368</span><span class="p">,</span>     <span class="mf">0.000000000000000</span> <span class="p">]</span> <span class="c1"># b</span>
+<span class="o">-</span> <span class="p">[</span>     <span class="mf">0.000000000000000</span><span class="p">,</span>     <span class="mf">0.000000000000000</span><span class="p">,</span>     <span class="mf">4.978000000000000</span> <span class="p">]</span> <span class="c1"># c</span>
+<span class="n">points</span><span class="p">:</span>
+<span class="o">-</span> <span class="n">symbol</span><span class="p">:</span> <span class="n">Al</span> <span class="c1"># 1</span>
+  <span class="n">coordinates</span><span class="p">:</span> <span class="p">[</span>  <span class="mf">0.333333333333333</span><span class="p">,</span>  <span class="mf">0.666666666666667</span><span class="p">,</span>  <span class="mf">0.000948820000000</span> <span class="p">]</span>
+  <span class="n">mass</span><span class="p">:</span> <span class="mf">26.981539</span>
+<span class="o">-</span> <span class="n">symbol</span><span class="p">:</span> <span class="n">Al</span> <span class="c1"># 2</span>
+  <span class="n">coordinates</span><span class="p">:</span> <span class="p">[</span>  <span class="mf">0.666666666666667</span><span class="p">,</span>  <span class="mf">0.333333333333333</span><span class="p">,</span>  <span class="mf">0.500948820000000</span> <span class="p">]</span>
+  <span class="n">mass</span><span class="p">:</span> <span class="mf">26.981539</span>
+<span class="o">-</span> <span class="n">symbol</span><span class="p">:</span> <span class="n">N</span>  <span class="c1"># 3</span>
+  <span class="n">coordinates</span><span class="p">:</span> <span class="p">[</span>  <span class="mf">0.333333333333333</span><span class="p">,</span>  <span class="mf">0.666666666666667</span><span class="p">,</span>  <span class="mf">0.619051180000000</span> <span class="p">]</span>
+  <span class="n">mass</span><span class="p">:</span> <span class="mf">14.006700</span>
+<span class="o">-</span> <span class="n">symbol</span><span class="p">:</span> <span class="n">N</span>  <span class="c1"># 4</span>
+  <span class="n">coordinates</span><span class="p">:</span> <span class="p">[</span>  <span class="mf">0.666666666666667</span><span class="p">,</span>  <span class="mf">0.333333333333333</span><span class="p">,</span>  <span class="mf">0.119051180000000</span> <span class="p">]</span>
+  <span class="n">mass</span><span class="p">:</span> <span class="mf">14.006700</span>
+</pre></div>
+</div>
+<p>Otherwise, it is directly created from
+<a class="reference external" href="https://phonopy.github.io/phonopy/phonopy-module.html#phonopyatoms-class"><code class="docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code> class</a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">phonopy.structure.atoms</span> <span class="kn">import</span> <span class="n">PhonopyAtoms</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">a</span> <span class="o">=</span> <span class="mf">3.11</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="n">a</span> <span class="o">=</span> <span class="mf">3.111</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="n">c</span> <span class="o">=</span> <span class="mf">4.978</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="n">lattice</span> <span class="o">=</span> <span class="p">[[</span><span class="n">a</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="n">a</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>  <span class="n">a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">c</span><span class="p">]]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="n">x</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="mi">3</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="n">points</span> <span class="o">=</span> <span class="p">[[</span><span class="n">x</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="n">x</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="mf">0.1181</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="mf">0.6181</span><span class="p">]]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="n">symbols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Al&#39;</span><span class="p">,</span> <span class="s1">&#39;Al&#39;</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span><span class="p">]</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">9</span><span class="p">]:</span> <span class="n">unitcell</span> <span class="o">=</span> <span class="n">PhonopyAtoms</span><span class="p">(</span><span class="n">cell</span><span class="o">=</span><span class="n">lattice</span><span class="p">,</span> <span class="n">scaled_positions</span><span class="o">=</span><span class="n">points</span><span class="p">,</span> <span class="n">symbols</span><span class="o">=</span><span class="n">symbols</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="phono3py-class">
+<h2><a class="toc-backref" href="#id3"><code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class</a><a class="headerlink" href="#phono3py-class" title="Permalink to this headline">¶</a></h2>
+<p>To operate phono3py from python, there is phono3py API. The main class is
+<code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> that is imported by</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">phono3py</span> <span class="kn">import</span> <span class="n">Phono3py</span>
+</pre></div>
+</div>
+<p>As written in <a class="reference internal" href="workflow.html#workflow"><span class="std std-ref">Workflow</span></a>, phono3py workflow is roughly divided into three
+steps. <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class is used at each step. The minimum set of inputs to
+instantiate <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class are <code class="docutils literal notranslate"><span class="pre">unitcell</span></code> (1st argument), <code class="docutils literal notranslate"><span class="pre">supercell_matrix</span></code>
+(2nd argument), and <code class="docutils literal notranslate"><span class="pre">primitive_matrix</span></code>, which are used as</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ph3</span> <span class="o">=</span> <span class="n">Phono3py</span><span class="p">(</span><span class="n">unitcell</span><span class="p">,</span> <span class="n">supercell_matrix</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">primitive_matrix</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">unitcell</span></code> is an instance of the
+<a class="reference external" href="https://phonopy.github.io/phonopy/phonopy-module.html#phonopyatoms-class"><code class="docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code> class</a>.
+<code class="docutils literal notranslate"><span class="pre">supercell_matrix</span></code> and <code class="docutils literal notranslate"><span class="pre">primitive_matrix</span></code> are the transformation matrices to
+generate supercell and primitive cell from <code class="docutils literal notranslate"><span class="pre">unitcell</span></code> (see
+<a class="reference external" href="https://phonopy.github.io/phonopy/phonopy-module.html#definitions-of-variables">definitions</a>).
+This step is similar to the
+<a class="reference external" href="https://phonopy.github.io/phonopy/phonopy-module.html#pre-process">instantiation of <code class="docutils literal notranslate"><span class="pre">Phonopy</span></code> class</a>.</p>
+<p>There are many parameters that can be given to <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class. The details are
+written in the docstring, which is shown by</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">help</span><span class="p">(</span><span class="n">Phono3py</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="displacement-dataset-generation">
+<h2><a class="toc-backref" href="#id4">Displacement dataset generation</a><a class="headerlink" href="#displacement-dataset-generation" title="Permalink to this headline">¶</a></h2>
+<p>The step (1) in <a class="reference internal" href="workflow.html#workflow"><span class="std std-ref">Workflow</span></a> generates sets of displacements in supercell.
+Supercells with the displacements are used as input crystal structure models of
+force calculator that is, e.g., first-principles calculation code. Using the
+force calculator, sets of forces of the supercells with the displacements are
+obtained out of phono3py environment, i.e., phono3py only provides crystal
+structures. Here we call the sets of the displacements as
+<code class="docutils literal notranslate"><span class="pre">displacement</span> <span class="pre">dataset</span></code>, the sets of the supercell forces as <code class="docutils literal notranslate"><span class="pre">force</span> <span class="pre">sets</span></code>, and
+the pair of <code class="docutils literal notranslate"><span class="pre">displacement</span> <span class="pre">dataset</span></code> and <code class="docutils literal notranslate"><span class="pre">force</span> <span class="pre">sets</span></code> as simply <code class="docutils literal notranslate"><span class="pre">dataset</span></code> for
+computing second and third force constants.</p>
+<p>After instantiating <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> with <code class="docutils literal notranslate"><span class="pre">unitcell</span></code>, displacements are generated as
+follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="n">ph3</span> <span class="o">=</span> <span class="n">Phono3py</span><span class="p">(</span><span class="n">unitcell</span><span class="p">,</span> <span class="n">supercell_matrix</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">primitive_matrix</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">generate_displacements</span><span class="p">()</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="nb">len</span><span class="p">(</span><span class="n">ph3</span><span class="o">.</span><span class="n">supercells_with_displacements</span><span class="p">)</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="mi">1254</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="nb">type</span><span class="p">(</span><span class="n">ph3</span><span class="o">.</span><span class="n">supercells_with_displacements</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="n">phonopy</span><span class="o">.</span><span class="n">structure</span><span class="o">.</span><span class="n">atoms</span><span class="o">.</span><span class="n">PhonopyAtoms</span>
+</pre></div>
+</div>
+<p>By this, 1254 supercells with displacements were generated.</p>
+<p>The generated displacement dataset is used in the force constants calculation.
+Therefore, it is recommended to save it into a file if the python process having
+the <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class instance is expected to be terminated. The displacement
+dataset and crystal structure information are saved to a file by
+<code class="docutils literal notranslate"><span class="pre">Phono3py.save()</span></code> method:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;phono3py_disp.yaml&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="supercell-force-calculation">
+<h2><a class="toc-backref" href="#id5">Supercell force calculation</a><a class="headerlink" href="#supercell-force-calculation" title="Permalink to this headline">¶</a></h2>
+<p>Forces of the generated supercells with displacements are calculated by some
+external force calculator such as first-principles calculation code.</p>
+<p>Calculated supercell forces will be stored in <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class instance through
+<code class="docutils literal notranslate"><span class="pre">Phono3py.forces</span></code> attribute by setting an array_like variable with the shape of
+<code class="docutils literal notranslate"><span class="pre">(num_supercells,</span> <span class="pre">num_atoms_in_supercell,</span> <span class="pre">3)</span></code>. In the above example, the array
+shape is <code class="docutils literal notranslate"><span class="pre">(1254,</span> <span class="pre">72,</span> <span class="pre">3)</span></code>.</p>
+<p>If calculated force sets are stored in the <a class="reference internal" href="input-output-files.html#input-output-files-forces-fc3"><span class="std std-ref">FORCES_FC3</span></a>
+format, the numpy array of <code class="docutils literal notranslate"><span class="pre">forces</span></code> is obtained by</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">forces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s2">&quot;FORCES_FC3&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_atoms_in_supercell</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">forces</span><span class="p">)</span> <span class="o">==</span> <span class="n">num_supercells</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="force-constants-calculation">
+<h2><a class="toc-backref" href="#id6">Force constants calculation</a><a class="headerlink" href="#force-constants-calculation" title="Permalink to this headline">¶</a></h2>
+<p>The pair of the displacement dataset and force sets is required to calculate
+force constants. <a class="reference internal" href="#api-phono3py-load"><span class="std std-ref">Non-analytical term correction parameters</span></a> is the convenient function to load
+these data from files and to set up them in the <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class instance.
+However, in the case when only displacement dataset is expected, the low-level
+phono3py-yaml parser in <code class="docutils literal notranslate"><span class="pre">Phono3pyYaml</span></code> is useful.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">phono3py.interface.phono3py_yaml</span> <span class="kn">import</span> <span class="n">Phono3pyYaml</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">ph3yml</span> <span class="o">=</span> <span class="n">Phono3pyYaml</span><span class="p">()</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="n">ph3yml</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s2">&quot;phono3py_disp.yaml&quot;</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="n">disp_dataset</span> <span class="o">=</span> <span class="n">ph3yml</span><span class="o">.</span><span class="n">dataset</span>
+</pre></div>
+</div>
+<p>With this <code class="docutils literal notranslate"><span class="pre">ph3yml</span></code>, how to compute force constants is explained. In the
+following, it is assumed that we have <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> in the current directory. The
+displacement dataset and force sets are set to the <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class instance as
+follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="n">unitcell</span> <span class="o">=</span> <span class="n">ph3yml</span><span class="o">.</span><span class="n">unitcell</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">phono3py</span> <span class="kn">import</span> <span class="n">Phono3py</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">7</span><span class="p">]:</span> <span class="n">ph3</span> <span class="o">=</span> <span class="n">Phono3py</span><span class="p">(</span><span class="n">unitcell</span><span class="p">,</span> <span class="n">supercell_matrix</span><span class="o">=</span><span class="n">ph3yml</span><span class="o">.</span><span class="n">supercell_matrix</span><span class="p">,</span> <span class="n">primitive_matrix</span><span class="o">=</span><span class="n">ph3yml</span><span class="o">.</span><span class="n">primitive_matrix</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">9</span><span class="p">]:</span> <span class="n">forces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s2">&quot;FORCES_FC3&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ph3</span><span class="o">.</span><span class="n">supercell</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">10</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">disp_dataset</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">11</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">forces</span> <span class="o">=</span> <span class="n">forces</span>
+</pre></div>
+</div>
+<p>Now it is ready to compute force constants.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">12</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">produce_fc3</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="non-analytical-term-correction-parameters">
+<span id="api-phono3py-load"></span><h2><a class="toc-backref" href="#id7">Non-analytical term correction parameters</a><a class="headerlink" href="#non-analytical-term-correction-parameters" title="Permalink to this headline">¶</a></h2>
+<p>Users collects Born effective charges and dielectric constant tensor from
+experiments or calculations, and they are used as parameters for non-analytical
+term correction (NAC). These parameters are stored as a python dict:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s1">&#39;born&#39;</span><span class="p">:</span> <span class="n">ndarray</span>
+    <span class="n">Born</span> <span class="n">effective</span> <span class="n">charges</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">num_atoms_in_primitive_cell</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;double&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span>
+<span class="s1">&#39;factor&#39;</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">Unit</span> <span class="n">conversion</span> <span class="n">factor</span>
+<span class="s1">&#39;dielectric&#39;</span><span class="p">:</span> <span class="n">ndarray</span>
+    <span class="n">Dielectric</span> <span class="n">constant</span> <span class="n">tensor</span>
+    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;double&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;C&#39;</span>
+</pre></div>
+</div>
+<p>Be careful that, in the case of using phono3py API, Born effective charges of
+all atoms in the primitive cell are necessary, whereas in the
+<a class="reference external" href="https://phonopy.github.io/phonopy/input-files.html#born-optional"><code class="docutils literal notranslate"><span class="pre">BORN</span></code> file</a>,
+only Born effective charges of symmetrically independent atoms are written. Some
+more information about NAC parameters is found
+<a class="reference external" href="https://phonopy.github.io/phonopy/phonopy-module.html#getting-parameters-for-non-analytical-term-correction">here</a>.</p>
+<p>This NAC parameters are set to the <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class instance via the
+<code class="docutils literal notranslate"><span class="pre">Phono3py.nac_params</span></code> attribute. The NAC parameters may be read from <code class="docutils literal notranslate"><span class="pre">BORN</span></code> file</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">13</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">phonopy.file_IO</span> <span class="kn">import</span> <span class="n">parse_BORN</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">14</span><span class="p">]:</span> <span class="n">nac_params</span> <span class="o">=</span> <span class="n">parse_BORN</span><span class="p">(</span><span class="n">ph3</span><span class="o">.</span><span class="n">primitive</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;BORN&quot;</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">15</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">nac_params</span> <span class="o">=</span> <span class="n">nan_params</span>
+</pre></div>
+</div>
+<p>where the <code class="docutils literal notranslate"><span class="pre">parse_BORN</span></code> function requires the corresponding primitive cell of the
+<code class="docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code> class.</p>
+</div>
+<div class="section" id="regular-grid-for-q-point-sampling">
+<h2><a class="toc-backref" href="#id8">Regular grid for <strong>q</strong>-point sampling</a><a class="headerlink" href="#regular-grid-for-q-point-sampling" title="Permalink to this headline">¶</a></h2>
+<p>Phonons are normally sampled on a <span class="math notranslate nohighlight">\(\Gamma\)</span> centre regular grid in reciprocal
+space. There are three ways to specify the regular grid.</p>
+<ol class="arabic simple">
+<li><p>Three integer values</p></li>
+<li><p>One value</p></li>
+<li><p>3x3 integer matrix</p></li>
+</ol>
+<p>One of these is set to <code class="docutils literal notranslate"><span class="pre">mesh_numbers</span></code> attribute of the <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class. For
+example,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ph3</span><span class="o">.</span><span class="n">mesh_numbers</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]</span>
+<span class="n">ph3</span><span class="o">.</span><span class="n">mesh_numbers</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">ph3</span><span class="o">.</span><span class="n">mesh_numbers</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">]]</span>
+</pre></div>
+</div>
+<div class="section" id="three-integer-values">
+<h3><a class="toc-backref" href="#id9">Three integer values</a><a class="headerlink" href="#three-integer-values" title="Permalink to this headline">¶</a></h3>
+<p>Three integer values (<span class="math notranslate nohighlight">\(n_1\)</span>, <span class="math notranslate nohighlight">\(n_2\)</span>, <span class="math notranslate nohighlight">\(n_3\)</span>) are specified.</p>
+<p>The conventional regular grid is defined by the three integer values. The
+<span class="math notranslate nohighlight">\(\mathbf{q}\)</span>-points are given by linear combination of reciprocal basis vectors
+divided by the respective integers, which is given as</p>
+<div class="math notranslate nohighlight" id="equation-three-integer-grid">
+<span class="eqno">(1)<a class="headerlink" href="#equation-three-integer-grid" title="Permalink to this equation">¶</a></span>\[\begin{split}\mathbf{q} = \left( \frac{\mathbf{b}^*_1}{n_1} \; \frac{\mathbf{b}^*_2}{n_2} \;
+\frac{\mathbf{b}^*_3}{n_3} \right)
+\begin{pmatrix} m_1 \\ m_2 \\ m_3 \end{pmatrix},\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(m_i \in \{ 0, 1, \ldots, n_i - 1 \}\)</span>.</p>
+</div>
+<div class="section" id="one-value">
+<h3><a class="toc-backref" href="#id10">One value</a><a class="headerlink" href="#one-value" title="Permalink to this headline">¶</a></h3>
+<p>A distance like value <span class="math notranslate nohighlight">\(l\)</span> is specified. Using this value, a regular grid is
+generated. As default, the three integer values of the conventional regular grid
+are defined by the following calculation.</p>
+<div class="math notranslate nohighlight" id="equation-one-value-grid">
+<span class="eqno">(2)<a class="headerlink" href="#equation-one-value-grid" title="Permalink to this equation">¶</a></span>\[n_i = \max[1, \mathrm{nint}(l|\mathbf{b}^*_i|)]\]</div>
+<p>Experimentally, use of a generalized regular grid is supported. By specifying
+<code class="docutils literal notranslate"><span class="pre">use_grg</span> <span class="pre">=</span> <span class="pre">True</span></code> at the <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class instantiation, the generalized regular
+grid is generated using the value <span class="math notranslate nohighlight">\(l\)</span>. First, the conventional unit cell of the
+primitive cell is searched. Second, Eq. <a class="reference internal" href="#equation-one-value-grid">(2)</a> is applied to the
+reciprocal basis vectors of the conventional unit cell. Then,
+<span class="math notranslate nohighlight">\(\mathbf{q}\)</span>-points are sampled following Eq. <a class="reference internal" href="#equation-three-integer-grid">(1)</a> with
+respect to the reciprocal basis vectors of the conventional unit cell. The
+parallelepiped defined by <span class="math notranslate nohighlight">\(\mathbf{b}^*_i\)</span> of the conventinal unit cell can be
+smaller than that of the primitive cell. In this case, the <span class="math notranslate nohighlight">\(\mathbf{q}\)</span>-points
+are sampled to fill the latter parallelepiped.</p>
+</div>
+<div class="section" id="x3-integer-matrix-experimental">
+<h3><a class="toc-backref" href="#id11">3x3 integer matrix (experimental)</a><a class="headerlink" href="#x3-integer-matrix-experimental" title="Permalink to this headline">¶</a></h3>
+<p>This is used to define the generalized regular grid explicitly. The generalized
+regular grid is designed to be automatically generated by one given value
+considering symmetry. However a 3x3 integer matrix (array) is accepted if this
+matrix follows the symmetry properly.</p>
+</div>
+</div>
+<div class="section" id="phonon-phonon-interaction-calculation">
+<h2><a class="toc-backref" href="#id12">Phonon-phonon interaction calculation</a><a class="headerlink" href="#phonon-phonon-interaction-calculation" title="Permalink to this headline">¶</a></h2>
+<p>Three phonon interaction strength is calculated after defining the regular grid.
+When we have <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> used above (maybe <code class="docutils literal notranslate"><span class="pre">BORN</span></code>,
+too), it is convenient to get the <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class instance with settings.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span> <span class="nn">phono3py</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">ph3</span> <span class="o">=</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;phono3py_disp.yaml&quot;</span><span class="p">,</span> <span class="n">log_level</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">NAC</span> <span class="n">params</span> <span class="n">were</span> <span class="n">read</span> <span class="kn">from</span> <span class="s2">&quot;BORN&quot;</span><span class="o">.</span>
+<span class="n">Displacement</span> <span class="n">dataset</span> <span class="k">for</span> <span class="n">fc3</span> <span class="n">was</span> <span class="n">read</span> <span class="kn">from</span> <span class="s2">&quot;phono3py_disp.yaml&quot;</span><span class="o">.</span>
+<span class="n">Sets</span> <span class="n">of</span> <span class="n">supercell</span> <span class="n">forces</span> <span class="n">were</span> <span class="n">read</span> <span class="kn">from</span> <span class="s2">&quot;FORCES_FC3&quot;</span><span class="o">.</span>
+<span class="n">Computing</span> <span class="n">fc3</span><span class="p">[</span> <span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span> <span class="p">]</span> <span class="n">using</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span> <span class="k">with</span> <span class="n">displacements</span><span class="p">:</span>
+    <span class="p">[</span> <span class="mf">0.0300</span>  <span class="mf">0.0000</span>  <span class="mf">0.0000</span><span class="p">]</span>
+    <span class="p">[</span> <span class="mf">0.0000</span>  <span class="mf">0.0000</span>  <span class="mf">0.0300</span><span class="p">]</span>
+    <span class="p">[</span> <span class="mf">0.0000</span>  <span class="mf">0.0000</span> <span class="o">-</span><span class="mf">0.0300</span><span class="p">]</span>
+<span class="n">Computing</span> <span class="n">fc3</span><span class="p">[</span> <span class="mi">37</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span> <span class="p">]</span> <span class="n">using</span> <span class="n">numpy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span> <span class="k">with</span> <span class="n">displacements</span><span class="p">:</span>
+    <span class="p">[</span> <span class="mf">0.0300</span>  <span class="mf">0.0000</span>  <span class="mf">0.0000</span><span class="p">]</span>
+    <span class="p">[</span> <span class="mf">0.0000</span>  <span class="mf">0.0000</span>  <span class="mf">0.0300</span><span class="p">]</span>
+    <span class="p">[</span> <span class="mf">0.0000</span>  <span class="mf">0.0000</span> <span class="o">-</span><span class="mf">0.0300</span><span class="p">]</span>
+<span class="n">Expanding</span> <span class="n">fc3</span><span class="o">.</span>
+<span class="n">fc3</span> <span class="n">was</span> <span class="n">symmetrized</span><span class="o">.</span>
+<span class="n">Max</span> <span class="n">drift</span> <span class="n">of</span> <span class="n">fc3</span><span class="p">:</span> <span class="mf">0.000000</span> <span class="p">(</span><span class="n">yxx</span><span class="p">)</span> <span class="mf">0.000000</span> <span class="p">(</span><span class="n">xyx</span><span class="p">)</span> <span class="mf">0.000000</span> <span class="p">(</span><span class="n">xxy</span><span class="p">)</span>
+<span class="n">Displacement</span> <span class="n">dataset</span> <span class="k">for</span> <span class="n">fc2</span> <span class="n">was</span> <span class="n">read</span> <span class="kn">from</span> <span class="s2">&quot;phono3py_disp.yaml&quot;</span><span class="o">.</span>
+<span class="n">Sets</span> <span class="n">of</span> <span class="n">supercell</span> <span class="n">forces</span> <span class="n">were</span> <span class="n">read</span> <span class="kn">from</span> <span class="s2">&quot;FORCES_FC3&quot;</span><span class="o">.</span>
+<span class="n">fc2</span> <span class="n">was</span> <span class="n">symmetrized</span><span class="o">.</span>
+<span class="n">Max</span> <span class="n">drift</span> <span class="n">of</span> <span class="n">fc2</span><span class="p">:</span> <span class="mf">0.000000</span> <span class="p">(</span><span class="n">yy</span><span class="p">)</span> <span class="mf">0.000000</span> <span class="p">(</span><span class="n">yy</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Three phonon interaction calculation becomes ready to run by the following
+lines:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">mesh_numbers</span> <span class="o">=</span> <span class="mi">30</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">init_phph_interaction</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The three phonon interaction calculation is implemented in
+<code class="docutils literal notranslate"><span class="pre">phono3py.phonon3.interaction.Interaction</span></code> class. By phono3py’s design choice,
+<span class="math notranslate nohighlight">\(\mathbf{q}_1\)</span> of the three phonons <span class="math notranslate nohighlight">\((\mathbf{q}_1, \mathbf{q}_2, \mathbf{q}_3)\)</span>
+in this class is given, and calculation iterates over different <span class="math notranslate nohighlight">\(\mathbf{q}_2\)</span>.
+<span class="math notranslate nohighlight">\(\mathbf{q}_3\)</span> is uniquely determined from <span class="math notranslate nohighlight">\(\mathbf{q}_1\)</span> and <span class="math notranslate nohighlight">\(\mathbf{q}_2\)</span>.
+Symmetry is employed to avoid calculating symmetrically redundant <span class="math notranslate nohighlight">\(\mathbf{q}_2\)</span>
+at the fixed <span class="math notranslate nohighlight">\(\mathbf{q}_1\)</span>. One <code class="docutils literal notranslate"><span class="pre">Interaction</span></code> class instance stores the data
+only for one fixed <span class="math notranslate nohighlight">\(\mathbf{q}_1\)</span>.</p>
+<p>Three phonon interaction strength requires large memory space. Therefore, in
+lattice thermal conductivity calculation, it is calculated on-demand, and then
+abandoned after use of the data. Three phonon interaction strength calculation
+is the most computationally demanding part for usual applications. Detailed
+techniques are used to avoid elements of the Three phonon interaction strength
+if it is specified to do so.</p>
+<p>Three phonon interaction strength calculation is the engine of more practical
+(or closer to macroscopic physical properties) calculation such as lattice
+thermal conductivity calculation. To minimize computational resources required
+by each purpose of use, the outer function that calls this function determines
+proper computational configuration of this function.</p>
+</div>
+<div class="section" id="lattice-thermal-conductivity-calculation">
+<h2><a class="toc-backref" href="#id13">Lattice thermal conductivity calculation</a><a class="headerlink" href="#lattice-thermal-conductivity-calculation" title="Permalink to this headline">¶</a></h2>
+<p>Once three phonon interaction calculation is prepared by
+<code class="docutils literal notranslate"><span class="pre">ph3.init_phph_interaction()</span></code>, it is ready to run lattice thermal conductivity.
+Its many parameters are found in the docstring. With default parameters, the
+lattice thermal conductivity under the mode relaxation time approximation is
+performed as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">run_thermal_conductivity</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs">
+<h2><a class="toc-backref" href="#id14">Use of different supercell dimensions for 2nd and 3rd order FCs</a><a class="headerlink" href="#use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs" title="Permalink to this headline">¶</a></h2>
+<p>Phono3py supports different supercell dimensions for second and third order
+force constants (fc2 and fc3). The default setting is using the same dimensions.
+What are written above assume the default setting. In our experience, higher
+order force constants have shorter interaction range in direct space, and
+require more computational demand. Therefore we tend to expect to use smaller
+supercell dimension for fc3 than that for fc2. Therefore,
+<code class="docutils literal notranslate"><span class="pre">phonon_supercell_matrix</span></code> parameter exists. This specifies fc2 supercell
+dimension.</p>
+<p>Using <code class="docutils literal notranslate"><span class="pre">POSCAR-unitcell</span></code> in the AlN-LDA example,</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">phonopy.interface.calculator</span> <span class="kn">import</span> <span class="n">read_crystal_structure</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">unitcell</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">read_crystal_structure</span><span class="p">(</span><span class="s2">&quot;POSCAR-unitcell&quot;</span><span class="p">,</span> <span class="n">interface_mode</span><span class="o">=</span><span class="s1">&#39;vasp&#39;</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="kn">from</span> <span class="nn">phono3py</span> <span class="kn">import</span> <span class="n">Phono3py</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="n">ph3</span> <span class="o">=</span> <span class="n">Phono3py</span><span class="p">(</span><span class="n">unitcell</span><span class="p">,</span> <span class="n">supercell_matrix</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">primitive_matrix</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">phonon_supercell_matrix</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;phono3py_disp.yaml&quot;</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">generate_displacements</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Phono3py.generate_fc2_displacements()</span></code> is the method to generate displacement
+dataset for fc2. This is usually unnecessary to be called because this is called
+when <code class="docutils literal notranslate"><span class="pre">Phono3py.generate_displacements()</span></code> is called.
+<code class="docutils literal notranslate"><span class="pre">Phono3py.generate_fc2_displacements()</span></code> may be called explicitly if non-default
+control of displacement pattern is expected. See their docstrings for the
+details.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">phonon_supercell_matrix</span></code> is specified, the following attributes are
+usable:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Phono3py</span><span class="o">.</span><span class="n">phonon_supercell_matrix</span>
+<span class="n">Phono3py</span><span class="o">.</span><span class="n">phonon_dataset</span>
+<span class="n">Phono3py</span><span class="o">.</span><span class="n">phonon_forces</span>
+<span class="n">Phono3py</span><span class="o">.</span><span class="n">phonon_supercells_with_displacements</span>
+</pre></div>
+</div>
+<p>The meanings of them are found in their docstrings though they may be guessed
+easily.</p>
+</div>
+<div class="section" id="phono3py-load">
+<h2><a class="toc-backref" href="#id15"><code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code></a><a class="headerlink" href="#phono3py-load" title="Permalink to this headline">¶</a></h2>
+<p>The purpose of <code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code> is to create a <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class instance with
+basic parameters loaded from the phono3py-yaml-type file and also to try setting
+up force constants and non-analytical term correction automatically from
+phono3py files in the current directory.</p>
+<p>In AlN-LDA example, the unit cell structure, supercell matrix, and primitive
+matrix were recorded in the <code class="docutils literal notranslate"><span class="pre">phono3py_disp_dimfc2.yamll</span></code> file. This is easily
+read a helper function of <code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code>. Using ipython (or jupyter-notebook):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="kn">import</span> <span class="nn">phono3py</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">ph3</span> <span class="o">=</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;phono3py_disp_dimfc2.yaml&quot;</span><span class="p">,</span> <span class="n">produce_fc</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="nb">type</span><span class="p">(</span><span class="n">ph3</span><span class="p">)</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">3</span><span class="p">]:</span> <span class="n">phono3py</span><span class="o">.</span><span class="n">api_phono3py</span><span class="o">.</span><span class="n">Phono3py</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">4</span><span class="p">]:</span> <span class="nb">print</span><span class="p">(</span><span class="n">ph3</span><span class="o">.</span><span class="n">unitcell</span><span class="p">)</span>
+<span class="n">lattice</span><span class="p">:</span>
+<span class="o">-</span> <span class="p">[</span>     <span class="mf">3.110999999491908</span><span class="p">,</span>     <span class="mf">0.000000000000000</span><span class="p">,</span>     <span class="mf">0.000000000000000</span> <span class="p">]</span> <span class="c1"># a</span>
+<span class="o">-</span> <span class="p">[</span>    <span class="o">-</span><span class="mf">1.555499999745954</span><span class="p">,</span>     <span class="mf">2.694205030733368</span><span class="p">,</span>     <span class="mf">0.000000000000000</span> <span class="p">]</span> <span class="c1"># b</span>
+<span class="o">-</span> <span class="p">[</span>     <span class="mf">0.000000000000000</span><span class="p">,</span>     <span class="mf">0.000000000000000</span><span class="p">,</span>     <span class="mf">4.978000000000000</span> <span class="p">]</span> <span class="c1"># c</span>
+<span class="n">points</span><span class="p">:</span>
+<span class="o">-</span> <span class="n">symbol</span><span class="p">:</span> <span class="n">Al</span> <span class="c1"># 1</span>
+  <span class="n">coordinates</span><span class="p">:</span> <span class="p">[</span>  <span class="mf">0.333333333333333</span><span class="p">,</span>  <span class="mf">0.666666666666667</span><span class="p">,</span>  <span class="mf">0.000948820000000</span> <span class="p">]</span>
+  <span class="n">mass</span><span class="p">:</span> <span class="mf">26.981539</span>
+<span class="o">-</span> <span class="n">symbol</span><span class="p">:</span> <span class="n">Al</span> <span class="c1"># 2</span>
+  <span class="n">coordinates</span><span class="p">:</span> <span class="p">[</span>  <span class="mf">0.666666666666667</span><span class="p">,</span>  <span class="mf">0.333333333333333</span><span class="p">,</span>  <span class="mf">0.500948820000000</span> <span class="p">]</span>
+  <span class="n">mass</span><span class="p">:</span> <span class="mf">26.981539</span>
+<span class="o">-</span> <span class="n">symbol</span><span class="p">:</span> <span class="n">N</span>  <span class="c1"># 3</span>
+  <span class="n">coordinates</span><span class="p">:</span> <span class="p">[</span>  <span class="mf">0.333333333333333</span><span class="p">,</span>  <span class="mf">0.666666666666667</span><span class="p">,</span>  <span class="mf">0.619051180000000</span> <span class="p">]</span>
+  <span class="n">mass</span><span class="p">:</span> <span class="mf">14.006700</span>
+<span class="o">-</span> <span class="n">symbol</span><span class="p">:</span> <span class="n">N</span>  <span class="c1"># 4</span>
+  <span class="n">coordinates</span><span class="p">:</span> <span class="p">[</span>  <span class="mf">0.666666666666667</span><span class="p">,</span>  <span class="mf">0.333333333333333</span><span class="p">,</span>  <span class="mf">0.119051180000000</span> <span class="p">]</span>
+  <span class="n">mass</span><span class="p">:</span> <span class="mf">14.006700</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">supercell_matrix</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">5</span><span class="p">]:</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]])</span>
+
+<span class="n">In</span> <span class="p">[</span><span class="mi">6</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">nac_params</span>
+<span class="n">Out</span><span class="p">[</span><span class="mi">6</span><span class="p">]:</span>
+<span class="p">{</span><span class="s1">&#39;born&#39;</span><span class="p">:</span> <span class="n">array</span><span class="p">([[[</span> <span class="mf">2.51264750e+00</span><span class="p">,</span>  <span class="mf">0.00000000e+00</span><span class="p">,</span>  <span class="mf">0.00000000e+00</span><span class="p">],</span>
+         <span class="p">[</span> <span class="mf">0.00000000e+00</span><span class="p">,</span>  <span class="mf">2.51264750e+00</span><span class="p">,</span>  <span class="mf">0.00000000e+00</span><span class="p">],</span>
+         <span class="p">[</span> <span class="mf">0.00000000e+00</span><span class="p">,</span>  <span class="mf">0.00000000e+00</span><span class="p">,</span>  <span class="mf">2.67353000e+00</span><span class="p">]],</span>
+
+        <span class="p">[[</span> <span class="mf">2.51264750e+00</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.22044605e-16</span><span class="p">,</span>  <span class="mf">0.00000000e+00</span><span class="p">],</span>
+         <span class="p">[</span> <span class="mf">0.00000000e+00</span><span class="p">,</span>  <span class="mf">2.51264750e+00</span><span class="p">,</span>  <span class="mf">0.00000000e+00</span><span class="p">],</span>
+         <span class="p">[</span> <span class="mf">0.00000000e+00</span><span class="p">,</span>  <span class="mf">0.00000000e+00</span><span class="p">,</span>  <span class="mf">2.67353000e+00</span><span class="p">]],</span>
+
+        <span class="p">[[</span><span class="o">-</span><span class="mf">2.51264750e+00</span><span class="p">,</span>  <span class="mf">0.00000000e+00</span><span class="p">,</span>  <span class="mf">0.00000000e+00</span><span class="p">],</span>
+         <span class="p">[</span> <span class="mf">0.00000000e+00</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.51264750e+00</span><span class="p">,</span>  <span class="mf">0.00000000e+00</span><span class="p">],</span>
+         <span class="p">[</span> <span class="mf">0.00000000e+00</span><span class="p">,</span>  <span class="mf">0.00000000e+00</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.67353000e+00</span><span class="p">]],</span>
+
+        <span class="p">[[</span><span class="o">-</span><span class="mf">2.51264750e+00</span><span class="p">,</span>  <span class="mf">2.22044605e-16</span><span class="p">,</span>  <span class="mf">0.00000000e+00</span><span class="p">],</span>
+         <span class="p">[</span> <span class="mf">0.00000000e+00</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.51264750e+00</span><span class="p">,</span>  <span class="mf">0.00000000e+00</span><span class="p">],</span>
+         <span class="p">[</span> <span class="mf">0.00000000e+00</span><span class="p">,</span>  <span class="mf">0.00000000e+00</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.67353000e+00</span><span class="p">]]]),</span>
+ <span class="s1">&#39;factor&#39;</span><span class="p">:</span> <span class="mf">14.39965172592227</span><span class="p">,</span>
+ <span class="s1">&#39;dielectric&#39;</span><span class="p">:</span> <span class="n">array</span><span class="p">([[</span><span class="mf">4.435009</span><span class="p">,</span> <span class="mf">0.</span>      <span class="p">,</span> <span class="mf">0.</span>      <span class="p">],</span>
+        <span class="p">[</span><span class="mf">0.</span>      <span class="p">,</span> <span class="mf">4.435009</span><span class="p">,</span> <span class="mf">0.</span>      <span class="p">],</span>
+        <span class="p">[</span><span class="mf">0.</span>      <span class="p">,</span> <span class="mf">0.</span>      <span class="p">,</span> <span class="mf">4.653269</span><span class="p">]])}</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+              </div>
+              
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
+    <a class='left-prev' id="prev-link" href="external-tools.html" title="previous page">
+        <i class="fas fa-angle-left"></i>
+        <div class="prev-next-info">
+            <p class="prev-next-subtitle">previous</p>
+            <p class="prev-next-title">External tools</p>
+        </div>
+    </a>
+    <a class='right-next' id="next-link" href="tips.html" title="next page">
+    <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Tips</p>
+    </div>
+    <i class="fas fa-angle-right"></i>
+    </a>
+</div>
+            
+        </div>
+    </div>
+    <footer class="footer">
+  <p>
+    
+        &copy; Copyright 2015, Atsushi Togo.<br/>
+  </p>
+</footer>
+</main>
+
+
+      </div>
+    </div>
+  
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+
+  </body>
+</html>

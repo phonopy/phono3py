@@ -94,7 +94,7 @@ LAPACKE (http://www.netlib.org/lapack/lapacke.html) can be installed from the
 Ubuntu package manager (`liblapacke` and `liblapacke-dev`):
 
 ```bash
-   % sudo apt-get install liblapack-dev liblapacke-dev
+% sudo apt-get install liblapack-dev liblapacke-dev
 ```
 
 ### Compiling Netlib LAPACKE

@@ -2,6 +2,19 @@
 
 # Change Log
 
+## Feb-14-2022: Version 2.2.0
+
+- Maintenance release to follow the change of phonopy at v2.12.1.
+- Installation using `setup.py` now requires creating `site.cfg` file. See
+  https://phonopy.github.io/phono3py/install.html and
+  [PR #59](https://github.com/phonopy/phono3py/pull/59).
+- Dorp python 3.6 support, and dependencies of numpy and matplotlib versions are
+  updated:
+
+  - Python >= 3.7
+  - numpy >= 1.15.0
+  - matplotlib >= 2.2.2
+
 ## Nov-3-2021: Version 2.1.0
 
 - Fix of a critical bung in the direct solution. See the detail as commit log of

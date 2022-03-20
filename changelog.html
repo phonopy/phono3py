@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Change Log &#8212; Phono3py v.2.1.0</title>
+    <title>Change Log &#8212; Phono3py v.2.2.0</title>
     
   <link href="_static/css/theme.css" rel="stylesheet">
   <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
@@ -23,7 +23,7 @@
 
     
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
     
   <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
 
@@ -31,9 +31,9 @@
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
-    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="How to cite phono3py" href="citation.html" />
@@ -53,14 +53,19 @@
     <div class="container-xl">
       <div class="row">
           
-<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
     
         <div class="navbar-brand-box">
     <a class="navbar-brand text-wrap" href="index.html">
       
       
       
-      <h1 class="site-logo" id="site-title">Phono3py v.2.1.0</h1>
+      <h1 class="site-logo" id="site-title">Phono3py v.2.2.0</h1>
       
     </a>
 </div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
@@ -72,6 +77,11 @@
  <li class="toctree-l1">
   <a class="reference internal" href="install.html">
    Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="workflow.html">
+   Workflow
   </a>
  </li>
  <li class="toctree-l1">
@@ -117,8 +127,8 @@
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="output-files.html">
-   Output files
+  <a class="reference internal" href="input-output-files.html">
+   Input / Output files
   </a>
  </li>
  <li class="toctree-l1">
@@ -152,6 +162,11 @@
   </a>
  </li>
  <li class="toctree-l1">
+  <a class="reference internal" href="phono3py-api.html">
+   Phono3py API
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="tips.html">
    Tips
   </a>
@@ -182,22 +197,22 @@
 
 
           
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
 <main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
     
     <div class="topbar container-xl fixed-top">
     <div class="topbar-contents row">
         <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
         <div class="col pl-md-4 topbar-main">
-            
-            <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
-                data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
-                aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
-                title="Toggle navigation" data-toggle="tooltip" data-placement="left">
-                <i class="fas fa-bars"></i>
-                <i class="fas fa-arrow-left"></i>
-                <i class="fas fa-arrow-up"></i>
-            </button>
-            
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
             
 <div class="dropdown-buttons-trigger">
     <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
@@ -212,7 +227,7 @@
                 data-placement="left">.md</button></a>
         <!-- Download PDF via print -->
         <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
-            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
     </div>
 </div>
 
@@ -230,13 +245,18 @@
         </div>
 
         <!-- Table of contents -->
-        <div class="d-none d-md-block col-md-2 bd-toc show">
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
             
             <div class="tocsection onthispage pt-5 pb-3">
                 <i class="fas fa-list"></i> Contents
             </div>
             <nav id="bd-toc-nav" aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#feb-14-2022-version-2-2-0">
+   Feb-14-2022: Version 2.2.0
+  </a>
+ </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#nov-3-2021-version-2-1-0">
    Nov-3-2021: Version 2.1.0
@@ -480,11 +500,286 @@
 </div>
     <div id="main-content" class="row">
         <div class="col-12 col-md-9 pl-md-3 pr-md-0">
-        
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Change Log</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#feb-14-2022-version-2-2-0">
+   Feb-14-2022: Version 2.2.0
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#nov-3-2021-version-2-1-0">
+   Nov-3-2021: Version 2.1.0
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#jul-22-2021-version-2-0-0">
+   Jul-22-2021: Version 2.0.0
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#mar-17-2021-version-1-22-3">
+   Mar-17-2021: Version 1.22.3
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#feb-21-2021-version-1-22-2">
+   Feb-21-2021: Version 1.22.2
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#feb-21-2021-version-1-22-1">
+   Feb-21-2021: Version 1.22.1
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#jan-29-2021-version-1-22-0">
+   Jan-29-2021: Version 1.22.0
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#sep-30-2020-version-1-21-0">
+   Sep-30-2020: Version 1.21.0
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#mar-3-2020-version-1-20-0">
+   Mar-3-2020: Version 1.20.0
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#mar-3-2020-version-1-19-1">
+   Mar-3-2020: Version 1.19.1
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#mar-2-2020-version-1-19-0">
+   Mar-2-2020: Version 1.19.0
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#dec-22-2019-version-1-18-2">
+   Dec-22-2019: Version 1.18.2
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#oct-17-2019-version-1-18-1">
+   Oct-17-2019: Version 1.18.1
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#oct-9-2019-version-1-18-0">
+   Oct-9-2019: Version 1.18.0
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#apr-18-2019-version-1-17-0">
+   Apr-18-2019: Version 1.17.0
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#mar-24-2019-version-1-16-0">
+   Mar-24-2019: Version 1.16.0
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#nov-22-2018-version-1-14-3">
+   Nov-22-2018: version 1.14.3
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#june-20-2018-version-1-13-3">
+   June-20-2018: version 1.13.3
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#may-17-2018-version-1-13-1">
+   May-17-2018: version 1.13.1
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#mar-16-2018-version-1-12-9">
+   Mar-16-2018: version 1.12.9
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#feb-1-2018-version-1-12-7">
+   Feb-1-2018: version 1.12.7
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#nov-22-2017-version-1-12-5">
+   Nov-22-2017: version 1.12.5
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#nov-17-2017-version-1-12-3">
+   Nov-17-2017: version 1.12.3
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#jun-18-2017-version-1-11-13">
+   Jun-18-2017: version 1.11.13
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#mar-31-2017-version-1-11-11">
+   Mar-31-2017: version 1.11.11
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#feb-9-2017-version-1-11-9">
+   Feb-9-2017: version 1.11.9
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#dec-14-2016-version-1-11-7">
+   Dec-14-2016: version 1.11.7
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#nov-27-2016-version-1-11-5">
+   Nov-27-2016: version 1.11.5
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#apr-24-2016-version-1-10-9">
+   Apr-24-2016: version 1.10.9
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#apr-16-2016-version-1-10-7">
+   Apr-16-2016: version 1.10.7
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#mar-15-2016-version-1-10-5">
+   Mar-15-2016: version 1.10.5
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#oct-10-2015-version-0-9-14">
+   Oct-10-2015: version 0.9.14
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#sep-26-2015-version-0-9-13">
+   Sep-26-2015: version 0.9.13
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#aug-12-2015-version-0-9-12">
+   Aug-12-2015: version 0.9.12
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#jun-18-2015-version-0-9-10-1">
+   Jun-18-2015: version 0.9.10.1
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#jun-17-2015-version-0-9-10">
+   Jun-17-2015: version 0.9.10
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#changes-in-version-0-9-7">
+   Changes in version 0.9.7
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#changes-in-version-0-9-6">
+   Changes in version 0.9.6
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#changes-in-version-0-9-5">
+   Changes in version 0.9.5
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#changes-in-version-0-9-4">
+   Changes in version 0.9.4
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#changes-in-version-0-8-11">
+   Changes in version 0.8.11
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#changes-in-version-0-8-10">
+   Changes in version 0.8.10
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#changes-in-version-0-8-2">
+   Changes in version 0.8.2
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#changes-in-version-0-8-0">
+   Changes in version 0.8.0
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#changes-in-version-0-7-6">
+   Changes in version 0.7.6
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#changes-in-version-0-7-2">
+   Changes in version 0.7.2
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#changes-in-version-0-7-1">
+   Changes in version 0.7.1
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#changes-in-version-0-6-0">
+   Changes in version 0.6.0
+  </a>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
               <div>
                 
   <div class="tex2jax_ignore mathjax_ignore section" id="change-log">
 <span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="feb-14-2022-version-2-2-0">
+<h2>Feb-14-2022: Version 2.2.0<a class="headerlink" href="#feb-14-2022-version-2-2-0" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Maintenance release to follow the change of phonopy at v2.12.1.</p></li>
+<li><p>Installation using <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> now requires creating <code class="docutils literal notranslate"><span class="pre">site.cfg</span></code> file. See
+<a class="reference external" href="https://phonopy.github.io/phono3py/install.html">https://phonopy.github.io/phono3py/install.html</a> and
+<a class="reference external" href="https://github.com/phonopy/phono3py/pull/59">PR #59</a>.</p></li>
+<li><p>Dorp python 3.6 support, and dependencies of numpy and matplotlib versions are
+updated:</p>
+<ul>
+<li><p>Python &gt;= 3.7</p></li>
+<li><p>numpy &gt;= 1.15.0</p></li>
+<li><p>matplotlib &gt;= 2.2.2</p></li>
+</ul>
+</li>
+</ul>
+</div>
 <div class="section" id="nov-3-2021-version-2-1-0">
 <h2>Nov-3-2021: Version 2.1.0<a class="headerlink" href="#nov-3-2021-version-2-1-0" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
@@ -505,7 +800,7 @@ were changed to</p>
 <div class="section" id="jul-22-2021-version-2-0-0">
 <h2>Jul-22-2021: Version 2.0.0<a class="headerlink" href="#jul-22-2021-version-2-0-0" title="Permalink to this headline">¶</a></h2>
 <p>This is a major version release. There are some backword-incompatible changes.</p>
-<ol class="simple">
+<ol class="arabic simple">
 <li><p>Grid point indexing system to address grid points of q-points is changed.</p></li>
 <li><p>Array data types of most of the integer arrays are changed to <code class="docutils literal notranslate"><span class="pre">dtype='int_'</span></code>
 from <code class="docutils literal notranslate"><span class="pre">dtype='intc'</span></code>.</p></li>
@@ -621,7 +916,7 @@ input crystal structure by <code class="docutils literal notranslate"><span clas
 not given, <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> (primary) or <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> (secondary) is
 searched in the current directory. Then <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file is used as
 the input. By this, semi-automatic phono3py mode is invocked, which acts as</p>
-<ol class="simple">
+<ol class="arabic simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">supercell_matrix</span></code> corresponding to <code class="docutils literal notranslate"><span class="pre">DIM</span></code> in the <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code> type file
 is used if it exists.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">phonon_supercell_matrix</span></code> corresponding to <code class="docutils literal notranslate"><span class="pre">DIM_FC2</span></code> in the <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code>
@@ -686,7 +981,7 @@ These options are used to save harmonic phonon infromation on strage.</p></li>
 <ul>
 <li><p>Bug fix of RTA thermal conductivity. This bug exists from version 1.10.11.18
 (git e40cd059). This bug exhibits when all the following conditions are met:</p>
-<ol class="simple">
+<ol class="arabic simple">
 <li><p>RTA thermal conductivity calculation.</p></li>
 <li><p>Tetrahedron method for Brillouin zone integration is used.</p></li>
 <li><p>Number of triplets is smaller than number of bands at each grid point.</p></li>
@@ -722,7 +1017,7 @@ with other script names already existing under bin directory.</p></li>
 <ul class="simple">
 <li><p><a class="reference internal" href="command-options.html#normal-umklapp-option"><span class="std std-ref">--nu (N_U = .TRUE.)</span></a> option was made.</p></li>
 <li><p>Many minor updates: fixing bugs, improving usabilities.</p></li>
-<li><p>Improve of <a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kaccum"><span class="std std-ref">phono3py-kaccum</span></a> and <a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kdeplot"><span class="std std-ref">phono3py-kdeplot</span></a>.</p></li>
+<li><p>Improve of <a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kaccum"><span class="std std-ref">phono3py-kaccum: Cumulative lattice thermal conductivity and related properties</span></a> and <a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kdeplot"><span class="std std-ref">phono3py-kdeplot: Distribution of phonon lifetime</span></a>.</p></li>
 </ul>
 </div>
 <div class="section" id="mar-31-2017-version-1-11-11">
@@ -754,8 +1049,8 @@ or later.</p></li>
 <h2>Nov-27-2016: version 1.11.5<a class="headerlink" href="#nov-27-2016-version-1-11-5" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">gaccum</span></code> is merged to <code class="docutils literal notranslate"><span class="pre">kaccum</span></code>. <code class="docutils literal notranslate"><span class="pre">gaccum</span></code> is removed. See
-<a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kaccum"><span class="std std-ref">phono3py-kaccum</span></a>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">kdeplot</span></code> is added. See <a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kdeplot"><span class="std std-ref">phono3py-kdeplot</span></a>.</p></li>
+<a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kaccum"><span class="std std-ref">phono3py-kaccum: Cumulative lattice thermal conductivity and related properties</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kdeplot</span></code> is added. See <a class="reference internal" href="auxiliary-tools.html#auxiliary-tools-kdeplot"><span class="std std-ref">phono3py-kdeplot: Distribution of phonon lifetime</span></a>.</p></li>
 </ul>
 </div>
 <div class="section" id="apr-24-2016-version-1-10-9">
@@ -969,8 +1264,8 @@ a mesh number is an even number, it is more carefully treated.</p></li>
 
               </div>
               
-        
-            <!-- Previous / next buttons -->
+            
+                <!-- Previous / next buttons -->
 <div class='prev-next-area'> 
     <a class='left-prev' id="prev-link" href="citation.html" title="previous page">
         <i class="fas fa-angle-left"></i>
@@ -980,17 +1275,15 @@ a mesh number is an even number, it is more carefully treated.</p></li>
         </div>
     </a>
 </div>
-        
+            
         </div>
     </div>
     <footer class="footer">
-    <div class="container">
-      <p>
-        
-            &copy; Copyright 2015, Atsushi Togo.<br/>
-      </p>
-    </div>
-  </footer>
+  <p>
+    
+        &copy; Copyright 2015, Atsushi Togo.<br/>
+  </p>
+</footer>
 </main>
 
 

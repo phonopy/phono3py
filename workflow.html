@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>How to cite phono3py &#8212; Phono3py v.2.2.0</title>
+    <title>Workflow &#8212; Phono3py v.2.2.0</title>
     
   <link href="_static/css/theme.css" rel="stylesheet">
   <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
@@ -34,8 +34,8 @@
     <script src="_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Change Log" href="changelog.html" />
-    <link rel="prev" title="Tips" href="tips.html" />
+    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="prev" title="Installation" href="install.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -78,8 +78,8 @@
    Installation
   </a>
  </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="workflow.html">
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
    Workflow
   </a>
  </li>
@@ -170,8 +170,8 @@
    Tips
   </a>
  </li>
- <li class="toctree-l1 current active">
-  <a class="current reference internal" href="#">
+ <li class="toctree-l1">
+  <a class="reference internal" href="citation.html">
    How to cite phono3py
   </a>
  </li>
@@ -221,7 +221,7 @@
         <!-- ipynb file if we had a myst markdown file -->
         
         <!-- Download raw file -->
-        <a class="dropdown-buttons" href="_sources/citation.md.txt"><button type="button"
+        <a class="dropdown-buttons" href="_sources/workflow.md.txt"><button type="button"
                 class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
                 data-placement="left">.md</button></a>
         <!-- Download PDF via print -->
@@ -246,30 +246,6 @@
         <!-- Table of contents -->
         <div class="d-none d-md-block col-md-2 bd-toc show noprint">
             
-            <div class="tocsection onthispage pt-5 pb-3">
-                <i class="fas fa-list"></i> Contents
-            </div>
-            <nav id="bd-toc-nav" aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#citation-of-phono3py">
-   Citation of phono3py
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#citation-of-direct-solution-of-lbte-lbte">
-   Citation of direct solution of LBTE (
-   <code class="docutils literal notranslate">
-    <span class="pre">
-     --lbte
-    </span>
-   </code>
-   )
-  </a>
- </li>
-</ul>
-
-            </nav>
         </div>
     </div>
 </div>
@@ -277,92 +253,47 @@
         <div class="col-12 col-md-9 pl-md-3 pr-md-0">
             <!-- Table of contents that is only displayed when printing the page -->
             <div id="jb-print-docs-body" class="onlyprint">
-                <h1>How to cite phono3py</h1>
+                <h1>Workflow</h1>
                 <!-- Table of contents -->
                 <div id="print-main-content">
                     <div id="jb-print-toc">
                         
-                        <div>
-                            <h2> Contents </h2>
-                        </div>
-                        <nav aria-label="Page">
-                            <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#citation-of-phono3py">
-   Citation of phono3py
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#citation-of-direct-solution-of-lbte-lbte">
-   Citation of direct solution of LBTE (
-   <code class="docutils literal notranslate">
-    <span class="pre">
-     --lbte
-    </span>
-   </code>
-   )
-  </a>
- </li>
-</ul>
-
-                        </nav>
                     </div>
                 </div>
             </div>
             
               <div>
                 
-  <div class="tex2jax_ignore mathjax_ignore section" id="how-to-cite-phono3py">
-<h1>How to cite phono3py<a class="headerlink" href="#how-to-cite-phono3py" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="citation-of-phono3py">
-<h2>Citation of phono3py<a class="headerlink" href="#citation-of-phono3py" title="Permalink to this headline">¶</a></h2>
-<p>If you have used phono3py, please cite the following article:</p>
-<ul>
-<li><p>“Distributions of phonon lifetimes in Brillouin zones”,
-Atsushi Togo, Laurent Chaput, and Isao Tanaka, Phys. Rev. B, <strong>91</strong>, 094306 (2015)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@article</span><span class="p">{</span><span class="n">phono3py</span><span class="p">,</span>
-  <span class="n">title</span> <span class="o">=</span> <span class="p">{</span><span class="n">Distributions</span> <span class="n">of</span> <span class="n">phonon</span> <span class="n">lifetimes</span> <span class="ow">in</span> <span class="n">Brillouin</span> <span class="n">zones</span><span class="p">},</span>
-  <span class="n">author</span> <span class="o">=</span> <span class="p">{</span><span class="n">Togo</span><span class="p">,</span> <span class="n">Atsushi</span> <span class="ow">and</span> <span class="n">Chaput</span><span class="p">,</span> <span class="n">Laurent</span> <span class="ow">and</span> <span class="n">Tanaka</span><span class="p">,</span> <span class="n">Isao</span><span class="p">},</span>
-  <span class="n">journal</span> <span class="o">=</span> <span class="p">{</span><span class="n">Phys</span><span class="o">.</span> <span class="n">Rev</span><span class="o">.</span> <span class="n">B</span><span class="p">},</span>
-  <span class="n">volume</span> <span class="o">=</span> <span class="p">{</span><span class="mi">91</span><span class="p">},</span>
-  <span class="n">issue</span> <span class="o">=</span> <span class="p">{</span><span class="mi">9</span><span class="p">},</span>
-  <span class="n">pages</span> <span class="o">=</span> <span class="p">{</span><span class="mi">094306</span><span class="p">},</span>
-  <span class="n">numpages</span> <span class="o">=</span> <span class="p">{</span><span class="mi">31</span><span class="p">},</span>
-  <span class="n">year</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2015</span><span class="p">},</span>
-  <span class="n">month</span> <span class="o">=</span> <span class="p">{</span><span class="n">Mar</span><span class="p">},</span>
-  <span class="n">publisher</span> <span class="o">=</span> <span class="p">{</span><span class="n">American</span> <span class="n">Physical</span> <span class="n">Society</span><span class="p">},</span>
-  <span class="n">doi</span> <span class="o">=</span> <span class="p">{</span><span class="mf">10.1103</span><span class="o">/</span><span class="n">PhysRevB</span><span class="mf">.91.094306</span><span class="p">},</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-</li>
-</ul>
-</div>
-<div class="section" id="citation-of-direct-solution-of-lbte-lbte">
-<span id="citation-direct-solution-lbte"></span><h2>Citation of direct solution of LBTE (<code class="docutils literal notranslate"><span class="pre">--lbte</span></code>)<a class="headerlink" href="#citation-of-direct-solution-of-lbte-lbte" title="Permalink to this headline">¶</a></h2>
-<p>If you have used direct solution of LBTE in phono3py, please cite the
-following article:</p>
-<ul>
-<li><p>“Direct Solution to the Linearized Phonon Boltzmann Equation”
-Laurent Chaput, Phys. Rev. Lett., <strong>110</strong>, 265506 (2013)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@article</span><span class="p">{</span><span class="n">PhysRevLett</span><span class="mf">.110.265506</span><span class="p">,</span>
-  <span class="n">title</span> <span class="o">=</span> <span class="p">{</span><span class="n">Direct</span> <span class="n">Solution</span> <span class="n">to</span> <span class="n">the</span> <span class="n">Linearized</span> <span class="n">Phonon</span> <span class="n">Boltzmann</span> <span class="n">Equation</span><span class="p">},</span>
-  <span class="n">author</span> <span class="o">=</span> <span class="p">{</span><span class="n">Chaput</span><span class="p">,</span> <span class="n">Laurent</span><span class="p">},</span>
-  <span class="n">journal</span> <span class="o">=</span> <span class="p">{</span><span class="n">Phys</span><span class="o">.</span> <span class="n">Rev</span><span class="o">.</span> <span class="n">Lett</span><span class="o">.</span><span class="p">},</span>
-  <span class="n">volume</span> <span class="o">=</span> <span class="p">{</span><span class="mi">110</span><span class="p">},</span>
-  <span class="n">issue</span> <span class="o">=</span> <span class="p">{</span><span class="mi">26</span><span class="p">},</span>
-  <span class="n">pages</span> <span class="o">=</span> <span class="p">{</span><span class="mi">265506</span><span class="p">},</span>
-  <span class="n">numpages</span> <span class="o">=</span> <span class="p">{</span><span class="mi">5</span><span class="p">},</span>
-  <span class="n">year</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2013</span><span class="p">},</span>
-  <span class="n">month</span> <span class="o">=</span> <span class="p">{</span><span class="n">Jun</span><span class="p">},</span>
-  <span class="n">publisher</span> <span class="o">=</span> <span class="p">{</span><span class="n">American</span> <span class="n">Physical</span> <span class="n">Society</span><span class="p">},</span>
-  <span class="n">doi</span> <span class="o">=</span> <span class="p">{</span><span class="mf">10.1103</span><span class="o">/</span><span class="n">PhysRevLett</span><span class="mf">.110.265506</span><span class="p">},</span>
-  <span class="n">url</span> <span class="o">=</span> <span class="p">{</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">link</span><span class="o">.</span><span class="n">aps</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">doi</span><span class="o">/</span><span class="mf">10.1103</span><span class="o">/</span><span class="n">PhysRevLett</span><span class="mf">.110.265506</span><span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-</div>
-</li>
-</ul>
+  <div class="tex2jax_ignore mathjax_ignore section" id="workflow">
+<span id="id1"></span><h1>Workflow<a class="headerlink" href="#workflow" title="Permalink to this headline">¶</a></h1>
+<p>Phono3py calculate phonon-phonon interaction related properties. Diagram shown
+below illustrates workflow of lattice thermal conductivity (LTC) calculation.
+The other properties such as spectral function can be calculated in similar
+workflow.</p>
+<p>The LTC calculation is performed by the following three steps:</p>
+<ol class="arabic simple">
+<li><p>Calculation of supercell-force sets (force-sets)</p></li>
+<li><p>Calculation of force constants (FC)</p></li>
+<li><p>Calculation of lattice thermal conductivity (LTC)</p></li>
+</ol>
+<p>Users will call phono3py at each step with at least unit cell and supercell
+matrix, which define the supercell model, as inputs.</p>
+<p>In the first step, supercell and sets of atomic displacements are generated,
+where we call the sets of the displacements as “displacement dataset”.
+Supercells with displacements are built from them. Then forces of the supercell
+models are calculated using a force calculator such as first-principles
+calculation code, which we call “force sets”.</p>
+<p>In the second step, second and third order force constants (fc2 and fc3) are
+computed from the displacement datasets and force sets obtained in the first
+step.</p>
+<p>In the third step, the force constants obtained in the second step are used to
+calculate lattice thermal conductivity. When the input unit cell is not a
+primitive cell, primitive cell matrix is required to be given. Long-range
+dipole-dipole interaction can be included when parameters for non-analytical
+term correction (NAC) are provided.</p>
+<div class="figure align-center" id="id2">
+<img alt="_images/procedure.png" src="_images/procedure.png" />
+<p class="caption"><span class="caption-text">Work flow of lattice thermal conductivity calculation</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
 </div>
 </div>
 
@@ -372,17 +303,17 @@ Laurent Chaput, Phys. Rev. Lett., <strong>110</strong>, 265506 (2013)</p>
             
                 <!-- Previous / next buttons -->
 <div class='prev-next-area'> 
-    <a class='left-prev' id="prev-link" href="tips.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="install.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Tips</p>
+            <p class="prev-next-title">Installation</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="changelog.html" title="next page">
+    <a class='right-next' id="next-link" href="examples.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Change Log</p>
+        <p class="prev-next-title">Examples</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

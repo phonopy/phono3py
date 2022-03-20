@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Installation &#8212; Phono3py v.2.1.0</title>
+    <title>Installation &#8212; Phono3py v.2.2.0</title>
     
   <link href="_static/css/theme.css" rel="stylesheet">
   <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
@@ -23,7 +23,7 @@
 
     
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=c3fdc42140077d1ad13ad2f1588a4309" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
     
   <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
 
@@ -31,10 +31,10 @@
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/sphinx-book-theme.12a9622fbb08dcb3a2a40b2c02b83a57.js"></script>
+    <script src="_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="next" title="Workflow" href="workflow.html" />
     <link rel="prev" title="Welcome to phono3py" href="index.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
@@ -52,14 +52,19 @@
     <div class="container-xl">
       <div class="row">
           
-<div class="col-12 col-md-3 bd-sidebar site-navigation show" id="site-navigation">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
     
         <div class="navbar-brand-box">
     <a class="navbar-brand text-wrap" href="index.html">
       
       
       
-      <h1 class="site-logo" id="site-title">Phono3py v.2.1.0</h1>
+      <h1 class="site-logo" id="site-title">Phono3py v.2.2.0</h1>
       
     </a>
 </div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
@@ -71,6 +76,11 @@
  <li class="toctree-l1 current active">
   <a class="current reference internal" href="#">
    Installation
+  </a>
+ </li>
+ <li class="toctree-l1">
+  <a class="reference internal" href="workflow.html">
+   Workflow
   </a>
  </li>
  <li class="toctree-l1">
@@ -116,8 +126,8 @@
   </a>
  </li>
  <li class="toctree-l1">
-  <a class="reference internal" href="output-files.html">
-   Output files
+  <a class="reference internal" href="input-output-files.html">
+   Input / Output files
   </a>
  </li>
  <li class="toctree-l1">
@@ -151,6 +161,11 @@
   </a>
  </li>
  <li class="toctree-l1">
+  <a class="reference internal" href="phono3py-api.html">
+   Phono3py API
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="tips.html">
    Tips
   </a>
@@ -181,22 +196,22 @@
 
 
           
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
 <main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
     
     <div class="topbar container-xl fixed-top">
     <div class="topbar-contents row">
         <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
         <div class="col pl-md-4 topbar-main">
-            
-            <button id="navbar-toggler" class="navbar-toggler ml-0" type="button" data-toggle="collapse"
-                data-toggle="tooltip" data-placement="bottom" data-target=".site-navigation" aria-controls="navbar-menu"
-                aria-expanded="true" aria-label="Toggle navigation" aria-controls="site-navigation"
-                title="Toggle navigation" data-toggle="tooltip" data-placement="left">
-                <i class="fas fa-bars"></i>
-                <i class="fas fa-arrow-left"></i>
-                <i class="fas fa-arrow-up"></i>
-            </button>
-            
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
+            </div>
             
 <div class="dropdown-buttons-trigger">
     <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
@@ -211,7 +226,7 @@
                 data-placement="left">.md</button></a>
         <!-- Download PDF via print -->
         <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
-            onClick="window.print()" data-toggle="tooltip" data-placement="left">.pdf</button>
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
     </div>
 </div>
 
@@ -229,7 +244,7 @@
         </div>
 
         <!-- Table of contents -->
-        <div class="d-none d-md-block col-md-2 bd-toc show">
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
             
             <div class="tocsection onthispage pt-5 pb-3">
                 <i class="fas fa-list"></i> Contents
@@ -301,7 +316,82 @@
 </div>
     <div id="main-content" class="row">
         <div class="col-12 col-md-9 pl-md-3 pr-md-0">
-        
+            <!-- Table of contents that is only displayed when printing the page -->
+            <div id="jb-print-docs-body" class="onlyprint">
+                <h1>Installation</h1>
+                <!-- Table of contents -->
+                <div id="print-main-content">
+                    <div id="jb-print-toc">
+                        
+                        <div>
+                            <h2> Contents </h2>
+                        </div>
+                        <nav aria-label="Page">
+                            <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#installation-using-conda">
+   Installation using conda
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#installation-from-source-code">
+   Installation from source code
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#installation-of-lapacke">
+     Installation of LAPACKE
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#openblas-provided-by-conda">
+     OpenBLAS provided by conda
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#openmp-library-of-gcc">
+     OpenMP library of gcc
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas">
+     Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#compiling-netlib-lapacke">
+     Compiling Netlib LAPACKE
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#building-using-setup-py">
+   Building using setup.py
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#installation-instruction-of-latest-development-version-of-phono3py">
+   Installation instruction of latest development version of phono3py
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#multithreading-and-its-controlling-by-c-macro">
+   Multithreading and its controlling by C macro
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#trouble-shooting">
+   Trouble shooting
+  </a>
+ </li>
+</ul>
+
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            
               <div>
                 
   <div class="tex2jax_ignore mathjax_ignore section" id="installation">
@@ -394,7 +484,7 @@ system. If you don’t have it and you use Ubuntu linux, it is installed by:</p>
 <h3><a class="toc-backref" href="#id6">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a><a class="headerlink" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas" title="Permalink to this headline">¶</a></h3>
 <p>LAPACKE (<a class="reference external" href="http://www.netlib.org/lapack/lapacke.html">http://www.netlib.org/lapack/lapacke.html</a>) can be installed from the
 Ubuntu package manager (<code class="docutils literal notranslate"><span class="pre">liblapacke</span></code> and <code class="docutils literal notranslate"><span class="pre">liblapacke-dev</span></code>):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>   % sudo apt-get install liblapack-dev liblapacke-dev
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% sudo apt-get install liblapack-dev liblapacke-dev
 </pre></div>
 </div>
 </div>
@@ -419,7 +509,7 @@ to use it with python.</p>
 <p>If package installation is not possible or you want to compile with special
 compiler or special options, phono3py is built using <a class="reference external" href="http://setup.py">setup.py</a>. In this case,
 manual modification of <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> may be needed.</p>
-<ol>
+<ol class="arabic">
 <li><p>Download the latest source code at</p>
 <p><a class="reference external" href="https://pypi.python.org/pypi/phono3py">https://pypi.python.org/pypi/phono3py</a></p>
 </li>
@@ -452,7 +542,7 @@ follows:</p>
 <span id="install-an-example"></span><h2><a class="toc-backref" href="#id9">Installation instruction of latest development version of phono3py</a><a class="headerlink" href="#installation-instruction-of-latest-development-version-of-phono3py" title="Permalink to this headline">¶</a></h2>
 <p>When using conda, <code class="docutils literal notranslate"><span class="pre">PYTHONPATH</span></code> should not be set if possible because potentially
 wrong python libraries can be imported.</p>
-<ol>
+<ol class="arabic">
 <li><p>Download miniforge</p>
 <p>Miniforge is downloaded at <a class="reference external" href="https://github.com/conda-forge/miniforge">https://github.com/conda-forge/miniforge</a>. The
 detailed installation instruction is found in the same page.</p>
@@ -533,7 +623,7 @@ are unnecessary to be deactivated.</p>
 </div>
 <div class="section" id="trouble-shooting">
 <h2><a class="toc-backref" href="#id11">Trouble shooting</a><a class="headerlink" href="#trouble-shooting" title="Permalink to this headline">¶</a></h2>
-<ol class="simple">
+<ol class="arabic simple">
 <li><p>Phonopy version should be the latest to use the latest phono3py.</p></li>
 <li><p>There are other pitfalls, see
 <a class="reference external" href="https://phonopy.github.io/phonopy/install.html#trouble-shooting">https://phonopy.github.io/phonopy/install.html#trouble-shooting</a>.</p></li>
@@ -544,8 +634,8 @@ are unnecessary to be deactivated.</p>
 
               </div>
               
-        
-            <!-- Previous / next buttons -->
+            
+                <!-- Previous / next buttons -->
 <div class='prev-next-area'> 
     <a class='left-prev' id="prev-link" href="index.html" title="previous page">
         <i class="fas fa-angle-left"></i>
@@ -554,25 +644,23 @@ are unnecessary to be deactivated.</p>
             <p class="prev-next-title">Welcome to phono3py</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="examples.html" title="next page">
+    <a class='right-next' id="next-link" href="workflow.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Examples</p>
+        <p class="prev-next-title">Workflow</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>
 </div>
-        
+            
         </div>
     </div>
     <footer class="footer">
-    <div class="container">
-      <p>
-        
-            &copy; Copyright 2015, Atsushi Togo.<br/>
-      </p>
-    </div>
-  </footer>
+  <p>
+    
+        &copy; Copyright 2015, Atsushi Togo.<br/>
+  </p>
+</footer>
 </main>
 
 
