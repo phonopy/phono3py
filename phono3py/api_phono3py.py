@@ -135,7 +135,7 @@ class Phono3py:
     def __init__(
         self,
         unitcell: PhonopyAtoms,
-        supercell_matrix,
+        supercell_matrix=None,
         primitive_matrix=None,
         phonon_supercell_matrix=None,
         masses=None,
@@ -162,10 +162,12 @@ class Phono3py:
         ----------
         unitcell : PhonopyAtoms, optional
             Input unit cell.
-        supercell_matrix : array_like
+        supercell_matrix : array_like, optional
             Supercell matrix multiplied to input cell basis vectors.
             shape=(3, ) or (3, 3), where the former is considered a diagonal
             matrix. The elements have to be given by integers.
+            Although the default is None, which results in identity
+            matrix, it is recommended to give `supercell_matrix` explicitly.
         primitive_matrix : array_like or str, optional
             Primitive matrix multiplied to input cell basis vectors. Default is
             the identity matrix.
@@ -242,13 +244,15 @@ class Phono3py:
 
         # Create supercell and primitive cell
         self._unitcell = unitcell
-        self._supercell_matrix = shape_supercell_matrix(supercell_matrix)
+        self._supercell_matrix = np.array(
+            shape_supercell_matrix(supercell_matrix), dtype="int_", order="C"
+        )
         pmat = self._determine_primitive_matrix(primitive_matrix)
         self._primitive_matrix = pmat
         self._nac_params = None
         if phonon_supercell_matrix is not None:
-            self._phonon_supercell_matrix = shape_supercell_matrix(
-                phonon_supercell_matrix
+            self._phonon_supercell_matrix = np.array(
+                shape_supercell_matrix(phonon_supercell_matrix), dtype="int_", order="C"
             )
         else:
             self._phonon_supercell_matrix = None
@@ -721,7 +725,7 @@ class Phono3py:
 
         ndarray
             Supercell matrix with respect to unit cell.
-            shape=(3, 3), dtype='intc', order='C'
+            shape=(3, 3), dtype='int_', order='C'
 
         """
         return self._supercell_matrix
@@ -741,7 +745,7 @@ class Phono3py:
 
         ndarray
             Supercell matrix with respect to unit cell.
-            shape=(3, 3), dtype='intc', order='C'
+            shape=(3, 3), dtype='int_', order='C'
 
         """
         return self._phonon_supercell_matrix
@@ -1426,7 +1430,7 @@ class Phono3py:
             prod(mesh) because it includes Brillouin zone boundary. The detail
             is found in the docstring of
             phono3py.phonon3.triplets.get_triplets_at_q.
-            shape=(num_grid_points, 3), dtype='intc', order='C'
+            shape=(num_grid_points, 3), dtype=int
 
         """
         if self._interaction is not None:

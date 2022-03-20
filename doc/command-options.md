@@ -70,6 +70,8 @@ TURBOMOLE interface is invoked. See the details at {ref}`turbomole_interface`.
 
 These options have no respective configuration file tags.
 
+(cf3_option)=
+
 ### `--cf3` (command option only)
 
 This is used to create `FORCES_FC3` from `phono3py_disp.yaml` and force
@@ -296,8 +298,6 @@ like ALM.
 The symmetrizations for the second and third orders can be independently applied
 by `--sym-fc2` (`SYMMETRIZE_FC2 = .TRUE.`) and `--sym-fc3r`
 (`SYMMETRIZE_FC3 = .TRUE.`), , respectively.
-
-(cf3_option)=
 
 ### `--cutoff-fc3` or `--cutoff-fc3-distance` (`CUTOFF_FC3_DISTANCE`)
 
