@@ -481,7 +481,10 @@ def set_dataset_and_force_constants(
             and ph3py_yaml is not None
             and ph3py_yaml.phonon_dataset is None
         ):
-            msg = '"FORCES_FC2" was found. ' "But displacement dataset was not found."
+            msg = (
+                '"FORCES_FC2" was found. But phonon displacement dataset '
+                f'was not found in "{ph3py_yaml.yaml_filename}".'
+            )
             raise RuntimeError(msg)
         _set_forces_fc2(
             ph3py,
