@@ -322,6 +322,18 @@ drawback, a certain number of third-order-force-constants elements are abandoned
 or computed with less numerical accuracy. More details are found at
 {ref}`command_cutoff_pair`.
 
+### `--alm`
+
+This invokes ALM as the force constants calculator for fc2 and fc3. See the
+detail at
+[phonopy documentaton](https://phonopy.github.io/phonopy/setting-tags.html#alm).
+This option is useful for fitting random displacement dataset or MD data to
+force constants. Phono3py doesn't provide command-line interface to generate
+random displacements. Instead simply
+[phonopy can be used for this purpose](https://phonopy.github.io/phonopy/setting-tags.html#random-displacements),
+because `FORCE_SETS` in the type-II format obtained using phonopy can be used as
+`FORCES_FC3` and `FORCES_FC2` just renaming the file name.
+
 ## Reciprocal space sampling mesh and grid points, and band indices
 
 ### `--mesh` (`MESH` or `MESH_NUMBERS`)
@@ -329,8 +341,8 @@ or computed with less numerical accuracy. More details are found at
 Mesh sampling grids in reciprocal space are generated with the specified
 numbers. This mesh is made along reciprocal axes and is always Gamma-centered.
 Except for that this mesh is always Gamma-centered, this works in the same way
-as written here,
-https://phonopy.github.io/phonopy/setting-tags.html#mesh-mp-or-mesh-numbers.
+as written
+[here](https://phonopy.github.io/phonopy/setting-tags.html#mesh-mp-or-mesh-numbers).
 
 (gp_option)=
 

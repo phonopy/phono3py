@@ -28,7 +28,8 @@ This file contains displacement dataset and crystal structure information.
 
 This is created with `--cf3` option. See {ref}`cf3_option`.
 
-This file has a simple format like
+There are two formats of `FORCES_FC3`. The type-I format is like that shown
+below
 
 ```
 # File: 1
@@ -74,12 +75,16 @@ numpy as follows:
 np.savetxt("FORCES_FC3", forces.reshape(-1, 3))
 ```
 
+The type-II format is the same as
+[phonopy's type-II format](https://phonopy.github.io/phonopy/input-files.html#type-2)
+of `FORCE_SETS`.
+
 ### `FORCES_FC2`
 
 This is created with `--cf2` option. See {ref}`cf2_option` and
 {ref}`dim_fc2_option`.
 
-The file format of this file is similar to that of `FORCES_FC3`.
+The file formats (type-I and type-II) are same as those of `FORCES_FC3`.
 
 ## HDF5 files
 
