@@ -367,10 +367,10 @@ proper computational configuration of this function.
 ## Lattice thermal conductivity calculation
 
 Once three phonon interaction calculation is prepared by
-`ph3.init_phph_interaction()`, it is ready to run lattice thermal conductivity.
-Its many parameters are found in the docstring. With default parameters, the
-lattice thermal conductivity under the mode relaxation time approximation is
-performed as follows:
+`ph3.init_phph_interaction()`, it is ready to run lattice thermal conductivity
+calculation. The many parameters are explained in the docstring, but even with
+the default parameters, the lattice thermal conductivity calculation under the
+mode relaxation time approximation is performed as follows:
 
 ```python
 In [5]: ph3.run_thermal_conductivity()
@@ -380,12 +380,11 @@ In [5]: ph3.run_thermal_conductivity()
 
 Phono3py supports different supercell dimensions for second and third order
 force constants (fc2 and fc3). The default setting is using the same dimensions.
-What are written above assume the default setting. In our experience, higher
-order force constants have shorter interaction range in direct space, and
-require more computational demand. Therefore we tend to expect to use smaller
-supercell dimension for fc3 than that for fc2. Therefore,
-`phonon_supercell_matrix` parameter exists. This specifies fc2 supercell
-dimension.
+Although fc3 requires much more number of supercells than fc2, in our
+experience, fc3 have shorter interaction range in direct space. Therefore we
+tend to expect to use smaller supercell dimension for fc3 than that for fc2. To
+achieve this, `phonon_supercell_matrix` parameter exists to specify fc2
+supercell dimension independently.
 
 Using `POSCAR-unitcell` in the AlN-LDA example,
 
@@ -404,8 +403,8 @@ In [6]: ph3.generate_displacements()
 ```
 
 `Phono3py.generate_fc2_displacements()` is the method to generate displacement
-dataset for fc2. This is usually unnecessary to be called because this is called
-when `Phono3py.generate_displacements()` is called.
+dataset for fc2. This is normally unnecessary to be called because this is
+called when `Phono3py.generate_displacements()` is called.
 `Phono3py.generate_fc2_displacements()` may be called explicitly if non-default
 control of displacement pattern is expected. See their docstrings for the
 details.
