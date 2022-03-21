@@ -142,13 +142,14 @@ In [8]: ph3.save("phono3py_disp.yaml")
 Forces of the generated supercells with displacements are calculated by some
 external force calculator such as first-principles calculation code.
 
-Calculated supercell forces will be stored in `Phono3py` class instance through
-`Phono3py.forces` attribute by setting an array_like variable with the shape of
-`(num_supercells, num_atoms_in_supercell, 3)`. In the above example, the array
-shape is `(1254, 72, 3)`.
+Calculated supercell forces will be stored in a `Phono3py` class instance
+through `Phono3py.forces` attribute by setting an array_like variable with the
+shape of `(num_supercells, num_atoms_in_supercell, 3)`. In the above example,
+the array shape is `(1254, 72, 3)`.
 
-If calculated force sets are stored in the {ref}`input-output_files_FORCES_FC3`
-format, the numpy array of `forces` is obtained by
+If the calculated force sets are stored in the
+{ref}`input-output_files_FORCES_FC3` file, the numpy array of `forces` is
+obtained by
 
 ```python
 forces = np.loadtxt("FORCES_FC3").reshape(-1, num_atoms_in_supercell, 3)
@@ -199,8 +200,6 @@ Now it is ready to compute force constants.
 ```python
 In [12]: ph3.produce_fc3()
 ```
-
-(api-phono3py-load)=
 
 ## Non-analytical term correction parameters
 
@@ -423,6 +422,8 @@ Phono3py.phonon_supercells_with_displacements
 
 The meanings of them are found in their docstrings though they may be guessed
 easily.
+
+(api-phono3py-load)=
 
 ## `phono3py.load`
 
