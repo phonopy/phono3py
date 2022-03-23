@@ -755,7 +755,7 @@ http://phonopy.github.io/phonopy/setting-tags.html#q-direction.
 Phonon self-energy of bubble diagram is written as,
 
 $$
-\Sigma*\lambda(\omega) = \Delta*\lambda(\omega) - i \Gamma\_\lambda(\omega).
+\Sigma_\lambda(\omega) = \Delta_\lambda(\omega) - i \Gamma_\lambda(\omega).
 $$
 
 The imaginary part and real part are written as
