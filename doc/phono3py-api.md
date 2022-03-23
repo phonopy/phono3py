@@ -432,7 +432,7 @@ up force constants and non-analytical term correction automatically from
 phono3py files in the current directory.
 
 In AlN-LDA example, the unit cell structure, supercell matrix, and primitive
-matrix were recorded in the `phono3py_disp_dimfc2.yamll` file. This is easily
+matrix were recorded in the `phono3py_disp_dimfc2.yaml` file. This is easily
 read a helper function of `phono3py.load`. Using ipython (or jupyter-notebook):
 
 ```python

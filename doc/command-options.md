@@ -672,6 +672,43 @@ In [6]: f['gamma_U'].shape
 Out[6]: (101, 56, 6)
 ```
 
+### `--scattering-event-class` (`SCATTERING_EVENT_CLASS`)
+
+Scattering event class of imaginary part of self energy is specified by `1` or
+`2`. This only works with {ref}`ise_option` option. The classes 1 and 2 are
+given by
+
+$$
+\begin{align*}
+ \Gamma_\lambda^{(1)}(\omega) = \frac{18\pi}{\hbar^2}
+ \sum_{\lambda_1 \lambda_2}
+ \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2
+ (n_{\lambda_1}-n_{\lambda_2})
+ \left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2})
+ -  \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
+ \right]
+ \end{align*}
+$$
+
+and
+
+$$
+\begin{align*}
+ \Gamma_\lambda^{(2)}(\omega) = \frac{18\pi}{\hbar^2}
+ \sum_{\lambda_1 \lambda_2}
+ \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2
+(n_{\lambda_1}+ n_{\lambda_2}+1)
+ \left[ \delta(\omega-\omega_{\lambda_1}-\omega_{\lambda_2})
+ - \delta(\omega + \omega_{\lambda_1} + \omega_{\lambda_2}) \right]
+ \end{align*},
+$$
+
+respectively, and
+
+$$
+\Gamma_\lambda(\omega) = \Gamma_\lambda^{(1)}(\omega) + \Gamma_\lambda^{(2)}(\omega).
+$$
+
 ## Temperature
 
 (ts_option)=
@@ -730,13 +767,13 @@ $$
  \bigl|\Phi_{-\lambda\lambda_1\lambda_2}\bigl|^2 &
  \left\{(n_{\lambda_1}+ n_{\lambda_2}+1)
  \left[ \delta(\omega-\omega_{\lambda_1}-\omega_{\lambda_2})
- - \delta(\omega-\omega_{\lambda_1}-\omega_{\lambda_2}) \right] \right.
+ - \delta(\omega+\omega_{\lambda_1}+\omega_{\lambda_2}) \right] \right.
  \\
  & + (n_{\lambda_1}-n_{\lambda_2})
  \left[\delta(\omega+\omega_{\lambda_1}-\omega_{\lambda_2})
  - \left. \delta(\omega-\omega_{\lambda_1}+\omega_{\lambda_2})
  \right]\right\},
- \end{align*}
+\end{align*}
 $$
 
 and
@@ -787,7 +824,7 @@ samplied frequency points of $\omega$ in THz (without $2\pi$).
 Real part of self energy $\Delta_\lambda(\omega)$ is calculated with respect to
 frequency $\omega$, where $\omega$ is sampled following
 {ref}`freq_sampling_option`. With this option, only smearing approach is
-provide, for which values given by `--sigma` option are used to approximate the
+provided, for which values given by `--sigma` option are used to approximate the
 principal value as $\varepsilon$ in the following equation:
 
 $$
