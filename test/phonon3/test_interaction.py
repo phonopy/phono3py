@@ -2,6 +2,7 @@
 import numpy as np
 import pytest
 
+from phono3py import Phono3py
 from phono3py.phonon3.interaction import Interaction
 
 itr_RTA_Si = [
@@ -109,12 +110,61 @@ def test_interaction_RTA_AlN(aln_lda):
     )
 
 
-def _get_irt(ph3, mesh):
+def test_interaction_nac_direction_phonon_NaCl(nacl_pbe: Phono3py):
+    """Test interaction_strength of NaCl with nac_q_direction."""
+    itr = _get_irt(nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params)
+    itr.nac_q_direction = [1, 0, 0]
+    itr.set_grid_point(0)
+    frequencies, _, _ = itr.get_phonons()
+    np.testing.assert_allclose(
+        frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 7.41183870], rtol=0, atol=1e-6
+    )
+    itr.run()
+
+
+def test_interaction_nac_direction_phonon_NaCl_second_error(nacl_pbe: Phono3py):
+    """Test interaction_strength of NaCl with nac_q_direction.
+
+    Second setting non-gamma grid point must raise exception.
+
+    """
+    itr = _get_irt(nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params)
+    itr.nac_q_direction = [1, 0, 0]
+    itr.set_grid_point(0)
+    with pytest.raises(RuntimeError):
+        itr.set_grid_point(1)
+
+
+def test_interaction_nac_direction_phonon_NaCl_second_no_error(nacl_pbe: Phono3py):
+    """Test interaction_strength of NaCl with nac_q_direction.
+
+    Second setting non-gamma grid point should not raise exception because
+    nac_q_direction = None is set, but the phonons at Gamma is updated to those without
+    NAC.
+
+    """
+    itr = _get_irt(nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params)
+    itr.nac_q_direction = [1, 0, 0]
+    itr.set_grid_point(0)
+    itr.nac_q_direction = None
+    itr.set_grid_point(1)
+    frequencies, _, _ = itr.get_phonons()
+    np.testing.assert_allclose(
+        frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 4.59488262], rtol=0, atol=1e-6
+    )
+
+
+def _get_irt(ph3, mesh, nac_params=None):
     ph3.mesh_numbers = mesh
     itr = Interaction(
         ph3.primitive, ph3.grid, ph3.primitive_symmetry, ph3.fc3, cutoff_frequency=1e-4
     )
-    itr.init_dynamical_matrix(ph3.fc2, ph3.phonon_supercell, ph3.phonon_primitive)
+    if nac_params is None:
+        itr.init_dynamical_matrix(ph3.fc2, ph3.phonon_supercell, ph3.phonon_primitive)
+    else:
+        itr.init_dynamical_matrix(
+            ph3.fc2, ph3.phonon_supercell, ph3.phonon_primitive, nac_params=nac_params
+        )
     return itr
 
 
