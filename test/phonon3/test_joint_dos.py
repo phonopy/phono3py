@@ -1,7 +1,10 @@
 """Tests for joint-density-of-states."""
 import numpy as np
+import pytest
 
+from phono3py import Phono3py
 from phono3py.api_jointdos import Phono3pyJointDos
+from phono3py.phonon3.joint_dos import JointDos
 
 si_freq_points = [
     0.0000000,
@@ -165,7 +168,7 @@ nacl_jdos_12_at_300K = [
 ]
 
 
-def test_jdos_si(si_pbesol):
+def test_jdos_si(si_pbesol: Phono3py):
     """Test joint-DOS by Si."""
     si_pbesol.mesh_numbers = [9, 9, 9]
     jdos = Phono3pyJointDos(
@@ -185,7 +188,7 @@ def test_jdos_si(si_pbesol):
     )
 
 
-def test_jdso_si_nomeshsym(si_pbesol):
+def test_jdso_si_nomeshsym(si_pbesol: Phono3py):
     """Test joint-DOS without considering mesh symmetry by Si."""
     si_pbesol.mesh_numbers = [9, 9, 9]
     jdos = Phono3pyJointDos(
@@ -206,7 +209,7 @@ def test_jdso_si_nomeshsym(si_pbesol):
     )
 
 
-def test_jdos_nacl(nacl_pbe):
+def test_jdos_nacl(nacl_pbe: Phono3py):
     """Test joint-DOS by NaCl."""
     nacl_pbe.mesh_numbers = [9, 9, 9]
     jdos = Phono3pyJointDos(
@@ -227,7 +230,7 @@ def test_jdos_nacl(nacl_pbe):
     )
 
 
-def test_jdos_nacl_gamma(nacl_pbe):
+def test_jdos_nacl_gamma(nacl_pbe: Phono3py):
     """Test joint-DOS at Gamma-point by NaCl."""
     nacl_pbe.mesh_numbers = [9, 9, 9]
     jdos = Phono3pyJointDos(
@@ -249,7 +252,7 @@ def test_jdos_nacl_gamma(nacl_pbe):
     )
 
 
-def test_jdos_nacl_at_300K(nacl_pbe):
+def test_jdos_nacl_at_300K(nacl_pbe: Phono3py):
     """Test joint-DOS at 300K by NaCl."""
     nacl_pbe.mesh_numbers = [9, 9, 9]
     jdos = Phono3pyJointDos(
@@ -273,3 +276,59 @@ def test_jdos_nacl_at_300K(nacl_pbe):
     np.testing.assert_allclose(
         nacl_jdos_12_at_300K[2:], jdos.joint_dos.ravel()[2:], rtol=1e-2, atol=1e-5
     )
+
+
+def test_jdos_nac_direction_phonon_NaCl(nacl_pbe: Phono3py):
+    """Test JDOS of NaCl with nac_q_direction."""
+    jdos = _get_jdos(nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params)
+    jdos.nac_q_direction = [1, 0, 0]
+    jdos.set_grid_point(0)
+    frequencies, _, _ = jdos.get_phonons()
+    np.testing.assert_allclose(
+        frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 7.41183870], rtol=0, atol=1e-6
+    )
+
+
+def test_jdos_nac_direction_phonon_NaCl_second_error(nacl_pbe: Phono3py):
+    """Test JDOS of NaCl with nac_q_direction.
+
+    Second setting non-gamma grid point must raise exception.
+
+    """
+    jdos = _get_jdos(nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params)
+    jdos.nac_q_direction = [1, 0, 0]
+    jdos.set_grid_point(0)
+    with pytest.raises(RuntimeError):
+        jdos.set_grid_point(1)
+
+
+def test_jdos_nac_direction_phonon_NaCl_second_no_error(nacl_pbe: Phono3py):
+    """Test JDOS of NaCl with nac_q_direction.
+
+    Second setting non-gamma grid point should not raise exception because
+    nac_q_direction = None is set, but the phonons at Gamma is updated to those without
+    NAC.
+
+    """
+    jdos = _get_jdos(nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params)
+    jdos.nac_q_direction = [1, 0, 0]
+    jdos.set_grid_point(0)
+    jdos.nac_q_direction = None
+    jdos.set_grid_point(1)
+    frequencies, _, _ = jdos.get_phonons()
+    np.testing.assert_allclose(
+        frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 4.59488262], rtol=0, atol=1e-6
+    )
+
+
+def _get_jdos(ph3: Phono3py, mesh, nac_params=None):
+    ph3.mesh_numbers = mesh
+    jdos = JointDos(
+        ph3.primitive,
+        ph3.supercell,
+        ph3.grid,
+        ph3.fc2,
+        nac_params=nac_params,
+        cutoff_frequency=1e-4,
+    )
+    return jdos

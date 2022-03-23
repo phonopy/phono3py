@@ -119,7 +119,6 @@ def test_interaction_nac_direction_phonon_NaCl(nacl_pbe: Phono3py):
     np.testing.assert_allclose(
         frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 7.41183870], rtol=0, atol=1e-6
     )
-    itr.run()
 
 
 def test_interaction_nac_direction_phonon_NaCl_second_error(nacl_pbe: Phono3py):
@@ -154,7 +153,7 @@ def test_interaction_nac_direction_phonon_NaCl_second_no_error(nacl_pbe: Phono3p
     )
 
 
-def _get_irt(ph3, mesh, nac_params=None):
+def _get_irt(ph3: Phono3py, mesh, nac_params=None):
     ph3.mesh_numbers = mesh
     itr = Interaction(
         ph3.primitive, ph3.grid, ph3.primitive_symmetry, ph3.fc3, cutoff_frequency=1e-4

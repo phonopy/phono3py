@@ -112,6 +112,7 @@ class JointDos:
 
         self._tetrahedron_method = None
         self._phonon_done = None
+        self._done_nac_at_gamma = False  # Phonon at Gamma is calculatd with NAC.
         self._frequencies = None
         self._eigenvectors = None
 
@@ -214,8 +215,26 @@ class JointDos:
         self._frequency_points = None
         if self._phonon_done is None:
             self._allocate_phonons()
+
         gamma_gp = get_grid_point_from_address([0, 0, 0], self._bz_grid.D_diag)
-        self._phonon_done[gamma_gp] = 0
+        if (self._bz_grid.addresses[grid_point] == 0).all():
+            if self._nac_q_direction is not None:
+                self._done_nac_at_gamma = True
+                self._phonon_done[gamma_gp] = 0
+        elif self._done_nac_at_gamma:
+            if self._nac_q_direction is None:
+                self._done_nac_at_gamma = False
+                self._phonon_done[gamma_gp] = 0
+            else:
+                msg = (
+                    "Phonons at Gamma has been calcualted with NAC, "
+                    "but ph-ph interaction is expected to calculate at "
+                    "non-Gamma point. Setting Interaction.nac_q_direction = "
+                    "None, can avoid raising this exception to re-run phonon "
+                    "calculation at Gamma without NAC."
+                )
+                raise RuntimeError(msg)
+
         self.run_phonon_solver(np.array([gamma_gp, grid_point], dtype="int_"))
 
     def get_triplets_at_q(self):
