@@ -50,7 +50,7 @@ from phono3py.phonon3.triplets import (
     get_triplets_integration_weights,
 )
 from phono3py.phonon.func import bose_einstein
-from phono3py.phonon.grid import BZGrid
+from phono3py.phonon.grid import BZGrid, get_grid_point_from_address
 from phono3py.phonon.solver import run_phonon_solver_c
 
 
@@ -61,7 +61,7 @@ class JointDos:
         self,
         primitive,
         supercell,
-        bz_grid,
+        bz_grid: BZGrid,
         fc2,
         nac_params=None,
         nac_q_direction=None,
@@ -210,12 +210,13 @@ class JointDos:
         """Set a grid point at which joint-DOS is calculated."""
         self._grid_point = grid_point
         self._set_triplets()
-        if self._phonon_done is None:
-            self._allocate_phonons()
         self._joint_dos = None
         self._frequency_points = None
-        self._phonon_done[0] = 0
-        self.run_phonon_solver(np.array([grid_point], dtype="int_"))
+        if self._phonon_done is None:
+            self._allocate_phonons()
+        gamma_gp = get_grid_point_from_address([0, 0, 0], self._bz_grid.D_diag)
+        self._phonon_done[gamma_gp] = 0
+        self.run_phonon_solver(np.array([gamma_gp, grid_point], dtype="int_"))
 
     def get_triplets_at_q(self):
         """Return triplets information."""
@@ -261,7 +262,6 @@ class JointDos:
             self._run_c_with_g()
 
     def _run_c_with_g(self):
-        self.run_phonon_solver(self._triplets_at_q.ravel())
         max_phonon_freq = np.max(self._frequencies)
         self._frequency_points = get_frequency_points(
             max_phonon_freq=max_phonon_freq,
@@ -292,7 +292,6 @@ class JointDos:
                 np.array([freq_point], dtype="double"),
                 self._sigma,
                 is_collision_matrix=True,
-                neighboring_phonons=(i == 0),
             )
 
             if self._temperatures is None:

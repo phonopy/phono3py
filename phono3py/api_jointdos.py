@@ -73,6 +73,7 @@ class Phono3pyJointDos:
         else:
             self._sigmas = sigmas
         self._temperatures = temperatures
+        self._nac_q_direction = nac_q_direction
         self._is_mesh_symmetry = is_mesh_symmetry
         self._filename = output_filename
         self._log_level = log_level
@@ -92,7 +93,6 @@ class Phono3pyJointDos:
             self._bz_grid,
             fc2,
             nac_params=nac_params,
-            nac_q_direction=nac_q_direction,
             cutoff_frequency=cutoff_frequency,
             frequency_step=frequency_step,
             num_frequency_points=num_frequency_points,
@@ -123,6 +123,10 @@ class Phono3pyJointDos:
             print("Sampling mesh: [ %d %d %d ]" % tuple(self._bz_grid.D_diag))
 
         for i, gp in enumerate(grid_points):
+            if (self._bz_grid.addresses[gp] == 0).all():
+                self._jdos.nac_q_direction = self._nac_q_direction
+            else:
+                self._jdos.nac_q_direction = None
             self._jdos.set_grid_point(gp)
 
             if self._log_level:
