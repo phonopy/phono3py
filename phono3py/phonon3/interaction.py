@@ -152,7 +152,7 @@ class Interaction:
         self._g_zero = None
 
         self._phonon_done = None
-        self._is_nac_at_gamma = False  # Phonon at Gamma is calculatd with NAC.
+        self._done_nac_at_gamma = False  # Phonon at Gamma is calculatd with NAC.
         self._frequencies = None
         self._eigenvectors = None
         self._dm = None
@@ -507,7 +507,7 @@ class Interaction:
             # used.
             if (self._bz_grid.addresses[grid_point] == 0).all():
                 if self._nac_q_direction is not None:
-                    self._is_nac_at_gamma = True
+                    self._done_nac_at_gamma = True
                     self._phonon_done[grid_point] = 0
                     self.run_phonon_solver(
                         np.array(
@@ -535,30 +535,30 @@ class Interaction:
                         reciprocal_rotations=rotations,
                         is_time_reversal=False,
                     )
-            else:
-                if self._is_nac_at_gamma:
-                    if self._nac_q_direction is None:
-                        gamma_gp = get_grid_point_from_address(
-                            [0, 0, 0], self._bz_grid.D_diag
+            elif self._done_nac_at_gamma:
+                if self._nac_q_direction is None:
+                    self._done_nac_at_gamma = False
+                    gamma_gp = get_grid_point_from_address(
+                        [0, 0, 0], self._bz_grid.D_diag
+                    )
+                    self._phonon_done[gamma_gp] = 0
+                    self.run_phonon_solver(
+                        np.array(
+                            [
+                                gamma_gp,
+                            ],
+                            dtype="int_",
                         )
-                        self._phonon_done[gamma_gp] = 0
-                        self.run_phonon_solver(
-                            np.array(
-                                [
-                                    gamma_gp,
-                                ],
-                                dtype="int_",
-                            )
-                        )
-                    else:
-                        msg = (
-                            "Phonons at Gamma has been calcualted with NAC, "
-                            "but ph-ph interaction is expected to calculate at "
-                            "non-Gamma point. Setting Interaction.nac_q_direction = "
-                            "None, can avoid raising this exception to re-run phonon "
-                            "calculation at Gamma without NAC."
-                        )
-                        raise RuntimeError(msg)
+                    )
+                else:
+                    msg = (
+                        "Phonons at Gamma has been calcualted with NAC, "
+                        "but ph-ph interaction is expected to calculate at "
+                        "non-Gamma point. Setting Interaction.nac_q_direction = "
+                        "None, can avoid raising this exception to re-run phonon "
+                        "calculation at Gamma without NAC."
+                    )
+                    raise RuntimeError(msg)
 
         reciprocal_lattice = np.linalg.inv(self._primitive.cell)
         for triplet in triplets_at_q:
