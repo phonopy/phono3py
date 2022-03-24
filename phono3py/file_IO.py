@@ -535,7 +535,7 @@ def write_joint_dos(
             gp,
             mesh,
             frequencies,
-            jdos,
+            jdos[0],
             sigma=sigma,
             temperature=None,
             filename=filename,

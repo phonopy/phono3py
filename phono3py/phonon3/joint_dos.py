@@ -42,10 +42,6 @@ from phonopy.structure.cells import Primitive
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.units import VaspToTHz
 
-from phono3py.phonon3.imag_self_energy import (
-    get_freq_points_batches,
-    get_frequency_points,
-)
 from phono3py.phonon3.triplets import (
     get_nosym_triplets_at_q,
     get_tetrahedra_vertices,
@@ -70,9 +66,6 @@ class JointDos:
         nac_q_direction=None,
         sigma=None,
         cutoff_frequency=None,
-        frequency_step=None,
-        num_frequency_points=None,
-        temperatures=None,
         frequency_factor_to_THz=VaspToTHz,
         frequency_scale_factor=1.0,
         is_mesh_symmetry=True,
@@ -91,15 +84,12 @@ class JointDos:
         self._nac_params = nac_params
         self.nac_q_direction = nac_q_direction
         self._sigma = None
-        self.set_sigma(sigma)
+        self.sigma = sigma
 
         if cutoff_frequency is None:
             self._cutoff_frequency = 0
         else:
             self._cutoff_frequency = cutoff_frequency
-        self._frequency_step = frequency_step
-        self._num_frequency_points = num_frequency_points
-        self._temperatures = temperatures
         self._frequency_factor_to_THz = frequency_factor_to_THz
         self._frequency_scale_factor = frequency_scale_factor
         self._is_mesh_symmetry = is_mesh_symmetry
@@ -125,6 +115,7 @@ class JointDos:
         self._g = None
         self._g_zero = None
         self._ones_pp_strength = None
+        self._temperature = None
 
     def run(self):
         """Calculate joint-density-of-states."""
@@ -207,12 +198,42 @@ class JointDos:
         warnings.warn("Use attribute, nac_q_direction", DeprecationWarning)
         self.nac_q_direction = nac_q_direction
 
-    def set_sigma(self, sigma):
-        """Set sigma value. None means tetrahedron method."""
+    @property
+    def sigma(self):
+        """Getter and setter of sigma."""
+        return self._sigma
+
+    @sigma.setter
+    def sigma(self, sigma):
         if sigma is None:
             self._sigma = None
         else:
             self._sigma = float(sigma)
+
+    def set_sigma(self, sigma):
+        """Set sigma value. None means tetrahedron method."""
+        warnings.warn(
+            "Use attribute, JointDOS.sigma instead of JointDOS.set_sigma()",
+            DeprecationWarning,
+        )
+        self.sigma = sigma
+
+    @property
+    def bz_grid(self) -> BZGrid:
+        """Return BZGrid."""
+        return self._bz_grid
+
+    @property
+    def temperature(self):
+        """Setter and getter of temperature."""
+        return self._temperature
+
+    @temperature.setter
+    def temperature(self, temperature):
+        if temperature is None:
+            self._temperature = None
+        else:
+            self._temperature = float(temperature)
 
     def set_grid_point(self, grid_point):
         """Set a grid point at which joint-DOS is calculated."""
@@ -248,11 +269,6 @@ class JointDos:
         """Return triplets information."""
         return self._triplets_at_q, self._weights_at_q
 
-    @property
-    def bz_grid(self) -> BZGrid:
-        """Return BZGrid."""
-        return self._bz_grid
-
     def run_phonon_solver(self, grid_points):
         """Calculate phonons at grid_points.
 
@@ -260,6 +276,8 @@ class JointDos:
         method name. So this name is not allowed to change.
 
         """
+        if self._phonon_done is None:
+            self._allocate_phonons()
         run_phonon_solver_c(
             self._dm,
             self._frequencies,
@@ -279,7 +297,7 @@ class JointDos:
             self,
             np.array(freq_points, dtype="double"),
             self._sigma,
-            is_collision_matrix=(self._temperatures is None),
+            is_collision_matrix=(self._temperature is None),
         )
 
     def _run_c(self, lang="C"):
@@ -287,7 +305,7 @@ class JointDos:
             if lang == "C":
                 self._run_with_g()
             else:
-                if self._temperatures is not None:
+                if self._temperature is not None:
                     print(
                         "JDOS with phonon occupation numbers doesn't work "
                         "in this option."
@@ -305,36 +323,19 @@ class JointDos:
         integration in JDOS. Performance benefit with lang="C" is very limited.
 
         """
-        max_phonon_freq = np.max(self._frequencies)
-        self._frequency_points = get_frequency_points(
-            max_phonon_freq=max_phonon_freq,
-            sigmas=[
-                self._sigma,
-            ],
-            frequency_points=None,
-            frequency_step=self._frequency_step,
-            num_frequency_points=self._num_frequency_points,
-        )
-
-        if self._temperatures is None:
-            jdos = np.zeros((len(self._frequency_points), 2), dtype="double", order="C")
-            for i, freq_point in enumerate(self._frequency_points):
-                self.run_integration_weights([freq_point])
-                if self._temperatures is None:
-                    g = self._g
-                    jdos[i, 1] = np.sum(
-                        np.tensordot(g[0, :, 0], self._weights_at_q, axes=(0, 0))
-                    )
-                    gx = g[2] - g[0]
-                    jdos[i, 0] = np.sum(
-                        np.tensordot(gx[:, 0], self._weights_at_q, axes=(0, 0))
-                    )
+        jdos = np.zeros((len(self._frequency_points), 2), dtype="double", order="C")
+        self.run_integration_weights(self._frequency_points)
+        if self._temperature is None:
+            for i, _ in enumerate(self._frequency_points):
+                g = self._g
+                jdos[i, 1] = np.sum(
+                    np.tensordot(g[0, :, i], self._weights_at_q, axes=(0, 0))
+                )
+                gx = g[2] - g[0]
+                jdos[i, 0] = np.sum(
+                    np.tensordot(gx[:, i], self._weights_at_q, axes=(0, 0))
+                )
         else:
-            jdos = np.zeros(
-                (len(self._temperatures), len(self._frequency_points), 2),
-                dtype="double",
-                order="C",
-            )
             if lang == "C":
                 num_band = len(self._primitive) * 3
                 self._ones_pp_strength = np.ones(
@@ -342,67 +343,55 @@ class JointDos:
                     dtype="double",
                     order="C",
                 )
-                batches = get_freq_points_batches(len(self._frequency_points))
-                print(
-                    f"Calculations at {len(self._frequency_points)} "
-                    f"frequency points are devided into {len(batches)} batches."
-                )
-                for ib, freq_indices in enumerate(batches):
-                    print(f"{ib + 1}/{len(batches)}: {freq_indices}")
-                    fpoints = self._frequency_points[freq_indices]
-                    self.run_integration_weights(fpoints)
-                    for k in range(2):
-                        g = self._g.copy()
-                        g[k] = 0
-                        self._run_c_with_g_at_temperature(jdos, g, k, freq_indices)
+                for k in range(2):
+                    g = self._g.copy()
+                    g[k] = 0
+                    self._run_c_with_g_at_temperature(jdos, g, k)
             else:
                 self._run_occupation()
-                for i, freq_point in enumerate(self._frequency_points):
-                    self.run_integration_weights([freq_point])
+                for i, _ in enumerate(self._frequency_points):
                     self._run_py_with_g_at_temperature(jdos, i)
 
         self._joint_dos = jdos / np.prod(self._bz_grid.D_diag)
 
-    def _run_c_with_g_at_temperature(self, jdos, g, k, freq_indices):
+    def _run_c_with_g_at_temperature(self, jdos, g, k):
         import phono3py._phono3py as phono3c
 
         jdos_elem = np.zeros(1, dtype="double")
-        for i, i_freq in enumerate(freq_indices):
-            for j, temp in enumerate(self._temperatures):
-                phono3c.imag_self_energy_with_g(
-                    jdos_elem,
-                    self._ones_pp_strength,
-                    self._triplets_at_q,
-                    self._weights_at_q,
-                    self._frequencies,
-                    float(temp),
-                    g,
-                    self._g_zero,
-                    self._cutoff_frequency,
-                    i,
-                )
-                jdos[j, i_freq, k] = jdos_elem[0]
+        for i, _ in enumerate(self._frequency_points):
+            phono3c.imag_self_energy_with_g(
+                jdos_elem,
+                self._ones_pp_strength,
+                self._triplets_at_q,
+                self._weights_at_q,
+                self._frequencies,
+                self._temperature,
+                g,
+                self._g_zero,
+                self._cutoff_frequency,
+                i,
+            )
+            jdos[i, k] = jdos_elem[0]
 
     def _run_occupation(self):
-        self._occupations = []
-        for t in self._temperatures:
-            freqs = self._frequencies[self._triplets_at_q[:, 1:]]
-            self._occupations.append(
-                np.where(freqs > self._cutoff_frequency, bose_einstein(freqs, t), 0)
-            )
+        t = self._temperature
+        freqs = self._frequencies[self._triplets_at_q[:, 1:]]
+        self._occupations = np.where(
+            freqs > self._cutoff_frequency, bose_einstein(freqs, t), 0
+        )
 
     def _run_py_with_g_at_temperature(self, jdos, i):
         g = self._g
-        for j, n in enumerate(self._occupations):
-            for k, l in list(np.ndindex(g.shape[3:])):
-                jdos[j, i, 1] += np.dot(
-                    (n[:, 0, k] + n[:, 1, l] + 1) * g[0, :, 0, k, l],
-                    self._weights_at_q,
-                )
-                jdos[j, i, 0] += np.dot(
-                    (n[:, 0, k] - n[:, 1, l]) * g[1, :, 0, k, l],
-                    self._weights_at_q,
-                )
+        n = self._occupations
+        for k, l in list(np.ndindex(g.shape[3:])):
+            jdos[i, 1] += np.dot(
+                (n[:, 0, k] + n[:, 1, l] + 1) * g[0, :, i, k, l],
+                self._weights_at_q,
+            )
+            jdos[i, 0] += np.dot(
+                (n[:, 0, k] - n[:, 1, l]) * g[1, :, i, k, l],
+                self._weights_at_q,
+            )
 
     def _run_py_tetrahedron_method(self):
         thm = TetrahedronMethod(self._bz_grid.microzone_lattice)
