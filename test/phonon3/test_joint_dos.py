@@ -5,6 +5,7 @@ import pytest
 from phono3py import Phono3py
 from phono3py.api_jointdos import Phono3pyJointDos
 from phono3py.phonon3.joint_dos import JointDos
+from phono3py.phonon.grid import BZGrid
 
 si_freq_points = [
     0.0000000,
@@ -170,8 +171,14 @@ nacl_jdos_12_at_300K = [
 ]
 
 
-def test_jdos_si(si_pbesol: Phono3py):
-    """Test joint-DOS by Si."""
+@pytest.mark.parametrize("gp,store_dense_gp_map", [(103, False), (105, True)])
+def test_jdos_si(si_pbesol: Phono3py, gp: int, store_dense_gp_map: bool):
+    """Test joint-DOS by Si.
+
+    store_dense_gp_map=False : 103
+    store_dense_gp_map=True : 105
+
+    """
     si_pbesol.mesh_numbers = [9, 9, 9]
     jdos = Phono3pyJointDos(
         si_pbesol.phonon_supercell,
@@ -179,9 +186,11 @@ def test_jdos_si(si_pbesol: Phono3py):
         si_pbesol.fc2,
         mesh=si_pbesol.mesh_numbers,
         num_frequency_points=10,
+        store_dense_gp_map=store_dense_gp_map,
         log_level=1,
     )
-    jdos.run([103])
+    jdos.run([gp])
+
     # print(", ".join(["%.7f" % fp for fp in jdos.frequency_points]))
     np.testing.assert_allclose(si_freq_points, jdos.frequency_points, atol=1e-5)
     # print(", ".join(["%.7f" % jd for jd in jdos.joint_dos.ravel()]))
@@ -190,7 +199,8 @@ def test_jdos_si(si_pbesol: Phono3py):
     )
 
 
-def test_jdso_si_nomeshsym(si_pbesol: Phono3py):
+@pytest.mark.parametrize("gp,store_dense_gp_map", [(103, False), (105, True)])
+def test_jdso_si_nomeshsym(si_pbesol: Phono3py, gp: int, store_dense_gp_map: bool):
     """Test joint-DOS without considering mesh symmetry by Si."""
     si_pbesol.mesh_numbers = [9, 9, 9]
     jdos = Phono3pyJointDos(
@@ -200,9 +210,10 @@ def test_jdso_si_nomeshsym(si_pbesol: Phono3py):
         mesh=si_pbesol.mesh_numbers,
         num_frequency_points=10,
         is_mesh_symmetry=False,
+        store_dense_gp_map=store_dense_gp_map,
         log_level=1,
     )
-    jdos.run([103])
+    jdos.run([gp])
     # print(", ".join(["%.7f" % fp for fp in jdos.frequency_points]))
     np.testing.assert_allclose(si_freq_points, jdos.frequency_points, atol=1e-5)
     # print(", ".join(["%.7f" % jd for jd in jdos.joint_dos.ravel()]))
@@ -211,7 +222,8 @@ def test_jdso_si_nomeshsym(si_pbesol: Phono3py):
     )
 
 
-def test_jdos_nacl(nacl_pbe: Phono3py):
+@pytest.mark.parametrize("gp,store_dense_gp_map", [(103, False), (105, True)])
+def test_jdos_nacl(nacl_pbe: Phono3py, gp: int, store_dense_gp_map: bool):
     """Test joint-DOS by NaCl."""
     nacl_pbe.mesh_numbers = [9, 9, 9]
     jdos = Phono3pyJointDos(
@@ -221,9 +233,10 @@ def test_jdos_nacl(nacl_pbe: Phono3py):
         mesh=nacl_pbe.mesh_numbers,
         nac_params=nacl_pbe.nac_params,
         num_frequency_points=10,
+        store_dense_gp_map=store_dense_gp_map,
         log_level=1,
     )
-    jdos.run([103])
+    jdos.run([gp])
     # print(", ".join(["%.7f" % fp for fp in jdos.frequency_points]))
     np.testing.assert_allclose(nacl_freq_points, jdos.frequency_points, atol=1e-5)
     # print(", ".join(["%.7f" % jd for jd in jdos.joint_dos.ravel()]))
@@ -232,7 +245,8 @@ def test_jdos_nacl(nacl_pbe: Phono3py):
     )
 
 
-def test_jdos_nacl_gamma(nacl_pbe: Phono3py):
+@pytest.mark.parametrize("gp,store_dense_gp_map", [(0, False), (0, True)])
+def test_jdos_nacl_gamma(nacl_pbe: Phono3py, gp: int, store_dense_gp_map: bool):
     """Test joint-DOS at Gamma-point by NaCl."""
     nacl_pbe.mesh_numbers = [9, 9, 9]
     jdos = Phono3pyJointDos(
@@ -243,9 +257,10 @@ def test_jdos_nacl_gamma(nacl_pbe: Phono3py):
         nac_params=nacl_pbe.nac_params,
         nac_q_direction=[1, 0, 0],
         num_frequency_points=10,
+        store_dense_gp_map=store_dense_gp_map,
         log_level=1,
     )
-    jdos.run([0])
+    jdos.run([gp])
     # print(", ".join(["%.7f" % fp for fp in jdos.frequency_points]))
     np.testing.assert_allclose(nacl_freq_points_gamma, jdos.frequency_points, atol=1e-5)
     # print(", ".join(["%.7f" % jd for jd in jdos.joint_dos.ravel()]))
@@ -254,7 +269,8 @@ def test_jdos_nacl_gamma(nacl_pbe: Phono3py):
     )
 
 
-def test_jdos_nacl_at_300K(nacl_pbe: Phono3py):
+@pytest.mark.parametrize("gp,store_dense_gp_map", [(103, False), (105, True)])
+def test_jdos_nacl_at_300K(nacl_pbe: Phono3py, gp: int, store_dense_gp_map: bool):
     """Test joint-DOS at 300K by NaCl."""
     nacl_pbe.mesh_numbers = [9, 9, 9]
     jdos = Phono3pyJointDos(
@@ -267,44 +283,64 @@ def test_jdos_nacl_at_300K(nacl_pbe: Phono3py):
         temperatures=[
             300,
         ],
+        store_dense_gp_map=store_dense_gp_map,
         log_level=1,
     )
-    jdos.run([103])
+    jdos.run([gp])
     # print(", ".join(["%.7f" % fp for fp in jdos.frequency_points]))
     np.testing.assert_allclose(
         nacl_freq_points_at_300K, jdos.frequency_points, atol=1e-5
     )
-    print(", ".join(["%.7f" % jd for jd in jdos.joint_dos.ravel()]))
+    # print(", ".join(["%.7f" % jd for jd in jdos.joint_dos.ravel()]))
     np.testing.assert_allclose(
         nacl_jdos_12_at_300K[2:], jdos.joint_dos.ravel()[2:], rtol=1e-2, atol=1e-5
     )
 
 
-def test_jdos_nac_direction_phonon_NaCl(nacl_pbe: Phono3py):
+@pytest.mark.parametrize("gp,store_dense_gp_map", [(0, False), (0, True)])
+def test_jdos_nac_direction_phonon_NaCl(
+    nacl_pbe: Phono3py, gp: int, store_dense_gp_map: bool
+):
     """Test JDOS of NaCl with nac_q_direction."""
-    jdos = _get_jdos(nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params)
+    jdos = _get_jdos(
+        nacl_pbe,
+        [7, 7, 7],
+        nac_params=nacl_pbe.nac_params,
+        store_dense_gp_map=store_dense_gp_map,
+    )
     jdos.nac_q_direction = [1, 0, 0]
-    jdos.set_grid_point(0)
+    jdos.set_grid_point(gp)
     frequencies, _, _ = jdos.get_phonons()
     np.testing.assert_allclose(
         frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 7.41183870], rtol=0, atol=1e-6
     )
 
 
-def test_jdos_nac_direction_phonon_NaCl_second_error(nacl_pbe: Phono3py):
+@pytest.mark.parametrize("gp,store_dense_gp_map", [(0, False), (0, True)])
+def test_jdos_nac_direction_phonon_NaCl_second_error(
+    nacl_pbe: Phono3py, gp: int, store_dense_gp_map: bool
+):
     """Test JDOS of NaCl with nac_q_direction.
 
     Second setting non-gamma grid point must raise exception.
 
     """
-    jdos = _get_jdos(nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params)
+    jdos = _get_jdos(
+        nacl_pbe,
+        [7, 7, 7],
+        nac_params=nacl_pbe.nac_params,
+        store_dense_gp_map=store_dense_gp_map,
+    )
     jdos.nac_q_direction = [1, 0, 0]
-    jdos.set_grid_point(0)
+    jdos.set_grid_point(gp)
     with pytest.raises(RuntimeError):
         jdos.set_grid_point(1)
 
 
-def test_jdos_nac_direction_phonon_NaCl_second_no_error(nacl_pbe: Phono3py):
+@pytest.mark.parametrize("gp1,gp2,store_dense_gp_map", [(0, 1, False), (0, 1, True)])
+def test_jdos_nac_direction_phonon_NaCl_second_no_error(
+    nacl_pbe: Phono3py, gp1: int, gp2: int, store_dense_gp_map: bool
+):
     """Test JDOS of NaCl with nac_q_direction.
 
     Second setting non-gamma grid point should not raise exception because
@@ -312,25 +348,77 @@ def test_jdos_nac_direction_phonon_NaCl_second_no_error(nacl_pbe: Phono3py):
     NAC.
 
     """
-    jdos = _get_jdos(nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params)
+    jdos = _get_jdos(
+        nacl_pbe,
+        [7, 7, 7],
+        nac_params=nacl_pbe.nac_params,
+        store_dense_gp_map=store_dense_gp_map,
+    )
     jdos.nac_q_direction = [1, 0, 0]
-    jdos.set_grid_point(0)
+    jdos.set_grid_point(gp1)
     jdos.nac_q_direction = None
-    jdos.set_grid_point(1)
+    jdos.set_grid_point(gp2)
     frequencies, _, _ = jdos.get_phonons()
     np.testing.assert_allclose(
         frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 4.59488262], rtol=0, atol=1e-6
     )
 
 
-def _get_jdos(ph3: Phono3py, mesh, nac_params=None):
+@pytest.mark.parametrize("gp,store_dense_gp_map", [(103, False), (105, True)])
+def test_jdos_nac_NaCl_300K_C(nacl_pbe: Phono3py, gp: int, store_dense_gp_map: bool):
+    """Test running JDOS of NaCl in C mode."""
+    jdos = _get_jdos(
+        nacl_pbe,
+        [9, 9, 9],
+        nac_params=nacl_pbe.nac_params,
+        store_dense_gp_map=store_dense_gp_map,
+    )
+    jdos.set_grid_point(gp)
+    jdos.frequency_points = nacl_freq_points_at_300K
+    jdos.temperature = 300
+    jdos.run_phonon_solver()
+    jdos.run_integration_weights()
+    jdos.run_jdos()
+    np.testing.assert_allclose(
+        nacl_jdos_12_at_300K[2:], jdos.joint_dos.ravel()[2:], rtol=1e-2, atol=1e-5
+    )
+
+
+@pytest.mark.parametrize("gp,store_dense_gp_map", [(103, False), (105, True)])
+def test_jdos_nac_NaCl_300K_Py(nacl_pbe: Phono3py, gp: int, store_dense_gp_map: bool):
+    """Test running JDOS of NaCl in Py mode."""
+    jdos = _get_jdos(
+        nacl_pbe,
+        [9, 9, 9],
+        nac_params=nacl_pbe.nac_params,
+        store_dense_gp_map=store_dense_gp_map,
+    )
+    jdos.set_grid_point(gp)
+    jdos.frequency_points = nacl_freq_points_at_300K
+    jdos.temperature = 300
+    jdos.run_phonon_solver()
+    jdos.run_integration_weights()
+    jdos.run_jdos(lang="Py")
+    np.testing.assert_allclose(
+        nacl_jdos_12_at_300K[2:], jdos.joint_dos.ravel()[2:], rtol=1e-2, atol=1e-5
+    )
+
+
+def _get_jdos(ph3: Phono3py, mesh, nac_params=None, store_dense_gp_map=False):
+    bz_grid = BZGrid(
+        mesh,
+        lattice=ph3.primitive.cell,
+        symmetry_dataset=ph3.primitive_symmetry.dataset,
+        store_dense_gp_map=store_dense_gp_map,
+    )
     ph3.mesh_numbers = mesh
     jdos = JointDos(
         ph3.primitive,
         ph3.supercell,
-        ph3.grid,
+        bz_grid,
         ph3.fc2,
         nac_params=nac_params,
+        store_dense_gp_map=store_dense_gp_map,
         cutoff_frequency=1e-4,
     )
     return jdos
