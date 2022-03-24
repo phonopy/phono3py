@@ -528,7 +528,7 @@ def run_ise_at_frequency_points_batch(
     else:
         _nelems_in_batch = nelems_in_batch
 
-    batches = _get_batches(len(_frequency_points), _nelems_in_batch)
+    batches = get_freq_points_batches(len(_frequency_points), _nelems_in_batch)
 
     if log_level:
         print(
@@ -553,7 +553,8 @@ def run_ise_at_frequency_points_batch(
                 ] = ise.get_detailed_imag_self_energy()
 
 
-def _get_batches(tot_nelems, nelems=10):
+def get_freq_points_batches(tot_nelems, nelems=10):
+    """Divide frequency points into batches."""
     nbatch = tot_nelems // nelems
     batches = [np.arange(i * nelems, (i + 1) * nelems) for i in range(nbatch)]
     if tot_nelems % nelems > 0:
@@ -603,8 +604,6 @@ class ImagSelfEnergy:
 
         self._g = None  # integration weights
         self._g_zero = None  # Necessary elements of interaction strength
-        self._g_zero_frequency_points = None
-        self._g_zero_zeros = None  # always zeros for frequency sampling mode
         self._is_collision_matrix = False
 
         # Unit to THz of Gamma
@@ -657,23 +656,13 @@ class ImagSelfEnergy:
         else:
             f_points = self._frequency_points
 
-        self._g, _g_zero = get_triplets_integration_weights(
+        self._g, self._g_zero = get_triplets_integration_weights(
             self._pp,
             np.array(f_points, dtype="double"),
             self._sigma,
             self._sigma_cutoff,
             is_collision_matrix=self._is_collision_matrix,
         )
-        if self._frequency_points is None:
-            self._g_zero = _g_zero
-        else:
-            # g_zero feature can not be used in frequency sampling mode.
-            # zero values of the following array shape is used in C-routine.
-            # shape = [num_triplets, num_band0, num_band, num_band]
-            shape = list(self._g.shape[1:])
-            shape[1] = len(self._pp.band_indices)
-            self._g_zero_zeros = np.zeros(shape=shape, dtype="byte", order="C")
-            self._g_zero_frequency_points = _g_zero
 
         if scattering_event_class == 1 or scattering_event_class == 2:
             self._g[scattering_event_class - 1] = 0
@@ -895,7 +884,7 @@ class ImagSelfEnergy:
                 self._frequencies,
                 self._temperature,
                 self._g,
-                self._g_zero_frequency_points,
+                self._g_zero,
                 self._cutoff_frequency,
                 i,
             )
