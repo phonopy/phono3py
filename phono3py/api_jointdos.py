@@ -38,6 +38,10 @@ from phonopy.structure.symmetry import Symmetry
 from phonopy.units import VaspToTHz
 
 from phono3py.file_IO import write_joint_dos
+from phono3py.phonon3.imag_self_energy import (
+    get_freq_points_batches,
+    get_frequency_points,
+)
 from phono3py.phonon3.joint_dos import JointDos
 from phono3py.phonon.grid import BZGrid
 
@@ -94,9 +98,6 @@ class Phono3pyJointDos:
             fc2,
             nac_params=nac_params,
             cutoff_frequency=cutoff_frequency,
-            frequency_step=frequency_step,
-            num_frequency_points=num_frequency_points,
-            temperatures=self._temperatures,
             frequency_factor_to_THz=frequency_factor_to_THz,
             frequency_scale_factor=frequency_scale_factor,
             is_mesh_symmetry=self._is_mesh_symmetry,
@@ -107,11 +108,29 @@ class Phono3pyJointDos:
         )
 
         self._joint_dos = None
+        self._num_frequency_points_in_batch = None
+        self._frequency_step = frequency_step
+        self._num_frequency_points = num_frequency_points
 
     @property
     def grid(self):
         """Return BZGrid class instance."""
         return self._bz_grid
+
+    @property
+    def num_frequency_points_in_batch(self):
+        """Getter and setter of num_frequency_points_in_batch.
+
+        Number of sampling frequency points per batch.
+        Larger value gives better concurrency in tetrahedron method,
+        but requires more memory.
+
+        """
+        return self._num_frequency_points_in_batch
+
+    @num_frequency_points_in_batch.setter
+    def num_frequency_points_in_batch(self, nelems_in_batch):
+        self._num_frequency_points_in_batch = nelems_in_batch
 
     def run(self, grid_points, write_jdos=False):
         """Calculate joint-density-of-states."""
@@ -121,6 +140,36 @@ class Phono3pyJointDos:
                 "---------------------------------"
             )
             print("Sampling mesh: [ %d %d %d ]" % tuple(self._bz_grid.D_diag))
+
+        self._jdos.run_phonon_solver(
+            np.arange(len(self._bz_grid.addresses), dtype="int_")
+        )
+        frequencies, _, _ = self._jdos.get_phonons()
+        max_phonon_freq = np.max(frequencies)
+        self._frequency_points = get_frequency_points(
+            max_phonon_freq=max_phonon_freq,
+            sigmas=self._sigmas,
+            frequency_points=None,
+            frequency_step=self._frequency_step,
+            num_frequency_points=self._num_frequency_points,
+        )
+        batches = get_freq_points_batches(
+            len(self._frequency_points), nelems=self._num_frequency_points_in_batch
+        )
+        if self._temperatures is None:
+            temperatures = [None]
+        else:
+            temperatures = self._temperatures
+        self._joint_dos = np.zeros(
+            (
+                len(self._sigmas),
+                len(temperatures),
+                len(self._frequency_points),
+                2,
+            ),
+            dtype="double",
+            order="C",
+        )
 
         for i, gp in enumerate(grid_points):
             if (self._bz_grid.addresses[gp] == 0).all():
@@ -147,19 +196,32 @@ class Phono3pyJointDos:
             if not self._sigmas:
                 raise RuntimeError("sigma or tetrahedron method has to be set.")
 
-            for sigma in self._sigmas:
+            for i_s, sigma in enumerate(self._sigmas):
+                self._jdos.sigma = sigma
                 if self._log_level:
                     if sigma is None:
                         print("Tetrahedron method is used.")
                     else:
                         print("Smearing method with sigma=%s is used." % sigma)
-                self._jdos.set_sigma(sigma)
-                self._jdos.run()
+                    print(
+                        f"Calculations at {len(self._frequency_points)} "
+                        f"frequency points are devided into {len(batches)} batches."
+                    )
+                for i_t, temperature in enumerate(temperatures):
+                    self._jdos.temperature = temperature
 
-                if write_jdos:
-                    filename = self._write(gp, sigma=sigma)
-                    if self._log_level:
-                        print('JDOS is written into "%s".' % filename)
+                    for ib, freq_indices in enumerate(batches):
+                        print(f"{ib + 1}/{len(batches)}: {freq_indices}")
+                        self._jdos.frequency_points = self._frequency_points[
+                            freq_indices
+                        ]
+                        self._jdos.run()
+                        self._joint_dos[i_s, i_t, freq_indices] = self._jdos.joint_dos
+
+                    if write_jdos:
+                        filename = self._write(gp, i_sigma=i_s)
+                        if self._log_level:
+                            print('JDOS is written into "%s".' % filename)
 
     @property
     def dynamical_matrix(self):
@@ -169,20 +231,20 @@ class Phono3pyJointDos:
     @property
     def frequency_points(self):
         """Return frequency points."""
-        return self._jdos.frequency_points
+        return self._frequency_points
 
     @property
     def joint_dos(self):
         """Return calculated joint-density-of-states."""
-        return self._jdos.joint_dos
+        return self._joint_dos
 
-    def _write(self, gp, sigma=None):
+    def _write(self, gp, i_sigma=0):
         return write_joint_dos(
             gp,
             self._bz_grid.D_diag,
-            self._jdos.frequency_points,
-            self._jdos.joint_dos,
-            sigma=sigma,
+            self._frequency_points,
+            self._joint_dos[i_sigma],
+            sigma=self._sigmas[i_sigma],
             temperatures=self._temperatures,
             filename=self._filename,
             is_mesh_symmetry=self._is_mesh_symmetry,

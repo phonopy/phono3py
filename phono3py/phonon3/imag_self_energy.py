@@ -553,12 +553,16 @@ def run_ise_at_frequency_points_batch(
                 ] = ise.get_detailed_imag_self_energy()
 
 
-def get_freq_points_batches(tot_nelems, nelems=10):
+def get_freq_points_batches(tot_nelems, nelems=None):
     """Divide frequency points into batches."""
-    nbatch = tot_nelems // nelems
-    batches = [np.arange(i * nelems, (i + 1) * nelems) for i in range(nbatch)]
-    if tot_nelems % nelems > 0:
-        batches.append(np.arange(nelems * nbatch, tot_nelems))
+    if nelems is None:
+        _nelems = 10
+    else:
+        _nelems = nelems
+    nbatch = tot_nelems // _nelems
+    batches = [np.arange(i * _nelems, (i + 1) * _nelems) for i in range(nbatch)]
+    if tot_nelems % _nelems > 0:
+        batches.append(np.arange(_nelems * nbatch, tot_nelems))
     return batches
 
 
