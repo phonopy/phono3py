@@ -314,13 +314,15 @@ class JointDos:
         else:
             self._run_with_g()
 
-    def _run_with_g(self, lang="Py"):
+    def _run_with_g(self, lang="C"):
         """Calculate JDOS.
 
         lang="Py" is the original implementation.
         lang="C" calculates JDOS using C routine for imag-free-energy.
-        Computational efficiency is determined by tetraherdon method, but not
-        integration in JDOS. Performance benefit with lang="C" is very limited.
+        Computational efficiency is roughly determined by tetraherdon method, but not
+        integration in JDOS. Although performance benefit using lang="C" is limited,
+        using the same routine as imag-free-energy is considered a good idea.
+        So here, the implementation in C is used for the integration of JDOS.
 
         """
         jdos = np.zeros((len(self._frequency_points), 2), dtype="double", order="C")
@@ -377,21 +379,20 @@ class JointDos:
         t = self._temperature
         freqs = self._frequencies[self._triplets_at_q[:, 1:]]
         self._occupations = np.where(
-            freqs > self._cutoff_frequency, bose_einstein(freqs, t), 0
+            freqs > self._cutoff_frequency, bose_einstein(freqs, t), -1
         )
 
     def _run_py_with_g_at_temperature(self, jdos, i):
         g = self._g
         n = self._occupations
         for k, l in list(np.ndindex(g.shape[3:])):
+            weights = np.where(
+                np.logical_or(n[:, 0, k] < 0, n[:, 1, l] < 0), 0, self._weights_at_q
+            )
             jdos[i, 1] += np.dot(
-                (n[:, 0, k] + n[:, 1, l] + 1) * g[0, :, i, k, l],
-                self._weights_at_q,
+                (n[:, 0, k] + n[:, 1, l] + 1) * g[0, :, i, k, l], weights
             )
-            jdos[i, 0] += np.dot(
-                (n[:, 0, k] - n[:, 1, l]) * g[1, :, i, k, l],
-                self._weights_at_q,
-            )
+            jdos[i, 0] += np.dot((n[:, 0, k] - n[:, 1, l]) * g[1, :, i, k, l], weights)
 
     def _run_py_tetrahedron_method(self):
         thm = TetrahedronMethod(self._bz_grid.microzone_lattice)
