@@ -268,7 +268,11 @@ class Phono3pyJointDos:
                     self._jdos.temperature = temperature
 
                     for ib, freq_indices in enumerate(batches):
-                        print(f"{ib + 1}/{len(batches)}: {freq_indices}", flush=True)
+                        if self._log_level:
+                            print(
+                                f"{ib + 1}/{len(batches)}: {freq_indices + 1}",
+                                flush=True,
+                            )
                         self._jdos.frequency_points = self._frequency_points[
                             freq_indices
                         ]
