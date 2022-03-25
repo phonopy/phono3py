@@ -62,6 +62,7 @@ class Phono3pyJointDos:
         cutoff_frequency=1e-4,
         frequency_step=None,
         num_frequency_points=None,
+        num_points_in_batch=None,
         temperatures=None,
         frequency_factor_to_THz=VaspToTHz,
         frequency_scale_factor=None,
@@ -98,7 +99,7 @@ class Phono3pyJointDos:
         self._log_level = log_level
 
         self._joint_dos = None
-        self._num_frequency_points_in_batch = None
+        self._num_frequency_points_in_batch = num_points_in_batch
         self._frequency_step = frequency_step
         self._num_frequency_points = num_frequency_points
 

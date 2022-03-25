@@ -1840,6 +1840,7 @@ class Phono3py:
         frequency_points=None,
         frequency_step=None,
         num_frequency_points=None,
+        num_points_in_batch=None,
         frequency_points_at_bands=False,
         scattering_event_class=None,
         write_txt=False,
@@ -1873,6 +1874,11 @@ class Phono3py:
             Number of sampling sampling points to be used instead of
             frequency_step. This number includes end points. Default is None,
             which gives 201.
+        num_points_in_batch: int, optional
+            Number of sampling points in one batch. This is for the frequency
+            sampling mode and the sampling points are divided into batches.
+            Lager number provides efficient use of multi-cores but more
+            memory demanding. Default is None, which give the number of 10.
         frequency_points_at_bands : bool, optional
             Phonon band frequencies are used as frequency points when True.
             Default is False.
@@ -1916,6 +1922,7 @@ class Phono3py:
             frequency_step=frequency_step,
             frequency_points_at_bands=frequency_points_at_bands,
             num_frequency_points=num_frequency_points,
+            num_points_in_batch=num_points_in_batch,
             scattering_event_class=scattering_event_class,
             write_gamma_detail=write_gamma_detail,
             return_gamma_detail=keep_gamma_detail,
