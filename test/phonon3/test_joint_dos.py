@@ -411,14 +411,13 @@ def _get_jdos(ph3: Phono3py, mesh, nac_params=None, store_dense_gp_map=False):
         symmetry_dataset=ph3.primitive_symmetry.dataset,
         store_dense_gp_map=store_dense_gp_map,
     )
-    ph3.mesh_numbers = mesh
     jdos = JointDos(
         ph3.primitive,
         ph3.supercell,
-        bz_grid,
         ph3.fc2,
         nac_params=nac_params,
         store_dense_gp_map=store_dense_gp_map,
         cutoff_frequency=1e-4,
     )
+    jdos.bz_grid = bz_grid
     return jdos

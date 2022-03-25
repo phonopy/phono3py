@@ -38,7 +38,7 @@ import warnings
 
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
-from phonopy.structure.cells import Primitive
+from phonopy.structure.cells import Primitive, Supercell
 from phonopy.units import VaspToTHz
 
 from phono3py.phonon3.triplets import (
@@ -58,7 +58,6 @@ class JointDos:
         self,
         primitive,
         supercell,
-        bz_grid: BZGrid,
         fc2,
         nac_params=None,
         nac_q_direction=None,
@@ -78,7 +77,6 @@ class JointDos:
         self._grid_point = None
         self._primitive = primitive
         self._supercell = supercell
-        self._bz_grid = bz_grid
         self._fc2 = fc2
         self._nac_params = nac_params
         self.nac_q_direction = nac_q_direction
@@ -116,6 +114,7 @@ class JointDos:
         self._g_zero = None
         self._ones_pp_strength = None
         self._temperature = None
+        self._bz_grid = None
 
     @property
     def dynamical_matrix(self) -> DynamicalMatrix:
@@ -159,6 +158,11 @@ class JointDos:
         """Return primitive cell."""
         warnings.warn("Use attribute, primitive", DeprecationWarning)
         return self.primitive
+
+    @property
+    def supercell(self) -> Supercell:
+        """Return supercell."""
+        return self._supercell
 
     @property
     def mesh_numbers(self):
@@ -209,8 +213,12 @@ class JointDos:
 
     @property
     def bz_grid(self) -> BZGrid:
-        """Return BZGrid."""
+        """Setter and getter of BZGrid."""
         return self._bz_grid
+
+    @bz_grid.setter
+    def bz_grid(self, bz_grid: BZGrid):
+        self._bz_grid = bz_grid
 
     @property
     def temperature(self):
