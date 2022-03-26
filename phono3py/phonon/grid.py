@@ -741,7 +741,7 @@ def get_grid_point_from_address_py(addresses, D_diag):
         shape=(..., 3)
 
     """
-    return np.dot(addresses % D_diag, [1, D_diag[0], D_diag[0] * D_diag[1]])
+    return np.dot(np.mod(addresses, D_diag), [1, D_diag[0], D_diag[0] * D_diag[1]])
 
 
 def get_grid_point_from_address(address, D_diag):
