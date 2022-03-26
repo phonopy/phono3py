@@ -386,7 +386,7 @@ def test_jdos_nac_NaCl_300K_C(nacl_pbe: Phono3py, gp: int, store_dense_gp_map: b
 
 @pytest.mark.parametrize("gp,store_dense_gp_map", [(103, False), (105, True)])
 def test_jdos_nac_NaCl_300K_Py(nacl_pbe: Phono3py, gp: int, store_dense_gp_map: bool):
-    """Test running JDOS of NaCl in Py mode."""
+    """Test running JDOS of NaCl in Py (JDOS) mode."""
     jdos = _get_jdos(
         nacl_pbe,
         [9, 9, 9],
@@ -398,6 +398,26 @@ def test_jdos_nac_NaCl_300K_Py(nacl_pbe: Phono3py, gp: int, store_dense_gp_map: 
     jdos.temperature = 300
     jdos.run_phonon_solver()
     jdos.run_integration_weights()
+    jdos.run_jdos(lang="Py")
+    np.testing.assert_allclose(
+        nacl_jdos_12_at_300K[2:], jdos.joint_dos.ravel()[2:], rtol=1e-2, atol=1e-5
+    )
+
+
+@pytest.mark.parametrize("gp,store_dense_gp_map", [(103, False), (105, True)])
+def test_jdos_nac_NaCl_300K_PyPy(nacl_pbe: Phono3py, gp: int, store_dense_gp_map: bool):
+    """Test running JDOS of NaCl in Py (JDOS) and Py (tetrahedron) mode."""
+    jdos = _get_jdos(
+        nacl_pbe,
+        [9, 9, 9],
+        nac_params=nacl_pbe.nac_params,
+        store_dense_gp_map=store_dense_gp_map,
+    )
+    jdos.set_grid_point(gp)
+    jdos.frequency_points = nacl_freq_points_at_300K
+    jdos.temperature = 300
+    jdos.run_phonon_solver()
+    jdos.run_integration_weights(lang="Py")
     jdos.run_jdos(lang="Py")
     np.testing.assert_allclose(
         nacl_jdos_12_at_300K[2:], jdos.joint_dos.ravel()[2:], rtol=1e-2, atol=1e-5
