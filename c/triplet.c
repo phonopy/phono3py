@@ -73,7 +73,7 @@ void tpl_get_integration_weight(
     num_band_prod = num_band0 * num_band1 * num_band2;
 
 #ifdef _OPENMP
-#pragma omp parallel for if (openmp_per_triplets)
+#pragma omp parallel for schedule(guided) if (openmp_per_triplets)
 #endif
     for (i = 0; i < num_triplets; i++) {
         tpi_get_integration_weight(

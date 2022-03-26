@@ -143,7 +143,6 @@ def get_triplets_integration_weights(
     sigma,
     sigma_cutoff=None,
     is_collision_matrix=False,
-    neighboring_phonons=False,
     lang="C",
 ):
     """Calculate triplets integration weights.
@@ -212,7 +211,6 @@ def get_triplets_integration_weights(
                 g_zero,
                 interaction,
                 frequency_points,
-                neighboring_phonons=neighboring_phonons,
             )
         else:
             _set_triplets_integration_weights_py(g, interaction, frequency_points)
@@ -361,33 +359,11 @@ def _get_BZ_triplets_at_q(grid_point, bz_grid: BZGrid, map_triplets):
     return triplets, np.array(ir_weights, dtype="int_")
 
 
-def _set_triplets_integration_weights_c(
-    g, g_zero, pp, frequency_points, neighboring_phonons=False
-):
+def _set_triplets_integration_weights_c(g, g_zero, pp, frequency_points):
     import phono3py._phono3py as phono3c
 
     thm = TetrahedronMethod(pp.bz_grid.microzone_lattice)
     triplets_at_q = pp.get_triplets_at_q()[0]
-
-    if neighboring_phonons:
-        unique_vertices = np.dot(thm.get_unique_tetrahedra_vertices(), pp.bz_grid.P.T)
-        for i, j in zip((1, 2), (1, -1)):
-            neighboring_grid_points = np.zeros(
-                len(unique_vertices) * len(triplets_at_q), dtype="int_"
-            )
-            phono3c.neighboring_grid_points(
-                neighboring_grid_points,
-                np.array(triplets_at_q[:, i], dtype="int_").ravel(),
-                np.array(j * unique_vertices, dtype="int_", order="C"),
-                pp.bz_grid.D_diag,
-                pp.bz_grid.addresses,
-                pp.bz_grid.gp_map,
-                pp.bz_grid.store_dense_gp_map * 1 + 1,
-            )
-            pp.run_phonon_solver(
-                np.array(np.unique(neighboring_grid_points), dtype="int_")
-            )
-
     frequencies = pp.get_phonons()[0]
     phono3c.triplets_integration_weights(
         g,

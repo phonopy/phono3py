@@ -39,13 +39,13 @@
 
 #include "phonoc_array.h"
 
-void ise_get_imag_self_energy_at_bands_with_g(
+void ise_get_imag_self_energy_with_g(
     double *imag_self_energy, const Darray *fc3_normal_squared,
     const double *frequencies, const long (*triplets)[3],
     const long *triplet_weights, const double *g, const char *g_zero,
     const double temperature, const double cutoff_frequency,
     const long num_frequency_points, const long frequency_point_index);
-void ise_get_detailed_imag_self_energy_at_bands_with_g(
+void ise_get_detailed_imag_self_energy_with_g(
     double *detailed_imag_self_energy, double *imag_self_energy_N,
     double *imag_self_energy_U, const Darray *fc3_normal_squared,
     const double *frequencies, const long (*triplets)[3],
@@ -58,7 +58,7 @@ void ise_imag_self_energy_at_triplet(
     const long triplet[3], const long triplet_weight, const double *g1,
     const double *g2_3, const long (*g_pos)[4], const long num_g_pos,
     const double *temperatures, const long num_temps,
-    const double cutoff_frequency, const long openmp_at_bands,
+    const double cutoff_frequency, const long openmp_possible,
     const long at_a_frequency_point);
 long ise_set_g_pos(long (*g_pos)[4], const long num_band0, const long num_band,
                    const char *g_zero);
