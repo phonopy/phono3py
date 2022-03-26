@@ -730,16 +730,18 @@ def can_use_std_lattice(conv_lat, tmat, std_lattice, rotations, symprec=1e-5):
     return False
 
 
-def get_grid_point_from_address_py(address, mesh):
-    """Python version of get_grid_point_from_address."""
-    # X runs first in XYZ
-    # (*In spglib, Z first is possible with MACRO setting.)
-    m = mesh
-    return (
-        address[0] % m[0]
-        + (address[1] % m[1]) * m[0]
-        + (address[2] % m[2]) * m[0] * m[1]
-    )
+def get_grid_point_from_address_py(addresses, D_diag):
+    """Return GR-grid point index from addresses.
+
+    Python version of get_grid_point_from_address.
+    X runs first in XYZ
+    In grid.c, Z first is possible with MACRO setting.
+
+    addresses :
+        shape=(..., 3)
+
+    """
+    return np.dot(addresses % D_diag, [1, D_diag[0], D_diag[0] * D_diag[1]])
 
 
 def get_grid_point_from_address(address, D_diag):
