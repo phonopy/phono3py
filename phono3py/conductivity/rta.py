@@ -294,9 +294,9 @@ class ConductivityRTABase(ConductivityBase):
             if self._log_level:
                 print("Calculating collisions at temperatures...")
             for k, t in enumerate(self._temperatures):
-                self._collision.set_temperature(t)
+                self._collision.temperature = t
                 self._collision.run()
-                self._gamma[j, k, i] = self._collision.get_imag_self_energy()
+                self._gamma[j, k, i] = self._collision.imag_self_energy
                 if self._is_N_U or self._is_gamma_detail:
                     g_N, g_U = self._collision.get_imag_self_energy_N_and_U()
                     self._gamma_N[j, k, i] = g_N
@@ -405,7 +405,7 @@ class ConductivityRTABase(ConductivityBase):
                     symmetrize_fc3_q,
                     self._pp.cutoff_frequency,
                 )
-            col_unit_conv = self._collision.get_unit_conversion_factor()
+            col_unit_conv = self._collision.unit_conversion_factor
             pp_unit_conv = self._pp.get_unit_conversion_factor()
             if self._is_N_U:
                 col = collisions.sum(axis=0)

@@ -476,7 +476,7 @@ class ConductivityLBTEBase(ConductivityBase):
                 ] = self._pp.get_averaged_interaction()
 
             for k, t in enumerate(self._temperatures):
-                self._collision.set_temperature(t)
+                self._collision.temperature = t
                 self._collision.run()
                 if self._all_grid_points:
                     if self._is_reducible_collision_matrix:
@@ -485,7 +485,7 @@ class ConductivityLBTEBase(ConductivityBase):
                         i_data = i_gp
                 else:
                     i_data = 0
-                self._gamma[j, k, i_data] = self._collision.get_imag_self_energy()
+                self._gamma[j, k, i_data] = self._collision.imag_self_energy
                 self._collision_matrix[
                     j, k, i_data
                 ] = self._collision.get_collision_matrix()
