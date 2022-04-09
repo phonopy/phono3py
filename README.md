@@ -21,7 +21,7 @@ phono3py repository.
 
 - Github issues is the place to discuss about phono3py issues.
 - Github pull request is the place to request merging source code.
-- Python 3.7 will be the minimum requirement soon.
+- Python 3.7 is the minimum requirement.
 - Formatting is written in `pyproject.toml`.
 - Not strictly, but VSCode's `settings.json` may be written like
 

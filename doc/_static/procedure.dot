@@ -3,7 +3,6 @@ digraph phonopy {
   "Phono3py (force-sets)" [shape = box, style = filled];
   "Phono3py (FC)" [shape = box, style = filled];
   "Phono3py (LTC)" [shape = box, style = filled];
-  "Supercell + displacements" [shape = box];
   "Force calc." [shape = octagon];
   "Force-constants calc." [shape = octagon];
 
