@@ -26,27 +26,27 @@ build:
 
 requirements:
   build:
-    - python>=3.6
+    - python>=3.7
     - pip
-    - numpy>=1.11
+    - numpy>=1.15
     - scipy
-    - matplotlib-base>=2.0.0
+    - matplotlib-base>=2.2.2
     - pyyaml
     - h5py
-    - phonopy>=2.12,<2.13
+    - phonopy>=2.13,<2.14
     - openblas
     - libgfortran
     - spglib
 
   run:
-    - python>=3.6
+    - python>=3.7
     - pip
-    - numpy>=1.11
+    - numpy>=1.15
     - scipy
-    - matplotlib-base>=2.0.0
+    - matplotlib-base>=2.2.2
     - pyyaml
     - h5py
-    - phonopy>=2.12,<2.13
+    - phonopy>=2.13,<2.14
     - openblas
     - libgfortran
     - spglib

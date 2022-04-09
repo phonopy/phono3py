@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Apr-9-2022: Version 2.3.0
+
+- Maintenance release including small bug fixes.
+
 ## Feb-14-2022: Version 2.2.0
 
 - Maintenance release to follow the change of phonopy at v2.12.1.

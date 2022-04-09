@@ -50,6 +50,9 @@ macros = []
 # in numpy>=1.16.0, silence build warnings about deprecated API usage
 macros.append(("NPY_NO_DEPRECATED_API", "0"))
 
+# Avoid divergence in tetrahedron method by ensuring denominator > 1e-10.
+# macros.append(("THM_EPSILON", "1e-10"))
+
 with_threaded_blas = False
 with_mkl = False
 
@@ -131,6 +134,7 @@ extensions.append(
 
 packages_phono3py = [
     "phono3py",
+    "phono3py.conductivity",
     "phono3py.cui",
     "phono3py.interface",
     "phono3py.other",
@@ -194,7 +198,7 @@ if __name__ == "__main__":
             "matplotlib>=2.2.2",
             "h5py",
             "spglib",
-            "phonopy>=2.13,<2.14",
+            "phonopy>=2.14,<2.15",
         ],
         provides=["phono3py"],
         scripts=scripts_phono3py,

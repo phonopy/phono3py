@@ -67,7 +67,7 @@ def run_KDE(x, y, nbins, x_max=None, y_max=None, density_ratio=0.1):
                 indices = [nbins - i - 1]
         short_nbinds = len(indices)
 
-        ynbins = nbins ** 2 // short_nbinds
+        ynbins = nbins**2 // short_nbinds
         xi, yi = np.mgrid[x_min : _x_max : nbins * 1j, y_min : _y_max : ynbins * 1j]
         positions = np.vstack([xi.ravel(), yi.ravel()])
         zi = np.reshape(kernel(positions).T, xi.shape)

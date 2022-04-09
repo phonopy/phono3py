@@ -34,7 +34,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.structure.tetrahedron_method import TetrahedronMethod
+from phonopy.structure.tetrahedron_method import (
+    TetrahedronMethod,
+    get_tetrahedra_relative_grid_address,
+)
 
 
 def get_unique_grid_points(grid_points, bz_grid):
@@ -125,8 +128,13 @@ def get_integration_weights(
     """
     import phono3py._phono3py as phono3c
 
-    thm = TetrahedronMethod(bz_grid.microzone_lattice)
-
+    relative_grid_addresses = np.array(
+        np.dot(
+            get_tetrahedra_relative_grid_address(bz_grid.microzone_lattice), bz_grid.P.T
+        ),
+        dtype="int_",
+        order="C",
+    )
     if grid_points is None:
         _grid_points = bz_grid.grg2bzg
     elif _check_ndarray_state(grid_points, "int_"):
@@ -156,7 +164,7 @@ def get_integration_weights(
     phono3c.integration_weights_at_grid_points(
         integration_weights,
         _sampling_points,
-        np.array(np.dot(thm.get_tetrahedra(), bz_grid.P.T), dtype="int_", order="C"),
+        relative_grid_addresses,
         bz_grid.D_diag,
         _grid_points,
         _grid_values,

@@ -37,7 +37,7 @@ import numpy as np
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
 from phono3py.phonon.func import gaussian
-from phono3py.phonon.grid import BZGrid
+from phono3py.phonon.grid import BZGrid, get_grid_point_from_address_py
 
 
 def get_triplets_at_q(
@@ -143,7 +143,6 @@ def get_triplets_integration_weights(
     sigma,
     sigma_cutoff=None,
     is_collision_matrix=False,
-    neighboring_phonons=False,
     lang="C",
 ):
     """Calculate triplets integration weights.
@@ -155,7 +154,7 @@ def get_triplets_integration_weights(
         shape=(2 or 3, triplets, freq_points, bands, bands), dtype='double'.
     g_zero : ndarray
         Location of strictly zero elements.
-        shape=(triplets, ), dtype='byte'
+        shape=(triplets, freq_points, bands, bands), dtype='byte'
 
     """
     triplets = interaction.get_triplets_at_q()[0]
@@ -212,34 +211,11 @@ def get_triplets_integration_weights(
                 g_zero,
                 interaction,
                 frequency_points,
-                neighboring_phonons=neighboring_phonons,
             )
         else:
             _set_triplets_integration_weights_py(g, interaction, frequency_points)
 
     return g, g_zero
-
-
-def get_tetrahedra_vertices(relative_address, mesh, triplets_at_q, bz_grid):
-    """Return vertices of tetrahedra used for tetrahedron method.
-
-    Equivalent function is implemented in C and this python version exists
-    only for the test and assumes q1+q2+q3=G.
-
-    """
-    bzmesh = mesh * 2
-    grid_order = [1, mesh[0], mesh[0] * mesh[1]]
-    bz_grid_order = [1, bzmesh[0], bzmesh[0] * bzmesh[1]]
-    num_triplets = len(triplets_at_q)
-    vertices = np.zeros((num_triplets, 2, 24, 4), dtype="int_")
-    for i, tp in enumerate(triplets_at_q):
-        for j, adrs_shift in enumerate((relative_address, -relative_address)):
-            adrs = bz_grid.addresses[tp[j + 1]] + adrs_shift
-            bz_gp = np.dot(adrs % bzmesh, bz_grid_order)
-            gp = np.dot(adrs % mesh, grid_order)
-            vgp = bz_grid.gp_map[bz_gp]
-            vertices[i, j] = vgp + (vgp == -1) * (gp + 1)
-    return vertices
 
 
 def _get_triplets_reciprocal_mesh_at_q(
@@ -361,33 +337,11 @@ def _get_BZ_triplets_at_q(grid_point, bz_grid: BZGrid, map_triplets):
     return triplets, np.array(ir_weights, dtype="int_")
 
 
-def _set_triplets_integration_weights_c(
-    g, g_zero, pp, frequency_points, neighboring_phonons=False
-):
+def _set_triplets_integration_weights_c(g, g_zero, pp, frequency_points):
     import phono3py._phono3py as phono3c
 
     thm = TetrahedronMethod(pp.bz_grid.microzone_lattice)
     triplets_at_q = pp.get_triplets_at_q()[0]
-
-    if neighboring_phonons:
-        unique_vertices = np.dot(thm.get_unique_tetrahedra_vertices(), pp.bz_grid.P.T)
-        for i, j in zip((1, 2), (1, -1)):
-            neighboring_grid_points = np.zeros(
-                len(unique_vertices) * len(triplets_at_q), dtype="int_"
-            )
-            phono3c.neighboring_grid_points(
-                neighboring_grid_points,
-                np.array(triplets_at_q[:, i], dtype="int_").ravel(),
-                np.array(j * unique_vertices, dtype="int_", order="C"),
-                pp.bz_grid.D_diag,
-                pp.bz_grid.addresses,
-                pp.bz_grid.gp_map,
-                pp.bz_grid.store_dense_gp_map * 1 + 1,
-            )
-            pp.run_phonon_solver(
-                np.array(np.unique(neighboring_grid_points), dtype="int_")
-            )
-
     frequencies = pp.get_phonons()[0]
     phono3c.triplets_integration_weights(
         g,
@@ -406,15 +360,19 @@ def _set_triplets_integration_weights_c(
 
 
 def _set_triplets_integration_weights_py(g, pp, frequency_points):
+    """Python version of _set_triplets_integration_weights_c.
+
+    Tetrahedron method engine is that implemented in phonopy written mainly in C.
+
+    """
     thm = TetrahedronMethod(pp.bz_grid.microzone_lattice)
     triplets_at_q = pp.get_triplets_at_q()[0]
-    tetrahedra_vertices = get_tetrahedra_vertices(
+    tetrahedra_vertices = _get_tetrahedra_vertices(
         np.array(np.dot(thm.get_tetrahedra(), pp.bz_grid.P.T), dtype="int_", order="C"),
-        pp.bz_grid.D_diag,
         triplets_at_q,
         pp.bz_grid,
     )
-    pp.run_phonon_solver(np.array(np.unique(tetrahedra_vertices), dtype="int_"))
+    pp.run_phonon_solver()
     frequencies = pp.get_phonons()[0]
     num_band = frequencies.shape[1]
     for i, vertices in enumerate(tetrahedra_vertices):
@@ -434,3 +392,20 @@ def _set_triplets_integration_weights_py(g, pp, frequency_points):
             g[1, i, :, j, k] = g1 - g2
             if len(g) == 3:
                 g[2, i, :, j, k] = g0 + g1 + g2
+
+
+def _get_tetrahedra_vertices(relative_address, triplets_at_q, bz_grid: BZGrid):
+    """Return vertices of tetrahedra used for tetrahedron method.
+
+    Equivalent function is implemented in C and this python version exists
+    only for the test and assumes q1+q2+q3=G.
+
+    """
+    num_triplets = len(triplets_at_q)
+    vertices = np.zeros((num_triplets, 2, 24, 4), dtype="int_")
+    for i, tp in enumerate(triplets_at_q):
+        for j, adrs_shift in enumerate((relative_address, -relative_address)):
+            adrs = bz_grid.addresses[tp[j + 1]] + adrs_shift
+            gps = get_grid_point_from_address_py(adrs, bz_grid.D_diag)
+            vertices[i, j] = bz_grid.grg2bzg[gps]
+    return vertices

@@ -366,6 +366,7 @@ def set_dataset_and_force_constants(
     """Set displacements, forces, and create force constants."""
     read_fc = {"fc2": False, "fc3": False}
     p2s_map = ph3py.primitive.p2s_map
+    phonon_p2s_map = ph3py.phonon_primitive.p2s_map
     if fc3_filename is not None:
         fc3 = read_fc3_from_hdf5(filename=fc3_filename, p2s_map=p2s_map)
         ph3py.fc3 = fc3
@@ -439,7 +440,7 @@ def set_dataset_and_force_constants(
         show_drift_fc3(ph3py.fc3, primitive=ph3py.primitive)
 
     if fc2_filename is not None:
-        fc2 = read_fc2_from_hdf5(filename=fc2_filename, p2s_map=p2s_map)
+        fc2 = read_fc2_from_hdf5(filename=fc2_filename, p2s_map=phonon_p2s_map)
         ph3py.fc2 = fc2
         read_fc["fc2"] = True
         if log_level:
@@ -464,7 +465,7 @@ def set_dataset_and_force_constants(
             log_level,
         )
     elif os.path.isfile("fc2.hdf5"):
-        ph3py.fc2 = read_fc2_from_hdf5(filename="fc2.hdf5", p2s_map=p2s_map)
+        ph3py.fc2 = read_fc2_from_hdf5(filename="fc2.hdf5", p2s_map=phonon_p2s_map)
         read_fc["fc2"] = True
         if log_level:
             print('fc2 was read from "fc2.hdf5".')
@@ -480,7 +481,10 @@ def set_dataset_and_force_constants(
             and ph3py_yaml is not None
             and ph3py_yaml.phonon_dataset is None
         ):
-            msg = '"FORCES_FC2" was found. ' "But displacement dataset was not found."
+            msg = (
+                '"FORCES_FC2" was found. But phonon displacement dataset '
+                f'was not found in "{ph3py_yaml.yaml_filename}".'
+            )
             raise RuntimeError(msg)
         _set_forces_fc2(
             ph3py,

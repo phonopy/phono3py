@@ -34,6 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import sys
+import warnings
 from typing import List, Optional
 
 import numpy as np
@@ -47,6 +48,528 @@ from phono3py.file_IO import (
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.triplets import get_triplets_integration_weights
 from phono3py.phonon.func import bose_einstein
+
+
+class ImagSelfEnergy:
+    """Class for imaginary-part of self-energy of bubble diagram."""
+
+    def __init__(
+        self,
+        interaction: Interaction,
+        with_detail=False,
+        lang="C",
+    ):
+        """Init method.
+
+        Band indices to be calculated at are kept in Interaction instance.
+
+        Parameters
+        ----------
+        interaction : Interaction
+            Class instance of ph-ph interaction.
+        with_detail : bool, optional
+            Contributions to gammas for each triplets are computed. Default is
+            False.
+        lang : str, optional
+            This is used for debugging purpose.
+
+        """
+        self._pp = interaction
+        self._sigma = None
+        self._temperature = None
+        self._frequency_points = None
+        self._grid_point = None
+
+        self._lang = lang
+        self._imag_self_energy = None
+        self._detailed_imag_self_energy = None
+        self._pp_strength = None
+        self._frequencies = None
+        self._triplets_at_q = None
+        self._weights_at_q = None
+        self._with_detail = with_detail
+        self._cutoff_frequency = interaction.cutoff_frequency
+
+        self._g = None  # integration weights
+        self._g_zero = None  # Necessary elements of interaction strength
+        self._is_collision_matrix = False
+
+        # Unit to THz of Gamma
+        self._unit_conversion = (
+            18 * np.pi / (Hbar * EV) ** 2 / (2 * np.pi * THz) ** 2 * EV**2
+        )
+
+    def run(self):
+        """Calculate imaginary-part of self-energies."""
+        if self._pp_strength is None:
+            self.run_interaction()
+
+        num_band0 = self._pp_strength.shape[1]
+
+        if self._frequency_points is None:
+            self._imag_self_energy = np.zeros(num_band0, dtype="double")
+            if self._with_detail:
+                self._detailed_imag_self_energy = np.empty_like(self._pp_strength)
+                self._detailed_imag_self_energy[:] = 0
+                self._ise_N = np.zeros_like(self._imag_self_energy)
+                self._ise_U = np.zeros_like(self._imag_self_energy)
+            self._run_with_band_indices()
+        else:
+            self._imag_self_energy = np.zeros(
+                (len(self._frequency_points), num_band0), order="C", dtype="double"
+            )
+            if self._with_detail:
+                self._detailed_imag_self_energy = np.zeros(
+                    (len(self._frequency_points),) + self._pp_strength.shape,
+                    order="C",
+                    dtype="double",
+                )
+                self._ise_N = np.zeros_like(self._imag_self_energy)
+                self._ise_U = np.zeros_like(self._imag_self_energy)
+            self._run_with_frequency_points()
+
+    def run_interaction(self, is_full_pp=True):
+        """Calculate ph-ph interaction."""
+        if is_full_pp or self._frequency_points is not None:
+            self._pp.run(lang=self._lang)
+        else:
+            self._pp.run(lang=self._lang, g_zero=self._g_zero)
+        self._pp_strength = self._pp.interaction_strength
+
+    def set_integration_weights(self, scattering_event_class=None):
+        """Compute integration weights at grid points."""
+        if self._frequency_points is None:
+            bi = self._pp.band_indices
+            f_points = self._frequencies[self._grid_point][bi]
+        else:
+            f_points = self._frequency_points
+
+        self._g, self._g_zero = get_triplets_integration_weights(
+            self._pp,
+            np.array(f_points, dtype="double"),
+            self._sigma,
+            self._sigma_cutoff,
+            is_collision_matrix=self._is_collision_matrix,
+        )
+
+        if scattering_event_class == 1 or scattering_event_class == 2:
+            self._g[scattering_event_class - 1] = 0
+
+    @property
+    def imag_self_energy(self):
+        """Return calculated imaginary-part of self-energies."""
+        if self._cutoff_frequency is None:
+            return self._imag_self_energy
+        else:
+            return self._average_by_degeneracy(self._imag_self_energy)
+
+    def get_imag_self_energy(self):
+        """Return calculated imaginary-part of self-energies."""
+        warnings.warn(
+            "Use attribute, ImagSelfEnergy.imag_self_energy "
+            "instead of ImagSelfEnergy.get_imag_self_energy().",
+            DeprecationWarning,
+        )
+        return self.imag_self_energy
+
+    def get_imag_self_energy_N_and_U(self):
+        """Return normal and Umklapp contributions.
+
+        Three-phonon scatterings are categorized into normal and Umklapp and
+        the contributions of the triplets to imaginary-part of self-energies
+        are returned.
+
+        """
+        if self._cutoff_frequency is None:
+            return self._ise_N, self._ise_U
+        else:
+            return (
+                self._average_by_degeneracy(self._ise_N),
+                self._average_by_degeneracy(self._ise_U),
+            )
+
+    @property
+    def detailed_imag_self_energy(self):
+        """Return triplets contributions to imaginary-part of self-energies."""
+        return self._detailed_imag_self_energy
+
+    def get_detailed_imag_self_energy(self):
+        """Return triplets contributions to imaginary-part of self-energies."""
+        warnings.warn(
+            "Use attribute, ImagSelfEnergy.detailed_imag_self_energy "
+            "instead of ImagSelfEnergy.get_detailed_imag_self_energy().",
+            DeprecationWarning,
+        )
+        return self.detailed_imag_self_energy
+
+    def get_integration_weights(self):
+        """Return integration weights.
+
+        See the details of returns at ``get_triplets_integration_weights``.
+
+        """
+        return self._g, self._g_zero
+
+    @property
+    def unit_conversion_factor(self):
+        """Return unit conversion factor of gamma."""
+        return self._unit_conversion
+
+    def get_unit_conversion_factor(self):
+        """Return unit conversion factor of gamma."""
+        warnings.warn(
+            "Use attribute, ImagSelfEnergy.unit_conversion_factor "
+            "instead of ImagSelfEnergy.get_unit_conversion_factor().",
+            DeprecationWarning,
+        )
+        return self.unit_conversion_factor
+
+    def set_grid_point(self, grid_point=None):
+        """Set a grid point at which calculation will be performed."""
+        if grid_point is None:
+            self._grid_point = None
+        else:
+            self._pp.set_grid_point(grid_point)
+            self._pp_strength = None
+            (self._triplets_at_q, self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
+            self._grid_point = grid_point
+            self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
+
+    def set_sigma(self, sigma, sigma_cutoff=None):
+        """Set sigma value. None means tetrahedron method."""
+        if sigma is None:
+            self._sigma = None
+        else:
+            self._sigma = float(sigma)
+
+        if sigma_cutoff is None:
+            self._sigma_cutoff = None
+        else:
+            self._sigma_cutoff = float(sigma_cutoff)
+
+        self.delete_integration_weights()
+
+    @property
+    def frequency_points(self):
+        """Getter and setter of sampling frequency points."""
+        return self._frequency_points
+
+    @frequency_points.setter
+    def frequency_points(self, frequency_points):
+        if frequency_points is None:
+            self._frequency_points = None
+        else:
+            self._frequency_points = np.array(frequency_points, dtype="double")
+
+    def set_frequency_points(self, frequency_points):
+        """Set frequency points where spectrum calculation will be performed."""
+        warnings.warn(
+            "Use attribute, ImagSelfEnergy.frequency_points "
+            "instead of ImagSelfEnergy.set_frequency_points().",
+            DeprecationWarning,
+        )
+        self.frequency_points = frequency_points
+
+    @property
+    def temperature(self):
+        """Getter and setter of temperature."""
+        return self._temperature
+
+    @temperature.setter
+    def temperature(self, temperature):
+        if temperature is None:
+            self._temperature = None
+        else:
+            self._temperature = float(temperature)
+
+    def set_temperature(self, temperature):
+        """Set temperatures where calculation will be peformed."""
+        warnings.warn(
+            "Use attribute, ImagSelfEnergy.temperature "
+            "instead of ImagSelfEnergy.set_temperature().",
+            DeprecationWarning,
+        )
+        self.temperature = temperature
+
+    def set_averaged_pp_interaction(self, ave_pp):
+        """Set averaged ph-ph interactions.
+
+        This is used for analysis of the calculated results by introducing
+        averaged value as an approximation.
+        Setting this, ph-ph interaction calculation will not be executed.
+
+        """
+        num_triplets = len(self._triplets_at_q)
+        num_band = len(self._pp.primitive) * 3
+        num_grid = np.prod(self._pp.mesh_numbers)
+        bi = self._pp.get_band_indices()
+        self._pp_strength = np.zeros(
+            (num_triplets, len(bi), num_band, num_band), dtype="double"
+        )
+
+        for i, v_ave in enumerate(ave_pp):
+            self._pp_strength[:, i, :, :] = v_ave / num_grid
+
+    @property
+    def interaction_strength(self):
+        """Getter and setter of ph-ph interaction strength."""
+        return self._pp_strength
+
+    @interaction_strength.setter
+    def interaction_strength(self, pp_strength):
+        self._pp_strength = pp_strength
+        self._pp.set_interaction_strength(pp_strength, g_zero=self._g_zero)
+
+    def set_interaction_strength(self, pp_strength):
+        """Set ph-ph interaction strengths."""
+        warnings.warn(
+            "Use attribute, ImagSelfEnergy.interaction_strength "
+            "instead of ImagSelfEnergy.set_interaction_strength().",
+            DeprecationWarning,
+        )
+        self.interaction_strength = pp_strength
+
+    def delete_integration_weights(self):
+        """Delete large ndarray's."""
+        self._g = None
+        self._g_zero = None
+        self._pp_strength = None
+
+    def _run_with_band_indices(self):
+        if self._g is not None:
+            if self._lang == "C":
+                if self._with_detail:
+                    # self._detailed_imag_self_energy.shape =
+                    #    (num_triplets, num_band0, num_band, num_band)
+                    # self._imag_self_energy is also set.
+                    self._run_c_detailed_with_band_indices_with_g()
+                else:
+                    # self._imag_self_energy.shape = (num_band0,)
+                    self._run_c_with_band_indices_with_g()
+            else:
+                print("Running into _run_py_with_band_indices_with_g()")
+                print("This routine is super slow and only for the test.")
+                self._run_py_with_band_indices_with_g()
+        else:
+            print(
+                "get_triplets_integration_weights must be executed "
+                "before calling this method."
+            )
+            import sys
+
+            sys.exit(1)
+
+    def _run_with_frequency_points(self):
+        if self._g is not None:
+            if self._lang == "C":
+                if self._with_detail:
+                    self._run_c_detailed_with_frequency_points_with_g()
+                else:
+                    self._run_c_with_frequency_points_with_g()
+            else:
+                print("Running into _run_py_with_frequency_points_with_g()")
+                print("This routine is super slow and only for the test.")
+                self._run_py_with_frequency_points_with_g()
+        else:
+            print(
+                "get_triplets_integration_weights must be executed "
+                "before calling this method."
+            )
+            import sys
+
+            sys.exit(1)
+
+    def _run_c_with_band_indices_with_g(self):
+        import phono3py._phono3py as phono3c
+
+        if self._g_zero is None:
+            _g_zero = np.zeros(self._pp_strength.shape, dtype="byte", order="C")
+        else:
+            _g_zero = self._g_zero
+
+        phono3c.imag_self_energy_with_g(
+            self._imag_self_energy,
+            self._pp_strength,
+            self._triplets_at_q,
+            self._weights_at_q,
+            self._frequencies,
+            self._temperature,
+            self._g,
+            _g_zero,
+            self._cutoff_frequency,
+            -1,
+        )
+        self._imag_self_energy *= self._unit_conversion
+
+    def _run_c_detailed_with_band_indices_with_g(self):
+        import phono3py._phono3py as phono3c
+
+        if self._g_zero is None:
+            _g_zero = np.zeros(self._pp_strength.shape, dtype="byte", order="C")
+        else:
+            _g_zero = self._g_zero
+
+        phono3c.detailed_imag_self_energy_with_g(
+            self._detailed_imag_self_energy,
+            self._ise_N,  # Normal
+            self._ise_U,  # Umklapp
+            self._pp_strength,
+            self._triplets_at_q,
+            self._weights_at_q,
+            self._pp.bz_grid.addresses,
+            self._frequencies,
+            self._temperature,
+            self._g,
+            _g_zero,
+            self._cutoff_frequency,
+        )
+
+        self._detailed_imag_self_energy *= self._unit_conversion
+        self._ise_N *= self._unit_conversion
+        self._ise_U *= self._unit_conversion
+        self._imag_self_energy = self._ise_N + self._ise_U
+
+    def _run_c_with_frequency_points_with_g(self):
+        import phono3py._phono3py as phono3c
+
+        num_band0 = self._pp_strength.shape[1]
+        ise_at_f = np.zeros(num_band0, dtype="double")
+
+        for i in range(len(self._frequency_points)):
+            phono3c.imag_self_energy_with_g(
+                ise_at_f,
+                self._pp_strength,
+                self._triplets_at_q,
+                self._weights_at_q,
+                self._frequencies,
+                self._temperature,
+                self._g,
+                self._g_zero,
+                self._cutoff_frequency,
+                i,
+            )
+            self._imag_self_energy[i] = ise_at_f
+        self._imag_self_energy *= self._unit_conversion
+
+    def _run_c_detailed_with_frequency_points_with_g(self):
+        import phono3py._phono3py as phono3c
+
+        num_band0 = self._pp_strength.shape[1]
+        g_shape = list(self._g.shape)
+        g_shape[2] = num_band0
+        g = np.zeros((2,) + self._pp_strength.shape, order="C", dtype="double")
+        detailed_ise_at_f = np.zeros(
+            self._detailed_imag_self_energy.shape[1:5], order="C", dtype="double"
+        )
+        ise_at_f_N = np.zeros(num_band0, dtype="double")
+        ise_at_f_U = np.zeros(num_band0, dtype="double")
+        _g_zero = np.zeros(g_shape, dtype="byte", order="C")
+
+        for i in range(len(self._frequency_points)):
+            for j in range(g.shape[2]):
+                g[:, :, j, :, :] = self._g[:, :, i, :, :]
+                phono3c.detailed_imag_self_energy_with_g(
+                    detailed_ise_at_f,
+                    ise_at_f_N,
+                    ise_at_f_U,
+                    self._pp_strength,
+                    self._triplets_at_q,
+                    self._weights_at_q,
+                    self._pp.bz_grid.addresses,
+                    self._frequencies,
+                    self._temperature,
+                    g,
+                    _g_zero,
+                    self._cutoff_frequency,
+                )
+            self._detailed_imag_self_energy[i] = (
+                detailed_ise_at_f * self._unit_conversion
+            )
+            self._ise_N[i] = ise_at_f_N * self._unit_conversion
+            self._ise_U[i] = ise_at_f_U * self._unit_conversion
+            self._imag_self_energy[i] = self._ise_N[i] + self._ise_U[i]
+
+    def _run_py_with_band_indices_with_g(self):
+        if self._temperature > 0:
+            self._ise_thm_with_band_indices()
+        else:
+            self._ise_thm_with_band_indices_0K()
+
+    def _ise_thm_with_band_indices(self):
+        freqs = self._frequencies[self._triplets_at_q[:, [1, 2]]]
+        freqs = np.where(freqs > self._cutoff_frequency, freqs, 1)
+        n = bose_einstein(freqs, self._temperature)
+        for i, (tp, w, interaction) in enumerate(
+            zip(self._triplets_at_q, self._weights_at_q, self._pp_strength)
+        ):
+            for j, k in list(np.ndindex(interaction.shape[1:])):
+                f1 = self._frequencies[tp[1]][j]
+                f2 = self._frequencies[tp[2]][k]
+                if f1 > self._cutoff_frequency and f2 > self._cutoff_frequency:
+                    n2 = n[i, 0, j]
+                    n3 = n[i, 1, k]
+                    g1 = self._g[0, i, :, j, k]
+                    g2_g3 = self._g[1, i, :, j, k]  # g2 - g3
+                    self._imag_self_energy[:] += (
+                        ((n2 + n3 + 1) * g1 + (n2 - n3) * (g2_g3))
+                        * interaction[:, j, k]
+                        * w
+                    )
+
+        self._imag_self_energy *= self._unit_conversion
+
+    def _ise_thm_with_band_indices_0K(self):
+        for i, (w, interaction) in enumerate(
+            zip(self._weights_at_q, self._pp_strength)
+        ):
+            for j, k in list(np.ndindex(interaction.shape[1:])):
+                g1 = self._g[0, i, :, j, k]
+                self._imag_self_energy[:] += g1 * interaction[:, j, k] * w
+
+        self._imag_self_energy *= self._unit_conversion
+
+    def _run_py_with_frequency_points_with_g(self):
+        if self._temperature > 0:
+            self._ise_thm_with_frequency_points()
+        else:
+            self._ise_thm_with_frequency_points_0K()
+
+    def _ise_thm_with_frequency_points(self):
+        for i, (tp, w, interaction) in enumerate(
+            zip(self._triplets_at_q, self._weights_at_q, self._pp_strength)
+        ):
+            for j, k in list(np.ndindex(interaction.shape[1:])):
+                f1 = self._frequencies[tp[1]][j]
+                f2 = self._frequencies[tp[2]][k]
+                if f1 > self._cutoff_frequency and f2 > self._cutoff_frequency:
+                    n2 = bose_einstein(f1, self._temperature)
+                    n3 = bose_einstein(f2, self._temperature)
+                    g1 = self._g[0, i, :, j, k]
+                    g2_g3 = self._g[1, i, :, j, k]  # g2 - g3
+                    for ll in range(len(interaction)):
+                        self._imag_self_energy[:, ll] += (
+                            ((n2 + n3 + 1) * g1 + (n2 - n3) * (g2_g3))
+                            * interaction[ll, j, k]
+                            * w
+                        )
+
+        self._imag_self_energy *= self._unit_conversion
+
+    def _ise_thm_with_frequency_points_0K(self):
+        for i, (w, interaction) in enumerate(
+            zip(self._weights_at_q, self._pp_strength)
+        ):
+            for j, k in list(np.ndindex(interaction.shape[1:])):
+                g1 = self._g[0, i, :, j, k]
+                for ll in range(len(interaction)):
+                    self._imag_self_energy[:, ll] += g1 * interaction[ll, j, k] * w
+
+        self._imag_self_energy *= self._unit_conversion
+
+    def _average_by_degeneracy(self, imag_self_energy):
+        return average_by_degeneracy(
+            imag_self_energy, self._pp.band_indices, self._frequencies[self._grid_point]
+        )
 
 
 def get_imag_self_energy(
@@ -260,7 +783,7 @@ def _get_imag_self_energy_at_gp(
     _num_frequency_points,
     scattering_event_class,
     num_points_in_batch,
-    interaction,
+    interaction: Interaction,
     ise,
     write_gamma_detail,
     return_gamma_detail,
@@ -270,6 +793,7 @@ def _get_imag_self_energy_at_gp(
     num_band0 = len(interaction.band_indices)
     frequencies = interaction.get_phonons()[0]
     mesh = interaction.mesh_numbers
+    bz_grid = interaction.bz_grid
 
     if write_gamma_detail or return_gamma_detail:
         triplets, weights, _, _ = interaction.get_triplets_at_q()
@@ -329,6 +853,7 @@ def _get_imag_self_energy_at_gp(
             full_filename = write_gamma_detail_to_hdf5(
                 temperatures,
                 mesh,
+                bz_grid=bz_grid,
                 gamma_detail=detailed_gamma_at_gp[j],
                 grid_point=gp,
                 triplet=triplets,
@@ -357,7 +882,7 @@ def _get_imag_self_energy_at_sigma(
     _frequency_points,
     scattering_event_class,
     num_points_in_batch,
-    ise,
+    ise: ImagSelfEnergy,
     write_gamma_detail,
     return_gamma_detail,
     log_level,
@@ -371,11 +896,11 @@ def _get_imag_self_energy_at_sigma(
     if _frequency_points is None:
         ise.set_integration_weights(scattering_event_class=scattering_event_class)
         for k, t in enumerate(temperatures):
-            ise.set_temperature(t)
+            ise.temperature = t
             ise.run()
-            gamma[j, k, i] = ise.get_imag_self_energy()
+            gamma[j, k, i] = ise.imag_self_energy
             if write_gamma_detail or return_gamma_detail:
-                detailed_gamma_at_gp[k] = ise.get_detailed_imag_self_energy()
+                detailed_gamma_at_gp[k] = ise.detailed_imag_self_energy
     else:
         run_ise_at_frequency_points_batch(
             i,
@@ -526,7 +1051,7 @@ def run_ise_at_frequency_points_batch(
     else:
         _nelems_in_batch = nelems_in_batch
 
-    batches = _get_batches(len(_frequency_points), _nelems_in_batch)
+    batches = get_freq_points_batches(len(_frequency_points), _nelems_in_batch)
 
     if log_level:
         print(
@@ -539,483 +1064,24 @@ def run_ise_at_frequency_points_batch(
             print("%d/%d: %s" % (bi + 1, len(batches), fpts_batch + 1))
             sys.stdout.flush()
 
-        ise.set_frequency_points(_frequency_points[fpts_batch])
+        ise.frequency_points = _frequency_points[fpts_batch]
         ise.set_integration_weights(scattering_event_class=scattering_event_class)
         for ll, t in enumerate(temperatures):
-            ise.set_temperature(t)
+            ise.temperature = t
             ise.run()
-            gamma[j, ll, i, :, fpts_batch] = ise.get_imag_self_energy()
+            gamma[j, ll, i, :, fpts_batch] = ise.imag_self_energy
             if write_gamma_detail or return_gamma_detail:
-                detailed_gamma_at_gp[
-                    ll, fpts_batch
-                ] = ise.get_detailed_imag_self_energy()
+                detailed_gamma_at_gp[ll, fpts_batch] = ise.detailed_imag_self_energy
 
 
-def _get_batches(tot_nelems, nelems=10):
-    nbatch = tot_nelems // nelems
-    batches = [np.arange(i * nelems, (i + 1) * nelems) for i in range(nbatch)]
-    if tot_nelems % nelems > 0:
-        batches.append(np.arange(nelems * nbatch, tot_nelems))
+def get_freq_points_batches(tot_nelems, nelems=None):
+    """Divide frequency points into batches."""
+    if nelems is None:
+        _nelems = 10
+    else:
+        _nelems = nelems
+    nbatch = tot_nelems // _nelems
+    batches = [np.arange(i * _nelems, (i + 1) * _nelems) for i in range(nbatch)]
+    if tot_nelems % _nelems > 0:
+        batches.append(np.arange(_nelems * nbatch, tot_nelems))
     return batches
-
-
-class ImagSelfEnergy:
-    """Class for imaginary-part of self-energy of bubble diagram."""
-
-    def __init__(
-        self,
-        interaction: Interaction,
-        with_detail=False,
-        lang="C",
-    ):
-        """Init method.
-
-        Band indices to be calculated at are kept in Interaction instance.
-
-        Parameters
-        ----------
-        interaction : Interaction
-            Class instance of ph-ph interaction.
-        with_detail : bool, optional
-            Contributions to gammas for each triplets are computed. Default is
-            False.
-        lang : str, optional
-            This is used for debugging purpose.
-
-        """
-        self._pp = interaction
-        self._sigma = None
-        self._temperature = None
-        self._frequency_points = None
-        self._grid_point = None
-
-        self._lang = lang
-        self._imag_self_energy = None
-        self._detailed_imag_self_energy = None
-        self._pp_strength = None
-        self._frequencies = None
-        self._triplets_at_q = None
-        self._weights_at_q = None
-        self._with_detail = with_detail
-        self._cutoff_frequency = interaction.cutoff_frequency
-
-        self._g = None  # integration weights
-        self._g_zero = None  # Necessary elements of interaction strength
-        self._g_zero_frequency_points = None
-        self._g_zero_zeros = None  # always zeros for frequency sampling mode
-        self._is_collision_matrix = False
-
-        # Unit to THz of Gamma
-        self._unit_conversion = (
-            18 * np.pi / (Hbar * EV) ** 2 / (2 * np.pi * THz) ** 2 * EV ** 2
-        )
-
-    def run(self):
-        """Calculate imaginary-part of self-energies."""
-        if self._pp_strength is None:
-            self.run_interaction()
-
-        num_band0 = self._pp_strength.shape[1]
-
-        if self._frequency_points is None:
-            self._imag_self_energy = np.zeros(num_band0, dtype="double")
-            if self._with_detail:
-                self._detailed_imag_self_energy = np.empty_like(self._pp_strength)
-                self._detailed_imag_self_energy[:] = 0
-                self._ise_N = np.zeros_like(self._imag_self_energy)
-                self._ise_U = np.zeros_like(self._imag_self_energy)
-            self._run_with_band_indices()
-        else:
-            self._imag_self_energy = np.zeros(
-                (len(self._frequency_points), num_band0), order="C", dtype="double"
-            )
-            if self._with_detail:
-                self._detailed_imag_self_energy = np.zeros(
-                    (len(self._frequency_points),) + self._pp_strength.shape,
-                    order="C",
-                    dtype="double",
-                )
-                self._ise_N = np.zeros_like(self._imag_self_energy)
-                self._ise_U = np.zeros_like(self._imag_self_energy)
-            self._run_with_frequency_points()
-
-    def run_interaction(self, is_full_pp=True):
-        """Calculate ph-ph interaction."""
-        if is_full_pp or self._frequency_points is not None:
-            self._pp.run(lang=self._lang)
-        else:
-            self._pp.run(lang=self._lang, g_zero=self._g_zero)
-        self._pp_strength = self._pp.interaction_strength
-
-    def set_integration_weights(self, scattering_event_class=None):
-        """Compute integration weights at grid points."""
-        if self._frequency_points is None:
-            bi = self._pp.band_indices
-            f_points = self._frequencies[self._grid_point][bi]
-        else:
-            f_points = self._frequency_points
-
-        self._g, _g_zero = get_triplets_integration_weights(
-            self._pp,
-            np.array(f_points, dtype="double"),
-            self._sigma,
-            self._sigma_cutoff,
-            is_collision_matrix=self._is_collision_matrix,
-        )
-        if self._frequency_points is None:
-            self._g_zero = _g_zero
-        else:
-            # g_zero feature can not be used in frequency sampling mode.
-            # zero values of the following array shape is used in C-routine.
-            # shape = [num_triplets, num_band0, num_band, num_band]
-            shape = list(self._g.shape[1:])
-            shape[1] = len(self._pp.band_indices)
-            self._g_zero_zeros = np.zeros(shape=shape, dtype="byte", order="C")
-            self._g_zero_frequency_points = _g_zero
-
-        if scattering_event_class == 1 or scattering_event_class == 2:
-            self._g[scattering_event_class - 1] = 0
-
-    def get_imag_self_energy(self):
-        """Return calculated imaginary-part of self-energies."""
-        if self._cutoff_frequency is None:
-            return self._imag_self_energy
-        else:
-            return self._average_by_degeneracy(self._imag_self_energy)
-
-    def get_imag_self_energy_N_and_U(self):
-        """Return normal and Umklapp contributions.
-
-        Three-phonon scatterings are categorized into normal and Umklapp and
-        the contributions of the triplets to imaginary-part of self-energies
-        are returned.
-
-        """
-        if self._cutoff_frequency is None:
-            return self._ise_N, self._ise_U
-        else:
-            return (
-                self._average_by_degeneracy(self._ise_N),
-                self._average_by_degeneracy(self._ise_U),
-            )
-
-    def get_detailed_imag_self_energy(self):
-        """Return triplets contributions to imaginary-part of self-energies."""
-        return self._detailed_imag_self_energy
-
-    def get_integration_weights(self):
-        """Return integration weights.
-
-        See the details of returns at ``get_triplets_integration_weights``.
-
-        """
-        return self._g, self._g_zero
-
-    def get_unit_conversion_factor(self):
-        """Return unit conversion factor of gamma."""
-        return self._unit_conversion
-
-    def set_grid_point(self, grid_point=None):
-        """Set a grid point at which calculation will be performed."""
-        if grid_point is None:
-            self._grid_point = None
-        else:
-            self._pp.set_grid_point(grid_point)
-            self._pp_strength = None
-            (self._triplets_at_q, self._weights_at_q) = self._pp.get_triplets_at_q()[:2]
-            self._grid_point = grid_point
-            self._frequencies, self._eigenvectors, _ = self._pp.get_phonons()
-
-    def set_sigma(self, sigma, sigma_cutoff=None):
-        """Set sigma value. None means tetrahedron method."""
-        if sigma is None:
-            self._sigma = None
-        else:
-            self._sigma = float(sigma)
-
-        if sigma_cutoff is None:
-            self._sigma_cutoff = None
-        else:
-            self._sigma_cutoff = float(sigma_cutoff)
-
-        self.delete_integration_weights()
-
-    def set_frequency_points(self, frequency_points):
-        """Set frequency points where spectrum calculation will be performed."""
-        if frequency_points is None:
-            self._frequency_points = None
-        else:
-            self._frequency_points = np.array(frequency_points, dtype="double")
-
-    def set_temperature(self, temperature):
-        """Set temperatures where calculation will be peformed."""
-        if temperature is None:
-            self._temperature = None
-        else:
-            self._temperature = float(temperature)
-
-    def set_averaged_pp_interaction(self, ave_pp):
-        """Set averaged ph-ph interactions.
-
-        This is used for analysis of the calculated results by introducing
-        averaged value as an approximation.
-        Setting this, ph-ph interaction calculation will not be executed.
-
-        """
-        num_triplets = len(self._triplets_at_q)
-        num_band = len(self._pp.primitive) * 3
-        num_grid = np.prod(self._pp.mesh_numbers)
-        bi = self._pp.get_band_indices()
-        self._pp_strength = np.zeros(
-            (num_triplets, len(bi), num_band, num_band), dtype="double"
-        )
-
-        for i, v_ave in enumerate(ave_pp):
-            self._pp_strength[:, i, :, :] = v_ave / num_grid
-
-    def set_interaction_strength(self, pp_strength):
-        """Set ph-ph interaction strengths."""
-        self._pp_strength = pp_strength
-        self._pp.set_interaction_strength(pp_strength, g_zero=self._g_zero)
-
-    def delete_integration_weights(self):
-        """Delete large ndarray's."""
-        self._g = None
-        self._g_zero = None
-        self._pp_strength = None
-
-    def _run_with_band_indices(self):
-        if self._g is not None:
-            if self._lang == "C":
-                if self._with_detail:
-                    # self._detailed_imag_self_energy.shape =
-                    #    (num_triplets, num_band0, num_band, num_band)
-                    # self._imag_self_energy is also set.
-                    self._run_c_detailed_with_band_indices_with_g()
-                else:
-                    # self._imag_self_energy.shape = (num_band0,)
-                    self._run_c_with_band_indices_with_g()
-            else:
-                print("Running into _run_py_with_band_indices_with_g()")
-                print("This routine is super slow and only for the test.")
-                self._run_py_with_band_indices_with_g()
-        else:
-            print(
-                "get_triplets_integration_weights must be executed "
-                "before calling this method."
-            )
-            import sys
-
-            sys.exit(1)
-
-    def _run_with_frequency_points(self):
-        if self._g is not None:
-            if self._lang == "C":
-                if self._with_detail:
-                    self._run_c_detailed_with_frequency_points_with_g()
-                else:
-                    self._run_c_with_frequency_points_with_g()
-            else:
-                print("Running into _run_py_with_frequency_points_with_g()")
-                print("This routine is super slow and only for the test.")
-                self._run_py_with_frequency_points_with_g()
-        else:
-            print(
-                "get_triplets_integration_weights must be executed "
-                "before calling this method."
-            )
-            import sys
-
-            sys.exit(1)
-
-    def _run_c_with_band_indices_with_g(self):
-        import phono3py._phono3py as phono3c
-
-        if self._g_zero is None:
-            _g_zero = np.zeros(self._pp_strength.shape, dtype="byte", order="C")
-        else:
-            _g_zero = self._g_zero
-
-        phono3c.imag_self_energy_with_g(
-            self._imag_self_energy,
-            self._pp_strength,
-            self._triplets_at_q,
-            self._weights_at_q,
-            self._frequencies,
-            self._temperature,
-            self._g,
-            _g_zero,
-            self._cutoff_frequency,
-            -1,
-        )
-        self._imag_self_energy *= self._unit_conversion
-
-    def _run_c_detailed_with_band_indices_with_g(self):
-        import phono3py._phono3py as phono3c
-
-        if self._g_zero is None:
-            _g_zero = np.zeros(self._pp_strength.shape, dtype="byte", order="C")
-        else:
-            _g_zero = self._g_zero
-
-        phono3c.detailed_imag_self_energy_with_g(
-            self._detailed_imag_self_energy,
-            self._ise_N,  # Normal
-            self._ise_U,  # Umklapp
-            self._pp_strength,
-            self._triplets_at_q,
-            self._weights_at_q,
-            self._pp.bz_grid.addresses,
-            self._frequencies,
-            self._temperature,
-            self._g,
-            _g_zero,
-            self._cutoff_frequency,
-        )
-
-        self._detailed_imag_self_energy *= self._unit_conversion
-        self._ise_N *= self._unit_conversion
-        self._ise_U *= self._unit_conversion
-        self._imag_self_energy = self._ise_N + self._ise_U
-
-    def _run_c_with_frequency_points_with_g(self):
-        import phono3py._phono3py as phono3c
-
-        num_band0 = self._pp_strength.shape[1]
-        ise_at_f = np.zeros(num_band0, dtype="double")
-
-        for i in range(len(self._frequency_points)):
-            phono3c.imag_self_energy_with_g(
-                ise_at_f,
-                self._pp_strength,
-                self._triplets_at_q,
-                self._weights_at_q,
-                self._frequencies,
-                self._temperature,
-                self._g,
-                self._g_zero_frequency_points,
-                self._cutoff_frequency,
-                i,
-            )
-            self._imag_self_energy[i] = ise_at_f
-        self._imag_self_energy *= self._unit_conversion
-
-    def _run_c_detailed_with_frequency_points_with_g(self):
-        import phono3py._phono3py as phono3c
-
-        num_band0 = self._pp_strength.shape[1]
-        g_shape = list(self._g.shape)
-        g_shape[2] = num_band0
-        g = np.zeros((2,) + self._pp_strength.shape, order="C", dtype="double")
-        detailed_ise_at_f = np.zeros(
-            self._detailed_imag_self_energy.shape[1:5], order="C", dtype="double"
-        )
-        ise_at_f_N = np.zeros(num_band0, dtype="double")
-        ise_at_f_U = np.zeros(num_band0, dtype="double")
-        _g_zero = np.zeros(g_shape, dtype="byte", order="C")
-
-        for i in range(len(self._frequency_points)):
-            for j in range(g.shape[2]):
-                g[:, :, j, :, :] = self._g[:, :, i, :, :]
-                phono3c.detailed_imag_self_energy_with_g(
-                    detailed_ise_at_f,
-                    ise_at_f_N,
-                    ise_at_f_U,
-                    self._pp_strength,
-                    self._triplets_at_q,
-                    self._weights_at_q,
-                    self._pp.bz_grid.addresses,
-                    self._frequencies,
-                    self._temperature,
-                    g,
-                    _g_zero,
-                    self._cutoff_frequency,
-                )
-            self._detailed_imag_self_energy[i] = (
-                detailed_ise_at_f * self._unit_conversion
-            )
-            self._ise_N[i] = ise_at_f_N * self._unit_conversion
-            self._ise_U[i] = ise_at_f_U * self._unit_conversion
-            self._imag_self_energy[i] = self._ise_N[i] + self._ise_U[i]
-
-    def _run_py_with_band_indices_with_g(self):
-        if self._temperature > 0:
-            self._ise_thm_with_band_indices()
-        else:
-            self._ise_thm_with_band_indices_0K()
-
-    def _ise_thm_with_band_indices(self):
-        freqs = self._frequencies[self._triplets_at_q[:, [1, 2]]]
-        freqs = np.where(freqs > self._cutoff_frequency, freqs, 1)
-        n = bose_einstein(freqs, self._temperature)
-        for i, (tp, w, interaction) in enumerate(
-            zip(self._triplets_at_q, self._weights_at_q, self._pp_strength)
-        ):
-            for j, k in list(np.ndindex(interaction.shape[1:])):
-                f1 = self._frequencies[tp[1]][j]
-                f2 = self._frequencies[tp[2]][k]
-                if f1 > self._cutoff_frequency and f2 > self._cutoff_frequency:
-                    n2 = n[i, 0, j]
-                    n3 = n[i, 1, k]
-                    g1 = self._g[0, i, :, j, k]
-                    g2_g3 = self._g[1, i, :, j, k]  # g2 - g3
-                    self._imag_self_energy[:] += (
-                        ((n2 + n3 + 1) * g1 + (n2 - n3) * (g2_g3))
-                        * interaction[:, j, k]
-                        * w
-                    )
-
-        self._imag_self_energy *= self._unit_conversion
-
-    def _ise_thm_with_band_indices_0K(self):
-        for i, (w, interaction) in enumerate(
-            zip(self._weights_at_q, self._pp_strength)
-        ):
-            for j, k in list(np.ndindex(interaction.shape[1:])):
-                g1 = self._g[0, i, :, j, k]
-                self._imag_self_energy[:] += g1 * interaction[:, j, k] * w
-
-        self._imag_self_energy *= self._unit_conversion
-
-    def _run_py_with_frequency_points_with_g(self):
-        if self._temperature > 0:
-            self._ise_thm_with_frequency_points()
-        else:
-            self._ise_thm_with_frequency_points_0K()
-
-    def _ise_thm_with_frequency_points(self):
-        for i, (tp, w, interaction) in enumerate(
-            zip(self._triplets_at_q, self._weights_at_q, self._pp_strength)
-        ):
-            for j, k in list(np.ndindex(interaction.shape[1:])):
-                f1 = self._frequencies[tp[1]][j]
-                f2 = self._frequencies[tp[2]][k]
-                if f1 > self._cutoff_frequency and f2 > self._cutoff_frequency:
-                    n2 = bose_einstein(f1, self._temperature)
-                    n3 = bose_einstein(f2, self._temperature)
-                    g1 = self._g[0, i, :, j, k]
-                    g2_g3 = self._g[1, i, :, j, k]  # g2 - g3
-                    for ll in range(len(interaction)):
-                        self._imag_self_energy[:, ll] += (
-                            ((n2 + n3 + 1) * g1 + (n2 - n3) * (g2_g3))
-                            * interaction[ll, j, k]
-                            * w
-                        )
-
-        self._imag_self_energy *= self._unit_conversion
-
-    def _ise_thm_with_frequency_points_0K(self):
-        for i, (w, interaction) in enumerate(
-            zip(self._weights_at_q, self._pp_strength)
-        ):
-            for j, k in list(np.ndindex(interaction.shape[1:])):
-                g1 = self._g[0, i, :, j, k]
-                for ll in range(len(interaction)):
-                    self._imag_self_energy[:, ll] += g1 * interaction[ll, j, k] * w
-
-        self._imag_self_energy *= self._unit_conversion
-
-    def _average_by_degeneracy(self, imag_self_energy):
-        return average_by_degeneracy(
-            imag_self_energy, self._pp.band_indices, self._frequencies[self._grid_point]
-        )

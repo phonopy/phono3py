@@ -3,6 +3,7 @@ import os
 
 import phonopy
 import pytest
+from phonopy import Phonopy
 from phonopy.interface.phonopy_yaml import read_cell_yaml
 
 import phono3py
@@ -44,6 +45,28 @@ def si_pbesol(request):
         forces_fc3_filename=forces_fc3_filename,
         store_dense_gp_map=enable_v2,
         store_dense_svecs=enable_v2,
+        log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
+def si_pbesol_grg(request):
+    """Return Phono3py instance of Si 2x2x2.
+
+    * with symmetry
+    * full fc
+    * GR-grid
+
+    """
+    yaml_filename = os.path.join(current_dir, "phono3py_si_pbesol.yaml")
+    forces_fc3_filename = os.path.join(current_dir, "FORCES_FC3_si_pbesol")
+    enable_v2 = request.config.getoption("--v1")
+    return phono3py.load(
+        yaml_filename,
+        forces_fc3_filename=forces_fc3_filename,
+        store_dense_gp_map=enable_v2,
+        store_dense_svecs=enable_v2,
+        use_grg=True,
         log_level=1,
     )
 
@@ -230,4 +253,32 @@ def aln_lda(request):
         store_dense_gp_map=enable_v2,
         store_dense_svecs=enable_v2,
         log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
+def ph_nacl() -> Phonopy:
+    """Return Phonopy class instance of NaCl 2x2x2."""
+    yaml_filename = os.path.join(current_dir, "phonopy_disp_NaCl.yaml")
+    force_sets_filename = os.path.join(current_dir, "FORCE_SETS_NaCl")
+    born_filename = os.path.join(current_dir, "BORN_NaCl")
+    return phonopy.load(
+        yaml_filename,
+        force_sets_filename=force_sets_filename,
+        born_filename=born_filename,
+        is_compact_fc=False,
+        log_level=1,
+        produce_fc=True,
+    )
+
+
+@pytest.fixture(scope="session")
+def ph_si() -> Phonopy:
+    """Return Phonopy class instance of Si-prim 2x2x2."""
+    yaml_filename = os.path.join(current_dir, "phonopy_params_Si.yaml")
+    return phonopy.load(
+        yaml_filename,
+        is_compact_fc=False,
+        log_level=1,
+        produce_fc=True,
     )

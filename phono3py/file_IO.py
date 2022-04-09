@@ -453,7 +453,12 @@ def write_grid_address(grid_address, mesh, filename=None):
 
 
 def write_grid_address_to_hdf5(
-    grid_address, mesh, grid_mapping_table, compression="gzip", filename=None
+    grid_address,
+    mesh,
+    grid_mapping_table,
+    bz_grid=None,
+    compression="gzip",
+    filename=None,
 ):
     """Write grid addresses to grid_address.hdf5."""
     suffix = _get_filename_suffix(mesh, filename=filename)
@@ -461,6 +466,10 @@ def write_grid_address_to_hdf5(
     with h5py.File(full_filename, "w") as w:
         w.create_dataset("version", data=np.string_(__version__))
         w.create_dataset("mesh", data=mesh)
+        if bz_grid is not None and bz_grid.grid_matrix is not None:
+            w.create_dataset("grid_matrix", data=bz_grid.grid_matrix)
+            w.create_dataset("P_matrix", data=bz_grid.P)
+            w.create_dataset("Q_matrix", data=bz_grid.Q)
         w.create_dataset("grid_address", data=grid_address, compression=compression)
         w.create_dataset(
             "grid_mapping_table", data=grid_mapping_table, compression=compression
@@ -526,7 +535,7 @@ def write_joint_dos(
             gp,
             mesh,
             frequencies,
-            jdos,
+            jdos[0],
             sigma=sigma,
             temperature=None,
             filename=filename,
@@ -618,6 +627,7 @@ def write_real_self_energy_to_hdf5(
     deltas,
     mesh,
     epsilon,
+    bz_grid=None,
     frequency_points=None,
     frequencies=None,
     filename=None,
@@ -649,6 +659,10 @@ def write_real_self_energy_to_hdf5(
         w.create_dataset("version", data=np.string_(__version__))
         w.create_dataset("grid_point", data=grid_point)
         w.create_dataset("mesh", data=mesh)
+        if bz_grid is not None and bz_grid.grid_matrix is not None:
+            w.create_dataset("grid_matrix", data=bz_grid.grid_matrix)
+            w.create_dataset("P_matrix", data=bz_grid.P)
+            w.create_dataset("Q_matrix", data=bz_grid.Q)
         w.create_dataset("band_index", data=_band_indices)
         w.create_dataset("delta", data=deltas)
         w.create_dataset("temperature", data=temperatures)
@@ -700,6 +714,7 @@ def write_spectral_function_to_hdf5(
     shifts,
     half_linewidths,
     mesh,
+    bz_grid=None,
     sigma=None,
     frequency_points=None,
     frequencies=None,
@@ -724,6 +739,10 @@ def write_spectral_function_to_hdf5(
         w.create_dataset("version", data=np.string_(__version__))
         w.create_dataset("grid_point", data=grid_point)
         w.create_dataset("mesh", data=mesh)
+        if bz_grid is not None and bz_grid.grid_matrix is not None:
+            w.create_dataset("grid_matrix", data=bz_grid.grid_matrix)
+            w.create_dataset("P_matrix", data=bz_grid.P)
+            w.create_dataset("Q_matrix", data=bz_grid.Q)
         w.create_dataset("band_index", data=_band_indices)
         w.create_dataset("spectral_function", data=spectral_functions)
         w.create_dataset("shift", data=shifts)
@@ -884,13 +903,23 @@ def write_collision_eigenvalues_to_hdf5(
 def write_kappa_to_hdf5(
     temperature,
     mesh,
+    bz_grid=None,
     frequency=None,
     group_velocity=None,
     gv_by_gv=None,
+    velocity_operator=None,
     mean_free_path=None,
     heat_capacity=None,
     kappa=None,
     mode_kappa=None,
+    kappa_P_exact=None,
+    kappa_P_RTA=None,
+    kappa_C=None,
+    kappa_TOT_exact=None,
+    kappa_TOT_RTA=None,
+    mode_kappa_P_exact=None,  # k_P from the exact solution of the LBTE
+    mode_kappa_P_RTA=None,  # k_P in the RTA calculated in the LBTE
+    mode_kappa_C=None,
     kappa_RTA=None,  # RTA calculated in LBTE
     mode_kappa_RTA=None,  # RTA calculated in LBTE
     f_vector=None,
@@ -928,7 +957,10 @@ def write_kappa_to_hdf5(
         w.create_dataset("version", data=np.string_(__version__))
         w.create_dataset("temperature", data=temperature)
         w.create_dataset("mesh", data=mesh)
-
+        if bz_grid is not None and bz_grid.grid_matrix is not None:
+            w.create_dataset("grid_matrix", data=bz_grid.grid_matrix)
+            w.create_dataset("P_matrix", data=bz_grid.P)
+            w.create_dataset("Q_matrix", data=bz_grid.Q)
         if frequency is not None:
             if isinstance(frequency, np.floating):
                 w.create_dataset("frequency", data=frequency)
@@ -940,6 +972,10 @@ def write_kappa_to_hdf5(
             )
         if gv_by_gv is not None:
             w.create_dataset("gv_by_gv", data=gv_by_gv)
+        if velocity_operator is not None:
+            w.create_dataset(
+                "velocity_operator", data=velocity_operator, compression=compression
+            )
         # if mean_free_path is not None:
         #     w.create_dataset('mean_free_path', data=mean_free_path,
         #                      compression=compression)
@@ -957,6 +993,26 @@ def write_kappa_to_hdf5(
             w.create_dataset(
                 "mode_kappa_RTA", data=mode_kappa_RTA, compression=compression
             )
+        if kappa_P_exact is not None:
+            w.create_dataset("kappa_P_exact", data=kappa_P_exact)
+        if kappa_P_RTA is not None:
+            w.create_dataset("kappa_P_RTA", data=kappa_P_RTA)
+        if kappa_C is not None:
+            w.create_dataset("kappa_C", data=kappa_C)
+        if kappa_TOT_exact is not None:
+            w.create_dataset("kappa_TOT_exact", data=kappa_TOT_exact)
+        if kappa_TOT_RTA is not None:
+            w.create_dataset("kappa_TOT_RTA", data=kappa_TOT_RTA)
+        if mode_kappa_P_exact is not None:
+            w.create_dataset(
+                "mode_kappa_P_exact", data=mode_kappa_P_exact, compression=compression
+            )
+        if mode_kappa_P_RTA is not None:
+            w.create_dataset(
+                "mode_kappa_P_RTA", data=mode_kappa_P_RTA, compression=compression
+            )
+        if mode_kappa_C is not None:
+            w.create_dataset("mode_kappa_C", data=mode_kappa_C, compression=compression)
         if f_vector is not None:
             w.create_dataset("f_vector", data=f_vector, compression=compression)
         if gamma is not None:
@@ -989,13 +1045,13 @@ def write_kappa_to_hdf5(
             w.create_dataset("kappa_unit_conversion", data=kappa_unit_conversion)
 
         if verbose:
-            text = ""
-            if kappa is not None:
-                text += "Thermal conductivity and related properties "
-            else:
-                text += "Thermal conductivity related properties "
+            text = "Thermal conductivity related properties "
             if grid_point is not None:
-                text += "at gp-%d " % grid_point
+                try:
+                    gp_text = "at gp-%d " % grid_point
+                    text += gp_text
+                except TypeError:
+                    pass
                 if band_index is not None:
                     text += "and band_index-%d\n" % (band_index + 1)
             if sigma is not None:
@@ -1299,6 +1355,7 @@ def read_pp_from_hdf5(
 def write_gamma_detail_to_hdf5(
     temperature,
     mesh,
+    bz_grid=None,
     gamma_detail=None,
     grid_point=None,
     triplet=None,
@@ -1332,6 +1389,10 @@ def write_gamma_detail_to_hdf5(
         w.create_dataset("version", data=np.string_(__version__))
         w.create_dataset("temperature", data=temperature)
         w.create_dataset("mesh", data=mesh)
+        if bz_grid is not None and bz_grid.grid_matrix is not None:
+            w.create_dataset("grid_matrix", data=bz_grid.grid_matrix)
+            w.create_dataset("P_matrix", data=bz_grid.P)
+            w.create_dataset("Q_matrix", data=bz_grid.Q)
         if gamma_detail is not None:
             w.create_dataset("gamma_detail", data=gamma_detail, compression=compression)
         if triplet is not None:
@@ -1384,7 +1445,15 @@ def write_gamma_detail_to_hdf5(
 
 
 def write_phonon_to_hdf5(
-    frequency, eigenvector, grid_address, mesh, compression="gzip", filename=None
+    frequency,
+    eigenvector,
+    grid_address,
+    mesh,
+    bz_grid=None,
+    ir_grid_points=None,
+    ir_grid_weights=None,
+    compression="gzip",
+    filename=None,
 ):
     """Write phonon on grid in its hdf5 file."""
     suffix = _get_filename_suffix(mesh, filename=filename)
@@ -1393,9 +1462,21 @@ def write_phonon_to_hdf5(
     with h5py.File(full_filename, "w") as w:
         w.create_dataset("version", data=np.string_(__version__))
         w.create_dataset("mesh", data=mesh)
+        if bz_grid is not None and bz_grid.grid_matrix is not None:
+            w.create_dataset("grid_matrix", data=bz_grid.grid_matrix)
+            w.create_dataset("P_matrix", data=bz_grid.P)
+            w.create_dataset("Q_matrix", data=bz_grid.Q)
         w.create_dataset("grid_address", data=grid_address, compression=compression)
         w.create_dataset("frequency", data=frequency, compression=compression)
         w.create_dataset("eigenvector", data=eigenvector, compression=compression)
+        if ir_grid_points is not None:
+            w.create_dataset(
+                "ir_grid_points", data=ir_grid_points, compression=compression
+            )
+        if ir_grid_weights is not None:
+            w.create_dataset(
+                "ir_grid_weights", data=ir_grid_weights, compression=compression
+            )
         return full_filename
 
     return None
@@ -1629,8 +1710,11 @@ def _get_filename_suffix(
 ):
     """Return filename suffix corresponding to parameters."""
     suffix = "-m%d%d%d" % tuple(mesh)
-    if grid_point is not None:
-        suffix += "-g%d" % grid_point
+    try:
+        gp_suffix = "-g%d" % grid_point
+        suffix += gp_suffix
+    except TypeError:
+        pass
     if band_indices is not None:
         suffix += "-"
         for bi in band_indices:

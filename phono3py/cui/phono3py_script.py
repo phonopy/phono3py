@@ -89,7 +89,7 @@ from phono3py.interface.phono3py_yaml import (
     displacements_yaml_lines_type1,
 )
 from phono3py.phonon3.gruneisen import run_gruneisen_parameters
-from phono3py.phonon.grid import get_grid_point_from_address
+from phono3py.phonon.grid import get_grid_point_from_address, get_ir_grid_points
 from phono3py.version import __version__
 
 # import logging
@@ -770,7 +770,7 @@ def run_gruneisen_then_exit(phono3py, settings, output_filename, log_level):
         settings.mesh_numbers is None
         and settings.band_paths is None
         and settings.qpoints is None
-    ):  # noqa E129
+    ):
         print("An option of --mesh, --band, or --qpoints has to be specified.")
         if log_level:
             print_error()
@@ -831,11 +831,13 @@ def run_jdos_then_exit(
         cutoff_frequency=updated_settings["cutoff_frequency"],
         frequency_step=updated_settings["frequency_step"],
         num_frequency_points=updated_settings["num_frequency_points"],
+        num_points_in_batch=updated_settings["num_points_in_batch"],
         temperatures=updated_settings["temperature_points"],
         frequency_factor_to_THz=updated_settings["frequency_factor_to_THz"],
         frequency_scale_factor=updated_settings["frequency_scale_factor"],
+        use_grg=settings.use_grg,
         is_mesh_symmetry=settings.is_mesh_symmetry,
-        store_dense_gp_map=settings.store_dense_gp_map,
+        store_dense_gp_map=(not settings.emulate_v1),
         symprec=phono3py.symmetry.tolerance,
         output_filename=output_filename,
         log_level=log_level,
@@ -862,13 +864,14 @@ def run_isotope_then_exit(phono3py, settings, updated_settings, log_level):
     else:
         band_indices = None
     iso = Phono3pyIsotope(
-        phono3py.mesh_numbers,
+        settings.mesh_numbers,
         phono3py.phonon_primitive,
         mass_variances=mass_variances,
         band_indices=band_indices,
         sigmas=updated_settings["sigmas"],
         frequency_factor_to_THz=updated_settings["frequency_factor_to_THz"],
-        store_dense_gp_map=settings.store_dense_gp_map,
+        use_grg=settings.use_grg,
+        store_dense_gp_map=(not settings.emulate_v1),
         symprec=phono3py.symmetry.tolerance,
         cutoff_frequency=settings.cutoff_frequency,
         lapack_zheev_uplo=settings.lapack_zheev_uplo,
@@ -894,7 +897,12 @@ def run_isotope_then_exit(phono3py, settings, updated_settings, log_level):
 
 
 def init_phph_interaction(
-    phono3py, settings, updated_settings, input_filename, output_filename, log_level
+    phono3py: Phono3py,
+    settings,
+    updated_settings,
+    input_filename,
+    output_filename,
+    log_level,
 ):
     """Initialize ph-ph interaction and phonons on grid."""
     if log_level:
@@ -902,10 +910,8 @@ def init_phph_interaction(
         sys.stdout.flush()
     phono3py.mesh_numbers = settings.mesh_numbers
     bz_grid = phono3py.grid
-    identity = np.eye(3, dtype="int_")
-    not_grg = (bz_grid.P == identity).all() and (bz_grid.Q == identity).all()
     if log_level:
-        if not_grg:
+        if bz_grid.grid_matrix is None:
             print("[ %d %d %d ]" % tuple(phono3py.mesh_numbers))
         else:
             print("")
@@ -939,11 +945,16 @@ def init_phph_interaction(
 
     if settings.write_phonon:
         freqs, eigvecs, grid_address = phono3py.get_phonon_data()
+        ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bz_grid)
+        ir_grid_points = np.array(bz_grid.grg2bzg[ir_grid_points], dtype="int_")
         filename = write_phonon_to_hdf5(
             freqs,
             eigvecs,
             grid_address,
             phono3py.mesh_numbers,
+            bz_grid=bz_grid,
+            ir_grid_points=ir_grid_points,
+            ir_grid_weights=ir_grid_weights,
             compression=settings.hdf5_compression,
             filename=output_filename,
         )
@@ -1270,6 +1281,7 @@ def main(**argparse_control):
             updated_settings["temperature_points"],
             frequency_step=updated_settings["frequency_step"],
             num_frequency_points=updated_settings["num_frequency_points"],
+            num_points_in_batch=updated_settings["num_points_in_batch"],
             scattering_event_class=settings.scattering_event_class,
             write_txt=True,
             write_gamma_detail=settings.write_gamma_detail,
@@ -1329,6 +1341,7 @@ def main(**argparse_control):
             read_gamma=settings.read_gamma,
             write_kappa=True,
             is_N_U=settings.is_N_U,
+            conductivity_type=settings.conductivity_type,
             write_gamma_detail=settings.write_gamma_detail,
             write_collision=settings.write_collision,
             read_collision=settings.read_collision,

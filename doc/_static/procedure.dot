@@ -1,0 +1,36 @@
+digraph phonopy {
+  graph [bgcolor=transparent];
+  "Phono3py (force-sets)" [shape = box, style = filled];
+  "Phono3py (FC)" [shape = box, style = filled];
+  "Phono3py (LTC)" [shape = box, style = filled];
+  "Force calc." [shape = octagon];
+  "Force-constants calc." [shape = octagon];
+
+  subgraph ph3force {
+  "Unit cell" -> "Phono3py (force-sets)";
+  "Supercell matrix" -> "Phono3py (force-sets)";
+  "Phono3py (force-sets)" -> "Supercell";
+  "Phono3py (force-sets)" -> "Displacement dataset";
+  "Supercell" -> "Force calc.";
+  "Displacement dataset" -> "Force calc.";
+  "Force calc." -> "Supercell-force sets";
+  }
+
+  subgraph ph3fc {
+  "Unit cell" -> "Phono3py (FC)";
+  "Supercell matrix" -> "Phono3py (FC)";
+  "Displacement dataset" -> "Phono3py (FC)";
+  "Supercell-force sets" -> "Phono3py (FC)";
+  "Phono3py (FC)" -> "Force-constants calc.";
+  "Force-constants calc." -> "Force constants (fc2, fc3)";
+  }
+
+  subgraph ph3ltc {
+  "Unit cell" -> "Phono3py (LTC)";
+  "Supercell matrix" -> "Phono3py (LTC)";
+  "Primitive cell matrix\n(optional)" -> "Phono3py (LTC)";
+  "Non-analytical term\ncorrection parameters\n(optional)" -> "Phono3py (LTC)";
+  "Force constants (fc2, fc3)" -> "Phono3py (LTC)";
+  "Phono3py (LTC)" -> "Lattice thermal conductivity";
+  }
+}

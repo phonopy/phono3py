@@ -181,7 +181,7 @@ void ph3py_get_imag_self_energy_at_bands_with_g(
     const long *triplet_weights, const double *g, const char *g_zero,
     const double temperature, const double cutoff_frequency,
     const long num_frequency_points, const long frequency_point_index) {
-    ise_get_imag_self_energy_at_bands_with_g(
+    ise_get_imag_self_energy_with_g(
         imag_self_energy, fc3_normal_squared, frequencies, triplets,
         triplet_weights, g, g_zero, temperature, cutoff_frequency,
         num_frequency_points, frequency_point_index);
@@ -194,7 +194,7 @@ void ph3py_get_detailed_imag_self_energy_at_bands_with_g(
     const long *triplet_weights, const long (*bz_grid_addresses)[3],
     const double *g, const char *g_zero, const double temperature,
     const double cutoff_frequency) {
-    ise_get_detailed_imag_self_energy_at_bands_with_g(
+    ise_get_detailed_imag_self_energy_with_g(
         detailed_imag_self_energy, imag_self_energy_N, imag_self_energy_U,
         fc3_normal_squared, frequencies, triplets, triplet_weights,
         bz_grid_addresses, g, g_zero, temperature, cutoff_frequency);
