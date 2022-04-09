@@ -44,11 +44,12 @@ from phono3py.file_IO import (
     write_real_self_energy_to_hdf5,
 )
 from phono3py.phonon3.imag_self_energy import get_frequency_points
+from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon.func import bose_einstein
 
 
 def get_real_self_energy(
-    interaction,
+    interaction: Interaction,
     grid_points,
     temperatures,
     epsilons=None,
@@ -134,6 +135,7 @@ def get_real_self_energy(
 
     fst = RealSelfEnergy(interaction)
     mesh = interaction.mesh_numbers
+    bz_grid = interaction.bz_grid
     frequencies = interaction.get_phonons()[0]
     max_phonon_freq = np.amax(frequencies)
     band_indices = interaction.band_indices
@@ -228,6 +230,7 @@ def get_real_self_energy(
                     all_deltas[i, :, j],
                     mesh,
                     fst.epsilon,
+                    bz_grid=bz_grid,
                     frequency_points=_frequency_points,
                     frequencies=frequencies,
                     filename=output_filename,
@@ -346,7 +349,7 @@ class RealSelfEnergy:
         self._real_self_energies = None
 
         # Unit to THz of Delta
-        self._unit_conversion = 18 / (Hbar * EV) ** 2 / (2 * np.pi * THz) ** 2 * EV ** 2
+        self._unit_conversion = 18 / (Hbar * EV) ** 2 / (2 * np.pi * THz) ** 2 * EV**2
 
     def run(self):
         """Calculate real-part of self-energies."""
@@ -568,10 +571,10 @@ class RealSelfEnergy:
                 #     d -= (n2 - n3) / f3
                 # if abs(f4) > self._epsilon:
                 #     d += (n2 - n3) / f4
-                d -= (n2 + n3 + 1) * f1 / (f1 ** 2 + self._epsilon ** 2)
-                d += (n2 + n3 + 1) * f2 / (f2 ** 2 + self._epsilon ** 2)
-                d -= (n2 - n3) * f3 / (f3 ** 2 + self._epsilon ** 2)
-                d += (n2 - n3) * f4 / (f4 ** 2 + self._epsilon ** 2)
+                d -= (n2 + n3 + 1) * f1 / (f1**2 + self._epsilon**2)
+                d += (n2 + n3 + 1) * f2 / (f2**2 + self._epsilon**2)
+                d -= (n2 - n3) * f3 / (f3**2 + self._epsilon**2)
+                d += (n2 - n3) * f4 / (f4**2 + self._epsilon**2)
 
                 sum_d += d * interaction[i, j, k] * weight
         return sum_d
@@ -594,8 +597,8 @@ class RealSelfEnergy:
                 #     d -= 1.0 / f1
                 # if abs(f2) > self._epsilon:
                 #     d += 1.0 / f2
-                d -= 1.0 * f1 / (f1 ** 2 + self._epsilon ** 2)
-                d += 1.0 * f2 / (f2 ** 2 + self._epsilon ** 2)
+                d -= 1.0 * f1 / (f1**2 + self._epsilon**2)
+                d += 1.0 * f2 / (f2**2 + self._epsilon**2)
 
                 sum_d += d * interaction[i, j, k] * weight
         return sum_d

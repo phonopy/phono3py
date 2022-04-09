@@ -1,7 +1,8 @@
 """Test for kaccum.py."""
 import numpy as np
 
-from phono3py.cui.kaccum import KappaDOS, _get_mfp
+from phono3py import Phono3py
+from phono3py.other.kaccum import GammaDOSsmearing, KappaDOS, get_mfp
 from phono3py.phonon.grid import get_ir_grid_points
 
 kappados_si = [
@@ -198,7 +199,7 @@ gammados_nacl = [
 ]
 
 
-def test_kappados_si(si_pbesol):
+def test_kappados_si(si_pbesol: Phono3py):
     """Test KappaDOS class with Si.
 
     * 3x3 tensor vs frequency
@@ -241,7 +242,7 @@ def test_kappados_si(si_pbesol):
     )
 
 
-def test_kappados_nacl(nacl_pbe):
+def test_kappados_nacl(nacl_pbe: Phono3py):
     """Test KappaDOS class with NaCl.
 
     * 3x3 tensor vs frequency
@@ -284,7 +285,40 @@ def test_kappados_nacl(nacl_pbe):
     )
 
 
-def _calculate_kappados(ph3, mode_prop, freq_points=None):
+def test_GammaDOSsmearing(nacl_pbe: Phono3py):
+    """Test for GammaDOSsmearing by computing phonon-DOS."""
+    ph3 = nacl_pbe
+    ph3.mesh_numbers = [21, 21, 21]
+    ph3.init_phph_interaction()
+    ph3.run_phonon_solver()
+    bz_grid = ph3.grid
+    frequencies, _, _ = ph3.get_phonon_data()
+    ir_grid_points, ir_weights, _ = get_ir_grid_points(bz_grid)
+    ir_frequencies = frequencies[bz_grid.grg2bzg[ir_grid_points]]
+    phonon_states = np.ones((1,) + ir_frequencies.shape, dtype="double", order="C")
+    gdos = GammaDOSsmearing(
+        phonon_states, ir_frequencies, ir_weights, num_sampling_points=10
+    )
+    fpoints, gdos_vals = gdos.get_gdos()
+    gdos_ref = [
+        [-1.4312845953710325e-07, 0.001748289450006],
+        [0.8213328685698041, 0.04545825822129761],
+        [1.6426658802680678, 0.2533557541451728],
+        [2.463998891966331, 0.9005575010964907],
+        [3.285331903664595, 1.6202936411038107],
+        [4.106664915362859, 1.9916061367478763],
+        [4.9279979270611225, 2.5977728237205513],
+        [5.749330938759386, 0.4504707799027985],
+        [6.57066395045765, 0.2936475034684396],
+        [7.391996962155914, 0.02869983288053483],
+    ]
+
+    np.testing.assert_allclose(
+        np.c_[fpoints, gdos_vals[0, :, 1]], gdos_ref, rtol=0, atol=1e-5
+    )
+
+
+def _calculate_kappados(ph3: Phono3py, mode_prop, freq_points=None):
     tc = ph3.thermal_conductivity
     bz_grid = ph3.grid
     frequencies, _, _ = ph3.get_phonon_data()
@@ -306,13 +340,14 @@ def _calculate_kappados(ph3, mode_prop, freq_points=None):
     np.testing.assert_equal(bz_grid.bzg2grg[tc.grid_points], ir_grid_points)
     np.testing.assert_allclose(ir_freq_points, freq_points, rtol=0, atol=1e-5)
     np.testing.assert_allclose(ir_kdos, kdos, rtol=0, atol=1e-5)
+
     return freq_points, kdos[0, :, :, 0]
 
 
-def _calculate_mfpdos(ph3, mfp_points=None):
+def _calculate_mfpdos(ph3: Phono3py, mfp_points=None):
     tc = ph3.thermal_conductivity
     bz_grid = ph3.grid
-    mean_freepath = _get_mfp(tc.gamma[0], tc.group_velocities)
+    mean_freepath = get_mfp(tc.gamma[0], tc.group_velocities)
     _, _, ir_grid_map = get_ir_grid_points(bz_grid)
     mfpdos = KappaDOS(
         tc.mode_kappa[0],

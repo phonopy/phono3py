@@ -78,14 +78,14 @@ class Isotope:
         sigma=None,
         bz_grid=None,
         frequency_factor_to_THz=VaspToTHz,
-        store_dense_gp_map=False,
+        use_grg=False,
+        store_dense_gp_map=True,
         symprec=1e-5,
         cutoff_frequency=None,
         lapack_zheev_uplo="L",
     ):
         """Init method."""
-        self._mesh = np.array(mesh, dtype="int_")
-
+        self._mesh = mesh
         if mass_variances is None:
             self._mass_variances = get_mass_variances(primitive)
         else:
@@ -122,6 +122,7 @@ class Isotope:
                 self._mesh,
                 lattice=self._primitive.cell,
                 symmetry_dataset=primitive_symmetry.dataset,
+                use_grg=use_grg,
                 store_dense_gp_map=store_dense_gp_map,
             )
 
@@ -288,12 +289,17 @@ class Isotope:
         )
 
     def _set_integration_weights_py(self):
+        if self._bz_grid.store_dense_gp_map:
+            raise NotImplementedError("Only for type-I bz_map.")
+        if self._bz_grid.grid_matrix is not None:
+            raise NotImplementedError("Generalized regular grid is not supported.")
         thm = TetrahedronMethod(self._bz_grid.microzone_lattice)
         num_grid_points = len(self._grid_points)
         num_band = len(self._primitive) * 3
         self._integration_weights = np.zeros(
             (num_grid_points, len(self._band_indices), num_band), dtype="double"
         )
+
         for i, gp in enumerate(self._grid_points):
             tfreqs = get_tetrahedra_frequencies(
                 gp,
@@ -346,7 +352,7 @@ class Isotope:
                         ti_sum += ti_sum_band * self._integration_weights[i, bi, j]
                     else:
                         ti_sum += ti_sum_band * gaussian(f0 - f, self._sigma)
-            t_inv.append(np.pi / 2 / np.prod(self._bz_grid.D_diag) * f0 ** 2 * ti_sum)
+            t_inv.append(np.pi / 2 / np.prod(self._bz_grid.D_diag) * f0**2 * ti_sum)
 
         self._gamma = np.array(t_inv, dtype="double") / 2
 

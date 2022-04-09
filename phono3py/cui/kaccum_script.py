@@ -7,7 +7,6 @@ import numpy as np
 from phonopy.cui.collect_cell_info import collect_cell_info
 from phonopy.cui.settings import fracval
 from phonopy.interface.calculator import read_crystal_structure
-from phonopy.phonon.dos import NormalDistribution
 from phonopy.structure.cells import (
     get_primitive,
     get_primitive_matrix,
@@ -16,146 +15,10 @@ from phonopy.structure.cells import (
 from phonopy.structure.symmetry import Symmetry
 
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
-from phono3py.other.tetrahedron_method import get_integration_weights
+from phono3py.other.kaccum import GammaDOSsmearing, get_mfp, run_mfp_dos, run_prop_dos
 from phono3py.phonon.grid import BZGrid, get_ir_grid_points
 
 epsilon = 1.0e-8
-
-
-class KappaDOS:
-    """Class to calculate thermal conductivity spectram."""
-
-    def __init__(
-        self,
-        mode_kappa,
-        frequencies,
-        bz_grid,
-        ir_grid_points,
-        ir_grid_map=None,
-        frequency_points=None,
-        num_sampling_points=100,
-    ):
-        """Init method.
-
-        mode_kappa : ndarray
-            Target value.
-            shape=(temperatures, ir_grid_points, num_band, num_elem),
-            dtype='double'
-        frequencies : ndarray
-            shape=(ir_grid_points, num_band), dtype='double'
-        bz_grid : BZGrid
-        ir_grid_points : ndarray
-            Ir-grid point indices in GR-grid.
-            shape=(ir_grid_points, ), dtype='int_'
-        ir_grid_map : ndarray, optional, default=None
-            Mapping table to ir-grid point indices in GR-grid.
-            None gives `np.arange(len(frequencies), 'int_')`.
-        frequency_points : array_like, optional, default=None
-            This is used as the frequency points. When None,
-            frequency points are created from `num_sampling_points`.
-        num_sampling_points : int, optional, default=100
-            Number of uniform sampling points.
-
-        """
-        min_freq = min(frequencies.ravel())
-        max_freq = max(frequencies.ravel()) + epsilon
-        if frequency_points is None:
-            self._frequency_points = np.linspace(
-                min_freq, max_freq, num_sampling_points, dtype="double"
-            )
-        else:
-            self._frequency_points = np.array(frequency_points, dtype="double")
-
-        n_temp, _, _, n_elem = mode_kappa.shape
-        self._kdos = np.zeros(
-            (n_temp, len(self._frequency_points), 2, n_elem), dtype="double"
-        )
-
-        if ir_grid_map is None:
-            bzgp2irgp_map = None
-        else:
-            bzgp2irgp_map = self._get_bzgp2irgp_map(bz_grid, ir_grid_map)
-        for j, function in enumerate(("J", "I")):
-            iweights = get_integration_weights(
-                self._frequency_points,
-                frequencies,
-                bz_grid,
-                grid_points=ir_grid_points,
-                bzgp2irgp_map=bzgp2irgp_map,
-                function=function,
-            )
-            for i, iw in enumerate(iweights):
-                self._kdos[:, :, j] += np.transpose(
-                    np.dot(iw, mode_kappa[:, i]), axes=(1, 0, 2)
-                )
-        self._kdos /= np.prod(bz_grid.D_diag)
-
-    def get_kdos(self):
-        """Return thermal conductivity spectram.
-
-        Returns
-        -------
-        tuple
-            frequency_points : ndarray
-                shape=(sampling_points, ), dtype='double'
-            kdos : ndarray
-                shape=(temperatures, sampling_points, 2 (J, I), num_elem),
-                dtype='double', order='C'
-
-        """
-        return self._frequency_points, self._kdos
-
-    def _get_bzgp2irgp_map(self, bz_grid, ir_grid_map):
-        unique_gps = np.unique(ir_grid_map)
-        gp_map = {j: i for i, j in enumerate(unique_gps)}
-        bzgp2irgp_map = np.array(
-            [gp_map[ir_grid_map[grgp]] for grgp in bz_grid.bzg2grg], dtype="int_"
-        )
-        return bzgp2irgp_map
-
-
-class GammaDOSsmearing:
-    """Class to calculate Gamma spectram by smearing method."""
-
-    def __init__(
-        self, gamma, frequencies, ir_grid_weights, sigma=None, num_fpoints=200
-    ):
-        """Init method."""
-        self._gamma = gamma
-        self._frequencies = frequencies
-        self._ir_grid_weights = ir_grid_weights
-        self._num_fpoints = num_fpoints
-        self._set_frequency_points()
-        self._gdos = np.zeros(
-            (len(gamma), len(self._frequency_points), 2), dtype="double"
-        )
-        if sigma is None:
-            self._sigma = (
-                max(self._frequency_points) - min(self._frequency_points)
-            ) / 100
-        else:
-            self._sigma = 0.1
-        self._smearing_function = NormalDistribution(self._sigma)
-        self._run_smearing_method()
-
-    def get_gdos(self):
-        """Return Gamma spectram."""
-        return self._frequency_points, self._gdos
-
-    def _set_frequency_points(self):
-        min_freq = np.min(self._frequencies)
-        max_freq = np.max(self._frequencies) + epsilon
-        self._frequency_points = np.linspace(min_freq, max_freq, self._num_fpoints)
-
-    def _run_smearing_method(self):
-        self._dos = []
-        num_gp = np.sum(self._ir_grid_weights)
-        for i, f in enumerate(self._frequency_points):
-            dos = self._smearing_function.calc(self._frequencies - f)
-            for j, g_t in enumerate(self._gamma):
-                self._gdos[j, i, 1] = (
-                    np.sum(np.dot(self._ir_grid_weights, dos * g_t)) / num_gp
-                )
 
 
 def _show_tensor(kdos, temperatures, sampling_points, args):
@@ -203,78 +66,63 @@ def _set_T_target(temperatures, mode_prop, T_target, mean_freepath=None):
                 return temperatures, mode_prop
 
 
-def _run_prop_dos(
-    frequencies, mode_prop, ir_grid_map, ir_grid_points, num_sampling_points, bz_grid
-):
-    """Run DOS-like calculation."""
-    kappa_dos = KappaDOS(
-        mode_prop,
-        frequencies,
-        bz_grid,
-        ir_grid_points,
-        ir_grid_map=ir_grid_map,
-        num_sampling_points=num_sampling_points,
-    )
-    freq_points, kdos = kappa_dos.get_kdos()
-    sampling_points = np.tile(freq_points, (len(kdos), 1))
-    return kdos, sampling_points
+def _get_ir_grid_info(bz_grid: BZGrid, weights, qpoints=None, ir_grid_points=None):
+    """Return ir-grid point information.
 
+    Parameters
+    ----------
+    bz_grid : BZGrid
+        BZ grid information.
+    weights : ndarray
+        Weights of ir-grid points stored in kappa-xxx.hdf5. This is used to check
+        agreement between generated ir-grid points and those underlying in hdf5.
+    qpoints : ndarray
+        Ir-grid q-point coordinates stored in kappa-xxx.hdf5. This is used to check
+        agreement between generated ir-grid points and q-points coordinates in hdf5.
 
-def _get_mfp(g, gv):
-    """Calculate mean free path from inverse lifetime and group velocity."""
-    g = np.where(g > 0, g, -1)
-    gv_norm = np.sqrt((gv ** 2).sum(axis=2))
-    mean_freepath = np.where(g > 0, gv_norm / (2 * 2 * np.pi * g), 0)
-    return mean_freepath
-
-
-def _run_mfp_dos(
-    mean_freepath, mode_prop, ir_grid_map, ir_grid_points, num_sampling_points, bz_grid
-):
-    """Run DOS-like calculation for mean free path.
-
-    mean_freepath : shape=(temperatures, ir_grid_points, 6)
-    mode_prop : shape=(temperatures, ir_grid_points, 6, 6)
+    Returns
+    -------
+    ir_grid_points : ndarray
+        Ir-grid point indices in BZ-grid.
+        shape=(ir_grid_points, ), dtype='int_'
+    ir_grid_map : ndarray, optional, default=None
+        Mapping table to ir-grid point indices in GR-grid.
 
     """
-    kdos = []
-    sampling_points = []
-    for i, _ in enumerate(mean_freepath):
-        kappa_dos = KappaDOS(
-            mode_prop[i : i + 1, :, :],
-            mean_freepath[i],
-            bz_grid,
-            ir_grid_points,
-            ir_grid_map=ir_grid_map,
-            num_sampling_points=num_sampling_points,
-        )
-        sampling_points_at_T, kdos_at_T = kappa_dos.get_kdos()
-        kdos.append(kdos_at_T[0])
-        sampling_points.append(sampling_points_at_T)
-    kdos = np.array(kdos)
-    sampling_points = np.array(sampling_points)
+    (ir_grid_points_ref, weights_ref, ir_grid_map) = get_ir_grid_points(bz_grid)
+    ir_grid_points_ref = np.array(bz_grid.grg2bzg[ir_grid_points_ref], dtype="int_")
 
-    return kdos, sampling_points
+    _assert_grid_in_hdf5(
+        weights, qpoints, ir_grid_points, weights_ref, ir_grid_points_ref, bz_grid
+    )
+
+    return ir_grid_points_ref, ir_grid_map
 
 
-def _get_grid_symmetry(bz_grid, weights, qpoints):
-    (ir_grid_points, weights_for_check, ir_grid_map) = get_ir_grid_points(bz_grid)
-
+def _assert_grid_in_hdf5(
+    weights,
+    qpoints,
+    ir_grid_points,
+    weights_for_check,
+    ir_grid_points_ref,
+    bz_grid: BZGrid,
+):
     try:
-        np.testing.assert_array_equal(weights, weights_for_check)
+        np.testing.assert_equal(weights, weights_for_check)
     except AssertionError:
         print("*******************************")
         print("** Might forget --pa option? **")
         print("*******************************")
         raise
 
-    addresses = bz_grid.addresses[ir_grid_points]
-    D_diag = bz_grid.D_diag.astype("double")
-    qpoints_for_check = np.dot(addresses / D_diag, bz_grid.Q.T)
-    diff_q = qpoints - qpoints_for_check
-    np.testing.assert_almost_equal(diff_q, np.rint(diff_q))
-
-    return ir_grid_points, ir_grid_map
+    if ir_grid_points is not None:
+        np.testing.assert_equal(ir_grid_points, ir_grid_points_ref)
+    if qpoints is not None:
+        addresses = bz_grid.addresses[ir_grid_points_ref]
+        D_diag = bz_grid.D_diag.astype("double")
+        qpoints_for_check = np.dot(addresses / D_diag, bz_grid.Q.T)
+        diff_q = qpoints - qpoints_for_check
+        np.testing.assert_almost_equal(diff_q, np.rint(diff_q))
 
 
 def _get_calculator(args):
@@ -441,11 +289,10 @@ def _get_parser():
         help="Invoke TURBOMOLE mode",
     )
     parser.add_argument(
-        "--noks",
-        "--no-kappa-stars",
-        dest="no_kappa_stars",
+        "--no-gridsym",
+        dest="no_gridsym",
         action="store_true",
-        help="Deactivate summation of partial kappa at q-stars",
+        help="Grid symmetry is unused for phonon-xxx.hdf5 inputs.",
     )
     parser.add_argument("filenames", nargs="*")
     args = parser.parse_args()
@@ -531,24 +378,44 @@ def main():
         else:
             primitive = get_primitive(cell, primitive_matrix)
 
-    mesh = np.array(f_kappa["mesh"][:], dtype="int_")
-    temperatures = f_kappa["temperature"][:]
-    ir_weights = f_kappa["weight"][:]
+    if "grid_matrix" in f_kappa:
+        mesh = np.array(f_kappa["grid_matrix"][:], dtype="int_")
+    else:
+        mesh = np.array(f_kappa["mesh"][:], dtype="int_")
+    if "temperature" in f_kappa:
+        temperatures = f_kappa["temperature"][:]
+    else:
+        temperatures = np.zeros(1, dtype="double")
+    if "weight" in f_kappa:
+        frequencies = f_kappa["frequency"][:]
+        ir_weights = f_kappa["weight"][:]
+        ir_grid_points = None
+        qpoints = f_kappa["qpoint"][:]
+    elif "ir_grid_weights" in f_kappa and not args.no_gridsym:
+        ir_weights = f_kappa["ir_grid_weights"][:]
+        ir_grid_points = f_kappa["ir_grid_points"][:]
+        qpoints = None
+        frequencies = np.array(f_kappa["frequency"][ir_grid_points], dtype="double")
+    else:
+        frequencies = f_kappa["frequency"][:]
+        ir_weights = np.ones(len(frequencies), dtype="int_")
     primitive_symmetry = Symmetry(primitive)
     bz_grid = BZGrid(
         mesh,
         lattice=primitive.cell,
         symmetry_dataset=primitive_symmetry.dataset,
-        store_dense_gp_map=False,
+        store_dense_gp_map=True,
     )
-    if args.no_kappa_stars or (ir_weights == 1).all():
-        ir_grid_points = np.arange(np.prod(mesh), dtype="int_")
-        ir_grid_map = np.arange(np.prod(mesh), dtype="int_")
+    if args.no_gridsym or (ir_weights == 1).all():
+        ir_grid_points = bz_grid.grg2bzg
+        ir_grid_map = None
     else:
-        ir_grid_points, ir_grid_map = _get_grid_symmetry(
-            bz_grid, ir_weights, f_kappa["qpoint"][:]
+        ir_grid_points, ir_grid_map = _get_ir_grid_info(
+            bz_grid,
+            ir_weights,
+            qpoints=qpoints,
+            ir_grid_points=ir_grid_points,
         )
-    frequencies = f_kappa["frequency"][:]
     conditions = frequencies > 0
     if np.logical_not(conditions).sum() > 3:
         sys.stderr.write(
@@ -565,19 +432,21 @@ def main():
         or args.tau
         or args.gv_norm
         or args.dos
-    ):  # noqa E129
-
+    ):
         mode_prop = _get_mode_property(args, f_kappa)
 
         if args.temperature is not None and not (
             args.gv_norm or args.pqj or args.gruneisen or args.dos
-        ):  # noqa E129
+        ):
             temperatures, mode_prop = _set_T_target(
                 temperatures, mode_prop, args.temperature
             )
         if args.smearing:
             mode_prop_dos = GammaDOSsmearing(
-                mode_prop, frequencies, ir_weights, num_fpoints=args.num_sampling_points
+                mode_prop,
+                frequencies,
+                ir_weights,
+                num_sampling_points=args.num_sampling_points,
             )
             sampling_points, gdos = mode_prop_dos.get_gdos()
             sampling_points = np.tile(sampling_points, (len(gdos), 1))
@@ -585,7 +454,7 @@ def main():
         else:
             for i, w in enumerate(ir_weights):
                 mode_prop[:, i, :] *= w
-            kdos, sampling_points = _run_prop_dos(
+            kdos, sampling_points = run_prop_dos(
                 frequencies,
                 mode_prop[:, :, :, None],
                 ir_grid_map,
@@ -607,9 +476,9 @@ def main():
         if args.mfp:
             if "mean_free_path" in f_kappa:
                 mfp = f_kappa["mean_free_path"][:]
-                mean_freepath = np.sqrt((mfp ** 2).sum(axis=3))
+                mean_freepath = np.sqrt((mfp**2).sum(axis=3))
             else:
-                mean_freepath = _get_mfp(
+                mean_freepath = get_mfp(
                     f_kappa["gamma"][:], f_kappa["group_velocity"][:]
                 )
             if args.temperature is not None:
@@ -620,7 +489,7 @@ def main():
                     mean_freepath=mean_freepath,
                 )
 
-            kdos, sampling_points = _run_mfp_dos(
+            kdos, sampling_points = run_mfp_dos(
                 mean_freepath,
                 mode_prop,
                 ir_grid_map,
@@ -634,7 +503,7 @@ def main():
                 temperatures, mode_prop = _set_T_target(
                     temperatures, mode_prop, args.temperature
                 )
-            kdos, sampling_points = _run_prop_dos(
+            kdos, sampling_points = run_prop_dos(
                 frequencies,
                 mode_prop,
                 ir_grid_map,

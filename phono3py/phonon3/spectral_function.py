@@ -46,11 +46,12 @@ from phono3py.phonon3.imag_self_energy import (
     get_frequency_points,
     run_ise_at_frequency_points_batch,
 )
+from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon3.real_self_energy import imag_to_real
 
 
 def run_spectral_function(
-    interaction,
+    interaction: Interaction,
     grid_points,
     temperatures=None,
     sigmas=None,
@@ -157,6 +158,7 @@ def run_spectral_function(
                 spf.shifts[sigma_i, :, i],
                 spf.half_linewidths[sigma_i, :, i],
                 interaction.mesh_numbers,
+                interaction.bz_grid,
                 sigma=sigma,
                 frequency_points=spf.frequency_points,
                 frequencies=frequencies[gp],
@@ -354,8 +356,8 @@ class SpectralFunction:
 
     def _get_spectral_function(self, gammas, deltas, freq):
         fpoints = self._frequency_points
-        nums = 4 * freq ** 2 * gammas / np.pi
-        denoms = (fpoints ** 2 - freq ** 2 - 2 * freq * deltas) ** 2 + (
+        nums = 4 * freq**2 * gammas / np.pi
+        denoms = (fpoints**2 - freq**2 - 2 * freq * deltas) ** 2 + (
             2 * freq * gammas
         ) ** 2
         vals = np.where(denoms > 0, nums / denoms, 0)

@@ -34,6 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import warnings
+from typing import Optional
 
 import numpy as np
 from phonopy.harmonic.force_constants import similarity_transformation
@@ -131,13 +132,13 @@ class BZGrid:
         mesh,
         reciprocal_lattice=None,
         lattice=None,
-        symmetry_dataset=None,
+        symmetry_dataset: Optional[dict] = None,
         is_shift=None,
-        is_time_reversal=True,
-        use_grg=False,
-        force_SNF=False,
-        SNF_coordinates="reciprocal",
-        store_dense_gp_map=True,
+        is_time_reversal: bool = True,
+        use_grg: bool = False,
+        force_SNF: bool = False,
+        SNF_coordinates: str = "reciprocal",
+        store_dense_gp_map: bool = True,
     ):
         """Init method.
 
@@ -150,7 +151,7 @@ class BZGrid:
         lattice : array_like
             Direct primitive basis vectors given as row vectors
             shape=(3, 3), dtype='double', order='C'
-        symmetry_dataset : dict
+        symmetry_dataset : dict, optional
             Symmetry dataset (Symmetry.dataset) searched for the primitive cell
             corresponding to ``reciprocal_lattice`` or ``lattice``.
         is_shift : array_like or None, optional
@@ -174,14 +175,7 @@ class BZGrid:
             Default is True.
 
         """
-        if symmetry_dataset is None:
-            identity = np.eye(3, dtype="int_", order="C")
-            self._symmetry_dataset = {
-                "rotations": identity.reshape(1, 3, 3),
-                "translations": np.array([[0, 0, 0]], dtype="double"),
-            }
-        else:
-            self._symmetry_dataset = symmetry_dataset
+        self._symmetry_dataset = symmetry_dataset
         self._is_shift = is_shift
         self._is_time_reversal = is_time_reversal
         self._store_dense_gp_map = store_dense_gp_map
@@ -210,7 +204,7 @@ class BZGrid:
             )
 
         self._generate_grid(
-            mesh, use_grg=use_grg, force_SNF=force_SNF, coordinates=SNF_coordinates
+            mesh, use_grg=use_grg, force_SNF=force_SNF, SNF_coordinates=SNF_coordinates
         )
 
     @property
@@ -267,6 +261,7 @@ class BZGrid:
         """Grid generating matrix to be represented by SNF.
 
         Grid generating matrix used for SNF.
+        When SNF is used, ndarray, otherwise None.
         shape=(3, 3), dtype='int_', order='C'.
 
         """
@@ -402,123 +397,22 @@ class BZGrid:
         return np.array(self._grg2bzg[gps], dtype="int_")
 
     def _generate_grid(
-        self, mesh, use_grg=False, force_SNF=False, coordinates="reciprocal"
+        self, mesh, use_grg=False, force_SNF=False, SNF_coordinates="reciprocal"
     ):
-        self._set_mesh_numbers(
-            mesh, use_grg=use_grg, force_SNF=force_SNF, coordinates=coordinates
+        gm = GridMatrix(
+            mesh,
+            self._lattice,
+            symmetry_dataset=self._symmetry_dataset,
+            use_grg=use_grg,
+            force_SNF=force_SNF,
+            SNF_coordinates=SNF_coordinates,
         )
+        self._grid_matrix = gm.grid_matrix
+        self._D_diag = gm.D_diag
+        self._P = gm.P
+        self._Q = gm.Q
         self._set_bz_grid()
         self._set_rotations()
-
-    def _set_mesh_numbers(
-        self, mesh, use_grg=False, force_SNF=False, coordinates="reciprocal"
-    ):
-        """Set mesh numbers from array or float value.
-
-        Four cases:
-        1) Three integers are given.
-            Use these numbers as regular grid.
-        2) One number is given with no symmetry provided.
-            Regular grid is computed from this value. Grid is generated so that
-            distances in reciprocal space between neighboring grid points become
-            similar.
-        3) One number is given and use_grg=False.
-            Regular grid is computed from this value and point group symmetry.
-            Grid is generated so that distances in reciprocal space between
-            neighboring grid points become similar.
-        4) One number is given with symmetry provided and use_grg=True.
-            Generalized regular grid is generated. However if the grid
-            generating matrix is a diagonal matrix, use it as the D matrix
-            of SNF and P and Q are set as identity matrices. Otherwise
-            D, P, Q matrices are computed using SNF. Grid is generated so that
-            basis vectors of supercell in direct space corresponding to this grid
-            have similar lengths.
-
-        """
-        try:
-            num_values = len(mesh)
-            if num_values == 3:
-                self._D_diag = np.array(mesh, dtype="int_")
-        except TypeError:
-            length = float(mesh)
-            fall_back = True
-            if use_grg:
-                if "international" in self._symmetry_dataset:
-                    if is_primitive_cell(self._symmetry_dataset["rotations"]):
-                        self._set_SNF(
-                            length, force_SNF=force_SNF, coordinates=coordinates
-                        )
-                        fall_back = False
-                    else:
-                        warnings.warn(
-                            "Non primitive cell input. Unable to use GR-grid.",
-                            RuntimeWarning,
-                        )
-            if fall_back:
-                self._D_diag = length2mesh(length, self._lattice)
-
-    def _set_SNF(self, length, force_SNF=False, coordinates="reciprocal"):
-        """Calculate Smith normal form.
-
-        Microzone is defined as the regular grid of a conventional
-        unit cell. To find the conventional unit cell, symmetry
-        information is used.
-
-        """
-        self._grid_matrix = self._get_grid_matrix(length, coordinates=coordinates)
-
-        # If grid_matrix is a diagonal matrix, use it as D matrix.
-        gm_diag = np.diagonal(self._grid_matrix)
-        if (np.diag(gm_diag) == self._grid_matrix).all() and not force_SNF:
-            self._D_diag = np.array(gm_diag, dtype="int_")
-        else:
-            import phono3py._phono3py as phono3c
-
-            if not phono3c.snf3x3(self._D_diag, self._P, self._Q, self._grid_matrix):
-                msg = "SNF3x3 failed."
-                raise RuntimeError(msg)
-
-    def _get_grid_matrix(self, length: float, coordinates: str = "reciprocal"):
-        """Return grid matrix.
-
-        Grid is generated by the distance `length`. `coordinates` is used eighter
-        the grid is defined by supercell in real space or mesh grid in reciprocal
-        space.
-
-        Note
-        ----
-        It is assumed that self._lattice is a primitive cell basis vectors.
-
-        Parameters
-        ----------
-        length : float
-            Distance measure to generate grid.
-        coordinates : str, optional
-            `reciprocal` (default) or `direct`.
-
-        """
-        sym_dataset = self._symmetry_dataset
-        tmat = sym_dataset["transformation_matrix"]
-        conv_lat = np.dot(np.linalg.inv(tmat).T, self._lattice)
-
-        if coordinates == "direct":
-            num_cells = int(np.prod(length2mesh(length, conv_lat)))
-            max_num_atoms = num_cells * len(sym_dataset["std_types"])
-            conv_mesh_numbers = estimate_supercell_matrix(
-                sym_dataset, max_num_atoms=max_num_atoms, max_iter=200
-            )
-        elif coordinates == "reciprocal":
-            conv_mesh_numbers = length2mesh(length, conv_lat)
-        else:
-            raise TypeError('Expect "direct" or "reciprocal" for coordinates.')
-
-        inv_tmat = np.linalg.inv(tmat)
-        inv_tmat_int = np.rint(inv_tmat).astype(int)
-        assert (np.abs(inv_tmat - inv_tmat_int) < 1e-5).all()
-        grid_matrix = np.array(
-            (inv_tmat_int * conv_mesh_numbers).T, dtype="int_", order="C"
-        )
-        return grid_matrix
 
     def _set_bz_grid(self):
         """Generate BZ grid addresses and grid point mapping table."""
@@ -549,9 +443,12 @@ class BZGrid:
         """
         import phono3py._phono3py as phono3c
 
-        direct_rotations = np.array(
-            self._symmetry_dataset["rotations"], dtype="int_", order="C"
-        )
+        if self._symmetry_dataset is None:
+            direct_rotations = np.eye(3, dtype="int_", order="C").reshape(1, 3, 3)
+        else:
+            direct_rotations = np.array(
+                self._symmetry_dataset["rotations"], dtype="int_", order="C"
+            )
         rec_rotations = np.zeros((48, 3, 3), dtype="int_", order="C")
         num_rec_rot = phono3c.reciprocal_rotations(
             rec_rotations, direct_rotations, self._is_time_reversal
@@ -577,16 +474,274 @@ class BZGrid:
             raise RuntimeError(msg)
 
 
-def get_grid_point_from_address_py(address, mesh):
-    """Python version of get_grid_point_from_address."""
-    # X runs first in XYZ
-    # (*In spglib, Z first is possible with MACRO setting.)
-    m = mesh
-    return (
-        address[0] % m[0]
-        + (address[1] % m[1]) * m[0]
-        + (address[2] % m[2]) * m[0] * m[1]
-    )
+class GridMatrix:
+    """Class to generate regular grid in reciprocal space.
+
+    Attributes
+    ----------
+    D_diag : ndarray
+    P : ndarray
+    Q : ndarray
+    grid_matrix : ndarray
+
+    """
+
+    def __init__(
+        self,
+        mesh,
+        lattice,
+        symmetry_dataset: Optional[dict] = None,
+        use_grg: bool = True,
+        force_SNF: bool = False,
+        SNF_coordinates: str = "reciprocal",
+    ) -> None:
+        """Init method.
+
+        mesh : array_like or float
+            Mesh numbers or length.
+            With float number, either conventional or generalized regular grid is
+            computed depending on the given flags (`use_grg`, `force_SNF`).
+            Given ndarry with
+                shape=(3,), dtype='int_': conventional regular grid
+                shape=(3, 3), dtype='int_': generalized regular grid
+        lattice : array_like
+            Primitive basis vectors in direct space given as row vectors.
+            shape=(3, 3), dtype='double', order='C'
+        symmetry_dataset : dict, optional
+            Symmetry dataset of spglib (Symmetry.dataset) of primitive cell
+            that has `lattice`. Default is None.
+        use_grg : bool, optional
+            Use generalized regular grid. Default is False.
+        force_SNF : bool, optional
+            Enforce Smith normal form even when grid lattice of GR-grid is the same as
+            the traditional grid lattice. Default is False.
+        SNF_coordinates : str, optional
+            `reciprocal` or `direct`.
+            Space of coordinates to generate grid generating matrix either in direct
+            or reciprocal space. The default is `reciprocal`.
+
+        """
+        self._mesh = mesh
+        self._lattice = lattice
+        self._symmetry_dataset = symmetry_dataset
+        self._grid_matrix = None
+        self._D_diag = np.ones(3, dtype="int_")
+        self._Q = np.eye(3, dtype="int_", order="C")
+        self._P = np.eye(3, dtype="int_", order="C")
+
+        self._set_mesh_numbers(
+            mesh, use_grg=use_grg, force_SNF=force_SNF, coordinates=SNF_coordinates
+        )
+
+    @property
+    def grid_matrix(self):
+        """Grid generating matrix to be represented by SNF.
+
+        Grid generating matrix used for SNF.
+        When SNF is used, ndarray, otherwise None.
+        shape=(3, 3), dtype='int_', order='C'.
+
+        """
+        return self._grid_matrix
+
+    @property
+    def D_diag(self):
+        """Diagonal elements of diagonal matrix after SNF: D=PAQ.
+
+        This corresponds to the mesh numbers in transformed reciprocal
+        basis vectors.
+        shape=(3,), dtype='int_'
+
+        """
+        return self._D_diag
+
+    @property
+    def P(self):
+        """Left unimodular matrix after SNF: D=PAQ.
+
+        Left unimodular matrix after SNF: D=PAQ.
+        shape=(3, 3), dtype='int_', order='C'.
+
+        """
+        return self._P
+
+    @property
+    def Q(self):
+        """Right unimodular matrix after SNF: D=PAQ.
+
+        Right unimodular matrix after SNF: D=PAQ.
+        shape=(3, 3), dtype='int_', order='C'.
+
+        """
+        return self._Q
+
+    def _set_mesh_numbers(
+        self, mesh, use_grg=False, force_SNF=False, coordinates="reciprocal"
+    ):
+        """Set mesh numbers from array or float value.
+
+        Four cases:
+        1) Three integers are given.
+            Use these numbers as regular grid.
+        2) One number is given with no symmetry provided.
+            Regular grid is computed from this value. Grid is generated so that
+            distances in reciprocal space between neighboring grid points become
+            similar.
+        3) One number is given and use_grg=False.
+            Regular grid is computed from this value and point group symmetry.
+            Grid is generated so that distances in reciprocal space between
+            neighboring grid points become similar.
+        4) One number is given with symmetry provided and use_grg=True.
+            Generalized regular grid is generated. However if the grid
+            generating matrix is a diagonal matrix, use it as the D matrix
+            of SNF and P and Q are set as identity matrices. Otherwise
+            D, P, Q matrices are computed using SNF. Grid is generated so that
+            basis vectors of supercell in direct space corresponding to this grid
+            have similar lengths.
+
+        """
+        num_values = len(np.ravel(mesh))
+        if num_values == 1 or num_values == 9:
+            if num_values == 1:
+                length = float(mesh)
+                grid_matrix = None
+                _use_grg = use_grg
+            else:
+                length = None
+                grid_matrix = mesh
+                _use_grg = True
+            fall_back = True
+            if _use_grg:
+                if "international" in self._symmetry_dataset:
+                    if is_primitive_cell(self._symmetry_dataset["rotations"]):
+                        self._set_SNF(
+                            length=length,
+                            grid_matrix=grid_matrix,
+                            force_SNF=force_SNF,
+                            coordinates=coordinates,
+                        )
+                        fall_back = False
+                    else:
+                        warnings.warn(
+                            "Non primitive cell input. Unable to use GR-grid.",
+                            RuntimeWarning,
+                        )
+            if fall_back:
+                self._D_diag = length2mesh(length, self._lattice)
+        elif num_values == 3:
+            self._D_diag = np.array(mesh, dtype="int_")
+
+    def _set_SNF(
+        self, length=None, grid_matrix=None, force_SNF=False, coordinates="reciprocal"
+    ):
+        """Calculate Smith normal form.
+
+        Microzone is defined as the regular grid of a conventional
+        unit cell. To find the conventional unit cell, symmetry
+        information is used.
+
+        """
+        if length is not None:
+            _grid_matrix = self._get_grid_matrix(length, coordinates=coordinates)
+        elif grid_matrix is not None:
+            _grid_matrix = np.array(grid_matrix, dtype="int_", order="C")
+
+        # If grid_matrix is a diagonal matrix, use it as D matrix.
+        gm_diag = np.diagonal(_grid_matrix)
+        if (np.diag(gm_diag) == _grid_matrix).all() and not force_SNF:
+            self._D_diag = np.array(gm_diag, dtype="int_")
+        else:
+            import phono3py._phono3py as phono3c
+
+            if not phono3c.snf3x3(self._D_diag, self._P, self._Q, _grid_matrix):
+                msg = "SNF3x3 failed."
+                raise RuntimeError(msg)
+
+            self._grid_matrix = _grid_matrix
+
+    def _get_grid_matrix(self, length: float, coordinates: str = "reciprocal"):
+        """Return grid matrix.
+
+        Grid is generated by the distance `length`. `coordinates` is used eighter
+        the grid is defined by supercell in real space or mesh grid in reciprocal
+        space.
+
+        Note
+        ----
+        It is assumed that self._lattice is a primitive cell basis vectors.
+
+        Parameters
+        ----------
+        length : float
+            Distance measure to generate grid.
+        coordinates : str, optional
+            `reciprocal` (default) or `direct`.
+
+        """
+        sym_dataset = self._symmetry_dataset
+        tmat = sym_dataset["transformation_matrix"]
+        conv_lat = np.dot(np.linalg.inv(tmat).T, self._lattice)
+
+        if can_use_std_lattice(
+            conv_lat,
+            tmat,
+            sym_dataset["std_lattice"],
+            sym_dataset["rotations"],
+        ):
+            conv_lat = sym_dataset["std_lattice"]
+            tmat = np.dot(self._lattice, np.linalg.inv(conv_lat)).T
+
+        if coordinates == "direct":
+            num_cells = int(np.prod(length2mesh(length, conv_lat)))
+            max_num_atoms = num_cells * len(sym_dataset["std_types"])
+            conv_mesh_numbers = estimate_supercell_matrix(
+                sym_dataset, max_num_atoms=max_num_atoms, max_iter=200
+            )
+        elif coordinates == "reciprocal":
+            conv_mesh_numbers = length2mesh(length, conv_lat)
+        else:
+            raise TypeError('Expect "direct" or "reciprocal" for coordinates.')
+
+        inv_tmat = np.linalg.inv(tmat)
+        inv_tmat_int = np.rint(inv_tmat).astype(int)
+        assert (np.abs(inv_tmat - inv_tmat_int) < 1e-5).all()
+        grid_matrix = np.array(
+            (inv_tmat_int * conv_mesh_numbers).T, dtype="int_", order="C"
+        )
+        return grid_matrix
+
+
+def can_use_std_lattice(conv_lat, tmat, std_lattice, rotations, symprec=1e-5):
+    """Inspect if std_lattice can be used as conv_lat.
+
+    r_s is the rotation matrix of conv_lat.
+    Return if conv_lat rotated by det(r_s)*r_s and std_lattice are equivalent.
+    det(r_s) is necessary to make improper rotation to proper rotation.
+
+    """
+    for r in rotations:
+        r_s = similarity_transformation(tmat, r)
+        if np.allclose(
+            np.linalg.det(r_s) * np.dot(np.transpose(conv_lat), r_s),
+            np.transpose(std_lattice),
+            atol=symprec,
+        ):
+            return True
+    return False
+
+
+def get_grid_point_from_address_py(addresses, D_diag):
+    """Return GR-grid point index from addresses.
+
+    Python version of get_grid_point_from_address.
+    X runs first in XYZ
+    In grid.c, Z first is possible with MACRO setting.
+
+    addresses :
+        shape=(..., 3)
+
+    """
+    return np.dot(np.mod(addresses, D_diag), [1, D_diag[0], D_diag[0] * D_diag[1]])
 
 
 def get_grid_point_from_address(address, D_diag):
@@ -863,9 +1018,7 @@ def _relocate_BZ_grid_address(
         _is_shift = np.zeros(3, dtype="int_")
     else:
         _is_shift = np.array(is_shift, dtype="int_")
-    bz_grid_addresses = np.zeros(
-        (np.prod(np.add(D_diag, 1)), 3), dtype="int_", order="C"
-    )
+    bz_grid_addresses = np.zeros((np.prod(D_diag) * 8, 3), dtype="int_", order="C")
     bzg2grg = np.zeros(len(bz_grid_addresses), dtype="int_")
 
     if store_dense_gp_map:
@@ -896,7 +1049,7 @@ def _relocate_BZ_grid_address(
 
 
 def _get_ir_grid_map(D_diag, grg_rotations, PS=None):
-    """Irreducible k-points are searched.
+    """Return mapping to irreducible grid points in GR-grid.
 
     Parameters
     ----------
@@ -915,8 +1068,7 @@ def _get_ir_grid_map(D_diag, grg_rotations, PS=None):
     Returns
     -------
     ir_grid_map : ndarray
-        Grid point mapping table to ir-gird-points in gereralized
-        regular grid.
+        Grid point mapping from all indices to ir-gird-point indices in GR-grid.
         dtype='int_', shape=(prod(mesh),)
 
     """

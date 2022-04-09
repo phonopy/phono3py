@@ -60,10 +60,10 @@ from phonopy.structure.dataset import get_displacements_and_forces
 from phonopy.structure.symmetry import Symmetry
 from phonopy.units import VaspToTHz
 
+from phono3py.conductivity.direct_solution import get_thermal_conductivity_LBTE
+from phono3py.conductivity.rta import get_thermal_conductivity_RTA
 from phono3py.interface.fc_calculator import get_fc3
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
-from phono3py.phonon3.conductivity_LBTE import get_thermal_conductivity_LBTE
-from phono3py.phonon3.conductivity_RTA import get_thermal_conductivity_RTA
 from phono3py.phonon3.dataset import get_displacements_and_forces_fc3
 from phono3py.phonon3.displacement_fc3 import (
     direction_to_displacement,
@@ -135,7 +135,7 @@ class Phono3py:
     def __init__(
         self,
         unitcell: PhonopyAtoms,
-        supercell_matrix,
+        supercell_matrix=None,
         primitive_matrix=None,
         phonon_supercell_matrix=None,
         masses=None,
@@ -162,10 +162,12 @@ class Phono3py:
         ----------
         unitcell : PhonopyAtoms, optional
             Input unit cell.
-        supercell_matrix : array_like
+        supercell_matrix : array_like, optional
             Supercell matrix multiplied to input cell basis vectors.
             shape=(3, ) or (3, 3), where the former is considered a diagonal
             matrix. The elements have to be given by integers.
+            Although the default is None, which results in identity
+            matrix, it is recommended to give `supercell_matrix` explicitly.
         primitive_matrix : array_like or str, optional
             Primitive matrix multiplied to input cell basis vectors. Default is
             the identity matrix.
@@ -242,13 +244,15 @@ class Phono3py:
 
         # Create supercell and primitive cell
         self._unitcell = unitcell
-        self._supercell_matrix = shape_supercell_matrix(supercell_matrix)
+        self._supercell_matrix = np.array(
+            shape_supercell_matrix(supercell_matrix), dtype="int_", order="C"
+        )
         pmat = self._determine_primitive_matrix(primitive_matrix)
         self._primitive_matrix = pmat
         self._nac_params = None
         if phonon_supercell_matrix is not None:
-            self._phonon_supercell_matrix = shape_supercell_matrix(
-                phonon_supercell_matrix
+            self._phonon_supercell_matrix = np.array(
+                shape_supercell_matrix(phonon_supercell_matrix), dtype="int_", order="C"
             )
         else:
             self._phonon_supercell_matrix = None
@@ -721,7 +725,7 @@ class Phono3py:
 
         ndarray
             Supercell matrix with respect to unit cell.
-            shape=(3, 3), dtype='intc', order='C'
+            shape=(3, 3), dtype='int_', order='C'
 
         """
         return self._supercell_matrix
@@ -741,7 +745,7 @@ class Phono3py:
 
         ndarray
             Supercell matrix with respect to unit cell.
-            shape=(3, 3), dtype='intc', order='C'
+            shape=(3, 3), dtype='int_', order='C'
 
         """
         return self._phonon_supercell_matrix
@@ -1426,7 +1430,7 @@ class Phono3py:
             prod(mesh) because it includes Brillouin zone boundary. The detail
             is found in the docstring of
             phono3py.phonon3.triplets.get_triplets_at_q.
-            shape=(num_grid_points, 3), dtype='intc', order='C'
+            shape=(num_grid_points, 3), dtype=int
 
         """
         if self._interaction is not None:
@@ -1836,6 +1840,7 @@ class Phono3py:
         frequency_points=None,
         frequency_step=None,
         num_frequency_points=None,
+        num_points_in_batch=None,
         frequency_points_at_bands=False,
         scattering_event_class=None,
         write_txt=False,
@@ -1869,6 +1874,11 @@ class Phono3py:
             Number of sampling sampling points to be used instead of
             frequency_step. This number includes end points. Default is None,
             which gives 201.
+        num_points_in_batch: int, optional
+            Number of sampling points in one batch. This is for the frequency
+            sampling mode and the sampling points are divided into batches.
+            Lager number provides efficient use of multi-cores but more
+            memory demanding. Default is None, which give the number of 10.
         frequency_points_at_bands : bool, optional
             Phonon band frequencies are used as frequency points when True.
             Default is False.
@@ -1912,6 +1922,7 @@ class Phono3py:
             frequency_step=frequency_step,
             frequency_points_at_bands=frequency_points_at_bands,
             num_frequency_points=num_frequency_points,
+            num_points_in_batch=num_points_in_batch,
             scattering_event_class=scattering_event_class,
             write_gamma_detail=write_gamma_detail,
             return_gamma_detail=keep_gamma_detail,
@@ -2146,6 +2157,7 @@ class Phono3py:
         write_gamma=False,
         read_gamma=False,
         is_N_U=False,
+        conductivity_type=None,
         write_kappa=False,
         write_gamma_detail=False,
         write_collision=False,
@@ -2171,7 +2183,7 @@ class Phono3py:
                 `is_LBTE=True` gives temperatures=[300, ].
         is_isotope : bool, optional, default is False
             With or without isotope scattering.
-        mass_variances : array_like, optiona, default is None
+        mass_variances : array_like, optional, default is None
             Mass variances for isotope scattering calculation. When None,
             the values stored in phono3py are used with `is_isotope=True`.
             shape(atoms_in_primitive, ), dtype='double'.
@@ -2244,6 +2256,8 @@ class Phono3py:
             RTA only (`is_LBTE=False`). With True, categorization of normal
             and Umklapp scattering is made and imaginary parts of self energy
             for them are separated.
+        conductivity_type : str, optional
+            "wigner" or None. Default is None.
         write_kappa : bool, optional, default is False
             With True, thermal conductivity and related properties are
             written into a file. With multiple `sigmas`, respective files
@@ -2311,6 +2325,7 @@ class Phono3py:
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
                 is_full_pp=is_full_pp,
+                conductivity_type=conductivity_type,
                 pinv_cutoff=pinv_cutoff,
                 pinv_solver=pinv_solver,
                 write_collision=write_collision,
@@ -2342,9 +2357,10 @@ class Phono3py:
                 is_kappa_star=is_kappa_star,
                 gv_delta_q=gv_delta_q,
                 is_full_pp=is_full_pp,
+                is_N_U=is_N_U,
+                conductivity_type=conductivity_type,
                 write_gamma=write_gamma,
                 read_gamma=read_gamma,
-                is_N_U=is_N_U,
                 write_kappa=write_kappa,
                 write_pp=write_pp,
                 read_pp=read_pp,

@@ -50,7 +50,8 @@ class Phono3pyIsotope:
         band_indices=None,
         sigmas=None,
         frequency_factor_to_THz=VaspToTHz,
-        store_dense_gp_map=False,
+        use_grg=False,
+        store_dense_gp_map=True,
         symprec=1e-5,
         cutoff_frequency=None,
         lapack_zheev_uplo="L",
@@ -62,13 +63,13 @@ class Phono3pyIsotope:
             ]
         else:
             self._sigmas = sigmas
-        self._mesh_numbers = mesh
         self._iso = Isotope(
             mesh,
             primitive,
             mass_variances=mass_variances,
             band_indices=band_indices,
             frequency_factor_to_THz=frequency_factor_to_THz,
+            use_grg=use_grg,
             store_dense_gp_map=store_dense_gp_map,
             symprec=symprec,
             cutoff_frequency=cutoff_frequency,
@@ -85,12 +86,28 @@ class Phono3pyIsotope:
         """Return BZGrid class instance."""
         return self._iso.bz_grid
 
+    @property
+    def gamma(self):
+        """Return calculated isotope scattering."""
+        return self._gamma
+
+    @property
+    def frequencies(self):
+        """Return phonon frequencies at grid points."""
+        return self._iso.get_phonons()[0][self._grid_points]
+
+    @property
+    def grid_points(self):
+        """Return grid points in BZ-grid."""
+        return self._grid_points
+
     def run(self, grid_points):
         """Calculate isotope scattering."""
         gamma = np.zeros(
             (len(self._sigmas), len(grid_points), len(self._iso.band_indices)),
             dtype="double",
         )
+        self._grid_points = np.array(grid_points, dtype="int_")
 
         for j, gp in enumerate(grid_points):
             self._iso.set_grid_point(gp)
@@ -98,7 +115,9 @@ class Phono3pyIsotope:
             print("--------------- Isotope scattering ---------------")
             print("Grid point: %d" % gp)
             adrs = self._iso.bz_grid.addresses[gp]
-            q = adrs.astype("double") / self._mesh_numbers
+            bz_grid = self._iso.bz_grid
+            print(bz_grid.D_diag)
+            q = np.dot(adrs.astype("double") / bz_grid.D_diag, bz_grid.Q.T)
             print("q-point: %s" % q)
 
             if self._sigmas:
@@ -143,8 +162,3 @@ class Phono3pyIsotope:
     def set_sigma(self, sigma):
         """Set sigma. None means tetrahedron method."""
         self._iso.set_sigma(sigma)
-
-    @property
-    def gamma(self):
-        """Return calculated isotope scattering."""
-        return self._gamma
