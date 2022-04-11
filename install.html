@@ -448,13 +448,30 @@ is:</p>
 <span class="n">extra_compile_args</span> <span class="o">=</span> <span class="o">-</span><span class="n">fopenmp</span>
 </pre></div>
 </div>
-<p>A basic example to add include directories and openmp flags would be:</p>
+<p>Additional configuration can be necessary. It is recommended first starting only
+with <code class="docutils literal notranslate"><span class="pre">extra_compile_args</span> <span class="pre">=</span> <span class="pre">-fopenmp</span></code> and run <code class="docutils literal notranslate"><span class="pre">setup.py</span></code>, then check if phono3py
+works properly or not without error or warning. When phono3py doesn’t work with
+the above setting, add another configuration one by one to test compilation.
+With conda-forge packages, at 11th Apr. 2022, the following configuration
+worked.</p>
+<p>With MKL (for gcc and clang), <code class="docutils literal notranslate"><span class="pre">site.cfg</span></code></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">phono3py</span><span class="p">]</span>
-<span class="n">include_dirs</span> <span class="o">=</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">lapack</span><span class="o">/</span><span class="n">include</span>
 <span class="n">extra_compile_args</span> <span class="o">=</span> <span class="o">-</span><span class="n">fopenmp</span>
-<span class="n">extra_link_args</span> <span class="o">=</span> <span class="o">-</span><span class="n">fopenmp</span>
 </pre></div>
 </div>
+<p>With openblas and clang</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">phono3py</span><span class="p">]</span>
+<span class="n">extra_compile_args</span> <span class="o">=</span> <span class="o">-</span><span class="n">fopenmp</span>
+</pre></div>
+</div>
+<p>With openblas and gcc</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">phono3py</span><span class="p">]</span>
+<span class="n">extra_compile_args</span> <span class="o">=</span> <span class="o">-</span><span class="n">fopenmp</span>
+<span class="n">extra_link_args</span> <span class="o">=</span> <span class="o">-</span><span class="n">lgomp</span>
+</pre></div>
+</div>
+<p>Mind that these configurations can be outdated instantly by the change of the
+conda-forge packages.</p>
 <p>More detailed information about <code class="docutils literal notranslate"><span class="pre">site.cfg</span></code> customization is found at
 <a class="reference external" href="https://github.com/numpy/numpy/blob/main/site.cfg.example">https://github.com/numpy/numpy/blob/main/site.cfg.example</a>.</p>
 <div class="section" id="installation-of-lapacke">
