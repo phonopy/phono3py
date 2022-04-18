@@ -124,6 +124,7 @@ class BZGrid:
     QDinv : ndarray
     grid_matrix : ndarray
     microzone_lattice : ndarray
+    gp_Gamma : int
 
     """
 
@@ -189,6 +190,7 @@ class BZGrid:
         self._microzone_lattice = None
         self._rotations = None
         self._reciprocal_operations = None
+        self._gp_Gamma = None
 
         if reciprocal_lattice is not None:
             self._reciprocal_lattice = np.array(
@@ -289,6 +291,11 @@ class BZGrid:
 
         """
         return self._gp_map
+
+    @property
+    def gp_Gamma(self):
+        """Return grid point index of Gamma-point."""
+        return self._gp_Gamma
 
     @property
     def bzg2grg(self):
@@ -433,6 +440,9 @@ class BZGrid:
         )
         self._microzone_lattice = np.dot(
             self._reciprocal_lattice, np.dot(self._QDinv, self._P)
+        )
+        self._gp_Gamma = int(
+            self._grg2bzg[get_grid_point_from_address([0, 0, 0], self._D_diag)]
         )
 
     def _set_rotations(self):

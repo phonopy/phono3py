@@ -153,17 +153,41 @@ def test_interaction_nac_direction_phonon_NaCl_second_no_error(nacl_pbe: Phono3p
     )
 
 
-def _get_irt(ph3: Phono3py, mesh, nac_params=None):
+def test_phonon_solver_expand_RTA_si(si_pbesol):
+    """Test phonon solver with eigenvector rotation of Si.
+
+    Eigenvectors can be different but frequencies must be almost the same.
+
+    """
+    itr = _get_irt(si_pbesol, [4, 4, 4])
+    freqs, _, phonon_done = itr.get_phonons()
+    assert (phonon_done == 1).all()
+    itr = _get_irt(si_pbesol, [4, 4, 4], solve_dynamical_matrices=False)
+    itr.run_phonon_solver_with_eigvec_rotation()
+    freqs_expanded, _, _ = itr.get_phonons()
+    np.testing.assert_allclose(freqs, freqs_expanded, rtol=0, atol=1e-6)
+
+
+def _get_irt(ph3: Phono3py, mesh, nac_params=None, solve_dynamical_matrices=True):
     ph3.mesh_numbers = mesh
     itr = Interaction(
         ph3.primitive, ph3.grid, ph3.primitive_symmetry, ph3.fc3, cutoff_frequency=1e-4
     )
     if nac_params is None:
-        itr.init_dynamical_matrix(ph3.fc2, ph3.phonon_supercell, ph3.phonon_primitive)
+        itr.init_dynamical_matrix(
+            ph3.fc2,
+            ph3.phonon_supercell,
+            ph3.phonon_primitive,
+        )
     else:
         itr.init_dynamical_matrix(
-            ph3.fc2, ph3.phonon_supercell, ph3.phonon_primitive, nac_params=nac_params
+            ph3.fc2,
+            ph3.phonon_supercell,
+            ph3.phonon_primitive,
+            nac_params=nac_params,
         )
+    if solve_dynamical_matrices:
+        itr.run_phonon_solver()
     return itr
 
 
