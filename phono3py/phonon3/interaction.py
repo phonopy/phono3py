@@ -683,7 +683,16 @@ class Interaction:
         bz_grid_points_solved = self._get_phonons_at_minus_q()
         if bz_grid_points_solved:
             print("DEBUG: BZ-grid points additionally solved " "than ir-grid-points.")
-            print(bz_grid_points_solved)
+            qpoints = np.dot(
+                self._bz_grid.addresses[bz_grid_points_solved]
+                / self._bz_grid.D_diag.astype("double"),
+                self._bz_grid.Q.T,
+            )
+            distances = np.linalg.norm(
+                np.dot(qpoints, np.linalg.inv(self._primitive.cell).T), axis=1
+            )
+            for qpt, dist in zip(qpoints, distances):
+                print(qpt, dist)
 
     def _get_reciprocal_rotations_in_space_group_operations(self):
         """Collect reciprocal rotations that belong to space group operations.
@@ -766,6 +775,8 @@ class Interaction:
             self._phonon_done[bzgp] = 1
             self._frequencies[bzgp, :] = self._frequencies[bzgp_mq, :]
             self._eigenvectors[bzgp, :, :] = np.conj(self._eigenvectors[bzgp_mq, :, :])
+
+        assert (self._phonon_done == 1).all()
 
         return bz_grid_points_solved
 
