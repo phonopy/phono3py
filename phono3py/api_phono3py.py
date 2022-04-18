@@ -532,7 +532,8 @@ class Phono3py:
     @nac_params.setter
     def nac_params(self, nac_params):
         self._nac_params = nac_params
-        self._init_dynamical_matrix()
+        if self._interaction is not None:
+            self._init_dynamical_matrix()
 
     def get_nac_params(self):
         """Return NAC parameters."""
@@ -2484,11 +2485,30 @@ class Phono3py:
         )
 
     def _init_dynamical_matrix(self):
-        if self._interaction is not None:
-            self._interaction.init_dynamical_matrix(
-                self._fc2,
-                self._phonon_supercell,
-                self._phonon_primitive,
-                nac_params=self._nac_params,
-                solve_dynamical_matrices=False,
+        if self._interaction is None:
+            msg = (
+                "Phono3py.init_phph_interaction has to be called "
+                "before running this method."
             )
+            raise RuntimeError(msg)
+
+        self._interaction.init_dynamical_matrix(
+            self._fc2,
+            self._phonon_supercell,
+            self._phonon_primitive,
+            nac_params=self._nac_params,
+        )
+        gp_G = self._bz_grid.gp_Gamma
+        self.run_phonon_solver(np.array([gp_G], dtype="int_"))
+        freqs, _, _ = self.get_phonon_data()
+        if np.sum(freqs[gp_G] < self._cutoff_frequency) < 3:
+            for i, f in enumerate(freqs[gp_G, :3]):
+                if not (f < self._cutoff_frequency):
+                    freqs[gp_G, i] = 0
+                    print("=" * 26 + " Warning " + "=" * 26)
+                    print(
+                        " Phonon frequency of band index %d at Gamma "
+                        "is calculated to be %f." % (i + 1, f)
+                    )
+                    print(" But this frequency is forced to be zero.")
+                    print("=" * 61)

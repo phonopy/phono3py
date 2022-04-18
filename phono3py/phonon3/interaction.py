@@ -50,7 +50,6 @@ from phono3py.phonon3.reciprocal_to_normal import ReciprocalToNormal
 from phono3py.phonon3.triplets import get_nosym_triplets_at_q, get_triplets_at_q
 from phono3py.phonon.grid import (
     BZGrid,
-    get_grid_point_from_address,
     get_grid_points_by_rotations,
     get_ir_grid_points,
 )
@@ -538,14 +537,11 @@ class Interaction:
             elif self._done_nac_at_gamma:
                 if self._nac_q_direction is None:
                     self._done_nac_at_gamma = False
-                    gamma_gp = get_grid_point_from_address(
-                        [0, 0, 0], self._bz_grid.D_diag
-                    )
-                    self._phonon_done[gamma_gp] = 0
+                    self._phonon_done[self._bz_grid.gp_Gamma] = 0
                     self.run_phonon_solver(
                         np.array(
                             [
-                                gamma_gp,
+                                self._bz_grid.gp_Gamma,
                             ],
                             dtype="int_",
                         )
@@ -596,7 +592,6 @@ class Interaction:
         supercell,
         primitive,
         nac_params=None,
-        solve_dynamical_matrices=True,
         decimals=None,
     ):
         """Prepare for phonon calculation on grid.
@@ -617,25 +612,6 @@ class Interaction:
             symprec=self._symprec,
         )
 
-        self._phonon_done[0] = 0
-        if solve_dynamical_matrices:
-            self.run_phonon_solver()
-        else:
-            self.run_phonon_solver(np.array([0], dtype="int_"))
-
-        if (self._bz_grid.addresses[0] == 0).all():
-            if np.sum(self._frequencies[0] < self._cutoff_frequency) < 3:
-                for i, f in enumerate(self._frequencies[0, :3]):
-                    if not (f < self._cutoff_frequency):
-                        self._frequencies[0, i] = 0
-                        print("=" * 26 + " Warning " + "=" * 26)
-                        print(
-                            " Phonon frequency of band index %d at Gamma "
-                            "is calculated to be %f." % (i + 1, f)
-                        )
-                        print(" But this frequency is forced to be zero.")
-                        print("=" * 61)
-
     def set_phonon_data(self, frequencies, eigenvectors, bz_grid_addresses):
         """Set phonons on grid."""
         if bz_grid_addresses.shape != self._bz_grid.addresses.shape:
@@ -655,20 +631,12 @@ class Interaction:
     def run_phonon_solver(self, grid_points=None):
         """Run phonon solver at BZ-grid points."""
         if grid_points is None:
-            self._get_phonons_at_all_bz_grid_points()
+            _grid_points = np.arange(len(self._bz_grid.addresses), dtype="int_")
         else:
             _grid_points = grid_points
-            self._run_phonon_solver_c(_grid_points)
+        self._run_phonon_solver_c(_grid_points)
 
-    def _get_phonons_at_all_bz_grid_points(self, expand_phonons=False):
-        """Get phonons at all BZ-grid points."""
-        if expand_phonons:
-            self._expand_phonons()
-        else:
-            grid_points = np.arange(len(self._bz_grid.addresses), dtype="int_")
-            self._run_phonon_solver_c(grid_points)
-
-    def _expand_phonons(self):
+    def run_phonon_solver_with_eigvec_rotation(self):
         """Phonons at ir-grid-points are copied by proper rotations.
 
         Some phonons that are not covered by rotations are solved.
@@ -679,9 +647,10 @@ class Interaction:
             self._phonon_done
 
         """
+        self._phonon_done[:] = 0
         ir_grid_points, _, _ = get_ir_grid_points(self._bz_grid)
         ir_bz_grid_points = self._bz_grid.grg2bzg[ir_grid_points]
-        self._run_phonon_solver_c(ir_bz_grid_points)
+        self.run_phonon_solver(grid_points=ir_bz_grid_points)
 
         d2r_map = self._get_reciprocal_rotations_in_space_group_operations()
 
@@ -784,8 +753,8 @@ class Interaction:
             )[0]
 
             if self._phonon_done[bzgp_mq] == 0:
-                self._run_phonon_solver_c(
-                    np.array(
+                self.run_phonon_solver(
+                    grid_points=np.array(
                         [
                             bzgp_mq,
                         ],
