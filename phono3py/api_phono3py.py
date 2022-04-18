@@ -1360,54 +1360,6 @@ class Phono3py:
         self._interaction.nac_q_direction = nac_q_direction
         self._init_dynamical_matrix()
 
-    def set_phph_interaction(
-        self,
-        nac_params=None,
-        nac_q_direction=None,
-        constant_averaged_interaction=None,
-        frequency_scale_factor=None,
-        solve_dynamical_matrices=True,
-    ):
-        """Initialize ph-ph interaction calculation.
-
-        This method is deprecated at v2.0. Phono3py.init_phph_interaction
-        should be used instead of this method.
-
-        Parameters
-        ----------
-        Most of parameters are given at docstring of
-        Phono3py.init_phph_interaction.
-
-        nac_params : dict, Deprecated at v2.0
-            Parameters used for non-analytical term correction
-            'born': ndarray
-                Born effective charges
-                shape=(primitive cell atoms, 3, 3), dtype='double', order='C'
-            'factor': float
-                Unit conversion factor
-            'dielectric': ndarray
-                Dielectric constant tensor
-                shape=(3, 3), dtype='double', order='C'
-
-        """
-        msg = (
-            "Phono3py.init_phph_interaction is deprecated at v2.0. "
-            "Use Phono3py.prepare_interaction instead."
-        )
-        warnings.warn(msg, DeprecationWarning)
-
-        if nac_params is not None:
-            self._nac_params = nac_params
-            msg = "nac_params will be set by Phono3py.nac_params attributes."
-            warnings.warn(msg, DeprecationWarning)
-
-        self.init_phph_interaction(
-            nac_q_direction=nac_q_direction,
-            constant_averaged_interaction=constant_averaged_interaction,
-            frequency_scale_factor=frequency_scale_factor,
-            solve_dynamical_matrices=solve_dynamical_matrices,
-        )
-
     def set_phonon_data(self, frequencies, eigenvectors, grid_address):
         """Set phonon frequencies and eigenvectors in Interaction instance.
 
@@ -1612,8 +1564,6 @@ class Phono3py:
 
     def produce_fc3(
         self,
-        forces_fc3=None,
-        displacement_dataset=None,
         symmetrize_fc3r=False,
         is_compact_fc=False,
         fc_calculator=None,
@@ -1623,10 +1573,6 @@ class Phono3py:
 
         Parameters
         ----------
-        forces_fc3 :
-            Dummy argument. Deprecated at v2.0.
-        displacement_dataset : dict
-            See docstring of Phono3py.dataset. Deprecated at v2.0.
         symmetrize_fc3r : bool
             Only for type 1 displacement_dataset, translational and
             permutation symmetries are applied after creating fc3. This
@@ -1646,17 +1592,7 @@ class Phono3py:
             Options for external force constants calculator.
 
         """
-        if displacement_dataset is None:
-            disp_dataset = self._dataset
-        else:
-            msg = "Displacement dataset has to set by Phono3py.dataset."
-            warnings.warn(msg, DeprecationWarning)
-            disp_dataset = displacement_dataset
-
-        if forces_fc3 is not None:
-            self.forces = forces_fc3
-            msg = "Forces have to be set by Phono3py.forces or via " "Phono3py.dataset."
-            warnings.warn(msg, DeprecationWarning)
+        disp_dataset = self._dataset
 
         if fc_calculator is not None:
             disps, forces = get_displacements_and_forces_fc3(disp_dataset)
@@ -1706,8 +1642,6 @@ class Phono3py:
 
     def produce_fc2(
         self,
-        forces_fc2=None,
-        displacement_dataset=None,
         symmetrize_fc2=False,
         is_compact_fc=False,
         fc_calculator=None,
@@ -1717,10 +1651,6 @@ class Phono3py:
 
         Parameters
         ----------
-        forces_fc2 :
-            Dummy argument. Deprecated at v2.0
-        displacement_dataset : dict
-            See docstring of Phono3py.phonon_dataset. Deprecated at v2.0.
         symmetrize_fc2 : bool
             Only for type 1 displacement_dataset, translational and
             permutation symmetries are applied after creating fc3. This
@@ -1740,25 +1670,10 @@ class Phono3py:
             Options for external force constants calculator.
 
         """
-        if displacement_dataset is None:
-            if self._phonon_dataset is None:
-                disp_dataset = self._dataset
-            else:
-                disp_dataset = self._phonon_dataset
+        if self._phonon_dataset is None:
+            disp_dataset = self._dataset
         else:
-            disp_dataset = displacement_dataset
-            msg = (
-                "Displacement dataset for fc2 has to set by " "Phono3py.phonon_dataset."
-            )
-            warnings.warn(msg, DeprecationWarning)
-
-        if forces_fc2 is not None:
-            self.phonon_forces = forces_fc2
-            msg = (
-                "Forces for fc2 have to be set by Phono3py.phonon_forces "
-                "or via Phono3py.phonon_dataset."
-            )
-            warnings.warn(msg, DeprecationWarning)
+            disp_dataset = self._phonon_dataset
 
         if is_compact_fc:
             p2s_map = self._phonon_primitive.p2s_map
