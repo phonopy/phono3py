@@ -41,6 +41,7 @@ from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.units import THzToEv
 
 from phono3py.conductivity.base import ConductivityBase, ConductivityMixIn
+from phono3py.conductivity.kubo import ConductivityGroupVelocityMatrixMixIn
 from phono3py.conductivity.utils import (
     ConductivityRTAWriter,
     ShowCalcProgress,
@@ -814,6 +815,16 @@ class ConductivityWignerRTA(ConductivityVelocityOperatorMixIn, ConductivityRTABa
         self._gv_operator_sum2 = np.zeros(
             (num_grid_points, num_band0, nat3, 6), order="C", dtype=complex_dtype
         )
+
+
+class ConductivityKuboRTA(ConductivityGroupVelocityMatrixMixIn, ConductivityRTABase):
+    """Class of Kubo lattice thermal conductivity under RTA."""
+
+    def set_kappa_at_sigmas(self):
+        """Calculate the Kubo thermal conductivity."""
+
+    def _allocate_values(self):
+        super()._allocate_values()
 
 
 def get_thermal_conductivity_RTA(

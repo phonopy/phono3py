@@ -501,21 +501,38 @@ class ConductivityBase(ABC):
 
     @abstractmethod
     def _run_at_grid_point(self):
-        """Must be implementated in the inherited class."""
+        """Run at conductivity calculation at specified grid point.
+
+        Should be implementated in Conductivity* class.
+
+        """
         raise NotImplementedError()
 
     @abstractmethod
     def _allocate_values(self):
-        """Must be implementated in the inherited class."""
+        """Allocate necessary data arrays.
+
+        Should be implementated in Conductivity* class.
+
+        """
         raise NotImplementedError()
 
     @abstractmethod
     def _set_velocities(self, i_gp, i_data):
-        """Must be implementated in the inherited class."""
+        """Set velocities at grid point and at data location.
+
+        Should be implementated in Conductivity*MixIn.
+
+        """
         raise NotImplementedError()
 
     @abstractmethod
     def _init_velocity(self, gv_delta_q):
+        """Initialize velocitiy class instance.
+
+        Should be implementated in Conductivity*MixIn.
+
+        """
         raise NotImplementedError()
 
     def _get_ir_grid_points(self):
