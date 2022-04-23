@@ -35,6 +35,7 @@
 
 import sys
 from abc import abstractmethod
+from typing import Type, Union, cast
 
 import numpy as np
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
@@ -62,7 +63,7 @@ from phono3py.phonon.grid import get_grid_points_by_rotations
 class ConductivityRTABase(ConductivityBase):
     """Base class of ConductivityRTA*.
 
-    This is a base class for RTA classes.
+    This is a base class of RTA classes.
 
     """
 
@@ -975,8 +976,13 @@ def get_thermal_conductivity_RTA(
     else:
         _temperatures = temperatures
 
+    conductivity_RTA_class: Type[
+        Union[ConductivityRTA, ConductivityWignerRTA, ConductivityKuboRTA]
+    ]
     if conductivity_type == "wigner":
         conductivity_RTA_class = ConductivityWignerRTA
+    elif conductivity_type == "kubo":
+        conductivity_RTA_class = ConductivityKuboRTA
     else:
         conductivity_RTA_class = ConductivityRTA
 
@@ -1040,9 +1046,11 @@ def get_thermal_conductivity_RTA(
         br.set_kappa_at_sigmas()
         if log_level:
             if conductivity_type == "wigner":
-                ShowCalcProgress.kappa_Wigner_RTA(br, log_level)
+                ShowCalcProgress.kappa_Wigner_RTA(
+                    cast(ConductivityWignerRTA, br), log_level
+                )
             else:
-                ShowCalcProgress.kappa_RTA(br, log_level)
+                ShowCalcProgress.kappa_RTA(cast(ConductivityRTA, br), log_level)
         if write_kappa:
             ConductivityRTAWriter.write_kappa(
                 br,

@@ -56,7 +56,11 @@ unit_to_WmK = (
 
 
 class HeatCapacityMixIn:
-    """Heat capacity mix-in."""
+    """Heat capacity mix-in.
+
+    Used by other mix-in.
+
+    """
 
     @property
     def mode_heat_capacities(self):
@@ -107,7 +111,11 @@ class HeatCapacityMixIn:
 
 
 class ConductivityMixIn(HeatCapacityMixIn):
-    """Thermal conductivity mix-in."""
+    """Thermal conductivity mix-in.
+
+    Used by ConductivityRTA and ConductivityLBTE.
+
+    """
 
     @property
     def kappa(self):
@@ -264,7 +272,13 @@ class ConductivityMixIn(HeatCapacityMixIn):
 
 
 class ConductivityBase(ABC):
-    """Base class of Conductivity classes."""
+    """Base class of Conductivity classes.
+
+    All Conductivity* classes have to inherit this base class.
+
+    self._gv has to be allocated in the inherited classes.
+
+    """
 
     _average_gv_over_kstar = False
 
