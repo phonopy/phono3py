@@ -40,24 +40,6 @@ from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.units import VaspToTHz
 
 
-def get_group_velocity_matrices(
-    q, dynamical_matrix, q_length=None, symmetry=None, frequency_factor_to_THz=VaspToTHz
-):
-    """Return group velocity matrices at a q-points.
-
-    See details of parameters at `GroupVelocityMatrix`.
-
-    """
-    gv = GroupVelocityMatrix(
-        dynamical_matrix,
-        q_length=q_length,
-        symmetry=symmetry,
-        frequency_factor_to_THz=frequency_factor_to_THz,
-    )
-    gv.run([q])
-    return gv.group_velocities[0]
-
-
 class GroupVelocityMatrix(GroupVelocity):
     """Class to calculate group velocities matricies of phonons.
 
@@ -222,9 +204,7 @@ class GroupVelocityMatrix(GroupVelocity):
             List of phonon eigenvectors of degenerate bands.
 
         """
-        eigvals, eigvecs = np.linalg.eigh(
-            np.dot(eigsets.T.conj(), np.dot(ddms[0], eigsets))
-        )
+        _, eigvecs = np.linalg.eigh(np.dot(eigsets.T.conj(), np.dot(ddms[0], eigsets)))
 
         # gv = []
         rot_eigsets = np.dot(eigsets, eigvecs)

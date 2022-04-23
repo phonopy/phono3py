@@ -36,7 +36,7 @@
 from phono3py.phonon.group_velocity_matrix import GroupVelocityMatrix
 
 
-class ConductivityGroupVelocityMatrixMixIn:
+class ConductivityKuboMixIn:
     """Thermal conductivity mix-in for group velocity matrix."""
 
     def _init_velocity(self, gv_delta_q):
@@ -48,5 +48,11 @@ class ConductivityGroupVelocityMatrixMixIn:
         )
 
     def _set_velocities(self, i_gp, i_data):
-        self._set_gv_operator(i_gp, i_data)
-        self._set_gv_by_gv_operator(i_gp, i_data)
+        self._set_gv_matrix(i_gp, i_data)
+        self._set_gv_by_gv_matrix(i_gp, i_data)
+
+    def _set_gv_matrix(self, i_gp, i_data):
+        pass
+
+    def _set_gv_by_gv_matrix(self, i_gp, i_data):
+        pass

@@ -39,11 +39,12 @@ import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.units import EV, Angstrom, Hbar, THz
 
+from phono3py.conductivity.base import HeatCapacityMixIn
 from phono3py.phonon.grid import get_grid_points_by_rotations
 from phono3py.phonon.velocity_operator import VelocityOperator
 
 
-class ConductivityVelocityOperatorMixIn:
+class ConductivityWignerMixIn(HeatCapacityMixIn):
     """Thermal conductivity mix-in for velocity operator."""
 
     @property

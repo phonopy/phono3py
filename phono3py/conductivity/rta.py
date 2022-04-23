@@ -41,7 +41,7 @@ from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.units import THzToEv
 
 from phono3py.conductivity.base import ConductivityBase, ConductivityMixIn
-from phono3py.conductivity.kubo import ConductivityGroupVelocityMatrixMixIn
+from phono3py.conductivity.kubo import ConductivityKuboMixIn
 from phono3py.conductivity.utils import (
     ConductivityRTAWriter,
     ShowCalcProgress,
@@ -50,7 +50,7 @@ from phono3py.conductivity.utils import (
 )
 from phono3py.conductivity.utils import write_pp as write_phph
 from phono3py.conductivity.wigner import (
-    ConductivityVelocityOperatorMixIn,
+    ConductivityWignerMixIn,
     get_conversion_factor_WTE,
 )
 from phono3py.file_IO import read_pp_from_hdf5
@@ -124,6 +124,10 @@ class ConductivityRTABase(ConductivityBase):
         if self._temperatures is not None:
             self._allocate_values()
 
+        self._collision = ImagSelfEnergy(
+            self._pp, with_detail=(self._is_gamma_detail or self._is_N_U)
+        )
+
     def get_gamma_N_U(self):
         """Return N and U parts of gamma."""
         return (self._gamma_N, self._gamma_U)
@@ -165,9 +169,6 @@ class ConductivityRTABase(ConductivityBase):
                 self._gamma_U = np.zeros_like(self._gamma)
 
         self._gv = np.zeros((num_grid_points, num_band0, 3), order="C", dtype="double")
-        self._cv = np.zeros(
-            (num_temp, num_grid_points, num_band0), order="C", dtype="double"
-        )
         if self._isotope is not None:
             self._gamma_iso = np.zeros(
                 (len(self._sigmas), num_grid_points, num_band0),
@@ -180,9 +181,6 @@ class ConductivityRTABase(ConductivityBase):
             )
         self._num_ignored_phonon_modes = np.zeros(
             (len(self._sigmas), num_temp), order="C", dtype="intc"
-        )
-        self._collision = ImagSelfEnergy(
-            self._pp, with_detail=(self._is_gamma_detail or self._is_N_U)
         )
 
     def _run_at_grid_point(self):
@@ -528,6 +526,7 @@ class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
         log_level=0,
     ):
         """Init method."""
+        self._cv = None
         self._kappa = None
         self._mode_kappa = None
         self._gv_sum2 = None
@@ -557,7 +556,7 @@ class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
     def set_kappa_at_sigmas(self):
         """Calculate kappa from ph-ph interaction results."""
         num_band = len(self._pp.primitive) * 3
-        for i, grid_point in enumerate(self._grid_points):
+        for i, _ in enumerate(self._grid_points):
             cv = self._cv[:, i, :]
             gp = self._grid_points[i]
             frequencies = self._frequencies[gp]
@@ -605,6 +604,9 @@ class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
         num_grid_points = len(self._grid_points)
         num_temp = len(self._temperatures)
 
+        self._cv = np.zeros(
+            (num_temp, num_grid_points, num_band0), order="C", dtype="double"
+        )
         self._gv_sum2 = np.zeros(
             (num_grid_points, num_band0, 6), order="C", dtype="double"
         )
@@ -618,7 +620,7 @@ class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
         )
 
 
-class ConductivityWignerRTA(ConductivityVelocityOperatorMixIn, ConductivityRTABase):
+class ConductivityWignerRTA(ConductivityWignerMixIn, ConductivityRTABase):
     """Class of Wigner lattice thermal conductivity under RTA.
 
     Authors
@@ -650,6 +652,7 @@ class ConductivityWignerRTA(ConductivityVelocityOperatorMixIn, ConductivityRTABa
         log_level=0,
     ):
         """Init method."""
+        self._cv = None
         self._kappa_TOT_RTA = None
         self._kappa_P_RTA = None
         self._kappa_C = None
@@ -691,7 +694,7 @@ class ConductivityWignerRTA(ConductivityVelocityOperatorMixIn, ConductivityRTABa
 
         """
         num_band = len(self._pp.primitive) * 3
-        for i, grid_point in enumerate(self._grid_points):
+        for i, _ in enumerate(self._grid_points):
             cv = self._cv[:, i, :]
             gp = self._grid_points[i]
             frequencies = self._frequencies[gp]
@@ -777,6 +780,9 @@ class ConductivityWignerRTA(ConductivityVelocityOperatorMixIn, ConductivityRTABa
         num_temp = len(self._temperatures)
         nat3 = len(self._pp.primitive) * 3
 
+        self._cv = np.zeros(
+            (num_temp, num_grid_points, num_band0), order="C", dtype="double"
+        )
         self._kappa_TOT_RTA = np.zeros(
             (len(self._sigmas), num_temp, 6), order="C", dtype="double"
         )
@@ -817,14 +823,124 @@ class ConductivityWignerRTA(ConductivityVelocityOperatorMixIn, ConductivityRTABa
         )
 
 
-class ConductivityKuboRTA(ConductivityGroupVelocityMatrixMixIn, ConductivityRTABase):
+class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
     """Class of Kubo lattice thermal conductivity under RTA."""
 
+    def __init__(
+        self,
+        interaction: Interaction,
+        grid_points=None,
+        temperatures=None,
+        sigmas=None,
+        sigma_cutoff=None,
+        is_isotope=False,
+        mass_variances=None,
+        boundary_mfp=None,  # in micrometre
+        use_ave_pp=False,
+        is_kappa_star=True,
+        gv_delta_q=None,
+        is_full_pp=False,
+        read_pp=False,
+        store_pp=False,
+        pp_filename=None,
+        is_N_U=False,
+        is_gamma_detail=False,
+        is_frequency_shift_by_bubble=False,
+        log_level=0,
+    ):
+        """Init method."""
+        self._cv_mat = None
+        self._gv_mat = None
+        self._kappa = None
+
+        super().__init__(
+            interaction,
+            grid_points=grid_points,
+            temperatures=temperatures,
+            sigmas=sigmas,
+            sigma_cutoff=sigma_cutoff,
+            is_isotope=is_isotope,
+            mass_variances=mass_variances,
+            boundary_mfp=boundary_mfp,
+            use_ave_pp=use_ave_pp,
+            is_kappa_star=is_kappa_star,
+            gv_delta_q=gv_delta_q,
+            is_full_pp=is_full_pp,
+            read_pp=read_pp,
+            store_pp=store_pp,
+            pp_filename=pp_filename,
+            is_N_U=is_N_U,
+            is_gamma_detail=is_gamma_detail,
+            is_frequency_shift_by_bubble=is_frequency_shift_by_bubble,
+            log_level=log_level,
+        )
+
     def set_kappa_at_sigmas(self):
-        """Calculate the Kubo thermal conductivity."""
+        """Calculate kappa from ph-ph interaction results."""
+        num_band = len(self._pp.primitive) * 3
+        for i, _ in enumerate(self._grid_points):
+            cv = self._cv[:, i, :]
+            gp = self._grid_points[i]
+            frequencies = self._frequencies[gp]
+
+            # Kappa
+            for j in range(len(self._sigmas)):
+                for k in range(len(self._temperatures)):
+                    g_sum = self._get_main_diagonal(i, j, k)
+                    for ll in range(num_band):
+                        if frequencies[ll] < self._pp.cutoff_frequency:
+                            self._num_ignored_phonon_modes[j, k] += 1
+                            continue
+
+                        old_settings = np.seterr(all="raise")
+                        try:
+                            self._mode_kappa[j, k, i, ll] = (
+                                self._gv_sum2[i, ll]
+                                * cv[k, ll]
+                                / (g_sum[ll] * 2)
+                                * self._conversion_factor
+                            )
+                        except FloatingPointError:
+                            # supposed that g is almost 0 and |gv|=0
+                            pass
+                        except Exception:
+                            print("=" * 26 + " Warning " + "=" * 26)
+                            print(
+                                " Unexpected physical condition of ph-ph "
+                                "interaction calculation was found."
+                            )
+                            print(
+                                " g=%f at gp=%d, band=%d, freq=%f"
+                                % (g_sum[ll], gp, ll + 1, frequencies[ll])
+                            )
+                            print("=" * 61)
+                        np.seterr(**old_settings)
+
+        N = self._num_sampling_grid_points
+        self._kappa = self._mode_kappa.sum(axis=2).sum(axis=2) / N
 
     def _allocate_values(self):
         super()._allocate_values()
+
+        num_band0 = len(self._pp.band_indices)
+        num_band = len(self._pp.primitive) * 3
+        num_grid_points = len(self._grid_points)
+        num_temp = len(self._temperatures)
+
+        self._cv_mat = np.zeros(
+            (num_temp, num_grid_points, num_band0, num_band), order="C", dtype="double"
+        )
+        self._gv_mat = np.zeros(
+            (num_temp, num_grid_points, num_band0, num_band), order="C", dtype="double"
+        )
+        self._kappa = np.zeros(
+            (len(self._sigmas), num_temp, 6), order="C", dtype="double"
+        )
+        self._mode_kappa_mat = np.zeros(
+            (len(self._sigmas), num_temp, num_grid_points, num_band0, num_band, 6),
+            order="C",
+            dtype="double",
+        )
 
 
 def get_thermal_conductivity_RTA(

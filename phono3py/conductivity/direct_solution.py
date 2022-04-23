@@ -51,7 +51,7 @@ from phono3py.conductivity.utils import (
 )
 from phono3py.conductivity.utils import write_pp as write_phph
 from phono3py.conductivity.wigner import (
-    ConductivityVelocityOperatorMixIn,
+    ConductivityWignerMixIn,
     get_conversion_factor_WTE,
 )
 from phono3py.file_IO import read_pp_from_hdf5
@@ -119,6 +119,7 @@ class ConductivityLBTEBase(ConductivityBase):
         self._pinv_cutoff = pinv_cutoff
         self._pinv_solver = pinv_solver
 
+        self._cv = None
         self._f_vectors = None  # experimental
         self._mfp = None  # experimental
 
@@ -126,6 +127,21 @@ class ConductivityLBTEBase(ConductivityBase):
             self._all_grid_points = True
         else:
             self._all_grid_points = False
+        self._rot_grid_points = None
+
+        if self._is_reducible_collision_matrix:
+            self._collision = CollisionMatrix(
+                self._pp, is_reducible_collision_matrix=True, log_level=self._log_level
+            )
+        else:
+            self._rot_grid_points = self._get_rot_grid_points()
+            self._collision = CollisionMatrix(
+                self._pp,
+                rotations_cartesian=self._rotations_cartesian,
+                num_ir_grid_points=len(self._ir_grid_points),
+                rot_grid_points=self._rot_grid_points,
+                log_level=self._log_level,
+            )
 
         if self._temperatures is not None:
             self._allocate_values()
@@ -264,19 +280,32 @@ class ConductivityLBTEBase(ConductivityBase):
         mode_kappa[i_sigma, i_temp] /= len(self._rotations_cartesian)
         kappa[i_sigma, i_temp] = mode_kappa[i_sigma, i_temp].sum(axis=0).sum(axis=0) / N
 
+    def _get_rot_grid_points(self):
+        num_ir_grid_points = len(self._ir_grid_points)
+        rot_grid_points = np.zeros(
+            (num_ir_grid_points, len(self._point_operations)), dtype="int_"
+        )
+        if self._is_kappa_star:
+            rotations = self._pp.bz_grid.rotations  # rotations of GR-grid
+        else:
+            rotations = self._point_operations  # only identity
+        for i, ir_gp in enumerate(self._ir_grid_points):
+            rot_grid_points[i] = get_grid_points_by_rotations(
+                ir_gp, self._pp.bz_grid, reciprocal_rotations=rotations
+            )
+        return rot_grid_points
+
     def _allocate_values(self):
         """Allocate arrays."""
-        num_band0 = len(self._pp.band_indices)
-        num_band = len(self._pp.primitive) * 3
-        num_temp = len(self._temperatures)
-
         if self._is_reducible_collision_matrix:
-            self._allocate_reducible_colmat_values(num_temp, num_band0, num_band)
+            self._allocate_reducible_colmat_values()
         else:
-            self._allocate_ir_colmat_values(num_temp, num_band0, num_band)
+            self._allocate_ir_colmat_values()
 
-    def _allocate_local_values(self, num_temp, num_band0, num_grid_points):
+    def _allocate_local_values(self, num_grid_points):
         """Allocate grid point local arrays."""
+        num_band0 = len(self._pp.band_indices)
+        num_temp = len(self._temperatures)
         self._gv = np.zeros((num_grid_points, num_band0, 3), dtype="double", order="C")
         self._cv = np.zeros(
             (num_temp, num_grid_points, num_band0), dtype="double", order="C"
@@ -338,17 +367,17 @@ class ConductivityLBTEBase(ConductivityBase):
         if self._log_level:
             self._show_log(i_gp)
 
-    def _allocate_reducible_colmat_values(self, num_temp, num_band0, num_band):
+    def _allocate_reducible_colmat_values(self):
         """Allocate arrays for reducilble collision matrix."""
+        num_band0 = len(self._pp.band_indices)
+        num_band = len(self._pp.primitive) * 3
+        num_temp = len(self._temperatures)
         num_mesh_points = np.prod(self._pp.mesh_numbers)
         if self._all_grid_points:
             num_stored_grid_points = num_mesh_points
         else:
             num_stored_grid_points = 1
-        self._allocate_local_values(num_temp, num_band0, num_mesh_points)
-        self._collision = CollisionMatrix(
-            self._pp, is_reducible_collision_matrix=True, log_level=self._log_level
-        )
+        self._allocate_local_values(num_mesh_points)
         if self._collision_matrix is None:
             self._collision_matrix = np.empty(
                 (
@@ -369,8 +398,11 @@ class ConductivityLBTEBase(ConductivityBase):
             order="C",
         )
 
-    def _allocate_ir_colmat_values(self, num_temp, num_band0, num_band):
+    def _allocate_ir_colmat_values(self):
         """Allocate arrays for ir collision matrix."""
+        num_band0 = len(self._pp.band_indices)
+        num_band = len(self._pp.primitive) * 3
+        num_temp = len(self._temperatures)
         num_ir_grid_points = len(self._ir_grid_points)
         num_grid_points = len(self._grid_points)
         if self._all_grid_points:
@@ -378,26 +410,7 @@ class ConductivityLBTEBase(ConductivityBase):
         else:
             num_stored_grid_points = 1
 
-        self._allocate_local_values(num_temp, num_band0, num_grid_points)
-        self._rot_grid_points = np.zeros(
-            (num_ir_grid_points, len(self._point_operations)), dtype="int_"
-        )
-        if self._is_kappa_star:
-            rotations = self._pp.bz_grid.rotations  # rotations of GR-grid
-        else:
-            rotations = self._point_operations  # only identity
-
-        for i, ir_gp in enumerate(self._ir_grid_points):
-            self._rot_grid_points[i] = get_grid_points_by_rotations(
-                ir_gp, self._pp.bz_grid, reciprocal_rotations=rotations
-            )
-        self._collision = CollisionMatrix(
-            self._pp,
-            rotations_cartesian=self._rotations_cartesian,
-            num_ir_grid_points=num_ir_grid_points,
-            rot_grid_points=self._rot_grid_points,
-            log_level=self._log_level,
-        )
+        self._allocate_local_values(num_grid_points)
         if self._collision_matrix is None:
             self._collision_matrix = np.empty(
                 (
@@ -1249,9 +1262,11 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
         )
         return self.mode_kappa_RTA
 
-    def _allocate_local_values(self, num_temp, num_band0, num_grid_points):
+    def _allocate_local_values(self, num_grid_points):
         """Allocate grid point local arrays."""
-        super()._allocate_local_values(num_temp, num_band0, num_grid_points)
+        num_band0 = len(self._pp.band_indices)
+        num_temp = len(self._temperatures)
+        super()._allocate_local_values(num_grid_points)
 
         self._kappa = np.zeros(
             (len(self._sigmas), num_temp, 6), dtype="double", order="C"
@@ -1336,7 +1351,7 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
             )
 
 
-class ConductivityWignerLBTE(ConductivityVelocityOperatorMixIn, ConductivityLBTEBase):
+class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
     """Class of Wigner lattice thermal conductivity under direct-solution.
 
     Authors
@@ -1404,9 +1419,11 @@ class ConductivityWignerLBTE(ConductivityVelocityOperatorMixIn, ConductivityLBTE
             self._pp.primitive.volume
         )
 
-    def _allocate_local_values(self, num_temp, num_band0, num_grid_points):
+    def _allocate_local_values(self, num_grid_points):
         """Allocate grid point local arrays."""
-        super()._allocate_local_values(num_temp, num_band0, num_grid_points)
+        num_band0 = len(self._pp.band_indices)
+        num_temp = len(self._temperatures)
+        super()._allocate_local_values(num_grid_points)
 
         nat3 = len(self._pp.primitive) * 3
         self._kappa_TOT_RTA = np.zeros(

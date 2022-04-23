@@ -36,21 +36,231 @@
 import textwrap
 import warnings
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import numpy as np
 from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.phonon.group_velocity import GroupVelocity
-from phonopy.phonon.thermal_properties import mode_cv as get_mode_cv
+from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.units import EV, Angstrom, THz, THzToEv
 
 from phono3py.other.isotope import Isotope
+from phono3py.phonon3.collision_matrix import CollisionMatrix
+from phono3py.phonon3.imag_self_energy import ImagSelfEnergy
 from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon.grid import get_grid_points_by_rotations, get_ir_grid_points
 
 unit_to_WmK = (
     (THz * Angstrom) ** 2 / (Angstrom**3) * EV / THz / (2 * np.pi)
 )  # 2pi comes from definition of lifetime.
+
+
+class HeatCapacityMixIn:
+    """Heat capacity mix-in."""
+
+    @property
+    def mode_heat_capacities(self):
+        """Return mode heat capacity at constant volume at grid points.
+
+        Grid points are those at mode kappa are calculated.
+
+        """
+        return self._cv
+
+    def get_mode_heat_capacities(self):
+        """Return mode heat capacity at constant volume at grid points.
+
+        Grid points are those at mode kappa are calculated.
+
+        """
+        warnings.warn(
+            "Use attribute, Conductivity.mode_heat_capacities "
+            "instead of Conductivity.get_mode_heat_capacities().",
+            DeprecationWarning,
+        )
+        return self.mode_heat_capacities
+
+    def _set_cv(self, i_irgp, i_data):
+        """Set mode heat capacity.
+
+        The array has to be allocated somewhere out of the mix-in.
+
+        self._cv = np.zeros(
+            (num_temp, num_grid_points, num_band0), order="C", dtype="double"
+        )
+
+        """
+        grid_point = self._grid_points[i_irgp]
+        freqs = self._frequencies[grid_point][self._pp.band_indices]
+        cv = np.zeros((len(self._temperatures), len(freqs)), dtype="double")
+        # T/freq has to be large enough to avoid divergence.
+        # Otherwise just set 0.
+        for i, f in enumerate(freqs):
+            finite_t = self._temperatures > f / 100
+            if f > self._pp.cutoff_frequency:
+                cv[:, i] = np.where(
+                    finite_t,
+                    mode_cv(np.where(finite_t, self._temperatures, 10000), f * THzToEv),
+                    0,
+                )
+        self._cv[:, i_data, :] = cv
+
+
+class ConductivityMixIn(HeatCapacityMixIn):
+    """Thermal conductivity mix-in."""
+
+    @property
+    def kappa(self):
+        """Return kappa."""
+        return self._kappa
+
+    def get_kappa(self):
+        """Return kappa."""
+        warnings.warn(
+            "Use attribute, Conductivity.kappa " "instead of Conductivity.get_kappa().",
+            DeprecationWarning,
+        )
+        return self.kappa
+
+    @property
+    def mode_kappa(self):
+        """Return mode_kappa."""
+        return self._mode_kappa
+
+    def get_mode_kappa(self):
+        """Return mode_kappa."""
+        warnings.warn(
+            "Use attribute, Conductivity.mode_kappa "
+            "instead of Conductivity.get_mode_kappa().",
+            DeprecationWarning,
+        )
+        return self.mode_kappa
+
+    @property
+    def group_velocities(self):
+        """Return group velocities at grid points.
+
+        Grid points are those at mode kappa are calculated.
+
+        """
+        return self._gv
+
+    def get_group_velocities(self):
+        """Return group velocities at grid points.
+
+        Grid points are those at mode kappa are calculated.
+
+        """
+        warnings.warn(
+            "Use attribute, Conductivity.group_velocities "
+            "instead of Conductivity.get_group_velocities().",
+            DeprecationWarning,
+        )
+        return self.group_velocities
+
+    @property
+    def gv_by_gv(self):
+        """Return gv_by_gv at grid points where mode kappa are calculated."""
+        return self._gv_sum2
+
+    def get_gv_by_gv(self):
+        """Return gv_by_gv at grid points where mode kappa are calculated."""
+        warnings.warn(
+            "Use attribute, Conductivity.gv_by_gv "
+            "instead of Conductivity.get_gv_by_gv().",
+            DeprecationWarning,
+        )
+        return self.gv_by_gv
+
+    def _init_velocity(self, gv_delta_q):
+        self._velocity_obj = GroupVelocity(
+            self._pp.dynamical_matrix,
+            q_length=gv_delta_q,
+            symmetry=self._pp.primitive_symmetry,
+            frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
+        )
+
+    def _set_velocities(self, i_gp, i_data):
+        self._set_gv(i_gp, i_data)
+        self._set_gv_by_gv(i_gp, i_data)
+
+    def _set_gv(self, i_irgp, i_data):
+        """Set group velocity."""
+        irgp = self._grid_points[i_irgp]
+        if self._average_gv_over_kstar and len(self._point_operations) > 1:
+            gps_rotated = get_grid_points_by_rotations(
+                irgp, self._pp.bz_grid, with_surface=True
+            )
+            assert len(gps_rotated) == len(self._point_operations)
+
+            unique_gps = np.unique(gps_rotated)
+            gvs = {}
+            for bz_gp in unique_gps.tolist():  # To conver to int type.
+                self._velocity_obj.run([self._get_qpoint_from_gp_index(bz_gp)])
+                gvs[bz_gp] = self._velocity_obj.group_velocities[
+                    0, self._pp.band_indices, :
+                ]
+            gv = np.zeros_like(gvs[irgp])
+            for bz_gp, r in zip(gps_rotated, self._rotations_cartesian):
+                gv += np.dot(gvs[bz_gp], r)  # = dot(r_inv, gv)
+            self._gv[i_data] = gv / len(self._point_operations)
+        else:
+            self._velocity_obj.run([self._get_qpoint_from_gp_index(irgp)])
+            gv = self._velocity_obj.group_velocities[0, self._pp.band_indices, :]
+            self._gv[i_data] = gv
+
+    def _set_gv_by_gv(self, i_irgp, i_data):
+        """Outer product of group velocities.
+
+        (v x v) [num_k*, num_freqs, 3, 3]
+
+        """
+        gv_by_gv_tensor, order_kstar = self._get_gv_by_gv(i_irgp, i_data)
+        self._num_sampling_grid_points += order_kstar
+
+        # Sum all vxv at k*
+        for j, vxv in enumerate(([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])):
+            self._gv_sum2[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
+
+    def _get_gv_by_gv(self, i_irgp, i_data):
+        if self._is_kappa_star:
+            rotation_map = get_grid_points_by_rotations(
+                self._grid_points[i_irgp], self._pp.bz_grid
+            )
+        else:
+            rotation_map = get_grid_points_by_rotations(
+                self._grid_points[i_irgp],
+                self._pp.bz_grid,
+                reciprocal_rotations=self._point_operations,
+            )
+
+        gv = self._gv[i_data]
+        gv_by_gv = np.zeros((len(gv), 3, 3), dtype="double")
+
+        for r in self._rotations_cartesian:
+            gvs_rot = np.dot(gv, r.T)
+            gv_by_gv += [np.outer(r_gv, r_gv) for r_gv in gvs_rot]
+        gv_by_gv /= len(rotation_map) // len(np.unique(rotation_map))
+        order_kstar = len(np.unique(rotation_map))
+
+        if self._grid_weights is not None:
+            if order_kstar != self._grid_weights[i_irgp]:
+                if self._log_level:
+                    text = (
+                        "Number of elements in k* is unequal "
+                        "to number of equivalent grid-points. "
+                        "This means that the mesh sampling grids break "
+                        "symmetry. Please check carefully "
+                        "the convergence over grid point densities."
+                    )
+                    msg = textwrap.fill(
+                        text, initial_indent=" ", subsequent_indent=" ", width=70
+                    )
+                    print("*" * 30 + "Warning" + "*" * 30)
+                    print(msg)
+                    print("*" * 67)
+
+        return gv_by_gv, order_kstar
 
 
 class ConductivityBase(ABC):
@@ -147,7 +357,7 @@ class ConductivityBase(ABC):
         else:
             self._sigmas = sigmas
         self._sigma_cutoff = sigma_cutoff
-        self._collision = None  # has to be set derived class
+        self._collision: Optional[Union[ImagSelfEnergy, CollisionMatrix]] = None
         if temperatures is None:
             self._temperatures = None
         else:
@@ -181,7 +391,6 @@ class ConductivityBase(ABC):
         self._read_gamma_iso = False
 
         self._gv = None
-        self._cv = None
         self._gamma = None
         self._gamma_iso = None
 
@@ -227,28 +436,6 @@ class ConductivityBase(ABC):
     def bz_grid(self):
         """Return GR-grid."""
         return self._pp.bz_grid
-
-    @property
-    def mode_heat_capacities(self):
-        """Return mode heat capacity at constant volume at grid points.
-
-        Grid points are those at mode kappa are calculated.
-
-        """
-        return self._cv
-
-    def get_mode_heat_capacities(self):
-        """Return mode heat capacity at constant volume at grid points.
-
-        Grid points are those at mode kappa are calculated.
-
-        """
-        warnings.warn(
-            "Use attribute, Conductivity.mode_heat_capacities "
-            "instead of Conductivity.get_mode_heat_capacities().",
-            DeprecationWarning,
-        )
-        return self.mode_heat_capacities
 
     @property
     def frequencies(self):
@@ -593,25 +780,6 @@ class ConductivityBase(ABC):
         )
         self._mass_variances = self._isotope.mass_variances
 
-    def _set_cv(self, i_irgp, i_data):
-        """Set mode heat capacity."""
-        grid_point = self._grid_points[i_irgp]
-        freqs = self._frequencies[grid_point][self._pp.band_indices]
-        cv = np.zeros((len(self._temperatures), len(freqs)), dtype="double")
-        # T/freq has to be large enough to avoid divergence.
-        # Otherwise just set 0.
-        for i, f in enumerate(freqs):
-            finite_t = self._temperatures > f / 100
-            if f > self._pp.cutoff_frequency:
-                cv[:, i] = np.where(
-                    finite_t,
-                    get_mode_cv(
-                        np.where(finite_t, self._temperatures, 10000), f * THzToEv
-                    ),
-                    0,
-                )
-        self._cv[:, i_data, :] = cv
-
     def _get_main_diagonal(self, i, j, k):
         main_diagonal = self._gamma[j, k, i].copy()
         if self._gamma_iso is not None:
@@ -665,160 +833,3 @@ class ConductivityBase(ABC):
                     )
                     % tuple(self._mass_variances)
                 )
-
-
-class ConductivityMixIn:
-    """Thermal conductivity mix-in."""
-
-    @property
-    def kappa(self):
-        """Return kappa."""
-        return self._kappa
-
-    def get_kappa(self):
-        """Return kappa."""
-        warnings.warn(
-            "Use attribute, Conductivity.kappa " "instead of Conductivity.get_kappa().",
-            DeprecationWarning,
-        )
-        return self.kappa
-
-    @property
-    def mode_kappa(self):
-        """Return mode_kappa."""
-        return self._mode_kappa
-
-    def get_mode_kappa(self):
-        """Return mode_kappa."""
-        warnings.warn(
-            "Use attribute, Conductivity.mode_kappa "
-            "instead of Conductivity.get_mode_kappa().",
-            DeprecationWarning,
-        )
-        return self.mode_kappa
-
-    @property
-    def group_velocities(self):
-        """Return group velocities at grid points.
-
-        Grid points are those at mode kappa are calculated.
-
-        """
-        return self._gv
-
-    def get_group_velocities(self):
-        """Return group velocities at grid points.
-
-        Grid points are those at mode kappa are calculated.
-
-        """
-        warnings.warn(
-            "Use attribute, Conductivity.group_velocities "
-            "instead of Conductivity.get_group_velocities().",
-            DeprecationWarning,
-        )
-        return self.group_velocities
-
-    @property
-    def gv_by_gv(self):
-        """Return gv_by_gv at grid points where mode kappa are calculated."""
-        return self._gv_sum2
-
-    def get_gv_by_gv(self):
-        """Return gv_by_gv at grid points where mode kappa are calculated."""
-        warnings.warn(
-            "Use attribute, Conductivity.gv_by_gv "
-            "instead of Conductivity.get_gv_by_gv().",
-            DeprecationWarning,
-        )
-        return self.gv_by_gv
-
-    def _init_velocity(self, gv_delta_q):
-        self._velocity_obj = GroupVelocity(
-            self._pp.dynamical_matrix,
-            q_length=gv_delta_q,
-            symmetry=self._pp.primitive_symmetry,
-            frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
-        )
-
-    def _set_velocities(self, i_gp, i_data):
-        self._set_gv(i_gp, i_data)
-        self._set_gv_by_gv(i_gp, i_data)
-
-    def _set_gv(self, i_irgp, i_data):
-        """Set group velocity."""
-        irgp = self._grid_points[i_irgp]
-        if self._average_gv_over_kstar and len(self._point_operations) > 1:
-            gps_rotated = get_grid_points_by_rotations(
-                irgp, self._pp.bz_grid, with_surface=True
-            )
-            assert len(gps_rotated) == len(self._point_operations)
-
-            unique_gps = np.unique(gps_rotated)
-            gvs = {}
-            for bz_gp in unique_gps.tolist():  # To conver to int type.
-                self._velocity_obj.run([self._get_qpoint_from_gp_index(bz_gp)])
-                gvs[bz_gp] = self._velocity_obj.group_velocities[
-                    0, self._pp.band_indices, :
-                ]
-            gv = np.zeros_like(gvs[irgp])
-            for bz_gp, r in zip(gps_rotated, self._rotations_cartesian):
-                gv += np.dot(gvs[bz_gp], r)  # = dot(r_inv, gv)
-            self._gv[i_data] = gv / len(self._point_operations)
-        else:
-            self._velocity_obj.run([self._get_qpoint_from_gp_index(irgp)])
-            gv = self._velocity_obj.group_velocities[0, self._pp.band_indices, :]
-            self._gv[i_data] = gv
-
-    def _set_gv_by_gv(self, i_irgp, i_data):
-        """Outer product of group velocities.
-
-        (v x v) [num_k*, num_freqs, 3, 3]
-
-        """
-        gv_by_gv_tensor, order_kstar = self._get_gv_by_gv(i_irgp, i_data)
-        self._num_sampling_grid_points += order_kstar
-
-        # Sum all vxv at k*
-        for j, vxv in enumerate(([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])):
-            self._gv_sum2[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
-
-    def _get_gv_by_gv(self, i_irgp, i_data):
-        if self._is_kappa_star:
-            rotation_map = get_grid_points_by_rotations(
-                self._grid_points[i_irgp], self._pp.bz_grid
-            )
-        else:
-            rotation_map = get_grid_points_by_rotations(
-                self._grid_points[i_irgp],
-                self._pp.bz_grid,
-                reciprocal_rotations=self._point_operations,
-            )
-
-        gv = self._gv[i_data]
-        gv_by_gv = np.zeros((len(gv), 3, 3), dtype="double")
-
-        for r in self._rotations_cartesian:
-            gvs_rot = np.dot(gv, r.T)
-            gv_by_gv += [np.outer(r_gv, r_gv) for r_gv in gvs_rot]
-        gv_by_gv /= len(rotation_map) // len(np.unique(rotation_map))
-        order_kstar = len(np.unique(rotation_map))
-
-        if self._grid_weights is not None:
-            if order_kstar != self._grid_weights[i_irgp]:
-                if self._log_level:
-                    text = (
-                        "Number of elements in k* is unequal "
-                        "to number of equivalent grid-points. "
-                        "This means that the mesh sampling grids break "
-                        "symmetry. Please check carefully "
-                        "the convergence over grid point densities."
-                    )
-                    msg = textwrap.fill(
-                        text, initial_indent=" ", subsequent_indent=" ", width=70
-                    )
-                    print("*" * 30 + "Warning" + "*" * 30)
-                    print(msg)
-                    print("*" * 67)
-
-        return gv_by_gv, order_kstar
