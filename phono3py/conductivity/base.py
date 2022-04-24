@@ -41,7 +41,7 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.phonon.thermal_properties import mode_cv
-from phonopy.units import EV, Angstrom, THz, THzToEv
+from phonopy.units import EV, Angstrom, Kb, THz, THzToEv
 
 from phono3py.other.isotope import Isotope
 from phono3py.phonon3.collision_matrix import CollisionMatrix
@@ -94,16 +94,18 @@ class HeatCapacityMixIn:
 
         """
         grid_point = self._grid_points[i_gp]
-        freqs = self._frequencies[grid_point][self._pp.band_indices]
+        freqs = self._frequencies[grid_point][self._pp.band_indices] * THzToEv
+        cutoff = self._pp.cutoff_frequency * THzToEv
         cv = np.zeros((len(self._temperatures), len(freqs)), dtype="double")
-        # T/freq has to be large enough to avoid divergence.
+        # x=freq/T has to be small enough to avoid overflow of exp(x).
+        # x < 100 is the hard-corded criterion.
         # Otherwise just set 0.
         for i, f in enumerate(freqs):
-            finite_t = self._temperatures > f / 100
-            if f > self._pp.cutoff_frequency:
+            if f > cutoff:
+                condition = f / (self._temperatures * Kb) < 100
                 cv[:, i] = np.where(
-                    finite_t,
-                    mode_cv(np.where(finite_t, self._temperatures, 10000), f * THzToEv),
+                    condition,
+                    mode_cv(np.where(condition, self._temperatures, 10000), f),
                     0,
                 )
         self._cv[:, i_data, :] = cv
@@ -230,43 +232,14 @@ class ConductivityMixIn(HeatCapacityMixIn):
             self._gv_sum2[i_data, :, j] = gv_by_gv_tensor[:, vxv[0], vxv[1]]
 
     def _get_gv_by_gv(self, i_gp, i_data):
-        if self._is_kappa_star:
-            rotation_map = get_grid_points_by_rotations(
-                self._grid_points[i_gp], self._pp.bz_grid
-            )
-        else:
-            rotation_map = get_grid_points_by_rotations(
-                self._grid_points[i_gp],
-                self._pp.bz_grid,
-                reciprocal_rotations=self._point_operations,
-            )
-
+        multi = self._get_multiplicity_at_q(i_gp)
         gv = self._gv[i_data]
         gv_by_gv = np.zeros((len(gv), 3, 3), dtype="double")
-
         for r in self._rotations_cartesian:
             gvs_rot = np.dot(gv, r.T)
             gv_by_gv += [np.outer(r_gv, r_gv) for r_gv in gvs_rot]
-        gv_by_gv /= len(rotation_map) // len(np.unique(rotation_map))
-        order_kstar = len(np.unique(rotation_map))
-
-        if order_kstar != self._grid_weights[i_gp]:
-            if self._log_level:
-                text = (
-                    "Number of elements in k* is unequal "
-                    "to number of equivalent grid-points. "
-                    "This means that the mesh sampling grids break "
-                    "symmetry. Please check carefully "
-                    "the convergence over grid point densities."
-                )
-                msg = textwrap.fill(
-                    text, initial_indent=" ", subsequent_indent=" ", width=70
-                )
-                print("*" * 30 + "Warning" + "*" * 30)
-                print(msg)
-                print("*" * 67)
-
-        return gv_by_gv, order_kstar
+        gv_by_gv /= multi
+        return gv_by_gv, self._get_kstar_order(i_gp, multi)
 
 
 class ConductivityBase(ABC):
@@ -802,6 +775,49 @@ class ConductivityBase(ABC):
 
         """
         return np.dot(self._pp.bz_grid.addresses[i_gps], self._pp.bz_grid.QDinv.T)
+
+    def _get_multiplicity_at_q(self, i_gp):
+        """Return multiplicity (order of site-symmetry) of q-point."""
+        if self._is_kappa_star:
+            q = self._get_qpoint_from_gp_index(self._grid_points[i_gp])
+            reclat = np.linalg.inv(self._pp.primitive.cell)
+            multi = 0
+            for q_rot in [np.dot(r, q) for r in self._point_operations]:
+                diff = q - q_rot
+                diff -= np.rint(diff)
+                dist = np.linalg.norm(np.dot(reclat, diff))
+                if dist < self._pp.primitive_symmetry.tolerance:
+                    multi += 1
+        else:
+            multi = 1
+        return multi
+
+    def _get_kstar_order(self, i_gp, multi):
+        """Return order (number of arms) of kstar.
+
+        multi : int
+            Multiplicity of q-point of `i_gp`, which can be obtained by
+            `self._get_multiplicity_at_q(i_gp)`.
+
+        """
+        order_kstar = len(self._point_operations) // multi
+        if order_kstar != self._grid_weights[i_gp]:
+            if self._log_level:
+                text = (
+                    "Number of elements in k* is unequal "
+                    "to number of equivalent grid-points. "
+                    "This means that the mesh sampling grids break "
+                    "symmetry. Please check carefully "
+                    "the convergence over grid point densities."
+                )
+                msg = textwrap.fill(
+                    text, initial_indent=" ", subsequent_indent=" ", width=70
+                )
+                print("*" * 30 + "Warning" + "*" * 30)
+                print(msg)
+                print("*" * 67)
+
+        return order_kstar
 
     def _get_gamma_isotope_at_sigmas(self, i):
         gamma_iso = []

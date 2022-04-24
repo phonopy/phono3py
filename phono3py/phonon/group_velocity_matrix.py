@@ -144,7 +144,7 @@ class GroupVelocityMatrix(GroupVelocity):
         freqs = np.where(condition, freqs, 1)
         rot_eigvecs = rot_eigvecs * np.where(condition, 1 / np.sqrt(2 * freqs), 0)
 
-        gvm = np.array((3,) + eigvecs.shape, dtype=self._complex_dtype)
+        gvm = np.zeros((3,) + eigvecs.shape, dtype=self._complex_dtype)
         for i, ddm in enumerate(ddms[1:]):
             ddm = ddm * (self._factor**2)
             gvm[i] = np.dot(rot_eigvecs.T.conj(), np.dot(ddm, rot_eigvecs))

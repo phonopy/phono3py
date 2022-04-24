@@ -33,11 +33,25 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import numpy as np
+from phonopy.units import Kb, THzToEv
+
 from phono3py.phonon.group_velocity_matrix import GroupVelocityMatrix
+from phono3py.phonon.heat_capacity_matrix import mode_cv_matrix
 
 
 class ConductivityKuboMixIn:
     """Thermal conductivity mix-in for group velocity matrix."""
+
+    @property
+    def kappa(self):
+        """Return kappa."""
+        return self._kappa
+
+    @property
+    def mode_kappa_mat(self):
+        """Return mode_kappa_mat."""
+        return self._mode_kappa_mat
 
     def _init_velocity(self, gv_delta_q):
         self._velocity_obj = GroupVelocityMatrix(
@@ -48,15 +62,51 @@ class ConductivityKuboMixIn:
         )
 
     def _set_cv(self, i_gp, i_data):
-        pass
+        """Set heat capacity matrix.
+
+        x=freq/T has to be small enough to avoid overflow of exp(x).
+        x < 100 is the hard-corded criterion.
+        Otherwise just set 0.
+
+        """
+        irgp = self._grid_points[i_gp]
+        freqs = self._frequencies[irgp] * THzToEv
+        cutoff = self._pp.cutoff_frequency * THzToEv
+
+        for i_temp, temp in enumerate(self._temperatures):
+            if (freqs / (temp * Kb) > 100).any():
+                continue
+            cvm = mode_cv_matrix(temp, freqs, cutoff=cutoff)
+            self._cv_mat[i_temp, i_data] = cvm[self._pp.band_indices, :]
 
     def _set_velocities(self, i_gp, i_data):
-        self._gv_mat[i_data] = self._get_gv_matrix(i_gp)
+        gvm, gv = self._get_gv_matrix(i_gp)
+        self._gv_mat[i_data] = gvm
+        self._gv[i_data] = gv
 
     def _get_gv_matrix(self, i_gp):
         """Get group velocity matrix."""
+        self._num_sampling_grid_points += self._grid_weights[i_gp]
         irgp = self._grid_points[i_gp]
         self._velocity_obj.run([self._get_qpoint_from_gp_index(irgp)])
-        return self._velocity_obj.group_velocity_matrices[
-            0, :, self._pp.band_indices, :
-        ]
+        gvm = np.zeros(self._gv_mat.shape[1:], dtype=self._complex_dtype, order="C")
+        gv = np.zeros(self._gv.shape[1:], dtype="double", order="C")
+        for i in range(3):
+            gvm[i] = self._velocity_obj.group_velocity_matrices[
+                0, i, self._pp.band_indices, :
+            ]
+            gv[:, i] = (
+                self._velocity_obj.group_velocity_matrices[0, i]
+                .diagonal()[self._pp.band_indices]
+                .real
+            )
+        return gvm, gv
+
+    # def _get_gvm_by_gvm(self, i_gp):
+    #     q = self._get_qpoint_from_gp_index(self._grid_points[i_gp])
+    #     qpoints = [np.dot(r, q) for r in self._point_operations]
+    #     self._velocity_obj.run(qpoints)
+    #     gvm = self._velocity_obj.group_velocity_matrices
+    #     gvm_sum = np.zeros(
+    #         (6,) + self._gv_mat.shape[2:], dtype=self._complex_dtype, order="C"
+    #     )

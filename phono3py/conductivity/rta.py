@@ -33,7 +33,6 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import sys
 from abc import abstractmethod
 from typing import Type, Union, cast
 
@@ -448,7 +447,7 @@ class ConductivityRTABase(ConductivityBase):
         else:
             self._show_log_values(frequencies, gv, ave_pp)
 
-        sys.stdout.flush()
+        print("", end="", flush=True)
 
     def _show_log_values(self, frequencies, gv, ave_pp):
         if self._is_full_pp or self._use_ave_pp or self._use_const_ave_pp:
@@ -603,6 +602,7 @@ class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
         super()._allocate_values()
 
         num_band0 = len(self._pp.band_indices)
+        num_band = len(self._pp.primitive) * 3
         num_grid_points = len(self._grid_points)
         num_temp = len(self._temperatures)
 
@@ -612,11 +612,14 @@ class ConductivityRTA(ConductivityMixIn, ConductivityRTABase):
         self._gv_sum2 = np.zeros(
             (num_grid_points, num_band0, 6), order="C", dtype="double"
         )
+
+        # kappa* and mode_kappa* are accessed when all bands exist, i.e.,
+        # num_band0==num_band.
         self._kappa = np.zeros(
             (len(self._sigmas), num_temp, 6), order="C", dtype="double"
         )
         self._mode_kappa = np.zeros(
-            (len(self._sigmas), num_temp, num_grid_points, num_band0, 6),
+            (len(self._sigmas), num_temp, num_grid_points, num_band, 6),
             order="C",
             dtype="double",
         )
@@ -785,6 +788,15 @@ class ConductivityWignerRTA(ConductivityWignerMixIn, ConductivityRTABase):
         self._cv = np.zeros(
             (num_temp, num_grid_points, num_band0), order="C", dtype="double"
         )
+        self._gv_operator = np.zeros(
+            (num_grid_points, num_band0, nat3, 3), order="C", dtype=self._complex_dtype
+        )
+        self._gv_operator_sum2 = np.zeros(
+            (num_grid_points, num_band0, nat3, 6), order="C", dtype=self._complex_dtype
+        )
+
+        # kappa* and mode_kappa* are accessed when all bands exist, i.e.,
+        # num_band0==num_band.
         self._kappa_TOT_RTA = np.zeros(
             (len(self._sigmas), num_temp, 6), order="C", dtype="double"
         )
@@ -796,7 +808,7 @@ class ConductivityWignerRTA(ConductivityWignerMixIn, ConductivityRTABase):
         )
 
         self._mode_kappa_P_RTA = np.zeros(
-            (len(self._sigmas), num_temp, num_grid_points, num_band0, 6),
+            (len(self._sigmas), num_temp, num_grid_points, nat3, 6),
             order="C",
             dtype="double",
         )
@@ -814,13 +826,6 @@ class ConductivityWignerRTA(ConductivityWignerMixIn, ConductivityRTABase):
             ),
             order="C",
             dtype="double",
-        )
-
-        self._gv_operator = np.zeros(
-            (num_grid_points, num_band0, nat3, 3), order="C", dtype=self._complex_dtype
-        )
-        self._gv_operator_sum2 = np.zeros(
-            (num_grid_points, num_band0, nat3, 6), order="C", dtype=self._complex_dtype
         )
 
 
@@ -878,47 +883,65 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
 
     def set_kappa_at_sigmas(self):
         """Calculate kappa from ph-ph interaction results."""
-        num_band = len(self._pp.primitive) * 3
         for i_gp, _ in enumerate(self._grid_points):
-            cv = self._cv[:, i_gp, :]
-            gp = self._grid_points[i_gp]
-            frequencies = self._frequencies[gp]
-
-            # Kappa
+            frequencies = self._frequencies[self._grid_points[i_gp]]
             for j in range(len(self._sigmas)):
                 for k in range(len(self._temperatures)):
                     g_sum = self._get_main_diagonal(i_gp, j, k)
-                    for ll in range(num_band):
-                        if frequencies[ll] < self._pp.cutoff_frequency:
+                    for i_band, freq in enumerate(frequencies):
+                        if freq < self._pp.cutoff_frequency:
                             self._num_ignored_phonon_modes[j, k] += 1
                             continue
-
-                        old_settings = np.seterr(all="raise")
-                        try:
-                            self._mode_kappa[j, k, i_gp, ll] = (
-                                self._gv_sum2[i_gp, ll]
-                                * cv[k, ll]
-                                / (g_sum[ll] * 2)
-                                * self._conversion_factor
-                            )
-                        except FloatingPointError:
-                            # supposed that g is almost 0 and |gv|=0
-                            pass
-                        except Exception:
-                            print("=" * 26 + " Warning " + "=" * 26)
-                            print(
-                                " Unexpected physical condition of ph-ph "
-                                "interaction calculation was found."
-                            )
-                            print(
-                                " g=%f at gp=%d, band=%d, freq=%f"
-                                % (g_sum[ll], gp, ll + 1, frequencies[ll])
-                            )
-                            print("=" * 61)
-                        np.seterr(**old_settings)
-
+                        self._set_kappa_at_sigmas(
+                            j, k, i_gp, i_band, g_sum, frequencies
+                        )
         N = self._num_sampling_grid_points
-        self._kappa = self._mode_kappa.sum(axis=2).sum(axis=2) / N
+        self._kappa = self._mode_kappa_mat.sum(axis=2).sum(axis=2).sum(axis=2).real / N
+
+    def _set_kappa_at_sigmas(self, j, k, i_gp, i_band, g_sum, frequencies):
+        gvm = self._gv_mat[i_gp]
+        cvm = self._cv_mat[k, i_gp]
+        for j_band, freq in enumerate(frequencies):
+            if freq < self._pp.cutoff_frequency:
+                return
+
+            g = g_sum[i_band] + g_sum[j_band]
+            for i_pair, (a, b) in enumerate(
+                ([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])
+            ):
+                old_settings = np.seterr(all="raise")
+                try:
+                    self._mode_kappa_mat[j, k, i_gp, i_band, j_band, i_pair] = (
+                        cvm[i_band, j_band]
+                        * gvm[a, i_band, j_band]
+                        * gvm[b, j_band, i_band]
+                        * g
+                        / ((frequencies[j_band] - frequencies[i_band]) ** 2 + g**2)
+                        * self._conversion_factor
+                    )
+                except FloatingPointError:
+                    # supposed that g is almost 0 and |gv|=0
+                    pass
+                except Exception:
+                    gp = self._grid_points[i_gp]
+                    print("=" * 26 + " Warning " + "=" * 26)
+                    print(
+                        " Unexpected physical condition of ph-ph "
+                        "interaction calculation was found."
+                    )
+                    print(
+                        " g=%f at gp=%d, band=%d, freq=%f, band=%d, freq=%f"
+                        % (
+                            g_sum[i_band],
+                            gp,
+                            i_band + 1,
+                            frequencies[i_band],
+                            j_band + 1,
+                            frequencies[j_band],
+                        )
+                    )
+                    print("=" * 61)
+                np.seterr(**old_settings)
 
     def _allocate_values(self):
         super()._allocate_values()
@@ -936,12 +959,15 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
             dtype=self._complex_dtype,
             order="C",
         )
+
+        # kappa and mode_kappa_mat are accessed when all bands exist, i.e.,
+        # num_band0==num_band.
         self._kappa = np.zeros(
             (len(self._sigmas), num_temp, 6), dtype="double", order="C"
         )
         self._mode_kappa_mat = np.zeros(
-            (len(self._sigmas), num_temp, num_grid_points, num_band0, num_band, 6),
-            dtype="double",
+            (len(self._sigmas), num_temp, num_grid_points, num_band, num_band, 6),
+            dtype=self._complex_dtype,
             order="C",
         )
 

@@ -423,6 +423,13 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         help="Calculate joint density of states",
     )
     parser.add_argument(
+        "--kubo",
+        dest="is_kubo_kappa",
+        action="store_true",
+        default=False,
+        help="Choose Kubo lattice thermal conductivity.",
+    )
+    parser.add_argument(
         "--lbte",
         dest="is_lbte",
         action="store_true",
