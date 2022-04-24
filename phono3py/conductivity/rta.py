@@ -170,7 +170,7 @@ class ConductivityRTABase(ConductivityBase):
                 self._gamma_U = np.zeros_like(self._gamma)
 
         self._gv = np.zeros((num_grid_points, num_band0, 3), order="C", dtype="double")
-        if self._isotope is not None:
+        if self._is_isotope:
             self._gamma_iso = np.zeros(
                 (len(self._sigmas), num_grid_points, num_band0),
                 order="C",
@@ -213,7 +213,7 @@ class ConductivityRTABase(ConductivityBase):
             else:  # can save memory space
                 self._set_gamma_at_sigmas_lowmem(i_gp)
 
-        if self._isotope is not None and not self._read_gamma_iso:
+        if self._is_isotope and not self._read_gamma_iso:
             gamma_iso = self._get_gamma_isotope_at_sigmas(i_gp)
             self._gamma_iso[:, i_gp, :] = gamma_iso[:, self._pp.band_indices]
 

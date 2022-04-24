@@ -37,6 +37,7 @@ import sys
 import time
 import warnings
 from abc import abstractmethod
+from typing import Type, Union
 
 import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
@@ -310,18 +311,16 @@ class ConductivityLBTEBase(ConductivityBase):
         self._cv = np.zeros(
             (num_temp, num_grid_points, num_band0), dtype="double", order="C"
         )
+        self._gamma = np.zeros(
+            (len(self._sigmas), num_temp, num_grid_points, num_band0),
+            dtype="double",
+            order="C",
+        )
         if self._is_full_pp:
             self._averaged_pp_interaction = np.zeros(
                 (num_grid_points, num_band0), dtype="double", order="C"
             )
-
-        if self._gamma is None:
-            self._gamma = np.zeros(
-                (len(self._sigmas), num_temp, num_grid_points, num_band0),
-                dtype="double",
-                order="C",
-            )
-        if self._isotope is not None:
+        if self._is_isotope:
             self._gamma_iso = np.zeros(
                 (len(self._sigmas), num_grid_points, num_band0),
                 dtype="double",
@@ -359,7 +358,7 @@ class ConductivityLBTEBase(ConductivityBase):
             i_data = i_gp
         self._set_velocities(i_gp, i_data)
         self._set_cv(i_gp, i_data)
-        if self._isotope is not None:
+        if self._is_isotope:
             gamma_iso = self._get_gamma_isotope_at_sigmas(i_gp)
             band_indices = self._pp.band_indices
             self._gamma_iso[:, i_data, :] = gamma_iso[:, band_indices]
@@ -608,13 +607,13 @@ class ConductivityLBTEBase(ConductivityBase):
             gamma_irgp = self._gamma[:, :, ir_gp, :].copy()
             self._gamma[:, :, ir_gp, :] = 0
             multi = (rot_grid_points[:, ir_gp] == ir_gp).sum()
-            if self._gamma_iso is not None:
+            if self._is_isotope:
                 gamma_iso_irgp = self._gamma_iso[:, ir_gp, :].copy()
                 self._gamma_iso[:, ir_gp, :] = 0
             for j, r in enumerate(self._rotations_cartesian):
                 gp_r = rot_grid_points[j, ir_gp]
                 self._gamma[:, :, gp_r, :] += gamma_irgp / multi
-                if self._gamma_iso is not None:
+                if self._is_isotope:
                     self._gamma_iso[:, gp_r, :] += gamma_iso_irgp / multi
                 self._cv[:, gp_r, :] += cv_irgp / multi
                 self._gv[gp_r] += np.dot(gv_irgp, r.T) / multi
@@ -1663,6 +1662,7 @@ def get_thermal_conductivity_LBTE(
     else:
         temps = _temperatures
 
+    conductivity_LBTE_class: Type[Union[ConductivityLBTE, ConductivityWignerLBTE]]
     if conductivity_type == "wigner":
         conductivity_LBTE_class = ConductivityWignerLBTE
     else:

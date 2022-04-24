@@ -291,7 +291,7 @@ class ConductivityBase(ABC):
         sigma_cutoff=None,
         is_isotope=False,
         mass_variances=None,
-        boundary_mfp=None,
+        boundary_mfp: Optional[float] = None,
         is_kappa_star=True,
         gv_delta_q=None,
         is_full_pp=False,
@@ -353,25 +353,26 @@ class ConductivityBase(ABC):
         self._is_full_pp = is_full_pp
         self._log_level = log_level
 
-        self._rotations_cartesian = None
-        self._point_operations = None
+        self._rotations_cartesian: np.ndarray
+        self._point_operations: np.ndarray
         self._set_point_operations()
 
-        self._grid_point_count: int = 0
-        self._grid_points = None
-        self._grid_weights = None
-        self._ir_grid_points = None
-        self._ir_grid_weights = None
-        self._num_sampling_grid_points = 0
+        self._grid_points: np.ndarray
+        self._grid_weights: np.ndarray
+        self._ir_grid_points: np.ndarray
+        self._ir_grid_weights: np.ndarray
         self._set_grid_properties(grid_points)
+        self._grid_point_count: int = 0
+        self._num_sampling_grid_points: int = 0
 
-        self._sigmas: Optional[List]
+        self._sigmas: List
         if sigmas is None:
             self._sigmas = []
         else:
-            self._sigmas = sigmas
+            self._sigmas = list(sigmas)
         self._sigma_cutoff = sigma_cutoff
         self._collision: Optional[Union[ImagSelfEnergy, CollisionMatrix]] = None
+        self._temperatures: Optional[np.ndarray]
         if temperatures is None:
             self._temperatures = None
         else:
@@ -393,20 +394,21 @@ class ConductivityBase(ABC):
         if (self._phonon_done == 0).any():
             self._pp.run_phonon_solver()
 
-        self._isotope = None
-        self._mass_variances = None
         self._is_isotope = is_isotope
         if mass_variances is not None:
             self._is_isotope = True
+        self._isotope: Isotope
+        self._mass_variances: np.ndarray
         if self._is_isotope:
             self._set_isotope(mass_variances)
 
         self._read_gamma = False
         self._read_gamma_iso = False
 
-        self._gv = None
-        self._gamma = None
-        self._gamma_iso = None
+        # Allocated in self._allocate_values.
+        self._gv: np.ndarray
+        self._gamma: np.ndarray
+        self._gamma_iso: Optional[np.ndarray] = None
 
         volume = self._pp.primitive.volume
         self._conversion_factor = unit_to_WmK / volume
@@ -688,7 +690,7 @@ class ConductivityBase(ABC):
 
     def _set_grid_properties(self, grid_points):
         if grid_points is not None:  # Specify grid points
-            self._grid_points = grid_points
+            self._grid_points = np.array(grid_points, dtype="int_")
             (self._ir_grid_points, self._ir_grid_weights) = self._get_ir_grid_points()
         elif not self._is_kappa_star:  # All grid points
             self._grid_points = self._pp.bz_grid.grg2bzg
@@ -796,7 +798,7 @@ class ConductivityBase(ABC):
 
     def _get_main_diagonal(self, i, j, k):
         main_diagonal = self._gamma[j, k, i].copy()
-        if self._gamma_iso is not None:
+        if self._is_isotope:
             main_diagonal += self._gamma_iso[j, i]
         if self._boundary_mfp is not None:
             main_diagonal += self._get_boundary_scattering(i)
