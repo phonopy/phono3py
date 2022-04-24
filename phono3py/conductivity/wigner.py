@@ -164,13 +164,12 @@ class ConductivityWignerMixIn(HeatCapacityMixIn):
         gv_operator = self._gv_operator[i_data]
         nat3 = len(self._pp.primitive) * 3
         nbands = np.shape(gv_operator)[0]
-        complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
 
-        gv_by_gv_operator = np.zeros((nbands, nat3, 3, 3), dtype=complex_dtype)
+        gv_by_gv_operator = np.zeros((nbands, nat3, 3, 3), dtype=self._complex_dtype)
 
         for r in self._rotations_cartesian:
             # can be optimized
-            gvs_rot_operator = np.zeros((nbands, nat3, 3), dtype=complex_dtype)
+            gvs_rot_operator = np.zeros((nbands, nat3, 3), dtype=self._complex_dtype)
             for s in range(0, nbands):
                 for s_p in range(0, nat3):
                     for i in range(0, 3):

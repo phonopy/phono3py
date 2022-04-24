@@ -36,10 +36,9 @@
 import textwrap
 import warnings
 from abc import ABC, abstractmethod
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
-from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.phonon.thermal_properties import mode_cv
 from phonopy.units import EV, Angstrom, THz, THzToEv
@@ -84,7 +83,7 @@ class HeatCapacityMixIn:
         )
         return self.mode_heat_capacities
 
-    def _set_cv(self, i_irgp, i_data):
+    def _set_cv(self, i_gp, i_data):
         """Set mode heat capacity.
 
         The array has to be allocated somewhere out of the mix-in.
@@ -94,7 +93,7 @@ class HeatCapacityMixIn:
         )
 
         """
-        grid_point = self._grid_points[i_irgp]
+        grid_point = self._grid_points[i_gp]
         freqs = self._frequencies[grid_point][self._pp.band_indices]
         cv = np.zeros((len(self._temperatures), len(freqs)), dtype="double")
         # T/freq has to be large enough to avoid divergence.
@@ -189,12 +188,13 @@ class ConductivityMixIn(HeatCapacityMixIn):
         )
 
     def _set_velocities(self, i_gp, i_data):
-        self._set_gv(i_gp, i_data)
+        self._gv[i_data] = self._get_gv(i_gp)
         self._set_gv_by_gv(i_gp, i_data)
 
-    def _set_gv(self, i_irgp, i_data):
-        """Set group velocity."""
-        irgp = self._grid_points[i_irgp]
+    def _get_gv(self, i_gp):
+        """Get group velocity."""
+        irgp = self._grid_points[i_gp]
+
         if self._average_gv_over_kstar and len(self._point_operations) > 1:
             gps_rotated = get_grid_points_by_rotations(
                 irgp, self._pp.bz_grid, with_surface=True
@@ -211,11 +211,10 @@ class ConductivityMixIn(HeatCapacityMixIn):
             gv = np.zeros_like(gvs[irgp])
             for bz_gp, r in zip(gps_rotated, self._rotations_cartesian):
                 gv += np.dot(gvs[bz_gp], r)  # = dot(r_inv, gv)
-            self._gv[i_data] = gv / len(self._point_operations)
+            return gv / len(self._point_operations)
         else:
             self._velocity_obj.run([self._get_qpoint_from_gp_index(irgp)])
-            gv = self._velocity_obj.group_velocities[0, self._pp.band_indices, :]
-            self._gv[i_data] = gv
+            return self._velocity_obj.group_velocities[0, self._pp.band_indices, :]
 
     def _set_gv_by_gv(self, i_gp, i_data):
         """Outer product of group velocities.
@@ -351,14 +350,14 @@ class ConductivityBase(ABC):
         self._is_kappa_star = is_kappa_star
         self._is_full_pp = is_full_pp
         self._log_level = log_level
+        self._complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
 
-        self._rotations_cartesian: np.ndarray
-        self._point_operations: np.ndarray
-        self._set_point_operations()
-
-        self._grid_points: np.ndarray
-        self._ir_grid_points: np.ndarray
-        self._set_grid_info(grid_points)
+        self._point_operations, self._rotations_cartesian = self._get_point_operations()
+        (
+            self._grid_points,
+            self._ir_grid_points,
+            self._grid_weights,
+        ) = self._get_grid_info(grid_points)
         self._grid_point_count: int = 0
         self._num_sampling_grid_points: int = 0
 
@@ -404,8 +403,8 @@ class ConductivityBase(ABC):
         volume = self._pp.primitive.volume
         self._conversion_factor = unit_to_WmK / volume
 
-        # `self._velocity_obj`` is the instance of an inherited class of
-        # `GroupVelocity`. `self._init_velocity()1 is the method setup the instance,
+        # `self._velocity_obj` is the instance of an inherited class of
+        # `GroupVelocity`. `self._init_velocity()` is the method setup the instance,
         # which must be implmented in the inherited class of `ConductivityBase`.
         self._velocity_obj: GroupVelocity
         self._init_velocity(gv_delta_q)
@@ -670,43 +669,62 @@ class ConductivityBase(ABC):
         """
         return self._num_sampling_grid_points
 
-    def _set_point_operations(self):
-        """Set up reciprocal point group operations.
+    def _get_point_operations(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Return reciprocal point group operations.
 
-        self._point_operations : those in reduced coordinates.
-        self._rotations_cartesian : those in Cartesian coordinates.
+        Returns
+        -------
+        point_operations : ndarray
+            Operations in reduced coordinates.
+            shape=(num_operations, 3, 3), dtype='int_'
+        rotations_cartesian : ndarray
+            Operations in Cartesian coordinates.
+            shape=(num_operations, 3, 3), dtype='double'
 
         """
         if not self._is_kappa_star:
-            self._point_operations = np.array(
+            point_operations = np.array(
                 [np.eye(3, dtype="int_")], dtype="int_", order="C"
             )
-        else:
-            self._point_operations = np.array(
-                self._pp.bz_grid.reciprocal_operations, dtype="int_", order="C"
+            rotations_cartesian = np.array(
+                [np.eye(3, dtype="double")], dtype="double", order="C"
             )
-        rec_lat = np.linalg.inv(self._pp.primitive.cell)
-        self._rotations_cartesian = np.array(
-            [similarity_transformation(rec_lat, r) for r in self._point_operations],
-            dtype="double",
-            order="C",
-        )
+        else:
+            point_operations = self._pp.bz_grid.reciprocal_operations
+            rotations_cartesian = self._pp.bz_grid.rotations_cartesian
 
-    def _set_grid_info(self, grid_points):
-        """Set up grid point information in BZGrid."""
+        return point_operations, rotations_cartesian
+
+    def _get_grid_info(self, grid_points) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Return grid point information in BZGrid.
+
+        Returns
+        -------
+        grid_points : ndarray
+            Grid point indices to be iterated over.
+            shape=(len(grid_points),), dtype='int_'
+        ir_grid_points : ndarray
+            Irreducible grid points on regular grid.
+            shape=(len(ir_grid_points),), dtype='int_'
+        grid_weights : ndarray
+            Grid weights of `grid_points`. If grid symmetry is not broken,
+            these values are equivalent to numbers of k-star arms.
+
+        """
         ir_grid_points, grid_weights = self._get_ir_grid_points(grid_points)
         if grid_points is not None:  # Specify grid points
-            self._grid_points = np.array(grid_points, dtype="int_")
-            self._ir_grid_points = ir_grid_points
-            self._grid_weights = grid_weights
+            _grid_points = np.array(grid_points, dtype="int_")
+            _ir_grid_points = ir_grid_points
+            _grid_weights = grid_weights
         elif not self._is_kappa_star:  # All grid points
-            self._grid_points = self._pp.bz_grid.grg2bzg
-            self._ir_grid_points = self._grid_points
-            self._grid_weights = np.ones(len(self._grid_points), dtype="int_")
+            _grid_points = self._pp.bz_grid.grg2bzg
+            _ir_grid_points = _grid_points
+            _grid_weights = np.ones(len(_grid_points), dtype="int_")
         else:  # Automatic sampling
-            self._grid_points = ir_grid_points
-            self._ir_grid_points = ir_grid_points
-            self._grid_weights = grid_weights
+            _grid_points = ir_grid_points
+            _ir_grid_points = ir_grid_points
+            _grid_weights = grid_weights
+        return _grid_points, _ir_grid_points, _grid_weights
 
     @abstractmethod
     def _run_at_grid_point(self):
@@ -738,6 +756,15 @@ class ConductivityBase(ABC):
     @abstractmethod
     def _init_velocity(self, gv_delta_q):
         """Initialize velocitiy class instance.
+
+        Should be implementated in Conductivity*MixIn.
+
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _set_cv(self, i_gp, i_data):
+        """Set heat capacity at grid point and at data location.
 
         Should be implementated in Conductivity*MixIn.
 

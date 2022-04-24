@@ -47,12 +47,16 @@ class ConductivityKuboMixIn:
             frequency_factor_to_THz=self._pp.frequency_factor_to_THz,
         )
 
+    def _set_cv(self, i_gp, i_data):
+        pass
+
     def _set_velocities(self, i_gp, i_data):
-        self._set_gv_matrix(i_gp, i_data)
-        self._set_gv_by_gv_matrix(i_gp, i_data)
+        self._gv_mat[i_data] = self._get_gv_matrix(i_gp)
 
-    def _set_gv_matrix(self, i_gp, i_data):
-        pass
-
-    def _set_gv_by_gv_matrix(self, i_gp, i_data):
-        pass
+    def _get_gv_matrix(self, i_gp):
+        """Get group velocity matrix."""
+        irgp = self._grid_points[i_gp]
+        self._velocity_obj.run([self._get_qpoint_from_gp_index(irgp)])
+        return self._velocity_obj.group_velocity_matrices[
+            0, :, self._pp.band_indices, :
+        ]

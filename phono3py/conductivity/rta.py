@@ -816,12 +816,11 @@ class ConductivityWignerRTA(ConductivityWignerMixIn, ConductivityRTABase):
             dtype="double",
         )
 
-        complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
         self._gv_operator = np.zeros(
-            (num_grid_points, num_band0, nat3, 3), order="C", dtype=complex_dtype
+            (num_grid_points, num_band0, nat3, 3), order="C", dtype=self._complex_dtype
         )
         self._gv_operator_sum2 = np.zeros(
-            (num_grid_points, num_band0, nat3, 6), order="C", dtype=complex_dtype
+            (num_grid_points, num_band0, nat3, 6), order="C", dtype=self._complex_dtype
         )
 
 
@@ -930,18 +929,20 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
         num_temp = len(self._temperatures)
 
         self._cv_mat = np.zeros(
-            (num_temp, num_grid_points, num_band0, num_band), order="C", dtype="double"
+            (num_temp, num_grid_points, num_band0, num_band), dtype="double", order="C"
         )
         self._gv_mat = np.zeros(
-            (num_temp, num_grid_points, num_band0, num_band), order="C", dtype="double"
+            (num_grid_points, 3, num_band0, num_band),
+            dtype=self._complex_dtype,
+            order="C",
         )
         self._kappa = np.zeros(
-            (len(self._sigmas), num_temp, 6), order="C", dtype="double"
+            (len(self._sigmas), num_temp, 6), dtype="double", order="C"
         )
         self._mode_kappa_mat = np.zeros(
             (len(self._sigmas), num_temp, num_grid_points, num_band0, num_band, 6),
-            order="C",
             dtype="double",
+            order="C",
         )
 
 
