@@ -218,7 +218,7 @@ class ConductivityRTABase(ConductivityBase):
             self._gamma_iso[:, i_gp, :] = gamma_iso[:, self._pp.band_indices]
 
         if self._log_level:
-            self._show_log(self._qpoints[i_gp], i_gp)
+            self._show_log(i_gp)
 
     def _set_gamma_at_sigmas(self, i):
         for j, sigma in enumerate(self._sigmas):
@@ -431,13 +431,14 @@ class ConductivityRTABase(ConductivityBase):
                         self._frequencies[self._grid_points[i]],
                     )
 
-    def _show_log(self, q, i):
-        gp = self._grid_points[i]
+    def _show_log(self, i_gp):
+        q = self._get_qpoint_from_gp_index(i_gp)
+        gp = self._grid_points[i_gp]
         frequencies = self._frequencies[gp][self._pp.band_indices]
-        gv = self._gv[i]
+        gv = self._gv[i_gp]
 
         if self._averaged_pp_interaction is not None:
-            ave_pp = self._averaged_pp_interaction[i]
+            ave_pp = self._averaged_pp_interaction[i_gp]
         else:
             ave_pp = None
         self._show_log_value_names()
@@ -879,15 +880,15 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
     def set_kappa_at_sigmas(self):
         """Calculate kappa from ph-ph interaction results."""
         num_band = len(self._pp.primitive) * 3
-        for i, _ in enumerate(self._grid_points):
-            cv = self._cv[:, i, :]
-            gp = self._grid_points[i]
+        for i_gp, _ in enumerate(self._grid_points):
+            cv = self._cv[:, i_gp, :]
+            gp = self._grid_points[i_gp]
             frequencies = self._frequencies[gp]
 
             # Kappa
             for j in range(len(self._sigmas)):
                 for k in range(len(self._temperatures)):
-                    g_sum = self._get_main_diagonal(i, j, k)
+                    g_sum = self._get_main_diagonal(i_gp, j, k)
                     for ll in range(num_band):
                         if frequencies[ll] < self._pp.cutoff_frequency:
                             self._num_ignored_phonon_modes[j, k] += 1
@@ -895,8 +896,8 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
 
                         old_settings = np.seterr(all="raise")
                         try:
-                            self._mode_kappa[j, k, i, ll] = (
-                                self._gv_sum2[i, ll]
+                            self._mode_kappa[j, k, i_gp, ll] = (
+                                self._gv_sum2[i_gp, ll]
                                 * cv[k, ll]
                                 / (g_sum[ll] * 2)
                                 * self._conversion_factor

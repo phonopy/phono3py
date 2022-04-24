@@ -1262,7 +1262,13 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
         return self.mode_kappa_RTA
 
     def _allocate_local_values(self, num_grid_points):
-        """Allocate grid point local arrays."""
+        """Allocate grid point local arrays.
+
+        For full collision matrix, `num_grid_points` equals to the number of
+        grid points in GRGrid, i.e., `prod(D_diag)`. Otherwise, number of
+        grid points to be iterated over.
+
+        """
         num_band0 = len(self._pp.band_indices)
         num_temp = len(self._temperatures)
         super()._allocate_local_values(num_grid_points)
@@ -1417,6 +1423,21 @@ class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
         self._conversion_factor_WTE = get_conversion_factor_WTE(
             self._pp.primitive.volume
         )
+
+    @property
+    def kappa_TOT_exact(self):
+        """Return kappa."""
+        return self._kappa_TOT_exact
+
+    @property
+    def kappa_P_exact(self):
+        """Return kappa."""
+        return self._kappa_P_exact
+
+    @property
+    def mode_kappa_P_exact(self):
+        """Return mode_kappa."""
+        return self._mode_kappa_P_exact
 
     def _allocate_local_values(self, num_grid_points):
         """Allocate grid point local arrays."""
