@@ -485,6 +485,10 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_wigner_kappa:
                 self._confs["conductivity_type"] = "wigner"
 
+        if "is_kubo_kappa" in self._args:
+            if self._args.is_kubo_kappa:
+                self._confs["conductivity_type"] = "kubo"
+
         if "lapack_zheev_uplo" in self._args:
             if self._args.lapack_zheev_uplo is not None:
                 self._confs["lapack_zheev_uplo"] = self._args.lapack_zheev_uplo

@@ -33,6 +33,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from typing import Optional
+
 import numpy as np
 from phonopy.units import Kb, THzToEv
 
@@ -52,7 +54,7 @@ class CollisionMatrix(ImagSelfEnergy):
         self,
         interaction: Interaction,
         rotations_cartesian=None,
-        num_ir_grid_points=None,
+        num_ir_grid_points=Optional[int],
         rot_grid_points=None,
         is_reducible_collision_matrix=False,
         log_level=0,

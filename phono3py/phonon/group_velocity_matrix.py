@@ -40,24 +40,6 @@ from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.units import VaspToTHz
 
 
-def get_group_velocity_matrices(
-    q, dynamical_matrix, q_length=None, symmetry=None, frequency_factor_to_THz=VaspToTHz
-):
-    """Return group velocity matrices at a q-points.
-
-    See details of parameters at `GroupVelocityMatrix`.
-
-    """
-    gv = GroupVelocityMatrix(
-        dynamical_matrix,
-        q_length=q_length,
-        symmetry=symmetry,
-        frequency_factor_to_THz=frequency_factor_to_THz,
-    )
-    gv.run([q])
-    return gv.group_velocities[0]
-
-
 class GroupVelocityMatrix(GroupVelocity):
     """Class to calculate group velocities matricies of phonons.
 
@@ -66,8 +48,6 @@ class GroupVelocityMatrix(GroupVelocity):
     Attributes
     ----------
     group_velocity_matrices : ndarray
-        shape=(q-points, 3, bands, bands), order='C'
-        dtype=complex that is "c%d" % (np.dtype('double').itemsize * 2)
 
     """
 
@@ -105,7 +85,7 @@ class GroupVelocityMatrix(GroupVelocity):
         )
 
         self._group_velocity_matrices = None
-        self._dtype_complex = "c%d" % (np.dtype("double").itemsize * 2)
+        self._complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
 
     def run(self, q_points, perturbation=None):
         """Run group velocity matrix calculate at q-points.
@@ -132,12 +112,20 @@ class GroupVelocityMatrix(GroupVelocity):
 
         gvm = [self._calculate_group_velocity_matrix_at_q(q) for q in self._q_points]
         self._group_velocity_matrices = np.array(
-            gvm, dtype=self._dtype_complex, order="C"
+            gvm, dtype=self._complex_dtype, order="C"
         )
 
     @property
     def group_velocity_matrices(self):
-        """Return group velocity matrices."""
+        """Return group velocity matrices.
+
+        Returns
+        -------
+        group_velocity_matrices : ndarray
+            shape=(q-points, 3, num_band, num_band), order='C'
+            dtype=complex that is "c%d" % (np.dtype('double').itemsize * 2)
+
+        """
         return self._group_velocity_matrices
 
     def _calculate_group_velocity_matrix_at_q(self, q):
@@ -146,31 +134,20 @@ class GroupVelocityMatrix(GroupVelocity):
         eigvals, eigvecs = np.linalg.eigh(dm)
         eigvals = eigvals.real
         freqs = np.sqrt(abs(eigvals)) * np.sign(eigvals) * self._factor
-
         deg_sets = degenerate_sets(freqs)
-
         ddms = self._get_dD(np.array(q))
+        rot_eigvecs = np.zeros_like(eigvecs)
 
-        rot_eigvecs = np.zeros(
-            (len(freqs), len(freqs)), dtype=self._dtype_complex, order="C"
-        )
         for deg in deg_sets:
             rot_eigvecs[:, deg] = self._rot_eigsets(ddms, eigvecs[:, deg])
+        condition = freqs > self._cutoff_frequency
+        freqs = np.where(condition, freqs, 1)
+        rot_eigvecs = rot_eigvecs * np.where(condition, 1 / np.sqrt(2 * freqs), 0)
 
-        for i, f in enumerate(freqs):
-            if f > self._cutoff_frequency:
-                freqs[i] = 1 / np.sqrt(2 * f)
-            else:
-                freqs[i] = 0
-        freqs = np.diag(freqs)
-
-        rot_eigvecs = np.dot(rot_eigvecs, freqs)
-
-        gvm = []
-
-        for ddm in ddms[1:]:
+        gvm = np.zeros((3,) + eigvecs.shape, dtype=self._complex_dtype)
+        for i, ddm in enumerate(ddms[1:]):
             ddm = ddm * (self._factor**2)
-            gvm.append(np.dot(rot_eigvecs.T.conj(), np.dot(ddm, rot_eigvecs)))
+            gvm[i] = np.dot(rot_eigvecs.T.conj(), np.dot(ddm, rot_eigvecs))
 
         if self._perturbation is None:
             if self._symmetry is None:
@@ -180,9 +157,7 @@ class GroupVelocityMatrix(GroupVelocity):
         else:
             return gvm
 
-        return gvm
-
-    def _symmetrize_group_velocity_matrix(self, gv, q):
+    def _symmetrize_group_velocity_matrix(self, gvm, q):
         """Symmetrize obtained group velocity matrices.
 
         The following symmetries are applied:
@@ -198,16 +173,16 @@ class GroupVelocityMatrix(GroupVelocity):
             if (np.abs(diff) < self._symmetry.tolerance).all():
                 rotations.append(r)
 
-        gv_sym = np.zeros_like(gv)
+        gvm_sym = np.zeros_like(gvm)
         for r in rotations:
             r_cart = similarity_transformation(self._reciprocal_lattice, r)
-            gv_sym += np.einsum("ij,jkl->ikl", r_cart, gv)
-        gv_sym = gv_sym / len(rotations)
+            gvm_sym += np.einsum("ij,jkl->ikl", r_cart, gvm)
+        gvm_sym = gvm_sym / len(rotations)
 
         # band hermicity
-        gv_sym = (gv_sym + gv_sym.transpose(0, 2, 1).conj()) / 2
+        gvm_sym = (gvm_sym + gvm_sym.transpose(0, 2, 1).conj()) / 2
 
-        return gv_sym
+        return gvm_sym
 
     def _rot_eigsets(self, ddms, eigsets):
         """Treat degeneracy.
@@ -215,18 +190,24 @@ class GroupVelocityMatrix(GroupVelocity):
         Eigenvectors of degenerates bands in eigsets are rotated to make
         the velocity analytical in a specified direction (self._directions[0]).
 
-        ddms : array-like
+        Parameters
+        ----------
+        ddms : list of ndarray
             List of delta (derivative or finite difference) of dynamical
             matrices along several q-directions for perturbation.
-        eigsets : array-like
+            shape=(len(self._directions), num_band, num_band), dtype=complex
+        eigsets : ndarray
             List of phonon eigenvectors of degenerate bands.
+            shape=(num_band, num_degenerates), dtype=complex
+
+        Returns
+        -------
+        rot_eigvecs : ndarray
+            Rotated eigenvectors.
+            shape=(num_band, num_degenerates), dtype=complex
 
         """
-        eigvals, eigvecs = np.linalg.eigh(
-            np.dot(eigsets.T.conj(), np.dot(ddms[0], eigsets))
-        )
-
-        # gv = []
+        _, eigvecs = np.linalg.eigh(np.dot(eigsets.T.conj(), np.dot(ddms[0], eigsets)))
         rot_eigsets = np.dot(eigsets, eigvecs)
 
         return rot_eigsets
