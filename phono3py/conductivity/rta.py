@@ -899,7 +899,7 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
         self._kappa = self._mode_kappa_mat.sum(axis=2).sum(axis=2).sum(axis=2).real / N
 
     def _set_kappa_at_sigmas(self, j, k, i_gp, i_band, g_sum, frequencies):
-        gvm = self._gv_mat[i_gp]
+        gvm_sum2 = self._gv_mat_sum2[i_gp]
         cvm = self._cv_mat[k, i_gp]
         for j_band, freq in enumerate(frequencies):
             if freq < self._pp.cutoff_frequency:
@@ -913,8 +913,7 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
                 try:
                     self._mode_kappa_mat[j, k, i_gp, i_band, j_band, i_pair] = (
                         cvm[i_band, j_band]
-                        * gvm[a, i_band, j_band]
-                        * gvm[b, j_band, i_band]
+                        * gvm_sum2[i_band, j_band, i_pair]
                         * g
                         / ((frequencies[j_band] - frequencies[i_band]) ** 2 + g**2)
                         * self._conversion_factor
@@ -955,7 +954,12 @@ class ConductivityKuboRTA(ConductivityKuboMixIn, ConductivityRTABase):
             (num_temp, num_grid_points, num_band0, num_band), dtype="double", order="C"
         )
         self._gv_mat = np.zeros(
-            (num_grid_points, 3, num_band0, num_band),
+            (num_grid_points, num_band0, num_band, 3),
+            dtype=self._complex_dtype,
+            order="C",
+        )
+        self._gv_mat_sum2 = np.zeros(
+            (num_grid_points, num_band0, num_band, 6),
             dtype=self._complex_dtype,
             order="C",
         )

@@ -81,18 +81,31 @@ class ConductivityKuboMixIn:
 
     def _set_velocities(self, i_gp, i_data):
         gvm, gv = self._get_gv_matrix(i_gp)
+        gvm_sum2, kstar_order = self._get_gvm_by_gvm(i_gp)
+        self._num_sampling_grid_points += kstar_order
         self._gv_mat[i_data] = gvm
+        self._gv_mat_sum2[i_data] = gvm_sum2
         self._gv[i_data] = gv
 
     def _get_gv_matrix(self, i_gp):
-        """Get group velocity matrix."""
-        self._num_sampling_grid_points += self._grid_weights[i_gp]
+        """Get group velocity matrix.
+
+        Returns
+        -------
+        gv_mat : ndarray
+            Group velocity matrix at grid point of `i_gp`.
+            shape=(num_band0, num_band, 3), dtype=complex
+        gv : ndarray
+            Group velocity at grid point of `i_gp`.
+            shape=(num_band0, 3), dtype=double
+
+        """
         irgp = self._grid_points[i_gp]
         self._velocity_obj.run([self._get_qpoint_from_gp_index(irgp)])
         gvm = np.zeros(self._gv_mat.shape[1:], dtype=self._complex_dtype, order="C")
         gv = np.zeros(self._gv.shape[1:], dtype="double", order="C")
         for i in range(3):
-            gvm[i] = self._velocity_obj.group_velocity_matrices[
+            gvm[:, :, i] = self._velocity_obj.group_velocity_matrices[
                 0, i, self._pp.band_indices, :
             ]
             gv[:, i] = (
@@ -102,11 +115,40 @@ class ConductivityKuboMixIn:
             )
         return gvm, gv
 
-    # def _get_gvm_by_gvm(self, i_gp):
-    #     q = self._get_qpoint_from_gp_index(self._grid_points[i_gp])
-    #     qpoints = [np.dot(r, q) for r in self._point_operations]
-    #     self._velocity_obj.run(qpoints)
-    #     gvm = self._velocity_obj.group_velocity_matrices
-    #     gvm_sum = np.zeros(
-    #         (6,) + self._gv_mat.shape[2:], dtype=self._complex_dtype, order="C"
-    #     )
+    def _get_gvm_by_gvm(self, i_gp):
+        r"""Compute sum of gvm over k-star.
+
+        q is an irreducible q-point. k_q is an arm of k-star of q.
+        R are the elements of the reciprocal point group.
+        m is the multiplicity of q, i.e., order of site-point symmetry.
+
+        \sum_{k_q} v^\alpha_{kjj'} v^\beta_{kj'j}
+        = 1/m \sum_{R} v^\alpha_{Rq jj'} v^\beta_{Rq j'j}
+
+        Returns
+        -------
+        gvm_sum2 : ndarray
+            sum of gvm x gvm over kstar arms.
+            shape=(num_band0, num_band, 6).
+            The last 6 gives 3x3 tensor element positions, xx, yy, zz, yz, xz, xy.
+        order_kstar : int
+            Number of kstar arms.
+
+        """
+        multi = self._get_multiplicity_at_q(i_gp)
+        q = self._get_qpoint_from_gp_index(self._grid_points[i_gp])
+        qpoints = [np.dot(r, q) for r in self._point_operations]
+        self._velocity_obj.run(qpoints)
+
+        gvm_sum2 = np.zeros(
+            self._gv_mat.shape[1:-1] + (6,), dtype=self._complex_dtype, order="C"
+        )
+        for i_pair, (a, b) in enumerate(
+            ([0, 0], [1, 1], [2, 2], [1, 2], [0, 2], [0, 1])
+        ):
+            for gvm in self._velocity_obj.group_velocity_matrices:
+                gvm_by_gvm = np.multiply(gvm[a], gvm[b].T)
+                gvm_sum2[:, :, i_pair] += gvm_by_gvm[self._pp.band_indices, :]
+        gvm_sum2 /= multi
+
+        return gvm_sum2, self._get_kstar_order(i_gp, multi)
