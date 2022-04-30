@@ -209,17 +209,16 @@ class Phono3pyYaml(PhonopyYaml):
                 d2_list = d1.get("second_atoms")
             for d2 in d2_list:
                 if "forces" in d2:
-                    data1["second_atoms"].append(
-                        {
-                            "number": d2["atom"] - 1,
-                            "displacement": np.array(
-                                d2["displacement"], dtype="double"
-                            ),
-                            "forces": np.array(d2["forces"], dtype="double", order="C"),
-                            "id": d2["displacement_id"],
-                            "pair_distance": d2["pair_distance"],
-                        }
-                    )
+                    second_atom_dict = {
+                        "number": d2["atom"] - 1,
+                        "displacement": np.array(d2["displacement"], dtype="double"),
+                        "forces": np.array(d2["forces"], dtype="double", order="C"),
+                    }
+                    if "displacement_id" in d2:
+                        second_atom_dict["id"] = d2["displacement_id"]
+                    if "pair_distance" in d2:
+                        second_atom_dict["pair_distance"] = d2["pair_distance"]
+                    data1["second_atoms"].append(second_atom_dict)
                 else:
                     disps = [
                         {
