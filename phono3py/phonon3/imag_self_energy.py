@@ -312,6 +312,9 @@ class ImagSelfEnergy:
 
     def set_interaction_strength(self, pp_strength, g_zero=None):
         """Set ph-ph interaction strengths."""
+        self._pp_strength = pp_strength
+        if g_zero is not None:
+            self._g_zero = g_zero
         self._pp.set_interaction_strength(pp_strength, g_zero=g_zero)
 
     def delete_integration_weights(self):
