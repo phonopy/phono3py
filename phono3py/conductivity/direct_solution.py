@@ -475,11 +475,15 @@ class ConductivityLBTEBase(ConductivityBase):
                     print("=" * 26 + " Warning " + "=" * 26)
                     print("Inconsistency found in g_zero.")
                     print(
-                        "This inconsistency may come from slight numerical "
-                        "calculator difference between hardware or software library. "
+                        "The inconsistency may come from slight numerical "
+                        "calculator difference between hardwares or linear algebra "
+                        "libraries. "
+                        "To avoid the inconsistency, it is recommended to use the same "
+                        "phonon-*.hdf5 for generating pp-*.hdf5 because phonon "
+                        "frequencies are used to determine g_zero. "
                         "If significant difference of values below is found, it can be "
-                        "a sign of that something is broken. Otherwise, this warning "
-                        "may be ignored."
+                        "a sign of that something is really wrong. Otherwise, this "
+                        "warning may be ignored."
                     )
                     print(_g_zero.shape, g_zero.shape)
                     for i, (_v, v) in enumerate(zip(_g_zero, g_zero)):
