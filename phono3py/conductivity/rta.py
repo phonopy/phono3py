@@ -222,7 +222,7 @@ class ConductivityRTABase(ConductivityBase):
     def _set_gamma_at_sigmas(self, i):
         for j, sigma in enumerate(self._sigmas):
             self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
-            self._collision.set_integration_weights()
+            self._collision.run_integration_weights()
 
             if self._log_level:
                 text = "Collisions will be calculated with "

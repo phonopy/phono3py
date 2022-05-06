@@ -453,10 +453,10 @@ class ConductivityLBTEBase(ConductivityBase):
                 print(text)
 
             self._collision.set_sigma(sigma, sigma_cutoff=self._sigma_cutoff)
-            self._collision.set_integration_weights()
+            self._collision.run_integration_weights()
 
             if self._read_pp:
-                pp, _g_zero = read_pp_from_hdf5(
+                pp_strength, _g_zero = read_pp_from_hdf5(
                     self._pp.mesh_numbers,
                     grid_point=self._grid_points[i_gp],
                     sigma=sigma,
@@ -472,8 +472,24 @@ class ConductivityLBTEBase(ConductivityBase):
                             "tetrahedron method is not supported."
                         )
                 if _g_zero is not None and (_g_zero != g_zero).any():
-                    raise ValueError("Inconsistency found in g_zero.")
-                self._collision.set_interaction_strength(pp)
+                    print("=" * 26 + " Warning " + "=" * 26)
+                    print("Inconsistency found in g_zero.")
+                    print(
+                        "This inconsistency may come from slight numerical "
+                        "calculator difference between hardware or software library. "
+                        "If significant difference of values below is found, it can be "
+                        "a sign of that something is broken. Otherwise, this warning "
+                        "may be ignored."
+                    )
+                    print(_g_zero.shape, g_zero.shape)
+                    for i, (_v, v) in enumerate(zip(_g_zero, g_zero)):
+                        if (_v != v).any():
+                            print(f"{i + 1} {_v.sum()} {v.sum()}")
+                    self._collision.set_interaction_strength(
+                        pp_strength, g_zero=_g_zero
+                    )
+                else:
+                    self._collision.set_interaction_strength(pp_strength)
             elif j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
                 if self._log_level:
                     print("Existing ph-ph interaction is used.")
