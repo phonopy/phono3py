@@ -906,8 +906,7 @@ def init_phph_interaction(
 ):
     """Initialize ph-ph interaction and phonons on grid."""
     if log_level:
-        sys.stdout.write("Generating grid system ... ")
-        sys.stdout.flush()
+        print("Generating grid system ... ", end="", flush=True)
     phono3py.mesh_numbers = settings.mesh_numbers
     bz_grid = phono3py.grid
     if log_level:

@@ -1,8 +1,8 @@
-"""Define phono3py version."""
-# Copyright (C) 2020 Atsushi Togo
+"""Calculate group velocity matrix."""
+# Copyright (C) 2021 Atsushi Togo
 # All rights reserved.
 #
-# This file is part of phono3py.
+# This file is part of phonopy.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -33,4 +33,48 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-__version__ = "2.3.1"
+import numpy as np
+from phonopy.phonon.thermal_properties import mode_cv
+from phonopy.units import Kb
+
+
+def mode_cv_matrix(temp, freqs, cutoff=1e-4):
+    r"""Calculate mode heat capacity matrix, Cqjj'.
+
+    C_{\mathbf{q}jj'} = K_B \frac{e^{x_{\mathbf{q}j} - x_{\mathbf{q}j'}} - 1}
+    {x_{\mathbf{q}j} - x_{\mathbf{q}j'}} \left( \frac{
+    x_{\mathbf{q}j} + x_{\mathbf{q}j'}}{2}
+    \right)^2 n_{\mathbf{q}j}(n_{\mathbf{q}j'} + 1)
+
+    Note
+    ----
+    Diagonal (j=j') terms reduce to normal mode heat capacity.
+
+    Parameters
+    ----------
+    temp : float
+        Temperature in K.
+    freqs : ndarray
+        Phonon frequencies at a q-point in eV.
+    cutoff : float
+        This is used to check the degeneracy.
+
+    Returns
+    -------
+    ndarray
+        Heat capacity matrix in eV/K.
+        shape=(num_band, num_band), dtype='double', order='C'.
+
+    """
+    x = freqs / Kb / temp
+    shape = (len(freqs), len(freqs))
+    cvm = np.zeros(shape, dtype="double", order="C")
+    for i, j in np.ndindex(shape):
+        if abs(freqs[i] - freqs[j]) < cutoff:
+            cvm[i, j] = mode_cv(temp, freqs[i])
+            continue
+        sub = x[i] - x[j]
+        add = x[i] + x[j]
+        n_inv = np.exp([x[i], x[j], sub]) - 1
+        cvm[i, j] = Kb * n_inv[2] / sub * (add / 2) ** 2 / n_inv[0] * (1 / n_inv[1] + 1)
+    return cvm

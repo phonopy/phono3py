@@ -49,14 +49,37 @@ is:
 extra_compile_args = -fopenmp
 ```
 
-A basic example to add include directories and openmp flags would be:
+Additional configuration can be necessary. It is recommended first starting only
+with `extra_compile_args = -fopenmp` and run `setup.py`, then check if phono3py
+works properly or not without error or warning. When phono3py doesn't work with
+the above setting, add another configuration one by one to test compilation.
+With conda-forge packages, at 11th Apr. 2022, the following configuration
+worked.
+
+With MKL (for gcc and clang), `site.cfg`
 
 ```
 [phono3py]
-include_dirs = /opt/lapack/include
 extra_compile_args = -fopenmp
-extra_link_args = -fopenmp
 ```
+
+With openblas and clang
+
+```
+[phono3py]
+extra_compile_args = -fopenmp
+```
+
+With openblas and gcc
+
+```
+[phono3py]
+extra_compile_args = -fopenmp
+extra_link_args = -lgomp
+```
+
+Mind that these configurations can be outdated instantly by the change of the
+conda-forge packages.
 
 More detailed information about `site.cfg` customization is found at
 https://github.com/numpy/numpy/blob/main/site.cfg.example.

@@ -53,12 +53,21 @@ from phono3py.file_IO import (
 from phono3py.phonon3.triplets import get_all_triplets
 
 if TYPE_CHECKING:
-    from phono3py.conductivity.rta import ConductivityRTA, ConductivityWignerRTA
+    from phono3py.conductivity.base import ConductivityBase
     from phono3py.conductivity.direct_solution import (
         ConductivityLBTE,
         ConductivityWignerLBTE,
     )
-    from phono3py.conductivity.base import ConductivityBase
+    from phono3py.conductivity.rta import (
+        ConductivityKuboRTA,
+        ConductivityRTA,
+        ConductivityWignerRTA,
+    )
+
+    cond_RTA_type = Union[
+        "ConductivityRTA", "ConductivityWignerRTA", "ConductivityKuboRTA"
+    ]
+    cond_LBTE_type = Union["ConductivityLBTE", "ConductivityWignerLBTE"]
 
 from phono3py.phonon3.interaction import Interaction
 
@@ -68,7 +77,7 @@ class ConductivityRTAWriter:
 
     @staticmethod
     def write_gamma(
-        br: Union["ConductivityRTA", "ConductivityWignerRTA"],
+        br: "cond_RTA_type",
         interaction: Interaction,
         i: int,
         compression: str = "gzip",
@@ -76,20 +85,23 @@ class ConductivityRTAWriter:
         verbose: bool = True,
     ):
         """Write mode kappa related properties into a hdf5 file."""
+        from phono3py.conductivity.rta import ConductivityRTA, ConductivityWignerRTA
+
         grid_points = br.grid_points
-        try:
+        if isinstance(br, ConductivityRTA):
             group_velocities_i = br.group_velocities[i]
-        except AttributeError:
-            group_velocities_i = None
-        try:
-            velocity_operator_i = br.velocity_operator[i]
-        except AttributeError:
-            velocity_operator_i = None
-        try:
             gv_by_gv_i = br.gv_by_gv[i]
-        except AttributeError:
+        else:
+            group_velocities_i = None
             gv_by_gv_i = None
-        mode_heat_capacities = br.mode_heat_capacities
+        if isinstance(br, ConductivityWignerRTA):
+            velocity_operator_i = br.velocity_operator[i]
+        else:
+            velocity_operator_i = None
+        if isinstance(br, (ConductivityRTA, ConductivityWignerRTA)):
+            mode_heat_capacities = br.mode_heat_capacities
+        else:
+            mode_heat_capacities = None
         ave_pp = br.averaged_pp_interaction
         mesh = br.mesh_numbers
         bz_grid = br.bz_grid
@@ -202,13 +214,15 @@ class ConductivityRTAWriter:
 
     @staticmethod
     def write_kappa(
-        br: Union["ConductivityRTA", "ConductivityWignerRTA"],
+        br: "cond_RTA_type",
         volume: float,
         compression: str = "gzip",
         filename: Optional[str] = None,
         log_level: int = 0,
     ):
         """Write kappa related properties into a hdf5 file."""
+        from phono3py.conductivity.rta import ConductivityRTA, ConductivityWignerRTA
+
         temperatures = br.temperatures
         sigmas = br.sigmas
         sigma_cutoff = br.sigma_cutoff_width
@@ -219,44 +233,34 @@ class ConductivityRTAWriter:
         bz_grid = br.bz_grid
         frequencies = br.frequencies
 
-        try:
+        if isinstance(br, ConductivityRTA):
             kappa = br.kappa
-        except AttributeError:
-            kappa = None
-        try:
             mode_kappa = br.mode_kappa
-        except AttributeError:
-            mode_kappa = None
-        try:
             gv = br.group_velocities
-        except AttributeError:
-            gv = None
-        try:
             gv_by_gv = br.gv_by_gv
-        except AttributeError:
+        else:
+            kappa = None
+            mode_kappa = None
+            gv = None
             gv_by_gv = None
-        try:
+
+        if isinstance(br, ConductivityWignerRTA):
             kappa_TOT_RTA = br.kappa_TOT_RTA
-        except AttributeError:
-            kappa_TOT_RTA = None
-        try:
             kappa_P_RTA = br.kappa_P_RTA
-        except AttributeError:
-            kappa_P_RTA = None
-        try:
             kappa_C = br.kappa_C
-        except AttributeError:
-            kappa_C = None
-        try:
             mode_kappa_P_RTA = br.mode_kappa_P_RTA
-        except AttributeError:
-            mode_kappa_P_RTA = None
-        try:
             mode_kappa_C = br.mode_kappa_C
-        except AttributeError:
+        else:
+            kappa_TOT_RTA = None
+            kappa_P_RTA = None
+            kappa_C = None
+            mode_kappa_P_RTA = None
             mode_kappa_C = None
 
-        mode_cv = br.mode_heat_capacities
+        if isinstance(br, (ConductivityRTA, ConductivityWignerRTA)):
+            mode_cv = br.mode_heat_capacities
+        else:
+            mode_cv = None
         ave_pp = br.averaged_pp_interaction
         qpoints = br.qpoints
         grid_points = br.grid_points
@@ -337,7 +341,7 @@ class ConductivityRTAWriter:
 
     @staticmethod
     def write_gamma_detail(
-        br: Union["ConductivityRTA", "ConductivityWignerRTA"],
+        br: "cond_RTA_type",
         interaction: Interaction,
         i: int,
         compression: str = "gzip",
@@ -398,7 +402,7 @@ class ConductivityLBTEWriter:
 
     @staticmethod
     def write_collision(
-        lbte: Union["ConductivityLBTE", "ConductivityWignerLBTE"],
+        lbte: "cond_LBTE_type",
         interaction: Interaction,
         i=None,
         is_reducible_collision_matrix=False,
@@ -479,7 +483,7 @@ class ConductivityLBTEWriter:
 
     @staticmethod
     def write_kappa(
-        lbte: Union["ConductivityLBTE", "ConductivityWignerLBTE"],
+        lbte: "cond_LBTE_type",
         volume,
         is_reducible_collision_matrix=False,
         write_LBTE_solution=False,
@@ -489,53 +493,39 @@ class ConductivityLBTEWriter:
         log_level=0,
     ):
         """Write kappa related properties into a hdf5 file."""
-        try:
+        from phono3py.conductivity.direct_solution import (
+            ConductivityLBTE,
+            ConductivityWignerLBTE,
+        )
+
+        if isinstance(lbte, ConductivityLBTE):
             kappa = lbte.kappa
-        except AttributeError:
-            kappa = None
-        try:
             mode_kappa = lbte.mode_kappa
-        except AttributeError:
-            mode_kappa = None
-        try:
             kappa_RTA = lbte.kappa_RTA
-        except AttributeError:
-            kappa_RTA = None
-        try:
             mode_kappa_RTA = lbte.mode_kappa_RTA
-        except AttributeError:
-            mode_kappa_RTA = None
-        try:
             gv = lbte.group_velocities
-        except AttributeError:
-            gv = None
-        try:
             gv_by_gv = lbte.gv_by_gv
-        except AttributeError:
+        else:
+            kappa = None
+            mode_kappa = None
+            kappa_RTA = None
+            mode_kappa_RTA = None
+            gv = None
             gv_by_gv = None
-        try:
+
+        if isinstance(lbte, ConductivityWignerLBTE):
             kappa_P_exact = lbte.kappa_P_exact
-        except AttributeError:
-            kappa_P_exact = None
-        try:
             kappa_P_RTA = lbte.kappa_P_RTA
-        except AttributeError:
-            kappa_P_RTA = None
-        try:
             kappa_C = lbte.kappa_C
-        except AttributeError:
-            kappa_C = None
-        try:
             mode_kappa_P_exact = lbte.mode_kappa_P_exact
-        except AttributeError:
-            mode_kappa_P_exact = None
-        try:
             mode_kappa_P_RTA = lbte.mode_kappa_P_RTA
-        except AttributeError:
-            mode_kappa_P_RTA = None
-        try:
             mode_kappa_C = lbte.mode_kappa_C
-        except AttributeError:
+        else:
+            kappa_P_exact = None
+            kappa_P_RTA = None
+            kappa_C = None
+            mode_kappa_P_exact = None
+            mode_kappa_P_RTA = None
             mode_kappa_C = None
 
         temperatures = lbte.temperatures

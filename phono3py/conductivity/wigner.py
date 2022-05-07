@@ -39,27 +39,22 @@ import numpy as np
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.units import EV, Angstrom, Hbar, THz
 
+from phono3py.conductivity.base import HeatCapacityMixIn
 from phono3py.phonon.grid import get_grid_points_by_rotations
 from phono3py.phonon.velocity_operator import VelocityOperator
 
 
-class ConductivityVelocityOperatorMixIn:
-    """Thermal conductivity mix-in for velocity operator."""
+class ConductivityWignerMixIn(HeatCapacityMixIn):
+    """Thermal conductivity mix-in for velocity operator.
 
-    @property
-    def kappa_TOT_exact(self):
-        """Return kappa."""
-        return self._kappa_TOT_exact
+    This mix-in is included in `ConductivityWignerRTA` and `ConductivityWignerLBTE`.
+
+    """
 
     @property
     def kappa_TOT_RTA(self):
         """Return kappa."""
         return self._kappa_TOT_RTA
-
-    @property
-    def kappa_P_exact(self):
-        """Return kappa."""
-        return self._kappa_P_exact
 
     @property
     def kappa_P_RTA(self):
@@ -70,11 +65,6 @@ class ConductivityVelocityOperatorMixIn:
     def kappa_C(self):
         """Return kappa."""
         return self._kappa_C
-
-    @property
-    def mode_kappa_P_exact(self):
-        """Return mode_kappa."""
-        return self._mode_kappa_P_exact
 
     @property
     def mode_kappa_P_RTA(self):
@@ -174,13 +164,12 @@ class ConductivityVelocityOperatorMixIn:
         gv_operator = self._gv_operator[i_data]
         nat3 = len(self._pp.primitive) * 3
         nbands = np.shape(gv_operator)[0]
-        complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
 
-        gv_by_gv_operator = np.zeros((nbands, nat3, 3, 3), dtype=complex_dtype)
+        gv_by_gv_operator = np.zeros((nbands, nat3, 3, 3), dtype=self._complex_dtype)
 
         for r in self._rotations_cartesian:
             # can be optimized
-            gvs_rot_operator = np.zeros((nbands, nat3, 3), dtype=complex_dtype)
+            gvs_rot_operator = np.zeros((nbands, nat3, 3), dtype=self._complex_dtype)
             for s in range(0, nbands):
                 for s_p in range(0, nat3):
                     for i in range(0, 3):

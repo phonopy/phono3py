@@ -177,7 +177,7 @@ class SpectralFunction:
 
     def __init__(
         self,
-        interaction,
+        interaction: Interaction,
         grid_points,
         frequency_points=None,
         frequency_step=None,
@@ -227,13 +227,18 @@ class SpectralFunction:
                 print("-" * 74)
             raise StopIteration
 
+        gp = self._grid_points[self._gp_index]
+        qpoint = np.dot(
+            self._interaction.bz_grid.addresses[gp],
+            self._interaction.bz_grid.QDinv.T,
+        )
         if self._log_level:
             print(
-                ("-" * 24 + " Spectral function (%d/%d) " + "-" * 24)
-                % (self._gp_index + 1, len(self._grid_points))
+                ("-" * 24 + " Spectral function %d (%d/%d) " + "-" * 24)
+                % (gp, self._gp_index + 1, len(self._grid_points))
             )
+            print("q-point: (%5.2f %5.2f %5.2f)" % tuple(qpoint))
 
-        gp = self._grid_points[self._gp_index]
         ise = ImagSelfEnergy(self._interaction)
         ise.set_grid_point(gp)
 

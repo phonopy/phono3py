@@ -177,7 +177,7 @@ class Phono3pyYaml(PhonopyYaml):
         if "displacement_pairs" in self._yaml:
             disp = self._yaml["displacement_pairs"][0]
             if type(disp) is dict:  # type1
-                dataset = self._parse_forces_fc3_type1(len(self.supercell))
+                dataset = self._parse_fc3_dataset_type1(len(self.supercell))
             elif type(disp) is list:  # type2
                 if "displacement" in disp[0]:
                     dataset = self._parse_force_sets_type2()
@@ -193,15 +193,22 @@ class Phono3pyYaml(PhonopyYaml):
         if self.dataset is None and "displacements" in self._yaml:
             self.dataset = self._get_dataset(self.supercell)
 
-    def _parse_forces_fc3_type1(self, natom):
+    def _parse_fc3_dataset_type1(self, natom):
+        """Parse fc3 type1-dataset."""
         dataset = {"natom": natom, "first_atoms": []}
-        for d1 in self._yaml["displacement_pairs"]:
+        disp2_id = len(self._yaml["displacement_pairs"])
+        for disp1_id, d1 in enumerate(self._yaml["displacement_pairs"]):
             data1 = {
                 "number": d1["atom"] - 1,
                 "displacement": np.array(d1["displacement"], dtype="double"),
-                "id": d1["displacement_id"],
                 "second_atoms": [],
             }
+            if "displacement_id" in d1:
+                d1_id = d1["displacement_id"]
+                if disp1_id + 1 != d1_id:
+                    msg = f"{d1_id} != {disp1_id + 1}. Dataset may be broken."
+                    raise RuntimeError(msg)
+                data1["id"] = d1_id
             if "forces" in d1:
                 data1["forces"] = np.array(d1["forces"], dtype="double", order="C")
             d2_list = d1.get("paired_with")
@@ -209,37 +216,69 @@ class Phono3pyYaml(PhonopyYaml):
                 d2_list = d1.get("second_atoms")
             for d2 in d2_list:
                 if "forces" in d2:
-                    data1["second_atoms"].append(
-                        {
-                            "number": d2["atom"] - 1,
-                            "displacement": np.array(
-                                d2["displacement"], dtype="double"
-                            ),
-                            "forces": np.array(d2["forces"], dtype="double", order="C"),
-                            "id": d2["displacement_id"],
-                            "pair_distance": d2["pair_distance"],
-                        }
+                    disp2_id = self._parse_fc3_dataset_type1_with_forces(
+                        data1, d2, disp2_id
                     )
                 else:
-                    disps = [
-                        {
-                            "number": d2["atom"] - 1,
-                            "displacement": np.array(disp, dtype="double"),
-                        }
-                        for disp in d2["displacements"]
-                    ]
-                    if "pair_distance" in d2:
-                        for d2_dict in disps:
-                            d2_dict["pair_distance"] = d2["pair_distance"]
-                    if "included" in d2:
-                        for d2_dict in disps:
-                            d2_dict["included"] = d2["included"]
-                    if "displacement_ids" in d2:
-                        for disp_id, d2_dict in zip(d2["displacement_ids"], disps):
-                            d2_dict["id"] = disp_id
-                    data1["second_atoms"] += disps
+                    disp2_id = self._parse_fc3_dataset_type1_without_forces(
+                        data1, d2, disp2_id
+                    )
             dataset["first_atoms"].append(data1)
         return dataset
+
+    def _parse_fc3_dataset_type1_with_forces(self, data1, d2, disp2_id):
+        """Parse fc3 type1-dataset that has forces in it.
+
+        One displacement couples with one force-set in yaml.
+
+        """
+        second_atom_dict = {
+            "number": d2["atom"] - 1,
+            "displacement": np.array(d2["displacement"], dtype="double"),
+            "forces": np.array(d2["forces"], dtype="double", order="C"),
+        }
+        if "displacement_id" in d2:
+            d2_id = d2["displacement_id"]
+            if disp2_id + 1 != d2_id:
+                msg = f"{d2_id} != {disp2_id + 1}. Dataset may be broken."
+                raise RuntimeError(msg)
+            second_atom_dict["id"] = d2_id
+        if "pair_distance" in d2:
+            second_atom_dict["pair_distance"] = d2["pair_distance"]
+        disp2_id += 1
+        data1["second_atoms"].append(second_atom_dict)
+        return disp2_id
+
+    def _parse_fc3_dataset_type1_without_forces(self, data1, d2, disp2_id):
+        """Parse fc3 type1-dataset that doesn't have forces in it.
+
+        Displacements are stored in `displacements` as a list.
+
+        """
+        disps = [
+            {
+                "number": d2["atom"] - 1,
+                "displacement": np.array(disp, dtype="double"),
+            }
+            for disp in d2["displacements"]
+        ]
+        if "pair_distance" in d2:
+            for d2_dict in disps:
+                d2_dict["pair_distance"] = d2["pair_distance"]
+        if "included" in d2:
+            for d2_dict in disps:
+                d2_dict["included"] = d2["included"]
+        if "displacement_ids" in d2:
+            for d2_id, d2_dict in zip(d2["displacement_ids"], disps):
+                if disp2_id + 1 != d2_id:
+                    msg = f"{d2_id} != {disp2_id + 1}. Dataset may be broken."
+                    raise RuntimeError(msg)
+                d2_dict["id"] = d2_id
+                disp2_id += 1
+        else:
+            disp2_id += len(disps)
+        data1["second_atoms"] += disps
+        return disp2_id
 
     def _cell_info_yaml_lines(self):
         """Get YAML lines for information of cells.
@@ -319,72 +358,82 @@ class Phono3pyYaml(PhonopyYaml):
 
 
 def displacements_yaml_lines_type1(dataset, with_forces=False, key="displacements"):
-    """Get YAML lines for type1 phonon_dataset and dataset."""
+    """Get YAML lines for type1 phonon_dataset and dataset.
+
+    This is a function but not class method because used by other function.
+
+    """
     id_offset = len(dataset["first_atoms"])
 
     if "second_atoms" in dataset["first_atoms"][0]:
         lines = ["displacement_pairs:"]
     else:
-        lines = ["%s:" % key]
-    for i, d in enumerate(dataset["first_atoms"]):
-        lines.append("- atom: %4d" % (d["number"] + 1))
+        lines = [f"{key}:"]
+    for disp1_id, d1 in enumerate(dataset["first_atoms"]):
+        lines.append("- atom: %4d" % (d1["number"] + 1))
         lines.append("  displacement:")
-        lines.append("    [ %19.16f, %19.16f, %19.16f ]" % tuple(d["displacement"]))
-        id_num = i + 1
-        if "id" in d:
-            assert id_num == d["id"]
-        lines.append("  displacement_id: %d" % id_num)
-        if with_forces and "forces" in d:
+        lines.append("    [ %19.16f, %19.16f, %19.16f ]" % tuple(d1["displacement"]))
+        if "id" in d1:
+            assert disp1_id + 1 == d1["id"]
+        lines.append(f"  displacement_id: {disp1_id + 1}")
+        if with_forces and "forces" in d1:
             lines.append("  forces:")
-            for v in d["forces"]:
+            for v in d1["forces"]:
                 lines.append("  - [ %19.16f, %19.16f, %19.16f ]" % tuple(v))
-        if "second_atoms" in d:
+        if "second_atoms" in d1:
             ret_lines, id_offset = _second_displacements_yaml_lines(
-                d["second_atoms"], id_offset, with_forces=with_forces
+                d1["second_atoms"], id_offset, with_forces=with_forces
             )
             lines += ret_lines
     lines.append("")
 
     if "second_atoms" in dataset["first_atoms"][0]:
-        n_single = len(dataset["first_atoms"])
-        n_pair = 0
-        n_included = 0
-        for d1 in dataset["first_atoms"]:
-            n_d2 = len(d1["second_atoms"])
-            n_pair += n_d2
-            for d2 in d1["second_atoms"]:
-                if "included" not in d2:
-                    n_included += 1
-                elif d2["included"]:
-                    n_included += 1
+        lines += _displacements_yaml_lines_type1_info(dataset)
 
-        lines.append("displacement_pair_info:")
-        if "cutoff_distance" in dataset:
-            lines.append("  cutoff_pair_distance: %11.8f" % dataset["cutoff_distance"])
-        lines.append("  number_of_singles: %d" % n_single)
-        lines.append("  number_of_pairs: %d" % n_pair)
-        if "cutoff_distance" in dataset:
-            lines.append("  number_of_pairs_in_cutoff: %d" % n_included)
+    return lines
 
-        # 'duplicates' is dict, but written as a list of list in yaml.
-        # See the docstring of _parse_fc3_dataset for the reason.
-        if "duplicates" in dataset and dataset["duplicates"]:
-            lines.append("  duplicated_supercell_ids: " "# 0 means perfect supercell")
-            # Backward compatibility for dict type
-            if type(dataset["duplicates"]) is dict:
-                for i, j in dataset["duplicates"].items():
-                    lines.append("  - [ %d, %d ]" % (int(i), j))
-            else:
-                for (i, j) in dataset["duplicates"]:
-                    lines.append("  - [ %d, %d ]" % (i, j))
-            lines.append("")
+
+def _displacements_yaml_lines_type1_info(dataset):
+    """Return lines of displacement-pair summary."""
+    n_single = len(dataset["first_atoms"])
+    n_pair = 0
+    n_included = 0
+    for d1 in dataset["first_atoms"]:
+        n_pair += len(d1["second_atoms"])
+        for d2 in d1["second_atoms"]:
+            if "included" not in d2:
+                n_included += 1
+            elif d2["included"]:
+                n_included += 1
+
+    lines = []
+    lines.append("displacement_pair_info:")
+    if "cutoff_distance" in dataset:
+        lines.append("  cutoff_pair_distance: %11.8f" % dataset["cutoff_distance"])
+    lines.append("  number_of_singles: %d" % n_single)
+    lines.append("  number_of_pairs: %d" % n_pair)
+    if "cutoff_distance" in dataset:
+        lines.append("  number_of_pairs_in_cutoff: %d" % n_included)
+
+    # 'duplicates' is dict, but written as a list of list in yaml.
+    # See the docstring of _parse_fc3_dataset for the reason.
+    if "duplicates" in dataset and dataset["duplicates"]:
+        lines.append("  duplicated_supercell_ids: " "# 0 means perfect supercell")
+        # Backward compatibility for dict type
+        if type(dataset["duplicates"]) is dict:
+            for disp1_id, j in dataset["duplicates"].items():
+                lines.append("  - [ %d, %d ]" % (int(disp1_id), j))
+        else:
+            for (disp1_id, j) in dataset["duplicates"]:
+                lines.append("  - [ %d, %d ]" % (disp1_id, j))
+        lines.append("")
 
     return lines
 
 
 def _second_displacements_yaml_lines(dataset2, id_offset, with_forces=False):
     lines = []
-    id_num = id_offset
+    disp2_id = id_offset
     # lines.append("  second_atoms:")
     lines.append("  paired_with:")
     numbers = np.array([d["number"] for d in dataset2])
@@ -393,7 +442,7 @@ def _second_displacements_yaml_lines(dataset2, id_offset, with_forces=False):
         indices_eq_i = np.sort(np.where(numbers == i)[0])
         if with_forces and "forces" in dataset2[indices_eq_i[0]]:
             for j in indices_eq_i:
-                id_num += 1
+                disp2_id += 1
                 lines.append("  - atom: %4d" % (i + 1))
                 lines.append("    pair_distance: %.8f" % dataset2[j]["pair_distance"])
                 lines.append("    displacement:")
@@ -403,8 +452,8 @@ def _second_displacements_yaml_lines(dataset2, id_offset, with_forces=False):
                 )
 
                 if "id" in dataset2[j]:
-                    assert dataset2[j]["id"] == id_num
-                    lines.append("    displacement_id: %d" % id_num)
+                    assert dataset2[j]["id"] == disp2_id
+                lines.append("    displacement_id: %d" % disp2_id)
 
                 lines.append("    forces:")
                 for v in dataset2[j]["forces"]:
@@ -420,16 +469,14 @@ def _second_displacements_yaml_lines(dataset2, id_offset, with_forces=False):
             disp_ids = []
             lines.append("    displacements:")
             for j in indices_eq_i:
-                id_num += 1
+                disp2_id += 1
                 d = tuple(dataset2[j]["displacement"])
                 lines.append("    - [ %19.16f, %19.16f, %19.16f ]" % d)
                 if "id" in dataset2[j]:
-                    assert dataset2[j]["id"] == id_num
-                    disp_ids.append(dataset2[j]["id"])
-            if disp_ids:
-                lines.append(
-                    "    displacement_ids: [ %s ]"
-                    % ", ".join(["%d" % j for j in disp_ids])
-                )
+                    assert dataset2[j]["id"] == disp2_id
+                disp_ids.append(disp2_id)
+            lines.append(
+                "    displacement_ids: [ %s ]" % ", ".join(["%d" % j for j in disp_ids])
+            )
 
-    return lines, id_num
+    return lines, disp2_id
