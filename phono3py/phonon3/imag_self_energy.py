@@ -136,7 +136,7 @@ class ImagSelfEnergy:
             self._pp.run(lang=self._lang, g_zero=self._g_zero)
         self._pp_strength = self._pp.interaction_strength
 
-    def set_integration_weights(self, scattering_event_class=None):
+    def run_integration_weights(self, scattering_event_class=None):
         """Compute integration weights at grid points."""
         if self._frequency_points is None:
             bi = self._pp.band_indices
@@ -310,24 +310,12 @@ class ImagSelfEnergy:
         for i, v_ave in enumerate(ave_pp):
             self._pp_strength[:, i, :, :] = v_ave / num_grid
 
-    @property
-    def interaction_strength(self):
-        """Getter and setter of ph-ph interaction strength."""
-        return self._pp_strength
-
-    @interaction_strength.setter
-    def interaction_strength(self, pp_strength):
-        self._pp_strength = pp_strength
-        self._pp.set_interaction_strength(pp_strength, g_zero=self._g_zero)
-
-    def set_interaction_strength(self, pp_strength):
+    def set_interaction_strength(self, pp_strength, g_zero=None):
         """Set ph-ph interaction strengths."""
-        warnings.warn(
-            "Use attribute, ImagSelfEnergy.interaction_strength "
-            "instead of ImagSelfEnergy.set_interaction_strength().",
-            DeprecationWarning,
-        )
-        self.interaction_strength = pp_strength
+        self._pp_strength = pp_strength
+        if g_zero is not None:
+            self._g_zero = g_zero
+        self._pp.set_interaction_strength(pp_strength, g_zero=g_zero)
 
     def delete_integration_weights(self):
         """Delete large ndarray's."""
@@ -894,7 +882,7 @@ def _get_imag_self_energy_at_sigma(
         detailed_gamma_at_gp_at_j = detailed_gamma_at_gp[j]
 
     if _frequency_points is None:
-        ise.set_integration_weights(scattering_event_class=scattering_event_class)
+        ise.run_integration_weights(scattering_event_class=scattering_event_class)
         for k, t in enumerate(temperatures):
             ise.temperature = t
             ise.run()
@@ -1031,7 +1019,7 @@ def run_ise_at_frequency_points_batch(
     i,
     j,
     _frequency_points,
-    ise,
+    ise: ImagSelfEnergy,
     temperatures,
     gamma,
     write_gamma_detail=False,
@@ -1065,7 +1053,7 @@ def run_ise_at_frequency_points_batch(
             sys.stdout.flush()
 
         ise.frequency_points = _frequency_points[fpts_batch]
-        ise.set_integration_weights(scattering_event_class=scattering_event_class)
+        ise.run_integration_weights(scattering_event_class=scattering_event_class)
         for ll, t in enumerate(temperatures):
             ise.temperature = t
             ise.run()
