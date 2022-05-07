@@ -5,10 +5,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Direct solution of linearized phonon Boltzmann equation &#8212; Phono3py v.2.3.0</title>
+    <title>Direct solution of linearized phonon Boltzmann equation &#8212; Phono3py v.2.3.1</title>
     
-  <link href="_static/css/theme.css" rel="stylesheet">
-  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
 
     
   <link rel="stylesheet"
@@ -18,20 +19,17 @@
   <link rel="preload" as="font" type="font/woff2" crossorigin
     href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
 
-    
-      
-
-    
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=62ba249389abaaa9ffc34bf36a076bdc1d65ee18" type="text/css" />
     
-  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
 
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=f31d14ad54b65d19161ba51d4ffff3a77ae00456"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -45,7 +43,21 @@
     <!-- Google Analytics -->
     
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay overlay-navbar" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<!-- Checkboxes to toggle the in-page toc -->
+<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
+<label class="overlay overlay-pagetoc" for="__page-toc">
+    <div class="visually-hidden">Toggle in-page Table of Contents</div>
+</label>
+<!-- Headers at the top -->
+<div class="announcement header-item noprint"></div>
+<div class="header header-item noprint"></div>
+
     
     <div class="container-fluid" id="banner"></div>
 
@@ -54,19 +66,15 @@
     <div class="container-xl">
       <div class="row">
           
-<!-- Checkboxes to toggle the left sidebar -->
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
-<label class="overlay" for="__navigation">
-    <div class="visually-hidden">Toggle navigation sidebar</div>
-</label>
-<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
-    
-        <div class="navbar-brand-box">
+<!-- Sidebar -->
+<div class="bd-sidebar noprint" id="site-navigation">
+    <div class="bd-sidebar__content">
+        <div class="bd-sidebar__top"><div class="navbar-brand-box">
     <a class="navbar-brand text-wrap" href="index.html">
       
       
       
-      <h1 class="site-logo" id="site-title">Phono3py v.2.3.0</h1>
+      <h1 class="site-logo" id="site-title">Phono3py v.2.3.1</h1>
       
     </a>
 </div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
@@ -185,74 +193,135 @@
 </ul>
 
     </div>
-</nav> <!-- To handle the deprecated key -->
-
-<div class="navbar_extra_footer">
-  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
-</div>
-
-</div>
-
-
-          
-
-
-          
-<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
-<div class="sbt-scroll-pixel-helper"></div>
-<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
-    
-    <div class="topbar container-xl fixed-top">
-    <div class="topbar-contents row">
-        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
-        <div class="col pl-md-4 topbar-main">
-            <div class="topbar-left">
-                
-                <label class="nav-toggle-button" for="__navigation">
-                    <div class="visually-hidden">Toggle navigation</div>
-                    <i class="fas fa-bars"></i>
-                </label>
-                
+</nav></div>
+        <div class="bd-sidebar__bottom">
+             <!-- To handle the deprecated key -->
+            
+            <div class="navbar_extra_footer">
+            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
             </div>
             
-<div class="dropdown-buttons-trigger">
-    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
-            class="fas fa-download"></i></button>
+        </div>
+    </div>
+    <div id="rtd-footer-container"></div>
+</div>
 
-    <div class="dropdown-buttons">
-        <!-- ipynb file if we had a myst markdown file -->
+
+          
+
+
+          
+<!-- A tiny helper pixel to detect if we've scrolled -->
+<div class="sbt-scroll-pixel-helper"></div>
+<!-- Main content -->
+<div class="col py-0 content-container">
+    
+    <div class="header-article row sticky-top noprint">
         
-        <!-- Download raw file -->
-        <a class="dropdown-buttons" href="_sources/direct-solution.md.txt"><button type="button"
-                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
-                data-placement="left">.md</button></a>
-        <!-- Download PDF via print -->
-        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
-                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+
+
+
+<div class="col py-1 d-flex header-article-main">
+    <div class="header-article__left">
+        
+        <label for="__navigation"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="right"
+title="Toggle navigation"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-bars"></i>
+  </span>
+
+</label>
+
+        
+    </div>
+    <div class="header-article__right">
+<button onclick="toggleFullScreen()"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="bottom"
+title="Fullscreen mode"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+<div class="menu-dropdown menu-dropdown-download-buttons">
+  <button class="headerbtn menu-dropdown__trigger"
+      aria-label="Download this page">
+      <i class="fas fa-download"></i>
+  </button>
+  <div class="menu-dropdown__content">
+    <ul>
+      <li>
+        <a href="_sources/direct-solution.md.txt"
+   class="headerbtn"
+   data-toggle="tooltip"
+data-placement="left"
+title="Download source file"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="headerbtn__text-container">.md</span>
+</a>
+
+      </li>
+      
+      <li>
+        
+<button onclick="printPdf(this)"
+  class="headerbtn"
+  data-toggle="tooltip"
+data-placement="left"
+title="Print to PDF"
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="headerbtn__text-container">.pdf</span>
+</button>
+
+      </li>
+      
+    </ul>
+  </div>
+</div>
+<label for="__page-toc"
+  class="headerbtn headerbtn-page-toc"
+  
+>
+  
+
+<span class="headerbtn__icon-container">
+  <i class="fas fa-list"></i>
+  </span>
+
+</label>
+
     </div>
 </div>
 
-            <!-- Source interaction buttons -->
-
-            <!-- Full screen (wrap in <a> to have style consistency -->
-
-<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
-        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
-        title="Fullscreen mode"><i
-            class="fas fa-expand"></i></button></a>
-
-            <!-- Launch buttons -->
-
-        </div>
-
-        <!-- Table of contents -->
-        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
-            
-            <div class="tocsection onthispage pt-5 pb-3">
-                <i class="fas fa-list"></i> Contents
-            </div>
-            <nav id="bd-toc-nav" aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
+<!-- Table of contents -->
+<div class="col-md-3 bd-toc show noprint">
+    <div class="tocsection onthispage pt-5 pb-3">
+        <i class="fas fa-list"></i> Contents
+    </div>
+    <nav id="bd-toc-nav" aria-label="Page">
+        <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#how-to-use">
    How to use
@@ -309,12 +378,11 @@
  </li>
 </ul>
 
-            </nav>
-        </div>
-    </div>
+    </nav>
 </div>
-    <div id="main-content" class="row">
-        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
+    </div>
+    <div class="article row">
+        <div class="col pl-md-3 pl-lg-5 content-container">
             <!-- Table of contents that is only displayed when printing the page -->
             <div id="jb-print-docs-body" class="onlyprint">
                 <h1>Direct solution of linearized phonon Boltzmann equation</h1>
@@ -387,11 +455,12 @@
                     </div>
                 </div>
             </div>
-            
+            <main id="main-content" role="main">
+                
               <div>
                 
   <div class="tex2jax_ignore mathjax_ignore section" id="direct-solution-of-linearized-phonon-boltzmann-equation">
-<span id="direct-solution"></span><h1>Direct solution of linearized phonon Boltzmann equation<a class="headerlink" href="#direct-solution-of-linearized-phonon-boltzmann-equation" title="Permalink to this headline">¶</a></h1>
+<span id="direct-solution"></span><h1>Direct solution of linearized phonon Boltzmann equation<a class="headerlink" href="#direct-solution-of-linearized-phonon-boltzmann-equation" title="Permalink to this headline">#</a></h1>
 <p>This page explains how to use the direct solution of LBTE by
 <a class="reference external" href="https://doi.org/10.1103/PhysRevLett.110.265506">L. Chaput, Phys. Rev. Lett. 110, 265506 (2013)</a>
 (<a class="reference internal" href="citation.html#citation-direct-solution-lbte"><span class="std std-ref">citation</span></a>).</p>
@@ -416,7 +485,7 @@
 </ul>
 </div>
 <div class="section" id="how-to-use">
-<h2><a class="toc-backref" href="#id1">How to use</a><a class="headerlink" href="#how-to-use" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id1">How to use</a><a class="headerlink" href="#how-to-use" title="Permalink to this headline">#</a></h2>
 <p>As written in the following sections, this calculation requires large memory
 space. When running multiple temperature points, simply the memory space needed
 is multiplied by the number of the temperature points. Therefore it is normally
@@ -444,7 +513,7 @@ Eigenvalues of collision matrix were written into <span class="s2">&quot;coleigs
 </div>
 </div>
 <div class="section" id="memory-usage">
-<h2><a class="toc-backref" href="#id2">Memory usage</a><a class="headerlink" href="#memory-usage" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id2">Memory usage</a><a class="headerlink" href="#memory-usage" title="Permalink to this headline">#</a></h2>
 <p>The direct solution of LBTE needs diagonalization of a large collision matrix,
 which requires large memory space. This is the largest limitation of using this
 method. The memory size needed for one collision matrix at a temperature point
@@ -483,7 +552,7 @@ interaction strengths is shown such as</p>
 </div>
 </div>
 <div class="section" id="work-load-distribution">
-<h2><a class="toc-backref" href="#id3">Work load distribution</a><a class="headerlink" href="#work-load-distribution" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id3">Work load distribution</a><a class="headerlink" href="#work-load-distribution" title="Permalink to this headline">#</a></h2>
 <p>The other difficulty compared with RTA is the workload distribution. Currently
 there are two ways to distribute the calculation: (1) Collision matrix is
 divided and the pieces are distributed into computing nodes. (2) Ph-ph
@@ -495,7 +564,7 @@ stored in an hdf5 file. Increasing the calculation size, e.g., larger mesh
 numbers or larger number of atoms in the primitive cell, large files are
 created.</p>
 <div class="section" id="distribution-of-collision-matrix">
-<span id="distribution-colmat"></span><h3><a class="toc-backref" href="#id4">Distribution of collision matrix</a><a class="headerlink" href="#distribution-of-collision-matrix" title="Permalink to this headline">¶</a></h3>
+<span id="distribution-colmat"></span><h3><a class="toc-backref" href="#id4">Distribution of collision matrix</a><a class="headerlink" href="#distribution-of-collision-matrix" title="Permalink to this headline">#</a></h3>
 <p>A full collision matrix is divided into pieces at grid points of irreducible
 part of Brillouin zone. Each piece is calculated independently from the other
 pieces. After finishing the calculations of these pieces, the full collision
@@ -548,7 +617,7 @@ collision matrix calculation (see also <a class="reference internal" href="workl
 temperatures by <code class="docutils literal notranslate"><span class="pre">--ts</span></code> option, i.e., 300K in this case.</p>
 </div>
 <div class="section" id="distribution-of-phonon-phonon-interaction-strengths">
-<h3><a class="toc-backref" href="#id5">Distribution of phonon-phonon interaction strengths</a><a class="headerlink" href="#distribution-of-phonon-phonon-interaction-strengths" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id5">Distribution of phonon-phonon interaction strengths</a><a class="headerlink" href="#distribution-of-phonon-phonon-interaction-strengths" title="Permalink to this headline">#</a></h3>
 <p>The distribution of pieces of collision matrix is straightforward and is
 recommended to use if the number of temperature points is small. However
 increasing data file size, network communication becomes to require long time to
@@ -605,7 +674,7 @@ at multiple temperatures.</p>
 </div>
 </div>
 <div class="section" id="cutoff-parameter-of-pseudo-inversion">
-<span id="diagonzalization-solver"></span><h2><a class="toc-backref" href="#id6">Cutoff parameter of pseudo inversion</a><a class="headerlink" href="#cutoff-parameter-of-pseudo-inversion" title="Permalink to this headline">¶</a></h2>
+<span id="diagonzalization-solver"></span><h2><a class="toc-backref" href="#id6">Cutoff parameter of pseudo inversion</a><a class="headerlink" href="#cutoff-parameter-of-pseudo-inversion" title="Permalink to this headline">#</a></h2>
 <p>To achieve a pseudo inversion, a cutoff parameter is used to find null space,
 i.e., to select the nearly zero eigenvalues. The default cutoff value is <code class="docutils literal notranslate"><span class="pre">1e-8</span></code>,
 and this hopefully works in many cases. But if a collision matrix is numerically
@@ -632,11 +701,11 @@ the red points show the negative values as positive values
 can see the gap between <span class="math notranslate nohighlight">\(10^{-4}\)</span> and <span class="math notranslate nohighlight">\(10^{-16}\)</span>, which
 is a good sign. The values whose absolute values are smaller than
 <span class="math notranslate nohighlight">\(10^{-8}\)</span> are treated as 0 and those solutions are considered
-as null spaces.</span><a class="headerlink" href="#coleigplot" title="Permalink to this image">¶</a></p>
+as null spaces.</span><a class="headerlink" href="#coleigplot" title="Permalink to this image">#</a></p>
 </div>
 </div>
 <div class="section" id="diagonalization-solver-interfaces">
-<h2><a class="toc-backref" href="#id7">Diagonalization solver interfaces</a><a class="headerlink" href="#diagonalization-solver-interfaces" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id7">Diagonalization solver interfaces</a><a class="headerlink" href="#diagonalization-solver-interfaces" title="Permalink to this headline">#</a></h2>
 <p>Multithreaded BLAS is recommended to use for the calculation of the direct
 solution of LBTE because the diagonalization of the collision matrix is
 computationally highly demanding. The diagonalization in Phono3py relies on
@@ -649,19 +718,19 @@ conda-forge is written <a class="reference internal" href="install.html#install-
 interfaces is described in the
 <a class="reference internal" href="#direct-solution-solver-choice"><span class="std std-ref">next section</span></a>.</p>
 <div class="section" id="openblas-or-mkl-linked-scipy-and-numpy">
-<h3><a class="toc-backref" href="#id8">OpenBLAS or MKL linked scipy and numpy</a><a class="headerlink" href="#openblas-or-mkl-linked-scipy-and-numpy" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id8">OpenBLAS or MKL linked scipy and numpy</a><a class="headerlink" href="#openblas-or-mkl-linked-scipy-and-numpy" title="Permalink to this headline">#</a></h3>
 <p>Scipy and numpy have interfaces to LAPACK <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code>, and scipy also has the
 interface to <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>. OpenBLAS and MKL linked scipy and numpy are provided by
 conda-forge.</p>
 </div>
 <div class="section" id="openblas-or-mkl-via-lapacke">
-<h3><a class="toc-backref" href="#id9">OpenBLAS or MKL via LAPACKE</a><a class="headerlink" href="#openblas-or-mkl-via-lapacke" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id9">OpenBLAS or MKL via LAPACKE</a><a class="headerlink" href="#openblas-or-mkl-via-lapacke" title="Permalink to this headline">#</a></h3>
 <p>LAPACK <code class="docutils literal notranslate"><span class="pre">dsyev</span></code> and <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code> can be accessed via LAPACKE in the phono3py’s C
 language implementation through the python C-API.</p>
 </div>
 </div>
 <div class="section" id="solver-choice-for-diagonalization">
-<span id="direct-solution-solver-choice"></span><h2><a class="toc-backref" href="#id10">Solver choice for diagonalization</a><a class="headerlink" href="#solver-choice-for-diagonalization" title="Permalink to this headline">¶</a></h2>
+<span id="direct-solution-solver-choice"></span><h2><a class="toc-backref" href="#id10">Solver choice for diagonalization</a><a class="headerlink" href="#solver-choice-for-diagonalization" title="Permalink to this headline">#</a></h2>
 <p>For larger systems, diagonalization of collision matrix takes longest time and
 requires large memory space. Phono3py relies on LAPACK for the diagonalization
 and so the performance is dependent on the choice of the diagonalization solver.</p>
@@ -695,9 +764,11 @@ carefully.</p></li>
 
               </div>
               
-            
-                <!-- Previous / next buttons -->
-<div class='prev-next-area'> 
+            </main>
+            <footer class="footer-article noprint">
+                
+    <!-- Previous / next buttons -->
+<div class='prev-next-area'>
     <a class='left-prev' id="prev-link" href="auxiliary-tools.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
@@ -713,22 +784,26 @@ carefully.</p></li>
     <i class="fas fa-angle-right"></i>
     </a>
 </div>
-            
+            </footer>
         </div>
     </div>
-    <footer class="footer">
-  <p>
+    <div class="footer-content row">
+        <footer class="col footer"><p>
+  
+      &copy; Copyright 2015, Atsushi Togo.<br/>
+</p>
+        </footer>
+    </div>
     
-        &copy; Copyright 2015, Atsushi Togo.<br/>
-  </p>
-</footer>
-</main>
+</div>
 
 
       </div>
     </div>
   
-  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+
 
   </body>
 </html>
