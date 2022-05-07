@@ -885,12 +885,12 @@ class ConductivityBase(ABC):
 
     def _show_log_header(self, i_gp):
         if self._log_level:
-            gp = self._grid_points[i_gp]
+            bzgp = self._grid_points[i_gp]
             print(
                 "======================= Grid point %d (%d/%d) "
-                "=======================" % (gp, i_gp + 1, len(self._grid_points))
+                "=======================" % (bzgp, i_gp + 1, len(self._grid_points))
             )
-            qpoint = self._get_qpoint_from_gp_index(i_gp)
+            qpoint = self._get_qpoint_from_gp_index(bzgp)
             print("q-point: (%5.2f %5.2f %5.2f)" % tuple(qpoint))
             if self._boundary_mfp is not None:
                 if self._boundary_mfp > 1000:
