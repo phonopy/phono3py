@@ -1503,7 +1503,7 @@ def read_phonon_from_hdf5(mesh, filename=None, verbose=True):
         assert (mesh_in_file == mesh).all(), "Mesh numbers are inconsistent."
 
         if verbose:
-            print('Phonons are read from "%s".' % full_filename)
+            print('Phonons were read from "%s".' % full_filename, flush=True)
 
         return frequencies, eigenvectors, grid_address
 

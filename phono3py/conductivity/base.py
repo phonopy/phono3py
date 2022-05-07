@@ -911,3 +911,4 @@ class ConductivityBase(ABC):
                     )
                     % tuple(self._mass_variances)
                 )
+            print(end="", flush=True)
