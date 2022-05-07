@@ -718,6 +718,7 @@ def write_spectral_function_to_hdf5(
     sigma=None,
     frequency_points=None,
     frequencies=None,
+    all_band_exist=False,
     filename=None,
 ):
     """Wirte spectral functions (currently only bubble) in hdf5.
@@ -729,10 +730,18 @@ def write_spectral_function_to_hdf5(
 
     """
     full_filename = "spectral"
-    suffix = _get_filename_suffix(mesh, grid_point=grid_point, sigma=sigma)
+    if all_band_exist:
+        _band_indices = None
+    else:
+        _band_indices = np.hstack(band_indices).astype("int_")
+    suffix = _get_filename_suffix(
+        mesh, grid_point=grid_point, band_indices=_band_indices, sigma=sigma
+    )
     _band_indices = np.array(band_indices, dtype="intc")
 
     full_filename += suffix
+    if filename is not None:
+        full_filename += f".{filename}"
     full_filename += ".hdf5"
 
     with h5py.File(full_filename, "w") as w:

@@ -2051,6 +2051,7 @@ class Phono3py:
             band_indices=self._band_indices,
             write_txt=write_txt,
             write_hdf5=write_hdf5,
+            output_filename=output_filename,
             log_level=self._log_level,
         )
 

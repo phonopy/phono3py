@@ -46,7 +46,7 @@ from phono3py.phonon3.imag_self_energy import (
     get_frequency_points,
     run_ise_at_frequency_points_batch,
 )
-from phono3py.phonon3.interaction import Interaction
+from phono3py.phonon3.interaction import Interaction, all_bands_exist
 from phono3py.phonon3.real_self_energy import imag_to_real
 
 
@@ -135,38 +135,40 @@ def run_spectral_function(
                     pos = 0
                     for k in range(j):
                         pos += len(band_indices[k])
-                    filename = write_spectral_function_at_grid_point(
-                        gp,
-                        bi,
-                        spf.frequency_points,
-                        spf_at_t[pos : (pos + len(bi))].sum(axis=0) / len(bi),
-                        interaction.mesh_numbers,
-                        t,
-                        sigma=sigma,
-                        filename=output_filename,
-                        is_mesh_symmetry=interaction.is_mesh_symmetry,
-                    )
+                    if write_txt:
+                        filename = write_spectral_function_at_grid_point(
+                            gp,
+                            bi,
+                            spf.frequency_points,
+                            spf_at_t[pos : (pos + len(bi))].sum(axis=0) / len(bi),
+                            interaction.mesh_numbers,
+                            t,
+                            sigma=sigma,
+                            filename=output_filename,
+                            is_mesh_symmetry=interaction.is_mesh_symmetry,
+                        )
                     if log_level:
-                        print("Spectral functions were written to")
-                        print('"%s".' % filename)
+                        print(f'Spectral functions were written to "{filename}".')
 
-            filename = write_spectral_function_to_hdf5(
-                gp,
-                band_indices,
-                temperatures,
-                spf.spectral_functions[sigma_i, :, i],
-                spf.shifts[sigma_i, :, i],
-                spf.half_linewidths[sigma_i, :, i],
-                interaction.mesh_numbers,
-                interaction.bz_grid,
-                sigma=sigma,
-                frequency_points=spf.frequency_points,
-                frequencies=frequencies[gp],
-                filename=output_filename,
-            )
+            if write_hdf5:
+                filename = write_spectral_function_to_hdf5(
+                    gp,
+                    bi,
+                    temperatures,
+                    spf.spectral_functions[sigma_i, :, i],
+                    spf.shifts[sigma_i, :, i],
+                    spf.half_linewidths[sigma_i, :, i],
+                    interaction.mesh_numbers,
+                    interaction.bz_grid,
+                    sigma=sigma,
+                    frequency_points=spf.frequency_points,
+                    frequencies=frequencies[gp],
+                    all_band_exist=all_bands_exist(interaction),
+                    filename=output_filename,
+                )
 
             if log_level:
-                print('Spectral functions were stored in "%s".' % filename)
+                print(f'Spectral functions were stored in "{filename}".')
                 sys.stdout.flush()
 
     return spf

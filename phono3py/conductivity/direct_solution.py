@@ -46,7 +46,6 @@ from phonopy.units import Kb, THzToEv
 from phono3py.conductivity.base import ConductivityBase, ConductivityMixIn
 from phono3py.conductivity.utils import (
     ConductivityLBTEWriter,
-    all_bands_exist,
     select_colmat_solver,
     set_collision_from_file,
 )
@@ -57,7 +56,7 @@ from phono3py.conductivity.wigner import (
 )
 from phono3py.file_IO import read_pp_from_hdf5
 from phono3py.phonon3.collision_matrix import CollisionMatrix
-from phono3py.phonon3.interaction import Interaction
+from phono3py.phonon3.interaction import Interaction, all_bands_exist
 from phono3py.phonon.grid import get_grid_points_by_rotations
 
 

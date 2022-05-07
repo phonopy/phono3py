@@ -50,6 +50,7 @@ from phono3py.file_IO import (
     write_pp_to_hdf5,
     write_unitary_matrix_to_hdf5,
 )
+from phono3py.phonon3.interaction import all_bands_exist
 from phono3py.phonon3.triplets import get_all_triplets
 
 if TYPE_CHECKING:
@@ -907,16 +908,6 @@ class ShowCalcProgress:
                 for j, (t, k) in enumerate(zip(temperatures, kappa_TOT_RTA[i])):
                     print("K_T\t" + ("%7.1f " + " %10.3f" * 6) % ((t,) + tuple(k)))
             print("")
-
-
-def all_bands_exist(interaction: Interaction):
-    """Return if all bands are selected or not."""
-    band_indices = interaction.band_indices
-    num_band = len(interaction.primitive) * 3
-    if len(band_indices) == num_band:
-        if (band_indices - np.arange(num_band) == 0).all():
-            return True
-    return False
 
 
 def write_pp(

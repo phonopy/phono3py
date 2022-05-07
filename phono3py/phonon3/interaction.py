@@ -905,3 +905,13 @@ class Interaction:
         self._eigenvectors = np.zeros(
             (num_grid, num_band, num_band), dtype=("c%d" % (itemsize * 2)), order="C"
         )
+
+
+def all_bands_exist(interaction: Interaction):
+    """Return if all bands are selected or not."""
+    band_indices = interaction.band_indices
+    num_band = len(interaction.primitive) * 3
+    if len(band_indices) == num_band:
+        if (band_indices - np.arange(num_band) == 0).all():
+            return True
+    return False
