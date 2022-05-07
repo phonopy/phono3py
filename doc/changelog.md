@@ -2,6 +2,10 @@
 
 # Change Log
 
+## May-7-2022: Version 2.3.1
+
+- Fix wrongly displaying q-point in conductivity calculation.
+
 ## Apr-9-2022: Version 2.3.0
 
 - Maintenance release including small bug fixes.
