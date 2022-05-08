@@ -81,6 +81,7 @@ class Phono3pySettings(Settings):
         "read_gamma": False,
         "read_phonon": False,
         "read_pp": False,
+        "output_yaml_filename": None,
         "phonon_supercell_matrix": None,
         "pinv_cutoff": 1.0e-8,
         "pinv_solver": 0,
@@ -242,6 +243,10 @@ class Phono3pySettings(Settings):
     def set_num_points_in_batch(self, val):
         """Set num_points_in_batch."""
         self._v["num_points_in_batch"] = val
+
+    def set_output_yaml_filename(self, val):
+        """Set output_yaml_filename."""
+        self._v["output_yaml_filename"] = val
 
     def set_phonon_supercell_matrix(self, val):
         """Set phonon_supercell_matrix."""
@@ -507,6 +512,10 @@ class Phono3pyConfParser(ConfParser):
             if num_points_in_batch is not None:
                 self._confs["num_points_in_batch"] = num_points_in_batch
 
+        if "output_yaml_filename" in self._args:
+            if self._args.output_yaml_filename is not None:
+                self._confs["output_yaml_filename"] = self._args.output_yaml_filename
+
         if "pinv_cutoff" in self._args:
             if self._args.pinv_cutoff is not None:
                 self._confs["pinv_cutoff"] = self._args.pinv_cutoff
@@ -661,7 +670,11 @@ class Phono3pyConfParser(ConfParser):
                 self.set_parameter(conf_key, int(confs[conf_key]))
 
             # string
-            if conf_key in ("conductivity_type", "create_forces_fc3_file"):
+            if conf_key in (
+                "conductivity_type",
+                "create_forces_fc3_file",
+                "output_yaml_filename",
+            ):
                 self.set_parameter(conf_key, confs[conf_key])
 
             # specials
@@ -867,6 +880,10 @@ class Phono3pyConfParser(ConfParser):
         # Maximum mean free path
         if "max_freepath" in params:
             self._settings.set_max_freepath(params["max_freepath"])
+
+        # Output yaml filename instead of default filename of phono3py.yaml.
+        if "output_yaml_filename" in params:
+            self._settings.set_output_yaml_filename(params["output_yaml_filename"])
 
         # Cutoff frequency for pseudo inversion of collision matrix
         if "pinv_cutoff" in params:

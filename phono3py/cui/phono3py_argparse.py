@@ -181,6 +181,14 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         default=False,
         help="Solve collective phonons",
     )
+    if load_phono3py_yaml:
+        parser.add_argument(
+            "--config",
+            dest="conf_filename",
+            metavar="FILE",
+            default=None,
+            help="Phono3py configuration file",
+        )
     parser.add_argument(
         "--const-ave-pp",
         dest="const_ave_pp",
@@ -540,7 +548,14 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             "sampling modes of imag-self-energy calculation"
         ),
     )
-    if not load_phono3py_yaml:
+    if load_phono3py_yaml:
+        parser.add_argument(
+            "-o",
+            dest="output_yaml_filename",
+            default=None,
+            help="Output yaml filename instead of default filename of phono3py.yaml",
+        )
+    else:
         parser.add_argument(
             "-o", dest="output_filename", default=None, help="Output filename extension"
         )
