@@ -53,6 +53,7 @@ workload-distribution
 cutoff-pair
 external-tools
 phono3py-api
+phono3py-load
 tips
 citation
 changelog

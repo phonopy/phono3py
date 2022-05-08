@@ -112,10 +112,10 @@ def print_phono3py():
 
 def finalize_phono3py(
     phono3py: Phono3py,
-    confs,
+    confs_dict,
     log_level,
     displacements_mode=False,
-    filename="phono3py.yaml",
+    filename=None,
 ):
     """Write phono3py.yaml and then exit.
 
@@ -123,7 +123,7 @@ def finalize_phono3py(
     ----------
     phono3py : Phono3py
         Phono3py instance.
-    confs : dict
+    confs_dict : dict
         This contains the settings and command options that the user set.
     log_level : int
         Log level. 0 means quiet.
@@ -135,6 +135,11 @@ def finalize_phono3py(
         phono3py.yaml is written in this filename.
 
     """
+    if filename is None:
+        yaml_filename = "phono3py.yaml"
+    else:
+        yaml_filename = filename
+
     if displacements_mode:
         _calculator = phono3py.calculator
     else:
@@ -144,19 +149,19 @@ def finalize_phono3py(
     yaml_settings = {"force_sets": False, "displacements": displacements_mode}
 
     ph3py_yaml = Phono3pyYaml(
-        configuration=confs, physical_units=_physical_units, settings=yaml_settings
+        configuration=confs_dict, physical_units=_physical_units, settings=yaml_settings
     )
     ph3py_yaml.set_phonon_info(phono3py)
     ph3py_yaml.calculator = _calculator
-    with open(filename, "w") as w:
+    with open(yaml_filename, "w") as w:
         w.write(str(ph3py_yaml))
 
     if log_level > 0:
         print("")
         if displacements_mode:
-            print('Displacement dataset was written in "%s".' % filename)
+            print(f'Displacement dataset was written in "{yaml_filename}".')
         else:
-            print('Summary of calculation was written in "%s".' % filename)
+            print(f'Summary of calculation was written in "{yaml_filename}".')
         print_end()
     sys.exit(0)
 
@@ -233,7 +238,9 @@ def read_phono3py_settings(args, argparse_control, log_level):
         file_exists(args.filename[0], log_level)
         if load_phono3py_yaml:
             phono3py_conf_parser = Phono3pyConfParser(
-                args=args, default_settings=argparse_control
+                filename=args.conf_filename,
+                args=args,
+                default_settings=argparse_control,
             )
             cell_filename = args.filename[0]
         else:
@@ -246,13 +253,18 @@ def read_phono3py_settings(args, argparse_control, log_level):
                 )
                 cell_filename = phono3py_conf_parser.settings.cell_filename
     else:
-        phono3py_conf_parser = Phono3pyConfParser(args=args)
+        if load_phono3py_yaml:
+            phono3py_conf_parser = Phono3pyConfParser(
+                args=args, filename=args.conf_filename
+            )
+        else:
+            phono3py_conf_parser = Phono3pyConfParser(args=args)
         cell_filename = phono3py_conf_parser.settings.cell_filename
 
-    confs = phono3py_conf_parser.confs.copy()
+    confs_dict = phono3py_conf_parser.confs.copy()
     settings = phono3py_conf_parser.settings
 
-    return settings, confs, cell_filename
+    return settings, confs_dict, cell_filename
 
 
 def create_FORCES_FC2_from_FORCE_SETS_then_exit(log_level):
@@ -997,10 +1009,12 @@ def main(**argparse_control):
     if load_phono3py_yaml:
         input_filename = None
         output_filename = None
+        output_yaml_filename = args.output_yaml_filename
     else:
         (input_filename, output_filename) = get_input_output_filenames_from_args(args)
+        output_yaml_filename = None
 
-    settings, confs, cell_filename = read_phono3py_settings(
+    settings, confs_dict, cell_filename = read_phono3py_settings(
         args, argparse_control, log_level
     )
 
@@ -1067,7 +1081,7 @@ def main(**argparse_control):
 
         finalize_phono3py(
             phono3py,
-            confs,
+            confs_dict,
             log_level,
             displacements_mode=True,
             filename="phono3py_disp.yaml",
@@ -1359,4 +1373,4 @@ def main(**argparse_control):
                 + "-" * 11
             )
 
-    finalize_phono3py(phono3py, confs, log_level)
+    finalize_phono3py(phono3py, confs_dict, log_level, filename=output_yaml_filename)
