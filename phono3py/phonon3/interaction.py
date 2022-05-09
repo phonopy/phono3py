@@ -154,6 +154,8 @@ class Interaction:
         self._done_nac_at_gamma = False  # Phonon at Gamma is calculatd with NAC.
         self._frequencies = None
         self._eigenvectors = None
+        self._frequencies_at_gamma = None
+        self._eigenvectors_at_gamma = None
         self._dm = None
         self._nac_params = None
         self._nac_q_direction = None
@@ -354,7 +356,7 @@ class Interaction:
         if nac_q_direction is None:
             self._nac_q_direction = None
         else:
-            self._nac_q_direction = np.array(nac_q_direction, dtype="double")
+            self._nac_q_direction = np.array(nac_q_direction, copy=True, dtype="double")
 
     def get_nac_q_direction(self):
         """Return q-direction used for NAC at q->0."""
@@ -495,57 +497,43 @@ class Interaction:
                 ir_map_at_q,
             ) = get_nosym_triplets_at_q(grid_point, self._bz_grid)
         else:
-            (
-                triplets_at_q,
-                weights_at_q,
-                triplets_map_at_q,
-                ir_map_at_q,
-            ) = get_triplets_at_q(grid_point, self._bz_grid, swappable=True)
+            # Special treatment of symmetry is applied when q_direction is used
+            # at Gamma point = (0 0 0).
+            if (
+                self._bz_grid.addresses[grid_point] == 0
+            ).all() and self._nac_q_direction is not None:
+                rotations = []
+                for i, r in enumerate(self._bz_grid.reciprocal_operations):
+                    dq = self._nac_q_direction
+                    dq /= np.linalg.norm(dq)
+                    diff = np.dot(r, dq) - dq
+                    if (abs(diff) < 1e-5).all():
+                        rotations.append(self._bz_grid.rotations[i])
+                (
+                    triplets_at_q,
+                    weights_at_q,
+                    triplets_map_at_q,
+                    ir_map_at_q,
+                ) = get_triplets_at_q(
+                    grid_point,
+                    self._bz_grid,
+                    reciprocal_rotations=rotations,
+                    is_time_reversal=False,
+                )
+            else:
+                (
+                    triplets_at_q,
+                    weights_at_q,
+                    triplets_map_at_q,
+                    ir_map_at_q,
+                ) = get_triplets_at_q(grid_point, self._bz_grid)
 
-            # Special treatment of symmetry is applied when q_direction is
-            # used.
+            # Re-calculate phonon at Gamma-point when q-direction is given.
             if (self._bz_grid.addresses[grid_point] == 0).all():
-                if self._nac_q_direction is not None:
-                    self._done_nac_at_gamma = True
-                    self._phonon_done[grid_point] = 0
-                    self.run_phonon_solver(
-                        np.array(
-                            [
-                                grid_point,
-                            ],
-                            dtype="int_",
-                        )
-                    )
-                    rotations = []
-                    for i, r in enumerate(self._bz_grid.reciprocal_operations):
-                        dq = self._nac_q_direction
-                        dq /= np.linalg.norm(dq)
-                        diff = np.dot(r, dq) - dq
-                        if (abs(diff) < 1e-5).all():
-                            rotations.append(self._bz_grid.rotations[i])
-                    (
-                        triplets_at_q,
-                        weights_at_q,
-                        triplets_map_at_q,
-                        ir_map_at_q,
-                    ) = get_triplets_at_q(
-                        grid_point,
-                        self._bz_grid,
-                        reciprocal_rotations=rotations,
-                        is_time_reversal=False,
-                    )
+                self.run_phonon_solver_at_gamma(is_nac=True)
             elif self._done_nac_at_gamma:
                 if self._nac_q_direction is None:
-                    self._done_nac_at_gamma = False
-                    self._phonon_done[self._bz_grid.gp_Gamma] = 0
-                    self.run_phonon_solver(
-                        np.array(
-                            [
-                                self._bz_grid.gp_Gamma,
-                            ],
-                            dtype="int_",
-                        )
-                    )
+                    self.run_phonon_solver_at_gamma()
                 else:
                     msg = (
                         "Phonons at Gamma has been calcualted with NAC, "
@@ -600,7 +588,6 @@ class Interaction:
            When False, phonon calculation will be postponed.
 
         """
-        self._allocate_phonon()
         self._nac_params = nac_params
         self._dm = get_dynamical_matrix(
             fc2,
@@ -611,6 +598,7 @@ class Interaction:
             decimals=decimals,
             symprec=self._symprec,
         )
+        self._allocate_phonon()
 
     def set_phonon_data(self, frequencies, eigenvectors, bz_grid_addresses):
         """Set phonons on grid."""
@@ -627,6 +615,9 @@ class Interaction:
             self._phonon_done[:] = 1
             self._frequencies[:] = frequencies
             self._eigenvectors[:] = eigenvectors
+            gp_Gamma = self._bz_grid.gp_Gamma
+            self._frequencies_at_gamma = self._frequencies[gp_Gamma].copy()
+            self._eigenvectors_at_gamma = self._eigenvectors[gp_Gamma].copy()
 
     def run_phonon_solver(self, grid_points=None):
         """Run phonon solver at BZ-grid points."""
@@ -635,6 +626,37 @@ class Interaction:
         else:
             _grid_points = grid_points
         self._run_phonon_solver_c(_grid_points)
+
+    def run_phonon_solver_at_gamma(self, is_nac=False):
+        """Run phonon solver at Gamma point.
+
+        Run phonon solver at Gamma point with/without NAC. When `self._nac_q_direction`
+        is None, always without NAC. `self._nac_q_direction` will be unchanged in any
+        case.
+
+        Parameters
+        ----------
+        is_nac : bool, optional
+            With NAC when is_nac is True and `self._nac_q_direction` is not None,
+            otherwise without NAC. Default is False.
+
+        """
+        if not is_nac and self._frequencies_at_gamma is not None:
+            gp_Gamma = self._bz_grid.gp_Gamma
+            self._frequencies[gp_Gamma] = self._frequencies_at_gamma
+            self._eigenvectors[gp_Gamma] = self._eigenvectors_at_gamma
+            return
+
+        self._phonon_done[self._bz_grid.gp_Gamma] = 0
+        if is_nac:
+            self._done_nac_at_gamma = True
+            self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="int_"))
+        else:
+            self._done_nac_at_gamma = False
+            _nac_q_direction = self._nac_q_direction
+            self._nac_q_direction = None
+            self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="int_"))
+            self._nac_q_direction = _nac_q_direction
 
     def run_phonon_solver_with_eigvec_rotation(self):
         """Phonons at ir-grid-points are copied by proper rotations.
@@ -897,6 +919,12 @@ class Interaction:
         )
 
     def _allocate_phonon(self):
+        """Allocate phonon arrays.
+
+        Phonons at Gamma point without NAC are stored in `self._frequencies_at_gamma`
+        and `self._eigenvectors_at_gamma`.
+
+        """
         num_band = len(self._primitive) * 3
         num_grid = len(self._bz_grid.addresses)
         self._phonon_done = np.zeros(num_grid, dtype="byte")
@@ -905,6 +933,11 @@ class Interaction:
         self._eigenvectors = np.zeros(
             (num_grid, num_band, num_band), dtype=("c%d" % (itemsize * 2)), order="C"
         )
+        gp_Gamma = self._bz_grid.gp_Gamma
+        self.run_phonon_solver_at_gamma()
+        self._frequencies_at_gamma = self._frequencies[gp_Gamma].copy()
+        self._eigenvectors_at_gamma = self._eigenvectors[gp_Gamma].copy()
+        self._phonon_done[gp_Gamma] = 0
 
 
 def all_bands_exist(interaction: Interaction):
