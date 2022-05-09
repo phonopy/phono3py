@@ -48,246 +48,6 @@ from phono3py.phonon3.interaction import Interaction
 from phono3py.phonon.func import bose_einstein
 
 
-def get_real_self_energy(
-    interaction: Interaction,
-    grid_points,
-    temperatures,
-    epsilons=None,
-    frequency_points=None,
-    frequency_step=None,
-    num_frequency_points=None,
-    frequency_points_at_bands=False,
-    write_hdf5=True,
-    output_filename=None,
-    log_level=0,
-):
-    """Real part of self energy at frequency points.
-
-    Band indices to be calculated at are kept in Interaction instance.
-
-    Parameters
-    ----------
-    interaction : Interaction
-        Ph-ph interaction.
-    grid_points : array_like
-        Grid-point indices where imag-self-energeis are caclculated.
-        dtype=int, shape=(grid_points,)
-    temperatures : array_like
-        Temperatures where imag-self-energies are calculated.
-        dtype=float, shape=(temperatures,)
-    epsilons : array_like
-        Smearing widths to computer principal part. When multiple values
-        are given frequency shifts for those values are returned.
-        dtype=float, shape=(epsilons,)
-    frequency_points : array_like, optional
-        Frequency sampling points. Default is None. With
-        frequency_points_at_bands=False and frequency_points is None,
-        num_frequency_points or frequency_step is used to generate uniform
-        frequency sampling points.
-        dtype=float, shape=(frequency_points,)
-    frequency_step : float, optional
-        Uniform pitch of frequency sampling points. Default is None. This
-        results in using num_frequency_points.
-    num_frequency_points: int, optional
-        Number of sampling sampling points to be used instead of
-        frequency_step. This number includes end points. Default is None,
-        which gives 201.
-    frequency_points_at_bands : bool, optional
-        Phonon band frequencies are used as frequency points when True.
-        Default is False.
-    num_points_in_batch: int, optional
-        Number of sampling points in one batch. This is for the frequency
-        sampling mode and the sampling points are divided into batches.
-        Lager number provides efficient use of multi-cores but more
-        memory demanding. Default is None, which give the number of 10.
-    log_level: int
-        Log level. Default is 0.
-
-    Returns
-    -------
-    tuple :
-        (frequency_points, all_deltas) are returned.
-
-        When frequency_points_at_bands is True,
-
-            all_deltas.shape = (epsilons, temperatures, grid_points,
-                                band_indices)
-
-        otherwise
-
-            all_deltas.shape = (epsilons, temperatures, grid_points,
-                                band_indices, frequency_points)
-
-    """
-    if epsilons is None:
-        _epsilons = [
-            None,
-        ]
-    else:
-        _epsilons = epsilons
-
-    _temperatures = np.array(temperatures, dtype="double")
-
-    if (interaction.get_phonons()[2] == 0).any():
-        if log_level:
-            print("Running harmonic phonon calculations...")
-        interaction.run_phonon_solver()
-
-    fst = RealSelfEnergy(interaction)
-    mesh = interaction.mesh_numbers
-    bz_grid = interaction.bz_grid
-    frequencies = interaction.get_phonons()[0]
-    max_phonon_freq = np.amax(frequencies)
-    band_indices = interaction.band_indices
-
-    if frequency_points_at_bands:
-        _frequency_points = None
-        all_deltas = np.zeros(
-            (len(_epsilons), len(_temperatures), len(grid_points), len(band_indices)),
-            dtype="double",
-            order="C",
-        )
-    else:
-        _frequency_points = get_frequency_points(
-            max_phonon_freq=max_phonon_freq,
-            sigmas=epsilons,
-            frequency_points=frequency_points,
-            frequency_step=frequency_step,
-            num_frequency_points=num_frequency_points,
-        )
-        all_deltas = np.zeros(
-            (
-                len(_epsilons),
-                len(_temperatures),
-                len(grid_points),
-                len(band_indices),
-                len(_frequency_points),
-            ),
-            dtype="double",
-            order="C",
-        )
-        fst.frequency_points = _frequency_points
-
-    for j, gp in enumerate(grid_points):
-        fst.grid_point = gp
-        if log_level:
-            weights = interaction.get_triplets_at_q()[1]
-            if len(grid_points) > 1:
-                print(
-                    "------------------- Real part of self energy -o- (%d/%d) "
-                    "-------------------" % (j + 1, len(grid_points))
-                )
-            else:
-                print(
-                    "----------------------- Real part of self energy -o- "
-                    "-----------------------"
-                )
-            print("Grid point: %d" % gp)
-            print("Number of ir-triplets: %d / %d" % (len(weights), weights.sum()))
-
-        fst.run_interaction()
-        frequencies = interaction.get_phonons()[0][gp]
-
-        if log_level:
-            bz_grid = interaction.bz_grid
-            qpoint = np.dot(bz_grid.QDinv, bz_grid.addresses[gp])
-            print("Phonon frequencies at (%4.2f, %4.2f, %4.2f):" % tuple(qpoint))
-            for bi, freq in enumerate(frequencies):
-                print("%3d  %f" % (bi + 1, freq))
-            sys.stdout.flush()
-
-        for i, epsilon in enumerate(_epsilons):
-            fst.epsilon = epsilon
-            for k, t in enumerate(_temperatures):
-                fst.temperature = t
-                fst.run()
-                all_deltas[i, k, j] = fst.real_self_energy.T
-
-                # if not frequency_points_at_bands:
-                #     pos = 0
-                #     for bi_set in [[bi, ] for bi in band_indices]:
-                #         filename = write_real_self_energy(
-                #             gp,
-                #             bi_set,
-                #             _frequency_points,
-                #             all_deltas[i, k, j, pos:(pos + len(bi_set))],
-                #             mesh,
-                #             fst.epsilon,
-                #             t,
-                #             filename=output_filename)
-                #         pos += len(bi_set)
-
-                #         if log_level:
-                #             print("Real part of self energies were stored in "
-                #                   "\"%s\"." % filename)
-                #         sys.stdout.flush()
-
-            if write_hdf5:
-                filename = write_real_self_energy_to_hdf5(
-                    gp,
-                    band_indices,
-                    _temperatures,
-                    all_deltas[i, :, j],
-                    mesh,
-                    fst.epsilon,
-                    bz_grid=bz_grid,
-                    frequency_points=_frequency_points,
-                    frequencies=frequencies,
-                    filename=output_filename,
-                )
-
-                if log_level:
-                    print('Real part of self energies were stored in "%s".' % filename)
-                    sys.stdout.flush()
-
-    return _frequency_points, all_deltas
-
-
-def write_real_self_energy(
-    real_self_energy,
-    mesh,
-    grid_points,
-    band_indices,
-    frequency_points,
-    temperatures,
-    epsilons,
-    output_filename=None,
-    is_mesh_symmetry=True,
-    log_level=0,
-):
-    """Write real-part of self-energies into files."""
-    if epsilons is None:
-        _epsilons = [
-            RealSelfEnergy.default_epsilon,
-        ]
-    else:
-        _epsilons = epsilons
-
-    for epsilon, rse_temps in zip(_epsilons, real_self_energy):
-        for t, rse_gps in zip(temperatures, rse_temps):
-            for gp, rse in zip(grid_points, rse_gps):
-                for i, bi in enumerate(band_indices):
-                    pos = 0
-                    for j in range(i):
-                        pos += len(band_indices[j])
-                    filename = write_real_self_energy_at_grid_point(
-                        gp,
-                        bi,
-                        frequency_points,
-                        rse[pos : (pos + len(bi))].sum(axis=0) / len(bi),
-                        mesh,
-                        epsilon,
-                        t,
-                        filename=output_filename,
-                        is_mesh_symmetry=is_mesh_symmetry,
-                    )
-                    if log_level:
-                        print(
-                            "Real parts of self-energies were "
-                            'written to "%s".' % filename
-                        )
-
-
 class RealSelfEnergy:
     """Class to calculate real-part of self-energy of bubble diagram.
 
@@ -311,7 +71,12 @@ class RealSelfEnergy:
     default_epsilon = 0.05
 
     def __init__(
-        self, interaction, grid_point=None, temperature=None, epsilon=None, lang="C"
+        self,
+        interaction: Interaction,
+        grid_point=None,
+        temperature=None,
+        epsilon=None,
+        lang="C",
     ):
         """Init method.
 
@@ -604,13 +369,6 @@ class RealSelfEnergy:
         return sum_d
 
 
-def imag_to_real(im_part, frequency_points):
-    """Calculate real-part of self-energy from the imaginary-part."""
-    i2r = ImagToReal(im_part, frequency_points)
-    i2r.run()
-    return i2r.re_part, i2r.frequency_points
-
-
 class ImagToReal:
     """Calculate real part of self-energy using Kramers-Kronig relation."""
 
@@ -710,3 +468,254 @@ class ImagToReal:
         _frequency_points = np.hstack([-frequency_points[::-1], frequency_points[1:]])
 
         return _im_part, _frequency_points, df
+
+
+def get_real_self_energy(
+    interaction: Interaction,
+    grid_points,
+    temperatures,
+    epsilons=None,
+    frequency_points=None,
+    frequency_step=None,
+    num_frequency_points=None,
+    frequency_points_at_bands=False,
+    write_hdf5=True,
+    output_filename=None,
+    log_level=0,
+):
+    """Real part of self energy at frequency points.
+
+    Band indices to be calculated at are kept in Interaction instance.
+
+    Parameters
+    ----------
+    interaction : Interaction
+        Ph-ph interaction.
+    grid_points : array_like
+        Grid-point indices where imag-self-energeis are caclculated.
+        dtype=int, shape=(grid_points,)
+    temperatures : array_like
+        Temperatures where imag-self-energies are calculated.
+        dtype=float, shape=(temperatures,)
+    epsilons : array_like
+        Smearing widths to computer principal part. When multiple values
+        are given frequency shifts for those values are returned.
+        dtype=float, shape=(epsilons,)
+    frequency_points : array_like, optional
+        Frequency sampling points. Default is None. With
+        frequency_points_at_bands=False and frequency_points is None,
+        num_frequency_points or frequency_step is used to generate uniform
+        frequency sampling points.
+        dtype=float, shape=(frequency_points,)
+    frequency_step : float, optional
+        Uniform pitch of frequency sampling points. Default is None. This
+        results in using num_frequency_points.
+    num_frequency_points: int, optional
+        Number of sampling sampling points to be used instead of
+        frequency_step. This number includes end points. Default is None,
+        which gives 201.
+    frequency_points_at_bands : bool, optional
+        Phonon band frequencies are used as frequency points when True.
+        Default is False.
+    num_points_in_batch: int, optional
+        Number of sampling points in one batch. This is for the frequency
+        sampling mode and the sampling points are divided into batches.
+        Lager number provides efficient use of multi-cores but more
+        memory demanding. Default is None, which give the number of 10.
+    log_level: int
+        Log level. Default is 0.
+
+    Returns
+    -------
+    tuple :
+        (frequency_points, all_deltas) are returned.
+
+        When frequency_points_at_bands is True,
+
+            all_deltas.shape = (epsilons, temperatures, grid_points,
+                                band_indices)
+
+        otherwise
+
+            all_deltas.shape = (epsilons, temperatures, grid_points,
+                                band_indices, frequency_points)
+
+    """
+    if epsilons is None:
+        _epsilons = [
+            None,
+        ]
+    else:
+        _epsilons = epsilons
+
+    _temperatures = np.array(temperatures, dtype="double")
+
+    if (interaction.get_phonons()[2] == 0).any():
+        if log_level:
+            print("Running harmonic phonon calculations...")
+        interaction.run_phonon_solver()
+
+    fst = RealSelfEnergy(interaction)
+    mesh = interaction.mesh_numbers
+    bz_grid = interaction.bz_grid
+
+    # Set phonon at Gamma without NAC for finding max_phonon_freq.
+    interaction.run_phonon_solver_at_gamma()
+    max_phonon_freq = np.amax(interaction.get_phonons()[0])
+    interaction.run_phonon_solver_at_gamma(is_nac=True)
+
+    band_indices = interaction.band_indices
+
+    if frequency_points_at_bands:
+        _frequency_points = None
+        all_deltas = np.zeros(
+            (len(_epsilons), len(_temperatures), len(grid_points), len(band_indices)),
+            dtype="double",
+            order="C",
+        )
+    else:
+        _frequency_points = get_frequency_points(
+            max_phonon_freq=max_phonon_freq,
+            sigmas=epsilons,
+            frequency_points=frequency_points,
+            frequency_step=frequency_step,
+            num_frequency_points=num_frequency_points,
+        )
+        all_deltas = np.zeros(
+            (
+                len(_epsilons),
+                len(_temperatures),
+                len(grid_points),
+                len(band_indices),
+                len(_frequency_points),
+            ),
+            dtype="double",
+            order="C",
+        )
+        fst.frequency_points = _frequency_points
+
+    for j, gp in enumerate(grid_points):
+        fst.grid_point = gp
+        if log_level:
+            weights = interaction.get_triplets_at_q()[1]
+            if len(grid_points) > 1:
+                print(
+                    "------------------- Real part of self energy -o- (%d/%d) "
+                    "-------------------" % (j + 1, len(grid_points))
+                )
+            else:
+                print(
+                    "----------------------- Real part of self energy -o- "
+                    "-----------------------"
+                )
+            print("Grid point: %d" % gp)
+            print("Number of ir-triplets: %d / %d" % (len(weights), weights.sum()))
+
+        fst.run_interaction()
+        frequencies = interaction.get_phonons()[0][gp]
+
+        if log_level:
+            bz_grid = interaction.bz_grid
+            qpoint = np.dot(bz_grid.QDinv, bz_grid.addresses[gp])
+            print("Phonon frequencies at (%4.2f, %4.2f, %4.2f):" % tuple(qpoint))
+            for bi, freq in enumerate(frequencies):
+                print("%3d  %f" % (bi + 1, freq))
+            sys.stdout.flush()
+
+        for i, epsilon in enumerate(_epsilons):
+            fst.epsilon = epsilon
+            for k, t in enumerate(_temperatures):
+                fst.temperature = t
+                fst.run()
+                all_deltas[i, k, j] = fst.real_self_energy.T
+
+                # if not frequency_points_at_bands:
+                #     pos = 0
+                #     for bi_set in [[bi, ] for bi in band_indices]:
+                #         filename = write_real_self_energy(
+                #             gp,
+                #             bi_set,
+                #             _frequency_points,
+                #             all_deltas[i, k, j, pos:(pos + len(bi_set))],
+                #             mesh,
+                #             fst.epsilon,
+                #             t,
+                #             filename=output_filename)
+                #         pos += len(bi_set)
+
+                #         if log_level:
+                #             print("Real part of self energies were stored in "
+                #                   "\"%s\"." % filename)
+                #         sys.stdout.flush()
+
+            if write_hdf5:
+                filename = write_real_self_energy_to_hdf5(
+                    gp,
+                    band_indices,
+                    _temperatures,
+                    all_deltas[i, :, j],
+                    mesh,
+                    fst.epsilon,
+                    bz_grid=bz_grid,
+                    frequency_points=_frequency_points,
+                    frequencies=frequencies,
+                    filename=output_filename,
+                )
+
+                if log_level:
+                    print('Real part of self energies were stored in "%s".' % filename)
+                    sys.stdout.flush()
+
+    return _frequency_points, all_deltas
+
+
+def write_real_self_energy(
+    real_self_energy,
+    mesh,
+    grid_points,
+    band_indices,
+    frequency_points,
+    temperatures,
+    epsilons,
+    output_filename=None,
+    is_mesh_symmetry=True,
+    log_level=0,
+):
+    """Write real-part of self-energies into files."""
+    if epsilons is None:
+        _epsilons = [
+            RealSelfEnergy.default_epsilon,
+        ]
+    else:
+        _epsilons = epsilons
+
+    for epsilon, rse_temps in zip(_epsilons, real_self_energy):
+        for t, rse_gps in zip(temperatures, rse_temps):
+            for gp, rse in zip(grid_points, rse_gps):
+                for i, bi in enumerate(band_indices):
+                    pos = 0
+                    for j in range(i):
+                        pos += len(band_indices[j])
+                    filename = write_real_self_energy_at_grid_point(
+                        gp,
+                        bi,
+                        frequency_points,
+                        rse[pos : (pos + len(bi))].sum(axis=0) / len(bi),
+                        mesh,
+                        epsilon,
+                        t,
+                        filename=output_filename,
+                        is_mesh_symmetry=is_mesh_symmetry,
+                    )
+                    if log_level:
+                        print(
+                            "Real parts of self-energies were "
+                            'written to "%s".' % filename
+                        )
+
+
+def imag_to_real(im_part, frequency_points):
+    """Calculate real-part of self-energy from the imaginary-part."""
+    i2r = ImagToReal(im_part, frequency_points)
+    i2r.run()
+    return i2r.re_part, i2r.frequency_points
