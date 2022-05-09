@@ -56,8 +56,9 @@ class JointDos:
 
     def __init__(
         self,
-        primitive,
-        supercell,
+        primitive: Primitive,
+        supercell: Supercell,
+        bz_grid: BZGrid,
         fc2,
         nac_params=None,
         nac_q_direction=None,
@@ -77,6 +78,7 @@ class JointDos:
         self._grid_point = None
         self._primitive = primitive
         self._supercell = supercell
+        self._bz_grid = bz_grid
         self._fc2 = fc2
         self._nac_params = nac_params
         self.nac_q_direction = nac_q_direction
@@ -99,7 +101,6 @@ class JointDos:
 
         self._num_band = len(self._primitive) * 3
         self._reciprocal_lattice = np.linalg.inv(self._primitive.cell)
-        self._init_dynamical_matrix()
 
         self._tetrahedron_method = None
         self._phonon_done = None
@@ -114,7 +115,8 @@ class JointDos:
         self._g_zero = None
         self._ones_pp_strength = None
         self._temperature = None
-        self._bz_grid = None
+
+        self._init_dynamical_matrix()
 
     @property
     def dynamical_matrix(self) -> DynamicalMatrix:
@@ -216,10 +218,6 @@ class JointDos:
         """Setter and getter of BZGrid."""
         return self._bz_grid
 
-    @bz_grid.setter
-    def bz_grid(self, bz_grid: BZGrid):
-        self._bz_grid = bz_grid
-
     @property
     def temperature(self):
         """Setter and getter of temperature."""
@@ -241,8 +239,6 @@ class JointDos:
         self._grid_point = grid_point
         self._set_triplets()
         self._joint_dos = None
-        if self._phonon_done is None:
-            self._allocate_phonons()
 
         gamma_gp = get_grid_point_from_address([0, 0, 0], self._bz_grid.D_diag)
         if (self._bz_grid.addresses[grid_point] == 0).all():
@@ -276,8 +272,7 @@ class JointDos:
             _grid_points = np.arange(len(self._bz_grid.addresses), dtype="int_")
         else:
             _grid_points = grid_points
-        if self._phonon_done is None:
-            self._allocate_phonons()
+
         run_phonon_solver_c(
             self._dm,
             self._frequencies,
@@ -290,6 +285,29 @@ class JointDos:
             self._nac_q_direction,
             self._lapack_zheev_uplo,
         )
+
+    def run_phonon_solver_at_gamma(self, is_nac=False):
+        """Run phonon solver at Gamma point.
+
+        Run phonon solver at Gamma point with/without NAC. When `self._nac_q_direction`
+        is None, always without NAC. `self._nac_q_direction` will be unchanged in any
+        case.
+
+        Parameters
+        ----------
+        is_nac : bool, optional
+            With NAC when is_nac is True and `self._nac_q_direction` is not None,
+            otherwise without NAC. Default is False.
+
+        """
+        self._phonon_done[self._bz_grid.gp_Gamma] = 0
+        if is_nac:
+            self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="int_"))
+        else:
+            _nac_q_direction = self._nac_q_direction
+            self._nac_q_direction = None
+            self.run_phonon_solver(np.array([self._bz_grid.gp_Gamma], dtype="int_"))
+            self._nac_q_direction = _nac_q_direction
 
     def run(self):
         """Calculate joint-density-of-states."""
@@ -402,6 +420,7 @@ class JointDos:
             frequency_scale_factor=self._frequency_scale_factor,
             symprec=self._symprec,
         )
+        self._allocate_phonons()
 
     def _set_triplets(self):
         if not self._is_mesh_symmetry:
@@ -421,8 +440,8 @@ class JointDos:
         num_grid = len(self._bz_grid.addresses)
         num_band = self._num_band
         self._phonon_done = np.zeros(num_grid, dtype="byte")
-        self._frequencies = np.zeros((num_grid, num_band), dtype="double")
-        itemsize = self._frequencies.itemsize
+        self._frequencies = np.zeros((num_grid, num_band), dtype="double", order="C")
+        complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
         self._eigenvectors = np.zeros(
-            (num_grid, num_band, num_band), dtype=("c%d" % (itemsize * 2))
+            (num_grid, num_band, num_band), dtype=complex_dtype, order="C"
         )

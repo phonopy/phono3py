@@ -829,12 +829,13 @@ def run_gruneisen_then_exit(phono3py, settings, output_filename, log_level):
 
 
 def run_jdos_then_exit(
-    phono3py, settings, updated_settings, output_filename, log_level
+    phono3py: Phono3py, settings, updated_settings, output_filename, log_level
 ):
     """Run joint-DOS calculation."""
     joint_dos = Phono3pyJointDos(
         phono3py.phonon_supercell,
         phono3py.phonon_primitive,
+        phono3py.grid,
         phono3py.fc2,
         mesh=settings.mesh_numbers,
         nac_params=phono3py.nac_params,
