@@ -668,8 +668,11 @@ def get_imag_self_energy(
             print("Running harmonic phonon calculations...")
         interaction.run_phonon_solver()
 
-    frequencies = interaction.get_phonons()[0]
-    max_phonon_freq = np.amax(frequencies)
+    # Set phonon at Gamma without NAC for finding max_phonon_freq.
+    interaction.run_phonon_solver_at_gamma()
+    max_phonon_freq = np.amax(interaction.get_phonons()[0])
+    interaction.run_phonon_solver_at_gamma(is_nac=True)
+
     num_band0 = len(interaction.band_indices)
 
     if frequency_points_at_bands:

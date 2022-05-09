@@ -1,6 +1,8 @@
 """Test for imag_free_energy.py."""
 import numpy as np
 
+from phono3py import Phono3py
+
 gammas = [
     0.0000000,
     0.0000000,
@@ -671,45 +673,45 @@ gammas_nacl_nac = [
     0.00000000,
     0.00000000,
     0.00000000,
-    0.20104463,
-    0.20104463,
-    0.12311129,
+    0.20482566,
+    0.20482566,
+    0.12447648,
     0.00000000,
     0.00000000,
     0.00000000,
-    0.10448465,
-    0.10448465,
-    0.06445738,
+    0.10819754,
+    0.10819754,
+    0.06679962,
     0.00000000,
     0.00000000,
     0.00000000,
-    0.03814089,
-    0.03814089,
-    0.02351398,
+    0.03735364,
+    0.03735364,
+    0.02305203,
     0.00000000,
     0.00000000,
     0.00000000,
-    0.79562828,
-    0.79562828,
-    0.49265042,
+    0.69026924,
+    0.69026924,
+    0.42880009,
     0.00000000,
     0.00000000,
     0.00000000,
-    0.71487838,
-    0.71487838,
-    0.44811019,
+    1.05462484,
+    1.05462484,
+    0.64579913,
     0.00000000,
     0.00000000,
     0.00000000,
-    0.29194862,
-    0.29194862,
-    0.18098946,
+    0.24280747,
+    0.24280747,
+    0.15052565,
     0.00000000,
     0.00000000,
     0.00000000,
-    0.00006218,
-    0.00006218,
-    0.00004024,
+    0.00013397,
+    0.00013397,
+    0.00008461,
     0.00000000,
     0.00000000,
     0.00000000,
@@ -725,15 +727,15 @@ gammas_nacl_nac = [
 ]
 freq_points_nacl_nac = [
     0.0,
-    1.65531064,
-    3.31062129,
-    4.96593193,
-    6.62124257,
-    8.27655322,
-    9.93186386,
-    11.58717451,
-    13.24248515,
-    14.89779579,
+    1.63223063,
+    3.26446125,
+    4.89669188,
+    6.5289225,
+    8.16115313,
+    9.79338375,
+    11.42561438,
+    13.057845,
+    14.69007563,
 ]
 
 
@@ -1070,7 +1072,7 @@ def test_imag_self_energy_nacl_npoints(nacl_pbe):
     np.testing.assert_allclose(freq_points_nacl, _fpoints.ravel(), rtol=0, atol=1e-5)
 
 
-def test_imag_self_energy_nacl_nac_npoints(nacl_pbe):
+def test_imag_self_energy_nacl_nac_npoints(nacl_pbe: Phono3py):
     """Imaginary part of self energy spectrum of NaCl.
 
     * at 10 frequency points sampled uniformly.
@@ -1080,22 +1082,14 @@ def test_imag_self_energy_nacl_nac_npoints(nacl_pbe):
     nacl_pbe.mesh_numbers = [9, 9, 9]
     nacl_pbe.init_phph_interaction(nac_q_direction=[1, 0, 0])
     _fpoints, _gammas = nacl_pbe.run_imag_self_energy(
-        nacl_pbe.grid.grg2bzg[
-            [
-                0,
-            ]
-        ],
-        [
-            300,
-        ],
-        num_frequency_points=10,
+        [nacl_pbe.grid.gp_Gamma], [300], num_frequency_points=10
     )
     # for line in np.swapaxes(_gammas, -1, -2).ravel().reshape(-1, 6):
     #     print(("%10.8f, " * 6) % tuple(line))
     # print(_fpoints.ravel())
     np.testing.assert_allclose(
-        gammas_nacl_nac, np.swapaxes(_gammas, -1, -2).ravel(), rtol=0, atol=1e-2
+        freq_points_nacl_nac, _fpoints.ravel(), rtol=0, atol=1e-5
     )
     np.testing.assert_allclose(
-        freq_points_nacl_nac, _fpoints.ravel(), rtol=0, atol=1e-5
+        gammas_nacl_nac, np.swapaxes(_gammas, -1, -2).ravel(), rtol=0, atol=1e-2
     )
