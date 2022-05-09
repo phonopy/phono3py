@@ -929,9 +929,9 @@ class Interaction:
         num_grid = len(self._bz_grid.addresses)
         self._phonon_done = np.zeros(num_grid, dtype="byte")
         self._frequencies = np.zeros((num_grid, num_band), dtype="double", order="C")
-        itemsize = self._frequencies.itemsize
+        complex_dtype = "c%d" % (np.dtype("double").itemsize * 2)
         self._eigenvectors = np.zeros(
-            (num_grid, num_band, num_band), dtype=("c%d" % (itemsize * 2)), order="C"
+            (num_grid, num_band, num_band), dtype=complex_dtype, order="C"
         )
         gp_Gamma = self._bz_grid.gp_Gamma
         self.run_phonon_solver_at_gamma()

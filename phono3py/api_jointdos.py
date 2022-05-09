@@ -98,6 +98,7 @@ class Phono3pyJointDos:
         self._filename = output_filename
         self._log_level = log_level
 
+        self._bz_grid = None
         self._joint_dos = None
         self._num_frequency_points_in_batch = num_points_in_batch
         self._frequency_step = frequency_step
@@ -108,6 +109,7 @@ class Phono3pyJointDos:
         )
 
         if mesh is not None:
+            self.mesh_numbers = mesh
             self.initialize(mesh)
 
     @property
@@ -161,6 +163,7 @@ class Phono3pyJointDos:
         self._jdos = JointDos(
             self._primitive,
             self._supercell,
+            self._bz_grid,
             self._fc2,
             nac_params=self._nac_params,
             cutoff_frequency=self._cutoff_frequency,
@@ -176,7 +179,6 @@ class Phono3pyJointDos:
             print("Generating grid system ... ", end="", flush=True)
 
         self.mesh_numbers = mesh_numbers
-        self._jdos.bz_grid = self._bz_grid
 
         if self._log_level:
             if self._bz_grid.grid_matrix is None:
@@ -203,7 +205,10 @@ class Phono3pyJointDos:
 
         self._jdos.run_phonon_solver()
         frequencies, _, _ = self._jdos.get_phonons()
+        self._jdos.run_phonon_solver_at_gamma()
         max_phonon_freq = np.max(frequencies)
+        self._jdos.run_phonon_solver_at_gamma(is_nac=True)
+
         self._frequency_points = get_frequency_points(
             max_phonon_freq=max_phonon_freq,
             sigmas=self._sigmas,
