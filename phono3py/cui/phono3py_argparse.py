@@ -296,7 +296,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             "--sym-fc",
             dest="fc_symmetry",
             action="store_true",
-            default=False,
+            default=None,
             help="Symmetrize force constants",
         )
     parser.add_argument(
@@ -469,7 +469,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             "--nac",
             dest="is_nac",
             action="store_true",
-            default=False,
+            default=None,
             help="Non-analytical term correction",
         )
     parser.add_argument(
@@ -484,7 +484,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             "--no-sym-fc",
             dest="fc_symmetry",
             action="store_false",
-            default=True,
+            default=None,
             help="Do not symmetrize force constants",
         )
     parser.add_argument(
@@ -514,7 +514,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             "--nonac",
             dest="is_nac",
             action="store_false",
-            default=True,
+            default=None,
             help="Non-analytical term correction",
         )
     parser.add_argument(

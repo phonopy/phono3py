@@ -107,7 +107,7 @@ class Phono3pySettings(Settings):
         self._v comes from the parent class.
 
         """
-        super().__init__()
+        super().__init__(default=default)
         self._v.update(Phono3pySettings._default.copy())
         if default is not None:
             self._v.update(default)

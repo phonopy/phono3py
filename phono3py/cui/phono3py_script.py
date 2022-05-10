@@ -51,11 +51,7 @@ from phonopy.cui.phonopy_script import (
     store_nac_params,
 )
 from phonopy.file_IO import is_file_phonopy_yaml, parse_FORCE_SETS, write_FORCE_SETS
-from phonopy.interface.calculator import (
-    get_default_physical_units,
-    get_force_sets,
-    get_interface_mode,
-)
+from phonopy.interface.calculator import get_default_physical_units, get_force_sets
 from phonopy.phonon.band_structure import get_band_qpoints
 from phonopy.structure.cells import isclose as cells_isclose
 from phonopy.units import Bohr, Hartree, VaspToTHz
@@ -245,20 +241,28 @@ def read_phono3py_settings(args, argparse_control, log_level):
             cell_filename = args.filename[0]
         else:
             if is_file_phonopy_yaml(args.filename[0], keyword="phono3py"):
-                phono3py_conf_parser = Phono3pyConfParser(args=args)
+                phono3py_conf_parser = Phono3pyConfParser(
+                    args=args, default_settings=argparse_control
+                )
                 cell_filename = args.filename[0]
             else:
                 phono3py_conf_parser = Phono3pyConfParser(
-                    filename=args.filename[0], args=args
+                    filename=args.filename[0],
+                    args=args,
+                    default_settings=argparse_control,
                 )
                 cell_filename = phono3py_conf_parser.settings.cell_filename
     else:
         if load_phono3py_yaml:
             phono3py_conf_parser = Phono3pyConfParser(
-                args=args, filename=args.conf_filename
+                args=args,
+                filename=args.conf_filename,
+                default_settings=argparse_control,
             )
         else:
-            phono3py_conf_parser = Phono3pyConfParser(args=args)
+            phono3py_conf_parser = Phono3pyConfParser(
+                args=args, default_settings=argparse_control
+            )
         cell_filename = phono3py_conf_parser.settings.cell_filename
 
     confs_dict = phono3py_conf_parser.confs.copy()
@@ -716,7 +720,6 @@ def store_force_constants(
     phono3py,
     settings,
     ph3py_yaml,
-    physical_units,
     input_filename,
     output_filename,
     load_phono3py_yaml,
@@ -736,6 +739,7 @@ def store_force_constants(
             fc_calculator_options=fc_calculator_options,
             symmetrize_fc=settings.fc_symmetry,
             is_compact_fc=settings.is_compact_fc,
+            cutoff_pair_distance=settings.cutoff_pair_distance,
             log_level=log_level,
         )
 
@@ -835,7 +839,6 @@ def run_jdos_then_exit(
     joint_dos = Phono3pyJointDos(
         phono3py.phonon_supercell,
         phono3py.phonon_primitive,
-        phono3py.grid,
         phono3py.fc2,
         mesh=settings.mesh_numbers,
         nac_params=phono3py.nac_params,
@@ -1005,7 +1008,6 @@ def main(**argparse_control):
     load_phono3py_yaml = argparse_control.get("load_phono3py_yaml", False)
 
     args, log_level = start_phono3py(**argparse_control)
-    physical_units = get_default_physical_units(get_interface_mode(vars(args)))
 
     if load_phono3py_yaml:
         input_filename = None
@@ -1221,7 +1223,6 @@ def main(**argparse_control):
         phono3py,
         settings,
         cell_info["phonopy_yaml"],
-        physical_units,
         input_filename,
         output_filename,
         load_phono3py_yaml,
