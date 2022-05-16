@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quantum ESPRESSO (pw) &amp; phono3py calculation &#8212; Phono3py v.2.3.1</title>
+    <title>phono3py-load command &#8212; Phono3py v.2.3.1</title>
     
   <link href="_static/css/theme.css" rel="stylesheet">
   <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
@@ -34,8 +34,8 @@
     <script src="_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="CRYSTAL &amp; phono3py calculation" href="crystal.html" />
-    <link rel="prev" title="VASP &amp; phono3py calculation" href="vasp.html" />
+    <link rel="next" title="Tips" href="tips.html" />
+    <link rel="prev" title="Phono3py API" href="phono3py-api.html" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="docsearch:language" content="None">
     
@@ -88,23 +88,23 @@
    Examples
   </a>
  </li>
- <li class="toctree-l1 current active has-children">
+ <li class="toctree-l1 has-children">
   <a class="reference internal" href="interfaces.html">
    Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)
   </a>
-  <input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
+  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
   <label for="toctree-checkbox-1">
    <i class="fas fa-chevron-down">
    </i>
   </label>
-  <ul class="current">
+  <ul>
    <li class="toctree-l2">
     <a class="reference internal" href="vasp.html">
      VASP &amp; phono3py calculation
     </a>
    </li>
-   <li class="toctree-l2 current active">
-    <a class="current reference internal" href="#">
+   <li class="toctree-l2">
+    <a class="reference internal" href="qe.html">
      Quantum ESPRESSO (pw) &amp; phono3py calculation
     </a>
    </li>
@@ -165,8 +165,8 @@
    Phono3py API
   </a>
  </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="phono3py-load.html">
+ <li class="toctree-l1 current active">
+  <a class="current reference internal" href="#">
    phono3py-load command
   </a>
  </li>
@@ -226,7 +226,7 @@
         <!-- ipynb file if we had a myst markdown file -->
         
         <!-- Download raw file -->
-        <a class="dropdown-buttons" href="_sources/qe.md.txt"><button type="button"
+        <a class="dropdown-buttons" href="_sources/phono3py-load.md.txt"><button type="button"
                 class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
                 data-placement="left">.md</button></a>
         <!-- Download PDF via print -->
@@ -251,19 +251,6 @@
         <!-- Table of contents -->
         <div class="d-none d-md-block col-md-2 bd-toc show noprint">
             
-            <div class="tocsection onthispage pt-5 pb-3">
-                <i class="fas fa-list"></i> Contents
-            </div>
-            <nav id="bd-toc-nav" aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#workflow">
-   Workflow
-  </a>
- </li>
-</ul>
-
-            </nav>
         </div>
     </div>
 </div>
@@ -271,96 +258,50 @@
         <div class="col-12 col-md-9 pl-md-3 pr-md-0">
             <!-- Table of contents that is only displayed when printing the page -->
             <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Quantum ESPRESSO (pw) & phono3py calculation</h1>
+                <h1>phono3py-load command</h1>
                 <!-- Table of contents -->
                 <div id="print-main-content">
                     <div id="jb-print-toc">
                         
-                        <div>
-                            <h2> Contents </h2>
-                        </div>
-                        <nav aria-label="Page">
-                            <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#workflow">
-   Workflow
-  </a>
- </li>
-</ul>
-
-                        </nav>
                     </div>
                 </div>
             </div>
             
               <div>
                 
-  <div class="tex2jax_ignore mathjax_ignore section" id="quantum-espresso-pw-phono3py-calculation">
-<span id="qe-interface"></span><h1>Quantum ESPRESSO (pw) &amp; phono3py calculation<a class="headerlink" href="#quantum-espresso-pw-phono3py-calculation" title="Permalink to this headline">¶</a></h1>
-<p>Quantum espresso package itself has a set of the force constants
-calculation environment based on DFPT. But the document here explains how
-to calculate phonon-phonon interaction and related properties using
-phono3py, i.e., using the finite displacement and supercell approach.</p>
-<p>An example for QE (pw) is found in the <code class="docutils literal notranslate"><span class="pre">example-phono3py/Si-QE</span></code> directory.</p>
-<p>Unless a proper <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> containing calculator information,
-to invoke the QE (pw) interface, <code class="docutils literal notranslate"><span class="pre">--qe</span></code> option has to be specified,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --qe <span class="o">[</span>options<span class="o">]</span> <span class="o">[</span>arguments<span class="o">]</span>
-</pre></div>
-</div>
-<p>When the file name of the unit cell is different from the default one
-(see <a class="reference internal" href="interfaces.html#default-unit-cell-file-name-for-calculator"><span class="std std-ref">Default unit cell file name</span></a>), <code class="docutils literal notranslate"><span class="pre">-c</span></code> option
-is used to specify the file name. QE (pw) unit cell file parser used in
-phono3py is the same as that in phonopy. It can read
-only limited number of keywords that are shown in the phonopy web site
-(<a class="reference external" href="http://phonopy.github.io/phonopy/qe.html#qe-interface">http://phonopy.github.io/phonopy/qe.html#qe-interface</a>).</p>
-<div class="section" id="workflow">
-<span id="qe-workflow"></span><h2>Workflow<a class="headerlink" href="#workflow" title="Permalink to this headline">¶</a></h2>
-<ol class="arabic">
-<li><p>Create supercells with displacements</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --qe -d --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --pa<span class="o">=</span><span class="s2">&quot;F&quot;</span> -c Si.in
-</pre></div>
-</div>
-<p>In this example, probably 111 different supercells with
-displacements are created. Supercell files (<code class="docutils literal notranslate"><span class="pre">supercell-xxx.in</span></code>)
-are created but they contain only the crystal
-structures. Calculation setting has to be added before running the
-calculation. In this step, the option <code class="docutils literal notranslate"><span class="pre">--qe</span></code> is necessary.</p>
+  <div class="tex2jax_ignore mathjax_ignore section" id="phono3py-load-command">
+<span id="id1"></span><h1>phono3py-load command<a class="headerlink" href="#phono3py-load-command" title="Permalink to this headline">¶</a></h1>
+<p>After phono3py v2.3.2, <code class="docutils literal notranslate"><span class="pre">phono3py-load</span></code> command is installed. This behaves
+similarly to <code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code> (<a class="reference internal" href="phono3py-api.html#api-phono3py-load"><span class="std std-ref">phono3py.load</span></a>) in the phono3py python
+module. The main aim of introducing this command is to provide uniform usage
+over many different force calculators. Once <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is created, the
+following operations will be the same using this command.</p>
+<p>The following default behaviours are different from that of those of <code class="docutils literal notranslate"><span class="pre">phono3py</span></code>
+command:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">phono3py_xxx.yaml</span></code> type file is always necessary in either of two ways:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">phono3py_xxx.yaml</span></code> type file is given as the first argument of the
+command.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">phono3py_xxx.yaml</span></code> type file is put in the current directory with one of
+the default filenames of <code class="docutils literal notranslate"><span class="pre">phono3py_params.yaml</span></code>, <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>,
+<code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code>. The searching preference order is <code class="docutils literal notranslate"><span class="pre">phono3py_params.yaml</span></code> &gt;
+<code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> &gt; <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code>.</p></li>
+</ul>
 </li>
-<li><p>Run QE (pw) for supercell force calculations</p>
-<p>Let’s assume that the calculations have been made in <code class="docutils literal notranslate"><span class="pre">disp-xxx</span></code>
-directories with the file names of <code class="docutils literal notranslate"><span class="pre">Si-supercell.in</span></code>. Then after
-finishing those calculations, <code class="docutils literal notranslate"><span class="pre">Si-supercell.out</span></code> may be created
-in each directory.</p>
-</li>
-<li><p>Collect forces</p>
-<p><code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> is obtained with <code class="docutils literal notranslate"><span class="pre">--cf3</span></code> options collecting the
-forces on atoms in QE (pw) calculation results:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --cf3 disp-00001/Si-supercell.out disp-00002/Si-supercell.out ...
-</pre></div>
-</div>
-<p>or in recent bash or zsh:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --cf3 disp-<span class="o">{</span><span class="m">00001</span>..00111<span class="o">}</span>/Si-supercell.out
-</pre></div>
-</div>
-<p><code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is used to create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code>, therefore it
-must exist in current directory.</p>
-</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-c</span></code> option (read crystal structure) does not exist.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-d</span></code> option (create displacements) does not exist.</p></li>
+<li><p>Use of command options is recommended, but phono3py configuration file can be
+read through <code class="docutils literal notranslate"><span class="pre">--config</span></code> option.</p></li>
+<li><p>If parameters for non-analytical term correction (NAC) are found, NAC is
+automatically enabled. This can be disabled by <code class="docutils literal notranslate"><span class="pre">--nonac</span></code> option.</p></li>
+<li><p>When force constants are calculated from displacements and forces dataset,
+force constants are automatically symmetrized. To disable this, <code class="docutils literal notranslate"><span class="pre">--no-sym-fc</span></code>
+option is used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-o</span></code> option works differently from <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> command. This option requires
+one argument of string. The string is used as the output yaml filename that
+replaces the default output yaml filename of <code class="docutils literal notranslate"><span class="pre">phono3py.yaml</span></code>.</p></li>
 </ol>
-<ol class="arabic" start="4">
-<li><p>Calculate 3rd and 2nd order force constants</p>
-<p><code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> files are created by:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --sym-fc
-</pre></div>
-</div>
-<p>where <code class="docutils literal notranslate"><span class="pre">--sym-fc</span></code> symmetrizes fc3 and fc2.</p>
-</li>
-<li><p>Calculate lattice thermal conductivity, e.g., by:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --mesh<span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> --fc3 --fc2 --br
-</pre></div>
-</div>
-</li>
-</ol>
-</div>
 </div>
 
 
@@ -369,17 +310,17 @@ must exist in current directory.</p>
             
                 <!-- Previous / next buttons -->
 <div class='prev-next-area'> 
-    <a class='left-prev' id="prev-link" href="vasp.html" title="previous page">
+    <a class='left-prev' id="prev-link" href="phono3py-api.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
             <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">VASP &amp; phono3py calculation</p>
+            <p class="prev-next-title">Phono3py API</p>
         </div>
     </a>
-    <a class='right-next' id="next-link" href="crystal.html" title="next page">
+    <a class='right-next' id="next-link" href="tips.html" title="next page">
     <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">CRYSTAL &amp; phono3py calculation</p>
+        <p class="prev-next-title">Tips</p>
     </div>
     <i class="fas fa-angle-right"></i>
     </a>

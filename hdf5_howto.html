@@ -7,9 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>How to read the results stored in hdf5 files &#8212; Phono3py v.2.3.1</title>
     
-  <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-<link href="_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <link href="_static/css/theme.css" rel="stylesheet">
+  <link href="_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
 
     
   <link rel="stylesheet"
@@ -19,17 +18,20 @@
   <link rel="preload" as="font" type="font/woff2" crossorigin
     href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
 
-    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=62ba249389abaaa9ffc34bf36a076bdc1d65ee18" type="text/css" />
     
-  <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+      
+
+    
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-book-theme.css?digest=84ace793992934648b4de8eed757e5a2" />
+    
+  <link rel="preload" as="script" href="_static/js/index.be7d3bbb2ef33a8344ce.js">
 
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/scripts/sphinx-book-theme.js?digest=f31d14ad54b65d19161ba51d4ffff3a77ae00456"></script>
+    <script src="_static/sphinx-book-theme.9d8b4a8b9bb19db25eeaddc40d639ba2.js"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -43,21 +45,7 @@
     <!-- Google Analytics -->
     
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
-<!-- Checkboxes to toggle the left sidebar -->
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
-<label class="overlay overlay-navbar" for="__navigation">
-    <div class="visually-hidden">Toggle navigation sidebar</div>
-</label>
-<!-- Checkboxes to toggle the in-page toc -->
-<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
-<label class="overlay overlay-pagetoc" for="__page-toc">
-    <div class="visually-hidden">Toggle in-page Table of Contents</div>
-</label>
-<!-- Headers at the top -->
-<div class="announcement header-item noprint"></div>
-<div class="header header-item noprint"></div>
-
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
     
     <div class="container-fluid" id="banner"></div>
 
@@ -66,10 +54,14 @@
     <div class="container-xl">
       <div class="row">
           
-<!-- Sidebar -->
-<div class="bd-sidebar noprint" id="site-navigation">
-    <div class="bd-sidebar__content">
-        <div class="bd-sidebar__top"><div class="navbar-brand-box">
+<!-- Checkboxes to toggle the left sidebar -->
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
+<label class="overlay" for="__navigation">
+    <div class="visually-hidden">Toggle navigation sidebar</div>
+</label>
+<div class="col-12 col-md-3 bd-sidebar site-navigation " id="site-navigation">
+    
+        <div class="navbar-brand-box">
     <a class="navbar-brand text-wrap" href="index.html">
       
       
@@ -176,6 +168,11 @@
   </a>
  </li>
  <li class="toctree-l1">
+  <a class="reference internal" href="phono3py-load.html">
+   phono3py-load command
+  </a>
+ </li>
+ <li class="toctree-l1">
   <a class="reference internal" href="tips.html">
    Tips
   </a>
@@ -193,135 +190,74 @@
 </ul>
 
     </div>
-</nav></div>
-        <div class="bd-sidebar__bottom">
-             <!-- To handle the deprecated key -->
-            
-            <div class="navbar_extra_footer">
-            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</nav> <!-- To handle the deprecated key -->
+
+<div class="navbar_extra_footer">
+  Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
+</div>
+
+</div>
+
+
+          
+
+
+          
+<!-- This is an invisible pixel that we watch to see if we've scrolled. -->
+<div class="sbt-scroll-pixel-helper"></div>
+<main class="col py-md-3 pl-md-4 bd-content overflow-auto" role="main">
+    
+    <div class="topbar container-xl fixed-top">
+    <div class="topbar-contents row">
+        <div class="col-12 col-md-3 bd-topbar-whitespace site-navigation show"></div>
+        <div class="col pl-md-4 topbar-main">
+            <div class="topbar-left">
+                
+                <label class="nav-toggle-button" for="__navigation">
+                    <div class="visually-hidden">Toggle navigation</div>
+                    <i class="fas fa-bars"></i>
+                </label>
+                
             </div>
             
+<div class="dropdown-buttons-trigger">
+    <button id="dropdown-buttons-trigger" class="btn btn-secondary topbarbtn" aria-label="Download this page"><i
+            class="fas fa-download"></i></button>
+
+    <div class="dropdown-buttons">
+        <!-- ipynb file if we had a myst markdown file -->
+        
+        <!-- Download raw file -->
+        <a class="dropdown-buttons" href="_sources/hdf5_howto.md.txt"><button type="button"
+                class="btn btn-secondary topbarbtn" title="Download source file" data-toggle="tooltip"
+                data-placement="left">.md</button></a>
+        <!-- Download PDF via print -->
+        <button type="button" id="download-print" class="btn btn-secondary topbarbtn" title="Print to PDF"
+                onclick="printPdf(this)" data-toggle="tooltip" data-placement="left">.pdf</button>
+    </div>
+</div>
+
+            <!-- Source interaction buttons -->
+
+            <!-- Full screen (wrap in <a> to have style consistency -->
+
+<a class="full-screen-button"><button type="button" class="btn btn-secondary topbarbtn" data-toggle="tooltip"
+        data-placement="bottom" onclick="toggleFullScreen()" aria-label="Fullscreen mode"
+        title="Fullscreen mode"><i
+            class="fas fa-expand"></i></button></a>
+
+            <!-- Launch buttons -->
+
         </div>
-    </div>
-    <div id="rtd-footer-container"></div>
-</div>
 
-
-          
-
-
-          
-<!-- A tiny helper pixel to detect if we've scrolled -->
-<div class="sbt-scroll-pixel-helper"></div>
-<!-- Main content -->
-<div class="col py-0 content-container">
-    
-    <div class="header-article row sticky-top noprint">
-        
-
-
-
-<div class="col py-1 d-flex header-article-main">
-    <div class="header-article__left">
-        
-        <label for="__navigation"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="right"
-title="Toggle navigation"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-bars"></i>
-  </span>
-
-</label>
-
-        
-    </div>
-    <div class="header-article__right">
-<button onclick="toggleFullScreen()"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="bottom"
-title="Fullscreen mode"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-expand"></i>
-  </span>
-
-</button>
-
-<div class="menu-dropdown menu-dropdown-download-buttons">
-  <button class="headerbtn menu-dropdown__trigger"
-      aria-label="Download this page">
-      <i class="fas fa-download"></i>
-  </button>
-  <div class="menu-dropdown__content">
-    <ul>
-      <li>
-        <a href="_sources/hdf5_howto.md.txt"
-   class="headerbtn"
-   data-toggle="tooltip"
-data-placement="left"
-title="Download source file"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-file"></i>
-  </span>
-<span class="headerbtn__text-container">.md</span>
-</a>
-
-      </li>
-      
-      <li>
-        
-<button onclick="printPdf(this)"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="left"
-title="Print to PDF"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-file-pdf"></i>
-  </span>
-<span class="headerbtn__text-container">.pdf</span>
-</button>
-
-      </li>
-      
-    </ul>
-  </div>
-</div>
-<label for="__page-toc"
-  class="headerbtn headerbtn-page-toc"
-  
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-list"></i>
-  </span>
-
-</label>
-
-    </div>
-</div>
-
-<!-- Table of contents -->
-<div class="col-md-3 bd-toc show noprint">
-    <div class="tocsection onthispage pt-5 pb-3">
-        <i class="fas fa-list"></i> Contents
-    </div>
-    <nav id="bd-toc-nav" aria-label="Page">
-        <ul class="visible nav section-nav flex-column">
+        <!-- Table of contents -->
+        <div class="d-none d-md-block col-md-2 bd-toc show noprint">
+            
+            <div class="tocsection onthispage pt-5 pb-3">
+                <i class="fas fa-list"></i> Contents
+            </div>
+            <nav id="bd-toc-nav" aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#how-to-use-hdf5-python-library">
    How to use HDF5 python library
@@ -417,11 +353,12 @@ title="Print to PDF"
  </li>
 </ul>
 
-    </nav>
-</div>
+            </nav>
+        </div>
     </div>
-    <div class="article row">
-        <div class="col pl-md-3 pl-lg-5 content-container">
+</div>
+    <div id="main-content" class="row">
+        <div class="col-12 col-md-9 pl-md-3 pr-md-0">
             <!-- Table of contents that is only displayed when printing the page -->
             <div id="jb-print-docs-body" class="onlyprint">
                 <h1>How to read the results stored in hdf5 files</h1>
@@ -533,12 +470,11 @@ title="Print to PDF"
                     </div>
                 </div>
             </div>
-            <main id="main-content" role="main">
-                
+            
               <div>
                 
   <div class="tex2jax_ignore mathjax_ignore section" id="how-to-read-the-results-stored-in-hdf5-files">
-<span id="hdf5-howto"></span><h1>How to read the results stored in hdf5 files<a class="headerlink" href="#how-to-read-the-results-stored-in-hdf5-files" title="Permalink to this headline">#</a></h1>
+<span id="hdf5-howto"></span><h1>How to read the results stored in hdf5 files<a class="headerlink" href="#how-to-read-the-results-stored-in-hdf5-files" title="Permalink to this headline">¶</a></h1>
 <div class="contents local topic" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#how-to-use-hdf5-python-library" id="id1">How to use HDF5 python library</a></p></li>
@@ -564,7 +500,7 @@ title="Print to PDF"
 </ul>
 </div>
 <div class="section" id="how-to-use-hdf5-python-library">
-<h2><a class="toc-backref" href="#id1">How to use HDF5 python library</a><a class="headerlink" href="#how-to-use-hdf5-python-library" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id1">How to use HDF5 python library</a><a class="headerlink" href="#how-to-use-hdf5-python-library" title="Permalink to this headline">¶</a></h2>
 <p>It is assumed that <code class="docutils literal notranslate"><span class="pre">python-h5py</span></code> is installed on the computer you
 interactively use. In the following, how to see the contents of
 <code class="docutils literal notranslate"><span class="pre">.hdf5</span></code> files in the interactive mode of Python. The basic usage of
@@ -648,7 +584,7 @@ In <span class="o">[</span><span class="m">12</span><span class="o">]</span>: <s
 </div>
 </div>
 <div class="section" id="details-of-kappa-hdf5-file">
-<span id="kappa-hdf5-file"></span><h2><a class="toc-backref" href="#id2">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a><a class="headerlink" href="#details-of-kappa-hdf5-file" title="Permalink to this headline">#</a></h2>
+<span id="kappa-hdf5-file"></span><h2><a class="toc-backref" href="#id2">Details of <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file</a><a class="headerlink" href="#details-of-kappa-hdf5-file" title="Permalink to this headline">¶</a></h2>
 <p>Files name, e.g. <code class="docutils literal notranslate"><span class="pre">kappa-m323220.hdf5</span></code>, is determined by some
 specific options. <code class="docutils literal notranslate"><span class="pre">mxxx</span></code>, show the numbers of sampling
 mesh. <code class="docutils literal notranslate"><span class="pre">sxxx</span></code> and <code class="docutils literal notranslate"><span class="pre">gxxx</span></code> appear optionally. <code class="docutils literal notranslate"><span class="pre">sxxx</span></code> gives the
@@ -660,19 +596,19 @@ memorize the option <code class="docutils literal notranslate"><span class="pre"
 <p>Currently <code class="docutils literal notranslate"><span class="pre">kappa-*.hdf5</span></code> file (not for the specific grid points)
 contains the properties shown below.</p>
 <div class="section" id="mesh">
-<h3><a class="toc-backref" href="#id3">mesh</a><a class="headerlink" href="#mesh" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id3">mesh</a><a class="headerlink" href="#mesh" title="Permalink to this headline">¶</a></h3>
 <p>(Versions 1.10.11 or later)</p>
 <p>The numbers of mesh points for reciprocal space sampling along
 reciprocal axes, <span class="math notranslate nohighlight">\(a^*, b^*, c^*\)</span>.</p>
 </div>
 <div class="section" id="frequency">
-<h3><a class="toc-backref" href="#id4">frequency</a><a class="headerlink" href="#frequency" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id4">frequency</a><a class="headerlink" href="#frequency" title="Permalink to this headline">¶</a></h3>
 <p>Phonon frequencies. The physical unit is THz, where THz
 is in the ordinal frequency not the angular frequency.</p>
 <p>The array shape is (irreducible q-point, phonon band).</p>
 </div>
 <div class="section" id="gamma">
-<span id="kappa-hdf5-file-gamma"></span><h3><a class="toc-backref" href="#id5">gamma</a><a class="headerlink" href="#gamma" title="Permalink to this headline">#</a></h3>
+<span id="kappa-hdf5-file-gamma"></span><h3><a class="toc-backref" href="#id5">gamma</a><a class="headerlink" href="#gamma" title="Permalink to this headline">¶</a></h3>
 <p>Imaginary part of self energy. The physical unit is THz, where THz
 is in the ordinal frequency not the angular frequency.</p>
 <p>The array shape for all grid-points (irreducible q-points) is
@@ -698,20 +634,20 @@ In <span class="o">[</span><span class="m">11</span><span class="o">]</span>: <s
 </div>
 </div>
 <div class="section" id="gamma-isotope">
-<h3><a class="toc-backref" href="#id6">gamma_isotope</a><a class="headerlink" href="#gamma-isotope" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id6">gamma_isotope</a><a class="headerlink" href="#gamma-isotope" title="Permalink to this headline">¶</a></h3>
 <p>Isotope scattering of <span class="math notranslate nohighlight">\(1/2\tau^\mathrm{iso}_\lambda\)</span>.
 The physical unit is same as that of gamma.</p>
 <p>The array shape is same as that of frequency.</p>
 </div>
 <div class="section" id="group-velocity">
-<h3><a class="toc-backref" href="#id7">group_velocity</a><a class="headerlink" href="#group-velocity" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id7">group_velocity</a><a class="headerlink" href="#group-velocity" title="Permalink to this headline">¶</a></h3>
 <p>Phonon group velocity, <span class="math notranslate nohighlight">\(\nabla_\mathbf{q}\omega_\lambda\)</span>. The
 physical unit is <span class="math notranslate nohighlight">\(\text{THz}\cdot\text{Angstrom}\)</span>, where THz
 is in the ordinal frequency not the angular frequency.</p>
 <p>The array shape is (irreducible q-point, phonon band, 3 = Cartesian coordinates).</p>
 </div>
 <div class="section" id="heat-capacity">
-<h3><a class="toc-backref" href="#id8">heat_capacity</a><a class="headerlink" href="#heat-capacity" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id8">heat_capacity</a><a class="headerlink" href="#heat-capacity" title="Permalink to this headline">¶</a></h3>
 <p>Mode-heat-capacity defined by</p>
 <div class="math notranslate nohighlight">
 \[
@@ -724,12 +660,12 @@ T)}{[\exp(\hbar\omega_\lambda/k_\mathrm{B} T)-1]^2}.
 <p>The array shape is (temperature, irreducible q-point, phonon band).</p>
 </div>
 <div class="section" id="kappa">
-<span id="output-kappa"></span><h3><a class="toc-backref" href="#id9">kappa</a><a class="headerlink" href="#kappa" title="Permalink to this headline">#</a></h3>
+<span id="output-kappa"></span><h3><a class="toc-backref" href="#id9">kappa</a><a class="headerlink" href="#kappa" title="Permalink to this headline">¶</a></h3>
 <p>Thermal conductivity tensor. The physical unit is W/m-K.</p>
 <p>The array shape is (temperature, 6 = (xx, yy, zz, yz, xz, xy)).</p>
 </div>
 <div class="section" id="mode-kappa">
-<span id="output-mode-kappa"></span><h3><a class="toc-backref" href="#id10">mode-kappa</a><a class="headerlink" href="#mode-kappa" title="Permalink to this headline">#</a></h3>
+<span id="output-mode-kappa"></span><h3><a class="toc-backref" href="#id10">mode-kappa</a><a class="headerlink" href="#mode-kappa" title="Permalink to this headline">¶</a></h3>
 <p>Thermal conductivity tensors at k-stars (<span class="math notranslate nohighlight">\({}^*\mathbf{k}\)</span>):</p>
 <div class="math notranslate nohighlight">
 \[
@@ -751,7 +687,7 @@ symmetry.</p>
 (xx, yy, zz, yz, xz, xy)).</p>
 </div>
 <div class="section" id="gv-by-gv">
-<h3><a class="toc-backref" href="#id11">gv_by_gv</a><a class="headerlink" href="#gv-by-gv" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id11">gv_by_gv</a><a class="headerlink" href="#gv-by-gv" title="Permalink to this headline">¶</a></h3>
 <p>Outer products of group velocities for k-stars
 (<span class="math notranslate nohighlight">\({}^*\mathbf{k}\)</span>) for each irreducible q-point and phonon band
 (<span class="math notranslate nohighlight">\(j\)</span>):</p>
@@ -767,23 +703,23 @@ ordinal frequency not the angular frequency.</p>
 yz, xz, xy)).</p>
 </div>
 <div class="section" id="q-point">
-<h3><a class="toc-backref" href="#id12">q-point</a><a class="headerlink" href="#q-point" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id12">q-point</a><a class="headerlink" href="#q-point" title="Permalink to this headline">¶</a></h3>
 <p>Irreducible q-points in reduced coordinates.</p>
 <p>The array shape is (irreducible q-point, 3 = reduced
 coordinates in reciprocal space).</p>
 </div>
 <div class="section" id="temperature">
-<h3><a class="toc-backref" href="#id13">temperature</a><a class="headerlink" href="#temperature" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id13">temperature</a><a class="headerlink" href="#temperature" title="Permalink to this headline">¶</a></h3>
 <p>Temperatures where thermal conductivities are calculated. The physical
 unit is K.</p>
 </div>
 <div class="section" id="weight">
-<h3><a class="toc-backref" href="#id14">weight</a><a class="headerlink" href="#weight" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id14">weight</a><a class="headerlink" href="#weight" title="Permalink to this headline">¶</a></h3>
 <p>Weights corresponding to irreducible q-points. Sum of weights equals to
 the number of mesh grid points.</p>
 </div>
 <div class="section" id="ave-pp">
-<h3><a class="toc-backref" href="#id15">ave_pp</a><a class="headerlink" href="#ave-pp" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id15">ave_pp</a><a class="headerlink" href="#ave-pp" title="Permalink to this headline">¶</a></h3>
 <p>Averaged phonon-phonon interaction in <span class="math notranslate nohighlight">\(\text{eV}^2,
 \)</span>P_{\mathbf{q}j}$:</p>
 <div class="math notranslate nohighlight">
@@ -796,7 +732,7 @@ calculation mode by default. To calculate this, <code class="docutils literal no
 has to be specified (see <a class="reference internal" href="command-options.html#full-pp-option"><span class="std std-ref">--full-pp (FULL_PP = .TRUE.)</span></a>).</p>
 </div>
 <div class="section" id="kappa-unit-conversion">
-<h3><a class="toc-backref" href="#id16">kappa_unit_conversion</a><a class="headerlink" href="#kappa-unit-conversion" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id16">kappa_unit_conversion</a><a class="headerlink" href="#kappa-unit-conversion" title="Permalink to this headline">¶</a></h3>
 <p>This is used to convert the physical unit of lattice thermal
 conductivity made of <code class="docutils literal notranslate"><span class="pre">heat_capacity</span></code>, <code class="docutils literal notranslate"><span class="pre">group_velocity</span></code>, and
 <code class="docutils literal notranslate"><span class="pre">gamma</span></code>, to W/m-K. In the single mode relaxation time (SMRT) method,
@@ -836,7 +772,7 @@ array<span class="o">([</span>  <span class="m">1</span>.02050201e+03,   <span c
 </div>
 </div>
 <div class="section" id="how-to-know-grid-point-index-number-corresponding-to-grid-address">
-<h2><a class="toc-backref" href="#id17">How to know grid point index number corresponding to grid address</a><a class="headerlink" href="#how-to-know-grid-point-index-number-corresponding-to-grid-address" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id17">How to know grid point index number corresponding to grid address</a><a class="headerlink" href="#how-to-know-grid-point-index-number-corresponding-to-grid-address" title="Permalink to this headline">¶</a></h2>
 <p>Runngin with <code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code>, hdf5 files are written out with file names
 such as <code class="docutils literal notranslate"><span class="pre">kappa-m202020-g4448.hdf5</span></code>. You may want to know the grid point
 index number with given grid address. This is done as follows:</p>
@@ -867,11 +803,9 @@ Out<span class="o">[</span><span class="m">7</span><span class="o">]</span>: <sp
 
               </div>
               
-            </main>
-            <footer class="footer-article noprint">
-                
-    <!-- Previous / next buttons -->
-<div class='prev-next-area'>
+            
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'> 
     <a class='left-prev' id="prev-link" href="input-output-files.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
@@ -887,26 +821,22 @@ Out<span class="o">[</span><span class="m">7</span><span class="o">]</span>: <sp
     <i class="fas fa-angle-right"></i>
     </a>
 </div>
-            </footer>
+            
         </div>
     </div>
-    <div class="footer-content row">
-        <footer class="col footer"><p>
-  
-      &copy; Copyright 2015, Atsushi Togo.<br/>
-</p>
-        </footer>
-    </div>
+    <footer class="footer">
+  <p>
     
-</div>
+        &copy; Copyright 2015, Atsushi Togo.<br/>
+  </p>
+</footer>
+</main>
 
 
       </div>
     </div>
   
-  <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
-
+  <script src="_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
 
   </body>
 </html>
