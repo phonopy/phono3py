@@ -33,7 +33,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import copy
 import sys
+from typing import Optional
 
 import numpy as np
 from phonopy.cui.collect_cell_info import collect_cell_info
@@ -292,32 +294,53 @@ def create_FORCES_FC2_from_FORCE_SETS_then_exit(log_level):
     sys.exit(0)
 
 
-def create_FORCE_SETS_from_FORCES_FCx_then_exit(phonon_smat, input_filename, log_level):
+def create_FORCE_SETS_from_FORCES_FCx_then_exit(
+    phonon_smat, input_filename: Optional[str], cell_filename: Optional[str], log_level
+):
     """Convert FORCES_FC3 or FORCES_FC2 to FORCE_SETS."""
+    if cell_filename is not None:
+        disp_filename = cell_filename
+    elif input_filename is None:
+        disp_filename = "phono3py_disp.yaml"
+    else:
+        disp_filename = f"phono3py_disp.{input_filename}.yaml"
     if phonon_smat is not None:
-        if input_filename is None:
-            disp_filename = "disp_fc2.yaml"
-        else:
-            disp_filename = "disp_fc2." + input_filename + ".yaml"
         forces_filename = "FORCES_FC2"
     else:
-        if input_filename is None:
-            disp_filename = "disp_fc3.yaml"
-        else:
-            disp_filename = "disp_fc3." + input_filename + ".yaml"
         forces_filename = "FORCES_FC3"
+
+    if log_level:
+        print(f'Displacement dataset is read from "{disp_filename}".')
+        print(f'Forces are read from "{forces_filename}"')
 
     with open(forces_filename, "r") as f:
         len_first_line = get_length_of_first_line(f)
 
     if len_first_line == 3:
         file_exists(disp_filename, log_level)
-        disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
         file_exists(forces_filename, log_level)
-        parse_FORCES_FC2(disp_dataset, filename=forces_filename)
-        if log_level:
-            print('Displacement dataset was read from "%s".' % disp_filename)
-        write_FORCE_SETS(disp_dataset)
+        ph3yml = Phono3pyYaml()
+        ph3yml.read(disp_filename)
+        if phonon_smat is None:
+            dataset = copy.deepcopy(ph3yml.dataset)
+            smat = ph3yml.supercell_matrix
+        else:
+            dataset = copy.deepcopy(ph3yml.phonon_dataset)
+            smat = ph3yml.phonon_supercell_matrix
+
+        if smat is None or (phonon_smat is not None and (phonon_smat != smat).any()):
+            if log_level:
+                print("")
+                print("Supercell matrix is inconsistent.")
+                print(f'Supercell matrix read from "{disp_filename}":')
+                print(smat)
+                print("Supercell matrix given by --dim-fc2:")
+                print(phonon_smat)
+                print_error()
+            sys.exit(1)
+
+        parse_FORCES_FC2(dataset, filename=forces_filename)
+        write_FORCE_SETS(dataset)
 
         if log_level:
             print("FORCE_SETS has been created.")
@@ -1025,7 +1048,7 @@ def main(**argparse_control):
         create_FORCES_FC2_from_FORCE_SETS_then_exit(log_level)
     if args.force_sets_mode:
         create_FORCE_SETS_from_FORCES_FCx_then_exit(
-            settings.phonon_supercell_matrix, input_filename, log_level
+            settings.phonon_supercell_matrix, input_filename, cell_filename, log_level
         )
     if args.write_grid_points:
         run_mode = "write_grid_info"
