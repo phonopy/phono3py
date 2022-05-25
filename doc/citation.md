@@ -48,3 +48,40 @@ following article:
     url = {https://link.aps.org/doi/10.1103/PhysRevLett.110.265506}
   }
   ```
+
+## Citation of solution of the Wigner transport equation (`--wigner`)
+
+If you have used the solution of the Wigner transport equation in phono3py, please cite the
+following articles:
+
+(citation_unified_theory)=
+- "Unified theory of thermal transport in crystals and glasses"
+  Michele Simoncelli, Nicola  Marzari, and Francesco Mauri, Nat. Phys., **15**, 809 (2019)
+
+  ```
+  @article{NatPhys.15.809,
+    title={Unified theory of thermal transport in crystals and glasses},
+    author={Simoncelli, Michele and Marzari, Nicola and Mauri, Francesco},
+    journal={Nature Physics},
+    volume={15},
+    number={8},
+    pages={809--813},
+    year={2019},
+    publisher={Nature Publishing Group},
+    doi = {/10.1038/s41567-019-0520-x},
+    url = {https://www.nature.com/articles/s41567-019-0520-x}
+  }
+  ```
+(citation_wigner_formulation)=
+- "Wigner formulation of thermal transport in solids"
+  Michele Simoncelli, Nicola  Marzari, and Francesco Mauri, arXiv:2112.06897, (2021)
+
+  ```
+  @article{arXiv:2112.06897,
+    title={Wigner formulation of thermal transport in solids},
+    author={Simoncelli, Michele and Marzari, Nicola and Mauri, Francesco},
+    journal={arXiv preprint arXiv:2112.06897},
+    url={https://arxiv.org/abs/2112.06897},
+    year={2021}
+  }
+  ```
