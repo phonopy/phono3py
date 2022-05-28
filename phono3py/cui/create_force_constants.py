@@ -72,7 +72,6 @@ def create_phono3py_force_constants(
     ph3py_yaml=None,
     input_filename=None,
     output_filename=None,
-    phono3py_yaml_filename=None,
     log_level=1,
 ):
     """Read or calculate force constants."""
@@ -96,7 +95,7 @@ def create_phono3py_force_constants(
         or settings.read_pp
         or (not settings.is_bterta and settings.write_phonon)
         or settings.constant_averaged_pp_interaction is not None
-    ):  # noqa E129
+    ):
         pass
     else:
         if settings.read_fc3:
@@ -214,9 +213,7 @@ def parse_forces(
     # Try to read FORCES_FC* if type-2 and return dataset.
     # None is returned unless type-2.
     # can emit FileNotFoundError.
-    if (
-        dataset is None or dataset is not None and not forces_in_dataset(dataset)
-    ):  # noqa E129
+    if dataset is None or dataset is not None and not forces_in_dataset(dataset):
         _dataset = _get_type2_dataset(
             natom, phono3py.calculator, filename=force_filename, log_level=log_level
         )
@@ -244,6 +241,7 @@ def parse_forces(
             % (fc_type, filename_read_from)
         )
 
+    # Overwrite dataset['cutoff_distance'] when necessary.
     if cutoff_pair_distance:
         if "cutoff_distance" not in dataset or (
             "cutoff_distance" in dataset

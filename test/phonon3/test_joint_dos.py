@@ -169,6 +169,40 @@ nacl_jdos_12_at_300K = [
     0.0000000,
     0.0000000,
 ]
+nacl_freq_points_gamma_at_300K = [
+    0.0000000,
+    1.6322306,
+    3.2644613,
+    4.8966919,
+    6.5289225,
+    8.1611531,
+    9.7933838,
+    11.4256144,
+    13.0578450,
+    14.6900756,
+]
+nacl_jdos_gamma_at_300K = [
+    0.0000000,
+    0.0000000,
+    6.3607672,
+    0.4210009,
+    2.9647113,
+    2.3994749,
+    0.9360874,
+    5.2286115,
+    0.1977176,
+    22.0282005,
+    0.0000000,
+    32.0059314,
+    0.0000000,
+    13.9738865,
+    0.0000000,
+    2.1095895,
+    0.0000000,
+    0.3079461,
+    0.0000000,
+    0.0213677,
+]
 
 
 @pytest.mark.parametrize("gp,store_dense_gp_map", [(103, False), (105, True)])
@@ -294,6 +328,38 @@ def test_jdos_nacl_at_300K(nacl_pbe: Phono3py, gp: int, store_dense_gp_map: bool
     # print(", ".join(["%.7f" % jd for jd in jdos.joint_dos.ravel()]))
     np.testing.assert_allclose(
         nacl_jdos_12_at_300K[2:], jdos.joint_dos.ravel()[2:], rtol=1e-2, atol=1e-5
+    )
+
+
+def test_jdos_nacl_nac_gamma_at_300K_npoints(nacl_pbe: Phono3py):
+    """Real part of self energy spectrum of NaCl.
+
+    * at 10 frequency points sampled uniformly.
+    * at q->0
+
+    """
+    nacl_pbe.mesh_numbers = [9, 9, 9]
+    jdos = Phono3pyJointDos(
+        nacl_pbe.phonon_supercell,
+        nacl_pbe.phonon_primitive,
+        nacl_pbe.fc2,
+        mesh=nacl_pbe.mesh_numbers,
+        nac_params=nacl_pbe.nac_params,
+        nac_q_direction=[1, 0, 0],
+        num_frequency_points=10,
+        temperatures=[
+            300,
+        ],
+        log_level=1,
+    )
+    jdos.run([nacl_pbe.grid.gp_Gamma])
+    # print(", ".join(["%.7f" % fp for fp in jdos.frequency_points]))
+    np.testing.assert_allclose(
+        nacl_freq_points_gamma_at_300K, jdos.frequency_points, atol=1e-5
+    )
+    # print(", ".join(["%.7f" % jd for jd in jdos.joint_dos.ravel()]))
+    np.testing.assert_allclose(
+        nacl_jdos_gamma_at_300K[2:], jdos.joint_dos.ravel()[2:], rtol=1e-2, atol=1e-5
     )
 
 
@@ -434,10 +500,10 @@ def _get_jdos(ph3: Phono3py, mesh, nac_params=None, store_dense_gp_map=False):
     jdos = JointDos(
         ph3.primitive,
         ph3.supercell,
+        bz_grid,
         ph3.fc2,
         nac_params=nac_params,
         store_dense_gp_map=store_dense_gp_map,
         cutoff_frequency=1e-4,
     )
-    jdos.bz_grid = bz_grid
     return jdos

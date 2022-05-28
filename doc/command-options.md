@@ -489,7 +489,7 @@ see {ref}`--ave-pp <ave_pp_option>`) is also given and stored.
 
 (LTC_options)=
 
-## Methods to solve phonon Boltzmann equation
+## Methods to solve phonon Boltzmann equation, and Wigner formulation
 
 ### `--br` (`BTERTA = .TRUE.`)
 
@@ -511,6 +511,19 @@ Run calculation of lattice thermal conductivity tensor with a direct solution of
 linearized phonon Boltzmann equation. The basis usage of this option is
 equivalent to that of `--br`. More detail is documented at
 {ref}`direct_solution`.
+
+### `--wigner`
+
+Run calculation of lattice thermal conductivity tensor computing the coherences (wave-like) contribution
+to the thermal conductivity, obtained solving the Wigner transport equation equation.
+This option can be combined with `--lbte` or `--br`; in the former case the populations
+conductivity (particle-like, equivalent to the conductivity obtained solving the LBTE) is computed exactly,
+in the latter case the populations conductivity is
+computed in the relaxation-time approximation (RTA).
+The coherences contribution to the conductivity is always computed exactly.
+The coherences conductivity is usually non-negligible compared to the particle-like conductivity in materials
+with ultralow or glass-like conductivity.
+More details can be found at {ref}`wigner_solution`.
 
 ## Scattering
 

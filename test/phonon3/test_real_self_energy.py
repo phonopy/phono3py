@@ -1,6 +1,7 @@
 """Test for real_self_energy.py."""
 import numpy as np
 
+from phono3py import Phono3py
 from phono3py.phonon3.real_self_energy import ImagToReal
 
 si_pbesol_Delta = [
@@ -167,6 +168,80 @@ im_part = [
     [30.3852997, 0.0468188, 30.3852997, 0.4941608, 30.5387608, 0.4706733],
     [30.6922219, 0.0000000, 30.6922219, 0.4173657, 30.8456830, 0.3821416],
 ]
+delta_nacl_nac = [
+    0.00000000,
+    0.00000000,
+    0.00000000,
+    0.00000000,
+    0.00000000,
+    0.00000000,
+    0.00000000,
+    0.00000000,
+    0.00000000,
+    -0.43835832,
+    -0.43835832,
+    -0.27175512,
+    0.00000000,
+    0.00000000,
+    0.00000000,
+    -0.24732785,
+    -0.24732785,
+    -0.15332798,
+    0.00000000,
+    0.00000000,
+    0.00000000,
+    -0.45125778,
+    -0.45125778,
+    -0.27975198,
+    0.00000000,
+    0.00000000,
+    0.00000000,
+    -0.80781739,
+    -0.80781739,
+    -0.50079699,
+    0.00000000,
+    0.00000000,
+    0.00000000,
+    -0.36217245,
+    -0.36217245,
+    -0.22452456,
+    0.00000000,
+    0.00000000,
+    0.00000000,
+    0.54848940,
+    0.54848940,
+    0.34002959,
+    0.00000000,
+    0.00000000,
+    0.00000000,
+    0.29335952,
+    0.29335952,
+    0.18186480,
+    0.00000000,
+    0.00000000,
+    0.00000000,
+    0.16329650,
+    0.16329650,
+    0.10123375,
+    0.00000000,
+    0.00000000,
+    0.00000000,
+    0.11208511,
+    0.11208511,
+    0.06948585,
+]
+freq_points_nacl_nac = [
+    0.0,
+    1.63223063,
+    3.26446125,
+    4.89669188,
+    6.5289225,
+    8.16115313,
+    9.79338375,
+    11.42561438,
+    13.057845,
+    14.69007563,
+]
 
 
 def test_real_self_energy_with_band_indices(si_pbesol):
@@ -188,7 +263,7 @@ def test_real_self_energy_with_band_indices(si_pbesol):
     np.testing.assert_allclose(si_pbesol_Delta, delta[0, 0, :], atol=0.01)
 
 
-def test_real_self_energy_with_frequency_points(si_pbesol):
+def test_real_self_energy_with_frequency_points(si_pbesol: Phono3py):
     """Real part of self energy spectrum of Si.
 
     * specified frquency points
@@ -219,6 +294,27 @@ def test_real_self_energy_with_frequency_points(si_pbesol):
     #     print("".join("%.8f, " % s for s in b))
     # for b in delta[0, 1, 0]:
     #     print("".join("%.8f, " % s for s in b))
+
+
+def test_real_self_energy_nacl_nac_npoints(nacl_pbe: Phono3py):
+    """Real part of self energy spectrum of NaCl.
+
+    * at 10 frequency points sampled uniformly.
+    * at q->0
+
+    """
+    nacl_pbe.mesh_numbers = [9, 9, 9]
+    nacl_pbe.init_phph_interaction(nac_q_direction=[1, 0, 0])
+    fps, delta = nacl_pbe.run_real_self_energy(
+        [nacl_pbe.grid.gp_Gamma], [300], num_frequency_points=10
+    )
+    # for line in np.swapaxes(delta, -1, -2).ravel().reshape(-1, 6):
+    #     print(("%10.8f, " * 6) % tuple(line))
+    # print(fps.ravel())
+    np.testing.assert_allclose(freq_points_nacl_nac, fps.ravel(), rtol=0, atol=1e-5)
+    np.testing.assert_allclose(
+        delta_nacl_nac, np.swapaxes(delta, -1, -2).ravel(), rtol=0, atol=1e-2
+    )
 
 
 def test_ImagToReal():

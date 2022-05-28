@@ -198,7 +198,7 @@ if __name__ == "__main__":
             "matplotlib>=2.2.2",
             "h5py",
             "spglib",
-            "phonopy>=2.14,<2.15",
+            "phonopy>=2.15,<2.16",
         ],
         provides=["phono3py"],
         scripts=scripts_phono3py,

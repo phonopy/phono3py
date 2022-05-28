@@ -46,7 +46,7 @@ from phono3py.phonon3.imag_self_energy import (
     get_frequency_points,
     run_ise_at_frequency_points_batch,
 )
-from phono3py.phonon3.interaction import Interaction
+from phono3py.phonon3.interaction import Interaction, all_bands_exist
 from phono3py.phonon3.real_self_energy import imag_to_real
 
 
@@ -135,38 +135,40 @@ def run_spectral_function(
                     pos = 0
                     for k in range(j):
                         pos += len(band_indices[k])
-                    filename = write_spectral_function_at_grid_point(
-                        gp,
-                        bi,
-                        spf.frequency_points,
-                        spf_at_t[pos : (pos + len(bi))].sum(axis=0) / len(bi),
-                        interaction.mesh_numbers,
-                        t,
-                        sigma=sigma,
-                        filename=output_filename,
-                        is_mesh_symmetry=interaction.is_mesh_symmetry,
-                    )
+                    if write_txt:
+                        filename = write_spectral_function_at_grid_point(
+                            gp,
+                            bi,
+                            spf.frequency_points,
+                            spf_at_t[pos : (pos + len(bi))].sum(axis=0) / len(bi),
+                            interaction.mesh_numbers,
+                            t,
+                            sigma=sigma,
+                            filename=output_filename,
+                            is_mesh_symmetry=interaction.is_mesh_symmetry,
+                        )
                     if log_level:
-                        print("Spectral functions were written to")
-                        print('"%s".' % filename)
+                        print(f'Spectral functions were written to "{filename}".')
 
-            filename = write_spectral_function_to_hdf5(
-                gp,
-                band_indices,
-                temperatures,
-                spf.spectral_functions[sigma_i, :, i],
-                spf.shifts[sigma_i, :, i],
-                spf.half_linewidths[sigma_i, :, i],
-                interaction.mesh_numbers,
-                interaction.bz_grid,
-                sigma=sigma,
-                frequency_points=spf.frequency_points,
-                frequencies=frequencies[gp],
-                filename=output_filename,
-            )
+            if write_hdf5:
+                filename = write_spectral_function_to_hdf5(
+                    gp,
+                    bi,
+                    temperatures,
+                    spf.spectral_functions[sigma_i, :, i],
+                    spf.shifts[sigma_i, :, i],
+                    spf.half_linewidths[sigma_i, :, i],
+                    interaction.mesh_numbers,
+                    interaction.bz_grid,
+                    sigma=sigma,
+                    frequency_points=spf.frequency_points,
+                    frequencies=frequencies[gp],
+                    all_band_exist=all_bands_exist(interaction),
+                    filename=output_filename,
+                )
 
             if log_level:
-                print('Spectral functions were stored in "%s".' % filename)
+                print(f'Spectral functions were stored in "{filename}".')
                 sys.stdout.flush()
 
     return spf
@@ -188,7 +190,7 @@ class SpectralFunction:
         log_level=0,
     ):
         """Init method."""
-        self._interaction = interaction
+        self._pp = interaction
         self._grid_points = grid_points
         self._frequency_points_in = frequency_points
         self._num_points_in_batch = num_points_in_batch
@@ -229,8 +231,8 @@ class SpectralFunction:
 
         gp = self._grid_points[self._gp_index]
         qpoint = np.dot(
-            self._interaction.bz_grid.addresses[gp],
-            self._interaction.bz_grid.QDinv.T,
+            self._pp.bz_grid.addresses[gp],
+            self._pp.bz_grid.QDinv.T,
         )
         if self._log_level:
             print(
@@ -239,7 +241,7 @@ class SpectralFunction:
             )
             print("q-point: (%5.2f %5.2f %5.2f)" % tuple(qpoint))
 
-        ise = ImagSelfEnergy(self._interaction)
+        ise = ImagSelfEnergy(self._pp)
         ise.set_grid_point(gp)
 
         if self._log_level:
@@ -293,7 +295,7 @@ class SpectralFunction:
                 len(self._sigmas),
                 len(self._temperatures),
                 len(self._grid_points),
-                len(self._interaction.band_indices),
+                len(self._pp.band_indices),
                 len(self._frequency_points),
             ),
             dtype="double",
@@ -324,8 +326,8 @@ class SpectralFunction:
             print("* Real part of self energy")
             print("Running Kramers-Kronig relation integration...")
 
-        for j, temp in enumerate(self._temperatures):
-            for k, bi in enumerate(self._interaction.band_indices):
+        for j, _ in enumerate(self._temperatures):
+            for k, _ in enumerate(self._pp.band_indices):
                 re_part, fpoints = imag_to_real(
                     self._gammas[sigma_i, j, i, k], self._frequency_points
                 )
@@ -350,9 +352,9 @@ class SpectralFunction:
         """
         if self._log_level:
             print("* Spectral function")
-        frequencies = self._interaction.get_phonons()[0]
+        frequencies = self._pp.get_phonons()[0]
         for j, temp in enumerate(self._temperatures):
-            for k, bi in enumerate(self._interaction.band_indices):
+            for k, bi in enumerate(self._pp.band_indices):
                 freq = frequencies[grid_point, bi]
                 gammas = self._gammas[sigma_i, j, i, k]
                 deltas = self._deltas[sigma_i, j, i, k]
@@ -369,11 +371,16 @@ class SpectralFunction:
         return vals
 
     def _set_frequency_points(self):
-        if (self._interaction.get_phonons()[2] == 0).any():
+        if (self._pp.get_phonons()[2] == 0).any():
             if self._log_level:
                 print("Running harmonic phonon calculations...")
-            self._interaction.run_phonon_solver()
-        max_phonon_freq = np.amax(self._interaction.get_phonons()[0])
+            self._pp.run_phonon_solver()
+
+        # Set phonon at Gamma without NAC for finding max_phonon_freq.
+        self._pp.run_phonon_solver_at_gamma()
+        max_phonon_freq = np.amax(self._pp.get_phonons()[0])
+        self._pp.run_phonon_solver_at_gamma(is_nac=True)
+
         self._frequency_points = get_frequency_points(
             max_phonon_freq=max_phonon_freq,
             sigmas=self._sigmas,

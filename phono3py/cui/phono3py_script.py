@@ -33,7 +33,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import copy
 import sys
+from typing import Optional
 
 import numpy as np
 from phonopy.cui.collect_cell_info import collect_cell_info
@@ -51,11 +53,7 @@ from phonopy.cui.phonopy_script import (
     store_nac_params,
 )
 from phonopy.file_IO import is_file_phonopy_yaml, parse_FORCE_SETS, write_FORCE_SETS
-from phonopy.interface.calculator import (
-    get_default_physical_units,
-    get_force_sets,
-    get_interface_mode,
-)
+from phonopy.interface.calculator import get_default_physical_units, get_force_sets
 from phonopy.phonon.band_structure import get_band_qpoints
 from phonopy.structure.cells import isclose as cells_isclose
 from phonopy.units import Bohr, Hartree, VaspToTHz
@@ -112,10 +110,10 @@ def print_phono3py():
 
 def finalize_phono3py(
     phono3py: Phono3py,
-    confs,
+    confs_dict,
     log_level,
     displacements_mode=False,
-    filename="phono3py.yaml",
+    filename=None,
 ):
     """Write phono3py.yaml and then exit.
 
@@ -123,7 +121,7 @@ def finalize_phono3py(
     ----------
     phono3py : Phono3py
         Phono3py instance.
-    confs : dict
+    confs_dict : dict
         This contains the settings and command options that the user set.
     log_level : int
         Log level. 0 means quiet.
@@ -135,6 +133,11 @@ def finalize_phono3py(
         phono3py.yaml is written in this filename.
 
     """
+    if filename is None:
+        yaml_filename = "phono3py.yaml"
+    else:
+        yaml_filename = filename
+
     if displacements_mode:
         _calculator = phono3py.calculator
     else:
@@ -144,19 +147,19 @@ def finalize_phono3py(
     yaml_settings = {"force_sets": False, "displacements": displacements_mode}
 
     ph3py_yaml = Phono3pyYaml(
-        configuration=confs, physical_units=_physical_units, settings=yaml_settings
+        configuration=confs_dict, physical_units=_physical_units, settings=yaml_settings
     )
     ph3py_yaml.set_phonon_info(phono3py)
     ph3py_yaml.calculator = _calculator
-    with open(filename, "w") as w:
+    with open(yaml_filename, "w") as w:
         w.write(str(ph3py_yaml))
 
     if log_level > 0:
         print("")
         if displacements_mode:
-            print('Displacement dataset was written in "%s".' % filename)
+            print(f'Displacement dataset was written in "{yaml_filename}".')
         else:
-            print('Summary of calculation was written in "%s".' % filename)
+            print(f'Summary of calculation was written in "{yaml_filename}".')
         print_end()
     sys.exit(0)
 
@@ -233,26 +236,41 @@ def read_phono3py_settings(args, argparse_control, log_level):
         file_exists(args.filename[0], log_level)
         if load_phono3py_yaml:
             phono3py_conf_parser = Phono3pyConfParser(
-                args=args, default_settings=argparse_control
+                filename=args.conf_filename,
+                args=args,
+                default_settings=argparse_control,
             )
             cell_filename = args.filename[0]
         else:
             if is_file_phonopy_yaml(args.filename[0], keyword="phono3py"):
-                phono3py_conf_parser = Phono3pyConfParser(args=args)
+                phono3py_conf_parser = Phono3pyConfParser(
+                    args=args, default_settings=argparse_control
+                )
                 cell_filename = args.filename[0]
             else:
                 phono3py_conf_parser = Phono3pyConfParser(
-                    filename=args.filename[0], args=args
+                    filename=args.filename[0],
+                    args=args,
+                    default_settings=argparse_control,
                 )
                 cell_filename = phono3py_conf_parser.settings.cell_filename
     else:
-        phono3py_conf_parser = Phono3pyConfParser(args=args)
+        if load_phono3py_yaml:
+            phono3py_conf_parser = Phono3pyConfParser(
+                args=args,
+                filename=args.conf_filename,
+                default_settings=argparse_control,
+            )
+        else:
+            phono3py_conf_parser = Phono3pyConfParser(
+                args=args, default_settings=argparse_control
+            )
         cell_filename = phono3py_conf_parser.settings.cell_filename
 
-    confs = phono3py_conf_parser.confs.copy()
+    confs_dict = phono3py_conf_parser.confs.copy()
     settings = phono3py_conf_parser.settings
 
-    return settings, confs, cell_filename
+    return settings, confs_dict, cell_filename
 
 
 def create_FORCES_FC2_from_FORCE_SETS_then_exit(log_level):
@@ -276,32 +294,53 @@ def create_FORCES_FC2_from_FORCE_SETS_then_exit(log_level):
     sys.exit(0)
 
 
-def create_FORCE_SETS_from_FORCES_FCx_then_exit(phonon_smat, input_filename, log_level):
+def create_FORCE_SETS_from_FORCES_FCx_then_exit(
+    phonon_smat, input_filename: Optional[str], cell_filename: Optional[str], log_level
+):
     """Convert FORCES_FC3 or FORCES_FC2 to FORCE_SETS."""
+    if cell_filename is not None:
+        disp_filename = cell_filename
+    elif input_filename is None:
+        disp_filename = "phono3py_disp.yaml"
+    else:
+        disp_filename = f"phono3py_disp.{input_filename}.yaml"
     if phonon_smat is not None:
-        if input_filename is None:
-            disp_filename = "disp_fc2.yaml"
-        else:
-            disp_filename = "disp_fc2." + input_filename + ".yaml"
         forces_filename = "FORCES_FC2"
     else:
-        if input_filename is None:
-            disp_filename = "disp_fc3.yaml"
-        else:
-            disp_filename = "disp_fc3." + input_filename + ".yaml"
         forces_filename = "FORCES_FC3"
+
+    if log_level:
+        print(f'Displacement dataset is read from "{disp_filename}".')
+        print(f'Forces are read from "{forces_filename}"')
 
     with open(forces_filename, "r") as f:
         len_first_line = get_length_of_first_line(f)
 
     if len_first_line == 3:
         file_exists(disp_filename, log_level)
-        disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
         file_exists(forces_filename, log_level)
-        parse_FORCES_FC2(disp_dataset, filename=forces_filename)
-        if log_level:
-            print('Displacement dataset was read from "%s".' % disp_filename)
-        write_FORCE_SETS(disp_dataset)
+        ph3yml = Phono3pyYaml()
+        ph3yml.read(disp_filename)
+        if phonon_smat is None:
+            dataset = copy.deepcopy(ph3yml.dataset)
+            smat = ph3yml.supercell_matrix
+        else:
+            dataset = copy.deepcopy(ph3yml.phonon_dataset)
+            smat = ph3yml.phonon_supercell_matrix
+
+        if smat is None or (phonon_smat is not None and (phonon_smat != smat).any()):
+            if log_level:
+                print("")
+                print("Supercell matrix is inconsistent.")
+                print(f'Supercell matrix read from "{disp_filename}":')
+                print(smat)
+                print("Supercell matrix given by --dim-fc2:")
+                print(phonon_smat)
+                print_error()
+            sys.exit(1)
+
+        parse_FORCES_FC2(dataset, filename=forces_filename)
+        write_FORCE_SETS(dataset)
 
         if log_level:
             print("FORCE_SETS has been created.")
@@ -316,11 +355,10 @@ def create_FORCE_SETS_from_FORCES_FCx_then_exit(phonon_smat, input_filename, log
     sys.exit(0)
 
 
-def create_FORCES_FC3_and_FORCES_FC2_then_exit(
-    settings, input_filename, output_filename, log_level
-):
+def create_FORCES_FC3_and_FORCES_FC2_then_exit(settings, input_filename, log_level):
     """Create FORCES_FC3 and FORCES_FC2 from files."""
     interface_mode = settings.calculator
+    ph3py_yaml = None
 
     #####################
     # Create FORCES_FC3 #
@@ -330,32 +368,19 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
             disp_fc3_filename = "disp_fc3.yaml"
         else:
             disp_fc3_filename = "disp_fc3." + input_filename + ".yaml"
-        ph3py_yaml = None
-
         disp_filenames = files_exist(
             ["phono3py_disp.yaml", disp_fc3_filename], log_level, is_any=True
         )
-
-        if disp_filenames[0] == "phono3py_disp.yaml":
-            try:
-                ph3py_yaml = Phono3pyYaml()
-                ph3py_yaml.read("phono3py_disp.yaml")
-                if ph3py_yaml.calculator is not None:
-                    interface_mode = ph3py_yaml.calculator  # overwrite
-                disp_filename = "phono3py_disp.yaml"
-            except KeyError:
-                file_exists("disp_fc3.yaml", log_level)
-                if log_level > 0:
-                    print('"phono3py_disp.yaml" was found but wasn\'t used.')
-                disp_filename = disp_fc3_filename
+        disp_filename = disp_filenames[0]
+        if "phono3py_disp.yaml" in disp_filename:
+            ph3py_yaml = Phono3pyYaml()
+            ph3py_yaml.read(disp_filename)
+            if ph3py_yaml.calculator is not None:
+                interface_mode = ph3py_yaml.calculator  # overwrite
+            disp_dataset = ph3py_yaml.dataset
         else:
-            disp_filename = disp_filenames[0]
-
-        if ph3py_yaml is None:
             file_exists(disp_filename, log_level)
             disp_dataset = parse_disp_fc3_yaml(filename=disp_filename)
-        else:
-            disp_dataset = ph3py_yaml.dataset
 
         if log_level:
             print("")
@@ -430,11 +455,27 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
     #####################
     if settings.create_forces_fc2:
         if input_filename is None:
-            disp_filename = "disp_fc2.yaml"
+            disp_fc2_filename = "disp_fc2.yaml"
         else:
-            disp_filename = "disp_fc2." + input_filename + ".yaml"
-        file_exists(disp_filename, log_level)
-        disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
+            disp_fc2_filename = "disp_fc2." + input_filename + ".yaml"
+
+        disp_filenames = files_exist(
+            ["phono3py_disp.yaml", disp_fc2_filename], log_level, is_any=True
+        )
+        if "phono3py_disp.yaml" in disp_filenames[0]:
+            # ph3py_yaml is not None, phono3py_disp.yaml is already read.
+            if ph3py_yaml is None:
+                disp_filename = disp_filenames[0]
+                ph3py_yaml = Phono3pyYaml()
+                ph3py_yaml.read(disp_filename)
+                if ph3py_yaml.calculator is not None:
+                    interface_mode = ph3py_yaml.calculator  # overwrite
+            disp_dataset = ph3py_yaml.phonon_dataset
+        else:
+            disp_filename = disp_filenames[0]
+            file_exists(disp_filename, log_level)
+            disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
+
         if log_level:
             print('Displacement dataset was read from "%s".' % disp_filename)
         num_atoms = disp_dataset["natom"]
@@ -704,7 +745,6 @@ def store_force_constants(
     phono3py,
     settings,
     ph3py_yaml,
-    physical_units,
     input_filename,
     output_filename,
     load_phono3py_yaml,
@@ -724,6 +764,7 @@ def store_force_constants(
             fc_calculator_options=fc_calculator_options,
             symmetrize_fc=settings.fc_symmetry,
             is_compact_fc=settings.is_compact_fc,
+            cutoff_pair_distance=settings.cutoff_pair_distance,
             log_level=log_level,
         )
 
@@ -817,7 +858,7 @@ def run_gruneisen_then_exit(phono3py, settings, output_filename, log_level):
 
 
 def run_jdos_then_exit(
-    phono3py, settings, updated_settings, output_filename, log_level
+    phono3py: Phono3py, settings, updated_settings, output_filename, log_level
 ):
     """Run joint-DOS calculation."""
     joint_dos = Phono3pyJointDos(
@@ -992,15 +1033,16 @@ def main(**argparse_control):
     load_phono3py_yaml = argparse_control.get("load_phono3py_yaml", False)
 
     args, log_level = start_phono3py(**argparse_control)
-    physical_units = get_default_physical_units(get_interface_mode(vars(args)))
 
     if load_phono3py_yaml:
         input_filename = None
         output_filename = None
+        output_yaml_filename = args.output_yaml_filename
     else:
         (input_filename, output_filename) = get_input_output_filenames_from_args(args)
+        output_yaml_filename = None
 
-    settings, confs, cell_filename = read_phono3py_settings(
+    settings, confs_dict, cell_filename = read_phono3py_settings(
         args, argparse_control, log_level
     )
 
@@ -1008,7 +1050,7 @@ def main(**argparse_control):
         create_FORCES_FC2_from_FORCE_SETS_then_exit(log_level)
     if args.force_sets_mode:
         create_FORCE_SETS_from_FORCES_FCx_then_exit(
-            settings.phonon_supercell_matrix, input_filename, log_level
+            settings.phonon_supercell_matrix, input_filename, cell_filename, log_level
         )
     if args.write_grid_points:
         run_mode = "write_grid_info"
@@ -1024,9 +1066,7 @@ def main(**argparse_control):
     ####################################
     # Create FORCES_FC3 and FORCES_FC2 #
     ####################################
-    create_FORCES_FC3_and_FORCES_FC2_then_exit(
-        settings, input_filename, output_filename, log_level
-    )
+    create_FORCES_FC3_and_FORCES_FC2_then_exit(settings, input_filename, log_level)
 
     ###########################################################
     # Symmetry tolerance. Distance unit depends on interface. #
@@ -1067,7 +1107,7 @@ def main(**argparse_control):
 
         finalize_phono3py(
             phono3py,
-            confs,
+            confs_dict,
             log_level,
             displacements_mode=True,
             filename="phono3py_disp.yaml",
@@ -1206,7 +1246,6 @@ def main(**argparse_control):
         phono3py,
         settings,
         cell_info["phonopy_yaml"],
-        physical_units,
         input_filename,
         output_filename,
         load_phono3py_yaml,
@@ -1359,4 +1398,4 @@ def main(**argparse_control):
                 + "-" * 11
             )
 
-    finalize_phono3py(phono3py, confs, log_level)
+    finalize_phono3py(phono3py, confs_dict, log_level, filename=output_yaml_filename)
