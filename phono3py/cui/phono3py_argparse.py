@@ -181,6 +181,14 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         default=False,
         help="Solve collective phonons",
     )
+    if load_phono3py_yaml:
+        parser.add_argument(
+            "--config",
+            dest="conf_filename",
+            metavar="FILE",
+            default=None,
+            help="Phono3py configuration file",
+        )
     parser.add_argument(
         "--const-ave-pp",
         dest="const_ave_pp",
@@ -288,7 +296,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             "--sym-fc",
             dest="fc_symmetry",
             action="store_true",
-            default=False,
+            default=None,
             help="Symmetrize force constants",
         )
     parser.add_argument(
@@ -461,7 +469,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             "--nac",
             dest="is_nac",
             action="store_true",
-            default=False,
+            default=None,
             help="Non-analytical term correction",
         )
     parser.add_argument(
@@ -476,7 +484,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             "--no-sym-fc",
             dest="fc_symmetry",
             action="store_false",
-            default=True,
+            default=None,
             help="Do not symmetrize force constants",
         )
     parser.add_argument(
@@ -506,7 +514,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             "--nonac",
             dest="is_nac",
             action="store_false",
-            default=True,
+            default=None,
             help="Non-analytical term correction",
         )
     parser.add_argument(
@@ -540,7 +548,14 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             "sampling modes of imag-self-energy calculation"
         ),
     )
-    if not load_phono3py_yaml:
+    if load_phono3py_yaml:
+        parser.add_argument(
+            "-o",
+            dest="output_yaml_filename",
+            default=None,
+            help="Output yaml filename instead of default filename of phono3py.yaml",
+        )
+    else:
         parser.add_argument(
             "-o", dest="output_filename", default=None, help="Output filename extension"
         )

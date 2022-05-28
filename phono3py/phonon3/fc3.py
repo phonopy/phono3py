@@ -67,7 +67,14 @@ def get_fc3(
     is_compact_fc=False,
     verbose=False,
 ):
-    """Calculate fc3."""
+    """Calculate fc3.
+
+    Even when 'cutoff_distance' in dataset, all displacements are in the dataset,
+    but force-sets out of cutoff-pair-distance are zero. fc3 is solved in exactly
+    the same way. Then post-clean-up
+    is performed.
+
+    """
     # fc2 has to be full matrix to compute delta-fc2
     # p2s_map elements are extracted if is_compact_fc=True at the last part.
     fc2 = get_fc2(supercell, symmetry, disp_dataset)
@@ -120,7 +127,9 @@ def get_fc3(
         if is_compact_fc:
             print("cutoff_fc3 doesn't support compact-fc3 yet.")
             raise ValueError
-        _cutoff_fc3(fc3, supercell, disp_dataset, symmetry, verbose=verbose)
+        _cutoff_fc3_for_cutoff_pairs(
+            fc3, supercell, disp_dataset, symmetry, verbose=verbose
+        )
 
     if is_compact_fc:
         p2s_map = primitive.p2s_map
@@ -473,7 +482,7 @@ def _solve_fc3(
     return fc3
 
 
-def _cutoff_fc3(fc3, supercell, disp_dataset, symmetry, verbose=False):
+def _cutoff_fc3_for_cutoff_pairs(fc3, supercell, disp_dataset, symmetry, verbose=False):
     if verbose:
         print("Building atom mapping table...")
     fc3_done = _get_fc3_done(supercell, disp_dataset, symmetry, fc3.shape[:3])

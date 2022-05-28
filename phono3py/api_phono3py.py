@@ -2051,6 +2051,7 @@ class Phono3py:
             band_indices=self._band_indices,
             write_txt=write_txt,
             write_hdf5=write_hdf5,
+            output_filename=output_filename,
             log_level=self._log_level,
         )
 
@@ -2498,13 +2499,12 @@ class Phono3py:
             self._phonon_primitive,
             nac_params=self._nac_params,
         )
-        gp_G = self._bz_grid.gp_Gamma
-        self.run_phonon_solver(np.array([gp_G], dtype="int_"))
         freqs, _, _ = self.get_phonon_data()
-        if np.sum(freqs[gp_G] < self._cutoff_frequency) < 3:
-            for i, f in enumerate(freqs[gp_G, :3]):
+        gp_Gamma = self._bz_grid.gp_Gamma
+        if np.sum(freqs[gp_Gamma] < self._cutoff_frequency) < 3:
+            for i, f in enumerate(freqs[gp_Gamma, :3]):
                 if not (f < self._cutoff_frequency):
-                    freqs[gp_G, i] = 0
+                    freqs[gp_Gamma, i] = 0
                     print("=" * 26 + " Warning " + "=" * 26)
                     print(
                         " Phonon frequency of band index %d at Gamma "

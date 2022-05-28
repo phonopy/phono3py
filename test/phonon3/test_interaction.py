@@ -153,6 +153,43 @@ def test_interaction_nac_direction_phonon_NaCl_second_no_error(nacl_pbe: Phono3p
     )
 
 
+def test_interaction_run_phonon_solver_at_gamma_NaCl(nacl_pbe: Phono3py):
+    """Test run_phonon_solver_at_gamma with nac_q_direction on NaCl.
+
+    Phonon calculation at Gamma without NAC is peformed at itr.init_dynamical_matrix().
+    The phonons at Gamma without NAC are saved in dedicated variables.
+
+    Phonon calculation at Gamma with NAC is peformed at itr.set_grid_point(0) and
+    stored in phonon variables on grid.
+
+    itr.run_phonon_solver_at_gamma() stored phonons at Gamma without NAC are copied
+    to phonon variables on grid.
+
+    itr.run_phonon_solver_at_gamma(is_nac=True) runs phonon calculation at Gamma with
+    NAC and stores them in phonon variables on grid.
+
+    """
+    itr = _get_irt(nacl_pbe, [7, 7, 7], nac_params=nacl_pbe.nac_params)
+    itr.nac_q_direction = [1, 0, 0]
+    frequencies, _, _ = itr.get_phonons()
+    np.testing.assert_allclose(
+        frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 4.59488262], rtol=0, atol=1e-6
+    )
+    itr.set_grid_point(0)
+    frequencies, _, _ = itr.get_phonons()
+    np.testing.assert_allclose(
+        frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 7.41183870], rtol=0, atol=1e-6
+    )
+    itr.run_phonon_solver_at_gamma()
+    np.testing.assert_allclose(
+        frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 4.59488262], rtol=0, atol=1e-6
+    )
+    itr.run_phonon_solver_at_gamma(is_nac=True)
+    np.testing.assert_allclose(
+        frequencies[0], [0, 0, 0, 4.59488262, 4.59488262, 7.41183870], rtol=0, atol=1e-6
+    )
+
+
 def test_phonon_solver_expand_RTA_si(si_pbesol):
     """Test phonon solver with eigenvector rotation of Si.
 
