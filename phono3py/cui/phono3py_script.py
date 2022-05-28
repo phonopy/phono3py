@@ -355,11 +355,10 @@ def create_FORCE_SETS_from_FORCES_FCx_then_exit(
     sys.exit(0)
 
 
-def create_FORCES_FC3_and_FORCES_FC2_then_exit(
-    settings, input_filename, output_filename, log_level
-):
+def create_FORCES_FC3_and_FORCES_FC2_then_exit(settings, input_filename, log_level):
     """Create FORCES_FC3 and FORCES_FC2 from files."""
     interface_mode = settings.calculator
+    ph3py_yaml = None
 
     #####################
     # Create FORCES_FC3 #
@@ -369,32 +368,19 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
             disp_fc3_filename = "disp_fc3.yaml"
         else:
             disp_fc3_filename = "disp_fc3." + input_filename + ".yaml"
-        ph3py_yaml = None
-
         disp_filenames = files_exist(
             ["phono3py_disp.yaml", disp_fc3_filename], log_level, is_any=True
         )
-
-        if disp_filenames[0] == "phono3py_disp.yaml":
-            try:
-                ph3py_yaml = Phono3pyYaml()
-                ph3py_yaml.read("phono3py_disp.yaml")
-                if ph3py_yaml.calculator is not None:
-                    interface_mode = ph3py_yaml.calculator  # overwrite
-                disp_filename = "phono3py_disp.yaml"
-            except KeyError:
-                file_exists("disp_fc3.yaml", log_level)
-                if log_level > 0:
-                    print('"phono3py_disp.yaml" was found but wasn\'t used.')
-                disp_filename = disp_fc3_filename
+        disp_filename = disp_filenames[0]
+        if "phono3py_disp.yaml" in disp_filename:
+            ph3py_yaml = Phono3pyYaml()
+            ph3py_yaml.read(disp_filename)
+            if ph3py_yaml.calculator is not None:
+                interface_mode = ph3py_yaml.calculator  # overwrite
+            disp_dataset = ph3py_yaml.dataset
         else:
-            disp_filename = disp_filenames[0]
-
-        if ph3py_yaml is None:
             file_exists(disp_filename, log_level)
             disp_dataset = parse_disp_fc3_yaml(filename=disp_filename)
-        else:
-            disp_dataset = ph3py_yaml.dataset
 
         if log_level:
             print("")
@@ -469,11 +455,27 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
     #####################
     if settings.create_forces_fc2:
         if input_filename is None:
-            disp_filename = "disp_fc2.yaml"
+            disp_fc2_filename = "disp_fc2.yaml"
         else:
-            disp_filename = "disp_fc2." + input_filename + ".yaml"
-        file_exists(disp_filename, log_level)
-        disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
+            disp_fc2_filename = "disp_fc2." + input_filename + ".yaml"
+
+        disp_filenames = files_exist(
+            ["phono3py_disp.yaml", disp_fc2_filename], log_level, is_any=True
+        )
+        if "phono3py_disp.yaml" in disp_filenames[0]:
+            # ph3py_yaml is not None, phono3py_disp.yaml is already read.
+            if ph3py_yaml is None:
+                disp_filename = disp_filenames[0]
+                ph3py_yaml = Phono3pyYaml()
+                ph3py_yaml.read(disp_filename)
+                if ph3py_yaml.calculator is not None:
+                    interface_mode = ph3py_yaml.calculator  # overwrite
+            disp_dataset = ph3py_yaml.phonon_dataset
+        else:
+            disp_filename = disp_filenames[0]
+            file_exists(disp_filename, log_level)
+            disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
+
         if log_level:
             print('Displacement dataset was read from "%s".' % disp_filename)
         num_atoms = disp_dataset["natom"]
@@ -1064,9 +1066,7 @@ def main(**argparse_control):
     ####################################
     # Create FORCES_FC3 and FORCES_FC2 #
     ####################################
-    create_FORCES_FC3_and_FORCES_FC2_then_exit(
-        settings, input_filename, output_filename, log_level
-    )
+    create_FORCES_FC3_and_FORCES_FC2_then_exit(settings, input_filename, log_level)
 
     ###########################################################
     # Symmetry tolerance. Distance unit depends on interface. #
