@@ -2,6 +2,10 @@
 
 # Change Log
 
+## May-28-2022: Version 2.3.2
+
+- Fix `--cf2` command.
+
 ## May-7-2022: Version 2.3.1
 
 - Fix wrongly displaying q-point in conductivity calculation.
