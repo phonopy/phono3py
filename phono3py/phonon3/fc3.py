@@ -95,16 +95,32 @@ def get_fc3(
     lattice = supercell.cell.T
     permutations = symmetry.atomic_permutations
 
+    p2s_map = primitive.p2s_map
+    for i in first_disp_atoms:
+        assert i in p2s_map
+
     if is_compact_fc and "cutoff_distance" not in disp_dataset:
         s2p_map = primitive.s2p_map
-        p2s_map = primitive.p2s_map
         p2p_map = primitive.p2p_map
         s2compact = np.array([p2p_map[i] for i in s2p_map], dtype="int_")
-        for i in first_disp_atoms:
-            assert i in p2s_map
         target_atoms = [i for i in p2s_map if i not in first_disp_atoms]
     else:
+        # distribute_fc3 prefers pure translation operations in distributing
+        # fc3. Below, fc3 already computed are distributed to the first index
+        # atoms in primitive cell, and then distribute to all the other atoms.
         s2compact = np.arange(len(supercell), dtype="int_")
+        target_atoms = [i for i in p2s_map if i not in first_disp_atoms]
+        distribute_fc3(
+            fc3,
+            first_disp_atoms,
+            target_atoms,
+            lattice,
+            rotations,
+            permutations,
+            s2compact,
+            verbose=verbose,
+        )
+        first_disp_atoms = np.unique(np.concatenate((first_disp_atoms, p2s_map)))
         target_atoms = [i for i in s2compact if i not in first_disp_atoms]
 
     distribute_fc3(
@@ -160,6 +176,8 @@ def distribute_fc3(
     and
         atom_mapping[i_target] = i_done
         fc3[i_target, j_target, k_target] = R_inv[i_done, j, k]
+    When multiple (R, t) can be found, the pure translation operation is
+    preferred.
 
     Parameters
     ----------
@@ -172,13 +190,21 @@ def distribute_fc3(
         dtype=intc
 
     """
+    identity = np.eye(3, dtype=int)
+    pure_trans_indices = [i for i, r in enumerate(rotations) if (r == identity).all()]
+
     n_satom = fc3.shape[1]
     for i_target in target_atoms:
         for i_done in first_disp_atoms:
             rot_indices = np.where(permutations[:, i_target] == i_done)[0]
             if len(rot_indices) > 0:
-                atom_mapping = np.array(permutations[rot_indices[0]], dtype="int_")
-                rot = rotations[rot_indices[0]]
+                rot_index = rot_indices[0]
+                for rot_i in rot_indices:
+                    if rot_i in pure_trans_indices:
+                        rot_index = rot_i
+                        break
+                atom_mapping = np.array(permutations[rot_index], dtype="int_")
+                rot = rotations[rot_index]
                 rot_cart_inv = np.array(
                     similarity_transformation(lattice, rot).T, dtype="double", order="C"
                 )
