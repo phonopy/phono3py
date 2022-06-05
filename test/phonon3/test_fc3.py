@@ -21,6 +21,15 @@ def test_cutoff_fc3_zero(nacl_pbe):
     assert np.abs(5259.2234163 - abs_delta) < 1e-3
 
 
+def test_cutoff_fc3_zero_compact_fc(nacl_pbe_compact_fc):
+    """Test for abrupt cut of fc3 by distance."""
+    ph = nacl_pbe_compact_fc
+    fc3 = ph.fc3.copy()
+    cutoff_fc3_by_zero(fc3, ph.supercell, 5, p2s_map=ph.primitive.p2s_map)
+    abs_delta = np.abs(ph.fc3 - fc3).sum()
+    assert np.abs(164.359250 - abs_delta) < 1e-3
+
+
 def test_fc3(si_pbesol_111):
     """Test fc3 with Si PBEsol 1x1x1."""
     ph = si_pbesol_111
