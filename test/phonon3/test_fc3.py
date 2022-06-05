@@ -1,18 +1,55 @@
 """Tests for fc3."""
 import numpy as np
 
+from phono3py import Phono3py
 from phono3py.phonon3.fc3 import cutoff_fc3_by_zero
 
 
-def test_cutoff_fc3(nacl_pbe_cutoff_fc3, nacl_pbe):
-    """Test for cutoff pair option."""
+def test_cutoff_fc3(nacl_pbe_cutoff_fc3: Phono3py, nacl_pbe: Phono3py):
+    """Test for cutoff-pair-distance option.
+
+    Only supercell forces that satisfy specified cutoff pairs are set in
+    dataset preparation.
+
+    """
     fc3_cut = nacl_pbe_cutoff_fc3.fc3
     fc3 = nacl_pbe.fc3
     abs_delta = np.abs(fc3_cut - fc3).sum()
-    assert np.abs(1894.2058837 - abs_delta) < 1e-3
+
+    assert fc3.shape == (64, 64, 64, 3, 3, 3)
+    assert np.abs(1901.0248613 - abs_delta) < 1e-3
 
 
-def test_cutoff_fc3_zero(nacl_pbe):
+def test_cutoff_fc3_all_forces(
+    nacl_pbe_cutoff_fc3: Phono3py, nacl_pbe_cutoff_fc3_all_forces: Phono3py
+):
+    """Test for cutoff-pair-distance option with all forces are set.
+
+    By definition, displacement datasets are kept unchanged when
+    cutoff-pair-distance is specified.
+
+    This test checkes only supercell forces that satisfy specified cutoff pairs
+    are chosen properly.
+
+    """
+    fc3_cut = nacl_pbe_cutoff_fc3.fc3
+    fc3_cut_all_forces = nacl_pbe_cutoff_fc3_all_forces.fc3
+    np.testing.assert_allclose(fc3_cut, fc3_cut_all_forces, atol=1e-8)
+
+
+def test_cutoff_fc3_compact_fc(
+    nacl_pbe_cutoff_fc3_compact_fc: Phono3py, nacl_pbe_cutoff_fc3: Phono3py
+):
+    """Test for cutoff-pair-distance option with compact-fc."""
+    fc3_cfc = nacl_pbe_cutoff_fc3_compact_fc.fc3
+    fc3_full = nacl_pbe_cutoff_fc3.fc3
+    p2s_map = nacl_pbe_cutoff_fc3.primitive.p2s_map
+    assert fc3_cfc.shape == (2, 64, 64, 3, 3, 3)
+    assert fc3_full.shape == (64, 64, 64, 3, 3, 3)
+    np.testing.assert_allclose(fc3_cfc, fc3_full[p2s_map], atol=1e-8)
+
+
+def test_cutoff_fc3_zero(nacl_pbe: Phono3py):
     """Test for abrupt cut of fc3 by distance."""
     ph = nacl_pbe
     fc3 = ph.fc3.copy()
@@ -21,7 +58,7 @@ def test_cutoff_fc3_zero(nacl_pbe):
     assert np.abs(5259.2234163 - abs_delta) < 1e-3
 
 
-def test_cutoff_fc3_zero_compact_fc(nacl_pbe_compact_fc):
+def test_cutoff_fc3_zero_compact_fc(nacl_pbe_compact_fc: Phono3py):
     """Test for abrupt cut of fc3 by distance."""
     ph = nacl_pbe_compact_fc
     fc3 = ph.fc3.copy()
@@ -30,7 +67,7 @@ def test_cutoff_fc3_zero_compact_fc(nacl_pbe_compact_fc):
     assert np.abs(164.359250 - abs_delta) < 1e-3
 
 
-def test_fc3(si_pbesol_111):
+def test_fc3(si_pbesol_111: Phono3py):
     """Test fc3 with Si PBEsol 1x1x1."""
     ph = si_pbesol_111
     fc3_ref = [
@@ -54,7 +91,7 @@ def test_fc3(si_pbesol_111):
 
 
 # @pytest.mark.skipif(not FC_CALCULATOR_ALM_AVAILABLE, reason="not found ALM package")
-def test_fc3_alm(si_pbesol_111_alm):
+def test_fc3_alm(si_pbesol_111_alm: Phono3py):
     """Test fc3 with Si PBEsol 1x1x1 calcualted using ALM."""
     ph = si_pbesol_111_alm
     fc3_ref = [

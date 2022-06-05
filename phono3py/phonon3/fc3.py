@@ -84,7 +84,7 @@ def get_fc3(
         disp_dataset,
         fc2,
         symmetry,
-        is_compact_fc=is_compact_fc,
+        is_compact_fc=(is_compact_fc and "cutoff_distance" not in disp_dataset),
         verbose=verbose,
     )
     if verbose:
@@ -95,7 +95,7 @@ def get_fc3(
     lattice = supercell.cell.T
     permutations = symmetry.atomic_permutations
 
-    if is_compact_fc:
+    if is_compact_fc and "cutoff_distance" not in disp_dataset:
         s2p_map = primitive.s2p_map
         p2s_map = primitive.p2s_map
         p2p_map = primitive.p2p_map
@@ -124,9 +124,6 @@ def get_fc3(
                 "Cutting-off fc3 (cut-off distance: %f)"
                 % disp_dataset["cutoff_distance"]
             )
-        if is_compact_fc:
-            print("cutoff_fc3 doesn't support compact-fc3 yet.")
-            raise ValueError
         _cutoff_fc3_for_cutoff_pairs(
             fc3, supercell, disp_dataset, symmetry, verbose=verbose
         )
@@ -134,6 +131,11 @@ def get_fc3(
     if is_compact_fc:
         p2s_map = primitive.p2s_map
         fc2 = np.array(fc2[p2s_map], dtype="double", order="C")
+        if "cutoff_distance" in disp_dataset:
+            fc3_shape = (len(p2s_map), fc3.shape[1], fc3.shape[2])
+            fc3_cfc = np.zeros(fc3_shape, dtype="double", order="C")
+            fc3_cfc = fc3[p2s_map]
+            fc3 = fc3_cfc
 
     return fc2, fc3
 
@@ -278,7 +280,7 @@ def set_translational_invariance_fc3(fc3):
         _set_translational_invariance_fc3_per_index(fc3, index=i)
 
 
-def set_translational_invariance_compact_fc3(fc3, primitive):
+def set_translational_invariance_compact_fc3(fc3, primitive: Primitive):
     """Enforce translational symmetry to compact fc3."""
     try:
         import phono3py._phono3py as phono3c

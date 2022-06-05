@@ -78,7 +78,7 @@ def load(
     store_dense_svecs=True,
     symprec=1e-5,
     log_level=0,
-):
+) -> Phono3py:
     """Create Phono3py instance from parameters and/or input files.
 
     "phono3py_yaml"-like file is parsed unless crystal structure information
