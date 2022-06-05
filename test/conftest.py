@@ -193,6 +193,24 @@ def nacl_pbe(request):
     """Return Phono3py instance of NaCl 2x2x2.
 
     * with symmetry
+    * full fc
+
+    """
+    yaml_filename = os.path.join(current_dir, "phono3py_params_NaCl222.yaml.xz")
+    enable_v2 = request.config.getoption("--v1")
+    return phono3py.load(
+        yaml_filename,
+        store_dense_gp_map=enable_v2,
+        store_dense_svecs=enable_v2,
+        log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
+def nacl_pbe_compact_fc(request):
+    """Return Phono3py instance of NaCl 2x2x2.
+
+    * with symmetry
     * compact fc
 
     """
@@ -202,6 +220,7 @@ def nacl_pbe(request):
         yaml_filename,
         store_dense_gp_map=enable_v2,
         store_dense_svecs=enable_v2,
+        is_compact_fc=True,
         log_level=1,
     )
 

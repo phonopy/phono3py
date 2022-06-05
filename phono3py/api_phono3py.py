@@ -1717,6 +1717,12 @@ class Phono3py:
     def cutoff_fc3_by_zero(self, cutoff_distance, fc3=None):
         """Set zero to fc3 elements out of cutoff distance.
 
+        Note
+        ----
+        fc3 is overwritten.
+
+        Parameters
+        ----------
         cutoff_distance : float
             After creating force constants, fc elements where any pair
             distance in atom triplets larger than cutoff_distance are set zero.
@@ -1727,7 +1733,11 @@ class Phono3py:
         else:
             _fc3 = fc3
         cutoff_fc3_by_zero(
-            _fc3, self._supercell, cutoff_distance, self._symprec  # overwritten
+            _fc3,
+            self._supercell,
+            cutoff_distance,
+            p2s_map=self._primitive.p2s_map,
+            symprec=self._symprec,
         )
 
     def set_permutation_symmetry(self):

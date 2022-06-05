@@ -499,7 +499,7 @@ def _cutoff_fc3_for_cutoff_pairs(fc3, supercell, disp_dataset, symmetry, verbose
                 _copy_permutation_symmetry_fc3_elem(fc3, ave_fc3, i, j, k)
 
 
-def cutoff_fc3_by_zero(fc3, supercell, cutoff_distance, symprec=1e-5):
+def cutoff_fc3_by_zero(fc3, supercell, cutoff_distance, p2s_map=None, symprec=1e-5):
     """Set zero in fc3 elements where pair distances are larger than cutoff."""
     num_atom = len(supercell)
     lattice = supercell.cell.T
@@ -512,11 +512,19 @@ def cutoff_fc3_by_zero(fc3, supercell, cutoff_distance, symprec=1e-5):
                 )
             )
 
-    for i, j, k in np.ndindex(num_atom, num_atom, num_atom):
-        for pair in ((i, j), (j, k), (k, i)):
-            if min_distances[pair] > cutoff_distance:
-                fc3[i, j, k] = 0
-                break
+    if fc3.shape[0] == fc3.shape[1]:
+        _p2s_map = np.arange(num_atom)
+    elif p2s_map is None or len(p2s_map) != fc3.shape[0]:
+        raise RuntimeError("Array shape of fc3 is incorrect.")
+    else:
+        _p2s_map = p2s_map
+
+    for i_index, i in enumerate(_p2s_map):
+        for j, k in np.ndindex(num_atom, num_atom):
+            for pair in ((i, j), (j, k), (k, i)):
+                if min_distances[pair] > cutoff_distance:
+                    fc3[i_index, j, k] = 0
+                    break
 
 
 def show_drift_fc3(fc3, primitive=None, name="fc3"):

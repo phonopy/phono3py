@@ -742,7 +742,7 @@ def grid_addresses_to_grid_points(grid_addresses, bz_grid):
 
 
 def store_force_constants(
-    phono3py,
+    phono3py: Phono3py,
     settings,
     ph3py_yaml,
     input_filename,
@@ -776,6 +776,14 @@ def store_force_constants(
         if phono3py.fc3 is None or phono3py.fc2 is None:
             print_error()
             sys.exit(1)
+
+        cutoff_distance = settings.cutoff_fc3_distance
+        if cutoff_distance is not None and cutoff_distance > 0:
+            if log_level:
+                print(
+                    "Cutting-off fc3 by zero (cut-off distance: %f)" % cutoff_distance
+                )
+            phono3py.cutoff_fc3_by_zero(cutoff_distance)
 
         if not read_fc["fc3"]:
             write_fc3_to_hdf5(
