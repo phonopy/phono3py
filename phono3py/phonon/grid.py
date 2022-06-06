@@ -37,13 +37,13 @@ import warnings
 from typing import Optional
 
 import numpy as np
-from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.structure.cells import (
     estimate_supercell_matrix,
     get_reduced_bases,
     is_primitive_cell,
 )
 from phonopy.structure.grid_points import extract_ir_grid_points, length2mesh
+from phonopy.utils import similarity_transformation
 
 
 class BZGrid:
