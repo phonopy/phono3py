@@ -844,6 +844,8 @@ class Phono3py:
     @dataset.setter
     def dataset(self, dataset):
         self._dataset = dataset
+        self._supercells_with_displacements = None
+        self._phonon_supercells_with_displacements = None
 
     @property
     def displacement_dataset(self):
@@ -1044,19 +1046,30 @@ class Phono3py:
     def displacements(self):
         """Setter and getter displacements in supercells.
 
-        getter : ndarray
+        There are two types of displacement dataset. See the docstring
+        of dataset about types 1 and 2 for the displacement dataset formats.
+        Displacements set returned depends on either type-1 or type-2 as
+        follows:
+
+        Type-1, List of list
+            The internal list has 4 elements such as [32, 0.01, 0.0, 0.0]].
+            The first element is the supercell atom index starting with 0.
+            The remaining three elements give the displacement in Cartesian
+            coordinates.
+        Type-2, array_like
             Displacements of all atoms of all supercells in Cartesian
             coordinates.
-            shape=(supercells, natom, 3), dtype='double', order='C'
+            shape=(supercells, natom, 3)
+            dtype='double'
 
-        setter : array_like
+
+        For setter, only type-2 dataset format is allowed.
+
+        displacements : array_like
             Atomic displacements of all atoms of all supercells.
-            shape=(supercells, natom, 3).
-
-            If type-1 displacement dataset for fc2 exists already, type-2
-            displacement dataset is newly created and information of
-            forces is abandoned. If type-1 displacement dataset for fc2
-            exists already information of forces is preserved.
+            Only all displacements in each supercell case (type-2) is
+            supported.
+            shape=(supercells, natom, 3), dtype='double', order='C'
 
         """
         dataset = self._dataset
@@ -1087,16 +1100,14 @@ class Phono3py:
 
     @displacements.setter
     def displacements(self, displacements):
-        dataset = self._dataset
         disps = np.array(displacements, dtype="double", order="C")
-        natom = self._supercell.get_number_of_atoms()
+        natom = len(self._supercell)
         if disps.ndim != 3 or disps.shape[1:] != (natom, 3):
             raise RuntimeError("Array shape of displacements is incorrect.")
-
-        if "first_atoms" in dataset:
-            dataset = {"displacements": disps}
-        elif "displacements" in dataset or "forces" in dataset:
-            dataset["displacements"] = disps
+        if "first_atoms" in self._dataset:
+            raise RuntimeError("Displacements are incompatible with dataset.")
+        self._dataset["displacements"] = disps
+        self._supercells_with_displacements = None
 
     @property
     def forces(self):
@@ -1157,17 +1168,30 @@ class Phono3py:
     def phonon_displacements(self):
         """Setter and getter of displacements in supercells for fc2.
 
-        Displacements of all atoms of all supercells in Cartesian
-        coordinates.
-        shape=(supercells, natom, 3), dtype='double', order='C'
+        There are two types of displacement dataset. See the docstring
+        of dataset about types 1 and 2 for the displacement dataset formats.
+        Displacements set returned depends on either type-1 or type-2 as
+        follows:
 
-        getter : ndarray
+        Type-1, List of list
+            The internal list has 4 elements such as [32, 0.01, 0.0, 0.0]].
+            The first element is the supercell atom index starting with 0.
+            The remaining three elements give the displacement in Cartesian
+            coordinates.
+        Type-2, array_like
+            Displacements of all atoms of all supercells in Cartesian
+            coordinates.
+            shape=(supercells, natom, 3)
+            dtype='double'
 
-        setter : array_like
-            If type-1 displacement dataset for fc2 exists already, type-2
-            displacement dataset is newly created and information of
-            forces is abandoned. If type-1 displacement dataset for fc2
-            exists already information of forces is preserved.
+
+        For setter, only type-2 dataset format is allowed.
+
+        displacements : array_like
+            Atomic displacements of all atoms of all supercells.
+            Only all displacements in each supercell case (type-2) is
+            supported.
+            shape=(supercells, natom, 3), dtype='double', order='C'
 
         """
         if self._phonon_dataset is None:
@@ -1176,7 +1200,7 @@ class Phono3py:
         dataset = self._phonon_dataset
         if "first_atoms" in dataset:
             num_scells = len(dataset["first_atoms"])
-            natom = self._phonon_supercell.get_number_of_atoms()
+            natom = len(self._phonon_supercell)
             displacements = np.zeros((num_scells, natom, 3), dtype="double", order="C")
             for i, disp1 in enumerate(dataset["first_atoms"]):
                 displacements[i, disp1["number"]] = disp1["displacement"]
@@ -1192,16 +1216,15 @@ class Phono3py:
         if self._phonon_dataset is None:
             raise RuntimeError("phonon_displacement_dataset does not exist.")
 
-        dataset = self._phonon_dataset
         disps = np.array(displacements, dtype="double", order="C")
-        natom = self._phonon_supercell.get_number_of_atoms()
+        natom = len(self._phonon_supercell)
         if disps.ndim != 3 or disps.shape[1:] != (natom, 3):
             raise RuntimeError("Array shape of displacements is incorrect.")
+        if "first_atoms" in self._phonon_dataset:
+            raise RuntimeError("Displacements are incompatible with dataset.")
 
-        if "first_atoms" in dataset:
-            dataset = {"displacements": disps}
-        elif "displacements" in dataset or "forces" in dataset:
-            dataset["displacements"] = disps
+        self._phonon_dataset["displacements"] = disps
+        self._phonon_supercells_with_displacements = None
 
     @property
     def phonon_forces(self):
