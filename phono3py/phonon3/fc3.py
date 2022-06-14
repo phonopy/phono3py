@@ -379,7 +379,12 @@ def _get_delta_fc2(
 
 
 def _get_constrained_fc2(
-    supercell, dataset_second_atoms, atom1, forces1, reduced_site_sym, symprec
+    supercell: PhonopyAtoms,
+    dataset_second_atoms,
+    atom1,
+    forces1,
+    reduced_site_sym,
+    symprec,
 ):
     """Return fc2 under reduced (broken) site symmetry by first displacement.
 
@@ -658,7 +663,13 @@ def _set_permutation_symmetry_fc3_elem_with_cutoff(fc3, fc3_done, a, b, c):
 
 
 def _get_fc3_least_atoms(
-    supercell, primitive, disp_dataset, fc2, symmetry, is_compact_fc=False, verbose=True
+    supercell: PhonopyAtoms,
+    primitive: Primitive,
+    disp_dataset,
+    fc2,
+    symmetry: Symmetry,
+    is_compact_fc: bool = False,
+    verbose: bool = True,
 ):
     symprec = symmetry.tolerance
     num_satom = len(supercell)
@@ -667,7 +678,7 @@ def _get_fc3_least_atoms(
     )
 
     if is_compact_fc:
-        num_patom = primitive.get_number_of_atoms()
+        num_patom = len(primitive)
         s2p_map = primitive.s2p_map
         p2p_map = primitive.p2p_map
         first_atom_nums = []
