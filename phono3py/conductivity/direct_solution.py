@@ -86,6 +86,7 @@ class ConductivityLBTEBase(ConductivityBase):
         pp_filename=None,
         pinv_cutoff=1.0e-8,
         pinv_solver=0,
+        pinv_method=0,
         log_level=0,
         lang="C",
     ):
@@ -117,6 +118,7 @@ class ConductivityLBTEBase(ConductivityBase):
         self._read_pp = read_pp
         self._pp_filename = pp_filename
         self._pinv_cutoff = pinv_cutoff
+        self._pinv_method = pinv_method
         self._pinv_solver = pinv_solver
 
         self._cv = None
@@ -817,14 +819,18 @@ class ConductivityLBTEBase(ConductivityBase):
 
         start = time.time()
 
+        if self._pinv_method == 0:
+            eig_str = "abs(eig)"
+        else:
+            eig_str = "eig"
+        print(
+            f"Calculating pseudo-inv by ignoring {eig_str}<{self._pinv_cutoff:<.1e}",
+            end="",
+        )
         if solver in [0, 1, 2, 3, 4, 5]:
             if self._log_level:
-                sys.stdout.write(
-                    "Calculating pseudo-inv with cutoff=%-.1e "
-                    "(np.dot) " % self._pinv_cutoff
-                )
+                print(" (np.dot) ", end="")
                 sys.stdout.flush()
-
             e = self._get_eigvals_pinv(i_sigma, i_temp)
             if self._is_reducible_collision_matrix:
                 X1 = np.dot(v.T, X)
@@ -837,15 +843,17 @@ class ConductivityLBTEBase(ConductivityBase):
             import phono3py._phono3py as phono3c
 
             if self._log_level:
-                sys.stdout.write(
-                    "Calculating pseudo-inv with cutoff=%-.1e "
-                    "(built-in) " % self._pinv_cutoff
-                )
+                print(" (built-in) ", end="")
                 sys.stdout.flush()
 
             w = self._collision_eigenvalues[i_sigma, i_temp]
             phono3c.pinv_from_eigensolution(
-                self._collision_matrix, w, i_sigma, i_temp, self._pinv_cutoff, 0
+                self._collision_matrix,
+                w,
+                i_sigma,
+                i_temp,
+                self._pinv_cutoff,
+                self._pinv_method,
             )
             if self._is_reducible_collision_matrix:
                 Y = np.dot(v, X)
@@ -872,12 +880,13 @@ class ConductivityLBTEBase(ConductivityBase):
             (Y / 2).reshape(num_grid_points, num_band * 3).T / weights
         ).T.reshape(self._f_vectors.shape)
 
-    def _get_eigvals_pinv(self, i_sigma, i_temp, take_abs=True):
+    def _get_eigvals_pinv(self, i_sigma, i_temp):
         """Return inverse eigenvalues of eigenvalues > epsilon."""
         w = self._collision_eigenvalues[i_sigma, i_temp]
         e = np.zeros_like(w)
+
         for ll, val in enumerate(w):
-            if take_abs:
+            if self._pinv_method == 0:
                 _val = abs(val)
             else:
                 _val = val
@@ -1220,6 +1229,7 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
         pp_filename=None,
         pinv_cutoff=1.0e-8,
         pinv_solver=0,
+        pinv_method=0,
         log_level=0,
         lang="C",
     ):
@@ -1248,6 +1258,7 @@ class ConductivityLBTE(ConductivityMixIn, ConductivityLBTEBase):
             pp_filename=pp_filename,
             pinv_cutoff=pinv_cutoff,
             pinv_solver=pinv_solver,
+            pinv_method=pinv_method,
             log_level=log_level,
             lang=lang,
         )
@@ -1403,6 +1414,7 @@ class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
         pp_filename=None,
         pinv_cutoff=1.0e-8,
         pinv_solver=0,
+        pinv_method=0,
         log_level=0,
         lang="C",
     ):
@@ -1436,6 +1448,7 @@ class ConductivityWignerLBTE(ConductivityWignerMixIn, ConductivityLBTEBase):
             pp_filename=pp_filename,
             pinv_cutoff=pinv_cutoff,
             pinv_solver=pinv_solver,
+            pinv_method=pinv_method,
             log_level=log_level,
             lang=lang,
         )
@@ -1671,6 +1684,7 @@ def get_thermal_conductivity_LBTE(
     conductivity_type=None,
     pinv_cutoff=1.0e-8,
     pinv_solver=0,  # default: dsyev in lapacke
+    pinv_method=0,  # default: abs(eig) < cutoff
     write_collision=False,
     read_collision=False,
     write_kappa=False,
@@ -1726,6 +1740,7 @@ def get_thermal_conductivity_LBTE(
         pp_filename=input_filename,
         pinv_cutoff=pinv_cutoff,
         pinv_solver=pinv_solver,
+        pinv_method=pinv_method,
         log_level=log_level,
     )
 

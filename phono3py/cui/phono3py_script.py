@@ -35,7 +35,7 @@
 
 import copy
 import sys
-from typing import Optional, Union
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 from phonopy.cui.collect_cell_info import collect_cell_info
@@ -683,7 +683,9 @@ def check_supercell_in_yaml(cell_info, ph3, distance_to_A, log_level):
                 sys.exit(1)
 
 
-def init_phono3py(settings, cell_info, interface_mode, symprec, log_level):
+def init_phono3py(
+    settings, cell_info, interface_mode, symprec, log_level
+) -> Tuple[Phono3py, Dict]:
     """Initialize phono3py and update settings by default values."""
     physical_units = get_default_physical_units(interface_mode)
     distance_to_A = physical_units["distance_to_A"]
@@ -1391,6 +1393,7 @@ def main(**argparse_control):
             is_full_pp=settings.is_full_pp,
             pinv_cutoff=settings.pinv_cutoff,
             pinv_solver=settings.pinv_solver,
+            pinv_method=settings.pinv_method,
             write_gamma=settings.write_gamma,
             read_gamma=settings.read_gamma,
             write_kappa=True,

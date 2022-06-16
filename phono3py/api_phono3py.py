@@ -2103,6 +2103,7 @@ class Phono3py:
         gv_delta_q=None,  # for group velocity
         is_full_pp=False,
         pinv_cutoff=1.0e-8,  # for pseudo-inversion of collision matrix
+        pinv_method=0,  # for pseudo-inversion of collision matrix
         pinv_solver=0,  # solver of pseudo-inversion of collision matrix
         write_gamma=False,
         read_gamma=False,
@@ -2175,7 +2176,11 @@ class Phono3py:
         pinv_cutoff : float, optional, default is 1.0e-8
             Direct solution only (`is_LBTE=True`). This is used as a criterion
             to judge the eigenvalues are considered as zero or not in
-            pseudo-inversion of collision matrix.
+            pseudo-inversion of collision matrix. See also `pinv_method`.
+        pinv_method : int, optional, default is 0.
+            Direct solution only (`is_LBTE=True`).
+                0. abs(eigenvalue) < `pinv_cutoff`
+                1. eigenvalue < `pinv_cutoff`
         pinv_solver : int, optional, default is 0
             Direct solution only (`is_LBTE=True`). Choice of solver of
             pseudo-inversion of collision matrix. 0 means the default choice.
@@ -2278,6 +2283,7 @@ class Phono3py:
                 conductivity_type=conductivity_type,
                 pinv_cutoff=pinv_cutoff,
                 pinv_solver=pinv_solver,
+                pinv_method=pinv_method,
                 write_collision=write_collision,
                 read_collision=read_collision,
                 write_kappa=write_kappa,
