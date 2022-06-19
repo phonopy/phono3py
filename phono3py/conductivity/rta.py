@@ -37,7 +37,6 @@ from abc import abstractmethod
 from typing import Type, Union, cast
 
 import numpy as np
-from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.units import THzToEv
 
 from phono3py.conductivity.base import ConductivityBase, ConductivityMixIn
@@ -53,6 +52,7 @@ from phono3py.conductivity.wigner import (
     get_conversion_factor_WTE,
 )
 from phono3py.file_IO import read_pp_from_hdf5
+from phono3py.other.tetrahedron_method import get_tetrahedra_relative_grid_address
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
 from phono3py.phonon.grid import get_grid_points_by_rotations
@@ -327,7 +327,9 @@ class ConductivityRTABase(ConductivityBase):
         symmetrize_fc3_q = 0
 
         if None in self._sigmas:
-            thm = TetrahedronMethod(self._pp.bz_grid.microzone_lattice)
+            tetrahedra = get_tetrahedra_relative_grid_address(
+                self._pp.bz_grid.microzone_lattice
+            )
 
         # It is assumed that self._sigmas = [None].
         for j, sigma in enumerate(self._sigmas):
@@ -350,7 +352,7 @@ class ConductivityRTABase(ConductivityBase):
                 phono3c.pp_collision(
                     collisions,
                     np.array(
-                        np.dot(thm.get_tetrahedra(), self._pp.bz_grid.P.T),
+                        np.dot(tetrahedra, self._pp.bz_grid.P.T),
                         dtype="int_",
                         order="C",
                     ),

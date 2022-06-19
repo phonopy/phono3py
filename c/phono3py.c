@@ -624,7 +624,20 @@ void ph3py_expand_collision_matrix(double *collision_matrix,
     multi = NULL;
 }
 
-/* tpi_get_neighboring_grid_points around multiple grid points for using openmp
+/**
+ * @brief Get relative grid addresses needed for computing tetrahedron
+ * integration weights
+ *
+ * @param relative_grid_address
+ * @param reciprocal_lattice
+ */
+void ph3py_get_relative_grid_address(long relative_grid_address[24][4][3],
+                                     const double reciprocal_lattice[3][3]) {
+    thm_get_relative_grid_address(relative_grid_address, reciprocal_lattice);
+}
+
+/* tpi_get_neighboring_grid_points around multiple grid points for using
+ * openmp
  *
  * relative_grid_addresses are given as P multipled with those from dataset,
  * i.e.,
