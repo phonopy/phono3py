@@ -208,6 +208,8 @@ void ph3py_expand_collision_matrix(double *collision_matrix,
                                    const long num_grid_points,
                                    const long num_rot, const long num_sigma,
                                    const long num_temp, const long num_band);
+void ph3py_get_relative_grid_address(long relative_grid_address[24][4][3],
+                                     const double reciprocal_lattice[3][3]);
 long ph3py_get_neighboring_gird_points(
     long *relative_grid_points, const long *grid_points,
     const long (*relative_grid_address)[3], const long mesh[3],

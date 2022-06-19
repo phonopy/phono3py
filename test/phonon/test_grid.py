@@ -1,8 +1,8 @@
 """Tests for grids."""
 import numpy as np
 import pytest
-from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
+from phono3py.other.tetrahedron_method import get_tetrahedra_relative_grid_address
 from phono3py.phonon.grid import (
     BZGrid,
     _get_grid_points_by_bz_rotations_c,
@@ -815,10 +815,10 @@ def test_SNF_tetrahedra_relative_grid(aln_lda):
 
         plat = np.linalg.inv(aln_lda.primitive.cell)
         mlat = bzgrid.microzone_lattice
-        thm = TetrahedronMethod(mlat)
-        snf_tetrahedra = np.dot(thm.get_tetrahedra(), bzgrid.P.T)
+        tetrahedra = get_tetrahedra_relative_grid_address(mlat)
+        snf_tetrahedra = np.dot(tetrahedra, bzgrid.P.T)
 
-        for mtet, ptet in zip(thm.get_tetrahedra(), snf_tetrahedra):
+        for mtet, ptet in zip(tetrahedra, snf_tetrahedra):
             np.testing.assert_allclose(
                 np.dot(mtet, mlat.T),
                 np.dot(np.dot(ptet, bzgrid.QDinv.T), plat.T),

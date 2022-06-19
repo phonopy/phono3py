@@ -68,6 +68,8 @@ static PyObject *py_get_permutation_symmetry_fc3(PyObject *self,
 static PyObject *py_get_permutation_symmetry_compact_fc3(PyObject *self,
                                                          PyObject *args);
 static PyObject *py_transpose_compact_fc3(PyObject *self, PyObject *args);
+static PyObject *py_get_thm_relative_grid_address(PyObject *self,
+                                                  PyObject *args);
 static PyObject *py_get_neighboring_grid_points(PyObject *self, PyObject *args);
 static PyObject *py_get_thm_integration_weights_at_grid_points(PyObject *self,
                                                                PyObject *args);
@@ -161,6 +163,8 @@ static PyMethodDef _phono3py_methods[] = {
      "Set permutation symmetry for compact-fc3"},
     {"transpose_compact_fc3", (PyCFunction)py_transpose_compact_fc3,
      METH_VARARGS, "Transpose compact fc3"},
+    {"tetrahedra_relative_grid_address", py_get_thm_relative_grid_address,
+     METH_VARARGS, "Relative grid addresses of vertices of 24 tetrahedra"},
     {"neighboring_grid_points", (PyCFunction)py_get_neighboring_grid_points,
      METH_VARARGS, "Neighboring grid points by relative grid addresses"},
     {"integration_weights_at_grid_points",
@@ -1133,6 +1137,28 @@ static PyObject *py_transpose_compact_fc3(PyObject *self, PyObject *args) {
 
     ph3py_transpose_compact_fc3(fc3, p2s, s2pp, nsym_list, perms, n_satom,
                                 n_patom, t_type);
+
+    Py_RETURN_NONE;
+}
+
+static PyObject *py_get_thm_relative_grid_address(PyObject *self,
+                                                  PyObject *args) {
+    PyArrayObject *py_relative_grid_address;
+    PyArrayObject *py_reciprocal_lattice_py;
+
+    long(*relative_grid_address)[4][3];
+    double(*reciprocal_lattice)[3];
+
+    if (!PyArg_ParseTuple(args, "OO", &py_relative_grid_address,
+                          &py_reciprocal_lattice_py)) {
+        return NULL;
+    }
+
+    relative_grid_address =
+        (long(*)[4][3])PyArray_DATA(py_relative_grid_address);
+    reciprocal_lattice = (double(*)[3])PyArray_DATA(py_reciprocal_lattice_py);
+
+    ph3py_get_relative_grid_address(relative_grid_address, reciprocal_lattice);
 
     Py_RETURN_NONE;
 }
