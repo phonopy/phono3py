@@ -3,8 +3,9 @@
 This software calculates phonon-phonon interaction and related properties using
 the supercell approach. For example, the following physical values are obtained:
 
-- Lattice thermal conductivity by relaxation time approximation and
-  direct-solution of phonon Boltzmann equation ({ref}`LTC_options`)
+- Lattice thermal conductivity by relaxation time approximation,
+  direct-solution of phonon Boltzmann equation ({ref}`LTC_options`), and
+  solution of the Wigner transport equation ({ref}`LTC_options`)
 - {ref}`Cummulative lattice thermal conductivity and related properties <auxiliary_tools_kaccum>`
 - {ref}`self_energy_options` (Phonon lifetime/linewidth)
 - {ref}`jdos_option`
@@ -49,6 +50,7 @@ input-output-files
 hdf5_howto
 auxiliary-tools
 direct-solution
+wigner-solution
 workload-distribution
 cutoff-pair
 external-tools
