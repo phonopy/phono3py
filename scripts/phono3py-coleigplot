@@ -50,8 +50,8 @@ def plot_one(ax, coleigs, temperatures, args):
     coleigs_n = coleigs[t_index].copy()
     coleigs_p[coleigs_p < 0] = np.nan
     coleigs_n[coleigs_n >= 0] = np.nan
-    ax.semilogy(coleigs_p, "b.", markersize=1)
-    ax.semilogy(-coleigs_n, "r.", markersize=1)
+    ax.semilogy(coleigs_p, "b.", markersize=1, clip_on=False)
+    ax.semilogy(-coleigs_n, "r.", markersize=1, clip_on=False)
     ax.set_xlim(0, len(coleigs_p))
 
 
@@ -91,7 +91,7 @@ def plot_more_files(ax, args):
 def plot(args: argparse.Namespace):
     import matplotlib.pyplot as plt
 
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     ax.xaxis.set_ticks_position("bottom")
     ax.yaxis.set_ticks_position("left")
     ax.xaxis.set_tick_params(which="both", direction="in")
