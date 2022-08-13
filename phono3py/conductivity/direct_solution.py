@@ -1747,7 +1747,6 @@ def get_thermal_conductivity_LBTE(
     if read_collision:
         read_from = set_collision_from_file(
             lbte,
-            interaction.bz_grid,
             indices=read_collision,
             is_reducible_collision_matrix=is_reducible_collision_matrix,
             filename=input_filename,

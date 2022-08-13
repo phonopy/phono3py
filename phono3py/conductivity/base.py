@@ -502,7 +502,7 @@ class ConductivityBase(ABC):
 
     @temperatures.setter
     def temperatures(self, temperatures):
-        self._temperatures = temperatures
+        self._temperatures = np.array(temperatures, dtype="double")
         self._allocate_values()
 
     def get_temperatures(self):

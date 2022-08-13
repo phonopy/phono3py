@@ -1091,7 +1091,6 @@ def read_gamma_from_hdf5(
     sigma=None,
     sigma_cutoff=None,
     filename=None,
-    verbose=True,
 ):
     """Read gamma from kappa-*.hdf5 file."""
     if band_index is None:
@@ -1108,9 +1107,7 @@ def read_gamma_from_hdf5(
     )
     full_filename = "kappa" + suffix + ".hdf5"
     if not os.path.exists(full_filename):
-        if verbose:
-            print("%s not found." % full_filename)
-        return None
+        return None, full_filename
 
     read_data = {}
 
@@ -1122,10 +1119,8 @@ def read_gamma_from_hdf5(
                     read_data[key] = f[key][:]
                 else:
                     read_data[key] = f[key][()]
-        if verbose:
-            print("Read data from %s." % full_filename)
 
-    return read_data
+    return read_data, full_filename
 
 
 def read_collision_from_hdf5(
@@ -1136,9 +1131,15 @@ def read_collision_from_hdf5(
     sigma=None,
     sigma_cutoff=None,
     filename=None,
+    only_temperatures=False,
     verbose=True,
 ):
-    """Read colliction matrix."""
+    """Read colliction matrix.
+
+    indices : array_like of int
+        Indices of temperatures.
+
+    """
     if band_index is None:
         band_indices = None
     else:
@@ -1156,6 +1157,11 @@ def read_collision_from_hdf5(
         if verbose:
             print("%s not found." % full_filename)
         return None
+
+    if only_temperatures:
+        with h5py.File(full_filename, "r") as f:
+            temperatures = np.array(f["temperature"][:], dtype="double")
+            return None, None, temperatures
 
     with h5py.File(full_filename, "r") as f:
         if indices == "all":
@@ -1200,8 +1206,6 @@ def read_collision_from_hdf5(
             print(text)
 
         return collision_matrix, gamma, temperatures
-
-    return None
 
 
 def write_pp_to_hdf5(

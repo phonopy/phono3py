@@ -57,11 +57,13 @@ if TYPE_CHECKING:
     from phono3py.conductivity.base import ConductivityBase
     from phono3py.conductivity.direct_solution import (
         ConductivityLBTE,
+        ConductivityLBTEBase,
         ConductivityWignerLBTE,
     )
     from phono3py.conductivity.rta import (
         ConductivityKuboRTA,
         ConductivityRTA,
+        ConductivityRTABase,
         ConductivityWignerRTA,
     )
 
@@ -699,14 +701,30 @@ def select_colmat_solver(pinv_solver):
     return solver
 
 
-def set_gamma_from_file(br, filename=None, verbose=True):
-    """Read kappa-*.hdf5 files for thermal conductivity calculation."""
-    sigmas = br.get_sigmas()
-    sigma_cutoff = br.get_sigma_cutoff_width()
-    mesh = br.get_mesh_numbers()
-    grid_points = br.get_grid_points()
-    temperatures = br.get_temperatures()
-    num_band = br.get_frequencies().shape[1]
+def set_gamma_from_file(
+    br: "ConductivityRTABase", filename: Optional[str] = None, verbose: bool = True
+):
+    """Read kappa-*.hdf5 files for thermal conductivity calculation.
+
+    If kappa-m*.hdf5 that contains all data is not found, kappa-m*-gp*.hdf5
+    files at grid points are searched. If any of those files are not found,
+    kappa-m*-gp*-b*.hdf5 files at grid points and bands are searched. If any
+    of those files are not found, it fails.
+
+    br : ConductivityRTABase
+        RTA lattice thermal conductivity instance.
+    filename : str, optional
+        This string is inserted in the filename as kappa-m*.{filename}.hdf5.
+    verbose : bool, optional
+        Show text output or not.
+
+    """
+    sigmas = br.sigmas
+    sigma_cutoff = br.sigma_cutoff_width
+    mesh = br.mesh_numbers
+    grid_points = br.grid_points
+    temperatures = br.temperatures
+    num_band = br.frequencies.shape[1]
 
     gamma = np.zeros(
         (len(sigmas), len(temperatures), len(grid_points), num_band), dtype="double"
@@ -721,14 +739,15 @@ def set_gamma_from_file(br, filename=None, verbose=True):
     read_succeeded = True
 
     for j, sigma in enumerate(sigmas):
-        data = read_gamma_from_hdf5(
+        data, full_filename = read_gamma_from_hdf5(
             mesh,
             sigma=sigma,
             sigma_cutoff=sigma_cutoff,
             filename=filename,
-            verbose=verbose,
         )
         if data:
+            if verbose:
+                print("Read data from %s." % full_filename)
             gamma[j] = data["gamma"]
             if "gamma_isotope" in data:
                 gamma_iso[j] = data["gamma_isotope"]
@@ -740,16 +759,21 @@ def set_gamma_from_file(br, filename=None, verbose=True):
                 is_ave_pp_in = True
                 ave_pp[:] = data["ave_pp"]
         else:
+            if verbose:
+                print(
+                    "%s not found. Look for hdf5 files at grid points." % full_filename
+                )
             for i, gp in enumerate(grid_points):
-                data_gp = read_gamma_from_hdf5(
+                data_gp, full_filename = read_gamma_from_hdf5(
                     mesh,
                     grid_point=gp,
                     sigma=sigma,
                     sigma_cutoff=sigma_cutoff,
                     filename=filename,
-                    verbose=verbose,
                 )
                 if data_gp:
+                    if verbose:
+                        print("Read data from %s." % full_filename)
                     gamma[j, :, i] = data_gp["gamma"]
                     if "gamma_iso" in data_gp:
                         gamma_iso[j, i] = data_gp["gamma_iso"]
@@ -761,17 +785,23 @@ def set_gamma_from_file(br, filename=None, verbose=True):
                         is_ave_pp_in = True
                         ave_pp[i] = data_gp["ave_pp"]
                 else:
+                    if verbose:
+                        print(
+                            "%s not found. Look for hdf5 files at bands."
+                            % full_filename
+                        )
                     for bi in range(num_band):
-                        data_band = read_gamma_from_hdf5(
+                        data_band, full_filename = read_gamma_from_hdf5(
                             mesh,
                             grid_point=gp,
                             band_index=bi,
                             sigma=sigma,
                             sigma_cutoff=sigma_cutoff,
                             filename=filename,
-                            verbose=verbose,
                         )
                         if data_band:
+                            if verbose:
+                                print("Read data from %s." % full_filename)
                             gamma[j, :, i, bi] = data_band["gamma"]
                             if "gamma_iso" in data_band:
                                 gamma_iso[j, i, bi] = data_band["gamma_iso"]
@@ -783,10 +813,12 @@ def set_gamma_from_file(br, filename=None, verbose=True):
                                 is_ave_pp_in = True
                                 ave_pp[i, bi] = data_band["ave_pp"]
                         else:
+                            if verbose:
+                                print("%s not found." % full_filename)
                             read_succeeded = False
 
     if read_succeeded:
-        br.set_gamma(gamma)
+        br.gamma = gamma
         if is_ave_pp_in:
             br.set_averaged_pp_interaction(ave_pp)
         if is_gamma_N_U_in:
@@ -945,23 +977,32 @@ def write_pp(
 
 
 def set_collision_from_file(
-    lbte,
-    bz_grid,
+    lbte: "ConductivityLBTEBase",
     indices="all",
     is_reducible_collision_matrix=False,
     filename=None,
     log_level=0,
 ):
-    """Set collision matrix from that read from files."""
-    sigmas = lbte.get_sigmas()
-    sigma_cutoff = lbte.get_sigma_cutoff_width()
-    mesh = lbte.mesh_numbers
-    grid_points = lbte.get_grid_points()
-    indices = indices
+    """Set collision matrix from that read from files.
 
-    if len(sigmas) > 1:
-        gamma = []
-        collision_matrix = []
+    If collision-m*.hdf5 that contains all data is not found,
+    collision-m*-gp*.hdf5 files at grid points are searched. If any of those
+    files are not found, collision-m*-gp*-b*.hdf5 files at grid points and bands
+    are searched. If any of those files are not found, it fails.
+
+    lbte : ConductivityLBTEBase
+        RTA lattice thermal conductivity instance.
+    filename : str, optional
+        This string is inserted in the filename as collision-m*.{filename}.hdf5.
+    verbose : bool, optional
+        Show text output or not.
+
+    """
+    bz_grid = lbte.bz_grid
+    sigmas = lbte.sigmas
+    sigma_cutoff = lbte.sigma_cutoff_width
+    mesh = lbte.mesh_numbers
+    grid_points = lbte.grid_points
 
     read_from = None
 
@@ -972,7 +1013,8 @@ def set_collision_from_file(
         )
         sys.stdout.flush()
 
-    for j, sigma in enumerate(sigmas):
+    arrays_allocated = False
+    for i_sigma, sigma in enumerate(sigmas):
         collisions = read_collision_from_hdf5(
             mesh,
             indices=indices,
@@ -986,14 +1028,12 @@ def set_collision_from_file(
 
         if collisions:
             (colmat_at_sigma, gamma_at_sigma, temperatures) = collisions
-
-            if len(sigmas) == 1:
-                collision_matrix = colmat_at_sigma
-                gamma = np.zeros((1,) + gamma_at_sigma.shape, dtype="double", order="C")
-                gamma[0] = gamma_at_sigma
-            else:
-                collision_matrix.append(colmat_at_sigma)
-                gamma.append(gamma_at_sigma)
+            if not arrays_allocated:
+                arrays_allocated = True
+                # The following invokes self._allocate_values()
+                lbte.temperatures = temperatures
+            lbte.collision_matrix[i_sigma] = colmat_at_sigma[0]
+            lbte.gamma[i_sigma] = gamma_at_sigma[0]
             read_from = "full_matrix"
         else:
             vals = _allocate_collision(
@@ -1003,7 +1043,6 @@ def set_collision_from_file(
                 sigma_cutoff,
                 grid_points,
                 indices,
-                is_reducible_collision_matrix,
                 filename,
             )
             if vals:
@@ -1018,7 +1057,6 @@ def set_collision_from_file(
                     sigma_cutoff,
                     grid_points,
                     indices,
-                    is_reducible_collision_matrix,
                     filename,
                 )
                 if vals:
@@ -1031,10 +1069,15 @@ def set_collision_from_file(
                         )
                     return False
 
+            if not arrays_allocated:
+                arrays_allocated = True
+                # The following invokes self._allocate_values()
+                lbte.temperatures = temperatures
+
             for i, gp in enumerate(grid_points):
                 if not _collect_collision_gp(
-                    colmat_at_sigma,
-                    gamma_at_sigma,
+                    lbte.collision_matrix[i_sigma],
+                    lbte.gamma[i_sigma],
                     temperatures,
                     mesh,
                     sigma,
@@ -1047,11 +1090,11 @@ def set_collision_from_file(
                     filename,
                     log_level,
                 ):
-                    num_band = colmat_at_sigma.shape[3]
-                    for j in range(num_band):
+                    num_band = lbte.collision_matrix.shape[3]
+                    for i_band in range(num_band):
                         if not _collect_collision_band(
-                            colmat_at_sigma,
-                            gamma_at_sigma,
+                            lbte.collision_matrix[i_sigma],
+                            lbte.gamma[i_sigma],
                             temperatures,
                             mesh,
                             sigma,
@@ -1059,33 +1102,14 @@ def set_collision_from_file(
                             i,
                             gp,
                             bz_grid.bzg2grg,
-                            j,
+                            i_band,
                             indices,
                             is_reducible_collision_matrix,
                             filename,
                             log_level,
                         ):
                             return False
-
-            if len(sigmas) == 1:
-                gamma = gamma_at_sigma
-                collision_matrix = colmat_at_sigma
-            else:
-                gamma.append(gamma_at_sigma[0])
-                collision_matrix.append(colmat_at_sigma[0])
             read_from = "grid_points"
-
-    if len(sigmas) > 1:
-        temperatures = np.array(temperatures, dtype="double", order="C")
-        gamma = np.array(gamma, dtype="double", order="C")
-        collision_matrix = np.array(collision_matrix, dtype="double", order="C")
-
-    lbte.set_gamma(gamma)
-    lbte.set_collision_matrix(collision_matrix)
-    # lbte.set_temperatures invokes allocation of arrays. So this must
-    # be called after setting collision_matrix for saving memory
-    # space.
-    lbte.set_temperatures(temperatures)
 
     return read_from
 
@@ -1097,10 +1121,8 @@ def _allocate_collision(
     sigma_cutoff,
     grid_points,
     indices,
-    is_reducible_collision_matrix,
     filename,
 ):
-    num_mesh_points = np.prod(mesh)
     if for_gps:
         collision = read_collision_from_hdf5(
             mesh,
@@ -1109,6 +1131,7 @@ def _allocate_collision(
             sigma=sigma,
             sigma_cutoff=sigma_cutoff,
             filename=filename,
+            only_temperatures=True,
             verbose=False,
         )
     else:
@@ -1120,41 +1143,14 @@ def _allocate_collision(
             sigma=sigma,
             sigma_cutoff=sigma_cutoff,
             filename=filename,
+            only_temperatures=True,
             verbose=False,
         )
     if collision is None:
         return False
 
-    num_temp = len(collision[2])  # This is to treat indices="all".
-    if is_reducible_collision_matrix:
-        if for_gps:
-            num_band = collision[0].shape[4]  # for gps (s,T,b,irgp,b)
-        else:
-            num_band = collision[0].shape[3]  # for bands (s,T,irgp,b)
-        gamma_at_sigma = np.zeros(
-            (1, num_temp, num_mesh_points, num_band), dtype="double", order="C"
-        )
-        colmat_at_sigma = np.zeros(
-            (1, num_temp, num_mesh_points, num_band, num_mesh_points, num_band),
-            dtype="double",
-            order="C",
-        )
-    else:
-        if for_gps:
-            num_band = collision[0].shape[5]  # for gps (s,T,b0,3,irgp,b,3)
-        else:
-            num_band = collision[0].shape[4]  # for bands (s,T,3,irgp,b,3)
-        gamma_at_sigma = np.zeros(
-            (1, num_temp, len(grid_points), num_band), dtype="double", order="C"
-        )
-        colmat_at_sigma = np.zeros(
-            (1, num_temp, len(grid_points), num_band, 3, len(grid_points), num_band, 3),
-            dtype="double",
-            order="C",
-        )
-    temperatures = np.zeros(num_temp, dtype="double", order="C")
-
-    return colmat_at_sigma, gamma_at_sigma, temperatures
+    temperatures = collision[2]
+    return None, None, temperatures
 
 
 def _collect_collision_gp(
@@ -1192,8 +1188,8 @@ def _collect_collision_gp(
         igp = bzg2grg[gp]
     else:
         igp = i
-    gamma_at_sigma[0, :, igp] = gamma_at_gp
-    colmat_at_sigma[0, :, igp] = colmat_at_gp[0]
+    gamma_at_sigma[:, igp] = gamma_at_gp
+    colmat_at_sigma[:, igp] = colmat_at_gp[0]
     temperatures[:] = temperatures_at_gp
 
     return True
@@ -1236,8 +1232,8 @@ def _collect_collision_band(
         igp = bzg2grg[gp]
     else:
         igp = i
-    gamma_at_sigma[0, :, igp, j] = gamma_at_band
-    colmat_at_sigma[0, :, igp, j] = colmat_at_band[0]
+    gamma_at_sigma[:, igp, j] = gamma_at_band[0]
+    colmat_at_sigma[:, igp, j] = colmat_at_band[0]
     temperatures[:] = temperatures_at_band
 
     return True

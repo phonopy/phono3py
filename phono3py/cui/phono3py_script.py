@@ -1043,9 +1043,9 @@ def init_phph_interaction(
 
 def main(**argparse_control):
     """Phono3py main part of command line interface."""
-    # import warnings
+    import warnings
 
-    # warnings.simplefilter("error")
+    warnings.simplefilter("error")
     load_phono3py_yaml = argparse_control.get("load_phono3py_yaml", False)
 
     args, log_level = start_phono3py(**argparse_control)
