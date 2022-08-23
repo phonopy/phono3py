@@ -619,13 +619,17 @@ class Interaction:
             self._frequencies_at_gamma = self._frequencies[gp_Gamma].copy()
             self._eigenvectors_at_gamma = self._eigenvectors[gp_Gamma].copy()
 
-    def run_phonon_solver(self, grid_points=None):
+    def run_phonon_solver(self, grid_points=None, solve_by_rotation=False):
         """Run phonon solver at BZ-grid points."""
         if grid_points is None:
-            _grid_points = np.arange(len(self._bz_grid.addresses), dtype="int_")
+            if solve_by_rotation:
+                self.run_phonon_solver_with_eigvec_rotation()
+            else:
+                self._run_phonon_solver_c(
+                    np.arange(len(self._bz_grid.addresses), dtype="int_")
+                )
         else:
-            _grid_points = grid_points
-        self._run_phonon_solver_c(_grid_points)
+            self._run_phonon_solver_c(grid_points)
 
     def run_phonon_solver_at_gamma(self, is_nac=False):
         """Run phonon solver at Gamma point.
