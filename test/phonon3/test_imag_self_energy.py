@@ -1091,5 +1091,5 @@ def test_imag_self_energy_nacl_nac_npoints(nacl_pbe: Phono3py):
         freq_points_nacl_nac, _fpoints.ravel(), rtol=0, atol=1e-5
     )
     np.testing.assert_allclose(
-        gammas_nacl_nac, np.swapaxes(_gammas, -1, -2).ravel(), rtol=0, atol=1e-2
+        gammas_nacl_nac, np.swapaxes(_gammas, -1, -2).ravel(), rtol=0, atol=2e-2
     )
