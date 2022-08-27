@@ -40,9 +40,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "lapack_wrapper.h"
+// #include "lapack_wrapper.h"
 #include "phono3py.h"
 #include "phonoc_array.h"
+
+typedef struct {
+    double re;
+    double im;
+} _lapack_complex_double;
 
 static PyObject *py_get_interaction(PyObject *self, PyObject *args);
 static PyObject *py_get_pp_collision(PyObject *self, PyObject *args);
@@ -92,10 +97,8 @@ static PyObject *py_diagonalize_collision_matrix(PyObject *self,
                                                  PyObject *args);
 static PyObject *py_pinv_from_eigensolution(PyObject *self, PyObject *args);
 static PyObject *py_get_default_colmat_solver(PyObject *self, PyObject *args);
+static PyObject *py_lapacke_pinv(PyObject *self, PyObject *args);
 
-static void pinv_from_eigensolution(double *data, const double *eigvals,
-                                    const long size, const double cutoff,
-                                    const long pinv_method);
 static void show_colmat_info(const PyArrayObject *collision_matrix_py,
                              const long i_sigma, const long i_temp,
                              const long adrs_shift);
@@ -206,6 +209,8 @@ static PyMethodDef _phono3py_methods[] = {
      METH_VARARGS, "Pseudo-inverse from eigensolution"},
     {"default_colmat_solver", (PyCFunction)py_get_default_colmat_solver,
      METH_VARARGS, "Return default collison matrix solver by integer value"},
+    {"lapacke_pinv", (PyCFunction)py_lapacke_pinv, METH_VARARGS,
+     "Pseudo inversion using lapacke."},
     {NULL, NULL, 0, NULL}};
 
 #if PY_MAJOR_VERSION >= 3
@@ -276,7 +281,7 @@ static PyObject *py_get_interaction(PyObject *self, PyObject *args) {
 
     Darray *fc3_normal_squared;
     Darray *freqs;
-    lapack_complex_double *eigvecs;
+    _lapack_complex_double *eigvecs;
     long(*triplets)[3];
     long num_triplets;
     char *g_zero;
@@ -307,7 +312,7 @@ static PyObject *py_get_interaction(PyObject *self, PyObject *args) {
     freqs = convert_to_darray(py_frequencies);
     /* npy_cdouble and lapack_complex_double may not be compatible. */
     /* So eigenvectors should not be used in Python side */
-    eigvecs = (lapack_complex_double *)PyArray_DATA(py_eigenvectors);
+    eigvecs = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
     triplets = (long(*)[3])PyArray_DATA(py_triplets);
     num_triplets = (long)PyArray_DIMS(py_triplets)[0];
     g_zero = (char *)PyArray_DATA(py_g_zero);
@@ -371,7 +376,7 @@ static PyObject *py_get_pp_collision(PyObject *self, PyObject *args) {
     double *gamma;
     long(*relative_grid_address)[4][3];
     double *frequencies;
-    lapack_complex_double *eigenvectors;
+    _lapack_complex_double *eigenvectors;
     long(*triplets)[3];
     long num_triplets;
     long *triplet_weights;
@@ -405,7 +410,7 @@ static PyObject *py_get_pp_collision(PyObject *self, PyObject *args) {
     relative_grid_address =
         (long(*)[4][3])PyArray_DATA(py_relative_grid_address);
     frequencies = (double *)PyArray_DATA(py_frequencies);
-    eigenvectors = (lapack_complex_double *)PyArray_DATA(py_eigenvectors);
+    eigenvectors = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
     triplets = (long(*)[3])PyArray_DATA(py_triplets);
     num_triplets = (long)PyArray_DIMS(py_triplets)[0];
     triplet_weights = (long *)PyArray_DATA(py_triplet_weights);
@@ -471,7 +476,7 @@ static PyObject *py_get_pp_collision_with_sigma(PyObject *self,
 
     double *gamma;
     double *frequencies;
-    lapack_complex_double *eigenvectors;
+    _lapack_complex_double *eigenvectors;
     long(*triplets)[3];
     long num_triplets;
     long *triplet_weights;
@@ -502,7 +507,7 @@ static PyObject *py_get_pp_collision_with_sigma(PyObject *self,
 
     gamma = (double *)PyArray_DATA(py_gamma);
     frequencies = (double *)PyArray_DATA(py_frequencies);
-    eigenvectors = (lapack_complex_double *)PyArray_DATA(py_eigenvectors);
+    eigenvectors = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
     triplets = (long(*)[3])PyArray_DATA(py_triplets);
     num_triplets = (long)PyArray_DIMS(py_triplets)[0];
     triplet_weights = (long *)PyArray_DATA(py_triplet_weights);
@@ -910,7 +915,7 @@ static PyObject *py_get_isotope_strength(PyObject *self, PyObject *args) {
 
     double *gamma;
     double *frequencies;
-    lapack_complex_double *eigenvectors;
+    _lapack_complex_double *eigenvectors;
     long *band_indices;
     double *mass_variances;
     long num_band, num_band0;
@@ -924,7 +929,7 @@ static PyObject *py_get_isotope_strength(PyObject *self, PyObject *args) {
 
     gamma = (double *)PyArray_DATA(py_gamma);
     frequencies = (double *)PyArray_DATA(py_frequencies);
-    eigenvectors = (lapack_complex_double *)PyArray_DATA(py_eigenvectors);
+    eigenvectors = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
     band_indices = (long *)PyArray_DATA(py_band_indices);
     mass_variances = (double *)PyArray_DATA(py_mass_variances);
     num_band = (long)PyArray_DIMS(py_frequencies)[1];
@@ -954,7 +959,7 @@ static PyObject *py_get_thm_isotope_strength(PyObject *self, PyObject *args) {
     double *frequencies;
     long *ir_grid_points;
     long *weights;
-    lapack_complex_double *eigenvectors;
+    _lapack_complex_double *eigenvectors;
     long *band_indices;
     double *mass_variances;
     long num_band, num_band0, num_ir_grid_points;
@@ -971,7 +976,7 @@ static PyObject *py_get_thm_isotope_strength(PyObject *self, PyObject *args) {
     frequencies = (double *)PyArray_DATA(py_frequencies);
     ir_grid_points = (long *)PyArray_DATA(py_ir_grid_points);
     weights = (long *)PyArray_DATA(py_weights);
-    eigenvectors = (lapack_complex_double *)PyArray_DATA(py_eigenvectors);
+    eigenvectors = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
     band_indices = (long *)PyArray_DATA(py_band_indices);
     mass_variances = (double *)PyArray_DATA(py_mass_variances);
     num_band = (long)PyArray_DIMS(py_frequencies)[1];
@@ -1763,92 +1768,29 @@ static PyObject *py_get_default_colmat_solver(PyObject *self, PyObject *args) {
 #endif
 }
 
-static void pinv_from_eigensolution(double *data, const double *eigvals,
-                                    const long size, const double cutoff,
-                                    const long pinv_method) {
-    long i, ib, j, k, max_l, i_s, j_s;
-    double *tmp_data;
-    double e, sum;
-    long *l;
+static PyObject *py_lapacke_pinv(PyObject *self, PyObject *args) {
+    PyArrayObject *data_in_py;
+    PyArrayObject *data_out_py;
+    double cutoff;
 
-    l = NULL;
-    tmp_data = NULL;
+    int m;
+    int n;
+    double *data_in;
+    double *data_out;
+    int info;
 
-    tmp_data = (double *)malloc(sizeof(double) * size * size);
-
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (i = 0; i < size * size; i++) {
-        tmp_data[i] = data[i];
+    if (!PyArg_ParseTuple(args, "OOd", &data_out_py, &data_in_py, &cutoff)) {
+        return NULL;
     }
 
-    l = (long *)malloc(sizeof(long) * size);
-    max_l = 0;
-    for (i = 0; i < size; i++) {
-        if (pinv_method == 0) {
-            e = fabs(eigvals[i]);
-        } else {
-            e = eigvals[i];
-        }
-        if (e > cutoff) {
-            l[max_l] = i;
-            max_l++;
-        }
-    }
+    m = (int)PyArray_DIMS(data_in_py)[0];
+    n = (int)PyArray_DIMS(data_in_py)[1];
+    data_in = (double *)PyArray_DATA(data_in_py);
+    data_out = (double *)PyArray_DATA(data_out_py);
 
-#ifdef _OPENMP
-#pragma omp parallel for private(ib, j, k, i_s, j_s, sum)
-#endif
-    for (i = 0; i < size / 2; i++) {
-        /* from front */
-        i_s = i * size;
-        for (j = i; j < size; j++) {
-            j_s = j * size;
-            sum = 0;
-            for (k = 0; k < max_l; k++) {
-                sum +=
-                    tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
-            }
-            data[i_s + j] = sum;
-            data[j_s + i] = sum;
-        }
-        /* from back */
-        ib = size - i - 1;
-        i_s = ib * size;
-        for (j = ib; j < size; j++) {
-            j_s = j * size;
-            sum = 0;
-            for (k = 0; k < max_l; k++) {
-                sum +=
-                    tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
-            }
-            data[i_s + j] = sum;
-            data[j_s + ib] = sum;
-        }
-    }
+    info = phonopy_pinv(data_out, data_in, m, n, cutoff);
 
-    /* when size is odd */
-    if ((size % 2) == 1) {
-        i = (size - 1) / 2;
-        i_s = i * size;
-        for (j = i; j < size; j++) {
-            j_s = j * size;
-            sum = 0;
-            for (k = 0; k < max_l; k++) {
-                sum +=
-                    tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
-            }
-            data[i_s + j] = sum;
-            data[j_s + i] = sum;
-        }
-    }
-
-    free(l);
-    l = NULL;
-
-    free(tmp_data);
-    tmp_data = NULL;
+    return PyLong_FromLong((long)info);
 }
 
 static void show_colmat_info(const PyArrayObject *py_collision_matrix,

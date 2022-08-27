@@ -34,6 +34,8 @@
 
 #include "lapack_wrapper.h"
 
+#include <math.h>
+
 #define min(a, b) ((a) > (b) ? (b) : (a))
 
 #if defined(MKL_LAPACKE) || defined(SCIPY_MKL_H)
@@ -193,4 +195,92 @@ lapack_complex_double phonoc_complex_prod(const lapack_complex_double a,
         lapack_complex_double_imag(a) * lapack_complex_double_real(b) +
             lapack_complex_double_real(a) * lapack_complex_double_imag(b));
     return c;
+}
+
+void pinv_from_eigensolution(double *data, const double *eigvals,
+                             const long size, const double cutoff,
+                             const long pinv_method) {
+    long i, ib, j, k, max_l, i_s, j_s;
+    double *tmp_data;
+    double e, sum;
+    long *l;
+
+    l = NULL;
+    tmp_data = NULL;
+
+    tmp_data = (double *)malloc(sizeof(double) * size * size);
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (i = 0; i < size * size; i++) {
+        tmp_data[i] = data[i];
+    }
+
+    l = (long *)malloc(sizeof(long) * size);
+    max_l = 0;
+    for (i = 0; i < size; i++) {
+        if (pinv_method == 0) {
+            e = fabs(eigvals[i]);
+        } else {
+            e = eigvals[i];
+        }
+        if (e > cutoff) {
+            l[max_l] = i;
+            max_l++;
+        }
+    }
+
+#ifdef _OPENMP
+#pragma omp parallel for private(ib, j, k, i_s, j_s, sum)
+#endif
+    for (i = 0; i < size / 2; i++) {
+        /* from front */
+        i_s = i * size;
+        for (j = i; j < size; j++) {
+            j_s = j * size;
+            sum = 0;
+            for (k = 0; k < max_l; k++) {
+                sum +=
+                    tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
+            }
+            data[i_s + j] = sum;
+            data[j_s + i] = sum;
+        }
+        /* from back */
+        ib = size - i - 1;
+        i_s = ib * size;
+        for (j = ib; j < size; j++) {
+            j_s = j * size;
+            sum = 0;
+            for (k = 0; k < max_l; k++) {
+                sum +=
+                    tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
+            }
+            data[i_s + j] = sum;
+            data[j_s + ib] = sum;
+        }
+    }
+
+    /* when size is odd */
+    if ((size % 2) == 1) {
+        i = (size - 1) / 2;
+        i_s = i * size;
+        for (j = i; j < size; j++) {
+            j_s = j * size;
+            sum = 0;
+            for (k = 0; k < max_l; k++) {
+                sum +=
+                    tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
+            }
+            data[i_s + j] = sum;
+            data[j_s + i] = sum;
+        }
+    }
+
+    free(l);
+    l = NULL;
+
+    free(tmp_data);
+    tmp_data = NULL;
 }

@@ -444,7 +444,7 @@ def _solve_fc3(
         solver = "numpy.linalg.pinv"
     else:
         try:
-            import phono3py._lapackepy as lapackepy
+            import phono3py._phono3py as phono3c
 
             solver = "lapacke-dgesvd"
         except ImportError:
@@ -496,7 +496,7 @@ def _solve_fc3(
         inv_U = np.zeros(
             (rot_disps.shape[1], rot_disps.shape[0]), dtype="double", order="C"
         )
-        lapackepy.pinv(inv_U, rot_disps, 1e-13)
+        phono3c.lapacke_pinv(inv_U, rot_disps, 1e-13)
 
     fc3 = np.zeros((num_atom, num_atom, 3, 3, 3), dtype="double", order="C")
 
