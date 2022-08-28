@@ -35,8 +35,13 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 
-#include "lapack_wrapper.h"
+// #include "lapack_wrapper.h"
 #include "phononmod.h"
+
+typedef struct {
+    double re;
+    double im;
+} _lapack_complex_double;
 
 static PyObject *py_get_phonons_at_gridpoints(PyObject *self, PyObject *args);
 
@@ -139,7 +144,7 @@ static PyObject *py_get_phonons_at_gridpoints(PyObject *self, PyObject *args) {
     double(*dielectric)[3];
     double *q_dir;
     double *freqs;
-    lapack_complex_double *eigvecs;
+    _lapack_complex_double *eigvecs;
     char *phonon_done;
     long *grid_points;
     long(*grid_address)[3];
@@ -168,7 +173,7 @@ static PyObject *py_get_phonons_at_gridpoints(PyObject *self, PyObject *args) {
     }
 
     freqs = (double *)PyArray_DATA(py_frequencies);
-    eigvecs = (lapack_complex_double *)PyArray_DATA(py_eigenvectors);
+    eigvecs = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
     phonon_done = (char *)PyArray_DATA(py_phonon_done);
     grid_points = (long *)PyArray_DATA(py_grid_points);
     grid_address = (long(*)[3])PyArray_DATA(py_grid_address);

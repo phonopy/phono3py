@@ -65,14 +65,20 @@ def get_fc3(
     disp_dataset,
     symmetry: Symmetry,
     is_compact_fc=False,
+    pinv_solver: str = "numpy",
     verbose=False,
 ):
     """Calculate fc3.
 
-    Even when 'cutoff_distance' in dataset, all displacements are in the dataset,
-    but force-sets out of cutoff-pair-distance are zero. fc3 is solved in exactly
-    the same way. Then post-clean-up
-    is performed.
+    Even when 'cutoff_distance' in dataset, all displacements are in the
+    dataset, but force-sets out of cutoff-pair-distance are zero. fc3 is solved
+    in exactly the same way. Then post-clean-up is performed.
+
+    Returns
+    -------
+    tuple :
+        (fc2, fc3) fc2 and fc3 can be compact or full array formats depending on
+        `is_compact_fc`. See Phono3py.produce_fc3.
 
     """
     # fc2 has to be full matrix to compute delta-fc2
@@ -85,6 +91,7 @@ def get_fc3(
         fc2,
         symmetry,
         is_compact_fc=(is_compact_fc and "cutoff_distance" not in disp_dataset),
+        pinv_solver=pinv_solver,
         verbose=verbose,
     )
     if verbose:
@@ -444,7 +451,7 @@ def _solve_fc3(
         solver = "numpy.linalg.pinv"
     else:
         try:
-            import phono3py._lapackepy as lapackepy
+            import phono3py._phono3py as phono3c
 
             solver = "lapacke-dgesvd"
         except ImportError:
@@ -496,7 +503,7 @@ def _solve_fc3(
         inv_U = np.zeros(
             (rot_disps.shape[1], rot_disps.shape[0]), dtype="double", order="C"
         )
-        lapackepy.pinv(inv_U, rot_disps, 1e-13)
+        phono3c.lapacke_pinv(inv_U, rot_disps, 1e-13)
 
     fc3 = np.zeros((num_atom, num_atom, 3, 3, 3), dtype="double", order="C")
 
@@ -669,6 +676,7 @@ def _get_fc3_least_atoms(
     fc2,
     symmetry: Symmetry,
     is_compact_fc: bool = False,
+    pinv_solver="numpy",
     verbose: bool = True,
 ):
     symprec = symmetry.tolerance
@@ -735,6 +743,7 @@ def _get_fc3_least_atoms(
             displacements_first,
             np.array(delta_fc2s, dtype="double", order="C"),
             symprec,
+            pinv_solver=pinv_solver,
             verbose=verbose,
         )
         if is_compact_fc:

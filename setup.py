@@ -1,135 +1,113 @@
-"""Phono3py setup.py."""
+"""Phono3py setup.py.
+
+The build steps are as follows:
+
+mkdir _build && cd _build
+cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
+    -DPHONONMOD=on -DPHONO3PY=on -DCMAKE_INSTALL_PREFIX="" ..
+cmake --build . -v
+cd ..
+python setup.py build
+pip install -e .
+
+"""
 import os
+import pathlib
+import shutil
+import subprocess
 
 import numpy
 import setuptools
 
-# Ensure that 'site.cfg' exists.
-if not os.path.exists("site.cfg"):
-    msg_list = [
-        '"site.cfg" file is needed to run setup.py.',
-        "See about installation at https://phonopy.github.io/phono3py/install.html.",
-        "A minimum setting of site.cfg to build with openmp support is:",
-        "# ------------------------------",
-        "[phono3py]",
-        "extra_compile_args = -fopenmp",
-        "# ------------------------------",
-        "Please create an emply site.cfg (no-openmp support) to run setup.py",
-        "unless any custom setting is needed, although this is considered unusual.",
+
+def _run_cmake(build_dir):
+    build_dir.mkdir()
+    args = [
+        "cmake",
+        "-S",
+        ".",
+        "-B",
+        "_build",
+        "-DPHONONMOD=on",
+        "-DPHONO3PY=on",
+        "-DCMAKE_INSTALL_PREFIX=.",
     ]
+    # if "CONDA_PREFIX" in os.environ:
+    #     args.append("-DUSE_CONDA_PATH=on")
+    # if "CC" in os.environ:
+    #     args.append(f'-DCMAKE_C_COMPILER={os.environ["CC"]}')
 
-    raise FileNotFoundError("\n".join(msg_list))
+    cmake_output = subprocess.check_output(args)
+    print(cmake_output.decode("utf-8"))
+    subprocess.check_call(["cmake", "--build", "_build", "-v"])
+    return cmake_output
 
-# Retrieve the default flags from the numpy installation
-# This also means one can override this with a site.cfg
-# configuration file
-from numpy.distutils.system_info import dict_append, get_info, system_info
+
+def _clean_cmake(build_dir):
+    shutil.rmtree(build_dir)
+
+
+build_dir = pathlib.Path.cwd() / "_build"
+found_extra_link_args = []
+found_extra_compile_args = []
+define_macros = []
+use_mkl_lapacke = False
+if build_dir.exists():
+    pass
+else:
+    cmake_output = _run_cmake(build_dir)
+    found_flags = {}
+    found_libs = {}
+    for line in cmake_output.decode("utf-8").split("\n"):
+        for key in ["BLAS", "LAPACK", "OpenMP"]:
+            if f"{key} libs" in line and len(line.split()) > 3:
+                found_libs[key] = line.split()[3].split(";")
+            if f"{key} flags" in line and len(line.split()) > 3:
+                found_flags[key] = line.split()[3].split(";")
+    for key, value in found_libs.items():
+        found_extra_link_args += value
+        for element in value:
+            if "libmkl" in element:
+                use_mkl_lapacke = True
+    for key, value in found_flags.items():
+        found_extra_compile_args += value
+    if use_mkl_lapacke:
+        define_macros.append(("MKL_LAPACKE", None))
+    print("=============================================")
+    print(found_extra_compile_args)
+    print(found_extra_link_args)
+    print(define_macros)
+    print("=============================================")
 
 git_num = None
-
-# use flags defined in numpy
-all_info_d = get_info("ALL")
-lapack_info_d = get_info("lapack_opt")
-
-
-class phono3py_info(system_info):
-    """See system_info in numpy."""
-
-    section = "phono3py"
-
-    def calc_info(self):
-        """Read in *all* options in the [phono3py] section of site.cfg."""
-        info = self.calc_libraries_info()
-        dict_append(info, **self.calc_extra_info())
-        dict_append(info, include_dirs=self.get_include_dirs())
-        self.set_info(**info)
-
-
-macros = []
-
-# in numpy>=1.16.0, silence build warnings about deprecated API usage
-macros.append(("NPY_NO_DEPRECATED_API", "0"))
-
-# Avoid divergence in tetrahedron method by ensuring denominator > 1e-10.
-# macros.append(("THM_EPSILON", "1e-10"))
-
-with_threaded_blas = False
-with_mkl = False
-
-# define options
-# these are the basic definitions for all extensions
-opts = lapack_info_d.copy()
-if "mkl" in opts.get("libraries", ""):
-    with_mkl = True
-
-if with_mkl:
-    with_threaded_blas = True
-    # generally this should not be needed since the numpy distutils
-    # finding of MKL creates the SCIPY_MKL_H flag
-    macros.append(("MKL_LAPACKE", None))
-
-if with_threaded_blas:
-    macros.append(("MULTITHREADED_BLAS", None))
-
-# Create the dictionary for compiling the codes
-dict_append(opts, **all_info_d)
-dict_append(opts, include_dirs=["c"])
-dict_append(opts, define_macros=macros)
-# Add numpy's headers
-include_dirs = numpy.get_include()
-if include_dirs is not None:
-    dict_append(opts, include_dirs=[include_dirs])
-
-# Add any phono3py manual flags from here
-add_opts = phono3py_info().get_info()
-dict_append(opts, **add_opts)
+include_dirs = ["c", numpy.get_include()]
+# if "CONDA_PREFIX" in os.environ:
+#     include_dirs.append(os.environ["CONDA_PREFIX"] + "/include")
 
 # Different extensions
 extensions = []
 
 # Define the modules
-sources_phono3py = [
-    "c/_phono3py.c",
-    "c/bzgrid.c",
-    "c/collision_matrix.c",
-    "c/fc3.c",
-    "c/grgrid.c",
-    "c/imag_self_energy_with_g.c",
-    "c/interaction.c",
-    "c/isotope.c",
-    "c/lagrid.c",
-    "c/lapack_wrapper.c",
-    "c/phono3py.c",
-    "c/phonoc_utils.c",
-    "c/pp_collision.c",
-    "c/real_self_energy.c",
-    "c/real_to_reciprocal.c",
-    "c/reciprocal_to_normal.c",
-    "c/snf3x3.c",
-    "c/tetrahedron_method.c",
-    "c/triplet.c",
-    "c/triplet_grid.c",
-    "c/triplet_iw.c",
-]
 extensions.append(
-    setuptools.Extension("phono3py._phono3py", sources=sources_phono3py, **opts)
+    setuptools.Extension(
+        "phono3py._phono3py",
+        sources=["c/_phono3py.c"],
+        extra_link_args=["_build/libph3py.a"] + found_extra_link_args,
+        include_dirs=include_dirs,
+        extra_compile_args=found_extra_compile_args,
+        define_macros=define_macros,
+    )
 )
 
-
-sources_phononmod = [
-    "c/_phononmod.c",
-    "c/dynmat.c",
-    "c/lapack_wrapper.c",
-    "c/phonon.c",
-    "c/phononmod.c",
-]
 extensions.append(
-    setuptools.Extension("phono3py._phononmod", sources=sources_phononmod, **opts)
-)
-
-sources_lapackepy = ["c/_lapackepy.c", "c/lapack_wrapper.c"]
-extensions.append(
-    setuptools.Extension("phono3py._lapackepy", sources=sources_lapackepy, **opts)
+    setuptools.Extension(
+        "phono3py._phononmod",
+        sources=["c/_phononmod.c"],
+        extra_link_args=["_build/libphmod.a"] + found_extra_link_args,
+        include_dirs=include_dirs,
+        extra_compile_args=found_extra_compile_args,
+        define_macros=define_macros,
+    )
 )
 
 packages_phono3py = [
@@ -204,3 +182,5 @@ if __name__ == "__main__":
         scripts=scripts_phono3py,
         ext_modules=extensions,
     )
+
+    _clean_cmake(build_dir)
