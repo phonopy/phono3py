@@ -1,4 +1,6 @@
 """Tests for grids."""
+from __future__ import annotations
+
 import numpy as np
 import pytest
 from phonopy import Phonopy
@@ -1255,6 +1257,31 @@ def test_aln_BZGrid_with_shift(aln_cell: PhonopyAtoms):
         q_phonopy_norm = np.linalg.norm(np.dot(np.linalg.inv(aln_cell.cell), q_phonopy))
         q_norm = np.linalg.norm(np.dot(np.linalg.inv(aln_cell.cell), q))
         np.testing.assert_almost_equal(q_phonopy_norm, q_norm)
+
+
+@pytest.mark.parametrize(
+    "is_shift",
+    [
+        [True, False, False],
+        [False, True, False],
+        [True, True, False],
+        [True, False, True],
+        [False, True, True],
+        [True, True, True],
+    ],
+)
+def test_aln_BZGrid_with_shift_broken_symmetry(aln_cell: PhonopyAtoms, is_shift: list):
+    """Test broken symmetry of BZGrid with shift using AlN."""
+    mesh = [5, 5, 4]
+    symmetry = Symmetry(aln_cell)
+
+    with pytest.raises(RuntimeError):
+        BZGrid(
+            mesh,
+            lattice=aln_cell.cell,
+            symmetry_dataset=symmetry.dataset,
+            is_shift=is_shift,
+        )
 
 
 def test_agno2_BZGrid_with_shift(agno2_cell: PhonopyAtoms):

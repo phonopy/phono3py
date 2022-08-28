@@ -40,6 +40,7 @@ from typing import Optional
 
 import numpy as np
 from phonopy.structure.cells import (
+    determinant,
     estimate_supercell_matrix,
     get_reduced_bases,
     is_primitive_cell,
@@ -483,6 +484,21 @@ class BZGrid:
         ):
             msg = "Grid symmetry is broken. Use generalized regular grid."
             raise RuntimeError(msg)
+
+        if self._is_shift is not None:
+            if not self._satisfy_shift_symmetry():
+                msg = "Grid symmetry is broken by grid shift."
+                raise RuntimeError(msg)
+
+    def _satisfy_shift_symmetry(self):
+        Pinv = np.rint(np.linalg.inv(self._P)).astype(int)
+        assert determinant(Pinv) == 1
+        S = np.array(self._is_shift, dtype=int)
+        for r in self._rotations:
+            _S = np.dot(np.dot(Pinv, np.dot(r, self._P)), S)
+            if not np.array_equal((S - _S) % 2, [0, 0, 0]):
+                return False
+        return True
 
 
 class GridMatrix:
