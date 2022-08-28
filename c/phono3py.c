@@ -55,7 +55,7 @@
 
 long ph3py_get_interaction(
     Darray *fc3_normal_squared, const char *g_zero, const Darray *frequencies,
-    const lapack_complex_double *eigenvectors, const long (*triplets)[3],
+    const _lapack_complex_double *eigenvectors, const long (*triplets)[3],
     const long num_triplets, const long (*bz_grid_addresses)[3],
     const long D_diag[3], const long Q[3][3], const double *fc3,
     const long is_compact_fc3, const double (*svecs)[3],
@@ -80,11 +80,11 @@ long ph3py_get_interaction(
         }
     }
 
-    itr_get_interaction(fc3_normal_squared, g_zero, frequencies, eigenvectors,
-                        triplets, num_triplets, bzgrid, fc3, is_compact_fc3,
-                        svecs, multi_dims, multiplicity, masses, p2s_map,
-                        s2p_map, band_indices, symmetrize_fc3_q,
-                        cutoff_frequency);
+    itr_get_interaction(fc3_normal_squared, g_zero, frequencies,
+                        (lapack_complex_double *)eigenvectors, triplets,
+                        num_triplets, bzgrid, fc3, is_compact_fc3, svecs,
+                        multi_dims, multiplicity, masses, p2s_map, s2p_map,
+                        band_indices, symmetrize_fc3_q, cutoff_frequency);
     free(bzgrid);
     bzgrid = NULL;
 
@@ -94,7 +94,7 @@ long ph3py_get_interaction(
 long ph3py_get_pp_collision(
     double *imag_self_energy,
     const long relative_grid_address[24][4][3], /* thm */
-    const double *frequencies, const lapack_complex_double *eigenvectors,
+    const double *frequencies, const _lapack_complex_double *eigenvectors,
     const long (*triplets)[3], const long num_triplets,
     const long *triplet_weights, const long (*bz_grid_addresses)[3], /* thm */
     const long *bz_map,                                              /* thm */
@@ -123,11 +123,12 @@ long ph3py_get_pp_collision(
         }
     }
 
-    ppc_get_pp_collision(
-        imag_self_energy, relative_grid_address, frequencies, eigenvectors,
-        triplets, num_triplets, triplet_weights, bzgrid, fc3, is_compact_fc3,
-        svecs, multi_dims, multiplicity, masses, p2s_map, s2p_map, band_indices,
-        temperatures, is_NU, symmetrize_fc3_q, cutoff_frequency);
+    ppc_get_pp_collision(imag_self_energy, relative_grid_address, frequencies,
+                         (lapack_complex_double *)eigenvectors, triplets,
+                         num_triplets, triplet_weights, bzgrid, fc3,
+                         is_compact_fc3, svecs, multi_dims, multiplicity,
+                         masses, p2s_map, s2p_map, band_indices, temperatures,
+                         is_NU, symmetrize_fc3_q, cutoff_frequency);
 
     free(bzgrid);
     bzgrid = NULL;
@@ -137,7 +138,7 @@ long ph3py_get_pp_collision(
 
 long ph3py_get_pp_collision_with_sigma(
     double *imag_self_energy, const double sigma, const double sigma_cutoff,
-    const double *frequencies, const lapack_complex_double *eigenvectors,
+    const double *frequencies, const _lapack_complex_double *eigenvectors,
     const long (*triplets)[3], const long num_triplets,
     const long *triplet_weights, const long (*bz_grid_addresses)[3],
     const long D_diag[3], const long Q[3][3], const double *fc3,
@@ -164,10 +165,11 @@ long ph3py_get_pp_collision_with_sigma(
     }
 
     ppc_get_pp_collision_with_sigma(
-        imag_self_energy, sigma, sigma_cutoff, frequencies, eigenvectors,
-        triplets, num_triplets, triplet_weights, bzgrid, fc3, is_compact_fc3,
-        svecs, multi_dims, multiplicity, masses, p2s_map, s2p_map, band_indices,
-        temperatures, is_NU, symmetrize_fc3_q, cutoff_frequency);
+        imag_self_energy, sigma, sigma_cutoff, frequencies,
+        (lapack_complex_double *)eigenvectors, triplets, num_triplets,
+        triplet_weights, bzgrid, fc3, is_compact_fc3, svecs, multi_dims,
+        multiplicity, masses, p2s_map, s2p_map, band_indices, temperatures,
+        is_NU, symmetrize_fc3_q, cutoff_frequency);
 
     free(bzgrid);
     bzgrid = NULL;
@@ -253,26 +255,26 @@ void ph3py_get_reducible_collision_matrix(
 
 void ph3py_get_isotope_scattering_strength(
     double *gamma, const long grid_point, const double *mass_variances,
-    const double *frequencies, const lapack_complex_double *eigenvectors,
+    const double *frequencies, const _lapack_complex_double *eigenvectors,
     const long num_grid_points, const long *band_indices, const long num_band,
     const long num_band0, const double sigma, const double cutoff_frequency) {
-    iso_get_isotope_scattering_strength(gamma, grid_point, mass_variances,
-                                        frequencies, eigenvectors,
-                                        num_grid_points, band_indices, num_band,
-                                        num_band0, sigma, cutoff_frequency);
+    iso_get_isotope_scattering_strength(
+        gamma, grid_point, mass_variances, frequencies,
+        (lapack_complex_double *)eigenvectors, num_grid_points, band_indices,
+        num_band, num_band0, sigma, cutoff_frequency);
 }
 
 void ph3py_get_thm_isotope_scattering_strength(
     double *gamma, const long grid_point, const long *ir_grid_points,
     const long *weights, const double *mass_variances,
-    const double *frequencies, const lapack_complex_double *eigenvectors,
+    const double *frequencies, const _lapack_complex_double *eigenvectors,
     const long num_ir_grid_points, const long *band_indices,
     const long num_band, const long num_band0,
     const double *integration_weights, const double cutoff_frequency) {
     iso_get_thm_isotope_scattering_strength(
         gamma, grid_point, ir_grid_points, weights, mass_variances, frequencies,
-        eigenvectors, num_ir_grid_points, band_indices, num_band, num_band0,
-        integration_weights, cutoff_frequency);
+        (lapack_complex_double *)eigenvectors, num_ir_grid_points, band_indices,
+        num_band, num_band0, integration_weights, cutoff_frequency);
 }
 
 void ph3py_distribute_fc3(double *fc3, const long target, const long source,
@@ -737,4 +739,20 @@ long ph3py_get_thm_integration_weights_at_grid_points(
     bzgrid = NULL;
 
     return 1;
+}
+
+long ph3py_phonopy_dsyev(double *data, double *eigvals, const long size,
+                         const long algorithm) {
+    return (long)phonopy_dsyev(data, eigvals, (int)size, (int)algorithm);
+}
+
+long ph3py_phonopy_pinv(double *data_out, const double *data_in, const long m,
+                        const long n, const double cutoff) {
+    return (long)phonopy_pinv(data_out, data_in, (int)m, (int)n, cutoff);
+}
+
+void ph3py_pinv_from_eigensolution(double *data, const double *eigvals,
+                                   const long size, const double cutoff,
+                                   const long pinv_method) {
+    pinv_from_eigensolution(data, eigvals, size, cutoff, pinv_method);
 }

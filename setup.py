@@ -47,88 +47,78 @@ def _clean_cmake(build_dir):
     shutil.rmtree(build_dir)
 
 
-build_dir = pathlib.Path.cwd() / "_build"
-found_extra_link_args = []
-found_extra_compile_args = []
-define_macros = []
-use_mkl_lapacke = False
-if build_dir.exists():
-    pass
-else:
-    cmake_output = _run_cmake(build_dir)
-    found_flags = {}
-    found_libs = {}
-    for line in cmake_output.decode("utf-8").split("\n"):
-        for key in ["BLAS", "LAPACK", "OpenMP"]:
-            if f"{key} libs" in line and len(line.split()) > 3:
-                found_libs[key] = line.split()[3].split(";")
-            if f"{key} flags" in line and len(line.split()) > 3:
-                found_flags[key] = line.split()[3].split(";")
-    for key, value in found_libs.items():
-        found_extra_link_args += value
-        for element in value:
-            if "libmkl" in element:
-                use_mkl_lapacke = True
-    for key, value in found_flags.items():
-        found_extra_compile_args += value
-    if use_mkl_lapacke:
-        define_macros.append(("MKL_LAPACKE", None))
-    print("=============================================")
-    print(found_extra_compile_args)
-    print(found_extra_link_args)
-    print(define_macros)
-    print("=============================================")
+def _get_extensions(build_dir):
+    # Initialization of parameters
+    define_macros = []
+    extra_link_args = []
+    extra_compile_args = []
+    include_dirs = []
 
-git_num = None
-include_dirs = ["c", numpy.get_include()]
-# if "CONDA_PREFIX" in os.environ:
-#     include_dirs.append(os.environ["CONDA_PREFIX"] + "/include")
+    # Libraray search
+    found_extra_link_args = []
+    found_extra_compile_args = []
+    use_mkl_lapacke = False
+    if build_dir.exists():
+        pass
+    else:
+        cmake_output = _run_cmake(build_dir)
+        found_flags = {}
+        found_libs = {}
+        for line in cmake_output.decode("utf-8").split("\n"):
+            for key in ["BLAS", "LAPACK", "OpenMP"]:
+                if f"{key} libs" in line and len(line.split()) > 3:
+                    found_libs[key] = line.split()[3].split(";")
+                if f"{key} flags" in line and len(line.split()) > 3:
+                    found_flags[key] = line.split()[3].split(";")
+        for key, value in found_libs.items():
+            found_extra_link_args += value
+            for element in value:
+                if "libmkl" in element:
+                    use_mkl_lapacke = True
+        for key, value in found_flags.items():
+            found_extra_compile_args += value
+        if use_mkl_lapacke:
+            define_macros.append(("MKL_LAPACKE", None))
+        print("=============================================")
+        print("extra_compile_args: ", found_extra_compile_args)
+        print("extra_link_args: ", found_extra_link_args)
+        print("define_macros: ", define_macros)
+        print("=============================================")
+        print()
 
-# Different extensions
-extensions = []
+    # Build ext_modules
+    extensions = []
+    extra_link_args += found_extra_link_args
+    extra_compile_args += found_extra_link_args
+    define_macros.append(("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"))
+    include_dirs += ["c", numpy.get_include()]
 
-# Define the modules
-extensions.append(
-    setuptools.Extension(
-        "phono3py._phono3py",
-        sources=["c/_phono3py.c"],
-        extra_link_args=["_build/libph3py.a"] + found_extra_link_args,
-        include_dirs=include_dirs,
-        extra_compile_args=found_extra_compile_args,
-        define_macros=define_macros,
+    extensions.append(
+        setuptools.Extension(
+            "phono3py._phono3py",
+            sources=["c/_phono3py.c"],
+            extra_link_args=["_build/libph3py.a"] + extra_link_args,
+            include_dirs=include_dirs,
+            extra_compile_args=extra_compile_args,
+            define_macros=define_macros,
+        )
     )
-)
 
-extensions.append(
-    setuptools.Extension(
-        "phono3py._phononmod",
-        sources=["c/_phononmod.c"],
-        extra_link_args=["_build/libphmod.a"] + found_extra_link_args,
-        include_dirs=include_dirs,
-        extra_compile_args=found_extra_compile_args,
-        define_macros=define_macros,
+    extensions.append(
+        setuptools.Extension(
+            "phono3py._phononmod",
+            sources=["c/_phononmod.c"],
+            extra_link_args=["_build/libphmod.a"] + extra_link_args,
+            include_dirs=include_dirs,
+            extra_compile_args=extra_compile_args,
+            define_macros=define_macros,
+        )
     )
-)
+    return extensions
 
-packages_phono3py = [
-    "phono3py",
-    "phono3py.conductivity",
-    "phono3py.cui",
-    "phono3py.interface",
-    "phono3py.other",
-    "phono3py.phonon",
-    "phono3py.phonon3",
-    "phono3py.sscha",
-]
-scripts_phono3py = [
-    "scripts/phono3py",
-    "scripts/phono3py-load",
-    "scripts/phono3py-kaccum",
-    "scripts/phono3py-kdeplot",
-    "scripts/phono3py-coleigplot",
-]
 
-if __name__ == "__main__":
+def _get_version() -> str:
+    git_num = None
     version_nums = [None, None, None]
     with open("phono3py/version.py") as w:
         for line in w:
@@ -159,6 +149,30 @@ if __name__ == "__main__":
     version = ".".join(["%s" % n for n in version_nums[:3]])
     if len(version_nums) > 3:
         version += "-%s" % version_nums[3]
+    return version
+
+
+def main(build_dir):
+    """Run setuptools."""
+    version = _get_version()
+
+    packages_phono3py = [
+        "phono3py",
+        "phono3py.conductivity",
+        "phono3py.cui",
+        "phono3py.interface",
+        "phono3py.other",
+        "phono3py.phonon",
+        "phono3py.phonon3",
+        "phono3py.sscha",
+    ]
+    scripts_phono3py = [
+        "scripts/phono3py",
+        "scripts/phono3py-load",
+        "scripts/phono3py-kaccum",
+        "scripts/phono3py-kdeplot",
+        "scripts/phono3py-coleigplot",
+    ]
 
     setuptools.setup(
         name="phono3py",
@@ -180,7 +194,11 @@ if __name__ == "__main__":
         ],
         provides=["phono3py"],
         scripts=scripts_phono3py,
-        ext_modules=extensions,
+        ext_modules=_get_extensions(build_dir),
     )
-
     _clean_cmake(build_dir)
+
+
+if __name__ == "__main__":
+    build_dir = pathlib.Path.cwd() / "_build"
+    main(build_dir)

@@ -38,11 +38,6 @@
 // #include "lapack_wrapper.h"
 #include "phononmod.h"
 
-typedef struct {
-    double re;
-    double im;
-} _lapack_complex_double;
-
 static PyObject *py_get_phonons_at_gridpoints(PyObject *self, PyObject *args);
 
 struct module_state {
