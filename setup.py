@@ -114,6 +114,7 @@ def _get_extensions(build_dir):
             define_macros=define_macros,
         )
     )
+    return extensions
 
 
 def _get_version() -> str:
