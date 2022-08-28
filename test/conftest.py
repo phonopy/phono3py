@@ -1,10 +1,12 @@
 """Pytest conftest.py."""
 import os
 
+import numpy as np
 import phonopy
 import pytest
 from phonopy import Phonopy
 from phonopy.interface.phonopy_yaml import read_cell_yaml
+from phonopy.structure.atoms import PhonopyAtoms
 
 import phono3py
 
@@ -23,9 +25,26 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope="session")
-def agno2_cell():
+def agno2_cell() -> PhonopyAtoms:
     """Return AgNO2 cell (Imm2)."""
     cell = read_cell_yaml(os.path.join(current_dir, "AgNO2_cell.yaml"))
+    return cell
+
+
+@pytest.fixture(scope="session")
+def aln_cell() -> PhonopyAtoms:
+    """Return AlN cell (P6_3mc)."""
+    a = 3.111
+    c = 4.978
+    lattice = [[a, 0, 0], [-a / 2, a * np.sqrt(3) / 2, 0], [0, 0, c]]
+    symbols = ["Al", "Al", "N", "N"]
+    positions = [
+        [1.0 / 3, 2.0 / 3, 0.0009488200000000],
+        [2.0 / 3, 1.0 / 3, 0.5009488200000001],
+        [1.0 / 3, 2.0 / 3, 0.6190511800000000],
+        [2.0 / 3, 1.0 / 3, 0.1190511800000000],
+    ]
+    cell = PhonopyAtoms(cell=lattice, symbols=symbols, scaled_positions=positions)
     return cell
 
 

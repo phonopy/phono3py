@@ -106,10 +106,9 @@ class BZGrid:
     where s is the shift vectors that are 0 or 1/2. But it is more
     convenient to use the integer shift vectors S by 0 or 1, which gives
 
-    q = (np.dot(Q, (2 * addresses[gp] + np.dot(P, S))
-                    / D_diag.astype('double'))) / 2
+    q = (np.dot(Q, (2 * addresses[gp] + PS) / D_diag.astype('double') / 2))
 
-    and this is the definition of PS in this class.
+    where PS = np.dot(P, s) * 2.
 
     Attributes
     ----------
