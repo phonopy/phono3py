@@ -35,16 +35,16 @@
 #ifndef __phono3py_H__
 #define __phono3py_H__
 
-#if defined(MKL_LAPACKE) || defined(SCIPY_MKL_H)
-#include <mkl.h>
-#else
-#include <lapacke.h>
-#endif
 #include "phonoc_array.h"
+
+typedef struct {
+    double re;
+    double im;
+} _lapack_complex_double;
 
 long ph3py_get_interaction(
     Darray *fc3_normal_squared, const char *g_zero, const Darray *frequencies,
-    const lapack_complex_double *eigenvectors, const long (*triplets)[3],
+    const _lapack_complex_double *eigenvectors, const long (*triplets)[3],
     const long num_triplets, const long (*bz_grid_addresses)[3],
     const long D_diag[3], const long Q[3][3], const double *fc3,
     const long is_compact_fc3, const double (*svecs)[3],
@@ -54,7 +54,7 @@ long ph3py_get_interaction(
 long ph3py_get_pp_collision(
     double *imag_self_energy,
     const long relative_grid_address[24][4][3], /* thm */
-    const double *frequencies, const lapack_complex_double *eigenvectors,
+    const double *frequencies, const _lapack_complex_double *eigenvectors,
     const long (*triplets)[3], const long num_triplets,
     const long *triplet_weights, const long (*bz_grid_addresses)[3], /* thm */
     const long *bz_map,                                              /* thm */
@@ -66,7 +66,7 @@ long ph3py_get_pp_collision(
     const double cutoff_frequency);
 long ph3py_get_pp_collision_with_sigma(
     double *imag_self_energy, const double sigma, const double sigma_cutoff,
-    const double *frequencies, const lapack_complex_double *eigenvectors,
+    const double *frequencies, const _lapack_complex_double *eigenvectors,
     const long (*triplets)[3], const long num_triplets,
     const long *triplet_weights, const long (*bz_grid_addresses)[3],
     const long D_diag[3], const long Q[3][3], const double *fc3,
@@ -116,13 +116,13 @@ void ph3py_get_reducible_collision_matrix(
     const double unit_conversion_factor, const double cutoff_frequency);
 void ph3py_get_isotope_scattering_strength(
     double *gamma, const long grid_point, const double *mass_variances,
-    const double *frequencies, const lapack_complex_double *eigenvectors,
+    const double *frequencies, const _lapack_complex_double *eigenvectors,
     const long num_grid_points, const long *band_indices, const long num_band,
     const long num_band0, const double sigma, const double cutoff_frequency);
 void ph3py_get_thm_isotope_scattering_strength(
     double *gamma, const long grid_point, const long *ir_grid_points,
     const long *weights, const double *mass_variances,
-    const double *frequencies, const lapack_complex_double *eigenvectors,
+    const double *frequencies, const _lapack_complex_double *eigenvectors,
     const long num_ir_grid_points, const long *band_indices,
     const long num_band, const long num_band0,
     const double *integration_weights, const double cutoff_frequency);
@@ -223,5 +223,11 @@ long ph3py_get_thm_integration_weights_at_grid_points(
     const long *grid_points, const long (*bz_grid_addresses)[3],
     const long *bz_map, const long bz_grid_type, const double *frequencies,
     const long *gp2irgp_map, const char function);
-
+long ph3py_phonopy_dsyev(double *data, double *eigvals, const long size,
+                         const long algorithm);
+long ph3py_phonopy_pinv(double *data_out, const double *data_in, const long m,
+                        const long n, const double cutoff);
+void ph3py_pinv_from_eigensolution(double *data, const double *eigvals,
+                                   const long size, const double cutoff,
+                                   const long pinv_method);
 #endif

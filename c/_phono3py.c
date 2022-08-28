@@ -44,11 +44,6 @@
 #include "phono3py.h"
 #include "phonoc_array.h"
 
-typedef struct {
-    double re;
-    double im;
-} _lapack_complex_double;
-
 static PyObject *py_get_interaction(PyObject *self, PyObject *args);
 static PyObject *py_get_pp_collision(PyObject *self, PyObject *args);
 static PyObject *py_get_pp_collision_with_sigma(PyObject *self, PyObject *args);
@@ -102,8 +97,8 @@ static PyObject *py_lapacke_pinv(PyObject *self, PyObject *args);
 static void show_colmat_info(const PyArrayObject *collision_matrix_py,
                              const long i_sigma, const long i_temp,
                              const long adrs_shift);
-static Larray *convert_to_larray(const PyArrayObject *npyary);
-static Darray *convert_to_darray(const PyArrayObject *npyary);
+static Larray *convert_to_larray(PyArrayObject *npyary);
+static Darray *convert_to_darray(PyArrayObject *npyary);
 
 struct module_state {
     PyObject *error;
@@ -1708,11 +1703,11 @@ static PyObject *py_diagonalize_collision_matrix(PyObject *self,
 
     /* show_colmat_info(py_collision_matrix, i_sigma, i_temp, adrs_shift); */
 
-    info = phonopy_dsyev(collision_matrix + adrs_shift, eigvals, num_column,
-                         solver);
+    info = ph3py_phonopy_dsyev(collision_matrix + adrs_shift, eigvals,
+                               num_column, solver);
     if (is_pinv) {
-        pinv_from_eigensolution(collision_matrix + adrs_shift, eigvals,
-                                num_column, cutoff, 0);
+        ph3py_pinv_from_eigensolution(collision_matrix + adrs_shift, eigvals,
+                                      num_column, cutoff, 0);
     }
 
     return PyLong_FromLong(info);
@@ -1750,8 +1745,8 @@ static PyObject *py_pinv_from_eigensolution(PyObject *self, PyObject *args) {
 
     /* show_colmat_info(py_collision_matrix, i_sigma, i_temp, adrs_shift); */
 
-    pinv_from_eigensolution(collision_matrix + adrs_shift, eigvals, num_column,
-                            cutoff, pinv_method);
+    ph3py_pinv_from_eigensolution(collision_matrix + adrs_shift, eigvals,
+                                  num_column, cutoff, pinv_method);
 
     Py_RETURN_NONE;
 }
@@ -1783,12 +1778,12 @@ static PyObject *py_lapacke_pinv(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    m = (int)PyArray_DIMS(data_in_py)[0];
-    n = (int)PyArray_DIMS(data_in_py)[1];
+    m = (long)PyArray_DIMS(data_in_py)[0];
+    n = (long)PyArray_DIMS(data_in_py)[1];
     data_in = (double *)PyArray_DATA(data_in_py);
     data_out = (double *)PyArray_DATA(data_out_py);
 
-    info = phonopy_pinv(data_out, data_in, m, n, cutoff);
+    info = ph3py_phonopy_pinv(data_out, data_in, m, n, cutoff);
 
     return PyLong_FromLong((long)info);
 }
@@ -1810,7 +1805,13 @@ static void show_colmat_info(const PyArrayObject *py_collision_matrix,
     printf("Data shift:%lu [%lu, %lu]\n", adrs_shift, i_sigma, i_temp);
 }
 
-static Larray *convert_to_larray(const PyArrayObject *npyary) {
+/**
+ * @brief Convert numpy "int_" array to phono3py long array structure.
+ *
+ * @param npyary
+ * @return Larray*
+ */
+static Larray *convert_to_larray(PyArrayObject *npyary) {
     long i;
     Larray *ary;
 
@@ -1822,7 +1823,14 @@ static Larray *convert_to_larray(const PyArrayObject *npyary) {
     return ary;
 }
 
-static Darray *convert_to_darray(const PyArrayObject *npyary) {
+/**
+ * @brief Convert numpy "double" array to phono3py double array structure.
+ *
+ * @param npyary
+ * @return Darray*
+ * @note PyArray_NDIM receives non-const (PyArrayObject *).
+ */
+static Darray *convert_to_darray(PyArrayObject *npyary) {
     int i;
     Darray *ary;
 
