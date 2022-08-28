@@ -1,8 +1,14 @@
 """Tests for fc3."""
 import numpy as np
+import pytest
 
 from phono3py import Phono3py
-from phono3py.phonon3.fc3 import cutoff_fc3_by_zero
+from phono3py.phonon3.fc3 import (
+    cutoff_fc3_by_zero,
+    get_fc3,
+    set_permutation_symmetry_fc3,
+    set_translational_invariance_fc3,
+)
 
 
 def test_cutoff_fc3(nacl_pbe_cutoff_fc3: Phono3py, nacl_pbe: Phono3py):
@@ -88,6 +94,42 @@ def test_fc3(si_pbesol_111: Phono3py):
         ],
     ]
     np.testing.assert_allclose(ph.fc3[0, 1, 7], fc3_ref, atol=1e-8, rtol=0)
+
+
+@pytest.mark.parametrize("pinv_solver", ["numpy", "lapacke"])
+def test_fc3_lapacke_solver(si_pbesol_111: Phono3py, pinv_solver: str):
+    """Test fc3 with Si PBEsol 1x1x1 using lapacke solver."""
+    ph = si_pbesol_111
+    _, fc3 = get_fc3(
+        ph.supercell,
+        ph.primitive,
+        ph.dataset,
+        ph.symmetry,
+        pinv_solver=pinv_solver,
+        verbose=True,
+    )
+    set_translational_invariance_fc3(fc3)
+    set_permutation_symmetry_fc3(fc3)
+
+    fc3_ref = [
+        [
+            [1.07250822e-01, 1.86302073e-17, -4.26452855e-18],
+            [8.96414569e-03, -1.43046911e-01, -1.38498937e-01],
+            [-8.96414569e-03, -1.38498937e-01, -1.43046911e-01],
+        ],
+        [
+            [-8.96414569e-03, -1.43046911e-01, -1.38498937e-01],
+            [-3.39457157e-02, -4.63315728e-17, -4.17779237e-17],
+            [-3.31746167e-01, -2.60025724e-02, -2.60025724e-02],
+        ],
+        [
+            [8.96414569e-03, -1.38498937e-01, -1.43046911e-01],
+            [-3.31746167e-01, 2.60025724e-02, 2.60025724e-02],
+            [-3.39457157e-02, 3.69351540e-17, 5.94504191e-18],
+        ],
+    ]
+
+    np.testing.assert_allclose(fc3[0, 1, 7], fc3_ref, atol=1e-8, rtol=0)
 
 
 # @pytest.mark.skipif(not FC_CALCULATOR_ALM_AVAILABLE, reason="not found ALM package")
