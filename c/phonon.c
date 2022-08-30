@@ -214,8 +214,8 @@ static void get_undone_phonons(
     }
 
 /* To avoid multithreaded BLAS in OpenMP loop */
-#ifdef _OPENMP
 #ifndef MULTITHREADED_BLAS
+#ifdef _OPENMP
 #pragma omp parallel for private(j, gp, freqs_tmp, info)
 #endif
 #endif
@@ -274,8 +274,8 @@ static void get_gonze_undone_phonons(
     }
 
 /* To avoid multithreaded BLAS in OpenMP loop */
-#ifdef _OPENMP
 #ifndef MULTITHREADED_BLAS
+#ifdef _OPENMP
 #pragma omp parallel for private(j, gp, freqs_tmp, info)
 #endif
 #endif
