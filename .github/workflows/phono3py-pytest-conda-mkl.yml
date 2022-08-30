@@ -1,4 +1,4 @@
-name: Pytest with openblas
+name: Pytest with mkl
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
         shell: bash -l {0}
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.10"]
 
     steps:
     - uses: actions/checkout@v2
@@ -29,8 +29,8 @@ jobs:
       run: |
         conda activate test
         conda install --yes python=${{ matrix.python-version }}
-        conda install --yes matplotlib-base pyyaml "libblas=*=*openblas" openblas h5py scipy pytest codecov pytest-cov spglib alm cmake c-compiler
-        #conda install --yes matplotlib-base pyyaml "libblas=*=*mkl" mkl-include h5py scipy pytest codecov pytest-cov spglib alm cmake c-compiler
+        #conda install --yes matplotlib-base pyyaml "libblas=*=*openblas" openblas h5py scipy pytest codecov pytest-cov spglib alm cmake c-compiler
+        conda install --yes matplotlib-base pyyaml "libblas=*=*mkl" mkl-include h5py scipy pytest codecov pytest-cov spglib alm cmake c-compiler
     - name: Install phonopy
       run: |
         conda activate test
