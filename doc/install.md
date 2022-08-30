@@ -37,6 +37,9 @@ For phono3py, OpenMP library is necessary for the multithreding support. In
 additon, BLAS, LAPACK, and LAPACKE are also needed. These packages are probably
 installed using the package manager for each OS or conda.
 
+** The following way of installation will be deprecated from next minor version.
+See for the new way of installation {ref}`install_an_example`.**
+
 Custom installation is achieved by creating `site.cfg` file on the same
 directory as `setup.up`. Users will customize flags and additional libraries by
 adding a `site.cfg` that conforms to numpy stile distutils
@@ -186,7 +189,13 @@ wrong python libraries can be imported.
 1. Download miniforge
 
    Miniforge is downloaded at https://github.com/conda-forge/miniforge. The
-   detailed installation instruction is found in the same page.
+   detailed installation instruction is found in the same page. If usual conda or miniconda is used, the following `~/.condarc` setting is recommended:
+
+   ```
+   channel_priority: strict
+   channels:
+   - conda-forge
+   ```
 
 2. Initialization of conda and setup of conda environment
 
@@ -202,7 +211,7 @@ wrong python libraries can be imported.
    virtual environment.
 
    ```bash
-   % conda create -n phono3py python=3.9
+   % conda create -n phono3py python=3.10
    % conda activate phono3py
    ```
 
@@ -211,7 +220,7 @@ wrong python libraries can be imported.
    For x86-64 system:
 
    ```bash
-   % conda install numpy scipy h5py pyyaml matplotlib-base compilers "libblas=*=*mkl" spglib mkl-include
+   % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler "libblas=*=*mkl" spglib mkl-include cmake
    ```
 
    A libblas library can be chosen among `[openblas, mkl, blis, netlib]`. If
@@ -224,10 +233,10 @@ wrong python libraries can be imported.
    For macOS ARM64 system, currently only openblas can be chosen:
 
    ```bash
-   % conda install numpy scipy h5py pyyaml matplotlib-base compilers spglib
+   % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler spglib cmake openblas="0.3.18"
    ```
 
-   Note that using hdf5 files on NFS mouted file system, you may have to disable
+   Note that using hdf5 files on NFS mounted file system, you may have to disable
    file locking by setting
 
    ```bash
@@ -243,14 +252,10 @@ wrong python libraries can be imported.
    % git clone https://github.com/phonopy/phono3py.git
    % cd phonopy
    % git checkout develop
-   % python setup.py build
-   % pip install -e .
+   % pip install -e . -vvv
    % cd ../phono3py
    % git checkout develop
-   % echo "[phono3py]" > site.cfg
-   % echo "extra_compile_args = -fopenmp" >> site.cfg
-   % python setup.py build
-   % pip install -e .
+   % pip install -e . -vvv
    ```
 
    The conda packages dependency can often change and this recipe may not work
@@ -270,10 +275,10 @@ nesting is done by the OpenMP `parallel for` code. The inner loop calls LAPACKE
 functions and then the LAPACKE functions call the BLAS routines. If both of the
 inner and outer multithreadings can be activated, the inner multithreading must
 be deactivated at the compilation time. This is achieved by setting the C macro
-`MULTITHREADED_BLAS`, which can be written in `setup.py`. Deactivating the
+`MULTITHREADED_BLAS`, which can be written in `CMakeLists.txt`. Deactivating the
 multithreading of BLAS using the environment variables is not recommended
-because it is used in the non-nested parts of the code and these multithreadings
-are unnecessary to be deactivated.
+because it is also used in the non-nested parts of the code and these
+multithreadings are unnecessary to be deactivated.
 
 ## Trouble shooting
 
