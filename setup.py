@@ -44,7 +44,8 @@ def _run_cmake(build_dir):
 
 
 def _clean_cmake(build_dir):
-    shutil.rmtree(build_dir)
+    if build_dir.exists():
+        shutil.rmtree(build_dir)
 
 
 def _get_extensions(build_dir):

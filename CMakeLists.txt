@@ -58,15 +58,13 @@ if (PHONO3PY OR PHONONMOD)
     message(STATUS "MKL detected: Set C-macros MKL_LAPACKE MULTITHREADED_BLAS")
     add_compile_definitions(MKL_LAPACKE)
     add_compile_definitions(MULTITHREADED_BLAS)  # phono3py macro
-    add_compile_definitions(NPY_NO_DEPRECATED_API=0)  # phono3py macro
-    add_compile_definitions(THM_EPSILON=1e-10)  # phono3py macro
   endif()
   if (BLAS_LIBRARIES MATCHES "libopenblas")
     message(STATUS "OpenBLAS detected: Set C-macro MULTITHREADED_BLAS")
     add_compile_definitions(MULTITHREADED_BLAS)  # phono3py macro
-    add_compile_definitions(NPY_NO_DEPRECATED_API=0)  # phono3py macro
-    add_compile_definitions(THM_EPSILON=1e-10)  # phono3py macro
   endif()
+  add_compile_definitions(NPY_NO_DEPRECATED_API=0)  # phono3py macro
+  add_compile_definitions(THM_EPSILON=1e-10)  # phono3py macro
 endif()
 
 ############
