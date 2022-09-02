@@ -53,6 +53,7 @@ def _get_extensions(build_dir):
     define_macros = []
     extra_link_args = []
     extra_compile_args = []
+    extra_objects = []
     include_dirs = []
 
     # Libraray search
@@ -90,44 +91,46 @@ def _get_extensions(build_dir):
     # Build ext_modules
     extensions = []
     extra_link_args += found_extra_link_args
-    extra_compile_args += found_extra_link_args
+    extra_compile_args += found_extra_compile_args
     define_macros.append(("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"))
     include_dirs += ["c", numpy.get_include()]
 
-    extra_link_args_ph3py = []
+    extra_objects_ph3py = []
     libph3py = list((pathlib.Path.cwd() / "_build").glob("*ph3py.*"))
     if libph3py:
         print("=============================================")
         print(f"Phono3py library: {libph3py[0]}")
         print("=============================================")
-        extra_link_args_ph3py += [str(libph3py[0])]
+        extra_objects_ph3py += [str(libph3py[0])]
 
     extensions.append(
         setuptools.Extension(
             "phono3py._phono3py",
             sources=["c/_phono3py.c"],
-            extra_link_args=extra_link_args + extra_link_args_ph3py,
+            extra_link_args=extra_link_args,
             include_dirs=include_dirs,
             extra_compile_args=extra_compile_args,
+            extra_objects=extra_objects + extra_objects_ph3py,
             define_macros=define_macros,
         )
     )
 
-    extra_link_args_phmod = []
+    extra_objects_phmod = []
     libphmod = list((pathlib.Path.cwd() / "_build").glob("*phmod.*"))
     if libphmod:
         print("=============================================")
         print(f"Phonon library: {libphmod[0]}")
         print("=============================================")
-        extra_link_args_phmod += [str(libphmod[0])]
+        extra_objects_phmod += [str(libphmod[0])]
 
     extensions.append(
         setuptools.Extension(
             "phono3py._phononmod",
             sources=["c/_phononmod.c"],
-            extra_link_args=extra_link_args + extra_link_args_phmod,
+            extra_link_args=extra_link_args,
             include_dirs=include_dirs,
             extra_compile_args=extra_compile_args,
+            extra_objects=extra_objects + extra_objects_phmod,
             define_macros=define_macros,
         )
     )
