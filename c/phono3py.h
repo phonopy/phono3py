@@ -50,7 +50,8 @@ long ph3py_get_interaction(
     const long is_compact_fc3, const double (*svecs)[3],
     const long multi_dims[2], const long (*multi)[2], const double *masses,
     const long *p2s_map, const long *s2p_map, const long *band_indices,
-    const long symmetrize_fc3_q, const double cutoff_frequency);
+    const long symmetrize_fc3_q, const double cutoff_frequency,
+    const long openmp_per_triplets);
 long ph3py_get_pp_collision(
     double *imag_self_energy,
     const long relative_grid_address[24][4][3], /* thm */

@@ -99,7 +99,6 @@ class ConductivityRTABase(ConductivityBase):
         self._use_const_ave_pp = None
         self._averaged_pp_interaction = None
         self._num_ignored_phonon_modes = None
-        self._openmp_per_triplets = None
 
         super().__init__(
             interaction,
@@ -352,13 +351,13 @@ class ConductivityRTABase(ConductivityBase):
 
             # True: OpenMP over triplets
             # False: OpenMP over bands
-            if self._openmp_per_triplets is None:
+            if self._pp.openmp_per_triplets is None:
                 if len(triplets_at_q) > num_band:
                     openmp_per_triplets = True
                 else:
                     openmp_per_triplets = False
             else:
-                openmp_per_triplets = self._openmp_per_triplets
+                openmp_per_triplets = self._pp.openmp_per_triplets
 
             if sigma is None:
                 phono3c.pp_collision(

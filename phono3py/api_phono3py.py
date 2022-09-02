@@ -1312,6 +1312,7 @@ class Phono3py:
         frequency_scale_factor=None,
         symmetrize_fc3q=False,
         lapack_zheev_uplo="L",
+        openmp_per_triplets=None,
     ):
         """Initialize ph-ph interaction calculation.
 
@@ -1347,6 +1348,11 @@ class Phono3py:
         lapack_zheev_uplo : str, optional
             'L' or 'U'. Default is 'L'. This is passed to LAPACK zheev
             used for phonon solver.
+        openmp_per_triplets : bool or None, optional, default is None
+            Normally this parameter should not be touched.
+            When `True`, ph-ph interaction strength calculation runs with
+            OpenMP distribution over triplets, and over bands when `False`.
+            `None` will choose one of them automatically.
 
         """
         if self.mesh_numbers is None:
@@ -1380,6 +1386,7 @@ class Phono3py:
             is_mesh_symmetry=self._is_mesh_symmetry,
             symmetrize_fc3q=_symmetrize_fc3q,
             lapack_zheev_uplo=_lapack_zheev_uplo,
+            openmp_per_triplets=openmp_per_triplets,
         )
         self._interaction.nac_q_direction = nac_q_direction
         self._init_dynamical_matrix()
@@ -2244,10 +2251,10 @@ class Phono3py:
         compression: str, optional, default is "gzip"
             When writing results into files in hdf5, large data are compressed
             by this options. See the detail at h5py documentation.
-        input_filename : str, optiona, default is None
+        input_filename : str, optional, default is None
             When specified, the string is inserted before filename extension
             in reading files.
-        output_filename=None
+        output_filename : str, optional, default is None
             When specified, the string is inserted before filename extension
             in writing files.
 

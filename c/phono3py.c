@@ -62,7 +62,7 @@ long ph3py_get_interaction(
     const long multi_dims[2], const long (*multiplicity)[2],
     const double *masses, const long *p2s_map, const long *s2p_map,
     const long *band_indices, const long symmetrize_fc3_q,
-    const double cutoff_frequency) {
+    const double cutoff_frequency, const long openmp_per_triplets) {
     ConstBZGrid *bzgrid;
     long i, j;
 
@@ -84,7 +84,8 @@ long ph3py_get_interaction(
                         (lapack_complex_double *)eigenvectors, triplets,
                         num_triplets, bzgrid, fc3, is_compact_fc3, svecs,
                         multi_dims, multiplicity, masses, p2s_map, s2p_map,
-                        band_indices, symmetrize_fc3_q, cutoff_frequency);
+                        band_indices, symmetrize_fc3_q, cutoff_frequency,
+                        openmp_per_triplets);
     free(bzgrid);
     bzgrid = NULL;
 

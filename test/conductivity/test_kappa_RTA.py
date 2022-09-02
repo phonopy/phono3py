@@ -1,5 +1,6 @@
 """Test for Conductivity_RTA.py."""
 import numpy as np
+import pytest
 
 from phono3py import Phono3py
 
@@ -27,35 +28,49 @@ aln_lda_kappa_RTA = [203.304059, 203.304059, 213.003125, 0, 0, 0]
 aln_lda_kappa_RTA_with_sigmas = [213.820000, 213.820000, 224.800121, 0, 0, 0]
 
 
-def test_kappa_RTA_si(si_pbesol):
+@pytest.mark.parametrize("openmp_per_triplets", [True, False])
+def test_kappa_RTA_si(
+    si_pbesol: Phono3py,
+    openmp_per_triplets: bool,
+):
     """Test RTA by Si."""
-    kappa = _get_kappa(si_pbesol, [9, 9, 9]).ravel()
+    kappa = _get_kappa(
+        si_pbesol,
+        [9, 9, 9],
+        openmp_per_triplets=openmp_per_triplets,
+    ).ravel()
     np.testing.assert_allclose(si_pbesol_kappa_RTA, kappa, atol=0.5)
 
 
-def test_kappa_RTA_si_full_pp(si_pbesol):
+@pytest.mark.parametrize("openmp_per_triplets", [True, False])
+def test_kappa_RTA_si_full_pp(si_pbesol: Phono3py, openmp_per_triplets: bool):
     """Test RTA with full-pp by Si."""
-    kappa = _get_kappa(si_pbesol, [9, 9, 9], is_full_pp=True).ravel()
+    kappa = _get_kappa(
+        si_pbesol, [9, 9, 9], is_full_pp=True, openmp_per_triplets=openmp_per_triplets
+    ).ravel()
     np.testing.assert_allclose(si_pbesol_kappa_RTA, kappa, atol=0.5)
 
 
-def test_kappa_RTA_si_iso(si_pbesol):
+def test_kappa_RTA_si_iso(si_pbesol: Phono3py):
     """Test RTA with isotope scattering by Si."""
     kappa = _get_kappa(si_pbesol, [9, 9, 9], is_isotope=True).ravel()
     np.testing.assert_allclose(si_pbesol_kappa_RTA_iso, kappa, atol=0.5)
 
 
-def test_kappa_RTA_si_with_sigma(si_pbesol):
+@pytest.mark.parametrize("openmp_per_triplets", [True, False])
+def test_kappa_RTA_si_with_sigma(si_pbesol: Phono3py, openmp_per_triplets: bool):
     """Test RTA with smearing method by Si."""
     si_pbesol.sigmas = [
         0.1,
     ]
-    kappa = _get_kappa(si_pbesol, [9, 9, 9]).ravel()
+    kappa = _get_kappa(
+        si_pbesol, [9, 9, 9], openmp_per_triplets=openmp_per_triplets
+    ).ravel()
     np.testing.assert_allclose(si_pbesol_kappa_RTA_with_sigmas, kappa, atol=0.5)
     si_pbesol.sigmas = None
 
 
-def test_kappa_RTA_si_with_sigma_full_pp(si_pbesol):
+def test_kappa_RTA_si_with_sigma_full_pp(si_pbesol: Phono3py):
     """Test RTA with smearing method and full-pp by Si."""
     si_pbesol.sigmas = [
         0.1,
@@ -66,7 +81,7 @@ def test_kappa_RTA_si_with_sigma_full_pp(si_pbesol):
     si_pbesol.sigmas = None
 
 
-def test_kappa_RTA_si_with_sigma_iso(si_pbesol):
+def test_kappa_RTA_si_with_sigma_iso(si_pbesol: Phono3py):
     """Test RTA with smearing method and isotope scattering by Si."""
     si_pbesol.sigmas = [
         0.1,
@@ -76,13 +91,13 @@ def test_kappa_RTA_si_with_sigma_iso(si_pbesol):
     si_pbesol.sigmas = None
 
 
-def test_kappa_RTA_si_compact_fc(si_pbesol_compact_fc):
+def test_kappa_RTA_si_compact_fc(si_pbesol_compact_fc: Phono3py):
     """Test RTA with compact-fc by Si."""
     kappa = _get_kappa(si_pbesol_compact_fc, [9, 9, 9]).ravel()
     np.testing.assert_allclose(si_pbesol_kappa_RTA, kappa, atol=0.5)
 
 
-def test_kappa_RTA_si_nosym(si_pbesol, si_pbesol_nosym):
+def test_kappa_RTA_si_nosym(si_pbesol: Phono3py, si_pbesol_nosym: Phono3py):
     """Test RTA without considering symmetry by Si."""
     si_pbesol_nosym.fc2 = si_pbesol.fc2
     si_pbesol_nosym.fc3 = si_pbesol.fc3
@@ -326,9 +341,9 @@ def test_kappa_RTA_aln_with_sigma(aln_lda):
     aln_lda.sigma_cutoff = None
 
 
-def _get_kappa(ph3, mesh, is_isotope=False, is_full_pp=False):
+def _get_kappa(ph3, mesh, is_isotope=False, is_full_pp=False, openmp_per_triplets=None):
     ph3.mesh_numbers = mesh
-    ph3.init_phph_interaction()
+    ph3.init_phph_interaction(openmp_per_triplets=openmp_per_triplets)
     ph3.run_thermal_conductivity(
         temperatures=[
             300,
