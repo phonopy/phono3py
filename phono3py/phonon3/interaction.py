@@ -102,6 +102,7 @@ class Interaction:
         symmetrize_fc3q=False,
         cutoff_frequency=None,
         lapack_zheev_uplo="L",
+        openmp_per_triplets=None,
     ):
         """Init method."""
         self._primitive = primitive
@@ -140,6 +141,7 @@ class Interaction:
         self._is_mesh_symmetry = is_mesh_symmetry
         self._symmetrize_fc3q = symmetrize_fc3q
         self._lapack_zheev_uplo = lapack_zheev_uplo
+        self._openmp_per_triplets = openmp_per_triplets
 
         self._symprec = self._primitive_symmetry.tolerance
 
@@ -457,6 +459,11 @@ class Interaction:
             DeprecationWarning,
         )
         return self.cutoff_frequency
+
+    @property
+    def openmp_per_triplets(self):
+        """Return whether OpenMP distribution over triplets or bands."""
+        return self._openmp_per_triplets
 
     def get_averaged_interaction(self):
         """Return sum over phonon triplets of interaction strength.
@@ -843,12 +850,23 @@ class Interaction:
     def _run_c(self, g_zero):
         import phono3py._phono3py as phono3c
 
+        num_band = len(self._primitive) * 3
         if g_zero is None or self._symmetrize_fc3q:
             _g_zero = np.zeros(
                 self._interaction_strength.shape, dtype="byte", order="C"
             )
         else:
             _g_zero = g_zero
+
+        # True: OpenMP over triplets
+        # False: OpenMP over bands
+        if self._openmp_per_triplets is None:
+            if len(self._triplets_at_q) > num_band:
+                openmp_per_triplets = True
+            else:
+                openmp_per_triplets = False
+        else:
+            openmp_per_triplets = self._openmp_per_triplets
 
         phono3c.interaction(
             self._interaction_strength,
@@ -868,6 +886,7 @@ class Interaction:
             self._band_indices,
             self._symmetrize_fc3q,
             self._cutoff_frequency,
+            openmp_per_triplets * 1,
         )
         self._interaction_strength *= self._unit_conversion
         self._g_zero = g_zero

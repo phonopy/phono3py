@@ -72,10 +72,10 @@ void ppc_get_pp_collision(
     const long multi_dims[2], const long (*multiplicity)[2],
     const double *masses, const long *p2s_map, const long *s2p_map,
     const Larray *band_indices, const Darray *temperatures, const long is_NU,
-    const long symmetrize_fc3_q, const double cutoff_frequency) {
+    const long symmetrize_fc3_q, const double cutoff_frequency,
+    const long openmp_per_triplets) {
     long i;
     long num_band, num_band0, num_band_prod, num_temps;
-    long openmp_per_triplets;
     double *ise, *freqs_at_gp, *g;
     char *g_zero;
     long tp_relative_grid_address[2][24][4][3];
@@ -95,12 +95,6 @@ void ppc_get_pp_collision(
     for (i = 0; i < num_band0; i++) {
         freqs_at_gp[i] =
             frequencies[triplets[0][0] * num_band + band_indices->data[i]];
-    }
-
-    if (num_triplets > num_band) {
-        openmp_per_triplets = 1;
-    } else {
-        openmp_per_triplets = 0;
     }
 
     tpl_set_relative_grid_address(tp_relative_grid_address,
@@ -151,10 +145,11 @@ void ppc_get_pp_collision_with_sigma(
     const long multi_dims[2], const long (*multiplicity)[2],
     const double *masses, const long *p2s_map, const long *s2p_map,
     const Larray *band_indices, const Darray *temperatures, const long is_NU,
-    const long symmetrize_fc3_q, const double cutoff_frequency) {
+    const long symmetrize_fc3_q, const double cutoff_frequency,
+    const long openmp_per_triplets) {
     long i;
     long num_band, num_band0, num_band_prod, num_temps;
-    long openmp_per_triplets, const_adrs_shift;
+    long const_adrs_shift;
     double cutoff;
     double *ise, *freqs_at_gp, *g;
     char *g_zero;
@@ -176,12 +171,6 @@ void ppc_get_pp_collision_with_sigma(
     for (i = 0; i < num_band0; i++) {
         freqs_at_gp[i] =
             frequencies[triplets[0][0] * num_band + band_indices->data[i]];
-    }
-
-    if (num_triplets > num_band) {
-        openmp_per_triplets = 1;
-    } else {
-        openmp_per_triplets = 0;
     }
 
     cutoff = sigma * sigma_cutoff;
