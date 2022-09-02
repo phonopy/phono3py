@@ -63,7 +63,7 @@ long ph3py_get_pp_collision(
     const long multi_dims[2], const long (*multi)[2], const double *masses,
     const long *p2s_map, const long *s2p_map, const Larray *band_indices,
     const Darray *temperatures, const long is_NU, const long symmetrize_fc3_q,
-    const double cutoff_frequency);
+    const double cutoff_frequency, const long openmp_per_triplets);
 long ph3py_get_pp_collision_with_sigma(
     double *imag_self_energy, const double sigma, const double sigma_cutoff,
     const double *frequencies, const _lapack_complex_double *eigenvectors,
@@ -74,7 +74,7 @@ long ph3py_get_pp_collision_with_sigma(
     const long multi_dims[2], const long (*multi)[2], const double *masses,
     const long *p2s_map, const long *s2p_map, const Larray *band_indices,
     const Darray *temperatures, const long is_NU, const long symmetrize_fc3_q,
-    const double cutoff_frequency);
+    const double cutoff_frequency, const long openmp_per_triplets);
 void ph3py_get_imag_self_energy_at_bands_with_g(
     double *imag_self_energy, const Darray *fc3_normal_squared,
     const double *frequencies, const long (*triplets)[3],

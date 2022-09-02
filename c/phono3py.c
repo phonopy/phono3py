@@ -103,7 +103,8 @@ long ph3py_get_pp_collision(
     const long multi_dims[2], const long (*multiplicity)[2],
     const double *masses, const long *p2s_map, const long *s2p_map,
     const Larray *band_indices, const Darray *temperatures, const long is_NU,
-    const long symmetrize_fc3_q, const double cutoff_frequency) {
+    const long symmetrize_fc3_q, const double cutoff_frequency,
+    const long openmp_per_triplets) {
     ConstBZGrid *bzgrid;
     long i, j;
 
@@ -123,12 +124,12 @@ long ph3py_get_pp_collision(
         }
     }
 
-    ppc_get_pp_collision(imag_self_energy, relative_grid_address, frequencies,
-                         (lapack_complex_double *)eigenvectors, triplets,
-                         num_triplets, triplet_weights, bzgrid, fc3,
-                         is_compact_fc3, svecs, multi_dims, multiplicity,
-                         masses, p2s_map, s2p_map, band_indices, temperatures,
-                         is_NU, symmetrize_fc3_q, cutoff_frequency);
+    ppc_get_pp_collision(
+        imag_self_energy, relative_grid_address, frequencies,
+        (lapack_complex_double *)eigenvectors, triplets, num_triplets,
+        triplet_weights, bzgrid, fc3, is_compact_fc3, svecs, multi_dims,
+        multiplicity, masses, p2s_map, s2p_map, band_indices, temperatures,
+        is_NU, symmetrize_fc3_q, cutoff_frequency, openmp_per_triplets);
 
     free(bzgrid);
     bzgrid = NULL;
@@ -146,7 +147,8 @@ long ph3py_get_pp_collision_with_sigma(
     const long multi_dims[2], const long (*multiplicity)[2],
     const double *masses, const long *p2s_map, const long *s2p_map,
     const Larray *band_indices, const Darray *temperatures, const long is_NU,
-    const long symmetrize_fc3_q, const double cutoff_frequency) {
+    const long symmetrize_fc3_q, const double cutoff_frequency,
+    const long openmp_per_triplets) {
     ConstBZGrid *bzgrid;
     long i, j;
 
@@ -169,7 +171,7 @@ long ph3py_get_pp_collision_with_sigma(
         (lapack_complex_double *)eigenvectors, triplets, num_triplets,
         triplet_weights, bzgrid, fc3, is_compact_fc3, svecs, multi_dims,
         multiplicity, masses, p2s_map, s2p_map, band_indices, temperatures,
-        is_NU, symmetrize_fc3_q, cutoff_frequency);
+        is_NU, symmetrize_fc3_q, cutoff_frequency, openmp_per_triplets);
 
     free(bzgrid);
     bzgrid = NULL;

@@ -99,6 +99,7 @@ class ConductivityRTABase(ConductivityBase):
         self._use_const_ave_pp = None
         self._averaged_pp_interaction = None
         self._num_ignored_phonon_modes = None
+        self._openmp_per_triplets = None
 
         super().__init__(
             interaction,
@@ -314,6 +315,7 @@ class ConductivityRTABase(ConductivityBase):
         class instance.
 
         """
+        num_band = len(self._pp.primitive) * 3
         band_indices = self._pp.band_indices
         (
             svecs,
@@ -348,6 +350,16 @@ class ConductivityRTABase(ConductivityBase):
                 )
             import phono3py._phono3py as phono3c
 
+            # True: OpenMP over triplets
+            # False: OpenMP over bands
+            if self._openmp_per_triplets is None:
+                if len(triplets_at_q) > num_band:
+                    openmp_per_triplets = True
+                else:
+                    openmp_per_triplets = False
+            else:
+                openmp_per_triplets = self._openmp_per_triplets
+
             if sigma is None:
                 phono3c.pp_collision(
                     collisions,
@@ -376,6 +388,7 @@ class ConductivityRTABase(ConductivityBase):
                     self._is_N_U * 1,
                     symmetrize_fc3_q,
                     self._pp.cutoff_frequency,
+                    openmp_per_triplets * 1,
                 )
             else:
                 if self._sigma_cutoff is None:
@@ -404,6 +417,7 @@ class ConductivityRTABase(ConductivityBase):
                     self._is_N_U * 1,
                     symmetrize_fc3_q,
                     self._pp.cutoff_frequency,
+                    openmp_per_triplets * 1,
                 )
             col_unit_conv = self._collision.unit_conversion_factor
             pp_unit_conv = self._pp.get_unit_conversion_factor()
