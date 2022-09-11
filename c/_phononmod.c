@@ -152,7 +152,7 @@ static PyObject *py_get_phonons_at_gridpoints(PyObject *self, PyObject *args) {
     long *p2s_fc2;
     long *s2p_fc2;
     double(*rec_lat)[3];
-    double *dd_q0;
+    double(*dd_q0)[2];
     double(*G_list)[3];
     long num_patom, num_satom, num_phonons, num_grid_points, num_G_points;
 
@@ -206,7 +206,7 @@ static PyObject *py_get_phonons_at_gridpoints(PyObject *self, PyObject *args) {
     if ((PyObject *)py_dd_q0 == Py_None) {
         dd_q0 = NULL;
     } else {
-        dd_q0 = (double *)PyArray_DATA(py_dd_q0);
+        dd_q0 = (double(*)[2])PyArray_DATA(py_dd_q0);
     }
     if ((PyObject *)py_G_list == Py_None) {
         G_list = NULL;

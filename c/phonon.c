@@ -63,9 +63,9 @@ static void get_gonze_undone_phonons(
     const double *masses_fc2, const long *p2s_fc2, const long *s2p_fc2,
     const double unit_conversion_factor, const double (*born)[3][3],
     const double dielectric[3][3], const double reciprocal_lattice[3][3],
-    const double *q_direction, const double nac_factor, const double *dd_q0,
-    const double (*G_list)[3], const long num_G_points, const double lambda,
-    const char uplo);
+    const double *q_direction, const double nac_factor,
+    const double (*dd_q0)[2], const double (*G_list)[3],
+    const long num_G_points, const double lambda, const char uplo);
 static void get_phonons(lapack_complex_double *eigvecs, const double q[3],
                         const double *fc2, const double *masses,
                         const long *p2s, const long *s2p,
@@ -83,8 +83,8 @@ static void get_gonze_phonons(
     const long num_satom, const double (*svecs)[3], const long is_nac,
     const double (*born)[3][3], const double dielectric[3][3],
     const double reciprocal_lattice[3][3], const double *q_direction,
-    const double nac_factor, const double *dd_q0, const double (*G_list)[3],
-    const long num_G_points, const double lambda);
+    const double nac_factor, const double (*dd_q0)[2],
+    const double (*G_list)[3], const long num_G_points, const double lambda);
 static void get_dynamical_matrix(
     lapack_complex_double *dynmat, const double q[3], const double *fc2,
     const double *masses, const long *p2s, const long *s2p,
@@ -140,8 +140,9 @@ void phn_get_gonze_phonons_at_gridpoints(
     const double unit_conversion_factor, const double (*born)[3][3],
     const double dielectric[3][3], const double reciprocal_lattice[3][3],
     const double *q_direction, /* pointer */
-    const double nac_factor, const double *dd_q0, const double (*G_list)[3],
-    const long num_G_points, const double lambda, const char uplo) {
+    const double nac_factor, const double (*dd_q0)[2],
+    const double (*G_list)[3], const long num_G_points, const double lambda,
+    const char uplo) {
     long num_undone;
     long *undone;
 
@@ -245,9 +246,9 @@ static void get_gonze_undone_phonons(
     const double *masses_fc2, const long *p2s_fc2, const long *s2p_fc2,
     const double unit_conversion_factor, const double (*born)[3][3],
     const double dielectric[3][3], const double reciprocal_lattice[3][3],
-    const double *q_direction, const double nac_factor, const double *dd_q0,
-    const double (*G_list)[3], const long num_G_points, const double lambda,
-    const char uplo) {
+    const double *q_direction, const double nac_factor,
+    const double (*dd_q0)[2], const double (*G_list)[3],
+    const long num_G_points, const double lambda, const char uplo) {
     long i, j, gp, num_band;
     long is_nac, info;
     double q[3];
@@ -319,8 +320,8 @@ static void get_gonze_phonons(
     const long num_satom, const double (*svecs)[3], const long is_nac,
     const double (*born)[3][3], const double dielectric[3][3],
     const double reciprocal_lattice[3][3], const double *q_direction,
-    const double nac_factor, const double *dd_q0, const double (*G_list)[3],
-    const long num_G_points, const double lambda) {
+    const double nac_factor, const double (*dd_q0)[2],
+    const double (*G_list)[3], const long num_G_points, const double lambda) {
     long i, j, k, l, adrs, num_band;
     double mm;
     double q_cart[3];
@@ -331,8 +332,9 @@ static void get_gonze_phonons(
     q_dir_cart = NULL;
     num_band = num_patom * 3;
 
-    dym_get_dynamical_matrix_at_q((double *)eigvecs, num_patom, num_satom, fc2,
-                                  q, svecs, multi, masses, s2p, p2s, NULL, 0);
+    dym_get_dynamical_matrix_at_q((double(*)[2])eigvecs, num_patom, num_satom,
+                                  fc2, q, svecs, multi, masses, s2p, p2s, NULL,
+                                  0);
 
     dd = (lapack_complex_double *)malloc(sizeof(lapack_complex_double) *
                                          num_band * num_band);
@@ -353,7 +355,7 @@ static void get_gonze_phonons(
         }
     }
 
-    dym_get_recip_dipole_dipole((double *)dd, dd_q0, G_list, num_G_points,
+    dym_get_recip_dipole_dipole((double(*)[2])dd, dd_q0, G_list, num_G_points,
                                 num_patom, q_cart, q_dir_cart, born, dielectric,
                                 positions, nac_factor, lambda, 1e-5, 0);
 
@@ -401,9 +403,9 @@ static void get_dynamical_matrix(
                        reciprocal_lattice, q_direction, nac_factor);
     }
 
-    dym_get_dynamical_matrix_at_q((double *)dynmat, num_patom, num_satom, fc2,
-                                  q, svecs, multi, masses, s2p, p2s, charge_sum,
-                                  0);
+    dym_get_dynamical_matrix_at_q((double(*)[2])dynmat, num_patom, num_satom,
+                                  fc2, q, svecs, multi, masses, s2p, p2s,
+                                  charge_sum, 0);
     if (is_nac) {
         free(charge_sum);
         charge_sum = NULL;

@@ -59,6 +59,7 @@ void phn_get_gonze_phonons_at_gridpoints(
     const double unit_conversion_factor, const double (*born)[3][3],
     const double dielectric[3][3], const double reciprocal_lattice[3][3],
     const double *q_direction, /* pointer */
-    const double nac_factor, const double *dd_q0, const double (*G_list)[3],
-    const long num_G_points, const double lambda, const char uplo);
+    const double nac_factor, const double (*dd_q0)[2],
+    const double (*G_list)[3], const long num_G_points, const double lambda,
+    const char uplo);
 #endif
