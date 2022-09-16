@@ -211,6 +211,9 @@ def write_FORCES_FC2(disp_dataset, forces_fc2=None, fp=None, filename="FORCES_FC
         for forces in force_set:
             w.write("%15.10f %15.10f %15.10f\n" % tuple(forces))
 
+    if fp is None:
+        w.close()
+
 
 def write_FORCES_FC3(disp_dataset, forces_fc3=None, fp=None, filename="FORCES_FC3"):
     """Write FORCES_FC3.
@@ -231,7 +234,7 @@ def write_FORCES_FC3(disp_dataset, forces_fc3=None, fp=None, filename="FORCES_FC
 
     write_FORCES_FC2(disp_dataset, forces_fc2=forces_fc3, fp=w)
 
-    for i, disp1 in enumerate(disp_dataset["first_atoms"]):
+    for disp1 in disp_dataset["first_atoms"]:
         atom1 = disp1["number"]
         for disp2 in disp1["second_atoms"]:
             atom2 = disp2["number"]
@@ -259,6 +262,9 @@ def write_FORCES_FC3(disp_dataset, forces_fc3=None, fp=None, filename="FORCES_FC
                 for j in range(natom):
                     w.write("%15.10f %15.10f %15.10f\n" % (0, 0, 0))
             count += 1
+
+    if fp is None:
+        w.close()
 
 
 def write_fc3_dat(force_constants_third, filename="fc3.dat"):
