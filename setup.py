@@ -1,14 +1,10 @@
 """Phono3py setup.py.
 
-The build steps are as follows:
+Cmake handles automatic finding of library.
+Custom settings should be written in site.cfg.
 
-mkdir _build && cd _build
-cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=1 \
-    -DPHONONMOD=on -DPHONO3PY=on -DCMAKE_INSTALL_PREFIX="" ..
-cmake --build . -v
-cd ..
-python setup.py build
-pip install -e .
+To fully customize using site.cfg,
+set PHONO3PY_USE_CMAKE=false to avoid running cmake.
 
 """
 import os
@@ -78,6 +74,7 @@ def _get_params_from_site_cfg():
         "include_dirs": [],
     }
     use_mkl_lapacke = False
+    use_threaded_blas = False
 
     site_cfg_file = pathlib.Path.cwd() / "site.cfg"
     if not site_cfg_file.exists():
@@ -90,23 +87,27 @@ def _get_params_from_site_cfg():
             if len(line) < 2:
                 continue
             key = line[0].strip()
-            val = line[1]
+            val = line[1].strip()
             if key not in params:
                 continue
             if key == "define_macros":
-                elems = val.split()
-                for i in range(len(elems) // 2):
-                    pair = elems[i * 2 : i * 2 + 2]
-                    if pair[1].lower() == "none":
-                        pair[1] = None
-                    params[key].append(tuple(pair))
+                pair = val.split(maxsplit=1)
+                if pair[1].lower() == "none":
+                    pair[1] = None
+                params[key].append(tuple(pair))
             else:
                 if "mkl" in val:
                     use_mkl_lapacke = True
+                if "openblas" in val:
+                    use_threaded_blas = True
                 params[key] += val.split()
 
     if use_mkl_lapacke:
         params["define_macros"].append(("MKL_LAPACKE", None))
+    if use_threaded_blas:
+        params["define_macros"].append(("MULTITHREADED_BLAS", None))
+    if "THM_EPSILON" not in [macro[0] for macro in params["define_macros"]]:
+        params["define_macros"].append(("THM_EPSILON", "1e-10"))
 
     print("=============================================")
     print("Parameters found in site.cfg")
