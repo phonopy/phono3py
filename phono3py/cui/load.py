@@ -669,7 +669,7 @@ def _check_fc3_shape(ph3py: Phono3py, fc3, filename="fc3.hdf5"):
 
 
 def _check_fc_shape(ph3py: Phono3py, fc, smat, filename):
-    if len(ph3py.primitive) * determinant(smat) != fc.shape[1]:
+    if len(ph3py.unitcell) * determinant(smat) != fc.shape[1]:
         msg = (
             f'Supercell size mismatch between "{filename}" and supercell matrix {smat}.'
         )
