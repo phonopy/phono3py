@@ -19,6 +19,14 @@ import subprocess
 import numpy
 import setuptools
 
+if (
+    "PHONO3PY_USE_CMAKE" in os.environ
+    and os.environ["PHONO3PY_USE_CMAKE"].lower() == "false"
+):
+    use_cmake = False
+else:
+    use_cmake = True
+
 
 def _run_cmake(build_dir):
     build_dir.mkdir()
@@ -48,21 +56,119 @@ def _clean_cmake(build_dir):
         shutil.rmtree(build_dir)
 
 
-def _get_extensions(build_dir):
-    # Initialization of parameters
-    define_macros = []
-    extra_link_args = []
-    extra_compile_args = []
-    extra_objects = []
-    include_dirs = []
+def _get_params_from_site_cfg():
+    """Read extra_compile_args and extra_link_args.
 
-    # Libraray search
-    found_extra_link_args = []
-    found_extra_compile_args = []
+    Examples
+    --------
+    # For macOS
+    extra_compile_args = -fopenmp=libomp
+    extra_link_args = -lomp -lopenblas
+
+    # For linux
+    extra_compile_args = -fopenmp
+    extra_link_args = -lgomp  -lopenblas -lpthread
+
+    """
+    params = {
+        "define_macros": [],
+        "extra_link_args": [],
+        "extra_compile_args": [],
+        "extra_objects": [],
+        "include_dirs": [],
+    }
     use_mkl_lapacke = False
-    if build_dir.exists():
-        pass
+
+    site_cfg_file = pathlib.Path.cwd() / "site.cfg"
+    if not site_cfg_file.exists():
+        return params
+
+    with open(site_cfg_file) as f:
+        lines = [line.strip().split("=", maxsplit=1) for line in f]
+
+        for line in lines:
+            if len(line) < 2:
+                continue
+            key = line[0].strip()
+            val = line[1]
+            if key not in params:
+                continue
+            if key == "define_macros":
+                elems = val.split()[:2]
+                if elems[1].lower() == "none":
+                    elems[1] = None
+                params[key].append(tuple(elems))
+            else:
+                if "mkl" in val:
+                    use_mkl_lapacke = True
+                params[key] += val.split()
+
+    if use_mkl_lapacke:
+        params["define_macros"].append(("MKL_LAPACKE", None))
+
+    print("=============================================")
+    print("Parameters found in site.cfg")
+    for key, val in params.items():
+        print(f"{key}: {val}")
+    print("=============================================")
+    return params
+
+
+def _get_extensions(build_dir):
+    """Return python extension setting.
+
+    User customization by site.cfg file
+    -----------------------------------
+    See _get_params_from_site_cfg().
+
+    Automatic search using cmake
+    ----------------------------
+    Invoked by environment variable unless PHONO3PY_USE_CMAKE=false.
+
+    """
+    params = _get_params_from_site_cfg()
+    extra_objects_ph3py = []
+    extra_objects_phmod = []
+
+    if not use_cmake or not shutil.which("cmake"):
+        print("** Setup without using cmake **")
+        sources_ph3py = [
+            "c/_phono3py.c",
+            "c/bzgrid.c",
+            "c/collision_matrix.c",
+            "c/fc3.c",
+            "c/grgrid.c",
+            "c/imag_self_energy_with_g.c",
+            "c/interaction.c",
+            "c/isotope.c",
+            "c/lagrid.c",
+            "c/lapack_wrapper.c",
+            "c/phono3py.c",
+            "c/phonoc_utils.c",
+            "c/pp_collision.c",
+            "c/real_self_energy.c",
+            "c/real_to_reciprocal.c",
+            "c/reciprocal_to_normal.c",
+            "c/snf3x3.c",
+            "c/tetrahedron_method.c",
+            "c/triplet.c",
+            "c/triplet_grid.c",
+            "c/triplet_iw.c",
+        ]
+        sources_phmod = [
+            "c/_phononmod.c",
+            "c/dynmat.c",
+            "c/lapack_wrapper.c",
+            "c/phonon.c",
+            "c/phononmod.c",
+        ]
     else:
+        print("** Setup using cmake **")
+        use_mkl_lapacke = False
+        found_extra_link_args = []
+        found_extra_compile_args = []
+        sources_ph3py = ["c/_phono3py.c"]
+        sources_phmod = ["c/_phononmod.c"]
         cmake_output = _run_cmake(build_dir)
         found_flags = {}
         found_libs = {}
@@ -80,58 +186,58 @@ def _get_extensions(build_dir):
         for key, value in found_flags.items():
             found_extra_compile_args += value
         if use_mkl_lapacke:
-            define_macros.append(("MKL_LAPACKE", None))
+            params["define_macros"].append(("MKL_LAPACKE", None))
+
+        libph3py = list((pathlib.Path.cwd() / "_build").glob("*ph3py.*"))
+        if libph3py:
+            print("=============================================")
+            print(f"Phono3py library: {libph3py[0]}")
+            print("=============================================")
+            extra_objects_ph3py += [str(libph3py[0])]
+
+        libphmod = list((pathlib.Path.cwd() / "_build").glob("*phmod.*"))
+        if libphmod:
+            print("=============================================")
+            print(f"Phonon library: {libphmod[0]}")
+            print("=============================================")
+            extra_objects_phmod += [str(libphmod[0])]
+
+        params["extra_link_args"] += found_extra_link_args
+        params["extra_compile_args"] += found_extra_compile_args
+
         print("=============================================")
+        print("Parameters found by cmake")
         print("extra_compile_args: ", found_extra_compile_args)
         print("extra_link_args: ", found_extra_link_args)
-        print("define_macros: ", define_macros)
+        print("define_macros: ", params["define_macros"])
         print("=============================================")
         print()
 
-    # Build ext_modules
     extensions = []
-    extra_link_args += found_extra_link_args
-    extra_compile_args += found_extra_compile_args
-    define_macros.append(("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"))
-    include_dirs += ["c", numpy.get_include()]
-
-    extra_objects_ph3py = []
-    libph3py = list((pathlib.Path.cwd() / "_build").glob("*ph3py.*"))
-    if libph3py:
-        print("=============================================")
-        print(f"Phono3py library: {libph3py[0]}")
-        print("=============================================")
-        extra_objects_ph3py += [str(libph3py[0])]
+    params["define_macros"].append(("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION"))
+    params["include_dirs"] += ["c", numpy.get_include()]
 
     extensions.append(
         setuptools.Extension(
             "phono3py._phono3py",
-            sources=["c/_phono3py.c"],
-            extra_link_args=extra_link_args,
-            include_dirs=include_dirs,
-            extra_compile_args=extra_compile_args,
-            extra_objects=extra_objects + extra_objects_ph3py,
-            define_macros=define_macros,
+            sources=sources_ph3py,
+            extra_link_args=params["extra_link_args"],
+            include_dirs=params["include_dirs"],
+            extra_compile_args=params["extra_compile_args"],
+            extra_objects=params["extra_objects"] + extra_objects_ph3py,
+            define_macros=params["define_macros"],
         )
     )
-
-    extra_objects_phmod = []
-    libphmod = list((pathlib.Path.cwd() / "_build").glob("*phmod.*"))
-    if libphmod:
-        print("=============================================")
-        print(f"Phonon library: {libphmod[0]}")
-        print("=============================================")
-        extra_objects_phmod += [str(libphmod[0])]
 
     extensions.append(
         setuptools.Extension(
             "phono3py._phononmod",
-            sources=["c/_phononmod.c"],
-            extra_link_args=extra_link_args,
-            include_dirs=include_dirs,
-            extra_compile_args=extra_compile_args,
-            extra_objects=extra_objects + extra_objects_phmod,
-            define_macros=define_macros,
+            sources=sources_phmod,
+            extra_link_args=params["extra_link_args"],
+            include_dirs=params["include_dirs"],
+            extra_compile_args=params["extra_compile_args"],
+            extra_objects=params["extra_objects"] + extra_objects_phmod,
+            define_macros=params["define_macros"],
         )
     )
     return extensions
