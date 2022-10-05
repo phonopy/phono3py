@@ -40,6 +40,7 @@ import numpy as np
 import phonopy.cui.load_helper as load_helper
 from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_default_physical_units
+from phonopy.structure.cells import determinant
 
 from phono3py import Phono3py
 from phono3py.cui.create_force_constants import forces_in_dataset, parse_forces
@@ -78,7 +79,7 @@ def load(
     store_dense_svecs=True,
     symprec=1e-5,
     log_level=0,
-):
+) -> Phono3py:
     """Create Phono3py instance from parameters and/or input files.
 
     "phono3py_yaml"-like file is parsed unless crystal structure information
@@ -369,6 +370,7 @@ def set_dataset_and_force_constants(
     phonon_p2s_map = ph3py.phonon_primitive.p2s_map
     if fc3_filename is not None:
         fc3 = read_fc3_from_hdf5(filename=fc3_filename, p2s_map=p2s_map)
+        _check_fc3_shape(ph3py, fc3, filename=fc3_filename)
         ph3py.fc3 = fc3
         read_fc["fc3"] = True
         if log_level:
@@ -393,7 +395,9 @@ def set_dataset_and_force_constants(
             log_level,
         )
     elif os.path.isfile("fc3.hdf5"):
-        ph3py.fc3 = read_fc3_from_hdf5(filename="fc3.hdf5", p2s_map=p2s_map)
+        fc3 = read_fc3_from_hdf5(filename="fc3.hdf5", p2s_map=p2s_map)
+        _check_fc3_shape(ph3py, fc3)
+        ph3py.fc3 = fc3
         read_fc["fc3"] = True
         if log_level:
             print('fc3 was read from "fc3.hdf5".')
@@ -441,6 +445,7 @@ def set_dataset_and_force_constants(
 
     if fc2_filename is not None:
         fc2 = read_fc2_from_hdf5(filename=fc2_filename, p2s_map=phonon_p2s_map)
+        _check_fc2_shape(ph3py, fc2, filename=fc2_filename)
         ph3py.fc2 = fc2
         read_fc["fc2"] = True
         if log_level:
@@ -465,7 +470,9 @@ def set_dataset_and_force_constants(
             log_level,
         )
     elif os.path.isfile("fc2.hdf5"):
-        ph3py.fc2 = read_fc2_from_hdf5(filename="fc2.hdf5", p2s_map=phonon_p2s_map)
+        fc2 = read_fc2_from_hdf5(filename="fc2.hdf5", p2s_map=phonon_p2s_map)
+        _check_fc2_shape(ph3py, fc2)
+        ph3py.fc2 = fc2
         read_fc["fc2"] = True
         if log_level:
             print('fc2 was read from "fc2.hdf5".')
@@ -646,3 +653,24 @@ def _set_forces_fc2(
         )
         if log_level and symmetrize_fc:
             print("fc2 was symmetrized.")
+
+
+def _check_fc2_shape(ph3py: Phono3py, fc2, filename="fc2.hdf5"):
+    if ph3py.phonon_supercell_matrix is None:
+        smat = ph3py.supercell_matrix
+    else:
+        smat = ph3py.phonon_supercell_matrix
+    _check_fc_shape(ph3py, fc2, smat, filename)
+
+
+def _check_fc3_shape(ph3py: Phono3py, fc3, filename="fc3.hdf5"):
+    smat = ph3py.supercell_matrix
+    _check_fc_shape(ph3py, fc3, smat, filename)
+
+
+def _check_fc_shape(ph3py: Phono3py, fc, smat, filename):
+    if len(ph3py.unitcell) * determinant(smat) != fc.shape[1]:
+        msg = (
+            f'Supercell size mismatch between "{filename}" and supercell matrix {smat}.'
+        )
+        raise RuntimeError(msg)

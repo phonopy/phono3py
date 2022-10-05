@@ -20,6 +20,13 @@ def get_options():
         dest="temperature",
         help="Temperature to output data at",
     )
+    parser.add_argument(
+        "--savetxt",
+        dest="savetxt",
+        action="store_true",
+        default=False,
+        help="Write coleigs to text file",
+    )
     parser.add_argument("filenames", nargs="*")
     args = parser.parse_args()
     return args
@@ -43,8 +50,8 @@ def plot_one(ax, coleigs, temperatures, args):
     coleigs_n = coleigs[t_index].copy()
     coleigs_p[coleigs_p < 0] = np.nan
     coleigs_n[coleigs_n >= 0] = np.nan
-    ax.semilogy(coleigs_p, "b.", markersize=1)
-    ax.semilogy(-coleigs_n, "r.", markersize=1)
+    ax.semilogy(coleigs_p, "b.", markersize=1, clip_on=False)
+    ax.semilogy(-coleigs_n, "r.", markersize=1, clip_on=False)
     ax.set_xlim(0, len(coleigs_p))
 
 
@@ -81,10 +88,10 @@ def plot_more_files(ax, args):
     plot_more(ax, coleigs, temperatures, args)
 
 
-def main(args: argparse.Namespace):
+def plot(args: argparse.Namespace):
     import matplotlib.pyplot as plt
 
-    fig, ax = plt.subplots()
+    _, ax = plt.subplots()
     ax.xaxis.set_ticks_position("bottom")
     ax.yaxis.set_ticks_position("left")
     ax.xaxis.set_tick_params(which="both", direction="in")
@@ -98,6 +105,30 @@ def main(args: argparse.Namespace):
     # for filename in args.filenames:
 
     plt.show()
+
+
+def write_dat(args: argparse.Namespace):
+    with open("coleigs.dat", "w") as w:
+        for filename in args.filenames:
+            with h5py.File(filename) as f:
+                print("#", file=w)
+                print(f"# Filename {filename}", file=w)
+                print("#", file=w)
+                print("#             eigenvalue      log10(abs(eigenvalue))", file=w)
+                log_vals = np.log10(np.abs(f["collision_eigenvalues"][:]))
+                for coleigs, coleigs_log in zip(f["collision_eigenvalues"], log_vals):
+                    for i, (val, val_log) in enumerate(zip(coleigs, coleigs_log)):
+                        print(f"{i + 1:<10d} {val:15.8e}     {val_log:15.8f}", file=w)
+                    print(file=w)
+                print(file=w)
+                print(file=w)
+
+
+def main(args: argparse.Namespace):
+    if args.savetxt:
+        write_dat(args)
+    else:
+        plot(args)
 
 
 if __name__ == "__main__":

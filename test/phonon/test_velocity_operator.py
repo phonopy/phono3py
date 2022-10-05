@@ -214,7 +214,7 @@ def test_gv_operator_nacl(ph_nacl: Phonopy):
         np.testing.assert_allclose(
             (square_modulus_q[:, :, direction]).ravel(),
             gv_operator_square_modulus_ref[direction].ravel(),
-            atol=1e-5,
+            atol=1e-3,
         )
 
 

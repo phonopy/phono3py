@@ -33,11 +33,18 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from typing import TYPE_CHECKING, Union
+
 import numpy as np
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
+from phono3py.other.tetrahedron_method import get_tetrahedra_relative_grid_address
 from phono3py.phonon.func import gaussian
 from phono3py.phonon.grid import BZGrid, get_grid_point_from_address_py
+
+if TYPE_CHECKING:
+    from phono3py.phonon3.interaction import Interaction
+    from phono3py.phonon3.joint_dos import JointDos
 
 
 def get_triplets_at_q(
@@ -138,7 +145,7 @@ def get_nosym_triplets_at_q(grid_point, bz_grid: BZGrid):
 
 
 def get_triplets_integration_weights(
-    interaction,
+    interaction: Union["Interaction", "JointDos"],
     frequency_points,
     sigma,
     sigma_cutoff=None,
@@ -337,17 +344,19 @@ def _get_BZ_triplets_at_q(grid_point, bz_grid: BZGrid, map_triplets):
     return triplets, np.array(ir_weights, dtype="int_")
 
 
-def _set_triplets_integration_weights_c(g, g_zero, pp, frequency_points):
+def _set_triplets_integration_weights_c(
+    g, g_zero, pp: Union["Interaction", "JointDos"], frequency_points
+):
     import phono3py._phono3py as phono3c
 
-    thm = TetrahedronMethod(pp.bz_grid.microzone_lattice)
+    tetrahedra = get_tetrahedra_relative_grid_address(pp.bz_grid.microzone_lattice)
     triplets_at_q = pp.get_triplets_at_q()[0]
     frequencies = pp.get_phonons()[0]
     phono3c.triplets_integration_weights(
         g,
         g_zero,
         frequency_points,  # f0
-        np.array(np.dot(thm.get_tetrahedra(), pp.bz_grid.P.T), dtype="int_", order="C"),
+        np.array(np.dot(tetrahedra, pp.bz_grid.P.T), dtype="int_", order="C"),
         pp.bz_grid.D_diag,
         triplets_at_q,
         frequencies,  # f1
@@ -359,7 +368,9 @@ def _set_triplets_integration_weights_c(g, g_zero, pp, frequency_points):
     )
 
 
-def _set_triplets_integration_weights_py(g, pp, frequency_points):
+def _set_triplets_integration_weights_py(
+    g, pp: Union["Interaction", "JointDos"], frequency_points
+):
     """Python version of _set_triplets_integration_weights_c.
 
     Tetrahedron method engine is that implemented in phonopy written mainly in C.

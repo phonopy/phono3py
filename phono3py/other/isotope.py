@@ -34,11 +34,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import warnings
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
 from phonopy.phonon.tetrahedron_mesh import get_tetrahedra_frequencies
-from phonopy.structure.atoms import isotope_data
+from phonopy.structure.atoms import PhonopyAtoms
+from phonopy.structure.atoms import isotope_data as phonopy_isotope_data
+from phonopy.structure.cells import Primitive
 from phonopy.structure.symmetry import Symmetry
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.units import VaspToTHz
@@ -52,13 +55,30 @@ from phono3py.phonon.grid import BZGrid
 from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
 
 
-def get_mass_variances(primitive):
+def get_mass_variances(
+    primitive: Optional[PhonopyAtoms] = None,
+    symbols: Optional[Union[List[str], Tuple[str]]] = None,
+    isotope_data: Optional[Dict] = None,
+):
     """Calculate mass variances."""
-    symbols = primitive.symbols
+    if primitive is not None:
+        _symbols = primitive.symbols
+    elif symbols is not None:
+        _symbols = symbols
+    else:
+        raise RuntimeError("primitive or symbols have to be given.")
+
+    _isotope_data = {}
+    for s in _symbols:
+        if isotope_data is not None and s in isotope_data:
+            _isotope_data[s] = isotope_data[s]
+        else:
+            _isotope_data[s] = phonopy_isotope_data[s]
+
     mass_variances = []
-    for s in symbols:
-        masses = np.array([x[1] for x in isotope_data[s]])
-        fractions = np.array([x[2] for x in isotope_data[s]])
+    for s in _symbols:
+        masses = np.array([x[1] for x in _isotope_data[s]])
+        fractions = np.array([x[2] for x in _isotope_data[s]])
         m_ave = np.dot(masses, fractions)
         g = np.dot(fractions, (1 - masses / m_ave) ** 2)
         mass_variances.append(g)
@@ -74,6 +94,7 @@ class Isotope:
         mesh,
         primitive,
         mass_variances=None,  # length of list is num_atom.
+        isotope_data=None,
         band_indices=None,
         sigma=None,
         bz_grid=None,
@@ -87,7 +108,9 @@ class Isotope:
         """Init method."""
         self._mesh = mesh
         if mass_variances is None:
-            self._mass_variances = get_mass_variances(primitive)
+            self._mass_variances = get_mass_variances(
+                primitive, isotope_data=isotope_data
+            )
         else:
             self._mass_variances = np.array(mass_variances, dtype="double")
         self._primitive = primitive
@@ -215,8 +238,8 @@ class Isotope:
     def init_dynamical_matrix(
         self,
         fc2,
-        supercell,
-        primitive,
+        supercell: PhonopyAtoms,
+        primitive: Primitive,
         nac_params=None,
         frequency_scale_factor=None,
         decimals=None,

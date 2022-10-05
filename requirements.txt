@@ -2,4 +2,4 @@ numpy >= 1.15.0
 PyYAML
 matplotlib >= 2.2.2
 h5py
-phonopy >=2.15,<2.16
+phonopy >=2.16,<2.17

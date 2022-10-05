@@ -40,7 +40,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "lapack_wrapper.h"
+// #include "lapack_wrapper.h"
 #include "phono3py.h"
 #include "phonoc_array.h"
 
@@ -68,6 +68,8 @@ static PyObject *py_get_permutation_symmetry_fc3(PyObject *self,
 static PyObject *py_get_permutation_symmetry_compact_fc3(PyObject *self,
                                                          PyObject *args);
 static PyObject *py_transpose_compact_fc3(PyObject *self, PyObject *args);
+static PyObject *py_get_thm_relative_grid_address(PyObject *self,
+                                                  PyObject *args);
 static PyObject *py_get_neighboring_grid_points(PyObject *self, PyObject *args);
 static PyObject *py_get_thm_integration_weights_at_grid_points(PyObject *self,
                                                                PyObject *args);
@@ -90,15 +92,13 @@ static PyObject *py_diagonalize_collision_matrix(PyObject *self,
                                                  PyObject *args);
 static PyObject *py_pinv_from_eigensolution(PyObject *self, PyObject *args);
 static PyObject *py_get_default_colmat_solver(PyObject *self, PyObject *args);
+static PyObject *py_lapacke_pinv(PyObject *self, PyObject *args);
 
-static void pinv_from_eigensolution(double *data, const double *eigvals,
-                                    const long size, const double cutoff,
-                                    const long pinv_method);
 static void show_colmat_info(const PyArrayObject *collision_matrix_py,
                              const long i_sigma, const long i_temp,
                              const long adrs_shift);
-static Larray *convert_to_larray(const PyArrayObject *npyary);
-static Darray *convert_to_darray(const PyArrayObject *npyary);
+static Larray *convert_to_larray(PyArrayObject *npyary);
+static Darray *convert_to_darray(PyArrayObject *npyary);
 
 struct module_state {
     PyObject *error;
@@ -161,6 +161,9 @@ static PyMethodDef _phono3py_methods[] = {
      "Set permutation symmetry for compact-fc3"},
     {"transpose_compact_fc3", (PyCFunction)py_transpose_compact_fc3,
      METH_VARARGS, "Transpose compact fc3"},
+    {"tetrahedra_relative_grid_address",
+     (PyCFunction)py_get_thm_relative_grid_address, METH_VARARGS,
+     "Relative grid addresses of vertices of 24 tetrahedra"},
     {"neighboring_grid_points", (PyCFunction)py_get_neighboring_grid_points,
      METH_VARARGS, "Neighboring grid points by relative grid addresses"},
     {"integration_weights_at_grid_points",
@@ -201,6 +204,8 @@ static PyMethodDef _phono3py_methods[] = {
      METH_VARARGS, "Pseudo-inverse from eigensolution"},
     {"default_colmat_solver", (PyCFunction)py_get_default_colmat_solver,
      METH_VARARGS, "Return default collison matrix solver by integer value"},
+    {"lapacke_pinv", (PyCFunction)py_lapacke_pinv, METH_VARARGS,
+     "Pseudo inversion using lapacke."},
     {NULL, NULL, 0, NULL}};
 
 #if PY_MAJOR_VERSION >= 3
@@ -268,10 +273,11 @@ static PyObject *py_get_interaction(PyObject *self, PyObject *args) {
     PyArrayObject *py_band_indices;
     double cutoff_frequency;
     long symmetrize_fc3_q;
+    long openmp_per_triplets;
 
     Darray *fc3_normal_squared;
     Darray *freqs;
-    lapack_complex_double *eigvecs;
+    _lapack_complex_double *eigvecs;
     long(*triplets)[3];
     long num_triplets;
     char *g_zero;
@@ -289,12 +295,12 @@ static PyObject *py_get_interaction(PyObject *self, PyObject *args) {
     long i;
     long is_compact_fc3;
 
-    if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOOld", &py_fc3_normal_squared,
-                          &py_g_zero, &py_frequencies, &py_eigenvectors,
-                          &py_triplets, &py_bz_grid_addresses, &py_D_diag,
-                          &py_Q, &py_fc3, &py_svecs, &py_multi, &py_masses,
-                          &py_p2s_map, &py_s2p_map, &py_band_indices,
-                          &symmetrize_fc3_q, &cutoff_frequency)) {
+    if (!PyArg_ParseTuple(
+            args, "OOOOOOOOOOOOOOOldl", &py_fc3_normal_squared, &py_g_zero,
+            &py_frequencies, &py_eigenvectors, &py_triplets,
+            &py_bz_grid_addresses, &py_D_diag, &py_Q, &py_fc3, &py_svecs,
+            &py_multi, &py_masses, &py_p2s_map, &py_s2p_map, &py_band_indices,
+            &symmetrize_fc3_q, &cutoff_frequency, &openmp_per_triplets)) {
         return NULL;
     }
 
@@ -302,7 +308,7 @@ static PyObject *py_get_interaction(PyObject *self, PyObject *args) {
     freqs = convert_to_darray(py_frequencies);
     /* npy_cdouble and lapack_complex_double may not be compatible. */
     /* So eigenvectors should not be used in Python side */
-    eigvecs = (lapack_complex_double *)PyArray_DATA(py_eigenvectors);
+    eigvecs = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
     triplets = (long(*)[3])PyArray_DATA(py_triplets);
     num_triplets = (long)PyArray_DIMS(py_triplets)[0];
     g_zero = (char *)PyArray_DATA(py_g_zero);
@@ -328,8 +334,8 @@ static PyObject *py_get_interaction(PyObject *self, PyObject *args) {
     ph3py_get_interaction(fc3_normal_squared, g_zero, freqs, eigvecs, triplets,
                           num_triplets, bz_grid_addresses, D_diag, Q, fc3,
                           is_compact_fc3, svecs, multi_dims, multi, masses, p2s,
-                          s2p, band_indices, symmetrize_fc3_q,
-                          cutoff_frequency);
+                          s2p, band_indices, symmetrize_fc3_q, cutoff_frequency,
+                          openmp_per_triplets);
 
     free(fc3_normal_squared);
     fc3_normal_squared = NULL;
@@ -362,11 +368,12 @@ static PyObject *py_get_pp_collision(PyObject *self, PyObject *args) {
     long is_NU;
     long symmetrize_fc3_q;
     long bz_grid_type;
+    long openmp_per_triplets;
 
     double *gamma;
     long(*relative_grid_address)[4][3];
     double *frequencies;
-    lapack_complex_double *eigenvectors;
+    _lapack_complex_double *eigenvectors;
     long(*triplets)[3];
     long num_triplets;
     long *triplet_weights;
@@ -387,12 +394,13 @@ static PyObject *py_get_pp_collision(PyObject *self, PyObject *args) {
     long is_compact_fc3;
 
     if (!PyArg_ParseTuple(
-            args, "OOOOOOOOlOOOOOOOOOOlld", &py_gamma,
+            args, "OOOOOOOOlOOOOOOOOOOlldl", &py_gamma,
             &py_relative_grid_address, &py_frequencies, &py_eigenvectors,
             &py_triplets, &py_triplet_weights, &py_bz_grid_addresses,
             &py_bz_map, &bz_grid_type, &py_D_diag, &py_Q, &py_fc3, &py_svecs,
             &py_multi, &py_masses, &py_p2s_map, &py_s2p_map, &py_band_indices,
-            &py_temperatures, &is_NU, &symmetrize_fc3_q, &cutoff_frequency)) {
+            &py_temperatures, &is_NU, &symmetrize_fc3_q, &cutoff_frequency,
+            &openmp_per_triplets)) {
         return NULL;
     }
 
@@ -400,7 +408,7 @@ static PyObject *py_get_pp_collision(PyObject *self, PyObject *args) {
     relative_grid_address =
         (long(*)[4][3])PyArray_DATA(py_relative_grid_address);
     frequencies = (double *)PyArray_DATA(py_frequencies);
-    eigenvectors = (lapack_complex_double *)PyArray_DATA(py_eigenvectors);
+    eigenvectors = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
     triplets = (long(*)[3])PyArray_DATA(py_triplets);
     num_triplets = (long)PyArray_DIMS(py_triplets)[0];
     triplet_weights = (long *)PyArray_DATA(py_triplet_weights);
@@ -430,7 +438,7 @@ static PyObject *py_get_pp_collision(PyObject *self, PyObject *args) {
         num_triplets, triplet_weights, bz_grid_addresses, bz_map, bz_grid_type,
         D_diag, Q, fc3, is_compact_fc3, svecs, multi_dims, multi, masses, p2s,
         s2p, band_indices, temperatures, is_NU, symmetrize_fc3_q,
-        cutoff_frequency);
+        cutoff_frequency, openmp_per_triplets);
 
     free(band_indices);
     band_indices = NULL;
@@ -463,10 +471,11 @@ static PyObject *py_get_pp_collision_with_sigma(PyObject *self,
     double sigma;
     double sigma_cutoff;
     double cutoff_frequency;
+    long openmp_per_triplets;
 
     double *gamma;
     double *frequencies;
-    lapack_complex_double *eigenvectors;
+    _lapack_complex_double *eigenvectors;
     long(*triplets)[3];
     long num_triplets;
     long *triplet_weights;
@@ -485,19 +494,19 @@ static PyObject *py_get_pp_collision_with_sigma(PyObject *self,
     long i;
     long is_compact_fc3;
 
-    if (!PyArg_ParseTuple(args, "OddOOOOOOOOOOOOOOOlld", &py_gamma, &sigma,
-                          &sigma_cutoff, &py_frequencies, &py_eigenvectors,
-                          &py_triplets, &py_triplet_weights,
-                          &py_bz_grid_addresses, &py_D_diag, &py_Q, &py_fc3,
-                          &py_svecs, &py_multi, &py_masses, &py_p2s_map,
-                          &py_s2p_map, &py_band_indices, &py_temperatures,
-                          &is_NU, &symmetrize_fc3_q, &cutoff_frequency)) {
+    if (!PyArg_ParseTuple(
+            args, "OddOOOOOOOOOOOOOOOlldl", &py_gamma, &sigma, &sigma_cutoff,
+            &py_frequencies, &py_eigenvectors, &py_triplets,
+            &py_triplet_weights, &py_bz_grid_addresses, &py_D_diag, &py_Q,
+            &py_fc3, &py_svecs, &py_multi, &py_masses, &py_p2s_map, &py_s2p_map,
+            &py_band_indices, &py_temperatures, &is_NU, &symmetrize_fc3_q,
+            &cutoff_frequency, &openmp_per_triplets)) {
         return NULL;
     }
 
     gamma = (double *)PyArray_DATA(py_gamma);
     frequencies = (double *)PyArray_DATA(py_frequencies);
-    eigenvectors = (lapack_complex_double *)PyArray_DATA(py_eigenvectors);
+    eigenvectors = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
     triplets = (long(*)[3])PyArray_DATA(py_triplets);
     num_triplets = (long)PyArray_DIMS(py_triplets)[0];
     triplet_weights = (long *)PyArray_DATA(py_triplet_weights);
@@ -525,7 +534,8 @@ static PyObject *py_get_pp_collision_with_sigma(PyObject *self,
         gamma, sigma, sigma_cutoff, frequencies, eigenvectors, triplets,
         num_triplets, triplet_weights, bz_grid_addresses, D_diag, Q, fc3,
         is_compact_fc3, svecs, multi_dims, multi, masses, p2s, s2p,
-        band_indices, temperatures, is_NU, symmetrize_fc3_q, cutoff_frequency);
+        band_indices, temperatures, is_NU, symmetrize_fc3_q, cutoff_frequency,
+        openmp_per_triplets);
 
     free(band_indices);
     band_indices = NULL;
@@ -905,7 +915,7 @@ static PyObject *py_get_isotope_strength(PyObject *self, PyObject *args) {
 
     double *gamma;
     double *frequencies;
-    lapack_complex_double *eigenvectors;
+    _lapack_complex_double *eigenvectors;
     long *band_indices;
     double *mass_variances;
     long num_band, num_band0;
@@ -919,7 +929,7 @@ static PyObject *py_get_isotope_strength(PyObject *self, PyObject *args) {
 
     gamma = (double *)PyArray_DATA(py_gamma);
     frequencies = (double *)PyArray_DATA(py_frequencies);
-    eigenvectors = (lapack_complex_double *)PyArray_DATA(py_eigenvectors);
+    eigenvectors = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
     band_indices = (long *)PyArray_DATA(py_band_indices);
     mass_variances = (double *)PyArray_DATA(py_mass_variances);
     num_band = (long)PyArray_DIMS(py_frequencies)[1];
@@ -949,7 +959,7 @@ static PyObject *py_get_thm_isotope_strength(PyObject *self, PyObject *args) {
     double *frequencies;
     long *ir_grid_points;
     long *weights;
-    lapack_complex_double *eigenvectors;
+    _lapack_complex_double *eigenvectors;
     long *band_indices;
     double *mass_variances;
     long num_band, num_band0, num_ir_grid_points;
@@ -966,7 +976,7 @@ static PyObject *py_get_thm_isotope_strength(PyObject *self, PyObject *args) {
     frequencies = (double *)PyArray_DATA(py_frequencies);
     ir_grid_points = (long *)PyArray_DATA(py_ir_grid_points);
     weights = (long *)PyArray_DATA(py_weights);
-    eigenvectors = (lapack_complex_double *)PyArray_DATA(py_eigenvectors);
+    eigenvectors = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
     band_indices = (long *)PyArray_DATA(py_band_indices);
     mass_variances = (double *)PyArray_DATA(py_mass_variances);
     num_band = (long)PyArray_DIMS(py_frequencies)[1];
@@ -1133,6 +1143,28 @@ static PyObject *py_transpose_compact_fc3(PyObject *self, PyObject *args) {
 
     ph3py_transpose_compact_fc3(fc3, p2s, s2pp, nsym_list, perms, n_satom,
                                 n_patom, t_type);
+
+    Py_RETURN_NONE;
+}
+
+static PyObject *py_get_thm_relative_grid_address(PyObject *self,
+                                                  PyObject *args) {
+    PyArrayObject *py_relative_grid_address;
+    PyArrayObject *py_reciprocal_lattice_py;
+
+    long(*relative_grid_address)[4][3];
+    double(*reciprocal_lattice)[3];
+
+    if (!PyArg_ParseTuple(args, "OO", &py_relative_grid_address,
+                          &py_reciprocal_lattice_py)) {
+        return NULL;
+    }
+
+    relative_grid_address =
+        (long(*)[4][3])PyArray_DATA(py_relative_grid_address);
+    reciprocal_lattice = (double(*)[3])PyArray_DATA(py_reciprocal_lattice_py);
+
+    ph3py_get_relative_grid_address(relative_grid_address, reciprocal_lattice);
 
     Py_RETURN_NONE;
 }
@@ -1676,11 +1708,11 @@ static PyObject *py_diagonalize_collision_matrix(PyObject *self,
 
     /* show_colmat_info(py_collision_matrix, i_sigma, i_temp, adrs_shift); */
 
-    info = phonopy_dsyev(collision_matrix + adrs_shift, eigvals, num_column,
-                         solver);
+    info = ph3py_phonopy_dsyev(collision_matrix + adrs_shift, eigvals,
+                               num_column, solver);
     if (is_pinv) {
-        pinv_from_eigensolution(collision_matrix + adrs_shift, eigvals,
-                                num_column, cutoff, 0);
+        ph3py_pinv_from_eigensolution(collision_matrix + adrs_shift, eigvals,
+                                      num_column, cutoff, 0);
     }
 
     return PyLong_FromLong(info);
@@ -1718,8 +1750,8 @@ static PyObject *py_pinv_from_eigensolution(PyObject *self, PyObject *args) {
 
     /* show_colmat_info(py_collision_matrix, i_sigma, i_temp, adrs_shift); */
 
-    pinv_from_eigensolution(collision_matrix + adrs_shift, eigvals, num_column,
-                            cutoff, pinv_method);
+    ph3py_pinv_from_eigensolution(collision_matrix + adrs_shift, eigvals,
+                                  num_column, cutoff, pinv_method);
 
     Py_RETURN_NONE;
 }
@@ -1736,92 +1768,29 @@ static PyObject *py_get_default_colmat_solver(PyObject *self, PyObject *args) {
 #endif
 }
 
-static void pinv_from_eigensolution(double *data, const double *eigvals,
-                                    const long size, const double cutoff,
-                                    const long pinv_method) {
-    long i, ib, j, k, max_l, i_s, j_s;
-    double *tmp_data;
-    double e, sum;
-    long *l;
+static PyObject *py_lapacke_pinv(PyObject *self, PyObject *args) {
+    PyArrayObject *data_in_py;
+    PyArrayObject *data_out_py;
+    double cutoff;
 
-    l = NULL;
-    tmp_data = NULL;
+    int m;
+    int n;
+    double *data_in;
+    double *data_out;
+    int info;
 
-    tmp_data = (double *)malloc(sizeof(double) * size * size);
-
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (i = 0; i < size * size; i++) {
-        tmp_data[i] = data[i];
+    if (!PyArg_ParseTuple(args, "OOd", &data_out_py, &data_in_py, &cutoff)) {
+        return NULL;
     }
 
-    l = (long *)malloc(sizeof(long) * size);
-    max_l = 0;
-    for (i = 0; i < size; i++) {
-        if (pinv_method == 0) {
-            e = fabs(eigvals[i]);
-        } else {
-            e = eigvals[i];
-        }
-        if (e > cutoff) {
-            l[max_l] = i;
-            max_l++;
-        }
-    }
+    m = (long)PyArray_DIMS(data_in_py)[0];
+    n = (long)PyArray_DIMS(data_in_py)[1];
+    data_in = (double *)PyArray_DATA(data_in_py);
+    data_out = (double *)PyArray_DATA(data_out_py);
 
-#ifdef _OPENMP
-#pragma omp parallel for private(ib, j, k, i_s, j_s, sum)
-#endif
-    for (i = 0; i < size / 2; i++) {
-        /* from front */
-        i_s = i * size;
-        for (j = i; j < size; j++) {
-            j_s = j * size;
-            sum = 0;
-            for (k = 0; k < max_l; k++) {
-                sum +=
-                    tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
-            }
-            data[i_s + j] = sum;
-            data[j_s + i] = sum;
-        }
-        /* from back */
-        ib = size - i - 1;
-        i_s = ib * size;
-        for (j = ib; j < size; j++) {
-            j_s = j * size;
-            sum = 0;
-            for (k = 0; k < max_l; k++) {
-                sum +=
-                    tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
-            }
-            data[i_s + j] = sum;
-            data[j_s + ib] = sum;
-        }
-    }
+    info = ph3py_phonopy_pinv(data_out, data_in, m, n, cutoff);
 
-    /* when size is odd */
-    if ((size % 2) == 1) {
-        i = (size - 1) / 2;
-        i_s = i * size;
-        for (j = i; j < size; j++) {
-            j_s = j * size;
-            sum = 0;
-            for (k = 0; k < max_l; k++) {
-                sum +=
-                    tmp_data[i_s + l[k]] * tmp_data[j_s + l[k]] / eigvals[l[k]];
-            }
-            data[i_s + j] = sum;
-            data[j_s + i] = sum;
-        }
-    }
-
-    free(l);
-    l = NULL;
-
-    free(tmp_data);
-    tmp_data = NULL;
+    return PyLong_FromLong((long)info);
 }
 
 static void show_colmat_info(const PyArrayObject *py_collision_matrix,
@@ -1841,7 +1810,13 @@ static void show_colmat_info(const PyArrayObject *py_collision_matrix,
     printf("Data shift:%lu [%lu, %lu]\n", adrs_shift, i_sigma, i_temp);
 }
 
-static Larray *convert_to_larray(const PyArrayObject *npyary) {
+/**
+ * @brief Convert numpy "int_" array to phono3py long array structure.
+ *
+ * @param npyary
+ * @return Larray*
+ */
+static Larray *convert_to_larray(PyArrayObject *npyary) {
     long i;
     Larray *ary;
 
@@ -1853,7 +1828,14 @@ static Larray *convert_to_larray(const PyArrayObject *npyary) {
     return ary;
 }
 
-static Darray *convert_to_darray(const PyArrayObject *npyary) {
+/**
+ * @brief Convert numpy "double" array to phono3py double array structure.
+ *
+ * @param npyary
+ * @return Darray*
+ * @note PyArray_NDIM receives non-const (PyArrayObject *).
+ */
+static Darray *convert_to_darray(PyArrayObject *npyary) {
     int i;
     Darray *ary;
 

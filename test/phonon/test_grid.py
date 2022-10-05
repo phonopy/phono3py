@@ -1,8 +1,13 @@
 """Tests for grids."""
+from __future__ import annotations
+
 import numpy as np
 import pytest
-from phonopy.structure.tetrahedron_method import TetrahedronMethod
+from phonopy import Phonopy
+from phonopy.structure.atoms import PhonopyAtoms
+from phonopy.structure.symmetry import Symmetry
 
+from phono3py.other.tetrahedron_method import get_tetrahedra_relative_grid_address
 from phono3py.phonon.grid import (
     BZGrid,
     _get_grid_points_by_bz_rotations_c,
@@ -11,7 +16,14 @@ from phono3py.phonon.grid import (
     can_use_std_lattice,
     get_grid_point_from_address,
     get_grid_point_from_address_py,
+    get_ir_grid_points,
 )
+
+
+def _get_qpoints(adrs, bzgrid):
+    return np.dot(
+        (adrs * 2 + bzgrid.PS) / bzgrid.D_diag.astype("double") / 2, bzgrid.Q.T
+    )
 
 
 def test_get_grid_point_from_address(agno2_cell):
@@ -815,10 +827,10 @@ def test_SNF_tetrahedra_relative_grid(aln_lda):
 
         plat = np.linalg.inv(aln_lda.primitive.cell)
         mlat = bzgrid.microzone_lattice
-        thm = TetrahedronMethod(mlat)
-        snf_tetrahedra = np.dot(thm.get_tetrahedra(), bzgrid.P.T)
+        tetrahedra = get_tetrahedra_relative_grid_address(mlat)
+        snf_tetrahedra = np.dot(tetrahedra, bzgrid.P.T)
 
-        for mtet, ptet in zip(thm.get_tetrahedra(), snf_tetrahedra):
+        for mtet, ptet in zip(tetrahedra, snf_tetrahedra):
             np.testing.assert_allclose(
                 np.dot(mtet, mlat.T),
                 np.dot(np.dot(ptet, bzgrid.QDinv.T), plat.T),
@@ -1192,3 +1204,181 @@ def test_can_use_std_lattice():
     ]
 
     assert can_use_std_lattice(conv_lat, tmat, std_lattice, rotations)
+
+
+def test_aln_BZGrid_with_shift(aln_cell: PhonopyAtoms):
+    """Test BZGrid with shift using AlN."""
+    mesh = [5, 5, 4]
+    symmetry = Symmetry(aln_cell)
+
+    # Without shift
+    bzgrid = BZGrid(mesh, lattice=aln_cell.cell, symmetry_dataset=symmetry.dataset)
+    ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bzgrid)
+    np.testing.assert_equal(
+        ir_grid_points, [0, 1, 2, 6, 7, 25, 26, 27, 31, 32, 50, 51, 52, 56, 57]
+    )
+    np.testing.assert_equal(
+        ir_grid_weights, [1, 6, 6, 6, 6, 2, 12, 12, 12, 12, 1, 6, 6, 6, 6]
+    )
+
+    # With shift
+    bzgrid = BZGrid(
+        mesh,
+        lattice=aln_cell.cell,
+        symmetry_dataset=symmetry.dataset,
+        is_shift=[False, False, True],
+    )
+    ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bzgrid)
+    np.testing.assert_equal(ir_grid_points, [0, 1, 2, 6, 7, 25, 26, 27, 31, 32])
+    np.testing.assert_equal(ir_grid_weights, [2, 12, 12, 12, 12, 2, 12, 12, 12, 12])
+
+    q_from_phonopy = [
+        [0.0000000, 0.0000000, 0.1250000],
+        [0.2000000, 0.0000000, 0.1250000],
+        [0.4000000, 0.0000000, 0.1250000],
+        [0.2000000, 0.2000000, 0.1250000],
+        [-0.6000000, 0.2000000, 0.1250000],
+        [0.0000000, 0.0000000, 0.3750000],
+        [0.2000000, 0.0000000, 0.3750000],
+        [0.4000000, 0.0000000, 0.3750000],
+        [0.2000000, 0.2000000, 0.3750000],
+        [-0.6000000, 0.2000000, 0.3750000],
+    ]
+
+    for adrs, q_phonopy in zip(
+        bzgrid.addresses[bzgrid.grg2bzg[ir_grid_points]], q_from_phonopy
+    ):
+        q = np.dot(
+            bzgrid.Q, (adrs * 2 + bzgrid.PS) / bzgrid.D_diag.astype("double") / 2
+        )
+        diff = q - q_phonopy
+        diff -= np.rint(diff)
+        np.testing.assert_allclose(diff, [0, 0, 0])
+        q_phonopy_norm = np.linalg.norm(np.dot(np.linalg.inv(aln_cell.cell), q_phonopy))
+        q_norm = np.linalg.norm(np.dot(np.linalg.inv(aln_cell.cell), q))
+        np.testing.assert_almost_equal(q_phonopy_norm, q_norm)
+
+
+@pytest.mark.parametrize(
+    "is_shift",
+    [
+        [True, False, False],
+        [False, True, False],
+        [True, True, False],
+        [True, False, True],
+        [False, True, True],
+        [True, True, True],
+    ],
+)
+def test_aln_BZGrid_with_shift_broken_symmetry(aln_cell: PhonopyAtoms, is_shift: list):
+    """Test broken symmetry of BZGrid with shift using AlN."""
+    mesh = [5, 5, 4]
+    symmetry = Symmetry(aln_cell)
+
+    with pytest.raises(RuntimeError):
+        BZGrid(
+            mesh,
+            lattice=aln_cell.cell,
+            symmetry_dataset=symmetry.dataset,
+            is_shift=is_shift,
+        )
+
+
+def test_agno2_BZGrid_with_shift(agno2_cell: PhonopyAtoms):
+    """Test BZGrid with shift using AgNO2."""
+    mesh = 15
+    ph = Phonopy(agno2_cell, supercell_matrix=[1, 1, 1], primitive_matrix="auto")
+
+    # from phonopy.interface.vasp import get_vasp_structure_lines
+    # print("\n".join(get_vasp_structure_lines(ph.primitive)))
+
+    # Without shift
+    bzgrid = BZGrid(
+        mesh,
+        lattice=ph.primitive.cell,
+        symmetry_dataset=ph.primitive_symmetry.dataset,
+        use_grg=True,
+    )
+    ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bzgrid)
+    np.testing.assert_equal(bzgrid.grid_matrix, [[0, 5, 5], [2, 0, 2], [3, 3, 0]])
+    np.testing.assert_equal(
+        ir_grid_points, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 15, 18, 20, 24, 30]
+    )
+    np.testing.assert_equal(
+        ir_grid_weights, [1, 8, 4, 4, 4, 4, 2, 8, 4, 4, 2, 2, 4, 2, 2, 2, 2, 1]
+    )
+    bzgrid_no_shift = bzgrid
+
+    # Digonal elements represent orthorhombic microzone.
+    shift_ref = np.diagonal(bzgrid.microzone_lattice) / 2
+
+    # With shift +c
+    bzgrid = BZGrid(
+        mesh,
+        lattice=ph.primitive.cell,
+        symmetry_dataset=ph.primitive_symmetry.dataset,
+        use_grg=True,
+        is_shift=[False, False, True],
+    )
+    ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bzgrid)
+
+    np.testing.assert_equal(
+        ir_grid_points, [0, 1, 2, 3, 4, 5, 11, 12, 14, 15, 17, 18, 20, 24, 30]
+    )
+    np.testing.assert_equal(
+        ir_grid_weights, [2, 8, 4, 8, 4, 2, 4, 4, 4, 4, 4, 4, 2, 4, 2]
+    )
+
+    q_shift_c = _get_qpoints(bzgrid.addresses[bzgrid.grg2bzg], bzgrid)
+    q_noshift = _get_qpoints(
+        bzgrid_no_shift.addresses[bzgrid_no_shift.grg2bzg], bzgrid_no_shift
+    )
+    diff = q_shift_c - q_noshift
+    diff -= np.rint(diff)
+    diff_cart = np.dot(diff, np.linalg.inv(ph.primitive.cell).T)
+    np.testing.assert_allclose(diff_cart - [0, 0, 3.33538325e-02], 0, atol=1e-8)
+    np.testing.assert_allclose(diff_cart[0][2], shift_ref[2], atol=1e-8)
+
+    # With shift +a, +b
+    bzgrid = BZGrid(
+        mesh,
+        lattice=ph.primitive.cell,
+        symmetry_dataset=ph.primitive_symmetry.dataset,
+        use_grg=True,
+        is_shift=[True, True, False],
+    )
+    ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bzgrid)
+
+    np.testing.assert_equal(ir_grid_points, [0, 1, 2, 3, 4, 5, 6, 8, 9, 12])
+    np.testing.assert_equal(ir_grid_weights, [4, 8, 8, 4, 8, 8, 4, 8, 4, 4])
+
+    q_shift_ab = _get_qpoints(bzgrid.addresses[bzgrid.grg2bzg], bzgrid)
+    diff = q_shift_ab - q_noshift
+    diff -= np.rint(diff)
+    diff_cart = np.dot(diff, np.linalg.inv(ph.primitive.cell).T)
+    np.testing.assert_allclose(
+        diff_cart - [3.03777935e-02, 3.89622460e-02, 0], 0, atol=1e-8
+    )
+    np.testing.assert_allclose(diff_cart[0][[0, 1]], shift_ref[[0, 1]], atol=1e-8)
+
+    # With shift +a, +b, +c
+    bzgrid = BZGrid(
+        mesh,
+        lattice=ph.primitive.cell,
+        symmetry_dataset=ph.primitive_symmetry.dataset,
+        use_grg=True,
+        is_shift=[True, True, True],
+    )
+    ir_grid_points, ir_grid_weights, _ = get_ir_grid_points(bzgrid)
+
+    np.testing.assert_equal(ir_grid_points, [0, 1, 2, 3, 5, 7, 8, 9])
+    np.testing.assert_equal(ir_grid_weights, [8, 8, 4, 8, 8, 8, 8, 8])
+
+    q_shift_ab = _get_qpoints(bzgrid.addresses[bzgrid.grg2bzg], bzgrid)
+    diff = q_shift_ab - q_noshift
+    diff -= np.rint(diff)
+    diff_cart = np.dot(diff, np.linalg.inv(ph.primitive.cell).T)
+    np.testing.assert_allclose(
+        diff_cart - [0.03037779, 0.03896225, 0.03335383], 0, atol=1e-8
+    )
+    np.testing.assert_allclose(diff_cart[0], shift_ref, atol=1e-8)

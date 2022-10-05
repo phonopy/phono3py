@@ -46,7 +46,7 @@ requirements:
     - matplotlib-base>=2.2.2
     - pyyaml
     - h5py
-    - phonopy>=2.15,<2.16
+    - phonopy>=2.16,<2.17
     - openblas
     - libgfortran
     - spglib

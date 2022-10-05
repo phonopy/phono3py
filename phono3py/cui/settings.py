@@ -85,6 +85,7 @@ class Phono3pySettings(Settings):
         "phonon_supercell_matrix": None,
         "pinv_cutoff": 1.0e-8,
         "pinv_solver": 0,
+        "pinv_method": 0,
         "pp_conversion_factor": None,
         "scattering_event_class": None,  # scattering event class 1 or 2
         "sigma_cutoff_width": None,
@@ -255,6 +256,10 @@ class Phono3pySettings(Settings):
     def set_pinv_cutoff(self, val):
         """Set pinv_cutoff."""
         self._v["pinv_cutoff"] = val
+
+    def set_pinv_method(self, val):
+        """Set pinv_method."""
+        self._v["pinv_method"] = val
 
     def set_pinv_solver(self, val):
         """Set pinv_solver."""
@@ -520,6 +525,10 @@ class Phono3pyConfParser(ConfParser):
             if self._args.pinv_cutoff is not None:
                 self._confs["pinv_cutoff"] = self._args.pinv_cutoff
 
+        if "pinv_method" in self._args:
+            if self._args.pinv_method is not None:
+                self._confs["pinv_method"] = self._args.pinv_method
+
         if "pinv_solver" in self._args:
             if self._args.pinv_solver is not None:
                 self._confs["pinv_solver"] = self._args.pinv_solver
@@ -663,6 +672,7 @@ class Phono3pyConfParser(ConfParser):
 
             # int
             if conf_key in (
+                "pinv_method",
                 "pinv_solver",
                 "num_points_in_batch",
                 "scattering_event_class",
@@ -888,6 +898,10 @@ class Phono3pyConfParser(ConfParser):
         # Cutoff frequency for pseudo inversion of collision matrix
         if "pinv_cutoff" in params:
             self._settings.set_pinv_cutoff(params["pinv_cutoff"])
+
+        # Switch for pseudo-inverse method either taking abs or not.
+        if "pinv_method" in params:
+            self._settings.set_pinv_method(params["pinv_method"])
 
         # Switch for pseudo-inverse solver
         if "pinv_solver" in params:

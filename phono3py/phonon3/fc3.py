@@ -65,14 +65,20 @@ def get_fc3(
     disp_dataset,
     symmetry: Symmetry,
     is_compact_fc=False,
+    pinv_solver: str = "numpy",
     verbose=False,
 ):
     """Calculate fc3.
 
-    Even when 'cutoff_distance' in dataset, all displacements are in the dataset,
-    but force-sets out of cutoff-pair-distance are zero. fc3 is solved in exactly
-    the same way. Then post-clean-up
-    is performed.
+    Even when 'cutoff_distance' in dataset, all displacements are in the
+    dataset, but force-sets out of cutoff-pair-distance are zero. fc3 is solved
+    in exactly the same way. Then post-clean-up is performed.
+
+    Returns
+    -------
+    tuple :
+        (fc2, fc3) fc2 and fc3 can be compact or full array formats depending on
+        `is_compact_fc`. See Phono3py.produce_fc3.
 
     """
     # fc2 has to be full matrix to compute delta-fc2
@@ -84,7 +90,8 @@ def get_fc3(
         disp_dataset,
         fc2,
         symmetry,
-        is_compact_fc=is_compact_fc,
+        is_compact_fc=(is_compact_fc and "cutoff_distance" not in disp_dataset),
+        pinv_solver=pinv_solver,
         verbose=verbose,
     )
     if verbose:
@@ -95,16 +102,32 @@ def get_fc3(
     lattice = supercell.cell.T
     permutations = symmetry.atomic_permutations
 
-    if is_compact_fc:
+    p2s_map = primitive.p2s_map
+    for i in first_disp_atoms:
+        assert i in p2s_map
+
+    if is_compact_fc and "cutoff_distance" not in disp_dataset:
         s2p_map = primitive.s2p_map
-        p2s_map = primitive.p2s_map
         p2p_map = primitive.p2p_map
         s2compact = np.array([p2p_map[i] for i in s2p_map], dtype="int_")
-        for i in first_disp_atoms:
-            assert i in p2s_map
         target_atoms = [i for i in p2s_map if i not in first_disp_atoms]
     else:
+        # distribute_fc3 prefers pure translation operations in distributing
+        # fc3. Below, fc3 already computed are distributed to the first index
+        # atoms in primitive cell, and then distribute to all the other atoms.
         s2compact = np.arange(len(supercell), dtype="int_")
+        target_atoms = [i for i in p2s_map if i not in first_disp_atoms]
+        distribute_fc3(
+            fc3,
+            first_disp_atoms,
+            target_atoms,
+            lattice,
+            rotations,
+            permutations,
+            s2compact,
+            verbose=verbose,
+        )
+        first_disp_atoms = np.unique(np.concatenate((first_disp_atoms, p2s_map)))
         target_atoms = [i for i in s2compact if i not in first_disp_atoms]
 
     distribute_fc3(
@@ -124,9 +147,6 @@ def get_fc3(
                 "Cutting-off fc3 (cut-off distance: %f)"
                 % disp_dataset["cutoff_distance"]
             )
-        if is_compact_fc:
-            print("cutoff_fc3 doesn't support compact-fc3 yet.")
-            raise ValueError
         _cutoff_fc3_for_cutoff_pairs(
             fc3, supercell, disp_dataset, symmetry, verbose=verbose
         )
@@ -134,6 +154,11 @@ def get_fc3(
     if is_compact_fc:
         p2s_map = primitive.p2s_map
         fc2 = np.array(fc2[p2s_map], dtype="double", order="C")
+        if "cutoff_distance" in disp_dataset:
+            fc3_shape = (len(p2s_map), fc3.shape[1], fc3.shape[2])
+            fc3_cfc = np.zeros(fc3_shape, dtype="double", order="C")
+            fc3_cfc = fc3[p2s_map]
+            fc3 = fc3_cfc
 
     return fc2, fc3
 
@@ -158,6 +183,8 @@ def distribute_fc3(
     and
         atom_mapping[i_target] = i_done
         fc3[i_target, j_target, k_target] = R_inv[i_done, j, k]
+    When multiple (R, t) can be found, the pure translation operation is
+    preferred.
 
     Parameters
     ----------
@@ -170,13 +197,21 @@ def distribute_fc3(
         dtype=intc
 
     """
+    identity = np.eye(3, dtype=int)
+    pure_trans_indices = [i for i, r in enumerate(rotations) if (r == identity).all()]
+
     n_satom = fc3.shape[1]
     for i_target in target_atoms:
         for i_done in first_disp_atoms:
             rot_indices = np.where(permutations[:, i_target] == i_done)[0]
             if len(rot_indices) > 0:
-                atom_mapping = np.array(permutations[rot_indices[0]], dtype="int_")
-                rot = rotations[rot_indices[0]]
+                rot_index = rot_indices[0]
+                for rot_i in rot_indices:
+                    if rot_i in pure_trans_indices:
+                        rot_index = rot_i
+                        break
+                atom_mapping = np.array(permutations[rot_index], dtype="int_")
+                rot = rotations[rot_index]
                 rot_cart_inv = np.array(
                     similarity_transformation(lattice, rot).T, dtype="double", order="C"
                 )
@@ -278,7 +313,7 @@ def set_translational_invariance_fc3(fc3):
         _set_translational_invariance_fc3_per_index(fc3, index=i)
 
 
-def set_translational_invariance_compact_fc3(fc3, primitive):
+def set_translational_invariance_compact_fc3(fc3, primitive: Primitive):
     """Enforce translational symmetry to compact fc3."""
     try:
         import phono3py._phono3py as phono3c
@@ -351,7 +386,12 @@ def _get_delta_fc2(
 
 
 def _get_constrained_fc2(
-    supercell, dataset_second_atoms, atom1, forces1, reduced_site_sym, symprec
+    supercell: PhonopyAtoms,
+    dataset_second_atoms,
+    atom1,
+    forces1,
+    reduced_site_sym,
+    symprec,
 ):
     """Return fc2 under reduced (broken) site symmetry by first displacement.
 
@@ -411,7 +451,7 @@ def _solve_fc3(
         solver = "numpy.linalg.pinv"
     else:
         try:
-            import phono3py._lapackepy as lapackepy
+            import phono3py._phono3py as phono3c
 
             solver = "lapacke-dgesvd"
         except ImportError:
@@ -463,7 +503,7 @@ def _solve_fc3(
         inv_U = np.zeros(
             (rot_disps.shape[1], rot_disps.shape[0]), dtype="double", order="C"
         )
-        lapackepy.pinv(inv_U, rot_disps, 1e-13)
+        phono3c.lapacke_pinv(inv_U, rot_disps, 1e-13)
 
     fc3 = np.zeros((num_atom, num_atom, 3, 3, 3), dtype="double", order="C")
 
@@ -499,7 +539,7 @@ def _cutoff_fc3_for_cutoff_pairs(fc3, supercell, disp_dataset, symmetry, verbose
                 _copy_permutation_symmetry_fc3_elem(fc3, ave_fc3, i, j, k)
 
 
-def cutoff_fc3_by_zero(fc3, supercell, cutoff_distance, symprec=1e-5):
+def cutoff_fc3_by_zero(fc3, supercell, cutoff_distance, p2s_map=None, symprec=1e-5):
     """Set zero in fc3 elements where pair distances are larger than cutoff."""
     num_atom = len(supercell)
     lattice = supercell.cell.T
@@ -512,11 +552,19 @@ def cutoff_fc3_by_zero(fc3, supercell, cutoff_distance, symprec=1e-5):
                 )
             )
 
-    for i, j, k in np.ndindex(num_atom, num_atom, num_atom):
-        for pair in ((i, j), (j, k), (k, i)):
-            if min_distances[pair] > cutoff_distance:
-                fc3[i, j, k] = 0
-                break
+    if fc3.shape[0] == fc3.shape[1]:
+        _p2s_map = np.arange(num_atom)
+    elif p2s_map is None or len(p2s_map) != fc3.shape[0]:
+        raise RuntimeError("Array shape of fc3 is incorrect.")
+    else:
+        _p2s_map = p2s_map
+
+    for i_index, i in enumerate(_p2s_map):
+        for j, k in np.ndindex(num_atom, num_atom):
+            for pair in ((i, j), (j, k), (k, i)):
+                if min_distances[pair] > cutoff_distance:
+                    fc3[i_index, j, k] = 0
+                    break
 
 
 def show_drift_fc3(fc3, primitive=None, name="fc3"):
@@ -622,7 +670,14 @@ def _set_permutation_symmetry_fc3_elem_with_cutoff(fc3, fc3_done, a, b, c):
 
 
 def _get_fc3_least_atoms(
-    supercell, primitive, disp_dataset, fc2, symmetry, is_compact_fc=False, verbose=True
+    supercell: PhonopyAtoms,
+    primitive: Primitive,
+    disp_dataset,
+    fc2,
+    symmetry: Symmetry,
+    is_compact_fc: bool = False,
+    pinv_solver="numpy",
+    verbose: bool = True,
 ):
     symprec = symmetry.tolerance
     num_satom = len(supercell)
@@ -631,7 +686,7 @@ def _get_fc3_least_atoms(
     )
 
     if is_compact_fc:
-        num_patom = primitive.get_number_of_atoms()
+        num_patom = len(primitive)
         s2p_map = primitive.s2p_map
         p2p_map = primitive.p2p_map
         first_atom_nums = []
@@ -688,6 +743,7 @@ def _get_fc3_least_atoms(
             displacements_first,
             np.array(delta_fc2s, dtype="double", order="C"),
             symprec,
+            pinv_solver=pinv_solver,
             verbose=verbose,
         )
         if is_compact_fc:

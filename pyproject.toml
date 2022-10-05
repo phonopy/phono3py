@@ -1,5 +1,7 @@
 [build-system]
-requires = ["setuptools", "wheel", "numpy", "oldest-supported-numpy"]
+requires = ["setuptools", "wheel", "numpy"]
+#requires = ["setuptools", "wheel", "numpy", "oldest-supported-numpy"]
+#build-backend = "setuptools.build_meta"
 
 [tool.flake8]
 max-line-length = 88

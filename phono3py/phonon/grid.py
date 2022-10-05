@@ -33,17 +33,20 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import warnings
 from typing import Optional
 
 import numpy as np
-from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.structure.cells import (
+    determinant,
     estimate_supercell_matrix,
     get_reduced_bases,
     is_primitive_cell,
 )
 from phonopy.structure.grid_points import extract_ir_grid_points, length2mesh
+from phonopy.utils import similarity_transformation
 
 
 class BZGrid:
@@ -104,10 +107,9 @@ class BZGrid:
     where s is the shift vectors that are 0 or 1/2. But it is more
     convenient to use the integer shift vectors S by 0 or 1, which gives
 
-    q = (np.dot(Q, (2 * addresses[gp] + np.dot(P, S))
-                    / D_diag.astype('double'))) / 2
+    q = (np.dot(Q, (2 * addresses[gp] + PS) / D_diag.astype('double') / 2))
 
-    and this is the definition of PS in this class.
+    where PS = np.dot(P, s) * 2.
 
     Attributes
     ----------
@@ -482,6 +484,21 @@ class BZGrid:
         ):
             msg = "Grid symmetry is broken. Use generalized regular grid."
             raise RuntimeError(msg)
+
+        if self._is_shift is not None:
+            if not self._satisfy_shift_symmetry():
+                msg = "Grid symmetry is broken by grid shift."
+                raise RuntimeError(msg)
+
+    def _satisfy_shift_symmetry(self):
+        Pinv = np.rint(np.linalg.inv(self._P)).astype(int)
+        assert determinant(Pinv) == 1
+        S = np.array(self._is_shift, dtype=int)
+        for r in self._rotations:
+            _S = np.dot(np.dot(Pinv, np.dot(r, self._P)), S)
+            if not np.array_equal((S - _S) % 2, [0, 0, 0]):
+                return False
+        return True
 
 
 class GridMatrix:
