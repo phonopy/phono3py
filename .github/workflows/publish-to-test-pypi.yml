@@ -9,22 +9,29 @@ on:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
     strategy:
       matrix:
-        python-version: [3.9, ]
+        python-version: ["3.10", ]
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    # Use conda-incubator/setup-miniconda for precise control of conda infrastructure
+    - uses: conda-incubator/setup-miniconda@v2
       with:
+        auto-update-conda: true
+        channels: conda-forge
+        channel-priority: strict
         python-version: ${{ matrix.python-version }}
     - name: Make sdist
       run: |
+        conda activate test
+        conda install --yes python=${{ matrix.python-version }}
+        conda install --yes "libblas=*=*openblas" openblas cmake c-compiler numpy
         ./get_nanoversion.sh
         cat __nanoversion__.txt
-        pip install numpy setuptools-scm
-        echo "[phono3py]" > site.cfg
         python setup.py sdist
     - name: Publish package to TestPyPI
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/rc')
