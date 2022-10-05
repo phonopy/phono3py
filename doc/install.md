@@ -4,23 +4,22 @@
 
 The detailed installation processes for different environments are described
 below. The easiest installation with a good computation performance is achieved
-by using the phono3py conda package (see {ref}`install_an_example`).
+by using the phono3py conda package. Installation of phonopy before the
+installation of phono3py is required. See how to install phonopy at
+https://phonopy.github.io/phonopy/install.html. Phono3py relies on phonopy, so
+please use the latest release of phonopy when installing phono3py.
 
 ```{contents}
 :depth: 3
 :local:
 ```
 
-Installation of phonopy before the installation of phono3py is required. See how
-to install phonopy at https://phonopy.github.io/phonopy/install.html. Phono3py
-relies on phonopy, so please use the latest release of phonopy when installing
-phono3py.
 
 ## Installation using conda
 
-Using conda is the easiest way for installation of phono3py if you are using
-x86-64 linux system or macOS. These packages are made and maintained by Jan
-Janssen. The installation is simply done by:
+Using conda is the easiest way for installation of phono3py for linux and macOS.
+These packages are made and maintained by Jan Janssen. The installation is
+simply done by:
 
 ```bash
 % conda install -c conda-forge phono3py
@@ -28,27 +27,36 @@ Janssen. The installation is simply done by:
 
 All dependent packages should be installed.
 
+(install_from_source_code)=
 ## Installation from source code
 
 When installing phono3py using `setup.py` from the source code, a few libraries
 are required before running `setup.py` script.
 
 For phono3py, OpenMP library is necessary for the multithreding support. In
-additon, BLAS, LAPACK, and LAPACKE are also needed. These packages are probably
-installed using the package manager for each OS or conda.
+additon, BLAS, LAPACK, and LAPACKE are also needed. These packages may be
+installed by the package manager of each OS or conda environment.
 
-** The following way of installation will be deprecated from next minor version.
-See for the new way of installation {ref}`install_an_example`.**
+### Automatic required library search by cmake
+
+With installed cmake on the system, required libraries may be found
+automatically using cmake. See {ref}`install_an_example`.
+
+### Custom installation with `site.cfg` file
 
 Custom installation is achieved by creating `site.cfg` file on the same
-directory as `setup.up`. Users will customize flags and additional libraries by
-adding a `site.cfg` that conforms to numpy stile distutils
-(`numpy.distutils.site.cfg` file). In most cases, users want to enable
-multithreading support with OpenMP. Its minimum setting with gcc as the compiler
-is:
+directory as `setup.py`. Users will customize flags and additional libraries by
+adding a `site.cfg`. In previous versions, `site.cfg` was processed by numpy,
+but from version 2.4.0, it is processed by script in `setup.py`.
+`extra_link_args`, `extra_compile_args`, `extra_objects`, and `include_dirs` can
+be specified. How they used is found at [setuptools web
+site](https://setuptools.pypa.io/en/latest/userguide/ext_modules.html#extension-api-reference).
+
+ In most cases,
+users want to enable multithreading support with OpenMP. Its minimum setting
+with gcc as the compiler is:
 
 ```
-[phono3py]
 extra_compile_args = -fopenmp
 ```
 
@@ -56,130 +64,26 @@ Additional configuration can be necessary. It is recommended first starting only
 with `extra_compile_args = -fopenmp` and run `setup.py`, then check if phono3py
 works properly or not without error or warning. When phono3py doesn't work with
 the above setting, add another configuration one by one to test compilation.
-With conda-forge packages, at 11th Apr. 2022, the following configuration
-worked.
+Some examples are given below.
 
-With MKL (for gcc and clang), `site.cfg`
+For MKL (for gcc and clang), `site.cfg`
 
 ```
-[phono3py]
 extra_compile_args = -fopenmp
 ```
 
-With openblas and clang
+For openblas and clang
 
 ```
-[phono3py]
 extra_compile_args = -fopenmp
 ```
 
-With openblas and gcc
+For openblas and gcc
 
 ```
-[phono3py]
 extra_compile_args = -fopenmp
 extra_link_args = -lgomp
 ```
-
-Mind that these configurations can be outdated instantly by the change of the
-conda-forge packages.
-
-More detailed information about `site.cfg` customization is found at
-https://github.com/numpy/numpy/blob/main/site.cfg.example.
-
-(install_lapacke)=
-
-### Installation of LAPACKE
-
-LAPACK library is used in a few parts of the code to diagonalize matrices.
-LAPACK*E* is the C-wrapper of LAPACK and LAPACK relies on BLAS. Both
-single-thread or multithread BLAS can be used in phono3py. In the following,
-multiple different ways of installation of LAPACKE are explained.
-
-### OpenBLAS provided by conda
-
-The installtion of LAPACKE is easy by conda. It is:
-
-```bash
-% conda install -c conda-forge openblas
-```
-
-### OpenMP library of gcc
-
-With system provided gcc, `libgomp1` may be necessary to enable OpenMP
-multithreading support. This library is probably installed already in your
-system. If you don't have it and you use Ubuntu linux, it is installed by:
-
-```bash
-% sudo apt-get install libgomp1
-```
-
-### Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)
-
-LAPACKE (http://www.netlib.org/lapack/lapacke.html) can be installed from the
-Ubuntu package manager (`liblapacke` and `liblapacke-dev`):
-
-```bash
-% sudo apt-get install liblapack-dev liblapacke-dev
-```
-
-### Compiling Netlib LAPACKE
-
-The compilation procedure is found at the LAPACKE web site. After creating the
-LAPACKE library, `liblapacke.a` (or the dynamic link library), `setup.py` must
-be properly modified to link it. As an example, the procedure of compiling
-LAPACKE is shown below.
-
-```bash
-% tar xvfz lapack-3.6.0.tgz
-% cd lapack-3.6.0
-% cp make.inc.example make.inc
-% make lapackelib
-```
-
-BLAS, LAPACK, and LAPACKE, these all may have to be compiled with `-fPIC` option
-to use it with python.
-
-## Building using setup.py
-
-If package installation is not possible or you want to compile with special
-compiler or special options, phono3py is built using setup.py. In this case,
-manual modification of `setup.py` may be needed.
-
-1. Download the latest source code at
-
-   https://pypi.python.org/pypi/phono3py
-
-2. and extract it:
-
-   ```
-   % tar xvfz phono3py-1.11.13.39.tar.gz
-   % cd phono3py-1.11.13.39
-   ```
-
-   The other option is using git to clone the phonopy repository from github:
-
-   ```
-   % git clone https://github.com/phonopy/phono3py.git
-   % cd phono3py
-   % git checkout master
-   ```
-
-3. Set up C-libraries for python C-API and python codes. This can be done as
-   follows:
-
-   Run `setup.py` script via pip:
-
-   ```
-   % pip install -e .
-   ```
-
-4. Set :envvar:`$PATH` and :envvar:`$PYTHONPATH`
-
-   `PATH` and `PYTHONPATH` are set in the same way as phonopy, see
-   https://phonopy.github.io/phonopy/install.html#building-using-setup-py.
-
-(install_an_example)=
 
 ## Installation instruction of latest development version of phono3py
 
@@ -211,7 +115,7 @@ wrong python libraries can be imported.
    virtual environment.
 
    ```bash
-   % conda create -n phono3py python=3.10
+   % conda create -n phono3py python
    % conda activate phono3py
    ```
 
@@ -262,6 +166,51 @@ wrong python libraries can be imported.
    properly. So if you find this instruction doesn't work, it is very
    appreciated if letting us know it in the phonopy mailing list.
 
+(install_lapacke)=
+
+## Installation of LAPACKE
+
+LAPACK library is used in a few parts of the code to diagonalize matrices.
+LAPACK*E* is the C-wrapper of LAPACK and LAPACK relies on BLAS. Both
+single-thread or multithread BLAS can be used in phono3py. In the following,
+multiple different ways of installation of LAPACKE are explained.
+
+### OpenBLAS provided by conda
+
+The installation of LAPACKE is easy by conda. It is:
+
+```bash
+% conda install -c conda-forge openblas
+```
+
+### Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)
+
+LAPACKE (http://www.netlib.org/lapack/lapacke.html) can be installed from the
+Ubuntu package manager (`liblapacke` and `liblapacke-dev`):
+
+```bash
+% sudo apt-get install liblapack-dev liblapacke-dev
+```
+
+### Compiling Netlib LAPACKE
+
+The compilation procedure is found at the LAPACKE web site. After creating the
+LAPACKE library, `liblapacke.a` (or the dynamic link library), `setup.py` must
+be properly modified to link it. As an example, the procedure of compiling
+LAPACKE is shown below.
+
+```bash
+% tar xvfz lapack-3.6.0.tgz
+% cd lapack-3.6.0
+% cp make.inc.example make.inc
+% make lapackelib
+```
+
+BLAS, LAPACK, and LAPACKE, these all may have to be compiled with `-fPIC` option
+to use it with python.
+
+(install_an_example)=
+
 ## Multithreading and its controlling by C macro
 
 Phono3py uses multithreading concurrency in two ways. One is that written in the
@@ -279,6 +228,16 @@ be deactivated at the compilation time. This is achieved by setting the C macro
 multithreading of BLAS using the environment variables is not recommended
 because it is also used in the non-nested parts of the code and these
 multithreadings are unnecessary to be deactivated.
+
+### OpenMP library of gcc
+
+With system provided gcc, `libgomp1` may be necessary to enable OpenMP
+multithreading support. This library is probably installed already in your
+system. If you don't have it and you use Ubuntu linux, it is installed by:
+
+```bash
+% sudo apt-get install libgomp1
+```
 
 ## Trouble shooting
 
