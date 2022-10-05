@@ -34,10 +34,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.harmonic.force_constants import similarity_transformation
 from phonopy.phonon.degeneracy import degenerate_sets
 from phonopy.phonon.group_velocity import GroupVelocity
 from phonopy.units import VaspToTHz
+from phonopy.utils import similarity_transformation
 
 
 class GroupVelocityMatrix(GroupVelocity):

@@ -37,7 +37,6 @@ from abc import abstractmethod
 from typing import Type, Union, cast
 
 import numpy as np
-from phonopy.structure.tetrahedron_method import TetrahedronMethod
 from phonopy.units import THzToEv
 
 from phono3py.conductivity.base import ConductivityBase, ConductivityMixIn
@@ -53,6 +52,7 @@ from phono3py.conductivity.wigner import (
     get_conversion_factor_WTE,
 )
 from phono3py.file_IO import read_pp_from_hdf5
+from phono3py.other.tetrahedron_method import get_tetrahedra_relative_grid_address
 from phono3py.phonon3.imag_self_energy import ImagSelfEnergy, average_by_degeneracy
 from phono3py.phonon3.interaction import Interaction, all_bands_exist
 from phono3py.phonon.grid import get_grid_points_by_rotations
@@ -314,6 +314,7 @@ class ConductivityRTABase(ConductivityBase):
         class instance.
 
         """
+        num_band = len(self._pp.primitive) * 3
         band_indices = self._pp.band_indices
         (
             svecs,
@@ -327,7 +328,9 @@ class ConductivityRTABase(ConductivityBase):
         symmetrize_fc3_q = 0
 
         if None in self._sigmas:
-            thm = TetrahedronMethod(self._pp.bz_grid.microzone_lattice)
+            tetrahedra = get_tetrahedra_relative_grid_address(
+                self._pp.bz_grid.microzone_lattice
+            )
 
         # It is assumed that self._sigmas = [None].
         for j, sigma in enumerate(self._sigmas):
@@ -346,11 +349,21 @@ class ConductivityRTABase(ConductivityBase):
                 )
             import phono3py._phono3py as phono3c
 
+            # True: OpenMP over triplets
+            # False: OpenMP over bands
+            if self._pp.openmp_per_triplets is None:
+                if len(triplets_at_q) > num_band:
+                    openmp_per_triplets = True
+                else:
+                    openmp_per_triplets = False
+            else:
+                openmp_per_triplets = self._pp.openmp_per_triplets
+
             if sigma is None:
                 phono3c.pp_collision(
                     collisions,
                     np.array(
-                        np.dot(thm.get_tetrahedra(), self._pp.bz_grid.P.T),
+                        np.dot(tetrahedra, self._pp.bz_grid.P.T),
                         dtype="int_",
                         order="C",
                     ),
@@ -374,6 +387,7 @@ class ConductivityRTABase(ConductivityBase):
                     self._is_N_U * 1,
                     symmetrize_fc3_q,
                     self._pp.cutoff_frequency,
+                    openmp_per_triplets * 1,
                 )
             else:
                 if self._sigma_cutoff is None:
@@ -402,6 +416,7 @@ class ConductivityRTABase(ConductivityBase):
                     self._is_N_U * 1,
                     symmetrize_fc3_q,
                     self._pp.cutoff_frequency,
+                    openmp_per_triplets * 1,
                 )
             col_unit_conv = self._collision.unit_conversion_factor
             pp_unit_conv = self._pp.get_unit_conversion_factor()

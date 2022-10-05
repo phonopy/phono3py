@@ -34,10 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.structure.tetrahedron_method import (
-    TetrahedronMethod,
-    get_tetrahedra_relative_grid_address,
-)
+from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
 
 def get_unique_grid_points(grid_points, bz_grid):
@@ -175,6 +172,26 @@ def get_integration_weights(
         function,
     )
     return integration_weights
+
+
+def get_tetrahedra_relative_grid_address(microzone_lattice):
+    """Return relative (differences of) grid addresses from the central.
+
+    Parameter
+    ---------
+    microzone_lattice : ndarray or list of list
+        column vectors of parallel piped microzone lattice, i.e.,
+        microzone_lattice = np.linalg.inv(cell.get_cell()) / mesh
+
+    """
+    import phono3py._phono3py as phono3c
+
+    relative_grid_address = np.zeros((24, 4, 3), dtype="int_", order="C")
+    phono3c.tetrahedra_relative_grid_address(
+        relative_grid_address, np.array(microzone_lattice, dtype="double", order="C")
+    )
+
+    return relative_grid_address
 
 
 def _check_ndarray_state(array, dtype):

@@ -9,10 +9,10 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif(NOT CMAKE_BUILD_TYPE)
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "CMAKE_SYSTEM_PREFIX_PATH: ${CMAKE_SYSTEM_PREFIX_PATH}")
 
 include(GNUInstallDirs)
-
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 
 # Version numbers
@@ -24,24 +24,40 @@ set(phono3py_micro_version ${CMAKE_MATCH_3})
 set(serial "${phono3py_major_version}.${phono3py_minor_version}.${phono3py_micro_version}")
 set(soserial "1")
 
-find_package(OpenMP)
-if (OPENMP_FOUND)
-  set(openmp "-lgomp")
+if (USE_CONDA_PATH)
+  message(STATUS "$ENV{CONDA_PREFIX}")
+  set(CMAKE_MODULE_PATH $ENV{CONDA_PREFIX})
+  set(MY_INCLUDES $ENV{CONDA_PREFIX}/include ${PROJECT_SOURCE_DIR}/c)
+  link_directories($ENV{CONDA_PREFIX}/lib)
 else()
-  set(openmp "-lomp")
+  set(MY_INCLUDES ${PROJECT_SOURCE_DIR}/c)
 endif()
 
-include_directories($ENV{CONDA_PREFIX}/include)
-link_directories($ENV{CONDA_PREFIX}/lib)
-set(LAPACK_LIBRARIES "-llapack")
+find_package(OpenMP)
+if (OpenMP_FOUND)
+    message(STATUS "OpenMP libs: ${OpenMP_C_LIBRARIES}")
+    message(STATUS "OpenMP flags: ${OpenMP_C_FLAGS}")
+endif()
+
 if (PHONO3PY OR PHONONMOD)
-  if (USE_MKL)
-    message(STATUS "BLAS library: MKL")
-    set(BLAS_LIBRARIES "-lmkl_rt")
-    add_compile_definitions(MKL_LAPACKE)
-  else()
-    message(STATUS "BLAS library: OpenBLAS")
-    set(BLAS_LIBRARIES "-lopenblas")
+  find_package(BLAS REQUIRED)    # set BLAS_LIBRARIES
+  if (BLAS_FOUND)
+    message(STATUS "BLAS libs: ${BLAS_LIBRARIES}")
+    message(STATUS "BLAS flags: ${BLAS_LINKER_FLAGS}")
+  endif()
+  find_package(LAPACK REQUIRED)  # set LAPACK_LIBRARIES
+  if (LAPACK_FOUND)
+    message(STATUS "LAPACK libs: ${LAPACK_LIBRARIES}")
+    message(STATUS "LAPACK flags: ${LAPACK_LINKER_FLAGS}")
+  endif()
+endif()
+
+if (PHONO3PY OR PHONONMOD)
+  if (BLAS_LIBRARIES MATCHES "libmkl")
+    message(STATUS "MKL detected: Set C-macros MKL_LAPACKE MULTITHREADED_BLAS")
+  endif()
+  if (BLAS_LIBRARIES MATCHES "libopenblas")
+    message(STATUS "OpenBLAS detected: Set C-macro MULTITHREADED_BLAS")
   endif()
 endif()
 
@@ -50,7 +66,6 @@ endif()
 ############
 if (PHONO3PY)
   # Source code
-  include_directories("${PROJECT_SOURCE_DIR}/c")
   set(SOURCES_PHONO3PY
     ${PROJECT_SOURCE_DIR}/c/bzgrid.c
     ${PROJECT_SOURCE_DIR}/c/collision_matrix.c
@@ -73,18 +88,34 @@ if (PHONO3PY)
     ${PROJECT_SOURCE_DIR}/c/triplet_grid.c
     ${PROJECT_SOURCE_DIR}/c/triplet_iw.c)
 
-  # Shared library
-  add_library(ph3py SHARED ${SOURCES_PHONO3PY})
-
-  if(NOT MSVC)
-    target_link_libraries(ph3py m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${openmp})
+  if (BUILD_SHARED_LIBRARIES)
+    # Shared library
+    add_library(ph3py SHARED ${SOURCES_PHONO3PY})
+    target_link_libraries(ph3py m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${OpenMP_C_LIBRARIES})
+    target_include_directories(ph3py PRIVATE ${MY_INCLUDES})
+    target_compile_options(ph3py PRIVATE ${OpenMP_C_FLAGS})
+    if (BLAS_LIBRARIES MATCHES "libmkl")
+      target_compile_definitions(ph3py PRIVATE MKL_LAPACKE THM_EPSILON=1e-10)
+    endif()
+    if (BLAS_LIBRARIES MATCHES "libopenblas")
+      target_compile_definitions(ph3py PRIVATE THM_EPSILON=1e-10)
+    endif()
+    set_property(TARGET ph3py PROPERTY VERSION ${serial})
+    set_property(TARGET ph3py PROPERTY SOVERSION ${soserial})
+    install(TARGETS ph3py LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
   endif()
-  set_property(TARGET ph3py PROPERTY VERSION ${serial})
-  set_property(TARGET ph3py PROPERTY SOVERSION ${soserial})
-  install(TARGETS ph3py LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
   # Static link library
   add_library(ph3py_static STATIC ${SOURCES_PHONO3PY})
+  target_link_libraries(ph3py_static m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${OpenMP_C_LIBRARIES})
+  target_include_directories(ph3py_static PRIVATE ${MY_INCLUDES})
+  target_compile_options(ph3py_static PRIVATE ${OpenMP_C_FLAGS})
+  if (BLAS_LIBRARIES MATCHES "libmkl")
+    target_compile_definitions(ph3py_static PRIVATE MKL_LAPACKE THM_EPSILON=1e-10)
+  endif()
+  if (BLAS_LIBRARIES MATCHES "libopenblas")
+    target_compile_definitions(ph3py_static PRIVATE THM_EPSILON=1e-10)
+  endif()
   set_property(TARGET ph3py_static PROPERTY VERSION ${serial})
   set_property(TARGET ph3py_static PROPERTY SOVERSION ${soserial})
   set_property(TARGET ph3py_static PROPERTY OUTPUT_NAME ph3py)
@@ -105,18 +136,34 @@ if (PHONONMOD)
     ${PROJECT_SOURCE_DIR}/c/phonon.c
     ${PROJECT_SOURCE_DIR}/c/phononmod.c)
 
-  # Shared library
-  add_library(phmod SHARED ${SOURCES_PHONONMOD})
-
-  if(NOT MSVC)
-    target_link_libraries(phmod m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${openmp})
+  if (BUILD_SHARED_LIBRARIES)
+    # Shared library
+    add_library(phmod SHARED ${SOURCES_PHONONMOD})
+    target_link_libraries(phmod m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${OpenMP_C_LIBRARIES})
+    target_include_directories(phmod PRIVATE ${MY_INCLUDES})
+    target_compile_options(phmod PRIVATE ${OpenMP_C_FLAGS})
+    if (BLAS_LIBRARIES MATCHES "libmkl")
+      target_compile_definitions(phmod PRIVATE MKL_LAPACKE MULTITHREADED_BLAS)
+    endif()
+    if (BLAS_LIBRARIES MATCHES "libopenblas")
+      target_compile_definitions(phmod PRIVATE MULTITHREADED_BLAS)
+    endif()
+    set_property(TARGET phmod PROPERTY VERSION ${serial})
+    set_property(TARGET phmod PROPERTY SOVERSION ${soserial})
+    install(TARGETS phmod LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
   endif()
-  set_property(TARGET phmod PROPERTY VERSION ${serial})
-  set_property(TARGET phmod PROPERTY SOVERSION ${soserial})
-  install(TARGETS phmod LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
   # Static link library
   add_library(phmod_static STATIC ${SOURCES_PHONONMOD})
+  target_link_libraries(phmod_static m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${OpenMP_C_LIBRARIES})
+  target_include_directories(phmod_static PRIVATE ${MY_INCLUDES})
+  target_compile_options(phmod_static PRIVATE ${OpenMP_C_FLAGS})
+  if (BLAS_LIBRARIES MATCHES "libmkl")
+    target_compile_definitions(phmod_static PRIVATE MKL_LAPACKE MULTITHREADED_BLAS)
+  endif()
+  if (BLAS_LIBRARIES MATCHES "libopenblas")
+    target_compile_definitions(phmod_static PRIVATE MULTITHREADED_BLAS)
+  endif()
   set_property(TARGET phmod_static PROPERTY VERSION ${serial})
   set_property(TARGET phmod_static PROPERTY SOVERSION ${soserial})
   set_property(TARGET phmod_static PROPERTY OUTPUT_NAME phmod)
@@ -143,18 +190,23 @@ if (GRIDSYS)
     ${PROJECT_SOURCE_DIR}/c/triplet_grid.c
     ${PROJECT_SOURCE_DIR}/c/triplet_iw.c)
 
-  # Shared library
-  add_library(gridsysmod SHARED ${SOURCES_GRIDSYSMOD})
 
-  # if(NOT MSVC)
-  #   target_link_libraries(gridsysmod m ${openmp})
-  # endif()
-  set_property(TARGET gridsysmod PROPERTY VERSION ${serial})
-  set_property(TARGET gridsysmod PROPERTY SOVERSION ${soserial})
-  install(TARGETS gridsysmod LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  if (BUILD_SHARED_LIBRARIES)
+    # Shared library
+    add_library(gridsysmod SHARED ${SOURCES_GRIDSYSMOD})
+    target_link_libraries(gridsysmod m ${OpenMP_C_LIBRARIES})
+    target_include_directories(gridsysmod PRIVATE ${MY_INCLUDES})
+    target_compile_definitions(gridsysmod PRIVATE THM_EPSILON=1e-10)
+    set_property(TARGET gridsysmod PROPERTY VERSION ${serial})
+    set_property(TARGET gridsysmod PROPERTY SOVERSION ${soserial})
+    install(TARGETS gridsysmod LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+  endif()
 
   # Static link library
   add_library(gridsysmod_static STATIC ${SOURCES_GRIDSYSMOD})
+  target_link_libraries(gridsysmod_static m ${OpenMP_C_LIBRARIES})
+  target_include_directories(gridsysmod_static PRIVATE ${MY_INCLUDES})
+  target_compile_definitions(gridsysmod PRIVATE THM_EPSILON=1e-10)
   set_property(TARGET gridsysmod_static PROPERTY VERSION ${serial})
   set_property(TARGET gridsysmod_static PROPERTY SOVERSION ${soserial})
   set_property(TARGET gridsysmod_static PROPERTY OUTPUT_NAME gridsysmod)

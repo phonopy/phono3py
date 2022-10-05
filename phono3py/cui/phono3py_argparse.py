@@ -583,6 +583,13 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         help="Switch of LBTE pinv solver",
     )
     parser.add_argument(
+        "--pinv-method",
+        dest="pinv_method",
+        type=int,
+        default=None,
+        help="Switch of LBTE pinv method",
+    )
+    parser.add_argument(
         "--pm",
         dest="is_plusminus_displacements",
         action="store_true",

@@ -211,6 +211,9 @@ def write_FORCES_FC2(disp_dataset, forces_fc2=None, fp=None, filename="FORCES_FC
         for forces in force_set:
             w.write("%15.10f %15.10f %15.10f\n" % tuple(forces))
 
+    if fp is None:
+        w.close()
+
 
 def write_FORCES_FC3(disp_dataset, forces_fc3=None, fp=None, filename="FORCES_FC3"):
     """Write FORCES_FC3.
@@ -231,7 +234,7 @@ def write_FORCES_FC3(disp_dataset, forces_fc3=None, fp=None, filename="FORCES_FC
 
     write_FORCES_FC2(disp_dataset, forces_fc2=forces_fc3, fp=w)
 
-    for i, disp1 in enumerate(disp_dataset["first_atoms"]):
+    for disp1 in disp_dataset["first_atoms"]:
         atom1 = disp1["number"]
         for disp2 in disp1["second_atoms"]:
             atom2 = disp2["number"]
@@ -259,6 +262,9 @@ def write_FORCES_FC3(disp_dataset, forces_fc3=None, fp=None, filename="FORCES_FC
                 for j in range(natom):
                     w.write("%15.10f %15.10f %15.10f\n" % (0, 0, 0))
             count += 1
+
+    if fp is None:
+        w.close()
 
 
 def write_fc3_dat(force_constants_third, filename="fc3.dat"):
@@ -1091,7 +1097,6 @@ def read_gamma_from_hdf5(
     sigma=None,
     sigma_cutoff=None,
     filename=None,
-    verbose=True,
 ):
     """Read gamma from kappa-*.hdf5 file."""
     if band_index is None:
@@ -1108,9 +1113,7 @@ def read_gamma_from_hdf5(
     )
     full_filename = "kappa" + suffix + ".hdf5"
     if not os.path.exists(full_filename):
-        if verbose:
-            print("%s not found." % full_filename)
-        return None
+        return None, full_filename
 
     read_data = {}
 
@@ -1122,10 +1125,8 @@ def read_gamma_from_hdf5(
                     read_data[key] = f[key][:]
                 else:
                     read_data[key] = f[key][()]
-        if verbose:
-            print("Read data from %s." % full_filename)
 
-    return read_data
+    return read_data, full_filename
 
 
 def read_collision_from_hdf5(
@@ -1136,9 +1137,15 @@ def read_collision_from_hdf5(
     sigma=None,
     sigma_cutoff=None,
     filename=None,
+    only_temperatures=False,
     verbose=True,
 ):
-    """Read colliction matrix."""
+    """Read colliction matrix.
+
+    indices : array_like of int
+        Indices of temperatures.
+
+    """
     if band_index is None:
         band_indices = None
     else:
@@ -1156,6 +1163,11 @@ def read_collision_from_hdf5(
         if verbose:
             print("%s not found." % full_filename)
         return None
+
+    if only_temperatures:
+        with h5py.File(full_filename, "r") as f:
+            temperatures = np.array(f["temperature"][:], dtype="double")
+            return None, None, temperatures
 
     with h5py.File(full_filename, "r") as f:
         if indices == "all":
@@ -1200,8 +1212,6 @@ def read_collision_from_hdf5(
             print(text)
 
         return collision_matrix, gamma, temperatures
-
-    return None
 
 
 def write_pp_to_hdf5(

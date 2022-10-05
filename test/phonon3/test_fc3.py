@@ -1,18 +1,61 @@
 """Tests for fc3."""
 import numpy as np
+import pytest
 
-from phono3py.phonon3.fc3 import cutoff_fc3_by_zero
+from phono3py import Phono3py
+from phono3py.phonon3.fc3 import (
+    cutoff_fc3_by_zero,
+    get_fc3,
+    set_permutation_symmetry_fc3,
+    set_translational_invariance_fc3,
+)
 
 
-def test_cutoff_fc3(nacl_pbe_cutoff_fc3, nacl_pbe):
-    """Test for cutoff pair option."""
+def test_cutoff_fc3(nacl_pbe_cutoff_fc3: Phono3py, nacl_pbe: Phono3py):
+    """Test for cutoff-pair-distance option.
+
+    Only supercell forces that satisfy specified cutoff pairs are set in
+    dataset preparation.
+
+    """
     fc3_cut = nacl_pbe_cutoff_fc3.fc3
     fc3 = nacl_pbe.fc3
     abs_delta = np.abs(fc3_cut - fc3).sum()
-    assert np.abs(1894.2058837 - abs_delta) < 1e-3
+
+    assert fc3.shape == (64, 64, 64, 3, 3, 3)
+    assert np.abs(1901.0248613 - abs_delta) < 1e-3
 
 
-def test_cutoff_fc3_zero(nacl_pbe):
+def test_cutoff_fc3_all_forces(
+    nacl_pbe_cutoff_fc3: Phono3py, nacl_pbe_cutoff_fc3_all_forces: Phono3py
+):
+    """Test for cutoff-pair-distance option with all forces are set.
+
+    By definition, displacement datasets are kept unchanged when
+    cutoff-pair-distance is specified.
+
+    This test checkes only supercell forces that satisfy specified cutoff pairs
+    are chosen properly.
+
+    """
+    fc3_cut = nacl_pbe_cutoff_fc3.fc3
+    fc3_cut_all_forces = nacl_pbe_cutoff_fc3_all_forces.fc3
+    np.testing.assert_allclose(fc3_cut, fc3_cut_all_forces, atol=1e-8)
+
+
+def test_cutoff_fc3_compact_fc(
+    nacl_pbe_cutoff_fc3_compact_fc: Phono3py, nacl_pbe_cutoff_fc3: Phono3py
+):
+    """Test for cutoff-pair-distance option with compact-fc."""
+    fc3_cfc = nacl_pbe_cutoff_fc3_compact_fc.fc3
+    fc3_full = nacl_pbe_cutoff_fc3.fc3
+    p2s_map = nacl_pbe_cutoff_fc3.primitive.p2s_map
+    assert fc3_cfc.shape == (2, 64, 64, 3, 3, 3)
+    assert fc3_full.shape == (64, 64, 64, 3, 3, 3)
+    np.testing.assert_allclose(fc3_cfc, fc3_full[p2s_map], atol=1e-8)
+
+
+def test_cutoff_fc3_zero(nacl_pbe: Phono3py):
     """Test for abrupt cut of fc3 by distance."""
     ph = nacl_pbe
     fc3 = ph.fc3.copy()
@@ -21,7 +64,16 @@ def test_cutoff_fc3_zero(nacl_pbe):
     assert np.abs(5259.2234163 - abs_delta) < 1e-3
 
 
-def test_fc3(si_pbesol_111):
+def test_cutoff_fc3_zero_compact_fc(nacl_pbe_compact_fc: Phono3py):
+    """Test for abrupt cut of fc3 by distance."""
+    ph = nacl_pbe_compact_fc
+    fc3 = ph.fc3.copy()
+    cutoff_fc3_by_zero(fc3, ph.supercell, 5, p2s_map=ph.primitive.p2s_map)
+    abs_delta = np.abs(ph.fc3 - fc3).sum()
+    assert np.abs(164.359250 - abs_delta) < 1e-3
+
+
+def test_fc3(si_pbesol_111: Phono3py):
     """Test fc3 with Si PBEsol 1x1x1."""
     ph = si_pbesol_111
     fc3_ref = [
@@ -44,8 +96,44 @@ def test_fc3(si_pbesol_111):
     np.testing.assert_allclose(ph.fc3[0, 1, 7], fc3_ref, atol=1e-8, rtol=0)
 
 
+@pytest.mark.parametrize("pinv_solver", ["numpy", "lapacke"])
+def test_fc3_lapacke_solver(si_pbesol_111: Phono3py, pinv_solver: str):
+    """Test fc3 with Si PBEsol 1x1x1 using lapacke solver."""
+    ph = si_pbesol_111
+    _, fc3 = get_fc3(
+        ph.supercell,
+        ph.primitive,
+        ph.dataset,
+        ph.symmetry,
+        pinv_solver=pinv_solver,
+        verbose=True,
+    )
+    set_translational_invariance_fc3(fc3)
+    set_permutation_symmetry_fc3(fc3)
+
+    fc3_ref = [
+        [
+            [1.07250822e-01, 1.86302073e-17, -4.26452855e-18],
+            [8.96414569e-03, -1.43046911e-01, -1.38498937e-01],
+            [-8.96414569e-03, -1.38498937e-01, -1.43046911e-01],
+        ],
+        [
+            [-8.96414569e-03, -1.43046911e-01, -1.38498937e-01],
+            [-3.39457157e-02, -4.63315728e-17, -4.17779237e-17],
+            [-3.31746167e-01, -2.60025724e-02, -2.60025724e-02],
+        ],
+        [
+            [8.96414569e-03, -1.38498937e-01, -1.43046911e-01],
+            [-3.31746167e-01, 2.60025724e-02, 2.60025724e-02],
+            [-3.39457157e-02, 3.69351540e-17, 5.94504191e-18],
+        ],
+    ]
+
+    np.testing.assert_allclose(fc3[0, 1, 7], fc3_ref, atol=1e-8, rtol=0)
+
+
 # @pytest.mark.skipif(not FC_CALCULATOR_ALM_AVAILABLE, reason="not found ALM package")
-def test_fc3_alm(si_pbesol_111_alm):
+def test_fc3_alm(si_pbesol_111_alm: Phono3py):
     """Test fc3 with Si PBEsol 1x1x1 calcualted using ALM."""
     ph = si_pbesol_111_alm
     fc3_ref = [

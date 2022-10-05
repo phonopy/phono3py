@@ -46,6 +46,7 @@ from phonopy.harmonic.force_constants import (
 )
 from phonopy.interface.calculator import get_default_physical_units
 
+from phono3py import Phono3py
 from phono3py.cui.show_log import show_phono3py_force_constants_settings
 from phono3py.file_IO import (
     get_length_of_first_line,
@@ -67,7 +68,7 @@ from phono3py.phonon3.fc3 import (
 
 
 def create_phono3py_force_constants(
-    phono3py,
+    phono3py: Phono3py,
     settings,
     ph3py_yaml=None,
     input_filename=None,
@@ -112,6 +113,16 @@ def create_phono3py_force_constants(
                 settings.fc_calculator_options,
                 log_level,
             )
+
+        cutoff_distance = settings.cutoff_fc3_distance
+        if cutoff_distance is not None and cutoff_distance > 0:
+            if log_level:
+                print(
+                    "Cutting-off fc3 by zero (cut-off distance: %f)" % cutoff_distance
+                )
+            phono3py.cutoff_fc3_by_zero(cutoff_distance)
+
+        if not settings.read_fc3:
             if output_filename is None:
                 filename = "fc3.hdf5"
             else:
@@ -124,14 +135,6 @@ def create_phono3py_force_constants(
                 p2s_map=phono3py.primitive.p2s_map,
                 compression=settings.hdf5_compression,
             )
-
-        cutoff_distance = settings.cutoff_fc3_distance
-        if cutoff_distance is not None and cutoff_distance > 0:
-            if log_level:
-                print(
-                    "Cutting-off fc3 by zero (cut-off distance: %f)" % cutoff_distance
-                )
-            phono3py.cutoff_fc3_by_zero(cutoff_distance)
 
         if log_level:
             show_drift_fc3(phono3py.fc3, primitive=phono3py.primitive)

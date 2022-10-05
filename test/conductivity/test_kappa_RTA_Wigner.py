@@ -179,7 +179,7 @@ def test_kappa_RTA_si_nomeshsym(si_pbesol, si_pbesol_nomeshsym):
     si_pbesol_nomeshsym.fc3 = si_pbesol.fc3
     kappa_P_RTA, kappa_C = _get_kappa_RTA(si_pbesol_nomeshsym, [4, 4, 4])
     np.testing.assert_allclose(
-        si_pbesol_kappa_P_RTA_si_nomeshsym, kappa_P_RTA, atol=0.5
+        si_pbesol_kappa_P_RTA_si_nomeshsym, kappa_P_RTA, atol=1.0
     )
     np.testing.assert_allclose(si_pbesol_kappa_C_si_nomeshsym, kappa_C, atol=0.02)
 

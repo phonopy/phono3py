@@ -35,7 +35,7 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 
-#include "lapack_wrapper.h"
+// #include "lapack_wrapper.h"
 #include "phononmod.h"
 
 static PyObject *py_get_phonons_at_gridpoints(PyObject *self, PyObject *args);
@@ -139,7 +139,7 @@ static PyObject *py_get_phonons_at_gridpoints(PyObject *self, PyObject *args) {
     double(*dielectric)[3];
     double *q_dir;
     double *freqs;
-    lapack_complex_double *eigvecs;
+    _lapack_complex_double *eigvecs;
     char *phonon_done;
     long *grid_points;
     long(*grid_address)[3];
@@ -152,7 +152,7 @@ static PyObject *py_get_phonons_at_gridpoints(PyObject *self, PyObject *args) {
     long *p2s_fc2;
     long *s2p_fc2;
     double(*rec_lat)[3];
-    double *dd_q0;
+    double(*dd_q0)[2];
     double(*G_list)[3];
     long num_patom, num_satom, num_phonons, num_grid_points, num_G_points;
 
@@ -168,7 +168,7 @@ static PyObject *py_get_phonons_at_gridpoints(PyObject *self, PyObject *args) {
     }
 
     freqs = (double *)PyArray_DATA(py_frequencies);
-    eigvecs = (lapack_complex_double *)PyArray_DATA(py_eigenvectors);
+    eigvecs = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
     phonon_done = (char *)PyArray_DATA(py_phonon_done);
     grid_points = (long *)PyArray_DATA(py_grid_points);
     grid_address = (long(*)[3])PyArray_DATA(py_grid_address);
@@ -206,7 +206,7 @@ static PyObject *py_get_phonons_at_gridpoints(PyObject *self, PyObject *args) {
     if ((PyObject *)py_dd_q0 == Py_None) {
         dd_q0 = NULL;
     } else {
-        dd_q0 = (double *)PyArray_DATA(py_dd_q0);
+        dd_q0 = (double(*)[2])PyArray_DATA(py_dd_q0);
     }
     if ((PyObject *)py_G_list == Py_None) {
         G_list = NULL;

@@ -35,7 +35,7 @@
 
 import copy
 import sys
-from typing import Optional
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 from phonopy.cui.collect_cell_info import collect_cell_info
@@ -355,7 +355,12 @@ def create_FORCE_SETS_from_FORCES_FCx_then_exit(
     sys.exit(0)
 
 
-def create_FORCES_FC3_and_FORCES_FC2_then_exit(settings, input_filename, log_level):
+def create_FORCES_FC3_and_FORCES_FC2_then_exit(
+    settings,
+    input_filename: Optional[str],
+    cell_filename: Optional[str],
+    log_level: Union[bool, int],
+):
     """Create FORCES_FC3 and FORCES_FC2 from files."""
     interface_mode = settings.calculator
     ph3py_yaml = None
@@ -368,19 +373,20 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(settings, input_filename, log_lev
             disp_fc3_filename = "disp_fc3.yaml"
         else:
             disp_fc3_filename = "disp_fc3." + input_filename + ".yaml"
-        disp_filenames = files_exist(
-            ["phono3py_disp.yaml", disp_fc3_filename], log_level, is_any=True
-        )
+        disp_filename_candidates = ["phono3py_disp.yaml", disp_fc3_filename]
+        if cell_filename is not None:
+            disp_filename_candidates.insert(0, cell_filename)
+        disp_filenames = files_exist(disp_filename_candidates, log_level, is_any=True)
         disp_filename = disp_filenames[0]
-        if "phono3py_disp.yaml" in disp_filename:
+        if disp_filename == disp_fc3_filename:
+            file_exists(disp_filename, log_level)
+            disp_dataset = parse_disp_fc3_yaml(filename=disp_filename)
+        else:
             ph3py_yaml = Phono3pyYaml()
             ph3py_yaml.read(disp_filename)
             if ph3py_yaml.calculator is not None:
                 interface_mode = ph3py_yaml.calculator  # overwrite
             disp_dataset = ph3py_yaml.dataset
-        else:
-            file_exists(disp_filename, log_level)
-            disp_dataset = parse_disp_fc3_yaml(filename=disp_filename)
 
         if log_level:
             print("")
@@ -458,23 +464,23 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(settings, input_filename, log_lev
             disp_fc2_filename = "disp_fc2.yaml"
         else:
             disp_fc2_filename = "disp_fc2." + input_filename + ".yaml"
+        disp_filename_candidates = ["phono3py_disp.yaml", disp_fc2_filename]
+        if cell_filename is not None:
+            disp_filename_candidates.insert(0, cell_filename)
+        disp_filenames = files_exist(disp_filename_candidates, log_level, is_any=True)
+        disp_filename = disp_filenames[0]
 
-        disp_filenames = files_exist(
-            ["phono3py_disp.yaml", disp_fc2_filename], log_level, is_any=True
-        )
-        if "phono3py_disp.yaml" in disp_filenames[0]:
+        if disp_filename == disp_fc2_filename:
+            file_exists(disp_filename, log_level)
+            disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
+        else:
             # ph3py_yaml is not None, phono3py_disp.yaml is already read.
             if ph3py_yaml is None:
-                disp_filename = disp_filenames[0]
                 ph3py_yaml = Phono3pyYaml()
                 ph3py_yaml.read(disp_filename)
                 if ph3py_yaml.calculator is not None:
                     interface_mode = ph3py_yaml.calculator  # overwrite
             disp_dataset = ph3py_yaml.phonon_dataset
-        else:
-            disp_filename = disp_filenames[0]
-            file_exists(disp_filename, log_level)
-            disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
 
         if log_level:
             print('Displacement dataset was read from "%s".' % disp_filename)
@@ -677,7 +683,9 @@ def check_supercell_in_yaml(cell_info, ph3, distance_to_A, log_level):
                 sys.exit(1)
 
 
-def init_phono3py(settings, cell_info, interface_mode, symprec, log_level):
+def init_phono3py(
+    settings, cell_info, interface_mode, symprec, log_level
+) -> Tuple[Phono3py, Dict]:
     """Initialize phono3py and update settings by default values."""
     physical_units = get_default_physical_units(interface_mode)
     distance_to_A = physical_units["distance_to_A"]
@@ -742,7 +750,7 @@ def grid_addresses_to_grid_points(grid_addresses, bz_grid):
 
 
 def store_force_constants(
-    phono3py,
+    phono3py: Phono3py,
     settings,
     ph3py_yaml,
     input_filename,
@@ -776,6 +784,14 @@ def store_force_constants(
         if phono3py.fc3 is None or phono3py.fc2 is None:
             print_error()
             sys.exit(1)
+
+        cutoff_distance = settings.cutoff_fc3_distance
+        if cutoff_distance is not None and cutoff_distance > 0:
+            if log_level:
+                print(
+                    "Cutting-off fc3 by zero (cut-off distance: %f)" % cutoff_distance
+                )
+            phono3py.cutoff_fc3_by_zero(cutoff_distance)
 
         if not read_fc["fc3"]:
             write_fc3_to_hdf5(
@@ -1027,9 +1043,9 @@ def init_phph_interaction(
 
 def main(**argparse_control):
     """Phono3py main part of command line interface."""
-    # import warnings
+    import warnings
 
-    # warnings.simplefilter("error")
+    warnings.simplefilter("error")
     load_phono3py_yaml = argparse_control.get("load_phono3py_yaml", False)
 
     args, log_level = start_phono3py(**argparse_control)
@@ -1066,7 +1082,9 @@ def main(**argparse_control):
     ####################################
     # Create FORCES_FC3 and FORCES_FC2 #
     ####################################
-    create_FORCES_FC3_and_FORCES_FC2_then_exit(settings, input_filename, log_level)
+    create_FORCES_FC3_and_FORCES_FC2_then_exit(
+        settings, input_filename, cell_filename, log_level
+    )
 
     ###########################################################
     # Symmetry tolerance. Distance unit depends on interface. #
@@ -1375,6 +1393,7 @@ def main(**argparse_control):
             is_full_pp=settings.is_full_pp,
             pinv_cutoff=settings.pinv_cutoff,
             pinv_solver=settings.pinv_solver,
+            pinv_method=settings.pinv_method,
             write_gamma=settings.write_gamma,
             read_gamma=settings.read_gamma,
             write_kappa=True,

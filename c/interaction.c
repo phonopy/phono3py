@@ -71,18 +71,15 @@ static void real_to_normal_sym_q(
     const long openmp_at_bands);
 
 /* fc3_normal_squared[num_triplets, num_band0, num_band, num_band] */
-void itr_get_interaction(Darray *fc3_normal_squared, const char *g_zero,
-                         const Darray *frequencies,
-                         const lapack_complex_double *eigenvectors,
-                         const long (*triplets)[3], const long num_triplets,
-                         const ConstBZGrid *bzgrid, const double *fc3,
-                         const long is_compact_fc3, const double (*svecs)[3],
-                         const long multi_dims[2],
-                         const long (*multiplicity)[2], const double *masses,
-                         const long *p2s_map, const long *s2p_map,
-                         const long *band_indices, const long symmetrize_fc3_q,
-                         const double cutoff_frequency) {
-    long openmp_per_triplets;
+void itr_get_interaction(
+    Darray *fc3_normal_squared, const char *g_zero, const Darray *frequencies,
+    const lapack_complex_double *eigenvectors, const long (*triplets)[3],
+    const long num_triplets, const ConstBZGrid *bzgrid, const double *fc3,
+    const long is_compact_fc3, const double (*svecs)[3],
+    const long multi_dims[2], const long (*multiplicity)[2],
+    const double *masses, const long *p2s_map, const long *s2p_map,
+    const long *band_indices, const long symmetrize_fc3_q,
+    const double cutoff_frequency, const long openmp_per_triplets) {
     long(*g_pos)[4];
     long i;
     long num_band, num_band0, num_band_prod, num_g_pos;
@@ -92,12 +89,6 @@ void itr_get_interaction(Darray *fc3_normal_squared, const char *g_zero,
     num_band0 = fc3_normal_squared->dims[1];
     num_band = frequencies->dims[1];
     num_band_prod = num_band0 * num_band * num_band;
-
-    if (num_triplets > num_band) {
-        openmp_per_triplets = 1;
-    } else {
-        openmp_per_triplets = 0;
-    }
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(guided) private( \

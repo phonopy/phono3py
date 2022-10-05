@@ -2,6 +2,12 @@
 
 # Change Log
 
+## May-28-2022: Version 2.4.0
+
+- Maintenance release to follow the change of phonopy at v2.16.
+- Installation procedure from source code is changed. See
+  {ref}`install_from_source_code`.
+
 ## May-28-2022: Version 2.3.2
 
 - Fix `--cf2` command.

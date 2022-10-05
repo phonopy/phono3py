@@ -1,10 +1,12 @@
 """Pytest conftest.py."""
 import os
 
+import numpy as np
 import phonopy
 import pytest
 from phonopy import Phonopy
 from phonopy.interface.phonopy_yaml import read_cell_yaml
+from phonopy.structure.atoms import PhonopyAtoms
 
 import phono3py
 
@@ -23,9 +25,26 @@ def pytest_addoption(parser):
 
 
 @pytest.fixture(scope="session")
-def agno2_cell():
+def agno2_cell() -> PhonopyAtoms:
     """Return AgNO2 cell (Imm2)."""
     cell = read_cell_yaml(os.path.join(current_dir, "AgNO2_cell.yaml"))
+    return cell
+
+
+@pytest.fixture(scope="session")
+def aln_cell() -> PhonopyAtoms:
+    """Return AlN cell (P6_3mc)."""
+    a = 3.111
+    c = 4.978
+    lattice = [[a, 0, 0], [-a / 2, a * np.sqrt(3) / 2, 0], [0, 0, c]]
+    symbols = ["Al", "Al", "N", "N"]
+    positions = [
+        [1.0 / 3, 2.0 / 3, 0.0009488200000000],
+        [2.0 / 3, 1.0 / 3, 0.5009488200000001],
+        [1.0 / 3, 2.0 / 3, 0.6190511800000000],
+        [2.0 / 3, 1.0 / 3, 0.1190511800000000],
+    ]
+    cell = PhonopyAtoms(cell=lattice, symbols=symbols, scaled_positions=positions)
     return cell
 
 
@@ -193,7 +212,7 @@ def nacl_pbe(request):
     """Return Phono3py instance of NaCl 2x2x2.
 
     * with symmetry
-    * compact fc
+    * full fc
 
     """
     yaml_filename = os.path.join(current_dir, "phono3py_params_NaCl222.yaml.xz")
@@ -207,8 +226,27 @@ def nacl_pbe(request):
 
 
 @pytest.fixture(scope="session")
-def nacl_pbe_cutoff_fc3(request):
+def nacl_pbe_compact_fc(request):
     """Return Phono3py instance of NaCl 2x2x2.
+
+    * with symmetry
+    * compact fc
+
+    """
+    yaml_filename = os.path.join(current_dir, "phono3py_params_NaCl222.yaml.xz")
+    enable_v2 = request.config.getoption("--v1")
+    return phono3py.load(
+        yaml_filename,
+        store_dense_gp_map=enable_v2,
+        store_dense_svecs=enable_v2,
+        is_compact_fc=True,
+        log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
+def nacl_pbe_cutoff_fc3(request):
+    """Return Phono3py instance of NaCl 2x2x2 with cutoff-pair-distance.
 
     * cutoff pair with 5
 
@@ -234,7 +272,57 @@ def nacl_pbe_cutoff_fc3(request):
             second_atoms["forces"] = forces[count]
             count += 1
     ph3.dataset = dataset
-    ph3.produce_fc3(symmetrize_fc3r=True)
+    ph3.produce_fc3()
+    # ph3.produce_fc3(symmetrize_fc3r=True)
+    return ph3
+
+
+@pytest.fixture(scope="session")
+def nacl_pbe_cutoff_fc3_all_forces(request):
+    """Return Phono3py instance of NaCl 2x2x2 with cutoff-pair-distance.
+
+    * cutoff pair with 5
+    * All forces are set.
+
+    """
+    yaml_filename = os.path.join(current_dir, "phono3py_params_NaCl222.yaml.xz")
+    enable_v2 = request.config.getoption("--v1")
+    ph3 = phono3py.load(
+        yaml_filename,
+        store_dense_gp_map=enable_v2,
+        store_dense_svecs=enable_v2,
+        produce_fc=False,
+        log_level=1,
+    )
+    forces = ph3.forces
+    ph3.generate_displacements(cutoff_pair_distance=5)
+    ph3.forces = forces
+    ph3.produce_fc3()
+    return ph3
+
+
+@pytest.fixture(scope="session")
+def nacl_pbe_cutoff_fc3_compact_fc(request):
+    """Return Phono3py instance of NaCl 2x2x2 with cutoff-pair-distance.
+
+    * cutoff pair with 5
+    * All forces are set.
+    * Compact FC
+
+    """
+    yaml_filename = os.path.join(current_dir, "phono3py_params_NaCl222.yaml.xz")
+    enable_v2 = request.config.getoption("--v1")
+    ph3 = phono3py.load(
+        yaml_filename,
+        store_dense_gp_map=enable_v2,
+        store_dense_svecs=enable_v2,
+        produce_fc=False,
+        log_level=1,
+    )
+    forces = ph3.forces
+    ph3.generate_displacements(cutoff_pair_distance=5)
+    ph3.forces = forces
+    ph3.produce_fc3(is_compact_fc=True)
     return ph3
 
 

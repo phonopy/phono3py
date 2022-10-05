@@ -59,4 +59,7 @@ int phonopy_dsyev(double *data, double *eigvals, const int size,
 lapack_complex_double phonoc_complex_prod(const lapack_complex_double a,
                                           const lapack_complex_double b);
 
+void pinv_from_eigensolution(double *data, const double *eigvals,
+                             const long size, const double cutoff,
+                             const long pinv_method);
 #endif
