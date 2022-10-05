@@ -8,36 +8,42 @@ on:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    # Use conda-incubator/setup-miniconda for precise control of conda infrastructure
+    - uses: conda-incubator/setup-miniconda@v2
       with:
+        auto-update-conda: true
+        channels: conda-forge
+        channel-priority: strict
         python-version: ${{ matrix.python-version }}
-    - name: Add conda to system path
+    - name: Install dependent packages
       run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        echo $CONDA/bin >> $GITHUB_PATH
-    - name: Install dependencies
+        conda activate test
+        conda install --yes python=${{ matrix.python-version }}
+        conda install --yes matplotlib-base pyyaml "libblas=*=*openblas" openblas h5py scipy pytest codecov pytest-cov spglib alm cmake c-compiler
+    - name: Install phonopy
       run: |
-        conda install --yes -c conda-forge python=${{ matrix.python-version }}
-        conda install --yes -c conda-forge matplotlib-base pyyaml openblas gcc_linux-64 h5py scipy pytest codecov pytest-cov spglib alm
-        pip install https://github.com/phonopy/phonopy/archive/rc.zip --user
-    - name: Set up phono3py
+        conda activate test
+        git clone --depth 1 https://github.com/phonopy/phonopy.git
+        cd phonopy
+        git checkout rc
+        pip install -e . -vvv
+        cd ..
+    - name: Install phono3py
       run: |
-        export CONDA_PREFIX=$CONDA
-        echo "[phono3py]" > site.cfg
-        echo "extra_compile_args = -fopenmp" >> site.cfg
-        echo "extra_link_args = -lgomp" >> site.cfg
-        python setup.py build
-        pip install -e .
-    - name: Test with pytest
+        conda activate test
+        pip install -e . -vvv
+    - name: Run pytest
       run: |
-        pytest --cov=./ --cov-report=xml
+        pytest --cov=./ --cov-report=xml test
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
       with:
