@@ -2,7 +2,11 @@
 
 # Change Log
 
-## May-28-2022: Version 2.4.0
+## Oct-6-2022: Version 2.4.1
+
+- Release for pypi packaging
+
+## Oct-5-2022: Version 2.4.0
 
 - Maintenance release to follow the change of phonopy at v2.16.
 - Installation procedure from source code is changed. See
