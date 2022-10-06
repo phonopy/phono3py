@@ -43,7 +43,7 @@ system, this automatic search is invoked as default. For the installation with
 custom configurations without using cmake, the environment variable
 `PHONO3PY_USE_CMAKE=false` has to be set.
 
-(install_with_cmake)
+(install_with_cmake)=
 ### Build with automatic search of library configurations by cmake
 
 With installed cmake and required libraries on the system, cmake tries to find
@@ -56,7 +56,7 @@ See an example at {ref}`install_an_example`. In the standard output, flags and
 libraries found by cmake are shown. Please carefully check if those
 configurations are expected ones or not.
 
-(install_custom)
+(install_custom)=
 ### Build with custom library configurations by `site.cfg` file
 
 Custom installation is achieved by creating `site.cfg` file on the same
