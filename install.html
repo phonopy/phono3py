@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Installation &#8212; Phono3py v.2.4.0</title>
+    <title>Installation &#8212; Phono3py v.2.4.1</title>
     
   <!-- Loaded before other Sphinx assets -->
   <link href="_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
@@ -72,7 +72,7 @@
       
       
       
-      <h1 class="site-logo" id="site-title">Phono3py v.2.4.0</h1>
+      <h1 class="site-logo" id="site-title">Phono3py v.2.4.1</h1>
       
     </a>
 </div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
@@ -341,13 +341,13 @@ title="Print to PDF"
   </a>
   <ul class="nav section-nav flex-column">
    <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#automatic-required-library-search-by-cmake">
-     Automatic required library search by cmake
+    <a class="reference internal nav-link" href="#build-with-automatic-search-of-library-configurations-by-cmake">
+     Build with automatic search of library configurations by cmake
     </a>
    </li>
    <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#custom-installation-with-site-cfg-file">
-     Custom installation with
+    <a class="reference internal nav-link" href="#build-with-custom-library-configurations-by-site-cfg-file">
+     Build with custom library configurations by
      <code class="docutils literal notranslate">
       <span class="pre">
        site.cfg
@@ -432,13 +432,13 @@ title="Print to PDF"
   </a>
   <ul class="nav section-nav flex-column">
    <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#automatic-required-library-search-by-cmake">
-     Automatic required library search by cmake
+    <a class="reference internal nav-link" href="#build-with-automatic-search-of-library-configurations-by-cmake">
+     Build with automatic search of library configurations by cmake
     </a>
    </li>
    <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#custom-installation-with-site-cfg-file">
-     Custom installation with
+    <a class="reference internal nav-link" href="#build-with-custom-library-configurations-by-site-cfg-file">
+     Build with custom library configurations by
      <code class="docutils literal notranslate">
       <span class="pre">
        site.cfg
@@ -511,33 +511,14 @@ by using the phono3py conda package. Installation of phonopy before the
 installation of phono3py is required. See how to install phonopy at
 <a class="reference external" href="https://phonopy.github.io/phonopy/install.html">https://phonopy.github.io/phonopy/install.html</a>. Phono3py relies on phonopy, so
 please use the latest release of phonopy when installing phono3py.</p>
-<div class="contents local topic" id="contents">
-<ul class="simple">
-<li><p><a class="reference internal" href="#installation-using-conda" id="id1">Installation using conda</a></p></li>
-<li><p><a class="reference internal" href="#installation-from-source-code" id="id2">Installation from source code</a></p>
-<ul>
-<li><p><a class="reference internal" href="#automatic-required-library-search-by-cmake" id="id3">Automatic required library search by cmake</a></p></li>
-<li><p><a class="reference internal" href="#custom-installation-with-site-cfg-file" id="id4">Custom installation with <code class="docutils literal notranslate"><span class="pre">site.cfg</span></code> file</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#installation-instruction-of-latest-development-version-of-phono3py" id="id5">Installation instruction of latest development version of phono3py</a></p></li>
-<li><p><a class="reference internal" href="#installation-of-lapacke" id="id6">Installation of LAPACKE</a></p>
-<ul>
-<li><p><a class="reference internal" href="#openblas-provided-by-conda" id="id7">OpenBLAS provided by conda</a></p></li>
-<li><p><a class="reference internal" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas" id="id8">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a></p></li>
-<li><p><a class="reference internal" href="#compiling-netlib-lapacke" id="id9">Compiling Netlib LAPACKE</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#multithreading-and-its-controlling-by-c-macro" id="id10">Multithreading and its controlling by C macro</a></p>
-<ul>
-<li><p><a class="reference internal" href="#openmp-library-of-gcc" id="id11">OpenMP library of gcc</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#trouble-shooting" id="id12">Trouble shooting</a></p></li>
-</ul>
-</div>
+<!--
+```{contents}
+:depth: 3
+:local:
+```
+-->
 <div class="section" id="installation-using-conda">
-<h2><a class="toc-backref" href="#id1">Installation using conda</a><a class="headerlink" href="#installation-using-conda" title="Permalink to this headline">#</a></h2>
+<h2>Installation using conda<a class="headerlink" href="#installation-using-conda" title="Permalink to this headline">#</a></h2>
 <p>Using conda is the easiest way for installation of phono3py for linux and macOS.
 These packages are made and maintained by Jan Janssen. The installation is
 simply done by:</p>
@@ -547,29 +528,50 @@ simply done by:</p>
 <p>All dependent packages should be installed.</p>
 </div>
 <div class="section" id="installation-from-source-code">
-<span id="install-from-source-code"></span><h2><a class="toc-backref" href="#id2">Installation from source code</a><a class="headerlink" href="#installation-from-source-code" title="Permalink to this headline">#</a></h2>
+<span id="install-from-source-code"></span><h2>Installation from source code<a class="headerlink" href="#installation-from-source-code" title="Permalink to this headline">#</a></h2>
 <p>When installing phono3py using <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> from the source code, a few libraries
 are required before running <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> script.</p>
-<p>For phono3py, OpenMP library is necessary for the multithreding support. In
-additon, BLAS, LAPACK, and LAPACKE are also needed. These packages may be
-installed by the package manager of each OS or conda environment.</p>
-<div class="section" id="automatic-required-library-search-by-cmake">
-<h3><a class="toc-backref" href="#id3">Automatic required library search by cmake</a><a class="headerlink" href="#automatic-required-library-search-by-cmake" title="Permalink to this headline">#</a></h3>
-<p>With installed cmake on the system, required libraries may be found
-automatically using cmake. See <a class="reference internal" href="#install-an-example"><span class="std std-ref">Multithreading and its controlling by C macro</span></a>.</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#install-lapacke"><span class="std std-ref">Linear algebra library</span></a>: BLAS, LAPACK, and LAPACKE</p></li>
+<li><p><a class="reference internal" href="#install-openmp"><span class="std std-ref">OpenMP library</span></a>: For the multithreding support.</p></li>
+</ul>
+<p>These packages may be installed by the package manager of OS (e.g. <code class="docutils literal notranslate"><span class="pre">apt</span></code>) or
+conda environment. Automatic search of required libraries and flags that are
+already on the system is performed by cmake. If cmake is installed on the
+system, this automatic search is invoked as default. For the installation with
+custom configurations without using cmake, the environment variable
+<code class="docutils literal notranslate"><span class="pre">PHONO3PY_USE_CMAKE=false</span></code> has to be set.</p>
+<div class="section" id="build-with-automatic-search-of-library-configurations-by-cmake">
+<span id="install-with-cmake"></span><h3>Build with automatic search of library configurations by cmake<a class="headerlink" href="#build-with-automatic-search-of-library-configurations-by-cmake" title="Permalink to this headline">#</a></h3>
+<p>With installed cmake and required libraries on the system, cmake tries to find
+libraries to be linked and the compiler flags that are required during the build.
+This phono3py build can be launched by</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span> <span class="o">-</span><span class="n">vvv</span>
+</pre></div>
 </div>
-<div class="section" id="custom-installation-with-site-cfg-file">
-<h3><a class="toc-backref" href="#id4">Custom installation with <code class="docutils literal notranslate"><span class="pre">site.cfg</span></code> file</a><a class="headerlink" href="#custom-installation-with-site-cfg-file" title="Permalink to this headline">#</a></h3>
+<p>See an example at <a class="reference internal" href="#install-an-example"><span class="std std-ref">Installation instruction of latest development version of phono3py</span></a>. In the standard output, flags and
+libraries found by cmake are shown. Please carefully check if those
+configurations are expected ones or not.</p>
+</div>
+<div class="section" id="build-with-custom-library-configurations-by-site-cfg-file">
+<span id="install-custom"></span><h3>Build with custom library configurations by <code class="docutils literal notranslate"><span class="pre">site.cfg</span></code> file<a class="headerlink" href="#build-with-custom-library-configurations-by-site-cfg-file" title="Permalink to this headline">#</a></h3>
 <p>Custom installation is achieved by creating <code class="docutils literal notranslate"><span class="pre">site.cfg</span></code> file on the same
-directory as <code class="docutils literal notranslate"><span class="pre">setup.py</span></code>. Users will customize flags and additional libraries by
-adding a <code class="docutils literal notranslate"><span class="pre">site.cfg</span></code>. In previous versions, <code class="docutils literal notranslate"><span class="pre">site.cfg</span></code> was processed by numpy,
+directory as <code class="docutils literal notranslate"><span class="pre">setup.py</span></code>. Users will write configurations of compiler flags and
+linked libraries in <code class="docutils literal notranslate"><span class="pre">site.cfg</span></code>. If <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> finds <code class="docutils literal notranslate"><span class="pre">site.cfg</span></code>, the
+configurations are used as the default configurations. If cmake is found in the
+system, cmake tries to find required libraries and found configurations are
+appended. To deactivate cmake’s library search, the environment variable
+<code class="docutils literal notranslate"><span class="pre">PHONO3PY_USE_CMAKE=false</span></code> has to be set before running the phono3py build:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">export</span> <span class="n">PHONO3PY_USE_CMAKE</span><span class="o">=</span><span class="n">false</span>
+</pre></div>
+</div>
+<p>In previous versions, <code class="docutils literal notranslate"><span class="pre">site.cfg</span></code> was processed by numpy,
 but from version 2.4.0, it is processed by script in <code class="docutils literal notranslate"><span class="pre">setup.py</span></code>.
 <code class="docutils literal notranslate"><span class="pre">extra_link_args</span></code>, <code class="docutils literal notranslate"><span class="pre">extra_compile_args</span></code>, <code class="docutils literal notranslate"><span class="pre">extra_objects</span></code>, and <code class="docutils literal notranslate"><span class="pre">include_dirs</span></code> can
 be specified. How they used is found at <a class="reference external" href="https://setuptools.pypa.io/en/latest/userguide/ext_modules.html#extension-api-reference">setuptools web
 site</a>.</p>
-<p>In most cases,
-users want to enable multithreading support with OpenMP. Its minimum setting
-with gcc as the compiler is:</p>
+<p>In most cases, users want to enable multithreading support with OpenMP. Its
+minimum setting with gcc as the compiler is:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">extra_compile_args</span> <span class="o">=</span> <span class="o">-</span><span class="n">fopenmp</span>
 </pre></div>
 </div>
@@ -594,7 +596,7 @@ Some examples are given below.</p>
 </div>
 </div>
 <div class="section" id="installation-instruction-of-latest-development-version-of-phono3py">
-<h2><a class="toc-backref" href="#id5">Installation instruction of latest development version of phono3py</a><a class="headerlink" href="#installation-instruction-of-latest-development-version-of-phono3py" title="Permalink to this headline">#</a></h2>
+<span id="install-an-example"></span><h2>Installation instruction of latest development version of phono3py<a class="headerlink" href="#installation-instruction-of-latest-development-version-of-phono3py" title="Permalink to this headline">#</a></h2>
 <p>When using conda, <code class="docutils literal notranslate"><span class="pre">PYTHONPATH</span></code> should not be set if possible because potentially
 wrong python libraries can be imported.</p>
 <ol class="arabic">
@@ -660,20 +662,20 @@ appreciated if letting us know it in the phonopy mailing list.</p>
 </ol>
 </div>
 <div class="section" id="installation-of-lapacke">
-<span id="install-lapacke"></span><h2><a class="toc-backref" href="#id6">Installation of LAPACKE</a><a class="headerlink" href="#installation-of-lapacke" title="Permalink to this headline">#</a></h2>
+<span id="install-lapacke"></span><h2>Installation of LAPACKE<a class="headerlink" href="#installation-of-lapacke" title="Permalink to this headline">#</a></h2>
 <p>LAPACK library is used in a few parts of the code to diagonalize matrices.
 LAPACK<em>E</em> is the C-wrapper of LAPACK and LAPACK relies on BLAS. Both
 single-thread or multithread BLAS can be used in phono3py. In the following,
 multiple different ways of installation of LAPACKE are explained.</p>
 <div class="section" id="openblas-provided-by-conda">
-<h3><a class="toc-backref" href="#id7">OpenBLAS provided by conda</a><a class="headerlink" href="#openblas-provided-by-conda" title="Permalink to this headline">#</a></h3>
+<h3>OpenBLAS provided by conda<a class="headerlink" href="#openblas-provided-by-conda" title="Permalink to this headline">#</a></h3>
 <p>The installation of LAPACKE is easy by conda. It is:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% conda install -c conda-forge openblas
 </pre></div>
 </div>
 </div>
 <div class="section" id="netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas">
-<h3><a class="toc-backref" href="#id8">Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)</a><a class="headerlink" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas" title="Permalink to this headline">#</a></h3>
+<h3>Netlib LAPACKE provided by Ubuntu package manager (with single-thread BLAS)<a class="headerlink" href="#netlib-lapacke-provided-by-ubuntu-package-manager-with-single-thread-blas" title="Permalink to this headline">#</a></h3>
 <p>LAPACKE (<a class="reference external" href="http://www.netlib.org/lapack/lapacke.html">http://www.netlib.org/lapack/lapacke.html</a>) can be installed from the
 Ubuntu package manager (<code class="docutils literal notranslate"><span class="pre">liblapacke</span></code> and <code class="docutils literal notranslate"><span class="pre">liblapacke-dev</span></code>):</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% sudo apt-get install liblapack-dev liblapacke-dev
@@ -681,7 +683,7 @@ Ubuntu package manager (<code class="docutils literal notranslate"><span class="
 </div>
 </div>
 <div class="section" id="compiling-netlib-lapacke">
-<h3><a class="toc-backref" href="#id9">Compiling Netlib LAPACKE</a><a class="headerlink" href="#compiling-netlib-lapacke" title="Permalink to this headline">#</a></h3>
+<h3>Compiling Netlib LAPACKE<a class="headerlink" href="#compiling-netlib-lapacke" title="Permalink to this headline">#</a></h3>
 <p>The compilation procedure is found at the LAPACKE web site. After creating the
 LAPACKE library, <code class="docutils literal notranslate"><span class="pre">liblapacke.a</span></code> (or the dynamic link library), <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> must
 be properly modified to link it. As an example, the procedure of compiling
@@ -697,7 +699,7 @@ to use it with python.</p>
 </div>
 </div>
 <div class="section" id="multithreading-and-its-controlling-by-c-macro">
-<span id="install-an-example"></span><h2><a class="toc-backref" href="#id10">Multithreading and its controlling by C macro</a><a class="headerlink" href="#multithreading-and-its-controlling-by-c-macro" title="Permalink to this headline">#</a></h2>
+<span id="install-openmp"></span><h2>Multithreading and its controlling by C macro<a class="headerlink" href="#multithreading-and-its-controlling-by-c-macro" title="Permalink to this headline">#</a></h2>
 <p>Phono3py uses multithreading concurrency in two ways. One is that written in the
 code with OpenMP <code class="docutils literal notranslate"><span class="pre">parallel</span> <span class="pre">for</span></code>. The other is achieved by using multithreaded
 BLAS. The BLAS multithreading is depending on which BLAS library is chosen by
@@ -714,7 +716,7 @@ multithreading of BLAS using the environment variables is not recommended
 because it is also used in the non-nested parts of the code and these
 multithreadings are unnecessary to be deactivated.</p>
 <div class="section" id="openmp-library-of-gcc">
-<h3><a class="toc-backref" href="#id11">OpenMP library of gcc</a><a class="headerlink" href="#openmp-library-of-gcc" title="Permalink to this headline">#</a></h3>
+<h3>OpenMP library of gcc<a class="headerlink" href="#openmp-library-of-gcc" title="Permalink to this headline">#</a></h3>
 <p>With system provided gcc, <code class="docutils literal notranslate"><span class="pre">libgomp1</span></code> may be necessary to enable OpenMP
 multithreading support. This library is probably installed already in your
 system. If you don’t have it and you use Ubuntu linux, it is installed by:</p>
@@ -724,7 +726,7 @@ system. If you don’t have it and you use Ubuntu linux, it is installed by:</p>
 </div>
 </div>
 <div class="section" id="trouble-shooting">
-<h2><a class="toc-backref" href="#id12">Trouble shooting</a><a class="headerlink" href="#trouble-shooting" title="Permalink to this headline">#</a></h2>
+<h2>Trouble shooting<a class="headerlink" href="#trouble-shooting" title="Permalink to this headline">#</a></h2>
 <ol class="arabic simple">
 <li><p>Phonopy version should be the latest to use the latest phono3py.</p></li>
 <li><p>There are other pitfalls, see
