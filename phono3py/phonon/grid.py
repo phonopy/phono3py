@@ -36,7 +36,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 from phonopy.structure.cells import (
@@ -136,7 +136,8 @@ class BZGrid:
         reciprocal_lattice=None,
         lattice=None,
         symmetry_dataset: Optional[dict] = None,
-        is_shift=None,
+        transformation_matrix: Optional[Union[list, np.ndarray]] = None,
+        is_shift: Optional[Union[list, np.ndarray]] = None,
         is_time_reversal: bool = True,
         use_grg: bool = False,
         force_SNF: bool = False,
@@ -146,40 +147,49 @@ class BZGrid:
         """Init method.
 
         mesh : array_like or float
-            Mesh numbers or length.
-            shape=(3,), dtype='int_'
+            Mesh numbers or length. shape=(3,), dtype='int_'
         reciprocal_lattice : array_like
-            Reciprocal primitive basis vectors given as column vectors
-            shape=(3, 3), dtype='double', order='C'
+            Reciprocal primitive basis vectors given as column vectors shape=(3,
+            3), dtype='double', order='C'
         lattice : array_like
-            Direct primitive basis vectors given as row vectors
-            shape=(3, 3), dtype='double', order='C'
+            Direct primitive basis vectors given as row vectors shape=(3, 3),
+            dtype='double', order='C'
         symmetry_dataset : dict, optional
             Symmetry dataset (Symmetry.dataset) searched for the primitive cell
             corresponding to ``reciprocal_lattice`` or ``lattice``.
+        transformation_matrix : array_like, optional
+            Transformation matrix equivalent to ``transformation_matrix`` or
+            spglib-dataset. This is only used when ``use_grg=True``. Default is
+            None.
         is_shift : array_like or None, optional
-            [0, 0, 0] gives Gamma center mesh and value 1 gives half mesh shift
-            along the basis vectors. Default is None.
-            dtype='int_', shape=(3,)
+            [0, 0, 0] (or [False, False, False]) gives Gamma center mesh and
+            value 1 (or True) gives half mesh shift along the basis vectors.
+            Default is None. dtype='int_', shape=(3,)
         is_time_reveral : bool, optional
-            Inversion symmetry is included in reciprocal point group.
-            Default is True.
+            Inversion symmetry is included in reciprocal point group. Default is
+            True.
         use_grg : bool, optional
-            Use generalized regular grid. Default is False.
+            Use generalized regular grid. Default is False. ``symmetry_dataset``
+            or ``transformation_matrix`` have to be specified when
+            ``use_grg=True``.
         force_SNF : bool, optional
-            Enforce Smith normal form even when grid lattice of GR-grid is the same as
-            the traditional grid lattice. Default is False.
+            Enforce Smith normal form even when grid lattice of GR-grid is the
+            same as the traditional grid lattice. Default is False.
         SNF_coordinates : str, optional
-            `reciprocal` or `direct`.
-            Space of coordinates to generate grid generating matrix either in direct
-            or reciprocal space. The default is `reciprocal`.
+            `reciprocal` or `direct`. Space of coordinates to generate grid
+            generating matrix either in direct or reciprocal space. The default
+            is `reciprocal`.
         store_dense_gp_map : bool, optional
             See the detail in the docstring of `_relocate_BZ_grid_address`.
             Default is True.
 
         """
         self._symmetry_dataset = symmetry_dataset
-        self._is_shift = is_shift
+        self._transformation_matrix = transformation_matrix
+        if is_shift is None:
+            self._is_shift = None
+        else:
+            self._is_shift = [v * 1 for v in is_shift]
         self._is_time_reversal = is_time_reversal
         self._store_dense_gp_map = store_dense_gp_map
         self._addresses = None
@@ -412,6 +422,7 @@ class BZGrid:
             mesh,
             self._lattice,
             symmetry_dataset=self._symmetry_dataset,
+            transformation_matrix=self._transformation_matrix,
             use_grg=use_grg,
             force_SNF=force_SNF,
             SNF_coordinates=SNF_coordinates,
@@ -518,6 +529,7 @@ class GridMatrix:
         mesh,
         lattice,
         symmetry_dataset: Optional[dict] = None,
+        transformation_matrix: Optional[Union[list, np.ndarray]] = None,
         use_grg: bool = True,
         force_SNF: bool = False,
         SNF_coordinates: str = "reciprocal",
@@ -525,39 +537,46 @@ class GridMatrix:
         """Init method.
 
         mesh : array_like or float
-            Mesh numbers or length.
-            With float number, either conventional or generalized regular grid is
-            computed depending on the given flags (`use_grg`, `force_SNF`).
-            Given ndarry with
-                shape=(3,), dtype='int_': conventional regular grid
-                shape=(3, 3), dtype='int_': generalized regular grid
+            Mesh numbers or length. With float number, either conventional or
+            generalized regular grid is computed depending on the given flags
+            (`use_grg`, `force_SNF`). Given ndarry with
+                shape=(3,), dtype='int_': conventional regular grid shape=(3,
+                3), dtype='int_': generalized regular grid
         lattice : array_like
             Primitive basis vectors in direct space given as row vectors.
             shape=(3, 3), dtype='double', order='C'
         symmetry_dataset : dict, optional
-            Symmetry dataset of spglib (Symmetry.dataset) of primitive cell
-            that has `lattice`. Default is None.
+            Symmetry dataset of spglib (Symmetry.dataset) of primitive cell that
+            has `lattice`. Default is None.
+        transformation_matrix : array_like, optional
+            Transformation matrix equivalent to ``transformation_matrix`` or
+            spglib-dataset. This is only used when ``use_grg=True``. Default is
+            None.
         use_grg : bool, optional
             Use generalized regular grid. Default is False.
         force_SNF : bool, optional
-            Enforce Smith normal form even when grid lattice of GR-grid is the same as
-            the traditional grid lattice. Default is False.
+            Enforce Smith normal form even when grid lattice of GR-grid is the
+            same as the traditional grid lattice. Default is False.
         SNF_coordinates : str, optional
-            `reciprocal` or `direct`.
-            Space of coordinates to generate grid generating matrix either in direct
-            or reciprocal space. The default is `reciprocal`.
+            `reciprocal` or `direct`. Space of coordinates to generate grid
+            generating matrix either in direct or reciprocal space. The default
+            is `reciprocal`.
 
         """
         self._mesh = mesh
         self._lattice = lattice
-        self._symmetry_dataset = symmetry_dataset
         self._grid_matrix = None
         self._D_diag = np.ones(3, dtype="int_")
         self._Q = np.eye(3, dtype="int_", order="C")
         self._P = np.eye(3, dtype="int_", order="C")
 
         self._set_mesh_numbers(
-            mesh, use_grg=use_grg, force_SNF=force_SNF, coordinates=SNF_coordinates
+            mesh,
+            use_grg=use_grg,
+            symmetry_dataset=symmetry_dataset,
+            transformation_matrix=transformation_matrix,
+            force_SNF=force_SNF,
+            coordinates=SNF_coordinates,
         )
 
     @property
@@ -603,7 +622,13 @@ class GridMatrix:
         return self._Q
 
     def _set_mesh_numbers(
-        self, mesh, use_grg=False, force_SNF=False, coordinates="reciprocal"
+        self,
+        mesh,
+        use_grg=False,
+        symmetry_dataset=None,
+        transformation_matrix=None,
+        force_SNF=False,
+        coordinates="reciprocal",
     ):
         """Set mesh numbers from array or float value.
 
@@ -639,27 +664,67 @@ class GridMatrix:
                 _use_grg = True
             fall_back = True
             if _use_grg:
-                if "international" in self._symmetry_dataset:
-                    if is_primitive_cell(self._symmetry_dataset["rotations"]):
-                        self._set_SNF(
-                            length=length,
-                            grid_matrix=grid_matrix,
-                            force_SNF=force_SNF,
-                            coordinates=coordinates,
+                if symmetry_dataset is None and transformation_matrix is None:
+                    msg = (
+                        "symmetry_dataset or transformation_matrix "
+                        "have to be specified."
+                    )
+                    raise RuntimeError(msg)
+                if symmetry_dataset is None:
+                    tmat_inv = np.linalg.inv(transformation_matrix)
+                    tmat_inv_int = np.rint(tmat_inv).astype(int)
+                    if (tmat_inv - tmat_inv_int > 1e-8).all():
+                        msg = (
+                            "Inverse of transformation matrix has to be an "
+                            "integer matrix."
                         )
-                        fall_back = False
-                    else:
-                        warnings.warn(
-                            "Non primitive cell input. Unable to use GR-grid.",
-                            RuntimeWarning,
+                        raise RuntimeError(msg)
+                    if determinant(tmat_inv_int) < 0:
+                        msg = "Determinant of transformation matrix has to be positive."
+                        raise RuntimeError(msg)
+                    if determinant(tmat_inv_int) < 1:
+                        msg = (
+                            "Determinant of inverse of transformation matrix has to "
+                            "be equal to or larger than 1."
                         )
+                        raise RuntimeError(msg)
+                    sym_dataset = {
+                        "rotations": np.eye(3, dtype="intc", order="C").reshape(
+                            1, 3, 3
+                        ),
+                        "transformation_matrix": transformation_matrix,
+                        "std_lattice": self._lattice,
+                        "std_types": np.array([1], dtype="intc"),
+                        "number": 1,
+                    }
+                else:
+                    sym_dataset = symmetry_dataset
+                if is_primitive_cell(sym_dataset["rotations"]):
+                    self._set_SNF(
+                        sym_dataset,
+                        length=length,
+                        grid_matrix=grid_matrix,
+                        force_SNF=force_SNF,
+                        coordinates=coordinates,
+                    )
+                    fall_back = False
+                else:
+                    warnings.warn(
+                        "Non primitive cell input. Unable to use GR-grid.",
+                        RuntimeWarning,
+                    )
             if fall_back:
                 self._D_diag = length2mesh(length, self._lattice)
         elif num_values == 3:
             self._D_diag = np.array(mesh, dtype="int_")
 
     def _set_SNF(
-        self, length=None, grid_matrix=None, force_SNF=False, coordinates="reciprocal"
+        self,
+        sym_dataset: dict,
+        length: Optional[float] = None,
+        grid_matrix=None,
+        force_SNF=False,
+        coordinates="reciprocal",
     ):
         """Calculate Smith normal form.
 
@@ -669,7 +734,9 @@ class GridMatrix:
 
         """
         if length is not None:
-            _grid_matrix = self._get_grid_matrix(length, coordinates=coordinates)
+            _grid_matrix = self._get_grid_matrix(
+                sym_dataset, length, coordinates=coordinates
+            )
         elif grid_matrix is not None:
             _grid_matrix = np.array(grid_matrix, dtype="int_", order="C")
 
@@ -686,7 +753,9 @@ class GridMatrix:
 
             self._grid_matrix = _grid_matrix
 
-    def _get_grid_matrix(self, length: float, coordinates: str = "reciprocal"):
+    def _get_grid_matrix(
+        self, sym_dataset: dict, length: float, coordinates: str = "reciprocal"
+    ):
         """Return grid matrix.
 
         Grid is generated by the distance `length`. `coordinates` is used eighter
@@ -705,7 +774,6 @@ class GridMatrix:
             `reciprocal` (default) or `direct`.
 
         """
-        sym_dataset = self._symmetry_dataset
         tmat = sym_dataset["transformation_matrix"]
         conv_lat = np.dot(np.linalg.inv(tmat).T, self._lattice)
 
