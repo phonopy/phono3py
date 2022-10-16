@@ -208,6 +208,91 @@ def si_pbesol_iterha_111():
 
 
 @pytest.fixture(scope="session")
+def si_pbesol_111_222_fd(request):
+    """Return Phono3py instance of Si 1x1x1.
+
+    * with symmetry
+    * full fc
+    * use alm if available on test side
+
+    """
+    yaml_filename = os.path.join(current_dir, "phono3py_params_Si-111-222.yaml")
+    enable_v2 = request.config.getoption("--v1")
+    return phono3py.load(
+        yaml_filename,
+        store_dense_gp_map=enable_v2,
+        store_dense_svecs=enable_v2,
+        log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
+def si_pbesol_111_222_alm_fd(request):
+    """Return Phono3py instance of Si 1x1x1.
+
+    * with symmetry
+    * full fc
+    * use alm for fc2 if available on test side
+
+    """
+    pytest.importorskip("alm")
+
+    yaml_filename = os.path.join(current_dir, "phono3py_params_Si-111-222.yaml")
+    enable_v2 = request.config.getoption("--v1")
+    return phono3py.load(
+        yaml_filename,
+        store_dense_gp_map=enable_v2,
+        store_dense_svecs=enable_v2,
+        fc_calculator="alm|",
+        log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
+def si_pbesol_111_222_alm(request):
+    """Return Phono3py instance of Si 1x1x1.
+
+    * with symmetry
+    * full fc
+    * use alm if available on test side
+
+    """
+    pytest.importorskip("alm")
+
+    yaml_filename = os.path.join(current_dir, "phono3py_params_Si-111-222.yaml")
+    enable_v2 = request.config.getoption("--v1")
+    return phono3py.load(
+        yaml_filename,
+        store_dense_gp_map=enable_v2,
+        store_dense_svecs=enable_v2,
+        fc_calculator="alm",
+        log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
+def si_pbesol_111_222_fd_alm(request):
+    """Return Phono3py instance of Si 1x1x1.
+
+    * with symmetry
+    * full fc
+    * use alm for fc3 if available on test side
+
+    """
+    pytest.importorskip("alm")
+
+    yaml_filename = os.path.join(current_dir, "phono3py_params_Si-111-222.yaml")
+    enable_v2 = request.config.getoption("--v1")
+    return phono3py.load(
+        yaml_filename,
+        store_dense_gp_map=enable_v2,
+        store_dense_svecs=enable_v2,
+        fc_calculator="|alm",
+        log_level=1,
+    )
+
+
+@pytest.fixture(scope="session")
 def nacl_pbe(request):
     """Return Phono3py instance of NaCl 2x2x2.
 

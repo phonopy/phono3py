@@ -1165,7 +1165,7 @@ def main(**argparse_control):
             )
 
     if log_level > 1:
-        show_phono3py_cells(phono3py, settings)
+        show_phono3py_cells(phono3py)
     elif log_level:
         print(
             "Use -v option to watch primitive cell, unit cell, "
