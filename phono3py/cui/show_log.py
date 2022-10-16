@@ -89,7 +89,7 @@ def show_general_settings(
             print("  %s" % v)
 
 
-def show_phono3py_cells(phono3py: Phono3py, settings):
+def show_phono3py_cells(phono3py: Phono3py):
     """Show crystal structures."""
     primitive = phono3py.primitive
     supercell = phono3py.supercell
@@ -100,7 +100,7 @@ def show_phono3py_cells(phono3py: Phono3py, settings):
     print_cell(primitive)
     print("-" * 32 + " supercell " + "-" * 33)
     print_cell(supercell, mapping=primitive.s2p_map)
-    if settings.phonon_supercell_matrix is not None:
+    if phono3py.phonon_supercell_matrix is not None:
         print("-" * 19 + " primitive cell for harmonic phonon " + "-" * 20)
         print_cell(phonon_primitive)
         print("-" * 21 + " supercell for harmonic phonon " + "-" * 22)
