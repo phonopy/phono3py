@@ -192,7 +192,7 @@ def create_phono3py_force_constants(
 
 
 def parse_forces(
-    phono3py,
+    phono3py: Phono3py,
     ph3py_yaml=None,
     cutoff_pair_distance=None,
     force_filename="FORCES_FC3",
@@ -226,6 +226,12 @@ def parse_forces(
             dataset = _dataset
 
     if dataset is None:
+        if disp_filename is None:
+            msg = (
+                "Displacement dataset corresponding to "
+                f'"{force_filename}" not found.'
+            )
+            raise RuntimeError(msg)
         # Displacement dataset is obtained from disp_filename.
         # can emit FileNotFoundError.
         dataset = _read_disp_fc_yaml(disp_filename, fc_type)
