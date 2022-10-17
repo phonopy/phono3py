@@ -93,6 +93,7 @@ static PyObject *py_diagonalize_collision_matrix(PyObject *self,
 static PyObject *py_pinv_from_eigensolution(PyObject *self, PyObject *args);
 static PyObject *py_get_default_colmat_solver(PyObject *self, PyObject *args);
 static PyObject *py_lapacke_pinv(PyObject *self, PyObject *args);
+static PyObject *py_get_omp_max_threads(PyObject *self, PyObject *args);
 
 static void show_colmat_info(const PyArrayObject *collision_matrix_py,
                              const long i_sigma, const long i_temp,
@@ -206,6 +207,9 @@ static PyMethodDef _phono3py_methods[] = {
      METH_VARARGS, "Return default collison matrix solver by integer value"},
     {"lapacke_pinv", (PyCFunction)py_lapacke_pinv, METH_VARARGS,
      "Pseudo inversion using lapacke."},
+    {"omp_max_threads", py_get_omp_max_threads, METH_VARARGS,
+     "Return openmp max number of threads. Return 0 unless openmp is "
+     "activated. "},
     {NULL, NULL, 0, NULL}};
 
 #if PY_MAJOR_VERSION >= 3
@@ -1791,6 +1795,10 @@ static PyObject *py_lapacke_pinv(PyObject *self, PyObject *args) {
     info = ph3py_phonopy_pinv(data_out, data_in, m, n, cutoff);
 
     return PyLong_FromLong((long)info);
+}
+
+static PyObject *py_get_omp_max_threads(PyObject *self, PyObject *args) {
+    return PyLong_FromLong(ph3py_get_max_threads());
 }
 
 static void show_colmat_info(const PyArrayObject *py_collision_matrix,

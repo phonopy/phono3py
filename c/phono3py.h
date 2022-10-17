@@ -231,4 +231,5 @@ long ph3py_phonopy_pinv(double *data_out, const double *data_in, const long m,
 void ph3py_pinv_from_eigensolution(double *data, const double *eigvals,
                                    const long size, const double cutoff,
                                    const long pinv_method);
+long ph3py_get_max_threads(void);
 #endif

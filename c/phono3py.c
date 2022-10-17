@@ -53,6 +53,10 @@
 #include "triplet.h"
 #include "triplet_iw.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 long ph3py_get_interaction(
     Darray *fc3_normal_squared, const char *g_zero, const Darray *frequencies,
     const _lapack_complex_double *eigenvectors, const long (*triplets)[3],
@@ -758,4 +762,12 @@ void ph3py_pinv_from_eigensolution(double *data, const double *eigvals,
                                    const long size, const double cutoff,
                                    const long pinv_method) {
     pinv_from_eigensolution(data, eigvals, size, cutoff, pinv_method);
+}
+
+long ph3py_get_max_threads(void) {
+#ifdef _OPENMP
+    return omp_get_max_threads();
+#else
+    return 0;
+#endif
 }
