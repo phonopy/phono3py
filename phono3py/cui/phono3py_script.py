@@ -34,6 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import copy
+import datetime
 import sys
 from typing import Dict, Optional, Tuple, Union
 
@@ -108,6 +109,23 @@ def print_phono3py():
  | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
  |_|                                |_|    |___/ """
     )
+    print_version(__version__)
+    print_time()
+
+
+def print_end_phono3py():
+    """Print END logo."""
+    print_time()
+    print_end()
+
+
+def print_time():
+    """Print current time."""
+    print(
+        "-------------------------"
+        f'[time {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}]'
+        "-------------------------"
+    )
 
 
 def finalize_phono3py(
@@ -157,12 +175,11 @@ def finalize_phono3py(
         w.write(str(ph3py_yaml))
 
     if log_level > 0:
-        print("")
         if displacements_mode:
             print(f'Displacement dataset was written in "{yaml_filename}".')
         else:
             print(f'Summary of calculation was written in "{yaml_filename}".')
-        print_end()
+        print_end_phono3py()
     sys.exit(0)
 
 
@@ -209,7 +226,6 @@ def start_phono3py(**argparse_control):
     # Title
     if log_level:
         print_phono3py()
-        print_version(__version__)
         import phono3py._phono3py as phono3c
 
         max_threads = phono3c.omp_max_threads()
@@ -298,7 +314,7 @@ def create_FORCES_FC2_from_FORCE_SETS_then_exit(log_level):
     print("\n".join(displacements_yaml_lines_type1(disp_dataset)))
 
     if log_level:
-        print_end()
+        print_end_phono3py()
     sys.exit(0)
 
 
@@ -352,14 +368,14 @@ def create_FORCE_SETS_from_FORCES_FCx_then_exit(
 
         if log_level:
             print("FORCE_SETS has been created.")
-            print_end()
+            print_end_phono3py()
     else:
         if log_level:
             print(
                 "The file format of %s is already readable by phonopy."
                 % forces_filename
             )
-            print_end()
+            print_end_phono3py()
     sys.exit(0)
 
 
@@ -455,7 +471,7 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
             if log_level:
                 print("")
                 print("%s has been created." % "FORCES_FC3")
-                print_end()
+                print_end_phono3py()
             sys.exit(0)
         else:
             if log_level:
@@ -533,7 +549,7 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
             if log_level:
                 print("")
                 print("%s has been created." % "FORCES_FC2")
-                print_end()
+                print_end_phono3py()
             sys.exit(0)
         else:
             if log_level:
@@ -877,7 +893,7 @@ def run_gruneisen_then_exit(phono3py, settings, output_filename, log_level):
     )
 
     if log_level:
-        print_end()
+        print_end_phono3py()
     sys.exit(0)
 
 
@@ -917,7 +933,7 @@ def run_jdos_then_exit(
     joint_dos.run(grid_points, write_jdos=True)
 
     if log_level:
-        print_end()
+        print_end_phono3py()
     sys.exit(0)
 
 
@@ -957,7 +973,7 @@ def run_isotope_then_exit(phono3py, settings, updated_settings, log_level):
     iso.run(grid_points)
 
     if log_level:
-        print_end()
+        print_end_phono3py()
     sys.exit(0)
 
 
@@ -1231,7 +1247,7 @@ def main(**argparse_control):
         )
 
         if log_level:
-            print_end()
+            print_end_phono3py()
         sys.exit(0)
 
     ################################################################
@@ -1249,7 +1265,7 @@ def main(**argparse_control):
         )
 
         if log_level:
-            print_end()
+            print_end_phono3py()
         sys.exit(0)
 
     ##################################
@@ -1314,7 +1330,7 @@ def main(**argparse_control):
                 in_database = False
         if not in_database:
             if log_level:
-                print_end()
+                print_end_phono3py()
             sys.exit(0)
 
     #########################################
