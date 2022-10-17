@@ -53,13 +53,15 @@ from phonopy.cui.phonopy_script import (
 )
 from phonopy.file_IO import is_file_phonopy_yaml, parse_FORCE_SETS, write_FORCE_SETS
 from phonopy.interface.calculator import get_default_physical_units, get_force_sets
-from phonopy.interface.fc_calculator import fc_calculator_names
 from phonopy.phonon.band_structure import get_band_qpoints
 from phonopy.structure.cells import isclose as cells_isclose
 from phonopy.units import Bohr, Hartree, VaspToTHz
 
 from phono3py import Phono3py, Phono3pyIsotope, Phono3pyJointDos
-from phono3py.cui.create_force_constants import create_phono3py_force_constants
+from phono3py.cui.create_force_constants import (
+    create_phono3py_force_constants,
+    get_fc_calculator_params,
+)
 from phono3py.cui.create_supercells import create_phono3py_supercells
 from phono3py.cui.load import set_dataset_and_force_constants
 from phono3py.cui.phono3py_argparse import get_parser
@@ -825,26 +827,6 @@ def store_force_constants(
             output_filename=output_filename,
             log_level=log_level,
         )
-
-
-def get_fc_calculator_params(settings):
-    """Return fc_calculator and fc_calculator_params from settings."""
-    fc_calculator = None
-    fc_calculator_list = []
-    if settings.fc_calculator is not None:
-        for fc_calculatr_str in settings.fc_calculator.split("|"):
-            if fc_calculatr_str == "":  # No external calculator
-                fc_calculator_list.append(fc_calculatr_str.lower())
-            elif fc_calculatr_str.lower() in fc_calculator_names:
-                fc_calculator_list.append(fc_calculatr_str.lower())
-        if fc_calculator_list:
-            fc_calculator = "|".join(fc_calculator_list)
-
-    fc_calculator_options = None
-    if settings.fc_calculator_options is not None:
-        fc_calculator_options = settings.fc_calculator_options
-
-    return fc_calculator, fc_calculator_options
 
 
 def run_gruneisen_then_exit(phono3py, settings, output_filename, log_level):
