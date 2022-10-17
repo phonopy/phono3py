@@ -281,6 +281,13 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             help="Read third order force constants",
         )
     parser.add_argument(
+        "--fc-calc",
+        "--fc-calculator",
+        dest="fc_calculator",
+        default=None,
+        help=("Force constants calculator"),
+    )
+    parser.add_argument(
         "--fc-calc-opt",
         "--fc-calculator-options",
         dest="fc_calculator_options",

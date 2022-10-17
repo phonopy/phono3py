@@ -1673,6 +1673,12 @@ class Phono3py:
         # Set fc2 and fc3
         self._fc3 = fc3
 
+        # fc2 as obtained above will not be set when "|" in fc-calculator setting.
+        if fc_calculator is not None and "|" in fc_calculator:
+            fc2 = None
+        if fc_calculator_options is not None and "|" in fc_calculator_options:
+            fc2 = None
+
         # Normally self._fc2 is overwritten in produce_fc2
         if self._fc2 is None:
             self._fc2 = fc2
