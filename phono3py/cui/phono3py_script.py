@@ -33,10 +33,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import copy
 import datetime
 import sys
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 from phonopy.cui.collect_cell_info import collect_cell_info
@@ -709,7 +711,7 @@ def check_supercell_in_yaml(cell_info, ph3, distance_to_A, log_level):
 
 def init_phono3py(
     settings, cell_info, interface_mode, symprec, log_level
-) -> Tuple[Phono3py, Dict]:
+) -> tuple[Phono3py, dict]:
     """Initialize phono3py and update settings by default values."""
     physical_units = get_default_physical_units(interface_mode)
     distance_to_A = physical_units["distance_to_A"]
