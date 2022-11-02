@@ -4,7 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
     <title>Phono3py API &#8212; Phono3py v.2.4.1</title>
     
   <!-- Loaded before other Sphinx assets -->
@@ -20,7 +21,7 @@
     href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=62ba249389abaaa9ffc34bf36a076bdc1d65ee18" type="text/css" />
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
     
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
@@ -29,7 +30,7 @@
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/scripts/sphinx-book-theme.js?digest=f31d14ad54b65d19161ba51d4ffff3a77ae00456"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -531,7 +532,7 @@ title="Print to PDF"
                 
               <div>
                 
-  <div class="tex2jax_ignore mathjax_ignore section" id="phono3py-api">
+  <section class="tex2jax_ignore mathjax_ignore" id="phono3py-api">
 <span id="id1"></span><h1>Phono3py API<a class="headerlink" href="#phono3py-api" title="Permalink to this headline">#</a></h1>
 <div class="contents local topic" id="contents">
 <ul class="simple">
@@ -556,7 +557,7 @@ title="Print to PDF"
 </div>
 <p>How to use phono3py API is described below along with snippets that work with
 <a class="reference external" href="https://github.com/phonopy/phono3py/tree/develop/example/AlN-LDA"><code class="docutils literal notranslate"><span class="pre">AlN-LDA</span></code> example</a>.</p>
-<div class="section" id="crystal-structure">
+<section id="crystal-structure">
 <h2><a class="toc-backref" href="#id2">Crystal structure</a><a class="headerlink" href="#crystal-structure" title="Permalink to this headline">#</a></h2>
 <p>Crystal structures in phono3py are usually <code class="docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code> class instances. When
 we want to obtain the <code class="docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code> class instances from a file written in a
@@ -607,8 +608,8 @@ used, e.g., in the AlN-LDA example,</p>
 <span class="n">In</span> <span class="p">[</span><span class="mi">9</span><span class="p">]:</span> <span class="n">unitcell</span> <span class="o">=</span> <span class="n">PhonopyAtoms</span><span class="p">(</span><span class="n">cell</span><span class="o">=</span><span class="n">lattice</span><span class="p">,</span> <span class="n">scaled_positions</span><span class="o">=</span><span class="n">points</span><span class="p">,</span> <span class="n">symbols</span><span class="o">=</span><span class="n">symbols</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="phono3py-class">
+</section>
+<section id="phono3py-class">
 <h2><a class="toc-backref" href="#id3"><code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class</a><a class="headerlink" href="#phono3py-class" title="Permalink to this headline">#</a></h2>
 <p>To operate phono3py from python, there is phono3py API. The main class is
 <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> that is imported by</p>
@@ -634,8 +635,8 @@ written in the docstring, which is shown by</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">help</span><span class="p">(</span><span class="n">Phono3py</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="displacement-dataset-generation">
+</section>
+<section id="displacement-dataset-generation">
 <h2><a class="toc-backref" href="#id4">Displacement dataset generation</a><a class="headerlink" href="#displacement-dataset-generation" title="Permalink to this headline">#</a></h2>
 <p>The step (1) in <a class="reference internal" href="workflow.html#workflow"><span class="std std-ref">Workflow</span></a> generates sets of displacements in supercell.
 Supercells with the displacements are used as input crystal structure models of
@@ -668,8 +669,8 @@ dataset and crystal structure information are saved to a file by
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">8</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;phono3py_disp.yaml&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="supercell-force-calculation">
+</section>
+<section id="supercell-force-calculation">
 <h2><a class="toc-backref" href="#id5">Supercell force calculation</a><a class="headerlink" href="#supercell-force-calculation" title="Permalink to this headline">#</a></h2>
 <p>Forces of the generated supercells with displacements are calculated by some
 external force calculator such as first-principles calculation code.</p>
@@ -684,8 +685,8 @@ obtained by</p>
 <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">forces</span><span class="p">)</span> <span class="o">==</span> <span class="n">num_supercells</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="force-constants-calculation">
+</section>
+<section id="force-constants-calculation">
 <h2><a class="toc-backref" href="#id6">Force constants calculation</a><a class="headerlink" href="#force-constants-calculation" title="Permalink to this headline">#</a></h2>
 <p>The pair of the displacement dataset and force sets is required to calculate
 force constants. <a class="reference internal" href="#api-phono3py-load"><span class="std std-ref">phono3py.load</span></a> is the convenient function to load
@@ -724,8 +725,8 @@ follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">12</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">produce_fc3</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="non-analytical-term-correction-parameters">
+</section>
+<section id="non-analytical-term-correction-parameters">
 <h2><a class="toc-backref" href="#id7">Non-analytical term correction parameters</a><a class="headerlink" href="#non-analytical-term-correction-parameters" title="Permalink to this headline">#</a></h2>
 <p>Users collects Born effective charges and dielectric constant tensor from
 experiments or calculations, and they are used as parameters for non-analytical
@@ -757,8 +758,8 @@ more information about NAC parameters is found
 </div>
 <p>where the <code class="docutils literal notranslate"><span class="pre">parse_BORN</span></code> function requires the corresponding primitive cell of the
 <code class="docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code> class.</p>
-</div>
-<div class="section" id="regular-grid-for-q-point-sampling">
+</section>
+<section id="regular-grid-for-q-point-sampling">
 <h2><a class="toc-backref" href="#id8">Regular grid for <strong>q</strong>-point sampling</a><a class="headerlink" href="#regular-grid-for-q-point-sampling" title="Permalink to this headline">#</a></h2>
 <p>Phonons are normally sampled on a <span class="math notranslate nohighlight">\(\Gamma\)</span> centre regular grid in reciprocal
 space. There are three ways to specify the regular grid.</p>
@@ -774,7 +775,7 @@ example,</p>
 <span class="n">ph3</span><span class="o">.</span><span class="n">mesh_numbers</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">]]</span>
 </pre></div>
 </div>
-<div class="section" id="three-integer-values">
+<section id="three-integer-values">
 <h3><a class="toc-backref" href="#id9">Three integer values</a><a class="headerlink" href="#three-integer-values" title="Permalink to this headline">#</a></h3>
 <p>Three integer values (<span class="math notranslate nohighlight">\(n_1\)</span>, <span class="math notranslate nohighlight">\(n_2\)</span>, <span class="math notranslate nohighlight">\(n_3\)</span>) are specified.</p>
 <p>The conventional regular grid is defined by the three integer values. The
@@ -785,8 +786,8 @@ divided by the respective integers, which is given as</p>
 \frac{\mathbf{b}^*_3}{n_3} \right)
 \begin{pmatrix} m_1 \\ m_2 \\ m_3 \end{pmatrix},\end{split}\]</div>
 <p>where <span class="math notranslate nohighlight">\(m_i \in \{ 0, 1, \ldots, n_i - 1 \}\)</span>.</p>
-</div>
-<div class="section" id="one-value">
+</section>
+<section id="one-value">
 <h3><a class="toc-backref" href="#id10">One value</a><a class="headerlink" href="#one-value" title="Permalink to this headline">#</a></h3>
 <p>A distance like value <span class="math notranslate nohighlight">\(l\)</span> is specified. Using this value, a regular grid is
 generated. As default, the three integer values of the conventional regular grid
@@ -803,16 +804,16 @@ respect to the reciprocal basis vectors of the conventional unit cell. The
 parallelepiped defined by <span class="math notranslate nohighlight">\(\mathbf{b}^*_i\)</span> of the conventinal unit cell can be
 smaller than that of the primitive cell. In this case, the <span class="math notranslate nohighlight">\(\mathbf{q}\)</span>-points
 are sampled to fill the latter parallelepiped.</p>
-</div>
-<div class="section" id="x3-integer-matrix-experimental">
+</section>
+<section id="x3-integer-matrix-experimental">
 <h3><a class="toc-backref" href="#id11">3x3 integer matrix (experimental)</a><a class="headerlink" href="#x3-integer-matrix-experimental" title="Permalink to this headline">#</a></h3>
 <p>This is used to define the generalized regular grid explicitly. The generalized
 regular grid is designed to be automatically generated by one given value
 considering symmetry. However a 3x3 integer matrix (array) is accepted if this
 matrix follows the symmetry properly.</p>
-</div>
-</div>
-<div class="section" id="phonon-phonon-interaction-calculation">
+</section>
+</section>
+<section id="phonon-phonon-interaction-calculation">
 <h2><a class="toc-backref" href="#id12">Phonon-phonon interaction calculation</a><a class="headerlink" href="#phonon-phonon-interaction-calculation" title="Permalink to this headline">#</a></h2>
 <p>Three phonon interaction strength is calculated after defining the regular grid.
 When we have <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> used above (maybe <code class="docutils literal notranslate"><span class="pre">BORN</span></code>,
@@ -866,8 +867,8 @@ if it is specified to do so.</p>
 thermal conductivity calculation. To minimize computational resources required
 by each purpose of use, the outer function that calls this function determines
 proper computational configuration of this function.</p>
-</div>
-<div class="section" id="lattice-thermal-conductivity-calculation">
+</section>
+<section id="lattice-thermal-conductivity-calculation">
 <h2><a class="toc-backref" href="#id13">Lattice thermal conductivity calculation</a><a class="headerlink" href="#lattice-thermal-conductivity-calculation" title="Permalink to this headline">#</a></h2>
 <p>Once three phonon interaction calculation is prepared by
 <code class="docutils literal notranslate"><span class="pre">ph3.init_phph_interaction()</span></code>, it is ready to run lattice thermal conductivity
@@ -877,8 +878,8 @@ mode relaxation time approximation is performed as follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">5</span><span class="p">]:</span> <span class="n">ph3</span><span class="o">.</span><span class="n">run_thermal_conductivity</span><span class="p">()</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs">
+</section>
+<section id="use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs">
 <h2><a class="toc-backref" href="#id14">Use of different supercell dimensions for 2nd and 3rd order FCs</a><a class="headerlink" href="#use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs" title="Permalink to this headline">#</a></h2>
 <p>Phono3py supports different supercell dimensions for second and third order
 force constants (fc2 and fc3). The default setting is using the same dimensions.
@@ -917,8 +918,8 @@ usable:</p>
 </div>
 <p>The meanings of them are found in their docstrings though they may be guessed
 easily.</p>
-</div>
-<div class="section" id="phono3py-load">
+</section>
+<section id="phono3py-load">
 <span id="api-phono3py-load"></span><h2><a class="toc-backref" href="#id15"><code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code></a><a class="headerlink" href="#phono3py-load" title="Permalink to this headline">#</a></h2>
 <p>The purpose of <code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code> is to create a <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class instance with
 basic parameters loaded from the phono3py-yaml-type file and also to try setting
@@ -982,8 +983,8 @@ read a helper function of <code class="docutils literal notranslate"><span class
         <span class="p">[</span><span class="mf">0.</span>      <span class="p">,</span> <span class="mf">0.</span>      <span class="p">,</span> <span class="mf">4.653269</span><span class="p">]])}</span>
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
               </div>

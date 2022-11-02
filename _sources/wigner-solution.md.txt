@@ -5,7 +5,7 @@
 This page explains how to compute the thermal conductivity from the solution of the Wigner transport equation (WTE)
 [M. Simoncelli, N. Marzari, F. Mauri; Nat. Phys. 15, 809 (2019)](https://doi.org/10.1038/s41567-019-0520-x)
 ({ref}`citation <citation_unified_theory>`) and
-[M. Simoncelli, N. Marzari, F. Mauri; arXiv:2112.06897 (2021)](https://arxiv.org/pdf/2112.06897)
+[M. Simoncelli, N. Marzari, F. Mauri; Phys. Rev. X 12, 041011 (2022)](https://doi.org/10.1103/PhysRevX.12.041011)
 ({ref}`citation <citation_wigner_formulation>`).
 
 

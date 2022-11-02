@@ -4,7 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
     <title>Solution of the Wigner transport equation &#8212; Phono3py v.2.4.1</title>
     
   <!-- Loaded before other Sphinx assets -->
@@ -20,7 +21,7 @@
     href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=62ba249389abaaa9ffc34bf36a076bdc1d65ee18" type="text/css" />
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
     
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
@@ -29,7 +30,7 @@
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/scripts/sphinx-book-theme.js?digest=f31d14ad54b65d19161ba51d4ffff3a77ae00456"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -405,12 +406,12 @@ title="Print to PDF"
                 
               <div>
                 
-  <div class="tex2jax_ignore mathjax_ignore section" id="solution-of-the-wigner-transport-equation">
+  <section class="tex2jax_ignore mathjax_ignore" id="solution-of-the-wigner-transport-equation">
 <span id="wigner-solution"></span><h1>Solution of the Wigner transport equation<a class="headerlink" href="#solution-of-the-wigner-transport-equation" title="Permalink to this headline">#</a></h1>
 <p>This page explains how to compute the thermal conductivity from the solution of the Wigner transport equation (WTE)
 <a class="reference external" href="https://doi.org/10.1038/s41567-019-0520-x">M. Simoncelli, N. Marzari, F. Mauri; Nat. Phys. 15, 809 (2019)</a>
 (<a class="reference internal" href="citation.html#citation-unified-theory"><span class="std std-ref">citation</span></a>) and
-<a class="reference external" href="https://arxiv.org/pdf/2112.06897">M. Simoncelli, N. Marzari, F. Mauri; arXiv:2112.06897 (2021)</a>
+<a class="reference external" href="https://doi.org/10.1103/PhysRevX.12.041011">M. Simoncelli, N. Marzari, F. Mauri; Phys. Rev. X 12, 041011 (2022)</a>
 (<a class="reference internal" href="citation.html#citation-wigner-formulation"><span class="std std-ref">citation</span></a>).</p>
 <p>The Wigner formulation of thermal transport in solids encompasses the emergence and coexistence of the particle-like propagation of phonon wavepackets discusses by Peierls for crystals [Peierls, Quantum theory of solids (Oxford Classics Series, 2001)], and the wave-like interband conduction mechanisms discussed by Allen and Feldman for harmonic glasses [
 Allen and Feldman, Phys. Rev. Lett. 62, 645 (1989)]. As discussed in the references above, the Wigner formulation allows to describe the thermal conductivity of ordered crystals (where it yields practically the same result of the LBTE), of disordered glasses (where it generalizes Allen-Feldman theory accounting for anharmonicity), as well as of materials with intermediate characteristics (in this intermediate regime, both particle-like and wave-like conduction mechanisms are relevant, thus the Wigner formulation has to be used to obtain accurately predict the thermal conductivity).</p>
@@ -434,9 +435,9 @@ Specifically, the expression for <span class="math notranslate nohighlight">\(\k
 <li><p><a class="reference internal" href="#computational-cost" id="id4">Computational cost</a></p></li>
 </ul>
 </div>
-<div class="section" id="how-to-use">
+<section id="how-to-use">
 <h2><a class="toc-backref" href="#id1">How to use</a><a class="headerlink" href="#how-to-use" title="Permalink to this headline">#</a></h2>
-<div class="section" id="solution-of-the-wte-scattering-in-the-rta-approximation">
+<section id="solution-of-the-wte-scattering-in-the-rta-approximation">
 <h3><a class="toc-backref" href="#id2">Solution of the WTE, scattering in the RTA approximation</a><a class="headerlink" href="#solution-of-the-wte-scattering-in-the-rta-approximation" title="Permalink to this headline">#</a></h3>
 <p>To compute the Wigner conductivity with scattering in the RTA approximation, specify <code class="docutils literal notranslate"><span class="pre">--br</span></code> and <code class="docutils literal notranslate"><span class="pre">--wigner</span></code>. For <code class="docutils literal notranslate"><span class="pre">example/Wigner_La2Zr2O7</span></code>, the command is:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>phono3py --nac --cell POSCAR --fc2 --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --dim-fc2<span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span> --mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> --tmin<span class="o">=</span><span class="m">300</span> --tmax<span class="o">=</span><span class="m">1000</span> --tstep<span class="o">=</span><span class="m">700</span> --sym-fc --isotope --br --wigner --read-gamma &gt; tc_La2Zr2O7.out
@@ -482,8 +483,8 @@ K_T    <span class="m">1600</span>.0      <span class="m">20</span>.335     <spa
 ...
 </pre></div>
 </div>
-</div>
-<div class="section" id="solution-of-the-wte-exact-treatment-of-scattering">
+</section>
+<section id="solution-of-the-wte-exact-treatment-of-scattering">
 <h3><a class="toc-backref" href="#id3">Solution of the WTE, exact treatment of scattering</a><a class="headerlink" href="#solution-of-the-wte-exact-treatment-of-scattering" title="Permalink to this headline">#</a></h3>
 <p>To compute the Wigner conductivity treating scattering exactly, specify <code class="docutils literal notranslate"><span class="pre">--lbte</span></code> and <code class="docutils literal notranslate"><span class="pre">--wigner</span></code>. For <code class="docutils literal notranslate"><span class="pre">example/Si-PBEsol</span></code>, the command is:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py-load --mesh <span class="m">11</span> <span class="m">11</span> <span class="m">11</span> --ts <span class="m">1600</span> --lbte --wigner
@@ -508,13 +509,13 @@ K_C             <span class="m">1600</span>.0       <span class="m">0</span>.277
 </pre></div>
 </div>
 <p>We note that usually in materials with ultralow or glass-like conductivity (<span class="math notranslate nohighlight">\(\kappa_T\lesssim 2\frac{W}{m\cdot K}\)</span>) treating scattering in the RTA approximation or exactly gives results that are practically equivalent (see <a class="reference internal" href="citation.html#citation-wigner-formulation"><span class="std std-ref">paper on the Wigner formulation</span></a> and references therein).</p>
-</div>
-</div>
-<div class="section" id="computational-cost">
+</section>
+</section>
+<section id="computational-cost">
 <h2><a class="toc-backref" href="#id4">Computational cost</a><a class="headerlink" href="#computational-cost" title="Permalink to this headline">#</a></h2>
 <p>Using the code with the <code class="docutils literal notranslate"><span class="pre">--wigner</span></code> option has a negligible effect on the duration of the calculation.</p>
-</div>
-</div>
+</section>
+</section>
 
 
               </div>

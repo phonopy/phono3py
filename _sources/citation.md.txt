@@ -74,14 +74,21 @@ following articles:
   ```
 (citation_wigner_formulation)=
 - "Wigner formulation of thermal transport in solids"
-  Michele Simoncelli, Nicola  Marzari, and Francesco Mauri, accepted in Physical Review X [arXiv:2112.06897, 2021]
+  Michele Simoncelli, Nicola  Marzari, and Francesco Mauri, Physical Review X **12**, 041011 (2022)
 
   ```
-  @article{arXiv:2112.06897,
-    title={Wigner formulation of thermal transport in solids},
-    author={Simoncelli, Michele and Marzari, Nicola and Mauri, Francesco},
-    journal={arXiv preprint arXiv:2112.06897},
-    url={https://arxiv.org/abs/2112.06897},
-    year={2021}
+  @article{PhysRevX.12.041011,
+    title = {Wigner Formulation of Thermal Transport in Solids},
+    author = {Simoncelli, Michele and Marzari, Nicola and Mauri, Francesco},
+    journal = {Phys. Rev. X},
+    volume = {12},
+    issue = {4},
+    pages = {041011},
+    numpages = {39},
+    year = {2022},
+    month = {Oct},
+    publisher = {American Physical Society},
+    doi = {10.1103/PhysRevX.12.041011},
+    url = {https://link.aps.org/doi/10.1103/PhysRevX.12.041011}
   }
   ```
