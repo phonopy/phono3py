@@ -58,6 +58,7 @@ phono3py-api
 phono3py-load
 tips
 citation
+reference
 changelog
 ```
 

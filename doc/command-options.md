@@ -903,6 +903,9 @@ file, where $A_{\mathrm{q}j}$ is normalied as given above, i.e., numerical
 sum of stored value for each band should become roughly 1.
 ```
 
+An example of application of spectral function calculation is found at
+{ref}`spectral_function_reference`.
+
 (jdos_option)=
 
 ## Joint density of states (JDOS) and weighted-JDOS
