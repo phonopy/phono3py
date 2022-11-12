@@ -25,7 +25,11 @@
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 # extensions = ['sphinx.ext.imgmath']
-extensions = ["sphinx.ext.mathjax", "myst_parser"]
+extensions = [
+    "sphinx.ext.mathjax",
+    "myst_parser",
+    "sphinxcontrib.bibtex",
+]
 myst_enable_extensions = ["linkify", "dollarmath", "amsmath"]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -33,6 +37,10 @@ templates_path = ["_templates"]
 
 # The suffix of source filenames.
 source_suffix = ".rst"
+
+# https://pypi.org/project/sphinxcontrib-bibtex/
+bibtex_bibfiles = ["references.bib"]
+bibtex_default_style = "unsrt"
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'

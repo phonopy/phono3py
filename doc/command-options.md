@@ -814,7 +814,7 @@ $$
 
 respectively. In the above formulae, angular frequency $\omega$ is used, but in
 the calculation results, ordinal frequency $\nu$ is used. Be careful about
-$2\pi$ treatment.
+$2\pi$ treatment. See also {cite}`Togo-PRB-2015,Togo-JPCM-2022`.
 
 (ise_option)=
 
@@ -878,6 +878,8 @@ $$
  \int_0^\infty \frac{d\omega}{2\pi} A_\lambda(\omega) = 1.
 $$
 
+See also {cite}`Togo-JPCM-2022`.
+
 ### `--spf` (`SPECTRAL_FUNCTION = .TRUE.`)
 
 Spectral function of self energy $A_\lambda(\omega)$ is calculated with respect
@@ -903,12 +905,11 @@ file, where $A_{\mathrm{q}j}$ is normalied as given above, i.e., numerical
 sum of stored value for each band should become roughly 1.
 ```
 
-An example of application of spectral function calculation is found at
-{ref}`spectral_function_reference`.
 
 (jdos_option)=
 
 ## Joint density of states (JDOS) and weighted-JDOS
+
 
 ### `--jdos` (`JOINT_DOS = .TRUE.`)
 
@@ -933,6 +934,8 @@ $$
 \end{align}
 $$
 
+(See also {cite}`Togo-PRB-2015,Togo-JPCM-2022`.)
+
 ```bash
 % phono3py --fc2 --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="16 16 16" --jdos --ga="0 0 0  8 8 8"
 ```
@@ -956,6 +959,8 @@ $$
 \omega_{\lambda''}).
 \end{align}
 $$
+
+(See also {cite}`Togo-PRB-2015,Mizokami-PRB-2018,Togo-JPCM-2022`.)
 
 ```bash
 % phono3py --fc2 --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="16 16 16" --jdos --ga="0 0 0  8 8 8" --ts=300
@@ -1231,3 +1236,9 @@ This rule is applied to
 This modifies default input and output file names.
 
 This is equivalent to setting `-i` and `-o` simultaneously.
+
+
+## References
+```{bibliography}
+:filter: docname in docnames
+```
