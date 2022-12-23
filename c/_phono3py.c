@@ -922,7 +922,7 @@ static PyObject *py_get_isotope_strength(PyObject *self, PyObject *args) {
     double *gamma;
     double *frequencies;
     long *ir_grid_points;
-    long *weights;
+    double *weights;
     _lapack_complex_double *eigenvectors;
     long *band_indices;
     double *mass_variances;
@@ -939,7 +939,7 @@ static PyObject *py_get_isotope_strength(PyObject *self, PyObject *args) {
     frequencies = (double *)PyArray_DATA(py_frequencies);
     eigenvectors = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
     ir_grid_points = (long *)PyArray_DATA(py_ir_grid_points);
-    weights = (long *)PyArray_DATA(py_weights);
+    weights = (double *)PyArray_DATA(py_weights);
     band_indices = (long *)PyArray_DATA(py_band_indices);
     mass_variances = (double *)PyArray_DATA(py_mass_variances);
     num_band = (long)PyArray_DIMS(py_frequencies)[1];
@@ -969,7 +969,7 @@ static PyObject *py_get_thm_isotope_strength(PyObject *self, PyObject *args) {
     double *gamma;
     double *frequencies;
     long *ir_grid_points;
-    long *weights;
+    double *weights;
     _lapack_complex_double *eigenvectors;
     long *band_indices;
     double *mass_variances;
@@ -986,7 +986,7 @@ static PyObject *py_get_thm_isotope_strength(PyObject *self, PyObject *args) {
     gamma = (double *)PyArray_DATA(py_gamma);
     frequencies = (double *)PyArray_DATA(py_frequencies);
     ir_grid_points = (long *)PyArray_DATA(py_ir_grid_points);
-    weights = (long *)PyArray_DATA(py_weights);
+    weights = (double *)PyArray_DATA(py_weights);
     eigenvectors = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
     band_indices = (long *)PyArray_DATA(py_band_indices);
     mass_variances = (double *)PyArray_DATA(py_mass_variances);

@@ -269,7 +269,7 @@ class Isotope:
         import phono3py._phono3py as phono3c
 
         gamma = np.zeros(len(self._band_indices), dtype="double")
-        weights_in_bzgp = np.ones(len(self._grid_points), dtype="int_")
+        weights_in_bzgp = np.ones(len(self._grid_points), dtype="double")
         if self._sigma is None:
             self._set_integration_weights()
             phono3c.thm_isotope_strength(

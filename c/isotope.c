@@ -42,7 +42,7 @@
 
 void iso_get_isotope_scattering_strength(
     double *gamma, const long grid_point, const long *ir_grid_points,
-    const long *weights, const double *mass_variances,
+    const double *weights, const double *mass_variances,
     const double *frequencies, const lapack_complex_double *eigenvectors,
     const long num_grid_points, const long *band_indices, const long num_band,
     const long num_band0, const double sigma, const double cutoff_frequency) {
@@ -127,7 +127,7 @@ void iso_get_isotope_scattering_strength(
 
 void iso_get_thm_isotope_scattering_strength(
     double *gamma, const long grid_point, const long *ir_grid_points,
-    const long *weights, const double *mass_variances,
+    const double *weights, const double *mass_variances,
     const double *frequencies, const lapack_complex_double *eigenvectors,
     const long num_grid_points, const long *band_indices, const long num_band,
     const long num_band0, const double *integration_weights,
@@ -196,7 +196,7 @@ void iso_get_thm_isotope_scattering_strength(
                     sum_g_k += (a * a + b * b) * mass_variances[l] * dist;
                 }
             }
-            gamma_ij[gp * num_band0 + j] = sum_g_k * weights[gp];
+            gamma_ij[i * num_band0 + j] = sum_g_k * weights[gp];
         }
     }
 
@@ -205,9 +205,8 @@ void iso_get_thm_isotope_scattering_strength(
     }
 
     for (i = 0; i < num_grid_points; i++) {
-        gp = ir_grid_points[i];
         for (j = 0; j < num_band0; j++) {
-            gamma[j] += gamma_ij[gp * num_band0 + j];
+            gamma[j] += gamma_ij[i * num_band0 + j];
         }
     }
 
