@@ -912,37 +912,44 @@ static PyObject *py_get_isotope_strength(PyObject *self, PyObject *args) {
     PyArrayObject *py_eigenvectors;
     PyArrayObject *py_band_indices;
     PyArrayObject *py_mass_variances;
+    PyArrayObject *py_ir_grid_points;
+    PyArrayObject *py_weights;
+
     long grid_point;
-    long num_grid_points;
     double cutoff_frequency;
     double sigma;
 
     double *gamma;
     double *frequencies;
+    long *ir_grid_points;
+    long *weights;
     _lapack_complex_double *eigenvectors;
     long *band_indices;
     double *mass_variances;
-    long num_band, num_band0;
+    long num_band, num_band0, num_ir_grid_points;
 
-    if (!PyArg_ParseTuple(args, "OlOOOOldd", &py_gamma, &grid_point,
-                          &py_mass_variances, &py_frequencies, &py_eigenvectors,
-                          &py_band_indices, &num_grid_points, &sigma,
-                          &cutoff_frequency)) {
+    if (!PyArg_ParseTuple(args, "OlOOOOOOdd", &py_gamma, &grid_point,
+                          &py_ir_grid_points, &py_weights, &py_mass_variances,
+                          &py_frequencies, &py_eigenvectors, &py_band_indices,
+                          &sigma, &cutoff_frequency)) {
         return NULL;
     }
 
     gamma = (double *)PyArray_DATA(py_gamma);
     frequencies = (double *)PyArray_DATA(py_frequencies);
     eigenvectors = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
+    ir_grid_points = (long *)PyArray_DATA(py_ir_grid_points);
+    weights = (long *)PyArray_DATA(py_weights);
     band_indices = (long *)PyArray_DATA(py_band_indices);
     mass_variances = (double *)PyArray_DATA(py_mass_variances);
     num_band = (long)PyArray_DIMS(py_frequencies)[1];
     num_band0 = (long)PyArray_DIMS(py_band_indices)[0];
+    num_ir_grid_points = (long)PyArray_DIMS(py_ir_grid_points)[0];
 
     ph3py_get_isotope_scattering_strength(
-        gamma, grid_point, mass_variances, frequencies, eigenvectors,
-        num_grid_points, band_indices, num_band, num_band0, sigma,
-        cutoff_frequency);
+        gamma, grid_point, ir_grid_points, weights, mass_variances, frequencies,
+        eigenvectors, num_ir_grid_points, band_indices, num_band, num_band0,
+        sigma, cutoff_frequency);
 
     Py_RETURN_NONE;
 }

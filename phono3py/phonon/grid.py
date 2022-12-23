@@ -444,7 +444,7 @@ class BZGrid:
             store_dense_gp_map=self._store_dense_gp_map,
         )
         if self._store_dense_gp_map:
-            self._grg2bzg = self._gp_map[:-1]
+            self._grg2bzg = np.array(self._gp_map[:-1], dtype="int_")
         else:
             self._grg2bzg = np.arange(np.prod(self._D_diag), dtype="int_")
 

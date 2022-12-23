@@ -41,11 +41,12 @@
 #include "phonoc_utils.h"
 
 void iso_get_isotope_scattering_strength(
-    double *gamma, const long grid_point, const double *mass_variances,
+    double *gamma, const long grid_point, const long *ir_grid_points,
+    const long *weights, const double *mass_variances,
     const double *frequencies, const lapack_complex_double *eigenvectors,
     const long num_grid_points, const long *band_indices, const long num_band,
     const long num_band0, const double sigma, const double cutoff_frequency) {
-    long i, j, k, l, m;
+    long i, j, k, l, m, gp;
     double *e0_r, *e0_i, e1_r, e1_i, a, b, f, *f0, dist, sum_g, sum_g_k;
 
     e0_r = (double *)malloc(sizeof(double) * num_band * num_band0);
@@ -74,13 +75,14 @@ void iso_get_isotope_scattering_strength(
         }
         sum_g = 0;
 #ifdef _OPENMP
-#pragma omp parallel for private(k, l, m, f, e1_r, e1_i, a, b, dist, sum_g_k) reduction(+ \
+#pragma omp parallel for private(gp, k, l, m, f, e1_r, e1_i, a, b, dist, sum_g_k) reduction(+ \
                                                                                         : sum_g)
 #endif
         for (j = 0; j < num_grid_points; j++) {
+            gp = ir_grid_points[j];
             sum_g_k = 0;
             for (k = 0; k < num_band; k++) { /* band index */
-                f = frequencies[j * num_band + k];
+                f = frequencies[gp * num_band + k];
                 if (f < cutoff_frequency) {
                     continue;
                 }
@@ -90,10 +92,10 @@ void iso_get_isotope_scattering_strength(
                     b = 0;
                     for (m = 0; m < 3; m++) {
                         e1_r = lapack_complex_double_real(
-                            eigenvectors[j * num_band * num_band +
+                            eigenvectors[gp * num_band * num_band +
                                          (l * 3 + m) * num_band + k]);
                         e1_i = lapack_complex_double_imag(
-                            eigenvectors[j * num_band * num_band +
+                            eigenvectors[gp * num_band * num_band +
                                          (l * 3 + m) * num_band + k]);
                         a += (e0_r[i * num_band + l * 3 + m] * e1_r +
                               e0_i[i * num_band + l * 3 + m] * e1_i);
@@ -103,7 +105,7 @@ void iso_get_isotope_scattering_strength(
                     sum_g_k += (a * a + b * b) * mass_variances[l] * dist;
                 }
             }
-            sum_g += sum_g_k;
+            sum_g += sum_g_k * weights[gp];
         }
         gamma[i] = sum_g;
     }

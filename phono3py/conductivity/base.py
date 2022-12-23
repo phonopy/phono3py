@@ -674,10 +674,10 @@ class ConductivityBase(ABC):
         Returns
         -------
         grid_points : ndarray
-            Grid point indices to be iterated over.
+            Grid point indices in BZ-grid to be iterated over.
             shape=(len(grid_points),), dtype='int_'
         ir_grid_points : ndarray
-            Irreducible grid points on regular grid.
+            Irreducible grid points in BZ-grid on regular grid.
             shape=(len(ir_grid_points),), dtype='int_'
         grid_weights : ndarray
             Grid weights of `grid_points`. If grid symmetry is not broken,

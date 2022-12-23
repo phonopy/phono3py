@@ -261,13 +261,15 @@ void ph3py_get_reducible_collision_matrix(
 }
 
 void ph3py_get_isotope_scattering_strength(
-    double *gamma, const long grid_point, const double *mass_variances,
+    double *gamma, const long grid_point, const long *ir_grid_points,
+    const long *weights, const double *mass_variances,
     const double *frequencies, const _lapack_complex_double *eigenvectors,
-    const long num_grid_points, const long *band_indices, const long num_band,
-    const long num_band0, const double sigma, const double cutoff_frequency) {
+    const long num_ir_grid_points, const long *band_indices,
+    const long num_band, const long num_band0, const double sigma,
+    const double cutoff_frequency) {
     iso_get_isotope_scattering_strength(
-        gamma, grid_point, mass_variances, frequencies,
-        (lapack_complex_double *)eigenvectors, num_grid_points, band_indices,
+        gamma, grid_point, ir_grid_points, weights, mass_variances, frequencies,
+        (lapack_complex_double *)eigenvectors, num_ir_grid_points, band_indices,
         num_band, num_band0, sigma, cutoff_frequency);
 }
 

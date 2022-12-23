@@ -157,9 +157,12 @@ class Isotope:
         if self._phonon_done is None:
             self._allocate_phonon()
 
-    def run(self):
+    def run(self, lang="C"):
         """Run isotope scattering calculation."""
-        self._run_c()
+        if lang == "C":
+            self._run_c()
+        else:
+            self._run_py()
 
     @property
     def sigma(self):
@@ -266,14 +269,14 @@ class Isotope:
         import phono3py._phono3py as phono3c
 
         gamma = np.zeros(len(self._band_indices), dtype="double")
+        weights_in_bzgp = np.ones(len(self._grid_points), dtype="int_")
         if self._sigma is None:
             self._set_integration_weights()
-            weights = np.ones(len(self._grid_points), dtype="int_")
             phono3c.thm_isotope_strength(
                 gamma,
                 self._grid_point,
-                self._grid_points,
-                weights,
+                self._bz_grid.grg2bzg,
+                weights_in_bzgp,
                 self._mass_variances,
                 self._frequencies,
                 self._eigenvectors,
@@ -285,21 +288,31 @@ class Isotope:
             phono3c.isotope_strength(
                 gamma,
                 self._grid_point,
+                self._bz_grid.grg2bzg,
+                weights_in_bzgp,
                 self._mass_variances,
                 self._frequencies,
                 self._eigenvectors,
                 self._band_indices,
-                np.prod(self._bz_grid.D_diag),
                 self._sigma,
                 self._cutoff_frequency,
             )
 
         self._gamma = gamma / np.prod(self._bz_grid.D_diag)
 
-    def _set_integration_weights(self):
-        self._set_integration_weights_c()
+    def _set_integration_weights(self, lang="C"):
+        if lang == "C":
+            self._set_integration_weights_c()
+        else:
+            self._set_integration_weights_py()
 
     def _set_integration_weights_c(self):
+        """Set tetrahedron method integration weights.
+
+        self._frequencies are those on all BZ-grid. So all those grid points in
+        BZ-grid, i.e., self._grid_points, are passed to get_integration_weights.
+
+        """
         unique_grid_points = get_unique_grid_points(self._grid_points, self._bz_grid)
         self._run_phonon_solver_c(unique_grid_points)
         freq_points = np.array(
@@ -312,10 +325,11 @@ class Isotope:
         )
 
     def _set_integration_weights_py(self):
-        if self._bz_grid.store_dense_gp_map:
-            raise NotImplementedError("Only for type-I bz_map.")
-        if self._bz_grid.grid_matrix is not None:
-            raise NotImplementedError("Generalized regular grid is not supported.")
+        """Set tetrahedron method integration weights.
+
+        Python implementation corresponding to _set_integration_weights_c.
+
+        """
         thm = TetrahedronMethod(self._bz_grid.microzone_lattice)
         num_grid_points = len(self._grid_points)
         num_band = len(self._primitive) * 3
@@ -325,7 +339,7 @@ class Isotope:
 
         for i, gp in enumerate(self._grid_points):
             tfreqs = get_tetrahedra_frequencies(
-                gp,
+                gp,  # In BZ-grid used only to access self._bz_grid.addresses.
                 self._bz_grid.D_diag,
                 self._bz_grid.addresses,
                 np.array(
@@ -333,7 +347,7 @@ class Isotope:
                     dtype="int_",
                     order="C",
                 ),
-                self._grid_points,
+                self._bz_grid.grg2bzg,
                 self._frequencies,
                 grid_order=[
                     1,
@@ -354,16 +368,16 @@ class Isotope:
             self._run_phonon_solver_py(gp)
 
         if self._sigma is None:
-            self._set_integration_weights()
+            self._set_integration_weights(lang="Py")
 
         t_inv = []
         for bi in self._band_indices:
             vec0 = self._eigenvectors[self._grid_point][:, bi].conj()
             f0 = self._frequencies[self._grid_point][bi]
             ti_sum = 0.0
-            for i, gp in enumerate(self._grid_points):
+            for gp in self._bz_grid.grg2bzg:
                 for j, (f, vec) in enumerate(
-                    zip(self._frequencies[i], self._eigenvectors[i].T)
+                    zip(self._frequencies[gp], self._eigenvectors[gp].T)
                 ):
                     if f < self._cutoff_frequency:
                         continue
@@ -372,7 +386,7 @@ class Isotope:
                         * self._mass_variances
                     )
                     if self._sigma is None:
-                        ti_sum += ti_sum_band * self._integration_weights[i, bi, j]
+                        ti_sum += ti_sum_band * self._integration_weights[gp, bi, j]
                     else:
                         ti_sum += ti_sum_band * gaussian(f0 - f, self._sigma)
             t_inv.append(np.pi / 2 / np.prod(self._bz_grid.D_diag) * f0**2 * ti_sum)
