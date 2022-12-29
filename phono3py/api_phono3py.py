@@ -50,6 +50,8 @@ from phonopy.harmonic.force_constants import (
 from phonopy.interface.fc_calculator import get_fc2
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import (
+    Primitive,
+    Supercell,
     get_primitive,
     get_primitive_matrix,
     get_supercell,
@@ -567,7 +569,7 @@ class Phono3py:
             return self._interaction.dynamical_matrix
 
     @property
-    def primitive(self):
+    def primitive(self) -> Primitive:
         """Return primitive cell.
 
         Primitive
@@ -586,7 +588,7 @@ class Phono3py:
         return self.primitive
 
     @property
-    def unitcell(self):
+    def unitcell(self) -> PhonopyAtoms:
         """Return Unit cell.
 
         PhonopyAtoms
@@ -605,7 +607,7 @@ class Phono3py:
         return self.unitcell
 
     @property
-    def supercell(self):
+    def supercell(self) -> Supercell:
         """Return supercell.
 
         Supercell
@@ -624,7 +626,7 @@ class Phono3py:
         return self.supercell
 
     @property
-    def phonon_supercell(self):
+    def phonon_supercell(self) -> Supercell:
         """Return supercell for fc2.
 
         Supercell
@@ -643,7 +645,7 @@ class Phono3py:
         return self.phonon_supercell
 
     @property
-    def phonon_primitive(self):
+    def phonon_primitive(self) -> Primitive:
         """Return primitive cell for fc2.
 
         Primitive
@@ -664,7 +666,7 @@ class Phono3py:
         return self.phonon_primitive
 
     @property
-    def symmetry(self):
+    def symmetry(self) -> Symmetry:
         """Return symmetry of supercell.
 
         Symmetry
@@ -683,7 +685,7 @@ class Phono3py:
         return self.symmetry
 
     @property
-    def primitive_symmetry(self):
+    def primitive_symmetry(self) -> Symmetry:
         """Return symmetry of primitive cell.
 
         Symmetry
@@ -702,7 +704,7 @@ class Phono3py:
         return self.primitive_symmetry
 
     @property
-    def phonon_supercell_symmetry(self):
+    def phonon_supercell_symmetry(self) -> Symmetry:
         """Return symmetry of supercell for fc2.
 
         Symmetry
@@ -1625,15 +1627,19 @@ class Phono3py:
         """
         disp_dataset = self._dataset
 
-        if fc_calculator is not None:
+        fc3_calculator, fc3_calculator_options = self._extract_fc2_fc3_calculators(
+            fc_calculator, fc_calculator_options, 3
+        )
+
+        if fc3_calculator is not None:
             disps, forces = get_displacements_and_forces_fc3(disp_dataset)
             fc2, fc3 = get_fc3(
                 self._supercell,
                 self._primitive,
                 disps,
                 forces,
-                fc_calculator=fc_calculator,
-                fc_calculator_options=fc_calculator_options,
+                fc_calculator=fc3_calculator,
+                fc_calculator_options=fc3_calculator_options,
                 is_compact_fc=is_compact_fc,
                 log_level=self._log_level,
             )
@@ -1666,6 +1672,12 @@ class Phono3py:
 
         # Set fc2 and fc3
         self._fc3 = fc3
+
+        # fc2 as obtained above will not be set when "|" in fc-calculator setting.
+        if fc_calculator is not None and "|" in fc_calculator:
+            fc2 = None
+        if fc_calculator_options is not None and "|" in fc_calculator_options:
+            fc2 = None
 
         # Normally self._fc2 is overwritten in produce_fc2
         if self._fc2 is None:
@@ -1711,15 +1723,19 @@ class Phono3py:
         else:
             p2s_map = None
 
-        if fc_calculator is not None:
+        fc2_calculator, fc2_calculator_options = self._extract_fc2_fc3_calculators(
+            fc_calculator, fc_calculator_options, 2
+        )
+
+        if fc2_calculator is not None:
             disps, forces = get_displacements_and_forces(disp_dataset)
             self._fc2 = get_fc2(
                 self._phonon_supercell,
                 self._phonon_primitive,
                 disps,
                 forces,
-                fc_calculator=fc_calculator,
-                fc_calculator_options=fc_calculator_options,
+                fc_calculator=fc2_calculator,
+                fc_calculator_options=fc2_calculator_options,
                 atom_list=p2s_map,
                 log_level=self._log_level,
             )
@@ -2558,3 +2574,38 @@ class Phono3py:
                     )
                     print(" But this frequency is forced to be zero.")
                     print("=" * 61)
+
+    def _extract_fc2_fc3_calculators(self, fc_calculator, fc_calculator_options, order):
+        """Extract fc_calculator and fc_calculator_options for fc2 and fc3.
+
+        fc_calculator : str
+            FC calculator. "|" separates fc2 and fc3. First and last
+            parts separated correspond to fc2 and fc3 calculators, respectively.
+        fc_calculator_options : str
+            FC calculator options. "|" separates fc2 and fc3. First and last
+            parts separated correspond to fc2 and fc3 options, respectively.
+        order : int = 2 or 3
+            2 and 3 indicate fc2 and fc3, respectively.
+
+        """
+        if fc_calculator is not None:
+            if "|" in fc_calculator:
+                _fc_calculator = fc_calculator.split("|")[order - 2]
+                if _fc_calculator == "":
+                    _fc_calculator = None
+            else:
+                _fc_calculator = fc_calculator
+        else:
+            _fc_calculator = None
+
+        if fc_calculator_options is not None:
+            if "|" in fc_calculator_options:
+                _fc_calculator_options = fc_calculator_options.split("|")[order - 2]
+                if _fc_calculator_options == "":
+                    _fc_calculator_options = None
+            else:
+                _fc_calculator_options = fc_calculator_options
+        else:
+            _fc_calculator_options = None
+
+        return _fc_calculator, _fc_calculator_options

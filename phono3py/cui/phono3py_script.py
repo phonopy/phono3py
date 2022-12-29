@@ -33,9 +33,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import annotations
+
 import copy
+import datetime
 import sys
-from typing import Dict, Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 from phonopy.cui.collect_cell_info import collect_cell_info
@@ -44,7 +47,6 @@ from phonopy.cui.phonopy_argparse import show_deprecated_option_warnings
 from phonopy.cui.phonopy_script import (
     file_exists,
     files_exist,
-    get_fc_calculator_params,
     print_end,
     print_error,
     print_error_message,
@@ -59,7 +61,10 @@ from phonopy.structure.cells import isclose as cells_isclose
 from phonopy.units import Bohr, Hartree, VaspToTHz
 
 from phono3py import Phono3py, Phono3pyIsotope, Phono3pyJointDos
-from phono3py.cui.create_force_constants import create_phono3py_force_constants
+from phono3py.cui.create_force_constants import (
+    create_phono3py_force_constants,
+    get_fc_calculator_params,
+)
 from phono3py.cui.create_supercells import create_phono3py_supercells
 from phono3py.cui.load import set_dataset_and_force_constants
 from phono3py.cui.phono3py_argparse import get_parser
@@ -105,6 +110,23 @@ def print_phono3py():
  | |_) | | | | (_) | | | | (_) |__) | |_) | |_| |
  | .__/|_| |_|\___/|_| |_|\___/____/| .__/ \__, |
  |_|                                |_|    |___/ """
+    )
+    print_version(__version__)
+    print_time()
+
+
+def print_end_phono3py():
+    """Print END logo."""
+    print_time()
+    print_end()
+
+
+def print_time():
+    """Print current time."""
+    print(
+        "-------------------------"
+        f'[time {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}]'
+        "-------------------------"
     )
 
 
@@ -155,12 +177,11 @@ def finalize_phono3py(
         w.write(str(ph3py_yaml))
 
     if log_level > 0:
-        print("")
         if displacements_mode:
             print(f'Displacement dataset was written in "{yaml_filename}".')
         else:
             print(f'Summary of calculation was written in "{yaml_filename}".')
-        print_end()
+        print_end_phono3py()
     sys.exit(0)
 
 
@@ -207,7 +228,12 @@ def start_phono3py(**argparse_control):
     # Title
     if log_level:
         print_phono3py()
-        print_version(__version__)
+        import phono3py._phono3py as phono3c
+
+        max_threads = phono3c.omp_max_threads()
+        if max_threads > 0:
+            print(f"Compiled with OpenMP support (max {max_threads} threads).")
+
         if argparse_control.get("load_phono3py_yaml", False):
             print("Running in phono3py.load mode.")
         print("Python version %d.%d.%d" % sys.version_info[:3])
@@ -290,7 +316,7 @@ def create_FORCES_FC2_from_FORCE_SETS_then_exit(log_level):
     print("\n".join(displacements_yaml_lines_type1(disp_dataset)))
 
     if log_level:
-        print_end()
+        print_end_phono3py()
     sys.exit(0)
 
 
@@ -344,14 +370,14 @@ def create_FORCE_SETS_from_FORCES_FCx_then_exit(
 
         if log_level:
             print("FORCE_SETS has been created.")
-            print_end()
+            print_end_phono3py()
     else:
         if log_level:
             print(
                 "The file format of %s is already readable by phonopy."
                 % forces_filename
             )
-            print_end()
+            print_end_phono3py()
     sys.exit(0)
 
 
@@ -447,7 +473,7 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
             if log_level:
                 print("")
                 print("%s has been created." % "FORCES_FC3")
-                print_end()
+                print_end_phono3py()
             sys.exit(0)
         else:
             if log_level:
@@ -525,7 +551,7 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
             if log_level:
                 print("")
                 print("%s has been created." % "FORCES_FC2")
-                print_end()
+                print_end_phono3py()
             sys.exit(0)
         else:
             if log_level:
@@ -685,7 +711,7 @@ def check_supercell_in_yaml(cell_info, ph3, distance_to_A, log_level):
 
 def init_phono3py(
     settings, cell_info, interface_mode, symprec, log_level
-) -> Tuple[Phono3py, Dict]:
+) -> tuple[Phono3py, dict]:
     """Initialize phono3py and update settings by default values."""
     physical_units = get_default_physical_units(interface_mode)
     distance_to_A = physical_units["distance_to_A"]
@@ -869,7 +895,7 @@ def run_gruneisen_then_exit(phono3py, settings, output_filename, log_level):
     )
 
     if log_level:
-        print_end()
+        print_end_phono3py()
     sys.exit(0)
 
 
@@ -909,7 +935,7 @@ def run_jdos_then_exit(
     joint_dos.run(grid_points, write_jdos=True)
 
     if log_level:
-        print_end()
+        print_end_phono3py()
     sys.exit(0)
 
 
@@ -949,7 +975,7 @@ def run_isotope_then_exit(phono3py, settings, updated_settings, log_level):
     iso.run(grid_points)
 
     if log_level:
-        print_end()
+        print_end_phono3py()
     sys.exit(0)
 
 
@@ -1043,9 +1069,9 @@ def init_phph_interaction(
 
 def main(**argparse_control):
     """Phono3py main part of command line interface."""
-    import warnings
+    # import warnings
 
-    warnings.simplefilter("error")
+    # warnings.simplefilter("error")
     load_phono3py_yaml = argparse_control.get("load_phono3py_yaml", False)
 
     args, log_level = start_phono3py(**argparse_control)
@@ -1165,7 +1191,7 @@ def main(**argparse_control):
             )
 
     if log_level > 1:
-        show_phono3py_cells(phono3py, settings)
+        show_phono3py_cells(phono3py)
     elif log_level:
         print(
             "Use -v option to watch primitive cell, unit cell, "
@@ -1223,7 +1249,7 @@ def main(**argparse_control):
         )
 
         if log_level:
-            print_end()
+            print_end_phono3py()
         sys.exit(0)
 
     ################################################################
@@ -1241,7 +1267,7 @@ def main(**argparse_control):
         )
 
         if log_level:
-            print_end()
+            print_end_phono3py()
         sys.exit(0)
 
     ##################################
@@ -1306,7 +1332,7 @@ def main(**argparse_control):
                 in_database = False
         if not in_database:
             if log_level:
-                print_end()
+                print_end_phono3py()
             sys.exit(0)
 
     #########################################

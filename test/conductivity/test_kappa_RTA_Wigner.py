@@ -2,98 +2,35 @@
 import numpy as np
 
 # first list is k_P, second list is k_C
-si_pbesol_kappa_P_RTA = [
-    108.723,
-    108.723,
-    108.723,
-    0.000,
-    0.000,
-    0.000,
-]  # old value 107.991
+si_pbesol_kappa_P_RTA = [108.723, 108.723, 108.723, 0.000, 0.000, 0.000]
 si_pbesol_kappa_C = [0.167, 0.167, 0.167, 0.000, 0.000, 0.000]
 
-si_pbesol_kappa_P_RTA_iso = [
-    97.494,
-    97.494,
-    97.494,
-    0.000,
-    0.000,
-    0.000,
-]  # old value 96.92419
+si_pbesol_kappa_P_RTA_iso = [98.008, 98.008, 98.008, 0.000, 0.000, 0.000]
 si_pbesol_kappa_C_iso = [0.177, 0.177, 0.177, 0.000, 0.000, 0.000]
 
-si_pbesol_kappa_P_RTA_with_sigmas = [
-    110.534,
-    110.534,
-    110.534,
-    0,
-    0,
-    0,
-]  # old value 109.6985
+si_pbesol_kappa_P_RTA_with_sigmas = [110.534, 110.534, 110.534, 0, 0, 0]
 si_pbesol_kappa_C_with_sigmas = [0.163, 0.163, 0.163, 0.000, 0.000, 0.000]
 
-si_pbesol_kappa_P_RTA_with_sigmas_iso = [
-    97.268,
-    97.268,
-    97.268,
-    0,
-    0,
-    0,
-]  # old value 96.03248
+si_pbesol_kappa_P_RTA_with_sigmas_iso = [97.268, 97.268, 97.268, 0, 0, 0]
 si_pbesol_kappa_C_with_sigmas_iso = [0.179, 0.179, 0.179, 0.000, 0.000, 0.000]
 
-si_pbesol_kappa_P_RTA_si_nosym = [
-    39.325,  # old value 38.242347
-    39.323,  # old value 38.700219
-    39.496,  # old value 39.198018
-    -0.004,  # old value  0.3216,
-    0.020,  # old value  0.207731,
-    0.018,  # old value  0.283,
-]
+si_pbesol_kappa_P_RTA_si_nosym = [39.325, 39.323, 39.496, -0.004, 0.020, 0.018]
 
 si_pbesol_kappa_C_si_nosym = [0.009, 0.009, 0.009, 0.000, 0.000, 0.000]
 
-si_pbesol_kappa_P_RTA_si_nomeshsym = [
-    39.411,
-    39.411,
-    39.411,
-    0,
-    0,
-    0,
-]  # old value 38.90918
+si_pbesol_kappa_P_RTA_si_nomeshsym = [39.411, 39.411, 39.411, 0, 0, 0]
 si_pbesol_kappa_C_si_nomeshsym = [0.009, 0.009, 0.009, 0.000, 0.000, 0.000]
 
-nacl_pbe_kappa_P_RTA = [
-    7.753,
-    7.753,
-    7.753,
-    0.000,
-    0.000,
-    0.000,
-]  # old value 7.72798252
+nacl_pbe_kappa_P_RTA = [7.753, 7.753, 7.753, 0.000, 0.000, 0.000]
 nacl_pbe_kappa_C = [0.081, 0.081, 0.081, 0.000, 0.000, 0.000]
 
 nacl_pbe_kappa_RTA_with_sigma = [7.742, 7.742, 7.742, 0, 0, 0]  # old value 7.71913708
 nacl_pbe_kappa_C_with_sigma = [0.081, 0.081, 0.081, 0.000, 0.000, 0.000]
 
-aln_lda_kappa_P_RTA = [
-    203.304,
-    203.304,
-    213.003,
-    0,
-    0,
-    0,
-]  # old value [203.304059, 203.304059, 213.003125, 0, 0, 0]
+aln_lda_kappa_P_RTA = [203.304, 203.304, 213.003, 0, 0, 0]
 aln_lda_kappa_C = [0.084, 0.084, 0.037, 0, 0, 0]
 
-aln_lda_kappa_P_RTA_with_sigmas = [
-    213.820000,
-    213.820000,
-    224.800000,
-    0,
-    0,
-    0,
-]  # old value [213.820000, 213.820000, 224.800121, 0, 0, 0]
+aln_lda_kappa_P_RTA_with_sigmas = [213.820000, 213.820000, 224.800000, 0, 0, 0]
 aln_lda_kappa_C_with_sigmas = [0.084, 0.084, 0.036, 0, 0, 0]
 
 

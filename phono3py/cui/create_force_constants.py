@@ -45,6 +45,7 @@ from phonopy.harmonic.force_constants import (
     symmetrize_force_constants,
 )
 from phonopy.interface.calculator import get_default_physical_units
+from phonopy.interface.fc_calculator import fc_calculator_names
 
 from phono3py import Phono3py
 from phono3py.cui.show_log import show_phono3py_force_constants_settings
@@ -76,12 +77,12 @@ def create_phono3py_force_constants(
     log_level=1,
 ):
     """Read or calculate force constants."""
-    if settings.fc_calculator is None:
-        symmetrize_fc3r = settings.is_symmetrize_fc3_r or settings.fc_symmetry
-        symmetrize_fc2 = settings.is_symmetrize_fc2 or settings.fc_symmetry
-    else:  # Rely on fc calculator the symmetrization of fc.
-        symmetrize_fc2 = False
-        symmetrize_fc3r = False
+    # Only for build-in fc calculator.
+    # These are not applied to external fc calculators.
+    symmetrize_fc3r = settings.is_symmetrize_fc3_r or settings.fc_symmetry
+    symmetrize_fc2 = settings.is_symmetrize_fc2 or settings.fc_symmetry
+
+    (fc_calculator, fc_calculator_options) = get_fc_calculator_params(settings)
 
     if log_level:
         show_phono3py_force_constants_settings(settings)
@@ -109,8 +110,8 @@ def create_phono3py_force_constants(
                 input_filename,
                 settings.is_compact_fc,
                 settings.cutoff_pair_distance,
-                settings.fc_calculator,
-                settings.fc_calculator_options,
+                fc_calculator,
+                fc_calculator_options,
                 log_level,
             )
 
@@ -148,7 +149,7 @@ def create_phono3py_force_constants(
         _read_phono3py_fc2(phono3py, symmetrize_fc2, input_filename, log_level)
     else:
         if phono3py.phonon_supercell_matrix is None:
-            if settings.fc_calculator == "alm" and phono3py.fc2 is not None:
+            if fc_calculator == "alm" and phono3py.fc2 is not None:
                 if log_level:
                     print("fc2 that was fit simultaneously with fc3 " "by ALM is used.")
             else:
@@ -158,8 +159,8 @@ def create_phono3py_force_constants(
                     symmetrize_fc2,
                     input_filename,
                     settings.is_compact_fc,
-                    settings.fc_calculator,
-                    settings.fc_calculator_options,
+                    fc_calculator,
+                    fc_calculator_options,
                     log_level,
                 )
         else:
@@ -169,8 +170,8 @@ def create_phono3py_force_constants(
                 symmetrize_fc2,
                 input_filename,
                 settings.is_compact_fc,
-                settings.fc_calculator,
-                settings.fc_calculator_options,
+                fc_calculator,
+                fc_calculator_options,
                 log_level,
             )
         if output_filename is None:
@@ -192,7 +193,7 @@ def create_phono3py_force_constants(
 
 
 def parse_forces(
-    phono3py,
+    phono3py: Phono3py,
     ph3py_yaml=None,
     cutoff_pair_distance=None,
     force_filename="FORCES_FC3",
@@ -218,7 +219,7 @@ def parse_forces(
     # can emit FileNotFoundError.
     if dataset is None or dataset is not None and not forces_in_dataset(dataset):
         _dataset = _get_type2_dataset(
-            natom, phono3py.calculator, filename=force_filename, log_level=log_level
+            natom, filename=force_filename, log_level=log_level
         )
         # Do not overwrite dataset when _dataset is None.
         if _dataset:
@@ -226,6 +227,12 @@ def parse_forces(
             dataset = _dataset
 
     if dataset is None:
+        if disp_filename is None:
+            msg = (
+                "Displacement dataset corresponding to "
+                f'"{force_filename}" not found.'
+            )
+            raise RuntimeError(msg)
         # Displacement dataset is obtained from disp_filename.
         # can emit FileNotFoundError.
         dataset = _read_disp_fc_yaml(disp_filename, fc_type)
@@ -276,6 +283,26 @@ def forces_in_dataset(dataset):
     return "forces" in dataset or (
         "first_atoms" in dataset and "forces" in dataset["first_atoms"][0]
     )
+
+
+def get_fc_calculator_params(settings):
+    """Return fc_calculator and fc_calculator_params from settings."""
+    fc_calculator = None
+    fc_calculator_list = []
+    if settings.fc_calculator is not None:
+        for fc_calculatr_str in settings.fc_calculator.split("|"):
+            if fc_calculatr_str == "":  # No external calculator
+                fc_calculator_list.append(fc_calculatr_str.lower())
+            elif fc_calculatr_str.lower() in fc_calculator_names:
+                fc_calculator_list.append(fc_calculatr_str.lower())
+        if fc_calculator_list:
+            fc_calculator = "|".join(fc_calculator_list)
+
+    fc_calculator_options = None
+    if settings.fc_calculator_options is not None:
+        fc_calculator_options = settings.fc_calculator_options
+
+    return fc_calculator, fc_calculator_options
 
 
 def _read_disp_fc_yaml(disp_filename, fc_type):
@@ -329,7 +356,7 @@ def _read_phono3py_fc2(phono3py, symmetrize_fc2, input_filename, log_level):
     if log_level:
         print('Reading fc2 from "%s".' % filename)
 
-    num_atom = phono3py.phonon_supercell.get_number_of_atoms()
+    num_atom = len(phono3py.phonon_supercell)
     p2s_map = phono3py.phonon_primitive.p2s_map
     try:
         phonon_fc2 = read_fc2_from_hdf5(filename=filename, p2s_map=p2s_map)
@@ -356,7 +383,7 @@ def _read_phono3py_fc2(phono3py, symmetrize_fc2, input_filename, log_level):
     phono3py.fc2 = phonon_fc2
 
 
-def _get_type2_dataset(natom, calculator, filename="FORCES_FC3", log_level=0):
+def _get_type2_dataset(natom, filename="FORCES_FC3", log_level=0):
     if not os.path.isfile(filename):
         return None
 
@@ -375,7 +402,7 @@ def _get_type2_dataset(natom, calculator, filename="FORCES_FC3", log_level=0):
 
 
 def _create_phono3py_fc3(
-    phono3py,
+    phono3py: Phono3py,
     ph3py_yaml,
     symmetrize_fc3r,
     input_filename,
@@ -436,7 +463,7 @@ def _create_phono3py_fc3(
 
 
 def _create_phono3py_fc2(
-    phono3py,
+    phono3py: Phono3py,
     ph3py_yaml,
     symmetrize_fc2,
     input_filename,

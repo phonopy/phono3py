@@ -53,6 +53,10 @@
 #include "triplet.h"
 #include "triplet_iw.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 long ph3py_get_interaction(
     Darray *fc3_normal_squared, const char *g_zero, const Darray *frequencies,
     const _lapack_complex_double *eigenvectors, const long (*triplets)[3],
@@ -257,19 +261,21 @@ void ph3py_get_reducible_collision_matrix(
 }
 
 void ph3py_get_isotope_scattering_strength(
-    double *gamma, const long grid_point, const double *mass_variances,
+    double *gamma, const long grid_point, const long *ir_grid_points,
+    const double *weights, const double *mass_variances,
     const double *frequencies, const _lapack_complex_double *eigenvectors,
-    const long num_grid_points, const long *band_indices, const long num_band,
-    const long num_band0, const double sigma, const double cutoff_frequency) {
+    const long num_ir_grid_points, const long *band_indices,
+    const long num_band, const long num_band0, const double sigma,
+    const double cutoff_frequency) {
     iso_get_isotope_scattering_strength(
-        gamma, grid_point, mass_variances, frequencies,
-        (lapack_complex_double *)eigenvectors, num_grid_points, band_indices,
+        gamma, grid_point, ir_grid_points, weights, mass_variances, frequencies,
+        (lapack_complex_double *)eigenvectors, num_ir_grid_points, band_indices,
         num_band, num_band0, sigma, cutoff_frequency);
 }
 
 void ph3py_get_thm_isotope_scattering_strength(
     double *gamma, const long grid_point, const long *ir_grid_points,
-    const long *weights, const double *mass_variances,
+    const double *weights, const double *mass_variances,
     const double *frequencies, const _lapack_complex_double *eigenvectors,
     const long num_ir_grid_points, const long *band_indices,
     const long num_band, const long num_band0,
@@ -758,4 +764,12 @@ void ph3py_pinv_from_eigensolution(double *data, const double *eigvals,
                                    const long size, const double cutoff,
                                    const long pinv_method) {
     pinv_from_eigensolution(data, eigvals, size, cutoff, pinv_method);
+}
+
+long ph3py_get_max_threads(void) {
+#ifdef _OPENMP
+    return omp_get_max_threads();
+#else
+    return 0;
+#endif
 }

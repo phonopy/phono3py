@@ -9,12 +9,12 @@ installation of phono3py is required. See how to install phonopy at
 https://phonopy.github.io/phonopy/install.html. Phono3py relies on phonopy, so
 please use the latest release of phonopy when installing phono3py.
 
+<!--
 ```{contents}
 :depth: 3
 :local:
 ```
-
-
+-->
 ## Installation using conda
 
 Using conda is the easiest way for installation of phono3py for linux and macOS.
@@ -33,28 +33,50 @@ All dependent packages should be installed.
 When installing phono3py using `setup.py` from the source code, a few libraries
 are required before running `setup.py` script.
 
-For phono3py, OpenMP library is necessary for the multithreding support. In
-additon, BLAS, LAPACK, and LAPACKE are also needed. These packages may be
-installed by the package manager of each OS or conda environment.
+- {ref}`Linear algebra library <install_lapacke>`: BLAS, LAPACK, and LAPACKE
+- {ref}`OpenMP library <install_openmp>`: For the multithreding support.
 
-### Automatic required library search by cmake
+These packages may be installed by the package manager of OS (e.g. `apt`) or
+conda environment. Automatic search of required libraries and flags that are
+already on the system is performed by cmake. If cmake is installed on the
+system, this automatic search is invoked as default. For the installation with
+custom configurations without using cmake, the environment variable
+`PHONO3PY_USE_CMAKE=false` has to be set.
 
-With installed cmake on the system, required libraries may be found
-automatically using cmake. See {ref}`install_an_example`.
+(install_with_cmake)=
+### Build with automatic search of library configurations by cmake
 
-### Custom installation with `site.cfg` file
+With installed cmake and required libraries on the system, cmake tries to find
+libraries to be linked and the compiler flags that are required during the build.
+This phono3py build can be launched by
+```
+% pip install -e . -vvv
+```
+See an example at {ref}`install_an_example`. In the standard output, flags and
+libraries found by cmake are shown. Please carefully check if those
+configurations are expected ones or not.
+
+(install_custom)=
+### Build with custom library configurations by `site.cfg` file
 
 Custom installation is achieved by creating `site.cfg` file on the same
-directory as `setup.py`. Users will customize flags and additional libraries by
-adding a `site.cfg`. In previous versions, `site.cfg` was processed by numpy,
+directory as `setup.py`. Users will write configurations of compiler flags and
+linked libraries in `site.cfg`. If `setup.py` finds `site.cfg`, the
+configurations are used as the default configurations. If cmake is found in the
+system, cmake tries to find required libraries and found configurations are
+appended. To deactivate cmake's library search, the environment variable
+`PHONO3PY_USE_CMAKE=false` has to be set before running the phono3py build:
+```
+% export PHONO3PY_USE_CMAKE=false
+```
+In previous versions, `site.cfg` was processed by numpy,
 but from version 2.4.0, it is processed by script in `setup.py`.
 `extra_link_args`, `extra_compile_args`, `extra_objects`, and `include_dirs` can
 be specified. How they used is found at [setuptools web
 site](https://setuptools.pypa.io/en/latest/userguide/ext_modules.html#extension-api-reference).
 
- In most cases,
-users want to enable multithreading support with OpenMP. Its minimum setting
-with gcc as the compiler is:
+In most cases, users want to enable multithreading support with OpenMP. Its
+minimum setting with gcc as the compiler is:
 
 ```
 extra_compile_args = -fopenmp
@@ -84,6 +106,8 @@ For openblas and gcc
 extra_compile_args = -fopenmp
 extra_link_args = -lgomp
 ```
+
+(install_an_example)=
 
 ## Installation instruction of latest development version of phono3py
 
@@ -167,7 +191,6 @@ wrong python libraries can be imported.
    appreciated if letting us know it in the phonopy mailing list.
 
 (install_lapacke)=
-
 ## Installation of LAPACKE
 
 LAPACK library is used in a few parts of the code to diagonalize matrices.
@@ -209,8 +232,7 @@ LAPACKE is shown below.
 BLAS, LAPACK, and LAPACKE, these all may have to be compiled with `-fPIC` option
 to use it with python.
 
-(install_an_example)=
-
+(install_openmp)=
 ## Multithreading and its controlling by C macro
 
 Phono3py uses multithreading concurrency in two ways. One is that written in the

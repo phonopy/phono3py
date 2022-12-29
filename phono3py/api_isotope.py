@@ -101,7 +101,7 @@ class Phono3pyIsotope:
         """Return grid points in BZ-grid."""
         return self._grid_points
 
-    def run(self, grid_points):
+    def run(self, grid_points, lang="C"):
         """Calculate isotope scattering."""
         gamma = np.zeros(
             (len(self._sigmas), len(grid_points), len(self._iso.band_indices)),
@@ -127,7 +127,7 @@ class Phono3pyIsotope:
                     else:
                         print("Sigma: %s" % sigma)
                     self._iso.sigma = sigma
-                    self._iso.run()
+                    self._iso.run(lang=lang)
                     gamma[i, j] = self._iso.gamma
                     frequencies = self._iso.get_phonons()[0]
                     print("")
