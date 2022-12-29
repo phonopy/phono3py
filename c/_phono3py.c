@@ -93,6 +93,7 @@ static PyObject *py_diagonalize_collision_matrix(PyObject *self,
 static PyObject *py_pinv_from_eigensolution(PyObject *self, PyObject *args);
 static PyObject *py_get_default_colmat_solver(PyObject *self, PyObject *args);
 static PyObject *py_lapacke_pinv(PyObject *self, PyObject *args);
+static PyObject *py_get_omp_max_threads(PyObject *self, PyObject *args);
 
 static void show_colmat_info(const PyArrayObject *collision_matrix_py,
                              const long i_sigma, const long i_temp,
@@ -206,6 +207,9 @@ static PyMethodDef _phono3py_methods[] = {
      METH_VARARGS, "Return default collison matrix solver by integer value"},
     {"lapacke_pinv", (PyCFunction)py_lapacke_pinv, METH_VARARGS,
      "Pseudo inversion using lapacke."},
+    {"omp_max_threads", py_get_omp_max_threads, METH_VARARGS,
+     "Return openmp max number of threads. Return 0 unless openmp is "
+     "activated. "},
     {NULL, NULL, 0, NULL}};
 
 #if PY_MAJOR_VERSION >= 3
@@ -908,37 +912,44 @@ static PyObject *py_get_isotope_strength(PyObject *self, PyObject *args) {
     PyArrayObject *py_eigenvectors;
     PyArrayObject *py_band_indices;
     PyArrayObject *py_mass_variances;
+    PyArrayObject *py_ir_grid_points;
+    PyArrayObject *py_weights;
+
     long grid_point;
-    long num_grid_points;
     double cutoff_frequency;
     double sigma;
 
     double *gamma;
     double *frequencies;
+    long *ir_grid_points;
+    double *weights;
     _lapack_complex_double *eigenvectors;
     long *band_indices;
     double *mass_variances;
-    long num_band, num_band0;
+    long num_band, num_band0, num_ir_grid_points;
 
-    if (!PyArg_ParseTuple(args, "OlOOOOldd", &py_gamma, &grid_point,
-                          &py_mass_variances, &py_frequencies, &py_eigenvectors,
-                          &py_band_indices, &num_grid_points, &sigma,
-                          &cutoff_frequency)) {
+    if (!PyArg_ParseTuple(args, "OlOOOOOOdd", &py_gamma, &grid_point,
+                          &py_ir_grid_points, &py_weights, &py_mass_variances,
+                          &py_frequencies, &py_eigenvectors, &py_band_indices,
+                          &sigma, &cutoff_frequency)) {
         return NULL;
     }
 
     gamma = (double *)PyArray_DATA(py_gamma);
     frequencies = (double *)PyArray_DATA(py_frequencies);
     eigenvectors = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
+    ir_grid_points = (long *)PyArray_DATA(py_ir_grid_points);
+    weights = (double *)PyArray_DATA(py_weights);
     band_indices = (long *)PyArray_DATA(py_band_indices);
     mass_variances = (double *)PyArray_DATA(py_mass_variances);
     num_band = (long)PyArray_DIMS(py_frequencies)[1];
     num_band0 = (long)PyArray_DIMS(py_band_indices)[0];
+    num_ir_grid_points = (long)PyArray_DIMS(py_ir_grid_points)[0];
 
     ph3py_get_isotope_scattering_strength(
-        gamma, grid_point, mass_variances, frequencies, eigenvectors,
-        num_grid_points, band_indices, num_band, num_band0, sigma,
-        cutoff_frequency);
+        gamma, grid_point, ir_grid_points, weights, mass_variances, frequencies,
+        eigenvectors, num_ir_grid_points, band_indices, num_band, num_band0,
+        sigma, cutoff_frequency);
 
     Py_RETURN_NONE;
 }
@@ -958,7 +969,7 @@ static PyObject *py_get_thm_isotope_strength(PyObject *self, PyObject *args) {
     double *gamma;
     double *frequencies;
     long *ir_grid_points;
-    long *weights;
+    double *weights;
     _lapack_complex_double *eigenvectors;
     long *band_indices;
     double *mass_variances;
@@ -975,7 +986,7 @@ static PyObject *py_get_thm_isotope_strength(PyObject *self, PyObject *args) {
     gamma = (double *)PyArray_DATA(py_gamma);
     frequencies = (double *)PyArray_DATA(py_frequencies);
     ir_grid_points = (long *)PyArray_DATA(py_ir_grid_points);
-    weights = (long *)PyArray_DATA(py_weights);
+    weights = (double *)PyArray_DATA(py_weights);
     eigenvectors = (_lapack_complex_double *)PyArray_DATA(py_eigenvectors);
     band_indices = (long *)PyArray_DATA(py_band_indices);
     mass_variances = (double *)PyArray_DATA(py_mass_variances);
@@ -1791,6 +1802,10 @@ static PyObject *py_lapacke_pinv(PyObject *self, PyObject *args) {
     info = ph3py_phonopy_pinv(data_out, data_in, m, n, cutoff);
 
     return PyLong_FromLong((long)info);
+}
+
+static PyObject *py_get_omp_max_threads(PyObject *self, PyObject *args) {
+    return PyLong_FromLong(ph3py_get_max_threads());
 }
 
 static void show_colmat_info(const PyArrayObject *py_collision_matrix,

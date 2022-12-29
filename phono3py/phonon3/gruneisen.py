@@ -159,7 +159,7 @@ class Gruneisen:
             self._svecs, self._multi = sparse_to_dense_svecs(svecs, multi)
 
         if self._ion_clamped:
-            num_atom_prim = self._pcell.get_number_of_atoms()
+            num_atom_prim = len(self._pcell)
             self._X = np.zeros((num_atom_prim, 3, 3, 3), dtype=float)
         else:
             self._X = self._get_X()
@@ -221,7 +221,7 @@ class Gruneisen:
         """Set band structure paths."""
         self._run_mode = "band"
         self._band_paths = paths
-        rec_lattice = np.linalg.inv(self._pcell.get_cell())
+        rec_lattice = np.linalg.inv(self._pcell.cell)
         self._band_distances = []
         for path in paths:
             distances_at_path = [0.0]
@@ -357,7 +357,7 @@ class Gruneisen:
             self._dm.run(q, nac_q_direction)
         omega2, w = np.linalg.eigh(self._dm.dynamical_matrix)
         g = np.zeros((len(omega2), 3, 3), dtype=float)
-        num_atom_prim = self._pcell.get_number_of_atoms()
+        num_atom_prim = len(self._pcell)
         dDdu = self._get_dDdu(q)
 
         for s in range(len(omega2)):

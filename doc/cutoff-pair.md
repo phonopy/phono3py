@@ -1,7 +1,8 @@
 (command_cutoff_pair)=
 # Force constants calculation with cutoff pair-distance
 
-Here the detail of the command option {ref}`--cutoff_pair <cutoff_pair_option>` is explained.
+Here the detail of the command option {ref}`--cutoff_pair <cutoff_pair_option>`
+is explained. See also reference {cite}`Mizokami-PRB-2018`.
 
 ```{contents}
 :depth: 2
@@ -426,4 +427,9 @@ number_of_pairs_in_cutoff: 1248
   300.0     235.887    235.887    219.301      0.000     -0.000     -0.000
   300.0     235.642    235.642    219.348      0.000     -0.000     -0.000
   300.0     235.728    235.728    219.102      0.000     -0.000     -0.000
+```
+
+## References
+```{bibliography}
+:filter: docname in docnames
 ```

@@ -89,7 +89,7 @@ def show_general_settings(
             print("  %s" % v)
 
 
-def show_phono3py_cells(phono3py: Phono3py, settings):
+def show_phono3py_cells(phono3py: Phono3py):
     """Show crystal structures."""
     primitive = phono3py.primitive
     supercell = phono3py.supercell
@@ -100,7 +100,7 @@ def show_phono3py_cells(phono3py: Phono3py, settings):
     print_cell(primitive)
     print("-" * 32 + " supercell " + "-" * 33)
     print_cell(supercell, mapping=primitive.s2p_map)
-    if settings.phonon_supercell_matrix is not None:
+    if phono3py.phonon_supercell_matrix is not None:
         print("-" * 19 + " primitive cell for harmonic phonon " + "-" * 20)
         print_cell(phonon_primitive)
         print("-" * 21 + " supercell for harmonic phonon " + "-" * 22)
@@ -220,12 +220,12 @@ def show_phono3py_settings(phono3py, settings, updated_settings, log_level):
 
     if settings.mesh_numbers is not None:
         try:
-            if len(settings.mesh_numbers) == 3:
-                mesh_numbers = tuple(np.array(settings.mesh_numbers).ravel())
-                nums = (("%d " * len(mesh_numbers)).strip()) % mesh_numbers
-                print(f"Mesh sampling: [ {nums} ]")
+            mesh_length = float(settings.mesh_numbers)
+            print(f"Length for sampling mesh generation: {mesh_length:.2f}")
         except TypeError:
-            print("Length for sampling mesh generation: %.2f" % settings.mesh_numbers)
+            mesh_numbers = tuple(np.ravel(settings.mesh_numbers))
+            nums = (("%d " * len(mesh_numbers)).strip()) % mesh_numbers
+            print(f"Mesh sampling: [ {nums} ]")
 
     sys.stdout.flush()
 

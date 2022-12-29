@@ -189,6 +189,17 @@ void tpi_get_integration_weight_with_sigma(
     }
 }
 
+/**
+ * @brief Return grid points of relative grid adddresses in BZ-grid
+ *
+ * @param neighboring_grid_points Grid points of relative grid addresses in
+ * BZ-grid.
+ * @param grid_point Grid point of interest.
+ * @param relative_grid_address Relative grid address wrt grid point of
+ * interest.
+ * @param num_relative_grid_address Number of relative grid addresses.
+ * @param bzgrid
+ */
 void tpi_get_neighboring_grid_points(long *neighboring_grid_points,
                                      const long grid_point,
                                      const long (*relative_grid_address)[3],

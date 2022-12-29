@@ -101,26 +101,25 @@ def get_integration_weights(
         Values at which the integration weights are computed.
         shape=(sampling_points, ), dtype='double'
     grid_values : array_like
-        Values of tetrahedron vertices. Usually they are phonon frequencies,
-        but the same shape array can be used instead of frequencies.
+        Values of tetrahedron vertices. Usually they are phonon frequencies, but
+        the same shape array can be used instead of frequencies.
         shape=(regular_grid_points, num_band), dtype='double'
     bz_grid : BZGrid
         Grid information in reciprocal space.
     grid_points : array_like, optional, default=None
-        Grid point indices in BZ-grid. If None, all regular grid points.
-        shape=(grid_points, ), dtype='int_'
+        Grid point indices in BZ-grid. If None, all regular grid points in
+        BZ-grid. shape=(grid_points, ), dtype='int_'
     bzgp2irgp_map : array_like, optional, default=None
-        Grid point index mapping from bz_grid to index of the first
-        dimension of `grid_values` array, i.e., usually irreducible
-        grid point count.
+        Grid point index mapping from bz_grid to index of the first dimension of
+        `grid_values` array, i.e., usually irreducible grid point count.
     function : str, 'I' or 'J', optional, default='I'
         'J' is for intetration and 'I' is for its derivative.
 
     Returns
     -------
     integration_weights : ndarray
-        shape=(grid_points, sampling_points, num_band),
-        dtype='double', order='C'
+        shape=(grid_points, sampling_points, num_band), dtype='double',
+        order='C'
 
     """
     import phono3py._phono3py as phono3c

@@ -1,5 +1,6 @@
 """Tests for isotope scatterings."""
 import numpy as np
+import pytest
 
 from phono3py import Phono3pyIsotope
 
@@ -49,7 +50,8 @@ si_pbesol_grg_iso_sigma = [
 ]
 
 
-def test_Phono3pyIsotope(si_pbesol):
+@pytest.mark.parametrize("lang", ["C", "Py"])
+def test_Phono3pyIsotope(si_pbesol, lang):
     """Phono3pyIsotope with tetrahedron method."""
     si_pbesol.mesh_numbers = [21, 21, 21]
     iso = Phono3pyIsotope(
@@ -63,12 +65,13 @@ def test_Phono3pyIsotope(si_pbesol):
         si_pbesol.phonon_primitive,
         nac_params=si_pbesol.nac_params,
     )
-    iso.run([23, 103])
+    iso.run([23, 103], lang=lang)
     # print(iso.gamma[0])
     np.testing.assert_allclose(si_pbesol_iso, iso.gamma[0], atol=3e-4)
 
 
-def test_Phono3pyIsotope_with_sigma(si_pbesol):
+@pytest.mark.parametrize("lang", ["C", "Py"])
+def test_Phono3pyIsotope_with_sigma(si_pbesol, lang):
     """Phono3pyIsotope with smearing method."""
     si_pbesol.mesh_numbers = [21, 21, 21]
     iso = Phono3pyIsotope(
@@ -85,12 +88,13 @@ def test_Phono3pyIsotope_with_sigma(si_pbesol):
         si_pbesol.phonon_primitive,
         nac_params=si_pbesol.nac_params,
     )
-    iso.run([23, 103])
+    iso.run([23, 103], lang=lang)
     # print(iso.gamma[0])
     np.testing.assert_allclose(si_pbesol_iso_sigma, iso.gamma[0], atol=3e-4)
 
 
-def test_Phono3pyIsotope_grg(si_pbesol_grg):
+@pytest.mark.parametrize("lang", ["C", "Py"])
+def test_Phono3pyIsotope_grg(si_pbesol_grg, lang):
     """Phono3pyIsotope with tetrahedron method and GR-grid."""
     ph3 = si_pbesol_grg
     iso = Phono3pyIsotope(
@@ -105,14 +109,15 @@ def test_Phono3pyIsotope_grg(si_pbesol_grg):
         ph3.phonon_primitive,
         nac_params=ph3.nac_params,
     )
-    iso.run([23, 103])
     np.testing.assert_equal(
         iso.grid.grid_matrix, [[-15, 15, 15], [15, -15, 15], [15, 15, -15]]
     )
+    iso.run([23, 103], lang=lang)
     np.testing.assert_allclose(si_pbesol_grg_iso, iso.gamma[0], atol=2e-3)
 
 
-def test_Phono3pyIsotope_grg_with_sigma(si_pbesol_grg):
+@pytest.mark.parametrize("lang", ["C", "Py"])
+def test_Phono3pyIsotope_grg_with_sigma(si_pbesol_grg, lang):
     """Phono3pyIsotope with smearing method and GR-grid."""
     ph3 = si_pbesol_grg
     iso = Phono3pyIsotope(
@@ -130,7 +135,7 @@ def test_Phono3pyIsotope_grg_with_sigma(si_pbesol_grg):
         ph3.phonon_primitive,
         nac_params=ph3.nac_params,
     )
-    iso.run([23, 103])
+    iso.run([23, 103], lang=lang)
     np.testing.assert_equal(
         iso.grid.grid_matrix, [[-15, 15, 15], [15, -15, 15], [15, 15, -15]]
     )

@@ -92,6 +92,7 @@ class Phono3pySettings(Settings):
         "solve_collective_phonon": False,
         "emulate_v1": False,
         "subtract_forces": None,
+        "temperatures": None,
         "use_ave_pp": False,
         "use_grg": False,
         "write_collision": False,
@@ -308,6 +309,10 @@ class Phono3pySettings(Settings):
     def set_subtract_forces(self, val):
         """Set subtract_forces."""
         self._v["subtract_forces"] = val
+
+    def set_temperatures(self, val):
+        """Set temperatures."""
+        self._v["temperatures"] = val
 
     def set_use_ave_pp(self, val):
         """Set use_ave_pp."""
@@ -580,6 +585,10 @@ class Phono3pyConfParser(ConfParser):
             if self._args.subtract_forces:
                 self._confs["subtract_forces"] = self._args.subtract_forces
 
+        if "temperatures" in self._args:
+            if self._args.temperatures is not None:
+                self._confs["temperatures"] = " ".join(self._args.temperatures)
+
         if "use_ave_pp" in self._args:
             if self._args.use_ave_pp:
                 self._confs["use_ave_pp"] = ".true."
@@ -752,6 +761,14 @@ class Phono3pyConfParser(ConfParser):
                 else:
                     vals = [int(x) for x in confs["read_collision"].split()]
                     self.set_parameter("read_collision", vals)
+
+            # For multiple T values.
+            if conf_key == "temperatures":
+                vals = [fracval(x) for x in confs["temperatures"].split()]
+                if len(vals) < 1:
+                    self.setting_error("Temperatures are incorrectly set.")
+                else:
+                    self.set_parameter("temperatures", vals)
 
     def _set_settings(self):
         self.set_settings()
@@ -958,6 +975,10 @@ class Phono3pyConfParser(ConfParser):
         # Subtract residual forces to create FORCES_FC2 and FORCES_FC3
         if "subtract_forces" in params:
             self._settings.set_subtract_forces(params["subtract_forces"])
+
+        # Temperatures for scatterings
+        if "temperatures" in params:
+            self._settings.set_temperatures(params["temperatures"])
 
         # Use averaged ph-ph interaction
         if "use_ave_pp" in params:

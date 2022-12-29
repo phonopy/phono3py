@@ -96,6 +96,166 @@ def test_fc3(si_pbesol_111: Phono3py):
     np.testing.assert_allclose(ph.fc3[0, 1, 7], fc3_ref, atol=1e-8, rtol=0)
 
 
+def test_phonon_smat_fd(si_pbesol_111_222_fd: Phono3py):
+    """Test phonon smat with Si PBEsol 1x1x1-2x2x2."""
+    ph = si_pbesol_111_222_fd
+    fc3_ref = [
+        [
+            [1.07250822e-01, 1.86302073e-17, -4.26452855e-18],
+            [8.96414569e-03, -1.43046911e-01, -1.38498937e-01],
+            [-8.96414569e-03, -1.38498937e-01, -1.43046911e-01],
+        ],
+        [
+            [-8.96414569e-03, -1.43046911e-01, -1.38498937e-01],
+            [-3.39457157e-02, -4.63315728e-17, -4.17779237e-17],
+            [-3.31746167e-01, -2.60025724e-02, -2.60025724e-02],
+        ],
+        [
+            [8.96414569e-03, -1.38498937e-01, -1.43046911e-01],
+            [-3.31746167e-01, 2.60025724e-02, 2.60025724e-02],
+            [-3.39457157e-02, 3.69351540e-17, 5.94504191e-18],
+        ],
+    ]
+    np.testing.assert_allclose(ph.fc3[0, 1, 7], fc3_ref, atol=1e-8, rtol=0)
+
+    fc2_ref = [
+        [-0.20333398, -0.0244225, -0.0244225],
+        [-0.0244225, -0.02219682, -0.024112],
+        [-0.0244225, -0.024112, -0.02219682],
+    ]
+    np.testing.assert_allclose(ph.fc2[0, 33], fc2_ref, atol=1e-6, rtol=0)
+
+
+def test_phonon_smat_alm(si_pbesol_111_222_alm: Phono3py):
+    """Test phonon smat and ALM with Si PBEsol 1x1x1-2x2x2."""
+    ph = si_pbesol_111_222_alm
+    fc3_ref = [
+        [
+            [0.10725082, 0.0, 0.0],
+            [-0.04225275, -0.09187669, -0.1386571],
+            [0.04225275, -0.1386571, -0.09187669],
+        ],
+        [
+            [0.04225275, -0.09187669, -0.1386571],
+            [-0.17073504, 0.0, 0.0],
+            [-0.33192165, 0.02516976, 0.02516976],
+        ],
+        [
+            [-0.04225275, -0.1386571, -0.09187669],
+            [-0.33192165, -0.02516976, -0.02516976],
+            [-0.17073504, 0.0, 0.0],
+        ],
+    ]
+    np.testing.assert_allclose(ph.fc3[0, 1, 7], fc3_ref, atol=1e-6, rtol=0)
+    fc2_ref = [
+        [-0.20333398, -0.0244225, -0.0244225],
+        [-0.0244225, -0.02219682, -0.024112],
+        [-0.0244225, -0.024112, -0.02219682],
+    ]
+    np.testing.assert_allclose(ph.fc2[0, 33], fc2_ref, atol=1e-6, rtol=0)
+
+
+def test_phonon_smat_alm_fd(si_pbesol_111_222_alm_fd: Phono3py):
+    """Test phonon smat and ALM (fc2) FD (fc3) with Si PBEsol 1x1x1-2x2x2."""
+    ph = si_pbesol_111_222_alm_fd
+    fc3_ref = [
+        [
+            [1.07250822e-01, 1.86302073e-17, -4.26452855e-18],
+            [8.96414569e-03, -1.43046911e-01, -1.38498937e-01],
+            [-8.96414569e-03, -1.38498937e-01, -1.43046911e-01],
+        ],
+        [
+            [-8.96414569e-03, -1.43046911e-01, -1.38498937e-01],
+            [-3.39457157e-02, -4.63315728e-17, -4.17779237e-17],
+            [-3.31746167e-01, -2.60025724e-02, -2.60025724e-02],
+        ],
+        [
+            [8.96414569e-03, -1.38498937e-01, -1.43046911e-01],
+            [-3.31746167e-01, 2.60025724e-02, 2.60025724e-02],
+            [-3.39457157e-02, 3.69351540e-17, 5.94504191e-18],
+        ],
+    ]
+    np.testing.assert_allclose(ph.fc3[0, 1, 7], fc3_ref, atol=1e-6, rtol=0)
+    fc2_ref = [
+        [-0.20333398, -0.0244225, -0.0244225],
+        [-0.0244225, -0.02219682, -0.024112],
+        [-0.0244225, -0.024112, -0.02219682],
+    ]
+    np.testing.assert_allclose(ph.fc2[0, 33], fc2_ref, atol=1e-6, rtol=0)
+
+
+def test_phonon_smat_fd_alm(si_pbesol_111_222_fd_alm: Phono3py):
+    """Test phonon smat and FD (fc2) ALM (fc3) with Si PBEsol 1x1x1-2x2x2."""
+    ph = si_pbesol_111_222_fd_alm
+    fc3_ref = [
+        [
+            [0.10725082, 0.0, 0.0],
+            [-0.04225275, -0.09187669, -0.1386571],
+            [0.04225275, -0.1386571, -0.09187669],
+        ],
+        [
+            [0.04225275, -0.09187669, -0.1386571],
+            [-0.17073504, 0.0, 0.0],
+            [-0.33192165, 0.02516976, 0.02516976],
+        ],
+        [
+            [-0.04225275, -0.1386571, -0.09187669],
+            [-0.33192165, -0.02516976, -0.02516976],
+            [-0.17073504, 0.0, 0.0],
+        ],
+    ]
+    np.testing.assert_allclose(ph.fc3[0, 1, 7], fc3_ref, atol=1e-6, rtol=0)
+    fc2_ref = [
+        [-0.20333398, -0.0244225, -0.0244225],
+        [-0.0244225, -0.02219682, -0.024112],
+        [-0.0244225, -0.024112, -0.02219682],
+    ]
+    np.testing.assert_allclose(ph.fc2[0, 33], fc2_ref, atol=1e-6, rtol=0)
+
+
+def test_phonon_smat_alm_cutoff(si_pbesol_111_222_alm_cutoff: Phono3py):
+    """Test phonon smat and ALM with Si PBEsol 1x1x1-2x2x2 cutoff."""
+    ph = si_pbesol_111_222_alm_cutoff
+    np.testing.assert_allclose(ph.fc3[0, 1, 7], 0, atol=1e-6, rtol=0)
+    np.testing.assert_allclose(ph.fc2[0, 33], 0, atol=1e-6, rtol=0)
+
+
+def test_phonon_smat_alm_cutoff_fc2(si_pbesol_111_222_alm_cutoff_fc2: Phono3py):
+    """Test phonon smat and ALM with Si PBEsol 1x1x1-2x2x2 cutoff fc2."""
+    ph = si_pbesol_111_222_alm_cutoff_fc2
+    fc3_ref = [
+        [
+            [0.10725082, 0.0, 0.0],
+            [-0.04225275, -0.09187669, -0.1386571],
+            [0.04225275, -0.1386571, -0.09187669],
+        ],
+        [
+            [0.04225275, -0.09187669, -0.1386571],
+            [-0.17073504, 0.0, 0.0],
+            [-0.33192165, 0.02516976, 0.02516976],
+        ],
+        [
+            [-0.04225275, -0.1386571, -0.09187669],
+            [-0.33192165, -0.02516976, -0.02516976],
+            [-0.17073504, 0.0, 0.0],
+        ],
+    ]
+    np.testing.assert_allclose(ph.fc3[0, 1, 7], fc3_ref, atol=1e-6, rtol=0)
+    np.testing.assert_allclose(ph.fc2[0, 33], 0, atol=1e-6, rtol=0)
+
+
+def test_phonon_smat_alm_cutoff_fc3(si_pbesol_111_222_alm_cutoff_fc3: Phono3py):
+    """Test phonon smat and ALM with Si PBEsol 1x1x1-2x2x2 cutoff fc3."""
+    ph = si_pbesol_111_222_alm_cutoff_fc3
+    np.testing.assert_allclose(ph.fc3[0, 1, 7], 0, atol=1e-6, rtol=0)
+    fc2_ref = [
+        [-0.20333398, -0.0244225, -0.0244225],
+        [-0.0244225, -0.02219682, -0.024112],
+        [-0.0244225, -0.024112, -0.02219682],
+    ]
+    np.testing.assert_allclose(ph.fc2[0, 33], fc2_ref, atol=1e-6, rtol=0)
+
+
 @pytest.mark.parametrize("pinv_solver", ["numpy", "lapacke"])
 def test_fc3_lapacke_solver(si_pbesol_111: Phono3py, pinv_solver: str):
     """Test fc3 with Si PBEsol 1x1x1 using lapacke solver."""
