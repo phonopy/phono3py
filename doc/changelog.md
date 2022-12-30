@@ -2,7 +2,11 @@
 
 # Change Log
 
-## Oct-29-2022: Version 2.5.0
+## Dec-31-2022: Version 2.5.1
+
+- Release to trigger phono3py conda-forge package build.
+
+## Dec-29-2022: Version 2.5.0
 
 - Maintenance release to follow the change of phonopy at v2.17.
 - Bug fix of phonon-isotope scattering strength. The scattering strength was
