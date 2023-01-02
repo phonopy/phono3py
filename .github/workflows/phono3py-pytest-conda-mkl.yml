@@ -3,6 +3,7 @@ name: Pytest with mkl
 on:
   push:
     branches-ignore:
+    - publish-gh-pages
     - master
     - rc
 
