@@ -4,6 +4,7 @@ project(phono3py C)
 option(PHONO3PY "Option to build phono3py module" OFF)
 option(PHONONMOD "Option to build phonon module" OFF)
 option(GRIDSYS "Option to build gridsys module" OFF)
+option(WITH_Fortran "enable fortran interface" OFF)
 option(USE_OpenMP "Option to search OpenMP library" ON)
 option(WITH_TESTS "build unit tests" OFF)
 option(BUILD_SHARED_LIBRARIES "Option to build shared library" OFF)
@@ -209,7 +210,7 @@ endif()
 # #######
 if(GRIDSYS)
     # Source code
-    set(SOURCES_GRIDSYSMOD
+    set(SOURCES_GRIDSYS
         ${PROJECT_SOURCE_DIR}/c/bzgrid.c
         ${PROJECT_SOURCE_DIR}/c/grgrid.c
         ${PROJECT_SOURCE_DIR}/c/gridsys.c
@@ -223,26 +224,26 @@ if(GRIDSYS)
 
     if(BUILD_SHARED_LIBRARIES)
         # Shared library
-        add_library(gridsysmod SHARED ${SOURCES_GRIDSYSMOD})
-        target_link_libraries(gridsysmod m ${OpenMP_C_LIBRARIES})
-        target_include_directories(gridsysmod PRIVATE ${MY_INCLUDES})
-        target_compile_options(gridsysmod PRIVATE ${OpenMP_C_FLAGS})
-        target_compile_definitions(gridsysmod PRIVATE THM_EPSILON=1e-10)
-        set_property(TARGET gridsysmod PROPERTY VERSION ${serial})
-        set_property(TARGET gridsysmod PROPERTY SOVERSION ${soserial})
-        install(TARGETS gridsysmod LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        add_library(gridsys SHARED ${SOURCES_GRIDSYS})
+        target_link_libraries(gridsys m ${OpenMP_C_LIBRARIES})
+        target_include_directories(gridsys PRIVATE ${MY_INCLUDES})
+        target_compile_options(gridsys PRIVATE ${OpenMP_C_FLAGS})
+        target_compile_definitions(gridsys PRIVATE THM_EPSILON=1e-10)
+        set_property(TARGET gridsys PROPERTY VERSION ${serial})
+        set_property(TARGET gridsys PROPERTY SOVERSION ${soserial})
+        install(TARGETS gridsys LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif()
 
     # Static link library
-    add_library(gridsysmod_static STATIC ${SOURCES_GRIDSYSMOD})
-    target_link_libraries(gridsysmod_static m ${OpenMP_C_LIBRARIES})
-    target_include_directories(gridsysmod_static PRIVATE ${MY_INCLUDES})
-    target_compile_options(gridsysmod_static PRIVATE ${OpenMP_C_FLAGS})
-    target_compile_definitions(gridsysmod_static PRIVATE THM_EPSILON=1e-10)
-    set_property(TARGET gridsysmod_static PROPERTY VERSION ${serial})
-    set_property(TARGET gridsysmod_static PROPERTY SOVERSION ${soserial})
-    set_property(TARGET gridsysmod_static PROPERTY OUTPUT_NAME gridsysmod)
-    install(TARGETS gridsysmod_static ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    add_library(gridsys_static STATIC ${SOURCES_GRIDSYS})
+    target_link_libraries(gridsys_static m ${OpenMP_C_LIBRARIES})
+    target_include_directories(gridsys_static PRIVATE ${MY_INCLUDES})
+    target_compile_options(gridsys_static PRIVATE ${OpenMP_C_FLAGS})
+    target_compile_definitions(gridsys_static PRIVATE THM_EPSILON=1e-10)
+    set_property(TARGET gridsys_static PROPERTY VERSION ${serial})
+    set_property(TARGET gridsys_static PROPERTY SOVERSION ${soserial})
+    set_property(TARGET gridsys_static PROPERTY OUTPUT_NAME gridsys)
+    install(TARGETS gridsys_static ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
     # Header file
     install(FILES ${PROJECT_SOURCE_DIR}/c/gridsys.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
@@ -250,4 +251,9 @@ endif()
 
 if(WITH_TESTS)
     add_subdirectory(ctest)
+endif()
+
+if (WITH_Fortran)
+  enable_language(Fortran)
+  add_subdirectory(fortran)
 endif()
