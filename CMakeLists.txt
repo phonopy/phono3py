@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 project(phono3py C)
 
 option(PHONO3PY "Option to build phono3py module" OFF)
-option(PHONONMOD "Option to build phonon module" OFF)
+option(PHONONCALC "Option to build phonon calculation module" OFF)
 option(GRIDSYS "Option to build gridsys module" OFF)
 option(WITH_Fortran "enable fortran interface" OFF)
 option(USE_OpenMP "Option to search OpenMP library" ON)
@@ -55,7 +55,7 @@ if(USE_OpenMP)
     endif()
 endif()
 
-if(PHONO3PY OR PHONONMOD)
+if(PHONO3PY OR PHONONCALC)
     find_package(BLAS REQUIRED) # set BLAS_LIBRARIES
 
     if(BLAS_FOUND)
@@ -71,7 +71,7 @@ if(PHONO3PY OR PHONONMOD)
     endif()
 endif()
 
-if(PHONO3PY OR PHONONMOD)
+if(PHONO3PY OR PHONONCALC)
     if(BLAS_LIBRARIES MATCHES "libmkl")
         message(STATUS "MKL detected: Set C-macros MKL_LAPACKE MULTITHREADED_BLAS")
     endif()
@@ -152,57 +152,57 @@ if(PHONO3PY)
 endif()
 
 # ############
-# phononmod #
+# phononcalc #
 # ############
-if(PHONONMOD)
+if(PHONONCALC)
     # Source code
-    set(SOURCES_PHONONMOD
+    set(SOURCES_PHONONCALC
         ${PROJECT_SOURCE_DIR}/c/dynmat.c
         ${PROJECT_SOURCE_DIR}/c/lapack_wrapper.c
         ${PROJECT_SOURCE_DIR}/c/phonon.c
-        ${PROJECT_SOURCE_DIR}/c/phononmod.c)
+        ${PROJECT_SOURCE_DIR}/c/phononcalc.c)
 
     if(BUILD_SHARED_LIBRARIES)
         # Shared library
-        add_library(phmod SHARED ${SOURCES_PHONONMOD})
-        target_link_libraries(phmod m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${OpenMP_C_LIBRARIES})
-        target_include_directories(phmod PRIVATE ${MY_INCLUDES})
-        target_compile_options(phmod PRIVATE ${OpenMP_C_FLAGS})
+        add_library(phcalc SHARED ${SOURCES_PHONONCALC})
+        target_link_libraries(phcalc m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${OpenMP_C_LIBRARIES})
+        target_include_directories(phcalc PRIVATE ${MY_INCLUDES})
+        target_compile_options(phcalc PRIVATE ${OpenMP_C_FLAGS})
 
         if(BLAS_LIBRARIES MATCHES "libmkl")
-            target_compile_definitions(phmod PRIVATE MKL_LAPACKE MULTITHREADED_BLAS)
+            target_compile_definitions(phcalc PRIVATE MKL_LAPACKE MULTITHREADED_BLAS)
         endif()
 
         if(BLAS_LIBRARIES MATCHES "libopenblas")
-            target_compile_definitions(phmod PRIVATE MULTITHREADED_BLAS)
+            target_compile_definitions(phcalc PRIVATE MULTITHREADED_BLAS)
         endif()
 
-        set_property(TARGET phmod PROPERTY VERSION ${serial})
-        set_property(TARGET phmod PROPERTY SOVERSION ${soserial})
-        install(TARGETS phmod LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        set_property(TARGET phcalc PROPERTY VERSION ${serial})
+        set_property(TARGET phcalc PROPERTY SOVERSION ${soserial})
+        install(TARGETS phcalc LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif()
 
     # Static link library
-    add_library(phmod_static STATIC ${SOURCES_PHONONMOD})
-    target_link_libraries(phmod_static m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${OpenMP_C_LIBRARIES})
-    target_include_directories(phmod_static PRIVATE ${MY_INCLUDES})
-    target_compile_options(phmod_static PRIVATE ${OpenMP_C_FLAGS})
+    add_library(phcalc_static STATIC ${SOURCES_PHONONCALC})
+    target_link_libraries(phcalc_static m ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES} ${OpenMP_C_LIBRARIES})
+    target_include_directories(phcalc_static PRIVATE ${MY_INCLUDES})
+    target_compile_options(phcalc_static PRIVATE ${OpenMP_C_FLAGS})
 
     if(BLAS_LIBRARIES MATCHES "libmkl")
-        target_compile_definitions(phmod_static PRIVATE MKL_LAPACKE MULTITHREADED_BLAS)
+        target_compile_definitions(phcalc_static PRIVATE MKL_LAPACKE MULTITHREADED_BLAS)
     endif()
 
     if(BLAS_LIBRARIES MATCHES "libopenblas")
-        target_compile_definitions(phmod_static PRIVATE MULTITHREADED_BLAS)
+        target_compile_definitions(phcalc_static PRIVATE MULTITHREADED_BLAS)
     endif()
 
-    set_property(TARGET phmod_static PROPERTY VERSION ${serial})
-    set_property(TARGET phmod_static PROPERTY SOVERSION ${soserial})
-    set_property(TARGET phmod_static PROPERTY OUTPUT_NAME phmod)
-    install(TARGETS phmod_static ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    set_property(TARGET phcalc_static PROPERTY VERSION ${serial})
+    set_property(TARGET phcalc_static PROPERTY SOVERSION ${soserial})
+    set_property(TARGET phcalc_static PROPERTY OUTPUT_NAME phcalc)
+    install(TARGETS phcalc_static ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
     # Header file
-    install(FILES ${PROJECT_SOURCE_DIR}/c/phononmod.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    install(FILES ${PROJECT_SOURCE_DIR}/c/phononcalc.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
 # #######

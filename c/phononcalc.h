@@ -32,15 +32,15 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef __phononmod_H__
-#define __phononmod_H__
+#ifndef __phononcalc_H__
+#define __phononcalc_H__
 
 typedef struct {
     double re;
     double im;
 } _lapack_complex_double;
 
-void phmod_get_phonons_at_gridpoints(
+void phcalc_get_phonons_at_gridpoints(
     double *frequencies, _lapack_complex_double *eigenvectors,
     char *phonon_done, const long num_phonons, const long *grid_points,
     const long num_grid_points, const long (*grid_address)[3],
