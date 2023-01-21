@@ -1,17 +1,11 @@
 cmake_minimum_required(VERSION 3.15)
-cmake_policy(SET CMP0007 NEW)
-
 project(phono3py C)
 
+option(PHONO3PY "Option to build phono3py module" OFF)
+option(PHONONMOD "Option to build phonon module" OFF)
+option(GRIDSYS "Option to build gridsys module" OFF)
 option(USE_OpenMP "Option to search OpenMP library" ON)
-
-# Sanity check if project is imported
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    option(WITH_TESTS "build unit tests" ON)
-else()
-    option(WITH_TESTS "build unit tests" OFF)
-endif()
-
+option(WITH_TESTS "build unit tests" OFF)
 option(BUILD_SHARED_LIBRARIES "Option to build shared library" OFF)
 if(WITH_TESTS)
     set(BUILD_SHARED_LIBRARIES ON)
