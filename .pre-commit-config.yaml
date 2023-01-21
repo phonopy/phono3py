@@ -35,3 +35,24 @@ repos:
   hooks:
     - id: isort
       name: isort (python)
+
+- repo: https://github.com/Takishima/cmake-pre-commit-hooks
+  rev: v1.5.3
+  hooks:
+    - id: clang-format
+      args:
+        - '-B_build-pre-commit'
+        - '-DWITH_Fortran=ON'
+        - '-DWITH_TESTS=ON'
+        - '-i'
+      stages: [manual]
+    - id: clang-tidy
+      args:
+        - '-B_build-pre-commit'
+        - '-DWITH_Fortran=ON'
+        - '-DWITH_TESTS=ON'
+        # - '--'
+        # - '-I/Users/togo/.miniforge/envs/dev/include'
+        # - '-I/Users/togo/.miniforge/envs/dev/include/python3.10'
+        # - '-I/Users/togo/.miniforge/envs/dev/lib/python3.10/site-packages/numpy/core/include'
+      stages: [manual]

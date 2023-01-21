@@ -32,7 +32,7 @@ def _run_cmake(build_dir):
         ".",
         "-B",
         "_build",
-        "-DPHONONMOD=on",
+        "-DPHONONCALC=on",
         "-DPHONO3PY=on",
         "-DCMAKE_INSTALL_PREFIX=.",
     ]
@@ -131,7 +131,7 @@ def _get_extensions(build_dir):
     """
     params = _get_params_from_site_cfg()
     extra_objects_ph3py = []
-    extra_objects_phmod = []
+    extra_objects_phcalc = []
 
     if not use_cmake or not shutil.which("cmake"):
         print("** Setup without using cmake **")
@@ -158,12 +158,12 @@ def _get_extensions(build_dir):
             "c/triplet_grid.c",
             "c/triplet_iw.c",
         ]
-        sources_phmod = [
-            "c/_phononmod.c",
+        sources_phcalc = [
+            "c/_phononcalc.c",
             "c/dynmat.c",
             "c/lapack_wrapper.c",
             "c/phonon.c",
-            "c/phononmod.c",
+            "c/phononcalc.c",
         ]
     else:
         print("** Setup using cmake **")
@@ -171,7 +171,7 @@ def _get_extensions(build_dir):
         found_extra_link_args = []
         found_extra_compile_args = []
         sources_ph3py = ["c/_phono3py.c"]
-        sources_phmod = ["c/_phononmod.c"]
+        sources_phcalc = ["c/_phononcalc.c"]
         cmake_output = _run_cmake(build_dir)
         found_flags = {}
         found_libs = {}
@@ -198,12 +198,12 @@ def _get_extensions(build_dir):
             print("=============================================")
             extra_objects_ph3py += [str(libph3py[0])]
 
-        libphmod = list((pathlib.Path.cwd() / "_build").glob("*phmod.*"))
-        if libphmod:
+        libphcalc = list((pathlib.Path.cwd() / "_build").glob("*phcalc.*"))
+        if libphcalc:
             print("=============================================")
-            print(f"Phonon library: {libphmod[0]}")
+            print(f"Phonon library: {libphcalc[0]}")
             print("=============================================")
-            extra_objects_phmod += [str(libphmod[0])]
+            extra_objects_phcalc += [str(libphcalc[0])]
 
         params["extra_link_args"] += found_extra_link_args
         params["extra_compile_args"] += found_extra_compile_args
@@ -234,12 +234,12 @@ def _get_extensions(build_dir):
 
     extensions.append(
         setuptools.Extension(
-            "phono3py._phononmod",
-            sources=sources_phmod,
+            "phono3py._phononcalc",
+            sources=sources_phcalc,
             extra_link_args=params["extra_link_args"],
             include_dirs=params["include_dirs"],
             extra_compile_args=params["extra_compile_args"],
-            extra_objects=params["extra_objects"] + extra_objects_phmod,
+            extra_objects=params["extra_objects"] + extra_objects_phcalc,
             define_macros=params["define_macros"],
         )
     )

@@ -36,7 +36,7 @@
 #include <numpy/arrayobject.h>
 
 // #include "lapack_wrapper.h"
-#include "phononmod.h"
+#include "phononcalc.h"
 
 static PyObject *py_get_phonons_at_gridpoints(PyObject *self, PyObject *args);
 
@@ -57,7 +57,7 @@ static PyObject *error_out(PyObject *m) {
     return NULL;
 }
 
-static PyMethodDef _phononmod_methods[] = {
+static PyMethodDef _phononcalc_methods[] = {
     {"error_out", (PyCFunction)error_out, METH_NOARGS, NULL},
     {"phonons_at_gridpoints", py_get_phonons_at_gridpoints, METH_VARARGS,
      "Set phonons at grid points"},
@@ -65,41 +65,41 @@ static PyMethodDef _phononmod_methods[] = {
 
 #if PY_MAJOR_VERSION >= 3
 
-static int _phononmod_traverse(PyObject *m, visitproc visit, void *arg) {
+static int _phononcalc_traverse(PyObject *m, visitproc visit, void *arg) {
     Py_VISIT(GETSTATE(m)->error);
     return 0;
 }
 
-static int _phononmod_clear(PyObject *m) {
+static int _phononcalc_clear(PyObject *m) {
     Py_CLEAR(GETSTATE(m)->error);
     return 0;
 }
 
 static struct PyModuleDef moduledef = {
-    PyModuleDef_HEAD_INIT,       "_phononmod",       NULL,
-    sizeof(struct module_state), _phononmod_methods, NULL,
-    _phononmod_traverse,         _phononmod_clear,   NULL};
+    PyModuleDef_HEAD_INIT,       "_phononcalc",       NULL,
+    sizeof(struct module_state), _phononcalc_methods, NULL,
+    _phononcalc_traverse,        _phononcalc_clear,   NULL};
 
 #define INITERROR return NULL
 
-PyObject *PyInit__phononmod(void)
+PyObject *PyInit__phononcalc(void)
 #else
 #define INITERROR return
 
-void init_phononmod(void)
+void init_phononcalc(void)
 #endif
 {
 #if PY_MAJOR_VERSION >= 3
     PyObject *module = PyModule_Create(&moduledef);
 #else
-    PyObject *module = Py_InitModule("_phononmod", _phononmod_methods);
+    PyObject *module = Py_InitModule("_phononcalc", _phononcalc_methods);
 #endif
     struct module_state *st;
 
     if (module == NULL) INITERROR;
     st = GETSTATE(module);
 
-    st->error = PyErr_NewException("_phononmod.Error", NULL, NULL);
+    st->error = PyErr_NewException("_phononcalc.Error", NULL, NULL);
     if (st->error == NULL) {
         Py_DECREF(module);
         INITERROR;
@@ -221,7 +221,7 @@ static PyObject *py_get_phonons_at_gridpoints(PyObject *self, PyObject *args) {
         positions_fc2 = (double(*)[3])PyArray_DATA(py_positions_fc2);
     }
 
-    phmod_get_phonons_at_gridpoints(
+    phcalc_get_phonons_at_gridpoints(
         freqs, eigvecs, phonon_done, num_phonons, grid_points, num_grid_points,
         grid_address, QDinv, fc2, svecs_fc2, multi_fc2, positions_fc2,
         num_patom, num_satom, masses_fc2, p2s_fc2, s2p_fc2,
