@@ -11,20 +11,20 @@ extern "C" {
 TEST(test_gridsys, test_gridsys_get_all_grid_addresses) {
     long(*gr_grid_addresses)[3];
     long D_diag[3] = {3, 4, 5};
-    long n, i, j, k, count;
+    long n, i, j, k, grid_index;
 
     n = D_diag[0] * D_diag[1] * D_diag[2];
     gr_grid_addresses = (long(*)[3])malloc(sizeof(long[3]) * n);
     gridsys_get_all_grid_addresses(gr_grid_addresses, D_diag);
 
-    count = 0;
+    grid_index = 0;
     for (k = 0; k < D_diag[2]; k++) {
         for (j = 0; j < D_diag[1]; j++) {
             for (i = 0; i < D_diag[0]; i++) {
-                ASSERT_EQ(gr_grid_addresses[count][0], i);
-                ASSERT_EQ(gr_grid_addresses[count][1], j);
-                ASSERT_EQ(gr_grid_addresses[count][2], k);
-                count++;
+                ASSERT_EQ(gr_grid_addresses[grid_index][0], i);
+                ASSERT_EQ(gr_grid_addresses[grid_index][1], j);
+                ASSERT_EQ(gr_grid_addresses[grid_index][2], k);
+                grid_index++;
             }
         }
     }
@@ -48,6 +48,32 @@ TEST(test_gridsys, test_gridsys_get_double_grid_address) {
         gridsys_get_double_grid_address(address_double, address, PS[i]);
         for (j = 0; j < 3; j++) {
             ASSERT_EQ(address_double[j], address[j] * 2 + PS[i][j]);
+        }
+    }
+}
+
+/**
+ * @brief gridsys_get_grid_address_from_index
+ * Return single grid address of grid point index in GR-grid. See the definition
+ * of grid point index at gridsys_get_all_grid_addresses.
+ */
+TEST(test_gridsys, test_gridsys_get_grid_address_from_index) {
+    long address[3];
+    long D_diag[3] = {3, 4, 5};
+    long i, j, k, l, grid_index;
+
+    for (k = 0; k < D_diag[2]; k++) {
+        for (j = 0; j < D_diag[1]; j++) {
+            for (i = 0; i < D_diag[0]; i++) {
+                gridsys_get_grid_address_from_index(address, grid_index,
+                                                    D_diag);
+                for (l = 0; l < 3; l++) {
+                    ASSERT_EQ(address[0], i);
+                    ASSERT_EQ(address[1], j);
+                    ASSERT_EQ(address[2], k);
+                }
+                grid_index++;
+            }
         }
     }
 }
