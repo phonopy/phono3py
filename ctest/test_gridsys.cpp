@@ -4,10 +4,14 @@ extern "C" {
 #include "gridsys.h"
 }
 
+/**
+ * @brief gridsys_get_all_grid_addresses test
+ * Return all GR-grid addresses of {(X, Y, Z)} where X runs fastest.
+ */
 TEST(test_gridsys, test_gridsys_get_all_grid_addresses) {
     long(*gr_grid_addresses)[3];
     long D_diag[3];
-    long n;
+    long n, i, j, k, count;
 
     D_diag[0] = 3;
     D_diag[1] = 4;
@@ -15,6 +19,18 @@ TEST(test_gridsys, test_gridsys_get_all_grid_addresses) {
     n = D_diag[0] * D_diag[1] * D_diag[2];
     gr_grid_addresses = (long(*)[3])malloc(sizeof(long[3]) * n);
     gridsys_get_all_grid_addresses(gr_grid_addresses, D_diag);
+
+    count = 0;
+    for (k = 0; k < D_diag[2]; k++) {
+        for (j = 0; j < D_diag[1]; j++) {
+            for (i = 0; i < D_diag[0]; i++) {
+                ASSERT_EQ(gr_grid_addresses[count][0], i);
+                ASSERT_EQ(gr_grid_addresses[count][1], j);
+                ASSERT_EQ(gr_grid_addresses[count][2], k);
+                count++;
+            }
+        }
+    }
 }
 
 /* TEST(test_gridsys, test_gridsys_get_all_grid_addresses) {
