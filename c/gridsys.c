@@ -107,12 +107,17 @@ double gridsys_get_thm_integration_weight(const double omega,
     return thm_get_integration_weight(omega, tetrahedra_omegas, function);
 }
 
+void gridsys_get_thm_all_relative_grid_address(
+    long relative_grid_address[4][24][4][3]) {
+    thm_get_all_relative_grid_address(relative_grid_address);
+}
+
 /* Get one dataset of relative grid address used for tetrahedron */
 /* method. rec_lattice is used to choose the one. */
 /* rec_lattice : microzone basis vectors in column vectors */
-void gridsys_get_thm_relative_grid_address(
+long gridsys_get_thm_relative_grid_address(
     long relative_grid_addresses[24][4][3], const double rec_lattice[3][3]) {
-    thm_get_relative_grid_address(relative_grid_addresses, rec_lattice);
+    return thm_get_relative_grid_address(relative_grid_addresses, rec_lattice);
 }
 
 /* The rotations are those after proper transformation in GRGrid. */

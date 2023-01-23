@@ -39,12 +39,58 @@
 extern "C" {
 #endif
 
+/* Generalized regular (GR) grid
+
+Integer grid matrix M_g is unimodular transformed to integer diagnonal matrix D
+by D = P M_g Q, which can be achieved by Smith normal form like transformation.
+P and Q used are integer unimodular matrices with determinant=1.
+
+S in PS is doubled shift with respect to microzone basis vectors, i.e.,
+half-grid shift along an axis corresponds to 1.
+
+*/
+
+/**
+ * @brief Return all GR-grid addresses with respect to n_1, n_2, n_3
+ *
+ * @param gr_grid_addresses all GR-grid addresses
+ * @param D_diag Numbers of divisions along a, b, c directions of GR-grid
+ * @return void
+ */
 void gridsys_get_all_grid_addresses(long (*gr_grid_addresses)[3],
                                     const long D_diag[3]);
+
+/**
+ * @brief Return double grid address in GR-grid
+ *
+ * @param address_double double grid address, i.e., possibly with shift in
+ * GR-grid
+ * @param address single grid address in GR-grid
+ * @param PS shift in GR-grid
+ * @return void
+ */
 void gridsys_get_double_grid_address(long address_double[3],
                                      const long address[3], const long PS[3]);
+
+/**
+ * @brief Return single grid address in GR-grid with given grid point index.
+ *
+ * @param address Single grid address in GR-grid
+ * @param grid_index Grid point index in GR-grid
+ * @param D_diag Numbers of divisions along a, b, c directions of GR-grid
+ * @return void
+ */
 void gridsys_get_grid_address_from_index(long address[3], const long grid_index,
                                          const long D_diag[3]);
+
+/**
+ * @brief
+ *
+ * @param address_double
+ * @param D_diag
+ * @param PS
+ * @return long
+ */
 long gridsys_get_double_grid_index(const long address_double[3],
                                    const long D_diag[3], const long PS[3]);
 long gridsys_get_grid_index_from_address(const long address[3],
@@ -64,7 +110,9 @@ long gridsys_transform_rotations(long (*transformed_rots)[3][3],
 double gridsys_get_thm_integration_weight(const double omega,
                                           const double tetrahedra_omegas[24][4],
                                           const char function);
-void gridsys_get_thm_relative_grid_address(
+void gridsys_get_thm_all_relative_grid_address(
+    long relative_grid_address[4][24][4][3]);
+long gridsys_get_thm_relative_grid_address(
     long relative_grid_addresses[24][4][3], const double rec_lattice[3][3]);
 void gridsys_get_ir_grid_map(long *ir_grid_map, const long (*rotations)[3][3],
                              const long num_rot, const long D_diag[3],
