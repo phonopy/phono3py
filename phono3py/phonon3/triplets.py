@@ -379,7 +379,7 @@ def _set_triplets_integration_weights_py(
     thm = TetrahedronMethod(pp.bz_grid.microzone_lattice)
     triplets_at_q = pp.get_triplets_at_q()[0]
     tetrahedra_vertices = _get_tetrahedra_vertices(
-        np.array(np.dot(thm.get_tetrahedra(), pp.bz_grid.P.T), dtype="int_", order="C"),
+        np.array(np.dot(thm.tetrahedra, pp.bz_grid.P.T), dtype="int_", order="C"),
         triplets_at_q,
         pp.bz_grid,
     )
