@@ -109,7 +109,7 @@ long gridsys_get_grid_index_from_address(const long address[3],
  * @brief Return grid point index of rotated address of given grid point index.
  *
  * @param grid_index Grid point index in GR-grid
- * @param rotation Rotation in reciprocal space R^T
+ * @param rotation Transformed rotation in reciprocal space tilde-R^T
  * @param D_diag Numbers of divisions along a, b, c directions of GR-grid
  * @param PS Shift in GR-grid
  * @return * long
@@ -149,7 +149,8 @@ long gridsys_get_snf3x3(long D_diag[3], long P[3][3], long Q[3][3],
  * vectors in GR-grid
  *
  * @param transformed_rots Transformed rotation matrices in reciprocal space
- * @param rotations Original rotations matrices in reciprocal space
+ * {tilde-R^T}
+ * @param rotations Original rotations matrices in reciprocal space {R^T}
  * @param num_rot Number of rotation matrices
  * @param D_diag Diagonal elements of diagnoal matrix D of Smith normal form
  * @param Q Unimodular matrix Q of Smith normal form
@@ -193,9 +194,40 @@ void gridsys_get_thm_all_relative_grid_address(
  */
 long gridsys_get_thm_relative_grid_address(
     long relative_grid_addresses[24][4][3], const double rec_lattice[3][3]);
+
+/**
+ * @brief Return mapping table from GR-grid points to GR-ir-grid points
+ *
+ * @param ir_grid_map Grid point index mapping to ir-grid point indices with
+ * array size of prod(D_diag)
+ * @param rotations Transformed rotation matrices in reciprocal space
+ * @param num_rot Number of rotation matrices
+ * @param D_diag Diagonal elements of diagnoal matrix D of Smith normal form
+ * @param PS Shift in GR-grid
+ */
 void gridsys_get_ir_grid_map(long *ir_grid_map, const long (*rotations)[3][3],
                              const long num_rot, const long D_diag[3],
                              const long PS[3]);
+
+/**
+ * @brief Find shortest grid points from Gamma considering periodicity of
+ * reciprocal lattice. See the details in docstring of BZGrid
+ *
+ * @param bz_grid_addresses Grid point addresses of shortest grid points
+ * @param bz_map List of accumulated numbers of BZ grid points from the
+ * first GR grid point to the last grid point. In type-II, [0, 1, 3, 4, ...]
+ * means multiplicities of [1, 2, 1, ...], with len(bz_map)=product(D_diag) + 1.
+ * @param bzg2grg Mapping table of bz_grid_addresses to gr_grid_addresses. In
+ * type-II, len(bzg2grg) == len(bz_grid_addresses) <= (D_diag[0] + 1) *
+ * (D_diag[1] + 1) * (D_diag[2] + 1).
+ * @param D_diag Diagonal elements of diagnoal matrix D of Smith normal form
+ * @param Q Unimodular matrix Q of Smith normal form
+ * @param PS Shift in GR-grid
+ * @param rec_lattice Reduced reciprocal basis vectors in column vectors
+ * @param type Data structure type I (old and sparse) or II (new and dense,
+ * recommended) of bz_map
+ * @return long Number of bz_grid_addresses stored.
+ */
 long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
                                    long *bzg2grg, const long D_diag[3],
                                    const long Q[3][3], const long PS[3],

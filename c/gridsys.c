@@ -64,7 +64,6 @@ long gridsys_get_double_grid_index(const long address_double[3],
     return grg_get_double_grid_index(address_double, D_diag, PS);
 }
 
-/* From single address to grid index */
 long gridsys_get_grid_index_from_address(const long address[3],
                                          const long D_diag[3]) {
     return grg_get_grid_index(address, D_diag);
@@ -88,9 +87,6 @@ long gridsys_get_snf3x3(long D_diag[3], long P[3][3], long Q[3][3],
     return grg_get_snf3x3(D_diag, P, Q, A);
 }
 
-/* Rotation matrices with respect to reciprocal basis vectors are
- * transformed to those for GRGrid. This set of the rotations are
- * used always in GRGrid handling. */
 long gridsys_transform_rotations(long (*transformed_rots)[3][3],
                                  const long (*rotations)[3][3],
                                  const long num_rot, const long D_diag[3],
@@ -112,44 +108,17 @@ void gridsys_get_thm_all_relative_grid_address(
     thm_get_all_relative_grid_address(relative_grid_address);
 }
 
-/* Get one dataset of relative grid address used for tetrahedron */
-/* method. rec_lattice is used to choose the one. */
-/* rec_lattice : microzone basis vectors in column vectors */
 long gridsys_get_thm_relative_grid_address(
     long relative_grid_addresses[24][4][3], const double rec_lattice[3][3]) {
     return thm_get_relative_grid_address(relative_grid_addresses, rec_lattice);
 }
 
-/* The rotations are those after proper transformation in GRGrid. */
 void gridsys_get_ir_grid_map(long *ir_grid_map, const long (*rotations)[3][3],
                              const long num_rot, const long D_diag[3],
                              const long PS[3]) {
     grg_get_ir_grid_map(ir_grid_map, rotations, num_rot, D_diag, PS);
 }
 
-/* Find shortest grid points from Gamma considering periodicity of */
-/* reciprocal lattice. See the details in docstring of BZGrid. */
-/* */
-/* Parameters */
-/* ---------- */
-/* type : Data structure type of bz_map. type=2 is always */
-/*        recommended.*/
-/* Returns */
-/* ------- */
-/* bz_grid_addresses : */
-/*     Grid point addresses of shortest grid points. */
-/*     len(bz_grid_addresses) <= product(D_diag + 1) */
-/*     for full gr_grid_addresses. */
-/* bz_map : */
-/*     List of accumulated numbers of BZ grid points from the first GR */
-/*     grid point to the last grid point. */
-/*     [0, 1, 3, 4, ...] means multiplicities of [1, 2, 1, ...] */
-/*     With type=2, len(bz_map)=product(D_diag) + 1. */
-/* bzg2grg : */
-/*     Mapping table of bz_grid_addresses to gr_grid_addresses. */
-/*     len(bzg2grg) == len(bz_grid_addresses) <= product(D_diag + 1). */
-/* (function return) size : */
-/*     Number of bz_grid_addresses stored. */
 long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
                                    long *bzg2grg, const long D_diag[3],
                                    const long Q[3][3], const long PS[3],
