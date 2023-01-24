@@ -440,7 +440,7 @@ class BZGrid:
             self._D_diag,
             self._Q,
             self._reciprocal_lattice,  # column vectors
-            is_shift=self._is_shift,
+            PS=self.PS,
             store_dense_gp_map=self._store_dense_gp_map,
         )
         if self._store_dense_gp_map:
@@ -1049,7 +1049,7 @@ def _relocate_BZ_grid_address(
     D_diag,
     Q,
     reciprocal_lattice,  # column vectors
-    is_shift=None,
+    PS=None,
     store_dense_gp_map=False,
 ):
     """Grid addresses are relocated to be inside first Brillouin zone.
@@ -1109,10 +1109,10 @@ def _relocate_BZ_grid_address(
     """
     import phono3py._phono3py as phono3c
 
-    if is_shift is None:
-        _is_shift = np.zeros(3, dtype="int_")
+    if PS is None:
+        _PS = np.zeros(3, dtype="int_")
     else:
-        _is_shift = np.array(is_shift, dtype="int_")
+        _PS = np.array(PS, dtype="int_")
     bz_grid_addresses = np.zeros((np.prod(D_diag) * 8, 3), dtype="int_", order="C")
     bzg2grg = np.zeros(len(bz_grid_addresses), dtype="int_")
 
@@ -1133,7 +1133,7 @@ def _relocate_BZ_grid_address(
         bzg2grg,
         np.array(D_diag, dtype="int_"),
         np.array(np.dot(tmat_inv_int, Q), dtype="int_", order="C"),
-        _is_shift,
+        _PS,
         np.array(reduced_basis.T, dtype="double", order="C"),
         store_dense_gp_map * 1 + 1,
     )
