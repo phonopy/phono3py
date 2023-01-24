@@ -13,6 +13,11 @@ if(NOT GTest_FOUND)
 
   # Fetch GoogleTest
   include(FetchContent)
+
+  # cmake-lint inline directives must be specified at body scope. See
+  # https://cmake-format.readthedocs.io/en/latest/lint-inline.html
+
+  # cmake-lint: disable=C0301
   FetchContent_Declare(
     googletest
     URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz
@@ -20,12 +25,12 @@ if(NOT GTest_FOUND)
   FetchContent_MakeAvailable(googletest)
 endif()
 
-foreach(TESTCASE IN ITEMS test_gridsys)
-  add_executable(${TESTCASE} ${TESTCASE}.cpp)
+foreach(testcase IN ITEMS test_gridsys)
+  add_executable(${testcase} ${testcase}.cpp)
   target_link_libraries(
-    ${TESTCASE}
+    ${testcase}
     PUBLIC gridsys
     PRIVATE GTest::gtest GTest::gtest_main)
-  target_include_directories(${TESTCASE} PUBLIC ${PROJECT_SOURCE_DIR}/c)
-  gtest_discover_tests(${TESTCASE})
+  target_include_directories(${testcase} PUBLIC ${PROJECT_SOURCE_DIR}/c)
+  gtest_discover_tests(${testcase})
 endforeach()

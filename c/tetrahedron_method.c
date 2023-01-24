@@ -718,7 +718,7 @@ static double _I_32(const double omega, const double vertices_omegas[4]);
 static double _I_33(const double omega, const double vertices_omegas[4]);
 static double _I_4(void);
 
-void thm_get_relative_grid_address(long relative_grid_address[24][4][3],
+long thm_get_relative_grid_address(long relative_grid_address[24][4][3],
                                    const double rec_lattice[3][3]) {
     long i, j, k, main_diag_index;
 
@@ -732,6 +732,7 @@ void thm_get_relative_grid_address(long relative_grid_address[24][4][3],
             }
         }
     }
+    return main_diag_index;
 }
 
 void thm_get_all_relative_grid_address(
