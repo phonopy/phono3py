@@ -25,7 +25,7 @@ if(NOT GTest_FOUND)
   FetchContent_MakeAvailable(googletest)
 endif()
 
-foreach(testcase IN ITEMS test_gridsys)
+foreach(testcase IN ITEMS test_gridsys test_niggli)
   add_executable(${testcase} ${testcase}.cpp)
   target_link_libraries(
     ${testcase}
