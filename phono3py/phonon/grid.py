@@ -1121,7 +1121,8 @@ def _relocate_BZ_grid_address(
     else:
         bz_map = np.zeros(np.prod(D_diag) * 9 + 1, dtype="int_")
 
-    reclat_T = np.array(reciprocal_lattice.T, dtype="double", order="C")
+    # Mpr^-1 = Lr^-1 Lp
+    reclat_T = np.array(np.transpose(reciprocal_lattice), dtype="double", order="C")
     reduced_basis = get_reduced_bases(reclat_T)
     tmat_inv = np.dot(np.linalg.inv(reduced_basis.T), reclat_T.T)
     tmat_inv_int = np.rint(tmat_inv).astype("int_")
