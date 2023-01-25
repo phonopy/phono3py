@@ -10,6 +10,7 @@ extern "C" {
  * @brief niggli:niggli_reduce
  * Run Niggli reduction.
  * @return succeeded (1) or not (0)
+ * @details The test data is imported from spglib test lattice.dat No.467.
  */
 TEST(test_gridsys, test_niggli_niggli_reduce) {
     /* row vectors */
