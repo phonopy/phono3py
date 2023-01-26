@@ -1,6 +1,7 @@
 """Test for triplets.py."""
 import numpy as np
 import pytest
+from phonopy import Phonopy
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.symmetry import Symmetry
 
@@ -492,8 +493,375 @@ def test_get_triplets_reciprocal_mesh_at_q(aln_cell: PhonopyAtoms, params):
         is_time_reversal=params[1],
         swappable=params[0],
     )
-    print(",".join(["%d" % x for x in map_triplets]))
-    print(",".join(["%d" % x for x in map_q]))
-    print(len(np.unique(map_triplets)))
+    # print(",".join(["%d" % x for x in map_triplets]))
+    # print(",".join(["%d" % x for x in map_q]))
+    # print(len(np.unique(map_triplets)))
     np.testing.assert_equal(ref_map_triplets[params[2]], map_triplets)
     np.testing.assert_equal(ref_map_q[params[2]], map_q)
+
+
+@pytest.mark.parametrize(
+    "params",
+    [(True, True, 0), (False, True, 1), (True, False, 2), (False, False, 3)],
+)
+def test_get_triplets_reciprocal_mesh_at_q_agno2(agno2_cell: PhonopyAtoms, params):
+    """Test BZGrid with shift using AgNO2."""
+    ref_map_triplets = [
+        [
+            0,
+            0,
+            2,
+            2,
+            4,
+            4,
+            6,
+            6,
+            8,
+            8,
+            10,
+            10,
+            12,
+            12,
+            6,
+            6,
+            16,
+            16,
+            2,
+            2,
+            12,
+            12,
+            6,
+            6,
+            8,
+            8,
+            10,
+            10,
+            4,
+            4,
+            6,
+            6,
+        ],
+        [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            6,
+            7,
+            16,
+            17,
+            2,
+            3,
+            12,
+            13,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            4,
+            5,
+            6,
+            7,
+        ],
+        [
+            0,
+            0,
+            2,
+            2,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            10,
+            12,
+            13,
+            7,
+            6,
+            16,
+            16,
+            2,
+            2,
+            13,
+            12,
+            6,
+            7,
+            9,
+            8,
+            10,
+            10,
+            5,
+            4,
+            7,
+            6,
+        ],
+        [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            2,
+            3,
+            20,
+            21,
+            6,
+            7,
+            24,
+            25,
+            10,
+            11,
+            28,
+            29,
+            14,
+            15,
+        ],
+    ]
+    ref_map_q = [
+        [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            6,
+            7,
+            16,
+            17,
+            2,
+            3,
+            12,
+            13,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            4,
+            5,
+            6,
+            7,
+        ],
+        [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            6,
+            7,
+            16,
+            17,
+            2,
+            3,
+            12,
+            13,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            4,
+            5,
+            6,
+            7,
+        ],
+        [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            2,
+            3,
+            20,
+            21,
+            6,
+            7,
+            24,
+            25,
+            10,
+            11,
+            28,
+            29,
+            14,
+            15,
+        ],
+        [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            2,
+            3,
+            20,
+            21,
+            6,
+            7,
+            24,
+            25,
+            10,
+            11,
+            28,
+            29,
+            14,
+            15,
+        ],
+    ]
+    grid_point = 1
+    mesh = 12
+    ph = Phonopy(agno2_cell, supercell_matrix=[1, 1, 1], primitive_matrix="auto")
+    bzgrid = BZGrid(
+        mesh,
+        lattice=ph.primitive.cell,
+        symmetry_dataset=ph.primitive_symmetry.dataset,
+        use_grg=True,
+        is_time_reversal=False,
+    )
+    np.testing.assert_equal([2, 2, 8], bzgrid.D_diag)
+    np.testing.assert_equal([[0, 0, 1], [1, 0, -1], [0, 1, -1]], bzgrid.Q)
+
+    map_triplets, map_q = _get_triplets_reciprocal_mesh_at_q(
+        grid_point,
+        bzgrid.D_diag,
+        bzgrid.rotations,
+        is_time_reversal=params[1],
+        swappable=params[0],
+    )
+    # print(",".join(["%d" % x for x in map_triplets]))
+    # print(",".join(["%d" % x for x in map_q]))
+    np.testing.assert_equal(ref_map_triplets[params[2]], map_triplets)
+    np.testing.assert_equal(ref_map_q[params[2]], map_q)
+
+
+@pytest.mark.parametrize(
+    "params",
+    [  # force_SNF, swappable, is_time_reversal
+        (True, True, True, 0),
+        (True, True, False, 1),
+        (True, False, True, 2),
+        (True, False, False, 3),
+        (False, True, True, 4),
+        (False, True, False, 5),
+        (False, False, True, 6),
+        (False, False, False, 7),
+    ],
+)
+def test_get_triplets_reciprocal_mesh_at_q_wurtzite_force(
+    aln_cell: PhonopyAtoms, params
+):
+    """Test BZGrid with shift using wurtzite with and without force_SNF."""
+    grid_point = 1
+    mesh = 14
+    ph = Phonopy(aln_cell, supercell_matrix=[1, 1, 1], primitive_matrix="auto")
+    bzgrid = BZGrid(
+        mesh,
+        lattice=ph.primitive.cell,
+        symmetry_dataset=ph.primitive_symmetry.dataset,
+        use_grg=True,
+        force_SNF=params[0],
+        is_time_reversal=False,
+    )
+
+    for r in bzgrid.rotations:
+        print("{")
+        for v in r:
+            print("{%d, %d, %d}," % tuple(v))
+        print("},")
+
+    ref_unique_elems = [[18, 30], [24, 45], [30, 30], [45, 45]]
+
+    if params[0]:
+        np.testing.assert_equal([1, 5, 15], bzgrid.D_diag)
+        np.testing.assert_equal([[-1, 0, -6], [0, -1, 0], [-1, 0, -5]], bzgrid.Q)
+    else:
+        np.testing.assert_equal([5, 5, 3], bzgrid.D_diag)
+        np.testing.assert_equal(np.eye(3, dtype=int), bzgrid.Q)
+
+    map_triplets, map_q = _get_triplets_reciprocal_mesh_at_q(
+        grid_point,
+        bzgrid.D_diag,
+        bzgrid.rotations,
+        is_time_reversal=params[2],
+        swappable=params[1],
+    )
+
+    # "% 4" means that expectation of the same values with and without force_SNF.
+    np.testing.assert_equal(
+        ref_unique_elems[params[3] % 4],
+        [len(np.unique(map_triplets)), len(np.unique(map_q))],
+    )

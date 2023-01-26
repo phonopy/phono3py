@@ -61,6 +61,22 @@ const long wurtzite_rec_rotations_without_time_reversal[12][3][3] = {
     {{1, 0, 0}, {-1, -1, 0}, {0, 0, 1}}, {{0, -1, 0}, {-1, 0, 0}, {0, 0, 1}},
     {{-1, -1, 0}, {0, 1, 0}, {0, 0, 1}}, {{-1, 0, 0}, {1, 1, 0}, {0, 0, 1}}};
 
+// Transformed point group operations of wurtzite {R^T} (without time reversal)
+// D_diag=[1, 5, 15], Q=[[-1, 0, -6], [0, -1, 0], [-1, 0, -5]]
+const long wurtzite_tilde_rec_rotations_without_time_reversal[12][3][3] = {
+    {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}},
+    {{1, -1, 0}, {-5, 0, -2}, {0, 3, 1}},
+    {{6, -1, 2}, {-5, -1, -2}, {-15, 3, -5}},
+    {{11, 0, 4}, {0, -1, 0}, {-30, 0, -11}},
+    {{11, 1, 4}, {5, 0, 2}, {-30, -3, -11}},
+    {{6, 1, 2}, {5, 1, 2}, {-15, -3, -5}},
+    {{6, -1, 2}, {5, 0, 2}, {-15, 3, -5}},
+    {{1, -1, 0}, {0, -1, 0}, {0, 3, 1}},
+    {{1, 0, 0}, {-5, -1, -2}, {0, 0, 1}},
+    {{6, 1, 2}, {-5, 0, -2}, {-15, -3, -5}},
+    {{11, 1, 4}, {0, 1, 0}, {-30, -3, -11}},
+    {{11, 0, 4}, {5, 1, 2}, {-30, 0, -11}}};
+
 // Symmetry operations of wurtzite 1x1x2 {R}
 const long wurtzite112_symmetry_operations[24][3][3] = {
     {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}},   {{1, -1, 0}, {1, 0, 0}, {0, 0, 1}},
@@ -91,6 +107,20 @@ const long AgNO2_tilde_rec_rotations[8][3][3] = {
     {{-5, 12, 2}, {-12, 25, 4}, {60, -120, -19}},
     {{-1, 0, 0}, {0, -11, -2}, {0, 60, 11}},
     {{-5, 12, 2}, {-12, 35, 6}, {60, -180, -31}}};
+
+const long AgNO2_tilde_rec_rotations_with_time_reversal_mesh12[8][3][3] = {
+    {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}},     {{1, 0, 0}, {0, -1, 0}, {4, 0, -1}},
+    {{1, 0, 0}, {0, 1, 0}, {4, 4, -1}},    {{1, 0, 0}, {0, -1, 0}, {0, -4, 1}},
+    {{-1, 0, 0}, {0, -1, 0}, {0, 0, -1}},  {{-1, 0, 0}, {0, 1, 0}, {-4, 0, 1}},
+    {{-1, 0, 0}, {0, -1, 0}, {-4, -4, 1}}, {{-1, 0, 0}, {0, 1, 0}, {0, 4, -1}},
+};
+
+// D_diag=[2, 2, 8], Q=[[0, 0, 1], [1, 0, -1], [0, 1, -1]]
+const long AgNO2_tilde_rec_rotations_without_time_reversal_mesh12[4][3][3] = {
+    {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}},
+    {{1, 0, 0}, {0, -1, 0}, {4, 0, -1}},
+    {{1, 0, 0}, {0, 1, 0}, {4, 4, -1}},
+    {{1, 0, 0}, {0, -1, 0}, {0, -4, 1}}};
 
 /**
  * @brief gridsys_get_all_grid_addresses test
@@ -895,6 +925,103 @@ TEST(test_gridsys, test_gridsys_get_triplets_at_q_wurtzite) {
                 ASSERT_EQ(ref_map_q[count][k], map_q[k]);
             }
             count++;
+        }
+    }
+}
+
+/**
+ * @brief gridsys_get_triplets_at_q by AgNO2 rotations
+ * @details Four patterns, is_time_reversal x swappable, are tested.
+ */
+TEST(test_gridsys, test_gridsys_get_triplets_at_q_AgNO2) {
+    long D_diag[3] = {2, 2, 8};
+    long grid_point = 1;
+    long map_triplets[32], map_q[32];
+    long i, j, k, num_triplets;
+    long ref_num_triplets[2][2] = {{8, 16}, {12, 24}};
+    long is_time_reversal[2] = {1, 0};
+    long swappable[2] = {1, 0};
+    long count = 0;
+    long ref_map_triplets[4][32] = {
+        {0,  0,  2, 2, 4,  4,  6, 6, 8, 8, 10, 10, 12, 12, 6, 6,
+         16, 16, 2, 2, 12, 12, 6, 6, 8, 8, 10, 10, 4,  4,  6, 6},
+        {0,  1,  2, 3, 4,  5,  6, 7, 8, 9, 10, 11, 12, 13, 6, 7,
+         16, 17, 2, 3, 12, 13, 6, 7, 8, 9, 10, 11, 4,  5,  6, 7},
+        {0,  0,  2, 2, 4,  5,  6, 7, 8, 9, 10, 10, 12, 13, 7, 6,
+         16, 16, 2, 2, 13, 12, 6, 7, 9, 8, 10, 10, 5,  4,  7, 6},
+        {0,  1,  2, 3, 4,  5,  6, 7, 8,  9,  10, 11, 12, 13, 14, 15,
+         16, 17, 2, 3, 20, 21, 6, 7, 24, 25, 10, 11, 28, 29, 14, 15}};
+    long ref_map_q[4][32] = {
+        {0,  1,  2, 3, 4,  5,  6, 7, 8, 9, 10, 11, 12, 13, 6, 7,
+         16, 17, 2, 3, 12, 13, 6, 7, 8, 9, 10, 11, 4,  5,  6, 7},
+        {0,  1,  2, 3, 4,  5,  6, 7, 8, 9, 10, 11, 12, 13, 6, 7,
+         16, 17, 2, 3, 12, 13, 6, 7, 8, 9, 10, 11, 4,  5,  6, 7},
+        {0,  1,  2, 3, 4,  5,  6, 7, 8,  9,  10, 11, 12, 13, 14, 15,
+         16, 17, 2, 3, 20, 21, 6, 7, 24, 25, 10, 11, 28, 29, 14, 15},
+        {0,  1,  2, 3, 4,  5,  6, 7, 8,  9,  10, 11, 12, 13, 14, 15,
+         16, 17, 2, 3, 20, 21, 6, 7, 24, 25, 10, 11, 28, 29, 14, 15}};
+
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 2; j++) {
+            num_triplets = gridsys_get_triplets_at_q(
+                map_triplets, map_q, grid_point, D_diag, is_time_reversal[i], 4,
+                AgNO2_tilde_rec_rotations_without_time_reversal_mesh12,
+                swappable[j]);
+            ASSERT_EQ(ref_num_triplets[i][j], num_triplets);
+            for (k = 0; k < 32; k++) {
+                ASSERT_EQ(ref_map_triplets[count][k], map_triplets[k]);
+                ASSERT_EQ(ref_map_q[count][k], map_q[k]);
+            }
+            count++;
+        }
+    }
+}
+
+/**
+ * @brief gridsys_get_triplets_at_q by wurtzite rotations with and without
+ * force_SNF (i.e., transformed or not transformed rotations)
+ * @details Four patterns, is_time_reversal x swappable, are tested.
+ */
+TEST(test_gridsys, test_gridsys_get_triplets_at_q_wurtzite_force_SNF) {
+    long D_diag[2][3] = {{1, 5, 15}, {5, 5, 3}};
+    long grid_point = 1;
+    long map_triplets[75], map_q[75];
+    long i, j, k, ll, num_triplets;
+    long ref_unique_elems[4][2] = {{18, 30}, {24, 45}, {30, 30}, {45, 45}};
+    long is_time_reversal[2] = {1, 0};
+    long swappable[2] = {1, 0};
+    long rec_rotations[2][12][3][3];
+
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 12; j++) {
+            for (k = 0; k < 3; k++) {
+                for (ll = 0; ll < 3; ll++) {
+                    if (i == 0) {
+                        rec_rotations[i][j][k][ll] =
+                            wurtzite_tilde_rec_rotations_without_time_reversal
+                                [j][k][ll];
+                    } else {
+                        rec_rotations[i][j][k][ll] =
+                            wurtzite_rec_rotations_without_time_reversal[j][k]
+                                                                        [ll];
+                    }
+                }
+            }
+        }
+    }
+
+    for (i = 0; i < 2; i++) {          // force_SNF True or False
+        for (j = 0; j < 2; j++) {      // swappable
+            for (k = 0; k < 2; k++) {  // is_time_reversal
+                num_triplets = gridsys_get_triplets_at_q(
+                    map_triplets, map_q, grid_point, D_diag[i],
+                    is_time_reversal[k], 12, rec_rotations[i], swappable[j]);
+                ASSERT_EQ(ref_unique_elems[j * 2 + k][0], num_triplets);
+                ASSERT_EQ(ref_unique_elems[j * 2 + k][0],
+                          get_num_unique_elems(map_triplets, 75));
+                ASSERT_EQ(ref_unique_elems[j * 2 + k][1],
+                          get_num_unique_elems(map_q, 75));
+            }
         }
     }
 }

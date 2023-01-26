@@ -26,11 +26,13 @@ if(NOT GTest_FOUND)
 endif()
 
 foreach(testcase IN ITEMS test_gridsys test_niggli)
-  add_executable(${testcase} ${testcase}.cpp)
+  add_executable(${testcase} ${CMAKE_CURRENT_SOURCE_DIR}/${testcase}.cpp
+                             ${CMAKE_CURRENT_SOURCE_DIR}/utils.c)
   target_link_libraries(
     ${testcase}
     PUBLIC gridsys
     PRIVATE GTest::gtest GTest::gtest_main)
-  target_include_directories(${testcase} PUBLIC ${PROJECT_SOURCE_DIR}/c)
+  target_include_directories(${testcase} PUBLIC ${PROJECT_SOURCE_DIR}/c
+                                                ${CMAKE_CURRENT_SOURCE_DIR})
   gtest_discover_tests(${testcase})
 endforeach()
