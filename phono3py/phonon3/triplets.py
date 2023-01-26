@@ -238,12 +238,11 @@ def _get_triplets_reciprocal_mesh_at_q(
     fixed_grid_number : int
         Grid point of q0
     D_diag : array_like
-        Diagonal part of the diagonal matrix by SNF.
-        shape=(3,), dtype='int_'
+        Diagonal part of the diagonal matrix by SNF. shape=(3,), dtype='int_'
     rec_rotations : array_like
-        Rotation matrices in reciprocal space, where the rotation matrix
-        R is defined like q'=Rq.
-        shape=(n_rot, 3, 3), dtype='int_'
+        Rotation matrices in reciprocal space, where the rotation matrix R is
+        defined like q'=Rq. Time reversal symmetry is taken care of by
+        is_time_reversal. shape=(n_rot, 3, 3), dtype='int_'
     is_time_reversal : bool
         Inversion symemtry is added if it doesn't exist.
     swappable : bool
@@ -252,14 +251,12 @@ def _get_triplets_reciprocal_mesh_at_q(
     Returns
     -------
     map_triplets : ndarray or None
-        Mapping table of all triplets to symmetrically
-        independent tripelts. More precisely, this gives a list of
-        index mapping from all q-points to independent q' of
-        q+q'+q''=G. Considering q' is enough because q is fixed and
-        q''=G-q-q' where G is automatically determined to choose
+        Mapping table of all triplets to symmetrically independent tripelts.
+        More precisely, this gives a list of index mapping from all q-points to
+        independent q' of q+q'+q''=G. Considering q' is enough because q is
+        fixed and q''=G-q-q' where G is automatically determined to choose
         smallest |G| without considering BZ surface (see docstring of
-        _get_BZ_triplets_at_q.)
-        shape=(prod(mesh),), dtype='int_'
+        _get_BZ_triplets_at_q.) shape=(prod(mesh),), dtype='int_'
     map_q : ndarray
         Irreducible q-points stabilized by q-point of specified grid_point.
         shape=(prod(mesh),), dtype='int_'
@@ -270,7 +267,7 @@ def _get_triplets_reciprocal_mesh_at_q(
     map_triplets = np.zeros(np.prod(D_diag), dtype="int_")
     map_q = np.zeros(np.prod(D_diag), dtype="int_")
 
-    phono3c.triplets_reciprocal_mesh_at_q(
+    num_triplets = phono3c.triplets_reciprocal_mesh_at_q(
         map_triplets,
         map_q,
         fixed_grid_number,
@@ -279,6 +276,7 @@ def _get_triplets_reciprocal_mesh_at_q(
         np.array(rec_rotations, dtype="int_", order="C"),
         swappable * 1,
     )
+    assert num_triplets == len(np.unique(map_triplets))
 
     return map_triplets, map_q
 

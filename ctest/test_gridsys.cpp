@@ -37,8 +37,8 @@ const long rutile112_symmetry_operations[32][3][3] = {
     {{-1, 0, 0}, {0, 1, 0}, {0, 0, -1}},  {{1, 0, 0}, {0, -1, 0}, {0, 0, 1}},
     {{0, 1, 0}, {1, 0, 0}, {0, 0, -1}},   {{0, -1, 0}, {-1, 0, 0}, {0, 0, 1}}};
 
-//  Point group operations of zincblende {R^T} (with time reversal)
-const long zincblende_rec_rotations_with_time_reversal[24][3][3] = {
+//  Point group operations of wurtzite {R^T} (with time reversal)
+const long wurtzite_rec_rotations_with_time_reversal[24][3][3] = {
     {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}},    {{1, 1, 0}, {-1, 0, 0}, {0, 0, 1}},
     {{0, 1, 0}, {-1, -1, 0}, {0, 0, 1}},  {{-1, 0, 0}, {0, -1, 0}, {0, 0, 1}},
     {{-1, -1, 0}, {1, 0, 0}, {0, 0, 1}},  {{0, -1, 0}, {1, 1, 0}, {0, 0, 1}},
@@ -52,8 +52,8 @@ const long zincblende_rec_rotations_with_time_reversal[24][3][3] = {
     {{-1, 0, 0}, {1, 1, 0}, {0, 0, -1}},  {{0, 1, 0}, {1, 0, 0}, {0, 0, -1}},
     {{1, 1, 0}, {0, -1, 0}, {0, 0, -1}},  {{1, 0, 0}, {-1, -1, 0}, {0, 0, -1}}};
 
-//  Point group operations of zincblende {R^T} (without time reversal)
-const long zincblende_rec_rotations_without_time_reversal[12][3][3] = {
+//  Point group operations of wurtzite {R^T} (without time reversal)
+const long wurtzite_rec_rotations_without_time_reversal[12][3][3] = {
     {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}},   {{1, 1, 0}, {-1, 0, 0}, {0, 0, 1}},
     {{0, 1, 0}, {-1, -1, 0}, {0, 0, 1}}, {{-1, 0, 0}, {0, -1, 0}, {0, 0, 1}},
     {{-1, -1, 0}, {1, 0, 0}, {0, 0, 1}}, {{0, -1, 0}, {1, 1, 0}, {0, 0, 1}},
@@ -61,8 +61,8 @@ const long zincblende_rec_rotations_without_time_reversal[12][3][3] = {
     {{1, 0, 0}, {-1, -1, 0}, {0, 0, 1}}, {{0, -1, 0}, {-1, 0, 0}, {0, 0, 1}},
     {{-1, -1, 0}, {0, 1, 0}, {0, 0, 1}}, {{-1, 0, 0}, {1, 1, 0}, {0, 0, 1}}};
 
-// Symmetry operations of zincblende 1x1x2 {R}
-const long zincblende112_symmetry_operations[24][3][3] = {
+// Symmetry operations of wurtzite 1x1x2 {R}
+const long wurtzite112_symmetry_operations[24][3][3] = {
     {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}},   {{1, -1, 0}, {1, 0, 0}, {0, 0, 1}},
     {{0, -1, 0}, {1, -1, 0}, {0, 0, 1}}, {{-1, 0, 0}, {0, -1, 0}, {0, 0, 1}},
     {{-1, 1, 0}, {-1, 0, 0}, {0, 0, 1}}, {{0, 1, 0}, {-1, 1, 0}, {0, 0, 1}},
@@ -325,25 +325,25 @@ TEST(test_gridsys, test_gridsys_get_reciprocal_point_group_rutile) {
 }
 
 /**
- * @brief gridsys_get_reciprocal_point_group with zincblende symmetry
+ * @brief gridsys_get_reciprocal_point_group with wurtzite symmetry
  * Return {R^T} of crystallographic point group {R} with and without time
  * reversal symmetry.
  */
-TEST(test_gridsys, test_gridsys_get_reciprocal_point_group_zincblende) {
+TEST(test_gridsys, test_gridsys_get_reciprocal_point_group_wurtzite) {
     long i, j, k, num_R;
     long rec_rotations[48][3][3];
     long is_found;
 
     // Without time reversal symmetry.
     num_R = gridsys_get_reciprocal_point_group(
-        rec_rotations, zincblende112_symmetry_operations, 24, 0);
+        rec_rotations, wurtzite112_symmetry_operations, 24, 0);
     ASSERT_EQ(12, num_R);
     for (i = 0; i < 12; i++) {
         is_found = 0;
         for (j = 0; j < 12; j++) {
             if (lagmat_check_identity_matrix_l3(
                     rec_rotations[i],
-                    zincblende_rec_rotations_without_time_reversal[j])) {
+                    wurtzite_rec_rotations_without_time_reversal[j])) {
                 is_found = 1;
                 break;
             }
@@ -353,14 +353,14 @@ TEST(test_gridsys, test_gridsys_get_reciprocal_point_group_zincblende) {
 
     // With time reversal symmetry.
     num_R = gridsys_get_reciprocal_point_group(
-        rec_rotations, zincblende112_symmetry_operations, 24, 1);
+        rec_rotations, wurtzite112_symmetry_operations, 24, 1);
     ASSERT_EQ(24, num_R);
     for (i = 0; i < 24; i++) {
         is_found = 0;
         for (j = 0; j < 24; j++) {
             if (lagmat_check_identity_matrix_l3(
                     rec_rotations[i],
-                    zincblende_rec_rotations_with_time_reversal[j])) {
+                    wurtzite_rec_rotations_with_time_reversal[j])) {
                 is_found = 1;
                 break;
             }
@@ -594,7 +594,7 @@ TEST(test_gridsys, test_gridsys_get_ir_grid_map_wurtzite) {
 
     for (i = 0; i < 2; i++) {
         gridsys_get_ir_grid_map(ir_grid_map,
-                                zincblende_rec_rotations_with_time_reversal, 24,
+                                wurtzite_rec_rotations_with_time_reversal, 24,
                                 D_diag, PS[i]);
         for (j = 0; j < n; j++) {
             ASSERT_EQ(ref_ir_grid_maps[i][j], ir_grid_map[j]);
@@ -761,7 +761,7 @@ TEST(test_gridsys, test_gridsys_get_bz_grid_addresses_wurtzite1) {
  * @details Niggli reduction doesn't change (swap) basis vectors.
  * Return BZ grid addresses
  */
-TEST(test_gridsys, test_gridsys_get_bz_grid_addresses_zincblende2) {
+TEST(test_gridsys, test_gridsys_get_bz_grid_addresses_wurtzite2) {
     long ref_bz_addresses[155][3] = {
         {0, 0, 0},     {0, 1, 0},     {0, 2, 0},    {0, -2, 0},
         {0, -1, 0},    {0, 0, 1},     {0, 1, 1},    {0, 2, 1},
@@ -845,5 +845,56 @@ TEST(test_gridsys, test_gridsys_get_bz_grid_addresses_zincblende2) {
     }
     for (i = 0; i < 155; i++) {
         ASSERT_EQ(ref_bzg2grg[i], bzg2grg[i]);
+    }
+}
+
+/**
+ * @brief gridsys_get_triplets_at_q by wurtzite rotations
+ * @details Four patterns, is_time_reversal x swappable, are tested.
+ */
+TEST(test_gridsys, test_gridsys_get_triplets_at_q_wurtzite) {
+    long D_diag[3] = {3, 3, 4};
+    long grid_point = 1;
+    long map_triplets[36], map_q[36];
+    long i, j, k, num_triplets;
+    long ref_num_triplets[2][2] = {{12, 18}, {14, 24}};
+    long is_time_reversal[2] = {1, 0};
+    long swappable[2] = {1, 0};
+    long count = 0;
+    long ref_map_triplets[4][36] = {
+        {0,  1,  0,  3,  3,  5,  5,  3,  3,  9, 10, 9, 12, 12, 14, 14, 12, 12,
+         18, 19, 18, 21, 21, 23, 23, 21, 21, 9, 10, 9, 12, 12, 14, 14, 12, 12},
+        {0,  1,  2,  3,  4,  5,  5,  3,  4,  9, 10, 11, 12, 13, 14, 14, 12, 13,
+         18, 19, 20, 21, 22, 23, 23, 21, 22, 9, 10, 11, 12, 13, 14, 14, 12, 13},
+        {0,  1,  0,  3,  3,  5,  5,  3,  3,  9,  10, 11,
+         12, 13, 14, 14, 12, 13, 18, 19, 18, 21, 21, 23,
+         23, 21, 21, 11, 10, 9,  13, 12, 14, 14, 13, 12},
+        {0,  1,  2,  3,  4,  5,  5,  3,  4,  9,  10, 11,
+         12, 13, 14, 14, 12, 13, 18, 19, 20, 21, 22, 23,
+         23, 21, 22, 27, 28, 29, 30, 31, 32, 32, 30, 31}};
+    long ref_map_q[4][36] = {
+        {0,  1,  2,  3,  4,  5,  5,  3,  4,  9, 10, 11, 12, 13, 14, 14, 12, 13,
+         18, 19, 20, 21, 22, 23, 23, 21, 22, 9, 10, 11, 12, 13, 14, 14, 12, 13},
+        {0,  1,  2,  3,  4,  5,  5,  3,  4,  9, 10, 11, 12, 13, 14, 14, 12, 13,
+         18, 19, 20, 21, 22, 23, 23, 21, 22, 9, 10, 11, 12, 13, 14, 14, 12, 13},
+        {0,  1,  2,  3,  4,  5,  5,  3,  4,  9,  10, 11,
+         12, 13, 14, 14, 12, 13, 18, 19, 20, 21, 22, 23,
+         23, 21, 22, 27, 28, 29, 30, 31, 32, 32, 30, 31},
+        {0,  1,  2,  3,  4,  5,  5,  3,  4,  9,  10, 11,
+         12, 13, 14, 14, 12, 13, 18, 19, 20, 21, 22, 23,
+         23, 21, 22, 27, 28, 29, 30, 31, 32, 32, 30, 31}};
+
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 2; j++) {
+            num_triplets = gridsys_get_triplets_at_q(
+                map_triplets, map_q, grid_point, D_diag, is_time_reversal[i],
+                12, wurtzite_rec_rotations_without_time_reversal, swappable[j]);
+            ASSERT_EQ(ref_num_triplets[i][j], num_triplets);
+            for (k = 0; k < 36; k++) {
+                ASSERT_EQ(ref_map_triplets[count][k], map_triplets[k]);
+                ASSERT_EQ(ref_map_q[count][k], map_q[k]);
+            }
+            count++;
+        }
     }
 }
