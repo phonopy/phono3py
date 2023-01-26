@@ -4,6 +4,7 @@ extern "C" {
 #include <math.h>
 
 #include "gridsys.h"
+#include "lagrid.h"
 #include "utils.h"
 }
 
@@ -981,6 +982,8 @@ TEST(test_gridsys, test_gridsys_get_triplets_at_q_AgNO2) {
  * @brief gridsys_get_triplets_at_q by wurtzite rotations with and without
  * force_SNF (i.e., transformed or not transformed rotations)
  * @details Four patterns, is_time_reversal x swappable, are tested.
+ * The lattices generated with and without force_SNF are the same.
+ * Therefore numbers of unique triplets should agree, which is this test.
  */
 TEST(test_gridsys, test_gridsys_get_triplets_at_q_wurtzite_force_SNF) {
     long D_diag[2][3] = {{1, 5, 15}, {5, 5, 3}};
@@ -1021,6 +1024,69 @@ TEST(test_gridsys, test_gridsys_get_triplets_at_q_wurtzite_force_SNF) {
                           get_num_unique_elems(map_triplets, 75));
                 ASSERT_EQ(ref_unique_elems[j * 2 + k][1],
                           get_num_unique_elems(map_q, 75));
+            }
+        }
+    }
+}
+
+/**
+ * @brief gridsys_get_triplets_at_q by wurtzite rotations with and without
+ * force_SNF (i.e., transformed or not transformed rotations)
+ * @details Four patterns, is_time_reversal x swappable, are tested.
+ * The lattices generated with and without force_SNF are the same.
+ * Therefore numbers of unique triplets should agree, which is this test.
+ */
+TEST(test_gridsys, test_gridsys_get_BZ_triplets_at_q_wurtzite_force_SNF) {
+    long D_diag[2][3] = {{1, 5, 15}, {5, 5, 3}};
+    long PS[3] = {0, 0, 0};
+    long Q[2][3][3] = {{{-1, 0, -6}, {0, -1, 0}, {-1, 0, -5}},
+                       {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}};
+    double rec_lattice[3][3] = {{0.3214400514304082, 0.0, 0.0},
+                                {0.1855835002216734, 0.3711670004433468, 0.0},
+                                {0.0, 0.0, 0.20088388911209323}};
+    long grid_point = 1;
+    long map_triplets[75], map_q[75];
+    long i, j, k, ll, num_triplets_1, num_triplets_2, bz_size;
+    long ref_unique_elems[4][2] = {{18, 30}, {24, 45}, {30, 30}, {45, 45}};
+    long is_time_reversal[2] = {1, 0};
+    long swappable[2] = {1, 0};
+    long rec_rotations[2][12][3][3];
+    long triplets[75][3];
+    long bz_grid_addresses[108][3];
+    long bz_map[75];
+    long bzg2grg[108];
+
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 12; j++) {
+            for (k = 0; k < 3; k++) {
+                for (ll = 0; ll < 3; ll++) {
+                    if (i == 0) {
+                        rec_rotations[i][j][k][ll] =
+                            wurtzite_tilde_rec_rotations_without_time_reversal
+                                [j][k][ll];
+                    } else {
+                        rec_rotations[i][j][k][ll] =
+                            wurtzite_rec_rotations_without_time_reversal[j][k]
+                                                                        [ll];
+                    }
+                }
+            }
+        }
+    }
+
+    for (i = 0; i < 2; i++) {  // force_SNF True or False
+        bz_size =
+            gridsys_get_bz_grid_addresses(bz_grid_addresses, bz_map, bzg2grg,
+                                          D_diag[i], Q[i], PS, rec_lattice, 2);
+        for (j = 0; j < 2; j++) {      // swappable
+            for (k = 0; k < 2; k++) {  // is_time_reversal
+                num_triplets_1 = gridsys_get_triplets_at_q(
+                    map_triplets, map_q, grid_point, D_diag[i],
+                    is_time_reversal[k], 12, rec_rotations[i], swappable[j]);
+                num_triplets_2 = gridsys_get_BZ_triplets_at_q(
+                    triplets, grid_point, bz_grid_addresses, bz_map,
+                    map_triplets, 75, D_diag[i], Q[i], 2);
+                ASSERT_EQ(num_triplets_1, num_triplets_2);
             }
         }
     }

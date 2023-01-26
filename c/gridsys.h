@@ -233,6 +233,23 @@ long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
                                    const long Q[3][3], const long PS[3],
                                    const double rec_lattice[3][3],
                                    const long type);
+
+/**
+ * @brief Find independent q' of (q, q', q'') with given q.
+ *
+ * @param map_triplets Mapping table from all grid points to grid points of
+ * independent q'
+ * @param map_q Mapping table from all grid points to grid point indices of
+ * irreducible q-points under the stabilizer subgroup of q
+ * @param grid_point Grid point of q
+ * @param D_diag Diagonal elements of diagnoal matrix D of Smith normal form
+ * @param is_time_reversal With (1) or without (0) time reversal symmetry
+ * @param num_rot Number of rotation matrices
+ * @param rec_rotations Transformed rotation matrices in reciprocal space
+ * @param swappable With (1) or without (0) permutation symmetry between q' and
+ * q''
+ * @return long Number of unique element of map_triplets
+ */
 long gridsys_get_triplets_at_q(long *map_triplets, long *map_q,
                                const long grid_point, const long D_diag[3],
                                const long is_time_reversal, const long num_rot,
