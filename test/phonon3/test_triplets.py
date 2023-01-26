@@ -1330,3 +1330,19 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
     np.testing.assert_equal(ref_triplets[params[3]], triplets)
     np.testing.assert_equal(ref_ir_weights[params[3]], ir_weights)
     print(np.linalg.inv(ph.primitive.cell).tolist())
+
+
+def test_test(aln_cell: PhonopyAtoms):
+    mesh = 13
+    ph = Phonopy(aln_cell, supercell_matrix=[1, 1, 1], primitive_matrix="auto")
+    bzgrid = BZGrid(
+        mesh,
+        lattice=ph.primitive.cell,
+        symmetry_dataset=ph.primitive_symmetry.dataset,
+        use_grg=True,
+        force_SNF=True,
+        is_time_reversal=False,
+    )
+    print(np.linalg.inv(ph.primitive.cell))
+    print(bzgrid.D_diag)
+    print(bzgrid.Q)
