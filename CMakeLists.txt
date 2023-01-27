@@ -222,6 +222,7 @@ if(GRIDSYS)
       ${PROJECT_SOURCE_DIR}/c/grgrid.c
       ${PROJECT_SOURCE_DIR}/c/gridsys.c
       ${PROJECT_SOURCE_DIR}/c/lagrid.c
+      ${PROJECT_SOURCE_DIR}/c/niggli.c
       ${PROJECT_SOURCE_DIR}/c/phonoc_utils.c
       ${PROJECT_SOURCE_DIR}/c/snf3x3.c
       ${PROJECT_SOURCE_DIR}/c/tetrahedron_method.c

@@ -40,9 +40,12 @@
 #include "bzgrid.h"
 #include "grgrid.h"
 #include "lagrid.h"
+#include "niggli.h"
 #include "tetrahedron_method.h"
 #include "triplet.h"
 #include "triplet_iw.h"
+
+#define GRIDSYS_NIGGLI_TOLERANCE 1e-5
 
 void gridsys_get_all_grid_addresses(long (*gr_grid_addresses)[3],
                                     const long D_diag[3]) {
@@ -123,26 +126,48 @@ long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
                                    long *bzg2grg, const long D_diag[3],
                                    const long Q[3][3], const long PS[3],
                                    const double rec_lattice[3][3],
-                                   const long type) {
+                                   const long bz_grid_type) {
     BZGrid *bzgrid;
     long i, j, size;
+    long inv_Mpr_int[3][3];
+    double inv_Lr[3][3], inv_Mpr[3][3];
+    double niggli_lattice[9];
 
     if ((bzgrid = (BZGrid *)malloc(sizeof(BZGrid))) == NULL) {
         warning_print("Memory could not be allocated.");
         return 0;
     }
 
+    for (i = 0; i < 3; i++) {
+        for (j = 0; j < 3; j++) {
+            niggli_lattice[i * 3 + j] = rec_lattice[i][j];
+        }
+    }
+    if (!niggli_reduce(niggli_lattice, GRIDSYS_NIGGLI_TOLERANCE)) {
+        return 0;
+    }
+    if (!lagmat_inverse_matrix_d3(inv_Lr, (double(*)[3])niggli_lattice,
+                                  GRIDSYS_NIGGLI_TOLERANCE)) {
+        return 0;
+    }
+    lagmat_multiply_matrix_d3(inv_Mpr, inv_Lr, rec_lattice);
+    lagmat_cast_matrix_3d_to_3l(inv_Mpr_int, inv_Mpr);
+    // printf("%ld %ld %ld\n", inv_Mpr_int[0][0], inv_Mpr_int[0][1],
+    //        inv_Mpr_int[0][2]);
+    // printf("%ld %ld %ld\n", inv_Mpr_int[1][0], inv_Mpr_int[1][1],
+    //        inv_Mpr_int[1][2]);
+    // printf("%ld %ld %ld\n", inv_Mpr_int[2][0], inv_Mpr_int[2][1],
+    //        inv_Mpr_int[2][2]);
+
     bzgrid->addresses = bz_grid_addresses;
     bzgrid->gp_map = bz_map;
     bzgrid->bzg2grg = bzg2grg;
-    bzgrid->type = type;
+    bzgrid->type = bz_grid_type;
+    lagmat_multiply_matrix_l3(bzgrid->Q, inv_Mpr_int, Q);
+    lagmat_copy_matrix_d3(bzgrid->reclat, (double(*)[3])niggli_lattice);
     for (i = 0; i < 3; i++) {
         bzgrid->D_diag[i] = D_diag[i];
         bzgrid->PS[i] = PS[i];
-        for (j = 0; j < 3; j++) {
-            bzgrid->Q[i][j] = Q[i][j];
-            bzgrid->reclat[i][j] = rec_lattice[i][j];
-        }
     }
 
     if (bzg_get_bz_grid_addresses(bzgrid)) {
