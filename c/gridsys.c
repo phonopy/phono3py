@@ -126,7 +126,7 @@ long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
                                    long *bzg2grg, const long D_diag[3],
                                    const long Q[3][3], const long PS[3],
                                    const double rec_lattice[3][3],
-                                   const long type) {
+                                   const long bz_grid_type) {
     BZGrid *bzgrid;
     long i, j, size;
     long inv_Mpr_int[3][3];
@@ -162,7 +162,7 @@ long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
     bzgrid->addresses = bz_grid_addresses;
     bzgrid->gp_map = bz_map;
     bzgrid->bzg2grg = bzg2grg;
-    bzgrid->type = type;
+    bzgrid->type = bz_grid_type;
     lagmat_multiply_matrix_l3(bzgrid->Q, inv_Mpr_int, Q);
     lagmat_copy_matrix_d3(bzgrid->reclat, (double(*)[3])niggli_lattice);
     for (i = 0; i < 3; i++) {

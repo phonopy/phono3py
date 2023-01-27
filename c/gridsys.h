@@ -224,15 +224,15 @@ void gridsys_get_ir_grid_map(long *ir_grid_map, const long (*rotations)[3][3],
  * @param Q Unimodular matrix Q of Smith normal form
  * @param PS Shift in GR-grid
  * @param rec_lattice Reduced reciprocal basis vectors in column vectors
- * @param type Data structure type I (old and sparse) or II (new and dense,
- * recommended) of bz_map
+ * @param bz_grid_type Data structure type I (old and sparse) or II (new and
+ * dense, recommended) of bz_map
  * @return long Number of bz_grid_addresses stored.
  */
 long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
                                    long *bzg2grg, const long D_diag[3],
                                    const long Q[3][3], const long PS[3],
                                    const double rec_lattice[3][3],
-                                   const long type);
+                                   const long bz_grid_type);
 
 /**
  * @brief Find independent q' of (q, q', q'') with given q.
@@ -255,12 +255,32 @@ long gridsys_get_triplets_at_q(long *map_triplets, long *map_q,
                                const long is_time_reversal, const long num_rot,
                                const long (*rec_rotations)[3][3],
                                const long swappable);
+
+/**
+ * @brief Search grid point triplets considering BZ surface.
+ *
+ * @param triplets Ir-triplets by grid point indices in bz_grid_addresses
+ * @param grid_point Grid point of q
+ * @param bz_grid_addresses Grid point addresses of shortest grid points
+ * @param bz_map  List of accumulated numbers of BZ grid points from the
+ * first GR grid point to the last grid point. In type-II, [0, 1, 3, 4, ...]
+ * means multiplicities of [1, 2, 1, ...], with len(bz_map)=product(D_diag) + 1.
+ * @param map_triplets Mapping table from all grid points to grid points of
+ * independent q'
+ * @param num_map_triplets First dimension of map_triplets
+ * @param D_diag Diagonal elements of diagnoal matrix D of Smith normal form
+ * @param Q Unimodular matrix Q of Smith normal form
+ * @param bz_grid_type Data structure type I (old and sparse) or II (new and
+ * dense, recommended) of bz_map
+ * @return long
+ */
 long gridsys_get_BZ_triplets_at_q(long (*triplets)[3], const long grid_point,
                                   const long (*bz_grid_addresses)[3],
                                   const long *bz_map, const long *map_triplets,
                                   const long num_map_triplets,
                                   const long D_diag[3], const long Q[3][3],
                                   const long bz_grid_type);
+
 long gridsys_get_integration_weight(
     double *iw, char *iw_zero, const double *frequency_points,
     const long num_band0, const long relative_grid_address[24][4][3],
