@@ -36,3 +36,7 @@ foreach(testcase IN ITEMS test_gridsys test_niggli)
                                                 ${CMAKE_CURRENT_SOURCE_DIR})
   gtest_discover_tests(${testcase})
 endforeach()
+
+if(WITH_Fortran)
+  add_subdirectory(fortran)
+endif()
