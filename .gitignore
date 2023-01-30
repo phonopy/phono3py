@@ -41,3 +41,6 @@ nosetests.xml
 .buildinfo
 .doctrees
 _build
+
+# ctest
+Testing
