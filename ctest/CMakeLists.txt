@@ -20,8 +20,8 @@ if(NOT GTest_FOUND)
   # cmake-lint: disable=C0301
   FetchContent_Declare(
     googletest
-    URL https://github.com/google/googletest/archive/refs/tags/release-1.12.1.tar.gz
-    URL_HASH MD5=e82199374acdfda3f425331028eb4e2a)
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG 4fb7039fda3f6588c7ca9664176f8c9e0a023b4a)
   FetchContent_MakeAvailable(googletest)
 endif()
 

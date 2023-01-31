@@ -274,7 +274,7 @@ long gridsys_get_triplets_at_q(long *map_triplets, long *map_q,
  * dense, recommended) of bz_map
  * @return long
  */
-long gridsys_get_BZ_triplets_at_q(long (*triplets)[3], const long grid_point,
+long gridsys_get_bz_triplets_at_q(long (*triplets)[3], const long grid_point,
                                   const long (*bz_grid_addresses)[3],
                                   const long *bz_map, const long *map_triplets,
                                   const long num_map_triplets,
