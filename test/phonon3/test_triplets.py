@@ -843,11 +843,11 @@ def test_get_triplets_reciprocal_mesh_at_q_wurtzite_force(
         is_time_reversal=False,
     )
 
-    for r in bzgrid.rotations:
-        print("{")
-        for v in r:
-            print("{%d, %d, %d}," % tuple(v))
-        print("},")
+    # for r in bzgrid.rotations:
+    #     print("{")
+    #     for v in r:
+    #         print("{%d, %d, %d}," % tuple(v))
+    #     print("},")
 
     ref_unique_elems = [[18, 30], [24, 45], [30, 30], [45, 45]]
 
@@ -1315,6 +1315,8 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
         force_SNF=params[0],
         is_time_reversal=False,
     )
+    # print(bzgrid.D_diag)
+    # print(bzgrid.addresses)
     map_triplets, map_q = _get_triplets_reciprocal_mesh_at_q(
         grid_point,
         bzgrid.D_diag,
@@ -1324,25 +1326,14 @@ def test_get_BZ_triplets_at_q(aln_cell: PhonopyAtoms, params):
     )
     triplets, ir_weights = _get_BZ_triplets_at_q(grid_point, bzgrid, map_triplets)
 
-    for tp in triplets:
-        print("{%d, %d, %d}," % tuple(tp))
-    # print(",".join(["%d" % x for x in ir_weights]))
+    triplets_with_zeros = np.zeros((45, 3), dtype=int)
+    triplets_with_zeros[: len(triplets)] = triplets
+    ir_weights_with_zeros = np.zeros(45, dtype=int)
+    ir_weights_with_zeros[: len(ir_weights)] = ir_weights
+    # for tp in triplets_with_zeros:
+    #     print("{%d, %d, %d}," % tuple(tp))
+    # print(",".join(["%d" % x for x in ir_weights_with_zeros]))
+    # print(len(triplets))
     np.testing.assert_equal(ref_triplets[params[3]], triplets)
     np.testing.assert_equal(ref_ir_weights[params[3]], ir_weights)
-    print(np.linalg.inv(ph.primitive.cell).tolist())
-
-
-def test_test(aln_cell: PhonopyAtoms):
-    mesh = 13
-    ph = Phonopy(aln_cell, supercell_matrix=[1, 1, 1], primitive_matrix="auto")
-    bzgrid = BZGrid(
-        mesh,
-        lattice=ph.primitive.cell,
-        symmetry_dataset=ph.primitive_symmetry.dataset,
-        use_grg=True,
-        force_SNF=True,
-        is_time_reversal=False,
-    )
-    print(np.linalg.inv(ph.primitive.cell))
-    print(bzgrid.D_diag)
-    print(bzgrid.Q)
+    # print(bzgrid._reciprocal_lattice.tolist())
