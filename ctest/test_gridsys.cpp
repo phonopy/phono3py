@@ -981,7 +981,7 @@ TEST(test_gridsys, test_gridsys_get_triplets_at_q_wurtzite_force_SNF) {
  * force_SNF (i.e., transformed or not transformed rotations)
  * @details Four patterns, is_time_reversal x swappable, are tested.
  */
-TEST(test_gridsys, test_gridsys_get_BZ_triplets_at_q_wurtzite_force_SNF) {
+TEST(test_gridsys, test_gridsys_get_bz_triplets_at_q_wurtzite_force_SNF) {
     long ref_triplets[8][45][3] = {
         {{1, 0, 4},   {1, 1, 3},   {1, 2, 2},   {1, 5, 91},  {1, 7, 90},
          {1, 10, 87}, {1, 12, 85}, {1, 13, 84}, {1, 14, 83}, {1, 18, 79},
@@ -1125,7 +1125,7 @@ TEST(test_gridsys, test_gridsys_get_BZ_triplets_at_q_wurtzite_force_SNF) {
                 num_triplets_1 = gridsys_get_triplets_at_q(
                     map_triplets, map_q, grid_point, D_diag[i],
                     is_time_reversal[k], 12, rec_rotations[i], swappable[j]);
-                num_triplets_2 = gridsys_get_BZ_triplets_at_q(
+                num_triplets_2 = gridsys_get_bz_triplets_at_q(
                     triplets, grid_point, bz_grid_addresses, bz_map,
                     map_triplets, 75, D_diag[i], Q[i], 2);
                 ASSERT_EQ(num_triplets_1, num_triplets_2);
