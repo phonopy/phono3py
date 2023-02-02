@@ -112,7 +112,7 @@ long gridsys_get_grid_index_from_address(const long address[3],
  * @param rotation Transformed rotation in reciprocal space tilde-R^T
  * @param D_diag Numbers of divisions along a, b, c directions of GR-grid
  * @param PS Shift in GR-grid
- * @return * long
+ * @return long
  */
 long gridsys_rotate_grid_index(const long grid_index, const long rotation[3][3],
                                const long D_diag[3], const long PS[3]);
@@ -125,7 +125,7 @@ long gridsys_rotate_grid_index(const long grid_index, const long rotation[3][3],
  * @param rotations Rotations in direct space {R}
  * @param num_rot Number of given rotations |{R}|
  * @param is_time_reversal With (1) or without (0) time reversal symmetry
- * @return * long
+ * @return long
  */
 long gridsys_get_reciprocal_point_group(long rec_rotations[48][3][3],
                                         const long (*rotations)[3][3],
@@ -160,40 +160,6 @@ long gridsys_transform_rotations(long (*transformed_rots)[3][3],
                                  const long (*rotations)[3][3],
                                  const long num_rot, const long D_diag[3],
                                  const long Q[3][3]);
-
-/**
- * @brief Return integration weight of linear tetrahedron method
- *
- * @param omega A frequency point where integration weight is computed
- * @param tetrahedra_omegas Frequencies at vertices of 6 tetrahedra
- * @param function I (delta function) or J (theta function)
- * @return double
- */
-double gridsys_get_thm_integration_weight(const double omega,
-                                          const double tetrahedra_omegas[24][4],
-                                          const char function);
-
-/**
- * @brief Return predefined relative grid addresses of 4 different
- * main diagonals for linear tetrahedron method
- *
- * @param relative_grid_address predefined relative grid addresses for linear
- * tetrahedron method
- */
-void gridsys_get_thm_all_relative_grid_address(
-    long relative_grid_address[4][24][4][3]);
-
-/**
- * @brief Return predefined relative grid addresses of main diagonal determined
- * from reciprocal basis vectors for linear tetrahedron method
- *
- * @param relative_grid_addresses predefined relative grid addresses of given
- * reciprocal basis vectors
- * @param rec_lattice Reciprocal basis vectors in column vectors
- * @return * long
- */
-long gridsys_get_thm_relative_grid_address(
-    long relative_grid_addresses[24][4][3], const double rec_lattice[3][3]);
 
 /**
  * @brief Return mapping table from GR-grid points to GR-ir-grid points
@@ -235,6 +201,27 @@ long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
                                    const long bz_grid_type);
 
 /**
+ * @brief Return index of rotated bz grid point
+ *
+ * @param bz_grid_index BZ grid point index
+ * @param rotation Transformed rotation in reciprocal space tilde-R^T
+ * @param bz_grid_addresses BZ grid point adddresses
+ * @param bz_map List of accumulated numbers of BZ grid points from the
+ * first GR grid point to the last grid point. In type-II, [0, 1, 3, 4, ...]
+ * means multiplicities of [1, 2, 1, ...], with len(bz_map)=product(D_diag) + 1.
+ * @param D_diag Numbers of divisions along a, b, c directions of GR-grid
+ * @param PS Shift in GR-grid
+ * @param bz_grid_type Data structure type I (old and sparse) or II (new and
+ * dense, recommended) of bz_map
+ * @return long
+ */
+long gridsys_rotate_bz_grid_index(const long bz_grid_index,
+                                  const long rotation[3][3],
+                                  const long (*bz_grid_addresses)[3],
+                                  const long *bz_map, const long D_diag[3],
+                                  const long PS[3], const long bz_grid_type);
+
+/**
  * @brief Find independent q' of (q, q', q'') with given q.
  *
  * @param map_triplets Mapping table from all grid points to grid points of
@@ -246,8 +233,8 @@ long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
  * @param is_time_reversal With (1) or without (0) time reversal symmetry
  * @param num_rot Number of rotation matrices
  * @param rec_rotations Transformed rotation matrices in reciprocal space
- * @param swappable With (1) or without (0) permutation symmetry between q' and
- * q''
+ * @param swappable With (1) or without (0) permutation symmetry between q'
+ * and q''
  * @return long Number of unique element of map_triplets
  */
 long gridsys_get_triplets_at_q(long *map_triplets, long *map_q,
@@ -280,6 +267,40 @@ long gridsys_get_bz_triplets_at_q(long (*triplets)[3], const long grid_point,
                                   const long num_map_triplets,
                                   const long D_diag[3], const long Q[3][3],
                                   const long bz_grid_type);
+
+/**
+ * @brief Return integration weight of linear tetrahedron method
+ *
+ * @param omega A frequency point where integration weight is computed
+ * @param tetrahedra_omegas Frequencies at vertices of 6 tetrahedra
+ * @param function I (delta function) or J (theta function)
+ * @return double
+ */
+double gridsys_get_thm_integration_weight(const double omega,
+                                          const double tetrahedra_omegas[24][4],
+                                          const char function);
+
+/**
+ * @brief Return predefined relative grid addresses of 4 different
+ * main diagonals for linear tetrahedron method
+ *
+ * @param relative_grid_address predefined relative grid addresses for linear
+ * tetrahedron method
+ */
+void gridsys_get_thm_all_relative_grid_address(
+    long relative_grid_address[4][24][4][3]);
+
+/**
+ * @brief Return predefined relative grid addresses of main diagonal determined
+ * from reciprocal basis vectors for linear tetrahedron method
+ *
+ * @param relative_grid_addresses predefined relative grid addresses of given
+ * reciprocal basis vectors
+ * @param rec_lattice Reciprocal basis vectors in column vectors
+ * @return * long
+ */
+long gridsys_get_thm_relative_grid_address(
+    long relative_grid_addresses[24][4][3], const double rec_lattice[3][3]);
 
 long gridsys_get_integration_weight(
     double *iw, char *iw_zero, const double *frequency_points,

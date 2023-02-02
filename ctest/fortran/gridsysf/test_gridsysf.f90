@@ -1,7 +1,13 @@
 program test_gridsysf
     use, intrinsic :: iso_c_binding
     use gridsysf, only: &
+        gridsys_get_grid_index_from_address, &
+        gridsys_rotate_grid_index, &
+        gridsys_get_double_grid_address, &
+        gridsys_get_grid_address_from_index, &
+        gridsys_get_double_grid_index, &
         gridsys_get_bz_grid_addresses, &
+        gridsys_rotate_bz_grid_index, &
         gridsys_get_triplets_at_q, &
         gridsys_get_bz_triplets_at_q
     implicit none
@@ -31,6 +37,12 @@ program test_gridsysf
                  11, 1, 4, 0, 1, 0, -30, -3, -11, &
                  11, 0, 4, 5, 1, 2, -30, 0, -11], [3, 3, 12])
 
+    write (*, '("[test_gridsys_get_grid_index_from_address]")')
+    call test_gridsys_get_grid_index_from_address()
+    write (*, '("[test_gridsys_rotate_grid_index]")')
+    call test_gridsys_rotate_grid_index()
+    write (*, '("[test_gridsys_rotate_bz_grid_index]")')
+    call test_gridsys_rotate_bz_grid_index()
     write (*, '("[test_gridsys_get_bz_grid_addresses_wurtzite]")')
     call test_gridsys_get_bz_grid_addresses_wurtzite()
     write (*, '("[test_gridsys_get_triplets_at_q_wurtzite]")')
@@ -39,6 +51,130 @@ program test_gridsysf
     call test_gridsys_get_bz_triplets_at_q_wurtzite_force_SNF()
 
 contains
+    subroutine test_gridsys_get_grid_index_from_address() bind(C)
+        integer(c_long) :: address(3)
+        integer(c_long) :: D_diag(3)
+        integer :: i, j, k, grid_index, ret_grid_index
+
+        D_diag(:) = [3, 4, 5]
+        grid_index = 0
+        do k = 0, D_diag(3) - 1
+            address(3) = k
+            do j = 0, D_diag(2) - 1
+                address(2) = j
+                do i = 0, D_diag(1) - 1
+                    address(1) = i
+                    ret_grid_index = gridsys_get_grid_index_from_address(address, D_diag)
+                    call assert_int(ret_grid_index, grid_index)
+                    grid_index = grid_index + 1
+                end do
+            end do
+        end do
+        write (*, '("  OK")')
+    end subroutine test_gridsys_get_grid_index_from_address
+
+    subroutine test_gridsys_rotate_grid_index() bind(C)
+        integer(c_long) :: address(3), d_address(3), rot_address(3)
+        integer(c_long) :: D_diag(3, 2)
+        integer(c_long) :: PS(3, 2, 2)
+        integer(c_long) :: grid_index
+        integer(c_long) :: rotation(3, 3)
+        integer :: i, j, k, rot_grid_index, ref_rot_grid_index, i_tilde, i_ps, i_rot
+        integer :: rot_grid_indices(60, 8)
+
+        rotation(:, :) = reshape([0, 1, 0, -1, 0, 0, 0, 0, -1], [3, 3])
+        D_diag(:, :) = reshape([1, 5, 15, 5, 5, 3], [3, 2])
+        PS(:, :, :) = reshape([ &
+                              0, 0, 0, -2, 0, 5, 0, 0, 0, 0, 0, 1], &
+                              [3, 2, 2])
+
+        do i_tilde = 1, 2
+        do i_ps = 1, 2
+        do i_rot = 1, 12
+            if (i_tilde == 1) then
+                rotation(:, :) = &
+                    wurtzite_tilde_rec_rotations_without_time_reversal(:, :, i_rot)
+            else
+                rotation(:, :) = &
+                    wurtzite_rec_rotations_without_time_reversal(:, :, i_rot)
+            end if
+            do grid_index = 0, 74
+                call gridsys_get_grid_address_from_index(address, grid_index, &
+                                                         D_diag(:, i_tilde))
+                call gridsys_get_double_grid_address(d_address, address, &
+                                                     PS(:, i_ps, i_tilde))
+                rot_address = matmul(transpose(rotation), d_address)
+                ref_rot_grid_index = gridsys_get_double_grid_index( &
+                                     rot_address, D_diag(:, i_tilde), &
+                                     PS(:, i_ps, i_tilde))
+                rot_grid_index = gridsys_rotate_grid_index( &
+                                 grid_index, rotation, D_diag(:, i_tilde), &
+                                 PS(:, i_ps, i_tilde))
+                call assert_int(rot_grid_index, ref_rot_grid_index)
+            end do
+        end do
+        end do
+        end do
+        write (*, '("  OK")')
+    end subroutine test_gridsys_rotate_grid_index
+
+    subroutine test_gridsys_rotate_bz_grid_index() bind(C)
+        integer(c_long) :: address(3), d_address(3), rot_address(3), ref_d_address(3)
+        integer(c_long) :: D_diag(3, 2)
+        integer(c_long) :: PS(3, 2, 2)
+        integer(c_long) :: grid_index
+        integer(c_long) :: rotation(3, 3)
+        integer :: i, j, k, i_tilde, i_ps, i_rot, rot_bz_gp, bz_size
+        integer :: rot_grid_indices(60, 8)
+        integer(c_long) :: Q(3, 3, 2)
+        real(c_double) :: rec_lattice(3, 3)
+        integer(c_long) :: bz_grid_addresses(3, 144)
+        integer(c_long) :: bz_map(76)
+        integer(c_long) :: bzg2grg(144)
+
+        Q(:, :, :) = reshape([-1, 0, -6, 0, -1, 0, -1, 0, -5, &
+                              1, 0, 0, 0, 1, 0, 0, 0, 1], [3, 3, 2])
+        rec_lattice(:, :) = reshape([0.3214400514304082, 0.0, 0.0, &
+                                     0.1855835002216734, 0.3711670004433468, 0.0, &
+                                     0.0, 0.0, 0.20088388911209323], [3, 3])
+        D_diag(:, :) = reshape([1, 5, 15, 5, 5, 3], [3, 2])
+        PS(:, :, :) = reshape([ &
+                              0, 0, 0, -2, 0, 5, 0, 0, 0, 0, 0, 1], &
+                              [3, 2, 2])
+
+        do i_tilde = 1, 2
+        do i_ps = 1, 2
+            bz_size = gridsys_get_bz_grid_addresses(bz_grid_addresses, bz_map, bzg2grg, &
+                                                    D_diag(:, i_tilde), Q(:, :, i_tilde), PS(:, i_ps, i_tilde), &
+                                                    rec_lattice, int(2, c_long))
+            do i_rot = 1, 12
+                if (i_tilde == 1) then
+                    rotation(:, :) = &
+                        wurtzite_tilde_rec_rotations_without_time_reversal(:, :, i_rot)
+                else
+                    rotation(:, :) = &
+                        wurtzite_rec_rotations_without_time_reversal(:, :, i_rot)
+                end if
+                do grid_index = 0, 74
+                    call gridsys_get_double_grid_address( &
+                        d_address, bz_grid_addresses(:, grid_index + 1), &
+                        PS(:, i_ps, i_tilde))
+                    rot_address = matmul(transpose(rotation), d_address)
+                    rot_bz_gp = gridsys_rotate_bz_grid_index( &
+                                grid_index, rotation, &
+                                bz_grid_addresses, bz_map, D_diag(:, i_tilde), &
+                                PS(:, i_ps, i_tilde), int(2, c_long));
+                    call gridsys_get_double_grid_address( &
+                        ref_d_address, &
+                        bz_grid_addresses(:, rot_bz_gp + 1), PS(:, i_ps, i_tilde))
+                    call assert_1D_array_c_long(ref_d_address, rot_address, 3)
+                end do
+            end do
+        end do
+        end do
+        write (*, '("  OK")')
+    end subroutine test_gridsys_rotate_bz_grid_index
+
     subroutine test_gridsys_get_bz_grid_addresses_wurtzite() bind(C)
         integer(c_long) :: bz_size
         integer(c_long) :: PS(3), D_diag(3), Q(3, 3), bz_grid_addresses(3, 144)
@@ -268,11 +404,13 @@ contains
                 num_triplets_2 = gridsys_get_bz_triplets_at_q( &
                                  triplets, grid_point, bz_grid_addresses, bz_map, &
                                  map_triplets, num_gp, D_diag, Q, int(2, c_long))
+                write (*, '("swappable:", i0, ", is_time_reversal:", i0)', advance='no') swappable, is_time_reversal
                 call assert_int(num_triplets_1, num_triplets_2)
                 call assert_int(num_triplets_1, ref_num_triplets(i))
                 shape_of_array(:) = [3, num_triplets_2]
                 call assert_2D_array_c_long( &
                     triplets, ref_triplets(:, :, i), shape_of_array)
+                write (*, '("  OK")')
                 i = i + 1
             end do
         end do

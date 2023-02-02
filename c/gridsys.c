@@ -100,22 +100,6 @@ long gridsys_transform_rotations(long (*transformed_rots)[3][3],
     return succeeded;
 }
 
-double gridsys_get_thm_integration_weight(const double omega,
-                                          const double tetrahedra_omegas[24][4],
-                                          const char function) {
-    return thm_get_integration_weight(omega, tetrahedra_omegas, function);
-}
-
-void gridsys_get_thm_all_relative_grid_address(
-    long relative_grid_address[4][24][4][3]) {
-    thm_get_all_relative_grid_address(relative_grid_address);
-}
-
-long gridsys_get_thm_relative_grid_address(
-    long relative_grid_addresses[24][4][3], const double rec_lattice[3][3]) {
-    return thm_get_relative_grid_address(relative_grid_addresses, rec_lattice);
-}
-
 void gridsys_get_ir_grid_map(long *ir_grid_map, const long (*rotations)[3][3],
                              const long num_rot, const long D_diag[3],
                              const long PS[3]) {
@@ -182,6 +166,35 @@ long gridsys_get_bz_grid_addresses(long (*bz_grid_addresses)[3], long *bz_map,
     return size;
 }
 
+long gridsys_rotate_bz_grid_index(const long bz_grid_index,
+                                  const long rotation[3][3],
+                                  const long (*bz_grid_addresses)[3],
+                                  const long *bz_map, const long D_diag[3],
+                                  const long PS[3], const long bz_grid_type) {
+    ConstBZGrid *bzgrid;
+    long i, rot_bz_gp;
+
+    if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL) {
+        warning_print("Memory could not be allocated.");
+        return 0;
+    }
+
+    bzgrid->addresses = bz_grid_addresses;
+    bzgrid->gp_map = bz_map;
+    bzgrid->type = bz_grid_type;
+    for (i = 0; i < 3; i++) {
+        bzgrid->D_diag[i] = D_diag[i];
+        bzgrid->PS[i] = PS[i];
+    }
+
+    rot_bz_gp = bzg_rotate_grid_index(bz_grid_index, rotation, bzgrid);
+
+    free(bzgrid);
+    bzgrid = NULL;
+
+    return rot_bz_gp;
+}
+
 long gridsys_get_triplets_at_q(long *map_triplets, long *map_q,
                                const long grid_point, const long D_diag[3],
                                const long is_time_reversal, const long num_rot,
@@ -224,6 +237,22 @@ long gridsys_get_bz_triplets_at_q(long (*triplets)[3], const long grid_point,
     bzgrid = NULL;
 
     return num_ir;
+}
+
+double gridsys_get_thm_integration_weight(const double omega,
+                                          const double tetrahedra_omegas[24][4],
+                                          const char function) {
+    return thm_get_integration_weight(omega, tetrahedra_omegas, function);
+}
+
+void gridsys_get_thm_all_relative_grid_address(
+    long relative_grid_address[4][24][4][3]) {
+    thm_get_all_relative_grid_address(relative_grid_address);
+}
+
+long gridsys_get_thm_relative_grid_address(
+    long relative_grid_addresses[24][4][3], const double rec_lattice[3][3]) {
+    return thm_get_relative_grid_address(relative_grid_addresses, rec_lattice);
 }
 
 /* relative_grid_addresses are given as P multipled with those from */
