@@ -64,6 +64,7 @@ const long wurtzite_rec_rotations_without_time_reversal[12][3][3] = {
 
 // Transformed point group operations of wurtzite {R^T} (without time reversal)
 // D_diag=[1, 5, 15], Q=[[-1, 0, -6], [0, -1, 0], [-1, 0, -5]]
+// P=[[1, 0, -2], [0, -1, 0], [-3, 0, 5]]
 const long wurtzite_tilde_rec_rotations_without_time_reversal[12][3][3] = {
     {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}},
     {{1, -1, 0}, {-5, 0, -2}, {0, 3, 1}},
@@ -257,72 +258,118 @@ TEST(test_gridsys, test_gridsys_get_grid_index_from_address) {
  * Return grid point index of rotated address of given grid point index.
  */
 TEST(test_gridsys, test_gridsys_rotate_grid_index) {
-    long address[3], rot_address[3];
-    long D_diag[3] = {3, 4, 5};
-    long PS[8][3] = {{0, 0, 0}, {0, 0, 3}, {0, 3, 0}, {0, 3, 3},
-                     {3, 0, 0}, {3, 0, 3}, {3, 3, 0}, {3, 3, 3}};
-    long i, j, k, l;
-    long grid_index = 0;
-    long rot_grid_index;
-    long rot_grid_indices[8][60] = {
-        {0,  9,  6,  1,  10, 7,  2,  11, 8,  0,  9,  6,  48, 57, 54,
-         49, 58, 55, 50, 59, 56, 48, 57, 54, 36, 45, 42, 37, 46, 43,
-         38, 47, 44, 36, 45, 42, 24, 33, 30, 25, 34, 31, 26, 35, 32,
-         24, 33, 30, 12, 21, 18, 13, 22, 19, 14, 23, 20, 12, 21, 18},
-        {24, 33, 30, 25, 34, 31, 26, 35, 32, 24, 33, 30, 12, 21, 18,
-         13, 22, 19, 14, 23, 20, 12, 21, 18, 0,  9,  6,  1,  10, 7,
-         2,  11, 8,  0,  9,  6,  48, 57, 54, 49, 58, 55, 50, 59, 56,
-         48, 57, 54, 36, 45, 42, 37, 46, 43, 38, 47, 44, 36, 45, 42},
-        {10, 7,  4,  11, 8,  5,  9,  6,  3,  10, 7,  4,  58, 55, 52,
-         59, 56, 53, 57, 54, 51, 58, 55, 52, 46, 43, 40, 47, 44, 41,
-         45, 42, 39, 46, 43, 40, 34, 31, 28, 35, 32, 29, 33, 30, 27,
-         34, 31, 28, 22, 19, 16, 23, 20, 17, 21, 18, 15, 22, 19, 16},
-        {34, 31, 28, 35, 32, 29, 33, 30, 27, 34, 31, 28, 22, 19, 16,
-         23, 20, 17, 21, 18, 15, 22, 19, 16, 10, 7,  4,  11, 8,  5,
-         9,  6,  3,  10, 7,  4,  58, 55, 52, 59, 56, 53, 57, 54, 51,
-         58, 55, 52, 46, 43, 40, 47, 44, 41, 45, 42, 39, 46, 43, 40},
-        {11, 8,  5,  9,  6,  3,  9,  6,  3,  10, 7,  4,  59, 56, 53,
-         57, 54, 51, 57, 54, 51, 58, 55, 52, 47, 44, 41, 45, 42, 39,
-         45, 42, 39, 46, 43, 40, 35, 32, 29, 33, 30, 27, 33, 30, 27,
-         34, 31, 28, 23, 20, 17, 21, 18, 15, 21, 18, 15, 22, 19, 16},
-        {35, 32, 29, 33, 30, 27, 33, 30, 27, 34, 31, 28, 23, 20, 17,
-         21, 18, 15, 21, 18, 15, 22, 19, 16, 11, 8,  5,  9,  6,  3,
-         9,  6,  3,  10, 7,  4,  59, 56, 53, 57, 54, 51, 57, 54, 51,
-         58, 55, 52, 47, 44, 41, 45, 42, 39, 45, 42, 39, 46, 43, 40},
-        {3,  0,  9,  4,  1,  10, 5,  2,  11, 3,  0,  9,  51, 48, 57,
-         52, 49, 58, 53, 50, 59, 51, 48, 57, 39, 36, 45, 40, 37, 46,
-         41, 38, 47, 39, 36, 45, 27, 24, 33, 28, 25, 34, 29, 26, 35,
-         27, 24, 33, 15, 12, 21, 16, 13, 22, 17, 14, 23, 15, 12, 21},
-        {27, 24, 33, 28, 25, 34, 29, 26, 35, 27, 24, 33, 15, 12, 21,
-         16, 13, 22, 17, 14, 23, 15, 12, 21, 3,  0,  9,  4,  1,  10,
-         5,  2,  11, 3,  0,  9,  51, 48, 57, 52, 49, 58, 53, 50, 59,
-         51, 48, 57, 39, 36, 45, 40, 37, 46, 41, 38, 47, 39, 36, 45}};
+    long D_diag[2][3] = {{1, 5, 15}, {5, 5, 3}};
+    long PS[2][2][3] = {{{0, 0, 0}, {-2, 0, 5}}, {{0, 0, 0}, {0, 0, 1}}};
+    long address[3], rot_address[3], d_address[3];
+    long i, j, k, ll, i_rot, i_tilde, i_ps, grid_index;
+    long rec_rotations[2][12][3][3];
 
-    // Rutile R^T of a screw operation.
-    long rotation[3][3] = {{0, 1, 0}, {-1, 0, 0}, {0, 0, -1}};
-
-    grid_index = 0;
-    for (k = 0; k < D_diag[2]; k++) {
-        address[2] = k;
-        for (j = 0; j < D_diag[1]; j++) {
-            address[1] = j;
-            for (i = 0; i < D_diag[0]; i++) {
-                address[0] = i;
-                lagmat_multiply_matrix_vector_l3(rot_address, rotation,
-                                                 address);
-                ASSERT_EQ(
-                    (gridsys_get_grid_index_from_address(rot_address, D_diag)),
-                    (gridsys_rotate_grid_index(grid_index, rotation, D_diag,
-                                               PS[0])));
-                grid_index++;
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 12; j++) {
+            for (k = 0; k < 3; k++) {
+                for (ll = 0; ll < 3; ll++) {
+                    if (i == 0) {
+                        rec_rotations[i][j][k][ll] =
+                            wurtzite_tilde_rec_rotations_without_time_reversal
+                                [j][k][ll];
+                    } else {
+                        rec_rotations[i][j][k][ll] =
+                            wurtzite_rec_rotations_without_time_reversal[j][k]
+                                                                        [ll];
+                    }
+                }
             }
         }
     }
-    for (l = 0; l < 8; l++) {
-        for (grid_index = 0; grid_index < 60; grid_index++) {
-            ASSERT_EQ(
-                rot_grid_indices[l][grid_index],
-                gridsys_rotate_grid_index(grid_index, rotation, D_diag, PS[l]));
+
+    for (i_tilde = 0; i_tilde < 1; i_tilde++) {
+        for (i_ps = 0; i_ps < 2; i_ps++) {
+            for (i_rot = 0; i_rot < 12; i_rot++) {
+                for (grid_index = 0; grid_index < 75; grid_index++) {
+                    gridsys_get_grid_address_from_index(address, grid_index,
+                                                        D_diag[i_tilde]);
+                    gridsys_get_double_grid_address(d_address, address,
+                                                    PS[i_tilde][i_ps]);
+                    lagmat_multiply_matrix_vector_l3(
+                        rot_address, rec_rotations[i_tilde][i_rot], d_address);
+                    ASSERT_EQ(
+                        (gridsys_get_double_grid_index(
+                            rot_address, D_diag[i_tilde], PS[i_tilde][i_ps])),
+                        (gridsys_rotate_grid_index(
+                            grid_index, rec_rotations[i_tilde][i_rot],
+                            D_diag[i_tilde], PS[i_tilde][i_ps])));
+                }
+            }
+        }
+    }
+}
+
+/**
+ * @brief gridsys_rotate_bz_grid_index
+ * Return bz grid point index of rotated bz address of given bz grid point
+ * index.
+ */
+TEST(test_gridsys, test_gridsys_rotate_bz_grid_index) {
+    long D_diag[2][3] = {{1, 5, 15}, {5, 5, 3}};
+    long PS[2][2][3] = {{{0, 0, 0}, {-2, 0, 5}}, {{0, 0, 0}, {0, 0, 1}}};
+    long address[3], rot_address[3], d_address[3], ref_d_address[3];
+    long i, j, k, ll, i_rot, i_tilde, i_ps, grid_index, rot_bz_gp, bz_size;
+    long rec_rotations[2][12][3][3];
+    long bz_grid_addresses[144][3];
+    long bz_map[76];
+    long bzg2grg[144];
+    long Q[2][3][3] = {{{-1, 0, -6}, {0, -1, 0}, {-1, 0, -5}},
+                       {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}};
+    double rec_lattice[3][3] = {{0.3214400514304082, 0.0, 0.0},
+                                {0.18558350022167336, 0.37116700044334666, 0.0},
+                                {0.0, 0.0, 0.20088388911209318}};
+
+    for (i = 0; i < 2; i++) {
+        for (j = 0; j < 12; j++) {
+            for (k = 0; k < 3; k++) {
+                for (ll = 0; ll < 3; ll++) {
+                    if (i == 0) {
+                        rec_rotations[i][j][k][ll] =
+                            wurtzite_tilde_rec_rotations_without_time_reversal
+                                [j][k][ll];
+                    } else {
+                        rec_rotations[i][j][k][ll] =
+                            wurtzite_rec_rotations_without_time_reversal[j][k]
+                                                                        [ll];
+                    }
+                }
+            }
+        }
+    }
+
+    for (i_tilde = 0; i_tilde < 1; i_tilde++) {
+        for (i_ps = 0; i_ps < 2; i_ps++) {
+            bz_size = gridsys_get_bz_grid_addresses(
+                bz_grid_addresses, bz_map, bzg2grg, D_diag[i_tilde], Q[i_tilde],
+                PS[i_tilde][i_ps], rec_lattice, 2);
+            for (i_rot = 0; i_rot < 12; i_rot++) {
+                for (grid_index = 0; grid_index < bz_size; grid_index++) {
+                    gridsys_get_double_grid_address(
+                        d_address, bz_grid_addresses[grid_index],
+                        PS[i_tilde][i_ps]);
+                    lagmat_multiply_matrix_vector_l3(
+                        rot_address, rec_rotations[i_tilde][i_rot], d_address);
+                    rot_bz_gp = gridsys_rotate_bz_grid_index(
+                        grid_index, rec_rotations[i_tilde][i_rot],
+                        bz_grid_addresses, bz_map, D_diag[i_tilde],
+                        PS[i_tilde][i_ps], 2);
+                    gridsys_get_double_grid_address(
+                        ref_d_address, bz_grid_addresses[rot_bz_gp],
+                        PS[i_tilde][i_ps]);
+                    printf("[%d-%d-%d-%d]\n", i_tilde, i_ps, i_rot, grid_index);
+                    for (i = 0; i < 3; i++) {
+                        printf("%d | %d | %d\n", d_address[i], ref_d_address[i],
+                               rot_address[i]);
+                        ASSERT_EQ(ref_d_address[i], rot_address[i]);
+                    }
+                    printf("------\n");
+                }
+            }
         }
     }
 }
@@ -442,8 +489,8 @@ TEST(test_gridsys, test_gridsys_get_snf3x3_AgNO2) {
 
 /**
  * @brief gridsys_transform_rotations
- * Transform {R^T} to {R^T} with respect to transformed microzone basis vectors
- * in GR-grid
+ * Transform {R^T} to {R^T} with respect to transformed microzone basis
+ * vectors in GR-grid
  */
 TEST(test_gridsys, test_gridsys_transform_rotations) {
     long transformed_rotations[8][3][3];
@@ -977,8 +1024,8 @@ TEST(test_gridsys, test_gridsys_get_triplets_at_q_wurtzite_force_SNF) {
 }
 
 /**
- * @brief gridsys_get_BZ_triplets_at_q by wurtzite rotations with and without
- * force_SNF (i.e., transformed or not transformed rotations)
+ * @brief gridsys_get_BZ_triplets_at_q by wurtzite rotations with and
+ * without force_SNF (i.e., transformed or not transformed rotations)
  * @details Four patterns, is_time_reversal x swappable, are tested.
  */
 TEST(test_gridsys, test_gridsys_get_bz_triplets_at_q_wurtzite_force_SNF) {
@@ -1131,8 +1178,8 @@ TEST(test_gridsys, test_gridsys_get_bz_triplets_at_q_wurtzite_force_SNF) {
                 ASSERT_EQ(num_triplets_1, num_triplets_2);
                 ASSERT_EQ(num_triplets_1, ref_num_triplets[count]);
                 for (ll = 0; ll < num_triplets_2; ll++) {
-                    // printf("%ld %ld %ld %ld [%ld %ld %ld] [%ld %ld %ld]\n",
-                    // i,
+                    // printf("%ld %ld %ld %ld [%ld %ld %ld] [%ld %ld
+                    // %ld]\n", i,
                     //        j, k, ll, ref_triplets[count][ll][0],
                     //        ref_triplets[count][ll][1],
                     //        ref_triplets[count][ll][2], triplets[ll][0],
