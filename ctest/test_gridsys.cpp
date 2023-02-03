@@ -180,7 +180,7 @@ TEST(test_gridsys, test_gridsys_get_double_grid_address) {
 TEST(test_gridsys, test_gridsys_get_grid_address_from_index) {
     long address[3];
     long D_diag[3] = {3, 4, 5};
-    long i, j, k, l;
+    long i, j, k, ll;
     long grid_index = 0;
 
     for (k = 0; k < D_diag[2]; k++) {
@@ -188,7 +188,7 @@ TEST(test_gridsys, test_gridsys_get_grid_address_from_index) {
             for (i = 0; i < D_diag[0]; i++) {
                 gridsys_get_grid_address_from_index(address, grid_index,
                                                     D_diag);
-                for (l = 0; l < 3; l++) {
+                for (ll = 0; ll < 3; ll++) {
                     ASSERT_EQ(address[0], i);
                     ASSERT_EQ(address[1], j);
                     ASSERT_EQ(address[2], k);
@@ -208,9 +208,9 @@ TEST(test_gridsys, test_gridsys_get_double_grid_index) {
     long D_diag[3] = {3, 4, 5};
     long PS[8][3] = {{0, 0, 0}, {0, 0, 3}, {0, 3, 0}, {0, 3, 3},
                      {3, 0, 0}, {3, 0, 3}, {3, 3, 0}, {3, 3, 3}};
-    long i, j, k, l, grid_index;
+    long i, j, k, ll, grid_index;
 
-    for (l = 0; l < 8; l++) {
+    for (ll = 0; ll < 8; ll++) {
         grid_index = 0;
         for (k = 0; k < D_diag[2]; k++) {
             address[2] = k;
@@ -219,9 +219,9 @@ TEST(test_gridsys, test_gridsys_get_double_grid_index) {
                 for (i = 0; i < D_diag[0]; i++) {
                     address[0] = i;
                     gridsys_get_double_grid_address(address_double, address,
-                                                    PS[l]);
+                                                    PS[ll]);
                     ASSERT_EQ(grid_index, gridsys_get_double_grid_index(
-                                              address_double, D_diag, PS[l]));
+                                              address_double, D_diag, PS[ll]));
                     grid_index++;
                 }
             }
@@ -361,13 +361,15 @@ TEST(test_gridsys, test_gridsys_rotate_bz_grid_index) {
                     gridsys_get_double_grid_address(
                         ref_d_address, bz_grid_addresses[rot_bz_gp],
                         PS[i_tilde][i_ps]);
-                    printf("[%d-%d-%d-%d]\n", i_tilde, i_ps, i_rot, grid_index);
+                    // printf("[%d-%d-%d-%d]\n", i_tilde, i_ps, i_rot,
+                    // grid_index);
                     for (i = 0; i < 3; i++) {
-                        printf("%d | %d | %d\n", d_address[i], ref_d_address[i],
-                               rot_address[i]);
+                        // printf("%d | %d | %d\n", d_address[i],
+                        // ref_d_address[i],
+                        //        rot_address[i]);
                         ASSERT_EQ(ref_d_address[i], rot_address[i]);
                     }
-                    printf("------\n");
+                    // printf("------\n");
                 }
             }
         }
@@ -380,7 +382,7 @@ TEST(test_gridsys, test_gridsys_rotate_bz_grid_index) {
  * reversal symmetry.
  */
 TEST(test_gridsys, test_gridsys_get_reciprocal_point_group_rutile) {
-    long i, j, k, num_R;
+    long i, j, num_R;
     long rec_rotations[48][3][3];
     long is_time_reversal, is_found;
 
@@ -574,7 +576,7 @@ TEST(test_gridsys, test_gridsys_get_thm_relative_grid_address) {
                                    {{-1, -1, -1}, {1, 1, -1}, {1, -1, 1}},
                                    {{1, 1, -1}, {-1, -1, -1}, {-1, 1, 1}},
                                    {{1, -1, 1}, {-1, 1, 1}, {-1, -1, -1}}};
-    long i, j, k, l, main_diagonal;
+    long i, j, k, ll, main_diagonal;
 
     gridsys_get_thm_all_relative_grid_address(all_rel_grid_address);
     for (i = 0; i < 4; i++) {
@@ -583,9 +585,9 @@ TEST(test_gridsys, test_gridsys_get_thm_relative_grid_address) {
         ASSERT_EQ(i, main_diagonal);
         for (j = 0; j < 24; j++) {
             for (k = 0; k < 4; k++) {
-                for (l = 0; l < 3; l++) {
-                    ASSERT_EQ(all_rel_grid_address[i][j][k][l],
-                              rel_grid_addresses[j][k][l]);
+                for (ll = 0; ll < 3; ll++) {
+                    ASSERT_EQ(all_rel_grid_address[i][j][k][ll],
+                              rel_grid_addresses[j][k][ll]);
                 }
             }
         }
