@@ -79,8 +79,7 @@ contains
         integer(c_long) :: PS(3, 2, 2)
         integer(c_long) :: grid_index
         integer(c_long) :: rotation(3, 3)
-        integer :: i, j, k, rot_grid_index, ref_rot_grid_index, i_tilde, i_ps, i_rot
-        integer :: rot_grid_indices(60, 8)
+        integer :: rot_grid_index, ref_rot_grid_index, i_tilde, i_ps, i_rot
 
         rotation(:, :) = reshape([0, 1, 0, -1, 0, 0, 0, 0, -1], [3, 3])
         D_diag(:, :) = reshape([1, 5, 15, 5, 5, 3], [3, 2])
@@ -119,13 +118,12 @@ contains
     end subroutine test_gridsys_rotate_grid_index
 
     subroutine test_gridsys_rotate_bz_grid_index() bind(C)
-        integer(c_long) :: address(3), d_address(3), rot_address(3), ref_d_address(3)
+        integer(c_long) :: d_address(3), rot_address(3), ref_d_address(3)
         integer(c_long) :: D_diag(3, 2)
         integer(c_long) :: PS(3, 2, 2)
         integer(c_long) :: grid_index
         integer(c_long) :: rotation(3, 3)
-        integer :: i, j, k, i_tilde, i_ps, i_rot, rot_bz_gp, bz_size
-        integer :: rot_grid_indices(60, 8)
+        integer :: i_tilde, i_ps, i_rot, rot_bz_gp, bz_size
         integer(c_long) :: Q(3, 3, 2)
         real(c_double) :: rec_lattice(3, 3)
         integer(c_long) :: bz_grid_addresses(3, 144)
@@ -180,7 +178,6 @@ contains
         integer(c_long) :: PS(3), D_diag(3), Q(3, 3), bz_grid_addresses(3, 144)
         integer(c_long) :: bz_map(76), bzg2grg(144)
         real(c_double) :: rec_lattice(3, 3)
-        integer :: i, j
 
         integer(c_long) :: ref_bz_grid_addresses(3, 93)
         integer(c_long) :: ref_bz_map(76)
