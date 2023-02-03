@@ -148,8 +148,8 @@ module gridsysf
             import c_long
             integer(c_long), intent(in), value :: bz_grid_index
             integer(c_long), intent(in) :: rotation(3, 3)
-            integer(c_long), intent(inout) :: bz_grid_addresses(3, *)
-            integer(c_long), intent(inout) :: bz_map(*)
+            integer(c_long), intent(in) :: bz_grid_addresses(3, *)
+            integer(c_long), intent(in) :: bz_map(*)
             integer(c_long), intent(in) :: D_diag(3)
             integer(c_long), intent(in) :: PS(3)
             integer(c_long), intent(in), value :: bz_grid_type
