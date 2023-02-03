@@ -519,7 +519,7 @@ long ph3py_rotate_bz_grid_index(const long bz_grid_index,
     bzgrid->type = bz_grid_type;
     for (i = 0; i < 3; i++) {
         bzgrid->D_diag[i] = D_diag[i];
-        bzgrid->PS[i] = 0;
+        bzgrid->PS[i] = PS[i];
     }
 
     rot_bz_gp = bzg_rotate_grid_index(bz_grid_index, rotation, bzgrid);
