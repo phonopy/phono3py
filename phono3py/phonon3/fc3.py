@@ -284,7 +284,7 @@ def set_permutation_symmetry_compact_fc3(fc3, primitive):
 
 
 def _copy_permutation_symmetry_fc3_elem(fc3, fc3_elem, a, b, c):
-    for (i, j, k) in list(np.ndindex(3, 3, 3)):
+    for i, j, k in list(np.ndindex(3, 3, 3)):
         fc3[a, b, c, i, j, k] = fc3_elem[i, j, k]
         fc3[c, a, b, k, i, j] = fc3_elem[i, j, k]
         fc3[b, c, a, j, k, i] = fc3_elem[i, j, k]
@@ -295,7 +295,7 @@ def _copy_permutation_symmetry_fc3_elem(fc3, fc3_elem, a, b, c):
 
 def _set_permutation_symmetry_fc3_elem(fc3, a, b, c, divisor=6):
     tensor3 = np.zeros((3, 3, 3), dtype="double")
-    for (i, j, k) in list(np.ndindex(3, 3, 3)):
+    for i, j, k in list(np.ndindex(3, 3, 3)):
         tensor3[i, j, k] = (
             fc3[a, b, c, i, j, k]
             + fc3[c, a, b, k, i, j]
@@ -656,7 +656,7 @@ def _set_permutation_symmetry_fc3_elem_with_cutoff(fc3, fc3_done, a, b, c):
     )
     tensor3 = np.zeros((3, 3, 3), dtype="double")
     if sum_done > 0:
-        for (i, j, k) in list(np.ndindex(3, 3, 3)):
+        for i, j, k in list(np.ndindex(3, 3, 3)):
             tensor3[i, j, k] = (
                 fc3[a, b, c, i, j, k] * fc3_done[a, b, c]
                 + fc3[c, a, b, k, i, j] * fc3_done[c, a, b]

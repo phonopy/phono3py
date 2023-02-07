@@ -424,7 +424,7 @@ def _displacements_yaml_lines_type1_info(dataset):
             for disp1_id, j in dataset["duplicates"].items():
                 lines.append("  - [ %d, %d ]" % (int(disp1_id), j))
         else:
-            for (disp1_id, j) in dataset["duplicates"]:
+            for disp1_id, j in dataset["duplicates"]:
                 lines.append("  - [ %d, %d ]" % (disp1_id, j))
         lines.append("")
 
