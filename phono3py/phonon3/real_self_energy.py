@@ -249,7 +249,6 @@ class RealSelfEnergy:
         for i, (triplet, w, interaction) in enumerate(
             zip(self._triplets_at_q, self._weights_at_q, self._pp_strength)
         ):
-
             freqs = self._frequencies[triplet]
             for j, bi in enumerate(self._band_indices):
                 fpoint = freqs[0, bi]
@@ -289,7 +288,6 @@ class RealSelfEnergy:
             for i, (triplet, w, interaction) in enumerate(
                 zip(self._triplets_at_q, self._weights_at_q, self._pp_strength)
             ):
-
                 freqs = self._frequencies[triplet]
                 for j, bi in enumerate(self._band_indices):
                     if self._temperature > 0:
@@ -312,7 +310,7 @@ class RealSelfEnergy:
             return 0
 
         sum_d = 0
-        for (j, k) in list(np.ndindex(interaction.shape[1:])):
+        for j, k in list(np.ndindex(interaction.shape[1:])):
             if fpoint < self._cutoff_frequency:
                 continue
 
@@ -349,7 +347,7 @@ class RealSelfEnergy:
             return 0
 
         sum_d = 0
-        for (j, k) in list(np.ndindex(interaction.shape[1:])):
+        for j, k in list(np.ndindex(interaction.shape[1:])):
             if (
                 freqs[1, j] > self._cutoff_frequency
                 and freqs[2, k] > self._cutoff_frequency

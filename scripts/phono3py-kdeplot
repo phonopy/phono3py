@@ -15,7 +15,6 @@ def collect_data(gamma, weights, frequencies, cutoff, max_freq):
     freqs = []
     mode_prop = []
     for w, freq, g in zip(weights, frequencies, gamma):
-
         tau = 1.0 / np.where(g > 0, g, -1) / (2 * 2 * np.pi)
         if cutoff:
             tau = np.where(tau < cutoff, tau, -1)
