@@ -94,12 +94,12 @@ class ReciprocalToNormal:
         sum_fc3 = 0j
         for i, j, k in list(np.ndindex((num_atom,) * 3)):
             sum_fc3_cart = 0
-            for l, m, n in list(np.ndindex((3, 3, 3))):
+            for ll, m, n in list(np.ndindex((3, 3, 3))):
                 sum_fc3_cart += (
-                    e1[i * 3 + l, b1]
+                    e1[i * 3 + ll, b1]
                     * e2[j * 3 + m, b2]
                     * e3[k * 3 + n, b3]
-                    * self._fc3_reciprocal[i, j, k, l, m, n]
+                    * self._fc3_reciprocal[i, j, k, ll, m, n]
                 )
             mass_sqrt = np.sqrt(np.prod(self._masses[[i, j, k]]))
             sum_fc3 += sum_fc3_cart / mass_sqrt

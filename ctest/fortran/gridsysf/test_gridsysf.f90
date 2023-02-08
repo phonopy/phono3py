@@ -311,19 +311,21 @@ contains
         integer(c_long) :: map_triplets(75), map_q(75)
         real(c_double) :: rec_lattice(3, 3)
         integer(c_long) :: grid_point, is_time_reversal, num_rot, num_gp, swappable
-        integer :: i, j, k, num_triplets_1, num_triplets_2, bz_size
+        integer :: i, j, k, num_triplets_1, num_triplets_2, bz_size, i_grgp
         integer(c_long) :: triplets(3, 75)
         integer(c_long) :: bz_grid_addresses(3, 108)
         integer(c_long) :: bz_map(75)
         integer(c_long) :: bzg2grg(108)
 
-        integer :: ref_num_triplets(4)
-        integer(c_long) :: ref_triplets(3, 45, 4)
-        integer(c_long) :: ref_ir_weights(45, 4)
+        integer :: ref_num_triplets(4, 2)
+        integer(c_long) :: ref_triplets(3, 45, 4, 2)
+        integer(c_long) :: ref_ir_weights(45, 4, 2)
         integer :: shape_of_array(2)
+        integer :: grgp(2)
 
-        ref_num_triplets(:) = [18, 24, 30, 45]
-        ref_triplets(:, :, :) = &
+        grgp(:) = [1, 7]
+        ref_num_triplets(:, :) = reshape([18, 24, 30, 45, 24, 24, 45, 45], [4, 2])
+        ref_triplets(:, :, :, :) = &
             reshape([ &
                     1, 0, 4, 1, 1, 3, 1, 2, 2, 1, 5, 91, 1, 7, 90, &
                     1, 10, 87, 1, 12, 85, 1, 13, 84, 1, 14, 83, 1, 18, 79, &
@@ -360,10 +362,47 @@ contains
                     1, 36, 60, 1, 38, 59, 1, 39, 57, 1, 41, 56, 1, 42, 55, &
                     1, 43, 54, 1, 44, 53, 1, 45, 52, 1, 46, 50, 1, 48, 49, &
                     1, 62, 35, 1, 63, 34, 1, 64, 33, 1, 65, 32, 1, 66, 31, &
-                    1, 67, 29, 1, 69, 28, 1, 70, 26, 1, 72, 25, 1, 73, 24], &
-                    [3, 45, 4])
+                    1, 67, 29, 1, 69, 28, 1, 70, 26, 1, 72, 25, 1, 73, 24, &
+                    8, 0, 89, 8, 1, 88, 8, 2, 87, 8, 3, 86, 9, 4, 92, &
+                    8, 5, 84, 8, 6, 82, 8, 8, 81, 8, 10, 80, 8, 11, 85, &
+                    8, 12, 78, 8, 13, 76, 8, 14, 75, 8, 17, 79, 8, 19, 71, &
+                    8, 20, 69, 9, 22, 67, 8, 24, 65, 8, 27, 62, 8, 29, 66, &
+                    8, 31, 58, 8, 32, 57, 8, 40, 50, 8, 48, 48, 0, 0, 0, &
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                    8, 0, 89, 8, 1, 88, 8, 2, 87, 8, 3, 86, 9, 4, 92, &
+                    8, 5, 84, 8, 6, 82, 8, 8, 81, 8, 10, 80, 8, 11, 85, &
+                    8, 12, 78, 8, 13, 76, 8, 14, 75, 8, 17, 79, 8, 19, 71, &
+                    8, 20, 69, 9, 22, 67, 8, 24, 65, 8, 27, 62, 8, 29, 66, &
+                    8, 31, 58, 8, 32, 57, 8, 40, 50, 8, 48, 48, 0, 0, 0, &
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                    8, 0, 89, 8, 1, 88, 8, 2, 87, 8, 3, 86, 9, 4, 92, &
+                    8, 5, 84, 8, 6, 82, 8, 8, 81, 8, 10, 80, 8, 11, 85, &
+                    8, 12, 78, 8, 13, 76, 8, 14, 75, 8, 16, 74, 8, 17, 79, &
+                    8, 19, 71, 8, 20, 69, 9, 22, 67, 9, 23, 73, 8, 24, 65, &
+                    8, 25, 64, 8, 27, 62, 8, 29, 66, 8, 31, 58, 8, 32, 57, &
+                    8, 33, 56, 8, 34, 55, 8, 40, 50, 9, 41, 49, 9, 42, 54, &
+                    8, 43, 46, 8, 44, 45, 8, 48, 48, 8, 50, 40, 8, 51, 38, &
+                    9, 53, 36, 8, 58, 31, 9, 61, 35, 8, 62, 27, 8, 63, 26, &
+                    8, 71, 19, 9, 72, 18, 8, 79, 17, 8, 81, 8, 8, 89, 0, &
+                    8, 0, 89, 8, 1, 88, 8, 2, 87, 8, 3, 86, 9, 4, 92, &
+                    8, 5, 84, 8, 6, 82, 8, 8, 81, 8, 10, 80, 8, 11, 85, &
+                    8, 12, 78, 8, 13, 76, 8, 14, 75, 8, 16, 74, 8, 17, 79, &
+                    8, 19, 71, 8, 20, 69, 9, 22, 67, 9, 23, 73, 8, 24, 65, &
+                    8, 25, 64, 8, 27, 62, 8, 29, 66, 8, 31, 58, 8, 32, 57, &
+                    8, 33, 56, 8, 34, 55, 8, 40, 50, 9, 41, 49, 9, 42, 54, &
+                    8, 43, 46, 8, 44, 45, 8, 48, 48, 8, 50, 40, 8, 51, 38, &
+                    9, 53, 36, 8, 58, 31, 9, 61, 35, 8, 62, 27, 8, 63, 26, &
+                    8, 71, 19, 9, 72, 18, 8, 79, 17, 8, 81, 8, 8, 89, 0 &
+                    ], &
+                    [3, 45, 4, 2])
 
-        ref_ir_weights(:, :) = &
+        ref_ir_weights(:, :, :) = &
             reshape([ &
                     2, 2, 1, 8, 4, 8, 4, 8, 8, 4, 4, 2, 4, 4, 2, 4, 2, 4, 0, 0, 0, 0, 0, &
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
@@ -372,10 +411,17 @@ contains
                     1, 1, 1, 1, 1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, &
                     2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
                     1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, &
-                    1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2], &
-                    [45, 4])
+                    1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, &
+                    2, 4, 4, 4, 4, 4, 2, 2, 4, 4, 4, 4, 4, 2, 2, 4, 4, 2, 2, 4, 2, 4, &
+                    2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                    2, 4, 4, 4, 4, 4, 2, 2, 4, 4, 4, 4, 4, 2, 2, 4, 4, 2, 2, 4, 2, 4, &
+                    2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, &
+                    1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 2, 1, 2, &
+                    1, 2, 2, 2, 1, 2, 2, 2, 2, 1, 1, 2, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1, &
+                    1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 2, 2, 2, 2, 1, &
+                    2, 1, 2, 2, 2, 1, 2, 2, 2, 2, 1, 1, 2, 2, 1, 2, 1, 2, 1, 2, 1, 1, 1 &
+                    ], [45, 4, 2])
 
-        grid_point = 1
         num_rot = 12
         num_gp = 75
         D_diag(:) = [1, 5, 15]
@@ -389,26 +435,29 @@ contains
                   bz_grid_addresses, bz_map, bzg2grg, &
                   D_diag, Q, PS, rec_lattice, int(2, c_long))
         call assert_int(bz_size, 93)
-        i = 1
-        do j = 0, 1
-            swappable = 1 - j
-            do k = 0, 1
-                is_time_reversal = 1 - k
-                num_triplets_1 = gridsys_get_triplets_at_q( &
-                                 map_triplets, map_q, grid_point, D_diag, &
-                                 is_time_reversal, num_rot, &
-                                 wurtzite_tilde_rec_rotations_without_time_reversal, swappable)
-                num_triplets_2 = gridsys_get_bz_triplets_at_q( &
-                                 triplets, grid_point, bz_grid_addresses, bz_map, &
-                                 map_triplets, num_gp, D_diag, Q, int(2, c_long))
-                write (*, '("swappable:", i0, ", is_time_reversal:", i0)', advance='no') swappable, is_time_reversal
-                call assert_int(num_triplets_1, num_triplets_2)
-                call assert_int(num_triplets_1, ref_num_triplets(i))
-                shape_of_array(:) = [3, num_triplets_2]
-                call assert_2D_array_c_long( &
-                    triplets, ref_triplets(:, :, i), shape_of_array)
-                write (*, '("  OK")')
-                i = i + 1
+        do i_grgp = 1, 2
+            grid_point = grgp(i_grgp)
+            i = 1
+            do j = 0, 1
+                swappable = 1 - j
+                do k = 0, 1
+                    is_time_reversal = 1 - k
+                    num_triplets_1 = gridsys_get_triplets_at_q( &
+                                     map_triplets, map_q, grid_point, D_diag, &
+                                     is_time_reversal, num_rot, &
+                                     wurtzite_tilde_rec_rotations_without_time_reversal, swappable)
+                    num_triplets_2 = gridsys_get_bz_triplets_at_q( &
+                                     triplets, bz_map(grid_point + 1), bz_grid_addresses, bz_map, &
+                                     map_triplets, num_gp, D_diag, Q, int(2, c_long))
+                    write (*, '("swappable:", i0, ", is_time_reversal:", i0)', advance='no') swappable, is_time_reversal
+                    call assert_int(num_triplets_1, num_triplets_2)
+                    call assert_int(num_triplets_1, ref_num_triplets(i, i_grgp))
+                    shape_of_array(:) = [3, num_triplets_2]
+                    call assert_2D_array_c_long( &
+                        triplets, ref_triplets(:, :, i, i_grgp), shape_of_array)
+                    write (*, '("  OK")')
+                    i = i + 1
+                end do
             end do
         end do
 

@@ -281,7 +281,7 @@ def _get_triplets_reciprocal_mesh_at_q(
     return map_triplets, map_q
 
 
-def _get_BZ_triplets_at_q(grid_point, bz_grid: BZGrid, map_triplets):
+def _get_BZ_triplets_at_q(bz_grid_index, bz_grid: BZGrid, map_triplets):
     """Grid point triplets are searched considering BZ surface.
 
     Looking for q+q'+q''=G with smallest |G|. In this condition,
@@ -294,8 +294,8 @@ def _get_BZ_triplets_at_q(grid_point, bz_grid: BZGrid, map_triplets):
 
     Parameters
     ----------
-    grid_number : int
-        Grid point of q0 as defined by bz_grid.
+    bz_grid_index : int
+        Grid point of q0 as defined in BZ-grid.
     bz_grid : BZGrid
         Data structure to represent BZ grid.
     map_triplets : ndarray or None
@@ -328,7 +328,7 @@ def _get_BZ_triplets_at_q(grid_point, bz_grid: BZGrid, map_triplets):
     triplets = -np.ones((len(ir_weights), 3), dtype="int_")
     num_ir_ret = phono3c.BZ_triplets_at_q(
         triplets,
-        grid_point,
+        bz_grid_index,
         bz_grid.addresses,
         bz_grid.gp_map,
         map_triplets,
