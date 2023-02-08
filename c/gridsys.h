@@ -225,10 +225,10 @@ long gridsys_rotate_bz_grid_index(const long bz_grid_index,
  * @brief Find independent q' of (q, q', q'') with given q.
  *
  * @param map_triplets Mapping table from all grid points to grid points of
- * independent q'
+ * independent q' in GR-grid
  * @param map_q Mapping table from all grid points to grid point indices of
  * irreducible q-points under the stabilizer subgroup of q
- * @param grid_point Grid point of q
+ * @param grid_index Grid point index of q in GR-grid
  * @param D_diag Diagonal elements of diagnoal matrix D of Smith normal form
  * @param is_time_reversal With (1) or without (0) time reversal symmetry
  * @param num_rot Number of rotation matrices
@@ -238,7 +238,7 @@ long gridsys_rotate_bz_grid_index(const long bz_grid_index,
  * @return long Number of unique element of map_triplets
  */
 long gridsys_get_triplets_at_q(long *map_triplets, long *map_q,
-                               const long grid_point, const long D_diag[3],
+                               const long grid_index, const long D_diag[3],
                                const long is_time_reversal, const long num_rot,
                                const long (*rec_rotations)[3][3],
                                const long swappable);
@@ -246,8 +246,8 @@ long gridsys_get_triplets_at_q(long *map_triplets, long *map_q,
 /**
  * @brief Search grid point triplets considering BZ surface.
  *
- * @param triplets Ir-triplets by grid point indices in bz_grid_addresses
- * @param grid_point Grid point of q
+ * @param ir_triplets Ir-triplets by grid point indices in BZ-grid
+ * @param bz_grid_index Grid point of q in BZ-grid
  * @param bz_grid_addresses Grid point addresses of shortest grid points
  * @param bz_map  List of accumulated numbers of BZ grid points from the
  * first GR grid point to the last grid point. In type-II, [0, 1, 3, 4, ...]
@@ -261,7 +261,8 @@ long gridsys_get_triplets_at_q(long *map_triplets, long *map_q,
  * dense, recommended) of bz_map
  * @return long
  */
-long gridsys_get_bz_triplets_at_q(long (*triplets)[3], const long grid_point,
+long gridsys_get_bz_triplets_at_q(long (*ir_triplets)[3],
+                                  const long bz_grid_index,
                                   const long (*bz_grid_addresses)[3],
                                   const long *bz_map, const long *map_triplets,
                                   const long num_map_triplets,

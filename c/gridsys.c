@@ -205,7 +205,8 @@ long gridsys_get_triplets_at_q(long *map_triplets, long *map_q,
         rec_rotations, swappable);
 }
 
-long gridsys_get_bz_triplets_at_q(long (*triplets)[3], const long grid_point,
+long gridsys_get_bz_triplets_at_q(long (*ir_triplets)[3],
+                                  const long bz_grid_index,
                                   const long (*bz_grid_addresses)[3],
                                   const long *bz_map, const long *map_triplets,
                                   const long num_map_triplets,
@@ -231,8 +232,8 @@ long gridsys_get_bz_triplets_at_q(long (*triplets)[3], const long grid_point,
     }
     bzgrid->size = num_map_triplets;
 
-    num_ir =
-        tpl_get_BZ_triplets_at_q(triplets, grid_point, bzgrid, map_triplets);
+    num_ir = tpl_get_BZ_triplets_at_q(ir_triplets, bz_grid_index, bzgrid,
+                                      map_triplets);
     free(bzgrid);
     bzgrid = NULL;
 
