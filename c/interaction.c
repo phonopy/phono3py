@@ -189,9 +189,15 @@ static void real_to_normal(
     const double cutoff_frequency, const long triplet_index,
     const long num_triplets, const long openmp_at_bands) {
     lapack_complex_double *fc3_reciprocal;
+    lapack_complex_double comp_zero;
+    long i;
 
+    comp_zero = lapack_make_complex_double(0, 0);
     fc3_reciprocal = (lapack_complex_double *)malloc(
         sizeof(lapack_complex_double) * num_band * num_band * num_band);
+    for (i = 0; i < num_band * num_band * num_band; i++) {
+        fc3_reciprocal[i] = comp_zero;
+    }
     r2r_real_to_reciprocal(fc3_reciprocal, q_vecs, fc3, is_compact_fc3, svecs,
                            multi_dims, multiplicity, p2s_map, s2p_map,
                            openmp_at_bands);
