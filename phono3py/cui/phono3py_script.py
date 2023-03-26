@@ -134,7 +134,7 @@ def finalize_phono3py(
     phono3py: Phono3py,
     confs_dict,
     log_level,
-    displacements_mode=False,
+    write_displacements=False,
     filename=None,
 ):
     """Write phono3py.yaml and then exit.
@@ -147,7 +147,7 @@ def finalize_phono3py(
         This contains the settings and command options that the user set.
     log_level : int
         Log level. 0 means quiet.
-    displacements_mode : Bool
+    write_displacements : Bool
         When True, crystal structure is written in the length unit of
         calculator interface in phono3py_disp.yaml. Otherwise, the
         default unit (angstrom) is used.
@@ -160,24 +160,19 @@ def finalize_phono3py(
     else:
         yaml_filename = filename
 
-    if displacements_mode:
-        _calculator = phono3py.calculator
-    else:
-        _calculator = None
-    _physical_units = get_default_physical_units(_calculator)
-
-    yaml_settings = {"force_sets": False, "displacements": displacements_mode}
-
+    _physical_units = get_default_physical_units(phono3py.calculator)
     ph3py_yaml = Phono3pyYaml(
-        configuration=confs_dict, physical_units=_physical_units, settings=yaml_settings
+        configuration=confs_dict,
+        calculator=phono3py.calculator,
+        physical_units=_physical_units,
+        settings={"force_sets": False, "displacements": write_displacements},
     )
     ph3py_yaml.set_phonon_info(phono3py)
-    ph3py_yaml.calculator = _calculator
     with open(yaml_filename, "w") as w:
         w.write(str(ph3py_yaml))
 
     if log_level > 0:
-        if displacements_mode:
+        if write_displacements:
             print(f'Displacement dataset was written in "{yaml_filename}".')
         else:
             print(f'Summary of calculation was written in "{yaml_filename}".')
@@ -778,7 +773,8 @@ def grid_addresses_to_grid_points(grid_addresses, bz_grid):
 def store_force_constants(
     phono3py: Phono3py,
     settings,
-    ph3py_yaml,
+    ph3py_yaml: Phono3pyYaml,
+    phono3py_yaml_filename,
     input_filename,
     output_filename,
     load_phono3py_yaml,
@@ -794,6 +790,7 @@ def store_force_constants(
         read_fc = set_dataset_and_force_constants(
             phono3py,
             ph3py_yaml=ph3py_yaml,
+            phono3py_yaml_filename=phono3py_yaml_filename,
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
             symmetrize_fc=settings.fc_symmetry,
@@ -841,6 +838,7 @@ def store_force_constants(
             phono3py,
             settings,
             ph3py_yaml=ph3py_yaml,
+            phono3py_yaml_filename=phono3py_yaml_filename,
             input_filename=input_filename,
             output_filename=output_filename,
             log_level=log_level,
@@ -1153,7 +1151,7 @@ def main(**argparse_control):
             phono3py,
             confs_dict,
             log_level,
-            displacements_mode=True,
+            write_displacements=True,
             filename="phono3py_disp.yaml",
         )
 
@@ -1290,6 +1288,7 @@ def main(**argparse_control):
         phono3py,
         settings,
         cell_info["phonopy_yaml"],
+        unitcell_filename,
         input_filename,
         output_filename,
         load_phono3py_yaml,

@@ -34,7 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import typing
+from typing import Optional
 
 import numpy as np
 import phonopy.cui.load_helper as load_helper
@@ -338,6 +338,7 @@ def load(
         fc2_filename=fc2_filename,
         forces_fc3_filename=forces_fc3_filename,
         forces_fc2_filename=forces_fc2_filename,
+        phono3py_yaml_filename=phono3py_yaml,
         fc_calculator=fc_calculator,
         fc_calculator_options=fc_calculator_options,
         produce_fc=produce_fc,
@@ -351,11 +352,12 @@ def load(
 
 def set_dataset_and_force_constants(
     ph3py: Phono3py,
-    ph3py_yaml: typing.Union[Phono3pyYaml, None] = None,
+    ph3py_yaml: Optional[Phono3pyYaml] = None,
     fc3_filename=None,
     fc2_filename=None,
     forces_fc3_filename=None,
     forces_fc2_filename=None,
+    phono3py_yaml_filename=None,
     fc_calculator=None,
     fc_calculator_options=None,
     produce_fc=True,
@@ -386,6 +388,7 @@ def set_dataset_and_force_constants(
             ph3py_yaml,
             force_filename,
             disp_filename,
+            phono3py_yaml_filename,
             produce_fc,
             symmetrize_fc,
             is_compact_fc,
@@ -413,6 +416,7 @@ def set_dataset_and_force_constants(
             ph3py_yaml,
             "FORCES_FC3",
             disp_filename,
+            phono3py_yaml_filename,
             produce_fc,
             symmetrize_fc,
             is_compact_fc,
@@ -431,6 +435,7 @@ def set_dataset_and_force_constants(
             ph3py_yaml,
             None,
             None,
+            phono3py_yaml_filename,
             produce_fc,
             symmetrize_fc,
             is_compact_fc,
@@ -577,9 +582,10 @@ def set_dataset_and_force_constants(
 
 def _set_forces_fc3(
     ph3py: Phono3py,
-    ph3py_yaml: typing.Union[Phono3pyYaml, None],
+    ph3py_yaml: Optional[Phono3pyYaml],
     force_filename,
     disp_filename,
+    phono3py_yaml_filename,
     produce_fc,
     symmetrize_fc,
     is_compact_fc,
@@ -594,6 +600,7 @@ def _set_forces_fc3(
         cutoff_pair_distance=cutoff_pair_distance,
         force_filename=force_filename,
         disp_filename=disp_filename,
+        phono3py_yaml_filename=phono3py_yaml_filename,
         fc_type="fc3",
         log_level=log_level,
     )
@@ -610,7 +617,7 @@ def _set_forces_fc3(
 
 def _set_forces_fc2(
     ph3py: Phono3py,
-    ph3py_yaml: typing.Union[Phono3pyYaml, None],
+    ph3py_yaml: Optional[Phono3pyYaml],
     force_filename,
     disp_filename,
     produce_fc,

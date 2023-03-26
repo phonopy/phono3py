@@ -35,6 +35,7 @@
 
 import os
 import sys
+from typing import Optional
 
 import numpy as np
 from phonopy.cui.phonopy_script import file_exists, print_error
@@ -71,9 +72,10 @@ from phono3py.phonon3.fc3 import (
 def create_phono3py_force_constants(
     phono3py: Phono3py,
     settings,
-    ph3py_yaml=None,
-    input_filename=None,
-    output_filename=None,
+    ph3py_yaml: Optional[Phono3pyYaml] = None,
+    phono3py_yaml_filename: Optional[str] = None,
+    input_filename: Optional[str] = None,
+    output_filename: Optional[str] = None,
     log_level=1,
 ):
     """Read or calculate force constants."""
@@ -106,6 +108,7 @@ def create_phono3py_force_constants(
             _create_phono3py_fc3(
                 phono3py,
                 ph3py_yaml,
+                phono3py_yaml_filename,
                 symmetrize_fc3r,
                 input_filename,
                 settings.is_compact_fc,
@@ -194,10 +197,11 @@ def create_phono3py_force_constants(
 
 def parse_forces(
     phono3py: Phono3py,
-    ph3py_yaml=None,
+    ph3py_yaml: Optional[Phono3pyYaml] = None,
     cutoff_pair_distance=None,
-    force_filename="FORCES_FC3",
-    disp_filename=None,
+    force_filename: str = "FORCES_FC3",
+    disp_filename: Optional[str] = None,
+    phono3py_yaml_filename: Optional[str] = None,
     fc_type=None,
     log_level=0,
 ):
@@ -210,9 +214,9 @@ def parse_forces(
         natom = len(phono3py.supercell)
 
     # Get dataset from ph3py_yaml. dataset can be None.
-    dataset = _extract_datast_from_ph3py_yaml(ph3py_yaml, fc_type)
+    dataset = _extract_dataset_from_ph3py_yaml(ph3py_yaml, fc_type)
     if dataset:
-        filename_read_from = ph3py_yaml.yaml_filename
+        filename_read_from = phono3py_yaml_filename
 
     # Try to read FORCES_FC* if type-2 and return dataset.
     # None is returned unless type-2.
@@ -403,7 +407,8 @@ def _get_type2_dataset(natom, filename="FORCES_FC3", log_level=0):
 
 def _create_phono3py_fc3(
     phono3py: Phono3py,
-    ph3py_yaml,
+    ph3py_yaml: Optional[Phono3pyYaml],
+    phono3py_yaml_filename: Optional[str],
     symmetrize_fc3r,
     input_filename,
     is_compact_fc,
@@ -426,11 +431,13 @@ def _create_phono3py_fc3(
     when the former value is smaller than the later.
 
     """
+    # disp_fc3.yaml is obsolete.
     if input_filename is None:
         disp_filename = "disp_fc3.yaml"
     else:
         disp_filename = "disp_fc3." + input_filename + ".yaml"
 
+    # If disp_fc3.yaml is not found, default phono3py.yaml file is
     _ph3py_yaml = _get_ph3py_yaml(disp_filename, ph3py_yaml)
 
     try:
@@ -440,6 +447,7 @@ def _create_phono3py_fc3(
             cutoff_pair_distance=cutoff_pair_distance,
             force_filename="FORCES_FC3",
             disp_filename=disp_filename,
+            phono3py_yaml_filename=phono3py_yaml_filename,
             fc_type="fc3",
             log_level=log_level,
         )
@@ -464,7 +472,7 @@ def _create_phono3py_fc3(
 
 def _create_phono3py_fc2(
     phono3py: Phono3py,
-    ph3py_yaml,
+    ph3py_yaml: Optional[Phono3pyYaml],
     symmetrize_fc2,
     input_filename,
     is_compact_fc,
@@ -505,7 +513,7 @@ def _create_phono3py_fc2(
     )
 
 
-def _get_ph3py_yaml(disp_filename, ph3py_yaml):
+def _get_ph3py_yaml(disp_filename, ph3py_yaml: Optional[Phono3pyYaml]):
     _ph3py_yaml = ph3py_yaml
     # Try to use phono3py.phonon_dataset when the disp file not found
     if not os.path.isfile(disp_filename):
@@ -517,8 +525,8 @@ def _get_ph3py_yaml(disp_filename, ph3py_yaml):
 
 
 def _create_phono3py_phonon_fc2(
-    phono3py,
-    ph3py_yaml,
+    phono3py: Phono3py,
+    ph3py_yaml: Optional[Phono3pyYaml],
     symmetrize_fc2,
     input_filename,
     is_compact_fc,
@@ -596,22 +604,12 @@ def _to_ndarray(array, dtype="double"):
         return array
 
 
-def _extract_datast_from_ph3py_yaml(ph3py_yaml, fc_type):
+def _extract_dataset_from_ph3py_yaml(ph3py_yaml: Optional[Phono3pyYaml], fc_type):
     dataset = None
     if fc_type == "phonon_fc2":
         if ph3py_yaml and ph3py_yaml.phonon_dataset is not None:
-            # copy dataset
-            # otherwise unit conversion can be applied multiple times.
-            _ph3py_yaml = Phono3pyYaml()
-            _ph3py_yaml.yaml_data = ph3py_yaml.yaml_data
-            _ph3py_yaml.parse()
-            dataset = _ph3py_yaml.phonon_dataset
+            dataset = ph3py_yaml.phonon_dataset
     else:
         if ph3py_yaml and ph3py_yaml.dataset is not None:
-            # copy dataset
-            # otherwise unit conversion can be applied multiple times.
-            _ph3py_yaml = Phono3pyYaml()
-            _ph3py_yaml.yaml_data = ph3py_yaml.yaml_data
-            _ph3py_yaml.parse()
-            dataset = _ph3py_yaml.dataset
+            dataset = ph3py_yaml.dataset
     return dataset
