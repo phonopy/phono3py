@@ -418,7 +418,7 @@ class Phono3pyYaml(PhonopyYaml):
         return "\n".join(ph3yml_dumper.get_yaml_lines())
 
     def read(self, filename):
-        """Read PhonopyYaml file."""
+        """Read Phono3pyYaml file."""
         self._data = read_phono3py_yaml(
             filename,
             configuration=self._data.configuration,
@@ -427,7 +427,7 @@ class Phono3pyYaml(PhonopyYaml):
         )
 
     def set_phonon_info(self, phono3py: "Phono3py"):
-        """Store data in phono3py instance in this instance."""
+        """Store data in Phono3py instance in this instance."""
         super().set_phonon_info(phono3py)
         self._data.phonon_supercell_matrix = phono3py.phonon_supercell_matrix
         self._data.phonon_dataset = phono3py.phonon_dataset
@@ -562,8 +562,8 @@ def _second_displacements_yaml_lines(dataset2, id_offset, with_forces=False):
 
 def read_phono3py_yaml(
     filename, configuration=None, calculator=None, physical_units=None
-):
-    """Read phonopy.yaml like file."""
+) -> Phono3pyYamlData:
+    """Read phono3py.yaml like file."""
     yaml_data = load_yaml(filename)
     if type(yaml_data) is str:
         msg = f'Could not load "{filename}" properly.'
@@ -578,8 +578,8 @@ def read_phono3py_yaml(
 
 def load_phono3py_yaml(
     yaml_data, configuration=None, calculator=None, physical_units=None
-):
-    """Return PhonopyYamlData instance loading yaml data.
+) -> Phono3pyYamlData:
+    """Return Phono3pyYamlData instance loading yaml data.
 
     Parameters
     -----------
