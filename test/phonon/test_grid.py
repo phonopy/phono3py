@@ -2354,33 +2354,33 @@ def test_relocate_BZ_grid_address_aln_compare():
     assert all(check)
 
 
-def test_get_aln_bzgrid(aln_cell: PhonopyAtoms):
-    """Return BZGrid of wurtzite AlN."""
-    mesh = 14
-    symmetry = Symmetry(aln_cell)
-    bzgrid = BZGrid(mesh, lattice=aln_cell.cell, symmetry_dataset=symmetry.dataset)
-    bzgrid = BZGrid(
-        mesh,
-        lattice=aln_cell.cell,
-        symmetry_dataset=symmetry.dataset,
-        use_grg=True,
-        force_SNF=True,
-    )
-    print(bzgrid.D_diag)
-    print(bzgrid.P)
-    print(bzgrid.Q)
-    shifts = np.array(
-        [
-            [0, 0, 0],
-            [0, 0, 1],
-            [0, 1, 0],
-            [0, 1, 1],
-            [1, 0, 0],
-            [1, 0, 1],
-            [1, 1, 0],
-            [1, 1, 1],
-        ]
-    )
-    print(np.dot(bzgrid.P, shifts.T).T)
+# def test_get_aln_bzgrid(aln_cell: PhonopyAtoms):
+#     """Return BZGrid of wurtzite AlN."""
+#     mesh = 14
+#     symmetry = Symmetry(aln_cell)
+#     bzgrid = BZGrid(mesh, lattice=aln_cell.cell, symmetry_dataset=symmetry.dataset)
+#     bzgrid = BZGrid(
+#         mesh,
+#         lattice=aln_cell.cell,
+#         symmetry_dataset=symmetry.dataset,
+#         use_grg=True,
+#         force_SNF=True,
+#     )
+#     print(bzgrid.D_diag)
+#     print(bzgrid.P)
+#     print(bzgrid.Q)
+#     shifts = np.array(
+#         [
+#             [0, 0, 0],
+#             [0, 0, 1],
+#             [0, 1, 0],
+#             [0, 1, 1],
+#             [1, 0, 0],
+#             [1, 0, 1],
+#             [1, 1, 0],
+#             [1, 1, 1],
+#         ]
+#     )
+#     print(np.dot(bzgrid.P, shifts.T).T)
 
-    return bzgrid
+#     return bzgrid
