@@ -304,7 +304,7 @@ class ConductivityRTABase(ConductivityBase):
                         k
                     ] = self._collision.get_detailed_imag_self_energy()
 
-    def _set_gamma_at_sigmas_lowmem(self, i):
+    def _set_gamma_at_sigmas_lowmem(self, i, make_r0_average=False):
         """Calculate gamma without storing ph-ph interaction strength.
 
         `svecs` and `multi` below must not be simply replaced by
@@ -386,6 +386,7 @@ class ConductivityRTABase(ConductivityBase):
                     self._temperatures,
                     self._is_N_U * 1,
                     symmetrize_fc3_q,
+                    make_r0_average * 1,
                     self._pp.cutoff_frequency,
                     openmp_per_triplets * 1,
                 )
@@ -415,6 +416,7 @@ class ConductivityRTABase(ConductivityBase):
                     self._temperatures,
                     self._is_N_U * 1,
                     symmetrize_fc3_q,
+                    make_r0_average * 1,
                     self._pp.cutoff_frequency,
                     openmp_per_triplets * 1,
                 )

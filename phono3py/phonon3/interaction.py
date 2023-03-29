@@ -847,7 +847,7 @@ class Interaction:
         else:
             self._band_indices = np.array(band_indices, dtype="int_")
 
-    def _run_c(self, g_zero):
+    def _run_c(self, g_zero, make_r0_average=False):
         import phono3py._phono3py as phono3c
 
         num_band = len(self._primitive) * 3
@@ -885,6 +885,7 @@ class Interaction:
             self._s2p,
             self._band_indices,
             self._symmetrize_fc3q,
+            make_r0_average * 1,
             self._cutoff_frequency,
             openmp_per_triplets * 1,
         )
