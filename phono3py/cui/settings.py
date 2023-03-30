@@ -56,6 +56,7 @@ class Phono3pySettings(Settings):
         "ion_clamped": False,
         "is_bterta": False,
         "is_compact_fc": False,
+        "is_fc3_r0_average": False,
         "is_full_pp": False,
         "is_gruneisen": False,
         "is_imag_self_energy": False,
@@ -173,6 +174,10 @@ class Phono3pySettings(Settings):
     def set_is_compact_fc(self, val):
         """Set is_compact_fc."""
         self._v["is_compact_fc"] = val
+
+    def set_is_fc3_r0_average(self, val):
+        """Set is_fc3_r0_average."""
+        self._v["is_fc3_r0_average"] = val
 
     def set_is_full_pp(self, val):
         """Set is_full_pp."""
@@ -440,6 +445,10 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_gruneisen:
                 self._confs["gruneisen"] = ".true."
 
+        if "is_fc3_r0_average" in self._args:
+            if self._args.is_fc3_r0_average:
+                self._confs["fc3_r0_average"] = ".true."
+
         if "is_full_pp" in self._args:
             if self._args.is_full_pp:
                 self._confs["full_pp"] = ".true."
@@ -647,6 +656,7 @@ class Phono3pyConfParser(ConfParser):
                 "bterta",
                 "compact_fc",
                 "emulate_v1",
+                "fc3_r0_average",
                 "real_self_energy",
                 "gruneisen",
                 "imag_self_energy",
@@ -842,6 +852,10 @@ class Phono3pyConfParser(ConfParser):
         # calculation.
         if "ion_clamped" in params:
             self._settings.set_ion_clamped(params["ion_clamped"])
+
+        # Take average in fc3-r2q transformation around three atoms
+        if "fc3_r0_average" in params:
+            self._settings.set_is_fc3_r0_average(params["fc3_r0_average"])
 
         # Calculate full ph-ph interaction strength for RTA conductivity
         if "full_pp" in params:

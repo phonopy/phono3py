@@ -325,7 +325,6 @@ class ConductivityRTABase(ConductivityBase):
         ) = self._pp.get_primitive_and_supercell_correspondence()
         fc3 = self._pp.fc3
         triplets_at_q, weights_at_q, _, _ = self._pp.get_triplets_at_q()
-        symmetrize_fc3_q = 0
 
         if None in self._sigmas:
             tetrahedra = get_tetrahedra_relative_grid_address(
@@ -385,8 +384,8 @@ class ConductivityRTABase(ConductivityBase):
                     band_indices,
                     self._temperatures,
                     self._is_N_U * 1,
-                    symmetrize_fc3_q,
-                    make_r0_average * 1,
+                    self._pp.symmetrize_fc3q * 1,
+                    self._pp.make_r0_average * 1,
                     self._pp.cutoff_frequency,
                     openmp_per_triplets * 1,
                 )
@@ -415,8 +414,8 @@ class ConductivityRTABase(ConductivityBase):
                     band_indices,
                     self._temperatures,
                     self._is_N_U * 1,
-                    symmetrize_fc3_q,
-                    make_r0_average * 1,
+                    self._pp.symmetrize_fc3q * 1,
+                    self._pp.make_r0_average * 1,
                     self._pp.cutoff_frequency,
                     openmp_per_triplets * 1,
                 )

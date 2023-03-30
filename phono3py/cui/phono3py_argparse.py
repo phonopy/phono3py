@@ -281,6 +281,13 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             help="Read third order force constants",
         )
     parser.add_argument(
+        "--fc3-r0-average",
+        dest="is_fc3_r0_average",
+        action="store_true",
+        default=False,
+        help="Take average in fc3-r2q transformation around three atoms",
+    )
+    parser.add_argument(
         "--fc-calc",
         "--fc-calculator",
         dest="fc_calculator",
