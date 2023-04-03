@@ -84,6 +84,8 @@ class Interaction:
     frequency_factor_to_THz
     lapack_zheev_uplo
     cutoff_frequency
+    symmetrize_fc3q
+    make_r0_average
 
     """
 
@@ -100,6 +102,7 @@ class Interaction:
         unit_conversion=None,
         is_mesh_symmetry=True,
         symmetrize_fc3q=False,
+        make_r0_average=False,
         cutoff_frequency=None,
         lapack_zheev_uplo="L",
         openmp_per_triplets=None,
@@ -140,6 +143,7 @@ class Interaction:
             self._cutoff_frequency = cutoff_frequency
         self._is_mesh_symmetry = is_mesh_symmetry
         self._symmetrize_fc3q = symmetrize_fc3q
+        self._make_r0_average = make_r0_average
         self._lapack_zheev_uplo = lapack_zheev_uplo
         self._openmp_per_triplets = openmp_per_triplets
 
@@ -464,6 +468,23 @@ class Interaction:
     def openmp_per_triplets(self):
         """Return whether OpenMP distribution over triplets or bands."""
         return self._openmp_per_triplets
+
+    @property
+    def symmetrize_fc3q(self):
+        """Return boolean of symmetrize_fc3q."""
+        return self._symmetrize_fc3q
+
+    @property
+    def make_r0_average(self):
+        """Return boolean of make_r0_average.
+
+        This flag is used to activate averaging of fc3 transformation
+        from real space to reciprocal space around three atoms. With False,
+        it is done at the first atom. With True, it is done at three atoms
+        and averaged.
+
+        """
+        return self._make_r0_average
 
     def get_averaged_interaction(self):
         """Return sum over phonon triplets of interaction strength.
@@ -847,7 +868,7 @@ class Interaction:
         else:
             self._band_indices = np.array(band_indices, dtype="int_")
 
-    def _run_c(self, g_zero):
+    def _run_c(self, g_zero, make_r0_average=False):
         import phono3py._phono3py as phono3c
 
         num_band = len(self._primitive) * 3
@@ -884,7 +905,8 @@ class Interaction:
             self._p2s,
             self._s2p,
             self._band_indices,
-            self._symmetrize_fc3q,
+            self._symmetrize_fc3q * 1,
+            self._make_r0_average * 1,
             self._cutoff_frequency,
             openmp_per_triplets * 1,
         )

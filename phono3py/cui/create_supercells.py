@@ -92,7 +92,6 @@ def create_phono3py_supercells(
         print("Displacement distance: %s" % distance)
 
     if write_disp_yaml:
-
         if output_filename is None:
             filename = "disp_fc3.yaml"
         else:
@@ -132,7 +131,6 @@ def create_phono3py_supercells(
             print("Number of displacement supercell files created: %d" % num_disp_files)
 
     if phono3py.phonon_supercell_matrix is not None:
-
         if write_disp_yaml:
             if output_filename is None:
                 filename = "disp_fc2.yaml"

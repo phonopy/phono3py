@@ -1,4 +1,4 @@
-/* Copyright (C) 2015 Atsushi Togo */
+/* Copyright (C) 2021 Atsushi Togo */
 /* All rights reserved. */
 
 /* This file is part of phonopy. */
@@ -32,34 +32,27 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef __interaction_H__
-#define __interaction_H__
+#ifndef __phononcalc_H__
+#define __phononcalc_H__
 
-#include "bzgrid.h"
-#include "lapack_wrapper.h"
-#include "phonoc_array.h"
+typedef struct {
+    double re;
+    double im;
+} _lapack_complex_double;
 
-void itr_get_interaction(
-    Darray *fc3_normal_squared, const char *g_zero, const Darray *frequencies,
-    const lapack_complex_double *eigenvectors, const long (*triplets)[3],
-    const long num_triplets, const ConstBZGrid *bzgrid, const double *fc3,
-    const long is_compact_fc3, const double (*svecs)[3],
-    const long multi_dims[2], const long (*multiplicity)[2],
-    const double *masses, const long *p2s_map, const long *s2p_map,
-    const long *band_indices, const long symmetrize_fc3_q,
-    const double cutoff_frequency, const long make_r0_average,
-    const long openmp_per_triplets);
-void itr_get_interaction_at_triplet(
-    double *fc3_normal_squared, const long num_band0, const long num_band,
-    const long (*g_pos)[4], const long num_g_pos, const double *frequencies,
-    const lapack_complex_double *eigenvectors, const long triplet[3],
-    const ConstBZGrid *bzgrid, const double *fc3, const long is_compact_fc3,
-    const double (*svecs)[3], const long multi_dims[2],
-    const long (*multiplicity)[2], const double *masses, const long *p2s_map,
-    const long *s2p_map, const long *band_indices, const long symmetrize_fc3_q,
-    const double cutoff_frequency,
-    const long triplet_index, /* only for print */
-    const long num_triplets,  /* only for print */
-    const long make_r0_average, const long openmp_at_bands);
+void phcalc_get_phonons_at_gridpoints(
+    double *frequencies, _lapack_complex_double *eigenvectors,
+    char *phonon_done, const long num_phonons, const long *grid_points,
+    const long num_grid_points, const long (*grid_address)[3],
+    const double QDinv[3][3], const double *fc2, const double (*svecs_fc2)[3],
+    const long (*multi_fc2)[2], const double (*positions_fc2)[3],
+    const long num_patom, const long num_satom, const double *masses_fc2,
+    const long *p2s_fc2, const long *s2p_fc2,
+    const double unit_conversion_factor, const double (*born)[3][3],
+    const double dielectric[3][3], const double reciprocal_lattice[3][3],
+    const double *q_direction, /* pointer */
+    const double nac_factor, const double (*dd_q0)[2],
+    const double (*G_list)[3], const long num_G_points, const double lambda,
+    const char uplo);
 
 #endif

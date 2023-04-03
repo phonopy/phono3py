@@ -1,7 +1,7 @@
-/* Copyright (C) 2021 Atsushi Togo */
+/* Copyright (C) 2015 Atsushi Togo */
 /* All rights reserved. */
 
-/* This file is part of phonopy. */
+/* This file is part of niggli. */
 
 /* Redistribution and use in source and binary forms, with or without */
 /* modification, are permitted provided that the following conditions */
@@ -15,7 +15,7 @@
 /*   the documentation and/or other materials provided with the */
 /*   distribution. */
 
-/* * Neither the name of the phonopy project nor the names of its */
+/* * Neither the name of the niggli project nor the names of its */
 /*   contributors may be used to endorse or promote products derived */
 /*   from this software without specific prior written permission. */
 
@@ -32,27 +32,18 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#ifndef __phononmod_H__
-#define __phononmod_H__
+#ifndef __NIGGLI_H__
+#define __NIGGLI_H__
 
-typedef struct {
-    double re;
-    double im;
-} _lapack_complex_double;
+#define NIGGLI_MAJOR_VERSION 0
+#define NIGGLI_MINOR_VERSION 1
+#define NIGGLI_MICRO_VERSION 2
 
-void phmod_get_phonons_at_gridpoints(
-    double *frequencies, _lapack_complex_double *eigenvectors,
-    char *phonon_done, const long num_phonons, const long *grid_points,
-    const long num_grid_points, const long (*grid_address)[3],
-    const double QDinv[3][3], const double *fc2, const double (*svecs_fc2)[3],
-    const long (*multi_fc2)[2], const double (*positions_fc2)[3],
-    const long num_patom, const long num_satom, const double *masses_fc2,
-    const long *p2s_fc2, const long *s2p_fc2,
-    const double unit_conversion_factor, const double (*born)[3][3],
-    const double dielectric[3][3], const double reciprocal_lattice[3][3],
-    const double *q_direction, /* pointer */
-    const double nac_factor, const double (*dd_q0)[2],
-    const double (*G_list)[3], const long num_G_points, const double lambda,
-    const char uplo);
+int niggli_get_major_version(void);
+int niggli_get_minor_version(void);
+int niggli_get_micro_version(void);
+int niggli_reduce(double* lattice_, const double eps_);
+int niggli_reduce_periodic(double* lattice_, const double eps_,
+                           const int aperiodic_axis);
 
 #endif

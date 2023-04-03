@@ -57,7 +57,8 @@ static void real_to_normal(
     const long (*multiplicity)[2], const double *masses, const long *p2s_map,
     const long *s2p_map, const long *band_indices, const long num_band,
     const double cutoff_frequency, const long triplet_index,
-    const long num_triplets, const long openmp_at_bands);
+    const long num_triplets, const long make_r0_average,
+    const long openmp_at_bands);
 static void real_to_normal_sym_q(
     double *fc3_normal_squared, const long (*g_pos)[4], const long num_g_pos,
     double *const freqs[3], lapack_complex_double *const eigvecs[3],
@@ -68,7 +69,7 @@ static void real_to_normal_sym_q(
     const long *s2p_map, const long *band_indices, const long num_band0,
     const long num_band, const double cutoff_frequency,
     const long triplet_index, const long num_triplets,
-    const long openmp_at_bands);
+    const long make_r0_average, const long openmp_at_bands);
 
 /* fc3_normal_squared[num_triplets, num_band0, num_band, num_band] */
 void itr_get_interaction(
@@ -79,7 +80,8 @@ void itr_get_interaction(
     const long multi_dims[2], const long (*multiplicity)[2],
     const double *masses, const long *p2s_map, const long *s2p_map,
     const long *band_indices, const long symmetrize_fc3_q,
-    const double cutoff_frequency, const long openmp_per_triplets) {
+    const double cutoff_frequency, const long make_r0_average,
+    const long openmp_per_triplets) {
     long(*g_pos)[4];
     long i;
     long num_band, num_band0, num_band_prod, num_g_pos;
@@ -104,7 +106,8 @@ void itr_get_interaction(
             g_pos, num_g_pos, frequencies->data, eigenvectors, triplets[i],
             bzgrid, fc3, is_compact_fc3, svecs, multi_dims, multiplicity,
             masses, p2s_map, s2p_map, band_indices, symmetrize_fc3_q,
-            cutoff_frequency, i, num_triplets, 1 - openmp_per_triplets);
+            cutoff_frequency, i, num_triplets, make_r0_average,
+            1 - openmp_per_triplets);
 
         free(g_pos);
         g_pos = NULL;
@@ -122,7 +125,7 @@ void itr_get_interaction_at_triplet(
     const double cutoff_frequency,
     const long triplet_index, /* only for print */
     const long num_triplets,  /* only for print */
-    const long openmp_at_bands) {
+    const long make_r0_average, const long openmp_at_bands) {
     long j, k;
     double *freqs[3];
     lapack_complex_double *eigvecs[3];
@@ -154,7 +157,7 @@ void itr_get_interaction_at_triplet(
             is_compact_fc3, q_vecs, /* q0, q1, q2 */
             svecs, multi_dims, multiplicity, masses, p2s_map, s2p_map,
             band_indices, num_band0, num_band, cutoff_frequency, triplet_index,
-            num_triplets, openmp_at_bands);
+            num_triplets, make_r0_average, openmp_at_bands);
         for (j = 0; j < 3; j++) {
             free(freqs[j]);
             freqs[j] = NULL;
@@ -172,7 +175,8 @@ void itr_get_interaction_at_triplet(
                        is_compact_fc3, q_vecs, /* q0, q1, q2 */
                        svecs, multi_dims, multiplicity, masses, p2s_map,
                        s2p_map, band_indices, num_band, cutoff_frequency,
-                       triplet_index, num_triplets, openmp_at_bands);
+                       triplet_index, num_triplets, make_r0_average,
+                       openmp_at_bands);
     }
 }
 
@@ -187,14 +191,28 @@ static void real_to_normal(
     const long (*multiplicity)[2], const double *masses, const long *p2s_map,
     const long *s2p_map, const long *band_indices, const long num_band,
     const double cutoff_frequency, const long triplet_index,
-    const long num_triplets, const long openmp_at_bands) {
+    const long num_triplets, const long make_r0_average,
+    const long openmp_at_bands) {
     lapack_complex_double *fc3_reciprocal;
+    lapack_complex_double comp_zero;
+    long i;
 
+    comp_zero = lapack_make_complex_double(0, 0);
     fc3_reciprocal = (lapack_complex_double *)malloc(
         sizeof(lapack_complex_double) * num_band * num_band * num_band);
+    for (i = 0; i < num_band * num_band * num_band; i++) {
+        fc3_reciprocal[i] = comp_zero;
+    }
     r2r_real_to_reciprocal(fc3_reciprocal, q_vecs, fc3, is_compact_fc3, svecs,
                            multi_dims, multiplicity, p2s_map, s2p_map,
-                           openmp_at_bands);
+                           make_r0_average, openmp_at_bands);
+    if (make_r0_average) {
+        for (i = 0; i < num_band * num_band * num_band; i++) {
+            fc3_reciprocal[i] = lapack_make_complex_double(
+                lapack_complex_double_real(fc3_reciprocal[i]) / 3,
+                lapack_complex_double_imag(fc3_reciprocal[i]) / 3);
+        }
+    }
 
 #ifdef MEASURE_R2N
     if (openmp_at_bands && num_triplets > 0) {
@@ -221,7 +239,7 @@ static void real_to_normal_sym_q(
     const long *s2p_map, const long *band_indices, const long num_band0,
     const long num_band, const double cutoff_frequency,
     const long triplet_index, const long num_triplets,
-    const long openmp_at_bands) {
+    const long make_r0_average, const long openmp_at_bands) {
     long i, j, k, l;
     long band_ex[3];
     double q_vecs_ex[3][3];
@@ -248,7 +266,7 @@ static void real_to_normal_sym_q(
             is_compact_fc3, q_vecs_ex, /* q0, q1, q2 */
             svecs, multi_dims, multiplicity, masses, p2s_map, s2p_map,
             band_indices, num_band, cutoff_frequency, triplet_index,
-            num_triplets, openmp_at_bands);
+            num_triplets, make_r0_average, openmp_at_bands);
         for (j = 0; j < num_band0; j++) {
             for (k = 0; k < num_band; k++) {
                 for (l = 0; l < num_band; l++) {

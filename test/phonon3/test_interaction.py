@@ -85,6 +85,73 @@ itr_RTA_AlN = [
     6.694871e-08,
 ]
 
+itr_RTA_AlN_r0_ave = [
+    7.451662e-08,
+    7.248965e-08,
+    7.068341e-08,
+    7.038257e-08,
+    7.291756e-08,
+    7.130737e-08,
+    7.073777e-08,
+    7.391677e-08,
+    7.086006e-08,
+    7.077947e-08,
+    7.084617e-08,
+    7.128499e-08,
+    7.036749e-08,
+    7.057057e-08,
+    7.032233e-08,
+    7.041152e-08,
+    7.366076e-08,
+    7.149180e-08,
+    6.992398e-08,
+    6.972641e-08,
+    7.187472e-08,
+    7.046525e-08,
+    7.006265e-08,
+    7.280888e-08,
+    7.005107e-08,
+    7.008412e-08,
+    7.019342e-08,
+    7.034898e-08,
+    6.969589e-08,
+    6.990595e-08,
+    6.961230e-08,
+    6.966506e-08,
+    7.121203e-08,
+    6.954065e-08,
+    6.839930e-08,
+    6.831861e-08,
+    6.986872e-08,
+    6.882433e-08,
+    6.859035e-08,
+    7.059587e-08,
+    6.844120e-08,
+    6.854220e-08,
+    6.865246e-08,
+    6.861039e-08,
+    6.819986e-08,
+    6.835737e-08,
+    6.808818e-08,
+    6.808952e-08,
+    6.954409e-08,
+    6.824539e-08,
+    6.732596e-08,
+    6.726087e-08,
+    6.854755e-08,
+    6.770693e-08,
+    6.745257e-08,
+    6.910600e-08,
+    6.733516e-08,
+    6.731725e-08,
+    6.731323e-08,
+    6.749548e-08,
+    6.700802e-08,
+    6.703569e-08,
+    6.694826e-08,
+    6.694365e-08,
+]
+
 
 @pytest.mark.parametrize("lang", ["C", "Py"])
 def test_interaction_RTA_si(si_pbesol, lang):
@@ -95,7 +162,7 @@ def test_interaction_RTA_si(si_pbesol, lang):
     # _show(itr)
     # (10, 6, 6, 6)
     np.testing.assert_allclose(
-        itr.interaction_strength.sum(axis=(1, 2, 3)), itr_RTA_Si, rtol=0, atol=1e-6
+        itr.interaction_strength.sum(axis=(1, 2, 3)), itr_RTA_Si, rtol=0, atol=1e-10
     )
 
 
@@ -106,7 +173,21 @@ def test_interaction_RTA_AlN(aln_lda):
     itr.run()
     # _show(itr)
     np.testing.assert_allclose(
-        itr.interaction_strength.sum(axis=(1, 2, 3)), itr_RTA_AlN, rtol=0, atol=1e-6
+        itr.interaction_strength.sum(axis=(1, 2, 3)), itr_RTA_AlN, rtol=0, atol=1e-10
+    )
+
+
+def test_interaction_RTA_AlN_r0_ave(aln_lda):
+    """Test interaction_strength of AlN."""
+    itr = _get_irt(aln_lda, [7, 7, 7], make_r0_average=True)
+    itr.set_grid_point(1)
+    itr.run()
+    # _show(itr)
+    np.testing.assert_allclose(
+        itr.interaction_strength.sum(axis=(1, 2, 3)),
+        itr_RTA_AlN_r0_ave,
+        rtol=0,
+        atol=1e-10,
     )
 
 
@@ -205,10 +286,21 @@ def test_phonon_solver_expand_RTA_si(si_pbesol):
     np.testing.assert_allclose(freqs, freqs_expanded, rtol=0, atol=1e-6)
 
 
-def _get_irt(ph3: Phono3py, mesh, nac_params=None, solve_dynamical_matrices=True):
+def _get_irt(
+    ph3: Phono3py,
+    mesh,
+    nac_params=None,
+    solve_dynamical_matrices=True,
+    make_r0_average=False,
+):
     ph3.mesh_numbers = mesh
     itr = Interaction(
-        ph3.primitive, ph3.grid, ph3.primitive_symmetry, ph3.fc3, cutoff_frequency=1e-4
+        ph3.primitive,
+        ph3.grid,
+        ph3.primitive_symmetry,
+        ph3.fc3,
+        make_r0_average=make_r0_average,
+        cutoff_frequency=1e-4,
     )
     if nac_params is None:
         itr.init_dynamical_matrix(
