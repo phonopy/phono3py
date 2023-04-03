@@ -25,7 +25,16 @@ nacl_pbe_kappa_RTA_with_sigma = [7.71913708, 7.71913708, 7.71913708, 0, 0, 0]
 
 
 aln_lda_kappa_RTA = [203.304059, 203.304059, 213.003125, 0, 0, 0]
+aln_lda_kappa_RTA_r0_ave = [2.06489355e02, 2.06489355e02, 2.19821864e02, 0, 0, 0]
 aln_lda_kappa_RTA_with_sigmas = [213.820000, 213.820000, 224.800121, 0, 0, 0]
+aln_lda_kappa_RTA_with_sigmas_r0_ave = [
+    2.17597885e02,
+    2.17597885e02,
+    2.30098660e02,
+    0,
+    0,
+    0,
+]
 
 
 @pytest.mark.parametrize("openmp_per_triplets", [True, False])
@@ -305,13 +314,13 @@ def test_kappa_RTA_si_N_U(si_pbesol):
     np.testing.assert_allclose(gU_ref, gU.ravel(), atol=1e-2)
 
 
-def test_kappa_RTA_nacl(nacl_pbe):
+def test_kappa_RTA_nacl(nacl_pbe: Phono3py):
     """Test RTA by NaCl."""
     kappa = _get_kappa(nacl_pbe, [9, 9, 9]).ravel()
     np.testing.assert_allclose(nacl_pbe_kappa_RTA, kappa, atol=0.5)
 
 
-def test_kappa_RTA_nacl_with_sigma(nacl_pbe):
+def test_kappa_RTA_nacl_with_sigma(nacl_pbe: Phono3py):
     """Test RTA with smearing method by NaCl."""
     nacl_pbe.sigmas = [
         0.1,
@@ -323,13 +332,19 @@ def test_kappa_RTA_nacl_with_sigma(nacl_pbe):
     nacl_pbe.sigma_cutoff = None
 
 
-def test_kappa_RTA_aln(aln_lda):
+def test_kappa_RTA_aln(aln_lda: Phono3py):
     """Test RTA by AlN."""
     kappa = _get_kappa(aln_lda, [7, 7, 5]).ravel()
     np.testing.assert_allclose(aln_lda_kappa_RTA, kappa, atol=0.5)
 
 
-def test_kappa_RTA_aln_with_sigma(aln_lda):
+def test_kappa_RTA_aln_with_r0_ave(aln_lda: Phono3py):
+    """Test RTA by AlN."""
+    kappa = _get_kappa(aln_lda, [7, 7, 5], make_r0_average=True).ravel()
+    np.testing.assert_allclose(aln_lda_kappa_RTA_r0_ave, kappa, atol=0.5)
+
+
+def test_kappa_RTA_aln_with_sigma(aln_lda: Phono3py):
     """Test RTA with smearing method by AlN."""
     aln_lda.sigmas = [
         0.1,
@@ -341,9 +356,30 @@ def test_kappa_RTA_aln_with_sigma(aln_lda):
     aln_lda.sigma_cutoff = None
 
 
-def _get_kappa(ph3, mesh, is_isotope=False, is_full_pp=False, openmp_per_triplets=None):
+def test_kappa_RTA_aln_with_sigma_and_r0_ave(aln_lda: Phono3py):
+    """Test RTA with smearing method by AlN."""
+    aln_lda.sigmas = [
+        0.1,
+    ]
+    aln_lda.sigma_cutoff = 3
+    kappa = _get_kappa(aln_lda, [7, 7, 5], make_r0_average=True).ravel()
+    np.testing.assert_allclose(aln_lda_kappa_RTA_with_sigmas_r0_ave, kappa, atol=0.5)
+    aln_lda.sigmas = None
+    aln_lda.sigma_cutoff = None
+
+
+def _get_kappa(
+    ph3,
+    mesh,
+    is_isotope=False,
+    is_full_pp=False,
+    openmp_per_triplets=None,
+    make_r0_average=False,
+):
     ph3.mesh_numbers = mesh
-    ph3.init_phph_interaction(openmp_per_triplets=openmp_per_triplets)
+    ph3.init_phph_interaction(
+        make_r0_average=make_r0_average, openmp_per_triplets=openmp_per_triplets
+    )
     ph3.run_thermal_conductivity(
         temperatures=[
             300,
