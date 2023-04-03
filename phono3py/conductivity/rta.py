@@ -304,7 +304,7 @@ class ConductivityRTABase(ConductivityBase):
                         k
                     ] = self._collision.get_detailed_imag_self_energy()
 
-    def _set_gamma_at_sigmas_lowmem(self, i):
+    def _set_gamma_at_sigmas_lowmem(self, i, make_r0_average=False):
         """Calculate gamma without storing ph-ph interaction strength.
 
         `svecs` and `multi` below must not be simply replaced by
@@ -325,7 +325,6 @@ class ConductivityRTABase(ConductivityBase):
         ) = self._pp.get_primitive_and_supercell_correspondence()
         fc3 = self._pp.fc3
         triplets_at_q, weights_at_q, _, _ = self._pp.get_triplets_at_q()
-        symmetrize_fc3_q = 0
 
         if None in self._sigmas:
             tetrahedra = get_tetrahedra_relative_grid_address(
@@ -385,7 +384,8 @@ class ConductivityRTABase(ConductivityBase):
                     band_indices,
                     self._temperatures,
                     self._is_N_U * 1,
-                    symmetrize_fc3_q,
+                    self._pp.symmetrize_fc3q * 1,
+                    self._pp.make_r0_average * 1,
                     self._pp.cutoff_frequency,
                     openmp_per_triplets * 1,
                 )
@@ -414,7 +414,8 @@ class ConductivityRTABase(ConductivityBase):
                     band_indices,
                     self._temperatures,
                     self._is_N_U * 1,
-                    symmetrize_fc3_q,
+                    self._pp.symmetrize_fc3q * 1,
+                    self._pp.make_r0_average * 1,
                     self._pp.cutoff_frequency,
                     openmp_per_triplets * 1,
                 )

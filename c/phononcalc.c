@@ -32,12 +32,12 @@
 /* ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE */
 /* POSSIBILITY OF SUCH DAMAGE. */
 
-#include "phononmod.h"
+#include "phononcalc.h"
 
 #include "lapack_wrapper.h"
 #include "phonon.h"
 
-void phmod_get_phonons_at_gridpoints(
+void phcalc_get_phonons_at_gridpoints(
     double *frequencies, _lapack_complex_double *eigenvectors,
     char *phonon_done, const long num_phonons, const long *grid_points,
     const long num_grid_points, const long (*grid_address)[3],

@@ -50,7 +50,7 @@ void ppc_get_pp_collision(
     const double *masses, const long *p2s_map, const long *s2p_map,
     const Larray *band_indices, const Darray *temperatures, const long is_NU,
     const long symmetrize_fc3_q, const double cutoff_frequency,
-    const long openmp_per_triplets);
+    const long make_r0_average, const long openmp_per_triplets);
 void ppc_get_pp_collision_with_sigma(
     double *imag_self_energy, const double sigma, const double sigma_cutoff,
     const double *frequencies, const lapack_complex_double *eigenvectors,
@@ -61,6 +61,6 @@ void ppc_get_pp_collision_with_sigma(
     const double *masses, const long *p2s_map, const long *s2p_map,
     const Larray *band_indices, const Darray *temperatures, const long is_NU,
     const long symmetrize_fc3_q, const double cutoff_frequency,
-    const long openmp_per_triplets);
+    const long make_r0_average, const long openmp_per_triplets);
 
 #endif

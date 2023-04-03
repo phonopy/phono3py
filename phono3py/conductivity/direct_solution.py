@@ -1043,7 +1043,6 @@ class ConductivityLBTEBase(ConductivityBase):
                 Y.reshape(num_grid_points, num_band, 3),
             )
         ):
-
             for j, (v, f) in enumerate(zip(v_gp, f_gp)):
                 # Do not consider three lowest modes at Gamma-point
                 # It is assumed that there are no imaginary modes.

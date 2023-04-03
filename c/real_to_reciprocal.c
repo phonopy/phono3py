@@ -43,23 +43,18 @@
 #include "phonoc_array.h"
 #include "phonoc_const.h"
 
-static void real_to_reciprocal_single_thread(
+static void real_to_reciprocal(
     lapack_complex_double *fc3_reciprocal, const double q_vecs[3][3],
     const double *fc3, const long is_compact_fc3, const double (*svecs)[3],
     const long multi_dims[2], const long (*multiplicity)[2],
-    const long *p2s_map, const long *s2p_map);
-static void real_to_reciprocal_openmp(
-    lapack_complex_double *fc3_reciprocal, const double q_vecs[3][3],
-    const double *fc3, const long is_compact_fc3, const double (*svecs)[3],
-    const long multi_dims[2], const long (*multiplicity)[2],
-    const long *p2s_map, const long *s2p_map);
+    const long *p2s_map, const long *s2p_map, const long make_r0_average,
+    const long openmp_at_bands);
 static void real_to_reciprocal_elements(
-    lapack_complex_double *fc3_rec_elem, const double q_vecs[3][3],
+    lapack_complex_double *fc3_rec_elem, const double q1[3], const double q2[3],
     const double *fc3, const long is_compact_fc3, const double (*svecs)[3],
     const long multi_dims[2], const long (*multiplicity)[2], const long *p2s,
     const long *s2p, const long pi0, const long pi1, const long pi2);
-static lapack_complex_double get_phase_factor(const double q[3][3],
-                                              const long qi,
+static lapack_complex_double get_phase_factor(const double q[3],
                                               const double (*svecs)[3],
                                               const long multi[2]);
 static lapack_complex_double get_pre_phase_factor(const long i_patom,
@@ -68,6 +63,8 @@ static lapack_complex_double get_pre_phase_factor(const long i_patom,
                                                   const long multi_dims[2],
                                                   const long (*multiplicity)[2],
                                                   const long *p2s_map);
+static lapack_complex_double sum_lapack_complex_double(lapack_complex_double a,
+                                                       lapack_complex_double b);
 
 /* fc3_reciprocal[num_patom, num_patom, num_patom, 3, 3, 3] */
 void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
@@ -75,62 +72,22 @@ void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
                             const long is_compact_fc3, const double (*svecs)[3],
                             const long multi_dims[2],
                             const long (*multiplicity)[2], const long *p2s_map,
-                            const long *s2p_map, const long openmp_at_bands) {
-    if (openmp_at_bands) {
-        real_to_reciprocal_openmp(fc3_reciprocal, q_vecs, fc3, is_compact_fc3,
-                                  svecs, multi_dims, multiplicity, p2s_map,
-                                  s2p_map);
-    } else {
-        real_to_reciprocal_single_thread(fc3_reciprocal, q_vecs, fc3,
-                                         is_compact_fc3, svecs, multi_dims,
-                                         multiplicity, p2s_map, s2p_map);
-    }
+                            const long *s2p_map, const long make_r0_average,
+                            const long openmp_at_bands) {
+    real_to_reciprocal(fc3_reciprocal, q_vecs, fc3, is_compact_fc3, svecs,
+                       multi_dims, multiplicity, p2s_map, s2p_map,
+                       make_r0_average, openmp_at_bands);
 }
 
-static void real_to_reciprocal_single_thread(
+static void real_to_reciprocal(
     lapack_complex_double *fc3_reciprocal, const double q_vecs[3][3],
     const double *fc3, const long is_compact_fc3, const double (*svecs)[3],
     const long multi_dims[2], const long (*multiplicity)[2],
-    const long *p2s_map, const long *s2p_map) {
-    long i, j, k, l, m, n;
+    const long *p2s_map, const long *s2p_map, const long make_r0_average,
+    const long openmp_at_bands) {
+    long i, j, k, l, m, n, jk, ik, ji;
     long num_patom, num_band;
-    lapack_complex_double pre_phase_factor, fc3_rec_elem[27];
-
-    num_patom = multi_dims[1];
-    num_band = num_patom * 3;
-
-    for (i = 0; i < num_patom; i++) {
-        pre_phase_factor = get_pre_phase_factor(i, q_vecs, svecs, multi_dims,
-                                                multiplicity, p2s_map);
-        for (j = 0; j < num_patom; j++) {
-            for (k = 0; k < num_patom; k++) {
-                real_to_reciprocal_elements(
-                    fc3_rec_elem, q_vecs, fc3, is_compact_fc3, svecs,
-                    multi_dims, multiplicity, p2s_map, s2p_map, i, j, k);
-                for (l = 0; l < 3; l++) {
-                    for (m = 0; m < 3; m++) {
-                        for (n = 0; n < 3; n++) {
-                            fc3_reciprocal[(i * 3 + l) * num_band * num_band +
-                                           (j * 3 + m) * num_band + k * 3 + n] =
-                                phonoc_complex_prod(
-                                    fc3_rec_elem[l * 9 + m * 3 + n],
-                                    pre_phase_factor);
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-static void real_to_reciprocal_openmp(
-    lapack_complex_double *fc3_reciprocal, const double q_vecs[3][3],
-    const double *fc3, const long is_compact_fc3, const double (*svecs)[3],
-    const long multi_dims[2], const long (*multiplicity)[2],
-    const long *p2s_map, const long *s2p_map) {
-    long i, j, k, l, m, n, jk;
-    long num_patom, num_band;
-    lapack_complex_double pre_phase_factor, fc3_rec_elem[27];
+    lapack_complex_double pre_phase_factor, fc3_rec_elem[27], fc3_rec;
 
     num_patom = multi_dims[1];
     num_band = num_patom * 3;
@@ -139,21 +96,96 @@ static void real_to_reciprocal_openmp(
         pre_phase_factor = get_pre_phase_factor(i, q_vecs, svecs, multi_dims,
                                                 multiplicity, p2s_map);
 #ifdef _OPENMP
-#pragma omp parallel for private(j, k, l, m, n, fc3_rec_elem)
+#pragma omp parallel for private(j, k, l, m, n, fc3_rec_elem, \
+                                 fc3_rec) if (openmp_at_bands)
 #endif
         for (jk = 0; jk < num_patom * num_patom; jk++) {
             j = jk / num_patom;
             k = jk % num_patom;
             real_to_reciprocal_elements(
-                fc3_rec_elem, q_vecs, fc3, is_compact_fc3, svecs, multi_dims,
-                multiplicity, p2s_map, s2p_map, i, j, k);
+                fc3_rec_elem, q_vecs[1], q_vecs[2], fc3, is_compact_fc3, svecs,
+                multi_dims, multiplicity, p2s_map, s2p_map, i, j, k);
             for (l = 0; l < 3; l++) {
                 for (m = 0; m < 3; m++) {
                     for (n = 0; n < 3; n++) {
+                        fc3_rec = phonoc_complex_prod(
+                            fc3_rec_elem[l * 9 + m * 3 + n], pre_phase_factor);
                         fc3_reciprocal[(i * 3 + l) * num_band * num_band +
                                        (j * 3 + m) * num_band + k * 3 + n] =
-                            phonoc_complex_prod(fc3_rec_elem[l * 9 + m * 3 + n],
-                                                pre_phase_factor);
+                            sum_lapack_complex_double(
+                                fc3_reciprocal[(i * 3 + l) * num_band *
+                                                   num_band +
+                                               (j * 3 + m) * num_band + k * 3 +
+                                               n],
+                                fc3_rec);
+                    }
+                }
+            }
+        }
+    }
+
+    if (make_r0_average) {
+        for (j = 0; j < num_patom; j++) {
+            pre_phase_factor = get_pre_phase_factor(
+                j, q_vecs, svecs, multi_dims, multiplicity, p2s_map);
+#ifdef _OPENMP
+#pragma omp parallel for private(i, k, l, m, n, fc3_rec_elem, \
+                                 fc3_rec) if (openmp_at_bands)
+#endif
+            for (ik = 0; ik < num_patom * num_patom; ik++) {
+                i = ik / num_patom;
+                k = ik % num_patom;
+                real_to_reciprocal_elements(
+                    fc3_rec_elem, q_vecs[0], q_vecs[2], fc3, is_compact_fc3,
+                    svecs, multi_dims, multiplicity, p2s_map, s2p_map, j, i, k);
+                for (l = 0; l < 3; l++) {
+                    for (m = 0; m < 3; m++) {
+                        for (n = 0; n < 3; n++) {
+                            fc3_rec = phonoc_complex_prod(
+                                fc3_rec_elem[m * 9 + l * 3 + n],
+                                pre_phase_factor);
+                            fc3_reciprocal[(i * 3 + l) * num_band * num_band +
+                                           (j * 3 + m) * num_band + k * 3 + n] =
+                                sum_lapack_complex_double(
+                                    fc3_reciprocal[(i * 3 + l) * num_band *
+                                                       num_band +
+                                                   (j * 3 + m) * num_band +
+                                                   k * 3 + n],
+                                    fc3_rec);
+                        }
+                    }
+                }
+            }
+        }
+
+        for (k = 0; k < num_patom; k++) {
+            pre_phase_factor = get_pre_phase_factor(
+                k, q_vecs, svecs, multi_dims, multiplicity, p2s_map);
+#ifdef _OPENMP
+#pragma omp parallel for private(j, i, l, m, n, fc3_rec_elem, \
+                                 fc3_rec) if (openmp_at_bands)
+#endif
+            for (ji = 0; ji < num_patom * num_patom; ji++) {
+                j = ji / num_patom;
+                i = ji % num_patom;
+                real_to_reciprocal_elements(
+                    fc3_rec_elem, q_vecs[1], q_vecs[0], fc3, is_compact_fc3,
+                    svecs, multi_dims, multiplicity, p2s_map, s2p_map, k, j, i);
+                for (l = 0; l < 3; l++) {
+                    for (m = 0; m < 3; m++) {
+                        for (n = 0; n < 3; n++) {
+                            fc3_rec = phonoc_complex_prod(
+                                fc3_rec_elem[n * 9 + m * 3 + l],
+                                pre_phase_factor);
+                            fc3_reciprocal[(i * 3 + l) * num_band * num_band +
+                                           (j * 3 + m) * num_band + k * 3 + n] =
+                                sum_lapack_complex_double(
+                                    fc3_reciprocal[(i * 3 + l) * num_band *
+                                                       num_band +
+                                                   (j * 3 + m) * num_band +
+                                                   k * 3 + n],
+                                    fc3_rec);
+                        }
                     }
                 }
             }
@@ -162,7 +194,7 @@ static void real_to_reciprocal_openmp(
 }
 
 static void real_to_reciprocal_elements(
-    lapack_complex_double *fc3_rec_elem, const double q_vecs[3][3],
+    lapack_complex_double *fc3_rec_elem, const double q1[3], const double q2[3],
     const double *fc3, const long is_compact_fc3, const double (*svecs)[3],
     const long multi_dims[2], const long (*multiplicity)[2], const long *p2s,
     const long *s2p, const long pi0, const long pi1, const long pi2) {
@@ -190,15 +222,14 @@ static void real_to_reciprocal_elements(
         }
 
         adrs_vec1 = j * multi_dims[1] + pi0;
-        phase_factor1 =
-            get_phase_factor(q_vecs, 1, svecs, multiplicity[adrs_vec1]);
+        phase_factor1 = get_phase_factor(q1, svecs, multiplicity[adrs_vec1]);
         for (k = 0; k < num_satom; k++) {
             if (s2p[k] != p2s[pi2]) {
                 continue;
             }
             adrs_vec2 = k * multi_dims[1] + pi0;
             phase_factor2 =
-                get_phase_factor(q_vecs, 2, svecs, multiplicity[adrs_vec2]);
+                get_phase_factor(q2, svecs, multiplicity[adrs_vec2]);
             adrs_shift =
                 i * 27 * num_satom * num_satom + j * 27 * num_satom + k * 27;
             phase_factor = phonoc_complex_prod(phase_factor1, phase_factor2);
@@ -247,8 +278,7 @@ static lapack_complex_double get_pre_phase_factor(const long i_patom,
     return pre_phase_factor;
 }
 
-static lapack_complex_double get_phase_factor(const double q[3][3],
-                                              const long qi,
+static lapack_complex_double get_phase_factor(const double q[3],
                                               const double (*svecs)[3],
                                               const long multi[2]) {
     long i, j;
@@ -259,7 +289,7 @@ static lapack_complex_double get_phase_factor(const double q[3][3],
     for (i = 0; i < multi[0]; i++) {
         phase = 0;
         for (j = 0; j < 3; j++) {
-            phase += q[qi][j] * svecs[multi[1] + i][j];
+            phase += q[j] * svecs[multi[1] + i][j];
         }
         phase *= M_2PI;
         sum_real += cos(phase);
@@ -269,4 +299,12 @@ static lapack_complex_double get_phase_factor(const double q[3][3],
     sum_imag /= multi[0];
 
     return lapack_make_complex_double(sum_real, sum_imag);
+}
+
+static lapack_complex_double sum_lapack_complex_double(
+    lapack_complex_double a, lapack_complex_double b) {
+    double v_real, v_imag;
+    v_real = lapack_complex_double_real(a) + lapack_complex_double_real(b);
+    v_imag = lapack_complex_double_imag(a) + lapack_complex_double_imag(b);
+    return lapack_make_complex_double(v_real, v_imag);
 }
