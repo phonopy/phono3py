@@ -2,7 +2,8 @@
 
 ## Citation of phono3py
 
-If you have used phono3py, please cite the following article:
+If you have used phono3py, please cite the following articles, which
+indeed helps the phono3py project to continue:
 
 - "Distributions of phonon lifetimes in Brillouin zones",
   Atsushi Togo, Laurent Chaput, and Isao Tanaka, Phys. Rev. B, **91**, 094306 (2015)
@@ -20,6 +21,25 @@ If you have used phono3py, please cite the following article:
     month = {Mar},
     publisher = {American Physical Society},
     doi = {10.1103/PhysRevB.91.094306},
+  }
+  ```
+
+- "First-principles Phonon Calculations with Phonopy and Phono3py",
+
+  Atsushi Togo, J. Phys. Soc. Jpn., **92**, 012001-1-21 (2023)
+
+  https://doi.org/10.7566/JPSJ.92.012001 (Open access)
+
+  ```
+  @article{phonopy-phono3py-JPSJ,
+    author  = {Togo ,Atsushi},
+    title   = {First-principles Phonon Calculations with Phonopy and Phono3py},
+    journal = {J. Phys. Soc. Jpn.},
+    volume  = {92},
+    number  = {1},
+    pages   = {012001},
+    year    = {2023},
+    doi     = {10.7566/JPSJ.92.012001}
   }
   ```
 
