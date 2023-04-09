@@ -263,10 +263,18 @@ class Phono3pyYamlLoader(PhonopyYamlLoader):
 class Phono3pyYamlDumper(PhonopyYamlDumper):
     """Phono3pyYaml dumper."""
 
-    def __init__(self, data: Phono3pyYamlData, dumper_settings):
+    _default_dumper_settings = {
+        "force_sets": False,
+        "displacements": True,
+        "force_constants": False,
+        "born_effective_charge": True,
+        "dielectric_constant": True,
+    }
+
+    def __init__(self, data: Phono3pyYamlData, dumper_settings=None):
         """Init method."""
         self._data = data
-        self._dumper_settings = dumper_settings
+        self._init_dumper_settings(dumper_settings)
 
     def _cell_info_yaml_lines(self):
         """Get YAML lines for information of cells.
@@ -370,13 +378,6 @@ class Phono3pyYaml(PhonopyYaml):
     """
 
     default_filenames = ("phono3py_disp.yaml", "phono3py.yaml")
-    _default_dumper_settings = {
-        "force_sets": False,
-        "displacements": True,
-        "force_constants": False,
-        "born_effective_charge": True,
-        "dielectric_constant": True,
-    }
     command_name = "phono3py"
 
     configuration = phonopy_yaml_property_factory("configuration")
@@ -410,11 +411,13 @@ class Phono3pyYaml(PhonopyYaml):
             calculator=calculator,
             physical_units=physical_units,
         )
-        self._init_dumper_settings(settings)
+        self._dumper_settings = settings
 
     def __str__(self):
         """Return string text of yaml output."""
-        ph3yml_dumper = Phono3pyYamlDumper(self._data, self._dumper_settings)
+        ph3yml_dumper = Phono3pyYamlDumper(
+            self._data, dumper_settings=self._dumper_settings
+        )
         return "\n".join(ph3yml_dumper.get_yaml_lines())
 
     def read(self, filename):
@@ -425,6 +428,7 @@ class Phono3pyYaml(PhonopyYaml):
             calculator=self._data.calculator,
             physical_units=self._data.physical_units,
         )
+        return self
 
     def set_phonon_info(self, phono3py: "Phono3py"):
         """Store data in Phono3py instance in this instance."""
