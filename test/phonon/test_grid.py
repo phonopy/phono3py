@@ -834,7 +834,7 @@ def test_BZGrid_SNF_hexagonal(aln_lda):
         force_SNF=True,
         SNF_coordinates="direct",
     )
-    np.testing.assert_equal(bzgrid.D_diag, [1, 6, 30])
+    np.testing.assert_equal(bzgrid.D_diag, [1, 7, 28])
 
 
 def test_BZGrid_SNF_nonprimitive(si_pbesol_111):
