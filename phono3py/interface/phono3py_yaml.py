@@ -105,6 +105,7 @@ class Phono3pyYamlLoader(PhonopyYamlLoader):
         """Yaml dict is parsed. See docstring of this class."""
         super().parse()
         self._parse_fc3_dataset()
+        return self
 
     def _parse_all_cells(self):
         """Parse all cells.
