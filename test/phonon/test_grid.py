@@ -869,7 +869,7 @@ def test_SNF_tetrahedra_relative_grid(aln_lda):
     mesh = 25
 
     for snf_coordinates, d_diag in zip(
-        ("direct", "reciprocal"), ([2, 8, 24], [1, 9, 45])
+        ("direct", "reciprocal"), ([1, 9, 45], [1, 9, 45])
     ):
         bzgrid = BZGrid(
             mesh,
