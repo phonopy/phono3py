@@ -24,7 +24,6 @@ jobs:
     # Use conda-incubator/setup-miniconda for precise control of conda infrastructure
     - uses: conda-incubator/setup-miniconda@v2
       with:
-        environment-file: etc/example-environment.yml
         miniforge-version: latest
         # auto-update-conda: true
         # installer-url: https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
