@@ -20,7 +20,7 @@ jobs:
         python-version: ["3.11"]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     # Use conda-incubator/setup-miniconda for precise control of conda infrastructure
     - uses: conda-incubator/setup-miniconda@v2
       with:
@@ -31,7 +31,7 @@ jobs:
         conda install --yes python=${{ matrix.python-version }}
         #conda install --yes matplotlib-base pyyaml "libblas=*=*openblas" openblas h5py scipy pytest codecov pytest-cov spglib alm cmake c-compiler
         conda install --yes matplotlib-base pyyaml "libblas=*=*mkl" mkl-include h5py scipy pytest codecov pytest-cov spglib alm cmake c-compiler
-    - name: Install phonopy
+    - name: Install phonopy develop branch
       run: |
         conda activate test
         git clone --depth 1 https://github.com/phonopy/phonopy.git
@@ -46,6 +46,6 @@ jobs:
       run: |
         pytest -v --cov=./ --cov-report=xml test
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v3
       with:
         verbose: true
