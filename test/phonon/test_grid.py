@@ -11,6 +11,7 @@ from phono3py import Phono3py
 from phono3py.other.tetrahedron_method import get_tetrahedra_relative_grid_address
 from phono3py.phonon.grid import (
     BZGrid,
+    GridMatrix,
     _get_grid_points_by_bz_rotations_c,
     _get_grid_points_by_bz_rotations_py,
     _get_grid_points_by_rotations,
@@ -2384,3 +2385,8 @@ def test_relocate_BZ_grid_address_aln_compare():
 #     print(np.dot(bzgrid.P, shifts.T).T)
 
 #     return bzgrid
+
+
+def test_GridMatrix_without_symmetry():
+    """Test of GridMatrix."""
+    GridMatrix(50, np.eye(3) * 5)

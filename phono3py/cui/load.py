@@ -181,28 +181,28 @@ def load(
          'dielectric': Dielectric constant matrix
                        (array_like, shape=(3, 3), dtype=float),
          'factor': unit conversion facotr (float)}
-    unitcell_filename : str, optional
+    unitcell_filename : os.PathLike, optional
         Input unit cell filename. Default is None.
-    supercell_filename : str, optional
+    supercell_filename : os.PathLike, optional
         Input supercell filename. When this is specified, supercell_matrix is
         ignored. Default is None.
-    born_filename : str, optional
+    born_filename : os.PathLike, optional
         Filename corresponding to 'BORN', a file contains non-analytical term
         correction parameters.
-    forces_fc3_filename : sequence or str, optional
+    forces_fc3_filename : sequence or os.PathLike, optional
         A two-elemental sequence of filenames corresponding to
         ('FORCES_FC3', 'disp_fc3.yaml') in the type-1 format or a filename
-        (str) corresponding to 'FORCES_FC3' in the type-2 format.
+        (os.PathLike) corresponding to 'FORCES_FC3' in the type-2 format.
         Default is None.
-    forces_fc2_filename : str or tuple, optional
+    forces_fc2_filename : os.PathLike or sequence, optional
         A two-elemental sequence of filenames corresponding to
         ('FORCES_FC2', 'disp_fc2.yaml') in the type-1 format or a filename
-        (str) corresponding to 'FORCES_FC2' in the type-2 format.
+        (os.PathLike) corresponding to 'FORCES_FC2' in the type-2 format.
         Default is None.
-    fc3_filename : str, optional
+    fc3_filename : os.PathLike, optional
         Filename of a file corresponding to 'fc3.hdf5', a file contains
         third-order force constants. Default is None.
-    fc2_filename : str, optional
+    fc2_filename : os.PathLike, optional
         Filename of a file corresponding to 'fc2.hdf5', a file contains
         second-order force constants. Default is None.
     fc_calculator : str, optional
@@ -378,7 +378,7 @@ def set_dataset_and_force_constants(
         if log_level:
             print('fc3 was read from "%s".' % fc3_filename)
     elif forces_fc3_filename is not None:
-        if type(forces_fc3_filename) is str:
+        if isinstance(forces_fc3_filename, os.PathLike):
             force_filename = forces_fc3_filename
             disp_filename = None
         else:
@@ -456,7 +456,7 @@ def set_dataset_and_force_constants(
         if log_level:
             print('fc2 was read from "%s".' % fc2_filename)
     elif forces_fc2_filename is not None:
-        if type(forces_fc2_filename) is str:
+        if isinstance(forces_fc2_filename, os.PathLike):
             force_filename = forces_fc2_filename
             disp_filename = None
         else:

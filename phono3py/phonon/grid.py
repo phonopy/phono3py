@@ -549,7 +549,7 @@ class GridMatrix:
             Symmetry dataset of spglib (Symmetry.dataset) of primitive cell that
             has `lattice`. Default is None.
         transformation_matrix : array_like, optional
-            Transformation matrix equivalent to ``transformation_matrix`` or
+            Transformation matrix equivalent to ``transformation_matrix`` in
             spglib-dataset. This is only used when ``use_grg=True``. Default is
             None.
         use_grg : bool, optional
@@ -714,7 +714,12 @@ class GridMatrix:
                         RuntimeWarning,
                     )
             if fall_back:
-                self._D_diag = length2mesh(length, self._lattice)
+                if symmetry_dataset is None:
+                    self._D_diag = length2mesh(length, self._lattice)
+                else:
+                    self._D_diag = length2mesh(
+                        length, self._lattice, rotations=symmetry_dataset["rotations"]
+                    )
         elif num_values == 3:
             self._D_diag = np.array(mesh, dtype="int_")
 
