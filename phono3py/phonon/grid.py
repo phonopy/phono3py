@@ -630,8 +630,10 @@ class GridMatrix:
         transformation_matrix: Optional[Union[list, np.ndarray]] = None,
         force_SNF=False,
         coordinates="reciprocal",
-    ):
+    ) -> None:
         """Set mesh numbers from array or float value.
+
+        self._grid_matrix and self._D_diag can be set.
 
         Four cases:
         1) Three integers are given.
@@ -656,7 +658,7 @@ class GridMatrix:
         num_values = len(np.ravel(mesh))
         if num_values == 1:
             length = float(mesh)
-            if not self._run_grg(
+            if not use_grg or not self._run_grg(
                 symmetry_dataset,
                 transformation_matrix,
                 length,

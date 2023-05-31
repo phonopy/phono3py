@@ -2454,7 +2454,7 @@ def test_GridMatrix_with_supercell_symmetry(ph_nacl: Phonopy):
     """Test of GridMatrix with supercell symmetry.
 
     Generalized regular grid can not be used for non-primitive lattice.
-    Therefore, fallback to length2mesh along with emission of RuntimeWarning.
+    Therefore, fallback to length2mesh. With grg=True, warning is emitted.
 
     """
     mesh = 50.0
@@ -2462,7 +2462,26 @@ def test_GridMatrix_with_supercell_symmetry(ph_nacl: Phonopy):
         gm = GridMatrix(
             mesh,
             ph_nacl.supercell.cell,
+            use_grg=True,
             symmetry_dataset=ph_nacl.symmetry.dataset,
         )
+    assert gm.grid_matrix is None
+    np.testing.assert_array_equal(gm.D_diag, [4, 4, 4])
+
+
+@pytest.mark.filterwarnings("error")
+def test_GridMatrix_with_supercell_symmetry_grg_false(ph_nacl: Phonopy):
+    """Test of GridMatrix with supercell symmetry.
+
+    With grg=False, simply length2mesh is used and warning is not emitted.
+
+    """
+    mesh = 50.0
+    gm = GridMatrix(
+        mesh,
+        ph_nacl.supercell.cell,
+        use_grg=False,
+        symmetry_dataset=ph_nacl.symmetry.dataset,
+    )
     assert gm.grid_matrix is None
     np.testing.assert_array_equal(gm.D_diag, [4, 4, 4])
