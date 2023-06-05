@@ -658,14 +658,16 @@ class GridMatrix:
         num_values = len(np.ravel(mesh))
         if num_values == 1:
             length = float(mesh)
-            if not use_grg or not self._run_grg(
-                symmetry_dataset,
-                transformation_matrix,
-                length,
-                None,
-                force_SNF,
-                coordinates,
-            ):
+            if use_grg:
+                found_grg = self._run_grg(
+                    symmetry_dataset,
+                    transformation_matrix,
+                    length,
+                    None,
+                    force_SNF,
+                    coordinates,
+                )
+            if not use_grg or not found_grg:
                 if symmetry_dataset is None:
                     self._D_diag = length2mesh(length, self._lattice)
                 else:
