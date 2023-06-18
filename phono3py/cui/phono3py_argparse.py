@@ -252,8 +252,8 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             help="Supercell dimension for extra fc2",
         )
     parser.add_argument(
-        "--emulate-v1",
-        dest="emulate_v1",
+        "--emulate-v2",
+        dest="emulate_v2",
         action="store_true",
         default=False,
         help="Emulate v1.x grid system and shortest vectors.",
