@@ -238,9 +238,9 @@ def load(
         cells. Default is False.
     use_grg : bool, optional
         Use generalized regular grid when True. Default is False.
-    store_dense_gp_map : bool, optional
+    store_dense_gp_map : bool, optional, Deprecated
         Use new format of BZ grid system. Default is True.
-    store_dense_svecs : bool, optional
+    store_dense_svecs : bool, optional, Deprecated
         Shortest vectors are stored in the dense array format. This is
         expected to be always True. Setting False is for rough
         compatibility with v1.x. Default is True.
