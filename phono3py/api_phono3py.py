@@ -1210,8 +1210,8 @@ class Phono3py:
             shape=(supercells, natom, 3), dtype='double', order='C'
 
         """
-        if self._phonon_dataset is None:
-            raise RuntimeError("phonon_displacement_dataset does not exist.")
+        if self._phonon_supercell_matrix is None:
+            raise RuntimeError("phonon_supercell_matrix is not set.")
 
         dataset = self._phonon_dataset
         if "first_atoms" in dataset:
@@ -1229,14 +1229,16 @@ class Phono3py:
 
     @phonon_displacements.setter
     def phonon_displacements(self, displacements):
-        if self._phonon_dataset is None:
-            raise RuntimeError("phonon_displacement_dataset does not exist.")
+        if self._phonon_supercell_matrix is None:
+            raise RuntimeError("phonon_supercell_matrix is not set.")
 
         disps = np.array(displacements, dtype="double", order="C")
         natom = len(self._phonon_supercell)
         if disps.ndim != 3 or disps.shape[1:] != (natom, 3):
             raise RuntimeError("Array shape of displacements is incorrect.")
-        if "first_atoms" in self._phonon_dataset:
+        if self._phonon_dataset is None:
+            self._phonon_dataset = {}
+        elif "first_atoms" in self._phonon_dataset:
             raise RuntimeError("Displacements are incompatible with dataset.")
 
         self._phonon_dataset["displacements"] = disps
