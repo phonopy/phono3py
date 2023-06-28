@@ -1118,7 +1118,9 @@ class Phono3py:
         natom = len(self._supercell)
         if disps.ndim != 3 or disps.shape[1:] != (natom, 3):
             raise RuntimeError("Array shape of displacements is incorrect.")
-        if "first_atoms" in self._dataset:
+        if self._dataset is None:
+            self._dataset = {}
+        elif "first_atoms" in self._dataset:
             raise RuntimeError("Displacements are incompatible with dataset.")
         self._dataset["displacements"] = disps
         self._supercells_with_displacements = None
