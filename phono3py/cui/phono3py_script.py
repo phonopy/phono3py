@@ -55,6 +55,7 @@ from phonopy.cui.phonopy_script import (
     store_nac_params,
 )
 from phonopy.file_IO import is_file_phonopy_yaml, parse_FORCE_SETS, write_FORCE_SETS
+from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_default_physical_units, get_force_sets
 from phonopy.phonon.band_structure import get_band_qpoints
 from phonopy.structure.cells import isclose as cells_isclose
@@ -66,7 +67,10 @@ from phono3py.cui.create_force_constants import (
     get_fc_calculator_params,
 )
 from phono3py.cui.create_supercells import create_phono3py_supercells
-from phono3py.cui.load import set_dataset_and_force_constants
+from phono3py.cui.load import (
+    compute_force_constants_from_datasets,
+    set_dataset_and_force_constants,
+)
 from phono3py.cui.phono3py_argparse import get_parser
 from phono3py.cui.settings import Phono3pyConfParser
 from phono3py.cui.show_log import (
@@ -91,6 +95,7 @@ from phono3py.interface.phono3py_yaml import (
     Phono3pyYaml,
     displacements_yaml_lines_type1,
 )
+from phono3py.phonon3.fc3 import show_drift_fc3
 from phono3py.phonon3.gruneisen import run_gruneisen_parameters
 from phono3py.phonon.grid import get_grid_point_from_address, get_ir_grid_points
 from phono3py.version import __version__
@@ -789,19 +794,31 @@ def store_force_constants(
             phono3py,
             ph3py_yaml=ph3py_yaml,
             phono3py_yaml_filename=phono3py_yaml_filename,
+            cutoff_pair_distance=settings.cutoff_pair_distance,
+            log_level=log_level,
+        )
+
+        compute_force_constants_from_datasets(
+            ph3py=phono3py,
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
             symmetrize_fc=settings.fc_symmetry,
             is_compact_fc=settings.is_compact_fc,
-            cutoff_pair_distance=settings.cutoff_pair_distance,
             log_level=log_level,
         )
 
         if log_level:
             if phono3py.fc3 is None:
                 print("fc3 could not be obtained.")
+            else:
+                show_drift_fc3(phono3py.fc3, primitive=phono3py.primitive)
             if phono3py.fc2 is None:
                 print("fc2 could not be obtained.")
+            else:
+                show_drift_force_constants(
+                    phono3py.fc2, primitive=phono3py.phonon_primitive, name="fc2"
+                )
+
         if phono3py.fc3 is None or phono3py.fc2 is None:
             print_error()
             sys.exit(1)
