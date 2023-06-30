@@ -370,7 +370,7 @@ def set_dataset_and_force_constants(
 ):
     """Set displacements, forces, and create force constants."""
     read_fc = {"fc2": False, "fc3": False}
-    read_fc["fc3"] = _set_fc3_dataset(
+    read_fc["fc3"] = _set_dataset_or_fc3(
         ph3py,
         ph3py_yaml=ph3py_yaml,
         fc3_filename=fc3_filename,
@@ -380,6 +380,7 @@ def set_dataset_and_force_constants(
         log_level=log_level,
     )
     if ph3py.dataset and produce_fc:
+        assert not read_fc["fc3"]
         ph3py.produce_fc3(
             symmetrize_fc3r=symmetrize_fc,
             is_compact_fc=is_compact_fc,
@@ -392,7 +393,7 @@ def set_dataset_and_force_constants(
     if log_level and ph3py.fc3 is not None:
         show_drift_fc3(ph3py.fc3, primitive=ph3py.primitive)
 
-    read_fc["fc2"] = _set_fc2_dataset(
+    read_fc["fc2"] = _set_dataset_phonon_dataset_or_fc2(
         ph3py,
         ph3py_yaml=ph3py_yaml,
         fc2_filename=fc2_filename,
@@ -401,6 +402,7 @@ def set_dataset_and_force_constants(
         log_level=log_level,
     )
     if (ph3py.dataset or ph3py.phonon_dataset) and produce_fc:
+        assert not read_fc["fc2"]
         ph3py.produce_fc2(
             symmetrize_fc2=symmetrize_fc,
             is_compact_fc=is_compact_fc,
@@ -425,7 +427,7 @@ def set_dataset_and_force_constants(
     return read_fc
 
 
-def _set_fc3_dataset(
+def _set_dataset_or_fc3(
     ph3py: Phono3py,
     ph3py_yaml: Optional[Phono3pyYaml] = None,
     fc3_filename: Optional[os.PathLike] = None,
@@ -449,7 +451,7 @@ def _set_fc3_dataset(
             disp_filename = None
         else:
             force_filename, disp_filename = forces_fc3_filename
-        _set_forces_fc3(
+        _set_dataset_for_fc3(
             ph3py,
             ph3py_yaml,
             force_filename,
@@ -472,7 +474,7 @@ def _set_fc3_dataset(
                 disp_filename = "disp_fc3.yaml"
             elif ph3py_yaml.dataset is None:
                 disp_filename = "disp_fc3.yaml"
-        _set_forces_fc3(
+        _set_dataset_for_fc3(
             ph3py,
             ph3py_yaml,
             "FORCES_FC3",
@@ -486,7 +488,7 @@ def _set_fc3_dataset(
         and ph3py_yaml.dataset is not None
         and forces_in_dataset(ph3py_yaml.dataset)
     ):
-        _set_forces_fc3(
+        _set_dataset_for_fc3(
             ph3py,
             ph3py_yaml,
             None,
@@ -498,7 +500,7 @@ def _set_fc3_dataset(
     return read_fc3
 
 
-def _set_fc2_dataset(
+def _set_dataset_phonon_dataset_or_fc2(
     ph3py: Phono3py,
     ph3py_yaml: Optional[Phono3pyYaml] = None,
     fc2_filename: Optional[os.PathLike] = None,
@@ -521,7 +523,7 @@ def _set_fc2_dataset(
             disp_filename = None
         else:
             force_filename, disp_filename = forces_fc2_filename
-        _set_forces_fc2(
+        _set_dataset_for_fc2(
             ph3py,
             ph3py_yaml,
             force_filename,
@@ -543,7 +545,7 @@ def _set_fc2_dataset(
                 disp_filename = "disp_fc2.yaml"
             elif ph3py_yaml.phonon_dataset is None:
                 disp_filename = "disp_fc2.yaml"
-        _set_forces_fc2(
+        _set_dataset_for_fc2(
             ph3py,
             ph3py_yaml,
             "FORCES_FC2",
@@ -563,7 +565,7 @@ def _set_fc2_dataset(
         and ph3py_yaml.phonon_dataset is not None
         and forces_in_dataset(ph3py_yaml.phonon_dataset)
     ):
-        _set_forces_fc2(
+        _set_dataset_for_fc2(
             ph3py,
             ph3py_yaml,
             None,
@@ -576,7 +578,7 @@ def _set_fc2_dataset(
         and ph3py_yaml.dataset is not None
         and forces_in_dataset(ph3py_yaml.dataset)
     ):
-        _set_forces_fc2(
+        _set_dataset_for_fc2(
             ph3py,
             ph3py_yaml,
             None,
@@ -592,7 +594,7 @@ def _set_fc2_dataset(
                 disp_filename = "disp_fc3.yaml"
             elif ph3py_yaml.dataset is None:
                 disp_filename = "disp_fc3.yaml"
-        _set_forces_fc2(
+        _set_dataset_for_fc2(
             ph3py,
             ph3py_yaml,
             "FORCES_FC3",
@@ -603,7 +605,7 @@ def _set_fc2_dataset(
     return read_fc2
 
 
-def _set_forces_fc3(
+def _set_dataset_for_fc3(
     ph3py: Phono3py,
     ph3py_yaml: Optional[Phono3pyYaml],
     force_filename,
@@ -624,7 +626,7 @@ def _set_forces_fc3(
     )
 
 
-def _set_forces_fc2(
+def _set_dataset_for_fc2(
     ph3py: Phono3py,
     ph3py_yaml: Optional[Phono3pyYaml],
     force_filename,
