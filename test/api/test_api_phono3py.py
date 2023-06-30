@@ -1,4 +1,4 @@
-"""Tests of PhonopyYaml."""
+"""Tests of Phono3py API."""
 from pathlib import Path
 
 from phono3py import Phono3py
@@ -23,7 +23,7 @@ def test_displacements_setter_NaCl(nacl_pbe: Phono3py):
 
 
 def test_displacements_setter_Si(si_pbesol_111_222_fd: Phono3py):
-    """Test Phono3py.displacements setter.
+    """Test Phono3py.displacements setter and Phono3py.phonon_displacements setter.
 
     Just check no error.
 
