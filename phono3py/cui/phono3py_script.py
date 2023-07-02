@@ -1099,7 +1099,11 @@ def main(**argparse_control):
     # warnings.simplefilter("error")
     load_phono3py_yaml = argparse_control.get("load_phono3py_yaml", False)
 
-    args, log_level = start_phono3py(**argparse_control)
+    if "args" in argparse_control:  # For pytest
+        args = argparse_control["args"]
+        log_level = args.log_level
+    else:
+        args, log_level = start_phono3py(**argparse_control)
 
     if load_phono3py_yaml:
         input_filename = None
