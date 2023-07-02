@@ -1,4 +1,6 @@
 """Tests of Phono3py API."""
+from __future__ import annotations
+
 import os
 import pathlib
 from collections.abc import Sequence
