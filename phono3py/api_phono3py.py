@@ -36,6 +36,7 @@
 import warnings
 
 import numpy as np
+from phonopy.exception import ForceCalculatorRequiredError
 from phonopy.harmonic.displacement import (
     directions_to_displacement_dataset,
     get_least_displacements,
@@ -1671,7 +1672,7 @@ class Phono3py:
                     "fc_calculator has to be set to produce force "
                     "constans from this dataset."
                 )
-                raise RuntimeError(msg)
+                raise ForceCalculatorRequiredError(msg)
             fc2, fc3 = get_phono3py_fc3(
                 self._supercell,
                 self._primitive,
