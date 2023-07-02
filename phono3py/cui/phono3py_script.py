@@ -54,6 +54,7 @@ from phonopy.cui.phonopy_script import (
     set_magnetic_moments,
     store_nac_params,
 )
+from phonopy.exception import ForceCalculatorRequiredError
 from phonopy.file_IO import is_file_phonopy_yaml, parse_FORCE_SETS, write_FORCE_SETS
 from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_default_physical_units, get_force_sets
@@ -798,14 +799,24 @@ def store_force_constants(
             log_level=log_level,
         )
 
-        compute_force_constants_from_datasets(
-            ph3py=phono3py,
-            fc_calculator=fc_calculator,
-            fc_calculator_options=fc_calculator_options,
-            symmetrize_fc=settings.fc_symmetry,
-            is_compact_fc=settings.is_compact_fc,
-            log_level=log_level,
-        )
+        try:
+            compute_force_constants_from_datasets(
+                ph3py=phono3py,
+                fc_calculator=fc_calculator,
+                fc_calculator_options=fc_calculator_options,
+                symmetrize_fc=settings.fc_symmetry,
+                is_compact_fc=settings.is_compact_fc,
+                log_level=log_level,
+            )
+        except ForceCalculatorRequiredError:
+            if log_level:
+                print("")
+                print(
+                    "Built-in force constants calculator doesn't support the "
+                    "dispalcements-forces dataset. "
+                    "An external force calculator, e.g., ALM (--alm), has to be used "
+                    "to compute force constants."
+                )
 
         if log_level:
             if phono3py.fc3 is None:
@@ -1088,7 +1099,11 @@ def main(**argparse_control):
     # warnings.simplefilter("error")
     load_phono3py_yaml = argparse_control.get("load_phono3py_yaml", False)
 
-    args, log_level = start_phono3py(**argparse_control)
+    if "args" in argparse_control:  # For pytest
+        args = argparse_control["args"]
+        log_level = args.log_level
+    else:
+        args, log_level = start_phono3py(**argparse_control)
 
     if load_phono3py_yaml:
         input_filename = None
