@@ -11,11 +11,12 @@ from phono3py import Phono3py
 from phono3py.other.tetrahedron_method import get_tetrahedra_relative_grid_address
 from phono3py.phonon.grid import (
     BZGrid,
+    GridMatrix,
+    _can_use_std_lattice,
     _get_grid_points_by_bz_rotations_c,
     _get_grid_points_by_bz_rotations_py,
     _get_grid_points_by_rotations,
     _relocate_BZ_grid_address,
-    can_use_std_lattice,
     get_grid_point_from_address,
     get_grid_point_from_address_py,
     get_ir_grid_points,
@@ -834,7 +835,7 @@ def test_BZGrid_SNF_hexagonal(aln_lda):
         force_SNF=True,
         SNF_coordinates="direct",
     )
-    np.testing.assert_equal(bzgrid.D_diag, [1, 6, 30])
+    np.testing.assert_equal(bzgrid.D_diag, [1, 7, 28])
 
 
 def test_BZGrid_SNF_nonprimitive(si_pbesol_111):
@@ -869,7 +870,7 @@ def test_SNF_tetrahedra_relative_grid(aln_lda):
     mesh = 25
 
     for snf_coordinates, d_diag in zip(
-        ("direct", "reciprocal"), ([2, 8, 24], [1, 9, 45])
+        ("direct", "reciprocal"), ([1, 9, 45], [1, 9, 45])
     ):
         bzgrid = BZGrid(
             mesh,
@@ -1260,7 +1261,7 @@ def test_can_use_std_lattice():
         [[0, 1, 0], [-1, -1, -1], [1, 0, 0]],
     ]
 
-    assert can_use_std_lattice(conv_lat, tmat, std_lattice, rotations)
+    assert _can_use_std_lattice(conv_lat, tmat, std_lattice, rotations)
 
 
 def test_aln_BZGrid_with_shift(aln_cell: PhonopyAtoms):
@@ -2384,3 +2385,103 @@ def test_relocate_BZ_grid_address_aln_compare():
 #     print(np.dot(bzgrid.P, shifts.T).T)
 
 #     return bzgrid
+
+
+def test_GridMatrix_without_symmetry(ph_nacl: Phonopy):
+    """Test of GridMatrix without symmetry."""
+    mesh = [4, 4, 4]
+    gm = GridMatrix(mesh, ph_nacl.primitive.cell)
+    assert gm.grid_matrix is None
+    np.testing.assert_array_equal(gm.D_diag, mesh)
+
+
+def test_GridMatrix_with_symmetry(ph_nacl: Phonopy):
+    """Test of GridMatrix with symmetry."""
+    mesh = 50.0
+    gm = GridMatrix(
+        mesh,
+        ph_nacl.primitive.cell,
+        symmetry_dataset=ph_nacl.primitive_symmetry.dataset,
+    )
+    np.testing.assert_array_equal(
+        gm.grid_matrix, np.array([[-1, 1, 1], [1, -1, 1], [1, 1, -1]]) * 9
+    )
+    np.testing.assert_array_equal(gm.D_diag, [9, 18, 18])
+
+
+def test_GridMatrix_with_grid_matrix(ph_nacl: Phonopy):
+    """Test of GridMatrix with grid_matrix.
+
+    This case has to be used with symmetry_dataset or transformation_matrix.
+
+    """
+    mesh = np.array([[-1, 1, 1], [1, -1, 1], [1, 1, -1]]) * 9
+    gm = GridMatrix(
+        mesh,
+        ph_nacl.primitive.cell,
+        symmetry_dataset=ph_nacl.primitive_symmetry.dataset,
+    )
+    np.testing.assert_array_equal(gm.grid_matrix, mesh)
+    np.testing.assert_array_equal(gm.D_diag, [9, 18, 18])
+
+    tmat = ph_nacl.primitive_symmetry.dataset["transformation_matrix"]
+    gm = GridMatrix(mesh, ph_nacl.primitive.cell, transformation_matrix=tmat)
+    np.testing.assert_array_equal(gm.grid_matrix, mesh)
+    np.testing.assert_array_equal(gm.D_diag, [9, 18, 18])
+
+
+def test_GridMatrix_with_transformation_matrix(ph_nacl: Phonopy):
+    """Test of GridMatrix with transformation matrix.
+
+    Only length is used to determine grid matrix, i.e., point group information
+    is not used.
+
+    """
+    mesh = 50.0
+    tmat = ph_nacl.primitive_symmetry.dataset["transformation_matrix"]
+    gm = GridMatrix(
+        mesh,
+        ph_nacl.primitive.cell,
+        transformation_matrix=tmat,
+    )
+    np.testing.assert_array_equal(
+        gm.grid_matrix, np.array([[-1, 1, 1], [1, -1, 1], [1, 1, -1]]) * 9
+    )
+    np.testing.assert_array_equal(gm.D_diag, [9, 18, 18])
+
+
+def test_GridMatrix_with_supercell_symmetry(ph_nacl: Phonopy):
+    """Test of GridMatrix with supercell symmetry.
+
+    Generalized regular grid can not be used for non-primitive lattice.
+    Therefore, fallback to length2mesh. With grg=True, warning is emitted.
+
+    """
+    mesh = 50.0
+    with pytest.warns(RuntimeWarning):
+        gm = GridMatrix(
+            mesh,
+            ph_nacl.supercell.cell,
+            use_grg=True,
+            symmetry_dataset=ph_nacl.symmetry.dataset,
+        )
+    assert gm.grid_matrix is None
+    np.testing.assert_array_equal(gm.D_diag, [4, 4, 4])
+
+
+@pytest.mark.filterwarnings("error")
+def test_GridMatrix_with_supercell_symmetry_grg_false(ph_nacl: Phonopy):
+    """Test of GridMatrix with supercell symmetry.
+
+    With grg=False, simply length2mesh is used and warning is not emitted.
+
+    """
+    mesh = 50.0
+    gm = GridMatrix(
+        mesh,
+        ph_nacl.supercell.cell,
+        use_grg=False,
+        symmetry_dataset=ph_nacl.symmetry.dataset,
+    )
+    assert gm.grid_matrix is None
+    np.testing.assert_array_equal(gm.D_diag, [4, 4, 4])
