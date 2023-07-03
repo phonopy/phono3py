@@ -1,5 +1,5 @@
 """Pytest conftest.py."""
-import os
+from pathlib import Path
 
 import numpy as np
 import phonopy
@@ -9,8 +9,9 @@ from phonopy.interface.phonopy_yaml import read_cell_yaml
 from phonopy.structure.atoms import PhonopyAtoms
 
 import phono3py
+from phono3py import Phono3py
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
+cwd = Path(__file__).parent
 store_dense_gp_map = True
 
 
@@ -27,7 +28,7 @@ def pytest_addoption(parser):
 @pytest.fixture(scope="session")
 def agno2_cell() -> PhonopyAtoms:
     """Return AgNO2 cell (Imm2)."""
-    cell = read_cell_yaml(os.path.join(current_dir, "AgNO2_cell.yaml"))
+    cell = read_cell_yaml(cwd / "AgNO2_cell.yaml")
     return cell
 
 
@@ -49,15 +50,15 @@ def aln_cell() -> PhonopyAtoms:
 
 
 @pytest.fixture(scope="session")
-def si_pbesol(request):
+def si_pbesol(request) -> Phono3py:
     """Return Phono3py instance of Si 2x2x2.
 
     * with symmetry
     * full fc
 
     """
-    yaml_filename = os.path.join(current_dir, "phono3py_si_pbesol.yaml")
-    forces_fc3_filename = os.path.join(current_dir, "FORCES_FC3_si_pbesol")
+    yaml_filename = cwd / "phono3py_si_pbesol.yaml"
+    forces_fc3_filename = cwd / "FORCES_FC3_si_pbesol"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -69,7 +70,7 @@ def si_pbesol(request):
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_grg(request):
+def si_pbesol_grg(request) -> Phono3py:
     """Return Phono3py instance of Si 2x2x2.
 
     * with symmetry
@@ -77,8 +78,8 @@ def si_pbesol_grg(request):
     * GR-grid
 
     """
-    yaml_filename = os.path.join(current_dir, "phono3py_si_pbesol.yaml")
-    forces_fc3_filename = os.path.join(current_dir, "FORCES_FC3_si_pbesol")
+    yaml_filename = cwd / "phono3py_si_pbesol.yaml"
+    forces_fc3_filename = cwd / "FORCES_FC3_si_pbesol"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -91,15 +92,15 @@ def si_pbesol_grg(request):
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_nosym(request):
+def si_pbesol_nosym(request) -> Phono3py:
     """Return Phono3py instance of Si 2x2x2.
 
     * without symmetry
     * no fc
 
     """
-    yaml_filename = os.path.join(current_dir, "phono3py_si_pbesol.yaml")
-    forces_fc3_filename = os.path.join(current_dir, "FORCES_FC3_si_pbesol")
+    yaml_filename = cwd / "phono3py_si_pbesol.yaml"
+    forces_fc3_filename = cwd / "FORCES_FC3_si_pbesol"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -113,15 +114,15 @@ def si_pbesol_nosym(request):
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_nomeshsym(request):
+def si_pbesol_nomeshsym(request) -> Phono3py:
     """Return Phono3py instance of Si 2x2x2.
 
     * without mesh-symmetry
     * no fc
 
     """
-    yaml_filename = os.path.join(current_dir, "phono3py_si_pbesol.yaml")
-    forces_fc3_filename = os.path.join(current_dir, "FORCES_FC3_si_pbesol")
+    yaml_filename = cwd / "phono3py_si_pbesol.yaml"
+    forces_fc3_filename = cwd / "FORCES_FC3_si_pbesol"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -135,15 +136,15 @@ def si_pbesol_nomeshsym(request):
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_compact_fc(request):
+def si_pbesol_compact_fc(request) -> Phono3py:
     """Return Phono3py instance of Si 2x2x2.
 
     * with symmetry
     * compact fc
 
     """
-    yaml_filename = os.path.join(current_dir, "phono3py_si_pbesol.yaml")
-    forces_fc3_filename = os.path.join(current_dir, "FORCES_FC3_si_pbesol")
+    yaml_filename = cwd / "phono3py_si_pbesol.yaml"
+    forces_fc3_filename = cwd / "FORCES_FC3_si_pbesol"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -156,14 +157,14 @@ def si_pbesol_compact_fc(request):
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_111(request):
+def si_pbesol_111(request) -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
     * full fc
 
     """
-    yaml_filename = os.path.join(current_dir, "phono3py_params_Si111.yaml")
+    yaml_filename = cwd / "phono3py_params_Si111.yaml"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -174,7 +175,7 @@ def si_pbesol_111(request):
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_111_alm(request):
+def si_pbesol_111_alm(request) -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
@@ -184,7 +185,7 @@ def si_pbesol_111_alm(request):
     """
     pytest.importorskip("alm")
 
-    yaml_filename = os.path.join(current_dir, "phono3py_params_Si111.yaml")
+    yaml_filename = cwd / "phono3py_params_Si111.yaml"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -196,19 +197,19 @@ def si_pbesol_111_alm(request):
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_iterha_111():
+def si_pbesol_iterha_111() -> Phonopy:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
     * no fc
 
     """
-    yaml_filename = os.path.join(current_dir, "phonopy_params-Si111-iterha.yaml.gz")
+    yaml_filename = cwd / "phonopy_params-Si111-iterha.yaml.gz"
     return phonopy.load(yaml_filename, log_level=1, produce_fc=False)
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_111_222_fd(request):
+def si_pbesol_111_222_fd(request) -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
@@ -216,7 +217,7 @@ def si_pbesol_111_222_fd(request):
     * use alm if available on test side
 
     """
-    yaml_filename = os.path.join(current_dir, "phono3py_params_Si-111-222.yaml")
+    yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -227,7 +228,7 @@ def si_pbesol_111_222_fd(request):
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_111_222_alm(request):
+def si_pbesol_111_222_alm(request) -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
@@ -237,7 +238,7 @@ def si_pbesol_111_222_alm(request):
     """
     pytest.importorskip("alm")
 
-    yaml_filename = os.path.join(current_dir, "phono3py_params_Si-111-222.yaml")
+    yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -249,7 +250,7 @@ def si_pbesol_111_222_alm(request):
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_111_222_alm_fd(request):
+def si_pbesol_111_222_alm_fd(request) -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
@@ -259,7 +260,7 @@ def si_pbesol_111_222_alm_fd(request):
     """
     pytest.importorskip("alm")
 
-    yaml_filename = os.path.join(current_dir, "phono3py_params_Si-111-222.yaml")
+    yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -271,7 +272,7 @@ def si_pbesol_111_222_alm_fd(request):
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_111_222_fd_alm(request):
+def si_pbesol_111_222_fd_alm(request) -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
@@ -281,7 +282,7 @@ def si_pbesol_111_222_fd_alm(request):
     """
     pytest.importorskip("alm")
 
-    yaml_filename = os.path.join(current_dir, "phono3py_params_Si-111-222.yaml")
+    yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -293,7 +294,7 @@ def si_pbesol_111_222_fd_alm(request):
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_111_222_alm_cutoff(request):
+def si_pbesol_111_222_alm_cutoff(request) -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
@@ -304,7 +305,7 @@ def si_pbesol_111_222_alm_cutoff(request):
     """
     pytest.importorskip("alm")
 
-    yaml_filename = os.path.join(current_dir, "phono3py_params_Si-111-222.yaml")
+    yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -317,7 +318,7 @@ def si_pbesol_111_222_alm_cutoff(request):
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_111_222_alm_cutoff_fc2(request):
+def si_pbesol_111_222_alm_cutoff_fc2(request) -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
@@ -328,7 +329,7 @@ def si_pbesol_111_222_alm_cutoff_fc2(request):
     """
     pytest.importorskip("alm")
 
-    yaml_filename = os.path.join(current_dir, "phono3py_params_Si-111-222.yaml")
+    yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -341,7 +342,7 @@ def si_pbesol_111_222_alm_cutoff_fc2(request):
 
 
 @pytest.fixture(scope="session")
-def si_pbesol_111_222_alm_cutoff_fc3(request):
+def si_pbesol_111_222_alm_cutoff_fc3(request) -> Phono3py:
     """Return Phono3py instance of Si 1x1x1.
 
     * with symmetry
@@ -352,7 +353,7 @@ def si_pbesol_111_222_alm_cutoff_fc3(request):
     """
     pytest.importorskip("alm")
 
-    yaml_filename = os.path.join(current_dir, "phono3py_params_Si-111-222.yaml")
+    yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -365,14 +366,14 @@ def si_pbesol_111_222_alm_cutoff_fc3(request):
 
 
 @pytest.fixture(scope="session")
-def nacl_pbe(request):
+def nacl_pbe(request) -> Phono3py:
     """Return Phono3py instance of NaCl 2x2x2.
 
     * with symmetry
     * full fc
 
     """
-    yaml_filename = os.path.join(current_dir, "phono3py_params_NaCl222.yaml.xz")
+    yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -383,14 +384,14 @@ def nacl_pbe(request):
 
 
 @pytest.fixture(scope="session")
-def nacl_pbe_compact_fc(request):
+def nacl_pbe_compact_fc(request) -> Phono3py:
     """Return Phono3py instance of NaCl 2x2x2.
 
     * with symmetry
     * compact fc
 
     """
-    yaml_filename = os.path.join(current_dir, "phono3py_params_NaCl222.yaml.xz")
+    yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -402,13 +403,13 @@ def nacl_pbe_compact_fc(request):
 
 
 @pytest.fixture(scope="session")
-def nacl_pbe_cutoff_fc3(request):
+def nacl_pbe_cutoff_fc3(request) -> Phono3py:
     """Return Phono3py instance of NaCl 2x2x2 with cutoff-pair-distance.
 
     * cutoff pair with 5
 
     """
-    yaml_filename = os.path.join(current_dir, "phono3py_params_NaCl222.yaml.xz")
+    yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
     enable_v2 = request.config.getoption("--v1")
     ph3 = phono3py.load(
         yaml_filename,
@@ -435,14 +436,14 @@ def nacl_pbe_cutoff_fc3(request):
 
 
 @pytest.fixture(scope="session")
-def nacl_pbe_cutoff_fc3_all_forces(request):
+def nacl_pbe_cutoff_fc3_all_forces(request) -> Phono3py:
     """Return Phono3py instance of NaCl 2x2x2 with cutoff-pair-distance.
 
     * cutoff pair with 5
     * All forces are set.
 
     """
-    yaml_filename = os.path.join(current_dir, "phono3py_params_NaCl222.yaml.xz")
+    yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
     enable_v2 = request.config.getoption("--v1")
     ph3 = phono3py.load(
         yaml_filename,
@@ -459,7 +460,7 @@ def nacl_pbe_cutoff_fc3_all_forces(request):
 
 
 @pytest.fixture(scope="session")
-def nacl_pbe_cutoff_fc3_compact_fc(request):
+def nacl_pbe_cutoff_fc3_compact_fc(request) -> Phono3py:
     """Return Phono3py instance of NaCl 2x2x2 with cutoff-pair-distance.
 
     * cutoff pair with 5
@@ -467,7 +468,7 @@ def nacl_pbe_cutoff_fc3_compact_fc(request):
     * Compact FC
 
     """
-    yaml_filename = os.path.join(current_dir, "phono3py_params_NaCl222.yaml.xz")
+    yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
     enable_v2 = request.config.getoption("--v1")
     ph3 = phono3py.load(
         yaml_filename,
@@ -484,14 +485,14 @@ def nacl_pbe_cutoff_fc3_compact_fc(request):
 
 
 @pytest.fixture(scope="session")
-def aln_lda(request):
+def aln_lda(request) -> Phono3py:
     """Return Phono3py instance of AlN 3x3x2.
 
     * with symmetry
     * full fc.
 
     """
-    yaml_filename = os.path.join(current_dir, "phono3py_params_AlN332.yaml.xz")
+    yaml_filename = cwd / "phono3py_params_AlN332.yaml.xz"
     enable_v2 = request.config.getoption("--v1")
     return phono3py.load(
         yaml_filename,
@@ -504,9 +505,9 @@ def aln_lda(request):
 @pytest.fixture(scope="session")
 def ph_nacl() -> Phonopy:
     """Return Phonopy class instance of NaCl 2x2x2."""
-    yaml_filename = os.path.join(current_dir, "phonopy_disp_NaCl.yaml")
-    force_sets_filename = os.path.join(current_dir, "FORCE_SETS_NaCl")
-    born_filename = os.path.join(current_dir, "BORN_NaCl")
+    yaml_filename = cwd / "phonopy_disp_NaCl.yaml"
+    force_sets_filename = cwd / "FORCE_SETS_NaCl"
+    born_filename = cwd / "BORN_NaCl"
     return phonopy.load(
         yaml_filename,
         force_sets_filename=force_sets_filename,
@@ -520,7 +521,7 @@ def ph_nacl() -> Phonopy:
 @pytest.fixture(scope="session")
 def ph_si() -> Phonopy:
     """Return Phonopy class instance of Si-prim 2x2x2."""
-    yaml_filename = os.path.join(current_dir, "phonopy_params_Si.yaml")
+    yaml_filename = cwd / "phonopy_params_Si.yaml"
     return phonopy.load(
         yaml_filename,
         is_compact_fc=False,

@@ -19,7 +19,7 @@ repos:
     - "--ignore=E203,W503"
 
 - repo: https://github.com/psf/black
-  rev: 23.1.0
+  rev: 23.3.0
   hooks:
   - id: black
     args:
@@ -37,7 +37,7 @@ repos:
       name: isort (python)
 
 - repo: https://github.com/Takishima/cmake-pre-commit-hooks
-  rev: v1.8.0
+  rev: v1.9.1
   hooks:
     - id: clang-format
       args:
