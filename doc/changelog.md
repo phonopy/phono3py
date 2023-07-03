@@ -2,6 +2,15 @@
 
 # Change Log
 
+## Jul-3-2023: Version 2.7.0
+
+- Drop python 3.7 support
+
+## Apr-3-2023: Version 2.6.0
+
+- Release to follow the change of phonopy at v2.18, which fixes to be able to
+  read `phono3py*.yaml` file with `phono3py-load`.
+
 ## Dec-31-2022: Version 2.5.1
 
 - Release to trigger phono3py conda-forge package build.

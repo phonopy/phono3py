@@ -36,6 +36,7 @@
 from __future__ import annotations
 
 import warnings
+from collections.abc import Sequence
 from typing import Optional, Union
 
 import numpy as np
@@ -132,11 +133,11 @@ class BZGrid:
 
     def __init__(
         self,
-        mesh,
+        mesh: Union[int, float, Sequence, np.ndarray],
         reciprocal_lattice=None,
         lattice=None,
         symmetry_dataset: Optional[dict] = None,
-        transformation_matrix: Optional[Union[list, np.ndarray]] = None,
+        transformation_matrix: Optional[Union[Sequence, np.ndarray]] = None,
         is_shift: Optional[Union[list, np.ndarray]] = None,
         is_time_reversal: bool = True,
         use_grg: bool = False,
@@ -158,9 +159,9 @@ class BZGrid:
             Symmetry dataset (Symmetry.dataset) searched for the primitive cell
             corresponding to ``reciprocal_lattice`` or ``lattice``.
         transformation_matrix : array_like, optional
-            Transformation matrix equivalent to ``transformation_matrix`` or
-            spglib-dataset. This is only used when ``use_grg=True``. Default is
-            None.
+            Transformation matrix equivalent to ``transformation_matrix`` in
+            spglib-dataset. This is only used when ``use_grg=True`` and
+            ``symmetry_dataset`` is unspecified. Default is None.
         is_shift : array_like or None, optional
             [0, 0, 0] (or [False, False, False]) gives Gamma center mesh and
             value 1 (or True) gives half mesh shift along the basis vectors.
@@ -440,7 +441,7 @@ class BZGrid:
             self._D_diag,
             self._Q,
             self._reciprocal_lattice,  # column vectors
-            is_shift=self._is_shift,
+            PS=self.PS,
             store_dense_gp_map=self._store_dense_gp_map,
         )
         if self._store_dense_gp_map:
@@ -526,8 +527,8 @@ class GridMatrix:
 
     def __init__(
         self,
-        mesh,
-        lattice,
+        mesh: Union[int, float, Sequence, np.ndarray],
+        lattice: Union[Sequence, np.ndarray],
         symmetry_dataset: Optional[dict] = None,
         transformation_matrix: Optional[Union[list, np.ndarray]] = None,
         use_grg: bool = True,
@@ -549,9 +550,9 @@ class GridMatrix:
             Symmetry dataset of spglib (Symmetry.dataset) of primitive cell that
             has `lattice`. Default is None.
         transformation_matrix : array_like, optional
-            Transformation matrix equivalent to ``transformation_matrix`` or
-            spglib-dataset. This is only used when ``use_grg=True``. Default is
-            None.
+            Transformation matrix equivalent to ``transformation_matrix`` in
+            spglib-dataset. This is only used when ``use_grg=True`` and
+            ``symmetry_dataset`` is unspecified. Default is None.
         use_grg : bool, optional
             Use generalized regular grid. Default is False.
         force_SNF : bool, optional
@@ -623,14 +624,16 @@ class GridMatrix:
 
     def _set_mesh_numbers(
         self,
-        mesh,
-        use_grg=False,
-        symmetry_dataset=None,
-        transformation_matrix=None,
+        mesh: Union[int, float, Sequence, np.ndarray],
+        use_grg: bool = False,
+        symmetry_dataset: Optional[dict] = None,
+        transformation_matrix: Optional[Union[list, np.ndarray]] = None,
         force_SNF=False,
         coordinates="reciprocal",
-    ):
+    ) -> None:
         """Set mesh numbers from array or float value.
+
+        self._grid_matrix and self._D_diag can be set.
 
         Four cases:
         1) Three integers are given.
@@ -653,72 +656,100 @@ class GridMatrix:
 
         """
         num_values = len(np.ravel(mesh))
-        if num_values == 1 or num_values == 9:
-            if num_values == 1:
-                length = float(mesh)
-                grid_matrix = None
-                _use_grg = use_grg
-            else:
-                length = None
-                grid_matrix = mesh
-                _use_grg = True
-            fall_back = True
-            if _use_grg:
-                if symmetry_dataset is None and transformation_matrix is None:
-                    msg = (
-                        "symmetry_dataset or transformation_matrix "
-                        "have to be specified."
-                    )
-                    raise RuntimeError(msg)
+        if num_values == 1:
+            length = float(mesh)
+            if use_grg:
+                found_grg = self._run_grg(
+                    symmetry_dataset,
+                    transformation_matrix,
+                    length,
+                    None,
+                    force_SNF,
+                    coordinates,
+                )
+            if not use_grg or not found_grg:
                 if symmetry_dataset is None:
-                    tmat_inv = np.linalg.inv(transformation_matrix)
-                    tmat_inv_int = np.rint(tmat_inv).astype(int)
-                    if (tmat_inv - tmat_inv_int > 1e-8).all():
-                        msg = (
-                            "Inverse of transformation matrix has to be an "
-                            "integer matrix."
-                        )
-                        raise RuntimeError(msg)
-                    if determinant(tmat_inv_int) < 0:
-                        msg = "Determinant of transformation matrix has to be positive."
-                        raise RuntimeError(msg)
-                    if determinant(tmat_inv_int) < 1:
-                        msg = (
-                            "Determinant of inverse of transformation matrix has to "
-                            "be equal to or larger than 1."
-                        )
-                        raise RuntimeError(msg)
-                    sym_dataset = {
-                        "rotations": np.eye(3, dtype="intc", order="C").reshape(
-                            1, 3, 3
-                        ),
-                        "transformation_matrix": transformation_matrix,
-                        "std_lattice": self._lattice,
-                        "std_types": np.array([1], dtype="intc"),
-                        "number": 1,
-                    }
+                    self._D_diag = length2mesh(length, self._lattice)
                 else:
-                    sym_dataset = symmetry_dataset
-                if is_primitive_cell(sym_dataset["rotations"]):
-                    self._set_SNF(
-                        sym_dataset,
-                        length=length,
-                        grid_matrix=grid_matrix,
-                        force_SNF=force_SNF,
-                        coordinates=coordinates,
+                    self._D_diag = length2mesh(
+                        length, self._lattice, rotations=symmetry_dataset["rotations"]
                     )
-                    fall_back = False
-                else:
-                    warnings.warn(
-                        "Non primitive cell input. Unable to use GR-grid.",
-                        RuntimeWarning,
-                    )
-            if fall_back:
-                self._D_diag = length2mesh(length, self._lattice)
-        elif num_values == 3:
+        if num_values == 9:
+            self._run_grg(
+                symmetry_dataset,
+                transformation_matrix,
+                None,
+                mesh,
+                force_SNF,
+                coordinates,
+            )
+        if num_values == 3:
             self._D_diag = np.array(mesh, dtype="int_")
 
-    def _set_SNF(
+    def _run_grg(
+        self,
+        symmetry_dataset,
+        transformation_matrix,
+        length,
+        grid_matrix,
+        force_SNF,
+        coordinates,
+    ) -> bool:
+        if symmetry_dataset is None and transformation_matrix is None:
+            msg = "symmetry_dataset or transformation_matrix has to be specified."
+            raise RuntimeError(msg)
+        if symmetry_dataset is not None:
+            sym_dataset = symmetry_dataset
+        else:  # transformation_matrix is not None
+            sym_dataset = self._get_mock_symmetry_dataset(transformation_matrix)
+        if is_primitive_cell(sym_dataset["rotations"]):
+            self._set_GRG_mesh(
+                sym_dataset,
+                length=length,
+                grid_matrix=grid_matrix,
+                force_SNF=force_SNF,
+                coordinates=coordinates,
+            )
+            return True
+
+        warnings.warn(
+            "Non primitive cell input. Unable to use GR-grid.",
+            RuntimeWarning,
+        )
+        return False
+
+    def _get_mock_symmetry_dataset(self, transformation_matrix) -> dict:
+        """Return mock symmetry_dataset containing transformation matrix.
+
+        Assuming self._lattice as standardized cell, and inverse of
+        trahsformation_matrix indicates original primitive lattice with respect
+        to self._lattice.
+
+        """
+        tmat_inv = np.linalg.inv(transformation_matrix)
+        tmat_inv_int = np.rint(tmat_inv).astype(int)
+        if (tmat_inv - tmat_inv_int > 1e-8).all():
+            msg = "Inverse of transformation matrix has to be an " "integer matrix."
+            raise RuntimeError(msg)
+        if determinant(tmat_inv_int) < 0:
+            msg = "Determinant of transformation matrix has to be positive."
+            raise RuntimeError(msg)
+        if determinant(tmat_inv_int) < 1:
+            msg = (
+                "Determinant of inverse of transformation matrix has to "
+                "be equal to or larger than 1."
+            )
+            raise RuntimeError(msg)
+        sym_dataset = {
+            "rotations": np.eye(3, dtype="intc", order="C").reshape(1, 3, 3),
+            "transformation_matrix": transformation_matrix,
+            "std_lattice": self._lattice,
+            "std_types": np.array([1], dtype="intc"),
+            "number": 1,
+        }
+        return sym_dataset
+
+    def _set_GRG_mesh(
         self,
         sym_dataset: dict,
         length: Optional[float] = None,
@@ -726,7 +757,7 @@ class GridMatrix:
         force_SNF=False,
         coordinates="reciprocal",
     ):
-        """Calculate Smith normal form.
+        """Set grid_matrix or D_diag with generalized regular grid.
 
         Microzone is defined as the regular grid of a conventional
         unit cell. To find the conventional unit cell, symmetry
@@ -777,7 +808,8 @@ class GridMatrix:
         tmat = sym_dataset["transformation_matrix"]
         conv_lat = np.dot(np.linalg.inv(tmat).T, self._lattice)
 
-        if can_use_std_lattice(
+        # GRG is wanted to be generated with respect to std_lattice if possible.
+        if _can_use_std_lattice(
             conv_lat,
             tmat,
             sym_dataset["std_lattice"],
@@ -804,25 +836,6 @@ class GridMatrix:
             (inv_tmat_int * conv_mesh_numbers).T, dtype="int_", order="C"
         )
         return grid_matrix
-
-
-def can_use_std_lattice(conv_lat, tmat, std_lattice, rotations, symprec=1e-5):
-    """Inspect if std_lattice can be used as conv_lat.
-
-    r_s is the rotation matrix of conv_lat.
-    Return if conv_lat rotated by det(r_s)*r_s and std_lattice are equivalent.
-    det(r_s) is necessary to make improper rotation to proper rotation.
-
-    """
-    for r in rotations:
-        r_s = similarity_transformation(tmat, r)
-        if np.allclose(
-            np.linalg.det(r_s) * np.dot(np.transpose(conv_lat), r_s),
-            np.transpose(std_lattice),
-            atol=symprec,
-        ):
-            return True
-    return False
 
 
 def get_grid_point_from_address_py(addresses, D_diag):
@@ -1049,7 +1062,7 @@ def _relocate_BZ_grid_address(
     D_diag,
     Q,
     reciprocal_lattice,  # column vectors
-    is_shift=None,
+    PS=None,
     store_dense_gp_map=False,
 ):
     """Grid addresses are relocated to be inside first Brillouin zone.
@@ -1109,10 +1122,10 @@ def _relocate_BZ_grid_address(
     """
     import phono3py._phono3py as phono3c
 
-    if is_shift is None:
-        _is_shift = np.zeros(3, dtype="int_")
+    if PS is None:
+        _PS = np.zeros(3, dtype="int_")
     else:
-        _is_shift = np.array(is_shift, dtype="int_")
+        _PS = np.array(PS, dtype="int_")
     bz_grid_addresses = np.zeros((np.prod(D_diag) * 8, 3), dtype="int_", order="C")
     bzg2grg = np.zeros(len(bz_grid_addresses), dtype="int_")
 
@@ -1121,7 +1134,8 @@ def _relocate_BZ_grid_address(
     else:
         bz_map = np.zeros(np.prod(D_diag) * 9 + 1, dtype="int_")
 
-    reclat_T = np.array(reciprocal_lattice.T, dtype="double", order="C")
+    # Mpr^-1 = Lr^-1 Lp
+    reclat_T = np.array(np.transpose(reciprocal_lattice), dtype="double", order="C")
     reduced_basis = get_reduced_bases(reclat_T)
     tmat_inv = np.dot(np.linalg.inv(reduced_basis.T), reclat_T.T)
     tmat_inv_int = np.rint(tmat_inv).astype("int_")
@@ -1133,7 +1147,7 @@ def _relocate_BZ_grid_address(
         bzg2grg,
         np.array(D_diag, dtype="int_"),
         np.array(np.dot(tmat_inv_int, Q), dtype="int_", order="C"),
-        _is_shift,
+        _PS,
         np.array(reduced_basis.T, dtype="double", order="C"),
         store_dense_gp_map * 1 + 1,
     )
@@ -1186,3 +1200,22 @@ def _get_ir_grid_map(D_diag, grg_rotations, PS=None):
         return ir_grid_map
     else:
         raise RuntimeError("_get_ir_grid_map failed to find ir-grid-points.")
+
+
+def _can_use_std_lattice(conv_lat, tmat, std_lattice, rotations, symprec=1e-5):
+    """Inspect if std_lattice can be used as conv_lat.
+
+    r_s is the rotation matrix of conv_lat.
+    Return if conv_lat rotated by det(r_s)*r_s and std_lattice are equivalent.
+    det(r_s) is necessary to make improper rotation to proper rotation.
+
+    """
+    for r in rotations:
+        r_s = similarity_transformation(tmat, r)
+        if np.allclose(
+            np.linalg.det(r_s) * np.dot(np.transpose(conv_lat), r_s),
+            np.transpose(std_lattice),
+            atol=symprec,
+        ):
+            return True
+    return False

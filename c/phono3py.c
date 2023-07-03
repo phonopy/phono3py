@@ -66,7 +66,8 @@ long ph3py_get_interaction(
     const long multi_dims[2], const long (*multiplicity)[2],
     const double *masses, const long *p2s_map, const long *s2p_map,
     const long *band_indices, const long symmetrize_fc3_q,
-    const double cutoff_frequency, const long openmp_per_triplets) {
+    const long make_r0_average, const double cutoff_frequency,
+    const long openmp_per_triplets) {
     ConstBZGrid *bzgrid;
     long i, j;
 
@@ -89,7 +90,7 @@ long ph3py_get_interaction(
                         num_triplets, bzgrid, fc3, is_compact_fc3, svecs,
                         multi_dims, multiplicity, masses, p2s_map, s2p_map,
                         band_indices, symmetrize_fc3_q, cutoff_frequency,
-                        openmp_per_triplets);
+                        make_r0_average, openmp_per_triplets);
     free(bzgrid);
     bzgrid = NULL;
 
@@ -108,8 +109,8 @@ long ph3py_get_pp_collision(
     const long multi_dims[2], const long (*multiplicity)[2],
     const double *masses, const long *p2s_map, const long *s2p_map,
     const Larray *band_indices, const Darray *temperatures, const long is_NU,
-    const long symmetrize_fc3_q, const double cutoff_frequency,
-    const long openmp_per_triplets) {
+    const long symmetrize_fc3_q, const double make_r0_average,
+    const double cutoff_frequency, const long openmp_per_triplets) {
     ConstBZGrid *bzgrid;
     long i, j;
 
@@ -129,12 +130,13 @@ long ph3py_get_pp_collision(
         }
     }
 
-    ppc_get_pp_collision(
-        imag_self_energy, relative_grid_address, frequencies,
-        (lapack_complex_double *)eigenvectors, triplets, num_triplets,
-        triplet_weights, bzgrid, fc3, is_compact_fc3, svecs, multi_dims,
-        multiplicity, masses, p2s_map, s2p_map, band_indices, temperatures,
-        is_NU, symmetrize_fc3_q, cutoff_frequency, openmp_per_triplets);
+    ppc_get_pp_collision(imag_self_energy, relative_grid_address, frequencies,
+                         (lapack_complex_double *)eigenvectors, triplets,
+                         num_triplets, triplet_weights, bzgrid, fc3,
+                         is_compact_fc3, svecs, multi_dims, multiplicity,
+                         masses, p2s_map, s2p_map, band_indices, temperatures,
+                         is_NU, symmetrize_fc3_q, cutoff_frequency,
+                         make_r0_average, openmp_per_triplets);
 
     free(bzgrid);
     bzgrid = NULL;
@@ -152,8 +154,8 @@ long ph3py_get_pp_collision_with_sigma(
     const long multi_dims[2], const long (*multiplicity)[2],
     const double *masses, const long *p2s_map, const long *s2p_map,
     const Larray *band_indices, const Darray *temperatures, const long is_NU,
-    const long symmetrize_fc3_q, const double cutoff_frequency,
-    const long openmp_per_triplets) {
+    const long symmetrize_fc3_q, const double make_r0_average,
+    const double cutoff_frequency, const long openmp_per_triplets) {
     ConstBZGrid *bzgrid;
     long i, j;
 
@@ -176,7 +178,8 @@ long ph3py_get_pp_collision_with_sigma(
         (lapack_complex_double *)eigenvectors, triplets, num_triplets,
         triplet_weights, bzgrid, fc3, is_compact_fc3, svecs, multi_dims,
         multiplicity, masses, p2s_map, s2p_map, band_indices, temperatures,
-        is_NU, symmetrize_fc3_q, cutoff_frequency, openmp_per_triplets);
+        is_NU, symmetrize_fc3_q, cutoff_frequency, make_r0_average,
+        openmp_per_triplets);
 
     free(bzgrid);
     bzgrid = NULL;
@@ -519,7 +522,7 @@ long ph3py_rotate_bz_grid_index(const long bz_grid_index,
     bzgrid->type = bz_grid_type;
     for (i = 0; i < 3; i++) {
         bzgrid->D_diag[i] = D_diag[i];
-        bzgrid->PS[i] = 0;
+        bzgrid->PS[i] = PS[i];
     }
 
     rot_bz_gp = bzg_rotate_grid_index(bz_grid_index, rotation, bzgrid);

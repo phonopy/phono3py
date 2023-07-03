@@ -56,6 +56,7 @@ class Phono3pySettings(Settings):
         "ion_clamped": False,
         "is_bterta": False,
         "is_compact_fc": False,
+        "is_fc3_r0_average": False,
         "is_full_pp": False,
         "is_gruneisen": False,
         "is_imag_self_energy": False,
@@ -90,7 +91,7 @@ class Phono3pySettings(Settings):
         "scattering_event_class": None,  # scattering event class 1 or 2
         "sigma_cutoff_width": None,
         "solve_collective_phonon": False,
-        "emulate_v1": False,
+        "emulate_v2": False,
         "subtract_forces": None,
         "temperatures": None,
         "use_ave_pp": False,
@@ -146,9 +147,9 @@ class Phono3pySettings(Settings):
         """Set cutoff_pair_distance."""
         self._v["cutoff_pair_distance"] = val
 
-    def set_emulate_v1(self, val):
-        """Set emulate_v1."""
-        self._v["emulate_v1"] = val
+    def set_emulate_v2(self, val):
+        """Set emulate_v2."""
+        self._v["emulate_v2"] = val
 
     def set_grid_addresses(self, val):
         """Set grid_addresses."""
@@ -173,6 +174,10 @@ class Phono3pySettings(Settings):
     def set_is_compact_fc(self, val):
         """Set is_compact_fc."""
         self._v["is_compact_fc"] = val
+
+    def set_is_fc3_r0_average(self, val):
+        """Set is_fc3_r0_average."""
+        self._v["is_fc3_r0_average"] = val
 
     def set_is_full_pp(self, val):
         """Set is_full_pp."""
@@ -432,13 +437,17 @@ class Phono3pyConfParser(ConfParser):
             if self._args.is_compact_fc:
                 self._confs["compact_fc"] = ".true."
 
-        if "emulate_v1" in self._args:
-            if self._args.emulate_v1:
-                self._confs["emulate_v1"] = ".true."
+        if "emulate_v2" in self._args:
+            if self._args.emulate_v2:
+                self._confs["emulate_v2"] = ".true."
 
         if "is_gruneisen" in self._args:
             if self._args.is_gruneisen:
                 self._confs["gruneisen"] = ".true."
+
+        if "is_fc3_r0_average" in self._args:
+            if self._args.is_fc3_r0_average:
+                self._confs["fc3_r0_average"] = ".true."
 
         if "is_full_pp" in self._args:
             if self._args.is_full_pp:
@@ -646,7 +655,8 @@ class Phono3pyConfParser(ConfParser):
                 "ion_clamped",
                 "bterta",
                 "compact_fc",
-                "emulate_v1",
+                "emulate_v2",
+                "fc3_r0_average",
                 "real_self_energy",
                 "gruneisen",
                 "imag_self_energy",
@@ -823,8 +833,8 @@ class Phono3pyConfParser(ConfParser):
             self._settings.set_cutoff_pair_distance(params["cutoff_pair_distance"])
 
         # Emulate v1.x grid system and shortest vectors.
-        if "emulate_v1" in params:
-            self._settings.set_emulate_v1(params["emulate_v1"])
+        if "emulate_v2" in params:
+            self._settings.set_emulate_v2(params["emulate_v2"])
 
         # Grid addresses (sets of three integer values)
         if "grid_addresses" in params:
@@ -842,6 +852,10 @@ class Phono3pyConfParser(ConfParser):
         # calculation.
         if "ion_clamped" in params:
             self._settings.set_ion_clamped(params["ion_clamped"])
+
+        # Take average in fc3-r2q transformation around three atoms
+        if "fc3_r0_average" in params:
+            self._settings.set_is_fc3_r0_average(params["fc3_r0_average"])
 
         # Calculate full ph-ph interaction strength for RTA conductivity
         if "full_pp" in params:

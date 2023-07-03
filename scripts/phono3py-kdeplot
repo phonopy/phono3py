@@ -15,7 +15,6 @@ def collect_data(gamma, weights, frequencies, cutoff, max_freq):
     freqs = []
     mode_prop = []
     for w, freq, g in zip(weights, frequencies, gamma):
-
         tau = 1.0 / np.where(g > 0, g, -1) / (2 * 2 * np.pi)
         if cutoff:
             tau = np.where(tau < cutoff, tau, -1)
@@ -28,8 +27,8 @@ def collect_data(gamma, weights, frequencies, cutoff, max_freq):
             freqs += list(_freq) * w
             mode_prop += list(_tau) * w
         else:
-            freqs += list(np.extract(freq < max_freq, freq))
-            mode_prop += list(np.extract(freq < max_freq, tau))
+            freqs += list(np.extract(freq < max_freq, freq)) * w
+            mode_prop += list(np.extract(freq < max_freq, tau)) * w
 
     x = np.array(freqs)
     y = np.array(mode_prop)

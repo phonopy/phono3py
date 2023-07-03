@@ -36,6 +36,7 @@
 import warnings
 
 import numpy as np
+from phonopy.exception import ForceCalculatorRequiredError
 from phonopy.harmonic.displacement import (
     directions_to_displacement_dataset,
     get_least_displacements,
@@ -165,27 +166,25 @@ class Phono3py:
         unitcell : PhonopyAtoms, optional
             Input unit cell.
         supercell_matrix : array_like, optional
-            Supercell matrix multiplied to input cell basis vectors.
-            shape=(3, ) or (3, 3), where the former is considered a diagonal
-            matrix. The elements have to be given by integers.
-            Although the default is None, which results in identity
-            matrix, it is recommended to give `supercell_matrix` explicitly.
+            Supercell matrix multiplied to input cell basis vectors. shape=(3, )
+            or (3, 3), where the former is considered a diagonal matrix. The
+            elements have to be given by integers. Although the default is None,
+            which results in identity matrix, it is recommended to give
+            `supercell_matrix` explicitly.
         primitive_matrix : array_like or str, optional
             Primitive matrix multiplied to input cell basis vectors. Default is
-            the identity matrix.
-            When given as array_like, shape=(3, 3), dtype=float.
-            When 'F', 'I', 'A', 'C', or 'R' is given instead of a 3x3 matrix,
-            the primitive matrix defined at
-            https://spglib.github.io/spglib/definition.html
-            is used.
-            When 'auto' is given, the centring type ('F', 'I', 'A', 'C', 'R',
-            or primitive 'P') is automatically chosen.
+            the identity matrix. When given as array_like, shape=(3, 3),
+            dtype=float. When 'F', 'I', 'A', 'C', or 'R' is given instead of a
+            3x3 matrix, the primitive matrix defined at
+            https://spglib.github.io/spglib/definition.html is used. When 'auto'
+            is given, the centring type ('F', 'I', 'A', 'C', 'R', or primitive
+            'P') is automatically chosen.
         phonon_supercell_matrix : array_like, optional
-            Supercell matrix used for fc2. In phono3py, supercell matrix for
-            fc3 and fc2 can be different to support longer range interaction of
-            fc2 than that of fc3. Unless setting this, supercell_matrix is
-            used. This is only valide when unitcell or unitcell_filename is
-            given. Default is None.
+            Supercell matrix used for fc2. In phono3py, supercell matrix for fc3
+            and fc2 can be different to support longer range interaction of fc2
+            than that of fc3. Unless setting this, supercell_matrix is used.
+            This is only valide when unitcell or unitcell_filename is given.
+            Default is None.
         masses : Deprecated.
             Use Phono3py.masses attribute after instanciation.
         band_indices : Deprecated.
@@ -209,23 +208,22 @@ class Phono3py:
         use_grg : bool, optional
             Use generalized regular grid when True. Default is False.
         SNF_coordinates : str, optional
-            `reciprocal` or `direct`.
-            Space of coordinates to generate grid generating matrix either in direct
-            or reciprocal space. The default is `reciprocal`.
+            `reciprocal` or `direct`. Space of coordinates to generate grid
+            generating matrix either in direct or reciprocal space. The default
+            is `reciprocal`.
         symmetrize_fc3q : Deprecated.
             See Phono3py.init_phph_interaction().
-        store_dense_gp_map : bool, optional
+        store_dense_gp_map : bool, optional, Deprecated.
             Use dense format of BZ grid system. Default is True.
-        store_dense_svecs : bool, optional
+        store_dense_svecs : bool, optional, Deprecated.
             Shortest vectors are stored in the dense array format. This is
-            expected to be always True. Setting False is for rough
-            compatibility with v1.x. Default is True.
+            expected to be always True. Setting False is for rough compatibility
+            with v1.x. Default is True.
         symprec : float, optional
             Tolerance used to find crystal symmetry. Default is 1e-5.
         calculator : str, optional.
-            Calculator used for computing forces. This is used to switch
-            the set of physical units. Default is None, which is equivalent
-            to "vasp".
+            Calculator used for computing forces. This is used to switch the set
+            of physical units. Default is None, which is equivalent to "vasp".
         log_level : int, optional
             Verbosity control. Default is 0. This can be 0, 1, or 2.
         lapack_zheev_uplo : Deprecated.
@@ -238,8 +236,23 @@ class Phono3py:
         self._is_mesh_symmetry = is_mesh_symmetry
         self._use_grg = use_grg
         self._SNF_coordinates = SNF_coordinates
+
+        if not store_dense_gp_map:
+            warnings.warn(
+                "Phono3py init parameter of store_dense_gp_map is deprecated. "
+                "This will be set always True.",
+                DeprecationWarning,
+            )
         self._store_dense_gp_map = store_dense_gp_map
+
+        if not store_dense_svecs:
+            warnings.warn(
+                "Phono3py init parameter of store_dense_svecs is deprecated. "
+                "This will be set always True.",
+                DeprecationWarning,
+            )
         self._store_dense_svecs = store_dense_svecs
+
         self._cutoff_frequency = cutoff_frequency
         self._calculator = calculator
         self._log_level = log_level
@@ -1106,7 +1119,9 @@ class Phono3py:
         natom = len(self._supercell)
         if disps.ndim != 3 or disps.shape[1:] != (natom, 3):
             raise RuntimeError("Array shape of displacements is incorrect.")
-        if "first_atoms" in self._dataset:
+        if self._dataset is None:
+            self._dataset = {}
+        elif "first_atoms" in self._dataset:
             raise RuntimeError("Displacements are incompatible with dataset.")
         self._dataset["displacements"] = disps
         self._supercells_with_displacements = None
@@ -1196,8 +1211,8 @@ class Phono3py:
             shape=(supercells, natom, 3), dtype='double', order='C'
 
         """
-        if self._phonon_dataset is None:
-            raise RuntimeError("phonon_displacement_dataset does not exist.")
+        if self._phonon_supercell_matrix is None:
+            raise RuntimeError("phonon_supercell_matrix is not set.")
 
         dataset = self._phonon_dataset
         if "first_atoms" in dataset:
@@ -1215,14 +1230,16 @@ class Phono3py:
 
     @phonon_displacements.setter
     def phonon_displacements(self, displacements):
-        if self._phonon_dataset is None:
-            raise RuntimeError("phonon_displacement_dataset does not exist.")
+        if self._phonon_supercell_matrix is None:
+            raise RuntimeError("phonon_supercell_matrix is not set.")
 
         disps = np.array(displacements, dtype="double", order="C")
         natom = len(self._phonon_supercell)
         if disps.ndim != 3 or disps.shape[1:] != (natom, 3):
             raise RuntimeError("Array shape of displacements is incorrect.")
-        if "first_atoms" in self._phonon_dataset:
+        if self._phonon_dataset is None:
+            self._phonon_dataset = {}
+        elif "first_atoms" in self._phonon_dataset:
             raise RuntimeError("Displacements are incompatible with dataset.")
 
         self._phonon_dataset["displacements"] = disps
@@ -1313,6 +1330,7 @@ class Phono3py:
         constant_averaged_interaction=None,
         frequency_scale_factor=None,
         symmetrize_fc3q=False,
+        make_r0_average=False,
         lapack_zheev_uplo="L",
         openmp_per_triplets=None,
     ):
@@ -1347,6 +1365,10 @@ class Phono3py:
         symmetrize_fc3q : bool, optional
             fc3 in phonon space is symmetrized by permutation symmetry.
             Default is False.
+        make_r0_average : bool, optional
+            fc3 transformation from real to reciprocal space is done
+            around three atoms and averaged when True. Default is False, i.e.,
+            only around the first atom.
         lapack_zheev_uplo : str, optional
             'L' or 'U'. Default is 'L'. This is passed to LAPACK zheev
             used for phonon solver.
@@ -1387,6 +1409,7 @@ class Phono3py:
             cutoff_frequency=self._cutoff_frequency,
             is_mesh_symmetry=self._is_mesh_symmetry,
             symmetrize_fc3q=_symmetrize_fc3q,
+            make_r0_average=make_r0_average,
             lapack_zheev_uplo=_lapack_zheev_uplo,
             openmp_per_triplets=openmp_per_triplets,
         )
@@ -1649,7 +1672,7 @@ class Phono3py:
                     "fc_calculator has to be set to produce force "
                     "constans from this dataset."
                 )
-                raise RuntimeError(msg)
+                raise ForceCalculatorRequiredError(msg)
             fc2, fc3 = get_phono3py_fc3(
                 self._supercell,
                 self._primitive,

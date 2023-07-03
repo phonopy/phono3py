@@ -205,7 +205,7 @@ nacl_jdos_gamma_at_300K = [
 ]
 
 
-@pytest.mark.parametrize("gp,store_dense_gp_map", [(103, False), (105, True)])
+@pytest.mark.parametrize("gp,store_dense_gp_map", [(105, True)])
 def test_jdos_si(si_pbesol: Phono3py, gp: int, store_dense_gp_map: bool):
     """Test joint-DOS by Si.
 
@@ -233,7 +233,7 @@ def test_jdos_si(si_pbesol: Phono3py, gp: int, store_dense_gp_map: bool):
     )
 
 
-@pytest.mark.parametrize("gp,store_dense_gp_map", [(103, False), (105, True)])
+@pytest.mark.parametrize("gp,store_dense_gp_map", [(105, True)])
 def test_jdso_si_nomeshsym(si_pbesol: Phono3py, gp: int, store_dense_gp_map: bool):
     """Test joint-DOS without considering mesh symmetry by Si."""
     si_pbesol.mesh_numbers = [9, 9, 9]
@@ -256,7 +256,7 @@ def test_jdso_si_nomeshsym(si_pbesol: Phono3py, gp: int, store_dense_gp_map: boo
     )
 
 
-@pytest.mark.parametrize("gp,store_dense_gp_map", [(103, False), (105, True)])
+@pytest.mark.parametrize("gp,store_dense_gp_map", [(105, True)])
 def test_jdos_nacl(nacl_pbe: Phono3py, gp: int, store_dense_gp_map: bool):
     """Test joint-DOS by NaCl."""
     nacl_pbe.mesh_numbers = [9, 9, 9]
@@ -279,7 +279,7 @@ def test_jdos_nacl(nacl_pbe: Phono3py, gp: int, store_dense_gp_map: bool):
     )
 
 
-@pytest.mark.parametrize("gp,store_dense_gp_map", [(0, False), (0, True)])
+@pytest.mark.parametrize("gp,store_dense_gp_map", [(0, True)])
 def test_jdos_nacl_gamma(nacl_pbe: Phono3py, gp: int, store_dense_gp_map: bool):
     """Test joint-DOS at Gamma-point by NaCl."""
     nacl_pbe.mesh_numbers = [9, 9, 9]
@@ -303,7 +303,7 @@ def test_jdos_nacl_gamma(nacl_pbe: Phono3py, gp: int, store_dense_gp_map: bool):
     )
 
 
-@pytest.mark.parametrize("gp,store_dense_gp_map", [(103, False), (105, True)])
+@pytest.mark.parametrize("gp,store_dense_gp_map", [(105, True)])
 def test_jdos_nacl_at_300K(nacl_pbe: Phono3py, gp: int, store_dense_gp_map: bool):
     """Test joint-DOS at 300K by NaCl."""
     nacl_pbe.mesh_numbers = [9, 9, 9]

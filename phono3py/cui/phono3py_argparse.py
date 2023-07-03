@@ -252,8 +252,8 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             help="Supercell dimension for extra fc2",
         )
     parser.add_argument(
-        "--emulate-v1",
-        dest="emulate_v1",
+        "--emulate-v2",
+        dest="emulate_v2",
         action="store_true",
         default=False,
         help="Emulate v1.x grid system and shortest vectors.",
@@ -280,6 +280,13 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
             default=False,
             help="Read third order force constants",
         )
+    parser.add_argument(
+        "--fc3-r0-average",
+        dest="is_fc3_r0_average",
+        action="store_true",
+        default=False,
+        help="Take average in fc3-r2q transformation around three atoms",
+    )
     parser.add_argument(
         "--fc-calc",
         "--fc-calculator",

@@ -19,19 +19,46 @@ repos:
     - "--ignore=E203,W503"
 
 - repo: https://github.com/psf/black
-  rev: 22.12.0
+  rev: 23.3.0
   hooks:
   - id: black
     args:
     - --line-length=88
 
 - repo: https://github.com/pycqa/pydocstyle
-  rev: 6.2.0
+  rev: 6.3.0
   hooks:
   - id: pydocstyle
 
 - repo: https://github.com/pycqa/isort
-  rev: 5.11.4
+  rev: 5.12.0
   hooks:
     - id: isort
       name: isort (python)
+
+- repo: https://github.com/Takishima/cmake-pre-commit-hooks
+  rev: v1.9.1
+  hooks:
+    - id: clang-format
+      args:
+        - '-B_build-pre-commit'
+        - '-DWITH_Fortran=ON'
+        - '-DWITH_TESTS=ON'
+        - '-i'
+      stages: [manual]
+    - id: clang-tidy
+      args:
+        - '-B_build-pre-commit'
+        - '-DWITH_Fortran=ON'
+        - '-DWITH_TESTS=ON'
+        # - '--'
+        # - '-I/Users/togo/.miniforge/envs/dev/include'
+        # - '-I/Users/togo/.miniforge/envs/dev/include/python3.10'
+        # - '-I/Users/togo/.miniforge/envs/dev/lib/python3.10/site-packages/numpy/core/include'
+      stages: [manual]
+
+- repo: https://github.com/cheshirekow/cmake-format-precommit
+  rev: v0.6.13
+  hooks:
+  - id: cmake-format
+  - id: cmake-lint

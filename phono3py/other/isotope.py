@@ -343,7 +343,7 @@ class Isotope:
                 self._bz_grid.D_diag,
                 self._bz_grid.addresses,
                 np.array(
-                    np.dot(thm.get_tetrahedra(), self._bz_grid.P.T),
+                    np.dot(thm.tetrahedra, self._bz_grid.P.T),
                     dtype="int_",
                     order="C",
                 ),

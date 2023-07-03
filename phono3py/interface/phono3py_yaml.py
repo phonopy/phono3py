@@ -33,101 +33,79 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from typing import TYPE_CHECKING
+from __future__ import annotations
+
+import dataclasses
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
-from phonopy.interface.phonopy_yaml import PhonopyYaml
+from phonopy.interface.phonopy_yaml import (
+    PhonopyYaml,
+    PhonopyYamlDumper,
+    PhonopyYamlLoader,
+    load_yaml,
+    phonopy_yaml_property_factory,
+)
 
 if TYPE_CHECKING:
     from phono3py import Phono3py
 
+from phonopy.structure.atoms import PhonopyAtoms
+from phonopy.structure.cells import Primitive, Supercell
+from phonopy.structure.symmetry import Symmetry
 
-class Phono3pyYaml(PhonopyYaml):
-    """phono3py.yaml reader and writer.
 
-    Details are found in the docstring of PhonopyYaml.
-    The common usages are as follows:
+@dataclasses.dataclass
+class Phono3pyYamlData:
+    """PhonopyYaml data structure."""
 
-    1. Set phono3py instance.
-        p3yml = Phono3pyYaml()
-        p3yml.set_phonon_info(phono3py_instance)
-    2. Read phono3py.yaml file.
-        p3yml = Phono3pyYaml()
-        p3yml.read(filename)
-    3. Parse yaml dict of phono3py.yaml.
-        with open("phono3py.yaml", 'r') as f:
-            p3yml.yaml_data = yaml.load(f, Loader=yaml.CLoader)
-            p3yml.parse()
-    4. Save stored data in Phono3pyYaml instance into a text file in yaml.
-        with open(filename, 'w') as w:
-            w.write(str(ph3py_yaml))
+    configuration: dict
+    calculator: str
+    physical_units: dict
+    unitcell: Optional[PhonopyAtoms] = None
+    primitive: Optional[Primitive] = None
+    supercell: Optional[Supercell] = None
+    dataset: Optional[dict] = None
+    supercell_matrix: Optional[np.ndarray] = None
+    primitive_matrix: Optional[np.ndarray] = None
+    nac_params: Optional[dict] = None
+    force_constants: Optional[np.ndarray] = None
+    symmetry: Optional[Symmetry] = None  # symmetry of supercell
+    frequency_unit_conversion_factor: Optional[float] = None
+    version: Optional[str] = None
+    command_name: str = "phono3py"
 
-    """
+    phonon_supercell_matrix: Optional[np.ndarray] = None
+    phonon_dataset: Optional[dict] = None
+    phonon_supercell: Optional[Supercell] = None
+    phonon_primitive: Optional[Primitive] = None
 
-    command_name = "phono3py"
-    default_filenames = ("phono3py_disp.yaml", "phono3py.yaml")
-    default_settings = {
-        "force_sets": False,
-        "displacements": True,
-        "force_constants": False,
-        "born_effective_charge": True,
-        "dielectric_constant": True,
-    }
+
+class Phono3pyYamlLoader(PhonopyYamlLoader):
+    """Phono3pyYaml loader."""
 
     def __init__(
-        self, configuration=None, calculator=None, physical_units=None, settings=None
+        self, yaml_data, configuration=None, calculator=None, physical_units=None
     ):
-        """Init method."""
-        self.configuration = None
-        self.calculator = None
-        self.physical_units = None
-        self.settings = None
+        """Init method.
 
-        self.unitcell = None
-        self.primitive = None
-        self.supercell = None
-        self.dataset = None
-        self.supercell_matrix = None
-        self.primitive_matrix = None
-        self.nac_params = None
-        self.force_constants = None
+        Parameters
+        ----------
+        yaml_data : dict
 
-        self.symmetry = None  # symmetry of supercell
-        self.s2p_map = None
-        self.u2p_map = None
-        self.frequency_unit_conversion_factor = None
-        self.version = None
-
-        #
-        # phono3py only
-        #
-        # With DIM_FC2 given
-        self.phonon_supercell_matrix = None
-        self.phonon_dataset = None
-        self.phonon_supercell = None
-        self.phonon_primitive = None
-
-        self._yaml = None
-
-        super().__init__(
+        """
+        self._yaml = yaml_data
+        self._data = Phono3pyYamlData(
             configuration=configuration,
             calculator=calculator,
             physical_units=physical_units,
-            settings=settings,
         )
-
-    def set_phonon_info(self, phono3py: "Phono3py"):
-        """Store data in phono3py instance in this instance."""
-        super().set_phonon_info(phono3py)
-        self.phonon_supercell_matrix = phono3py.phonon_supercell_matrix
-        self.phonon_dataset = phono3py.phonon_dataset
-        self.phonon_primitive = phono3py.phonon_primitive
-        self.phonon_supercell = phono3py.phonon_supercell
 
     def parse(self):
         """Yaml dict is parsed. See docstring of this class."""
         super().parse()
         self._parse_fc3_dataset()
+        return self
 
     def _parse_all_cells(self):
         """Parse all cells.
@@ -137,13 +115,15 @@ class Phono3pyYaml(PhonopyYaml):
         """
         super()._parse_all_cells()
         if "phonon_primitive_cell" in self._yaml:
-            self.phonon_primitive = self._parse_cell(
+            self._data.phonon_primitive = self._parse_cell(
                 self._yaml["phonon_primitive_cell"]
             )
         if "phonon_supercell" in self._yaml:
-            self.phonon_supercell = self._parse_cell(self._yaml["phonon_supercell"])
+            self._data.phonon_supercell = self._parse_cell(
+                self._yaml["phonon_supercell"]
+            )
         if "phonon_supercell_matrix" in self._yaml:
-            self.phonon_supercell_matrix = np.array(
+            self._data.phonon_supercell_matrix = np.array(
                 self._yaml["phonon_supercell_matrix"], dtype="intc", order="C"
             )
 
@@ -156,11 +136,11 @@ class Phono3pyYaml(PhonopyYaml):
         key="displacements" at older version than v2.2.
 
         """
-        self.phonon_dataset = self._get_dataset(
-            self.phonon_supercell, key="phonon_displacements"
+        self._data.phonon_dataset = self._get_dataset(
+            self._data.phonon_supercell, key="phonon_displacements"
         )
-        if self.phonon_dataset is None:  # key="displacements"
-            self.phonon_dataset = self._get_dataset(self.phonon_supercell)
+        if self._data.phonon_dataset is None:  # key="displacements"
+            self._data.phonon_dataset = self._get_dataset(self._data.phonon_supercell)
 
     def _parse_fc3_dataset(self):
         """Parse force dataset for fc3.
@@ -177,7 +157,7 @@ class Phono3pyYaml(PhonopyYaml):
         if "displacement_pairs" in self._yaml:
             disp = self._yaml["displacement_pairs"][0]
             if type(disp) is dict:  # type1
-                dataset = self._parse_fc3_dataset_type1(len(self.supercell))
+                dataset = self._parse_fc3_dataset_type1(len(self._data.supercell))
             elif type(disp) is list:  # type2
                 if "displacement" in disp[0]:
                     dataset = self._parse_force_sets_type2()
@@ -187,11 +167,11 @@ class Phono3pyYaml(PhonopyYaml):
                 dataset["cutoff_distance"] = info_yaml["cutoff_pair_distance"]
             if "duplicated_supercell_ids" in info_yaml:
                 dataset["duplicates"] = info_yaml["duplicated_supercell_ids"]
-        self.dataset = dataset
+        self._data.dataset = dataset
 
         # This case should work only for v2.2 or later.
-        if self.dataset is None and "displacements" in self._yaml:
-            self.dataset = self._get_dataset(self.supercell)
+        if self._data.dataset is None and "displacements" in self._yaml:
+            self._data.dataset = self._get_dataset(self._data.supercell)
 
     def _parse_fc3_dataset_type1(self, natom):
         """Parse fc3 type1-dataset."""
@@ -280,6 +260,23 @@ class Phono3pyYaml(PhonopyYaml):
         data1["second_atoms"] += disps
         return disp2_id
 
+
+class Phono3pyYamlDumper(PhonopyYamlDumper):
+    """Phono3pyYaml dumper."""
+
+    _default_dumper_settings = {
+        "force_sets": False,
+        "displacements": True,
+        "force_constants": False,
+        "born_effective_charge": True,
+        "dielectric_constant": True,
+    }
+
+    def __init__(self, data: Phono3pyYamlData, dumper_settings=None):
+        """Init method."""
+        self._data = data
+        self._init_dumper_settings(dumper_settings)
+
     def _cell_info_yaml_lines(self):
         """Get YAML lines for information of cells.
 
@@ -288,29 +285,29 @@ class Phono3pyYaml(PhonopyYaml):
         """
         lines = super()._cell_info_yaml_lines()
         lines += self._supercell_matrix_yaml_lines(
-            self.phonon_supercell_matrix, "phonon_supercell_matrix"
+            self._data.phonon_supercell_matrix, "phonon_supercell_matrix"
         )
         lines += self._primitive_yaml_lines(
-            self.phonon_primitive, "phonon_primitive_cell"
+            self._data.phonon_primitive, "phonon_primitive_cell"
         )
         lines += self._phonon_supercell_yaml_lines()
         return lines
 
     def _phonon_supercell_matrix_yaml_lines(self):
         lines = []
-        if self.phonon_supercell_matrix is not None:
+        if self._data.phonon_supercell_matrix is not None:
             lines.append("phonon_supercell_matrix:")
-            for v in self.supercell_matrix:
+            for v in self._data.supercell_matrix:
                 lines.append("- [ %3d, %3d, %3d ]" % tuple(v))
             lines.append("")
         return lines
 
     def _phonon_supercell_yaml_lines(self):
         lines = []
-        if self.phonon_supercell is not None:
-            s2p_map = getattr(self.phonon_primitive, "s2p_map", None)
+        if self._data.phonon_supercell is not None:
+            s2p_map = getattr(self._data.phonon_primitive, "s2p_map", None)
             lines += self._cell_yaml_lines(
-                self.phonon_supercell, "phonon_supercell", s2p_map
+                self._data.phonon_supercell, "phonon_supercell", s2p_map
             )
             lines.append("")
         return lines
@@ -321,10 +318,12 @@ class Phono3pyYaml(PhonopyYaml):
         This method override PhonopyYaml._nac_yaml_lines.
 
         """
-        if self.phonon_primitive is not None:
-            return self._nac_yaml_lines_given_symbols(self.phonon_primitive.symbols)
+        if self._data.phonon_primitive is not None:
+            return self._nac_yaml_lines_given_symbols(
+                self._data.phonon_primitive.symbols
+            )
         else:
-            return self._nac_yaml_lines_given_symbols(self.primitive.symbols)
+            return self._nac_yaml_lines_given_symbols(self._data.primitive.symbols)
 
     def _displacements_yaml_lines(self, with_forces=False, key="displacements"):
         """Get YAML lines for phonon_dataset and dataset.
@@ -335,12 +334,12 @@ class Phono3pyYaml(PhonopyYaml):
 
         """
         lines = []
-        if self.phonon_supercell_matrix is not None:
+        if self._data.phonon_supercell_matrix is not None:
             lines += self._displacements_yaml_lines_2types(
-                self.phonon_dataset, with_forces=with_forces, key=f"phonon_{key}"
+                self._data.phonon_dataset, with_forces=with_forces, key=f"phonon_{key}"
             )
         lines += self._displacements_yaml_lines_2types(
-            self.dataset, with_forces=with_forces, key=key
+            self._data.dataset, with_forces=with_forces, key=key
         )
         return lines
 
@@ -355,6 +354,90 @@ class Phono3pyYaml(PhonopyYaml):
 
         """
         return displacements_yaml_lines_type1(dataset, with_forces=with_forces, key=key)
+
+
+class Phono3pyYaml(PhonopyYaml):
+    """phono3py.yaml reader and writer.
+
+    Details are found in the docstring of PhonopyYaml.
+    The common usages are as follows:
+
+    1. Set phono3py instance.
+        p3yml = Phono3pyYaml()
+        p3yml.set_phonon_info(phono3py_instance)
+    2. Read phono3py.yaml file.
+        p3yml = Phono3pyYaml()
+        p3yml.read(filename)
+    3. Parse yaml dict of phono3py.yaml.
+        with open("phono3py.yaml", 'r') as f:
+            p3yml.yaml_data = yaml.load(f, Loader=yaml.CLoader)
+            p3yml.parse()
+    4. Save stored data in Phono3pyYaml instance into a text file in yaml.
+        with open(filename, 'w') as w:
+            w.write(str(ph3py_yaml))
+
+    """
+
+    default_filenames = ("phono3py_disp.yaml", "phono3py.yaml")
+    command_name = "phono3py"
+
+    configuration = phonopy_yaml_property_factory("configuration")
+    calculator = phonopy_yaml_property_factory("calculator")
+    physical_units = phonopy_yaml_property_factory("physical_units")
+    unitcell = phonopy_yaml_property_factory("unitcell")
+    primitive = phonopy_yaml_property_factory("primitive")
+    supercell = phonopy_yaml_property_factory("supercell")
+    dataset = phonopy_yaml_property_factory("dataset")
+    supercell_matrix = phonopy_yaml_property_factory("supercell_matrix")
+    primitive_matrix = phonopy_yaml_property_factory("primitive_matrix")
+    nac_params = phonopy_yaml_property_factory("nac_params")
+    force_constants = phonopy_yaml_property_factory("force_constants")
+    symmetry = phonopy_yaml_property_factory("symmetry")
+    frequency_unit_conversion_factor = phonopy_yaml_property_factory(
+        "frequency_unit_conversion_factor"
+    )
+    version = phonopy_yaml_property_factory("version")
+
+    phonon_supercell_matrix = phonopy_yaml_property_factory("phonon_supercell_matrix")
+    phonon_dataset = phonopy_yaml_property_factory("phonon_dataset")
+    phonon_supercell = phonopy_yaml_property_factory("phonon_supercell")
+    phonon_primitive = phonopy_yaml_property_factory("phonon_primitive")
+
+    def __init__(
+        self, configuration=None, calculator=None, physical_units=None, settings=None
+    ):
+        """Init method."""
+        self._data = Phono3pyYamlData(
+            configuration=configuration,
+            calculator=calculator,
+            physical_units=physical_units,
+        )
+        self._dumper_settings = settings
+
+    def __str__(self):
+        """Return string text of yaml output."""
+        ph3yml_dumper = Phono3pyYamlDumper(
+            self._data, dumper_settings=self._dumper_settings
+        )
+        return "\n".join(ph3yml_dumper.get_yaml_lines())
+
+    def read(self, filename):
+        """Read Phono3pyYaml file."""
+        self._data = read_phono3py_yaml(
+            filename,
+            configuration=self._data.configuration,
+            calculator=self._data.calculator,
+            physical_units=self._data.physical_units,
+        )
+        return self
+
+    def set_phonon_info(self, phono3py: "Phono3py"):
+        """Store data in Phono3py instance in this instance."""
+        super().set_phonon_info(phono3py)
+        self._data.phonon_supercell_matrix = phono3py.phonon_supercell_matrix
+        self._data.phonon_dataset = phono3py.phonon_dataset
+        self._data.phonon_primitive = phono3py.phonon_primitive
+        self._data.phonon_supercell = phono3py.phonon_supercell
 
 
 def displacements_yaml_lines_type1(dataset, with_forces=False, key="displacements"):
@@ -424,7 +507,7 @@ def _displacements_yaml_lines_type1_info(dataset):
             for disp1_id, j in dataset["duplicates"].items():
                 lines.append("  - [ %d, %d ]" % (int(disp1_id), j))
         else:
-            for (disp1_id, j) in dataset["duplicates"]:
+            for disp1_id, j in dataset["duplicates"]:
                 lines.append("  - [ %d, %d ]" % (disp1_id, j))
         lines.append("")
 
@@ -480,3 +563,39 @@ def _second_displacements_yaml_lines(dataset2, id_offset, with_forces=False):
             )
 
     return lines, disp2_id
+
+
+def read_phono3py_yaml(
+    filename, configuration=None, calculator=None, physical_units=None
+) -> Phono3pyYamlData:
+    """Read phono3py.yaml like file."""
+    yaml_data = load_yaml(filename)
+    if type(yaml_data) is str:
+        msg = f'Could not load "{filename}" properly.'
+        raise TypeError(msg)
+    return load_phono3py_yaml(
+        yaml_data,
+        configuration=configuration,
+        calculator=calculator,
+        physical_units=physical_units,
+    )
+
+
+def load_phono3py_yaml(
+    yaml_data, configuration=None, calculator=None, physical_units=None
+) -> Phono3pyYamlData:
+    """Return Phono3pyYamlData instance loading yaml data.
+
+    Parameters
+    -----------
+    yaml_data : dict
+
+    """
+    ph3yml_loader = Phono3pyYamlLoader(
+        yaml_data,
+        configuration=configuration,
+        calculator=calculator,
+        physical_units=physical_units,
+    )
+    ph3yml_loader.parse()
+    return ph3yml_loader.data

@@ -33,6 +33,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import warnings
+
 import numpy as np
 from phonopy.structure.cells import Primitive, Supercell
 from phonopy.structure.symmetry import Symmetry
@@ -70,7 +72,7 @@ class Phono3pyJointDos:
         SNF_coordinates="reciprocal",
         is_mesh_symmetry=True,
         is_symmetry=True,
-        store_dense_gp_map=False,
+        store_dense_gp_map=True,
         symprec=1e-5,
         output_filename=None,
         log_level=0,
@@ -91,7 +93,15 @@ class Phono3pyJointDos:
         self._frequency_scale_factor = frequency_scale_factor
         self._is_mesh_symmetry = is_mesh_symmetry
         self._is_symmetry = is_symmetry
+
+        if not store_dense_gp_map:
+            warnings.warn(
+                "Phono3pyJointDos init parameter of store_dense_gp_map is deprecated. "
+                "This will be set always True.",
+                DeprecationWarning,
+            )
         self._store_dense_gp_map = store_dense_gp_map
+
         self._use_grg = use_grg
         self._SNF_coordinates = SNF_coordinates
         self._symprec = symprec

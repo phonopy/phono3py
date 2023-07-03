@@ -47,7 +47,8 @@ void itr_get_interaction(
     const long multi_dims[2], const long (*multiplicity)[2],
     const double *masses, const long *p2s_map, const long *s2p_map,
     const long *band_indices, const long symmetrize_fc3_q,
-    const double cutoff_frequency, const long openmp_per_triplets);
+    const double cutoff_frequency, const long make_r0_average,
+    const long openmp_per_triplets);
 void itr_get_interaction_at_triplet(
     double *fc3_normal_squared, const long num_band0, const long num_band,
     const long (*g_pos)[4], const long num_g_pos, const double *frequencies,
@@ -59,6 +60,6 @@ void itr_get_interaction_at_triplet(
     const double cutoff_frequency,
     const long triplet_index, /* only for print */
     const long num_triplets,  /* only for print */
-    const long openmp_at_bands);
+    const long make_r0_average, const long openmp_at_bands);
 
 #endif

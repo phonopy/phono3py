@@ -72,7 +72,7 @@ def run_phonon_solver_c(
         'U' or 'L' for lapack zheev solver. Default is 'L'.
 
     """
-    import phono3py._phononmod as phononmod
+    import phono3py._phononcalc as phononcalc
 
     (
         svecs,
@@ -112,7 +112,7 @@ def run_phonon_solver_c(
     assert lapack_zheev_uplo in ("L", "U")
 
     fc_p2s, fc_s2p = _get_fc_elements_mapping(dm, fc)
-    phononmod.phonons_at_gridpoints(
+    phononcalc.phonons_at_gridpoints(
         frequencies,
         eigenvectors,
         phonon_done,
