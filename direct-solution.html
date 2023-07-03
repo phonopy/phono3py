@@ -1,481 +1,330 @@
 
+
 <!DOCTYPE html>
 
-<html>
+
+<html lang="en" >
+
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Direct solution of linearized phonon Boltzmann equation &#8212; Phono3py v.2.6.0</title>
-    
+    <title>Direct solution of linearized phonon Boltzmann equation &#8212; Phono3py v.2.7.0</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-<link href="_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <link href="_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
 
-    
-  <link rel="stylesheet"
-    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+  
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
-    
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+  
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'direct-solution';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Solution of the Wigner transport equation" href="wigner-solution.html" />
     <link rel="prev" title="Auxiliary tools" href="auxiliary-tools.html" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="docsearch:language" content="None">
-    
-
-    <!-- Google Analytics -->
-    
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
-<!-- Checkboxes to toggle the left sidebar -->
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
-<label class="overlay overlay-navbar" for="__navigation">
-    <div class="visually-hidden">Toggle navigation sidebar</div>
-</label>
-<!-- Checkboxes to toggle the in-page toc -->
-<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
-<label class="overlay overlay-pagetoc" for="__page-toc">
-    <div class="visually-hidden">Toggle in-page Table of Contents</div>
-</label>
-<!-- Headers at the top -->
-<div class="announcement header-item noprint"></div>
-<div class="header header-item noprint"></div>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
 
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
     
-    <div class="container-fluid" id="banner"></div>
-
     
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
 
-    <div class="container-xl">
-      <div class="row">
-          
-<!-- Sidebar -->
-<div class="bd-sidebar noprint" id="site-navigation">
-    <div class="bd-sidebar__content">
-        <div class="bd-sidebar__top"><div class="navbar-brand-box">
-    <a class="navbar-brand text-wrap" href="index.html">
-      
-      
-      
-      <h1 class="site-logo" id="site-title">Phono3py v.2.6.0</h1>
-      
-    </a>
-</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
-  <i class="icon fas fa-search"></i>
-  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
-    <div class="bd-toc-item active">
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    <p class="title logo__title">Phono3py v.2.7.0</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
- <li class="toctree-l1">
-  <a class="reference internal" href="install.html">
-   Installation
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="workflow.html">
-   Workflow
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="examples.html">
-   Examples
-  </a>
- </li>
- <li class="toctree-l1 has-children">
-  <a class="reference internal" href="interfaces.html">
-   Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)
-  </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
-  <label for="toctree-checkbox-1">
-   <i class="fas fa-chevron-down">
-   </i>
-  </label>
-  <ul>
-   <li class="toctree-l2">
-    <a class="reference internal" href="vasp.html">
-     VASP &amp; phono3py calculation
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="qe.html">
-     Quantum ESPRESSO (pw) &amp; phono3py calculation
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="crystal.html">
-     CRYSTAL &amp; phono3py calculation
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="turbomole.html">
-     TURBOMOLE &amp; phono3py calculation
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="command-options.html">
-   Command options / Setting tags
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="input-output-files.html">
-   Input / Output files
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hdf5_howto.html">
-   How to read the results stored in hdf5 files
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="auxiliary-tools.html">
-   Auxiliary tools
-  </a>
- </li>
- <li class="toctree-l1 current active">
-  <a class="current reference internal" href="#">
-   Direct solution of linearized phonon Boltzmann equation
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="wigner-solution.html">
-   Solution of the Wigner transport equation
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="workload-distribution.html">
-   Workload distribution
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="cutoff-pair.html">
-   Force constants calculation with cutoff pair-distance
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="external-tools.html">
-   External tools
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="phono3py-api.html">
-   Phono3py API
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="phono3py-load.html">
-   phono3py-load command
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="tips.html">
-   Tips
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="citation.html">
-   How to cite phono3py
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="changelog.html">
-   Change Log
-  </a>
- </li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qe.html">Quantum ESPRESSO (pw) &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbomole.html">TURBOMOLE &amp; phono3py calculation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input-output-files.html">Input / Output files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">How to read the results stored in hdf5 files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Direct solution of linearized phonon Boltzmann equation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wigner-solution.html">Solution of the Wigner transport equation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
 </ul>
 
     </div>
 </nav></div>
-        <div class="bd-sidebar__bottom">
-             <!-- To handle the deprecated key -->
-            
-            <div class="navbar_extra_footer">
-            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
-            </div>
-            
-        </div>
     </div>
-    <div id="rtd-footer-container"></div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/direct-solution.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
 </div>
 
 
-          
 
 
-          
-<!-- A tiny helper pixel to detect if we've scrolled -->
-<div class="sbt-scroll-pixel-helper"></div>
-<!-- Main content -->
-<div class="col py-0 content-container">
-    
-    <div class="header-article row sticky-top noprint">
-        
-
-
-
-<div class="col py-1 d-flex header-article-main">
-    <div class="header-article__left">
-        
-        <label for="__navigation"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="right"
-title="Toggle navigation"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-bars"></i>
-  </span>
-
-</label>
-
-        
-    </div>
-    <div class="header-article__right">
 <button onclick="toggleFullScreen()"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="bottom"
-title="Fullscreen mode"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
 >
   
 
-<span class="headerbtn__icon-container">
+<span class="btn__icon-container">
   <i class="fas fa-expand"></i>
   </span>
 
 </button>
 
-<div class="menu-dropdown menu-dropdown-download-buttons">
-  <button class="headerbtn menu-dropdown__trigger"
-      aria-label="Download this page">
-      <i class="fas fa-download"></i>
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
   </button>
-  <div class="menu-dropdown__content">
-    <ul>
-      <li>
-        <a href="_sources/direct-solution.md.txt"
-   class="headerbtn"
-   data-toggle="tooltip"
-data-placement="left"
-title="Download source file"
->
-  
+`);
+</script>
 
-<span class="headerbtn__icon-container">
-  <i class="fas fa-file"></i>
-  </span>
-<span class="headerbtn__text-container">.md</span>
-</a>
-
-      </li>
-      
-      <li>
-        
-<button onclick="printPdf(this)"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="left"
-title="Print to PDF"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-file-pdf"></i>
-  </span>
-<span class="headerbtn__text-container">.pdf</span>
-</button>
-
-      </li>
-      
-    </ul>
-  </div>
-</div>
-<label for="__page-toc"
-  class="headerbtn headerbtn-page-toc"
-  
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-list"></i>
-  </span>
-
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
 </label>
-
+</div></div>
+      
     </div>
+  
 </div>
-
-<!-- Table of contents -->
-<div class="col-md-3 bd-toc show noprint">
-    <div class="tocsection onthispage pt-5 pb-3">
-        <i class="fas fa-list"></i> Contents
-    </div>
-    <nav id="bd-toc-nav" aria-label="Page">
-        <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#how-to-use">
-   How to use
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#memory-usage">
-   Memory usage
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#work-load-distribution">
-   Work load distribution
-  </a>
-  <ul class="nav section-nav flex-column">
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#distribution-of-collision-matrix">
-     Distribution of collision matrix
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#distribution-of-phonon-phonon-interaction-strengths">
-     Distribution of phonon-phonon interaction strengths
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#cutoff-parameter-of-pseudo-inversion">
-   Cutoff parameter of pseudo inversion
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#diagonalization-solver-interfaces">
-   Diagonalization solver interfaces
-  </a>
-  <ul class="nav section-nav flex-column">
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#openblas-or-mkl-linked-scipy-and-numpy">
-     OpenBLAS or MKL linked scipy and numpy
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#openblas-or-mkl-via-lapacke">
-     OpenBLAS or MKL via LAPACKE
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#solver-choice-for-diagonalization">
-   Solver choice for diagonalization
-  </a>
- </li>
-</ul>
-
-    </nav>
 </div>
-    </div>
-    <div class="article row">
-        <div class="col pl-md-3 pl-lg-5 content-container">
-            <!-- Table of contents that is only displayed when printing the page -->
-            <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Direct solution of linearized phonon Boltzmann equation</h1>
-                <!-- Table of contents -->
-                <div id="print-main-content">
-                    <div id="jb-print-toc">
-                        
-                        <div>
-                            <h2> Contents </h2>
-                        </div>
-                        <nav aria-label="Page">
-                            <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#how-to-use">
-   How to use
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#memory-usage">
-   Memory usage
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#work-load-distribution">
-   Work load distribution
-  </a>
-  <ul class="nav section-nav flex-column">
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#distribution-of-collision-matrix">
-     Distribution of collision matrix
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#distribution-of-phonon-phonon-interaction-strengths">
-     Distribution of phonon-phonon interaction strengths
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#cutoff-parameter-of-pseudo-inversion">
-   Cutoff parameter of pseudo inversion
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#diagonalization-solver-interfaces">
-   Diagonalization solver interfaces
-  </a>
-  <ul class="nav section-nav flex-column">
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#openblas-or-mkl-linked-scipy-and-numpy">
-     OpenBLAS or MKL linked scipy and numpy
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#openblas-or-mkl-via-lapacke">
-     OpenBLAS or MKL via LAPACKE
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#solver-choice-for-diagonalization">
-   Solver choice for diagonalization
-  </a>
- </li>
-</ul>
+              
+              
 
-                        </nav>
-                    </div>
-                </div>
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Direct solution of linearized phonon Boltzmann equation</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
             </div>
-            <main id="main-content" role="main">
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-use">How to use</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#memory-usage">Memory usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#work-load-distribution">Work load distribution</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#distribution-of-collision-matrix">Distribution of collision matrix</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#distribution-of-phonon-phonon-interaction-strengths">Distribution of phonon-phonon interaction strengths</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cutoff-parameter-of-pseudo-inversion">Cutoff parameter of pseudo inversion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#diagonalization-solver-interfaces">Diagonalization solver interfaces</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-or-mkl-linked-scipy-and-numpy">OpenBLAS or MKL linked scipy and numpy</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-or-mkl-via-lapacke">OpenBLAS or MKL via LAPACKE</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solver-choice-for-diagonalization">Solver choice for diagonalization</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
                 
-              <div>
-                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
   <section class="tex2jax_ignore mathjax_ignore" id="direct-solution-of-linearized-phonon-boltzmann-equation">
-<span id="direct-solution"></span><h1>Direct solution of linearized phonon Boltzmann equation<a class="headerlink" href="#direct-solution-of-linearized-phonon-boltzmann-equation" title="Permalink to this headline">#</a></h1>
+<span id="direct-solution"></span><h1>Direct solution of linearized phonon Boltzmann equation<a class="headerlink" href="#direct-solution-of-linearized-phonon-boltzmann-equation" title="Permalink to this heading">#</a></h1>
 <p>This page explains how to use the direct solution of LBTE by
 <a class="reference external" href="https://doi.org/10.1103/PhysRevLett.110.265506">L. Chaput, Phys. Rev. Lett. 110, 265506 (2013)</a>
 (<a class="reference internal" href="citation.html#citation-direct-solution-lbte"><span class="std std-ref">citation</span></a>).</p>
-<div class="contents local topic" id="contents">
+<nav class="contents local" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#how-to-use" id="id1">How to use</a></p></li>
 <li><p><a class="reference internal" href="#memory-usage" id="id2">Memory usage</a></p></li>
@@ -494,37 +343,37 @@ title="Print to PDF"
 </li>
 <li><p><a class="reference internal" href="#solver-choice-for-diagonalization" id="id10">Solver choice for diagonalization</a></p></li>
 </ul>
-</div>
+</nav>
 <section id="how-to-use">
-<h2><a class="toc-backref" href="#id1">How to use</a><a class="headerlink" href="#how-to-use" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">How to use</a><a class="headerlink" href="#how-to-use" title="Permalink to this heading">#</a></h2>
 <p>As written in the following sections, this calculation requires large memory
 space. When running multiple temperature points, simply the memory space needed
 is multiplied by the number of the temperature points. Therefore it is normally
 recommended to specify <a class="reference internal" href="command-options.html#ts-option"><span class="std std-ref">–ts option</span></a>. An example to run with
 the direct solution of LBTE for <code class="docutils literal notranslate"><span class="pre">example/Si-PBEsol</span></code> is as follows:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py-load --mesh <span class="m">11</span> <span class="m">11</span> <span class="m">11</span> --lbte --ts <span class="m">300</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--lbte<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span>
 ...
 
-<span class="o">===================</span> End of collection of <span class="nv">collisions</span> <span class="o">===================</span>
-- Averaging collision matrix elements by phonon degeneracy <span class="o">[</span><span class="m">0</span>.036s<span class="o">]</span>
-- Making collision matrix symmetric <span class="o">(</span>built-in<span class="o">)</span> <span class="o">[</span><span class="m">0</span>.001s<span class="o">]</span>
------------ Thermal conductivity <span class="o">(</span>W/m-k<span class="o">)</span> with tetrahedron method -----------
-Diagonalizing by lapacke dsyev... <span class="o">[</span><span class="m">0</span>.141s<span class="o">]</span>
-Calculating pseudo-inv with <span class="nv">cutoff</span><span class="o">=</span><span class="m">1</span>.0e-08 <span class="o">(</span>np.dot<span class="o">)</span> <span class="o">[</span><span class="m">0</span>.001s<span class="o">]</span>
+<span class="o">===================</span><span class="w"> </span>End<span class="w"> </span>of<span class="w"> </span>collection<span class="w"> </span>of<span class="w"> </span><span class="nv">collisions</span><span class="w"> </span><span class="o">===================</span>
+-<span class="w"> </span>Averaging<span class="w"> </span>collision<span class="w"> </span>matrix<span class="w"> </span>elements<span class="w"> </span>by<span class="w"> </span>phonon<span class="w"> </span>degeneracy<span class="w"> </span><span class="o">[</span><span class="m">0</span>.036s<span class="o">]</span>
+-<span class="w"> </span>Making<span class="w"> </span>collision<span class="w"> </span>matrix<span class="w"> </span>symmetric<span class="w"> </span><span class="o">(</span>built-in<span class="o">)</span><span class="w"> </span><span class="o">[</span><span class="m">0</span>.001s<span class="o">]</span>
+-----------<span class="w"> </span>Thermal<span class="w"> </span>conductivity<span class="w"> </span><span class="o">(</span>W/m-k<span class="o">)</span><span class="w"> </span>with<span class="w"> </span>tetrahedron<span class="w"> </span>method<span class="w"> </span>-----------
+Diagonalizing<span class="w"> </span>by<span class="w"> </span>lapacke<span class="w"> </span>dsyev...<span class="w"> </span><span class="o">[</span><span class="m">0</span>.141s<span class="o">]</span>
+Calculating<span class="w"> </span>pseudo-inv<span class="w"> </span>with<span class="w"> </span><span class="nv">cutoff</span><span class="o">=</span><span class="m">1</span>.0e-08<span class="w"> </span><span class="o">(</span>np.dot<span class="o">)</span><span class="w"> </span><span class="o">[</span><span class="m">0</span>.001s<span class="o">]</span>
 <span class="c1">#  T(K)        xx         yy         zz         yz         xz         xy</span>
-  <span class="m">300</span>.0     <span class="m">113</span>.140    <span class="m">113</span>.140    <span class="m">113</span>.140      <span class="m">0</span>.000      <span class="m">0</span>.000     -0.000
-  <span class="o">(</span>RTA<span class="o">)</span>     <span class="m">108</span>.982    <span class="m">108</span>.982    <span class="m">108</span>.982      <span class="m">0</span>.000      <span class="m">0</span>.000     -0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">113</span>.140<span class="w">    </span><span class="m">113</span>.140<span class="w">    </span><span class="m">113</span>.140<span class="w">      </span><span class="m">0</span>.000<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="o">(</span>RTA<span class="o">)</span><span class="w">     </span><span class="m">108</span>.982<span class="w">    </span><span class="m">108</span>.982<span class="w">    </span><span class="m">108</span>.982<span class="w">      </span><span class="m">0</span>.000<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000
 ----------------------------------------------------------------------------
 
-Thermal conductivity and related properties were written into
+Thermal<span class="w"> </span>conductivity<span class="w"> </span>and<span class="w"> </span>related<span class="w"> </span>properties<span class="w"> </span>were<span class="w"> </span>written<span class="w"> </span>into
 <span class="s2">&quot;kappa-m111111.hdf5&quot;</span>.
-Eigenvalues of collision matrix were written into <span class="s2">&quot;coleigs-m111111.hdf5&quot;</span>
+Eigenvalues<span class="w"> </span>of<span class="w"> </span>collision<span class="w"> </span>matrix<span class="w"> </span>were<span class="w"> </span>written<span class="w"> </span>into<span class="w"> </span><span class="s2">&quot;coleigs-m111111.hdf5&quot;</span>
 ...
 </pre></div>
 </div>
 </section>
 <section id="memory-usage">
-<h2><a class="toc-backref" href="#id2">Memory usage</a><a class="headerlink" href="#memory-usage" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Memory usage</a><a class="headerlink" href="#memory-usage" title="Permalink to this heading">#</a></h2>
 <p>The direct solution of LBTE needs diagonalization of a large collision matrix,
 which requires large memory space. This is the largest limitation of using this
 method. The memory size needed for one collision matrix at a temperature point
@@ -543,27 +392,27 @@ LAPACK <code class="docutils literal notranslate"><span class="pre">dsyev</span>
 <p>When phono3py runs with <a class="reference internal" href="command-options.html#wgp-option"><span class="std std-ref">–wgp option</span></a> together with <code class="docutils literal notranslate"><span class="pre">--lbte</span></code>
 option, estimated memory space needed for storing collision matrix is presented.
 An example for <code class="docutils literal notranslate"><span class="pre">example/Si-PBEsol</span></code> is as follows:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py-load --mesh <span class="m">40</span> <span class="m">40</span> <span class="m">40</span> --lbte --wgp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="m">40</span><span class="w"> </span>--lbte<span class="w"> </span>--wgp
 ...
 
-Memory requirements:
-- Piece of collision matrix at each grid point, temp and sigma: <span class="m">0</span>.00 Gb
-- Full collision matrix at each temp and sigma: <span class="m">7</span>.15 Gb
-- Phonons: <span class="m">0</span>.04 Gb
-- Grid point information: <span class="m">0</span>.00 Gb
-- Phonon properties: <span class="m">0</span>.14 Gb
+Memory<span class="w"> </span>requirements:
+-<span class="w"> </span>Piece<span class="w"> </span>of<span class="w"> </span>collision<span class="w"> </span>matrix<span class="w"> </span>at<span class="w"> </span>each<span class="w"> </span>grid<span class="w"> </span>point,<span class="w"> </span>temp<span class="w"> </span>and<span class="w"> </span>sigma:<span class="w"> </span><span class="m">0</span>.00<span class="w"> </span>Gb
+-<span class="w"> </span>Full<span class="w"> </span>collision<span class="w"> </span>matrix<span class="w"> </span>at<span class="w"> </span>each<span class="w"> </span>temp<span class="w"> </span>and<span class="w"> </span>sigma:<span class="w"> </span><span class="m">7</span>.15<span class="w"> </span>Gb
+-<span class="w"> </span>Phonons:<span class="w"> </span><span class="m">0</span>.04<span class="w"> </span>Gb
+-<span class="w"> </span>Grid<span class="w"> </span>point<span class="w"> </span>information:<span class="w"> </span><span class="m">0</span>.00<span class="w"> </span>Gb
+-<span class="w"> </span>Phonon<span class="w"> </span>properties:<span class="w"> </span><span class="m">0</span>.14<span class="w"> </span>Gb
 
 ...
 </pre></div>
 </div>
 <p>With <a class="reference internal" href="command-options.html#stp-option"><span class="std std-ref">–stp option</span></a>, estimated memory space needed for ph-ph
 interaction strengths is shown such as</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py-load --mesh <span class="m">40</span> <span class="m">40</span> <span class="m">40</span> --lbte --stp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="m">40</span><span class="w"> </span>--lbte<span class="w"> </span>--stp
 </pre></div>
 </div>
 </section>
 <section id="work-load-distribution">
-<h2><a class="toc-backref" href="#id3">Work load distribution</a><a class="headerlink" href="#work-load-distribution" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Work load distribution</a><a class="headerlink" href="#work-load-distribution" title="Permalink to this heading">#</a></h2>
 <p>The other difficulty compared with RTA is the workload distribution. Currently
 there are two ways to distribute the calculation: (1) Collision matrix is
 divided and the pieces are distributed into computing nodes. (2) Ph-ph
@@ -575,7 +424,7 @@ stored in an hdf5 file. Increasing the calculation size, e.g., larger mesh
 numbers or larger number of atoms in the primitive cell, large files are
 created.</p>
 <section id="distribution-of-collision-matrix">
-<span id="distribution-colmat"></span><h3><a class="toc-backref" href="#id4">Distribution of collision matrix</a><a class="headerlink" href="#distribution-of-collision-matrix" title="Permalink to this headline">#</a></h3>
+<span id="distribution-colmat"></span><h3><a class="toc-backref" href="#id4" role="doc-backlink">Distribution of collision matrix</a><a class="headerlink" href="#distribution-of-collision-matrix" title="Permalink to this heading">#</a></h3>
 <p>A full collision matrix is divided into pieces at grid points of irreducible
 part of Brillouin zone. Each piece is calculated independently from the other
 pieces. After finishing the calculations of these pieces, the full collision
@@ -612,23 +461,23 @@ to distinguish the file names of the results at different temperatures.</p></li>
 </ol>
 <p>Examples of command options are shown below using <code class="docutils literal notranslate"><span class="pre">Si-PBE</span></code> example. Irreducible
 grid point indices are obtained by <a class="reference internal" href="command-options.html#wgp-option"><span class="std std-ref">–wgp option</span></a>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py-load --mesh <span class="m">19</span> <span class="m">19</span> <span class="m">19</span> --lbte --wgp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--lbte<span class="w"> </span>--wgp
 </pre></div>
 </div>
 <p>and the information is given in <code class="docutils literal notranslate"><span class="pre">ir_grid_points.yaml</span></code>. For distribution of
 collision matrix calculation (see also <a class="reference internal" href="workload-distribution.html#workload-distribution"><span class="std std-ref">Workload distribution</span></a>):</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py-load --mesh <span class="m">19</span> <span class="m">19</span> <span class="m">19</span> --lbte --ts <span class="m">300</span> --write-collision --gp<span class="o">=</span><span class="s2">&quot;grid_point_numbers...&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--lbte<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span><span class="w"> </span>--write-collision<span class="w"> </span>--gp<span class="o">=</span><span class="s2">&quot;grid_point_numbers...&quot;</span>
 </pre></div>
 </div>
 <p>To collect distributed pieces of the collision matrix:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py-load --mesh <span class="m">19</span> <span class="m">19</span> <span class="m">19</span> --lbte --read-collision <span class="m">0</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">19</span><span class="w"> </span>--lbte<span class="w"> </span>--read-collision<span class="w"> </span><span class="m">0</span>
 </pre></div>
 </div>
 <p>where <code class="docutils literal notranslate"><span class="pre">--read-collision</span> <span class="pre">0</span></code> indicates to read the first result in the list of
 temperatures by <code class="docutils literal notranslate"><span class="pre">--ts</span></code> option, i.e., 300K in this case.</p>
 </section>
 <section id="distribution-of-phonon-phonon-interaction-strengths">
-<h3><a class="toc-backref" href="#id5">Distribution of phonon-phonon interaction strengths</a><a class="headerlink" href="#distribution-of-phonon-phonon-interaction-strengths" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">Distribution of phonon-phonon interaction strengths</a><a class="headerlink" href="#distribution-of-phonon-phonon-interaction-strengths" title="Permalink to this heading">#</a></h3>
 <p>The distribution of pieces of collision matrix is straightforward and is
 recommended to use if the number of temperature points is small. However
 increasing data file size, network communication becomes to require long time to
@@ -660,24 +509,24 @@ results at different temperatures.</p></li>
 </ol>
 <p>Examples of command options are shown below using <code class="docutils literal notranslate"><span class="pre">Si-PBE</span></code> example. Irreducible
 grid point indices are obtained by <a class="reference internal" href="command-options.html#wgp-option"><span class="std std-ref">–wgp option</span></a></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py-load --mesh <span class="s2">&quot;19 19 19&quot;</span> --lbte --wgp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--lbte<span class="w"> </span>--wgp
 </pre></div>
 </div>
 <p>and the grid point information is provided in <code class="docutils literal notranslate"><span class="pre">ir_grid_points.yaml</span></code>. All phonons
 on mesh grid points are saved by</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py-load --mesh <span class="s2">&quot;19 19 19&quot;</span> --write-phonon
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--write-phonon
 </pre></div>
 </div>
 <p>For distribution of ph-ph interaction strength calculation (see also
 <a class="reference internal" href="workload-distribution.html#workload-distribution"><span class="std std-ref">Workload distribution</span></a>)</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py-load --mesh <span class="s2">&quot;19 19 19&quot;</span> --lbte --ts <span class="m">300</span> --write-pp --gp <span class="s2">&quot;grid_point_numbers...&quot;</span> --read-phonon
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--lbte<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span><span class="w"> </span>--write-pp<span class="w"> </span>--gp<span class="w"> </span><span class="s2">&quot;grid_point_numbers...&quot;</span><span class="w"> </span>--read-phonon
 </pre></div>
 </div>
 <p>Here one temperature has to be specified but any one of temperatures is OK since
 ph-ph interaction strength computed here is assumed to be temperature
 independent. Then the computed ph-ph interaction strengths are read and used to
 compute collision matrix and lattice thermal conductivity at a temperature by</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py-load --mesh <span class="s2">&quot;19 19 19&quot;</span> --lbte --ts <span class="m">300</span> --read-pp --read-phonon
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--lbte<span class="w"> </span>--ts<span class="w"> </span><span class="m">300</span><span class="w"> </span>--read-pp<span class="w"> </span>--read-phonon
 </pre></div>
 </div>
 <p>This last command is repeated at different temperatures to obtain the properties
@@ -685,7 +534,7 @@ at multiple temperatures.</p>
 </section>
 </section>
 <section id="cutoff-parameter-of-pseudo-inversion">
-<span id="diagonzalization-solver"></span><h2><a class="toc-backref" href="#id6">Cutoff parameter of pseudo inversion</a><a class="headerlink" href="#cutoff-parameter-of-pseudo-inversion" title="Permalink to this headline">#</a></h2>
+<span id="diagonzalization-solver"></span><h2><a class="toc-backref" href="#id6" role="doc-backlink">Cutoff parameter of pseudo inversion</a><a class="headerlink" href="#cutoff-parameter-of-pseudo-inversion" title="Permalink to this heading">#</a></h2>
 <p>To achieve a pseudo inversion, a cutoff parameter is used to find null space,
 i.e., to select the nearly zero eigenvalues. The default cutoff value is <code class="docutils literal notranslate"><span class="pre">1e-8</span></code>,
 and this hopefully works in many cases. But if a collision matrix is numerically
@@ -696,7 +545,7 @@ eigenvalues. After running the direct solution of LBTE, <code class="docutils li
 created. This contains the eigenvalues of the collision matrix (either
 symmetrized or non-symmetrized). The eigenvalues are plotted using
 <code class="docutils literal notranslate"><span class="pre">phono3py-coleigplot</span></code> in the phono3py package:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py-coleigplot coleigs-mxxx.hdf5
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-coleigplot<span class="w"> </span>coleigs-mxxx.hdf5
 </pre></div>
 </div>
 <p>It is assumed that only one set of eigenvalues at a temperature point is
@@ -718,7 +567,7 @@ as null spaces.</span><a class="headerlink" href="#coleigplot" title="Permalink 
 </figure>
 </section>
 <section id="diagonalization-solver-interfaces">
-<h2><a class="toc-backref" href="#id7">Diagonalization solver interfaces</a><a class="headerlink" href="#diagonalization-solver-interfaces" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id7" role="doc-backlink">Diagonalization solver interfaces</a><a class="headerlink" href="#diagonalization-solver-interfaces" title="Permalink to this heading">#</a></h2>
 <p>Multithreaded BLAS is recommended to use for the calculation of the direct
 solution of LBTE because the diagonalization of the collision matrix is
 computationally highly demanding. The diagonalization in Phono3py relies on
@@ -731,19 +580,19 @@ conda-forge is written <a class="reference internal" href="install.html#install-
 interfaces is described in the
 <a class="reference internal" href="#direct-solution-solver-choice"><span class="std std-ref">next section</span></a>.</p>
 <section id="openblas-or-mkl-linked-scipy-and-numpy">
-<h3><a class="toc-backref" href="#id8">OpenBLAS or MKL linked scipy and numpy</a><a class="headerlink" href="#openblas-or-mkl-linked-scipy-and-numpy" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id8" role="doc-backlink">OpenBLAS or MKL linked scipy and numpy</a><a class="headerlink" href="#openblas-or-mkl-linked-scipy-and-numpy" title="Permalink to this heading">#</a></h3>
 <p>Scipy and numpy have interfaces to LAPACK <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code>, and scipy also has the
 interface to <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>. OpenBLAS and MKL linked scipy and numpy are provided by
 conda-forge.</p>
 </section>
 <section id="openblas-or-mkl-via-lapacke">
-<h3><a class="toc-backref" href="#id9">OpenBLAS or MKL via LAPACKE</a><a class="headerlink" href="#openblas-or-mkl-via-lapacke" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">OpenBLAS or MKL via LAPACKE</a><a class="headerlink" href="#openblas-or-mkl-via-lapacke" title="Permalink to this heading">#</a></h3>
 <p>LAPACK <code class="docutils literal notranslate"><span class="pre">dsyev</span></code> and <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code> can be accessed via LAPACKE in the phono3py’s C
 language implementation through the python C-API.</p>
 </section>
 </section>
 <section id="solver-choice-for-diagonalization">
-<span id="direct-solution-solver-choice"></span><h2><a class="toc-backref" href="#id10">Solver choice for diagonalization</a><a class="headerlink" href="#solver-choice-for-diagonalization" title="Permalink to this headline">#</a></h2>
+<span id="direct-solution-solver-choice"></span><h2><a class="toc-backref" href="#id10" role="doc-backlink">Solver choice for diagonalization</a><a class="headerlink" href="#solver-choice-for-diagonalization" title="Permalink to this heading">#</a></h2>
 <p>For larger systems, diagonalization of collision matrix takes longest time and
 requires large memory space. Phono3py relies on LAPACK for the diagonalization
 and so the performance is dependent on the choice of the diagonalization solver.</p>
@@ -775,48 +624,114 @@ carefully.</p></li>
 </section>
 
 
-              </div>
+                </article>
               
-            </main>
-            <footer class="footer-article noprint">
-                
-    <!-- Previous / next buttons -->
-<div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="auxiliary-tools.html" title="previous page">
-        <i class="fas fa-angle-left"></i>
-        <div class="prev-next-info">
-            <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Auxiliary tools</p>
-        </div>
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="auxiliary-tools.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Auxiliary tools</p>
+      </div>
     </a>
-    <a class='right-next' id="next-link" href="wigner-solution.html" title="next page">
-    <div class="prev-next-info">
+    <a class="right-next"
+       href="wigner-solution.html"
+       title="next page">
+      <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
         <p class="prev-next-title">Solution of the Wigner transport equation</p>
-    </div>
-    <i class="fas fa-angle-right"></i>
-    </a>
-</div>
-            </footer>
-        </div>
-    </div>
-    <div class="footer-content row">
-        <footer class="col footer"><p>
-  
-      &copy; Copyright 2015, Atsushi Togo.<br/>
-</p>
-        </footer>
-    </div>
-    
-</div>
-
-
       </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-use">How to use</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#memory-usage">Memory usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#work-load-distribution">Work load distribution</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#distribution-of-collision-matrix">Distribution of collision matrix</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#distribution-of-phonon-phonon-interaction-strengths">Distribution of phonon-phonon interaction strengths</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cutoff-parameter-of-pseudo-inversion">Cutoff parameter of pseudo inversion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#diagonalization-solver-interfaces">Diagonalization solver interfaces</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-or-mkl-linked-scipy-and-numpy">OpenBLAS or MKL linked scipy and numpy</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#openblas-or-mkl-via-lapacke">OpenBLAS or MKL via LAPACKE</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solver-choice-for-diagonalization">Solver choice for diagonalization</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2015, Atsushi Togo.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
     </div>
+  </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+  <script src="_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
 
-
+  <footer class="bd-footer">
+  </footer>
   </body>
 </html>

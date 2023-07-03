@@ -1,530 +1,331 @@
 
+
 <!DOCTYPE html>
 
-<html>
+
+<html lang="en" >
+
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Force constants calculation with cutoff pair-distance &#8212; Phono3py v.2.6.0</title>
-    
+    <title>Force constants calculation with cutoff pair-distance &#8212; Phono3py v.2.7.0</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-<link href="_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <link href="_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
 
-    
-  <link rel="stylesheet"
-    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+  
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
-    
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+  
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'cutoff-pair';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="External tools" href="external-tools.html" />
     <link rel="prev" title="Workload distribution" href="workload-distribution.html" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="docsearch:language" content="None">
-    
-
-    <!-- Google Analytics -->
-    
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
-<!-- Checkboxes to toggle the left sidebar -->
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
-<label class="overlay overlay-navbar" for="__navigation">
-    <div class="visually-hidden">Toggle navigation sidebar</div>
-</label>
-<!-- Checkboxes to toggle the in-page toc -->
-<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
-<label class="overlay overlay-pagetoc" for="__page-toc">
-    <div class="visually-hidden">Toggle in-page Table of Contents</div>
-</label>
-<!-- Headers at the top -->
-<div class="announcement header-item noprint"></div>
-<div class="header header-item noprint"></div>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
 
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
     
-    <div class="container-fluid" id="banner"></div>
-
     
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
 
-    <div class="container-xl">
-      <div class="row">
-          
-<!-- Sidebar -->
-<div class="bd-sidebar noprint" id="site-navigation">
-    <div class="bd-sidebar__content">
-        <div class="bd-sidebar__top"><div class="navbar-brand-box">
-    <a class="navbar-brand text-wrap" href="index.html">
-      
-      
-      
-      <h1 class="site-logo" id="site-title">Phono3py v.2.6.0</h1>
-      
-    </a>
-</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
-  <i class="icon fas fa-search"></i>
-  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
-    <div class="bd-toc-item active">
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    <p class="title logo__title">Phono3py v.2.7.0</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
- <li class="toctree-l1">
-  <a class="reference internal" href="install.html">
-   Installation
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="workflow.html">
-   Workflow
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="examples.html">
-   Examples
-  </a>
- </li>
- <li class="toctree-l1 has-children">
-  <a class="reference internal" href="interfaces.html">
-   Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)
-  </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
-  <label for="toctree-checkbox-1">
-   <i class="fas fa-chevron-down">
-   </i>
-  </label>
-  <ul>
-   <li class="toctree-l2">
-    <a class="reference internal" href="vasp.html">
-     VASP &amp; phono3py calculation
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="qe.html">
-     Quantum ESPRESSO (pw) &amp; phono3py calculation
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="crystal.html">
-     CRYSTAL &amp; phono3py calculation
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="turbomole.html">
-     TURBOMOLE &amp; phono3py calculation
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="command-options.html">
-   Command options / Setting tags
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="input-output-files.html">
-   Input / Output files
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hdf5_howto.html">
-   How to read the results stored in hdf5 files
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="auxiliary-tools.html">
-   Auxiliary tools
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="direct-solution.html">
-   Direct solution of linearized phonon Boltzmann equation
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="wigner-solution.html">
-   Solution of the Wigner transport equation
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="workload-distribution.html">
-   Workload distribution
-  </a>
- </li>
- <li class="toctree-l1 current active">
-  <a class="current reference internal" href="#">
-   Force constants calculation with cutoff pair-distance
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="external-tools.html">
-   External tools
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="phono3py-api.html">
-   Phono3py API
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="phono3py-load.html">
-   phono3py-load command
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="tips.html">
-   Tips
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="citation.html">
-   How to cite phono3py
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="changelog.html">
-   Change Log
-  </a>
- </li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qe.html">Quantum ESPRESSO (pw) &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbomole.html">TURBOMOLE &amp; phono3py calculation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input-output-files.html">Input / Output files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">How to read the results stored in hdf5 files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="direct-solution.html">Direct solution of linearized phonon Boltzmann equation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wigner-solution.html">Solution of the Wigner transport equation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Force constants calculation with cutoff pair-distance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
 </ul>
 
     </div>
 </nav></div>
-        <div class="bd-sidebar__bottom">
-             <!-- To handle the deprecated key -->
-            
-            <div class="navbar_extra_footer">
-            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
-            </div>
-            
-        </div>
     </div>
-    <div id="rtd-footer-container"></div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/cutoff-pair.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
 </div>
 
 
-          
 
 
-          
-<!-- A tiny helper pixel to detect if we've scrolled -->
-<div class="sbt-scroll-pixel-helper"></div>
-<!-- Main content -->
-<div class="col py-0 content-container">
-    
-    <div class="header-article row sticky-top noprint">
-        
-
-
-
-<div class="col py-1 d-flex header-article-main">
-    <div class="header-article__left">
-        
-        <label for="__navigation"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="right"
-title="Toggle navigation"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-bars"></i>
-  </span>
-
-</label>
-
-        
-    </div>
-    <div class="header-article__right">
 <button onclick="toggleFullScreen()"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="bottom"
-title="Fullscreen mode"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
 >
   
 
-<span class="headerbtn__icon-container">
+<span class="btn__icon-container">
   <i class="fas fa-expand"></i>
   </span>
 
 </button>
 
-<div class="menu-dropdown menu-dropdown-download-buttons">
-  <button class="headerbtn menu-dropdown__trigger"
-      aria-label="Download this page">
-      <i class="fas fa-download"></i>
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
   </button>
-  <div class="menu-dropdown__content">
-    <ul>
-      <li>
-        <a href="_sources/cutoff-pair.md.txt"
-   class="headerbtn"
-   data-toggle="tooltip"
-data-placement="left"
-title="Download source file"
->
-  
+`);
+</script>
 
-<span class="headerbtn__icon-container">
-  <i class="fas fa-file"></i>
-  </span>
-<span class="headerbtn__text-container">.md</span>
-</a>
-
-      </li>
-      
-      <li>
-        
-<button onclick="printPdf(this)"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="left"
-title="Print to PDF"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-file-pdf"></i>
-  </span>
-<span class="headerbtn__text-container">.pdf</span>
-</button>
-
-      </li>
-      
-    </ul>
-  </div>
-</div>
-<label for="__page-toc"
-  class="headerbtn headerbtn-page-toc"
-  
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-list"></i>
-  </span>
-
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
 </label>
-
+</div></div>
+      
     </div>
+  
 </div>
-
-<!-- Table of contents -->
-<div class="col-md-3 bd-toc show noprint">
-    <div class="tocsection onthispage pt-5 pb-3">
-        <i class="fas fa-list"></i> Contents
-    </div>
-    <nav id="bd-toc-nav" aria-label="Page">
-        <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#what-is-cutff-pair-distance-in-phono3py">
-   What is cutff pair-distance in phono3py?
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#usage">
-   Usage
-  </a>
-  <ul class="nav section-nav flex-column">
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#creating-supercells-with-displacements">
-     Creating supercells with displacements
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#supercell-files">
-     Supercell files
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#special-phono3py-disp-yaml">
-     Special
-     <code class="docutils literal notranslate">
-      <span class="pre">
-       phono3py_disp.yaml
-      </span>
-     </code>
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#making-forces-fc3">
-     Making
-     <code class="docutils literal notranslate">
-      <span class="pre">
-       FORCES_FC3
-      </span>
-     </code>
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#running-phonon-phonon-interaction-calculation">
-     Running phonon-phonon interaction calculation
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#a-script-extract-supercell-ids-from-phono3py-disp-yaml">
-   A script extract supercell IDs from
-   <code class="docutils literal notranslate">
-    <span class="pre">
-     phono3py_disp.yaml
-    </span>
-   </code>
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#tests">
-   Tests
-  </a>
-  <ul class="nav section-nav flex-column">
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#si-pbe">
-     Si-PBE
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#aln-lda">
-     AlN-LDA
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#references">
-   References
-  </a>
- </li>
-</ul>
-
-    </nav>
 </div>
-    </div>
-    <div class="article row">
-        <div class="col pl-md-3 pl-lg-5 content-container">
-            <!-- Table of contents that is only displayed when printing the page -->
-            <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Force constants calculation with cutoff pair-distance</h1>
-                <!-- Table of contents -->
-                <div id="print-main-content">
-                    <div id="jb-print-toc">
-                        
-                        <div>
-                            <h2> Contents </h2>
-                        </div>
-                        <nav aria-label="Page">
-                            <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#what-is-cutff-pair-distance-in-phono3py">
-   What is cutff pair-distance in phono3py?
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#usage">
-   Usage
-  </a>
-  <ul class="nav section-nav flex-column">
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#creating-supercells-with-displacements">
-     Creating supercells with displacements
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#supercell-files">
-     Supercell files
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#special-phono3py-disp-yaml">
-     Special
-     <code class="docutils literal notranslate">
-      <span class="pre">
-       phono3py_disp.yaml
-      </span>
-     </code>
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#making-forces-fc3">
-     Making
-     <code class="docutils literal notranslate">
-      <span class="pre">
-       FORCES_FC3
-      </span>
-     </code>
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#running-phonon-phonon-interaction-calculation">
-     Running phonon-phonon interaction calculation
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#a-script-extract-supercell-ids-from-phono3py-disp-yaml">
-   A script extract supercell IDs from
-   <code class="docutils literal notranslate">
-    <span class="pre">
-     phono3py_disp.yaml
-    </span>
-   </code>
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#tests">
-   Tests
-  </a>
-  <ul class="nav section-nav flex-column">
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#si-pbe">
-     Si-PBE
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#aln-lda">
-     AlN-LDA
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#references">
-   References
-  </a>
- </li>
-</ul>
+              
+              
 
-                        </nav>
-                    </div>
-                </div>
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Force constants calculation with cutoff pair-distance</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
             </div>
-            <main id="main-content" role="main">
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-is-cutff-pair-distance-in-phono3py">What is cutff pair-distance in phono3py?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#creating-supercells-with-displacements">Creating supercells with displacements</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#supercell-files">Supercell files</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#special-phono3py-disp-yaml">Special <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#making-forces-fc3">Making <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-phonon-phonon-interaction-calculation">Running phonon-phonon interaction calculation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#a-script-extract-supercell-ids-from-phono3py-disp-yaml">A script extract supercell IDs from <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tests">Tests</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#si-pbe">Si-PBE</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#aln-lda">AlN-LDA</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
                 
-              <div>
-                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
   <section class="tex2jax_ignore mathjax_ignore" id="force-constants-calculation-with-cutoff-pair-distance">
-<span id="command-cutoff-pair"></span><h1>Force constants calculation with cutoff pair-distance<a class="headerlink" href="#force-constants-calculation-with-cutoff-pair-distance" title="Permalink to this headline">#</a></h1>
+<span id="command-cutoff-pair"></span><h1>Force constants calculation with cutoff pair-distance<a class="headerlink" href="#force-constants-calculation-with-cutoff-pair-distance" title="Permalink to this heading">#</a></h1>
 <p>Here the detail of the command option <a class="reference internal" href="command-options.html#cutoff-pair-option"><span class="std std-ref">–cutoff_pair</span></a>
 is explained. See also reference <span id="id1">[<a class="reference internal" href="#id5" title="Keiyu Mizokami, Atsushi Togo, and Isao Tanaka. Lattice thermal conductivities of two $\mathrm SiO_2$ polymorphs by first-principles calculations and the phonon boltzmann transport equation. Phys. Rev. B, 97:224306, Jun 2018. URL: https://link.aps.org/doi/10.1103/PhysRevB.97.224306, doi:10.1103/PhysRevB.97.224306.">1</a>]</span>.</p>
-<div class="contents local topic" id="contents">
+<nav class="contents local" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#what-is-cutff-pair-distance-in-phono3py" id="id6">What is cutff pair-distance in phono3py?</a></p></li>
 <li><p><a class="reference internal" href="#usage" id="id7">Usage</a></p>
@@ -545,9 +346,9 @@ is explained. See also reference <span id="id1">[<a class="reference internal" h
 </li>
 <li><p><a class="reference internal" href="#references" id="id17">References</a></p></li>
 </ul>
-</div>
+</nav>
 <section id="what-is-cutff-pair-distance-in-phono3py">
-<h2><a class="toc-backref" href="#id6">What is cutff pair-distance in phono3py?</a><a class="headerlink" href="#what-is-cutff-pair-distance-in-phono3py" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id6" role="doc-backlink">What is cutff pair-distance in phono3py?</a><a class="headerlink" href="#what-is-cutff-pair-distance-in-phono3py" title="Permalink to this heading">#</a></h2>
 <p>Using <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> option, number of supercells with
 displacements to be calculated is reduced. But of course this
 sacrifices the accuracy of third-order force constants (fc3).</p>
@@ -577,38 +378,38 @@ triplets are all larger than <span class="math notranslate nohighlight">\(d_\tex
 can not be obtained and so they are simply set zero.</p>
 </section>
 <section id="usage">
-<h2><a class="toc-backref" href="#id7">Usage</a><a class="headerlink" href="#usage" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id7" role="doc-backlink">Usage</a><a class="headerlink" href="#usage" title="Permalink to this heading">#</a></h2>
 <section id="creating-supercells-with-displacements">
-<h3><a class="toc-backref" href="#id8">Creating supercells with displacements</a><a class="headerlink" href="#creating-supercells-with-displacements" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id8" role="doc-backlink">Creating supercells with displacements</a><a class="headerlink" href="#creating-supercells-with-displacements" title="Permalink to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> option is employed when creating supercells with
 displacements, therefore this option must be used with <code class="docutils literal notranslate"><span class="pre">-d</span></code> option
 when running phono3py, for the Si-PBEsol example:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --cutoff-pair<span class="o">=</span><span class="m">5</span> -d --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> -c POSCAR-unitcell
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cutoff-pair<span class="o">=</span><span class="m">5</span><span class="w"> </span>-d<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell
 ...
 
-Unit cell was <span class="nb">read</span> from <span class="s2">&quot;POSCAR-unitcell&quot;</span>.
-Displacement distance: <span class="m">0</span>.03
-Number of displacements: <span class="m">111</span>
-Cutoff distance <span class="k">for</span> displacements: <span class="m">5</span>.0
-Number of displacement supercell files created: <span class="m">51</span>
+Unit<span class="w"> </span>cell<span class="w"> </span>was<span class="w"> </span><span class="nb">read</span><span class="w"> </span>from<span class="w"> </span><span class="s2">&quot;POSCAR-unitcell&quot;</span>.
+Displacement<span class="w"> </span>distance:<span class="w"> </span><span class="m">0</span>.03
+Number<span class="w"> </span>of<span class="w"> </span>displacements:<span class="w"> </span><span class="m">111</span>
+Cutoff<span class="w"> </span>distance<span class="w"> </span><span class="k">for</span><span class="w"> </span>displacements:<span class="w"> </span><span class="m">5</span>.0
+Number<span class="w"> </span>of<span class="w"> </span>displacement<span class="w"> </span>supercell<span class="w"> </span>files<span class="w"> </span>created:<span class="w"> </span><span class="m">51</span>
 
-Displacement dataset was written <span class="k">in</span> <span class="s2">&quot;phono3py_disp.yaml&quot;</span>.
+Displacement<span class="w"> </span>dataset<span class="w"> </span>was<span class="w"> </span>written<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s2">&quot;phono3py_disp.yaml&quot;</span>.
 ...
 
-% ls POSCAR-0*
-POSCAR-00001  POSCAR-00032  POSCAR-00043  POSCAR-00080  POSCAR-00097
-POSCAR-00002  POSCAR-00033  POSCAR-00070  POSCAR-00081  POSCAR-00098
-POSCAR-00003  POSCAR-00034  POSCAR-00071  POSCAR-00082  POSCAR-00099
-POSCAR-00016  POSCAR-00035  POSCAR-00072  POSCAR-00083  POSCAR-00100
-POSCAR-00017  POSCAR-00036  POSCAR-00073  POSCAR-00084  POSCAR-00101
-POSCAR-00018  POSCAR-00037  POSCAR-00074  POSCAR-00085  POSCAR-00102
-POSCAR-00019  POSCAR-00038  POSCAR-00075  POSCAR-00086  POSCAR-00103
-POSCAR-00024  POSCAR-00039  POSCAR-00076  POSCAR-00087
-POSCAR-00025  POSCAR-00040  POSCAR-00077  POSCAR-00088
-POSCAR-00026  POSCAR-00041  POSCAR-00078  POSCAR-00089
-POSCAR-00027  POSCAR-00042  POSCAR-00079  POSCAR-00096
-% ls POSCAR-0*<span class="p">|</span>wc -l
-      <span class="m">51</span>
+%<span class="w"> </span>ls<span class="w"> </span>POSCAR-0*
+POSCAR-00001<span class="w">  </span>POSCAR-00032<span class="w">  </span>POSCAR-00043<span class="w">  </span>POSCAR-00080<span class="w">  </span>POSCAR-00097
+POSCAR-00002<span class="w">  </span>POSCAR-00033<span class="w">  </span>POSCAR-00070<span class="w">  </span>POSCAR-00081<span class="w">  </span>POSCAR-00098
+POSCAR-00003<span class="w">  </span>POSCAR-00034<span class="w">  </span>POSCAR-00071<span class="w">  </span>POSCAR-00082<span class="w">  </span>POSCAR-00099
+POSCAR-00016<span class="w">  </span>POSCAR-00035<span class="w">  </span>POSCAR-00072<span class="w">  </span>POSCAR-00083<span class="w">  </span>POSCAR-00100
+POSCAR-00017<span class="w">  </span>POSCAR-00036<span class="w">  </span>POSCAR-00073<span class="w">  </span>POSCAR-00084<span class="w">  </span>POSCAR-00101
+POSCAR-00018<span class="w">  </span>POSCAR-00037<span class="w">  </span>POSCAR-00074<span class="w">  </span>POSCAR-00085<span class="w">  </span>POSCAR-00102
+POSCAR-00019<span class="w">  </span>POSCAR-00038<span class="w">  </span>POSCAR-00075<span class="w">  </span>POSCAR-00086<span class="w">  </span>POSCAR-00103
+POSCAR-00024<span class="w">  </span>POSCAR-00039<span class="w">  </span>POSCAR-00076<span class="w">  </span>POSCAR-00087
+POSCAR-00025<span class="w">  </span>POSCAR-00040<span class="w">  </span>POSCAR-00077<span class="w">  </span>POSCAR-00088
+POSCAR-00026<span class="w">  </span>POSCAR-00041<span class="w">  </span>POSCAR-00078<span class="w">  </span>POSCAR-00089
+POSCAR-00027<span class="w">  </span>POSCAR-00042<span class="w">  </span>POSCAR-00079<span class="w">  </span>POSCAR-00096
+%<span class="w"> </span>ls<span class="w"> </span>POSCAR-0*<span class="p">|</span>wc<span class="w"> </span>-l
+<span class="w">      </span><span class="m">51</span>
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">Number</span> <span class="pre">of</span> <span class="pre">displacements:</span> <span class="pre">111</span></code> shows the number of supercells with
@@ -621,7 +422,7 @@ contains information on this contraction and used in the other
 calculation step, therefore this file must be kept carefully.</p>
 </section>
 <section id="supercell-files">
-<h3><a class="toc-backref" href="#id9">Supercell files</a><a class="headerlink" href="#supercell-files" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">Supercell files</a><a class="headerlink" href="#supercell-files" title="Permalink to this heading">#</a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">POSCAR-xxxxx</span></code> (in the other calculator interface, the prefix of the
 filename is different) are not generated if distance between a pair of
 atoms to be displaced is larger than the specified cutoff pair
@@ -633,7 +434,7 @@ generated. The reason of this indexing is that it can be useful when
 changing the cutoff-pair-distance.</p>
 </section>
 <section id="special-phono3py-disp-yaml">
-<h3><a class="toc-backref" href="#id10">Special <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a><a class="headerlink" href="#special-phono3py-disp-yaml" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id10" role="doc-backlink">Special <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a><a class="headerlink" href="#special-phono3py-disp-yaml" title="Permalink to this heading">#</a></h3>
 <p>Using <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> option together with <code class="docutils literal notranslate"><span class="pre">-d</span></code> option, a special
 <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is created. This contains information on distances
 between displaced atomic-pairs and whether those pairs are to be
@@ -643,7 +444,7 @@ fc3, therefore be careful not to overwrite it by running the option
 with different value.</p>
 </section>
 <section id="making-forces-fc3">
-<h3><a class="toc-backref" href="#id11">Making <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a><a class="headerlink" href="#making-forces-fc3" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">Making <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a><a class="headerlink" href="#making-forces-fc3" title="Permalink to this heading">#</a></h3>
 <p>To create <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code>, only output files of the supercells created
 using <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> option are passed to <code class="docutils literal notranslate"><span class="pre">phono3py</span></code> as the
 arguments. The special <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> file is necessary to be
@@ -653,18 +454,18 @@ that forces are calculated using VASP in <code class="docutils literal notransla
 directories. After running force calculations, there should be the
 output file containing forces in each directory (for VASP
 <code class="docutils literal notranslate"><span class="pre">vasprun.xml</span></code>).</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --cf3 disp-<span class="o">{</span><span class="m">00001</span>,00002,00003,00016,00017,00018,00019,00024,00025,00026,00027,00032,00033,00034,00035,00036,00037,00038,00039,00040,00041,00042,00043,00070,00071,00072,00073,00074,00075,00076,00077,00078,00079,00080,00081,00082,00083,00084,00085,00086,00087,00088,00089,00096,00097,00098,00099,00100,00101,00102,00103<span class="o">}</span>/vasprun.xml
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--cf3<span class="w"> </span>disp-<span class="o">{</span><span class="m">00001</span>,00002,00003,00016,00017,00018,00019,00024,00025,00026,00027,00032,00033,00034,00035,00036,00037,00038,00039,00040,00041,00042,00043,00070,00071,00072,00073,00074,00075,00076,00077,00078,00079,00080,00081,00082,00083,00084,00085,00086,00087,00088,00089,00096,00097,00098,00099,00100,00101,00102,00103<span class="o">}</span>/vasprun.xml
 ...
 
-Displacement dataset is <span class="nb">read</span> from phono3py_disp.yaml.
-counter <span class="o">(</span>file index<span class="o">)</span>: <span class="m">1</span> <span class="m">2</span> <span class="m">3</span> <span class="m">4</span> <span class="m">5</span> <span class="m">6</span> <span class="m">7</span> <span class="m">8</span> <span class="m">9</span> <span class="m">10</span> <span class="m">11</span> <span class="m">12</span> <span class="m">13</span> <span class="m">14</span> <span class="m">15</span> <span class="m">16</span> <span class="m">17</span> <span class="m">18</span> <span class="m">19</span> <span class="m">20</span> <span class="m">21</span> <span class="m">22</span> <span class="m">23</span> <span class="m">24</span> <span class="m">25</span> <span class="m">26</span> <span class="m">27</span> <span class="m">28</span> <span class="m">29</span> <span class="m">30</span> <span class="m">31</span> <span class="m">32</span> <span class="m">33</span> <span class="m">34</span> <span class="m">35</span> <span class="m">36</span> <span class="m">37</span> <span class="m">38</span> <span class="m">39</span> <span class="m">40</span> <span class="m">41</span> <span class="m">42</span> <span class="m">43</span> <span class="m">44</span> <span class="m">45</span> <span class="m">46</span> <span class="m">47</span> <span class="m">48</span> <span class="m">49</span> <span class="m">50</span> <span class="m">51</span>
-FORCES_FC3 has been created.
+Displacement<span class="w"> </span>dataset<span class="w"> </span>is<span class="w"> </span><span class="nb">read</span><span class="w"> </span>from<span class="w"> </span>phono3py_disp.yaml.
+counter<span class="w"> </span><span class="o">(</span>file<span class="w"> </span>index<span class="o">)</span>:<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="m">6</span><span class="w"> </span><span class="m">7</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">9</span><span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">12</span><span class="w"> </span><span class="m">13</span><span class="w"> </span><span class="m">14</span><span class="w"> </span><span class="m">15</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="m">17</span><span class="w"> </span><span class="m">18</span><span class="w"> </span><span class="m">19</span><span class="w"> </span><span class="m">20</span><span class="w"> </span><span class="m">21</span><span class="w"> </span><span class="m">22</span><span class="w"> </span><span class="m">23</span><span class="w"> </span><span class="m">24</span><span class="w"> </span><span class="m">25</span><span class="w"> </span><span class="m">26</span><span class="w"> </span><span class="m">27</span><span class="w"> </span><span class="m">28</span><span class="w"> </span><span class="m">29</span><span class="w"> </span><span class="m">30</span><span class="w"> </span><span class="m">31</span><span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="m">33</span><span class="w"> </span><span class="m">34</span><span class="w"> </span><span class="m">35</span><span class="w"> </span><span class="m">36</span><span class="w"> </span><span class="m">37</span><span class="w"> </span><span class="m">38</span><span class="w"> </span><span class="m">39</span><span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="m">41</span><span class="w"> </span><span class="m">42</span><span class="w"> </span><span class="m">43</span><span class="w"> </span><span class="m">44</span><span class="w"> </span><span class="m">45</span><span class="w"> </span><span class="m">46</span><span class="w"> </span><span class="m">47</span><span class="w"> </span><span class="m">48</span><span class="w"> </span><span class="m">49</span><span class="w"> </span><span class="m">50</span><span class="w"> </span><span class="m">51</span>
+FORCES_FC3<span class="w"> </span>has<span class="w"> </span>been<span class="w"> </span>created.
 </pre></div>
 </div>
 <p>Using <a class="reference internal" href="command-options.html#cf3-file-option"><span class="std std-ref">–cf3-file option</span></a> may be recommended
 when the number of force files is large.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% <span class="k">for</span> i <span class="k">in</span> <span class="sb">`</span>ls POSCAR-0*<span class="p">|</span>sed s/POSCAR-//<span class="sb">`</span><span class="p">;</span><span class="k">do</span> <span class="nb">echo</span> disp-<span class="nv">$i</span>/vasprun.xml<span class="p">;</span><span class="k">done</span> &gt; file_list.dat
-% phono3py --cf3-file file_list.dat
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="sb">`</span>ls<span class="w"> </span>POSCAR-0*<span class="p">|</span>sed<span class="w"> </span>s/POSCAR-//<span class="sb">`</span><span class="p">;</span><span class="k">do</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span>disp-<span class="nv">$i</span>/vasprun.xml<span class="p">;</span><span class="k">done</span><span class="w"> </span>&gt;<span class="w"> </span>file_list.dat
+%<span class="w"> </span>phono3py<span class="w"> </span>--cf3-file<span class="w"> </span>file_list.dat
 </pre></div>
 </div>
 <p>Using a python script, <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is easily parsed. So
@@ -691,60 +492,60 @@ script:</p>
 </div>
 </section>
 <section id="running-phonon-phonon-interaction-calculation">
-<h3><a class="toc-backref" href="#id12">Running phonon-phonon interaction calculation</a><a class="headerlink" href="#running-phonon-phonon-interaction-calculation" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id12" role="doc-backlink">Running phonon-phonon interaction calculation</a><a class="headerlink" href="#running-phonon-phonon-interaction-calculation" title="Permalink to this heading">#</a></h3>
 <p>To create fc3, <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code> option is not necessary but the
 special <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> is required.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py
 ...
 
------------------------------ General settings -----------------------------
-Run mode: None
-HDF5 data compression filter: gzip
-Crystal structure was <span class="nb">read</span> from <span class="s2">&quot;phono3py_disp.yaml&quot;</span>.
-Supercell <span class="o">(</span>dim<span class="o">)</span>: <span class="o">[</span><span class="m">2</span> <span class="m">2</span> <span class="m">2</span><span class="o">]</span>
-Primitive matrix:
-  <span class="o">[</span><span class="m">0</span>.  <span class="m">0</span>.5 <span class="m">0</span>.5<span class="o">]</span>
-  <span class="o">[</span><span class="m">0</span>.5 <span class="m">0</span>.  <span class="m">0</span>.5<span class="o">]</span>
-  <span class="o">[</span><span class="m">0</span>.5 <span class="m">0</span>.5 <span class="m">0</span>. <span class="o">]</span>
-Spacegroup: Fd-3m <span class="o">(</span><span class="m">227</span><span class="o">)</span>
-Use -v option to watch primitive cell, unit cell, and supercell structures.
------------------------------ Force constants ------------------------------
-Imposing translational and index exchange symmetry to fc2: False
-Imposing translational and index exchange symmetry to fc3: False
-Imposing symmetry of index exchange to fc3 <span class="k">in</span> reciprocal space: False
-Displacement dataset <span class="k">for</span> fc3 was <span class="nb">read</span> from <span class="s2">&quot;phono3py_disp.yaml&quot;</span>.
-Sets of supercell forces were <span class="nb">read</span> from <span class="s2">&quot;FORCES_FC3&quot;</span>.
-Computing fc3<span class="o">[</span> <span class="m">1</span>, x, x <span class="o">]</span> using numpy.linalg.pinv with a displacement:
-    <span class="o">[</span> <span class="m">0</span>.0300  <span class="m">0</span>.0000  <span class="m">0</span>.0000<span class="o">]</span>
-Expanding fc3.
-Cutting-off fc3 <span class="o">(</span>cut-off distance: <span class="m">5</span>.000000<span class="o">)</span>
-Building atom mapping table...
-Creating contracted fc3...
-Writing fc3 to <span class="s2">&quot;fc3.hdf5&quot;</span>.
-Max drift of fc3: <span class="m">0</span>.047748 <span class="o">(</span>yxz<span class="o">)</span> <span class="m">0</span>.047748 <span class="o">(</span>xyz<span class="o">)</span> <span class="m">0</span>.047748 <span class="o">(</span>xzy<span class="o">)</span>
-Displacement dataset <span class="k">for</span> fc2 was <span class="nb">read</span> from <span class="s2">&quot;phono3py_disp.yaml&quot;</span>.
-Sets of supercell forces were <span class="nb">read</span> from <span class="s2">&quot;FORCES_FC3&quot;</span>.
-Writing fc2 to <span class="s2">&quot;fc2.hdf5&quot;</span>.
-Max drift of fc2: -0.000001 <span class="o">(</span>zz<span class="o">)</span> -0.000001 <span class="o">(</span>zz<span class="o">)</span>
------------ None of ph-ph interaction calculation was performed. -----------
+-----------------------------<span class="w"> </span>General<span class="w"> </span>settings<span class="w"> </span>-----------------------------
+Run<span class="w"> </span>mode:<span class="w"> </span>None
+HDF5<span class="w"> </span>data<span class="w"> </span>compression<span class="w"> </span>filter:<span class="w"> </span>gzip
+Crystal<span class="w"> </span>structure<span class="w"> </span>was<span class="w"> </span><span class="nb">read</span><span class="w"> </span>from<span class="w"> </span><span class="s2">&quot;phono3py_disp.yaml&quot;</span>.
+Supercell<span class="w"> </span><span class="o">(</span>dim<span class="o">)</span>:<span class="w"> </span><span class="o">[</span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="o">]</span>
+Primitive<span class="w"> </span>matrix:
+<span class="w">  </span><span class="o">[</span><span class="m">0</span>.<span class="w">  </span><span class="m">0</span>.5<span class="w"> </span><span class="m">0</span>.5<span class="o">]</span>
+<span class="w">  </span><span class="o">[</span><span class="m">0</span>.5<span class="w"> </span><span class="m">0</span>.<span class="w">  </span><span class="m">0</span>.5<span class="o">]</span>
+<span class="w">  </span><span class="o">[</span><span class="m">0</span>.5<span class="w"> </span><span class="m">0</span>.5<span class="w"> </span><span class="m">0</span>.<span class="w"> </span><span class="o">]</span>
+Spacegroup:<span class="w"> </span>Fd-3m<span class="w"> </span><span class="o">(</span><span class="m">227</span><span class="o">)</span>
+Use<span class="w"> </span>-v<span class="w"> </span>option<span class="w"> </span>to<span class="w"> </span>watch<span class="w"> </span>primitive<span class="w"> </span>cell,<span class="w"> </span>unit<span class="w"> </span>cell,<span class="w"> </span>and<span class="w"> </span>supercell<span class="w"> </span>structures.
+-----------------------------<span class="w"> </span>Force<span class="w"> </span>constants<span class="w"> </span>------------------------------
+Imposing<span class="w"> </span>translational<span class="w"> </span>and<span class="w"> </span>index<span class="w"> </span>exchange<span class="w"> </span>symmetry<span class="w"> </span>to<span class="w"> </span>fc2:<span class="w"> </span>False
+Imposing<span class="w"> </span>translational<span class="w"> </span>and<span class="w"> </span>index<span class="w"> </span>exchange<span class="w"> </span>symmetry<span class="w"> </span>to<span class="w"> </span>fc3:<span class="w"> </span>False
+Imposing<span class="w"> </span>symmetry<span class="w"> </span>of<span class="w"> </span>index<span class="w"> </span>exchange<span class="w"> </span>to<span class="w"> </span>fc3<span class="w"> </span><span class="k">in</span><span class="w"> </span>reciprocal<span class="w"> </span>space:<span class="w"> </span>False
+Displacement<span class="w"> </span>dataset<span class="w"> </span><span class="k">for</span><span class="w"> </span>fc3<span class="w"> </span>was<span class="w"> </span><span class="nb">read</span><span class="w"> </span>from<span class="w"> </span><span class="s2">&quot;phono3py_disp.yaml&quot;</span>.
+Sets<span class="w"> </span>of<span class="w"> </span>supercell<span class="w"> </span>forces<span class="w"> </span>were<span class="w"> </span><span class="nb">read</span><span class="w"> </span>from<span class="w"> </span><span class="s2">&quot;FORCES_FC3&quot;</span>.
+Computing<span class="w"> </span>fc3<span class="o">[</span><span class="w"> </span><span class="m">1</span>,<span class="w"> </span>x,<span class="w"> </span>x<span class="w"> </span><span class="o">]</span><span class="w"> </span>using<span class="w"> </span>numpy.linalg.pinv<span class="w"> </span>with<span class="w"> </span>a<span class="w"> </span>displacement:
+<span class="w">    </span><span class="o">[</span><span class="w"> </span><span class="m">0</span>.0300<span class="w">  </span><span class="m">0</span>.0000<span class="w">  </span><span class="m">0</span>.0000<span class="o">]</span>
+Expanding<span class="w"> </span>fc3.
+Cutting-off<span class="w"> </span>fc3<span class="w"> </span><span class="o">(</span>cut-off<span class="w"> </span>distance:<span class="w"> </span><span class="m">5</span>.000000<span class="o">)</span>
+Building<span class="w"> </span>atom<span class="w"> </span>mapping<span class="w"> </span>table...
+Creating<span class="w"> </span>contracted<span class="w"> </span>fc3...
+Writing<span class="w"> </span>fc3<span class="w"> </span>to<span class="w"> </span><span class="s2">&quot;fc3.hdf5&quot;</span>.
+Max<span class="w"> </span>drift<span class="w"> </span>of<span class="w"> </span>fc3:<span class="w"> </span><span class="m">0</span>.047748<span class="w"> </span><span class="o">(</span>yxz<span class="o">)</span><span class="w"> </span><span class="m">0</span>.047748<span class="w"> </span><span class="o">(</span>xyz<span class="o">)</span><span class="w"> </span><span class="m">0</span>.047748<span class="w"> </span><span class="o">(</span>xzy<span class="o">)</span>
+Displacement<span class="w"> </span>dataset<span class="w"> </span><span class="k">for</span><span class="w"> </span>fc2<span class="w"> </span>was<span class="w"> </span><span class="nb">read</span><span class="w"> </span>from<span class="w"> </span><span class="s2">&quot;phono3py_disp.yaml&quot;</span>.
+Sets<span class="w"> </span>of<span class="w"> </span>supercell<span class="w"> </span>forces<span class="w"> </span>were<span class="w"> </span><span class="nb">read</span><span class="w"> </span>from<span class="w"> </span><span class="s2">&quot;FORCES_FC3&quot;</span>.
+Writing<span class="w"> </span>fc2<span class="w"> </span>to<span class="w"> </span><span class="s2">&quot;fc2.hdf5&quot;</span>.
+Max<span class="w"> </span>drift<span class="w"> </span>of<span class="w"> </span>fc2:<span class="w"> </span>-0.000001<span class="w"> </span><span class="o">(</span>zz<span class="o">)</span><span class="w"> </span>-0.000001<span class="w"> </span><span class="o">(</span>zz<span class="o">)</span>
+-----------<span class="w"> </span>None<span class="w"> </span>of<span class="w"> </span>ph-ph<span class="w"> </span>interaction<span class="w"> </span>calculation<span class="w"> </span>was<span class="w"> </span>performed.<span class="w"> </span>-----------
 
-Summary of calculation was written <span class="k">in</span> <span class="s2">&quot;phono3py.yaml&quot;</span>.
+Summary<span class="w"> </span>of<span class="w"> </span>calculation<span class="w"> </span>was<span class="w"> </span>written<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s2">&quot;phono3py.yaml&quot;</span>.
 ...
 </pre></div>
 </div>
 <p>Once <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> are created, <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code>
 option and the special <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> are not needed anymore.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --mesh<span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> --fc3 --fc2 --br
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span><span class="w"> </span>--fc3<span class="w"> </span>--fc2<span class="w"> </span>--br
 ...
 
-  <span class="m">300</span>.0     <span class="m">108</span>.051    <span class="m">108</span>.051    <span class="m">108</span>.051      <span class="m">0</span>.000      <span class="m">0</span>.000     -0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">108</span>.051<span class="w">    </span><span class="m">108</span>.051<span class="w">    </span><span class="m">108</span>.051<span class="w">      </span><span class="m">0</span>.000<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000
 ...
 </pre></div>
 </div>
 </section>
 </section>
 <section id="a-script-extract-supercell-ids-from-phono3py-disp-yaml">
-<h2><a class="toc-backref" href="#id13">A script extract supercell IDs from <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a><a class="headerlink" href="#a-script-extract-supercell-ids-from-phono3py-disp-yaml" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id13" role="doc-backlink">A script extract supercell IDs from <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a><a class="headerlink" href="#a-script-extract-supercell-ids-from-phono3py-disp-yaml" title="Permalink to this heading">#</a></h2>
 <p>The following script is an example to collect supercell IDs
 with the cutoff-pair distance, for which <code class="docutils literal notranslate"><span class="pre">included:</span> <span class="pre">true</span></code> is used
 to hook them. <code class="docutils literal notranslate"><span class="pre">duplicates</span></code> in <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> gives the pairs of
@@ -789,14 +590,14 @@ to consider.</p>
 above for <code class="docutils literal notranslate"><span class="pre">--cutoff-pair=&quot;5.0&quot;</span></code>.</p>
 </section>
 <section id="tests">
-<h2><a class="toc-backref" href="#id14">Tests</a><a class="headerlink" href="#tests" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id14" role="doc-backlink">Tests</a><a class="headerlink" href="#tests" title="Permalink to this heading">#</a></h2>
 <section id="si-pbe">
-<h3><a class="toc-backref" href="#id15">Si-PBE</a><a class="headerlink" href="#si-pbe" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id15" role="doc-backlink">Si-PBE</a><a class="headerlink" href="#si-pbe" title="Permalink to this heading">#</a></h3>
 <p>For testing, thermal conductivities with respect to <code class="docutils literal notranslate"><span class="pre">--cutoff-pair</span></code>
 values are calculated as follows. Note that if <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> for full
 fc3 elements exists, the same <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> file can be used for
 generating contracted fc3 for each special <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% egrep <span class="s1">&#39;^\s+pair_distance&#39;</span> phono3py_disp.yaml<span class="p">|</span>awk <span class="s1">&#39;{print $2}&#39;</span><span class="p">|</span>sort<span class="p">|</span>uniq
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>egrep<span class="w"> </span><span class="s1">&#39;^\s+pair_distance&#39;</span><span class="w"> </span>phono3py_disp.yaml<span class="p">|</span>awk<span class="w"> </span><span class="s1">&#39;{print $2}&#39;</span><span class="p">|</span>sort<span class="p">|</span>uniq
 <span class="m">0</span>.000000
 <span class="m">2</span>.366961
 <span class="m">3</span>.865232
@@ -807,52 +608,52 @@ generating contracted fc3 for each special <code class="docutils literal notrans
 <span class="m">7</span>.100884
 <span class="m">7</span>.730463
 <span class="m">9</span>.467845
-% cp phono3py_disp.yaml phono3py_disp.orig.yaml
-% <span class="k">for</span> i <span class="k">in</span> <span class="o">{</span><span class="m">2</span>..10<span class="o">}</span><span class="p">;</span><span class="k">do</span> <span class="nv">d</span><span class="o">=</span><span class="sb">`</span>grep pair_distance phono3py_disp.orig.yaml<span class="p">|</span>awk <span class="s1">&#39;{print $2}&#39;</span><span class="p">|</span>sort<span class="p">|</span>uniq<span class="p">|</span>sed <span class="s2">&quot;</span><span class="si">${</span><span class="nv">i</span><span class="si">}</span><span class="s2">q;d&quot;</span><span class="sb">`</span><span class="p">;</span> <span class="nv">d</span><span class="o">=</span><span class="k">$((</span>d+0.1<span class="k">))</span><span class="p">;</span> phono3py --cutoff-pair<span class="o">=</span><span class="nv">$d</span> -o <span class="nv">$i</span> -d --pa<span class="o">=</span><span class="s2">&quot;F&quot;</span> --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> -c POSCAR-unitcell<span class="p">;</span> mv phono3py_disp.yaml phono3py_disp.<span class="nv">$i</span>.yaml<span class="p">;</span> <span class="k">done</span>
-% ls phono3py_disp.*.yaml
-% ls phono3py_disp.*.yaml
-phono3py_disp.10.yaml  phono3py_disp.5.yaml  phono3py_disp.9.yaml
-phono3py_disp.2.yaml   phono3py_disp.6.yaml  phono3py_disp.orig.yaml
-phono3py_disp.3.yaml   phono3py_disp.7.yaml
-phono3py_disp.4.yaml   phono3py_disp.8.yaml
-% <span class="k">for</span> i <span class="k">in</span> <span class="o">{</span><span class="m">2</span>..10<span class="o">}</span><span class="p">;</span><span class="k">do</span> grep number_of_pairs_in_cutoff phono3py_disp.<span class="nv">$i</span>.yaml<span class="p">;</span><span class="k">done</span>
-number_of_pairs_in_cutoff: <span class="m">10</span>
-number_of_pairs_in_cutoff: <span class="m">30</span>
-number_of_pairs_in_cutoff: <span class="m">50</span>
-number_of_pairs_in_cutoff: <span class="m">55</span>
-number_of_pairs_in_cutoff: <span class="m">75</span>
-number_of_pairs_in_cutoff: <span class="m">95</span>
-number_of_pairs_in_cutoff: <span class="m">103</span>
-number_of_pairs_in_cutoff: <span class="m">108</span>
-number_of_pairs_in_cutoff: <span class="m">110</span>
-% <span class="k">for</span> i <span class="k">in</span> <span class="o">{</span><span class="m">2</span>..10<span class="o">}</span><span class="p">;</span><span class="k">do</span> cp phono3py_disp.<span class="nv">$i</span>.yaml phono3py_disp.yaml<span class="p">;</span> phono3py --mesh<span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> --br<span class="p">|</span>tee std.<span class="nv">$i</span>.out<span class="p">;</span><span class="k">done</span>
-% <span class="k">for</span> i <span class="k">in</span> <span class="o">{</span><span class="m">2</span>..10<span class="o">}</span><span class="p">;</span><span class="k">do</span> egrep <span class="s1">&#39;^\s+300&#39;</span> std.<span class="nv">$i</span>.out<span class="p">;</span><span class="k">done</span>
-  <span class="m">300</span>.0     <span class="m">123</span>.606    <span class="m">123</span>.606    <span class="m">123</span>.606     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">118</span>.617    <span class="m">118</span>.617    <span class="m">118</span>.617     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">118</span>.818    <span class="m">118</span>.818    <span class="m">118</span>.818     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">118</span>.879    <span class="m">118</span>.879    <span class="m">118</span>.879     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">119</span>.468    <span class="m">119</span>.468    <span class="m">119</span>.468     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">119</span>.489    <span class="m">119</span>.489    <span class="m">119</span>.489     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">119</span>.501    <span class="m">119</span>.501    <span class="m">119</span>.501     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">119</span>.483    <span class="m">119</span>.483    <span class="m">119</span>.483     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">119</span>.481    <span class="m">119</span>.481    <span class="m">119</span>.481     -0.000     -0.000      <span class="m">0</span>.000
-% <span class="k">for</span> i <span class="k">in</span> <span class="o">{</span><span class="m">2</span>..10<span class="o">}</span><span class="p">;</span><span class="k">do</span> cp phono3py_disp.<span class="nv">$i</span>.yaml phono3py_disp.yaml<span class="p">;</span> phono3py --sym-fc --mesh<span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> --br<span class="p">|</span>tee std.sym-<span class="nv">$i</span>.out<span class="p">;</span><span class="k">done</span>
-% <span class="k">for</span> i <span class="k">in</span> <span class="o">{</span><span class="m">2</span>..10<span class="o">}</span><span class="p">;</span><span class="k">do</span> egrep <span class="s1">&#39;^\s+300&#39;</span> std.sym-<span class="nv">$i</span>.out<span class="p">;</span><span class="k">done</span>
-  <span class="m">300</span>.0     <span class="m">124</span>.650    <span class="m">124</span>.650    <span class="m">124</span>.650     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">119</span>.765    <span class="m">119</span>.765    <span class="m">119</span>.765     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">118</span>.847    <span class="m">118</span>.847    <span class="m">118</span>.847     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">118</span>.782    <span class="m">118</span>.782    <span class="m">118</span>.782     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">119</span>.471    <span class="m">119</span>.471    <span class="m">119</span>.471     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">119</span>.366    <span class="m">119</span>.366    <span class="m">119</span>.366     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">119</span>.350    <span class="m">119</span>.350    <span class="m">119</span>.350     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">119</span>.339    <span class="m">119</span>.339    <span class="m">119</span>.339     -0.000     -0.000      <span class="m">0</span>.000
-  <span class="m">300</span>.0     <span class="m">119</span>.337    <span class="m">119</span>.337    <span class="m">119</span>.337     -0.000     -0.000      <span class="m">0</span>.000
+%<span class="w"> </span>cp<span class="w"> </span>phono3py_disp.yaml<span class="w"> </span>phono3py_disp.orig.yaml
+%<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">2</span>..10<span class="o">}</span><span class="p">;</span><span class="k">do</span><span class="w"> </span><span class="nv">d</span><span class="o">=</span><span class="sb">`</span>grep<span class="w"> </span>pair_distance<span class="w"> </span>phono3py_disp.orig.yaml<span class="p">|</span>awk<span class="w"> </span><span class="s1">&#39;{print $2}&#39;</span><span class="p">|</span>sort<span class="p">|</span>uniq<span class="p">|</span>sed<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">i</span><span class="si">}</span><span class="s2">q;d&quot;</span><span class="sb">`</span><span class="p">;</span><span class="w"> </span><span class="nv">d</span><span class="o">=</span><span class="k">$((</span><span class="nv">d</span><span class="o">+</span><span class="m">0</span>.1<span class="k">))</span><span class="p">;</span><span class="w"> </span>phono3py<span class="w"> </span>--cutoff-pair<span class="o">=</span><span class="nv">$d</span><span class="w"> </span>-o<span class="w"> </span><span class="nv">$i</span><span class="w"> </span>-d<span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="p">;</span><span class="w"> </span>mv<span class="w"> </span>phono3py_disp.yaml<span class="w"> </span>phono3py_disp.<span class="nv">$i</span>.yaml<span class="p">;</span><span class="w"> </span><span class="k">done</span>
+%<span class="w"> </span>ls<span class="w"> </span>phono3py_disp.*.yaml
+%<span class="w"> </span>ls<span class="w"> </span>phono3py_disp.*.yaml
+phono3py_disp.10.yaml<span class="w">  </span>phono3py_disp.5.yaml<span class="w">  </span>phono3py_disp.9.yaml
+phono3py_disp.2.yaml<span class="w">   </span>phono3py_disp.6.yaml<span class="w">  </span>phono3py_disp.orig.yaml
+phono3py_disp.3.yaml<span class="w">   </span>phono3py_disp.7.yaml
+phono3py_disp.4.yaml<span class="w">   </span>phono3py_disp.8.yaml
+%<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">2</span>..10<span class="o">}</span><span class="p">;</span><span class="k">do</span><span class="w"> </span>grep<span class="w"> </span>number_of_pairs_in_cutoff<span class="w"> </span>phono3py_disp.<span class="nv">$i</span>.yaml<span class="p">;</span><span class="k">done</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">10</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">30</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">50</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">55</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">75</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">95</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">103</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">108</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">110</span>
+%<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">2</span>..10<span class="o">}</span><span class="p">;</span><span class="k">do</span><span class="w"> </span>cp<span class="w"> </span>phono3py_disp.<span class="nv">$i</span>.yaml<span class="w"> </span>phono3py_disp.yaml<span class="p">;</span><span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span><span class="w"> </span>--br<span class="p">|</span>tee<span class="w"> </span>std.<span class="nv">$i</span>.out<span class="p">;</span><span class="k">done</span>
+%<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">2</span>..10<span class="o">}</span><span class="p">;</span><span class="k">do</span><span class="w"> </span>egrep<span class="w"> </span><span class="s1">&#39;^\s+300&#39;</span><span class="w"> </span>std.<span class="nv">$i</span>.out<span class="p">;</span><span class="k">done</span>
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">123</span>.606<span class="w">    </span><span class="m">123</span>.606<span class="w">    </span><span class="m">123</span>.606<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">118</span>.617<span class="w">    </span><span class="m">118</span>.617<span class="w">    </span><span class="m">118</span>.617<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">118</span>.818<span class="w">    </span><span class="m">118</span>.818<span class="w">    </span><span class="m">118</span>.818<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">118</span>.879<span class="w">    </span><span class="m">118</span>.879<span class="w">    </span><span class="m">118</span>.879<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">119</span>.468<span class="w">    </span><span class="m">119</span>.468<span class="w">    </span><span class="m">119</span>.468<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">119</span>.489<span class="w">    </span><span class="m">119</span>.489<span class="w">    </span><span class="m">119</span>.489<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">119</span>.501<span class="w">    </span><span class="m">119</span>.501<span class="w">    </span><span class="m">119</span>.501<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">119</span>.483<span class="w">    </span><span class="m">119</span>.483<span class="w">    </span><span class="m">119</span>.483<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">119</span>.481<span class="w">    </span><span class="m">119</span>.481<span class="w">    </span><span class="m">119</span>.481<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+%<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">2</span>..10<span class="o">}</span><span class="p">;</span><span class="k">do</span><span class="w"> </span>cp<span class="w"> </span>phono3py_disp.<span class="nv">$i</span>.yaml<span class="w"> </span>phono3py_disp.yaml<span class="p">;</span><span class="w"> </span>phono3py<span class="w"> </span>--sym-fc<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span><span class="w"> </span>--br<span class="p">|</span>tee<span class="w"> </span>std.sym-<span class="nv">$i</span>.out<span class="p">;</span><span class="k">done</span>
+%<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">2</span>..10<span class="o">}</span><span class="p">;</span><span class="k">do</span><span class="w"> </span>egrep<span class="w"> </span><span class="s1">&#39;^\s+300&#39;</span><span class="w"> </span>std.sym-<span class="nv">$i</span>.out<span class="p">;</span><span class="k">done</span>
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">124</span>.650<span class="w">    </span><span class="m">124</span>.650<span class="w">    </span><span class="m">124</span>.650<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">119</span>.765<span class="w">    </span><span class="m">119</span>.765<span class="w">    </span><span class="m">119</span>.765<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">118</span>.847<span class="w">    </span><span class="m">118</span>.847<span class="w">    </span><span class="m">118</span>.847<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">118</span>.782<span class="w">    </span><span class="m">118</span>.782<span class="w">    </span><span class="m">118</span>.782<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">119</span>.471<span class="w">    </span><span class="m">119</span>.471<span class="w">    </span><span class="m">119</span>.471<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">119</span>.366<span class="w">    </span><span class="m">119</span>.366<span class="w">    </span><span class="m">119</span>.366<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">119</span>.350<span class="w">    </span><span class="m">119</span>.350<span class="w">    </span><span class="m">119</span>.350<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">119</span>.339<span class="w">    </span><span class="m">119</span>.339<span class="w">    </span><span class="m">119</span>.339<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">119</span>.337<span class="w">    </span><span class="m">119</span>.337<span class="w">    </span><span class="m">119</span>.337<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">      </span><span class="m">0</span>.000
 </pre></div>
 </div>
 </section>
 <section id="aln-lda">
-<h3><a class="toc-backref" href="#id16">AlN-LDA</a><a class="headerlink" href="#aln-lda" title="Permalink to this headline">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% egrep <span class="s1">&#39;^\s+pair_distance&#39;</span> phono3py_disp.yaml<span class="p">|</span>awk <span class="s1">&#39;{print $2}&#39;</span><span class="p">|</span>sort<span class="p">|</span>uniq
+<h3><a class="toc-backref" href="#id16" role="doc-backlink">AlN-LDA</a><a class="headerlink" href="#aln-lda" title="Permalink to this heading">#</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>egrep<span class="w"> </span><span class="s1">&#39;^\s+pair_distance&#39;</span><span class="w"> </span>phono3py_disp.yaml<span class="p">|</span>awk<span class="w"> </span><span class="s1">&#39;{print $2}&#39;</span><span class="p">|</span>sort<span class="p">|</span>uniq
 <span class="m">0</span>.000000
 <span class="m">1</span>.889907
 <span class="m">1</span>.901086
@@ -875,132 +676,200 @@ number_of_pairs_in_cutoff: <span class="m">110</span>
 <span class="m">6</span>.205027
 <span class="m">6</span>.469591
 <span class="m">7</span>.335901
-% cp phono3py_disp.yaml phono3py_disp.orig.yaml
-% <span class="k">for</span> i <span class="k">in</span> <span class="o">{</span><span class="m">2</span>..21<span class="o">}</span><span class="p">;</span><span class="k">do</span> <span class="nv">d</span><span class="o">=</span><span class="sb">`</span>grep pair_distance phono3py_disp.orig.yaml<span class="p">|</span>awk <span class="s1">&#39;{print $2}&#39;</span><span class="p">|</span>sort<span class="p">|</span>uniq<span class="p">|</span>sed <span class="s2">&quot;</span><span class="si">${</span><span class="nv">i</span><span class="si">}</span><span class="s2">q;d&quot;</span><span class="sb">`</span><span class="p">;</span> <span class="nv">d</span><span class="o">=</span><span class="k">$((</span>d+0.0001<span class="k">))</span><span class="p">;</span> phono3py --cutoff-pair<span class="o">=</span><span class="nv">$d</span> -o <span class="nv">$i</span> -d --dim<span class="o">=</span><span class="s2">&quot;3 3 2&quot;</span> -c POSCAR-unitcell<span class="p">;</span> mv phono3py_disp.yaml phono3py_disp.<span class="nv">$i</span>.yaml<span class="p">;</span> <span class="k">done</span>
-% <span class="k">for</span> i <span class="k">in</span> <span class="o">{</span><span class="m">2</span>..21<span class="o">}</span><span class="p">;</span><span class="k">do</span> grep number_of_pairs_in_cutoff phono3py_disp.<span class="nv">$i</span>.yaml<span class="p">;</span><span class="k">done</span>
-number_of_pairs_in_cutoff: <span class="m">72</span>
-number_of_pairs_in_cutoff: <span class="m">92</span>
-number_of_pairs_in_cutoff: <span class="m">196</span>
-number_of_pairs_in_cutoff: <span class="m">216</span>
-number_of_pairs_in_cutoff: <span class="m">312</span>
-number_of_pairs_in_cutoff: <span class="m">364</span>
-number_of_pairs_in_cutoff: <span class="m">460</span>
-number_of_pairs_in_cutoff: <span class="m">564</span>
-number_of_pairs_in_cutoff: <span class="m">660</span>
-number_of_pairs_in_cutoff: <span class="m">712</span>
-number_of_pairs_in_cutoff: <span class="m">764</span>
-number_of_pairs_in_cutoff: <span class="m">784</span>
-number_of_pairs_in_cutoff: <span class="m">888</span>
-number_of_pairs_in_cutoff: <span class="m">928</span>
-number_of_pairs_in_cutoff: <span class="m">980</span>
-number_of_pairs_in_cutoff: <span class="m">1020</span>
-number_of_pairs_in_cutoff: <span class="m">1116</span>
-number_of_pairs_in_cutoff: <span class="m">1156</span>
-number_of_pairs_in_cutoff: <span class="m">1208</span>
-number_of_pairs_in_cutoff: <span class="m">1248</span>
-% <span class="k">for</span> i <span class="k">in</span> <span class="o">{</span><span class="m">2</span>..21<span class="o">}</span><span class="p">;</span><span class="k">do</span> cp phono3py_disp.<span class="nv">$i</span>.yaml phono3py_disp.yaml<span class="p">;</span> phono3py --mesh<span class="o">=</span><span class="s2">&quot;13 13 9&quot;</span> --br --nac --io <span class="nv">$i</span><span class="p">|</span>tee std.<span class="nv">$i</span>.out<span class="p">;</span> <span class="k">done</span>
-% <span class="k">for</span> i <span class="k">in</span> <span class="o">{</span><span class="m">2</span>..21<span class="o">}</span><span class="p">;</span><span class="k">do</span> egrep <span class="s1">&#39;^\s+300\.0&#39;</span> std.<span class="nv">$i</span>.out<span class="p">;</span><span class="k">done</span>
-  <span class="m">300</span>.0     <span class="m">205</span>.550    <span class="m">205</span>.550    <span class="m">193</span>.665     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">218</span>.963    <span class="m">218</span>.963    <span class="m">204</span>.942     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">213</span>.624    <span class="m">213</span>.624    <span class="m">193</span>.863     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">219</span>.932    <span class="m">219</span>.932    <span class="m">199</span>.819     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.516    <span class="m">235</span>.516    <span class="m">218</span>.843     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">234</span>.750    <span class="m">234</span>.750    <span class="m">217</span>.384     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">234</span>.355    <span class="m">234</span>.355    <span class="m">218</span>.030     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.381    <span class="m">235</span>.381    <span class="m">218</span>.609     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.996    <span class="m">235</span>.996    <span class="m">219</span>.785     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">236</span>.220    <span class="m">236</span>.220    <span class="m">219</span>.867     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">236</span>.161    <span class="m">236</span>.161    <span class="m">219</span>.298     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">236</span>.096    <span class="m">236</span>.096    <span class="m">219</span>.313     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">234</span>.602    <span class="m">234</span>.602    <span class="m">217</span>.064     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.914    <span class="m">235</span>.914    <span class="m">218</span>.689     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.049    <span class="m">235</span>.049    <span class="m">217</span>.935     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.877    <span class="m">235</span>.877    <span class="m">219</span>.065     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">236</span>.133    <span class="m">236</span>.133    <span class="m">219</span>.364     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">236</span>.207    <span class="m">236</span>.207    <span class="m">219</span>.595     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">236</span>.035    <span class="m">236</span>.035    <span class="m">219</span>.463     -0.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">236</span>.104    <span class="m">236</span>.104    <span class="m">219</span>.348     -0.000     -0.000     -0.000
-% <span class="k">for</span> i <span class="k">in</span> <span class="o">{</span><span class="m">2</span>..21<span class="o">}</span><span class="p">;</span><span class="k">do</span> cp phono3py_disp.<span class="nv">$i</span>.yaml phono3py_disp.yaml<span class="p">;</span> phono3py --mesh<span class="o">=</span><span class="s2">&quot;13 13 9&quot;</span> --br --nac --io <span class="nv">$i</span><span class="p">|</span>tee std.<span class="nv">$i</span>.out<span class="p">;</span> <span class="k">done</span><span class="p">|</span>tee std.sym-<span class="nv">$i</span>.out<span class="p">;</span> <span class="k">done</span>
-% <span class="k">for</span> i <span class="k">in</span> <span class="o">{</span><span class="m">2</span>..21<span class="o">}</span><span class="p">;</span><span class="k">do</span> egrep <span class="s1">&#39;^\s+300\.0&#39;</span> std.sym-<span class="nv">$i</span>.out<span class="p">;</span><span class="k">done</span>
-  <span class="m">300</span>.0     <span class="m">232</span>.964    <span class="m">232</span>.964    <span class="m">216</span>.333      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.442    <span class="m">235</span>.442    <span class="m">219</span>.602      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.521    <span class="m">235</span>.521    <span class="m">217</span>.767      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.581    <span class="m">235</span>.581    <span class="m">217</span>.687      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">236</span>.837    <span class="m">236</span>.837    <span class="m">219</span>.933      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">236</span>.020    <span class="m">236</span>.020    <span class="m">219</span>.324      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.482    <span class="m">235</span>.482    <span class="m">218</span>.633      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">236</span>.313    <span class="m">236</span>.313    <span class="m">219</span>.677      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">236</span>.308    <span class="m">236</span>.308    <span class="m">219</span>.955      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">236</span>.074    <span class="m">236</span>.074    <span class="m">219</span>.882      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.520    <span class="m">235</span>.520    <span class="m">219</span>.450      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.769    <span class="m">235</span>.769    <span class="m">219</span>.562      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.441    <span class="m">235</span>.441    <span class="m">219</span>.168      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.892    <span class="m">235</span>.892    <span class="m">219</span>.590      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.509    <span class="m">235</span>.509    <span class="m">219</span>.167      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.646    <span class="m">235</span>.646    <span class="m">219</span>.521      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.783    <span class="m">235</span>.783    <span class="m">219</span>.311      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.887    <span class="m">235</span>.887    <span class="m">219</span>.301      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.642    <span class="m">235</span>.642    <span class="m">219</span>.348      <span class="m">0</span>.000     -0.000     -0.000
-  <span class="m">300</span>.0     <span class="m">235</span>.728    <span class="m">235</span>.728    <span class="m">219</span>.102      <span class="m">0</span>.000     -0.000     -0.000
+%<span class="w"> </span>cp<span class="w"> </span>phono3py_disp.yaml<span class="w"> </span>phono3py_disp.orig.yaml
+%<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">2</span>..21<span class="o">}</span><span class="p">;</span><span class="k">do</span><span class="w"> </span><span class="nv">d</span><span class="o">=</span><span class="sb">`</span>grep<span class="w"> </span>pair_distance<span class="w"> </span>phono3py_disp.orig.yaml<span class="p">|</span>awk<span class="w"> </span><span class="s1">&#39;{print $2}&#39;</span><span class="p">|</span>sort<span class="p">|</span>uniq<span class="p">|</span>sed<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">i</span><span class="si">}</span><span class="s2">q;d&quot;</span><span class="sb">`</span><span class="p">;</span><span class="w"> </span><span class="nv">d</span><span class="o">=</span><span class="k">$((</span><span class="nv">d</span><span class="o">+</span><span class="m">0</span>.0001<span class="k">))</span><span class="p">;</span><span class="w"> </span>phono3py<span class="w"> </span>--cutoff-pair<span class="o">=</span><span class="nv">$d</span><span class="w"> </span>-o<span class="w"> </span><span class="nv">$i</span><span class="w"> </span>-d<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;3 3 2&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="p">;</span><span class="w"> </span>mv<span class="w"> </span>phono3py_disp.yaml<span class="w"> </span>phono3py_disp.<span class="nv">$i</span>.yaml<span class="p">;</span><span class="w"> </span><span class="k">done</span>
+%<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">2</span>..21<span class="o">}</span><span class="p">;</span><span class="k">do</span><span class="w"> </span>grep<span class="w"> </span>number_of_pairs_in_cutoff<span class="w"> </span>phono3py_disp.<span class="nv">$i</span>.yaml<span class="p">;</span><span class="k">done</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">72</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">92</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">196</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">216</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">312</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">364</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">460</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">564</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">660</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">712</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">764</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">784</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">888</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">928</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">980</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">1020</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">1116</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">1156</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">1208</span>
+number_of_pairs_in_cutoff:<span class="w"> </span><span class="m">1248</span>
+%<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">2</span>..21<span class="o">}</span><span class="p">;</span><span class="k">do</span><span class="w"> </span>cp<span class="w"> </span>phono3py_disp.<span class="nv">$i</span>.yaml<span class="w"> </span>phono3py_disp.yaml<span class="p">;</span><span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;13 13 9&quot;</span><span class="w"> </span>--br<span class="w"> </span>--nac<span class="w"> </span>--io<span class="w"> </span><span class="nv">$i</span><span class="p">|</span>tee<span class="w"> </span>std.<span class="nv">$i</span>.out<span class="p">;</span><span class="w"> </span><span class="k">done</span>
+%<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">2</span>..21<span class="o">}</span><span class="p">;</span><span class="k">do</span><span class="w"> </span>egrep<span class="w"> </span><span class="s1">&#39;^\s+300\.0&#39;</span><span class="w"> </span>std.<span class="nv">$i</span>.out<span class="p">;</span><span class="k">done</span>
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">205</span>.550<span class="w">    </span><span class="m">205</span>.550<span class="w">    </span><span class="m">193</span>.665<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">218</span>.963<span class="w">    </span><span class="m">218</span>.963<span class="w">    </span><span class="m">204</span>.942<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">213</span>.624<span class="w">    </span><span class="m">213</span>.624<span class="w">    </span><span class="m">193</span>.863<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">219</span>.932<span class="w">    </span><span class="m">219</span>.932<span class="w">    </span><span class="m">199</span>.819<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.516<span class="w">    </span><span class="m">235</span>.516<span class="w">    </span><span class="m">218</span>.843<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">234</span>.750<span class="w">    </span><span class="m">234</span>.750<span class="w">    </span><span class="m">217</span>.384<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">234</span>.355<span class="w">    </span><span class="m">234</span>.355<span class="w">    </span><span class="m">218</span>.030<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.381<span class="w">    </span><span class="m">235</span>.381<span class="w">    </span><span class="m">218</span>.609<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.996<span class="w">    </span><span class="m">235</span>.996<span class="w">    </span><span class="m">219</span>.785<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">236</span>.220<span class="w">    </span><span class="m">236</span>.220<span class="w">    </span><span class="m">219</span>.867<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">236</span>.161<span class="w">    </span><span class="m">236</span>.161<span class="w">    </span><span class="m">219</span>.298<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">236</span>.096<span class="w">    </span><span class="m">236</span>.096<span class="w">    </span><span class="m">219</span>.313<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">234</span>.602<span class="w">    </span><span class="m">234</span>.602<span class="w">    </span><span class="m">217</span>.064<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.914<span class="w">    </span><span class="m">235</span>.914<span class="w">    </span><span class="m">218</span>.689<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.049<span class="w">    </span><span class="m">235</span>.049<span class="w">    </span><span class="m">217</span>.935<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.877<span class="w">    </span><span class="m">235</span>.877<span class="w">    </span><span class="m">219</span>.065<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">236</span>.133<span class="w">    </span><span class="m">236</span>.133<span class="w">    </span><span class="m">219</span>.364<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">236</span>.207<span class="w">    </span><span class="m">236</span>.207<span class="w">    </span><span class="m">219</span>.595<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">236</span>.035<span class="w">    </span><span class="m">236</span>.035<span class="w">    </span><span class="m">219</span>.463<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">236</span>.104<span class="w">    </span><span class="m">236</span>.104<span class="w">    </span><span class="m">219</span>.348<span class="w">     </span>-0.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+%<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">2</span>..21<span class="o">}</span><span class="p">;</span><span class="k">do</span><span class="w"> </span>cp<span class="w"> </span>phono3py_disp.<span class="nv">$i</span>.yaml<span class="w"> </span>phono3py_disp.yaml<span class="p">;</span><span class="w"> </span>phono3py<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;13 13 9&quot;</span><span class="w"> </span>--br<span class="w"> </span>--nac<span class="w"> </span>--io<span class="w"> </span><span class="nv">$i</span><span class="p">|</span>tee<span class="w"> </span>std.<span class="nv">$i</span>.out<span class="p">;</span><span class="w"> </span><span class="k">done</span><span class="p">|</span>tee<span class="w"> </span>std.sym-<span class="nv">$i</span>.out<span class="p">;</span><span class="w"> </span><span class="k">done</span>
+%<span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="o">{</span><span class="m">2</span>..21<span class="o">}</span><span class="p">;</span><span class="k">do</span><span class="w"> </span>egrep<span class="w"> </span><span class="s1">&#39;^\s+300\.0&#39;</span><span class="w"> </span>std.sym-<span class="nv">$i</span>.out<span class="p">;</span><span class="k">done</span>
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">232</span>.964<span class="w">    </span><span class="m">232</span>.964<span class="w">    </span><span class="m">216</span>.333<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.442<span class="w">    </span><span class="m">235</span>.442<span class="w">    </span><span class="m">219</span>.602<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.521<span class="w">    </span><span class="m">235</span>.521<span class="w">    </span><span class="m">217</span>.767<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.581<span class="w">    </span><span class="m">235</span>.581<span class="w">    </span><span class="m">217</span>.687<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">236</span>.837<span class="w">    </span><span class="m">236</span>.837<span class="w">    </span><span class="m">219</span>.933<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">236</span>.020<span class="w">    </span><span class="m">236</span>.020<span class="w">    </span><span class="m">219</span>.324<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.482<span class="w">    </span><span class="m">235</span>.482<span class="w">    </span><span class="m">218</span>.633<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">236</span>.313<span class="w">    </span><span class="m">236</span>.313<span class="w">    </span><span class="m">219</span>.677<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">236</span>.308<span class="w">    </span><span class="m">236</span>.308<span class="w">    </span><span class="m">219</span>.955<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">236</span>.074<span class="w">    </span><span class="m">236</span>.074<span class="w">    </span><span class="m">219</span>.882<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.520<span class="w">    </span><span class="m">235</span>.520<span class="w">    </span><span class="m">219</span>.450<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.769<span class="w">    </span><span class="m">235</span>.769<span class="w">    </span><span class="m">219</span>.562<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.441<span class="w">    </span><span class="m">235</span>.441<span class="w">    </span><span class="m">219</span>.168<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.892<span class="w">    </span><span class="m">235</span>.892<span class="w">    </span><span class="m">219</span>.590<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.509<span class="w">    </span><span class="m">235</span>.509<span class="w">    </span><span class="m">219</span>.167<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.646<span class="w">    </span><span class="m">235</span>.646<span class="w">    </span><span class="m">219</span>.521<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.783<span class="w">    </span><span class="m">235</span>.783<span class="w">    </span><span class="m">219</span>.311<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.887<span class="w">    </span><span class="m">235</span>.887<span class="w">    </span><span class="m">219</span>.301<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.642<span class="w">    </span><span class="m">235</span>.642<span class="w">    </span><span class="m">219</span>.348<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
+<span class="w">  </span><span class="m">300</span>.0<span class="w">     </span><span class="m">235</span>.728<span class="w">    </span><span class="m">235</span>.728<span class="w">    </span><span class="m">219</span>.102<span class="w">      </span><span class="m">0</span>.000<span class="w">     </span>-0.000<span class="w">     </span>-0.000
 </pre></div>
 </div>
 </section>
 </section>
 <section id="references">
-<h2><a class="toc-backref" href="#id17">References</a><a class="headerlink" href="#references" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id17" role="doc-backlink">References</a><a class="headerlink" href="#references" title="Permalink to this heading">#</a></h2>
 <div class="docutils container" id="id2">
-<dl class="citation">
-<dt class="label" id="id5"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
-<dd><p>Keiyu Mizokami, Atsushi Togo, and Isao Tanaka. Lattice thermal conductivities of two $\mathrm SiO_2$ polymorphs by first-principles calculations and the phonon boltzmann transport equation. <em>Phys. Rev. B</em>, 97:224306, Jun 2018. URL: <a class="reference external" href="https://link.aps.org/doi/10.1103/PhysRevB.97.224306">https://link.aps.org/doi/10.1103/PhysRevB.97.224306</a>, <a class="reference external" href="https://doi.org/10.1103/PhysRevB.97.224306">doi:10.1103/PhysRevB.97.224306</a>.</p>
-</dd>
-</dl>
+<div class="citation" id="id5" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Keiyu Mizokami, Atsushi Togo, and Isao Tanaka. Lattice thermal conductivities of two $\mathrm SiO_2$ polymorphs by first-principles calculations and the phonon boltzmann transport equation. <em>Phys. Rev. B</em>, 97:224306, Jun 2018. URL: <a class="reference external" href="https://link.aps.org/doi/10.1103/PhysRevB.97.224306">https://link.aps.org/doi/10.1103/PhysRevB.97.224306</a>, <a class="reference external" href="https://doi.org/10.1103/PhysRevB.97.224306">doi:10.1103/PhysRevB.97.224306</a>.</p>
+</div>
+</div>
 </div>
 </section>
 </section>
 
 
-              </div>
+                </article>
               
-            </main>
-            <footer class="footer-article noprint">
-                
-    <!-- Previous / next buttons -->
-<div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="workload-distribution.html" title="previous page">
-        <i class="fas fa-angle-left"></i>
-        <div class="prev-next-info">
-            <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Workload distribution</p>
-        </div>
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="workload-distribution.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Workload distribution</p>
+      </div>
     </a>
-    <a class='right-next' id="next-link" href="external-tools.html" title="next page">
-    <div class="prev-next-info">
+    <a class="right-next"
+       href="external-tools.html"
+       title="next page">
+      <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
         <p class="prev-next-title">External tools</p>
-    </div>
-    <i class="fas fa-angle-right"></i>
-    </a>
-</div>
-            </footer>
-        </div>
-    </div>
-    <div class="footer-content row">
-        <footer class="col footer"><p>
-  
-      &copy; Copyright 2015, Atsushi Togo.<br/>
-</p>
-        </footer>
-    </div>
-    
-</div>
-
-
       </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-is-cutff-pair-distance-in-phono3py">What is cutff pair-distance in phono3py?</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#creating-supercells-with-displacements">Creating supercells with displacements</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#supercell-files">Supercell files</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#special-phono3py-disp-yaml">Special <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#making-forces-fc3">Making <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#running-phonon-phonon-interaction-calculation">Running phonon-phonon interaction calculation</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#a-script-extract-supercell-ids-from-phono3py-disp-yaml">A script extract supercell IDs from <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tests">Tests</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#si-pbe">Si-PBE</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#aln-lda">AlN-LDA</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#references">References</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2015, Atsushi Togo.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
     </div>
+  </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+  <script src="_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
 
-
+  <footer class="bd-footer">
+  </footer>
   </body>
 </html>

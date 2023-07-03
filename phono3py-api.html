@@ -1,540 +1,329 @@
 
+
 <!DOCTYPE html>
 
-<html>
+
+<html lang="en" >
+
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Phono3py API &#8212; Phono3py v.2.6.0</title>
-    
+    <title>Phono3py API &#8212; Phono3py v.2.7.0</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-<link href="_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <link href="_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
 
-    
-  <link rel="stylesheet"
-    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+  
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
-    
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+  
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
     <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'phono3py-api';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="phono3py-load command" href="phono3py-load.html" />
     <link rel="prev" title="External tools" href="external-tools.html" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="docsearch:language" content="None">
-    
-
-    <!-- Google Analytics -->
-    
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
-<!-- Checkboxes to toggle the left sidebar -->
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
-<label class="overlay overlay-navbar" for="__navigation">
-    <div class="visually-hidden">Toggle navigation sidebar</div>
-</label>
-<!-- Checkboxes to toggle the in-page toc -->
-<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
-<label class="overlay overlay-pagetoc" for="__page-toc">
-    <div class="visually-hidden">Toggle in-page Table of Contents</div>
-</label>
-<!-- Headers at the top -->
-<div class="announcement header-item noprint"></div>
-<div class="header header-item noprint"></div>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
 
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
     
-    <div class="container-fluid" id="banner"></div>
-
     
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
 
-    <div class="container-xl">
-      <div class="row">
-          
-<!-- Sidebar -->
-<div class="bd-sidebar noprint" id="site-navigation">
-    <div class="bd-sidebar__content">
-        <div class="bd-sidebar__top"><div class="navbar-brand-box">
-    <a class="navbar-brand text-wrap" href="index.html">
-      
-      
-      
-      <h1 class="site-logo" id="site-title">Phono3py v.2.6.0</h1>
-      
-    </a>
-</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
-  <i class="icon fas fa-search"></i>
-  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
-    <div class="bd-toc-item active">
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    <p class="title logo__title">Phono3py v.2.7.0</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
- <li class="toctree-l1">
-  <a class="reference internal" href="install.html">
-   Installation
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="workflow.html">
-   Workflow
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="examples.html">
-   Examples
-  </a>
- </li>
- <li class="toctree-l1 has-children">
-  <a class="reference internal" href="interfaces.html">
-   Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)
-  </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
-  <label for="toctree-checkbox-1">
-   <i class="fas fa-chevron-down">
-   </i>
-  </label>
-  <ul>
-   <li class="toctree-l2">
-    <a class="reference internal" href="vasp.html">
-     VASP &amp; phono3py calculation
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="qe.html">
-     Quantum ESPRESSO (pw) &amp; phono3py calculation
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="crystal.html">
-     CRYSTAL &amp; phono3py calculation
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="turbomole.html">
-     TURBOMOLE &amp; phono3py calculation
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="command-options.html">
-   Command options / Setting tags
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="input-output-files.html">
-   Input / Output files
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hdf5_howto.html">
-   How to read the results stored in hdf5 files
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="auxiliary-tools.html">
-   Auxiliary tools
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="direct-solution.html">
-   Direct solution of linearized phonon Boltzmann equation
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="wigner-solution.html">
-   Solution of the Wigner transport equation
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="workload-distribution.html">
-   Workload distribution
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="cutoff-pair.html">
-   Force constants calculation with cutoff pair-distance
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="external-tools.html">
-   External tools
-  </a>
- </li>
- <li class="toctree-l1 current active">
-  <a class="current reference internal" href="#">
-   Phono3py API
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="phono3py-load.html">
-   phono3py-load command
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="tips.html">
-   Tips
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="citation.html">
-   How to cite phono3py
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="changelog.html">
-   Change Log
-  </a>
- </li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qe.html">Quantum ESPRESSO (pw) &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbomole.html">TURBOMOLE &amp; phono3py calculation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input-output-files.html">Input / Output files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">How to read the results stored in hdf5 files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="direct-solution.html">Direct solution of linearized phonon Boltzmann equation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wigner-solution.html">Solution of the Wigner transport equation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workload-distribution.html">Workload distribution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Phono3py API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
 </ul>
 
     </div>
 </nav></div>
-        <div class="bd-sidebar__bottom">
-             <!-- To handle the deprecated key -->
-            
-            <div class="navbar_extra_footer">
-            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
-            </div>
-            
-        </div>
     </div>
-    <div id="rtd-footer-container"></div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/phono3py-api.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
 </div>
 
 
-          
 
 
-          
-<!-- A tiny helper pixel to detect if we've scrolled -->
-<div class="sbt-scroll-pixel-helper"></div>
-<!-- Main content -->
-<div class="col py-0 content-container">
-    
-    <div class="header-article row sticky-top noprint">
-        
-
-
-
-<div class="col py-1 d-flex header-article-main">
-    <div class="header-article__left">
-        
-        <label for="__navigation"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="right"
-title="Toggle navigation"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-bars"></i>
-  </span>
-
-</label>
-
-        
-    </div>
-    <div class="header-article__right">
 <button onclick="toggleFullScreen()"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="bottom"
-title="Fullscreen mode"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
 >
   
 
-<span class="headerbtn__icon-container">
+<span class="btn__icon-container">
   <i class="fas fa-expand"></i>
   </span>
 
 </button>
 
-<div class="menu-dropdown menu-dropdown-download-buttons">
-  <button class="headerbtn menu-dropdown__trigger"
-      aria-label="Download this page">
-      <i class="fas fa-download"></i>
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
   </button>
-  <div class="menu-dropdown__content">
-    <ul>
-      <li>
-        <a href="_sources/phono3py-api.md.txt"
-   class="headerbtn"
-   data-toggle="tooltip"
-data-placement="left"
-title="Download source file"
->
-  
+`);
+</script>
 
-<span class="headerbtn__icon-container">
-  <i class="fas fa-file"></i>
-  </span>
-<span class="headerbtn__text-container">.md</span>
-</a>
-
-      </li>
-      
-      <li>
-        
-<button onclick="printPdf(this)"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="left"
-title="Print to PDF"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-file-pdf"></i>
-  </span>
-<span class="headerbtn__text-container">.pdf</span>
-</button>
-
-      </li>
-      
-    </ul>
-  </div>
-</div>
-<label for="__page-toc"
-  class="headerbtn headerbtn-page-toc"
-  
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-list"></i>
-  </span>
-
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
 </label>
-
+</div></div>
+      
     </div>
+  
 </div>
-
-<!-- Table of contents -->
-<div class="col-md-3 bd-toc show noprint">
-    <div class="tocsection onthispage pt-5 pb-3">
-        <i class="fas fa-list"></i> Contents
-    </div>
-    <nav id="bd-toc-nav" aria-label="Page">
-        <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#crystal-structure">
-   Crystal structure
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#phono3py-class">
-   <code class="docutils literal notranslate">
-    <span class="pre">
-     Phono3py
-    </span>
-   </code>
-   class
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#displacement-dataset-generation">
-   Displacement dataset generation
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#supercell-force-calculation">
-   Supercell force calculation
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#force-constants-calculation">
-   Force constants calculation
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#non-analytical-term-correction-parameters">
-   Non-analytical term correction parameters
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#regular-grid-for-q-point-sampling">
-   Regular grid for
-   <strong>
-    q
-   </strong>
-   -point sampling
-  </a>
-  <ul class="nav section-nav flex-column">
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#three-integer-values">
-     Three integer values
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#one-value">
-     One value
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#x3-integer-matrix-experimental">
-     3x3 integer matrix (experimental)
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#phonon-phonon-interaction-calculation">
-   Phonon-phonon interaction calculation
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#lattice-thermal-conductivity-calculation">
-   Lattice thermal conductivity calculation
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs">
-   Use of different supercell dimensions for 2nd and 3rd order FCs
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#phono3py-load">
-   <code class="docutils literal notranslate">
-    <span class="pre">
-     phono3py.load
-    </span>
-   </code>
-  </a>
- </li>
-</ul>
-
-    </nav>
 </div>
-    </div>
-    <div class="article row">
-        <div class="col pl-md-3 pl-lg-5 content-container">
-            <!-- Table of contents that is only displayed when printing the page -->
-            <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Phono3py API</h1>
-                <!-- Table of contents -->
-                <div id="print-main-content">
-                    <div id="jb-print-toc">
-                        
-                        <div>
-                            <h2> Contents </h2>
-                        </div>
-                        <nav aria-label="Page">
-                            <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#crystal-structure">
-   Crystal structure
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#phono3py-class">
-   <code class="docutils literal notranslate">
-    <span class="pre">
-     Phono3py
-    </span>
-   </code>
-   class
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#displacement-dataset-generation">
-   Displacement dataset generation
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#supercell-force-calculation">
-   Supercell force calculation
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#force-constants-calculation">
-   Force constants calculation
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#non-analytical-term-correction-parameters">
-   Non-analytical term correction parameters
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#regular-grid-for-q-point-sampling">
-   Regular grid for
-   <strong>
-    q
-   </strong>
-   -point sampling
-  </a>
-  <ul class="nav section-nav flex-column">
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#three-integer-values">
-     Three integer values
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#one-value">
-     One value
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#x3-integer-matrix-experimental">
-     3x3 integer matrix (experimental)
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#phonon-phonon-interaction-calculation">
-   Phonon-phonon interaction calculation
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#lattice-thermal-conductivity-calculation">
-   Lattice thermal conductivity calculation
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs">
-   Use of different supercell dimensions for 2nd and 3rd order FCs
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#phono3py-load">
-   <code class="docutils literal notranslate">
-    <span class="pre">
-     phono3py.load
-    </span>
-   </code>
-  </a>
- </li>
-</ul>
+              
+              
 
-                        </nav>
-                    </div>
-                </div>
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Phono3py API</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
             </div>
-            <main id="main-content" role="main">
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crystal-structure">Crystal structure</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phono3py-class"><code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#displacement-dataset-generation">Displacement dataset generation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supercell-force-calculation">Supercell force calculation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#force-constants-calculation">Force constants calculation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#non-analytical-term-correction-parameters">Non-analytical term correction parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#regular-grid-for-q-point-sampling">Regular grid for <strong>q</strong>-point sampling</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#three-integer-values">Three integer values</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#one-value">One value</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#x3-integer-matrix-experimental">3x3 integer matrix (experimental)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phonon-phonon-interaction-calculation">Phonon-phonon interaction calculation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lattice-thermal-conductivity-calculation">Lattice thermal conductivity calculation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs">Use of different supercell dimensions for 2nd and 3rd order FCs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phono3py-load"><code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code></a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
                 
-              <div>
-                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
   <section class="tex2jax_ignore mathjax_ignore" id="phono3py-api">
-<span id="id1"></span><h1>Phono3py API<a class="headerlink" href="#phono3py-api" title="Permalink to this headline">#</a></h1>
-<div class="contents local topic" id="contents">
+<span id="id1"></span><h1>Phono3py API<a class="headerlink" href="#phono3py-api" title="Permalink to this heading">#</a></h1>
+<nav class="contents local" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#crystal-structure" id="id2">Crystal structure</a></p></li>
 <li><p><a class="reference internal" href="#phono3py-class" id="id3"><code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class</a></p></li>
@@ -554,11 +343,11 @@ title="Print to PDF"
 <li><p><a class="reference internal" href="#use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs" id="id14">Use of different supercell dimensions for 2nd and 3rd order FCs</a></p></li>
 <li><p><a class="reference internal" href="#phono3py-load" id="id15"><code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code></a></p></li>
 </ul>
-</div>
+</nav>
 <p>How to use phono3py API is described below along with snippets that work with
 <a class="reference external" href="https://github.com/phonopy/phono3py/tree/develop/example/AlN-LDA"><code class="docutils literal notranslate"><span class="pre">AlN-LDA</span></code> example</a>.</p>
 <section id="crystal-structure">
-<h2><a class="toc-backref" href="#id2">Crystal structure</a><a class="headerlink" href="#crystal-structure" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Crystal structure</a><a class="headerlink" href="#crystal-structure" title="Permalink to this heading">#</a></h2>
 <p>Crystal structures in phono3py are usually <code class="docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code> class instances. When
 we want to obtain the <code class="docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code> class instances from a file written in a
 force-calculator format, the <code class="docutils literal notranslate"><span class="pre">read_crystal_structure</span></code> function in phonopy may be
@@ -610,7 +399,7 @@ used, e.g., in the AlN-LDA example,</p>
 </div>
 </section>
 <section id="phono3py-class">
-<h2><a class="toc-backref" href="#id3"><code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class</a><a class="headerlink" href="#phono3py-class" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id3" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class</a><a class="headerlink" href="#phono3py-class" title="Permalink to this heading">#</a></h2>
 <p>To operate phono3py from python, there is phono3py API. The main class is
 <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> that is imported by</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">phono3py</span> <span class="kn">import</span> <span class="n">Phono3py</span>
@@ -637,7 +426,7 @@ written in the docstring, which is shown by</p>
 </div>
 </section>
 <section id="displacement-dataset-generation">
-<h2><a class="toc-backref" href="#id4">Displacement dataset generation</a><a class="headerlink" href="#displacement-dataset-generation" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Displacement dataset generation</a><a class="headerlink" href="#displacement-dataset-generation" title="Permalink to this heading">#</a></h2>
 <p>The step (1) in <a class="reference internal" href="workflow.html#workflow"><span class="std std-ref">Workflow</span></a> generates sets of displacements in supercell.
 Supercells with the displacements are used as input crystal structure models of
 force calculator that is, e.g., first-principles calculation code. Using the
@@ -671,7 +460,7 @@ dataset and crystal structure information are saved to a file by
 </div>
 </section>
 <section id="supercell-force-calculation">
-<h2><a class="toc-backref" href="#id5">Supercell force calculation</a><a class="headerlink" href="#supercell-force-calculation" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id5" role="doc-backlink">Supercell force calculation</a><a class="headerlink" href="#supercell-force-calculation" title="Permalink to this heading">#</a></h2>
 <p>Forces of the generated supercells with displacements are calculated by some
 external force calculator such as first-principles calculation code.</p>
 <p>Calculated supercell forces will be stored in a <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class instance
@@ -687,7 +476,7 @@ obtained by</p>
 </div>
 </section>
 <section id="force-constants-calculation">
-<h2><a class="toc-backref" href="#id6">Force constants calculation</a><a class="headerlink" href="#force-constants-calculation" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id6" role="doc-backlink">Force constants calculation</a><a class="headerlink" href="#force-constants-calculation" title="Permalink to this heading">#</a></h2>
 <p>The pair of the displacement dataset and force sets is required to calculate
 force constants. <a class="reference internal" href="#api-phono3py-load"><span class="std std-ref">phono3py.load</span></a> is the convenient function to load
 these data from files and to set up them in the <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class instance.
@@ -727,7 +516,7 @@ follows:</p>
 </div>
 </section>
 <section id="non-analytical-term-correction-parameters">
-<h2><a class="toc-backref" href="#id7">Non-analytical term correction parameters</a><a class="headerlink" href="#non-analytical-term-correction-parameters" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id7" role="doc-backlink">Non-analytical term correction parameters</a><a class="headerlink" href="#non-analytical-term-correction-parameters" title="Permalink to this heading">#</a></h2>
 <p>Users collects Born effective charges and dielectric constant tensor from
 experiments or calculations, and they are used as parameters for non-analytical
 term correction (NAC). These parameters are stored as a python dict:</p>
@@ -760,7 +549,7 @@ more information about NAC parameters is found
 <code class="docutils literal notranslate"><span class="pre">PhonopyAtoms</span></code> class.</p>
 </section>
 <section id="regular-grid-for-q-point-sampling">
-<h2><a class="toc-backref" href="#id8">Regular grid for <strong>q</strong>-point sampling</a><a class="headerlink" href="#regular-grid-for-q-point-sampling" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id8" role="doc-backlink">Regular grid for <strong>q</strong>-point sampling</a><a class="headerlink" href="#regular-grid-for-q-point-sampling" title="Permalink to this heading">#</a></h2>
 <p>Phonons are normally sampled on a <span class="math notranslate nohighlight">\(\Gamma\)</span> centre regular grid in reciprocal
 space. There are three ways to specify the regular grid.</p>
 <ol class="arabic simple">
@@ -776,7 +565,7 @@ example,</p>
 </pre></div>
 </div>
 <section id="three-integer-values">
-<h3><a class="toc-backref" href="#id9">Three integer values</a><a class="headerlink" href="#three-integer-values" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">Three integer values</a><a class="headerlink" href="#three-integer-values" title="Permalink to this heading">#</a></h3>
 <p>Three integer values (<span class="math notranslate nohighlight">\(n_1\)</span>, <span class="math notranslate nohighlight">\(n_2\)</span>, <span class="math notranslate nohighlight">\(n_3\)</span>) are specified.</p>
 <p>The conventional regular grid is defined by the three integer values. The
 <span class="math notranslate nohighlight">\(\mathbf{q}\)</span>-points are given by linear combination of reciprocal basis vectors
@@ -788,7 +577,7 @@ divided by the respective integers, which is given as</p>
 <p>where <span class="math notranslate nohighlight">\(m_i \in \{ 0, 1, \ldots, n_i - 1 \}\)</span>.</p>
 </section>
 <section id="one-value">
-<h3><a class="toc-backref" href="#id10">One value</a><a class="headerlink" href="#one-value" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id10" role="doc-backlink">One value</a><a class="headerlink" href="#one-value" title="Permalink to this heading">#</a></h3>
 <p>A distance like value <span class="math notranslate nohighlight">\(l\)</span> is specified. Using this value, a regular grid is
 generated. As default, the three integer values of the conventional regular grid
 are defined by the following calculation.</p>
@@ -806,7 +595,7 @@ smaller than that of the primitive cell. In this case, the <span class="math not
 are sampled to fill the latter parallelepiped.</p>
 </section>
 <section id="x3-integer-matrix-experimental">
-<h3><a class="toc-backref" href="#id11">3x3 integer matrix (experimental)</a><a class="headerlink" href="#x3-integer-matrix-experimental" title="Permalink to this headline">#</a></h3>
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">3x3 integer matrix (experimental)</a><a class="headerlink" href="#x3-integer-matrix-experimental" title="Permalink to this heading">#</a></h3>
 <p>This is used to define the generalized regular grid explicitly. The generalized
 regular grid is designed to be automatically generated by one given value
 considering symmetry. However a 3x3 integer matrix (array) is accepted if this
@@ -814,7 +603,7 @@ matrix follows the symmetry properly.</p>
 </section>
 </section>
 <section id="phonon-phonon-interaction-calculation">
-<h2><a class="toc-backref" href="#id12">Phonon-phonon interaction calculation</a><a class="headerlink" href="#phonon-phonon-interaction-calculation" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id12" role="doc-backlink">Phonon-phonon interaction calculation</a><a class="headerlink" href="#phonon-phonon-interaction-calculation" title="Permalink to this heading">#</a></h2>
 <p>Three phonon interaction strength is calculated after defining the regular grid.
 When we have <code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">FORCES_FC3</span></code> used above (maybe <code class="docutils literal notranslate"><span class="pre">BORN</span></code>,
 too), it is convenient to get the <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class instance with settings.</p>
@@ -869,7 +658,7 @@ by each purpose of use, the outer function that calls this function determines
 proper computational configuration of this function.</p>
 </section>
 <section id="lattice-thermal-conductivity-calculation">
-<h2><a class="toc-backref" href="#id13">Lattice thermal conductivity calculation</a><a class="headerlink" href="#lattice-thermal-conductivity-calculation" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id13" role="doc-backlink">Lattice thermal conductivity calculation</a><a class="headerlink" href="#lattice-thermal-conductivity-calculation" title="Permalink to this heading">#</a></h2>
 <p>Once three phonon interaction calculation is prepared by
 <code class="docutils literal notranslate"><span class="pre">ph3.init_phph_interaction()</span></code>, it is ready to run lattice thermal conductivity
 calculation. The many parameters are explained in the docstring, but even with
@@ -880,7 +669,7 @@ mode relaxation time approximation is performed as follows:</p>
 </div>
 </section>
 <section id="use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs">
-<h2><a class="toc-backref" href="#id14">Use of different supercell dimensions for 2nd and 3rd order FCs</a><a class="headerlink" href="#use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id14" role="doc-backlink">Use of different supercell dimensions for 2nd and 3rd order FCs</a><a class="headerlink" href="#use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs" title="Permalink to this heading">#</a></h2>
 <p>Phono3py supports different supercell dimensions for second and third order
 force constants (fc2 and fc3). The default setting is using the same dimensions.
 Although fc3 requires much more number of supercells than fc2, in our
@@ -920,7 +709,7 @@ usable:</p>
 easily.</p>
 </section>
 <section id="phono3py-load">
-<span id="api-phono3py-load"></span><h2><a class="toc-backref" href="#id15"><code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code></a><a class="headerlink" href="#phono3py-load" title="Permalink to this headline">#</a></h2>
+<span id="api-phono3py-load"></span><h2><a class="toc-backref" href="#id15" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code></a><a class="headerlink" href="#phono3py-load" title="Permalink to this heading">#</a></h2>
 <p>The purpose of <code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code> is to create a <code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class instance with
 basic parameters loaded from the phono3py-yaml-type file and also to try setting
 up force constants and non-analytical term correction automatically from
@@ -987,48 +776,116 @@ read a helper function of <code class="docutils literal notranslate"><span class
 </section>
 
 
-              </div>
+                </article>
               
-            </main>
-            <footer class="footer-article noprint">
-                
-    <!-- Previous / next buttons -->
-<div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="external-tools.html" title="previous page">
-        <i class="fas fa-angle-left"></i>
-        <div class="prev-next-info">
-            <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">External tools</p>
-        </div>
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="external-tools.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">External tools</p>
+      </div>
     </a>
-    <a class='right-next' id="next-link" href="phono3py-load.html" title="next page">
-    <div class="prev-next-info">
+    <a class="right-next"
+       href="phono3py-load.html"
+       title="next page">
+      <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
         <p class="prev-next-title">phono3py-load command</p>
-    </div>
-    <i class="fas fa-angle-right"></i>
-    </a>
-</div>
-            </footer>
-        </div>
-    </div>
-    <div class="footer-content row">
-        <footer class="col footer"><p>
-  
-      &copy; Copyright 2015, Atsushi Togo.<br/>
-</p>
-        </footer>
-    </div>
-    
-</div>
-
-
       </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#crystal-structure">Crystal structure</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phono3py-class"><code class="docutils literal notranslate"><span class="pre">Phono3py</span></code> class</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#displacement-dataset-generation">Displacement dataset generation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#supercell-force-calculation">Supercell force calculation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#force-constants-calculation">Force constants calculation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#non-analytical-term-correction-parameters">Non-analytical term correction parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#regular-grid-for-q-point-sampling">Regular grid for <strong>q</strong>-point sampling</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#three-integer-values">Three integer values</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#one-value">One value</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#x3-integer-matrix-experimental">3x3 integer matrix (experimental)</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phonon-phonon-interaction-calculation">Phonon-phonon interaction calculation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lattice-thermal-conductivity-calculation">Lattice thermal conductivity calculation</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#use-of-different-supercell-dimensions-for-2nd-and-3rd-order-fcs">Use of different supercell dimensions for 2nd and 3rd order FCs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#phono3py-load"><code class="docutils literal notranslate"><span class="pre">phono3py.load</span></code></a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2015, Atsushi Togo.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
     </div>
+  </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+  <script src="_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
 
-
+  <footer class="bd-footer">
+  </footer>
   </body>
 </html>

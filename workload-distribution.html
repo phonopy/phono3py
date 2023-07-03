@@ -1,387 +1,312 @@
 
+
 <!DOCTYPE html>
 
-<html>
+
+<html lang="en" >
+
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Workload distribution &#8212; Phono3py v.2.6.0</title>
-    
+    <title>Workload distribution &#8212; Phono3py v.2.7.0</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
-<link href="_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+  <link href="_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
 
-    
-  <link rel="stylesheet"
-    href="_static/vendor/fontawesome/5.13.0/css/all.min.css">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-solid-900.woff2">
-  <link rel="preload" as="font" type="font/woff2" crossorigin
-    href="_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
+  
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=5115cc725059bd94278eecd172e13a965bf8f5a9" type="text/css" />
-    
+    <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+  
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/scripts/sphinx-book-theme.js?digest=9c920249402e914e316237a7dbc6769907cce411"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'workload-distribution';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Force constants calculation with cutoff pair-distance" href="cutoff-pair.html" />
     <link rel="prev" title="Solution of the Wigner transport equation" href="wigner-solution.html" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="docsearch:language" content="None">
-    
-
-    <!-- Google Analytics -->
-    
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
-<!-- Checkboxes to toggle the left sidebar -->
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle navigation sidebar">
-<label class="overlay overlay-navbar" for="__navigation">
-    <div class="visually-hidden">Toggle navigation sidebar</div>
-</label>
-<!-- Checkboxes to toggle the in-page toc -->
-<input type="checkbox" class="sidebar-toggle" name="__page-toc" id="__page-toc" aria-label="Toggle in-page Table of Contents">
-<label class="overlay overlay-pagetoc" for="__page-toc">
-    <div class="visually-hidden">Toggle in-page Table of Contents</div>
-</label>
-<!-- Headers at the top -->
-<div class="announcement header-item noprint"></div>
-<div class="header header-item noprint"></div>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
 
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
     
-    <div class="container-fluid" id="banner"></div>
-
     
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
 
-    <div class="container-xl">
-      <div class="row">
-          
-<!-- Sidebar -->
-<div class="bd-sidebar noprint" id="site-navigation">
-    <div class="bd-sidebar__content">
-        <div class="bd-sidebar__top"><div class="navbar-brand-box">
-    <a class="navbar-brand text-wrap" href="index.html">
-      
-      
-      
-      <h1 class="site-logo" id="site-title">Phono3py v.2.6.0</h1>
-      
-    </a>
-</div><form class="bd-search d-flex align-items-center" action="search.html" method="get">
-  <i class="icon fas fa-search"></i>
-  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
-</form><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
-    <div class="bd-toc-item active">
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    <p class="title logo__title">Phono3py v.2.7.0</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
- <li class="toctree-l1">
-  <a class="reference internal" href="install.html">
-   Installation
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="workflow.html">
-   Workflow
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="examples.html">
-   Examples
-  </a>
- </li>
- <li class="toctree-l1 has-children">
-  <a class="reference internal" href="interfaces.html">
-   Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)
-  </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/>
-  <label for="toctree-checkbox-1">
-   <i class="fas fa-chevron-down">
-   </i>
-  </label>
-  <ul>
-   <li class="toctree-l2">
-    <a class="reference internal" href="vasp.html">
-     VASP &amp; phono3py calculation
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="qe.html">
-     Quantum ESPRESSO (pw) &amp; phono3py calculation
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="crystal.html">
-     CRYSTAL &amp; phono3py calculation
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="turbomole.html">
-     TURBOMOLE &amp; phono3py calculation
-    </a>
-   </li>
-  </ul>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="command-options.html">
-   Command options / Setting tags
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="input-output-files.html">
-   Input / Output files
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="hdf5_howto.html">
-   How to read the results stored in hdf5 files
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="auxiliary-tools.html">
-   Auxiliary tools
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="direct-solution.html">
-   Direct solution of linearized phonon Boltzmann equation
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="wigner-solution.html">
-   Solution of the Wigner transport equation
-  </a>
- </li>
- <li class="toctree-l1 current active">
-  <a class="current reference internal" href="#">
-   Workload distribution
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="cutoff-pair.html">
-   Force constants calculation with cutoff pair-distance
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="external-tools.html">
-   External tools
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="phono3py-api.html">
-   Phono3py API
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="phono3py-load.html">
-   phono3py-load command
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="tips.html">
-   Tips
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="citation.html">
-   How to cite phono3py
-  </a>
- </li>
- <li class="toctree-l1">
-  <a class="reference internal" href="changelog.html">
-   Change Log
-  </a>
- </li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="interfaces.html">Interfaces to calculators (VASP, QE, CRYSTAL, Abinit, TURBOMOLE)</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="vasp.html">VASP &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qe.html">Quantum ESPRESSO (pw) &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="crystal.html">CRYSTAL &amp; phono3py calculation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="turbomole.html">TURBOMOLE &amp; phono3py calculation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="command-options.html">Command options / Setting tags</a></li>
+<li class="toctree-l1"><a class="reference internal" href="input-output-files.html">Input / Output files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hdf5_howto.html">How to read the results stored in hdf5 files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auxiliary-tools.html">Auxiliary tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="direct-solution.html">Direct solution of linearized phonon Boltzmann equation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="wigner-solution.html">Solution of the Wigner transport equation</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Workload distribution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cutoff-pair.html">Force constants calculation with cutoff pair-distance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="external-tools.html">External tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-api.html">Phono3py API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="phono3py-load.html">phono3py-load command</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tips.html">Tips</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citation.html">How to cite phono3py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Change Log</a></li>
 </ul>
 
     </div>
 </nav></div>
-        <div class="bd-sidebar__bottom">
-             <!-- To handle the deprecated key -->
-            
-            <div class="navbar_extra_footer">
-            Theme by the <a href="https://ebp.jupyterbook.org">Executable Book Project</a>
-            </div>
-            
-        </div>
     </div>
-    <div id="rtd-footer-container"></div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="_sources/workload-distribution.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
 </div>
 
 
-          
 
 
-          
-<!-- A tiny helper pixel to detect if we've scrolled -->
-<div class="sbt-scroll-pixel-helper"></div>
-<!-- Main content -->
-<div class="col py-0 content-container">
-    
-    <div class="header-article row sticky-top noprint">
-        
-
-
-
-<div class="col py-1 d-flex header-article-main">
-    <div class="header-article__left">
-        
-        <label for="__navigation"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="right"
-title="Toggle navigation"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-bars"></i>
-  </span>
-
-</label>
-
-        
-    </div>
-    <div class="header-article__right">
 <button onclick="toggleFullScreen()"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="bottom"
-title="Fullscreen mode"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
 >
   
 
-<span class="headerbtn__icon-container">
+<span class="btn__icon-container">
   <i class="fas fa-expand"></i>
   </span>
 
 </button>
 
-<div class="menu-dropdown menu-dropdown-download-buttons">
-  <button class="headerbtn menu-dropdown__trigger"
-      aria-label="Download this page">
-      <i class="fas fa-download"></i>
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
   </button>
-  <div class="menu-dropdown__content">
-    <ul>
-      <li>
-        <a href="_sources/workload-distribution.md.txt"
-   class="headerbtn"
-   data-toggle="tooltip"
-data-placement="left"
-title="Download source file"
->
-  
+`);
+</script>
 
-<span class="headerbtn__icon-container">
-  <i class="fas fa-file"></i>
-  </span>
-<span class="headerbtn__text-container">.md</span>
-</a>
-
-      </li>
-      
-      <li>
-        
-<button onclick="printPdf(this)"
-  class="headerbtn"
-  data-toggle="tooltip"
-data-placement="left"
-title="Print to PDF"
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-file-pdf"></i>
-  </span>
-<span class="headerbtn__text-container">.pdf</span>
-</button>
-
-      </li>
-      
-    </ul>
-  </div>
-</div>
-<label for="__page-toc"
-  class="headerbtn headerbtn-page-toc"
-  
->
-  
-
-<span class="headerbtn__icon-container">
-  <i class="fas fa-list"></i>
-  </span>
-
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
 </label>
-
+</div></div>
+      
     </div>
+  
 </div>
-
-<!-- Table of contents -->
-<div class="col-md-3 bd-toc show noprint">
-    <div class="tocsection onthispage pt-5 pb-3">
-        <i class="fas fa-list"></i> Contents
-    </div>
-    <nav id="bd-toc-nav" aria-label="Page">
-        <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#how-to-do-it">
-   How to do it
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#a-convenient-script">
-   A convenient script
-  </a>
- </li>
-</ul>
-
-    </nav>
 </div>
-    </div>
-    <div class="article row">
-        <div class="col pl-md-3 pl-lg-5 content-container">
-            <!-- Table of contents that is only displayed when printing the page -->
-            <div id="jb-print-docs-body" class="onlyprint">
-                <h1>Workload distribution</h1>
-                <!-- Table of contents -->
-                <div id="print-main-content">
-                    <div id="jb-print-toc">
-                        
-                        <div>
-                            <h2> Contents </h2>
-                        </div>
-                        <nav aria-label="Page">
-                            <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#how-to-do-it">
-   How to do it
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#a-convenient-script">
-   A convenient script
-  </a>
- </li>
-</ul>
+              
+              
 
-                        </nav>
-                    </div>
-                </div>
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Workload distribution</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
             </div>
-            <main id="main-content" role="main">
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-do-it">How to do it</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#a-convenient-script">A convenient script</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
                 
-              <div>
-                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
   <section class="tex2jax_ignore mathjax_ignore" id="workload-distribution">
-<span id="id1"></span><h1>Workload distribution<a class="headerlink" href="#workload-distribution" title="Permalink to this headline">#</a></h1>
+<span id="id1"></span><h1>Workload distribution<a class="headerlink" href="#workload-distribution" title="Permalink to this heading">#</a></h1>
 <p>Workload of thermal conductivity calculation can be distributed into
 computer nodes. The distribution over q-point grid points (<a class="reference internal" href="command-options.html#gp-option"><span class="std std-ref">–gp option</span></a>), over phonon bands (<a class="reference internal" href="command-options.html#bi-option"><span class="std std-ref">–bi option</span></a>), and over both of them are supported. Unless necessary,
 the distribution over bands is not recommended since it has some
@@ -394,27 +319,27 @@ calculation are executed. The resulting data for each grid point are
 stored in its <code class="docutils literal notranslate"><span class="pre">kappa-mxxx-gx.hdf5</span></code> file on each node by setting
 <a class="reference internal" href="command-options.html#write-gamma-option"><span class="std std-ref">–write_gamma option</span></a>. Once all data are
 obtained, those data are collected by <a class="reference internal" href="command-options.html#read-gamma-option"><span class="std std-ref">–read_gamma option</span></a> and the lattice thermal conductivity is obtained.</p>
-<div class="contents local topic" id="contents">
+<nav class="contents local" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#how-to-do-it" id="id2">How to do it</a></p></li>
 <li><p><a class="reference internal" href="#a-convenient-script" id="id3">A convenient script</a></p></li>
 </ul>
-</div>
+</nav>
 <section id="how-to-do-it">
-<h2><a class="toc-backref" href="#id2">How to do it</a><a class="headerlink" href="#how-to-do-it" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">How to do it</a><a class="headerlink" href="#how-to-do-it" title="Permalink to this heading">#</a></h2>
 <p>The following example is executed in the <code class="docutils literal notranslate"><span class="pre">Si-PBE</span></code> example.</p>
 <p>To avoid re-calculating fc3 and fc2, <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> are
 created on a single node:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --sym-fc -c POSCAR-unitcell
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--sym-fc<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell
 </pre></div>
 </div>
 <p>The indices of the irreducible grid-points neccesarry to specify
 <code class="docutils literal notranslate"><span class="pre">--ga</span></code> option are found by <a class="reference internal" href="command-options.html#wgp-option"><span class="std std-ref">–wgp option</span></a></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --pa<span class="o">=</span><span class="s2">&quot;F&quot;</span> -c POSCAR-unitcell --mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> --fc3 --fc2 --br --wgp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--fc3<span class="w"> </span>--fc2<span class="w"> </span>--br<span class="w"> </span>--wgp
 </pre></div>
 </div>
 <p>and they are stored in <code class="docutils literal notranslate"><span class="pre">ir_grid_points.yaml</span></code>.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% egrep <span class="s1">&#39;^- grid_point:&#39;</span> ir_grid_points.yaml<span class="p">|</span>awk <span class="s1">&#39;{printf(&quot;%d,&quot;,$3)}&#39;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>egrep<span class="w"> </span><span class="s1">&#39;^- grid_point:&#39;</span><span class="w"> </span>ir_grid_points.yaml<span class="p">|</span>awk<span class="w"> </span><span class="s1">&#39;{printf(&quot;%d,&quot;,$3)}&#39;</span>
 <span class="m">0</span>,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,60,61,62,63,64,65,66,67,68,69,70,71,72,73,80,81,82,83,84,85,86,87,88,89,90,91,100,101,102,103,104,105,106,107,108,109,120,121,122,123,124,125,126,127,140,141,142,143,144,145,160,161,162,163,180,181,402,403,404,405,406,407,408,409,422,423,424,425,426,427,428,429,430,431,432,433,434,435,442,443,444,445,446,447,448,449,450,451,452,453,462,463,464,465,466,467,468,469,470,471,482,483,484,485,486,487,488,489,502,503,504,505,506,507,522,523,524,525,542,543,804,805,806,807,808,809,824,825,826,827,828,829,830,831,832,833,844,845,846,847,848,849,850,851,864,865,866,867,868,869,884,885,886,887,904,905,1206,1207,1208,1209,1226,1227,1228,1229,1230,1231,1246,1247,1248,1249,1266,1267,1608,1609,1628,1629,
 </pre></div>
 </div>
@@ -422,7 +347,7 @@ created on a single node:</p>
 necessary to obtain lattice thermal conductivity. To distribute
 computational demands into computer nodes, a set of the grid-point
 indices are chosen and executed as follows:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --pa<span class="o">=</span><span class="s2">&quot;F&quot;</span> -c POSCAR-unitcell --mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> --fc3 --fc2 --br --gp<span class="o">=</span><span class="s2">&quot;0,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25&quot;</span> --write-gamma
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--fc3<span class="w"> </span>--fc2<span class="w"> </span>--br<span class="w"> </span>--gp<span class="o">=</span><span class="s2">&quot;0,1,2,3,4,5,6,7,8,9,20,21,22,23,24,25&quot;</span><span class="w"> </span>--write-gamma
 </pre></div>
 </div>
 <p>Then many <code class="docutils literal notranslate"><span class="pre">kappa-m191919-gx.hdf5</span></code> files are generated. These file
@@ -432,12 +357,12 @@ freedom to arrange those file names, for which see <a class="reference internal"
 options. After completing calculations for all irreducible grid-point
 indices, the RTA thermal conductivity is computed by another run in a
 short time from the stored data:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --pa<span class="o">=</span><span class="s2">&quot;F&quot;</span> -c POSCAR-unitcell --mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> --fc3 --fc2 --br --read-gamma
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--fc3<span class="w"> </span>--fc2<span class="w"> </span>--br<span class="w"> </span>--read-gamma
 </pre></div>
 </div>
 </section>
 <section id="a-convenient-script">
-<h2><a class="toc-backref" href="#id3">A convenient script</a><a class="headerlink" href="#a-convenient-script" title="Permalink to this headline">#</a></h2>
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">A convenient script</a><a class="headerlink" href="#a-convenient-script" title="Permalink to this heading">#</a></h2>
 <p>The following short script may be useful to splitting all irreducible
 grid-point indices into of reasonable number of sets of grid-point
 indices for workload distribution.</p>
@@ -462,9 +387,9 @@ indices for workload distribution.</p>
 </pre></div>
 </div>
 <p>Supposed that this script is saved as <code class="docutils literal notranslate"><span class="pre">divide_gps.py</span></code>,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% phono3py --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --pa<span class="o">=</span><span class="s2">&quot;F&quot;</span> -c POSCAR-unitcell --mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> --wgp
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--wgp
 ...
-% python divide_gps.py <span class="m">20</span>
+%<span class="w"> </span>python<span class="w"> </span>divide_gps.py<span class="w"> </span><span class="m">20</span>
 <span class="m">0</span>,30,52,82,120,402,434,468,524,844,1206
 <span class="m">1</span>,31,53,83,121,403,435,469,525,845,1207
 <span class="m">2</span>,32,54,84,122,404,442,470,542,846,1208
@@ -489,7 +414,7 @@ indices for workload distribution.</p>
 </div>
 <p>For example distributing into 20 computer nodes using a queueing
 system,</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>% <span class="nv">j</span><span class="o">=</span><span class="m">1</span><span class="p">;</span> <span class="k">for</span> i <span class="k">in</span> <span class="sb">`</span>python divide_gps.py <span class="m">20</span><span class="sb">`</span><span class="p">;</span><span class="k">do</span> <span class="nb">echo</span> <span class="nv">$i</span><span class="p">;</span> sed -e s/gps/<span class="nv">$i</span>/g -e s/num/<span class="nv">$j</span>/g job.sh<span class="p">|</span>qsub<span class="p">;</span> <span class="nv">j</span><span class="o">=</span><span class="k">$((</span>j+1<span class="k">))</span><span class="p">;</span> <span class="k">done</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span><span class="nv">j</span><span class="o">=</span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="sb">`</span>python<span class="w"> </span>divide_gps.py<span class="w"> </span><span class="m">20</span><span class="sb">`</span><span class="p">;</span><span class="k">do</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="nv">$i</span><span class="p">;</span><span class="w"> </span>sed<span class="w"> </span>-e<span class="w"> </span>s/gps/<span class="nv">$i</span>/g<span class="w"> </span>-e<span class="w"> </span>s/num/<span class="nv">$j</span>/g<span class="w"> </span>job.sh<span class="p">|</span>qsub<span class="p">;</span><span class="w"> </span><span class="nv">j</span><span class="o">=</span><span class="k">$((</span><span class="nv">j</span><span class="o">+</span><span class="m">1</span><span class="k">))</span><span class="p">;</span><span class="w"> </span><span class="k">done</span>
 </pre></div>
 </div>
 <p>with <code class="docutils literal notranslate"><span class="pre">job.sh</span></code> (here for grid-engine):</p>
@@ -500,55 +425,109 @@ system,</p>
 <span class="c1">#$ -e err-phono3py-num.log</span>
 <span class="c1">#$ -o std-phono3py-num.log</span>
 
-phono3py --dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span> --pa<span class="o">=</span><span class="s2">&quot;F&quot;</span> -c POSCAR-unitcell --mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span> --fc3 --fc2 --br --gp<span class="o">=</span><span class="s2">&quot;gps&quot;</span> --write-gamma
+phono3py<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell<span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--fc3<span class="w"> </span>--fc2<span class="w"> </span>--br<span class="w"> </span>--gp<span class="o">=</span><span class="s2">&quot;gps&quot;</span><span class="w"> </span>--write-gamma
 </pre></div>
 </div>
 </section>
 </section>
 
 
-              </div>
+                </article>
               
-            </main>
-            <footer class="footer-article noprint">
-                
-    <!-- Previous / next buttons -->
-<div class='prev-next-area'>
-    <a class='left-prev' id="prev-link" href="wigner-solution.html" title="previous page">
-        <i class="fas fa-angle-left"></i>
-        <div class="prev-next-info">
-            <p class="prev-next-subtitle">previous</p>
-            <p class="prev-next-title">Solution of the Wigner transport equation</p>
-        </div>
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="wigner-solution.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Solution of the Wigner transport equation</p>
+      </div>
     </a>
-    <a class='right-next' id="next-link" href="cutoff-pair.html" title="next page">
-    <div class="prev-next-info">
+    <a class="right-next"
+       href="cutoff-pair.html"
+       title="next page">
+      <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
         <p class="prev-next-title">Force constants calculation with cutoff pair-distance</p>
-    </div>
-    <i class="fas fa-angle-right"></i>
-    </a>
-</div>
-            </footer>
-        </div>
-    </div>
-    <div class="footer-content row">
-        <footer class="col footer"><p>
-  
-      &copy; Copyright 2015, Atsushi Togo.<br/>
-</p>
-        </footer>
-    </div>
-    
-</div>
-
-
       </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-to-do-it">How to do it</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#a-convenient-script">A convenient script</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2015, Atsushi Togo.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
     </div>
+  </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
+  <script src="_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
 
-
+  <footer class="bd-footer">
+  </footer>
   </body>
 </html>
