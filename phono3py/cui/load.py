@@ -333,7 +333,7 @@ def load(
             log_level=log_level,
         )
 
-    set_dataset_and_force_constants(
+    read_fc = set_dataset_and_force_constants(
         ph3py,
         ph3py_yaml,
         fc3_filename=fc3_filename,
@@ -346,7 +346,8 @@ def load(
 
     if produce_fc:
         compute_force_constants_from_datasets(
-            ph3py=ph3py,
+            ph3py,
+            read_fc,
             fc_calculator=fc_calculator,
             fc_calculator_options=fc_calculator_options,
             symmetrize_fc=symmetrize_fc,
@@ -374,8 +375,21 @@ def set_dataset_and_force_constants(
     phono3py_yaml_filename: Optional[os.PathLike] = None,
     cutoff_pair_distance: Optional[float] = None,
     log_level: int = 0,
-):
-    """Set displacements, forces, and create force constants."""
+) -> dict:
+    """Set displacements, forces, and create force constants.
+
+    Most of properties are stored in ph3py.
+
+    Returns
+    -------
+    dict
+        This contains flags indicating whether fc2 and fc3 were read from
+        file(s) or not. This information can be different from ph3py.fc3 is
+        (not) None and ph3py.fc2 is (not) None. Items are as follows:
+            fc3 : bool
+            fc2 : bool
+
+    """
     read_fc = {"fc2": False, "fc3": False}
     read_fc["fc3"] = _set_dataset_or_fc3(
         ph3py,
@@ -406,14 +420,26 @@ def set_dataset_and_force_constants(
 
 def compute_force_constants_from_datasets(
     ph3py: Phono3py,
+    read_fc: dict,
     fc_calculator: Optional[str] = None,
     fc_calculator_options: Optional[dict] = None,
     symmetrize_fc: bool = True,
     is_compact_fc: bool = True,
     log_level: int = 0,
 ):
-    """Compute force constants from datasets."""
-    if ph3py.dataset:
+    """Compute force constants from datasets.
+
+    Parameters
+    ----------
+    read_fc : dict
+        This contains flags indicating whether fc2 and fc3 were read from
+        file(s) or not. This information can be different from ph3py.fc3 is
+        (not) None and ph3py.fc2 is (not) None. Items are as follows:
+            fc3 : bool
+            fc2 : bool
+
+    """
+    if not read_fc["fc3"] and ph3py.dataset:
         ph3py.produce_fc3(
             symmetrize_fc3r=symmetrize_fc,
             is_compact_fc=is_compact_fc,
@@ -423,7 +449,7 @@ def compute_force_constants_from_datasets(
         if log_level and symmetrize_fc:
             print("fc3 was symmetrized.")
 
-    if ph3py.dataset or ph3py.phonon_dataset:
+    if not read_fc["fc2"] and (ph3py.dataset or ph3py.phonon_dataset):
         if (
             ph3py.phonon_supercell_matrix is None
             and fc_calculator == "alm"

@@ -2192,8 +2192,7 @@ class Phono3py:
         boundary_mfp : float, optiona, default is None
             Mean free path in micrometre to calculate simple boundary
             scattering contribution to thermal conductivity.
-            None gives 1 metre, which is supposed negligible contribution,
-            but this value is used to avoid divergence of phonon lifetime.
+            None ignores this contribution.
         solve_collective_phonon : bool, optional, default is False
             This is an option for the feature under development.
         use_ave_pp : bool, optional, default is False
