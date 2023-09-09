@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>VASP &amp; phono3py calculation &#8212; Phono3py v.2.7.0</title>
   
@@ -37,6 +37,9 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
@@ -379,10 +382,11 @@ computation. The procedure is as follows:</p>
 <p><code class="docutils literal notranslate"><span class="pre">ir_grid_points.yaml</span></code> is obtained. In this file, irreducible
 q-points are shown. Then distribute calculations of phonon
 lifetimes on grid points with <code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code> option by:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">gamma</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="s2">&quot;[grid ponit(s)]&quot;</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">gamma</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="s2">&quot;[grid point(s)]&quot;</span>
 </pre></div>
 </div>
-<p>After finishing all distributed calculations, run with
+<p>Here please replace <code class="docutils literal notranslate"><span class="pre">[grid</span> <span class="pre">point(s)]</span></code> by grid point indices in integer
+numbers. After finishing all distributed calculations, run with
 <code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code> option:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">read</span><span class="o">-</span><span class="n">gamma</span>
 </pre></div>

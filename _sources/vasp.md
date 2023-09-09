@@ -1,7 +1,9 @@
 (vasp_interface)=
+
 # VASP & phono3py calculation
 
 (vasp_workflow)=
+
 ## Workflow
 
 1. Create POSCARs with displacements
@@ -52,6 +54,7 @@
    ```bash
    % phono3py --cf2 disp_fc2-{00001..00002}/vasprun.xml
    ```
+
    `phono3py_displ.yaml` is necessary in this case and `FORCES_FC2` is
    created.
 
@@ -98,10 +101,11 @@
    lifetimes on grid points with `--write-gamma` option by:
 
    ```
-   % phono3py --mesh="11 11 11" --br --write-gamma --gp="[grid ponit(s)]"
+   % phono3py --mesh="11 11 11" --br --write-gamma --gp="[grid point(s)]"
    ```
 
-   After finishing all distributed calculations, run with
+   Here please replace `[grid point(s)]` by grid point indices in integer
+   numbers. After finishing all distributed calculations, run with
    `--read-gamma` option:
 
    ```

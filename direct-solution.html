@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>Direct solution of linearized phonon Boltzmann equation &#8212; Phono3py v.2.7.0</title>
   
@@ -37,6 +37,9 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
@@ -324,7 +327,7 @@ document.write(`
 <p>This page explains how to use the direct solution of LBTE by
 <a class="reference external" href="https://doi.org/10.1103/PhysRevLett.110.265506">L. Chaput, Phys. Rev. Lett. 110, 265506 (2013)</a>
 (<a class="reference internal" href="citation.html#citation-direct-solution-lbte"><span class="std std-ref">citation</span></a>).</p>
-<nav class="contents local" id="contents">
+<div class="contents local topic" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#how-to-use" id="id1">How to use</a></p></li>
 <li><p><a class="reference internal" href="#memory-usage" id="id2">Memory usage</a></p></li>
@@ -343,9 +346,9 @@ document.write(`
 </li>
 <li><p><a class="reference internal" href="#solver-choice-for-diagonalization" id="id10">Solver choice for diagonalization</a></p></li>
 </ul>
-</nav>
+</div>
 <section id="how-to-use">
-<h2><a class="toc-backref" href="#id1" role="doc-backlink">How to use</a><a class="headerlink" href="#how-to-use" title="Permalink to this heading">#</a></h2>
+<h2><a class="toc-backref" href="#id1">How to use</a><a class="headerlink" href="#how-to-use" title="Permalink to this heading">#</a></h2>
 <p>As written in the following sections, this calculation requires large memory
 space. When running multiple temperature points, simply the memory space needed
 is multiplied by the number of the temperature points. Therefore it is normally
@@ -373,7 +376,7 @@ Eigenvalues<span class="w"> </span>of<span class="w"> </span>collision<span clas
 </div>
 </section>
 <section id="memory-usage">
-<h2><a class="toc-backref" href="#id2" role="doc-backlink">Memory usage</a><a class="headerlink" href="#memory-usage" title="Permalink to this heading">#</a></h2>
+<h2><a class="toc-backref" href="#id2">Memory usage</a><a class="headerlink" href="#memory-usage" title="Permalink to this heading">#</a></h2>
 <p>The direct solution of LBTE needs diagonalization of a large collision matrix,
 which requires large memory space. This is the largest limitation of using this
 method. The memory size needed for one collision matrix at a temperature point
@@ -412,7 +415,7 @@ interaction strengths is shown such as</p>
 </div>
 </section>
 <section id="work-load-distribution">
-<h2><a class="toc-backref" href="#id3" role="doc-backlink">Work load distribution</a><a class="headerlink" href="#work-load-distribution" title="Permalink to this heading">#</a></h2>
+<h2><a class="toc-backref" href="#id3">Work load distribution</a><a class="headerlink" href="#work-load-distribution" title="Permalink to this heading">#</a></h2>
 <p>The other difficulty compared with RTA is the workload distribution. Currently
 there are two ways to distribute the calculation: (1) Collision matrix is
 divided and the pieces are distributed into computing nodes. (2) Ph-ph
@@ -424,7 +427,7 @@ stored in an hdf5 file. Increasing the calculation size, e.g., larger mesh
 numbers or larger number of atoms in the primitive cell, large files are
 created.</p>
 <section id="distribution-of-collision-matrix">
-<span id="distribution-colmat"></span><h3><a class="toc-backref" href="#id4" role="doc-backlink">Distribution of collision matrix</a><a class="headerlink" href="#distribution-of-collision-matrix" title="Permalink to this heading">#</a></h3>
+<span id="distribution-colmat"></span><h3><a class="toc-backref" href="#id4">Distribution of collision matrix</a><a class="headerlink" href="#distribution-of-collision-matrix" title="Permalink to this heading">#</a></h3>
 <p>A full collision matrix is divided into pieces at grid points of irreducible
 part of Brillouin zone. Each piece is calculated independently from the other
 pieces. After finishing the calculations of these pieces, the full collision
@@ -477,7 +480,7 @@ collision matrix calculation (see also <a class="reference internal" href="workl
 temperatures by <code class="docutils literal notranslate"><span class="pre">--ts</span></code> option, i.e., 300K in this case.</p>
 </section>
 <section id="distribution-of-phonon-phonon-interaction-strengths">
-<h3><a class="toc-backref" href="#id5" role="doc-backlink">Distribution of phonon-phonon interaction strengths</a><a class="headerlink" href="#distribution-of-phonon-phonon-interaction-strengths" title="Permalink to this heading">#</a></h3>
+<h3><a class="toc-backref" href="#id5">Distribution of phonon-phonon interaction strengths</a><a class="headerlink" href="#distribution-of-phonon-phonon-interaction-strengths" title="Permalink to this heading">#</a></h3>
 <p>The distribution of pieces of collision matrix is straightforward and is
 recommended to use if the number of temperature points is small. However
 increasing data file size, network communication becomes to require long time to
@@ -534,7 +537,7 @@ at multiple temperatures.</p>
 </section>
 </section>
 <section id="cutoff-parameter-of-pseudo-inversion">
-<span id="diagonzalization-solver"></span><h2><a class="toc-backref" href="#id6" role="doc-backlink">Cutoff parameter of pseudo inversion</a><a class="headerlink" href="#cutoff-parameter-of-pseudo-inversion" title="Permalink to this heading">#</a></h2>
+<span id="diagonzalization-solver"></span><h2><a class="toc-backref" href="#id6">Cutoff parameter of pseudo inversion</a><a class="headerlink" href="#cutoff-parameter-of-pseudo-inversion" title="Permalink to this heading">#</a></h2>
 <p>To achieve a pseudo inversion, a cutoff parameter is used to find null space,
 i.e., to select the nearly zero eigenvalues. The default cutoff value is <code class="docutils literal notranslate"><span class="pre">1e-8</span></code>,
 and this hopefully works in many cases. But if a collision matrix is numerically
@@ -567,7 +570,7 @@ as null spaces.</span><a class="headerlink" href="#coleigplot" title="Permalink 
 </figure>
 </section>
 <section id="diagonalization-solver-interfaces">
-<h2><a class="toc-backref" href="#id7" role="doc-backlink">Diagonalization solver interfaces</a><a class="headerlink" href="#diagonalization-solver-interfaces" title="Permalink to this heading">#</a></h2>
+<h2><a class="toc-backref" href="#id7">Diagonalization solver interfaces</a><a class="headerlink" href="#diagonalization-solver-interfaces" title="Permalink to this heading">#</a></h2>
 <p>Multithreaded BLAS is recommended to use for the calculation of the direct
 solution of LBTE because the diagonalization of the collision matrix is
 computationally highly demanding. The diagonalization in Phono3py relies on
@@ -580,19 +583,19 @@ conda-forge is written <a class="reference internal" href="install.html#install-
 interfaces is described in the
 <a class="reference internal" href="#direct-solution-solver-choice"><span class="std std-ref">next section</span></a>.</p>
 <section id="openblas-or-mkl-linked-scipy-and-numpy">
-<h3><a class="toc-backref" href="#id8" role="doc-backlink">OpenBLAS or MKL linked scipy and numpy</a><a class="headerlink" href="#openblas-or-mkl-linked-scipy-and-numpy" title="Permalink to this heading">#</a></h3>
+<h3><a class="toc-backref" href="#id8">OpenBLAS or MKL linked scipy and numpy</a><a class="headerlink" href="#openblas-or-mkl-linked-scipy-and-numpy" title="Permalink to this heading">#</a></h3>
 <p>Scipy and numpy have interfaces to LAPACK <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code>, and scipy also has the
 interface to <code class="docutils literal notranslate"><span class="pre">dsyev</span></code>. OpenBLAS and MKL linked scipy and numpy are provided by
 conda-forge.</p>
 </section>
 <section id="openblas-or-mkl-via-lapacke">
-<h3><a class="toc-backref" href="#id9" role="doc-backlink">OpenBLAS or MKL via LAPACKE</a><a class="headerlink" href="#openblas-or-mkl-via-lapacke" title="Permalink to this heading">#</a></h3>
+<h3><a class="toc-backref" href="#id9">OpenBLAS or MKL via LAPACKE</a><a class="headerlink" href="#openblas-or-mkl-via-lapacke" title="Permalink to this heading">#</a></h3>
 <p>LAPACK <code class="docutils literal notranslate"><span class="pre">dsyev</span></code> and <code class="docutils literal notranslate"><span class="pre">dsyevd</span></code> can be accessed via LAPACKE in the phono3py’s C
 language implementation through the python C-API.</p>
 </section>
 </section>
 <section id="solver-choice-for-diagonalization">
-<span id="direct-solution-solver-choice"></span><h2><a class="toc-backref" href="#id10" role="doc-backlink">Solver choice for diagonalization</a><a class="headerlink" href="#solver-choice-for-diagonalization" title="Permalink to this heading">#</a></h2>
+<span id="direct-solution-solver-choice"></span><h2><a class="toc-backref" href="#id10">Solver choice for diagonalization</a><a class="headerlink" href="#solver-choice-for-diagonalization" title="Permalink to this heading">#</a></h2>
 <p>For larger systems, diagonalization of collision matrix takes longest time and
 requires large memory space. Phono3py relies on LAPACK for the diagonalization
 and so the performance is dependent on the choice of the diagonalization solver.</p>

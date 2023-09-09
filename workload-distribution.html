@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>Workload distribution &#8212; Phono3py v.2.7.0</title>
   
@@ -37,6 +37,9 @@
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
@@ -319,14 +322,14 @@ calculation are executed. The resulting data for each grid point are
 stored in its <code class="docutils literal notranslate"><span class="pre">kappa-mxxx-gx.hdf5</span></code> file on each node by setting
 <a class="reference internal" href="command-options.html#write-gamma-option"><span class="std std-ref">–write_gamma option</span></a>. Once all data are
 obtained, those data are collected by <a class="reference internal" href="command-options.html#read-gamma-option"><span class="std std-ref">–read_gamma option</span></a> and the lattice thermal conductivity is obtained.</p>
-<nav class="contents local" id="contents">
+<div class="contents local topic" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#how-to-do-it" id="id2">How to do it</a></p></li>
 <li><p><a class="reference internal" href="#a-convenient-script" id="id3">A convenient script</a></p></li>
 </ul>
-</nav>
+</div>
 <section id="how-to-do-it">
-<h2><a class="toc-backref" href="#id2" role="doc-backlink">How to do it</a><a class="headerlink" href="#how-to-do-it" title="Permalink to this heading">#</a></h2>
+<h2><a class="toc-backref" href="#id2">How to do it</a><a class="headerlink" href="#how-to-do-it" title="Permalink to this heading">#</a></h2>
 <p>The following example is executed in the <code class="docutils literal notranslate"><span class="pre">Si-PBE</span></code> example.</p>
 <p>To avoid re-calculating fc3 and fc2, <code class="docutils literal notranslate"><span class="pre">fc3.hdf5</span></code> and <code class="docutils literal notranslate"><span class="pre">fc2.hdf5</span></code> are
 created on a single node:</p>
@@ -362,7 +365,7 @@ short time from the stored data:</p>
 </div>
 </section>
 <section id="a-convenient-script">
-<h2><a class="toc-backref" href="#id3" role="doc-backlink">A convenient script</a><a class="headerlink" href="#a-convenient-script" title="Permalink to this heading">#</a></h2>
+<h2><a class="toc-backref" href="#id3">A convenient script</a><a class="headerlink" href="#a-convenient-script" title="Permalink to this heading">#</a></h2>
 <p>The following short script may be useful to splitting all irreducible
 grid-point indices into of reasonable number of sets of grid-point
 indices for workload distribution.</p>
