@@ -314,14 +314,14 @@ document.write(`
 <ol class="arabic">
 <li><p>Create POSCARs with displacements</p>
 <p>This is the same way as usual phonopy:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-d<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-d<span class="w"> </span>--dim<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>--pa<span class="w"> </span>F<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">phono3py_disp.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">POSCAR-xxxxx</span></code> files are created.</p>
 <p>If you want to use larger supercell size for
 second-order force constants (fc2) calculation than that
 for third-order force constants (fc3) calculation:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-d<span class="w"> </span>--dim-fc2<span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span><span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--pa<span class="o">=</span><span class="s2">&quot;F&quot;</span><span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py<span class="w"> </span>-d<span class="w"> </span>--dim-fc2<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">4</span><span class="w"> </span>--dim<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>--pa<span class="w"> </span>F<span class="w"> </span>-c<span class="w"> </span>POSCAR-unitcell
 </pre></div>
 </div>
 <p>In this case, <code class="docutils literal notranslate"><span class="pre">POSCAR_FC2-xxxxx</span></code> files are also created.</p>
@@ -363,7 +363,7 @@ run time when reading force constants from these files with
 </li>
 <li><p>Thermal conductivity calculation</p>
 <p>An example of thermal conductivity calculation is:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> <span class="o">--</span><span class="n">br</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">mesh</span> <span class="mi">11</span> <span class="mi">11</span> <span class="mi">11</span> <span class="o">--</span><span class="n">br</span>
 </pre></div>
 </div>
 <p>This calculation may take very long time. <code class="docutils literal notranslate"><span class="pre">--thm</span></code> invokes a
@@ -376,19 +376,24 @@ point can be separately calculated since they
 are independent and no communication is necessary at the
 computation. The procedure is as follows:</p>
 <p>First run the same command with the addition option of <code class="docutils literal notranslate"><span class="pre">--wgp</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">wgp</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">mesh</span> <span class="mi">11</span> <span class="mi">11</span> <span class="mi">11</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">wgp</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">ir_grid_points.yaml</span></code> is obtained. In this file, irreducible
-q-points are shown. Then distribute calculations of phonon
-lifetimes on grid points with <code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code> option by:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">gamma</span> <span class="o">--</span><span class="n">gp</span><span class="o">=</span><span class="s2">&quot;[grid point(s)]&quot;</span>
+<p><code class="docutils literal notranslate"><span class="pre">ir_grid_points.yaml</span></code> is obtained. Irreducible q-points are found in this
+file. For example, the grid point indices of the irreducible q-points are
+printed by</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">grep</span> <span class="n">grid_point</span><span class="p">:</span> <span class="n">ir_grid_points</span><span class="o">.</span><span class="n">yaml</span><span class="o">|</span><span class="n">awk</span> <span class="s1">&#39;{printf(&quot;</span><span class="si">%d</span><span class="s1"> &quot;, $3)}&#39;</span>
+<span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">12</span> <span class="mi">13</span> <span class="mi">14</span> <span class="mi">15</span> <span class="mi">16</span> <span class="mi">17</span> <span class="mi">18</span> <span class="mi">19</span> <span class="mi">20</span> <span class="mi">21</span> <span class="mi">24</span> <span class="mi">25</span> <span class="mi">26</span> <span class="mi">27</span> <span class="mi">28</span> <span class="mi">29</span> <span class="mi">30</span> <span class="mi">31</span> <span class="mi">36</span> <span class="mi">37</span> <span class="mi">38</span> <span class="mi">39</span> <span class="mi">40</span> <span class="mi">41</span> <span class="mi">48</span> <span class="mi">49</span> <span class="mi">50</span> <span class="mi">51</span> <span class="mi">60</span> <span class="mi">61</span> <span class="mi">148</span> <span class="mi">149</span> <span class="mi">150</span> <span class="mi">151</span> <span class="mi">160</span> <span class="mi">161</span> <span class="mi">162</span> <span class="mi">163</span> <span class="mi">164</span> <span class="mi">165</span> <span class="mi">172</span> <span class="mi">173</span> <span class="mi">174</span> <span class="mi">175</span> <span class="mi">184</span> <span class="mi">185</span> <span class="mi">297</span> <span class="mi">298</span> <span class="mi">309</span> <span class="mi">310</span>
 </pre></div>
 </div>
-<p>Here please replace <code class="docutils literal notranslate"><span class="pre">[grid</span> <span class="pre">point(s)]</span></code> by grid point indices in integer
-numbers. After finishing all distributed calculations, run with
-<code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code> option:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">mesh</span><span class="o">=</span><span class="s2">&quot;11 11 11&quot;</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">read</span><span class="o">-</span><span class="n">gamma</span>
+<p>Phonon lifetimes on the first ten irreducible grid points are calculated and
+stored in files with <code class="docutils literal notranslate"><span class="pre">--write-gamma</span></code> option by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">mesh</span> <span class="mi">11</span> <span class="mi">11</span> <span class="mi">11</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">gamma</span> <span class="o">--</span><span class="n">gp</span> <span class="mi">0</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span> <span class="mi">4</span> <span class="mi">5</span> <span class="mi">12</span> <span class="mi">13</span> <span class="mi">14</span> <span class="mi">15</span>
+</pre></div>
+</div>
+<p>After finishing distributed calculations at all irreducible grid points
+(0, 1, …, 310), run with <code class="docutils literal notranslate"><span class="pre">--read-gamma</span></code> option:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">%</span> <span class="n">phono3py</span> <span class="o">--</span><span class="n">fc3</span> <span class="o">--</span><span class="n">fc2</span> <span class="o">--</span><span class="n">mesh</span> <span class="mi">11</span> <span class="mi">11</span> <span class="mi">11</span> <span class="o">--</span><span class="n">br</span> <span class="o">--</span><span class="n">read</span><span class="o">-</span><span class="n">gamma</span>
 </pre></div>
 </div>
 <p>Once this calculation runs without problem, separately calculated

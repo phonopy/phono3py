@@ -11,7 +11,7 @@
    This is the same way as usual phonopy:
 
    ```bash
-   % phono3py -d --dim="2 2 2" --pa="F" -c POSCAR-unitcell
+   % phono3py -d --dim 2 2 2 --pa F -c POSCAR-unitcell
    ```
 
    `phono3py_disp.yaml` and `POSCAR-xxxxx` files are created.
@@ -21,7 +21,7 @@
    for third-order force constants (fc3) calculation:
 
    ```bash
-   % phono3py -d --dim-fc2="4 4 4" --dim="2 2 2" --pa="F" -c POSCAR-unitcell
+   % phono3py -d --dim-fc2 4 4 4 --dim 2 2 2 --pa F -c POSCAR-unitcell
    ```
 
    In this case, `POSCAR_FC2-xxxxx` files are also created.
@@ -76,7 +76,7 @@
    An example of thermal conductivity calculation is:
 
    ```
-   % phono3py --mesh="11 11 11" --br
+   % phono3py --mesh 11 11 11 --br
    ```
 
    This calculation may take very long time. `--thm` invokes a
@@ -93,23 +93,30 @@
    First run the same command with the addition option of `--wgp`:
 
    ```
-   % phono3py --fc3 --fc2 --mesh="11 11 11" --br --wgp
+   % phono3py --fc3 --fc2 --mesh 11 11 11 --br --wgp
    ```
 
-   `ir_grid_points.yaml` is obtained. In this file, irreducible
-   q-points are shown. Then distribute calculations of phonon
-   lifetimes on grid points with `--write-gamma` option by:
+   `ir_grid_points.yaml` is obtained. Irreducible q-points are found in this
+   file. For example, the grid point indices of the irreducible q-points are
+   printed by
 
    ```
-   % phono3py --mesh="11 11 11" --br --write-gamma --gp="[grid point(s)]"
+   % grep grid_point: ir_grid_points.yaml|awk '{printf("%d ", $3)}'
+   0 1 2 3 4 5 12 13 14 15 16 17 18 19 20 21 24 25 26 27 28 29 30 31 36 37 38 39 40 41 48 49 50 51 60 61 148 149 150 151 160 161 162 163 164 165 172 173 174 175 184 185 297 298 309 310
    ```
 
-   Here please replace `[grid point(s)]` by grid point indices in integer
-   numbers. After finishing all distributed calculations, run with
-   `--read-gamma` option:
+   Phonon lifetimes on the first ten irreducible grid points are calculated and
+   stored in files with `--write-gamma` option by:
 
    ```
-   % phono3py --fc3 --fc2 --mesh="11 11 11" --br --read-gamma
+   % phono3py --mesh 11 11 11 --br --write-gamma --gp 0 1 2 3 4 5 12 13 14 15
+   ```
+
+   After finishing distributed calculations at all irreducible grid points
+   (0, 1, ..., 310), run with `--read-gamma` option:
+
+   ```
+   % phono3py --fc3 --fc2 --mesh 11 11 11 --br --read-gamma
    ```
 
    Once this calculation runs without problem, separately calculated
