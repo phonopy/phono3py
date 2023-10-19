@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
+  rev: v4.5.0
   hooks:
   - id: trailing-whitespace
   - id: end-of-file-fixer
@@ -19,7 +19,7 @@ repos:
     - "--ignore=E203,W503"
 
 - repo: https://github.com/psf/black
-  rev: 23.7.0
+  rev: 23.9.1
   hooks:
   - id: black
     args:
@@ -37,7 +37,7 @@ repos:
       name: isort (python)
 
 - repo: https://github.com/Takishima/cmake-pre-commit-hooks
-  rev: v1.9.2
+  rev: v1.9.4
   hooks:
     - id: clang-format
       args:
