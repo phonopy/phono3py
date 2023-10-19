@@ -605,7 +605,9 @@ where $N$ is the number of grid points on the sampling mesh.
 $\Phi_{\lambda \lambda' \lambda''} \equiv 0$ unless
 $\mathbf{q} + \mathbf{q}' + \mathbf{q}'' = \mathbf{G}$.
 
-See also references {cite}`Togo-PRB-2015,Mizokami-PRB-2018`.
+<!-- See also references {cite}`Togo-PRB-2015,Mizokami-PRB-2018`. -->
+
+See also {ref}`reference papers <ave_pp_reference>`.
 
 This option works only when `--read-gamma` and `--br` options are activated
 where the averaged phonon-phonon interaction that is read from
@@ -635,7 +637,11 @@ constant value and $|\Phi_{\lambda \lambda'
 {ref}`--ave-pp <ave_pp_option>` for thermal conductivity calculation. This
 option works only when `--br` options are activated. Therefore third-order force
 constants are not necessary to input. The physical unit of the value is
-$\text{eV}^2$. See also references {cite}`Togo-PRB-2015,Mizokami-PRB-2018`.
+$\text{eV}^2$.
+
+<!-- See also references {cite}`Togo-PRB-2015,Mizokami-PRB-2018`. -->
+
+See also {ref}`reference papers <ave_pp_reference>`.
 
 ```bash
 % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --const-ave-pp=1e-10
@@ -826,7 +832,9 @@ $$
 
 respectively. In the above formulae, angular frequency $\omega$ is used, but in
 the calculation results, ordinal frequency $\nu$ is used. Be careful about
-$2\pi$ treatment. See also references {cite}`Togo-PRB-2015,Togo-JPCM-2022`.
+$2\pi$ treatment.
+
+See also {ref}`reference papers <spectral_function_reference>`.
 
 (ise_option)=
 
@@ -890,7 +898,7 @@ $$
  \int_0^\infty \frac{d\omega}{2\pi} A_\lambda(\omega) = 1.
 $$
 
-See also reference {cite}`Togo-JPCM-2022`.
+See also {ref}`reference papers <spectral_function_reference>`.
 
 ### `--spf` (`SPECTRAL_FUNCTION = .TRUE.`)
 
@@ -944,7 +952,7 @@ $$
 \end{align}
 $$
 
-(See also references {cite}`Togo-PRB-2015,Togo-JPCM-2022`.)
+See also {ref}`reference papers <spectral_function_reference>`.
 
 ```bash
 % phono3py --fc2 --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="16 16 16" --jdos --ga="0 0 0  8 8 8"
@@ -970,7 +978,7 @@ $$
 \end{align}
 $$
 
-(See also references {cite}`Togo-PRB-2015,Mizokami-PRB-2018,Togo-JPCM-2022`.)
+See also {ref}`reference papers <spectral_function_reference>`.
 
 ```bash
 % phono3py --fc2 --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="16 16 16" --jdos --ga="0 0 0  8 8 8" --ts=300
@@ -1247,8 +1255,8 @@ This modifies default input and output file names.
 
 This is equivalent to setting `-i` and `-o` simultaneously.
 
-## References
+<!-- ## References
 
 ```{bibliography}
 :filter: docname in docnames
-```
+``` -->

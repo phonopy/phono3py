@@ -846,13 +846,13 @@ class Interaction:
 
     def _set_fc3(self, fc3):
         if (
-            type(fc3) == np.ndarray
+            isinstance(fc3, np.ndarray)
             and fc3.dtype == np.dtype("double")
             and fc3.flags.aligned
             and fc3.flags.owndata
             and fc3.flags.c_contiguous
             and self._frequency_scale_factor is None
-        ):  # noqa E129
+        ):
             self._fc3 = fc3
         elif self._frequency_scale_factor is None:
             self._fc3 = np.array(fc3, dtype="double", order="C")
