@@ -174,7 +174,7 @@ created from `FORCES_FC2` and `phono3py_disp.yaml` instead of `FORCES_FC3` and
 % phono3py --cfs --dim-fc2="x x x"
 ```
 
-## Supercell and primitive cell
+## Supercell, primitive cell, masses, magnetic moments
 
 (dim_option)=
 
@@ -236,6 +236,16 @@ phonopy `PRIMITIVE_AXES` tag (`--pa` option) at
 http://phonopy.github.io/phonopy/setting-tags.html#primitive-axis. When a proper
 `phono3py_disp.yaml` exists in the current directory, this is unnecessary to be
 specified.
+
+### `--mass` (`MASS`)
+
+Atomic masses of **primitive cell** are overwritten. See more details in
+[phonopy web page](https://phonopy.github.io/phonopy/setting-tags.html#mass).
+
+### `--magmom` (`MAGMOM`)
+
+Magnetic moments of **unit cell** are specified. This information is used to find crystal symmetry. See more details in [phonopy
+web page](https://phonopy.github.io/phonopy/setting-tags.html#magmom).
 
 ## Displacement creation
 
@@ -627,7 +637,6 @@ option works only when `--br` options are activated. Therefore third-order force
 constants are not necessary to input. The physical unit of the value is
 $\text{eV}^2$. See also references {cite}`Togo-PRB-2015,Mizokami-PRB-2018`.
 
-
 ```bash
 % phono3py --dim="3 3 2" -v --mesh="32 32 20" -c POSCAR-unitcell --br --const-ave-pp=1e-10
 ```
@@ -908,11 +917,9 @@ file, where $A_{\mathrm{q}j}$ is normalied as given above, i.e., numerical
 sum of stored value for each band should become roughly 1.
 ```
 
-
 (jdos_option)=
 
 ## Joint density of states (JDOS) and weighted-JDOS
-
 
 ### `--jdos` (`JOINT_DOS = .TRUE.`)
 
@@ -1240,8 +1247,8 @@ This modifies default input and output file names.
 
 This is equivalent to setting `-i` and `-o` simultaneously.
 
-
 ## References
+
 ```{bibliography}
 :filter: docname in docnames
 ```

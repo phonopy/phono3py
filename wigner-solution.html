@@ -7,7 +7,7 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
     <title>Solution of the Wigner transport equation &#8212; Phono3py v.2.7.0</title>
   
@@ -19,12 +19,12 @@
   </script>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=ac02cc09edc035673794" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=ac02cc09edc035673794" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=ac02cc09edc035673794" rel="stylesheet" />
 
   
-  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=ac02cc09edc035673794" rel="stylesheet" />
   <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
 <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
@@ -33,13 +33,11 @@
     <link rel="stylesheet" href="_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=ac02cc09edc035673794" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=ac02cc09edc035673794" />
+  <script src="_static/vendor/fontawesome/6.1.2/js/all.min.js?digest=ac02cc09edc035673794"></script>
 
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
     <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
@@ -60,6 +58,15 @@
   
   
   <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>
+    Back to top
+  </button>
+
   
   <input type="checkbox"
           class="sidebar-toggle"
@@ -259,10 +266,10 @@
 
 <script>
 document.write(`
-  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
-    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
-    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
   </button>
 `);
 </script>
@@ -270,7 +277,7 @@ document.write(`
 <script>
 document.write(`
   <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <i class="fa-solid fa-magnifying-glass"></i>
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
   </button>
 `);
 </script>
@@ -332,7 +339,7 @@ Specifically, the expression for <span class="math notranslate nohighlight">\(\k
 \]</div>
 <p>where <span class="math notranslate nohighlight">\(k_{B}\)</span> is the Boltzmann constant, <span class="math notranslate nohighlight">\(\mathcal{V}\)</span> is the volume of the primitive cell, <span class="math notranslate nohighlight">\(N_{\rm c}\)</span> is the number of phonon wavevectors <span class="math notranslate nohighlight">\(\mathbf{q}\)</span> used to sample the Brillouin zone, <span class="math notranslate nohighlight">\(\hbar\omega(\mathbf{q})_s\)</span> is the energy of the phonon with wavevector <span class="math notranslate nohighlight">\(\mathbf{q}\)</span> and mode <span class="math notranslate nohighlight">\(s\)</span>, <span class="math notranslate nohighlight">\({{V}^\alpha}(\mathbf{q})_{s,s'}\)</span> is the velocity operator in direction <span class="math notranslate nohighlight">\(\alpha\)</span>, <span class="math notranslate nohighlight">\(\bar{{N}}^{T}({\mathbf{q}})_{s}\)</span> is the Bose-Einstein distribution at temperature <span class="math notranslate nohighlight">\(T\)</span>, and <span class="math notranslate nohighlight">\(\Gamma(\mathbf{q})_{s}\)</span> is the phonon linewidth (full width at half maximum, i.e. the inverse phonon lifetime <span class="math notranslate nohighlight">\(\Gamma(\mathbf{q})_{s}=[\tau(\mathbf{q})_{s}]^{-1}\)</span>).</p>
 <p>As discussed in the references above, the term <span class="math notranslate nohighlight">\(\kappa_{\rm P}^{\alpha \beta}\)</span> can be evaluated exactly or in the RTA approximation (the former corresponds to account for all the repumping/depumping scattering events, while the latter only for depumping scattering events). In contrast, the term <span class="math notranslate nohighlight">\(\kappa_{\rm C}^{\alpha \beta}\)</span> depends only on the depumping scattering events, thus it remains unchanged if scattering is considered exactly or in the RTA approximation.</p>
-<div class="contents local topic" id="contents">
+<nav class="contents local" id="contents">
 <ul class="simple">
 <li><p><a class="reference internal" href="#how-to-use" id="id1">How to use</a></p>
 <ul>
@@ -342,11 +349,11 @@ Specifically, the expression for <span class="math notranslate nohighlight">\(\k
 </li>
 <li><p><a class="reference internal" href="#computational-cost" id="id4">Computational cost</a></p></li>
 </ul>
-</div>
+</nav>
 <section id="how-to-use">
-<h2><a class="toc-backref" href="#id1">How to use</a><a class="headerlink" href="#how-to-use" title="Permalink to this heading">#</a></h2>
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">How to use</a><a class="headerlink" href="#how-to-use" title="Permalink to this heading">#</a></h2>
 <section id="solution-of-the-wte-scattering-in-the-rta-approximation">
-<h3><a class="toc-backref" href="#id2">Solution of the WTE, scattering in the RTA approximation</a><a class="headerlink" href="#solution-of-the-wte-scattering-in-the-rta-approximation" title="Permalink to this heading">#</a></h3>
+<h3><a class="toc-backref" href="#id2" role="doc-backlink">Solution of the WTE, scattering in the RTA approximation</a><a class="headerlink" href="#solution-of-the-wte-scattering-in-the-rta-approximation" title="Permalink to this heading">#</a></h3>
 <p>To compute the Wigner conductivity with scattering in the RTA approximation, specify <code class="docutils literal notranslate"><span class="pre">--br</span></code> and <code class="docutils literal notranslate"><span class="pre">--wigner</span></code>. For <code class="docutils literal notranslate"><span class="pre">example/Wigner_La2Zr2O7</span></code>, the command is:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>phono3py<span class="w"> </span>--nac<span class="w"> </span>--cell<span class="w"> </span>POSCAR<span class="w"> </span>--fc2<span class="w"> </span>--dim<span class="o">=</span><span class="s2">&quot;2 2 2&quot;</span><span class="w"> </span>--dim-fc2<span class="o">=</span><span class="s2">&quot;4 4 4&quot;</span><span class="w"> </span>--mesh<span class="o">=</span><span class="s2">&quot;19 19 19&quot;</span><span class="w"> </span>--tmin<span class="o">=</span><span class="m">300</span><span class="w"> </span>--tmax<span class="o">=</span><span class="m">1000</span><span class="w"> </span>--tstep<span class="o">=</span><span class="m">700</span><span class="w"> </span>--sym-fc<span class="w"> </span>--isotope<span class="w"> </span>--br<span class="w"> </span>--wigner<span class="w"> </span>--read-gamma<span class="w"> </span>&gt;<span class="w"> </span>tc_La2Zr2O7.out
 </pre></div>
@@ -393,7 +400,7 @@ K_T<span class="w">    </span><span class="m">1600</span>.0<span class="w">     
 </div>
 </section>
 <section id="solution-of-the-wte-exact-treatment-of-scattering">
-<h3><a class="toc-backref" href="#id3">Solution of the WTE, exact treatment of scattering</a><a class="headerlink" href="#solution-of-the-wte-exact-treatment-of-scattering" title="Permalink to this heading">#</a></h3>
+<h3><a class="toc-backref" href="#id3" role="doc-backlink">Solution of the WTE, exact treatment of scattering</a><a class="headerlink" href="#solution-of-the-wte-exact-treatment-of-scattering" title="Permalink to this heading">#</a></h3>
 <p>To compute the Wigner conductivity treating scattering exactly, specify <code class="docutils literal notranslate"><span class="pre">--lbte</span></code> and <code class="docutils literal notranslate"><span class="pre">--wigner</span></code>. For <code class="docutils literal notranslate"><span class="pre">example/Si-PBEsol</span></code>, the command is:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>%<span class="w"> </span>phono3py-load<span class="w"> </span>--mesh<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">11</span><span class="w"> </span>--ts<span class="w"> </span><span class="m">1600</span><span class="w"> </span>--lbte<span class="w"> </span>--wigner
 </pre></div>
@@ -420,7 +427,7 @@ K_C<span class="w">             </span><span class="m">1600</span>.0<span class=
 </section>
 </section>
 <section id="computational-cost">
-<h2><a class="toc-backref" href="#id4">Computational cost</a><a class="headerlink" href="#computational-cost" title="Permalink to this heading">#</a></h2>
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Computational cost</a><a class="headerlink" href="#computational-cost" title="Permalink to this heading">#</a></h2>
 <p>Using the code with the <code class="docutils literal notranslate"><span class="pre">--wigner</span></code> option has a negligible effect on the duration of the calculation.</p>
 </section>
 </section>
@@ -431,11 +438,10 @@ K_C<span class="w">             </span><span class="m">1600</span>.0<span class=
 
               
               
-                <footer class="bd-footer-article">
-                  
-<div class="footer-article-items footer-article__inner">
-  
-    <div class="footer-article-item"><!-- Previous / next buttons -->
+              
+              
+                <footer class="prev-next-footer">
+                  <!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="left-prev"
        href="direct-solution.html"
@@ -455,10 +461,7 @@ K_C<span class="w">             </span><span class="m">1600</span>.0<span class=
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
-</div></div>
-  
 </div>
-
                 </footer>
               
             </div>
@@ -522,8 +525,8 @@ K_C<span class="w">             </span><span class="m">1600</span>.0<span class=
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script src="_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
-<script src="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+  <script src="_static/scripts/bootstrap.js?digest=ac02cc09edc035673794"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=ac02cc09edc035673794"></script>
 
   <footer class="bd-footer">
   </footer>
