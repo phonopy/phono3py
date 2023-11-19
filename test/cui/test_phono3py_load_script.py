@@ -99,7 +99,9 @@ def test_phono3py_with_QE_calculator(load_phono3py_yaml):
     with pytest.raises(SystemExit):
         main(**argparse_control)
 
-    with h5py.File(cwd_called / "kappa-m111111.hdf5") as f:
+    print(cwd_called.iterdir())
+
+    with h5py.File(cwd_called / "kappa-m111111.hdf5", "r") as f:
         np.testing.assert_almost_equal(f["kappa"][0, 0], 118.93, decimal=1)
 
     # Clean files created by phono3py/phono3py-load script.
