@@ -34,6 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import warnings
+from typing import Optional
 
 import numpy as np
 from phonopy.exception import ForceCalculatorRequiredError
@@ -155,7 +156,7 @@ class Phono3py:
         store_dense_gp_map=True,
         store_dense_svecs=True,
         symprec=1e-5,
-        calculator=None,
+        calculator: Optional[str] = None,
         log_level=0,
         lapack_zheev_uplo=None,
     ):
@@ -254,7 +255,7 @@ class Phono3py:
         self._store_dense_svecs = store_dense_svecs
 
         self._cutoff_frequency = cutoff_frequency
-        self._calculator = calculator
+        self._calculator: Optional[str] = calculator
         self._log_level = log_level
 
         # Create supercell and primitive cell
@@ -399,7 +400,7 @@ class Phono3py:
         return self.version
 
     @property
-    def calculator(self):
+    def calculator(self) -> Optional[str]:
         """Return calculator interface name.
 
         str

@@ -33,6 +33,7 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import copy
 import os
 import sys
 from typing import Optional
@@ -78,7 +79,12 @@ def create_phono3py_force_constants(
     output_filename: Optional[str] = None,
     log_level=1,
 ):
-    """Read or calculate force constants."""
+    """Read or calculate force constants.
+
+    This function is for the 'phonopy' command only and not for the
+    'phonopy-load' command.
+
+    """
     # Only for build-in fc calculator.
     # These are not applied to external fc calculators.
     symmetrize_fc3r = settings.is_symmetrize_fc3_r or settings.fc_symmetry
@@ -205,18 +211,42 @@ def parse_forces(
     fc_type=None,
     log_level=0,
 ):
-    """Read displacements and forces."""
-    filename_read_from = None
+    """Read displacements and forces.
+
+    Physical units of displacements and forces are converted following the
+    calculator name. The calculator name may be given as the user input or found
+    in phono3py-yaml file. When dumping to phono3py-yaml file, it is assumed
+    that displacements and forces are written in the default units (A and eV/A)
+    without writing calculator name in it.
+
+    """
+    filename_read_from: Optional[str] = None
+
+    calculator = phono3py.calculator
+    # Get dataset from ph3py_yaml. dataset can be None.
+    # physical_units can be overwritten if calculator is found in ph3py_yaml.
+    dataset = _extract_dataset_from_ph3py_yaml(ph3py_yaml, fc_type)
+    if dataset and ph3py_yaml.calculator:
+        calculator = ph3py_yaml.calculator
+
+    physical_units = get_default_physical_units(calculator)
 
     if fc_type == "phonon_fc2":
         natom = len(phono3py.phonon_supercell)
     else:
         natom = len(phono3py.supercell)
 
-    # Get dataset from ph3py_yaml. dataset can be None.
-    dataset = _extract_dataset_from_ph3py_yaml(ph3py_yaml, fc_type)
     if dataset:
         filename_read_from = phono3py_yaml_filename
+
+        # Units of displacements and forces are converted. If forces don't
+        # exist, the convesion will not be performed for forces.
+        if calculator is not None:
+            _convert_unit_in_dataset(
+                dataset,
+                distance_to_A=physical_units["distance_to_A"],
+                force_to_eVperA=physical_units["force_to_eVperA"],
+            )
 
     # Try to read FORCES_FC* if type-2 and return dataset.
     # None is returned unless type-2.
@@ -230,6 +260,15 @@ def parse_forces(
             filename_read_from = force_filename
             dataset = _dataset
 
+            # Units of displacements and forces are converted.
+            if calculator is not None:
+                _convert_unit_in_dataset(
+                    dataset,
+                    distance_to_A=physical_units["distance_to_A"],
+                    force_to_eVperA=physical_units["force_to_eVperA"],
+                )
+
+    # No dataset is found. "disp_fc*.yaml" is read. But this is deprecated.
     if dataset is None:
         if disp_filename is None:
             msg = (
@@ -241,6 +280,20 @@ def parse_forces(
         # can emit FileNotFoundError.
         dataset = _read_disp_fc_yaml(disp_filename, fc_type)
         filename_read_from = disp_filename
+
+        # No forces should exist. Therefore only unit of displacements is
+        # converted.
+        if calculator is None:
+            if log_level:
+                print(
+                    f'Displacements are read from "{disp_filename}", but '
+                    " the unit has not converted."
+                )
+        else:
+            _convert_unit_in_dataset(
+                dataset,
+                distance_to_A=physical_units["distance_to_A"],
+            )
 
     if "natom" in dataset and dataset["natom"] != natom:
         msg = (
@@ -273,11 +326,17 @@ def parse_forces(
         else:
             parse_FORCES_FC3(dataset, filename=force_filename)
 
+        # Unit of displacements is already converted.
+        # Therefore, only unit of forces is converted.
+        if calculator is not None:
+            _convert_unit_in_dataset(
+                dataset,
+                force_to_eVperA=physical_units["force_to_eVperA"],
+            )
+
         if log_level:
             print('Sets of supercell forces were read from "%s".' % force_filename)
             sys.stdout.flush()
-
-    _convert_unit_in_dataset(dataset, phono3py.calculator)
 
     return dataset
 
@@ -567,11 +626,16 @@ def _create_phono3py_phonon_fc2(
     )
 
 
-def _convert_unit_in_dataset(dataset, calculator):
-    physical_units = get_default_physical_units(calculator)
-    force_to_eVperA = physical_units["force_to_eVperA"]
-    distance_to_A = physical_units["distance_to_A"]
+def _convert_unit_in_dataset(
+    dataset: dict,
+    distance_to_A: Optional[float] = None,
+    force_to_eVperA: Optional[float] = None,
+) -> None:
+    """Convert physical units of displacements and forces in dataset.
 
+    dataset is overwritten.
+
+    """
     if "first_atoms" in dataset:
         for d1 in dataset["first_atoms"]:
             if distance_to_A is not None:
@@ -608,8 +672,8 @@ def _extract_dataset_from_ph3py_yaml(ph3py_yaml: Optional[Phono3pyYaml], fc_type
     dataset = None
     if fc_type == "phonon_fc2":
         if ph3py_yaml and ph3py_yaml.phonon_dataset is not None:
-            dataset = ph3py_yaml.phonon_dataset
+            dataset = copy.deepcopy(ph3py_yaml.phonon_dataset)
     else:
         if ph3py_yaml and ph3py_yaml.dataset is not None:
-            dataset = ph3py_yaml.dataset
+            dataset = copy.deepcopy(ph3py_yaml.dataset)
     return dataset

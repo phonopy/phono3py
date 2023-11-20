@@ -490,7 +490,7 @@ def get_parser(fc_symmetry=False, is_nac=False, load_phono3py_yaml=False):
         "--nac-method",
         dest="nac_method",
         default=None,
-        help="Non-analytical term correction method: Wang (default) or Gonze",
+        help="Non-analytical term correction method: Gonze (default) or Wang",
     )
     if fc_symmetry:
         parser.add_argument(
