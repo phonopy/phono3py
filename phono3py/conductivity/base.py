@@ -295,8 +295,7 @@ class ConductivityBase(ABC):
         boundary_mfp : float, optiona, default is None
             Mean free path in micrometre to calculate simple boundary
             scattering contribution to thermal conductivity.
-            None gives 1 metre, which is supposed negligible contribution,
-            but this value is used to avoid divergence of phonon lifetime.
+            None ignores this contribution.
         is_kappa_star : bool, optional
             When True, reciprocal space symmetry is used to calculate
             lattice thermal conductivity. This calculation is peformed

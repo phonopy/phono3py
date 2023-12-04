@@ -34,6 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import warnings
+from typing import Optional
 
 import numpy as np
 from phonopy.exception import ForceCalculatorRequiredError
@@ -155,7 +156,7 @@ class Phono3py:
         store_dense_gp_map=True,
         store_dense_svecs=True,
         symprec=1e-5,
-        calculator=None,
+        calculator: Optional[str] = None,
         log_level=0,
         lapack_zheev_uplo=None,
     ):
@@ -254,7 +255,7 @@ class Phono3py:
         self._store_dense_svecs = store_dense_svecs
 
         self._cutoff_frequency = cutoff_frequency
-        self._calculator = calculator
+        self._calculator: Optional[str] = calculator
         self._log_level = log_level
 
         # Create supercell and primitive cell
@@ -399,7 +400,7 @@ class Phono3py:
         return self.version
 
     @property
-    def calculator(self):
+    def calculator(self) -> Optional[str]:
         """Return calculator interface name.
 
         str
@@ -2192,8 +2193,7 @@ class Phono3py:
         boundary_mfp : float, optiona, default is None
             Mean free path in micrometre to calculate simple boundary
             scattering contribution to thermal conductivity.
-            None gives 1 metre, which is supposed negligible contribution,
-            but this value is used to avoid divergence of phonon lifetime.
+            None ignores this contribution.
         solve_collective_phonon : bool, optional, default is False
             This is an option for the feature under development.
         use_ave_pp : bool, optional, default is False

@@ -59,9 +59,9 @@ from phonopy.structure.symmetry import Symmetry
 class Phono3pyYamlData:
     """PhonopyYaml data structure."""
 
-    configuration: dict
-    calculator: str
-    physical_units: dict
+    configuration: Optional[dict] = None
+    calculator: Optional[str] = None
+    physical_units: Optional[dict] = None
     unitcell: Optional[PhonopyAtoms] = None
     primitive: Optional[Primitive] = None
     supercell: Optional[Supercell] = None
