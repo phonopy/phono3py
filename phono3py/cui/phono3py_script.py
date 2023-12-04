@@ -798,10 +798,10 @@ def store_force_constants(
             cutoff_pair_distance=settings.cutoff_pair_distance,
             log_level=log_level,
         )
-
         try:
             compute_force_constants_from_datasets(
-                ph3py=phono3py,
+                phono3py,
+                read_fc,
                 fc_calculator=fc_calculator,
                 fc_calculator_options=fc_calculator_options,
                 symmetrize_fc=settings.fc_symmetry,
