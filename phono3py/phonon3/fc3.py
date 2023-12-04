@@ -459,12 +459,11 @@ def _solve_fc3(
             solver = "numpy.linalg.pinv"
 
     if verbose:
-        text = "Computing fc3[ %d, x, x ] using %s with " % (first_atom_num + 1, solver)
+        print(f"Computing fc3[ {first_atom_num + 1}, x, x ] using {solver}.")
         if len(displacements_first) > 1:
-            text += "displacements:"
+            print("Displacements (in Angstrom):")
         else:
-            text += "a displacement:"
-        print(text)
+            print("One displacement (in Angstrom):")
         for i, v in enumerate(displacements_first):
             print("    [%7.4f %7.4f %7.4f]" % tuple(v))
             sys.stdout.flush()
