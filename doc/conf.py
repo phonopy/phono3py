@@ -57,7 +57,7 @@ copyright = "2015, Atsushi Togo"
 # built documents.
 #
 # The short X.Y version.
-version = "2.7"
+version = "2.8"
 # The full version, including alpha/beta/rc tags.
 release = "2.7.0"
 
