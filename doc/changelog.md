@@ -2,6 +2,11 @@
 
 # Change Log
 
+## Dec-4-2023: Version 2.8.0
+
+- Maintenance release
+- Fix unit conversion for non-VASP calculators
+
 ## Jul-3-2023: Version 2.7.0
 
 - Drop python 3.7 support
@@ -47,7 +52,7 @@
 
 - Maintenance release to follow the change of phonopy at v2.12.1.
 - Installation using `setup.py` now requires creating `site.cfg` file. See
-  https://phonopy.github.io/phono3py/install.html and
+  <https://phonopy.github.io/phono3py/install.html> and
   [PR #59](https://github.com/phonopy/phono3py/pull/59).
 - Dorp python 3.6 support, and dependencies of numpy and matplotlib versions are
   updated:
