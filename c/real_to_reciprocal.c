@@ -97,7 +97,7 @@ static void real_to_reciprocal(
                                                 multiplicity, p2s_map);
 #ifdef _OPENMP
 #pragma omp parallel for private(j, k, l, m, n, fc3_rec_elem, \
-                                 fc3_rec) if (openmp_at_bands)
+                                     fc3_rec) if (openmp_at_bands)
 #endif
         for (jk = 0; jk < num_patom * num_patom; jk++) {
             j = jk / num_patom;
@@ -130,7 +130,7 @@ static void real_to_reciprocal(
                 j, q_vecs, svecs, multi_dims, multiplicity, p2s_map);
 #ifdef _OPENMP
 #pragma omp parallel for private(i, k, l, m, n, fc3_rec_elem, \
-                                 fc3_rec) if (openmp_at_bands)
+                                     fc3_rec) if (openmp_at_bands)
 #endif
             for (ik = 0; ik < num_patom * num_patom; ik++) {
                 i = ik / num_patom;
@@ -141,6 +141,7 @@ static void real_to_reciprocal(
                 for (l = 0; l < 3; l++) {
                     for (m = 0; m < 3; m++) {
                         for (n = 0; n < 3; n++) {
+                            // fc3_rec is stored in a way swapping m <-> l.
                             fc3_rec = phonoc_complex_prod(
                                 fc3_rec_elem[m * 9 + l * 3 + n],
                                 pre_phase_factor);
@@ -163,7 +164,7 @@ static void real_to_reciprocal(
                 k, q_vecs, svecs, multi_dims, multiplicity, p2s_map);
 #ifdef _OPENMP
 #pragma omp parallel for private(j, i, l, m, n, fc3_rec_elem, \
-                                 fc3_rec) if (openmp_at_bands)
+                                     fc3_rec) if (openmp_at_bands)
 #endif
             for (ji = 0; ji < num_patom * num_patom; ji++) {
                 j = ji / num_patom;
@@ -174,6 +175,7 @@ static void real_to_reciprocal(
                 for (l = 0; l < 3; l++) {
                     for (m = 0; m < 3; m++) {
                         for (n = 0; n < 3; n++) {
+                            // fc3_rec is stored in a way swapping n <-> l.
                             fc3_rec = phonoc_complex_prod(
                                 fc3_rec_elem[n * 9 + m * 3 + l],
                                 pre_phase_factor);
