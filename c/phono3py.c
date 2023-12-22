@@ -49,6 +49,7 @@
 #include "phonoc_array.h"
 #include "pp_collision.h"
 #include "real_self_energy.h"
+#include "real_to_reciprocal.h"
 #include "tetrahedron_method.h"
 #include "triplet.h"
 #include "triplet_iw.h"
@@ -69,6 +70,7 @@ long ph3py_get_interaction(
     const long make_r0_average, const double cutoff_frequency,
     const long openmp_per_triplets) {
     ConstBZGrid *bzgrid;
+    AtomTriplets *atom_triplets;
     long i, j;
 
     if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL) {
@@ -85,12 +87,29 @@ long ph3py_get_interaction(
         }
     }
 
+    if ((atom_triplets = (AtomTriplets *)malloc(sizeof(AtomTriplets))) ==
+        NULL) {
+        warning_print("Memory could not be allocated.");
+        return 0;
+    }
+
+    atom_triplets->svecs = svecs;
+    atom_triplets->multi_dims[0] = multi_dims[0];
+    atom_triplets->multi_dims[1] = multi_dims[1];
+    atom_triplets->multiplicity = multiplicity;
+    atom_triplets->p2s_map = p2s_map;
+    atom_triplets->s2p_map = s2p_map;
+    atom_triplets->make_r0_average = make_r0_average;
+
     itr_get_interaction(fc3_normal_squared, g_zero, frequencies,
                         (lapack_complex_double *)eigenvectors, triplets,
-                        num_triplets, bzgrid, fc3, is_compact_fc3, svecs,
-                        multi_dims, multiplicity, masses, p2s_map, s2p_map,
-                        band_indices, symmetrize_fc3_q, cutoff_frequency,
-                        make_r0_average, openmp_per_triplets);
+                        num_triplets, bzgrid, fc3, is_compact_fc3,
+                        atom_triplets, masses, band_indices, symmetrize_fc3_q,
+                        cutoff_frequency, openmp_per_triplets);
+
+    free(atom_triplets);
+    atom_triplets = NULL;
+
     free(bzgrid);
     bzgrid = NULL;
 
@@ -109,9 +128,10 @@ long ph3py_get_pp_collision(
     const long multi_dims[2], const long (*multiplicity)[2],
     const double *masses, const long *p2s_map, const long *s2p_map,
     const Larray *band_indices, const Darray *temperatures, const long is_NU,
-    const long symmetrize_fc3_q, const double make_r0_average,
+    const long symmetrize_fc3_q, const long make_r0_average,
     const double cutoff_frequency, const long openmp_per_triplets) {
     ConstBZGrid *bzgrid;
+    AtomTriplets *atom_triplets;
     long i, j;
 
     if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL) {
@@ -130,13 +150,29 @@ long ph3py_get_pp_collision(
         }
     }
 
+    if ((atom_triplets = (AtomTriplets *)malloc(sizeof(AtomTriplets))) ==
+        NULL) {
+        warning_print("Memory could not be allocated.");
+        return 0;
+    }
+
+    atom_triplets->svecs = svecs;
+    atom_triplets->multi_dims[0] = multi_dims[0];
+    atom_triplets->multi_dims[1] = multi_dims[1];
+    atom_triplets->multiplicity = multiplicity;
+    atom_triplets->p2s_map = p2s_map;
+    atom_triplets->s2p_map = s2p_map;
+    atom_triplets->make_r0_average = make_r0_average;
+
     ppc_get_pp_collision(imag_self_energy, relative_grid_address, frequencies,
                          (lapack_complex_double *)eigenvectors, triplets,
                          num_triplets, triplet_weights, bzgrid, fc3,
-                         is_compact_fc3, svecs, multi_dims, multiplicity,
-                         masses, p2s_map, s2p_map, band_indices, temperatures,
-                         is_NU, symmetrize_fc3_q, cutoff_frequency,
-                         make_r0_average, openmp_per_triplets);
+                         is_compact_fc3, atom_triplets, masses, band_indices,
+                         temperatures, is_NU, symmetrize_fc3_q,
+                         cutoff_frequency, openmp_per_triplets);
+
+    free(atom_triplets);
+    atom_triplets = NULL;
 
     free(bzgrid);
     bzgrid = NULL;
@@ -154,9 +190,10 @@ long ph3py_get_pp_collision_with_sigma(
     const long multi_dims[2], const long (*multiplicity)[2],
     const double *masses, const long *p2s_map, const long *s2p_map,
     const Larray *band_indices, const Darray *temperatures, const long is_NU,
-    const long symmetrize_fc3_q, const double make_r0_average,
+    const long symmetrize_fc3_q, const long make_r0_average,
     const double cutoff_frequency, const long openmp_per_triplets) {
     ConstBZGrid *bzgrid;
+    AtomTriplets *atom_triplets;
     long i, j;
 
     if ((bzgrid = (ConstBZGrid *)malloc(sizeof(ConstBZGrid))) == NULL) {
@@ -173,13 +210,29 @@ long ph3py_get_pp_collision_with_sigma(
         }
     }
 
+    if ((atom_triplets = (AtomTriplets *)malloc(sizeof(AtomTriplets))) ==
+        NULL) {
+        warning_print("Memory could not be allocated.");
+        return 0;
+    }
+
+    atom_triplets->svecs = svecs;
+    atom_triplets->multi_dims[0] = multi_dims[0];
+    atom_triplets->multi_dims[1] = multi_dims[1];
+    atom_triplets->multiplicity = multiplicity;
+    atom_triplets->p2s_map = p2s_map;
+    atom_triplets->s2p_map = s2p_map;
+    atom_triplets->make_r0_average = make_r0_average;
+
     ppc_get_pp_collision_with_sigma(
         imag_self_energy, sigma, sigma_cutoff, frequencies,
         (lapack_complex_double *)eigenvectors, triplets, num_triplets,
-        triplet_weights, bzgrid, fc3, is_compact_fc3, svecs, multi_dims,
-        multiplicity, masses, p2s_map, s2p_map, band_indices, temperatures,
-        is_NU, symmetrize_fc3_q, cutoff_frequency, make_r0_average,
+        triplet_weights, bzgrid, fc3, is_compact_fc3, atom_triplets, masses,
+        band_indices, temperatures, is_NU, symmetrize_fc3_q, cutoff_frequency,
         openmp_per_triplets);
+
+    free(atom_triplets);
+    atom_triplets = NULL;
 
     free(bzgrid);
     bzgrid = NULL;
@@ -600,7 +653,7 @@ void ph3py_expand_collision_matrix(double *collision_matrix,
                           j * num_column * num_column);
 #ifdef _OPENMP
 #pragma omp parallel for private(ir_gp, adrs_shift_plus, colmat_copy, l, gp_r, \
-                                 m, n, p)
+                                     m, n, p)
 #endif
             for (k = 0; k < num_ir_gp; k++) {
                 ir_gp = ir_grid_points[k];
