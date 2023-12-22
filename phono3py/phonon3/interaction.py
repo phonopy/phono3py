@@ -34,6 +34,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import warnings
+from collections.abc import Sequence
+from typing import Literal, Optional, Union
 
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
@@ -94,18 +96,18 @@ class Interaction:
         primitive: Primitive,
         bz_grid: BZGrid,
         primitive_symmetry: Symmetry,
-        fc3=None,
-        band_indices=None,
-        constant_averaged_interaction=None,
-        frequency_factor_to_THz=VaspToTHz,
-        frequency_scale_factor=None,
-        unit_conversion=None,
-        is_mesh_symmetry=True,
-        symmetrize_fc3q=False,
-        make_r0_average=False,
-        cutoff_frequency=None,
-        lapack_zheev_uplo="L",
-        openmp_per_triplets=None,
+        fc3: Optional[np.ndarray] = None,
+        band_indices: Optional[Union[np.ndarray, Sequence]] = None,
+        constant_averaged_interaction: Optional[float] = None,
+        frequency_factor_to_THz: float = VaspToTHz,
+        frequency_scale_factor: Optional[float] = None,
+        unit_conversion: Optional[float] = None,
+        is_mesh_symmetry: bool = True,
+        symmetrize_fc3q: bool = False,
+        make_r0_average: bool = False,
+        cutoff_frequency: Optional[float] = None,
+        lapack_zheev_uplo: Literal["L", "U"] = "L",
+        openmp_per_triplets: Optional[bool] = None,
     ):
         """Init method."""
         self._primitive = primitive
@@ -174,12 +176,13 @@ class Interaction:
             self._multi = multi
         else:
             self._svecs, self._multi = sparse_to_dense_svecs(svecs, multi)
-
         self._masses = np.array(self._primitive.masses, dtype="double")
         self._p2s = np.array(self._primitive.p2s_map, dtype="int_")
         self._s2p = np.array(self._primitive.s2p_map, dtype="int_")
 
-    def run(self, lang="C", g_zero=None):
+    def run(
+        self, lang: Literal["C", "Python"] = "C", g_zero: Optional[np.ndarray] = None
+    ):
         """Run ph-ph interaction calculation."""
         if (self._phonon_done == 0).any():
             self.run_phonon_solver()
@@ -868,7 +871,7 @@ class Interaction:
         else:
             self._band_indices = np.array(band_indices, dtype="int_")
 
-    def _run_c(self, g_zero, make_r0_average=False):
+    def _run_c(self, g_zero):
         import phono3py._phono3py as phono3c
 
         num_band = len(self._primitive) * 3

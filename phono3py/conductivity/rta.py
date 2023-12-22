@@ -304,7 +304,7 @@ class ConductivityRTABase(ConductivityBase):
                         k
                     ] = self._collision.get_detailed_imag_self_energy()
 
-    def _set_gamma_at_sigmas_lowmem(self, i, make_r0_average=False):
+    def _set_gamma_at_sigmas_lowmem(self, i):
         """Calculate gamma without storing ph-ph interaction strength.
 
         `svecs` and `multi` below must not be simply replaced by
