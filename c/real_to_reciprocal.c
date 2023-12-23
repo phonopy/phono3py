@@ -74,6 +74,12 @@ void r2r_real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
                        atom_triplets, openmp_at_bands);
 }
 
+// Summations are performed with respect to three different lattice reference
+// point for the index of real space fc3 when make_r0_average=True. For cubic
+// case, these three are roughly equivalent but small difference comes from the
+// q-points in triplets used for summation implemented in
+// real_to_reciprocal_elements().
+// --sym-fc3q makes them almost equivalent.
 static void real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
                                const double q_vecs[3][3], const double *fc3,
                                const long is_compact_fc3,
@@ -95,6 +101,7 @@ static void real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
         j = (ijk - (i * num_patom * num_patom)) / num_patom;
         k = ijk % num_patom;
         pre_phase_factor = get_pre_phase_factor(i, q_vecs, atom_triplets);
+
         real_to_reciprocal_elements(fc3_rec_elem, q_vecs[1], q_vecs[2], fc3,
                                     is_compact_fc3, atom_triplets, i, j, k);
         for (l = 0; l < 3; l++) {
@@ -215,7 +222,8 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
     }
 }
 
-// This function has no need to think about phase 2pi
+// This function doesn't need to think about position +
+// lattice-translation because q+q'+q''=G.
 static lapack_complex_double get_pre_phase_factor(
     const long i_patom, const double q_vecs[3][3],
     const AtomTriplets *atom_triplets) {

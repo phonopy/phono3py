@@ -1446,7 +1446,7 @@ def main(**argparse_control):
             is_reducible_collision_matrix=settings.is_reducible_collision_matrix,  # noqa E501
             is_kappa_star=settings.is_kappa_star,
             gv_delta_q=settings.group_velocity_delta_q,
-            is_full_pp=settings.is_full_pp,
+            is_full_pp=(settings.is_full_pp or settings.is_symmetrize_fc3_q),
             pinv_cutoff=settings.pinv_cutoff,
             pinv_solver=settings.pinv_solver,
             pinv_method=settings.pinv_method,
