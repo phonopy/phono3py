@@ -179,6 +179,11 @@ class Interaction:
         self._masses = np.array(self._primitive.masses, dtype="double")
         self._p2s = np.array(self._primitive.p2s_map, dtype="int_")
         self._s2p = np.array(self._primitive.s2p_map, dtype="int_")
+        n_satom, n_patom, _ = self._multi.shape
+        self._all_shortest = np.zeros(
+            (n_patom, n_satom, n_satom), dtype="byte", order="C"
+        )
+        self._get_all_shortest()
 
     def run(
         self, lang: Literal["C", "Python"] = "C", g_zero: Optional[np.ndarray] = None
@@ -986,6 +991,46 @@ class Interaction:
         self._frequencies_at_gamma = self._frequencies[gp_Gamma].copy()
         self._eigenvectors_at_gamma = self._eigenvectors[gp_Gamma].copy()
         self._phonon_done[gp_Gamma] = 0
+
+    def _get_all_shortest(self):
+        """Return array indicating distances among three atoms are all shortest.
+
+        multi.shape = (n_satom, n_patom)
+        svecs : distance with respect to primitive cell basis
+        perms.shape = (n_pure_trans, n_satom)
+
+        """
+        svecs = self._svecs
+        multi = self._multi
+        n_satom, n_patom, _ = multi.shape
+        perms = self._primitive.atomic_permutations
+        s2pp_map = [self._primitive.p2p_map[i] for i in self._s2p]
+        lattice = self._primitive.cell
+
+        for i_patom in range(n_patom):
+            for j_atom in range(n_satom):
+                j_patom = s2pp_map[j_atom]
+                i_perm = np.where(perms[:, j_atom] == self._p2s[j_patom])[0][0]
+                for k_atom in range(n_satom):
+                    initial_vec = (
+                        svecs[multi[k_atom, i_patom, 1]]
+                        - svecs[multi[j_atom, i_patom, 1]]
+                    )
+                    d_jk_shortest = np.linalg.norm(initial_vec @ lattice)
+                    for j_m, k_m in np.ndindex(
+                        (multi[j_atom, i_patom, 0], multi[k_atom, i_patom, 0])
+                    ):
+                        vec_ij = svecs[multi[j_atom, i_patom, 1] + j_m]
+                        vec_ik = svecs[multi[k_atom, i_patom, 1] + k_m]
+                        d_jk_attempt = np.linalg.norm((vec_ik - vec_ij) @ lattice)
+                        if d_jk_attempt < d_jk_shortest:
+                            d_jk_shortest = d_jk_attempt
+                    k_atom_mapped = perms[i_perm, k_atom]
+                    d_jk_mapped = np.linalg.norm(
+                        svecs[multi[k_atom_mapped, j_patom, 1]] @ lattice
+                    )
+                    if abs(d_jk_mapped - d_jk_shortest) < self._symprec:
+                        self._all_shortest[i_patom, j_atom, k_atom] = 1
 
 
 def all_bands_exist(interaction: Interaction):

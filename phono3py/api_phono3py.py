@@ -34,7 +34,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import warnings
-from typing import Optional
+from collections.abc import Sequence
+from typing import Optional, Union
 
 import numpy as np
 from phonopy.exception import ForceCalculatorRequiredError
@@ -1041,7 +1042,7 @@ class Phono3py:
             return self._bz_grid.D_diag
 
     @mesh_numbers.setter
-    def mesh_numbers(self, mesh_numbers):
+    def mesh_numbers(self, mesh_numbers: Union[int, float, Sequence, np.ndarray]):
         self._set_mesh_numbers(mesh_numbers)
 
     @property
@@ -2555,7 +2556,10 @@ class Phono3py:
         else:
             return pmat
 
-    def _set_mesh_numbers(self, mesh):
+    def _set_mesh_numbers(
+        self,
+        mesh: Union[int, float, Sequence, np.ndarray],
+    ):
         # initialization related to mesh
         self._interaction = None
 
