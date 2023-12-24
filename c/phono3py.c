@@ -67,8 +67,8 @@ long ph3py_get_interaction(
     const long multi_dims[2], const long (*multiplicity)[2],
     const double *masses, const long *p2s_map, const long *s2p_map,
     const long *band_indices, const long symmetrize_fc3_q,
-    const long make_r0_average, const double cutoff_frequency,
-    const long openmp_per_triplets) {
+    const long make_r0_average, const char *all_shortest,
+    const double cutoff_frequency, const long openmp_per_triplets) {
     ConstBZGrid *bzgrid;
     AtomTriplets *atom_triplets;
     long i, j;
@@ -100,6 +100,7 @@ long ph3py_get_interaction(
     atom_triplets->p2s_map = p2s_map;
     atom_triplets->s2p_map = s2p_map;
     atom_triplets->make_r0_average = make_r0_average;
+    atom_triplets->all_shortest = all_shortest;
 
     itr_get_interaction(fc3_normal_squared, g_zero, frequencies,
                         (lapack_complex_double *)eigenvectors, triplets,
@@ -129,7 +130,8 @@ long ph3py_get_pp_collision(
     const double *masses, const long *p2s_map, const long *s2p_map,
     const Larray *band_indices, const Darray *temperatures, const long is_NU,
     const long symmetrize_fc3_q, const long make_r0_average,
-    const double cutoff_frequency, const long openmp_per_triplets) {
+    const char *all_shortest, const double cutoff_frequency,
+    const long openmp_per_triplets) {
     ConstBZGrid *bzgrid;
     AtomTriplets *atom_triplets;
     long i, j;
@@ -163,6 +165,7 @@ long ph3py_get_pp_collision(
     atom_triplets->p2s_map = p2s_map;
     atom_triplets->s2p_map = s2p_map;
     atom_triplets->make_r0_average = make_r0_average;
+    atom_triplets->all_shortest = all_shortest;
 
     ppc_get_pp_collision(imag_self_energy, relative_grid_address, frequencies,
                          (lapack_complex_double *)eigenvectors, triplets,
@@ -191,7 +194,8 @@ long ph3py_get_pp_collision_with_sigma(
     const double *masses, const long *p2s_map, const long *s2p_map,
     const Larray *band_indices, const Darray *temperatures, const long is_NU,
     const long symmetrize_fc3_q, const long make_r0_average,
-    const double cutoff_frequency, const long openmp_per_triplets) {
+    const char *all_shortest, const double cutoff_frequency,
+    const long openmp_per_triplets) {
     ConstBZGrid *bzgrid;
     AtomTriplets *atom_triplets;
     long i, j;
@@ -223,6 +227,7 @@ long ph3py_get_pp_collision_with_sigma(
     atom_triplets->p2s_map = p2s_map;
     atom_triplets->s2p_map = s2p_map;
     atom_triplets->make_r0_average = make_r0_average;
+    atom_triplets->all_shortest = all_shortest;
 
     ppc_get_pp_collision_with_sigma(
         imag_self_energy, sigma, sigma_cutoff, frequencies,

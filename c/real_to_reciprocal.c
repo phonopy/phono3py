@@ -54,7 +54,7 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
                                         const long is_compact_fc3,
                                         const AtomTriplets *atom_triplets,
                                         const long pi0, const long pi1,
-                                        const long pi2);
+                                        const long pi2, const long leg_index);
 static lapack_complex_double get_phase_factor(const double q[3],
                                               const double (*svecs)[3],
                                               const long multi[2]);
@@ -100,10 +100,12 @@ static void real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
         i = ijk / (num_patom * num_patom);
         j = (ijk - (i * num_patom * num_patom)) / num_patom;
         k = ijk % num_patom;
+
         pre_phase_factor = get_pre_phase_factor(i, q_vecs, atom_triplets);
 
         real_to_reciprocal_elements(fc3_rec_elem, q_vecs[1], q_vecs[2], fc3,
-                                    is_compact_fc3, atom_triplets, i, j, k);
+                                    is_compact_fc3, atom_triplets, i, j, k,
+                                    atom_triplets->make_r0_average);
         for (l = 0; l < 3; l++) {
             for (m = 0; m < 3; m++) {
                 for (n = 0; n < 3; n++) {
@@ -121,7 +123,8 @@ static void real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
 
         if (atom_triplets->make_r0_average) {
             real_to_reciprocal_elements(fc3_rec_elem, q_vecs[0], q_vecs[2], fc3,
-                                        is_compact_fc3, atom_triplets, i, j, k);
+                                        is_compact_fc3, atom_triplets, i, j, k,
+                                        2);
             for (l = 0; l < 3; l++) {
                 for (m = 0; m < 3; m++) {
                     for (n = 0; n < 3; n++) {
@@ -141,7 +144,8 @@ static void real_to_reciprocal(lapack_complex_double *fc3_reciprocal,
             }
 
             real_to_reciprocal_elements(fc3_rec_elem, q_vecs[1], q_vecs[0], fc3,
-                                        is_compact_fc3, atom_triplets, i, j, k);
+                                        is_compact_fc3, atom_triplets, i, j, k,
+                                        3);
             for (l = 0; l < 3; l++) {
                 for (m = 0; m < 3; m++) {
                     for (n = 0; n < 3; n++) {
@@ -169,7 +173,7 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
                                         const long is_compact_fc3,
                                         const AtomTriplets *atom_triplets,
                                         const long pi0, const long pi1,
-                                        const long pi2) {
+                                        const long pi2, const long leg_index) {
     long i, j, k, l;
     long num_satom, adrs_shift, adrs_vec1, adrs_vec2;
     lapack_complex_double phase_factor, phase_factor1, phase_factor2;
@@ -200,6 +204,12 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
             if (atom_triplets->s2p_map[k] != atom_triplets->p2s_map[pi2]) {
                 continue;
             }
+            if (leg_index > 1) {
+                if (atom_triplets->all_shortest[pi0 * num_satom * num_satom +
+                                                j * num_satom + k]) {
+                    continue;
+                }
+            }
             adrs_vec2 = k * atom_triplets->multi_dims[1] + pi0;
             phase_factor2 =
                 get_phase_factor(q2, atom_triplets->svecs,
@@ -207,11 +217,27 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
             adrs_shift =
                 i * 27 * num_satom * num_satom + j * 27 * num_satom + k * 27;
             phase_factor = phonoc_complex_prod(phase_factor1, phase_factor2);
-            for (l = 0; l < 27; l++) {
-                fc3_rec_real[l] += lapack_complex_double_real(phase_factor) *
-                                   fc3[adrs_shift + l];
-                fc3_rec_imag[l] += lapack_complex_double_imag(phase_factor) *
-                                   fc3[adrs_shift + l];
+
+            if ((leg_index == 1) &&
+                (atom_triplets->all_shortest[pi0 * num_satom * num_satom +
+                                             j * num_satom + k])) {
+                for (l = 0; l < 27; l++) {
+                    fc3_rec_real[l] +=
+                        lapack_complex_double_real(phase_factor) *
+                        fc3[adrs_shift + l] * 3;
+                    fc3_rec_imag[l] +=
+                        lapack_complex_double_imag(phase_factor) *
+                        fc3[adrs_shift + l] * 3;
+                }
+            } else {
+                for (l = 0; l < 27; l++) {
+                    fc3_rec_real[l] +=
+                        lapack_complex_double_real(phase_factor) *
+                        fc3[adrs_shift + l];
+                    fc3_rec_imag[l] +=
+                        lapack_complex_double_imag(phase_factor) *
+                        fc3[adrs_shift + l];
+                }
             }
         }
     }
@@ -227,7 +253,7 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
 static lapack_complex_double get_pre_phase_factor(
     const long i_patom, const double q_vecs[3][3],
     const AtomTriplets *atom_triplets) {
-    long i, j, svecs_adrs;
+    long j, svecs_adrs;
     double pre_phase;
     lapack_complex_double pre_phase_factor;
 
