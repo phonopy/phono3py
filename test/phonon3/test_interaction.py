@@ -1,6 +1,12 @@
 """Test Interaction class."""
+from __future__ import annotations
+
+from collections.abc import Sequence
+from typing import Literal, Optional, Union
+
 import numpy as np
 import pytest
+from phonopy.structure.cells import get_smallest_vectors
 
 from phono3py import Phono3py
 from phono3py.phonon3.interaction import Interaction
@@ -153,8 +159,8 @@ itr_RTA_AlN_r0_ave = [
 ]
 
 
-@pytest.mark.parametrize("lang", ["C", "Py"])
-def test_interaction_RTA_si(si_pbesol, lang):
+@pytest.mark.parametrize("lang", ["C", "Python"])
+def test_interaction_RTA_si(si_pbesol: Phono3py, lang: Literal["C", "Python"]):
     """Test interaction_strength of Si."""
     itr = _get_irt(si_pbesol, [4, 4, 4])
     itr.set_grid_point(1)
@@ -166,7 +172,7 @@ def test_interaction_RTA_si(si_pbesol, lang):
     )
 
 
-def test_interaction_RTA_AlN(aln_lda):
+def test_interaction_RTA_AlN(aln_lda: Phono3py):
     """Test interaction_strength of AlN."""
     itr = _get_irt(aln_lda, [7, 7, 7])
     itr.set_grid_point(1)
@@ -177,7 +183,7 @@ def test_interaction_RTA_AlN(aln_lda):
     )
 
 
-def test_interaction_RTA_AlN_r0_ave(aln_lda):
+def test_interaction_RTA_AlN_r0_ave(aln_lda: Phono3py):
     """Test interaction_strength of AlN."""
     itr = _get_irt(aln_lda, [7, 7, 7], make_r0_average=True)
     itr.set_grid_point(1)
@@ -271,7 +277,7 @@ def test_interaction_run_phonon_solver_at_gamma_NaCl(nacl_pbe: Phono3py):
     )
 
 
-def test_phonon_solver_expand_RTA_si(si_pbesol):
+def test_phonon_solver_expand_RTA_si(si_pbesol: Phono3py):
     """Test phonon solver with eigenvector rotation of Si.
 
     Eigenvectors can be different but frequencies must be almost the same.
@@ -286,19 +292,54 @@ def test_phonon_solver_expand_RTA_si(si_pbesol):
     np.testing.assert_allclose(freqs, freqs_expanded, rtol=0, atol=1e-6)
 
 
+def test_get_all_shortest(aln_lda: Phono3py):
+    """Test Interaction._get_all_shortest."""
+    ph3 = aln_lda
+    ph3.mesh_numbers = 30
+    itr = Interaction(
+        ph3.primitive,
+        ph3.grid,
+        ph3.primitive_symmetry,
+        cutoff_frequency=1e-5,
+    )
+    s_svecs, s_multi = get_smallest_vectors(
+        ph3.supercell.cell,
+        ph3.supercell.scaled_positions,
+        ph3.supercell.scaled_positions,
+        store_dense_svecs=True,
+    )
+    s_lattice = ph3.supercell.cell
+    p_lattice = itr.primitive.cell
+    shortests = itr._all_shortest
+    svecs, multi, _, _, _ = itr.get_primitive_and_supercell_correspondence()
+    n_satom, n_patom, _ = multi.shape
+    for i, j, k in np.ndindex((n_patom, n_satom, n_satom)):
+        d_jk_shortest = np.linalg.norm(s_svecs[s_multi[j, k, 1]] @ s_lattice)
+        is_found = 0
+        for m_j, m_k in np.ndindex((multi[j, i, 0], multi[k, i, 0])):
+            vec_ij = svecs[multi[j, i, 1] + m_j]
+            vec_ik = svecs[multi[k, i, 1] + m_k]
+            vec_jk = vec_ik - vec_ij
+            d_jk = np.linalg.norm(vec_jk @ p_lattice)
+            if abs(d_jk - d_jk_shortest) < ph3.symmetry.tolerance:
+                is_found = 1
+                break
+        assert shortests[i, j, k] == is_found
+
+
 def _get_irt(
     ph3: Phono3py,
-    mesh,
-    nac_params=None,
-    solve_dynamical_matrices=True,
-    make_r0_average=False,
+    mesh: Union[int, float, Sequence, np.ndarray],
+    nac_params: Optional[dict] = None,
+    solve_dynamical_matrices: bool = True,
+    make_r0_average: bool = False,
 ):
     ph3.mesh_numbers = mesh
     itr = Interaction(
         ph3.primitive,
         ph3.grid,
         ph3.primitive_symmetry,
-        ph3.fc3,
+        fc3=ph3.fc3,
         make_r0_average=make_r0_average,
         cutoff_frequency=1e-4,
     )
@@ -320,7 +361,7 @@ def _get_irt(
     return itr
 
 
-def _show(itr):
+def _show(itr: Interaction):
     itr_vals = itr.interaction_strength.sum(axis=(1, 2, 3))
     for i, v in enumerate(itr_vals):
         print("%e, " % v, end="")
