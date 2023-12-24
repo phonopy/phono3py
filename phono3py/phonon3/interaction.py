@@ -32,13 +32,14 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+from __future__ import annotations
 
 import warnings
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
 
 import numpy as np
-from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
+from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
 from phonopy.structure.cells import (
     Primitive,
     compute_all_sg_permutations,
@@ -211,7 +212,7 @@ class Interaction:
             )
 
     @property
-    def interaction_strength(self):
+    def interaction_strength(self) -> np.ndarray:
         """Return ph-ph interaction strength.
 
         Returns
@@ -233,7 +234,7 @@ class Interaction:
         return self.interaction_strength
 
     @property
-    def mesh_numbers(self):
+    def mesh_numbers(self) -> np.ndarray:
         """Return mesh numbers.
 
         Returns
@@ -254,12 +255,12 @@ class Interaction:
         return self.mesh_numbers
 
     @property
-    def is_mesh_symmetry(self):
+    def is_mesh_symmetry(self) -> bool:
         """Whether symmetry of grid is utilized or not."""
         return self._is_mesh_symmetry
 
     @property
-    def fc3(self):
+    def fc3(self) -> np.ndarray:
         """Return fc3."""
         return self._fc3
 
@@ -272,7 +273,7 @@ class Interaction:
         return self.fc3
 
     @property
-    def dynamical_matrix(self):
+    def dynamical_matrix(self) -> Optional[DynamicalMatrix]:
         """Return DynamicalMatrix class instance."""
         return self._dm
 
@@ -286,7 +287,7 @@ class Interaction:
         return self.dynamical_matrix
 
     @property
-    def primitive(self):
+    def primitive(self) -> Primitive:
         """Return Primitive class instance."""
         return self._primitive
 
@@ -300,11 +301,13 @@ class Interaction:
         return self.primitive
 
     @property
-    def primitive_symmetry(self):
+    def primitive_symmetry(self) -> Symmetry:
         """Return Symmetry class instance of primitive cell."""
         return self._primitive_symmetry
 
-    def get_triplets_at_q(self):
+    def get_triplets_at_q(
+        self,
+    ) -> tuple(np.ndarray, np.ndarray, np.ndarray, np.ndarray):
         """Return grid point triplets information.
 
         triplets_at_q is in BZ-grid.
@@ -321,12 +324,12 @@ class Interaction:
         )
 
     @property
-    def bz_grid(self):
+    def bz_grid(self) -> BZGrid:
         """Return BZGrid class instance."""
         return self._bz_grid
 
     @property
-    def band_indices(self):
+    def band_indices(self) -> np.ndarray:
         """Return band indices.
 
         Returns
@@ -347,12 +350,12 @@ class Interaction:
         return self.band_indices
 
     @property
-    def nac_params(self):
+    def nac_params(self) -> dict:
         """Return NAC params."""
         return self._nac_params
 
     @property
-    def nac_q_direction(self):
+    def nac_q_direction(self) -> Optional[np.ndarray]:
         """Return q-direction used for NAC at q->0.
 
         Direction of q-vector watching from Gamma point used for
@@ -391,7 +394,7 @@ class Interaction:
         self.nac_q_direction = nac_q_direction
 
     @property
-    def zero_value_positions(self):
+    def zero_value_positions(self) -> Optional[np.ndarray]:
         """Return zero ph-ph interaction elements information.
 
         Returns
@@ -410,7 +413,7 @@ class Interaction:
         )
         return self.zero_value_positions
 
-    def get_phonons(self):
+    def get_phonons(self) -> tuple(np.ndarray, np.ndarray, np.ndarray):
         """Return phonons on grid.
 
         Returns
@@ -431,7 +434,7 @@ class Interaction:
         return self._frequencies, self._eigenvectors, self._phonon_done
 
     @property
-    def frequency_factor_to_THz(self):
+    def frequency_factor_to_THz(self) -> float:
         """Return phonon frequency conversion factor to THz."""
         return self._frequency_factor_to_THz
 
@@ -445,7 +448,7 @@ class Interaction:
         return self.frequency_factor_to_THz
 
     @property
-    def lapack_zheev_uplo(self):
+    def lapack_zheev_uplo(self) -> Literal["L", "U"]:
         """Return U or L for lapack zheev solver."""
         return self._lapack_zheev_uplo
 
@@ -459,7 +462,7 @@ class Interaction:
         return self.lapack_zheev_uplo
 
     @property
-    def cutoff_frequency(self):
+    def cutoff_frequency(self) -> float:
         """Return cutoff phonon frequency to judge imaginary phonon."""
         return self._cutoff_frequency
 
@@ -473,17 +476,17 @@ class Interaction:
         return self.cutoff_frequency
 
     @property
-    def openmp_per_triplets(self):
+    def openmp_per_triplets(self) -> bool:
         """Return whether OpenMP distribution over triplets or bands."""
         return self._openmp_per_triplets
 
     @property
-    def symmetrize_fc3q(self):
+    def symmetrize_fc3q(self) -> bool:
         """Return boolean of symmetrize_fc3q."""
         return self._symmetrize_fc3q
 
     @property
-    def make_r0_average(self):
+    def make_r0_average(self) -> bool:
         """Return boolean of make_r0_average.
 
         This flag is used to activate averaging of fc3 transformation
@@ -494,7 +497,20 @@ class Interaction:
         """
         return self._make_r0_average
 
-    def get_averaged_interaction(self):
+    @property
+    def all_shortest(self) -> np.ndarray:
+        """Return boolean of make_r0_average.
+
+        This flag is used to activate averaging of fc3 transformation
+        from real space to reciprocal space around three atoms. With False,
+        it is done at the first atom. With True, it is done at three atoms
+        and averaged.
+
+        """
+        return self._all_shortest
+
+    @property
+    def averaged_interaction(self) -> np.ndarray:
         """Return sum over phonon triplets of interaction strength.
 
         See Eq.(21) of PRB 91, 094306 (2015)
@@ -506,17 +522,48 @@ class Interaction:
         v_sum = np.dot(w, v.sum(axis=2).sum(axis=2))
         return v_sum / np.prod(v.shape[2:])
 
-    def get_primitive_and_supercell_correspondence(self):
+    def get_averaged_interaction(self):
+        """Return sum over phonon triplets of interaction strength."""
+        warnings.warn(
+            "Use attribute, Interaction.averaged_interaction "
+            "instead of Interaction.get_averaged_interaction().",
+            DeprecationWarning,
+        )
+        return self.averaged_interaction
+
+    def get_primitive_and_supercell_correspondence(
+        self,
+    ) -> tuple(np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray):
         """Return atomic pair information."""
         return (self._svecs, self._multi, self._p2s, self._s2p, self._masses)
 
-    def get_unit_conversion_factor(self):
+    @property
+    def unit_conversion_factor(self) -> float:
         """Return unit conversion factor."""
         return self._unit_conversion
 
-    def get_constant_averaged_interaction(self):
+    def get_unit_conversion_factor(self):
+        """Return unit conversion factor."""
+        warnings.warn(
+            "Use attribute, Interaction.unit_conversion_factor "
+            "instead of Interaction.get_unit_conversion_factor().",
+            DeprecationWarning,
+        )
+        return self.unit_conversion_factor
+
+    @property
+    def constant_averaged_interaction(self) -> float:
         """Return constant averaged interaction."""
         return self._constant_averaged_interaction
+
+    def get_constant_averaged_interaction(self):
+        """Return constant averaged interaction."""
+        warnings.warn(
+            "Use attribute, Interaction.constant_averaged_interaction "
+            "instead of Interaction.get_constant_averaged_interaction().",
+            DeprecationWarning,
+        )
+        return self.constant_averaged_interaction
 
     def set_interaction_strength(self, pp_strength, g_zero=None):
         """Set interaction strength."""
@@ -915,6 +962,7 @@ class Interaction:
             self._band_indices,
             self._symmetrize_fc3q * 1,
             self._make_r0_average * 1,
+            self._all_shortest,
             self._cutoff_frequency,
             openmp_per_triplets * 1,
         )
@@ -1007,30 +1055,27 @@ class Interaction:
         s2pp_map = [self._primitive.p2p_map[i] for i in self._s2p]
         lattice = self._primitive.cell
 
-        for i_patom in range(n_patom):
-            for j_atom in range(n_satom):
-                j_patom = s2pp_map[j_atom]
-                i_perm = np.where(perms[:, j_atom] == self._p2s[j_patom])[0][0]
-                for k_atom in range(n_satom):
-                    initial_vec = (
-                        svecs[multi[k_atom, i_patom, 1]]
-                        - svecs[multi[j_atom, i_patom, 1]]
-                    )
-                    d_jk_shortest = np.linalg.norm(initial_vec @ lattice)
-                    for j_m, k_m in np.ndindex(
-                        (multi[j_atom, i_patom, 0], multi[k_atom, i_patom, 0])
-                    ):
-                        vec_ij = svecs[multi[j_atom, i_patom, 1] + j_m]
-                        vec_ik = svecs[multi[k_atom, i_patom, 1] + k_m]
-                        d_jk_attempt = np.linalg.norm((vec_ik - vec_ij) @ lattice)
-                        if d_jk_attempt < d_jk_shortest:
-                            d_jk_shortest = d_jk_attempt
-                    k_atom_mapped = perms[i_perm, k_atom]
-                    d_jk_mapped = np.linalg.norm(
-                        svecs[multi[k_atom_mapped, j_patom, 1]] @ lattice
-                    )
-                    if abs(d_jk_mapped - d_jk_shortest) < self._symprec:
-                        self._all_shortest[i_patom, j_atom, k_atom] = 1
+        for i_patom, j_atom in np.ndindex((n_patom, n_satom)):
+            if multi[j_atom, i_patom, 0] > 1:
+                continue
+            j_patom = s2pp_map[j_atom]
+            i_perm = np.where(perms[:, j_atom] == self._p2s[j_patom])[0]
+            assert len(i_perm) == 1
+            for k_atom in range(n_satom):
+                if multi[k_atom, i_patom, 0] > 1:
+                    continue
+                k_atom_mapped = perms[i_perm[0], k_atom]
+                if multi[k_atom_mapped, j_patom, 0] > 1:
+                    continue
+                vec_jk = (
+                    svecs[multi[k_atom, i_patom, 1]] - svecs[multi[j_atom, i_patom, 1]]
+                )
+                d_jk = np.linalg.norm(vec_jk @ lattice)
+                d_jk_mapped = np.linalg.norm(
+                    svecs[multi[k_atom_mapped, j_patom, 1]] @ lattice
+                )
+                if abs(d_jk_mapped - d_jk) < self._symprec:
+                    self._all_shortest[i_patom, j_atom, k_atom] = 1
 
 
 def all_bands_exist(interaction: Interaction):

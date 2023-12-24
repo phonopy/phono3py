@@ -314,16 +314,15 @@ def test_get_all_shortest(aln_lda: Phono3py):
     svecs, multi, _, _, _ = itr.get_primitive_and_supercell_correspondence()
     n_satom, n_patom, _ = multi.shape
     for i, j, k in np.ndindex((n_patom, n_satom, n_satom)):
-        d_jk_shortest = np.linalg.norm(s_svecs[s_multi[j, k, 1]] @ s_lattice)
         is_found = 0
-        for m_j, m_k in np.ndindex((multi[j, i, 0], multi[k, i, 0])):
-            vec_ij = svecs[multi[j, i, 1] + m_j]
-            vec_ik = svecs[multi[k, i, 1] + m_k]
+        if multi[j, i, 0] == 1 and multi[k, i, 0] == 1 and s_multi[j, k, 0] == 1:
+            d_jk_shortest = np.linalg.norm(s_svecs[s_multi[j, k, 1]] @ s_lattice)
+            vec_ij = svecs[multi[j, i, 1]]
+            vec_ik = svecs[multi[k, i, 1]]
             vec_jk = vec_ik - vec_ij
             d_jk = np.linalg.norm(vec_jk @ p_lattice)
             if abs(d_jk - d_jk_shortest) < ph3.symmetry.tolerance:
                 is_found = 1
-                break
         assert shortests[i, j, k] == is_found
 
 

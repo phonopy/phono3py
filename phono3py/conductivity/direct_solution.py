@@ -504,9 +504,7 @@ class ConductivityLBTEBase(ConductivityBase):
                 self._collision.run_interaction(is_full_pp=self._is_full_pp)
 
             if self._is_full_pp and j == 0:
-                self._averaged_pp_interaction[
-                    i_gp
-                ] = self._pp.get_averaged_interaction()
+                self._averaged_pp_interaction[i_gp] = self._pp.averaged_interaction
 
             for k, t in enumerate(self._temperatures):
                 self._collision.temperature = t
