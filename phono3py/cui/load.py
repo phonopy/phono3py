@@ -42,6 +42,7 @@ import numpy as np
 import phonopy.cui.load_helper as load_helper
 from phonopy.harmonic.force_constants import show_drift_force_constants
 from phonopy.interface.calculator import get_default_physical_units
+from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.cells import determinant
 
 from phono3py import Phono3py
@@ -52,33 +53,36 @@ from phono3py.phonon3.fc3 import show_drift_fc3
 
 
 def load(
-    phono3py_yaml=None,  # phono3py.yaml-like must be the first argument.
-    supercell_matrix=None,
-    primitive_matrix=None,
-    phonon_supercell_matrix=None,
-    is_nac=True,
-    calculator=None,
-    unitcell=None,
-    supercell=None,
-    nac_params=None,
-    unitcell_filename=None,
-    supercell_filename=None,
-    born_filename=None,
-    forces_fc3_filename: Optional[Union[os.PathLike, Sequence]] = None,
-    forces_fc2_filename: Optional[Union[os.PathLike, Sequence]] = None,
-    fc3_filename=None,
-    fc2_filename=None,
-    fc_calculator=None,
-    fc_calculator_options=None,
-    factor=None,
-    produce_fc=True,
-    is_symmetry=True,
-    symmetrize_fc=True,
-    is_mesh_symmetry=True,
-    is_compact_fc=False,
-    use_grg=False,
-    symprec=1e-5,
-    log_level=0,
+    phono3py_yaml: Optional[
+        Union[str, bytes, os.PathLike]
+    ] = None,  # phono3py.yaml-like must be the first argument.
+    supercell_matrix: Optional[Union[Sequence, np.ndarray]] = None,
+    primitive_matrix: Optional[Union[Sequence, np.ndarray]] = None,
+    phonon_supercell_matrix: Optional[Union[Sequence, np.ndarray]] = None,
+    is_nac: bool = True,
+    calculator: Optional[str] = None,
+    unitcell: Optional[PhonopyAtoms] = None,
+    supercell: Optional[PhonopyAtoms] = None,
+    nac_params: Optional[dict] = None,
+    unitcell_filename: Optional[Union[str, bytes, os.PathLike]] = None,
+    supercell_filename: Optional[Union[str, bytes, os.PathLike]] = None,
+    born_filename: Optional[Union[str, bytes, os.PathLike]] = None,
+    forces_fc3_filename: Optional[Union[str, bytes, os.PathLike]] = None,
+    forces_fc2_filename: Optional[Union[str, bytes, os.PathLike]] = None,
+    fc3_filename: Optional[Union[str, bytes, os.PathLike]] = None,
+    fc2_filename: Optional[Union[str, bytes, os.PathLike]] = None,
+    fc_calculator: Optional[str] = None,
+    fc_calculator_options: Optional[str] = None,
+    factor: Optional[float] = None,
+    produce_fc: bool = True,
+    is_symmetry: bool = True,
+    symmetrize_fc: bool = True,
+    is_mesh_symmetry: bool = True,
+    is_compact_fc: bool = False,
+    use_grg: bool = False,
+    make_r0_average: bool = True,
+    symprec: float = 1e-5,
+    log_level: int = 0,
 ) -> Phono3py:
     """Create Phono3py instance from parameters and/or input files.
 
@@ -227,6 +231,11 @@ def load(
         cells. Default is False.
     use_grg : bool, optional
         Use generalized regular grid when True. Default is False.
+    make_r0_average : bool, optional
+        fc3 transformation from real to reciprocal space is done
+        around three atoms and averaged when True. Default is False, i.e.,
+        only around the first atom. Setting False is for rough compatibility
+        with v2.x. Default is True.
     symprec : float, optional
         Tolerance used to find crystal symmetry. Default is 1e-5.
     log_level : int, optional
@@ -297,6 +306,7 @@ def load(
         is_symmetry=is_symmetry,
         is_mesh_symmetry=is_mesh_symmetry,
         use_grg=use_grg,
+        make_r0_average=make_r0_average,
         calculator=calculator,
         log_level=log_level,
     )
