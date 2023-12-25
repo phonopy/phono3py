@@ -38,6 +38,7 @@
 #include "bzgrid.h"
 #include "lapack_wrapper.h"
 #include "phonoc_array.h"
+#include "real_to_reciprocal.h"
 
 void ppc_get_pp_collision(
     double *imag_self_energy,
@@ -45,22 +46,18 @@ void ppc_get_pp_collision(
     const double *frequencies, const lapack_complex_double *eigenvectors,
     const long (*triplets)[3], const long num_triplets,
     const long *triplet_weights, const ConstBZGrid *bzgrid, const double *fc3,
-    const long is_compact_fc3, const double (*svecs)[3],
-    const long multi_dims[2], const long (*multiplicity)[2],
-    const double *masses, const long *p2s_map, const long *s2p_map,
-    const Larray *band_indices, const Darray *temperatures, const long is_NU,
-    const long symmetrize_fc3_q, const double cutoff_frequency,
-    const long make_r0_average, const long openmp_per_triplets);
+    const long is_compact_fc3, const AtomTriplets *atom_triplets,
+    const double *masses, const Larray *band_indices,
+    const Darray *temperatures, const long is_NU, const long symmetrize_fc3_q,
+    const double cutoff_frequency, const long openmp_per_triplets);
 void ppc_get_pp_collision_with_sigma(
     double *imag_self_energy, const double sigma, const double sigma_cutoff,
     const double *frequencies, const lapack_complex_double *eigenvectors,
     const long (*triplets)[3], const long num_triplets,
     const long *triplet_weights, const ConstBZGrid *bzgrid, const double *fc3,
-    const long is_compact_fc3, const double (*svecs)[3],
-    const long multi_dims[2], const long (*multiplicity)[2],
-    const double *masses, const long *p2s_map, const long *s2p_map,
-    const Larray *band_indices, const Darray *temperatures, const long is_NU,
-    const long symmetrize_fc3_q, const double cutoff_frequency,
-    const long make_r0_average, const long openmp_per_triplets);
+    const long is_compact_fc3, const AtomTriplets *atom_triplets,
+    const double *masses, const Larray *band_indices,
+    const Darray *temperatures, const long is_NU, const long symmetrize_fc3_q,
+    const double cutoff_frequency, const long openmp_per_triplets);
 
 #endif

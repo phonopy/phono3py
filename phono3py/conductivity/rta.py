@@ -115,7 +115,7 @@ class ConductivityRTABase(ConductivityBase):
             log_level=log_level,
         )
 
-        self._use_const_ave_pp = self._pp.get_constant_averaged_interaction()
+        self._use_const_ave_pp = self._pp.constant_averaged_interaction
         self._read_pp = read_pp
         self._store_pp = store_pp
         self._pp_filename = pp_filename
@@ -262,10 +262,10 @@ class ConductivityRTABase(ConductivityBase):
                 if self._log_level:
                     print(
                         "Constant ph-ph interaction of %6.3e is used."
-                        % self._pp.get_constant_averaged_interaction()
+                        % self._pp.constant_averaged_interaction
                     )
                 self._collision.run_interaction()
-                self._averaged_pp_interaction[i] = self._pp.get_averaged_interaction()
+                self._averaged_pp_interaction[i] = self._pp.averaged_interaction
             elif j != 0 and (self._is_full_pp or self._sigma_cutoff is None):
                 if self._log_level:
                     print("Existing ph-ph interaction is used.")
@@ -274,9 +274,7 @@ class ConductivityRTABase(ConductivityBase):
                     print("Calculating ph-ph interaction...")
                 self._collision.run_interaction(is_full_pp=self._is_full_pp)
                 if self._is_full_pp:
-                    self._averaged_pp_interaction[
-                        i
-                    ] = self._pp.get_averaged_interaction()
+                    self._averaged_pp_interaction[i] = self._pp.averaged_interaction
 
             # Number of triplets depends on q-point.
             # So this is allocated each time.
@@ -304,7 +302,7 @@ class ConductivityRTABase(ConductivityBase):
                         k
                     ] = self._collision.get_detailed_imag_self_energy()
 
-    def _set_gamma_at_sigmas_lowmem(self, i, make_r0_average=False):
+    def _set_gamma_at_sigmas_lowmem(self, i):
         """Calculate gamma without storing ph-ph interaction strength.
 
         `svecs` and `multi` below must not be simply replaced by
@@ -386,6 +384,7 @@ class ConductivityRTABase(ConductivityBase):
                     self._is_N_U * 1,
                     self._pp.symmetrize_fc3q * 1,
                     self._pp.make_r0_average * 1,
+                    self._pp.all_shortest,
                     self._pp.cutoff_frequency,
                     openmp_per_triplets * 1,
                 )
@@ -416,11 +415,12 @@ class ConductivityRTABase(ConductivityBase):
                     self._is_N_U * 1,
                     self._pp.symmetrize_fc3q * 1,
                     self._pp.make_r0_average * 1,
+                    self._pp.all_shortest,
                     self._pp.cutoff_frequency,
                     openmp_per_triplets * 1,
                 )
             col_unit_conv = self._collision.unit_conversion_factor
-            pp_unit_conv = self._pp.get_unit_conversion_factor()
+            pp_unit_conv = self._pp.unit_conversion_factor
             if self._is_N_U:
                 col = collisions.sum(axis=0)
                 col_N = collisions[0]
