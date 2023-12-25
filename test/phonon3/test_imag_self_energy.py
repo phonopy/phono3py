@@ -1879,7 +1879,7 @@ def test_imag_self_energy_nacl_nac_npoints(nacl_pbe: Phono3py):
         [nacl_pbe.grid.gp_Gamma], [300], num_frequency_points=10
     )
 
-    print(",".join([f"{val:.8f}" for val in gammas.ravel()]))
+    # print(",".join([f"{val:.8f}" for val in gammas.ravel()]))
 
     np.testing.assert_allclose(
         ref_freq_points_nacl_nac, fpoints.ravel(), rtol=0, atol=1e-5
