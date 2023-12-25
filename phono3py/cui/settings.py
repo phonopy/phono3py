@@ -832,7 +832,7 @@ class Phono3pyConfParser(ConfParser):
         if "cutoff_pair_distance" in params:
             self._settings.set_cutoff_pair_distance(params["cutoff_pair_distance"])
 
-        # Emulate v1.x grid system and shortest vectors.
+        # Emulate v2.x behaviour
         if "emulate_v2" in params:
             self._settings.set_emulate_v2(params["emulate_v2"])
 
