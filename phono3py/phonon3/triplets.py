@@ -70,8 +70,6 @@ def get_triplets_at_q(
         Inversion symemtry is added if it doesn't exist. Default is True.
     swappable : bool, optional
         q1 and q2 among (q0, q1, q2) can be swapped. Deafult is True.
-    store_dense_gp_map : bool, optional
-        See the detail in the docstring of ``_relocate_BZ_grid_address``.
 
     Returns
     -------
@@ -343,7 +341,10 @@ def _get_BZ_triplets_at_q(bz_grid_index, bz_grid: BZGrid, map_triplets):
 
 
 def _set_triplets_integration_weights_c(
-    g, g_zero, pp: Union["Interaction", "JointDos"], frequency_points
+    g: np.ndarray,
+    g_zero: np.ndarray,
+    pp: Union["Interaction", "JointDos"],
+    frequency_points,
 ):
     import phono3py._phono3py as phono3c
 

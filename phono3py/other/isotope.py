@@ -100,7 +100,6 @@ class Isotope:
         bz_grid=None,
         frequency_factor_to_THz=VaspToTHz,
         use_grg=False,
-        store_dense_gp_map=True,
         symprec=1e-5,
         cutoff_frequency=None,
         lapack_zheev_uplo="L",
@@ -146,7 +145,7 @@ class Isotope:
                 lattice=self._primitive.cell,
                 symmetry_dataset=primitive_symmetry.dataset,
                 use_grg=use_grg,
-                store_dense_gp_map=store_dense_gp_map,
+                store_dense_gp_map=True,
             )
 
     def set_grid_point(self, grid_point):

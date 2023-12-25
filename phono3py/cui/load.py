@@ -77,8 +77,6 @@ def load(
     is_mesh_symmetry=True,
     is_compact_fc=False,
     use_grg=False,
-    store_dense_gp_map=True,
-    store_dense_svecs=True,
     symprec=1e-5,
     log_level=0,
 ) -> Phono3py:
@@ -229,12 +227,6 @@ def load(
         cells. Default is False.
     use_grg : bool, optional
         Use generalized regular grid when True. Default is False.
-    store_dense_gp_map : bool, optional, Deprecated
-        Use new format of BZ grid system. Default is True.
-    store_dense_svecs : bool, optional, Deprecated
-        Shortest vectors are stored in the dense array format. This is expected
-        to be always True. Setting False is for rough compatibility with v1.x.
-        Default is True.
     symprec : float, optional
         Tolerance used to find crystal symmetry. Default is 1e-5.
     log_level : int, optional
@@ -305,8 +297,6 @@ def load(
         is_symmetry=is_symmetry,
         is_mesh_symmetry=is_mesh_symmetry,
         use_grg=use_grg,
-        store_dense_gp_map=store_dense_gp_map,
-        store_dense_svecs=store_dense_svecs,
         calculator=calculator,
         log_level=log_level,
     )

@@ -37,7 +37,8 @@ import sys
 
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
-from phonopy.structure.cells import sparse_to_dense_svecs
+from phonopy.structure.atoms import PhonopyAtoms
+from phonopy.structure.cells import Primitive
 from phonopy.structure.grid_points import get_qpoints
 from phonopy.units import VaspToTHz
 
@@ -126,8 +127,8 @@ class Gruneisen:
         self,
         fc2,
         fc3,
-        supercell,
-        primitive,
+        supercell: PhonopyAtoms,
+        primitive: Primitive,
         nac_params=None,
         nac_q_direction=None,
         ion_clamped=False,
@@ -151,12 +152,7 @@ class Gruneisen:
         )
         self._nac_q_direction = nac_q_direction
 
-        svecs, multi = self._pcell.get_smallest_vectors()
-        if self._pcell.store_dense_svecs:
-            self._svecs = svecs
-            self._multi = multi
-        else:
-            self._svecs, self._multi = sparse_to_dense_svecs(svecs, multi)
+        self._svecs, self._multi = self._pcell.get_smallest_vectors()
 
         if self._ion_clamped:
             num_atom_prim = len(self._pcell)

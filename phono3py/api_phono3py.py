@@ -153,13 +153,10 @@ class Phono3py:
         is_mesh_symmetry=True,
         use_grg=False,
         SNF_coordinates="reciprocal",
-        symmetrize_fc3q=None,
-        store_dense_gp_map=True,
-        store_dense_svecs=True,
+        make_r0_average: bool = False,
         symprec=1e-5,
         calculator: Optional[str] = None,
         log_level=0,
-        lapack_zheev_uplo=None,
     ):
         """Init method.
 
@@ -213,14 +210,11 @@ class Phono3py:
             `reciprocal` or `direct`. Space of coordinates to generate grid
             generating matrix either in direct or reciprocal space. The default
             is `reciprocal`.
-        symmetrize_fc3q : Deprecated.
-            See Phono3py.init_phph_interaction().
-        store_dense_gp_map : bool, optional, Deprecated.
-            Use dense format of BZ grid system. Default is True.
-        store_dense_svecs : bool, optional, Deprecated.
-            Shortest vectors are stored in the dense array format. This is
-            expected to be always True. Setting False is for rough compatibility
-            with v1.x. Default is True.
+        make_r0_average : bool, optional
+            fc3 transformation from real to reciprocal space is done
+            around three atoms and averaged when True. Default is False, i.e.,
+            only around the first atom. Setting False is for rough compatibility
+            with v2.x. Default is True.
         symprec : float, optional
             Tolerance used to find crystal symmetry. Default is 1e-5.
         calculator : str, optional.
@@ -228,8 +222,6 @@ class Phono3py:
             of physical units. Default is None, which is equivalent to "vasp".
         log_level : int, optional
             Verbosity control. Default is 0. This can be 0, 1, or 2.
-        lapack_zheev_uplo : Deprecated.
-            See Phono3py.init_phph_interaction().
 
         """
         self._symprec = symprec
@@ -239,21 +231,13 @@ class Phono3py:
         self._use_grg = use_grg
         self._SNF_coordinates = SNF_coordinates
 
-        if not store_dense_gp_map:
+        if not make_r0_average:
             warnings.warn(
-                "Phono3py init parameter of store_dense_gp_map is deprecated. "
-                "This will be set always True.",
+                "Phono3py init parameter of make_r0_average is deprecated. "
+                "This is always True but exists for backward compatibility.",
                 DeprecationWarning,
             )
-        self._store_dense_gp_map = store_dense_gp_map
-
-        if not store_dense_svecs:
-            warnings.warn(
-                "Phono3py init parameter of store_dense_svecs is deprecated. "
-                "This will be set always True.",
-                DeprecationWarning,
-            )
-        self._store_dense_svecs = store_dense_svecs
+        self._make_r0_average = make_r0_average
 
         self._cutoff_frequency = cutoff_frequency
         self._calculator: Optional[str] = calculator
@@ -360,26 +344,6 @@ class Phono3py:
                 DeprecationWarning,
             )
             self.sigma_cutoff = sigma_cutoff
-
-        if symmetrize_fc3q is not None:
-            warnings.warn(
-                "Phono3py init parameter of symmetrize_fc3q is deprecated. "
-                "Set this at Phono3py.init_phph_interaction().",
-                DeprecationWarning,
-            )
-            self._symmetrize_fc3q = symmetrize_fc3q
-        else:
-            self._symmetrize_fc3q = None
-
-        if lapack_zheev_uplo is not None:
-            warnings.warn(
-                "Phono3py init parameter of lapack_zheev_uplo is deprecated. "
-                "Set this at Phono3py.init_phph_interaction().",
-                DeprecationWarning,
-            )
-            self._lapack_zheev_uplo = lapack_zheev_uplo
-        else:
-            self._lapack_zheev_uplo = None
 
     @property
     def version(self):
@@ -1331,8 +1295,7 @@ class Phono3py:
         nac_q_direction=None,
         constant_averaged_interaction=None,
         frequency_scale_factor=None,
-        symmetrize_fc3q=False,
-        make_r0_average=False,
+        symmetrize_fc3q: bool = False,
         lapack_zheev_uplo="L",
         openmp_per_triplets=None,
     ):
@@ -1367,10 +1330,6 @@ class Phono3py:
         symmetrize_fc3q : bool, optional
             fc3 in phonon space is symmetrized by permutation symmetry.
             Default is False.
-        make_r0_average : bool, optional
-            fc3 transformation from real to reciprocal space is done
-            around three atoms and averaged when True. Default is False, i.e.,
-            only around the first atom.
         lapack_zheev_uplo : str, optional
             'L' or 'U'. Default is 'L'. This is passed to LAPACK zheev
             used for phonon solver.
@@ -1389,16 +1348,6 @@ class Phono3py:
             msg = "Phono3py.fc2 of instance is not found."
             raise RuntimeError(msg)
 
-        if self._symmetrize_fc3q is None:
-            _symmetrize_fc3q = symmetrize_fc3q
-        else:
-            _symmetrize_fc3q = self._symmetrize_fc3q
-
-        if self._lapack_zheev_uplo is None:
-            _lapack_zheev_uplo = lapack_zheev_uplo
-        else:
-            _lapack_zheev_uplo = self._lapack_zheev_uplo
-
         self._interaction = Interaction(
             self._primitive,
             self._bz_grid,
@@ -1410,9 +1359,9 @@ class Phono3py:
             frequency_scale_factor=frequency_scale_factor,
             cutoff_frequency=self._cutoff_frequency,
             is_mesh_symmetry=self._is_mesh_symmetry,
-            symmetrize_fc3q=_symmetrize_fc3q,
-            make_r0_average=make_r0_average,
-            lapack_zheev_uplo=_lapack_zheev_uplo,
+            symmetrize_fc3q=symmetrize_fc3q,
+            make_r0_average=self._make_r0_average,
+            lapack_zheev_uplo=lapack_zheev_uplo,
             openmp_per_triplets=openmp_per_triplets,
         )
         self._interaction.nac_q_direction = nac_q_direction
@@ -2545,9 +2494,7 @@ class Phono3py:
         else:
             t_mat = np.dot(inv_supercell_matrix, primitive_matrix)
 
-        return get_primitive(
-            supercell, t_mat, self._symprec, store_dense_svecs=self._store_dense_svecs
-        )
+        return get_primitive(supercell, t_mat, self._symprec, store_dense_svecs=True)
 
     def _determine_primitive_matrix(self, primitive_matrix):
         pmat = get_primitive_matrix(primitive_matrix, symprec=self._symprec)
@@ -2571,7 +2518,7 @@ class Phono3py:
             use_grg=self._use_grg,
             force_SNF=False,
             SNF_coordinates=self._SNF_coordinates,
-            store_dense_gp_map=self._store_dense_gp_map,
+            store_dense_gp_map=True,
         )
 
     def _init_dynamical_matrix(self):

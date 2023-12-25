@@ -36,8 +36,10 @@
 import numpy as np
 from phonopy.structure.tetrahedron_method import TetrahedronMethod
 
+from phono3py.phonon.grid import BZGrid
 
-def get_unique_grid_points(grid_points, bz_grid):
+
+def get_unique_grid_points(grid_points, bz_grid: BZGrid):
     """Collect grid points on tetrahedron vertices around input grid points.
 
     Find grid points of 24 tetrahedra around each grid point and
@@ -88,7 +90,7 @@ def get_unique_grid_points(grid_points, bz_grid):
 def get_integration_weights(
     sampling_points,
     grid_values,
-    bz_grid,
+    bz_grid: BZGrid,
     grid_points=None,
     bzgp2irgp_map=None,
     function="I",

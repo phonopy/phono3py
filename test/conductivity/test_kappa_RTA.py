@@ -369,7 +369,7 @@ def test_kappa_RTA_aln_with_sigma_and_r0_ave(aln_lda: Phono3py):
 
 
 def _get_kappa(
-    ph3,
+    ph3: Phono3py,
     mesh,
     is_isotope=False,
     is_full_pp=False,
@@ -377,9 +377,10 @@ def _get_kappa(
     make_r0_average=False,
 ):
     ph3.mesh_numbers = mesh
-    ph3.init_phph_interaction(
-        make_r0_average=make_r0_average, openmp_per_triplets=openmp_per_triplets
-    )
+    make_r0_average_orig = ph3._make_r0_average
+    ph3._make_r0_average = make_r0_average
+    ph3.init_phph_interaction(openmp_per_triplets=openmp_per_triplets)
+    ph3._make_r0_average = make_r0_average_orig
     ph3.run_thermal_conductivity(
         temperatures=[
             300,

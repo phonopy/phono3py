@@ -57,7 +57,10 @@ def test_kappa_LBTE_aln(aln_lda: Phono3py):
 def test_kappa_LBTE_aln_with_r0_ave(aln_lda: Phono3py):
     """Test direct solution by AlN."""
     aln_lda.mesh_numbers = [7, 7, 5]
-    aln_lda.init_phph_interaction(make_r0_average=True)
+    make_r0_average_orig = aln_lda._make_r0_average
+    aln_lda._make_r0_average = True
+    aln_lda.init_phph_interaction()
+    aln_lda._make_r0_average = make_r0_average_orig
     aln_lda.run_thermal_conductivity(
         is_LBTE=True,
         temperatures=[
