@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Change Log &#8212; Phono3py v.2.8.0</title>
+    <title>Change Log &#8212; Phono3py v.2.9.0</title>
   
   
   
@@ -129,7 +129,7 @@
   
   
   
-    <p class="title logo__title">Phono3py v.2.8.0</p>
+    <p class="title logo__title">Phono3py v.2.9.0</p>
   
 </a></div>
         <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
@@ -308,6 +308,7 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dec-25-2023-version-2-9-0">Dec-25-2023: Version 2.9.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dec-4-2023-version-2-8-0">Dec-4-2023: Version 2.8.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-3-2023-version-2-7-0">Jul-3-2023: Version 2.7.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-3-2023-version-2-6-0">Apr-3-2023: Version 2.6.0</a></li>
@@ -379,6 +380,19 @@ document.write(`
                   
   <section class="tex2jax_ignore mathjax_ignore" id="change-log">
 <span id="changelog"></span><h1>Change Log<a class="headerlink" href="#change-log" title="Permalink to this heading">#</a></h1>
+<section id="dec-25-2023-version-2-9-0">
+<h2>Dec-25-2023: Version 2.9.0<a class="headerlink" href="#dec-25-2023-version-2-9-0" title="Permalink to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Pre-release of version 3.0.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--v3</span></code> option enables phono3py version 3 behaviour. In phono3py-v3, it is
+planned to replace <span class="math notranslate nohighlight">\(\sum_{l'l''}\Phi_{\alpha\beta\gamma}(0\kappa, l'\kappa',
+l''\kappa'') \cdots\)</span> in Eq.(41) of
+<a class="reference external" href="https://journals.jps.jp/doi/10.7566/JPSJ.92.012001">https://journals.jps.jp/doi/10.7566/JPSJ.92.012001</a> by
+<span class="math notranslate nohighlight">\([\sum_{l'l''}\Phi_{\alpha\beta\gamma}(0\kappa, l'\kappa', l''\kappa'') \cdots + \sum_{ll''}\Phi_{\alpha\beta\gamma}(l\kappa, 0\kappa', l''\kappa'') \cdots + \sum_{ll'}\Phi_{\alpha\beta\gamma}(l\kappa, l'\kappa', 0\kappa'') \cdots] / 3\)</span>
+for better treatment of lattice sum in supercell although this requires more
+computational demand. In phono3py-v3, <code class="docutils literal notranslate"><span class="pre">--v2</span></code> option will be prepared.</p></li>
+</ul>
+</section>
 <section id="dec-4-2023-version-2-8-0">
 <h2>Dec-4-2023: Version 2.8.0<a class="headerlink" href="#dec-4-2023-version-2-8-0" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
@@ -978,6 +992,7 @@ a mesh number is an even number, it is more carefully treated.</p></li>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dec-25-2023-version-2-9-0">Dec-25-2023: Version 2.9.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#dec-4-2023-version-2-8-0">Dec-4-2023: Version 2.8.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jul-3-2023-version-2-7-0">Jul-3-2023: Version 2.7.0</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#apr-3-2023-version-2-6-0">Apr-3-2023: Version 2.6.0</a></li>
