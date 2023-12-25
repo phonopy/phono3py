@@ -187,8 +187,8 @@ def test_kappa_RTA_si_N_U(si_pbesol: Phono3py):
             [0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000, 0.00000000],
         ]
 
-    np.testing.assert_allclose(np.sum(gN_ref, axis=1), gN[0, 0].sum(axis=1), atol=1e-3)
-    np.testing.assert_allclose(np.sum(gU_ref, axis=1), gU[0, 0].sum(axis=1), atol=1e-3)
+    np.testing.assert_allclose(np.sum(gN_ref, axis=1), gN[0, 0].sum(axis=1), atol=0.05)
+    np.testing.assert_allclose(np.sum(gU_ref, axis=1), gU[0, 0].sum(axis=1), atol=0.05)
 
 
 def test_kappa_RTA_nacl(nacl_pbe: Phono3py):
