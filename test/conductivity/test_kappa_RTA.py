@@ -124,10 +124,10 @@ def test_kappa_RTA_si_nomeshsym(si_pbesol: Phono3py, si_pbesol_nomeshsym: Phono3
 def test_kappa_RTA_si_grg(si_pbesol_grg: Phono3py):
     """Test RTA by Si with GR-grid."""
     if si_pbesol_grg._make_r0_average:
-        ref_kappa_RTA_grg = [94.293, 94.293, 94.293, 0, 0, 0]
+        ref_kappa_RTA_grg = [111.204, 111.204, 111.204, 0, 0, 0]
     else:
-        ref_kappa_RTA_grg = [94.306, 94.306, 94.306, 0, 0, 0]
-    mesh = 20
+        ref_kappa_RTA_grg = [111.349, 111.349, 111.349, 0, 0, 0]
+    mesh = 30
     ph3 = si_pbesol_grg
     ph3.mesh_numbers = mesh
     ph3.init_phph_interaction()
@@ -139,11 +139,11 @@ def test_kappa_RTA_si_grg(si_pbesol_grg: Phono3py):
     kappa = ph3.thermal_conductivity.kappa.ravel()
     np.testing.assert_equal(
         ph3.thermal_conductivity.bz_grid.grid_matrix,
-        [[-4, 4, 4], [4, -4, 4], [4, 4, -4]],
+        [[-6, 6, 6], [6, -6, 6], [6, 6, -6]],
     )
     np.testing.assert_equal(
         ph3.grid.grid_matrix,
-        [[-4, 4, 4], [4, -4, 4], [4, 4, -4]],
+        [[-6, 6, 6], [6, -6, 6], [6, 6, -6]],
     )
     A = ph3.grid.grid_matrix
     D_diag = ph3.grid.D_diag
