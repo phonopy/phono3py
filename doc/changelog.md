@@ -10,7 +10,7 @@
   l''\kappa'') \cdots$ in Eq.(41) of
   <https://journals.jps.jp/doi/10.7566/JPSJ.92.012001> by
   $[\sum_{l'l''}\Phi_{\alpha\beta\gamma}(0\kappa, l'\kappa', l''\kappa'') \cdots + \sum_{ll''}\Phi_{\alpha\beta\gamma}(l\kappa, 0\kappa', l''\kappa'') \cdots + \sum_{ll'}\Phi_{\alpha\beta\gamma}(l\kappa, l'\kappa', 0\kappa'') \cdots] / 3$
-  for better handing of crystal symmetry although this requires more
+  for better treatment of lattice sum in supercell although this requires more
   computational demand. In phono3py-v3, `--v2` option will be prepared.
 
 ## Dec-4-2023: Version 2.8.0
