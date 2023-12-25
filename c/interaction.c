@@ -196,13 +196,6 @@ static void real_to_normal(double *fc3_normal_squared, const long (*g_pos)[4],
     }
     r2r_real_to_reciprocal(fc3_reciprocal, q_vecs, fc3, is_compact_fc3,
                            atom_triplets, openmp_at_bands);
-    if (atom_triplets->make_r0_average) {
-        for (i = 0; i < num_band * num_band * num_band; i++) {
-            fc3_reciprocal[i] = lapack_make_complex_double(
-                lapack_complex_double_real(fc3_reciprocal[i]) / 3,
-                lapack_complex_double_imag(fc3_reciprocal[i]) / 3);
-        }
-    }
 
 #ifdef MEASURE_R2N
     if (openmp_at_bands && num_triplets > 0) {

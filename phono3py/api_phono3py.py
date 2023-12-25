@@ -231,12 +231,6 @@ class Phono3py:
         self._use_grg = use_grg
         self._SNF_coordinates = SNF_coordinates
 
-        if not make_r0_average:
-            warnings.warn(
-                "Phono3py init parameter of make_r0_average is deprecated. "
-                "This is always True but exists for backward compatibility.",
-                DeprecationWarning,
-            )
         self._make_r0_average = make_r0_average
 
         self._cutoff_frequency = cutoff_frequency

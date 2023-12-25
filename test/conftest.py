@@ -58,10 +58,11 @@ def si_pbesol(request) -> Phono3py:
     """
     yaml_filename = cwd / "phono3py_si_pbesol.yaml"
     forces_fc3_filename = cwd / "FORCES_FC3_si_pbesol"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         forces_fc3_filename=forces_fc3_filename,
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -77,11 +78,12 @@ def si_pbesol_grg(request) -> Phono3py:
     """
     yaml_filename = cwd / "phono3py_si_pbesol.yaml"
     forces_fc3_filename = cwd / "FORCES_FC3_si_pbesol"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         forces_fc3_filename=forces_fc3_filename,
         use_grg=True,
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -96,12 +98,13 @@ def si_pbesol_nosym(request) -> Phono3py:
     """
     yaml_filename = cwd / "phono3py_si_pbesol.yaml"
     forces_fc3_filename = cwd / "FORCES_FC3_si_pbesol"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         forces_fc3_filename=forces_fc3_filename,
         is_symmetry=False,
         produce_fc=False,
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -116,12 +119,13 @@ def si_pbesol_nomeshsym(request) -> Phono3py:
     """
     yaml_filename = cwd / "phono3py_si_pbesol.yaml"
     forces_fc3_filename = cwd / "FORCES_FC3_si_pbesol"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         forces_fc3_filename=forces_fc3_filename,
         is_mesh_symmetry=False,
         produce_fc=False,
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -136,11 +140,12 @@ def si_pbesol_compact_fc(request) -> Phono3py:
     """
     yaml_filename = cwd / "phono3py_si_pbesol.yaml"
     forces_fc3_filename = cwd / "FORCES_FC3_si_pbesol"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         forces_fc3_filename=forces_fc3_filename,
         is_compact_fc=True,
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -154,9 +159,10 @@ def si_pbesol_111(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_Si111.yaml"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -173,10 +179,11 @@ def si_pbesol_111_alm(request) -> Phono3py:
     pytest.importorskip("alm")
 
     yaml_filename = cwd / "phono3py_params_Si111.yaml"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         fc_calculator="alm",
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -203,9 +210,10 @@ def si_pbesol_111_222_fd(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -222,10 +230,11 @@ def si_pbesol_111_222_alm(request) -> Phono3py:
     pytest.importorskip("alm")
 
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         fc_calculator="alm",
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -242,10 +251,11 @@ def si_pbesol_111_222_alm_fd(request) -> Phono3py:
     pytest.importorskip("alm")
 
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         fc_calculator="alm|",
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -262,10 +272,11 @@ def si_pbesol_111_222_fd_alm(request) -> Phono3py:
     pytest.importorskip("alm")
 
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         fc_calculator="|alm",
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -283,11 +294,12 @@ def si_pbesol_111_222_alm_cutoff(request) -> Phono3py:
     pytest.importorskip("alm")
 
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         fc_calculator="alm",
         fc_calculator_options="cutoff = 3",
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -305,11 +317,12 @@ def si_pbesol_111_222_alm_cutoff_fc2(request) -> Phono3py:
     pytest.importorskip("alm")
 
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         fc_calculator="alm",
         fc_calculator_options="cutoff = 3|",
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -327,11 +340,12 @@ def si_pbesol_111_222_alm_cutoff_fc3(request) -> Phono3py:
     pytest.importorskip("alm")
 
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         fc_calculator="alm",
         fc_calculator_options="|cutoff = 3",
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -345,9 +359,10 @@ def nacl_pbe(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -361,10 +376,11 @@ def nacl_pbe_compact_fc(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         is_compact_fc=True,
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
@@ -377,10 +393,11 @@ def nacl_pbe_cutoff_fc3(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     ph3 = phono3py.load(
         yaml_filename,
         produce_fc=False,
+        make_r0_average=not enable_v2,
         log_level=1,
     )
     forces = ph3.forces
@@ -409,10 +426,11 @@ def nacl_pbe_cutoff_fc3_all_forces(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     ph3 = phono3py.load(
         yaml_filename,
         produce_fc=False,
+        make_r0_average=not enable_v2,
         log_level=1,
     )
     forces = ph3.forces
@@ -432,10 +450,11 @@ def nacl_pbe_cutoff_fc3_compact_fc(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     ph3 = phono3py.load(
         yaml_filename,
         produce_fc=False,
+        make_r0_average=not enable_v2,
         log_level=1,
     )
     forces = ph3.forces
@@ -454,9 +473,10 @@ def aln_lda(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_AlN332.yaml.xz"
-    # enable_v2 = request.config.getoption("--v2")
+    enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
+        make_r0_average=not enable_v2,
         log_level=1,
     )
 
