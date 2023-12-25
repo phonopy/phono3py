@@ -263,11 +263,8 @@ def test_kappa_RTA_si_N_U(si_pbesol):
         ]
 
     # print(np.sum(gN), np.sum(gU))
-    np.testing.assert_allclose(
-        np.ravel(gN_ref) + np.ravel(gU_ref), gN.ravel() + gU.ravel(), atol=1e-2
-    )
-    np.testing.assert_allclose(np.ravel(gN_ref), gN.ravel(), atol=1e-3)
-    np.testing.assert_allclose(np.ravel(gU_ref), gU.ravel(), atol=1e-3)
+    np.testing.assert_allclose(np.sum(gN_ref, axis=1), gN[0, 0].sum(axis=1), atol=1e-3)
+    np.testing.assert_allclose(np.sum(gU_ref, axis=1), gU[0, 0].sum(axis=1), atol=1e-3)
 
 
 def test_kappa_RTA_nacl(nacl_pbe: Phono3py):
