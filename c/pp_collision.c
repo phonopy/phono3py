@@ -42,6 +42,7 @@
 #include "lapack_wrapper.h"
 #include "phonoc_array.h"
 #include "phonoc_utils.h"
+#include "real_to_reciprocal.h"
 #include "triplet.h"
 #include "triplet_iw.h"
 
@@ -51,12 +52,9 @@ static void get_collision(
     const char *g_zero, const double *frequencies,
     const lapack_complex_double *eigenvectors, const long triplet[3],
     const long triplet_weight, const ConstBZGrid *bzgrid, const double *fc3,
-    const long is_compact_fc3, const double (*svecs)[3],
-    const long multi_dims[2], const long (*multiplicity)[2],
-    const double *masses, const long *p2s_map, const long *s2p_map,
-    const long *band_indices, const long symmetrize_fc3_q,
-    const double cutoff_frequency, const long make_r0_average,
-    const long openmp_per_triplets);
+    const long is_compact_fc3, const AtomTriplets *atom_triplets,
+    const double *masses, const long *band_indices, const long symmetrize_fc3_q,
+    const double cutoff_frequency, const long openmp_per_triplets);
 static void finalize_ise(double *imag_self_energy, const double *ise,
                          const long (*bz_grid_address)[3],
                          const long (*triplets)[3], const long num_triplets,
@@ -69,12 +67,10 @@ void ppc_get_pp_collision(
     const double *frequencies, const lapack_complex_double *eigenvectors,
     const long (*triplets)[3], const long num_triplets,
     const long *triplet_weights, const ConstBZGrid *bzgrid, const double *fc3,
-    const long is_compact_fc3, const double (*svecs)[3],
-    const long multi_dims[2], const long (*multiplicity)[2],
-    const double *masses, const long *p2s_map, const long *s2p_map,
-    const Larray *band_indices, const Darray *temperatures, const long is_NU,
-    const long symmetrize_fc3_q, const double cutoff_frequency,
-    const long make_r0_average, const long openmp_per_triplets) {
+    const long is_compact_fc3, const AtomTriplets *atom_triplets,
+    const double *masses, const Larray *band_indices,
+    const Darray *temperatures, const long is_NU, const long symmetrize_fc3_q,
+    const double cutoff_frequency, const long openmp_per_triplets) {
     long i;
     long num_band, num_band0, num_band_prod, num_temps;
     double *ise, *freqs_at_gp, *g;
@@ -87,7 +83,7 @@ void ppc_get_pp_collision(
     g_zero = NULL;
 
     num_band0 = band_indices->dims[0];
-    num_band = multi_dims[1] * 3;
+    num_band = atom_triplets->multi_dims[1] * 3;
     num_band_prod = num_band0 * num_band * num_band;
     num_temps = temperatures->dims[0];
     ise =
@@ -103,7 +99,7 @@ void ppc_get_pp_collision(
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(guided) private( \
-    g, g_zero) if (openmp_per_triplets)
+        g, g_zero) if (openmp_per_triplets)
 #endif
     for (i = 0; i < num_triplets; i++) {
         g = (double *)malloc(sizeof(double) * 2 * num_band_prod);
@@ -118,9 +114,8 @@ void ppc_get_pp_collision(
         get_collision(ise + i * num_temps * num_band0, num_band0, num_band,
                       num_temps, temperatures->data, g, g_zero, frequencies,
                       eigenvectors, triplets[i], triplet_weights[i], bzgrid,
-                      fc3, is_compact_fc3, svecs, multi_dims, multiplicity,
-                      masses, p2s_map, s2p_map, band_indices->data,
-                      symmetrize_fc3_q, cutoff_frequency, make_r0_average,
+                      fc3, is_compact_fc3, atom_triplets, masses,
+                      band_indices->data, symmetrize_fc3_q, cutoff_frequency,
                       openmp_per_triplets);
 
         free(g_zero);
@@ -143,12 +138,10 @@ void ppc_get_pp_collision_with_sigma(
     const double *frequencies, const lapack_complex_double *eigenvectors,
     const long (*triplets)[3], const long num_triplets,
     const long *triplet_weights, const ConstBZGrid *bzgrid, const double *fc3,
-    const long is_compact_fc3, const double (*svecs)[3],
-    const long multi_dims[2], const long (*multiplicity)[2],
-    const double *masses, const long *p2s_map, const long *s2p_map,
-    const Larray *band_indices, const Darray *temperatures, const long is_NU,
-    const long symmetrize_fc3_q, const double cutoff_frequency,
-    const long make_r0_average, const long openmp_per_triplets) {
+    const long is_compact_fc3, const AtomTriplets *atom_triplets,
+    const double *masses, const Larray *band_indices,
+    const Darray *temperatures, const long is_NU, const long symmetrize_fc3_q,
+    const double cutoff_frequency, const long openmp_per_triplets) {
     long i;
     long num_band, num_band0, num_band_prod, num_temps;
     long const_adrs_shift;
@@ -162,7 +155,7 @@ void ppc_get_pp_collision_with_sigma(
     g_zero = NULL;
 
     num_band0 = band_indices->dims[0];
-    num_band = multi_dims[1] * 3;
+    num_band = atom_triplets->multi_dims[1] * 3;
     num_band_prod = num_band0 * num_band * num_band;
     num_temps = temperatures->dims[0];
     const_adrs_shift = num_band_prod;
@@ -179,7 +172,7 @@ void ppc_get_pp_collision_with_sigma(
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(guided) private( \
-    g, g_zero) if (openmp_per_triplets)
+        g, g_zero) if (openmp_per_triplets)
 #endif
     for (i = 0; i < num_triplets; i++) {
         g = (double *)malloc(sizeof(double) * 2 * num_band_prod);
@@ -191,9 +184,8 @@ void ppc_get_pp_collision_with_sigma(
         get_collision(ise + i * num_temps * num_band0, num_band0, num_band,
                       num_temps, temperatures->data, g, g_zero, frequencies,
                       eigenvectors, triplets[i], triplet_weights[i], bzgrid,
-                      fc3, is_compact_fc3, svecs, multi_dims, multiplicity,
-                      masses, p2s_map, s2p_map, band_indices->data,
-                      symmetrize_fc3_q, cutoff_frequency, make_r0_average,
+                      fc3, is_compact_fc3, atom_triplets, masses,
+                      band_indices->data, symmetrize_fc3_q, cutoff_frequency,
                       openmp_per_triplets);
 
         free(g_zero);
@@ -217,12 +209,9 @@ static void get_collision(
     const char *g_zero, const double *frequencies,
     const lapack_complex_double *eigenvectors, const long triplet[3],
     const long triplet_weight, const ConstBZGrid *bzgrid, const double *fc3,
-    const long is_compact_fc3, const double (*svecs)[3],
-    const long multi_dims[2], const long (*multiplicity)[2],
-    const double *masses, const long *p2s_map, const long *s2p_map,
-    const long *band_indices, const long symmetrize_fc3_q,
-    const double cutoff_frequency, const long make_r0_average,
-    const long openmp_per_triplets) {
+    const long is_compact_fc3, const AtomTriplets *atom_triplets,
+    const double *masses, const long *band_indices, const long symmetrize_fc3_q,
+    const double cutoff_frequency, const long openmp_per_triplets) {
     long i;
     long num_band_prod, num_g_pos;
     double *fc3_normal_squared;
@@ -243,9 +232,9 @@ static void get_collision(
 
     itr_get_interaction_at_triplet(
         fc3_normal_squared, num_band0, num_band, g_pos, num_g_pos, frequencies,
-        eigenvectors, triplet, bzgrid, fc3, is_compact_fc3, svecs, multi_dims,
-        multiplicity, masses, p2s_map, s2p_map, band_indices, symmetrize_fc3_q,
-        cutoff_frequency, 0, 0, make_r0_average, 1 - openmp_per_triplets);
+        eigenvectors, triplet, bzgrid, fc3, is_compact_fc3, atom_triplets,
+        masses, band_indices, symmetrize_fc3_q, cutoff_frequency, 0, 0,
+        1 - openmp_per_triplets);
 
     ise_imag_self_energy_at_triplet(
         ise, num_band0, num_band, fc3_normal_squared, frequencies, triplet,

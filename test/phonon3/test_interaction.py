@@ -1,191 +1,201 @@
 """Test Interaction class."""
+from __future__ import annotations
+
+from collections.abc import Sequence
+from typing import Literal, Optional, Union
+
 import numpy as np
 import pytest
+from phonopy.structure.cells import get_smallest_vectors
 
 from phono3py import Phono3py
 from phono3py.phonon3.interaction import Interaction
 
-itr_RTA_Si = [
-    4.522052e-08,
-    4.896362e-08,
-    4.614211e-08,
-    4.744361e-08,
-    4.832248e-08,
-    4.698535e-08,
-    4.597876e-08,
-    4.645423e-08,
-    4.659572e-08,
-    4.730222e-08,
-]
 
-itr_RTA_AlN = [
-    7.456796e-08,
-    7.242121e-08,
-    7.068141e-08,
-    7.059521e-08,
-    7.289497e-08,
-    7.127172e-08,
-    7.082734e-08,
-    7.394367e-08,
-    7.084351e-08,
-    7.083299e-08,
-    7.085792e-08,
-    7.124150e-08,
-    7.048386e-08,
-    7.062840e-08,
-    7.036795e-08,
-    7.043995e-08,
-    7.366440e-08,
-    7.136803e-08,
-    6.988469e-08,
-    6.989518e-08,
-    7.179516e-08,
-    7.038043e-08,
-    7.011416e-08,
-    7.278196e-08,
-    6.999028e-08,
-    7.009615e-08,
-    7.018236e-08,
-    7.025054e-08,
-    6.977425e-08,
-    6.993095e-08,
-    6.962119e-08,
-    6.964423e-08,
-    7.121739e-08,
-    6.939940e-08,
-    6.834705e-08,
-    6.847351e-08,
-    6.977063e-08,
-    6.872065e-08,
-    6.863218e-08,
-    7.055696e-08,
-    6.836064e-08,
-    6.854052e-08,
-    6.864199e-08,
-    6.849059e-08,
-    6.826958e-08,
-    6.837379e-08,
-    6.808307e-08,
-    6.804480e-08,
-    6.961289e-08,
-    6.816170e-08,
-    6.730028e-08,
-    6.746055e-08,
-    6.851460e-08,
-    6.764892e-08,
-    6.754060e-08,
-    6.913662e-08,
-    6.729303e-08,
-    6.736722e-08,
-    6.734663e-08,
-    6.743441e-08,
-    6.713107e-08,
-    6.710084e-08,
-    6.698233e-08,
-    6.694871e-08,
-]
-
-itr_RTA_AlN_r0_ave = [
-    7.451662e-08,
-    7.248965e-08,
-    7.068341e-08,
-    7.038257e-08,
-    7.291756e-08,
-    7.130737e-08,
-    7.073777e-08,
-    7.391677e-08,
-    7.086006e-08,
-    7.077947e-08,
-    7.084617e-08,
-    7.128499e-08,
-    7.036749e-08,
-    7.057057e-08,
-    7.032233e-08,
-    7.041152e-08,
-    7.366076e-08,
-    7.149180e-08,
-    6.992398e-08,
-    6.972641e-08,
-    7.187472e-08,
-    7.046525e-08,
-    7.006265e-08,
-    7.280888e-08,
-    7.005107e-08,
-    7.008412e-08,
-    7.019342e-08,
-    7.034898e-08,
-    6.969589e-08,
-    6.990595e-08,
-    6.961230e-08,
-    6.966506e-08,
-    7.121203e-08,
-    6.954065e-08,
-    6.839930e-08,
-    6.831861e-08,
-    6.986872e-08,
-    6.882433e-08,
-    6.859035e-08,
-    7.059587e-08,
-    6.844120e-08,
-    6.854220e-08,
-    6.865246e-08,
-    6.861039e-08,
-    6.819986e-08,
-    6.835737e-08,
-    6.808818e-08,
-    6.808952e-08,
-    6.954409e-08,
-    6.824539e-08,
-    6.732596e-08,
-    6.726087e-08,
-    6.854755e-08,
-    6.770693e-08,
-    6.745257e-08,
-    6.910600e-08,
-    6.733516e-08,
-    6.731725e-08,
-    6.731323e-08,
-    6.749548e-08,
-    6.700802e-08,
-    6.703569e-08,
-    6.694826e-08,
-    6.694365e-08,
-]
-
-
-@pytest.mark.parametrize("lang", ["C", "Py"])
-def test_interaction_RTA_si(si_pbesol, lang):
+@pytest.mark.parametrize("lang", ["C", "Python"])
+def test_interaction_RTA_si(si_pbesol: Phono3py, lang: Literal["C", "Python"]):
     """Test interaction_strength of Si."""
+    if si_pbesol._make_r0_average:
+        ref_itr_RTA_Si = [
+            4.522052e-08,
+            4.896362e-08,
+            4.614211e-08,
+            4.744361e-08,
+            4.832248e-08,
+            4.698535e-08,
+            4.597876e-08,
+            4.645423e-08,
+            4.659572e-08,
+            4.730222e-08,
+        ]
+    else:
+        ref_itr_RTA_Si = [
+            4.522052e-08,
+            4.896362e-08,
+            4.614211e-08,
+            4.744361e-08,
+            4.832248e-08,
+            4.698535e-08,
+            4.597876e-08,
+            4.645423e-08,
+            4.659572e-08,
+            4.730222e-08,
+        ]
+
     itr = _get_irt(si_pbesol, [4, 4, 4])
     itr.set_grid_point(1)
     itr.run(lang=lang)
     # _show(itr)
     # (10, 6, 6, 6)
     np.testing.assert_allclose(
-        itr.interaction_strength.sum(axis=(1, 2, 3)), itr_RTA_Si, rtol=0, atol=1e-10
+        itr.interaction_strength.sum(axis=(1, 2, 3)), ref_itr_RTA_Si, rtol=0, atol=1e-10
     )
 
 
-def test_interaction_RTA_AlN(aln_lda):
+def test_interaction_RTA_AlN(aln_lda: Phono3py):
     """Test interaction_strength of AlN."""
+    if aln_lda._make_r0_average:
+        ref_itr_RTA_AlN = [
+            7.456796e-08,
+            7.242121e-08,
+            7.068141e-08,
+            7.059521e-08,
+            7.289497e-08,
+            7.127172e-08,
+            7.082734e-08,
+            7.394367e-08,
+            7.084351e-08,
+            7.083299e-08,
+            7.085792e-08,
+            7.124150e-08,
+            7.048386e-08,
+            7.062840e-08,
+            7.036795e-08,
+            7.043995e-08,
+            7.366440e-08,
+            7.136803e-08,
+            6.988469e-08,
+            6.989518e-08,
+            7.179516e-08,
+            7.038043e-08,
+            7.011416e-08,
+            7.278196e-08,
+            6.999028e-08,
+            7.009615e-08,
+            7.018236e-08,
+            7.025054e-08,
+            6.977425e-08,
+            6.993095e-08,
+            6.962119e-08,
+            6.964423e-08,
+            7.121739e-08,
+            6.939940e-08,
+            6.834705e-08,
+            6.847351e-08,
+            6.977063e-08,
+            6.872065e-08,
+            6.863218e-08,
+            7.055696e-08,
+            6.836064e-08,
+            6.854052e-08,
+            6.864199e-08,
+            6.849059e-08,
+            6.826958e-08,
+            6.837379e-08,
+            6.808307e-08,
+            6.804480e-08,
+            6.961289e-08,
+            6.816170e-08,
+            6.730028e-08,
+            6.746055e-08,
+            6.851460e-08,
+            6.764892e-08,
+            6.754060e-08,
+            6.913662e-08,
+            6.729303e-08,
+            6.736722e-08,
+            6.734663e-08,
+            6.743441e-08,
+            6.713107e-08,
+            6.710084e-08,
+            6.698233e-08,
+            6.694871e-08,
+        ]
+    else:
+        ref_itr_RTA_AlN = [
+            7.456796e-08,
+            7.242121e-08,
+            7.068141e-08,
+            7.059521e-08,
+            7.289497e-08,
+            7.127172e-08,
+            7.082734e-08,
+            7.394367e-08,
+            7.084351e-08,
+            7.083299e-08,
+            7.085792e-08,
+            7.124150e-08,
+            7.048386e-08,
+            7.062840e-08,
+            7.036795e-08,
+            7.043995e-08,
+            7.366440e-08,
+            7.136803e-08,
+            6.988469e-08,
+            6.989518e-08,
+            7.179516e-08,
+            7.038043e-08,
+            7.011416e-08,
+            7.278196e-08,
+            6.999028e-08,
+            7.009615e-08,
+            7.018236e-08,
+            7.025054e-08,
+            6.977425e-08,
+            6.993095e-08,
+            6.962119e-08,
+            6.964423e-08,
+            7.121739e-08,
+            6.939940e-08,
+            6.834705e-08,
+            6.847351e-08,
+            6.977063e-08,
+            6.872065e-08,
+            6.863218e-08,
+            7.055696e-08,
+            6.836064e-08,
+            6.854052e-08,
+            6.864199e-08,
+            6.849059e-08,
+            6.826958e-08,
+            6.837379e-08,
+            6.808307e-08,
+            6.804480e-08,
+            6.961289e-08,
+            6.816170e-08,
+            6.730028e-08,
+            6.746055e-08,
+            6.851460e-08,
+            6.764892e-08,
+            6.754060e-08,
+            6.913662e-08,
+            6.729303e-08,
+            6.736722e-08,
+            6.734663e-08,
+            6.743441e-08,
+            6.713107e-08,
+            6.710084e-08,
+            6.698233e-08,
+            6.694871e-08,
+        ]
+
     itr = _get_irt(aln_lda, [7, 7, 7])
     itr.set_grid_point(1)
     itr.run()
-    # _show(itr)
-    np.testing.assert_allclose(
-        itr.interaction_strength.sum(axis=(1, 2, 3)), itr_RTA_AlN, rtol=0, atol=1e-10
-    )
-
-
-def test_interaction_RTA_AlN_r0_ave(aln_lda):
-    """Test interaction_strength of AlN."""
-    itr = _get_irt(aln_lda, [7, 7, 7], make_r0_average=True)
-    itr.set_grid_point(1)
-    itr.run()
-    # _show(itr)
+    _show(itr)
     np.testing.assert_allclose(
         itr.interaction_strength.sum(axis=(1, 2, 3)),
-        itr_RTA_AlN_r0_ave,
+        ref_itr_RTA_AlN,
         rtol=0,
         atol=1e-10,
     )
@@ -271,7 +281,7 @@ def test_interaction_run_phonon_solver_at_gamma_NaCl(nacl_pbe: Phono3py):
     )
 
 
-def test_phonon_solver_expand_RTA_si(si_pbesol):
+def test_phonon_solver_expand_RTA_si(si_pbesol: Phono3py):
     """Test phonon solver with eigenvector rotation of Si.
 
     Eigenvectors can be different but frequencies must be almost the same.
@@ -286,19 +296,53 @@ def test_phonon_solver_expand_RTA_si(si_pbesol):
     np.testing.assert_allclose(freqs, freqs_expanded, rtol=0, atol=1e-6)
 
 
+def test_get_all_shortest(aln_lda: Phono3py):
+    """Test Interaction._get_all_shortest."""
+    ph3 = aln_lda
+    ph3.mesh_numbers = 30
+    itr = Interaction(
+        ph3.primitive,
+        ph3.grid,
+        ph3.primitive_symmetry,
+        cutoff_frequency=1e-5,
+    )
+    s_svecs, s_multi = get_smallest_vectors(
+        ph3.supercell.cell,
+        ph3.supercell.scaled_positions,
+        ph3.supercell.scaled_positions,
+        store_dense_svecs=True,
+    )
+    s_lattice = ph3.supercell.cell
+    p_lattice = itr.primitive.cell
+    shortests = itr._all_shortest
+    svecs, multi, _, _, _ = itr.get_primitive_and_supercell_correspondence()
+    n_satom, n_patom, _ = multi.shape
+    for i, j, k in np.ndindex((n_patom, n_satom, n_satom)):
+        is_found = 0
+        if multi[j, i, 0] == 1 and multi[k, i, 0] == 1 and s_multi[j, k, 0] == 1:
+            d_jk_shortest = np.linalg.norm(s_svecs[s_multi[j, k, 1]] @ s_lattice)
+            vec_ij = svecs[multi[j, i, 1]]
+            vec_ik = svecs[multi[k, i, 1]]
+            vec_jk = vec_ik - vec_ij
+            d_jk = np.linalg.norm(vec_jk @ p_lattice)
+            if abs(d_jk - d_jk_shortest) < ph3.symmetry.tolerance:
+                is_found = 1
+        assert shortests[i, j, k] == is_found
+
+
 def _get_irt(
     ph3: Phono3py,
-    mesh,
-    nac_params=None,
-    solve_dynamical_matrices=True,
-    make_r0_average=False,
+    mesh: Union[int, float, Sequence, np.ndarray],
+    nac_params: Optional[dict] = None,
+    solve_dynamical_matrices: bool = True,
+    make_r0_average: bool = False,
 ):
     ph3.mesh_numbers = mesh
     itr = Interaction(
         ph3.primitive,
         ph3.grid,
         ph3.primitive_symmetry,
-        ph3.fc3,
+        fc3=ph3.fc3,
         make_r0_average=make_r0_average,
         cutoff_frequency=1e-4,
     )
@@ -320,7 +364,7 @@ def _get_irt(
     return itr
 
 
-def _show(itr):
+def _show(itr: Interaction):
     itr_vals = itr.interaction_strength.sum(axis=(1, 2, 3))
     for i, v in enumerate(itr_vals):
         print("%e, " % v, end="")
