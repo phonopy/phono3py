@@ -12,16 +12,15 @@ import phono3py
 from phono3py import Phono3py
 
 cwd = Path(__file__).parent
-store_dense_gp_map = True
 
 
 def pytest_addoption(parser):
-    """Activate v1 emulation  with --v1 option."""
+    """Activate v2 emulation  with --v2 option."""
     parser.addoption(
-        "--v1",
-        action="store_false",
-        default=True,
-        help="Run with phono3py v1.x emulation.",
+        "--v2",
+        action="store_true",
+        default=False,
+        help="Run with phono3py v2.x emulation.",
     )
 
 
@@ -59,12 +58,10 @@ def si_pbesol(request) -> Phono3py:
     """
     yaml_filename = cwd / "phono3py_si_pbesol.yaml"
     forces_fc3_filename = cwd / "FORCES_FC3_si_pbesol"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         forces_fc3_filename=forces_fc3_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         log_level=1,
     )
 
@@ -80,12 +77,10 @@ def si_pbesol_grg(request) -> Phono3py:
     """
     yaml_filename = cwd / "phono3py_si_pbesol.yaml"
     forces_fc3_filename = cwd / "FORCES_FC3_si_pbesol"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         forces_fc3_filename=forces_fc3_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         use_grg=True,
         log_level=1,
     )
@@ -101,14 +96,12 @@ def si_pbesol_nosym(request) -> Phono3py:
     """
     yaml_filename = cwd / "phono3py_si_pbesol.yaml"
     forces_fc3_filename = cwd / "FORCES_FC3_si_pbesol"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         forces_fc3_filename=forces_fc3_filename,
         is_symmetry=False,
         produce_fc=False,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         log_level=1,
     )
 
@@ -123,14 +116,12 @@ def si_pbesol_nomeshsym(request) -> Phono3py:
     """
     yaml_filename = cwd / "phono3py_si_pbesol.yaml"
     forces_fc3_filename = cwd / "FORCES_FC3_si_pbesol"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         forces_fc3_filename=forces_fc3_filename,
         is_mesh_symmetry=False,
         produce_fc=False,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         log_level=1,
     )
 
@@ -145,13 +136,11 @@ def si_pbesol_compact_fc(request) -> Phono3py:
     """
     yaml_filename = cwd / "phono3py_si_pbesol.yaml"
     forces_fc3_filename = cwd / "FORCES_FC3_si_pbesol"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
         forces_fc3_filename=forces_fc3_filename,
         is_compact_fc=True,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         log_level=1,
     )
 
@@ -165,11 +154,9 @@ def si_pbesol_111(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_Si111.yaml"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         log_level=1,
     )
 
@@ -186,11 +173,9 @@ def si_pbesol_111_alm(request) -> Phono3py:
     pytest.importorskip("alm")
 
     yaml_filename = cwd / "phono3py_params_Si111.yaml"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         fc_calculator="alm",
         log_level=1,
     )
@@ -218,11 +203,9 @@ def si_pbesol_111_222_fd(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         log_level=1,
     )
 
@@ -239,11 +222,9 @@ def si_pbesol_111_222_alm(request) -> Phono3py:
     pytest.importorskip("alm")
 
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         fc_calculator="alm",
         log_level=1,
     )
@@ -261,11 +242,9 @@ def si_pbesol_111_222_alm_fd(request) -> Phono3py:
     pytest.importorskip("alm")
 
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         fc_calculator="alm|",
         log_level=1,
     )
@@ -283,11 +262,9 @@ def si_pbesol_111_222_fd_alm(request) -> Phono3py:
     pytest.importorskip("alm")
 
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         fc_calculator="|alm",
         log_level=1,
     )
@@ -306,11 +283,9 @@ def si_pbesol_111_222_alm_cutoff(request) -> Phono3py:
     pytest.importorskip("alm")
 
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         fc_calculator="alm",
         fc_calculator_options="cutoff = 3",
         log_level=1,
@@ -330,11 +305,9 @@ def si_pbesol_111_222_alm_cutoff_fc2(request) -> Phono3py:
     pytest.importorskip("alm")
 
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         fc_calculator="alm",
         fc_calculator_options="cutoff = 3|",
         log_level=1,
@@ -354,11 +327,9 @@ def si_pbesol_111_222_alm_cutoff_fc3(request) -> Phono3py:
     pytest.importorskip("alm")
 
     yaml_filename = cwd / "phono3py_params_Si-111-222.yaml"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         fc_calculator="alm",
         fc_calculator_options="|cutoff = 3",
         log_level=1,
@@ -374,11 +345,9 @@ def nacl_pbe(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         log_level=1,
     )
 
@@ -392,11 +361,9 @@ def nacl_pbe_compact_fc(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         is_compact_fc=True,
         log_level=1,
     )
@@ -410,11 +377,9 @@ def nacl_pbe_cutoff_fc3(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     ph3 = phono3py.load(
         yaml_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         produce_fc=False,
         log_level=1,
     )
@@ -444,11 +409,9 @@ def nacl_pbe_cutoff_fc3_all_forces(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     ph3 = phono3py.load(
         yaml_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         produce_fc=False,
         log_level=1,
     )
@@ -469,11 +432,9 @@ def nacl_pbe_cutoff_fc3_compact_fc(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_NaCl222.yaml.xz"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     ph3 = phono3py.load(
         yaml_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         produce_fc=False,
         log_level=1,
     )
@@ -493,11 +454,9 @@ def aln_lda(request) -> Phono3py:
 
     """
     yaml_filename = cwd / "phono3py_params_AlN332.yaml.xz"
-    enable_v2 = request.config.getoption("--v1")
+    # enable_v2 = request.config.getoption("--v2")
     return phono3py.load(
         yaml_filename,
-        store_dense_gp_map=enable_v2,
-        store_dense_svecs=enable_v2,
         log_level=1,
     )
 

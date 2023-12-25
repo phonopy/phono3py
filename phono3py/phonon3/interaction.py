@@ -40,11 +40,7 @@ from typing import Literal, Optional, Union
 
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import DynamicalMatrix, get_dynamical_matrix
-from phonopy.structure.cells import (
-    Primitive,
-    compute_all_sg_permutations,
-    sparse_to_dense_svecs,
-)
+from phonopy.structure.cells import Primitive, compute_all_sg_permutations
 from phonopy.structure.symmetry import Symmetry
 from phonopy.units import AMU, EV, Angstrom, Hbar, THz, VaspToTHz
 
@@ -171,12 +167,7 @@ class Interaction:
 
         self._band_index_count = 0
 
-        svecs, multi = self._primitive.get_smallest_vectors()
-        if self._primitive.store_dense_svecs:
-            self._svecs = svecs
-            self._multi = multi
-        else:
-            self._svecs, self._multi = sparse_to_dense_svecs(svecs, multi)
+        self._svecs, self._multi = self._primitive.get_smallest_vectors()
         self._masses = np.array(self._primitive.masses, dtype="double")
         self._p2s = np.array(self._primitive.p2s_map, dtype="int_")
         self._s2p = np.array(self._primitive.s2p_map, dtype="int_")

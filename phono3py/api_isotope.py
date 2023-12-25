@@ -33,8 +33,6 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import warnings
-
 import numpy as np
 from phonopy.units import VaspToTHz
 
@@ -53,7 +51,6 @@ class Phono3pyIsotope:
         sigmas=None,
         frequency_factor_to_THz=VaspToTHz,
         use_grg=False,
-        store_dense_gp_map=True,
         symprec=1e-5,
         cutoff_frequency=None,
         lapack_zheev_uplo="L",
@@ -66,13 +63,6 @@ class Phono3pyIsotope:
         else:
             self._sigmas = sigmas
 
-        if not store_dense_gp_map:
-            warnings.warn(
-                "Phono3pyIsotope init parameter of store_dense_gp_map is deprecated. "
-                "This will be always set True.",
-                DeprecationWarning,
-            )
-
         self._iso = Isotope(
             mesh,
             primitive,
@@ -80,7 +70,6 @@ class Phono3pyIsotope:
             band_indices=band_indices,
             frequency_factor_to_THz=frequency_factor_to_THz,
             use_grg=use_grg,
-            store_dense_gp_map=store_dense_gp_map,
             symprec=symprec,
             cutoff_frequency=cutoff_frequency,
             lapack_zheev_uplo=lapack_zheev_uplo,
