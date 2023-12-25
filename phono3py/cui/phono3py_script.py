@@ -741,6 +741,7 @@ def init_phono3py(
         is_symmetry=settings.is_symmetry,
         is_mesh_symmetry=settings.is_mesh_symmetry,
         use_grg=settings.use_grg,
+        make_r0_average=settings.is_fc3_r0_average,
         symprec=symprec,
         calculator=interface_mode,
         log_level=log_level,
@@ -1036,7 +1037,6 @@ def init_phph_interaction(
         constant_averaged_interaction=ave_pp,
         frequency_scale_factor=updated_settings["frequency_scale_factor"],
         symmetrize_fc3q=settings.is_symmetrize_fc3_q,
-        make_r0_average=settings.is_fc3_r0_average,
         lapack_zheev_uplo=settings.lapack_zheev_uplo,
     )
 
@@ -1446,7 +1446,7 @@ def main(**argparse_control):
             is_reducible_collision_matrix=settings.is_reducible_collision_matrix,  # noqa E501
             is_kappa_star=settings.is_kappa_star,
             gv_delta_q=settings.group_velocity_delta_q,
-            is_full_pp=settings.is_full_pp,
+            is_full_pp=(settings.is_full_pp or settings.is_symmetrize_fc3_q),
             pinv_cutoff=settings.pinv_cutoff,
             pinv_solver=settings.pinv_solver,
             pinv_method=settings.pinv_method,

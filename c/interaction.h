@@ -38,28 +38,25 @@
 #include "bzgrid.h"
 #include "lapack_wrapper.h"
 #include "phonoc_array.h"
+#include "real_to_reciprocal.h"
 
 void itr_get_interaction(
     Darray *fc3_normal_squared, const char *g_zero, const Darray *frequencies,
     const lapack_complex_double *eigenvectors, const long (*triplets)[3],
     const long num_triplets, const ConstBZGrid *bzgrid, const double *fc3,
-    const long is_compact_fc3, const double (*svecs)[3],
-    const long multi_dims[2], const long (*multiplicity)[2],
-    const double *masses, const long *p2s_map, const long *s2p_map,
-    const long *band_indices, const long symmetrize_fc3_q,
-    const double cutoff_frequency, const long make_r0_average,
-    const long openmp_per_triplets);
+    const long is_compact_fc3, const AtomTriplets *atom_triplets,
+    const double *masses, const long *band_indices, const long symmetrize_fc3_q,
+    const double cutoff_frequency, const long openmp_per_triplets);
 void itr_get_interaction_at_triplet(
     double *fc3_normal_squared, const long num_band0, const long num_band,
     const long (*g_pos)[4], const long num_g_pos, const double *frequencies,
     const lapack_complex_double *eigenvectors, const long triplet[3],
     const ConstBZGrid *bzgrid, const double *fc3, const long is_compact_fc3,
-    const double (*svecs)[3], const long multi_dims[2],
-    const long (*multiplicity)[2], const double *masses, const long *p2s_map,
-    const long *s2p_map, const long *band_indices, const long symmetrize_fc3_q,
+    const AtomTriplets *atom_triplets, const double *masses,
+    const long *band_indices, const long symmetrize_fc3_q,
     const double cutoff_frequency,
     const long triplet_index, /* only for print */
     const long num_triplets,  /* only for print */
-    const long make_r0_average, const long openmp_at_bands);
+    const long openmp_at_bands);
 
 #endif

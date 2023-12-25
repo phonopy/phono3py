@@ -275,6 +275,7 @@ static PyObject *py_get_interaction(PyObject *self, PyObject *args) {
     PyArrayObject *py_p2s_map;
     PyArrayObject *py_s2p_map;
     PyArrayObject *py_band_indices;
+    PyArrayObject *py_all_shortest;
     double cutoff_frequency;
     long symmetrize_fc3_q;
     long make_r0_average;
@@ -293,6 +294,7 @@ static PyObject *py_get_interaction(PyObject *self, PyObject *args) {
     double(*svecs)[3];
     long(*multi)[2];
     double *masses;
+    char *all_shortest;
     long *p2s;
     long *s2p;
     long *band_indices;
@@ -300,12 +302,12 @@ static PyObject *py_get_interaction(PyObject *self, PyObject *args) {
     long i;
     long is_compact_fc3;
 
-    if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOOlldl", &py_fc3_normal_squared,
+    if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOOOOllOdl", &py_fc3_normal_squared,
                           &py_g_zero, &py_frequencies, &py_eigenvectors,
                           &py_triplets, &py_bz_grid_addresses, &py_D_diag,
                           &py_Q, &py_fc3, &py_svecs, &py_multi, &py_masses,
                           &py_p2s_map, &py_s2p_map, &py_band_indices,
-                          &symmetrize_fc3_q, &make_r0_average,
+                          &symmetrize_fc3_q, &make_r0_average, &py_all_shortest,
                           &cutoff_frequency, &openmp_per_triplets)) {
         return NULL;
     }
@@ -336,12 +338,13 @@ static PyObject *py_get_interaction(PyObject *self, PyObject *args) {
     p2s = (long *)PyArray_DATA(py_p2s_map);
     s2p = (long *)PyArray_DATA(py_s2p_map);
     band_indices = (long *)PyArray_DATA(py_band_indices);
+    all_shortest = (char *)PyArray_DATA(py_all_shortest);
 
     ph3py_get_interaction(fc3_normal_squared, g_zero, freqs, eigvecs, triplets,
                           num_triplets, bz_grid_addresses, D_diag, Q, fc3,
                           is_compact_fc3, svecs, multi_dims, multi, masses, p2s,
                           s2p, band_indices, symmetrize_fc3_q, make_r0_average,
-                          cutoff_frequency, openmp_per_triplets);
+                          all_shortest, cutoff_frequency, openmp_per_triplets);
 
     free(fc3_normal_squared);
     fc3_normal_squared = NULL;
@@ -370,6 +373,7 @@ static PyObject *py_get_pp_collision(PyObject *self, PyObject *args) {
     PyArrayObject *py_s2p_map;
     PyArrayObject *py_band_indices;
     PyArrayObject *py_temperatures;
+    PyArrayObject *py_all_shortest;
     double cutoff_frequency;
     long is_NU;
     long symmetrize_fc3_q;
@@ -396,18 +400,19 @@ static PyObject *py_get_pp_collision(PyObject *self, PyObject *args) {
     long *s2p;
     Larray *band_indices;
     Darray *temperatures;
+    char *all_shortest;
     long multi_dims[2];
     long i;
     long is_compact_fc3;
 
     if (!PyArg_ParseTuple(
-            args, "OOOOOOOOlOOOOOOOOOOllldl", &py_gamma,
+            args, "OOOOOOOOlOOOOOOOOOOlllOdl", &py_gamma,
             &py_relative_grid_address, &py_frequencies, &py_eigenvectors,
             &py_triplets, &py_triplet_weights, &py_bz_grid_addresses,
             &py_bz_map, &bz_grid_type, &py_D_diag, &py_Q, &py_fc3, &py_svecs,
             &py_multi, &py_masses, &py_p2s_map, &py_s2p_map, &py_band_indices,
             &py_temperatures, &is_NU, &symmetrize_fc3_q, &make_r0_average,
-            &cutoff_frequency, &openmp_per_triplets)) {
+            &py_all_shortest, &cutoff_frequency, &openmp_per_triplets)) {
         return NULL;
     }
 
@@ -439,13 +444,14 @@ static PyObject *py_get_pp_collision(PyObject *self, PyObject *args) {
     s2p = (long *)PyArray_DATA(py_s2p_map);
     band_indices = convert_to_larray(py_band_indices);
     temperatures = convert_to_darray(py_temperatures);
+    all_shortest = (char *)PyArray_DATA(py_all_shortest);
 
     ph3py_get_pp_collision(
         gamma, relative_grid_address, frequencies, eigenvectors, triplets,
         num_triplets, triplet_weights, bz_grid_addresses, bz_map, bz_grid_type,
         D_diag, Q, fc3, is_compact_fc3, svecs, multi_dims, multi, masses, p2s,
         s2p, band_indices, temperatures, is_NU, symmetrize_fc3_q,
-        make_r0_average, cutoff_frequency, openmp_per_triplets);
+        make_r0_average, all_shortest, cutoff_frequency, openmp_per_triplets);
 
     free(band_indices);
     band_indices = NULL;
@@ -473,6 +479,7 @@ static PyObject *py_get_pp_collision_with_sigma(PyObject *self,
     PyArrayObject *py_s2p_map;
     PyArrayObject *py_band_indices;
     PyArrayObject *py_temperatures;
+    PyArrayObject *py_all_shortest;
     long is_NU;
     long symmetrize_fc3_q;
     double sigma;
@@ -498,17 +505,19 @@ static PyObject *py_get_pp_collision_with_sigma(PyObject *self,
     long *s2p;
     Larray *band_indices;
     Darray *temperatures;
+    char *all_shortest;
     long multi_dims[2];
     long i;
     long is_compact_fc3;
 
     if (!PyArg_ParseTuple(
-            args, "OddOOOOOOOOOOOOOOOllldl", &py_gamma, &sigma, &sigma_cutoff,
+            args, "OddOOOOOOOOOOOOOOOlllOdl", &py_gamma, &sigma, &sigma_cutoff,
             &py_frequencies, &py_eigenvectors, &py_triplets,
             &py_triplet_weights, &py_bz_grid_addresses, &py_D_diag, &py_Q,
             &py_fc3, &py_svecs, &py_multi, &py_masses, &py_p2s_map, &py_s2p_map,
             &py_band_indices, &py_temperatures, &is_NU, &symmetrize_fc3_q,
-            &make_r0_average, &cutoff_frequency, &openmp_per_triplets)) {
+            &make_r0_average, &py_all_shortest, &cutoff_frequency,
+            &openmp_per_triplets)) {
         return NULL;
     }
 
@@ -537,13 +546,14 @@ static PyObject *py_get_pp_collision_with_sigma(PyObject *self,
     s2p = (long *)PyArray_DATA(py_s2p_map);
     band_indices = convert_to_larray(py_band_indices);
     temperatures = convert_to_darray(py_temperatures);
+    all_shortest = (char *)PyArray_DATA(py_all_shortest);
 
     ph3py_get_pp_collision_with_sigma(
         gamma, sigma, sigma_cutoff, frequencies, eigenvectors, triplets,
         num_triplets, triplet_weights, bz_grid_addresses, D_diag, Q, fc3,
         is_compact_fc3, svecs, multi_dims, multi, masses, p2s, s2p,
         band_indices, temperatures, is_NU, symmetrize_fc3_q, make_r0_average,
-        cutoff_frequency, openmp_per_triplets);
+        all_shortest, cutoff_frequency, openmp_per_triplets);
 
     free(band_indices);
     band_indices = NULL;

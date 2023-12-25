@@ -5,6 +5,7 @@ from phonopy import Phonopy
 from phonopy.structure.atoms import PhonopyAtoms
 from phonopy.structure.symmetry import Symmetry
 
+from phono3py import Phono3py
 from phono3py.phonon3.triplets import (
     _get_BZ_triplets_at_q,
     _get_triplets_reciprocal_mesh_at_q,
@@ -68,7 +69,7 @@ def test_get_triplets_at_q_type1(si_pbesol_111):
     np.testing.assert_equal(weights, weights_ref)
 
 
-def test_get_triplets_at_q_type2(si_pbesol_111):
+def test_get_triplets_at_q_type2(si_pbesol_111: Phono3py):
     """Test triplets under type2 grid."""
     pcell = si_pbesol_111.primitive
     psym = si_pbesol_111.primitive_symmetry

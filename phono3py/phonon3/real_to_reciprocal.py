@@ -34,7 +34,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 import numpy as np
-from phonopy.structure.cells import sparse_to_dense_svecs
 
 
 class RealToReciprocal:
@@ -50,12 +49,7 @@ class RealToReciprocal:
         self._p2s_map = primitive.p2s_map
         self._s2p_map = primitive.s2p_map
         # Reduce supercell atom index to primitive index
-        svecs, multi = self._primitive.get_smallest_vectors()
-        if self._primitive.store_dense_svecs:
-            self._svecs = svecs
-            self._multi = multi
-        else:
-            self._svecs, self._multi = sparse_to_dense_svecs(svecs, multi)
+        self._svecs, self._multi = self._primitive.get_smallest_vectors()
         self._fc3_reciprocal = None
 
     def run(self, triplet):

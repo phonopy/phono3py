@@ -51,7 +51,8 @@ long ph3py_get_interaction(
     const long multi_dims[2], const long (*multi)[2], const double *masses,
     const long *p2s_map, const long *s2p_map, const long *band_indices,
     const long symmetrize_fc3_q, const long make_r0_average,
-    const double cutoff_frequency, const long openmp_per_triplets);
+    const char *all_shortest, const double cutoff_frequency,
+    const long openmp_per_triplets);
 long ph3py_get_pp_collision(
     double *imag_self_energy,
     const long relative_grid_address[24][4][3], /* thm */
@@ -64,8 +65,8 @@ long ph3py_get_pp_collision(
     const long multi_dims[2], const long (*multi)[2], const double *masses,
     const long *p2s_map, const long *s2p_map, const Larray *band_indices,
     const Darray *temperatures, const long is_NU, const long symmetrize_fc3_q,
-    const double make_r0_average, const double cutoff_frequency,
-    const long openmp_per_triplets);
+    const long make_r0_average, const char *all_shortest,
+    const double cutoff_frequency, const long openmp_per_triplets);
 long ph3py_get_pp_collision_with_sigma(
     double *imag_self_energy, const double sigma, const double sigma_cutoff,
     const double *frequencies, const _lapack_complex_double *eigenvectors,
@@ -76,8 +77,8 @@ long ph3py_get_pp_collision_with_sigma(
     const long multi_dims[2], const long (*multi)[2], const double *masses,
     const long *p2s_map, const long *s2p_map, const Larray *band_indices,
     const Darray *temperatures, const long is_NU, const long symmetrize_fc3_q,
-    const double make_r0_average, const double cutoff_frequency,
-    const long openmp_per_triplets);
+    const long make_r0_average, const char *all_shortest,
+    const double cutoff_frequency, const long openmp_per_triplets);
 void ph3py_get_imag_self_energy_at_bands_with_g(
     double *imag_self_energy, const Darray *fc3_normal_squared,
     const double *frequencies, const long (*triplets)[3],
