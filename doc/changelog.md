@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Dec-26-2023: Version 2.9.1
+
+- Release to build conda-forge package.
+
 ## Dec-25-2023: Version 2.9.0
 
 - Pre-release of version 3.0.
