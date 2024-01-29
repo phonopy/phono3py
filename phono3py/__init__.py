@@ -1,4 +1,5 @@
 """Shortcuts to important classes, methods, and variables."""
+
 # Copyright (C) 2019 Atsushi Togo
 # All rights reserved.
 #

@@ -1,4 +1,5 @@
 """File I/O methods."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #

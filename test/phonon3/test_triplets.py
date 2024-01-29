@@ -1,4 +1,5 @@
 """Test for triplets.py."""
+
 import numpy as np
 import pytest
 from phonopy import Phonopy

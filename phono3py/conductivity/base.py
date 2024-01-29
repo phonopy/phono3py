@@ -1,4 +1,5 @@
 """Thermal conductivity base class."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #

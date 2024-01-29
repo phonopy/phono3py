@@ -1,4 +1,5 @@
 """Tests of displacements.py."""
+
 import numpy as np
 
 import phono3py

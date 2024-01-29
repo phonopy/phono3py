@@ -1,4 +1,5 @@
 """Calculate ph-ph interaction and phonons on grid."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #

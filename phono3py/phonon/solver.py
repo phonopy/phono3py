@@ -1,4 +1,5 @@
 """Create dynamical matrix and solve harmonic phonons on grid."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #

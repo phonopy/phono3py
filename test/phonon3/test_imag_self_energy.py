@@ -1,4 +1,5 @@
 """Test for imag_free_energy.py."""
+
 import numpy as np
 import pytest
 

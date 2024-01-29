@@ -1,4 +1,5 @@
 """Tests for SSCHA routines."""
+
 import numpy as np
 import pytest
 from phonopy.phonon.qpoints import QpointsPhonon

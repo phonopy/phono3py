@@ -1,4 +1,5 @@
 """Utilities for lattice thermal conductivity calculation."""
+
 # Copyright (C) 2022 Atsushi Togo
 # All rights reserved.
 #

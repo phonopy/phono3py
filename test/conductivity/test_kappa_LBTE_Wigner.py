@@ -1,4 +1,5 @@
 """Tests for direct solution of LBTE."""
+
 import numpy as np
 import pytest
 

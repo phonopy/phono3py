@@ -1,4 +1,5 @@
 """Force constants calculation utilities for command line user interface."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #

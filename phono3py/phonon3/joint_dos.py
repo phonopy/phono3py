@@ -1,4 +1,5 @@
 """Joint-density of states calculation."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #

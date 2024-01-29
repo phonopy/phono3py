@@ -1,4 +1,5 @@
 """API for joint-density-of-states calculation."""
+
 # Copyright (C) 2019 Atsushi Togo
 # All rights reserved.
 #

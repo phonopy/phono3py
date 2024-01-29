@@ -1,4 +1,5 @@
 """Tests for fc3."""
+
 import numpy as np
 import pytest
 
