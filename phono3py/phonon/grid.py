@@ -1,4 +1,5 @@
 """Regular grid tools."""
+
 # Copyright (C) 2021 Atsushi Togo
 # All rights reserved.
 #

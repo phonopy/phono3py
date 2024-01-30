@@ -1,4 +1,5 @@
 """Sphinx phono3py configuration file."""
+
 #
 # phono3py documentation build configuration file, created by
 # sphinx-quickstart on Wed Jun 26 13:13:14 2013.

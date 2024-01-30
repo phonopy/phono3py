@@ -1,4 +1,5 @@
 """Test for real_self_energy.py."""
+
 import numpy as np
 
 from phono3py import Phono3py
