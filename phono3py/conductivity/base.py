@@ -376,6 +376,8 @@ class ConductivityBase(ABC):
         volume = self._pp.primitive.volume
         self._conversion_factor = unit_to_WmK / volume
 
+        self._averaged_pp_interaction = None
+
         # `self._velocity_obj` is the instance of an inherited class of
         # `GroupVelocity`. `self._init_velocity()` is the method setup the instance,
         # which must be implmented in the inherited class of `ConductivityBase`.
@@ -632,6 +634,11 @@ class ConductivityBase(ABC):
             DeprecationWarning,
         )
         return self.averaged_pp_interaction
+
+    @property
+    def boundary_mfp(self) -> float:
+        """Return boundary MFP."""
+        return self._boundary_mfp
 
     def get_number_of_sampling_grid_points(self):
         """Return number of grid points.

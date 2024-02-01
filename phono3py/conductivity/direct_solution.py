@@ -109,7 +109,6 @@ class ConductivityLBTEBase(ConductivityBase):
         self._init_velocity(gv_delta_q)
 
         self._lang = lang
-        self._averaged_pp_interaction = None
         self._collision_eigenvalues = None
         self._is_reducible_collision_matrix = is_reducible_collision_matrix
         self._solve_collective_phonon = solve_collective_phonon
