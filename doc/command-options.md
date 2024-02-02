@@ -561,6 +561,8 @@ Then running with isotope calculation:
 In the result hdf5 file, currently isotope scattering strength is not written
 out, i.e., `gamma` is still imaginary part of self energy of ph-ph scattering.
 
+(boundary_mfp_option)=
+
 ### `--boundary-mfp`, `--bmfp` (`BOUNDARY_MFP`)
 
 A most simple phonon boundary scattering treatment is included. $v_g/L$ is just
