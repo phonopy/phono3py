@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Feb-2-2024: Version 2.9.2
+
+- `boundary_mfp` value is stored in `kappa-*.hdf5` file when it is specified.
+
 ## Dec-26-2023: Version 2.9.1
 
 - Release to build conda-forge package.
