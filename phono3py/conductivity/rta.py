@@ -98,7 +98,6 @@ class ConductivityRTABase(ConductivityBase):
         self._gamma_detail_at_q = None
         self._use_ave_pp = use_ave_pp
         self._use_const_ave_pp = None
-        self._averaged_pp_interaction = None
         self._num_ignored_phonon_modes = None
 
         super().__init__(

@@ -33,9 +33,12 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
+from __future__ import annotations
 
 import os
 import warnings
+from collections.abc import Sequence
+from typing import Optional, Union
 
 import h5py
 import numpy as np
@@ -919,6 +922,7 @@ def write_collision_eigenvalues_to_hdf5(
 def write_kappa_to_hdf5(
     temperature,
     mesh,
+    boundary_mfp: float = None,
     bz_grid=None,
     frequency=None,
     group_velocity=None,
@@ -1059,6 +1063,8 @@ def write_kappa_to_hdf5(
             w.create_dataset("sigma_cutoff_width", data=sigma_cutoff)
         if kappa_unit_conversion is not None:
             w.create_dataset("kappa_unit_conversion", data=kappa_unit_conversion)
+        if boundary_mfp is not None:
+            w.create_dataset("boundary_mfp", data=boundary_mfp)
 
         if verbose:
             text = "Thermal conductivity related properties "
@@ -1721,12 +1727,12 @@ def get_length_of_first_line(f):
 
 def _get_filename_suffix(
     mesh,
-    grid_point=None,
-    band_indices=None,
-    sigma=None,
-    sigma_cutoff=None,
-    temperature=None,
-    filename=None,
+    grid_point: Optional[int] = None,
+    band_indices: Optional[Union[np.ndarray, Sequence]] = None,
+    sigma: Optional[float] = None,
+    sigma_cutoff: Optional[float] = None,
+    temperature: Optional[float] = None,
+    filename: Optional[str] = None,
 ):
     """Return filename suffix corresponding to parameters."""
     suffix = "-m%d%d%d" % tuple(mesh)
