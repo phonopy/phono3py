@@ -1,4 +1,5 @@
 """Utilities to show various logs for main CUI script."""
+
 # Copyright (C) 2015 Atsushi Togo
 # All rights reserved.
 #

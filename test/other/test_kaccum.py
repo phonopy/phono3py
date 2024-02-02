@@ -1,4 +1,5 @@
 """Test for kaccum.py."""
+
 import numpy as np
 
 from phono3py import Phono3py

@@ -1,4 +1,5 @@
 """Calculate lattice thermal conductivity by direct solution."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -108,7 +109,6 @@ class ConductivityLBTEBase(ConductivityBase):
         self._init_velocity(gv_delta_q)
 
         self._lang = lang
-        self._averaged_pp_interaction = None
         self._collision_eigenvalues = None
         self._is_reducible_collision_matrix = is_reducible_collision_matrix
         self._solve_collective_phonon = solve_collective_phonon
@@ -517,9 +517,9 @@ class ConductivityLBTEBase(ConductivityBase):
                 else:
                     i_data = 0
                 self._gamma[j, k, i_data] = self._collision.imag_self_energy
-                self._collision_matrix[
-                    j, k, i_data
-                ] = self._collision.get_collision_matrix()
+                self._collision_matrix[j, k, i_data] = (
+                    self._collision.get_collision_matrix()
+                )
 
     def _prepare_collision_matrix(self):
         """Collect pieces and construct collision matrix."""

@@ -1,4 +1,5 @@
 """Phono3py kaccum command line script."""
+
 import argparse
 import sys
 

@@ -1,4 +1,5 @@
 """Tests for direct solution of LBTE."""
+
 import numpy as np
 
 from phono3py.api_phono3py import Phono3py

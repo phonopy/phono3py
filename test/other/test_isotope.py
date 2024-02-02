@@ -1,4 +1,5 @@
 """Tests for isotope scatterings."""
+
 import numpy as np
 import pytest
 

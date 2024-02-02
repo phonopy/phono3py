@@ -1,4 +1,5 @@
 """Transform fc3 in real space to reciprocal space."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #

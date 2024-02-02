@@ -1,4 +1,5 @@
 """Tests for velocity operator calculation."""
+
 import numpy as np
 from phonopy import Phonopy
 from phonopy.units import THzToCm, VaspToTHz

@@ -1,4 +1,5 @@
 """Phono3py command option and conf file parser."""
+
 # Copyright (C) 2015 Atsushi Togo
 # All rights reserved.
 #

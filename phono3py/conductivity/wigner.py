@@ -1,4 +1,5 @@
 """Wigner thermal conductivity base class."""
+
 # Copyright (C) 2022 Michele Simoncelli
 # All rights reserved.
 #

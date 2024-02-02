@@ -1,4 +1,5 @@
 """Calculate spectral function due to bubble diagram."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #

@@ -1,4 +1,5 @@
 """Launch script of ZnTe AiiDA calculation using aiida-phononpy."""
+
 from aiida.engine import submit
 from aiida.manage.configuration import load_profile
 from aiida.orm import Bool, Float, Str
