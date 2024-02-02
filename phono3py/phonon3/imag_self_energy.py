@@ -1,4 +1,5 @@
 """Calculation of imaginary-part of self-energy of bubble diagram."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #

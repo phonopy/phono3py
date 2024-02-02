@@ -1,4 +1,5 @@
 """Phono3py loader."""
+
 # Copyright (C) 2019 Atsushi Togo
 # All rights reserved.
 #

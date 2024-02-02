@@ -1,4 +1,5 @@
 """Calculate collision matrix of direct solution of LBTE."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #

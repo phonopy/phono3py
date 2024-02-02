@@ -1,4 +1,5 @@
 """Tests of Phono3py API."""
+
 from pathlib import Path
 
 from phono3py import Phono3py

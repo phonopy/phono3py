@@ -1,4 +1,5 @@
 """Utilities for lattice thermal conductivity calculation."""
+
 # Copyright (C) 2022 Atsushi Togo
 # All rights reserved.
 #
@@ -268,6 +269,7 @@ class ConductivityRTAWriter:
         qpoints = br.qpoints
         grid_points = br.grid_points
         weights = br.grid_weights
+        boundary_mfp = br.boundary_mfp
 
         for i, sigma in enumerate(sigmas):
             if kappa is None:
@@ -314,6 +316,7 @@ class ConductivityRTAWriter:
             write_kappa_to_hdf5(
                 temperatures,
                 mesh,
+                boundary_mfp=boundary_mfp,
                 bz_grid=bz_grid,
                 frequency=frequencies,
                 group_velocity=gv,
@@ -487,13 +490,13 @@ class ConductivityLBTEWriter:
     @staticmethod
     def write_kappa(
         lbte: "cond_LBTE_type",
-        volume,
-        is_reducible_collision_matrix=False,
-        write_LBTE_solution=False,
-        pinv_solver=None,
-        compression="gzip",
-        filename=None,
-        log_level=0,
+        volume: float,
+        is_reducible_collision_matrix: bool = False,
+        write_LBTE_solution: bool = False,
+        pinv_solver: Optional[int] = None,
+        compression: str = "gzip",
+        filename: Optional[str] = None,
+        log_level: int = 0,
     ):
         """Write kappa related properties into a hdf5 file."""
         from phono3py.conductivity.direct_solution import (
@@ -546,6 +549,7 @@ class ConductivityLBTEWriter:
         f_vector = lbte.get_f_vectors()
         mode_cv = lbte.mode_heat_capacities
         mfp = lbte.get_mean_free_path()
+        boundary_mfp = lbte.boundary_mfp
 
         coleigs = lbte.get_collision_eigenvalues()
         # After kappa calculation, the variable is overwritten by unitary matrix
@@ -612,6 +616,7 @@ class ConductivityLBTEWriter:
             write_kappa_to_hdf5(
                 temperatures,
                 mesh,
+                boundary_mfp=boundary_mfp,
                 bz_grid=bz_grid,
                 frequency=frequencies,
                 group_velocity=gv,

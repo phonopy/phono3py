@@ -1,4 +1,5 @@
 """Velocity operator of Simoncelli, Marzari, and Mauri."""
+
 # Copyright (C) 2013 Atsushi Togo
 # All rights reserved.
 #

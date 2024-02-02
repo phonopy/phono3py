@@ -123,8 +123,9 @@ The array shape is (irreducible q-point, phonon band).
 (kappa_hdf5_file_gamma)=
 ### gamma
 
-Imaginary part of self energy. The physical unit is THz, where THz
-is in the ordinal frequency not the angular frequency.
+Imaginary part of self energy of phonon bubble diagram (phonon-phonon
+scattering). The physical unit is THz, where THz is in the ordinal frequency not
+the angular frequency.
 
 The array shape for all grid-points (irreducible q-points) is
 (temperature, irreducible q-point, phonon band).
@@ -262,8 +263,15 @@ P_{\mathbf{q}j} = \frac{1}{(3n_\mathrm{a})^2} \sum_{\lambda'\lambda''}
 $$
 
 This is not going to be calculated in the RTA thermal coductivity
-calculation mode by default. To calculate this, `--full_pp` option
+calculation mode by default. To calculate this, `--full-pp` option
 has to be specified (see {ref}`full_pp_option`).
+
+### boundary_mfp
+
+A value specified by {ref}`boundary_mfp_option`. The physical unit is
+micrometre.
+
+When `--boundary-mfp` option is explicitly specified, its value is stored here.
 
 ### kappa_unit_conversion
 

@@ -1,4 +1,5 @@
 """Test spectral_function.py."""
+
 import numpy as np
 import pytest
 

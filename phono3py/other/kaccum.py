@@ -1,4 +1,5 @@
 """Calculated accumulated property with respect to other property."""
+
 from typing import Optional
 
 import numpy as np

@@ -1,4 +1,5 @@
 """Calculation of mode Grueneisen parameters from fc3."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #

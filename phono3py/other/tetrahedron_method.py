@@ -1,4 +1,5 @@
 """Tetrahedron method python wrapper."""
+
 # Copyright (C) 2021 Atsushi Togo
 # All rights reserved.
 #

@@ -7,6 +7,7 @@ To fully customize using site.cfg,
 set PHONO3PY_USE_CMAKE=false to avoid running cmake.
 
 """
+
 import os
 import pathlib
 import shutil

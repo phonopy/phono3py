@@ -1,4 +1,5 @@
 """Show and write triplets information."""
+
 # Copyright (C) 2015 Atsushi Togo
 # All rights reserved.
 #

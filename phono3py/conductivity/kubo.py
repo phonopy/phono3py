@@ -1,4 +1,5 @@
 """Kubo thermal conductivity base class."""
+
 # Copyright (C) 2022 Atsushi Togo
 # All rights reserved.
 #
