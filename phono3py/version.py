@@ -1,4 +1,5 @@
 """Define phono3py version."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -33,4 +34,4 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-__version__ = "2.9.1"
+__version__ = "2.9.2"

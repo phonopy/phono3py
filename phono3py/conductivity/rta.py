@@ -1,4 +1,5 @@
 """Lattice thermal conductivity calculation with RTA."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
@@ -97,7 +98,6 @@ class ConductivityRTABase(ConductivityBase):
         self._gamma_detail_at_q = None
         self._use_ave_pp = use_ave_pp
         self._use_const_ave_pp = None
-        self._averaged_pp_interaction = None
         self._num_ignored_phonon_modes = None
 
         super().__init__(
@@ -298,9 +298,9 @@ class ConductivityRTABase(ConductivityBase):
                     self._gamma_N[j, k, i] = g_N
                     self._gamma_U[j, k, i] = g_U
                 if self._is_gamma_detail:
-                    self._gamma_detail_at_q[
-                        k
-                    ] = self._collision.get_detailed_imag_self_energy()
+                    self._gamma_detail_at_q[k] = (
+                        self._collision.get_detailed_imag_self_energy()
+                    )
 
     def _set_gamma_at_sigmas_lowmem(self, i):
         """Calculate gamma without storing ph-ph interaction strength.

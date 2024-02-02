@@ -1,4 +1,5 @@
 """API for isotope scattering."""
+
 # Copyright (C) 2019 Atsushi Togo
 # All rights reserved.
 #

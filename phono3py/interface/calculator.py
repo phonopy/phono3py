@@ -1,4 +1,5 @@
 """Utilities of calculator interfaces."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #

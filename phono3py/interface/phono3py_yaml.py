@@ -1,4 +1,5 @@
 """phono3py_yaml reader and writer."""
+
 # Copyright (C) 2016 Atsushi Togo
 # All rights reserved.
 #

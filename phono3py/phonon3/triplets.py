@@ -1,4 +1,5 @@
 """Utilities to handle q-point triplets."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #

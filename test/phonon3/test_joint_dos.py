@@ -1,4 +1,5 @@
 """Tests for joint-density-of-states."""
+
 import numpy as np
 import pytest
 

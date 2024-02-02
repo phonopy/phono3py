@@ -1,4 +1,5 @@
 """Procedures to handle atomic displacements for fc3."""
+
 # Copyright (C) 2020 Atsushi Togo
 # All rights reserved.
 #
