@@ -1,6 +1,7 @@
 """Test for kaccum.py."""
 
 import numpy as np
+import pytest
 
 from phono3py import Phono3py
 from phono3py.other.kaccum import GammaDOSsmearing, KappaDOS, get_mfp
@@ -285,20 +286,26 @@ def _calculate_kappados(ph3: Phono3py, mode_prop, freq_points=None):
     tc = ph3.thermal_conductivity
     bz_grid = ph3.grid
     frequencies, _, _ = ph3.get_phonon_data()
-    kappados = KappaDOS(
-        mode_prop, frequencies, bz_grid, tc.grid_points, frequency_points=freq_points
-    )
+    with pytest.deprecated_call():
+        kappados = KappaDOS(
+            mode_prop,
+            frequencies,
+            bz_grid,
+            tc.grid_points,
+            frequency_points=freq_points,
+        )
     freq_points, kdos = kappados.get_kdos()
 
     ir_grid_points, _, ir_grid_map = get_ir_grid_points(bz_grid)
-    kappados = KappaDOS(
-        mode_prop,
-        tc.frequencies,
-        bz_grid,
-        tc.grid_points,
-        ir_grid_map=ir_grid_map,
-        frequency_points=freq_points,
-    )
+    with pytest.deprecated_call():
+        kappados = KappaDOS(
+            mode_prop,
+            tc.frequencies,
+            bz_grid,
+            tc.grid_points,
+            ir_grid_map=ir_grid_map,
+            frequency_points=freq_points,
+        )
     ir_freq_points, ir_kdos = kappados.get_kdos()
     np.testing.assert_equal(bz_grid.bzg2grg[tc.grid_points], ir_grid_points)
     np.testing.assert_allclose(ir_freq_points, freq_points, rtol=0, atol=1e-5)
@@ -312,15 +319,16 @@ def _calculate_mfpdos(ph3: Phono3py, mfp_points=None):
     bz_grid = ph3.grid
     mean_freepath = get_mfp(tc.gamma[0], tc.group_velocities)
     _, _, ir_grid_map = get_ir_grid_points(bz_grid)
-    mfpdos = KappaDOS(
-        tc.mode_kappa[0],
-        mean_freepath[0],
-        bz_grid,
-        tc.grid_points,
-        ir_grid_map=ir_grid_map,
-        frequency_points=mfp_points,
-        num_sampling_points=10,
-    )
+    with pytest.deprecated_call():
+        mfpdos = KappaDOS(
+            tc.mode_kappa[0],
+            mean_freepath[0],
+            bz_grid,
+            tc.grid_points,
+            ir_grid_map=ir_grid_map,
+            frequency_points=mfp_points,
+            num_sampling_points=10,
+        )
     freq_points, kdos = mfpdos.get_kdos()
 
     return freq_points, kdos[0, :, :, 0]
