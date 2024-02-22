@@ -20,10 +20,10 @@ the supercell approach. For example, the following physical values are obtained:
 Papers that may introduce phono3py:
 
 - Theoretical background is summarized in this paper:
-  http://dx.doi.org/10.1103/PhysRevB.91.094306 (arxiv
-  http://arxiv.org/abs/1501.00691).
+  <http://dx.doi.org/10.1103/PhysRevB.91.094306> (arxiv
+  <http://arxiv.org/abs/1501.00691>).
 - Introduction to phono3py application:
-  https://doi.org/10.1103/PhysRevB.97.224306 (open access).
+  <https://doi.org/10.1103/PhysRevB.97.224306> (open access).
 
 ```{image} Si-kaccum.png
 :width: 20%
@@ -65,7 +65,7 @@ changelog
 
 For questions, bug reports, and comments, please visit following mailing list:
 
-https://lists.sourceforge.net/lists/listinfo/phonopy-users
+<https://lists.sourceforge.net/lists/listinfo/phonopy-users>
 
 Message body including attached files has to be smaller than 300 KB.
 
@@ -73,9 +73,12 @@ Message body including attached files has to be smaller than 300 KB.
 
 BSD-3-Clause (New BSD)
 
-[License](https://github.com/phonopy/phono3py/blob/develop/LICENSE)
+## Contributors
 
-## Contact
+- Atsushi Togo, National Institute for Materials Science
 
-- Author: [Atsushi Togo](http://atztogo.github.io/), National Institute for
-  Materials Science
+## Acknowledgements
+
+Phono3py development is supported by:
+
+- National Institute for Materials Science
