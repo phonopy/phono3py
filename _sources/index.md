@@ -58,7 +58,7 @@ changelog
 
 For questions, bug reports, and comments, please visit following mailing list:
 
-https://lists.sourceforge.net/lists/listinfo/phonopy-users
+<https://lists.sourceforge.net/lists/listinfo/phonopy-users>
 
 Message body including attached files has to be smaller than 300 KB.
 
@@ -66,9 +66,12 @@ Message body including attached files has to be smaller than 300 KB.
 
 BSD-3-Clause (New BSD)
 
-[License](https://github.com/phonopy/phono3py/blob/develop/LICENSE)
+## Contributors
 
-## Contact
+- Atsushi Togo, National Institute for Materials Science
 
-- Author: [Atsushi Togo](http://atztogo.github.io/), National Institute for
-  Materials Science
+## Acknowledgements
+
+Phono3py development is supported by:
+
+- National Institute for Materials Science
