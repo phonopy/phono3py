@@ -1,8 +1,13 @@
 (command_cutoff_pair)=
+
 # Force constants calculation with cutoff pair-distance
 
 Here the detail of the command option {ref}`--cutoff_pair <cutoff_pair_option>`
-is explained. See also reference {cite}`Mizokami-PRB-2018`.
+is explained.
+
+<!-- See also reference {cite}`Mizokami-PRB-2018`. -->
+
+See also {ref}`a reference paper <cutoff_pair_reference>`.
 
 ```{contents}
 :depth: 2
@@ -270,7 +275,6 @@ if data2['distance'] < 5.0:  # 5.0 is cutoff-pair distance
 we can find the supercell IDs almost equivalent to those obtained
 above for `--cutoff-pair="5.0"`.
 
-
 ## Tests
 
 ### Si-PBE
@@ -429,7 +433,7 @@ number_of_pairs_in_cutoff: 1248
   300.0     235.728    235.728    219.102      0.000     -0.000     -0.000
 ```
 
-## References
+<!-- ## References
 ```{bibliography}
 :filter: docname in docnames
-```
+``` -->

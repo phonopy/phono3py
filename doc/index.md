@@ -4,8 +4,8 @@ This software calculates phonon-phonon interaction and related properties using
 the supercell approach. For example, the following physical values are obtained:
 
 - {ref}`Lattice thermal conductivity by relaxation time approximation
-  and direct-solution of phonon Boltzmann equation and
-  the Wigner transport equation <LTC_options>`
+and direct-solution of phonon Boltzmann equation and
+the Wigner transport equation <LTC_options>`
 - {ref}`Cummulative lattice thermal conductivity and related properties <auxiliary_tools_kaccum>`
 - {ref}`self_energy_options` (Phonon lifetime/linewidth)
 - {ref}`jdos_option`
@@ -16,14 +16,6 @@ the supercell approach. For example, the following physical values are obtained:
   {ref}`calculator_interfaces`).
 - API is prepared to operate phono3py from Python
   ([example](https://github.com/phonopy/phono3py/blob/master/example/Si-PBEsol/Si.py)).
-
-Papers that may introduce phono3py:
-
-- Theoretical background is summarized in this paper:
-  <http://dx.doi.org/10.1103/PhysRevB.91.094306> (arxiv
-  <http://arxiv.org/abs/1501.00691>).
-- Introduction to phono3py application:
-  <https://doi.org/10.1103/PhysRevB.97.224306> (open access).
 
 ```{image} Si-kaccum.png
 :width: 20%
@@ -58,6 +50,7 @@ phono3py-api
 phono3py-load
 tips
 citation
+reference
 changelog
 ```
 
