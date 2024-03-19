@@ -671,7 +671,6 @@ class Interaction:
             nac_params=nac_params,
             frequency_scale_factor=self._frequency_scale_factor,
             decimals=decimals,
-            symprec=self._symprec,
         )
         self._allocate_phonon()
 
