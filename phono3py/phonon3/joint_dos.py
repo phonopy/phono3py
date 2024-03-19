@@ -417,7 +417,6 @@ class JointDos:
             self._primitive,
             nac_params=self._nac_params,
             frequency_scale_factor=self._frequency_scale_factor,
-            symprec=self._symprec,
         )
         self._allocate_phonons()
 

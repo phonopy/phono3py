@@ -189,7 +189,7 @@ def test_gv_operator_nacl(ph_nacl: Phonopy):
     )
 
     # we chose an 'ugly' q-point because we want to avoid degeneracies.
-    ph_nacl.dynamical_matrix.run([[0.1, 0.22, 0.33]])
+    ph_nacl.dynamical_matrix.run([0.1, 0.22, 0.33])
     dm = ph_nacl.dynamical_matrix.dynamical_matrix
     eigvals, eigvecs = np.linalg.eigh(dm)
 
