@@ -24,26 +24,27 @@ indeed helps the phono3py project to continue:
   }
   ```
 
-- "First-principles Phonon Calculations with Phonopy and Phono3py",
+- "Implementation strategies in phonopy and phono3py",
 
-  Atsushi Togo, J. Phys. Soc. Jpn., **92**, 012001-1-21 (2023)
+  Atsushi Togo, Laurent Chaput, Terumasa Tadano, and Isao Tanaka, J. Phys. Condens. Matter **35**, 353001-1-22 (2023)
 
-  https://doi.org/10.7566/JPSJ.92.012001 (Open access)
+  https://dx.doi.org/10.1088/1361-648X/acd831 (Open access)
 
   ```
-  @article{phonopy-phono3py-JPSJ,
-    author  = {Togo ,Atsushi},
-    title   = {First-principles Phonon Calculations with Phonopy and Phono3py},
-    journal = {J. Phys. Soc. Jpn.},
-    volume  = {92},
-    number  = {1},
-    pages   = {012001},
+  @article{phonopy-phono3py-JPCM,
+    author  = {Togo, Atsushi and Chaput, Laurent and Tadano, Terumasa and Tanaka, Isao},
+    title   = {Implementation strategies in phonopy and phono3py},
+    journal = {J. Phys. Condens. Matter},
+    volume  = {35},
+    number  = {35},
+    pages   = {353001},
     year    = {2023},
-    doi     = {10.7566/JPSJ.92.012001}
+    doi     = {10.1088/1361-648X/acd831}
   }
   ```
 
 (citation_direct_solution_lbte)=
+
 ## Citation of direct solution of LBTE (`--lbte`)
 
 If you have used direct solution of LBTE in phono3py, please cite the
@@ -75,8 +76,9 @@ If you have used the solution of the Wigner transport equation in phono3py, plea
 following articles:
 
 (citation_unified_theory)=
+
 - "Unified theory of thermal transport in crystals and glasses"
-  Michele Simoncelli, Nicola  Marzari, and Francesco Mauri, Nat. Phys., **15**, 809 (2019)
+  Michele Simoncelli, Nicola Marzari, and Francesco Mauri, Nat. Phys., **15**, 809 (2019)
 
   ```
   @article{NatPhys.15.809,
@@ -92,9 +94,11 @@ following articles:
     url = {https://www.nature.com/articles/s41567-019-0520-x}
   }
   ```
-(citation_wigner_formulation)=
+
+  (citation_wigner_formulation)=
+
 - "Wigner formulation of thermal transport in solids"
-  Michele Simoncelli, Nicola  Marzari, and Francesco Mauri, Physical Review X **12**, 041011 (2022)
+  Michele Simoncelli, Nicola Marzari, and Francesco Mauri, Physical Review X **12**, 041011 (2022)
 
   ```
   @article{PhysRevX.12.041011,
