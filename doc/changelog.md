@@ -2,6 +2,10 @@
 
 # Change Log
 
+## Mar-20-2024: Version 2.10.0
+
+- Maintenance release
+
 ## Feb-2-2024: Version 2.9.2
 
 - `boundary_mfp` value is stored in `kappa-*.hdf5` file when it is specified.

@@ -161,7 +161,7 @@ wrong python libraries can be imported.
    For macOS ARM64 system, currently only openblas can be chosen:
 
    ```bash
-   % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler spglib cmake openblas="0.3.18"
+   % conda install numpy scipy h5py pyyaml matplotlib-base c-compiler spglib cmake openblas
    ```
 
    Note that using hdf5 files on NFS mounted file system, you may have to disable
