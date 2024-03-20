@@ -4,8 +4,8 @@ This software calculates phonon-phonon interaction and related properties using
 the supercell approach. For example, the following physical values are obtained:
 
 - {ref}`Lattice thermal conductivity by relaxation time approximation
-  and direct-solution of phonon Boltzmann equation and
-  the Wigner transport equation <LTC_options>`
+and direct-solution of phonon Boltzmann equation and
+the Wigner transport equation <LTC_options>`
 - {ref}`Cummulative lattice thermal conductivity and related properties <auxiliary_tools_kaccum>`
 - {ref}`self_energy_options` (Phonon lifetime/linewidth)
 - {ref}`jdos_option`
@@ -20,10 +20,10 @@ the supercell approach. For example, the following physical values are obtained:
 Papers that may introduce phono3py:
 
 - Theoretical background is summarized in this paper:
-  http://dx.doi.org/10.1103/PhysRevB.91.094306 (arxiv
-  http://arxiv.org/abs/1501.00691).
+  <http://dx.doi.org/10.1103/PhysRevB.91.094306> (arxiv
+  <http://arxiv.org/abs/1501.00691>).
 - Introduction to phono3py application:
-  https://doi.org/10.1103/PhysRevB.97.224306 (open access).
+  <https://doi.org/10.1103/PhysRevB.97.224306> (open access).
 
 ```{image} Si-kaccum.png
 :width: 20%
@@ -58,6 +58,7 @@ phono3py-api
 phono3py-load
 tips
 citation
+reference
 changelog
 ```
 
@@ -65,7 +66,7 @@ changelog
 
 For questions, bug reports, and comments, please visit following mailing list:
 
-https://lists.sourceforge.net/lists/listinfo/phonopy-users
+<https://lists.sourceforge.net/lists/listinfo/phonopy-users>
 
 Message body including attached files has to be smaller than 300 KB.
 
@@ -73,6 +74,12 @@ Message body including attached files has to be smaller than 300 KB.
 
 BSD-3-Clause (New BSD)
 
-## Contact
+## Contributors
 
-- Author: [Atsushi Togo](http://atztogo.github.io/)
+- Atsushi Togo, National Institute for Materials Science
+
+## Acknowledgements
+
+Phono3py development is supported by:
+
+- National Institute for Materials Science

@@ -256,7 +256,6 @@ class Isotope:
             nac_params=nac_params,
             frequency_scale_factor=frequency_scale_factor,
             decimals=decimals,
-            symprec=self._symprec,
         )
 
     def set_nac_q_direction(self, nac_q_direction=None):

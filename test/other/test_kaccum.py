@@ -1,13 +1,19 @@
 """Test for kaccum.py."""
 
+from __future__ import annotations
+
+from typing import Optional
+
 import numpy as np
+import pytest
 
 from phono3py import Phono3py
-from phono3py.other.kaccum import GammaDOSsmearing, KappaDOS, get_mfp
+from phono3py.other.kaccum import GammaDOSsmearing, KappaDOS, KappaDOSTHM, get_mfp
 from phono3py.phonon.grid import get_ir_grid_points
 
 
-def test_kappados_si(si_pbesol: Phono3py):
+@pytest.mark.parametrize("use_legacy_class", [False, True])
+def test_kappados_si(si_pbesol: Phono3py, use_legacy_class: bool):
     """Test KappaDOS class with Si.
 
     * 3x3 tensor vs frequency
@@ -101,7 +107,10 @@ def test_kappados_si(si_pbesol: Phono3py):
     tc = ph3.thermal_conductivity
     freq_points_in = np.array(kappados_si).reshape(-1, 3)[:, 0]
     freq_points, kdos = _calculate_kappados(
-        ph3, tc.mode_kappa[0], freq_points=freq_points_in
+        ph3,
+        tc.mode_kappa[0],
+        freq_points=freq_points_in,
+        use_legacy_class=use_legacy_class,
     )
     # for f, (jval, ival) in zip(freq_points, kdos):
     #     print("[%.7f, %.7f, %.7f]," % (f, jval, ival))
@@ -110,7 +119,10 @@ def test_kappados_si(si_pbesol: Phono3py):
     )
 
     freq_points, kdos = _calculate_kappados(
-        ph3, tc.gamma[0, :, :, :, None], freq_points=freq_points_in
+        ph3,
+        tc.gamma[0, :, :, :, None],
+        freq_points=freq_points_in,
+        use_legacy_class=use_legacy_class,
     )
     # for f, (jval, ival) in zip(freq_points, kdos):
     #     print("[%.7f, %.7f, %.7f]," % (f, jval, ival))
@@ -119,7 +131,9 @@ def test_kappados_si(si_pbesol: Phono3py):
     )
 
     mfp_points_in = np.array(mfpdos_si).reshape(-1, 3)[:, 0]
-    mfp_points, mfpdos = _calculate_mfpdos(ph3, mfp_points_in)
+    mfp_points, mfpdos = _calculate_mfpdos(
+        ph3, mfp_points_in, use_legacy_class=use_legacy_class
+    )
     # for f, (jval, ival) in zip(mfp_points, mfpdos):
     #     print("[%.7f, %.7f, %.7f]," % (f, jval, ival))
     np.testing.assert_allclose(
@@ -127,7 +141,8 @@ def test_kappados_si(si_pbesol: Phono3py):
     )
 
 
-def test_kappados_nacl(nacl_pbe: Phono3py):
+@pytest.mark.parametrize("use_legacy_class", [False, True])
+def test_kappados_nacl(nacl_pbe: Phono3py, use_legacy_class: bool):
     """Test KappaDOS class with NaCl.
 
     * 3x3 tensor vs frequency
@@ -230,7 +245,10 @@ def test_kappados_nacl(nacl_pbe: Phono3py):
     )
 
     freq_points, kdos = _calculate_kappados(
-        ph3, tc.gamma[0, :, :, :, None], freq_points=freq_points_in
+        ph3,
+        tc.gamma[0, :, :, :, None],
+        freq_points=freq_points_in,
+        use_legacy_class=use_legacy_class,
     )
     for f, (jval, ival) in zip(freq_points, kdos):
         print("[%.7f, %.7f, %.7f]," % (f, jval, ival))
@@ -239,7 +257,9 @@ def test_kappados_nacl(nacl_pbe: Phono3py):
     )
 
     mfp_points_in = np.array(mfpdos_nacl).reshape(-1, 3)[:, 0]
-    mfp_points, mfpdos = _calculate_mfpdos(ph3, mfp_points_in)
+    mfp_points, mfpdos = _calculate_mfpdos(
+        ph3, mfp_points_in, use_legacy_class=use_legacy_class
+    )
     # for f, (jval, ival) in zip(mfp_points, mfpdos):
     #     print("[%.7f, %.7f, %.7f]," % (f, jval, ival))
     np.testing.assert_allclose(
@@ -281,24 +301,45 @@ def test_GammaDOSsmearing(nacl_pbe: Phono3py):
     )
 
 
-def _calculate_kappados(ph3: Phono3py, mode_prop, freq_points=None):
+def _calculate_kappados(
+    ph3: Phono3py,
+    mode_prop: np.ndarray,
+    freq_points: Optional[np.ndarray] = None,
+    use_legacy_class: bool = False,
+):
     tc = ph3.thermal_conductivity
     bz_grid = ph3.grid
     frequencies, _, _ = ph3.get_phonon_data()
-    kappados = KappaDOS(
-        mode_prop, frequencies, bz_grid, tc.grid_points, frequency_points=freq_points
-    )
+    with pytest.deprecated_call():
+        kappados = KappaDOS(
+            mode_prop,
+            frequencies,
+            bz_grid,
+            tc.grid_points,
+            frequency_points=freq_points,
+        )
     freq_points, kdos = kappados.get_kdos()
 
     ir_grid_points, _, ir_grid_map = get_ir_grid_points(bz_grid)
-    kappados = KappaDOS(
-        mode_prop,
-        tc.frequencies,
-        bz_grid,
-        tc.grid_points,
-        ir_grid_map=ir_grid_map,
-        frequency_points=freq_points,
-    )
+    if use_legacy_class:
+        with pytest.deprecated_call():
+            kappados = KappaDOS(
+                mode_prop,
+                tc.frequencies,
+                bz_grid,
+                tc.grid_points,
+                ir_grid_map=ir_grid_map,
+                frequency_points=freq_points,
+            )
+    else:
+        kappados = KappaDOSTHM(
+            mode_prop,
+            tc.frequencies,
+            bz_grid,
+            bz_grid.bzg2grg[tc.grid_points],
+            ir_grid_map=ir_grid_map,
+            frequency_points=freq_points,
+        )
     ir_freq_points, ir_kdos = kappados.get_kdos()
     np.testing.assert_equal(bz_grid.bzg2grg[tc.grid_points], ir_grid_points)
     np.testing.assert_allclose(ir_freq_points, freq_points, rtol=0, atol=1e-5)
@@ -307,20 +348,36 @@ def _calculate_kappados(ph3: Phono3py, mode_prop, freq_points=None):
     return freq_points, kdos[0, :, :, 0]
 
 
-def _calculate_mfpdos(ph3: Phono3py, mfp_points=None):
+def _calculate_mfpdos(
+    ph3: Phono3py,
+    mfp_points=None,
+    use_legacy_class: bool = False,
+):
     tc = ph3.thermal_conductivity
     bz_grid = ph3.grid
     mean_freepath = get_mfp(tc.gamma[0], tc.group_velocities)
     _, _, ir_grid_map = get_ir_grid_points(bz_grid)
-    mfpdos = KappaDOS(
-        tc.mode_kappa[0],
-        mean_freepath[0],
-        bz_grid,
-        tc.grid_points,
-        ir_grid_map=ir_grid_map,
-        frequency_points=mfp_points,
-        num_sampling_points=10,
-    )
+    if use_legacy_class:
+        with pytest.deprecated_call():
+            mfpdos = KappaDOS(
+                tc.mode_kappa[0],
+                mean_freepath[0],
+                bz_grid,
+                tc.grid_points,
+                ir_grid_map=ir_grid_map,
+                frequency_points=mfp_points,
+                num_sampling_points=10,
+            )
+    else:
+        mfpdos = KappaDOSTHM(
+            tc.mode_kappa[0],
+            mean_freepath[0],
+            bz_grid,
+            bz_grid.bzg2grg[tc.grid_points],
+            ir_grid_map=ir_grid_map,
+            frequency_points=mfp_points,
+            num_sampling_points=10,
+        )
     freq_points, kdos = mfpdos.get_kdos()
 
     return freq_points, kdos[0, :, :, 0]
