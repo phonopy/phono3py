@@ -158,9 +158,9 @@ static double get_fc3_sum(const lapack_complex_double *e0,
                           const lapack_complex_double *e2,
                           const lapack_complex_double *fc3_reciprocal,
                           const long num_band) {
-    long i, j, k;
+    long i, j, jk;
     double sum_real, sum_imag;
-    lapack_complex_double e_012, e_012_fc3, *e_12_cache;
+    lapack_complex_double e_012_fc3, fc3_i_e_12, *e_12_cache;
     const lapack_complex_double *fc3_i;
 
     e_12_cache = (lapack_complex_double *)malloc(sizeof(lapack_complex_double) *
@@ -177,19 +177,15 @@ static double get_fc3_sum(const lapack_complex_double *e0,
 
     for (i = 0; i < num_band; i++) {
         fc3_i = fc3_reciprocal + i * num_band * num_band;
-        for (j = 0; j < num_band; j++) {
-            for (k = 0; k < num_band; k++) {
-                e_012 =
-                    phonoc_complex_prod(e0[i], e_12_cache[j * num_band + k]);
-                e_012_fc3 = phonoc_complex_prod(e_012, fc3_i[j * num_band + k]);
-                sum_real += lapack_complex_double_real(e_012_fc3);
-                sum_imag += lapack_complex_double_imag(e_012_fc3);
-            }
+        for (jk = 0; jk < num_band * num_band; jk++) {
+            fc3_i_e_12 = phonoc_complex_prod(fc3_i[jk], e_12_cache[jk]);
+            e_012_fc3 = phonoc_complex_prod(e0[i], fc3_i_e_12);
+            sum_real += lapack_complex_double_real(e_012_fc3);
+            sum_imag += lapack_complex_double_imag(e_012_fc3);
         }
     }
 
     free(e_12_cache);
     e_12_cache = NULL;
-
     return (sum_real * sum_real + sum_imag * sum_imag);
 }
