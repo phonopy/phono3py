@@ -233,20 +233,29 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
                                         const long pi2, const long leg_index) {
     long i, j, k, l;
     long num_satom, adrs_shift, adrs_vec1, adrs_vec2;
-    lapack_complex_double phase_factor, phase_factor1, phase_factor2;
+    lapack_complex_double phase_factor, phase_factor1, *phase_factor2;
     double fc3_rec_real[27], fc3_rec_imag[27];
+
+    num_satom = atom_triplets->multi_dims[0];
+
+    phase_factor2 = (lapack_complex_double *)malloc(
+        sizeof(lapack_complex_double) * num_satom);
 
     for (i = 0; i < 27; i++) {
         fc3_rec_real[i] = 0;
         fc3_rec_imag[i] = 0;
     }
 
-    num_satom = atom_triplets->multi_dims[0];
-
     if (is_compact_fc3) {
         i = pi0;
     } else {
         i = atom_triplets->p2s_map[pi0];
+    }
+
+    for (j = 0; j < num_satom; j++) {
+        adrs_vec2 = j * atom_triplets->multi_dims[1] + pi0;
+        phase_factor2[j] = get_phase_factor(
+            q2, atom_triplets->svecs, atom_triplets->multiplicity[adrs_vec2]);
     }
 
     for (j = 0; j < num_satom; j++) {
@@ -267,13 +276,9 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
                     continue;
                 }
             }
-            adrs_vec2 = k * atom_triplets->multi_dims[1] + pi0;
-            phase_factor2 =
-                get_phase_factor(q2, atom_triplets->svecs,
-                                 atom_triplets->multiplicity[adrs_vec2]);
             adrs_shift =
                 i * 27 * num_satom * num_satom + j * 27 * num_satom + k * 27;
-            phase_factor = phonoc_complex_prod(phase_factor1, phase_factor2);
+            phase_factor = phonoc_complex_prod(phase_factor1, phase_factor2[k]);
 
             if ((leg_index == 1) &&
                 (atom_triplets->all_shortest[pi0 * num_satom * num_satom +
@@ -303,6 +308,9 @@ static void real_to_reciprocal_elements(lapack_complex_double *fc3_rec_elem,
         fc3_rec_elem[i] =
             lapack_make_complex_double(fc3_rec_real[i], fc3_rec_imag[i]);
     }
+
+    free(phase_factor2);
+    phase_factor2 = NULL;
 }
 
 // This function doesn't need to think about position +
