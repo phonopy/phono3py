@@ -34,7 +34,11 @@
 
 #include "reciprocal_to_normal.h"
 
+#if defined(MKL_LAPACKE) || defined(SCIPY_MKL_H)
+#include <mkl_cblas.h>
+#else
 #include <cblas.h>
+#endif
 #include <math.h>
 #include <stdlib.h>
 
