@@ -67,7 +67,7 @@ void reciprocal_to_normal_squared(
     const lapack_complex_double *eigvecs1,
     const lapack_complex_double *eigvecs2, const double *masses,
     const long *band_indices, const long num_band,
-    const double cutoff_frequency, const long openmp_at_bands) {
+    const double cutoff_frequency, const long openmp_per_triplets) {
     long i, j, num_atom;
     double *inv_sqrt_masses;
     lapack_complex_double *e0, *e1, *e2;
@@ -95,7 +95,7 @@ void reciprocal_to_normal_squared(
     e2 = e1 + num_band * num_band;
 
 #ifdef _OPENMP
-#pragma omp parallel for private(j) if (openmp_at_bands)
+#pragma omp parallel for private(j) if (!openmp_per_triplets)
 #endif
     for (i = 0; i < num_band; i++) {
         for (j = 0; j < num_band; j++) {
@@ -132,7 +132,7 @@ void reciprocal_to_normal_squared(
 #endif
 
 #ifdef _OPENMP
-#pragma omp parallel for if (openmp_at_bands)
+#pragma omp parallel for if (!openmp_per_triplets)
 #endif
     for (i = 0; i < num_g_pos; i++) {
         if (freqs0[band_indices[g_pos[i][0]]] > cutoff_frequency &&
@@ -204,9 +204,8 @@ static double get_fc3_sum_blas(const lapack_complex_double *e0,
                                const lapack_complex_double *e2,
                                const lapack_complex_double *fc3_reciprocal,
                                const long num_band) {
-    long i, j;
+    long i;
     lapack_complex_double *fc3_e12, *e_12, zero, one, retval;
-    const lapack_complex_double *fc3_i;
 
     e_12 = (lapack_complex_double *)malloc(sizeof(lapack_complex_double) *
                                            num_band * num_band);

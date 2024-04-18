@@ -57,6 +57,6 @@ void itr_get_interaction_at_triplet(
     const double cutoff_frequency,
     const long triplet_index, /* only for print */
     const long num_triplets,  /* only for print */
-    const long openmp_at_bands);
+    const long openmp_per_triplets);
 
 #endif
