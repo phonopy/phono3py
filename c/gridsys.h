@@ -310,7 +310,7 @@ long gridsys_get_integration_weight(
     const long (*bz_grid_addresses)[3], const long *bz_map,
     const long bz_grid_type, const double *frequencies1, const long num_band1,
     const double *frequencies2, const long num_band2, const long tp_type,
-    const long openmp_per_triplets, const long openmp_per_bands);
+    const long openmp_per_triplets);
 void gridsys_get_integration_weight_with_sigma(
     double *iw, char *iw_zero, const double sigma, const double sigma_cutoff,
     const double *frequency_points, const long num_band0,

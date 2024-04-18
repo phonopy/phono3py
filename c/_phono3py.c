@@ -1419,7 +1419,7 @@ static PyObject *py_get_triplets_integration_weights(PyObject *self,
     ph3py_get_integration_weight(
         iw, iw_zero, frequency_points, num_band0, relative_grid_address, D_diag,
         triplets, num_triplets, bz_grid_addresses, bz_map, bz_grid_type,
-        frequencies1, num_band1, frequencies2, num_band2, tp_type, 1, 0);
+        frequencies1, num_band1, frequencies2, num_band2, tp_type, 1);
 
     Py_RETURN_NONE;
 }

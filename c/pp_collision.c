@@ -109,7 +109,7 @@ void ppc_get_pp_collision(
                                    triplets[i], 1, bzgrid,
                                    frequencies,           /* used as f1 */
                                    num_band, frequencies, /* used as f2 */
-                                   num_band, 2, 1 - openmp_per_triplets);
+                                   num_band, 2, openmp_per_triplets);
 
         get_collision(ise + i * num_temps * num_band0, num_band0, num_band,
                       num_temps, temperatures->data, g, g_zero, frequencies,
@@ -179,7 +179,7 @@ void ppc_get_pp_collision_with_sigma(
         g_zero = (char *)malloc(sizeof(char) * num_band_prod);
         tpi_get_integration_weight_with_sigma(
             g, g_zero, sigma, cutoff, freqs_at_gp, num_band0, triplets[i],
-            const_adrs_shift, frequencies, num_band, 2, 0);
+            const_adrs_shift, frequencies, num_band, 2, 1);
 
         get_collision(ise + i * num_temps * num_band0, num_band0, num_band,
                       num_temps, temperatures->data, g, g_zero, frequencies,

@@ -67,7 +67,7 @@ void tpi_get_integration_weight(
     const long triplets[3], const long num_triplets, const ConstBZGrid *bzgrid,
     const double *frequencies1, const long num_band1,
     const double *frequencies2, const long num_band2, const long tp_type,
-    const long openmp_per_bands) {
+    const long openmp_per_triplets) {
     long max_i, j, b1, b2, b12, num_band_prod, adrs_shift;
     long vertices[2][24][4];
     double g[3];
@@ -98,7 +98,7 @@ void tpi_get_integration_weight(
 
 #ifdef _OPENMP
 #pragma omp parallel for private(j, b1, b2, adrs_shift, g, \
-                                 freq_vertices) if (openmp_per_bands)
+                                     freq_vertices) if (!openmp_per_triplets)
 #endif
     for (b12 = 0; b12 < num_band1 * num_band2; b12++) {
         b1 = b12 / num_band2;
@@ -132,13 +132,13 @@ void tpi_get_integration_weight_with_sigma(
     double *iw, char *iw_zero, const double sigma, const double cutoff,
     const double *frequency_points, const long num_band0, const long triplet[3],
     const long const_adrs_shift, const double *frequencies, const long num_band,
-    const long tp_type, const long openmp_per_bands) {
+    const long tp_type, const long openmp_per_triplets) {
     long j, b12, b1, b2, adrs_shift;
     double f0, f1, f2, g0, g1, g2;
 
 #ifdef _OPENMP
 #pragma omp parallel for private(j, b1, b2, f0, f1, f2, g0, g1, g2, \
-                                 adrs_shift) if (openmp_per_bands)
+                                     adrs_shift) if (!openmp_per_triplets)
 #endif
     for (b12 = 0; b12 < num_band * num_band; b12++) {
         b1 = b12 / num_band;
