@@ -692,7 +692,7 @@ def _get_fc3_least_atoms(
         first_atom_nums = []
         for i in unique_first_atom_nums:
             if i != s2p_map[i]:
-                print("Something wrong in disp_fc3.yaml")
+                print("Something wrong in displacement dataset.")
                 raise RuntimeError
             else:
                 first_atom_nums.append(i)

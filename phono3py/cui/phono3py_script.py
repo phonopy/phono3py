@@ -83,8 +83,6 @@ from phono3py.cui.show_log import (
 from phono3py.cui.triplets_info import show_num_triplets, write_grid_points
 from phono3py.file_IO import (
     get_length_of_first_line,
-    parse_disp_fc2_yaml,
-    parse_disp_fc3_yaml,
     parse_FORCES_FC2,
     read_phonon_from_hdf5,
     write_fc2_to_hdf5,
@@ -385,7 +383,6 @@ def create_FORCE_SETS_from_FORCES_FCx_then_exit(
 
 def create_FORCES_FC3_and_FORCES_FC2_then_exit(
     settings,
-    input_filename: Optional[str],
     cell_filename: Optional[str],
     log_level: Union[bool, int],
 ):
@@ -397,24 +394,18 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
     # Create FORCES_FC3 #
     #####################
     if settings.create_forces_fc3 or settings.create_forces_fc3_file:
-        if input_filename is None:
-            disp_fc3_filename = "disp_fc3.yaml"
-        else:
-            disp_fc3_filename = "disp_fc3." + input_filename + ".yaml"
-        disp_filename_candidates = ["phono3py_disp.yaml", disp_fc3_filename]
+        disp_filename_candidates = [
+            "phono3py_disp.yaml",
+        ]
         if cell_filename is not None:
             disp_filename_candidates.insert(0, cell_filename)
         disp_filenames = files_exist(disp_filename_candidates, log_level, is_any=True)
         disp_filename = disp_filenames[0]
-        if disp_filename == disp_fc3_filename:
-            file_exists(disp_filename, log_level)
-            disp_dataset = parse_disp_fc3_yaml(filename=disp_filename)
-        else:
-            ph3py_yaml = Phono3pyYaml()
-            ph3py_yaml.read(disp_filename)
-            if ph3py_yaml.calculator is not None:
-                interface_mode = ph3py_yaml.calculator  # overwrite
-            disp_dataset = ph3py_yaml.dataset
+        ph3py_yaml = Phono3pyYaml()
+        ph3py_yaml.read(disp_filename)
+        if ph3py_yaml.calculator is not None:
+            interface_mode = ph3py_yaml.calculator  # overwrite
+        disp_dataset = ph3py_yaml.dataset
 
         if log_level:
             print("")
@@ -488,27 +479,21 @@ def create_FORCES_FC3_and_FORCES_FC2_then_exit(
     # Create FORCES_FC2 #
     #####################
     if settings.create_forces_fc2:
-        if input_filename is None:
-            disp_fc2_filename = "disp_fc2.yaml"
-        else:
-            disp_fc2_filename = "disp_fc2." + input_filename + ".yaml"
-        disp_filename_candidates = ["phono3py_disp.yaml", disp_fc2_filename]
+        disp_filename_candidates = [
+            "phono3py_disp.yaml",
+        ]
         if cell_filename is not None:
             disp_filename_candidates.insert(0, cell_filename)
         disp_filenames = files_exist(disp_filename_candidates, log_level, is_any=True)
         disp_filename = disp_filenames[0]
 
-        if disp_filename == disp_fc2_filename:
-            file_exists(disp_filename, log_level)
-            disp_dataset = parse_disp_fc2_yaml(filename=disp_filename)
-        else:
-            # ph3py_yaml is not None, phono3py_disp.yaml is already read.
-            if ph3py_yaml is None:
-                ph3py_yaml = Phono3pyYaml()
-                ph3py_yaml.read(disp_filename)
-                if ph3py_yaml.calculator is not None:
-                    interface_mode = ph3py_yaml.calculator  # overwrite
-            disp_dataset = ph3py_yaml.phonon_dataset
+        # ph3py_yaml is not None, phono3py_disp.yaml is already read.
+        if ph3py_yaml is None:
+            ph3py_yaml = Phono3pyYaml()
+            ph3py_yaml.read(disp_filename)
+            if ph3py_yaml.calculator is not None:
+                interface_mode = ph3py_yaml.calculator  # overwrite
+        disp_dataset = ph3py_yaml.phonon_dataset
 
         if log_level:
             print('Displacement dataset was read from "%s".' % disp_filename)
@@ -1138,9 +1123,7 @@ def main(**argparse_control):
     ####################################
     # Create FORCES_FC3 and FORCES_FC2 #
     ####################################
-    create_FORCES_FC3_and_FORCES_FC2_then_exit(
-        settings, input_filename, cell_filename, log_level
-    )
+    create_FORCES_FC3_and_FORCES_FC2_then_exit(settings, cell_filename, log_level)
 
     ###########################################################
     # Symmetry tolerance. Distance unit depends on interface. #

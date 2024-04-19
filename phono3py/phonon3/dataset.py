@@ -47,8 +47,7 @@ def get_displacements_and_forces_fc3(disp_dataset):
     Parameters
     ----------
     disp_dataset : dict
-        Displacement dataset that may be obtained by
-        file_IO.parse_disp_fc3_yaml.
+        Displacement dataset.
 
     Returns
     -------
