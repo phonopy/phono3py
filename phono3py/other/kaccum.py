@@ -209,15 +209,34 @@ def run_prop_dos(
     mode_prop,
     ir_grid_map,
     ir_grid_points,
-    num_sampling_points,
+    num_sampling_points: int,
     bz_grid: BZGrid,
 ):
-    """Run DOS-like calculation."""
+    """Run DOS-like calculation.
+
+    This is a simple wrapper of KappsDOSTHM.
+
+    Parameters
+    ----------
+    frequencies:
+        Frequencies at ir-grid points.
+    mode_prop:
+        Properties at  ir-grid points.
+    ir_grid_map:
+        Obtained by get_ir_grid_points(bz_grid)[2].
+    ir_grid_points:
+        Obtained by get_ir_grid_points(bz_grid)[0].
+    num_sampling_points:
+        Number of sampling points in horizontal axis.
+    bz_grid:
+        BZ grid.
+
+    """
     kappa_dos = KappaDOSTHM(
         mode_prop,
         frequencies,
         bz_grid,
-        ir_grid_points,
+        bz_grid.bzg2grg[ir_grid_points],
         ir_grid_map=ir_grid_map,
         num_sampling_points=num_sampling_points,
     )
@@ -227,7 +246,12 @@ def run_prop_dos(
 
 
 def run_mfp_dos(
-    mean_freepath, mode_prop, ir_grid_map, ir_grid_points, num_sampling_points, bz_grid
+    mean_freepath,
+    mode_prop,
+    ir_grid_map,
+    ir_grid_points,
+    num_sampling_points: int,
+    bz_grid: BZGrid,
 ):
     """Run DOS-like calculation for mean free path.
 
@@ -242,7 +266,7 @@ def run_mfp_dos(
             mode_prop[i : i + 1, :, :],
             mean_freepath[i],
             bz_grid,
-            ir_grid_points,
+            bz_grid.bzg2grg[ir_grid_points],
             ir_grid_map=ir_grid_map,
             num_sampling_points=num_sampling_points,
         )

@@ -129,14 +129,14 @@ def _assert_grid_in_hdf5(
 def _get_calculator(args):
     """Return calculator name."""
     interface_mode = None
-    if args.qe_mode:
-        interface_mode = "qe"
-    elif args.crystal_mode:
-        interface_mode = "crystal"
-    elif args.abinit_mode:
-        interface_mode = "abinit"
-    elif args.turbomole_mode:
-        interface_mode = "turbomole"
+    # if args.qe_mode:
+    #     interface_mode = "qe"
+    # elif args.crystal_mode:
+    #     interface_mode = "crystal"
+    # elif args.abinit_mode:
+    #     interface_mode = "abinit"
+    # elif args.turbomole_mode:
+    #     interface_mode = "turbomole"
     return interface_mode
 
 
@@ -155,16 +155,6 @@ def _read_files(args):
         f = h5py.File(args.filenames[0], "r")
 
     return cell, f
-
-
-def _read_files_by_collect_cell_info(cell_filename, interface_mode):
-    cell_info = collect_cell_info(
-        interface_mode=interface_mode,
-        cell_filename=cell_filename,
-        supercell_matrix=np.eye(3, dtype=int),
-        phonopy_yaml_cls=Phono3pyYaml,
-    )
-    return cell_info
 
 
 def _get_mode_property(args, f_kappa):
@@ -206,14 +196,14 @@ def _get_parser():
         default=None,
         help="Same as PRIMITIVE_AXES tags",
     )
-    parser.add_argument(
-        "-c",
-        "--cell",
-        dest="cell_filename",
-        metavar="FILE",
-        default=None,
-        help="Read unit cell",
-    )
+    # parser.add_argument(
+    #     "-c",
+    #     "--cell",
+    #     dest="cell_filename",
+    #     metavar="FILE",
+    #     default=None,
+    #     help="Read unit cell",
+    # )
     parser.add_argument(
         "--gv", action="store_true", help="Calculate for gv_x_gv (tensor)"
     )
@@ -270,24 +260,6 @@ def _get_parser():
         "--smearing",
         action="store_true",
         help="Use smearing method (only for scalar density)",
-    )
-    parser.add_argument(
-        "--qe", "--pwscf", dest="qe_mode", action="store_true", help="Invoke Pwscf mode"
-    )
-    parser.add_argument(
-        "--crystal",
-        dest="crystal_mode",
-        action="store_true",
-        help="Invoke CRYSTAL mode",
-    )
-    parser.add_argument(
-        "--abinit", dest="abinit_mode", action="store_true", help="Invoke Abinit mode"
-    )
-    parser.add_argument(
-        "--turbomole",
-        dest="turbomole_mode",
-        action="store_true",
-        help="Invoke TURBOMOLE mode",
     )
     parser.add_argument(
         "--no-gridsym",
@@ -363,8 +335,12 @@ def main():
             'Use of "phono3py-kaccum CRYSTAL_STRUCTURE_FILE" is not supported.'
         )
     else:
-        interface_mode = _get_calculator(args)
-        cell_info = _read_files_by_collect_cell_info(args.cell_filename, interface_mode)
+        cell_info = collect_cell_info(
+            supercell_matrix=np.eye(3, dtype=int),
+            phonopy_yaml_cls=Phono3pyYaml,
+        )
+        cell_filename = cell_info["optional_structure_info"][0]
+        print(f'# Crystal structure was read from "{cell_filename}".')
         cell = cell_info["unitcell"]
         phpy_yaml = cell_info.get("phonopy_yaml", None)
         if phpy_yaml is not None:

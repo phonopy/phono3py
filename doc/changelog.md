@@ -6,9 +6,9 @@
 
 This is a major version release. There are backward-incompatible changes.
 
-- Method to transform supercell third-order force constants fc3 in real to
-  reciprocal space was changed as described at Version 2.9.0 changelog below.
-  This results in the change of results with respect to those obtained by
+- Calculation method to transform supercell third-order force constants fc3 in
+  real to reciprocal space was changed as described at Version 2.9.0 changelog
+  below. This results in the change of results with respect to those obtained by
   phono3py version 2. To emulate v2 behaviour, use `--v2` option in phono3py
   command line script. For `Phono3py` class , `make_r0_average=True` (default)
   when instantiating it, and similarly for `phono3py.load` function.

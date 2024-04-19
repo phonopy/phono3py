@@ -80,36 +80,17 @@ With $19\times 19\times 19$ mesh:
 :width: 25%
 ```
 
-###General options
-
-#### `--pa`
-
-See {ref}`pa_option`.
-
-#### `-c`
-
-Unit cell filename is specified with this option, e.g., `-c POSCAR-unitcell`.
-
-#### `--qe`
-
-Let `phono3py-kaccum` read a QE (pw) unit cell file with `-c` option, for
-example:
-
-```bash
-% phono3py-kaccum --qe kappa-m191919.hdf5
-```
+That calculated by QE with $19\times 19\times 19$ mesh:
 
 ```{image} Si-kaccum-pwscf.png
 :width: 25%
 ```
 
-#### `--crystal`
+###General options
 
-Analogous to `--qe`, but to be used with the CRYSTAL interface.
+#### `--pa`
 
-#### `--turbomole`
-
-Analogous to `--qe`, but to be used with the TURBOMOLE interface
+See {ref}`pa_option`.
 
 #### `--temperature`
 
