@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import Sequence
 from typing import Optional, Union
 
@@ -134,37 +133,6 @@ class KappaDOSTHM:
         return bzgp2irgp_map
 
 
-class KappaDOS(KappaDOSTHM):
-    """Deprecated class to calculate DOS like spectram with tetrahedron method."""
-
-    def __init__(
-        self,
-        mode_kappa: np.ndarray,
-        frequencies: np.ndarray,
-        bz_grid: BZGrid,
-        ir_grid_points: np.ndarray,
-        ir_grid_map: Optional[np.ndarray] = None,
-        frequency_points: Optional[np.ndarray] = None,
-        num_sampling_points: int = 100,
-    ):
-        """Init method."""
-        warnings.warn(
-            "KappaDOS is deprecated."
-            "Use KappaDOSTHM instead with replacing ir_grid_points in BZ-grid "
-            "by ir_grid_points in GR-grid.",
-            DeprecationWarning,
-        )
-        super().__init__(
-            mode_kappa,
-            frequencies,
-            bz_grid,
-            bz_grid.bzg2grg[ir_grid_points],
-            ir_grid_map=ir_grid_map,
-            frequency_points=frequency_points,
-            num_sampling_points=num_sampling_points,
-        )
-
-
 class GammaDOSsmearing:
     """Class to calculate Gamma spectram by smearing method."""
 
@@ -245,7 +213,7 @@ def run_prop_dos(
     bz_grid: BZGrid,
 ):
     """Run DOS-like calculation."""
-    kappa_dos = KappaDOS(
+    kappa_dos = KappaDOSTHM(
         mode_prop,
         frequencies,
         bz_grid,
@@ -270,7 +238,7 @@ def run_mfp_dos(
     kdos = []
     sampling_points = []
     for i, _ in enumerate(mean_freepath):
-        kappa_dos = KappaDOS(
+        kappa_dos = KappaDOSTHM(
             mode_prop[i : i + 1, :, :],
             mean_freepath[i],
             bz_grid,

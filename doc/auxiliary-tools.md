@@ -39,21 +39,18 @@ Let's computer lattice thermal conductivity of Si using the `Si-PBEsol` example
 found in the example directory.
 
 ```bash
-% phono3py --dim="2 2 2" --pa="F" -c POSCAR-unitcell --mesh="11 11 11" --sym-fc --br
+% phono3py --mesh="11 11 11" --sym-fc --br
 ```
 
 Then using the output file, `kappa-m111111.hdf5`, run `phono3py-kaccum` as
 follows:
 
 ```bash
-% phono3py-kaccum --pa="F" -c POSCAR-unitcell kappa-m111111.hdf5 |tee kaccum.dat
+% phono3py-kaccum kappa-m111111.hdf5 |tee kaccum.dat
 ```
 
-Here `--pa` is optional. The definition of `--pa` option is same as
-{ref}`pa_option`. `POSCAR-unitcell` is the unit cell filename that is specified
-with `-c` option. `kappa-m111111.hdf5` is the output file of thermal
-conductivity calculation, which is passed to `phono3py-kaccum` as the first
-argument.
+`kappa-m111111.hdf5` is the output file of thermal conductivity calculation,
+which is passed to `phono3py-kaccum` as the first argument.
 
 The format of the output is as follows: The first column gives frequency in THz,
 and the second to seventh columns give the cumulative lattice thermal
@@ -99,7 +96,7 @@ Let `phono3py-kaccum` read a QE (pw) unit cell file with `-c` option, for
 example:
 
 ```bash
-% phono3py-kaccum --qe --pa="F" -c Si.in kappa-m191919.hdf5
+% phono3py-kaccum --qe kappa-m191919.hdf5
 ```
 
 ```{image} Si-kaccum-pwscf.png

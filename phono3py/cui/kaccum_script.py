@@ -358,9 +358,10 @@ def main():
     """
     args = _get_parser()
     primitive = None
-    if len(args.filenames) > 1:  # deprecated
-        cell, f_kappa = _read_files(args)
-        primitive_matrix = _analyze_primitive_matrix_option(args, unitcell=cell)
+    if len(args.filenames) > 1:
+        raise RuntimeError(
+            'Use of "phono3py-kaccum CRYSTAL_STRUCTURE_FILE" is not supported.'
+        )
     else:
         interface_mode = _get_calculator(args)
         cell_info = _read_files_by_collect_cell_info(args.cell_filename, interface_mode)

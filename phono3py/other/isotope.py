@@ -34,8 +34,9 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-import warnings
-from typing import Dict, List, Optional, Tuple, Union
+from __future__ import annotations
+
+from typing import Optional, Union
 
 import numpy as np
 from phonopy.harmonic.dynamical_matrix import get_dynamical_matrix
@@ -58,8 +59,8 @@ from phono3py.phonon.solver import run_phonon_solver_c, run_phonon_solver_py
 
 def get_mass_variances(
     primitive: Optional[PhonopyAtoms] = None,
-    symbols: Optional[Union[List[str], Tuple[str]]] = None,
-    isotope_data: Optional[Dict] = None,
+    symbols: Optional[Union[list[str], tuple[str]]] = None,
+    isotope_data: Optional[dict] = None,
 ):
     """Calculate mass variances."""
     if primitive is not None:
@@ -176,14 +177,6 @@ class Isotope:
         else:
             self._sigma = float(sigma)
 
-    def set_sigma(self, sigma):
-        """Set smearing width."""
-        warnings.warn(
-            "Isotope.set_sigma() is deprecated." "Use Isotope.sigma attribute.",
-            DeprecationWarning,
-        )
-        self.sigma = sigma
-
     @property
     def dynamical_matrix(self):
         """Return DynamicalMatrix* class instance."""
@@ -199,14 +192,6 @@ class Isotope:
         """Return scattering strength."""
         return self._gamma
 
-    def get_gamma(self):
-        """Return scattering strength."""
-        warnings.warn(
-            "Isotope.get_gamma() is deprecated." "Use Isotope.gamma attribute.",
-            DeprecationWarning,
-        )
-        return self.gamma
-
     @property
     def bz_grid(self):
         """Return BZgrid class instance."""
@@ -216,15 +201,6 @@ class Isotope:
     def mass_variances(self):
         """Return mass variances."""
         return self._mass_variances
-
-    def get_mass_variances(self):
-        """Return mass variances."""
-        warnings.warn(
-            "Isotope.get_mass_variances() is deprecated."
-            "Use Isotope.mass_variances attribute.",
-            DeprecationWarning,
-        )
-        return self.mass_variances
 
     def get_phonons(self):
         """Return phonons on grid."""
