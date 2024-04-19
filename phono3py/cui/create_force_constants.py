@@ -54,8 +54,6 @@ from phono3py import Phono3py
 from phono3py.cui.show_log import show_phono3py_force_constants_settings
 from phono3py.file_IO import (
     get_length_of_first_line,
-    parse_disp_fc2_yaml,
-    parse_disp_fc3_yaml,
     parse_FORCES_FC2,
     parse_FORCES_FC3,
     read_fc2_from_hdf5,
@@ -117,7 +115,6 @@ def create_phono3py_force_constants(
                 ph3py_yaml,
                 phono3py_yaml_filename,
                 symmetrize_fc3r,
-                input_filename,
                 settings.is_compact_fc,
                 settings.cutoff_pair_distance,
                 fc_calculator,
@@ -167,7 +164,6 @@ def create_phono3py_force_constants(
                     phono3py,
                     ph3py_yaml,
                     symmetrize_fc2,
-                    input_filename,
                     settings.is_compact_fc,
                     fc_calculator,
                     fc_calculator_options,
@@ -178,7 +174,6 @@ def create_phono3py_force_constants(
                 phono3py,
                 ph3py_yaml,
                 symmetrize_fc2,
-                input_filename,
                 settings.is_compact_fc,
                 fc_calculator,
                 fc_calculator_options,
@@ -207,7 +202,6 @@ def parse_forces(
     ph3py_yaml: Optional[Phono3pyYaml] = None,
     cutoff_pair_distance=None,
     force_filename: str = "FORCES_FC3",
-    disp_filename: Optional[str] = None,
     phono3py_yaml_filename: Optional[str] = None,
     fc_type=None,
     log_level=0,
@@ -269,32 +263,7 @@ def parse_forces(
                     force_to_eVperA=physical_units["force_to_eVperA"],
                 )
 
-    # No dataset is found. "disp_fc*.yaml" is read. But this is deprecated.
-    if dataset is None:
-        if disp_filename is None:
-            msg = (
-                "Displacement dataset corresponding to "
-                f'"{force_filename}" not found.'
-            )
-            raise RuntimeError(msg)
-        # Displacement dataset is obtained from disp_filename.
-        # can emit FileNotFoundError.
-        dataset = _read_disp_fc_yaml(disp_filename, fc_type)
-        filename_read_from = disp_filename
-
-        # No forces should exist. Therefore only unit of displacements is
-        # converted.
-        if calculator is None:
-            if log_level:
-                print(
-                    f'Displacements are read from "{disp_filename}", but '
-                    " the unit has not converted."
-                )
-        else:
-            _convert_unit_in_dataset(
-                dataset,
-                distance_to_A=physical_units["distance_to_A"],
-            )
+    assert dataset is not None
 
     if "natom" in dataset and dataset["natom"] != natom:
         msg = (
@@ -367,15 +336,6 @@ def get_fc_calculator_params(settings):
         fc_calculator_options = settings.fc_calculator_options
 
     return fc_calculator, fc_calculator_options
-
-
-def _read_disp_fc_yaml(disp_filename, fc_type):
-    if fc_type == "phonon_fc2":
-        dataset = parse_disp_fc2_yaml(filename=disp_filename)
-    else:
-        dataset = parse_disp_fc3_yaml(filename=disp_filename)
-
-    return dataset
 
 
 def _read_phono3py_fc3(phono3py, symmetrize_fc3r, input_filename, log_level):
@@ -469,13 +429,12 @@ def _create_phono3py_fc3(
     phono3py: Phono3py,
     ph3py_yaml: Optional[Phono3pyYaml],
     phono3py_yaml_filename: Optional[str],
-    symmetrize_fc3r,
-    input_filename,
-    is_compact_fc,
-    cutoff_pair_distance,
-    fc_calculator,
-    fc_calculator_options,
-    log_level,
+    symmetrize_fc3r: bool,
+    is_compact_fc: bool,
+    cutoff_pair_distance: Optional[float],
+    fc_calculator: Optional[str],
+    fc_calculator_options: Optional[str],
+    log_level: int,
 ):
     """Read or calculate fc3.
 
@@ -491,14 +450,7 @@ def _create_phono3py_fc3(
     when the former value is smaller than the later.
 
     """
-    # disp_fc3.yaml is obsolete.
-    if input_filename is None:
-        disp_filename = "disp_fc3.yaml"
-    else:
-        disp_filename = "disp_fc3." + input_filename + ".yaml"
-
-    # If disp_fc3.yaml is not found, default phono3py.yaml file is
-    _ph3py_yaml = _get_ph3py_yaml(disp_filename, ph3py_yaml)
+    _ph3py_yaml = _get_default_ph3py_yaml(ph3py_yaml)
 
     try:
         dataset = parse_forces(
@@ -506,7 +458,6 @@ def _create_phono3py_fc3(
             ph3py_yaml=_ph3py_yaml,
             cutoff_pair_distance=cutoff_pair_distance,
             force_filename="FORCES_FC3",
-            disp_filename=disp_filename,
             phono3py_yaml_filename=phono3py_yaml_filename,
             fc_type="fc3",
             log_level=log_level,
@@ -534,25 +485,18 @@ def _create_phono3py_fc2(
     phono3py: Phono3py,
     ph3py_yaml: Optional[Phono3pyYaml],
     symmetrize_fc2,
-    input_filename,
     is_compact_fc,
     fc_calculator,
     fc_calculator_options,
     log_level,
 ):
-    if input_filename is None:
-        disp_filename = "disp_fc3.yaml"
-    else:
-        disp_filename = "disp_fc3." + input_filename + ".yaml"
-
-    _ph3py_yaml = _get_ph3py_yaml(disp_filename, ph3py_yaml)
+    _ph3py_yaml = _get_default_ph3py_yaml(ph3py_yaml)
 
     try:
         dataset = parse_forces(
             phono3py,
             ph3py_yaml=_ph3py_yaml,
             force_filename="FORCES_FC3",
-            disp_filename=disp_filename,
             fc_type="fc2",
             log_level=log_level,
         )
@@ -573,40 +517,30 @@ def _create_phono3py_fc2(
     )
 
 
-def _get_ph3py_yaml(disp_filename, ph3py_yaml: Optional[Phono3pyYaml]):
+def _get_default_ph3py_yaml(ph3py_yaml: Optional[Phono3pyYaml]):
     _ph3py_yaml = ph3py_yaml
-    # Try to use phono3py.phonon_dataset when the disp file not found
-    if not os.path.isfile(disp_filename):
-        disp_filename = None
-        if _ph3py_yaml is None and os.path.isfile("phono3py_disp.yaml"):
-            _ph3py_yaml = Phono3pyYaml()
-            _ph3py_yaml.read("phono3py_disp.yaml")
+    if _ph3py_yaml is None and os.path.isfile("phono3py_disp.yaml"):
+        _ph3py_yaml = Phono3pyYaml()
+        _ph3py_yaml.read("phono3py_disp.yaml")
     return _ph3py_yaml
 
 
 def _create_phono3py_phonon_fc2(
     phono3py: Phono3py,
     ph3py_yaml: Optional[Phono3pyYaml],
-    symmetrize_fc2,
-    input_filename,
-    is_compact_fc,
-    fc_calculator,
-    fc_calculator_options,
-    log_level,
+    symmetrize_fc2: bool,
+    is_compact_fc: bool,
+    fc_calculator: Optional[str],
+    fc_calculator_options: Optional[str],
+    log_level: int,
 ):
-    if input_filename is None:
-        disp_filename = "disp_fc2.yaml"
-    else:
-        disp_filename = "disp_fc2." + input_filename + ".yaml"
-
-    _ph3py_yaml = _get_ph3py_yaml(disp_filename, ph3py_yaml)
+    _ph3py_yaml = _get_default_ph3py_yaml(ph3py_yaml)
 
     try:
         dataset = parse_forces(
             phono3py,
             ph3py_yaml=_ph3py_yaml,
             force_filename="FORCES_FC2",
-            disp_filename=disp_filename,
             fc_type="phonon_fc2",
             log_level=log_level,
         )

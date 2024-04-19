@@ -96,7 +96,6 @@ void ppc_get_pp_collision(
 
     tpl_set_relative_grid_address(tp_relative_grid_address,
                                   relative_grid_address, 2);
-
 #ifdef _OPENMP
 #pragma omp parallel for schedule(guided) private( \
         g, g_zero) if (openmp_per_triplets)
@@ -109,7 +108,7 @@ void ppc_get_pp_collision(
                                    triplets[i], 1, bzgrid,
                                    frequencies,           /* used as f1 */
                                    num_band, frequencies, /* used as f2 */
-                                   num_band, 2, 1 - openmp_per_triplets);
+                                   num_band, 2, openmp_per_triplets);
 
         get_collision(ise + i * num_temps * num_band0, num_band0, num_band,
                       num_temps, temperatures->data, g, g_zero, frequencies,
@@ -179,7 +178,7 @@ void ppc_get_pp_collision_with_sigma(
         g_zero = (char *)malloc(sizeof(char) * num_band_prod);
         tpi_get_integration_weight_with_sigma(
             g, g_zero, sigma, cutoff, freqs_at_gp, num_band0, triplets[i],
-            const_adrs_shift, frequencies, num_band, 2, 0);
+            const_adrs_shift, frequencies, num_band, 2, 1);
 
         get_collision(ise + i * num_temps * num_band0, num_band0, num_band,
                       num_temps, temperatures->data, g, g_zero, frequencies,
@@ -234,12 +233,12 @@ static void get_collision(
         fc3_normal_squared, num_band0, num_band, g_pos, num_g_pos, frequencies,
         eigenvectors, triplet, bzgrid, fc3, is_compact_fc3, atom_triplets,
         masses, band_indices, symmetrize_fc3_q, cutoff_frequency, 0, 0,
-        1 - openmp_per_triplets);
+        openmp_per_triplets);
 
     ise_imag_self_energy_at_triplet(
         ise, num_band0, num_band, fc3_normal_squared, frequencies, triplet,
         triplet_weight, g, g + num_band_prod, g_pos, num_g_pos, temperatures,
-        num_temps, cutoff_frequency, 1 - openmp_per_triplets, 0);
+        num_temps, cutoff_frequency, openmp_per_triplets, 0);
 
     free(fc3_normal_squared);
     fc3_normal_squared = NULL;

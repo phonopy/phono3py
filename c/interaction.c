@@ -58,7 +58,7 @@ static void real_to_normal(double *fc3_normal_squared, const long (*g_pos)[4],
                            const double *masses, const long *band_indices,
                            const long num_band, const double cutoff_frequency,
                            const long triplet_index, const long num_triplets,
-                           const long openmp_at_bands);
+                           const long openmp_per_triplets);
 static void real_to_normal_sym_q(
     double *fc3_normal_squared, const long (*g_pos)[4], const long num_g_pos,
     double *const freqs[3], lapack_complex_double *const eigvecs[3],
@@ -67,7 +67,7 @@ static void real_to_normal_sym_q(
     const AtomTriplets *atom_triplets, const double *masses,
     const long *band_indices, const long num_band0, const long num_band,
     const double cutoff_frequency, const long triplet_index,
-    const long num_triplets, const long openmp_at_bands);
+    const long num_triplets, const long openmp_per_triplets);
 
 /* fc3_normal_squared[num_triplets, num_band0, num_band, num_band] */
 void itr_get_interaction(
@@ -101,7 +101,7 @@ void itr_get_interaction(
             g_pos, num_g_pos, frequencies->data, eigenvectors, triplets[i],
             bzgrid, fc3, is_compact_fc3, atom_triplets, masses, band_indices,
             symmetrize_fc3_q, cutoff_frequency, i, num_triplets,
-            1 - openmp_per_triplets);
+            openmp_per_triplets);
 
         free(g_pos);
         g_pos = NULL;
@@ -118,7 +118,7 @@ void itr_get_interaction_at_triplet(
     const double cutoff_frequency,
     const long triplet_index, /* only for print */
     const long num_triplets,  /* only for print */
-    const long openmp_at_bands) {
+    const long openmp_per_triplets) {
     long j, k;
     double *freqs[3];
     lapack_complex_double *eigvecs[3];
@@ -149,7 +149,7 @@ void itr_get_interaction_at_triplet(
             fc3_normal_squared, g_pos, num_g_pos, freqs, eigvecs, fc3,
             is_compact_fc3, q_vecs, /* q0, q1, q2 */
             atom_triplets, masses, band_indices, num_band0, num_band,
-            cutoff_frequency, triplet_index, num_triplets, openmp_at_bands);
+            cutoff_frequency, triplet_index, num_triplets, openmp_per_triplets);
         for (j = 0; j < 3; j++) {
             free(freqs[j]);
             freqs[j] = NULL;
@@ -167,7 +167,7 @@ void itr_get_interaction_at_triplet(
                        is_compact_fc3, q_vecs, /* q0, q1, q2 */
                        atom_triplets, masses, band_indices, num_band,
                        cutoff_frequency, triplet_index, num_triplets,
-                       openmp_at_bands);
+                       openmp_per_triplets);
     }
 }
 
@@ -183,7 +183,7 @@ static void real_to_normal(double *fc3_normal_squared, const long (*g_pos)[4],
                            const double *masses, const long *band_indices,
                            const long num_band, const double cutoff_frequency,
                            const long triplet_index, const long num_triplets,
-                           const long openmp_at_bands) {
+                           const long openmp_per_triplets) {
     lapack_complex_double *fc3_reciprocal;
     lapack_complex_double comp_zero;
     long i;
@@ -195,10 +195,10 @@ static void real_to_normal(double *fc3_normal_squared, const long (*g_pos)[4],
         fc3_reciprocal[i] = comp_zero;
     }
     r2r_real_to_reciprocal(fc3_reciprocal, q_vecs, fc3, is_compact_fc3,
-                           atom_triplets, openmp_at_bands);
+                           atom_triplets, openmp_per_triplets);
 
 #ifdef MEASURE_R2N
-    if (openmp_at_bands && num_triplets > 0) {
+    if ((!openmp_per_triplets) && num_triplets > 0) {
         printf("At triplet %d/%d (# of bands=%d):\n", triplet_index,
                num_triplets, num_band0);
     }
@@ -206,7 +206,7 @@ static void real_to_normal(double *fc3_normal_squared, const long (*g_pos)[4],
     reciprocal_to_normal_squared(
         fc3_normal_squared, g_pos, num_g_pos, fc3_reciprocal, freqs0, freqs1,
         freqs2, eigvecs0, eigvecs1, eigvecs2, masses, band_indices, num_band,
-        cutoff_frequency, openmp_at_bands);
+        cutoff_frequency, openmp_per_triplets);
 
     free(fc3_reciprocal);
     fc3_reciprocal = NULL;
@@ -220,7 +220,7 @@ static void real_to_normal_sym_q(
     const AtomTriplets *atom_triplets, const double *masses,
     const long *band_indices, const long num_band0, const long num_band,
     const double cutoff_frequency, const long triplet_index,
-    const long num_triplets, const long openmp_at_bands) {
+    const long num_triplets, const long openmp_per_triplets) {
     long i, j, k, l;
     long band_ex[3];
     double q_vecs_ex[3][3];
@@ -246,7 +246,7 @@ static void real_to_normal_sym_q(
             eigvecs[index_exchange[i][1]], eigvecs[index_exchange[i][2]], fc3,
             is_compact_fc3, q_vecs_ex, /* q0, q1, q2 */
             atom_triplets, masses, band_indices, num_band, cutoff_frequency,
-            triplet_index, num_triplets, openmp_at_bands);
+            triplet_index, num_triplets, openmp_per_triplets);
         for (j = 0; j < num_band0; j++) {
             for (k = 0; k < num_band; k++) {
                 for (l = 0; l < num_band; l++) {

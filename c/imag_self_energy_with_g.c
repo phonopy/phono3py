@@ -221,7 +221,7 @@ void ise_imag_self_energy_at_triplet(
     const long triplet[3], const long triplet_weight, const double *g1,
     const double *g2_3, const long (*g_pos)[4], const long num_g_pos,
     const double *temperatures, const long num_temps,
-    const double cutoff_frequency, const long openmp_possible,
+    const double cutoff_frequency, const long openmp_per_triplets,
     const long at_a_frequency_point) {
     long i, j;
     double *n1, *n2, *ise_at_g_pos;
@@ -238,7 +238,7 @@ void ise_imag_self_energy_at_triplet(
     }
 
 #ifdef _OPENMP
-#pragma omp parallel for private(j, g_pos_3) if (openmp_possible)
+#pragma omp parallel for private(j, g_pos_3) if (!openmp_per_triplets)
 #endif
     for (i = 0; i < num_g_pos; i++) {
         if (at_a_frequency_point) {
