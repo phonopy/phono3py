@@ -6,13 +6,7 @@ import sys
 import h5py
 import numpy as np
 from phonopy.cui.collect_cell_info import collect_cell_info
-from phonopy.cui.settings import fracval
 from phonopy.interface.calculator import read_crystal_structure
-from phonopy.structure.cells import (
-    get_primitive,
-    get_primitive_matrix,
-    guess_primitive_matrix,
-)
 from phonopy.structure.symmetry import Symmetry
 
 from phono3py.interface.phono3py_yaml import Phono3pyYaml
@@ -188,23 +182,6 @@ def _get_parser():
     """Return args of ArgumentParser."""
     parser = argparse.ArgumentParser(description="Show unit cell volume")
     parser.add_argument(
-        "--pa",
-        "--primitive-axis",
-        "--primitive-axes",
-        nargs="+",
-        dest="primitive_matrix",
-        default=None,
-        help="Same as PRIMITIVE_AXES tags",
-    )
-    # parser.add_argument(
-    #     "-c",
-    #     "--cell",
-    #     dest="cell_filename",
-    #     metavar="FILE",
-    #     default=None,
-    #     help="Read unit cell",
-    # )
-    parser.add_argument(
         "--gv", action="store_true", help="Calculate for gv_x_gv (tensor)"
     )
     parser.add_argument("--pqj", action="store_true", help="Calculate for Pqj (scalar)")
@@ -272,34 +249,6 @@ def _get_parser():
     return args
 
 
-def _analyze_primitive_matrix_option(args, unitcell=None):
-    """Analyze --pa option argument."""
-    if args.primitive_matrix is not None:
-        if type(args.primitive_matrix) is list:
-            _primitive_matrix = " ".join(args.primitive_matrix)
-        else:
-            _primitive_matrix = args.primitive_matrix.strip()
-
-        if _primitive_matrix.lower() == "auto":
-            primitive_matrix = "auto"
-        elif _primitive_matrix.upper() in ("P", "F", "I", "A", "C", "R"):
-            primitive_matrix = _primitive_matrix.upper()
-        elif len(_primitive_matrix.split()) != 9:
-            raise SyntaxError("Number of elements in --pa option argument has to be 9.")
-        else:
-            primitive_matrix = np.reshape(
-                [fracval(x) for x in _primitive_matrix.split()], (3, 3)
-            )
-            if np.linalg.det(primitive_matrix) < 1e-8:
-                raise SyntaxError("Primitive matrix has to have positive determinant.")
-
-    pmat = get_primitive_matrix(primitive_matrix)
-    if unitcell is not None and isinstance(pmat, str) and pmat == "auto":
-        return guess_primitive_matrix(unitcell)
-    else:
-        return pmat
-
-
 def main():
     """Calculate kappa spectrum.
 
@@ -310,12 +259,6 @@ def main():
     % phono3py-kaccum kappa-m111111.hdf5
     ```
 
-    Old style usage
-    ---------------
-    ```
-    % phono3py-kaccum --pa="F" -c POSCAR-unitcell kappa-m111111.hdf5 |tee kaccum.dat
-    ```
-
     Plot by gnuplot
     ---------------
     ```
@@ -323,9 +266,6 @@ def main():
     ...
     gnuplot> p "kaccum.dat" i 30 u 1:2 w l, "kaccum.dat" i 30 u 1:8 w l
     ```
-
-    With phono3py.yaml type file as crystal structure, primitive matrix is
-    unnecessary to set.
 
     """
     args = _get_parser()
@@ -347,14 +287,7 @@ def main():
             primitive = cell_info["phonopy_yaml"].primitive
             if primitive is None:
                 primitive = cell
-        else:
-            primitive_matrix = _analyze_primitive_matrix_option(args, unitcell=cell)
         f_kappa = h5py.File(args.filenames[0], "r")
-    if primitive is None:
-        if primitive_matrix is None:
-            primitive = cell
-        else:
-            primitive = get_primitive(cell, primitive_matrix)
 
     if "grid_matrix" in f_kappa:
         mesh = np.array(f_kappa["grid_matrix"][:], dtype="int_")

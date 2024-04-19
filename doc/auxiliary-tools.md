@@ -35,7 +35,7 @@ $$
 
 ### How to use `phono3py-kaccum`
 
-Let's computer lattice thermal conductivity of Si using the `Si-PBEsol` example
+Let's compute lattice thermal conductivity of Si using the `Si-PBEsol` example
 found in the example directory.
 
 ```bash
@@ -50,7 +50,9 @@ follows:
 ```
 
 `kappa-m111111.hdf5` is the output file of thermal conductivity calculation,
-which is passed to `phono3py-kaccum` as the first argument.
+which is passed to `phono3py-kaccum` as the first argument. `phono3py_disp.yaml`
+or `phono3py.yaml` is necessary to be located under the current directory to
+read the crystal structure.
 
 The format of the output is as follows: The first column gives frequency in THz,
 and the second to seventh columns give the cumulative lattice thermal
@@ -86,11 +88,7 @@ That calculated by QE with $19\times 19\times 19$ mesh:
 :width: 25%
 ```
 
-###General options
-
-#### `--pa`
-
-See {ref}`pa_option`.
+### General options
 
 #### `--temperature`
 

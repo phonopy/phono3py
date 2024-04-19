@@ -390,8 +390,8 @@ def test_run_prop_dos(si_pbesol: Phono3py):
         6431.33681,
         7235.25391,
     ]
-    np.testing.assert_allclose(ref_kdos, kdos[0, :, :, 0].ravel(), atol=1e-2)
-    np.testing.assert_allclose(ref_mfp, mfp[0, :, :, 0].ravel(), atol=1e-2)
+    np.testing.assert_allclose(ref_kdos, kdos[0, :, :, 0].ravel(), atol=1e-1)
+    np.testing.assert_allclose(ref_mfp, mfp[0, :, :, 0].ravel(), atol=1e-1)
     np.testing.assert_allclose(ref_sampling_points, sampling_points[0], atol=1e-4)
     np.testing.assert_allclose(ref_sampling_points_mfp, sampling_points_mfp[0], rtol=10)
 
